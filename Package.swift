@@ -43,6 +43,11 @@ let package = Package(
       name: "PersonaPadCoreTests",
       dependencies: ["PersonaPadCore"],
       path: "Tests/PersonaPadCoreTests"
+    ),
+    .testTarget(
+      name: "PersonaPadAppTests",
+      dependencies: ["PersonaPadApp"],
+      path: "Tests/PersonaPadAppTests"
     )
   ]
 )

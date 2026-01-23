@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 struct PersonaPadCommands: Commands {
   @ObservedObject var store: AppStore
@@ -12,6 +11,9 @@ struct PersonaPadCommands: Commands {
 
       Button("Focus Sidebar Search") { store.requestSidebarSearchFocus() }
         .keyboardShortcut("f", modifiers: [.command])
+
+      Button("Focus Context Field") { store.requestComposerFocus(sectionKey: "context") }
+        .keyboardShortcut("l", modifiers: [.command])
 
       Button("Reload Packs") { store.reloadAll() }
         .keyboardShortcut("r", modifiers: [.command])

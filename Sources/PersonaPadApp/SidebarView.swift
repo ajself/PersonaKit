@@ -39,8 +39,11 @@ struct SidebarView: View {
         .textFieldStyle(.roundedBorder)
         .focused($searchFocused)
         .padding([.top, .horizontal])
-        .onChange(of: store.sidebarSearchFocusRequest) { _ in
-          searchFocused = true
+        .onChange(of: store.sidebarSearchFocusRequest) { request in
+          searchFocused = request.shouldFocus
+        }
+        .onChange(of: searchFocused) { newValue in
+          store.isSidebarSearchFocused = newValue
         }
 
       if !allTags.isEmpty {

@@ -3,6 +3,7 @@ import PersonaPadCore
 
 struct ComposerView: View {
   @EnvironmentObject private var store: AppStore
+  @FocusState private var focusedSectionKey: String?
 
   private var persona: Persona? {
     guard let id = store.selectedPersonaID else { return nil }
@@ -12,6 +13,7 @@ struct ComposerView: View {
   var body: some View {
     Group {
       if let persona {
+        let sections = persona.template?.sections ?? defaultSections
         ScrollView {
           VStack(alignment: .leading, spacing: 12) {
             Text(persona.name).font(.title2).bold()
@@ -21,7 +23,6 @@ struct ComposerView: View {
 
             Divider()
 
-            let sections = persona.template?.sections ?? defaultSections
             ForEach(sections, id: \.key) { s in
               VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -36,6 +37,7 @@ struct ComposerView: View {
                   }
                 ))
                 .font(.system(.body, design: .monospaced))
+                .focused($focusedSectionKey, equals: s.key)
                 .frame(minHeight: 100)
                 .overlay(
                   RoundedRectangle(cornerRadius: 8)
@@ -47,6 +49,11 @@ struct ComposerView: View {
             Spacer(minLength: 24)
           }
           .padding()
+        }
+        .onChange(of: store.composerFocusRequest) { request in
+          guard let request else { return }
+          guard sections.contains(where: { $0.key == request.sectionKey }) else { return }
+          focusedSectionKey = request.sectionKey
         }
       } else {
         if #available(macOS 14.0, *) {

@@ -4,6 +4,16 @@ import AppKit
 import PersonaPadCore
 import PersonaPadResources
 
+struct SidebarSearchFocusRequest: Equatable {
+  let id: UUID
+  let shouldFocus: Bool
+}
+
+struct ComposerFocusRequest: Equatable {
+  let id: UUID
+  let sectionKey: String
+}
+
 @MainActor
 final class AppStore: ObservableObject {
   @Published var diagnostics: [Diagnostic] = []
@@ -15,7 +25,9 @@ final class AppStore: ObservableObject {
 
   @Published var searchText: String = ""
   @Published var selectedTag: String?
-  @Published var sidebarSearchFocusRequest = UUID()
+  @Published var sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: false)
+  @Published var isSidebarSearchFocused: Bool = false
+  @Published var composerFocusRequest: ComposerFocusRequest?
 
   func reloadAll() {
     diagnostics.removeAll()
@@ -85,6 +97,14 @@ final class AppStore: ObservableObject {
   }
 
   func requestSidebarSearchFocus() {
-    sidebarSearchFocusRequest = UUID()
+    sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: true)
+  }
+
+  func requestSidebarSearchBlur() {
+    sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: false)
+  }
+
+  func requestComposerFocus(sectionKey: String) {
+    composerFocusRequest = ComposerFocusRequest(id: UUID(), sectionKey: sectionKey)
   }
 }
