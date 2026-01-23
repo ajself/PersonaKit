@@ -213,4 +213,35 @@ final class PersonaPadCoreTests: XCTestCase {
       XCTAssertTrue(error.diagnostics.contains { $0.message.contains("Failed to decode JSON") })
     }
   }
+
+  func testMetadataParsingAndSortedTags() throws {
+    let json = """
+    {
+      "schemaVersion": 1,
+      "documentType": "persona",
+      "persona": {
+        "id": "meta",
+        "name": "Meta",
+        "system": "SYSTEM",
+        "tags": ["beta", "Alpha", "alpha"],
+        "description": "Short about text."
+      }
+    }
+    """
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("meta.persona.json")
+    try json.write(to: url, atomically: true, encoding: .utf8)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let result = PersonaLoader.loadDocument(from: url, sourceKind: .project)
+    let set = try result.get()
+    guard let persona = set.personas.first else {
+      XCTFail("Missing persona")
+      return
+    }
+
+    XCTAssertEqual(persona.description, "Short about text.")
+    XCTAssertEqual(persona.about, "Short about text.")
+    XCTAssertEqual(persona.sortedTags, ["Alpha", "alpha", "beta"])
+    XCTAssertEqual(PersonaMetadata.sortedUniqueTags(from: [persona]), ["Alpha", "alpha", "beta"])
+  }
 }
