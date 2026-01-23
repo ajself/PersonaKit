@@ -1,10 +1,11 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
       "type": "lldb",
       "request": "launch",
       "name": "PersonaPadApp (Debug, lldb)",
-      "program": "${workspaceFolder}/.build/debug/PersonaPadApp",
+      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Debug/PersonaPadApp",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "xcodebuild: Build Debug PersonaPadApp",
@@ -14,111 +15,11 @@
       "type": "lldb",
       "request": "launch",
       "name": "PersonaPadApp (Release, lldb)",
-      "program": "${workspaceFolder}/.build/release/PersonaPadApp",
+      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Release/PersonaPadApp",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "xcodebuild: Build Release PersonaPadApp",
       "stopOnEntry": false
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "personapad (Debug, lldb)",
-      "program": "${workspaceFolder}/.build/debug/personapad",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Debug personapad",
-      "stopOnEntry": false
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "personapad (Release, lldb)",
-      "program": "${workspaceFolder}/.build/release/personapad",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Release personapad",
-      "stopOnEntry": false
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "personapad-validate (Debug, lldb)",
-      "program": "${workspaceFolder}/.build/debug/personapad-validate",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Debug personapad-validate",
-      "stopOnEntry": false
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "personapad-validate (Release, lldb)",
-      "program": "${workspaceFolder}/.build/release/personapad-validate",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Release personapad-validate",
-      "stopOnEntry": false
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug PersonaPadApp",
-      "target": "PersonaPadApp",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug PersonaPadApp"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release PersonaPadApp",
-      "target": "PersonaPadApp",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release PersonaPadApp"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug personapad",
-      "target": "personapad",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personapad"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release personapad",
-      "target": "personapad",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release personapad"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug personapad-validate",
-      "target": "personapad-validate",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personapad-validate"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release personapad-validate",
-      "target": "personapad-validate",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release personapad-validate"
     }
   ]
 }

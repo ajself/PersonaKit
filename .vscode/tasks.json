@@ -6,6 +6,8 @@
       "type": "shell",
       "command": "xcodebuild",
       "args": [
+        "-workspace",
+        "PersonaPad.xcworkspace",
         "-scheme",
         "PersonaPadApp",
         "-configuration",
@@ -26,6 +28,8 @@
       "type": "shell",
       "command": "xcodebuild",
       "args": [
+        "-workspace",
+        "PersonaPad.xcworkspace",
         "-scheme",
         "PersonaPadApp",
         "-configuration",
@@ -46,6 +50,8 @@
       "type": "shell",
       "command": "xcodebuild",
       "args": [
+        "-workspace",
+        "PersonaPad.xcworkspace",
         "-scheme",
         "PersonaPadApp",
         "-destination",
@@ -53,70 +59,6 @@
         "-derivedDataPath",
         ".build/DerivedData",
         "run"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "swift: Build Debug personapad",
-      "type": "shell",
-      "command": "swift",
-      "args": [
-        "build",
-        "-c",
-        "debug",
-        "--product",
-        "personapad"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "swift: Build Release personapad",
-      "type": "shell",
-      "command": "swift",
-      "args": [
-        "build",
-        "-c",
-        "release",
-        "--product",
-        "personapad"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "swift: Build Debug personapad-validate",
-      "type": "shell",
-      "command": "swift",
-      "args": [
-        "build",
-        "-c",
-        "debug",
-        "--product",
-        "personapad-validate"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "swift: Build Release personapad-validate",
-      "type": "shell",
-      "command": "swift",
-      "args": [
-        "build",
-        "-c",
-        "release",
-        "--product",
-        "personapad-validate"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

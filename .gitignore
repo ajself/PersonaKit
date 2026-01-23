@@ -65,6 +65,7 @@ App.xcconfig
 .build
 Derived/
 graph.dot
+.swiftpm/
 
 ### Custom build dir
 .sim
