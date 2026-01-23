@@ -14,7 +14,8 @@ struct SidebarView: View {
       let matchesSearch = store.searchText.isEmpty
         || p.name.localizedCaseInsensitiveContains(store.searchText)
         || (p.id.localizedCaseInsensitiveContains(store.searchText))
-        || (p.tags?.contains(where: { $0.localizedCaseInsensitiveContains(store.searchText) }) ?? false)
+        || (p.about?.localizedCaseInsensitiveContains(store.searchText) ?? false)
+        || p.sortedTags.contains(where: { $0.localizedCaseInsensitiveContains(store.searchText) })
 
       let matchesTag: Bool = {
         guard let tag = store.selectedTag, !tag.isEmpty else { return true }
@@ -26,7 +27,7 @@ struct SidebarView: View {
   }
 
   private var allTags: [String] {
-    Array(Set(store.personaIndex.values.flatMap { $0.persona.tags ?? [] })).sorted()
+    PersonaMetadata.sortedUniqueTags(from: store.personaIndex.values.map { $0.persona })
   }
 
   var body: some View {
@@ -70,8 +71,8 @@ private struct PersonaRow: View {
     VStack(alignment: .leading, spacing: 2) {
       Text(persona.name).font(.headline)
       Text(persona.id).font(.caption).foregroundStyle(.secondary)
-      if let desc = persona.description, !desc.isEmpty {
-        Text(desc).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+      if let about = persona.about, !about.isEmpty {
+        Text(about).font(.caption).foregroundStyle(.secondary).lineLimit(2)
       }
     }
     .padding(.vertical, 4)

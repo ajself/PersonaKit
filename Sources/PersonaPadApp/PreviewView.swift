@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import PersonaPadCore
 
 struct PreviewView: View {
   @EnvironmentObject private var store: AppStore
@@ -12,6 +13,11 @@ struct PreviewView: View {
     case json = "JSON"
 
     var id: String { rawValue }
+  }
+
+  private var selectedPersona: Persona? {
+    guard let id = store.selectedPersonaID else { return nil }
+    return store.personaIndex[id]?.persona
   }
 
   var body: some View {
@@ -36,11 +42,18 @@ struct PreviewView: View {
       switch selectedPanel {
       case .prompt:
         ScrollView {
-          Text(store.promptPreview.isEmpty ? "Select a persona and fill fields to see the composed prompt." : store.promptPreview)
-            .font(.system(.body, design: .monospaced))
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
+          VStack(alignment: .leading, spacing: 12) {
+            if let persona = selectedPersona, let about = persona.about, !about.isEmpty {
+              Text(about)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            }
+            Text(store.promptPreview.isEmpty ? "Select a persona and fill fields to see the composed prompt." : store.promptPreview)
+              .font(.system(.body, design: .monospaced))
+              .textSelection(.enabled)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding()
         }
       case .json:
         if jsonText.isEmpty {
