@@ -224,11 +224,17 @@ PersonaPad intentionally documents its constraints.
 
 If you are contributing, using automation, or proposing changes, please read:
 
-- **[PersonaPad v1 Scope & Contract](PersonaPad_v1_Scope_and_Contract.md)**  
+- **[PersonaPad v1 Scope & Contract](Docs/PersonaPad_v1_Scope_and_Contract.md)**  
   Defines what PersonaPad v1 *is*, *is not*, and when it is considered “done enough”.
 
 - **[AGENTS.md](AGENTS.md)**  
   Defines how automated agents (including Codex) and contributors should interact with the codebase.
+
+- **[PersonaPad v2 Draft](Docs/PersonaPad_v2_DRAFT.md)**  
+  Exploration intent only. Not a commitment.
+
+- **[PersonaPad v2 Discovery Scope](Docs/PersonaPad_v2_Scope_Discovery.md.md)**  
+  Discovery-only guardrails for v2 exploration work.
 
 These documents take precedence over issues, pull requests, or feature ideas.
 
@@ -243,7 +249,7 @@ Contributions are welcome, but:
 - not every feature request will be accepted
 - long-term maintainability matters more than growth
 
-Please read `PersonaPad_v1_Scope_and_Contract.md` before proposing large changes.
+Please read `Docs/PersonaPad_v1_Scope_and_Contract.md` before proposing large changes.
 
 ---
 

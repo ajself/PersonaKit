@@ -17,7 +17,7 @@ If something conflicts with this document, **this document wins**.
 This contract defines *product scope*.
 
 For guidance on how contributors and automated agents should work within this scope,
-see **[AGENTS.md](AGENTS.md)**.
+see **[AGENTS.md](../AGENTS.md)**.
 
 If there is a conflict, this contract defines *what* is allowed;
 AGENTS.md defines *how* work should be performed.
