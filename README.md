@@ -136,6 +136,27 @@ PersonaPad is opinionated about structure, flexible about content, and neutral a
 
 ---
 
+## Persona Metadata (Discovery Only)
+
+Personas can include lightweight metadata used only for discovery:
+- `tags`: an optional array of strings
+- `description`: a short human-readable "about" blurb
+
+These fields are used for search/filtering in the macOS app and do **not** affect
+prompt composition or output.
+
+Example:
+```json
+{
+  "id": "senior-ios-engineer",
+  "name": "Senior macOS/iOS Engineer",
+  "tags": ["swift", "code-review"],
+  "description": "Pragmatic pair engineer; minimal diffs."
+}
+```
+
+---
+
 ## Local-First by Design
 
 PersonaPad operates entirely locally.
