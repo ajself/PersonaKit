@@ -1,0 +1,101 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "swift: Build Debug PersonaPadApp",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "debug",
+        "--product",
+        "PersonaPadApp"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "swift: Build Release PersonaPadApp",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "release",
+        "--product",
+        "PersonaPadApp"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "swift: Build Debug personapad",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "debug",
+        "--product",
+        "personapad"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "swift: Build Release personapad",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "release",
+        "--product",
+        "personapad"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "swift: Build Debug personapad-validate",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "debug",
+        "--product",
+        "personapad-validate"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "swift: Build Release personapad-validate",
+      "type": "shell",
+      "command": "swift",
+      "args": [
+        "build",
+        "-c",
+        "release",
+        "--product",
+        "personapad-validate"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
