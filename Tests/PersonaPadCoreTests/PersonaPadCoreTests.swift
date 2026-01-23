@@ -244,4 +244,36 @@ final class PersonaPadCoreTests: XCTestCase {
     XCTAssertEqual(persona.sortedTags, ["Alpha", "alpha", "beta"])
     XCTAssertEqual(PersonaMetadata.sortedUniqueTags(from: [persona]), ["Alpha", "alpha", "beta"])
   }
+
+  func testMetadataDoesNotAffectComposition() throws {
+    let template = PromptTemplate(format: nil, sections: [
+      TemplateSection(key: "context", label: "Context", required: true),
+      TemplateSection(key: "task", label: "Task", required: true)
+    ])
+
+    let base = Persona(
+      id: "meta-free",
+      name: "Meta Free",
+      system: "SYSTEM",
+      template: template
+    )
+
+    let withMeta = Persona(
+      id: "meta-free",
+      name: "Meta Free",
+      tags: ["alpha", "beta"],
+      description: "About text.",
+      system: "SYSTEM",
+      template: template
+    )
+
+    let sections = [
+      "context": "Repo: PersonaPad",
+      "task": "Confirm output"
+    ]
+
+    let baseOutput = PromptComposer.compose(persona: base, sections: sections)
+    let metaOutput = PromptComposer.compose(persona: withMeta, sections: sections)
+    XCTAssertEqual(baseOutput, metaOutput)
+  }
 }
