@@ -230,12 +230,6 @@ If you are contributing, using automation, or proposing changes, please read:
 - **[AGENTS.md](AGENTS.md)**  
   Defines how automated agents (including Codex) and contributors should interact with the codebase.
 
-- **[PersonaPad v2 Draft](Docs/PersonaPad_v2_DRAFT.md)**  
-  Exploration intent only. Not a commitment.
-
-- **[PersonaPad v2 Discovery Scope](Docs/PersonaPad_v2_Scope_Discovery.md.md)**  
-  Discovery-only guardrails for v2 exploration work.
-
 These documents take precedence over issues, pull requests, or feature ideas.
 
 ---

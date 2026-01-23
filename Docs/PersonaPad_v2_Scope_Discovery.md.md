@@ -101,8 +101,8 @@ Metadata must **not**:
 ### Storage (Record What You Chose)
 Choose one approach and keep it simple:
 
-- [ ] Persona JSON fields (e.g., `tags`, `about`)
+- [x] Persona JSON fields (e.g., `tags`, `description`)
 - [ ] Sidecar metadata files
 - [ ] Pack manifest mapping IDs → metadata
 
-**Chosen approach:**
+**Chosen approach:** Persona JSON fields: `tags` (array of strings) and `description` (used as the short “about” blurb).
