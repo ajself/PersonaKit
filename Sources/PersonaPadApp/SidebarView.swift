@@ -47,7 +47,7 @@ struct SidebarView: View {
         }
 
       if !allTags.isEmpty {
-        ScrollView(.horizontal, showsIndicators: false) {
+        HorizontalTagScrollView {
           HStack(spacing: 6) {
             TagChip(title: "All", isSelected: store.selectedTag == nil) {
               store.selectedTag = nil
