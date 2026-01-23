@@ -2,15 +2,19 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "swift: Build Debug PersonaPadApp",
+      "label": "xcodebuild: Build Debug PersonaPadApp",
       "type": "shell",
-      "command": "swift",
+      "command": "xcodebuild",
       "args": [
-        "build",
-        "-c",
-        "debug",
-        "--product",
-        "PersonaPadApp"
+        "-scheme",
+        "PersonaPadApp",
+        "-configuration",
+        "Debug",
+        "-destination",
+        "platform=macOS",
+        "-derivedDataPath",
+        ".build/DerivedData",
+        "build"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -18,15 +22,37 @@
       "problemMatcher": []
     },
     {
-      "label": "swift: Build Release PersonaPadApp",
+      "label": "xcodebuild: Build Release PersonaPadApp",
       "type": "shell",
-      "command": "swift",
+      "command": "xcodebuild",
       "args": [
-        "build",
-        "-c",
-        "release",
-        "--product",
-        "PersonaPadApp"
+        "-scheme",
+        "PersonaPadApp",
+        "-configuration",
+        "Release",
+        "-destination",
+        "platform=macOS",
+        "-derivedDataPath",
+        ".build/DerivedData",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "xcodebuild: Run PersonaPadApp",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-scheme",
+        "PersonaPadApp",
+        "-destination",
+        "platform=macOS",
+        "-derivedDataPath",
+        ".build/DerivedData",
+        "run"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

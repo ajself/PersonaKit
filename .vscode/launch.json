@@ -7,7 +7,7 @@
       "program": "${workspaceFolder}/.build/debug/PersonaPadApp",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Debug PersonaPadApp",
+      "preLaunchTask": "xcodebuild: Build Debug PersonaPadApp",
       "stopOnEntry": false
     },
     {
@@ -17,7 +17,7 @@
       "program": "${workspaceFolder}/.build/release/PersonaPadApp",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "swift: Build Release PersonaPadApp",
+      "preLaunchTask": "xcodebuild: Build Release PersonaPadApp",
       "stopOnEntry": false
     },
     {
