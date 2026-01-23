@@ -6,11 +6,13 @@ import PersonaPadResources
 enum Command: String {
   case list
   case compose
+  case describe
 }
 
 struct ParsedArgs {
   var values: [String: String] = [:]
   var flags: Set<String> = []
+  var positionals: [String] = []
 
   func value(for key: String) -> String? {
     values[key]
@@ -40,6 +42,8 @@ struct PersonaPadCLI {
 
     var sets: [PersonaSet] = []
     var diags: [Diagnostic] = []
+    var sourcesByID: [String: PersonaSource] = [:]
+    var packsByID: [String: PackMeta] = [:]
 
     if builtInURLs.isEmpty {
       diags.append(.warning(
@@ -62,6 +66,13 @@ struct PersonaPadCLI {
       let loadedUser = PersonaLoader.loadDocuments(in: userPacks, sourceKind: .user)
       sets.append(contentsOf: loadedUser.sets)
       diags.append(contentsOf: loadedUser.diagnostics)
+    }
+
+    for set in sets {
+      for persona in set.personas {
+        sourcesByID[persona.id] = set.source
+        packsByID[persona.id] = set.pack
+      }
     }
 
     let merged = PersonaResolver.mergeSets(sets)
@@ -126,6 +137,23 @@ struct PersonaPadCLI {
       if !diags.isEmpty {
         printDiagnostics(diags)
       }
+
+    case .describe:
+      let personaID = parsed.positionals.first ?? parsed.value(for: "persona")
+      let result = PersonaDescriptor.describe(
+        personaID: personaID,
+        resolved: resolved.personasByID,
+        sourcesByID: sourcesByID,
+        packsByID: packsByID,
+        baseURL: repoRoot
+      )
+      switch result {
+      case .success(let text):
+        print(text)
+      case .failure(let failure):
+        fputs("\(failure.message)\n", stderr)
+        exit(failure.exitCode)
+      }
     }
   }
 
@@ -144,6 +172,7 @@ struct PersonaPadCLI {
           idx += 1
         }
       } else {
+        parsed.positionals.append(arg)
         idx += 1
       }
     }
@@ -155,6 +184,7 @@ struct PersonaPadCLI {
 Usage:
   personapad list
   personapad compose --persona <id> [--resolved-json] [--context <text|->] [--goal <text>] [--constraints <text>] [--evidence <text|->] [--task <text>]
+  personapad describe <persona-id>
 
 Notes:
   CLI loads built-ins from the PersonaPadResources bundle (or repo fallback when running from source).
