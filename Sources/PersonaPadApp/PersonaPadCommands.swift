@@ -10,6 +10,9 @@ struct PersonaPadCommands: Commands {
       Button("Switch Persona…") { showPersonaSwitcher = true }
         .keyboardShortcut("k", modifiers: [.command])
 
+      Button("Focus Sidebar Search") { store.requestSidebarSearchFocus() }
+        .keyboardShortcut("f", modifiers: [.command])
+
       Button("Reload Packs") { store.reloadAll() }
         .keyboardShortcut("r", modifiers: [.command])
 

@@ -5,6 +5,7 @@ import PersonaPadCore
 struct ContentView: View {
   @EnvironmentObject private var store: AppStore
   @Binding var showPersonaSwitcher: Bool
+  @State private var keyMonitor: Any?
 
   var body: some View {
     NavigationSplitView {
@@ -16,6 +17,10 @@ struct ContentView: View {
     }
     .onAppear {
       store.reloadAll()
+      installKeyMonitorIfNeeded()
+    }
+    .onDisappear {
+      removeKeyMonitor()
     }
     .onChange(of: store.selectedPersonaID) { _ in
       store.recomputePreview()
@@ -29,6 +34,34 @@ struct ContentView: View {
         Button("Reload") { store.reloadAll() }
         Button("Copy Prompt") { store.copyPromptToClipboard() }
       }
+    }
+  }
+
+  private func installKeyMonitorIfNeeded() {
+    guard keyMonitor == nil else { return }
+    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+      let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+      guard modifiers == [.command],
+            let characters = event.charactersIgnoringModifiers?.lowercased() else {
+        return event
+      }
+      switch characters {
+      case "k":
+        showPersonaSwitcher = true
+        return nil
+      case "f":
+        store.requestSidebarSearchFocus()
+        return nil
+      default:
+        return event
+      }
+    }
+  }
+
+  private func removeKeyMonitor() {
+    if let keyMonitor {
+      NSEvent.removeMonitor(keyMonitor)
+      self.keyMonitor = nil
     }
   }
 }

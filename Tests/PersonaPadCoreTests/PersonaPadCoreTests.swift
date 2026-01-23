@@ -245,6 +245,18 @@ final class PersonaPadCoreTests: XCTestCase {
     XCTAssertEqual(PersonaMetadata.sortedUniqueTags(from: [persona]), ["Alpha", "alpha", "beta"])
   }
 
+  func testPersonaSortKeyOrdersByNameThenId() throws {
+    let personaA1 = Persona(id: "alpha-2", name: "Alpha", system: "SYSTEM")
+    let personaA0 = Persona(id: "alpha-1", name: "Alpha", system: "SYSTEM")
+    let personaB = Persona(id: "beta-1", name: "beta", system: "SYSTEM")
+
+    let sorted = [personaB, personaA1, personaA0].sorted {
+      PersonaMetadata.personaSortKey($0) < PersonaMetadata.personaSortKey($1)
+    }
+
+    XCTAssertEqual(sorted.map(\.id), ["alpha-1", "alpha-2", "beta-1"])
+  }
+
   func testMetadataDoesNotAffectComposition() throws {
     let template = PromptTemplate(format: nil, sections: [
       TemplateSection(key: "context", label: "Context", required: true),

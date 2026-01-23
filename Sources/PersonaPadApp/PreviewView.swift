@@ -44,9 +44,17 @@ struct PreviewView: View {
         ScrollView {
           VStack(alignment: .leading, spacing: 12) {
             if let persona = selectedPersona, let about = persona.about, !about.isEmpty {
-              Text(about)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+              VStack(alignment: .leading, spacing: 6) {
+                Text("About")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                Text(about)
+                  .font(.callout)
+              }
+              .padding(10)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .background(Color.secondary.opacity(0.08))
+              .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             Text(store.promptPreview.isEmpty ? "Select a persona and fill fields to see the composed prompt." : store.promptPreview)
               .font(.system(.body, design: .monospaced))

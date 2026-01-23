@@ -15,6 +15,7 @@ final class AppStore: ObservableObject {
 
   @Published var searchText: String = ""
   @Published var selectedTag: String?
+  @Published var sidebarSearchFocusRequest = UUID()
 
   func reloadAll() {
     diagnostics.removeAll()
@@ -81,5 +82,9 @@ final class AppStore: ObservableObject {
     let pb = NSPasteboard.general
     pb.clearContents()
     pb.setString(promptPreview, forType: .string)
+  }
+
+  func requestSidebarSearchFocus() {
+    sidebarSearchFocusRequest = UUID()
   }
 }

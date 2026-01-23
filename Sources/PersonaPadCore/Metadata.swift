@@ -5,6 +5,10 @@ public enum PersonaMetadata {
     (tag.lowercased(), tag)
   }
 
+  public static func personaSortKey(_ persona: Persona) -> (String, String, String, String) {
+    (persona.name.lowercased(), persona.name, persona.id.lowercased(), persona.id)
+  }
+
   public static func sortedTags(_ tags: [String]?) -> [String] {
     guard let tags, !tags.isEmpty else { return [] }
     return tags.sorted { tagSortKey($0) < tagSortKey($1) }

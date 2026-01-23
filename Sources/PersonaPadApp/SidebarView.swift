@@ -3,9 +3,12 @@ import PersonaPadCore
 
 struct SidebarView: View {
   @EnvironmentObject private var store: AppStore
+  @FocusState private var searchFocused: Bool
 
   private var allPersonas: [ResolvedPersona] {
-    store.personaIndex.values.sorted { $0.persona.name.localizedCaseInsensitiveCompare($1.persona.name) == .orderedAscending }
+    store.personaIndex.values.sorted {
+      PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
+    }
   }
 
   private var filtered: [ResolvedPersona] {
@@ -34,7 +37,11 @@ struct SidebarView: View {
     VStack(spacing: 8) {
       TextField("Search personas", text: $store.searchText)
         .textFieldStyle(.roundedBorder)
+        .focused($searchFocused)
         .padding([.top, .horizontal])
+        .onChange(of: store.sidebarSearchFocusRequest) { _ in
+          searchFocused = true
+        }
 
       if !allTags.isEmpty {
         ScrollView(.horizontal, showsIndicators: false) {
