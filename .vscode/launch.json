@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Debug PersonaPadApp",
+      "target": "PersonaPadApp",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug PersonaPadApp"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Release PersonaPadApp",
+      "target": "PersonaPadApp",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release PersonaPadApp"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Debug personapad",
+      "target": "personapad",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug personapad"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Release personapad",
+      "target": "personapad",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release personapad"
+    }
+  ]
+}
