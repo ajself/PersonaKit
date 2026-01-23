@@ -39,6 +39,26 @@
       "target": "personapad",
       "configuration": "release",
       "preLaunchTask": "swift: Build Release personapad"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Debug personapad-validate",
+      "target": "personapad-validate",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug personapad-validate"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaPad}",
+      "name": "Release personapad-validate",
+      "target": "personapad-validate",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release personapad-validate"
     }
   ]
 }
