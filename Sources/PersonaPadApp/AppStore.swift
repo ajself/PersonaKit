@@ -18,6 +18,7 @@ struct ComposerFocusRequest: Equatable {
 final class AppStore: ObservableObject {
   @Published var diagnostics: [Diagnostic] = []
   @Published var personaIndex: [String: ResolvedPersona] = [:]
+  @Published var personaPacksByID: [String: PackMeta] = [:]
 
   @Published var selectedPersonaID: String?
   @Published var composerValues: [String: String] = [:]
@@ -34,6 +35,7 @@ final class AppStore: ObservableObject {
     let previousSelection = selectedPersonaID
 
     var sets: [PersonaSet] = []
+    var packsByID: [String: PackMeta] = [:]
 
     // 1) Built-ins from resources (BuiltIn/*.json)
     let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
@@ -67,12 +69,19 @@ final class AppStore: ObservableObject {
       ))
     }
 
+    for set in sets {
+      for persona in set.personas {
+        packsByID[persona.id] = set.pack
+      }
+    }
+
     let merged = PersonaResolver.mergeSets(sets)
     diagnostics.append(contentsOf: merged.diagnostics)
 
     let resolved = PersonaResolver.resolveAll(from: merged.personas)
     diagnostics.append(contentsOf: resolved.diagnostics)
     personaIndex = resolved.personasByID
+    personaPacksByID = packsByID
 
     if let previousSelection, personaIndex.keys.contains(previousSelection) {
       selectedPersonaID = previousSelection

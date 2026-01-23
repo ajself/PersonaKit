@@ -1,9 +1,11 @@
 # PersonaPad v2 — Intent & Exploration Draft
 
+Archived: PersonaPad v1.x is the current active product focus.
+
 ⚠️ **This is a working draft, not a commitment.**
 
 PersonaPad v1 remains the source of truth.
-See **[PersonaPad v1 Scope & Contract](PersonaPad_v1_Scope_and_Contract.md)** and **[AGENTS.md](../AGENTS.md)**.
+See **[PersonaPad v1 Scope & Contract](../PersonaPad_v1_Scope_and_Contract.md)** and **[AGENTS.md](../../AGENTS.md)**.
 This document exists to explore **where PersonaPad may grow next**
 *without violating v1 principles*.
 

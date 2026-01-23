@@ -1,5 +1,7 @@
 # PersonaPad v1.0.0
 
+Archived: PersonaPad v1.x is the current active product focus.
+
 PersonaPad is a **local, deterministic macOS utility for persona-based prompt composition**.
 
 v1.0.0 is the “boring reliability” release:

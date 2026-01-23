@@ -42,7 +42,7 @@ All agent behavior is constrained by the project’s scope contract:
 - **[PersonaPad v1 Scope & Contract](Docs/PersonaPad_v1_Scope_and_Contract.md)**
 
 If present, v2 exploration intent is captured in:
-- **[PersonaPad v2 Draft](Docs/PersonaPad_v2_DRAFT.md)**
+- **[PersonaPad v2 Draft](Docs/Drafts/PersonaPad_v2_DRAFT.md)**
 
 Agents must not propose or implement changes that violate that contract,
 even if technically feasible or seemingly useful.

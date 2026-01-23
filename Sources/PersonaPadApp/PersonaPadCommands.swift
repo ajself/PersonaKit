@@ -3,23 +3,53 @@ import SwiftUI
 struct PersonaPadCommands: Commands {
   @ObservedObject var store: AppStore
   @Binding var showPersonaSwitcher: Bool
+  @Binding var showInspector: Bool
 
   var body: some Commands {
     CommandMenu("PersonaPad") {
-      Button("Switch Persona…") { showPersonaSwitcher = true }
+      Button {
+        showPersonaSwitcher = true
+      } label: {
+        Label("Switch Persona…", systemImage: "arrow.left.arrow.right")
+      }
         .keyboardShortcut("k", modifiers: [.command])
 
-      Button("Focus Sidebar Search") { store.requestSidebarSearchFocus() }
+      Button {
+        store.requestSidebarSearchFocus()
+      } label: {
+        Label("Focus Sidebar Search", systemImage: "magnifyingglass")
+      }
         .keyboardShortcut("f", modifiers: [.command])
 
-      Button("Focus Context Field") { store.requestComposerFocus(sectionKey: "context") }
+      Button {
+        store.requestComposerFocus(sectionKey: "context")
+      } label: {
+        Label("Focus Context Field", systemImage: "text.cursor")
+      }
         .keyboardShortcut("l", modifiers: [.command])
 
-      Button("Reload Packs") { store.reloadAll() }
+      Button {
+        store.reloadAll()
+      } label: {
+        Label("Reload Packs", systemImage: "arrow.clockwise")
+      }
         .keyboardShortcut("r", modifiers: [.command])
 
-      Button("Copy Prompt") { store.copyPromptToClipboard() }
+      Button {
+        store.copyPromptToClipboard()
+      } label: {
+        Label("Copy Prompt", systemImage: "doc.on.doc")
+      }
         .keyboardShortcut("c", modifiers: [.command, .shift])
+
+      Divider()
+
+      Button {
+        showInspector.toggle()
+      } label: {
+        Label("Toggle Inspector", systemImage: "sidebar.right")
+      }
+      .keyboardShortcut("i", modifiers: [.command, .option])
     }
   }
 }

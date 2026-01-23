@@ -1,91 +1,61 @@
 import SwiftUI
 import Foundation
-import PersonaPadCore
 
 struct PreviewView: View {
   @EnvironmentObject private var store: AppStore
-  @State private var selectedPanel: Panel = .prompt
+  @Binding var selectedPanel: PreviewPanel
   @State private var jsonText: String = ""
-  @State private var jsonIsPrettyPrinted = false
-
-  private enum Panel: String, CaseIterable, Identifiable {
-    case prompt = "Prompt"
-    case json = "JSON"
-
-    var id: String { rawValue }
-  }
-
-  private var selectedPersona: Persona? {
-    guard let id = store.selectedPersonaID else { return nil }
-    return store.personaIndex[id]?.persona
-  }
+  @State private var jsonFormatWorkItem: DispatchWorkItem?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 12) {
-        Picker("Panel", selection: $selectedPanel) {
-          ForEach(Panel.allCases) { panel in
+    VStack(spacing: 0) {
+      HStack {
+        Picker("Output", selection: $selectedPanel) {
+          ForEach(PreviewPanel.allCases) { panel in
             Text(panel.rawValue).tag(panel)
           }
         }
         .pickerStyle(.segmented)
-
+        .frame(maxWidth: 220)
         Spacer()
-
-        if selectedPanel == .json {
-          Button("Format JSON") { formatJSON() }
-            .disabled(store.selectedPersonaID == nil)
-        }
       }
       .padding([.top, .horizontal])
 
-      switch selectedPanel {
-      case .prompt:
-        ScrollView {
-          VStack(alignment: .leading, spacing: 12) {
-            if let persona = selectedPersona, let about = persona.about, !about.isEmpty {
-              VStack(alignment: .leading, spacing: 6) {
-                Text("About")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                Text(about)
-                  .font(.callout)
-              }
-              .padding(10)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .background(Color.secondary.opacity(0.08))
-              .clipShape(RoundedRectangle(cornerRadius: 8))
+      Divider()
+        .padding(.top, 8)
+
+      Group {
+        switch selectedPanel {
+        case .prompt:
+          ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+              Text(store.promptPreview.isEmpty ? "No prompt available." : store.promptPreview)
+                .font(.system(.body, design: .monospaced))
+                .textSelection(.enabled)
             }
-            Text(store.promptPreview.isEmpty ? "Select a persona and fill fields to see the composed prompt." : store.promptPreview)
-              .font(.system(.body, design: .monospaced))
-              .textSelection(.enabled)
-          }
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding()
-        }
-      case .json:
-        if jsonText.isEmpty {
-          Text("Select a persona to see JSON.")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-        } else {
-          JSONEditorView(text: $jsonText)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          }
+        case .json:
+          if jsonText.isEmpty {
+            Text("No JSON available.")
+              .foregroundStyle(.secondary)
+              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+              .padding()
+          } else {
+            JSONEditorView(text: $jsonText)
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+          }
         }
       }
     }
     .onAppear { refreshJSON() }
-    .onChange(of: store.selectedPersonaID) { _ in refreshJSON() }
-    .onChange(of: store.personaIndex) { _ in refreshJSON() }
+    .onChange(of: store.selectedPersonaID) { _, _ in refreshJSON() }
+    .onChange(of: store.personaIndex) { _, _ in refreshJSON() }
+    .onChange(of: jsonText) { _, _ in scheduleJSONFormat() }
   }
 
   private func refreshJSON() {
-    jsonText = buildPersonaJSON(prettyPrinted: jsonIsPrettyPrinted)
-  }
-
-  private func formatJSON() {
-    jsonIsPrettyPrinted = true
     jsonText = buildPersonaJSON(prettyPrinted: true)
   }
 
@@ -107,5 +77,30 @@ struct PreviewView: View {
       return ""
     }
     return text
+  }
+
+  private func scheduleJSONFormat() {
+    jsonFormatWorkItem?.cancel()
+    let workItem = DispatchWorkItem { formatJSONIfValid() }
+    jsonFormatWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: workItem)
+  }
+
+  private func formatJSONIfValid() {
+    guard let formatted = prettyPrintedJSON(from: jsonText) else { return }
+    if formatted != jsonText {
+      jsonText = formatted
+    }
+  }
+
+  private func prettyPrintedJSON(from text: String) -> String? {
+    guard let data = text.data(using: .utf8) else { return nil }
+    guard let object = try? JSONSerialization.jsonObject(with: data) else { return nil }
+    guard JSONSerialization.isValidJSONObject(object) else { return nil }
+    let options: JSONSerialization.WritingOptions = [.prettyPrinted, .sortedKeys]
+    guard let prettyData = try? JSONSerialization.data(withJSONObject: object, options: options) else {
+      return nil
+    }
+    return String(data: prettyData, encoding: .utf8)
   }
 }

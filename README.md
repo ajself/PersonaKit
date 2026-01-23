@@ -1,6 +1,6 @@
 # PersonaPad
 
-PersonaPad is a **local, deterministic macOS utility for persona-based prompt composition**.
+PersonaPad is a **local, deterministic, boring-by-design macOS utility for persona-based prompt composition**.
 
 It exists to help engineers and technical creators preserve intent when switching mental modes without prompt drift or accidental inconsistency.
 
@@ -25,13 +25,13 @@ PersonaPad does not:
 swift run PersonaPadApp
 ```
 1) Select a persona in the left sidebar.  
-2) Fill **Context**, **Goal**, and **Task**.  
-3) Copy the prompt from the preview pane.
+2) Open the inspector and fill **Context**, **Evidence**, and **Task**.  
+3) Use the Prompt/JSON toggle in the main pane, then copy the prompt.
 
 ### CLI
 ```bash
 swift run personapad list
-swift run personapad compose --persona senior-ios-engineer --context "Repo: PersonaPad" --goal "Ship v1" --task "Review changes"
+swift run personapad compose --persona senior-ios-engineer --context "Repo: PersonaPad" --evidence "Determinism tests" --task "Review changes"
 ```
 
 The built-in pack is included, so both commands work out of the box.
@@ -104,9 +104,9 @@ A Swift library that provides:
 
 ### PersonaPadApp (macOS)
 A native macOS app that provides:
-- spatial browsing of persona packs
-- JSON inspection and editing
-- live prompt preview
+- sidebar browsing and filtering
+- prompt/JSON output preview
+- an inspector for parameters and persona metadata
 - confidence through visibility
 
 ### personapad (CLI)
@@ -195,9 +195,9 @@ swift run PersonaPadApp
 ### CLI
 ```bash
 swift run personapad list
-swift run personapad compose --persona <id> --context "Example" --goal "Example" --task "Example"
+swift run personapad compose --persona <id> --context "Example" --evidence "Example" --task "Example"
 ```
-Other section flags (`--constraints`, `--evidence`, `--task`) are optional.
+Other section flags (`--goal`, `--constraints`) are optional when a persona defines them.
 
 ## Loading the Example Pack in the App
 The app loads built-ins automatically. To load the example pack from `Examples/`:

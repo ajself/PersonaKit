@@ -39,27 +39,55 @@ struct SidebarView: View {
         .textFieldStyle(.roundedBorder)
         .focused($searchFocused)
         .padding([.top, .horizontal])
-        .onChange(of: store.sidebarSearchFocusRequest) { request in
+        .onChange(of: store.sidebarSearchFocusRequest) { _, request in
           searchFocused = request.shouldFocus
         }
-        .onChange(of: searchFocused) { newValue in
+        .onChange(of: searchFocused) { _, newValue in
           store.isSidebarSearchFocused = newValue
         }
+        .help("Search by name, id, description, or tag.")
 
       if !allTags.isEmpty {
-        HorizontalTagScrollView {
-          HStack(spacing: 6) {
-            TagChip(title: "All", isSelected: store.selectedTag == nil) {
-              store.selectedTag = nil
-            }
-            ForEach(allTags, id: \.self) { tag in
-              TagChip(title: tag, isSelected: store.selectedTag == tag) {
-                store.selectedTag = tag
+        VStack(alignment: .leading, spacing: 6) {
+          HStack {
+            Menu {
+              Button {
+                store.selectedTag = nil
+              } label: {
+                tagMenuRow(title: "All", isSelected: store.selectedTag == nil)
               }
+              Divider()
+              ForEach(allTags, id: \.self) { tag in
+                Button {
+                  store.selectedTag = tag
+                } label: {
+                  tagMenuRow(title: tag, isSelected: store.selectedTag == tag)
+                }
+              }
+            } label: {
+              Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
             }
+            .help("Filter personas by tag.")
+
+            Spacer()
           }
-          .padding(.horizontal)
+
+          if let selectedTag = store.selectedTag, !selectedTag.isEmpty {
+            HStack(spacing: 6) {
+              Text("Filter: \(selectedTag)")
+              Button {
+                store.selectedTag = nil
+              } label: {
+                Label("Clear", systemImage: "xmark.circle.fill")
+              }
+              .buttonStyle(.plain)
+              .help("Clear tag filter.")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          }
         }
+        .padding(.horizontal)
       }
 
       List(selection: $store.selectedPersonaID) {
@@ -70,6 +98,16 @@ struct SidebarView: View {
       }
 
       DiagnosticsFooter(diagnostics: store.diagnostics)
+    }
+  }
+
+  private func tagMenuRow(title: String, isSelected: Bool) -> some View {
+    HStack {
+      Text(title)
+      Spacer()
+      if isSelected {
+        Image(systemName: "checkmark")
+      }
     }
   }
 }
@@ -86,24 +124,6 @@ private struct PersonaRow: View {
       }
     }
     .padding(.vertical, 4)
-  }
-}
-
-private struct TagChip: View {
-  let title: String
-  let isSelected: Bool
-  let action: () -> Void
-
-  var body: some View {
-    Button(action: action) {
-      Text(title)
-        .font(.caption)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(isSelected ? Color.accentColor.opacity(0.25) : Color.secondary.opacity(0.12))
-        .clipShape(Capsule())
-    }
-    .buttonStyle(.plain)
   }
 }
 

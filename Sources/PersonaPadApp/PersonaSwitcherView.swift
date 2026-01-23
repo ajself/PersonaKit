@@ -33,7 +33,8 @@ struct PersonaSwitcherView: View {
         .textFieldStyle(.roundedBorder)
         .focused($searchFocused)
         .onSubmit { commitSelection() }
-        .onChange(of: query) { _ in syncSelection() }
+        .onChange(of: query) { _, _ in syncSelection() }
+        .help("Search by name, id, tags, or description.")
 
       List(selection: $selection) {
         ForEach(filtered, id: \.persona.id) { rp in
@@ -46,7 +47,11 @@ struct PersonaSwitcherView: View {
       }
       .frame(minHeight: 260)
 
-      Button("Select") { commitSelection() }
+      Button {
+        commitSelection()
+      } label: {
+        Label("Select", systemImage: "checkmark")
+      }
         .keyboardShortcut(.defaultAction)
         .frame(width: 0, height: 0)
         .opacity(0)
@@ -58,7 +63,7 @@ struct PersonaSwitcherView: View {
       selection = store.selectedPersonaID
       syncSelection()
     }
-    .onChange(of: store.personaIndex) { _ in
+    .onChange(of: store.personaIndex) { _, _ in
       syncSelection()
     }
     .onMoveCommand { direction in

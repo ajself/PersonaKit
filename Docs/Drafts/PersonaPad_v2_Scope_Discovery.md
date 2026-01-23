@@ -1,5 +1,7 @@
 # PersonaPad v2 — Scope & Contract (Discovery)
 
+Archived: PersonaPad v1.x is the current active product focus.
+
 This document locks the **first v2 increment**: **Persona Discovery**.
 
 It exists to:
@@ -14,7 +16,7 @@ If something conflicts with this document, **this document wins**.
 ## Relationship to v1
 
 PersonaPad v1 remains the foundation.
-See **[PersonaPad v1 Scope & Contract](PersonaPad_v1_Scope_and_Contract.md)** for v1 guarantees.
+See **[PersonaPad v1 Scope & Contract](../PersonaPad_v1_Scope_and_Contract.md)** for v1 guarantees.
 
 v2 Discovery is **additive**:
 - it must not change prompt composition behavior or output
