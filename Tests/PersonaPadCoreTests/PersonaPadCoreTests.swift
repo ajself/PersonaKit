@@ -340,8 +340,311 @@ final class PersonaPadCoreTests: XCTestCase {
       XCTFail("Expected failure for missing persona")
     case .failure(let failure):
       XCTAssertEqual(failure.exitCode, 2)
-      XCTAssertTrue(failure.message.contains("Persona not found"))
-      XCTAssertTrue(failure.message.contains("personapad list"))
+    XCTAssertTrue(failure.message.contains("Persona not found"))
+    XCTAssertTrue(failure.message.contains("personapad list"))
+  }
+
+  func testPackDiffClassifiesAndSortsDeterministically() throws {
+    let left: [PersonaDiffRecord] = [
+      PersonaDiffRecord(key: "z", id: "zeta", name: "Zeta", contentHash: "a"),
+      PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
+      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha", contentHash: "c")
+    ]
+    let right: [PersonaDiffRecord] = [
+      PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
+      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha Updated", contentHash: "d"),
+      PersonaDiffRecord(key: "c", id: "charlie", name: "Charlie", contentHash: "e")
+    ]
+
+    let diff = PackDiffBuilder.diff(left: Array(left.reversed()), right: Array(right.reversed()))
+
+    XCTAssertEqual(diff.added.map(\.id), ["charlie"])
+    XCTAssertEqual(diff.removed.map(\.id), ["zeta"])
+    XCTAssertEqual(diff.modified.map(\.id), ["alpha"])
+
+    let addedDiff = PackDiffBuilder.diff(left: [], right: [
+      PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"),
+      PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1")
+    ])
+    XCTAssertEqual(addedDiff.added.map(\.id), ["a", "b"])
+  }
+
+  func testStoragePathsAreDeterministic() throws {
+    let home = URL(fileURLWithPath: "/Users/tester")
+    let paths = PersonaPadStoragePaths.standard(homeDirectory: home)
+    XCTAssertEqual(paths.root.path, "/Users/tester/Library/Application Support/PersonaPad")
+    XCTAssertEqual(paths.packs.path, "/Users/tester/Library/Application Support/PersonaPad/Packs")
+    XCTAssertEqual(paths.state.path, "/Users/tester/Library/Application Support/PersonaPad/State")
+  }
+
+  func testSavedFiltersRoundTripDeterministicEncoding() throws {
+    let filters = [
+      SavedFilter(
+        id: "b",
+        name: "Beta",
+        queryText: "beta",
+        selectedTags: ["tag-b"],
+        selectedSources: ["user"],
+        groupingMode: nil
+      ),
+      SavedFilter(
+        id: "a",
+        name: "Alpha",
+        queryText: "alpha",
+        selectedTags: ["tag-a"],
+        selectedSources: ["builtIn"],
+        groupingMode: "tag"
+      )
+    ]
+
+    let data1 = try XCTUnwrap(SavedFiltersStore.encode(filters))
+    let decoded = try XCTUnwrap(SavedFiltersStore.decode(data1))
+    let data2 = try XCTUnwrap(SavedFiltersStore.encode(decoded))
+    XCTAssertEqual(data1, data2)
+  }
+
+  func testSavedFiltersLoadSortsByNameThenId() throws {
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let fileURL = tempRoot.appendingPathComponent("filters.json")
+    let store = SavedFiltersStore(fileURL: fileURL)
+
+    let filters = [
+      SavedFilter(
+        id: "b2",
+        name: "Beta",
+        queryText: "beta",
+        selectedTags: [],
+        selectedSources: [],
+        groupingMode: nil
+      ),
+      SavedFilter(
+        id: "a2",
+        name: "Alpha",
+        queryText: "alpha-2",
+        selectedTags: [],
+        selectedSources: [],
+        groupingMode: nil
+      ),
+      SavedFilter(
+        id: "a1",
+        name: "Alpha",
+        queryText: "alpha-1",
+        selectedTags: [],
+        selectedSources: [],
+        groupingMode: nil
+      )
+    ]
+
+    store.save(filters)
+    let loaded = store.load()
+    XCTAssertEqual(loaded.map(\.id), ["a1", "a2", "b2"])
+  }
+
+  func testPinnedPersonasMissingFileReturnsEmpty() throws {
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let fileURL = tempRoot.appendingPathComponent("pins.json")
+    let store = PinnedPersonasStore(fileURL: fileURL)
+
+    XCTAssertEqual(store.load(), [])
+  }
+
+  func testPinnedPersonasSaveSortsDeterministically() throws {
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let fileURL = tempRoot.appendingPathComponent("pins.json")
+    let store = PinnedPersonasStore(fileURL: fileURL)
+
+    store.save(["zeta", "alpha", "beta"])
+    let loaded = store.load()
+    XCTAssertEqual(loaded, ["alpha", "beta", "zeta"])
+  }
+
+  func testPinnedPersonasRoundTripDeterministicEncoding() throws {
+    let pins = ["beta", "alpha"]
+    let data1 = try XCTUnwrap(PinnedPersonasStore.encode(pins))
+    let decoded = try XCTUnwrap(PinnedPersonasStore.decode(data1))
+    let data2 = try XCTUnwrap(PinnedPersonasStore.encode(decoded))
+    XCTAssertEqual(data1, data2)
+  }
+
+  func testPackDirectoryNamingPrefersNameThenId() throws {
+    let pack = PackMeta(id: "pack.id", name: "My Pack", author: nil, description: nil, homepage: nil)
+    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: pack), "My Pack")
+
+    let fallback = PackMeta(id: "fallback.id", name: "   ", author: nil, description: nil, homepage: nil)
+    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: fallback), "fallback.id")
+
+    let sanitized = PackMeta(id: "pack/id", name: "My/Pack", author: nil, description: nil, homepage: nil)
+    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: sanitized), "My-Pack")
+  }
+
+  func testUniquePackDirectoryNameAddsSuffix() throws {
+    let existing: Set<String> = ["Pack", "Pack 2", "Pack 3"]
+    let name = PersonaPadStorage.uniquePackDirectoryName(preferred: "Pack", existing: existing)
+    XCTAssertEqual(name, "Pack 4")
+  }
+
+  func testImportPlanFromPackFileIncludesCompanions() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packURL = root.appendingPathComponent("Example.pack.json")
+    let personaURL = root.appendingPathComponent("Extra.persona.json")
+    let metaURL = root.appendingPathComponent("Extra.meta.json")
+    let nestedFolder = root.appendingPathComponent("Sub", isDirectory: true)
+    try fm.createDirectory(at: nestedFolder, withIntermediateDirectories: true)
+    let nestedPersonaURL = nestedFolder.appendingPathComponent("Nested.persona.json")
+
+    let packJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "personaPack",
+      "pack": { "id": "pack.id", "name": "Pack" },
+      "personas": [
+        { "id": "p1", "name": "P1", "system": "SYSTEM" }
+      ]
     }
+    """
+    let personaJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "persona",
+      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+    }
+    """
+    try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
+    try personaJSON.write(to: personaURL, atomically: true, encoding: .utf8)
+    try "{}".write(to: metaURL, atomically: true, encoding: .utf8)
+    try personaJSON.write(to: nestedPersonaURL, atomically: true, encoding: .utf8)
+
+    let plan = try PersonaPackImportPlan.plan(from: packURL).get()
+    XCTAssertEqual(plan.sourceRoot.standardizedFileURL, root.standardizedFileURL)
+    XCTAssertEqual(plan.pack.id, "pack.id")
+
+    let filenames = plan.filesToCopy.map(\.lastPathComponent)
+    XCTAssertTrue(filenames.contains("Example.pack.json"))
+    XCTAssertTrue(filenames.contains("Extra.persona.json"))
+    XCTAssertTrue(filenames.contains("Extra.meta.json"))
+    XCTAssertTrue(filenames.contains("Nested.persona.json"))
+
+    let nestedRelative = plan.relativePath(for: nestedPersonaURL)
+    XCTAssertEqual(nestedRelative, "Sub/Nested.persona.json")
+  }
+
+  func testImportPlanAllowsSameFilenameInDifferentFolders() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packURL = root.appendingPathComponent("Example.pack.json")
+    let subA = root.appendingPathComponent("A", isDirectory: true)
+    let subB = root.appendingPathComponent("B", isDirectory: true)
+    try fm.createDirectory(at: subA, withIntermediateDirectories: true)
+    try fm.createDirectory(at: subB, withIntermediateDirectories: true)
+    let fileA = subA.appendingPathComponent("Extra.persona.json")
+    let fileB = subB.appendingPathComponent("Extra.persona.json")
+
+    let packJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "personaPack",
+      "pack": { "id": "pack.id", "name": "Pack" },
+      "personas": [
+        { "id": "p1", "name": "P1", "system": "SYSTEM" }
+      ]
+    }
+    """
+    let personaJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "persona",
+      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+    }
+    """
+    try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
+    try personaJSON.write(to: fileA, atomically: true, encoding: .utf8)
+    try personaJSON.write(to: fileB, atomically: true, encoding: .utf8)
+
+    let plan = try PersonaPackImportPlan.plan(from: packURL).get()
+    let relativeA = plan.relativePath(for: fileA)
+    let relativeB = plan.relativePath(for: fileB)
+    XCTAssertEqual(relativeA, "A/Extra.persona.json")
+    XCTAssertEqual(relativeB, "B/Extra.persona.json")
+    XCTAssertNotEqual(relativeA, relativeB)
+  }
+
+  func testImportPlanRejectsMultiplePackFilesInFolder() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packA = root.appendingPathComponent("A.pack.json")
+    let packB = root.appendingPathComponent("B.pack.json")
+
+    let packJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "personaPack",
+      "pack": { "id": "pack.id", "name": "Pack" },
+      "personas": [
+        { "id": "p1", "name": "P1", "system": "SYSTEM" }
+      ]
+    }
+    """
+    try packJSON.write(to: packA, atomically: true, encoding: .utf8)
+    try packJSON.write(to: packB, atomically: true, encoding: .utf8)
+
+    let result = PersonaPackImportPlan.plan(from: root)
+    switch result {
+    case .success:
+      XCTFail("Expected multiple pack files to be rejected")
+    case .failure(let error):
+      switch error {
+      case .multiplePackFiles(let directory, let files):
+        XCTAssertEqual(directory.standardizedFileURL, root.standardizedFileURL)
+        XCTAssertEqual(files.map(\.lastPathComponent).sorted(), ["A.pack.json", "B.pack.json"])
+      default:
+        XCTFail("Unexpected error: \(error)")
+      }
+    }
+  }
+
+  func testUserPackLoaderCombinesFolderPersonas() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let packFolder = root.appendingPathComponent("MyPack", isDirectory: true)
+    try fm.createDirectory(at: packFolder, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packURL = packFolder.appendingPathComponent("My.pack.json")
+    let personaURL = packFolder.appendingPathComponent("Extra.persona.json")
+
+    let packJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "personaPack",
+      "pack": { "id": "pack.id", "name": "Pack" },
+      "personas": [
+        { "id": "p1", "name": "P1", "system": "SYSTEM" }
+      ]
+    }
+    """
+    let personaJSON = """
+    {
+      "schemaVersion": 1,
+      "documentType": "persona",
+      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+    }
+    """
+    try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
+    try personaJSON.write(to: personaURL, atomically: true, encoding: .utf8)
+
+    let loaded = UserPackLoader.load(in: root)
+    XCTAssertEqual(loaded.packs.count, 1)
+    XCTAssertEqual(loaded.packs.first?.set.personas.count, 2)
+    XCTAssertEqual(loaded.packs.first?.packRoot.standardizedFileURL, packFolder.standardizedFileURL)
   }
 }

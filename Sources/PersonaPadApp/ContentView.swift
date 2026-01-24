@@ -39,6 +39,12 @@ struct ContentView: View {
         }
         .help("Reload persona packs.")
         Button {
+          store.importPack()
+        } label: {
+          Label("Import Pack", systemImage: "tray.and.arrow.down")
+        }
+        .help("Import a persona pack into PersonaPad storage.")
+        Button {
           store.copyPromptToClipboard()
         } label: {
           Label("Copy Prompt", systemImage: "doc.on.doc")

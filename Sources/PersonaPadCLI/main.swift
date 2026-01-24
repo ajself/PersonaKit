@@ -60,11 +60,10 @@ struct PersonaPadCLI {
     }
 
     // User packs dir
-    let userPacks = FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("Library/Application Support/PersonaPad/Packs", isDirectory: true)
+    let userPacks = PersonaPadStoragePaths.standard().packs
     if FileManager.default.fileExists(atPath: userPacks.path) {
-      let loadedUser = PersonaLoader.loadDocuments(in: userPacks, sourceKind: .user)
-      sets.append(contentsOf: loadedUser.sets)
+      let loadedUser = UserPackLoader.load(in: userPacks)
+      sets.append(contentsOf: loadedUser.packs.map { $0.set })
       diags.append(contentsOf: loadedUser.diagnostics)
     }
 

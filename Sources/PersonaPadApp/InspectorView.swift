@@ -3,6 +3,11 @@ import PersonaPadCore
 
 struct InspectorView: View {
   @EnvironmentObject private var store: AppStore
+  @State private var showPackCompare = false
+  @State private var comparisonPackID: String?
+  @State private var packDiff: PackDiff?
+  @State private var packDiffDiagnostics: [Diagnostic] = []
+  @State private var primaryPackID: String?
 
   private var selectedPersona: Persona? {
     guard let id = store.selectedPersonaID else { return nil }
@@ -32,6 +37,39 @@ struct InspectorView: View {
     return "Unknown"
   }
 
+  private var selectedPackSelection: PackSelection? {
+    guard let persona = selectedPersona,
+          let sourceURL = store.personaSourcesByID[persona.id]?.url else {
+      return nil
+    }
+    let canonical = sourceURL.resolvingSymlinksInPath().standardizedFileURL
+    return store.availablePacks.first { selection in
+      selection.packFile.resolvingSymlinksInPath().standardizedFileURL == canonical
+    }
+  }
+
+  private var comparisonPackSelection: PackSelection? {
+    guard let comparisonPackID else { return nil }
+    return store.availablePacks.first { $0.id == comparisonPackID }
+  }
+
+  private var comparisonCandidates: [PackSelection] {
+    guard let selectedPackSelection else { return [] }
+    return store.availablePacks.filter { $0.id != selectedPackSelection.id }
+  }
+
+  private var selectedSourceLabel: String {
+    guard let persona = selectedPersona else { return "Unknown" }
+    let source = store.personaSourcesByID[persona.id]
+    let pack = store.personaPacksByID[persona.id]
+    let baseURL = PersonaPadStoragePaths.standard().root
+    let label = PersonaDescriptor.sourceLabel(source: source, pack: pack, baseURL: baseURL) ?? "Unknown"
+    if source?.kind == .builtIn {
+      return "\(label) — read-only"
+    }
+    return label
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
@@ -45,6 +83,8 @@ struct InspectorView: View {
             .padding(.top, 8)
           personaTagsSection
           personaSourceSection
+            .padding(.top, 8)
+          packDiffSection
             .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,6 +100,25 @@ struct InspectorView: View {
       .padding()
     }
     .frame(minWidth: 260)
+    .onAppear {
+      updatePrimaryPackSelection()
+    }
+    .onChange(of: store.selectedPersonaID) { _, _ in
+      updatePrimaryPackSelection()
+    }
+    .onChange(of: store.availablePacks) { _, _ in
+      updatePrimaryPackSelection()
+    }
+    .sheet(isPresented: $showPackCompare) {
+      PackCompareSheet(
+        primaryPack: selectedPackSelection,
+        availablePacks: store.availablePacks,
+        selectionID: $comparisonPackID
+      ) { selection in
+        computePackDiff(comparison: selection)
+        showPackCompare = false
+      }
+    }
   }
 
   private var personaHeaderLine: some View {
@@ -110,6 +169,55 @@ struct InspectorView: View {
       Text(selectedPackLabel)
         .font(.callout)
         .foregroundStyle(.secondary)
+      Text(selectedSourceLabel)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  private var packDiffSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Label("What Changed?", systemImage: "arrow.triangle.2.circlepath")
+          .font(.headline)
+        Spacer()
+        Button("Compare…") {
+          showPackCompare = true
+        }
+        .disabled(selectedPackSelection == nil || comparisonCandidates.isEmpty)
+        .help("Compare the selected pack with another pack.")
+      }
+
+      Text("Pack A: \(selectedPackSelection?.displayName ?? "Unknown")")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+
+      if let comparisonPackSelection {
+        Text("Pack B: \(comparisonPackSelection.displayName)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      if let packDiff {
+        PackDiffSummaryView(diff: packDiff)
+      } else {
+        Text("No comparison yet.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      if !packDiffDiagnostics.isEmpty {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Diff Diagnostics")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          ForEach(Array(packDiffDiagnostics.enumerated()), id: \.offset) { _, diagnostic in
+            Text("• [\(diagnostic.severity.rawValue.uppercased())] \(diagnostic.userFacingMessage)")
+              .font(.caption2)
+              .foregroundStyle(diagnostic.severity == .error ? .red : .orange)
+          }
+        }
+      }
     }
   }
 
@@ -119,6 +227,137 @@ struct InspectorView: View {
       return "No description."
     }
     return about
+  }
+
+  private func updatePrimaryPackSelection() {
+    let currentID = selectedPackSelection?.id
+    if primaryPackID != currentID {
+      primaryPackID = currentID
+      comparisonPackID = nil
+      packDiff = nil
+      packDiffDiagnostics = []
+      return
+    }
+    if let comparisonPackID,
+       !comparisonCandidates.contains(where: { $0.id == comparisonPackID }) {
+      self.comparisonPackID = nil
+      packDiff = nil
+      packDiffDiagnostics = []
+    }
+  }
+
+  private func computePackDiff(comparison: PackSelection) {
+    guard let selectedPackSelection else { return }
+    let left = PackDiffInputBuilder.build(for: selectedPackSelection)
+    let right = PackDiffInputBuilder.build(for: comparison)
+    packDiffDiagnostics = left.diagnostics + right.diagnostics
+    packDiff = PackDiffBuilder.diff(left: left.records, right: right.records)
+  }
+}
+
+private struct PackDiffSummaryView: View {
+  let diff: PackDiff
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      diffSection(title: "Added", systemImage: "plus", changes: diff.added)
+      diffSection(title: "Removed", systemImage: "minus", changes: diff.removed)
+      diffSection(title: "Modified", systemImage: "pencil", changes: diff.modified)
+    }
+  }
+
+  private func diffSection(title: String, systemImage: String, changes: [PersonaChange]) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      HStack {
+        Label(title, systemImage: systemImage)
+          .font(.subheadline)
+        Spacer()
+        Text("\(changes.count)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+      if changes.isEmpty {
+        Text("None")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      } else {
+        ForEach(Array(changes.enumerated()), id: \.offset) { _, change in
+          Text(changeLabel(change))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+      }
+    }
+  }
+
+  private func changeLabel(_ change: PersonaChange) -> String {
+    let name = change.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let id = change.id.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !name.isEmpty && !id.isEmpty && name != id {
+      return "\(name) (\(id))"
+    }
+    if !name.isEmpty {
+      return name
+    }
+    if !id.isEmpty {
+      return id
+    }
+    return "Unknown persona"
+  }
+}
+
+private struct PackCompareSheet: View {
+  let primaryPack: PackSelection?
+  let availablePacks: [PackSelection]
+  @Binding var selectionID: String?
+  let onConfirm: (PackSelection) -> Void
+
+  @Environment(\.dismiss) private var dismiss
+
+  private var candidates: [PackSelection] {
+    guard let primaryPack else { return availablePacks }
+    return availablePacks.filter { $0.id != primaryPack.id }
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text("Compare Packs")
+        .font(.headline)
+
+      if let primaryPack {
+        Text("Pack A: \(primaryPack.displayName)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      Picker("Pack B", selection: $selectionID) {
+        ForEach(candidates) { pack in
+          Text(pack.displayName)
+            .tag(Optional(pack.id))
+        }
+      }
+
+      HStack {
+        Spacer()
+        Button("Cancel") {
+          dismiss()
+        }
+        Button("Compare") {
+          guard let selectionID,
+                let selection = candidates.first(where: { $0.id == selectionID }) else { return }
+          onConfirm(selection)
+          dismiss()
+        }
+        .disabled(selectionID == nil || candidates.isEmpty)
+      }
+    }
+    .padding()
+    .frame(minWidth: 360)
+    .onAppear {
+      if selectionID == nil {
+        selectionID = candidates.first?.id
+      }
+    }
   }
 }
 

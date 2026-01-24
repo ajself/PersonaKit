@@ -16,6 +16,27 @@ struct PersonaPadAppMain: App {
     }
     .commands {
       CommandGroup(replacing: .newItem) { }
+      CommandGroup(after: .newItem) {
+        Button("Import Pack…") {
+          store.importPack()
+        }
+
+        Divider()
+
+        Button("Reveal PersonaPad Storage") {
+          store.revealStorageRoot()
+        }
+
+        Button("Reveal Selected Pack in Finder") {
+          store.revealSelectedPack()
+        }
+        .disabled(!store.canRevealSelectedPack)
+
+        Button("Remove Selected Pack…") {
+          store.removeSelectedPack()
+        }
+        .disabled(!store.canRemoveSelectedPack)
+      }
       PersonaPadCommands(
         store: store,
         showPersonaSwitcher: $showPersonaSwitcher,
