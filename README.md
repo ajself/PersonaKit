@@ -233,6 +233,9 @@ If you are contributing, using automation, or proposing changes, please read:
 - **[AGENTS.md](AGENTS.md)**  
   Defines how automated agents (including Codex) and contributors should interact with the codebase.
 
+- **[Migration Notes](Docs/Migrations)**  
+  Staged refactor milestones with context and acceptance criteria for new agent sessions.
+
 These documents take precedence over issues, pull requests, or feature ideas.
 
 ---
