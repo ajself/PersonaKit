@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "lineLength": 100,
+  "indentation": 2,
+  "tabWidth": 2,
+  "respectExistingLineBreaks": true,
+  "maximumBlankLines": 1,
+  "lineBreakBeforeEachArgument": false,
+  "lineBreakBeforeEachGenericRequirement": false,
+  "prioritizeKeepingFunctionOutputTogether": true,
+  "prioritizeKeepingFunctionCallArgumentsTogether": true,
+  "spacesAroundRangeFormationOperators": false
+}

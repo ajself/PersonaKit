@@ -1,0 +1,88 @@
+# SwiftLint — curated ruleset for SwiftUI + Swift 6+ concurrency apps
+# Keep this lean; prefer signal over noise.
+
+disabled_rules:
+  - trailing_whitespace
+  - todo
+
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - convenience_type
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - identical_operands
+  - joined_default_parameter
+  - last_where
+  - multiline_arguments
+  - multiline_parameters
+  - operator_usage_whitespace
+  - overridden_super_call
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - sorted_imports
+  - static_operator
+  - switch_case_alignment
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+
+analyzer_rules:
+  - unused_declaration
+  - unused_import
+
+included:
+  - AppShell
+  - Packages
+
+excluded:
+  - .build
+  - DerivedData
+  - Carthage
+  - Pods
+
+force_cast: warning
+force_try: warning
+force_unwrapping: warning
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+type_name:
+  min_length: 3
+  max_length: 60
+
+identifier_name:
+  min_length: 2
+  excluded:
+    - id
+    - x
+    - y
+    - z
+
+function_body_length:
+  warning: 60
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 450
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+file_length:
+  warning: 500
+  error: 900
+
+reporter: "xcode"

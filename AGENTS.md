@@ -49,6 +49,20 @@ even if technically feasible or seemingly useful.
 
 ---
 
+## Coding Style & Standards (Source of Truth)
+
+PersonaPad’s SwiftUI coding standards are documented here:
+
+- `Docs/Standards/SwiftUI-App-Style-Guide.md`
+
+Tooling configs are authoritative for formatting and linting:
+- `swift-format.json`
+- `swiftlint.yml`
+
+If guidance conflicts, the style guide and tooling configs win.
+
+---
+
 ## What Agents Are Allowed To Do
 
 Automated agents may be used for work that **hardens trust** and **reduces entropy**.
