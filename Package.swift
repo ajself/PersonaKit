@@ -41,12 +41,19 @@ let package = Package(
     ),
     .executableTarget(
       name: "PersonaPadCLI",
-      dependencies: ["PersonaPadCore", "PersonaPadResources"],
+      dependencies: [
+        "PersonaPadCore",
+        "PersonaPadResources",
+        .product(name: "Dependencies", package: "swift-dependencies")
+      ],
       path: "Sources/PersonaPadCLI"
     ),
     .executableTarget(
       name: "PersonaPadSchemaValidate",
-      dependencies: ["PersonaPadCore"],
+      dependencies: [
+        "PersonaPadCore",
+        .product(name: "Dependencies", package: "swift-dependencies")
+      ],
       path: "Sources/PersonaPadSchemaValidate"
     ),
     .testTarget(

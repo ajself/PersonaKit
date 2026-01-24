@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import Darwin
 import PersonaPadCore
@@ -26,6 +27,7 @@ struct ParsedArgs {
 @main
 struct PersonaPadCLI {
   static func main() async {
+    let fileClient = CLIEnvironment().fileClient
     let allArgs = Array(CommandLine.arguments.dropFirst())
     guard let first = allArgs.first, let cmd = Command(rawValue: first) else {
       printUsage()
@@ -34,7 +36,7 @@ struct PersonaPadCLI {
     let args = Array(allArgs.dropFirst())
     let parsed = parseArgs(args)
 
-    let repoRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let repoRoot = URL(fileURLWithPath: fileClient.currentDirectoryPath())
     var builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
     if builtInURLs.isEmpty {
       builtInURLs = PersonaPackLocator.builtInPackURLs(repoRoot: repoRoot)
@@ -61,7 +63,7 @@ struct PersonaPadCLI {
 
     // User packs dir
     let userPacks = PersonaPadStoragePaths.standard().packs
-    if FileManager.default.fileExists(atPath: userPacks.path) {
+    if fileClient.fileExists(userPacks) {
       let loadedUser = UserPackLoader.load(in: userPacks)
       sets.append(contentsOf: loadedUser.packs.map { $0.set })
       diags.append(contentsOf: loadedUser.diagnostics)
@@ -190,6 +192,10 @@ Notes:
   The macOS app additionally loads user packs from ~/Library/Application Support/PersonaPad/Packs/
 """)
   }
+}
+
+private struct CLIEnvironment {
+  @Dependency(\.fileClient) var fileClient
 }
 
 private func readStdinIfAvailable() -> String? {

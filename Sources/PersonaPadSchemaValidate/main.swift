@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PersonaPadCore
 
@@ -12,15 +13,15 @@ struct SchemaConfig {
 @main
 struct PersonaPadSchemaValidate {
   static func main() {
-    let fm = FileManager.default
-    let cwd = URL(fileURLWithPath: fm.currentDirectoryPath)
-    guard let repoRoot = findRepoRoot(start: cwd) else {
+    let fileClient = SchemaEnvironment().fileClient
+    let cwd = URL(fileURLWithPath: fileClient.currentDirectoryPath())
+    guard let repoRoot = findRepoRoot(start: cwd, fileClient: fileClient) else {
       fputs("Schema validation failed: could not locate Schema/personapad.schema.json.\n", stderr)
       exit(2)
     }
 
     let schemaURL = repoRoot.appendingPathComponent("Schema/personapad.schema.json")
-    guard let schemaData = try? Data(contentsOf: schemaURL),
+    guard let schemaData = try? fileClient.readData(schemaURL),
           let schemaJSON = try? JSONSerialization.jsonObject(with: schemaData) as? [String: Any] else {
       fputs("Schema validation failed: could not read schema at \(schemaURL.path).\n", stderr)
       exit(2)
@@ -31,7 +32,7 @@ struct PersonaPadSchemaValidate {
     let args = Array(CommandLine.arguments.dropFirst())
     let inputPaths = args.isEmpty ? [repoRoot.appendingPathComponent("Examples")] : args.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
 
-    let exampleFiles = collectJSONFiles(paths: inputPaths, fm: fm)
+    let exampleFiles = collectJSONFiles(paths: inputPaths, fileClient: fileClient)
     if exampleFiles.isEmpty {
       fputs("Schema validation failed: no JSON files found in Examples/.\n", stderr)
       exit(2)
@@ -39,7 +40,7 @@ struct PersonaPadSchemaValidate {
 
     var failures: [String] = []
     for file in exampleFiles {
-      if let message = validateFile(file, config: config) {
+      if let message = validateFile(file, config: config, fileClient: fileClient) {
         failures.append(message)
       }
     }
@@ -55,11 +56,11 @@ struct PersonaPadSchemaValidate {
     print("Schema validation passed for \(exampleFiles.count) file(s).")
   }
 
-  private static func findRepoRoot(start: URL) -> URL? {
+  private static func findRepoRoot(start: URL, fileClient: FileClient) -> URL? {
     var current = start
     for _ in 0..<6 {
       let schema = current.appendingPathComponent("Schema/personapad.schema.json")
-      if FileManager.default.fileExists(atPath: schema.path) {
+      if fileClient.fileExists(schema) {
         return current
       }
       current = current.deletingLastPathComponent()
@@ -67,20 +68,18 @@ struct PersonaPadSchemaValidate {
     return nil
   }
 
-  private static func collectJSONFiles(paths: [URL], fm: FileManager) -> [URL] {
+  private static func collectJSONFiles(paths: [URL], fileClient: FileClient) -> [URL] {
     var files: [URL] = []
     for path in paths {
-      var isDir: ObjCBool = false
-      if fm.fileExists(atPath: path.path, isDirectory: &isDir) {
-        if isDir.boolValue {
-          if let contents = try? fm.contentsOfDirectory(at: path, includingPropertiesForKeys: nil) {
-            for item in contents where item.pathExtension.lowercased() == "json" {
-              files.append(item)
-            }
+      guard fileClient.fileExists(path) else { continue }
+      if fileClient.isDirectory(path) {
+        if let contents = try? fileClient.contentsOfDirectory(path, nil) {
+          for item in contents where item.pathExtension.lowercased() == "json" {
+            files.append(item)
           }
-        } else if path.pathExtension.lowercased() == "json" {
-          files.append(path)
         }
+      } else if path.pathExtension.lowercased() == "json" {
+        files.append(path)
       }
     }
     return files.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
@@ -134,8 +133,8 @@ struct PersonaPadSchemaValidate {
     return []
   }
 
-  private static func validateFile(_ url: URL, config: SchemaConfig) -> String? {
-    guard let data = try? Data(contentsOf: url) else {
+  private static func validateFile(_ url: URL, config: SchemaConfig, fileClient: FileClient) -> String? {
+    guard let data = try? fileClient.readData(url) else {
       return "\(url.lastPathComponent): could not read file."
     }
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -254,4 +253,8 @@ struct PersonaPadSchemaValidate {
 
     return nil
   }
+}
+
+private struct SchemaEnvironment {
+  @Dependency(\.fileClient) var fileClient
 }
