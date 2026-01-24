@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PersonaPadCore
 
@@ -7,9 +8,10 @@ struct PackDiffInputResult: Equatable {
 }
 
 enum PackDiffInputBuilder {
-  static func build(for selection: PackSelection, fileManager: FileManager = .default) -> PackDiffInputResult {
+  static func build(for selection: PackSelection, fileClient: FileClient? = nil) -> PackDiffInputResult {
     var records: [PersonaDiffRecord] = []
     var diagnostics: [Diagnostic] = []
+    let fileClient = fileClient ?? PackDiffEnvironment().fileClient
 
     appendRecords(
       from: selection.packFile,
@@ -20,7 +22,7 @@ enum PackDiffInputBuilder {
     )
 
     if selection.isDirectoryPack {
-      let personaFiles = loadPersonaFiles(in: selection.packRoot, fileManager: fileManager)
+      let personaFiles = loadPersonaFiles(in: selection.packRoot, fileClient: fileClient)
       for file in personaFiles {
         appendRecords(
           from: file,
@@ -58,8 +60,8 @@ enum PackDiffInputBuilder {
     }
   }
 
-  private static func loadPersonaFiles(in directory: URL, fileManager: FileManager) -> [URL] {
-    guard let contents = try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+  private static func loadPersonaFiles(in directory: URL, fileClient: FileClient) -> [URL] {
+    guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return []
     }
     return contents
@@ -72,4 +74,8 @@ enum PackDiffInputBuilder {
     let name = url.lastPathComponent.lowercased()
     return name.hasSuffix(".meta.json") || name.hasSuffix(".metadata.json")
   }
+}
+
+private struct PackDiffEnvironment {
+  @Dependency(\.fileClient) var fileClient
 }

@@ -1,8 +1,9 @@
-import SwiftUI
 import PersonaPadCore
+import SwiftUI
 
 struct PersonaSwitcherView: View {
-  @Environment(AppStore.self) private var store
+  @Environment(AppStore.self)
+  private var store
   @Binding var isPresented: Bool
   @State private var query: String = ""
   @State private var selection: String?

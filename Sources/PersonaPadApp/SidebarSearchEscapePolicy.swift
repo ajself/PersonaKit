@@ -6,7 +6,7 @@ enum SidebarSearchEscapeAction: Equatable {
   case noOp
 }
 
-struct SidebarSearchEscapePolicy {
+enum SidebarSearchEscapePolicy {
   static func action(searchText: String, isFocused: Bool) -> SidebarSearchEscapeAction {
     if !searchText.isEmpty {
       return .clearAndFocus

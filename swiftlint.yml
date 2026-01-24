@@ -40,6 +40,8 @@ analyzer_rules:
 included:
   - AppShell
   - Packages
+  - Sources
+  - Tests
 
 excluded:
   - .build
