@@ -340,8 +340,9 @@ final class PersonaPadCoreTests: XCTestCase {
       XCTFail("Expected failure for missing persona")
     case .failure(let failure):
       XCTAssertEqual(failure.exitCode, 2)
-    XCTAssertTrue(failure.message.contains("Persona not found"))
-    XCTAssertTrue(failure.message.contains("personapad list"))
+      XCTAssertTrue(failure.message.contains("Persona not found"))
+      XCTAssertTrue(failure.message.contains("personapad list"))
+    }
   }
 
   func testPackDiffClassifiesAndSortsDeterministically() throws {

@@ -227,6 +227,9 @@ If you are contributing, using automation, or proposing changes, please read:
 - **[PersonaPad v1 Scope & Contract](Docs/PersonaPad_v1_Scope_and_Contract.md)**  
   Defines what PersonaPad v1 *is*, *is not*, and when it is considered “done enough”.
 
+- **[PersonaPad 2.0 Codex Prompt Pack](Docs/PersonaPad_2_0_Prompt_Pack_Index.md)**  
+  Defines the allowed 2.0 work units, execution order, and acceptance criteria.
+
 - **[AGENTS.md](AGENTS.md)**  
   Defines how automated agents (including Codex) and contributors should interact with the codebase.
 

@@ -45,6 +45,7 @@ All agent behavior is constrained by the following documents, in order of author
    - Nothing may change composition behavior without explicitly revising this contract.
 
 2. **PersonaPad 2.0 Codex Prompt Pack**  
+   (`Docs/PersonaPad_2_0_Prompt_Pack_Index.md`)
    - Governs *which new capabilities are allowed* in 2.0 (organization, import/export, diff, validation).
    - Defines sequencing, scope boundaries, and acceptance criteria for 2.0 work.
    - Each prompt file represents a bounded, shippable unit of work.
