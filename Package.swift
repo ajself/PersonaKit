@@ -12,6 +12,9 @@ let package = Package(
     .executable(name: "personapad", targets: ["PersonaPadCLI"]),
     .executable(name: "personapad-validate", targets: ["PersonaPadSchemaValidate"])
   ],
+  dependencies: [
+    .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
+  ],
   targets: [
     .target(
       name: "PersonaPadResources",
@@ -22,11 +25,18 @@ let package = Package(
     ),
     .target(
       name: "PersonaPadCore",
+      dependencies: [
+        .product(name: "Dependencies", package: "swift-dependencies")
+      ],
       path: "Sources/PersonaPadCore"
     ),
     .executableTarget(
       name: "PersonaPadApp",
-      dependencies: ["PersonaPadCore", "PersonaPadResources"],
+      dependencies: [
+        "PersonaPadCore",
+        "PersonaPadResources",
+        .product(name: "Dependencies", package: "swift-dependencies")
+      ],
       path: "Sources/PersonaPadApp"
     ),
     .executableTarget(
