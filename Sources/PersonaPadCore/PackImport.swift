@@ -34,11 +34,15 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     PersonaPackImportPlan.relativePath(for: file, sourceRoot: sourceRoot)
   }
 
-  public static func plan(from selection: URL, fileManager: FileManager = .default) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
-    let isDirectory = (try? selection.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+  public static func plan(
+    from selection: URL,
+    fileClient: FileClient? = nil
+  ) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
+    let fileClient = fileClient ?? FileClientProvider().fileClient
+    let isDirectory = fileClient.isDirectory(selection)
 
     if isDirectory {
-      return planFromDirectory(selection, fileManager: fileManager)
+      return planFromDirectory(selection, fileClient: fileClient)
     }
 
     guard selection.pathExtension.lowercased() == "json",
@@ -47,11 +51,14 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     }
     let sourceRoot = selection.deletingLastPathComponent()
     let packFile = selection
-    return planForPackFile(packFile, sourceRoot: sourceRoot, fileManager: fileManager)
+    return planForPackFile(packFile, sourceRoot: sourceRoot, fileClient: fileClient)
   }
 
-  private static func planFromDirectory(_ directory: URL, fileManager: FileManager) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
-    guard let contents = try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+  private static func planFromDirectory(
+    _ directory: URL,
+    fileClient: FileClient
+  ) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
+    guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return .failure(.missingPackFile(directory))
     }
     let packFiles = contents
@@ -63,11 +70,15 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     if packFiles.count > 1 {
       return .failure(.multiplePackFiles(directory, packFiles))
     }
-    return planForPackFile(packFile, sourceRoot: directory, fileManager: fileManager)
+    return planForPackFile(packFile, sourceRoot: directory, fileClient: fileClient)
   }
 
-  private static func planForPackFile(_ packFile: URL, sourceRoot: URL, fileManager: FileManager) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
-    guard let data = try? Data(contentsOf: packFile) else {
+  private static func planForPackFile(
+    _ packFile: URL,
+    sourceRoot: URL,
+    fileClient: FileClient
+  ) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
+    guard let data = try? fileClient.readData(packFile) else {
       return .failure(.invalidPackFile(packFile, "ensure the file is readable"))
     }
     guard let rawObject = try? JSONSerialization.jsonObject(with: data) else {
@@ -83,7 +94,7 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
       let message = error.diagnostics.first?.message ?? "ensure the file matches schema v1."
       return .failure(.invalidPackFile(packFile, message))
     case .success(let set):
-      let companions = companionFiles(in: sourceRoot, excluding: packFile, fileManager: fileManager)
+      let companions = companionFiles(in: sourceRoot, excluding: packFile, fileClient: fileClient)
       let allFiles = [packFile] + companions
       var filesWithRelative: [(url: URL, relative: String)] = []
       for file in allFiles {
@@ -104,11 +115,15 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     }
   }
 
-  private static func companionFiles(in directory: URL, excluding packFile: URL, fileManager: FileManager) -> [URL] {
-    guard let enumerator = fileManager.enumerator(
-      at: directory,
-      includingPropertiesForKeys: [.isDirectoryKey],
-      options: [.skipsHiddenFiles]
+  private static func companionFiles(
+    in directory: URL,
+    excluding packFile: URL,
+    fileClient: FileClient
+  ) -> [URL] {
+    guard let enumerator = fileClient.enumerator(
+      directory,
+      [.isDirectoryKey],
+      [.skipsHiddenFiles]
     ) else {
       return []
     }
@@ -116,7 +131,7 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     var results: [URL] = []
     let packCanonical = packFile.resolvingSymlinksInPath().standardizedFileURL
     for case let url as URL in enumerator {
-      let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+      let isDirectory = fileClient.isDirectory(url)
       if isDirectory { continue }
       let canonical = url.resolvingSymlinksInPath().standardizedFileURL
       if canonical == packCanonical { continue }

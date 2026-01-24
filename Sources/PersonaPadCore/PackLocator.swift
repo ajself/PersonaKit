@@ -6,37 +6,37 @@ public enum PersonaPackLocator {
       return [file]
     }
     if let dir = bundle.url(forResource: "BuiltIn", withExtension: nil) {
-      return jsonFiles(in: dir)
+      return jsonFiles(in: dir, fileClient: FileClientProvider().fileClient)
     }
     return []
   }
 
   public static func builtInPackURLs(repoRoot: URL) -> [URL] {
+    let fileClient = FileClientProvider().fileClient
     let resourcesRoot = repoRoot.appendingPathComponent("Sources/PersonaPadResources/Resources", isDirectory: true)
     let builtInDir = resourcesRoot.appendingPathComponent("BuiltIn", isDirectory: true)
-    if FileManager.default.fileExists(atPath: builtInDir.path) {
-      return jsonFiles(in: builtInDir)
+    if fileClient.fileExists(builtInDir) {
+      return jsonFiles(in: builtInDir, fileClient: fileClient)
     }
     let builtInFile = resourcesRoot.appendingPathComponent("BuiltIn.pack.json")
-    if FileManager.default.fileExists(atPath: builtInFile.path) {
+    if fileClient.fileExists(builtInFile) {
       return [builtInFile]
     }
 
     let legacyRoot = repoRoot.appendingPathComponent("Sources/PersonaPadApp/Resources", isDirectory: true)
     let legacyDir = legacyRoot.appendingPathComponent("BuiltIn", isDirectory: true)
-    if FileManager.default.fileExists(atPath: legacyDir.path) {
-      return jsonFiles(in: legacyDir)
+    if fileClient.fileExists(legacyDir) {
+      return jsonFiles(in: legacyDir, fileClient: fileClient)
     }
     let legacyFile = legacyRoot.appendingPathComponent("BuiltIn.pack.json")
-    if FileManager.default.fileExists(atPath: legacyFile.path) {
+    if fileClient.fileExists(legacyFile) {
       return [legacyFile]
     }
     return []
   }
 
-  private static func jsonFiles(in directory: URL) -> [URL] {
-    let fm = FileManager.default
-    guard let contents = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+  private static func jsonFiles(in directory: URL, fileClient: FileClient) -> [URL] {
+    guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return []
     }
     return contents

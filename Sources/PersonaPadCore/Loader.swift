@@ -3,8 +3,9 @@ import Foundation
 public enum PersonaLoader {
   public static func loadDocument(from url: URL, sourceKind: PersonaSource.Kind) -> Result<PersonaSet, DiagnosticError> {
     let source = PersonaSource(kind: sourceKind, url: url)
+    let fileClient = FileClientProvider().fileClient
     do {
-      let data = try Data(contentsOf: url)
+      let data = try fileClient.readData(url)
       let doc = try JSONDecoder().decode(PersonaDocumentEnvelope.self, from: data)
       return doc.asResolvedSet(source: source)
     } catch {
@@ -18,11 +19,11 @@ public enum PersonaLoader {
   public static func loadDocuments(in directory: URL, sourceKind: PersonaSource.Kind) -> (sets: [PersonaSet], diagnostics: [Diagnostic]) {
     var sets: [PersonaSet] = []
     var diagnostics: [Diagnostic] = []
+    let fileClient = FileClientProvider().fileClient
 
-    let fm = FileManager.default
     let contents: [URL]
     do {
-      contents = try fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+      contents = try fileClient.contentsOfDirectory(directory, nil)
     } catch {
       diagnostics.append(.warning(
         source: PersonaSource(kind: sourceKind, url: directory),

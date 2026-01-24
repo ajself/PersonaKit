@@ -123,7 +123,7 @@ public struct PersonaDescriptor {
   }
 
   private static func abbreviateHome(_ path: String) -> String {
-    let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+    let home = FileClientProvider().fileClient.homeDirectory().standardizedFileURL.path
     guard path.hasPrefix(home) else { return path }
     return "~" + path.dropFirst(home.count)
   }

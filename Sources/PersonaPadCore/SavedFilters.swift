@@ -27,23 +27,28 @@ public struct SavedFilter: Codable, Sendable, Hashable, Identifiable {
 
 public struct SavedFiltersStore {
   /// Storage location: Application Support/PersonaPad/State/filters.json
-  public static func defaultFileURL(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+  public static func defaultFileURL(
+    homeDirectory: URL? = nil
+  ) -> URL {
     PersonaPadStoragePaths.standard(homeDirectory: homeDirectory)
       .state
       .appendingPathComponent("filters.json")
   }
 
   public let fileURL: URL
-  private let fileManager: FileManager
+  private let fileClient: FileClient
 
-  public init(fileURL: URL = SavedFiltersStore.defaultFileURL(), fileManager: FileManager = .default) {
+  public init(
+    fileURL: URL = SavedFiltersStore.defaultFileURL(),
+    fileClient: FileClient? = nil
+  ) {
     self.fileURL = fileURL
-    self.fileManager = fileManager
+    self.fileClient = fileClient ?? FileClientProvider().fileClient
   }
 
   public func load() -> [SavedFilter] {
-    guard fileManager.fileExists(atPath: fileURL.path),
-          let data = try? Data(contentsOf: fileURL),
+    guard fileClient.fileExists(fileURL),
+          let data = try? fileClient.readData(fileURL),
           let decoded = SavedFiltersStore.decode(data) else {
       return []
     }
@@ -54,8 +59,8 @@ public struct SavedFiltersStore {
     let sorted = SavedFiltersStore.sorted(filters)
     guard let data = SavedFiltersStore.encode(sorted) else { return }
     let folder = fileURL.deletingLastPathComponent()
-    try? fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-    try? data.write(to: fileURL, options: [.atomic])
+    try? fileClient.createDirectory(folder, true)
+    try? fileClient.writeData(data, fileURL, [.atomic])
   }
 
   static func encode(_ filters: [SavedFilter]) -> Data? {

@@ -8,13 +8,17 @@ public struct LoadedUserPack: Sendable, Hashable {
 }
 
 public enum UserPackLoader {
-  public static func load(in packsRoot: URL, fileManager: FileManager = .default) -> (packs: [LoadedUserPack], diagnostics: [Diagnostic]) {
+  public static func load(
+    in packsRoot: URL,
+    fileClient: FileClient? = nil
+  ) -> (packs: [LoadedUserPack], diagnostics: [Diagnostic]) {
     var packs: [LoadedUserPack] = []
     var diagnostics: [Diagnostic] = []
+    let fileClient = fileClient ?? FileClientProvider().fileClient
 
     let contents: [URL]
     do {
-      contents = try fileManager.contentsOfDirectory(at: packsRoot, includingPropertiesForKeys: [.isDirectoryKey])
+      contents = try fileClient.contentsOfDirectory(packsRoot, [.isDirectoryKey])
     } catch {
       diagnostics.append(.warning(
         source: PersonaSource(kind: .user, url: packsRoot),
@@ -25,9 +29,9 @@ public enum UserPackLoader {
 
     let sorted = contents.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
     for entry in sorted {
-      let isDirectory = (try? entry.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+      let isDirectory = fileClient.isDirectory(entry)
       if isDirectory {
-        loadPackDirectory(entry, fileManager: fileManager, packs: &packs, diagnostics: &diagnostics)
+        loadPackDirectory(entry, fileClient: fileClient, packs: &packs, diagnostics: &diagnostics)
       } else {
         loadPackFile(entry, packs: &packs, diagnostics: &diagnostics)
       }
@@ -38,11 +42,11 @@ public enum UserPackLoader {
 
   private static func loadPackDirectory(
     _ directory: URL,
-    fileManager: FileManager,
+    fileClient: FileClient,
     packs: inout [LoadedUserPack],
     diagnostics: inout [Diagnostic]
   ) {
-    guard let contents = try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+    guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       diagnostics.append(.warning(
         source: PersonaSource(kind: .user, url: directory),
         message: "Could not read pack folder. Fix: ensure the folder is readable."
@@ -73,7 +77,7 @@ public enum UserPackLoader {
     case .failure(let error):
       diagnostics.append(contentsOf: error.diagnostics)
     case .success(let set):
-      let (extraPersonas, extraDiagnostics) = loadAdditionalPersonas(in: directory, fileManager: fileManager)
+      let (extraPersonas, extraDiagnostics) = loadAdditionalPersonas(in: directory, fileClient: fileClient)
       diagnostics.append(contentsOf: extraDiagnostics)
       let combinedPersonas = set.personas + extraPersonas
       let combined = PersonaSet(source: set.source, pack: set.pack, defaults: set.defaults, personas: combinedPersonas)
@@ -100,9 +104,9 @@ public enum UserPackLoader {
 
   private static func loadAdditionalPersonas(
     in directory: URL,
-    fileManager: FileManager
+    fileClient: FileClient
   ) -> (personas: [Persona], diagnostics: [Diagnostic]) {
-    guard let contents = try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+    guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return ([], [])
     }
 

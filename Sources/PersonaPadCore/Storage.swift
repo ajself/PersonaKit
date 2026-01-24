@@ -11,8 +11,9 @@ public struct PersonaPadStoragePaths: Sendable, Hashable {
     self.state = root.appendingPathComponent("State", isDirectory: true)
   }
 
-  public static func standard(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) -> PersonaPadStoragePaths {
-    let root = homeDirectory
+  public static func standard(homeDirectory: URL? = nil) -> PersonaPadStoragePaths {
+    let resolvedHome = homeDirectory ?? FileClientProvider().fileClient.homeDirectory()
+    let root = resolvedHome
       .appendingPathComponent("Library", isDirectory: true)
       .appendingPathComponent("Application Support", isDirectory: true)
       .appendingPathComponent("PersonaPad", isDirectory: true)
