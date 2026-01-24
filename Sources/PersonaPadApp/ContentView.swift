@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @Binding var showPersonaSwitcher: Bool
   @Binding var showInspector: Bool
   @State private var selectedPanel: PreviewPanel = .prompt
@@ -12,40 +12,37 @@ struct ContentView: View {
     } detail: {
       PreviewView(selectedPanel: $selectedPanel)
     }
-    .onAppear {
-      store.reloadAll()
+    .task {
+      store.send(.task)
     }
-    .onChange(of: store.selectedPersonaID) { _, _ in
-      store.recomputePreview()
-    }
-    .onChange(of: store.composerFocusRequest) { _, request in
+    .onChange(of: store.state.composerFocusRequest) { _, request in
       guard request != nil else { return }
       showInspector = true
     }
     .sheet(isPresented: $showPersonaSwitcher) {
       PersonaSwitcherView(isPresented: $showPersonaSwitcher)
-        .environmentObject(store)
+        .environment(store)
     }
     .inspector(isPresented: $showInspector) {
       InspectorView()
-        .environmentObject(store)
+        .environment(store)
     }
     .toolbar {
       ToolbarItemGroup(placement: .automatic) {
         Button {
-          store.reloadAll()
+          store.send(.reloadAll)
         } label: {
           Label("Reload", systemImage: "arrow.clockwise")
         }
         .help("Reload persona packs.")
         Button {
-          store.importPack()
+          store.send(.importPack)
         } label: {
           Label("Import Pack", systemImage: "tray.and.arrow.down")
         }
         .help("Import a persona pack into PersonaPad storage.")
         Button {
-          store.copyPromptToClipboard()
+          store.send(.copyPromptToClipboard)
         } label: {
           Label("Copy Prompt", systemImage: "doc.on.doc")
         }
@@ -70,14 +67,14 @@ struct ContentView: View {
       return
     }
     switch SidebarSearchEscapePolicy.action(
-      searchText: store.searchText,
-      isFocused: store.isSidebarSearchFocused
+      searchText: store.state.searchText,
+      isFocused: store.state.isSidebarSearchFocused
     ) {
     case .clearAndFocus:
-      store.searchText = ""
-      store.requestSidebarSearchFocus()
+      store.send(.setSearchText(""))
+      store.send(.requestSidebarSearchFocus)
     case .blur:
-      store.requestSidebarSearchBlur()
+      store.send(.requestSidebarSearchBlur)
     case .noOp:
       break
     }

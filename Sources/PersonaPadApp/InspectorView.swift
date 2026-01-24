@@ -2,7 +2,7 @@ import SwiftUI
 import PersonaPadCore
 
 struct InspectorView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @State private var showPackCompare = false
   @State private var comparisonPackID: String?
   @State private var packDiff: PackDiff?
@@ -10,8 +10,8 @@ struct InspectorView: View {
   @State private var primaryPackID: String?
 
   private var selectedPersona: Persona? {
-    guard let id = store.selectedPersonaID else { return nil }
-    return store.personaIndex[id]?.persona
+    guard let id = store.state.selectedPersonaID else { return nil }
+    return store.state.personaIndex[id]?.persona
   }
 
   private var selectedPersonaTags: [String] {
@@ -20,7 +20,7 @@ struct InspectorView: View {
 
   private var selectedPackLabel: String {
     guard let persona = selectedPersona,
-          let pack = store.personaPacksByID[persona.id] else {
+          let pack = store.state.personaPacksByID[persona.id] else {
       return "Unknown"
     }
     let name = pack.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,29 +39,29 @@ struct InspectorView: View {
 
   private var selectedPackSelection: PackSelection? {
     guard let persona = selectedPersona,
-          let sourceURL = store.personaSourcesByID[persona.id]?.url else {
+          let sourceURL = store.state.personaSourcesByID[persona.id]?.url else {
       return nil
     }
     let canonical = sourceURL.resolvingSymlinksInPath().standardizedFileURL
-    return store.availablePacks.first { selection in
+    return store.state.availablePacks.first { selection in
       selection.packFile.resolvingSymlinksInPath().standardizedFileURL == canonical
     }
   }
 
   private var comparisonPackSelection: PackSelection? {
     guard let comparisonPackID else { return nil }
-    return store.availablePacks.first { $0.id == comparisonPackID }
+    return store.state.availablePacks.first { $0.id == comparisonPackID }
   }
 
   private var comparisonCandidates: [PackSelection] {
     guard let selectedPackSelection else { return [] }
-    return store.availablePacks.filter { $0.id != selectedPackSelection.id }
+    return store.state.availablePacks.filter { $0.id != selectedPackSelection.id }
   }
 
   private var selectedSourceLabel: String {
     guard let persona = selectedPersona else { return "Unknown" }
-    let source = store.personaSourcesByID[persona.id]
-    let pack = store.personaPacksByID[persona.id]
+    let source = store.state.personaSourcesByID[persona.id]
+    let pack = store.state.personaPacksByID[persona.id]
     let baseURL = PersonaPadStoragePaths.standard().root
     let label = PersonaDescriptor.sourceLabel(source: source, pack: pack, baseURL: baseURL) ?? "Unknown"
     if source?.kind == .builtIn {
@@ -103,16 +103,16 @@ struct InspectorView: View {
     .onAppear {
       updatePrimaryPackSelection()
     }
-    .onChange(of: store.selectedPersonaID) { _, _ in
+    .onChange(of: store.state.selectedPersonaID) { _, _ in
       updatePrimaryPackSelection()
     }
-    .onChange(of: store.availablePacks) { _, _ in
+    .onChange(of: store.state.availablePacks) { _, _ in
       updatePrimaryPackSelection()
     }
     .sheet(isPresented: $showPackCompare) {
       PackCompareSheet(
         primaryPack: selectedPackSelection,
-        availablePacks: store.availablePacks,
+        availablePacks: store.state.availablePacks,
         selectionID: $comparisonPackID
       ) { selection in
         computePackDiff(comparison: selection)

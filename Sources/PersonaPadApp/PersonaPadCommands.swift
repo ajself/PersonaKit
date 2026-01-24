@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PersonaPadCommands: Commands {
-  @ObservedObject var store: AppStore
+  let store: AppStore
   @Binding var showPersonaSwitcher: Bool
   @Binding var showInspector: Bool
 
@@ -15,28 +15,28 @@ struct PersonaPadCommands: Commands {
         .keyboardShortcut("k", modifiers: [.command])
 
       Button {
-        store.requestSidebarSearchFocus()
+        store.send(.requestSidebarSearchFocus)
       } label: {
         Label("Focus Sidebar Search", systemImage: "magnifyingglass")
       }
         .keyboardShortcut("f", modifiers: [.command])
 
       Button {
-        store.requestComposerFocus(sectionKey: "context")
+        store.send(.requestComposerFocus(sectionKey: "context"))
       } label: {
         Label("Focus Context Field", systemImage: "text.cursor")
       }
         .keyboardShortcut("l", modifiers: [.command])
 
       Button {
-        store.reloadAll()
+        store.send(.reloadAll)
       } label: {
         Label("Reload Packs", systemImage: "arrow.clockwise")
       }
         .keyboardShortcut("r", modifiers: [.command])
 
       Button {
-        store.copyPromptToClipboard()
+        store.send(.copyPromptToClipboard)
       } label: {
         Label("Copy Prompt", systemImage: "doc.on.doc")
       }

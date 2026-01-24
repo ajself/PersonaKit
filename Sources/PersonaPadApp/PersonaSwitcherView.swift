@@ -2,14 +2,14 @@ import SwiftUI
 import PersonaPadCore
 
 struct PersonaSwitcherView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @Binding var isPresented: Bool
   @State private var query: String = ""
   @State private var selection: String?
   @FocusState private var searchFocused: Bool
 
   private var filtered: [ResolvedPersona] {
-    let all = store.personaIndex.values.sorted {
+    let all = store.state.personaIndex.values.sorted {
       PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
     }
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -60,10 +60,10 @@ struct PersonaSwitcherView: View {
     .frame(width: 420, height: 360)
     .onAppear {
       searchFocused = true
-      selection = store.selectedPersonaID
+      selection = store.state.selectedPersonaID
       syncSelection()
     }
-    .onChange(of: store.personaIndex) { _, _ in
+    .onChange(of: store.state.personaIndex) { _, _ in
       syncSelection()
     }
     .onMoveCommand { direction in
@@ -108,7 +108,7 @@ struct PersonaSwitcherView: View {
   }
 
   private func selectPersona(id: String) {
-    store.selectedPersonaID = id
+    store.send(.setSelectedPersonaID(id))
     isPresented = false
   }
 }

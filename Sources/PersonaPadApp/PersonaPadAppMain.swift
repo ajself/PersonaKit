@@ -4,36 +4,36 @@ import PersonaPadCore
 @main
 struct PersonaPadAppMain: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-  @StateObject private var store = AppStore()
+  @State private var store = AppStore()
   @State private var showPersonaSwitcher = false
   @State private var showInspector = false
 
   var body: some Scene {
     WindowGroup("PersonaPad") {
       ContentView(showPersonaSwitcher: $showPersonaSwitcher, showInspector: $showInspector)
-        .environmentObject(store)
+        .environment(store)
         .frame(minWidth: 1100, minHeight: 700)
     }
     .commands {
       CommandGroup(replacing: .newItem) { }
       CommandGroup(after: .newItem) {
         Button("Import Pack…") {
-          store.importPack()
+          store.send(.importPack)
         }
 
         Divider()
 
         Button("Reveal PersonaPad Storage") {
-          store.revealStorageRoot()
+          store.send(.revealStorageRoot)
         }
 
         Button("Reveal Selected Pack in Finder") {
-          store.revealSelectedPack()
+          store.send(.revealSelectedPack)
         }
         .disabled(!store.canRevealSelectedPack)
 
         Button("Remove Selected Pack…") {
-          store.removeSelectedPack()
+          store.send(.removeSelectedPack)
         }
         .disabled(!store.canRemoveSelectedPack)
       }

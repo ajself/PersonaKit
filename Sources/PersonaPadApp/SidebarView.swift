@@ -2,7 +2,7 @@ import SwiftUI
 import PersonaPadCore
 
 struct SidebarView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @FocusState private var searchFocused: Bool
   @State private var showSaveFilterSheet = false
   @State private var showRenameFilterSheet = false
@@ -11,14 +11,11 @@ struct SidebarView: View {
   @State private var deleteTarget: SavedFilter?
 
   private var searchBinding: Binding<String> {
-    Binding(
-      get: { store.searchText },
-      set: { store.setSearchText($0) }
-    )
+    store.bindingForSearchText()
   }
 
   private var allPersonas: [ResolvedPersona] {
-    store.personaIndex.values.sorted {
+    store.state.personaIndex.values.sorted {
       PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
     }
   }
@@ -27,25 +24,25 @@ struct SidebarView: View {
     allPersonas.filter { rp in
       let p = rp.persona
       let matchesPinned: Bool = {
-        guard store.isPinnedViewActive else { return true }
-        return store.pinnedPersonaIDs.contains(p.id)
+        guard store.state.isPinnedViewActive else { return true }
+        return store.state.pinnedPersonaIDs.contains(p.id)
       }()
-      let matchesSearch = store.searchText.isEmpty
-        || p.name.localizedCaseInsensitiveContains(store.searchText)
-        || (p.id.localizedCaseInsensitiveContains(store.searchText))
-        || (p.about?.localizedCaseInsensitiveContains(store.searchText) ?? false)
-        || p.sortedTags.contains(where: { $0.localizedCaseInsensitiveContains(store.searchText) })
+      let matchesSearch = store.state.searchText.isEmpty
+        || p.name.localizedCaseInsensitiveContains(store.state.searchText)
+        || (p.id.localizedCaseInsensitiveContains(store.state.searchText))
+        || (p.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
+        || p.sortedTags.contains(where: { $0.localizedCaseInsensitiveContains(store.state.searchText) })
 
       let matchesTag: Bool = {
-        guard !store.activeFilterTags.isEmpty else { return true }
+        guard !store.state.activeFilterTags.isEmpty else { return true }
         let tags = p.tags ?? []
-        return store.activeFilterTags.allSatisfy { tags.contains($0) }
+        return store.state.activeFilterTags.allSatisfy { tags.contains($0) }
       }()
 
       let matchesSource: Bool = {
-        guard !store.activeSourceKinds.isEmpty else { return true }
-        guard let kind = store.personaSourcesByID[p.id]?.kind else { return false }
-        return store.activeSourceKinds.contains(kind)
+        guard !store.state.activeSourceKinds.isEmpty else { return true }
+        guard let kind = store.state.personaSourcesByID[p.id]?.kind else { return false }
+        return store.state.activeSourceKinds.contains(kind)
       }()
 
       return matchesPinned && matchesSearch && matchesTag && matchesSource
@@ -53,7 +50,7 @@ struct SidebarView: View {
   }
 
   private var allTags: [String] {
-    PersonaMetadata.sortedUniqueTags(from: store.personaIndex.values.map { $0.persona })
+    PersonaMetadata.sortedUniqueTags(from: store.state.personaIndex.values.map { $0.persona })
   }
 
   var body: some View {
@@ -62,11 +59,11 @@ struct SidebarView: View {
         .textFieldStyle(.roundedBorder)
         .focused($searchFocused)
         .padding([.top, .horizontal])
-        .onChange(of: store.sidebarSearchFocusRequest) { _, request in
+        .onChange(of: store.state.sidebarSearchFocusRequest) { _, request in
           searchFocused = request.shouldFocus
         }
         .onChange(of: searchFocused) { _, newValue in
-          store.isSidebarSearchFocused = newValue
+          store.send(.setSidebarSearchFocused(newValue))
         }
         .help("Search by name, id, description, or tag.")
 
@@ -81,16 +78,16 @@ struct SidebarView: View {
           HStack {
             Menu {
               Button {
-                store.setSelectedTag(nil)
+                store.send(.setSelectedTag(nil))
               } label: {
-                tagMenuRow(title: "All", isSelected: store.activeFilterTags.isEmpty)
+                tagMenuRow(title: "All", isSelected: store.state.activeFilterTags.isEmpty)
               }
               Divider()
               ForEach(allTags, id: \.self) { tag in
                 Button {
-                  store.setSelectedTag(tag)
+                  store.send(.setSelectedTag(tag))
                 } label: {
-                  tagMenuRow(title: tag, isSelected: store.activeFilterTags.contains(tag))
+                  tagMenuRow(title: tag, isSelected: store.state.activeFilterTags.contains(tag))
                 }
               }
             } label: {
@@ -101,11 +98,11 @@ struct SidebarView: View {
             Spacer()
           }
 
-          if let selectedTag = store.selectedTag, !selectedTag.isEmpty {
+          if let selectedTag = store.state.selectedTag, !selectedTag.isEmpty {
             HStack(spacing: 6) {
               Text("Filter: \(selectedTag)")
               Button {
-                store.setSelectedTag(nil)
+                store.send(.setSelectedTag(nil))
               } label: {
                 Label("Clear", systemImage: "xmark.circle.fill")
               }
@@ -114,8 +111,8 @@ struct SidebarView: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
-          } else if store.activeFilterTags.count > 1 {
-            Text("Filter: \(store.activeFilterTags.count) tags")
+          } else if store.state.activeFilterTags.count > 1 {
+            Text("Filter: \(store.state.activeFilterTags.count) tags")
               .font(.caption)
               .foregroundStyle(.secondary)
           }
@@ -123,19 +120,19 @@ struct SidebarView: View {
         .padding(.horizontal)
       }
 
-      List(selection: $store.selectedPersonaID) {
+      List(selection: store.bindingForSelectedPersonaID()) {
         ForEach(filtered, id: \.persona.id) { rp in
           PersonaRow(
             persona: rp.persona,
-            isPinned: store.pinnedPersonaIDs.contains(rp.persona.id)
+            isPinned: store.state.pinnedPersonaIDs.contains(rp.persona.id)
           ) {
-            store.togglePinnedPersona(id: rp.persona.id)
+            store.send(.togglePinnedPersona(id: rp.persona.id))
           }
             .tag(rp.persona.id)
         }
       }
 
-      DiagnosticsFooter(diagnostics: store.diagnostics)
+      DiagnosticsFooter(diagnostics: store.state.diagnostics)
     }
     .sheet(isPresented: $showSaveFilterSheet) {
       FilterNameSheet(
@@ -143,7 +140,7 @@ struct SidebarView: View {
         confirmLabel: "Save",
         name: $pendingFilterName
       ) { name in
-        store.saveCurrentFilter(name: name)
+        store.send(.saveCurrentFilter(name: name))
         pendingFilterName = ""
       }
     }
@@ -154,7 +151,7 @@ struct SidebarView: View {
         name: $pendingFilterName
       ) { name in
         guard let target = renameTarget else { return }
-        store.renameSavedFilter(id: target.id, newName: name)
+        store.send(.renameSavedFilter(id: target.id, newName: name))
         renameTarget = nil
         pendingFilterName = ""
       }
@@ -165,7 +162,7 @@ struct SidebarView: View {
     )) {
       Button("Delete", role: .destructive) {
         if let target = deleteTarget {
-          store.deleteSavedFilter(id: target.id)
+          store.send(.deleteSavedFilter(id: target.id))
         }
         deleteTarget = nil
       }
@@ -194,11 +191,11 @@ struct SidebarView: View {
         .foregroundStyle(.secondary)
 
       Button {
-        store.setPinnedViewActive()
+        store.send(.setPinnedViewActive)
       } label: {
         savedFilterRow(
           title: "Pinned Personas",
-          isSelected: store.isPinnedViewActive
+          isSelected: store.state.isPinnedViewActive
         )
       }
       .buttonStyle(.plain)
@@ -223,22 +220,22 @@ struct SidebarView: View {
 
       VStack(alignment: .leading, spacing: 4) {
         Button {
-          store.applyAllPersonasFilter()
+          store.send(.applyAllPersonasFilter)
         } label: {
           savedFilterRow(
             title: "All Personas",
-            isSelected: store.selectedSavedFilterID == AppStore.allPersonasFilterID
+            isSelected: store.state.selectedSavedFilterID == AppStore.allPersonasFilterID
           )
         }
         .buttonStyle(.plain)
 
-        ForEach(store.savedFilters) { filter in
+        ForEach(store.state.savedFilters) { filter in
           Button {
-            store.applySavedFilter(filter)
+            store.send(.applySavedFilter(filter))
           } label: {
             savedFilterRow(
               title: filter.name,
-              isSelected: store.selectedSavedFilterID == filter.id
+              isSelected: store.state.selectedSavedFilterID == filter.id
             )
           }
           .buttonStyle(.plain)
@@ -270,10 +267,10 @@ struct SidebarView: View {
   }
 
   private func beginSaveFilter() {
-    let trimmed = store.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmed = store.state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmed.isEmpty {
       pendingFilterName = trimmed
-    } else if store.activeFilterTags.count == 1, let tag = store.activeFilterTags.first {
+    } else if store.state.activeFilterTags.count == 1, let tag = store.state.activeFilterTags.first {
       pendingFilterName = tag
     } else {
       pendingFilterName = "Saved Filter"

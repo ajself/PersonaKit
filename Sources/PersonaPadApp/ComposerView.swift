@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ComposerView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @FocusState private var focusedSectionKey: String?
   @State private var showContextHelp = false
   @State private var showEvidenceHelp = false
@@ -55,7 +55,7 @@ struct ComposerView: View {
         ]
       )
     }
-    .onChange(of: store.composerFocusRequest) { _, request in
+    .onChange(of: store.state.composerFocusRequest) { _, request in
       guard let request else { return }
       focusedSectionKey = request.sectionKey
     }
@@ -91,13 +91,7 @@ struct ComposerView: View {
         }
       }
 
-      TextEditor(text: Binding(
-        get: { store.composerValues[key] ?? "" },
-        set: { newValue in
-          store.composerValues[key] = newValue
-          store.recomputePreview()
-        }
-      ))
+      TextEditor(text: store.bindingForComposerValue(key: key))
       .font(.system(.body, design: .monospaced))
       .focused($focusedSectionKey, equals: key)
       .frame(minHeight: 90)

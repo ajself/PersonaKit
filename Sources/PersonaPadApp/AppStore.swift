@@ -1,9 +1,9 @@
+import Dependencies
 import Foundation
-import SwiftUI
-import AppKit
-import UniformTypeIdentifiers
+import Observation
 import PersonaPadCore
 import PersonaPadResources
+import SwiftUI
 
 struct SidebarSearchFocusRequest: Equatable {
   let id: UUID
@@ -54,40 +54,134 @@ struct PackSelection: Identifiable, Hashable {
 }
 
 @MainActor
-final class AppStore: ObservableObject {
-  @Published var diagnostics: [Diagnostic] = []
-  @Published var personaIndex: [String: ResolvedPersona] = [:]
-  @Published var personaPacksByID: [String: PackMeta] = [:]
-  @Published var personaSourcesByID: [String: PersonaSource] = [:]
-  @Published var packLocationsByPersonaID: [String: PackLocation] = [:]
-  @Published var availablePacks: [PackSelection] = []
+@Observable
+final class AppStore {
+  struct State {
+    var diagnostics: [Diagnostic]
+    var personaIndex: [String: ResolvedPersona]
+    var personaPacksByID: [String: PackMeta]
+    var personaSourcesByID: [String: PersonaSource]
+    var packLocationsByPersonaID: [String: PackLocation]
+    var availablePacks: [PackSelection]
 
-  @Published var selectedPersonaID: String?
-  @Published var composerValues: [String: String] = [:]
-  @Published var promptPreview: String = ""
+    var selectedPersonaID: String?
+    var composerValues: [String: String]
+    var promptPreview: String
 
-  @Published var searchText: String = ""
-  @Published var selectedTag: String?
-  @Published var activeFilterTags: [String] = []
-  @Published var activeSourceKinds: Set<PersonaSource.Kind> = []
-  @Published var savedFilters: [SavedFilter] = []
-  @Published var selectedSavedFilterID: String?
-  @Published var pinnedPersonaIDs: Set<String> = []
-  @Published var isPinnedViewActive: Bool = false
-  @Published var sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: false)
-  @Published var isSidebarSearchFocused: Bool = false
-  @Published var composerFocusRequest: ComposerFocusRequest?
+    var searchText: String
+    var selectedTag: String?
+    var activeFilterTags: [String]
+    var activeSourceKinds: Set<PersonaSource.Kind>
+    var savedFilters: [SavedFilter]
+    var selectedSavedFilterID: String?
+    var pinnedPersonaIDs: Set<String>
+    var isPinnedViewActive: Bool
+    var sidebarSearchFocusRequest: SidebarSearchFocusRequest
+    var isSidebarSearchFocused: Bool
+    var composerFocusRequest: ComposerFocusRequest?
 
-  private let savedFiltersStore = SavedFiltersStore()
-  private let pinnedPersonasStore = PinnedPersonasStore()
+    init(
+      diagnostics: [Diagnostic] = [],
+      personaIndex: [String: ResolvedPersona] = [:],
+      personaPacksByID: [String: PackMeta] = [:],
+      personaSourcesByID: [String: PersonaSource] = [:],
+      packLocationsByPersonaID: [String: PackLocation] = [:],
+      availablePacks: [PackSelection] = [],
+      selectedPersonaID: String? = nil,
+      composerValues: [String: String] = [:],
+      promptPreview: String = "",
+      searchText: String = "",
+      selectedTag: String? = nil,
+      activeFilterTags: [String] = [],
+      activeSourceKinds: Set<PersonaSource.Kind> = [],
+      savedFilters: [SavedFilter] = [],
+      selectedSavedFilterID: String? = nil,
+      pinnedPersonaIDs: Set<String> = [],
+      isPinnedViewActive: Bool = false,
+      sidebarSearchFocusRequest: SidebarSearchFocusRequest,
+      isSidebarSearchFocused: Bool = false,
+      composerFocusRequest: ComposerFocusRequest? = nil
+    ) {
+      self.diagnostics = diagnostics
+      self.personaIndex = personaIndex
+      self.personaPacksByID = personaPacksByID
+      self.personaSourcesByID = personaSourcesByID
+      self.packLocationsByPersonaID = packLocationsByPersonaID
+      self.availablePacks = availablePacks
+      self.selectedPersonaID = selectedPersonaID
+      self.composerValues = composerValues
+      self.promptPreview = promptPreview
+      self.searchText = searchText
+      self.selectedTag = selectedTag
+      self.activeFilterTags = activeFilterTags
+      self.activeSourceKinds = activeSourceKinds
+      self.savedFilters = savedFilters
+      self.selectedSavedFilterID = selectedSavedFilterID
+      self.pinnedPersonaIDs = pinnedPersonaIDs
+      self.isPinnedViewActive = isPinnedViewActive
+      self.sidebarSearchFocusRequest = sidebarSearchFocusRequest
+      self.isSidebarSearchFocused = isSidebarSearchFocused
+      self.composerFocusRequest = composerFocusRequest
+    }
+  }
+
+  enum Action {
+    case task
+    case reloadAll
+    case importPack
+    case revealStorageRoot
+    case revealSelectedPack
+    case removeSelectedPack
+    case copyPromptToClipboard
+    case requestSidebarSearchFocus
+    case requestSidebarSearchBlur
+    case requestComposerFocus(sectionKey: String)
+    case setSidebarSearchFocused(Bool)
+    case setSelectedPersonaID(String?)
+    case setComposerValue(key: String, value: String)
+    case setSearchText(String)
+    case setSelectedTag(String?)
+    case applyAllPersonasFilter
+    case applySavedFilter(SavedFilter)
+    case saveCurrentFilter(name: String)
+    case renameSavedFilter(id: String, newName: String)
+    case deleteSavedFilter(id: String)
+    case setPinnedViewActive
+    case togglePinnedPersona(id: String)
+  }
+
+  @ObservationIgnored
+  @Dependency(\.fileClient) private var fileClient
+
+  @ObservationIgnored
+  @Dependency(\.appClient) private var appClient
+
+  @ObservationIgnored
+  @Dependency(\.uuid) private var uuid
+
+  private let savedFiltersStore: SavedFiltersStore
+  private let pinnedPersonasStore: PinnedPersonasStore
   private var isApplyingSavedFilter = false
+
+  private(set) var state: State
 
   static let allPersonasFilterID = "all-personas"
 
-  init() {
-    savedFilters = savedFiltersStore.load()
-    selectedSavedFilterID = Self.allPersonasFilterID
-    pinnedPersonaIDs = Set(pinnedPersonasStore.load())
+  init(
+    savedFiltersStore: SavedFiltersStore = SavedFiltersStore(),
+    pinnedPersonasStore: PinnedPersonasStore = PinnedPersonasStore()
+  ) {
+    self.savedFiltersStore = savedFiltersStore
+    self.pinnedPersonasStore = pinnedPersonasStore
+    let focusRequest = SidebarSearchFocusRequest(
+      id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
+      shouldFocus: false
+    )
+    self.state = State(sidebarSearchFocusRequest: focusRequest)
+
+    state.savedFilters = savedFiltersStore.load()
+    state.selectedSavedFilterID = Self.allPersonasFilterID
+    state.pinnedPersonaIDs = Set(pinnedPersonasStore.load())
   }
 
   var canRevealSelectedPack: Bool {
@@ -97,14 +191,108 @@ final class AppStore: ObservableObject {
 
   var canRemoveSelectedPack: Bool {
     guard let location = selectedPackLocation,
-          let personaID = selectedPersonaID,
-          let source = personaSourcesByID[personaID] else { return false }
+          let personaID = state.selectedPersonaID,
+          let source = state.personaSourcesByID[personaID] else { return false }
     return location.isDirectoryPack && source.kind == .user
   }
 
-  func reloadAll() {
-    diagnostics.removeAll()
-    let previousSelection = selectedPersonaID
+  func send(_ action: Action) {
+    switch action {
+    case .task, .reloadAll:
+      reloadAll()
+    case .importPack:
+      importPack()
+    case .revealStorageRoot:
+      revealStorageRoot()
+    case .revealSelectedPack:
+      revealSelectedPack()
+    case .removeSelectedPack:
+      removeSelectedPack()
+    case .copyPromptToClipboard:
+      copyPromptToClipboard()
+    case .requestSidebarSearchFocus:
+      state.sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: uuid(), shouldFocus: true)
+    case .requestSidebarSearchBlur:
+      state.sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: uuid(), shouldFocus: false)
+    case .requestComposerFocus(let sectionKey):
+      state.composerFocusRequest = ComposerFocusRequest(id: uuid(), sectionKey: sectionKey)
+    case .setSidebarSearchFocused(let isFocused):
+      state.isSidebarSearchFocused = isFocused
+    case .setSelectedPersonaID(let id):
+      state.selectedPersonaID = id
+      recomputePreview()
+    case .setComposerValue(let key, let value):
+      state.composerValues[key] = value
+      recomputePreview()
+    case .setSearchText(let text):
+      state.searchText = text
+      if !isApplyingSavedFilter {
+        state.selectedSavedFilterID = nil
+      }
+    case .setSelectedTag(let tag):
+      state.selectedTag = tag
+      if let tag, !tag.isEmpty {
+        state.activeFilterTags = [tag]
+      } else {
+        state.activeFilterTags = []
+      }
+      if !isApplyingSavedFilter {
+        state.selectedSavedFilterID = nil
+      }
+    case .applyAllPersonasFilter:
+      state.isPinnedViewActive = false
+      applySavedFilterState(
+        id: Self.allPersonasFilterID,
+        queryText: "",
+        tags: [],
+        sources: []
+      )
+    case .applySavedFilter(let filter):
+      state.isPinnedViewActive = false
+      applySavedFilterState(
+        id: filter.id,
+        queryText: filter.queryText,
+        tags: filter.selectedTags,
+        sources: filter.selectedSources
+      )
+    case .saveCurrentFilter(let name):
+      saveCurrentFilter(name: name)
+    case .renameSavedFilter(let id, let newName):
+      renameSavedFilter(id: id, newName: newName)
+    case .deleteSavedFilter(let id):
+      deleteSavedFilter(id: id)
+    case .setPinnedViewActive:
+      state.isPinnedViewActive = true
+      state.selectedSavedFilterID = nil
+    case .togglePinnedPersona(let id):
+      togglePinnedPersona(id: id)
+    }
+  }
+
+  func bindingForSearchText() -> Binding<String> {
+    Binding(
+      get: { self.state.searchText },
+      set: { self.send(.setSearchText($0)) }
+    )
+  }
+
+  func bindingForSelectedPersonaID() -> Binding<String?> {
+    Binding(
+      get: { self.state.selectedPersonaID },
+      set: { self.send(.setSelectedPersonaID($0)) }
+    )
+  }
+
+  func bindingForComposerValue(key: String) -> Binding<String> {
+    Binding(
+      get: { self.state.composerValues[key] ?? "" },
+      set: { self.send(.setComposerValue(key: key, value: $0)) }
+    )
+  }
+
+  private func reloadAll() {
+    state.diagnostics.removeAll()
+    let previousSelection = state.selectedPersonaID
 
     var sets: [PersonaSet] = []
     var packsByID: [String: PackMeta] = [:]
@@ -115,22 +303,24 @@ final class AppStore: ObservableObject {
     // 1) Built-ins from resources (BuiltIn/*.json)
     let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
     if builtInURLs.isEmpty {
-      diagnostics.append(.warning(
+      state.diagnostics.append(.warning(
         source: PersonaSource(kind: .builtIn, url: nil),
         message: "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
       ))
     } else {
       for url in builtInURLs {
         switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
-        case .success(let set): sets.append(set)
-        case .failure(let error): diagnostics.append(contentsOf: error.diagnostics)
+        case .success(let set):
+          sets.append(set)
+        case .failure(let error):
+          state.diagnostics.append(contentsOf: error.diagnostics)
         }
       }
     }
 
     // 2) User packs directory (best-effort)
-    let userPacks = PersonaPadStoragePaths.standard().packs
-    if FileManager.default.fileExists(atPath: userPacks.path) {
+    let userPacks = PersonaPadStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs
+    if fileClient.fileExists(userPacks) {
       let loaded = UserPackLoader.load(in: userPacks)
       for pack in loaded.packs {
         sets.append(pack.set)
@@ -140,11 +330,11 @@ final class AppStore: ObservableObject {
           isDirectoryPack: pack.isDirectoryPack
         )
       }
-      diagnostics.append(contentsOf: loaded.diagnostics)
+      state.diagnostics.append(contentsOf: loaded.diagnostics)
     }
 
     if sets.isEmpty {
-      diagnostics.append(.warning(
+      state.diagnostics.append(.warning(
         source: PersonaSource(kind: .adhoc, url: nil),
         message: "No persona packs loaded. Add packs to \(userPacks.path)."
       ))
@@ -161,83 +351,85 @@ final class AppStore: ObservableObject {
     }
 
     let merged = PersonaResolver.mergeSets(sets)
-    diagnostics.append(contentsOf: merged.diagnostics)
+    state.diagnostics.append(contentsOf: merged.diagnostics)
 
     let resolved = PersonaResolver.resolveAll(from: merged.personas)
-    diagnostics.append(contentsOf: resolved.diagnostics)
-    personaIndex = resolved.personasByID
-    personaPacksByID = packsByID
-    personaSourcesByID = sourcesByID
-    packLocationsByPersonaID = packLocationsByID
-    availablePacks = buildPackSelections(sets: sets, packLocationsBySourceURL: packLocationsBySourceURL)
+    state.diagnostics.append(contentsOf: resolved.diagnostics)
+    state.personaIndex = resolved.personasByID
+    state.personaPacksByID = packsByID
+    state.personaSourcesByID = sourcesByID
+    state.packLocationsByPersonaID = packLocationsByID
+    state.availablePacks = buildPackSelections(sets: sets, packLocationsBySourceURL: packLocationsBySourceURL)
 
-    if let previousSelection, personaIndex.keys.contains(previousSelection) {
-      selectedPersonaID = previousSelection
+    if let previousSelection, state.personaIndex.keys.contains(previousSelection) {
+      state.selectedPersonaID = previousSelection
     } else {
-      selectedPersonaID = personaIndex.keys.sorted().first
+      state.selectedPersonaID = state.personaIndex.keys.sorted().first
     }
     recomputePreview()
   }
 
-  func recomputePreview() {
-    guard let id = selectedPersonaID, let persona = personaIndex[id]?.persona else {
-      promptPreview = ""
+  private func recomputePreview() {
+    guard let id = state.selectedPersonaID,
+          let persona = state.personaIndex[id]?.persona else {
+      state.promptPreview = ""
       return
     }
-    promptPreview = PersonaOutputRenderer.prompt(persona: persona, sections: composerValues)
+    state.promptPreview = PersonaOutputRenderer.prompt(persona: persona, sections: state.composerValues)
   }
 
-  func importPack() {
-    let panel = NSOpenPanel()
-    panel.title = "Import Pack"
-    panel.canChooseDirectories = true
-    panel.canChooseFiles = true
-    panel.allowsMultipleSelection = false
-    panel.allowedContentTypes = [.json]
-    panel.prompt = "Import"
-
-    guard panel.runModal() == .OK, let selection = panel.url else { return }
+  private func importPack() {
+    guard let selection = appClient.selectPackURL() else { return }
 
     let paths: PersonaPadStoragePaths
     do {
       paths = try ensureStorageDirectories()
     } catch {
-      presentError(title: "Import Failed", message: "Could not create PersonaPad storage folders. Fix: check permissions for Application Support.")
+      appClient.presentError(
+        "Import Failed",
+        "Could not create PersonaPad storage folders. Fix: check permissions for Application Support."
+      )
       return
     }
 
     let planResult = PersonaPackImportPlan.plan(from: selection)
     switch planResult {
     case .failure(let error):
-      presentError(title: "Import Failed", message: error.userFacingMessage)
+      appClient.presentError("Import Failed", error.userFacingMessage)
       return
     case .success(let plan):
       let existingNames = existingPackDirectoryNames(in: paths.packs)
       let preferred = PersonaPadStorage.preferredPackDirectoryName(for: plan.pack)
       let folderName = PersonaPadStorage.uniquePackDirectoryName(preferred: preferred, existing: existingNames)
       let destination = paths.packs.appendingPathComponent(folderName, isDirectory: true)
-      let tempFolderName = ".import_tmp_\(UUID().uuidString)"
+      let tempFolderName = ".import_tmp_\(uuid().uuidString)"
       let tempDestination = paths.packs.appendingPathComponent(tempFolderName, isDirectory: true)
 
       do {
-        try FileManager.default.createDirectory(at: tempDestination, withIntermediateDirectories: true)
+        try fileClient.createDirectory(tempDestination, true)
         for file in plan.filesToCopy {
           guard let relativePath = plan.relativePath(for: file) else {
             throw ImportCopyFailure.outsideRoot
           }
           let target = tempDestination.appendingPathComponent(relativePath)
           let targetFolder = target.deletingLastPathComponent()
-          try FileManager.default.createDirectory(at: targetFolder, withIntermediateDirectories: true)
-          try FileManager.default.copyItem(at: file, to: target)
+          try fileClient.createDirectory(targetFolder, true)
+          try fileClient.copyItem(file, target)
         }
-        try FileManager.default.moveItem(at: tempDestination, to: destination)
+        try fileClient.moveItem(tempDestination, destination)
       } catch {
-        try? FileManager.default.removeItem(at: tempDestination)
+        try? fileClient.removeItem(tempDestination)
         if case ImportCopyFailure.outsideRoot = error {
-          presentError(title: "Import Failed", message: "One or more files are outside the selected folder. Fix: ensure all pack files live under the pack folder.")
+          appClient.presentError(
+            "Import Failed",
+            "One or more files are outside the selected folder. Fix: ensure all pack files live under the pack folder."
+          )
           return
         }
-        presentError(title: "Import Failed", message: "Could not copy pack files. Fix: ensure the destination is writable. (\(error.localizedDescription))")
+        appClient.presentError(
+          "Import Failed",
+          "Could not copy pack files. Fix: ensure the destination is writable. (\(error.localizedDescription))"
+        )
         return
       }
     }
@@ -245,138 +437,119 @@ final class AppStore: ObservableObject {
     reloadAll()
   }
 
-  func revealStorageRoot() {
+  private func revealStorageRoot() {
     let paths: PersonaPadStoragePaths
     do {
       paths = try ensureStorageDirectories()
     } catch {
-      presentError(title: "Reveal Failed", message: "Could not create PersonaPad storage folders. Fix: check permissions for Application Support.")
+      appClient.presentError(
+        "Reveal Failed",
+        "Could not create PersonaPad storage folders. Fix: check permissions for Application Support."
+      )
       return
     }
-    NSWorkspace.shared.open(paths.root)
+    appClient.openURL(paths.root)
   }
 
-  func revealSelectedPack() {
+  private func revealSelectedPack() {
     guard let location = selectedPackLocation, location.isDirectoryPack else {
-      presentError(title: "Reveal Failed", message: "Selected pack is not a user pack folder.")
+      appClient.presentError("Reveal Failed", "Selected pack is not a user pack folder.")
       return
     }
-    NSWorkspace.shared.open(location.packRoot)
+    appClient.openURL(location.packRoot)
   }
 
-  func removeSelectedPack() {
+  private func removeSelectedPack() {
     guard let location = selectedPackLocation,
-          let personaID = selectedPersonaID,
-          let source = personaSourcesByID[personaID],
+          let personaID = state.selectedPersonaID,
+          let source = state.personaSourcesByID[personaID],
           location.isDirectoryPack,
           source.kind == .user else {
-      presentError(title: "Remove Failed", message: "Only user packs stored in PersonaPad can be removed.")
+      appClient.presentError("Remove Failed", "Only user packs stored in PersonaPad can be removed.")
       return
     }
 
-    let alert = NSAlert()
-    alert.messageText = "Remove Pack?"
-    alert.informativeText = "This will delete the pack folder from disk. This action cannot be undone."
-    alert.addButton(withTitle: "Remove")
-    alert.addButton(withTitle: "Cancel")
-    alert.alertStyle = .warning
-
-    let response = alert.runModal()
-    guard response == .alertFirstButtonReturn else { return }
+    guard appClient.confirmRemovePack() else { return }
 
     do {
-      try FileManager.default.removeItem(at: location.packRoot)
+      try fileClient.removeItem(location.packRoot)
       reloadAll()
     } catch {
-      presentError(title: "Remove Failed", message: "Could not delete the pack folder. Fix: check permissions. (\(error.localizedDescription))")
+      appClient.presentError(
+        "Remove Failed",
+        "Could not delete the pack folder. Fix: check permissions. (\(error.localizedDescription))"
+      )
     }
   }
 
-  func copyPromptToClipboard() {
-    let pb = NSPasteboard.general
-    pb.clearContents()
-    pb.setString(promptPreview, forType: .string)
+  private func copyPromptToClipboard() {
+    appClient.copyToClipboard(state.promptPreview)
   }
 
-  func requestSidebarSearchFocus() {
-    sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: true)
+  private var selectedPackLocation: PackLocation? {
+    guard let personaID = state.selectedPersonaID else { return nil }
+    return state.packLocationsByPersonaID[personaID]
   }
 
-  func requestSidebarSearchBlur() {
-    sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: UUID(), shouldFocus: false)
+  private func ensureStorageDirectories() throws -> PersonaPadStoragePaths {
+    let paths = PersonaPadStoragePaths.standard(homeDirectory: fileClient.homeDirectory())
+    try fileClient.createDirectory(paths.packs, true)
+    try fileClient.createDirectory(paths.state, true)
+    return paths
   }
 
-  func requestComposerFocus(sectionKey: String) {
-    composerFocusRequest = ComposerFocusRequest(id: UUID(), sectionKey: sectionKey)
-  }
-
-  func setSearchText(_ text: String) {
-    searchText = text
-    if !isApplyingSavedFilter {
-      selectedSavedFilterID = nil
+  private func existingPackDirectoryNames(in packsRoot: URL) -> Set<String> {
+    guard let contents = try? fileClient.contentsOfDirectory(packsRoot, [.isDirectoryKey]) else {
+      return []
     }
+    return Set(contents.compactMap { url in
+      let isDirectory = fileClient.isDirectory(url)
+      return isDirectory ? url.lastPathComponent : nil
+    })
   }
 
-  func setSelectedTag(_ tag: String?) {
-    selectedTag = tag
-    if let tag, !tag.isEmpty {
-      activeFilterTags = [tag]
+  private func applySavedFilterState(id: String?, queryText: String, tags: [String], sources: [String]) {
+    isApplyingSavedFilter = true
+    state.selectedSavedFilterID = id
+    state.searchText = queryText
+    state.activeFilterTags = tags
+    if tags.count == 1, let only = tags.first {
+      state.selectedTag = only
     } else {
-      activeFilterTags = []
+      state.selectedTag = nil
     }
-    if !isApplyingSavedFilter {
-      selectedSavedFilterID = nil
-    }
+    state.activeSourceKinds = parseSourceKinds(from: sources)
+    isApplyingSavedFilter = false
   }
 
-  func applyAllPersonasFilter() {
-    isPinnedViewActive = false
-    applySavedFilterState(
-      id: Self.allPersonasFilterID,
-      queryText: "",
-      tags: [],
-      sources: []
-    )
-  }
-
-  func applySavedFilter(_ filter: SavedFilter) {
-    isPinnedViewActive = false
-    applySavedFilterState(
-      id: filter.id,
-      queryText: filter.queryText,
-      tags: filter.selectedTags,
-      sources: filter.selectedSources
-    )
-  }
-
-  func saveCurrentFilter(name: String) {
+  private func saveCurrentFilter(name: String) {
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
 
-    let tags = Array(Set(activeFilterTags)).sorted()
-    let sources = Array(Set(activeSourceKinds.map(\.rawValue))).sorted()
+    let tags = Array(Set(state.activeFilterTags)).sorted()
+    let sources = Array(Set(state.activeSourceKinds.map(\.rawValue))).sorted()
 
     let filter = SavedFilter(
-      id: UUID().uuidString,
+      id: uuid().uuidString,
       name: trimmed,
-      queryText: searchText,
+      queryText: state.searchText,
       selectedTags: tags,
       selectedSources: sources,
       groupingMode: nil
     )
 
-    savedFilters = sortSavedFilters(savedFilters + [filter])
-    savedFiltersStore.save(savedFilters)
-    selectedSavedFilterID = filter.id
-    isPinnedViewActive = false
+    state.savedFilters = sortSavedFilters(state.savedFilters + [filter])
+    savedFiltersStore.save(state.savedFilters)
+    state.selectedSavedFilterID = filter.id
+    state.isPinnedViewActive = false
   }
 
-  func renameSavedFilter(id: String, newName: String) {
+  private func renameSavedFilter(id: String, newName: String) {
     let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
-    guard let index = savedFilters.firstIndex(where: { $0.id == id }) else { return }
+    guard let index = state.savedFilters.firstIndex(where: { $0.id == id }) else { return }
 
-    let existing = savedFilters[index]
+    let existing = state.savedFilters[index]
     let renamed = SavedFilter(
       id: existing.id,
       name: trimmed,
@@ -385,69 +558,27 @@ final class AppStore: ObservableObject {
       selectedSources: existing.selectedSources,
       groupingMode: existing.groupingMode
     )
-    var next = savedFilters
+    var next = state.savedFilters
     next[index] = renamed
-    savedFilters = sortSavedFilters(next)
-    savedFiltersStore.save(savedFilters)
+    state.savedFilters = sortSavedFilters(next)
+    savedFiltersStore.save(state.savedFilters)
   }
 
-  func deleteSavedFilter(id: String) {
-    savedFilters.removeAll { $0.id == id }
-    savedFiltersStore.save(savedFilters)
-    if selectedSavedFilterID == id {
-      selectedSavedFilterID = nil
+  private func deleteSavedFilter(id: String) {
+    state.savedFilters.removeAll { $0.id == id }
+    savedFiltersStore.save(state.savedFilters)
+    if state.selectedSavedFilterID == id {
+      state.selectedSavedFilterID = nil
     }
   }
 
-  func setPinnedViewActive() {
-    isPinnedViewActive = true
-    selectedSavedFilterID = nil
-  }
-
-  func togglePinnedPersona(id: String) {
-    if pinnedPersonaIDs.contains(id) {
-      pinnedPersonaIDs.remove(id)
+  private func togglePinnedPersona(id: String) {
+    if state.pinnedPersonaIDs.contains(id) {
+      state.pinnedPersonaIDs.remove(id)
     } else {
-      pinnedPersonaIDs.insert(id)
+      state.pinnedPersonaIDs.insert(id)
     }
-    pinnedPersonasStore.save(Array(pinnedPersonaIDs))
-  }
-
-  private var selectedPackLocation: PackLocation? {
-    guard let personaID = selectedPersonaID else { return nil }
-    return packLocationsByPersonaID[personaID]
-  }
-
-  private func ensureStorageDirectories() throws -> PersonaPadStoragePaths {
-    let paths = PersonaPadStoragePaths.standard()
-    let fm = FileManager.default
-    try fm.createDirectory(at: paths.packs, withIntermediateDirectories: true)
-    try fm.createDirectory(at: paths.state, withIntermediateDirectories: true)
-    return paths
-  }
-
-  private func existingPackDirectoryNames(in packsRoot: URL) -> Set<String> {
-    guard let contents = try? FileManager.default.contentsOfDirectory(at: packsRoot, includingPropertiesForKeys: [.isDirectoryKey]) else {
-      return []
-    }
-    return Set(contents.compactMap { url in
-      let isDirectory = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-      return isDirectory ? url.lastPathComponent : nil
-    })
-  }
-
-  private func applySavedFilterState(id: String?, queryText: String, tags: [String], sources: [String]) {
-    isApplyingSavedFilter = true
-    selectedSavedFilterID = id
-    searchText = queryText
-    activeFilterTags = tags
-    if tags.count == 1, let only = tags.first {
-      selectedTag = only
-    } else {
-      selectedTag = nil
-    }
-    activeSourceKinds = parseSourceKinds(from: sources)
-    isApplyingSavedFilter = false
+    pinnedPersonasStore.save(Array(state.pinnedPersonaIDs))
   }
 
   private func parseSourceKinds(from values: [String]) -> Set<PersonaSource.Kind> {
@@ -488,15 +619,6 @@ final class AppStore: ObservableObject {
     }
 
     return selectionsByURL.values.sorted { PackSelection.sortKey($0) < PackSelection.sortKey($1) }
-  }
-
-  private func presentError(title: String, message: String) {
-    let alert = NSAlert()
-    alert.messageText = title
-    alert.informativeText = message
-    alert.addButton(withTitle: "OK")
-    alert.alertStyle = .warning
-    alert.runModal()
   }
 
   private enum ImportCopyFailure: Error {

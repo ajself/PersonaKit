@@ -2,7 +2,7 @@ import SwiftUI
 import Foundation
 
 struct PreviewView: View {
-  @EnvironmentObject private var store: AppStore
+  @Environment(AppStore.self) private var store
   @Binding var selectedPanel: PreviewPanel
   @State private var jsonText: String = ""
   @State private var jsonFormatWorkItem: DispatchWorkItem?
@@ -29,7 +29,7 @@ struct PreviewView: View {
         case .prompt:
           ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-              Text(store.promptPreview.isEmpty ? "No prompt available." : store.promptPreview)
+              Text(store.state.promptPreview.isEmpty ? "No prompt available." : store.state.promptPreview)
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)
             }
@@ -50,8 +50,8 @@ struct PreviewView: View {
       }
     }
     .onAppear { refreshJSON() }
-    .onChange(of: store.selectedPersonaID) { _, _ in refreshJSON() }
-    .onChange(of: store.personaIndex) { _, _ in refreshJSON() }
+    .onChange(of: store.state.selectedPersonaID) { _, _ in refreshJSON() }
+    .onChange(of: store.state.personaIndex) { _, _ in refreshJSON() }
     .onChange(of: jsonText) { _, _ in scheduleJSONFormat() }
   }
 
@@ -61,7 +61,7 @@ struct PreviewView: View {
 
   private func buildPersonaJSON(prettyPrinted: Bool) -> String {
     // JSON viewer uses the resolved persona from the store (post-merge).
-    guard let id = store.selectedPersonaID, let persona = store.personaIndex[id]?.persona else {
+    guard let id = store.state.selectedPersonaID, let persona = store.state.personaIndex[id]?.persona else {
       return ""
     }
 
