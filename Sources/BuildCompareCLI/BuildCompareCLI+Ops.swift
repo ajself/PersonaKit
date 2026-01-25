@@ -32,11 +32,12 @@ extension BuildCompareCLI {
     }
     var total: Int64 = 0
     for case let fileURL as URL in enumerator {
-      if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+      guard let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
         let size = values.fileSize
-      {
-        total += Int64(size)
+      else {
+        continue
       }
+      total += Int64(size)
     }
     return total
   }

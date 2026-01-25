@@ -299,16 +299,17 @@ package func parseTimingSummary(_ output: String) -> [TimingEntry] {
     let text = String(line)
     guard let regex else { continue }
     let range = NSRange(text.startIndex..<text.endIndex, in: text)
-    if let match = regex.firstMatch(in: text, options: [], range: range),
+    guard let match = regex.firstMatch(in: text, options: [], range: range),
       match.numberOfRanges == 3,
       let nameRange = Range(match.range(at: 1), in: text),
       let secondsRange = Range(match.range(at: 2), in: text)
-    {
-      let name = String(text[nameRange]).trimmingCharacters(in: .whitespaces)
-      let seconds = Double(text[secondsRange]) ?? 0
-      if !name.isEmpty {
-        entries.append(TimingEntry(name: name, seconds: seconds))
-      }
+    else {
+      continue
+    }
+    let name = String(text[nameRange]).trimmingCharacters(in: .whitespaces)
+    let seconds = Double(text[secondsRange]) ?? 0
+    if !name.isEmpty {
+      entries.append(TimingEntry(name: name, seconds: seconds))
     }
   }
   return entries

@@ -77,7 +77,7 @@ the code was authored without sufficient adherence to this guide.
 - Linting reinforces architectural intent and prevents footguns.
 - Disabling a rule requires a comment explaining why.
 - Formatting-style rules that conflict with `swift-format` output are disabled in
-  `.swiftlint.yml` (for example, `opening_brace` and `trailing_comma`).
+  `.swiftlint.yml` (for example, `trailing_comma`).
 
 **Enforcement posture**
 - Formatting violations block commits.

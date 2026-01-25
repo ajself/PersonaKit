@@ -58,15 +58,15 @@ private struct MarkdownReportBuilder {
         base: base.app.cleanBuild.durationSeconds,
         head: head.app.cleanBuild.durationSeconds
       ))
-    if let baseIncr = base.app.incrementalBuild?.durationSeconds,
-      let headIncr = head.app.incrementalBuild?.durationSeconds
-    {
-      lines.append(
-        buildTimeLine(
-          title: "App incremental build",
-          base: baseIncr,
-          head: headIncr
-        ))
+    if let baseIncr = base.app.incrementalBuild?.durationSeconds {
+      if let headIncr = head.app.incrementalBuild?.durationSeconds {
+        lines.append(
+          buildTimeLine(
+            title: "App incremental build",
+            base: baseIncr,
+            head: headIncr
+          ))
+      }
     }
     lines.append(
       buildTimeLine(
@@ -74,15 +74,15 @@ private struct MarkdownReportBuilder {
         base: base.cli.cleanBuild.durationSeconds,
         head: head.cli.cleanBuild.durationSeconds
       ))
-    if let baseIncr = base.cli.incrementalBuild?.durationSeconds,
-      let headIncr = head.cli.incrementalBuild?.durationSeconds
-    {
-      lines.append(
-        buildTimeLine(
-          title: "CLI incremental build",
-          base: baseIncr,
-          head: headIncr
-        ))
+    if let baseIncr = base.cli.incrementalBuild?.durationSeconds {
+      if let headIncr = head.cli.incrementalBuild?.durationSeconds {
+        lines.append(
+          buildTimeLine(
+            title: "CLI incremental build",
+            base: baseIncr,
+            head: headIncr
+          ))
+      }
     }
     lines.append(
       buildTimeLine(
@@ -140,15 +140,15 @@ private struct MarkdownReportBuilder {
         base: base.app.cleanBuild.warningsCount,
         head: head.app.cleanBuild.warningsCount
       ))
-    if let baseIncr = base.app.incrementalBuild?.warningsCount,
-      let headIncr = head.app.incrementalBuild?.warningsCount
-    {
-      lines.append(
-        warningsLine(
-          title: "App incremental build",
-          base: baseIncr,
-          head: headIncr
-        ))
+    if let baseIncr = base.app.incrementalBuild?.warningsCount {
+      if let headIncr = head.app.incrementalBuild?.warningsCount {
+        lines.append(
+          warningsLine(
+            title: "App incremental build",
+            base: baseIncr,
+            head: headIncr
+          ))
+      }
     }
     lines.append(
       warningsLine(
@@ -156,15 +156,15 @@ private struct MarkdownReportBuilder {
         base: base.cli.cleanBuild.warningsCount,
         head: head.cli.cleanBuild.warningsCount
       ))
-    if let baseIncr = base.cli.incrementalBuild?.warningsCount,
-      let headIncr = head.cli.incrementalBuild?.warningsCount
-    {
-      lines.append(
-        warningsLine(
-          title: "CLI incremental build",
-          base: baseIncr,
-          head: headIncr
-        ))
+    if let baseIncr = base.cli.incrementalBuild?.warningsCount {
+      if let headIncr = head.cli.incrementalBuild?.warningsCount {
+        lines.append(
+          warningsLine(
+            title: "CLI incremental build",
+            base: baseIncr,
+            head: headIncr
+          ))
+      }
     }
     lines.append(
       warningsLine(
