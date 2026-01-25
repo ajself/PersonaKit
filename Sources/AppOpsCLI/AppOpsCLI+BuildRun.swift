@@ -2,18 +2,16 @@ import AppOpsCore
 import Foundation
 
 extension AppOpsCLI {
-  struct BuildCompareInputs {
-    let baseSha: String
-    let headSha: String
+  struct BuildRunInputs {
+    let revision: String?
     let outputRoot: URL
-    let worktreeRoot: URL
+    let worktreePath: URL?
     let workspace: String?
     let scheme: String
-    let schemeIsDefault: Bool
     let configuration: String
     let configPath: String?
     let allowTestFailures: Bool
-    let keepWorktrees: Bool
+    let keepWorktree: Bool
     let runTests: Bool
     let runIncremental: Bool
   }
@@ -24,7 +22,7 @@ extension AppOpsCLI {
     let duration: TimeInterval
   }
 
-  private enum BuildCompareError: Error, CustomStringConvertible {
+  private enum BuildRunError: Error, CustomStringConvertible {
     case usage(String)
     case commandFailed(String)
     case notFound(String)
@@ -41,37 +39,29 @@ extension AppOpsCLI {
     }
   }
 
-  private struct BuildCompareVersionInfo {
+  private struct BuildRunVersionInfo {
     let swift: String
     let xcode: String
   }
 
-  private struct BuildCompareContext {
-    let inputs: BuildCompareInputs
+  private struct BuildRunContext {
+    let inputs: BuildRunInputs
     let repo: URL
-    let versions: BuildCompareVersionInfo
+    let versions: BuildRunVersionInfo
   }
 
-  private struct WorktreePaths {
-    let base: URL
-    let head: URL
+  private struct WorktreeContext {
+    let repo: URL
+    let worktreePath: URL?
   }
 
   private struct WorkspacePlan {
-    let baseWorkspace: String
-    let headWorkspace: String
-    let baseScheme: String
-    let headScheme: String
+    let workspace: String
+    let scheme: String
   }
 
   private struct RecipePlan {
-    let base: [AppBuildRecipe]
-    let head: [AppBuildRecipe]
-  }
-
-  private struct RunMetrics {
-    let base: BuildCompareRevisionMetrics
-    let head: BuildCompareRevisionMetrics
+    let recipes: [AppBuildRecipe]
   }
 
   struct BuildAppRequest {
@@ -140,141 +130,107 @@ extension AppOpsCLI {
     let allowFailures: Bool
   }
 
-  static func runBuildCompare(
-    inputs: BuildCompareInputs,
+  static func runBuildRun(
+    inputs: BuildRunInputs,
     repoRoot: URL,
     environment: AppOpsEnvironment
-  ) throws -> BuildCompareReport {
+  ) throws -> BuildRunReport {
     try ensureDirectory(inputs.outputRoot)
-    try ensureDirectory(inputs.worktreeRoot)
+    if let worktreePath = inputs.worktreePath {
+      try ensureDirectory(worktreePath.deletingLastPathComponent())
+    }
 
-    let versions = BuildCompareVersionInfo(
+    let versions = BuildRunVersionInfo(
       swift: environment.runCommand(["swift", "--version"]) ?? "unknown",
       xcode: environment.runCommand(["xcodebuild", "-version"]) ?? "unknown"
     )
-    let context = BuildCompareContext(inputs: inputs, repo: repoRoot, versions: versions)
+    let context = BuildRunContext(inputs: inputs, repo: repoRoot, versions: versions)
 
-    return try withWorktrees(context: context) { worktrees in
-      let workspacePlan = try resolveWorkspaces(context: context, worktrees: worktrees)
+    return try withWorktree(context: context) { worktree in
+      let workspacePlan = try resolveWorkspace(context: context, repo: worktree.repo)
       let recipePlan = try resolveRecipes(context: context, workspacePlan: workspacePlan)
-      let metrics = try runComparisons(
-        context: context,
-        worktrees: worktrees,
-        workspacePlan: workspacePlan,
-        recipePlan: recipePlan
+      let resolvedSha = try resolveRevisionSha(repo: worktree.repo)
+      let metrics = try runForRevision(
+        RevisionRunRequest(
+          label: "run",
+          sha: resolvedSha,
+          repo: worktree.repo,
+          workspace: workspacePlan.workspace,
+          scheme: workspacePlan.scheme,
+          recipes: recipePlan.recipes,
+          configuration: context.inputs.configuration,
+          outputRoot: context.inputs.outputRoot,
+          runTests: context.inputs.runTests,
+          allowTestFailures: context.inputs.allowTestFailures,
+          runIncremental: context.inputs.runIncremental
+        )
       )
-      let metadata = buildMetadata(context: context, worktrees: worktrees)
-      return BuildCompareReport(
-        schemaVersion: 2,
+      let metadata = buildMetadata(
+        context: context,
+        worktree: worktree,
+        revisionSha: resolvedSha
+      )
+      return BuildRunReport(
+        schemaVersion: 1,
         run: metadata,
-        base: metrics.base,
-        head: metrics.head
+        metrics: metrics
       )
     }
   }
 
-  private static func withWorktrees<T>(
-    context: BuildCompareContext,
-    body: (WorktreePaths) throws -> T
+  private static func withWorktree<T>(
+    context: BuildRunContext,
+    body: (WorktreeContext) throws -> T
   ) throws -> T {
-    let worktrees = WorktreePaths(
-      base: context.inputs.worktreeRoot.appendingPathComponent("base"),
-      head: context.inputs.worktreeRoot.appendingPathComponent("head")
-    )
+    guard let revision = context.inputs.revision else {
+      return try body(WorktreeContext(repo: context.repo, worktreePath: nil))
+    }
+    guard let worktreePath = context.inputs.worktreePath else {
+      throw BuildRunError.usage("Missing worktree path for revision \(revision).")
+    }
 
-    let cleanupPaths = context.inputs.keepWorktrees ? [] : [worktrees.base, worktrees.head]
+    let cleanupPaths = context.inputs.keepWorktree ? [] : [worktreePath]
     defer {
-      if context.inputs.keepWorktrees == false {
+      if context.inputs.keepWorktree == false {
         for path in cleanupPaths {
           _ = try? removeWorktree(repo: context.repo, path: path)
         }
       }
     }
 
-    try addWorktree(repo: context.repo, path: worktrees.base, sha: context.inputs.baseSha)
-    try addWorktree(repo: context.repo, path: worktrees.head, sha: context.inputs.headSha)
-    return try body(worktrees)
+    try addWorktree(repo: context.repo, path: worktreePath, revision: revision)
+    return try body(WorktreeContext(repo: worktreePath, worktreePath: worktreePath))
   }
 
-  private static func resolveWorkspaces(
-    context: BuildCompareContext,
-    worktrees: WorktreePaths
+  private static func resolveWorkspace(
+    context: BuildRunContext,
+    repo: URL
   ) throws -> WorkspacePlan {
-    let baseWorkspace = try detectWorkspace(in: worktrees.base, override: context.inputs.workspace)
-    let headWorkspace = try detectWorkspace(in: worktrees.head, override: context.inputs.workspace)
-    let baseScheme = resolveScheme(defaultScheme: context.inputs.scheme)
-    let headScheme = resolveScheme(defaultScheme: context.inputs.scheme)
-    return WorkspacePlan(
-      baseWorkspace: baseWorkspace,
-      headWorkspace: headWorkspace,
-      baseScheme: baseScheme,
-      headScheme: headScheme
-    )
+    let workspace = try detectWorkspace(in: repo, override: context.inputs.workspace)
+    let scheme = resolveScheme(defaultScheme: context.inputs.scheme)
+    return WorkspacePlan(workspace: workspace, scheme: scheme)
   }
 
   private static func resolveRecipes(
-    context: BuildCompareContext,
+    context: BuildRunContext,
     workspacePlan: WorkspacePlan
   ) throws -> RecipePlan {
     let config = try loadConfig(repo: context.repo, overridePath: context.inputs.configPath)
-    let baseRecipes = config?.appRecipes(forWorkspace: workspacePlan.baseWorkspace)
+    let recipes = config?.appRecipes(forWorkspace: workspacePlan.workspace)
       ?? defaultAppRecipes()
-    let headRecipes = config?.appRecipes(forWorkspace: workspacePlan.headWorkspace)
-      ?? defaultAppRecipes()
-    return RecipePlan(base: baseRecipes, head: headRecipes)
-  }
-
-  private static func runComparisons(
-    context: BuildCompareContext,
-    worktrees: WorktreePaths,
-    workspacePlan: WorkspacePlan,
-    recipePlan: RecipePlan
-  ) throws -> RunMetrics {
-    let baseMetrics = try runForRevision(
-      RevisionRunRequest(
-        label: "base",
-        sha: context.inputs.baseSha,
-        repo: worktrees.base,
-        workspace: workspacePlan.baseWorkspace,
-        scheme: workspacePlan.baseScheme,
-        recipes: recipePlan.base,
-        configuration: context.inputs.configuration,
-        outputRoot: context.inputs.outputRoot,
-        runTests: context.inputs.runTests,
-        allowTestFailures: context.inputs.allowTestFailures,
-        runIncremental: context.inputs.runIncremental
-      )
-    )
-
-    let headMetrics = try runForRevision(
-      RevisionRunRequest(
-        label: "head",
-        sha: context.inputs.headSha,
-        repo: worktrees.head,
-        workspace: workspacePlan.headWorkspace,
-        scheme: workspacePlan.headScheme,
-        recipes: recipePlan.head,
-        configuration: context.inputs.configuration,
-        outputRoot: context.inputs.outputRoot,
-        runTests: context.inputs.runTests,
-        allowTestFailures: context.inputs.allowTestFailures,
-        runIncremental: context.inputs.runIncremental
-      )
-    )
-
-    return RunMetrics(base: baseMetrics, head: headMetrics)
+    return RecipePlan(recipes: recipes)
   }
 
   private static func buildMetadata(
-    context: BuildCompareContext,
-    worktrees: WorktreePaths
-  ) -> BuildCompareRunMetadata {
-    BuildCompareRunMetadata(
+    context: BuildRunContext,
+    worktree: WorktreeContext,
+    revisionSha: String
+  ) -> BuildRunMetadata {
+    BuildRunMetadata(
       timestampUTC: ISO8601DateFormatter().string(from: Date()),
       repoRoot: context.repo.path,
-      baseSha: context.inputs.baseSha,
-      headSha: context.inputs.headSha,
-      worktreeRoot: context.inputs.worktreeRoot.path,
+      revisionSha: revisionSha,
+      worktreePath: worktree.worktreePath?.path,
       outputRoot: context.inputs.outputRoot.path,
       scheme: context.inputs.scheme,
       configuration: context.inputs.configuration,
@@ -303,6 +259,18 @@ extension AppOpsCLI {
       output: output,
       duration: end.timeIntervalSince(start)
     )
+  }
+
+  private static func resolveRevisionSha(repo: URL) throws -> String {
+    let result = try runTool("git", ["rev-parse", "HEAD"], cwd: repo)
+    if result.exitCode != 0 {
+      throw BuildRunError.commandFailed("git rev-parse failed:\n\(result.output)")
+    }
+    let sha = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+    if sha.isEmpty {
+      throw BuildRunError.commandFailed("git rev-parse returned an empty SHA.")
+    }
+    return sha
   }
 
   /// Calculates the total size of a directory tree in bytes.
@@ -356,13 +324,13 @@ extension AppOpsCLI {
     description: String,
     logPath: String,
     output: String
-  ) throws -> BuildCompareFailure {
+  ) throws -> BuildRunFailure {
     let failuresRoot = outputRoot.appendingPathComponent("failures", isDirectory: true)
     try ensureDirectory(failuresRoot)
     let fileName = "\(label)-\(step).md"
     let detailsURL = failuresRoot.appendingPathComponent(fileName)
     let contents = """
-    # Build Compare Failure
+    # Build Run Failure
     Revision: \(sha)
     Step: \(step)
     Description: \(description)
@@ -372,7 +340,7 @@ extension AppOpsCLI {
     \(output)
     """
     try writeLog(contents, to: detailsURL)
-    return BuildCompareFailure(
+    return BuildRunFailure(
       step: step,
       description: description,
       logPath: logPath,
@@ -381,10 +349,10 @@ extension AppOpsCLI {
   }
 
   /// Adds a git worktree at the requested path for the given revision.
-  private static func addWorktree(repo: URL, path: URL, sha: String) throws {
-    let result = try runTool("git", ["worktree", "add", path.path, sha], cwd: repo)
+  private static func addWorktree(repo: URL, path: URL, revision: String) throws {
+    let result = try runTool("git", ["worktree", "add", path.path, revision], cwd: repo)
     if result.exitCode != 0 {
-      throw BuildCompareError.commandFailed("git worktree add failed:\n\(result.output)")
+      throw BuildRunError.commandFailed("git worktree add failed:\n\(result.output)")
     }
   }
 
@@ -392,7 +360,7 @@ extension AppOpsCLI {
   private static func removeWorktree(repo: URL, path: URL) throws {
     let result = try runTool("git", ["worktree", "remove", path.path], cwd: repo)
     if result.exitCode != 0 {
-      throw BuildCompareError.commandFailed("git worktree remove failed:\n\(result.output)")
+      throw BuildRunError.commandFailed("git worktree remove failed:\n\(result.output)")
     }
   }
 
@@ -415,7 +383,7 @@ extension AppOpsCLI {
       return workspace
     }
 
-    throw BuildCompareError.notFound("No .xcworkspace found in \(repo.path). Use --build-workspace to override.")
+    throw BuildRunError.notFound("No .xcworkspace found in \(repo.path). Use --build-workspace to override.")
   }
 
   /// Selects the scheme, honoring the caller's default.
@@ -456,21 +424,21 @@ extension AppOpsCLI {
     ]
   }
 
-  /// Loads a build-compare configuration JSON from disk when available.
-  private static func loadConfig(repo: URL, overridePath: String?) throws -> BuildCompareConfig? {
+  /// Loads a build-run configuration JSON from disk when available.
+  private static func loadConfig(repo: URL, overridePath: String?) throws -> BuildRunConfig? {
     let fm = FileManager.default
     let configURL: URL?
     if let overridePath {
       configURL = URL(fileURLWithPath: overridePath)
     } else {
-      let defaultPath = repo.appendingPathComponent("Scripts/build-compare.json")
+      let defaultPath = repo.appendingPathComponent("Scripts/build-run.json")
       configURL = fm.fileExists(atPath: defaultPath.path) ? defaultPath : nil
     }
 
     guard let url = configURL else { return nil }
     let data = try Data(contentsOf: url)
     let decoder = JSONDecoder()
-    return try decoder.decode(BuildCompareConfig.self, from: data)
+    return try decoder.decode(BuildRunConfig.self, from: data)
   }
 
   /// Builds the app target and collects timing, warnings, and binary size metrics.
@@ -494,7 +462,7 @@ extension AppOpsCLI {
     let cleanLog = request.logDir.appendingPathComponent("app-clean-\(request.recipeName).log")
     let cleanResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
     try writeLog(cleanResult.output, to: cleanLog)
-    let cleanFailure: BuildCompareFailure? = cleanResult.exitCode == 0
+    let cleanFailure: BuildRunFailure? = cleanResult.exitCode == 0
       ? nil
       : try recordFailure(
         outputRoot: request.outputRoot,
@@ -520,7 +488,7 @@ extension AppOpsCLI {
       let incrLog = request.logDir.appendingPathComponent("app-incremental-\(request.recipeName).log")
       let incrResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
       try writeLog(incrResult.output, to: incrLog)
-      let incrFailure: BuildCompareFailure? = incrResult.exitCode == 0
+      let incrFailure: BuildRunFailure? = incrResult.exitCode == 0
         ? nil
         : try recordFailure(
           outputRoot: request.outputRoot,
@@ -563,7 +531,7 @@ extension AppOpsCLI {
       cwd: request.repo
     )
     try writeLog(cleanResult.output, to: cleanLog)
-    let cleanFailure: BuildCompareFailure? = cleanResult.exitCode == 0
+    let cleanFailure: BuildRunFailure? = cleanResult.exitCode == 0
       ? nil
       : try recordFailure(
         outputRoot: request.outputRoot,
@@ -594,7 +562,7 @@ extension AppOpsCLI {
         cwd: request.repo
       )
       try writeLog(incrResult.output, to: incrLog)
-      let incrFailure: BuildCompareFailure? = incrResult.exitCode == 0
+      let incrFailure: BuildRunFailure? = incrResult.exitCode == 0
         ? nil
         : try recordFailure(
           outputRoot: request.outputRoot,
@@ -630,7 +598,7 @@ extension AppOpsCLI {
     try writeLog(result.output, to: log)
     let warnings = countWarnings(result.output)
     let success = result.exitCode == 0
-    let failure: BuildCompareFailure? = success
+    let failure: BuildRunFailure? = success
       ? nil
       : try recordFailure(
         outputRoot: request.outputRoot,
@@ -651,7 +619,7 @@ extension AppOpsCLI {
   }
 
   /// Executes all build and test steps for a single revision.
-  static func runForRevision(_ request: RevisionRunRequest) throws -> BuildCompareRevisionMetrics {
+  static func runForRevision(_ request: RevisionRunRequest) throws -> BuildRunMetrics {
     let logDir = request.outputRoot.appendingPathComponent("logs/\(request.label)")
     try ensureDirectory(logDir)
 
@@ -669,7 +637,7 @@ extension AppOpsCLI {
     )
     let tests = try testsForRevision(request: request, logDir: logDir)
 
-    return BuildCompareRevisionMetrics(
+    return BuildRunMetrics(
       sha: request.sha,
       app: AppMetrics(
         buildRecipe: appOutcome.recipeName,
@@ -730,7 +698,7 @@ extension AppOpsCLI {
     if let lastError {
       throw lastError
     }
-    throw BuildCompareError.commandFailed("App build did not produce metrics.")
+    throw BuildRunError.commandFailed("App build did not produce metrics.")
   }
 
   private static func testsForRevision(
@@ -759,7 +727,7 @@ extension AppOpsCLI {
     result: CommandResult,
     logURL: URL,
     outputPath: String,
-    failure: BuildCompareFailure?
+    failure: BuildRunFailure?
   ) -> BuildStepMetrics {
     let timing = parseTimingSummary(result.output)
     return buildStepMetrics(
@@ -776,7 +744,7 @@ extension AppOpsCLI {
     logURL: URL,
     outputPath: String,
     timingSummary: [TimingEntry]?,
-    failure: BuildCompareFailure?
+    failure: BuildRunFailure?
   ) -> BuildStepMetrics {
     BuildStepMetrics(
       durationSeconds: result.duration,

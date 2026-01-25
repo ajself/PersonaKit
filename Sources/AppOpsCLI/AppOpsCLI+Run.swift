@@ -24,8 +24,8 @@ extension AppOpsCLI {
     let importSource: URL
     let diffLeft: URL
     let diffRight: URL
-    let buildCompare: BuildCompareInputs?
-    let buildCompareSkippedReason: String?
+    let buildRun: BuildRunInputs?
+    let buildRunSkippedReason: String?
     let timestamp: String
     let userPacksRoot: String?
   }
@@ -36,8 +36,8 @@ extension AppOpsCLI {
     let diff: DiffMetrics
     let importMetrics: ImportMetrics
     let exportMetrics: ExportMetrics
-    let buildCompare: BuildCompareReport?
-    let buildCompareSkippedReason: String?
+    let buildRun: BuildRunReport?
+    let buildRunSkippedReason: String?
   }
 
   /// Runs the CLI with injected dependencies for testability.
@@ -72,8 +72,8 @@ extension AppOpsCLI {
       fileClient: fileClient
     )
 
-    let buildCompareReport = try inputs.buildCompare.map { buildInputs in
-      try runBuildCompare(inputs: buildInputs, repoRoot: inputs.repoRoot, environment: environment)
+    let buildRunReport = try inputs.buildRun.map { buildInputs in
+      try runBuildRun(inputs: buildInputs, repoRoot: inputs.repoRoot, environment: environment)
     }
 
     let metrics = ReportMetrics(
@@ -82,8 +82,8 @@ extension AppOpsCLI {
       diff: diffMetrics,
       importMetrics: importMetrics,
       exportMetrics: exportMetrics,
-      buildCompare: buildCompareReport,
-      buildCompareSkippedReason: inputs.buildCompareSkippedReason
+      buildRun: buildRunReport,
+      buildRunSkippedReason: inputs.buildRunSkippedReason
     )
     let report = makeReport(inputs: inputs, metrics: metrics, environment: environment)
 
@@ -137,11 +137,11 @@ extension AppOpsCLI {
     )
     try fileClient.createDirectory(outputRoot, true)
 
-    let buildCompare = try resolveBuildCompareInputs(
+    let buildRun = try resolveBuildRunInputs(
       parsed: parsed,
       repoRoot: repoRoot,
       outputRoot: outputRoot,
-      includeBuildCompare: !parsed.hasFlag("no-build-compare")
+      includeBuildRun: !parsed.hasFlag("no-build-run")
     )
 
     return RunInputs(
@@ -152,8 +152,8 @@ extension AppOpsCLI {
       importSource: importSource,
       diffLeft: diffLeft,
       diffRight: diffRight,
-      buildCompare: buildCompare.inputs,
-      buildCompareSkippedReason: buildCompare.skippedReason,
+      buildRun: buildRun.inputs,
+      buildRunSkippedReason: buildRun.skippedReason,
       timestamp: timestamp,
       userPacksRoot: userPacksRoot
     )
@@ -169,69 +169,67 @@ extension AppOpsCLI {
     }
   }
 
-  private struct BuildCompareResolution {
-    let inputs: BuildCompareInputs?
+  private struct BuildRunResolution {
+    let inputs: BuildRunInputs?
     let skippedReason: String?
   }
 
-  private static func resolveBuildCompareInputs(
+  private static func resolveBuildRunInputs(
     parsed: ParsedArgs,
     repoRoot: URL,
     outputRoot: URL,
-    includeBuildCompare: Bool
-  ) throws -> BuildCompareResolution {
-    guard includeBuildCompare else {
-      return BuildCompareResolution(
+    includeBuildRun: Bool
+  ) throws -> BuildRunResolution {
+    if parsed.value(for: "build-base") != nil || parsed.value(for: "build-head") != nil {
+      throw AppOpsError("Build compare flags were removed. Use --build-sha instead.")
+    }
+    if parsed.hasFlag("no-build-compare") {
+      throw AppOpsError("Use --no-build-run instead of --no-build-compare.")
+    }
+
+    guard includeBuildRun else {
+      return BuildRunResolution(
         inputs: nil,
-        skippedReason: "disabled via --no-build-compare"
+        skippedReason: "disabled via --no-build-run"
       )
     }
 
-    let baseSha = parsed.value(for: "build-base")
-    let headSha = parsed.value(for: "build-head")
-    if baseSha == nil, headSha == nil {
-      return BuildCompareResolution(
-        inputs: nil,
-        skippedReason: "missing --build-base/--build-head"
-      )
-    }
-    guard let baseSha, let headSha else {
-      throw AppOpsError("Build compare requires both --build-base and --build-head.")
-    }
+    let revision = parsed.value(for: "build-sha")
 
-    let buildOutputRoot = outputRoot.appendingPathComponent("build-compare", isDirectory: true)
-    let worktreeRoot: URL
-    if let override = parsed.value(for: "build-worktree-root") {
-      worktreeRoot = resolvePath(override, relativeTo: repoRoot)
+    let buildOutputRoot = outputRoot.appendingPathComponent("build-run", isDirectory: true)
+    let worktreePath: URL?
+    if let revision {
+      if let override = parsed.value(for: "build-worktree-root") {
+        worktreePath = resolvePath(override, relativeTo: repoRoot)
+      } else {
+        worktreePath = buildOutputRoot.appendingPathComponent("worktree", isDirectory: true)
+      }
     } else {
-      worktreeRoot = buildOutputRoot.appendingPathComponent("worktrees", isDirectory: true)
+      worktreePath = nil
     }
 
     let scheme = parsed.value(for: "build-scheme") ?? "PersonaKitApp"
-    let schemeIsDefault = parsed.value(for: "build-scheme") == nil
     let configuration = parsed.value(for: "build-configuration") ?? "Release"
     let workspace = parsed.value(for: "build-workspace")
     let configPath = parsed.value(for: "build-config").map { value in
       resolvePath(value, relativeTo: repoRoot).path
     }
 
-    let inputs = BuildCompareInputs(
-      baseSha: baseSha,
-      headSha: headSha,
+    let inputs = BuildRunInputs(
+      revision: revision,
       outputRoot: buildOutputRoot,
-      worktreeRoot: worktreeRoot,
+      worktreePath: worktreePath,
       workspace: workspace,
       scheme: scheme,
-      schemeIsDefault: schemeIsDefault,
       configuration: configuration,
       configPath: configPath,
       allowTestFailures: parsed.hasFlag("build-allow-test-failures"),
-      keepWorktrees: parsed.hasFlag("build-keep-worktrees"),
+      keepWorktree: parsed.hasFlag("build-keep-worktrees"),
       runTests: !parsed.hasFlag("build-no-tests"),
       runIncremental: !parsed.hasFlag("build-no-incremental")
     )
 
-    return BuildCompareResolution(inputs: inputs, skippedReason: nil)
+    return BuildRunResolution(inputs: inputs, skippedReason: nil)
   }
 
   private static func makeReport(
@@ -240,7 +238,7 @@ extension AppOpsCLI {
     environment: AppOpsEnvironment
   ) -> AppOpsReport {
     AppOpsReport(
-      schemaVersion: 2,
+      schemaVersion: 3,
       run: RunMetadata(
         timestampUTC: inputs.timestamp,
         repoRoot: inputs.repoRoot.path,
@@ -265,8 +263,8 @@ extension AppOpsCLI {
       diff: metrics.diff,
       importMetrics: metrics.importMetrics,
       exportMetrics: metrics.exportMetrics,
-      buildCompare: metrics.buildCompare,
-      buildCompareSkippedReason: metrics.buildCompareSkippedReason
+      buildRun: metrics.buildRun,
+      buildRunSkippedReason: metrics.buildRunSkippedReason
     )
   }
 
@@ -318,18 +316,17 @@ extension AppOpsCLI {
         --diff-left <path>      Left pack file for diff (default: built-in pack)
         --diff-right <path>     Right pack file for diff (default: Examples/personakit.pack.json)
         --no-user-packs         Skip loading ~/Library/Application Support/PersonaKit/Packs
-        --build-base <sha>      Base git SHA for build-compare (default: skip build compare)
-        --build-head <sha>      Head git SHA for build-compare (default: skip build compare)
+        --build-sha <sha>       Git SHA to run build metrics against (default: current working tree)
         --build-workspace <name>    Xcode workspace (default: auto-detect)
         --build-scheme <name>       Xcode scheme (default: PersonaKitApp)
         --build-configuration <name>  Build configuration (default: Release)
-        --build-config <path>       JSON config for app build recipes (default: Scripts/build-compare.json if present)
+        --build-config <path>       JSON config for app build recipes (default: Scripts/build-run.json if present)
         --build-allow-test-failures Record test failures without aborting the run
-        --build-no-tests             Skip swift test during build compare
-        --build-no-incremental       Skip incremental builds during build compare
-        --build-keep-worktrees       Keep worktrees after build compare
-        --build-worktree-root <path> Worktree root override (default: <appops-output>/build-compare/worktrees)
-        --no-build-compare       Skip build compare even if SHAs are provided
+        --build-no-tests             Skip swift test during build run
+        --build-no-incremental       Skip incremental builds during build run
+        --build-keep-worktrees       Keep worktree after build run
+        --build-worktree-root <path> Worktree path override (default: <appops-output>/build-run/worktree)
+        --no-build-run           Skip build run
         --help                  Show this message
 
       Methodology summary:
@@ -339,7 +336,7 @@ extension AppOpsCLI {
         Import = plan (scan) + copy to temp + move into destination; count files and bytes copied.
         Export = write first available pack set as sorted-key JSON; report bytes written.
         Timing uses a monotonic clock around each step; report formatting is not timed.
-        Build compare runs xcodebuild + swift build/test for base/head SHAs in git worktrees.
+        Build run uses xcodebuild + swift build/test for a single revision or working tree.
       """
     )
   }
@@ -367,7 +364,7 @@ extension AppOpsCLI {
 
   private static func emptyReport() -> AppOpsReport {
     AppOpsReport(
-      schemaVersion: 2,
+      schemaVersion: 3,
       run: RunMetadata(timestampUTC: "", repoRoot: "", outputRoot: "", gitSha: ""),
       environment: EnvironmentInfo(macOSVersion: "", swiftVersion: "", xcodeVersion: ""),
       inputs: InputConfig(
@@ -407,8 +404,8 @@ extension AppOpsCLI {
         destinationRoot: ""
       ),
       exportMetrics: ExportMetrics(durationSeconds: 0, bytesWritten: 0, outputPath: ""),
-      buildCompare: nil,
-      buildCompareSkippedReason: nil
+      buildRun: nil,
+      buildRunSkippedReason: nil
     )
   }
 }

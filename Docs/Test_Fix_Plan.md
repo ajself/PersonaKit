@@ -4,7 +4,7 @@ Goal: fix test failures in small, reviewable phases while keeping PersonaKit det
 
 ## Scope
 - Tests across core, app, and CLI targets.
-- AppOps build-compare test execution (including historical commits).
+- AppOps build-run test execution (including historical commits).
 
 ## Non-goals
 - New product features.
@@ -15,7 +15,7 @@ Goal: fix test failures in small, reviewable phases while keeping PersonaKit det
 
 ### Phase 0 — Baseline + Triage
 - Run `swift test` on the current HEAD and record results.
-- Run AppOps build-compare with tests enabled for the target base/head SHAs.
+- Run AppOps build-run with tests enabled for the target SHA(s) or current working tree.
 - Capture failing targets and log locations.
 - Produce a short list of failures with file paths and error messages.
 
@@ -54,12 +54,12 @@ Success criteria:
 - Keep the strategy explicit and file-based.
 
 Success criteria:
-- Build-compare runs without manual intervention, and the report shows why tests were skipped or allowed to fail.
+- Build-run reports without manual intervention, and the report shows why tests were skipped or allowed to fail.
 
 ### Phase 5 — Cleanup + Guardrails
 - Add a small regression test to prevent the same failure class.
 - Update any test fixtures or documentation touched by the fixes.
-- Re-run full tests and AppOps build-compare to confirm green.
+- Re-run full tests and AppOps build-run to confirm green.
 
 Success criteria:
 - `swift test` passes on HEAD and AppOps reports are clean and explicit.

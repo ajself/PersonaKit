@@ -1,7 +1,7 @@
 import Foundation
 
 /// Recorded failure details for a build or test step.
-package struct BuildCompareFailure: Codable, Equatable, Sendable {
+package struct BuildRunFailure: Codable, Equatable, Sendable {
   package let step: String
   package let description: String
   package let logPath: String
@@ -45,7 +45,7 @@ package struct BuildStepMetrics: Codable, Equatable, Sendable {
   package let timingSummary: [TimingEntry]?
   package let logPath: String
   package let outputPath: String?
-  package let failure: BuildCompareFailure?
+  package let failure: BuildRunFailure?
 
   package init(
     durationSeconds: Double,
@@ -53,7 +53,7 @@ package struct BuildStepMetrics: Codable, Equatable, Sendable {
     timingSummary: [TimingEntry]?,
     logPath: String,
     outputPath: String?,
-    failure: BuildCompareFailure? = nil
+    failure: BuildRunFailure? = nil
   ) {
     self.durationSeconds = durationSeconds
     self.warningsCount = warningsCount
@@ -145,14 +145,14 @@ package struct TestMetrics: Codable, Equatable, Sendable {
   package let warningsCount: Int
   package let success: Bool
   package let logPath: String
-  package let failure: BuildCompareFailure?
+  package let failure: BuildRunFailure?
 
   package init(
     durationSeconds: Double,
     warningsCount: Int,
     success: Bool,
     logPath: String,
-    failure: BuildCompareFailure? = nil
+    failure: BuildRunFailure? = nil
   ) {
     self.durationSeconds = durationSeconds
     self.warningsCount = warningsCount
@@ -171,7 +171,7 @@ package struct TestMetrics: Codable, Equatable, Sendable {
 }
 
 /// Metrics captured for a single git revision.
-package struct BuildCompareRevisionMetrics: Codable, Equatable, Sendable {
+package struct BuildRunMetrics: Codable, Equatable, Sendable {
   package let sha: String
   package let app: AppMetrics
   package let cli: CliMetrics
@@ -190,13 +190,12 @@ package struct BuildCompareRevisionMetrics: Codable, Equatable, Sendable {
   }
 }
 
-/// Metadata that describes the environment and inputs for a build-compare run.
-package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
+/// Metadata that describes the environment and inputs for a build run.
+package struct BuildRunMetadata: Codable, Equatable, Sendable {
   package let timestampUTC: String
   package let repoRoot: String
-  package let baseSha: String
-  package let headSha: String
-  package let worktreeRoot: String
+  package let revisionSha: String
+  package let worktreePath: String?
   package let outputRoot: String
   package let scheme: String
   package let configuration: String
@@ -206,9 +205,8 @@ package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
   package init(
     timestampUTC: String,
     repoRoot: String,
-    baseSha: String,
-    headSha: String,
-    worktreeRoot: String,
+    revisionSha: String,
+    worktreePath: String?,
     outputRoot: String,
     scheme: String,
     configuration: String,
@@ -217,9 +215,8 @@ package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
   ) {
     self.timestampUTC = timestampUTC
     self.repoRoot = repoRoot
-    self.baseSha = baseSha
-    self.headSha = headSha
-    self.worktreeRoot = worktreeRoot
+    self.revisionSha = revisionSha
+    self.worktreePath = worktreePath
     self.outputRoot = outputRoot
     self.scheme = scheme
     self.configuration = configuration
@@ -230,9 +227,8 @@ package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
   package enum CodingKeys: String, CodingKey {
     case timestampUTC = "timestamp_utc"
     case repoRoot = "repo_root"
-    case baseSha = "base_sha"
-    case headSha = "head_sha"
-    case worktreeRoot = "worktree_root"
+    case revisionSha = "revision_sha"
+    case worktreePath = "worktree_path"
     case outputRoot = "output_root"
     case scheme
     case configuration
@@ -241,30 +237,26 @@ package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
   }
 }
 
-/// The build-compare report schema embedded in AppOps output.
-package struct BuildCompareReport: Codable, Equatable, Sendable {
+/// The build-run report schema embedded in AppOps output.
+package struct BuildRunReport: Codable, Equatable, Sendable {
   package let schemaVersion: Int
-  package let run: BuildCompareRunMetadata
-  package let base: BuildCompareRevisionMetrics
-  package let head: BuildCompareRevisionMetrics
+  package let run: BuildRunMetadata
+  package let metrics: BuildRunMetrics
 
   package init(
     schemaVersion: Int,
-    run: BuildCompareRunMetadata,
-    base: BuildCompareRevisionMetrics,
-    head: BuildCompareRevisionMetrics
+    run: BuildRunMetadata,
+    metrics: BuildRunMetrics
   ) {
     self.schemaVersion = schemaVersion
     self.run = run
-    self.base = base
-    self.head = head
+    self.metrics = metrics
   }
 
   package enum CodingKeys: String, CodingKey {
     case schemaVersion = "schema_version"
     case run
-    case base
-    case head
+    case metrics
   }
 }
 
@@ -295,8 +287,8 @@ package struct AppBuildRecipe: Codable, Equatable, Sendable {
   }
 }
 
-/// Configuration file schema for build-compare app recipes.
-package struct BuildCompareConfig: Codable, Equatable, Sendable {
+/// Configuration file schema for build-run app recipes.
+package struct BuildRunConfig: Codable, Equatable, Sendable {
   package let schemaVersion: Int
   package let appRecipes: [AppBuildRecipe]
 

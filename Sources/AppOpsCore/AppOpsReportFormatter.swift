@@ -12,7 +12,7 @@ package enum AppOpsReportFormatter {
     appendDiff(to: &lines, report: report)
     appendImport(to: &lines, report: report)
     appendExport(to: &lines, report: report)
-    appendBuildCompare(to: &lines, report: report)
+    appendBuildRun(to: &lines, report: report)
     appendMethodology(to: &lines, report: report)
     appendInterpretation(to: &lines, report: report)
     return lines.joined(separator: "\n")
@@ -122,13 +122,13 @@ package enum AppOpsReportFormatter {
     )
   }
 
-  private static func appendBuildCompare(to lines: inout [String], report: AppOpsReport) {
+  private static func appendBuildRun(to lines: inout [String], report: AppOpsReport) {
     lines.append("")
-    if let buildCompare = report.buildCompare {
-      BuildCompareReportFormatter.appendSection(to: &lines, report: buildCompare)
+    if let buildRun = report.buildRun {
+      BuildRunReportFormatter.appendSection(to: &lines, report: buildRun)
     } else {
-      lines.append("## Build Compare")
-      if let reason = report.buildCompareSkippedReason {
+      lines.append("## Build Run")
+      if let reason = report.buildRunSkippedReason {
         lines.append("- Status: skipped (\(reason))")
       } else {
         lines.append("- Status: skipped")
@@ -165,10 +165,10 @@ package enum AppOpsReportFormatter {
       "- Diagnostics counts are the number of diagnostics emitted during load, merge, and resolve."
     )
     lines.append(
-      "- Build compare runs xcodebuild + swift build/test for base/head SHAs in git worktrees."
+      "- Build run captures xcodebuild + swift build/test for a single revision."
     )
     lines.append(
-      "- Build compare timings include command duration; warnings are counted from command output."
+      "- Build run timings include command duration; warnings are counted from command output."
     )
   }
 
@@ -184,7 +184,7 @@ package enum AppOpsReportFormatter {
       lines.append("- User packs were skipped for this run; related counts are zero.")
     }
     lines.append("- Diagnostics above zero signal input or merge/resolve issues worth inspection.")
-    lines.append("- Build compare results are sensitive to derived data and worktree cache state.")
+    lines.append("- Build run results are sensitive to derived data and cache state.")
   }
 
   private static func formatSeconds(_ value: Double) -> String {

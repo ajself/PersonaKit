@@ -20,8 +20,8 @@ func markdownReportIncludesKeySections() {
   #expect(markdown.contains("Files: 2"))
   #expect(markdown.contains("## Export"))
   #expect(markdown.contains("Bytes: 4096"))
-  #expect(markdown.contains("## Build Compare"))
-  #expect(markdown.contains("Status: skipped (missing --build-base/--build-head)"))
+  #expect(markdown.contains("## Build Run"))
+  #expect(markdown.contains("Status: skipped (disabled via --no-build-run)"))
   #expect(markdown.contains("## Methodology"))
   #expect(markdown.contains("## Interpretation"))
 }
@@ -41,7 +41,7 @@ private let userPacksRoot = "/Users/tester/Library/Application Support/PersonaKi
 
 private func makeReportWithUserPacks() -> AppOpsReport {
   AppOpsReport(
-    schemaVersion: 1,
+    schemaVersion: 3,
     run: makeRunMetadata(),
     environment: makeEnvironmentInfo(),
     inputs: makeInputConfig(userPacksRoot: userPacksRoot, includeUserPacks: true),
@@ -80,14 +80,14 @@ private func makeReportWithUserPacks() -> AppOpsReport {
       bytesCopied: 2048
     ),
     exportMetrics: makeExportMetrics(durationSeconds: 0.08, bytesWritten: 4096),
-    buildCompare: nil,
-    buildCompareSkippedReason: "missing --build-base/--build-head"
+    buildRun: nil,
+    buildRunSkippedReason: "disabled via --no-build-run"
   )
 }
 
 private func makeReportWithoutUserPacks() -> AppOpsReport {
   AppOpsReport(
-    schemaVersion: 1,
+    schemaVersion: 3,
     run: makeRunMetadata(),
     environment: makeEnvironmentInfo(),
     inputs: makeInputConfig(userPacksRoot: nil, includeUserPacks: false),
@@ -121,8 +121,8 @@ private func makeReportWithoutUserPacks() -> AppOpsReport {
       bytesCopied: 1024
     ),
     exportMetrics: makeExportMetrics(durationSeconds: 0.04, bytesWritten: 2048),
-    buildCompare: nil,
-    buildCompareSkippedReason: "missing --build-base/--build-head"
+    buildRun: nil,
+    buildRunSkippedReason: "disabled via --no-build-run"
   )
 }
 
