@@ -2,7 +2,7 @@ import Foundation
 import PersonaKitCore
 
 extension PersonaKitSchemaValidate {
-  private static func validateFile(
+  static func validateFile(
     _ url: URL,
     config: SchemaConfig,
     fileClient: FileClient

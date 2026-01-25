@@ -171,7 +171,7 @@ extension BuildCompareCLI {
   }
 
   /// Runs `swift test` and returns timing and warning metrics.
-  static func runTests(request: TestRunRequest) throws -> TestMetrics {
+  private static func runTests(request: TestRunRequest) throws -> TestMetrics {
     try ensureDirectory(request.logDir)
     let log = request.logDir.appendingPathComponent("tests.log")
     let result = try runTool(

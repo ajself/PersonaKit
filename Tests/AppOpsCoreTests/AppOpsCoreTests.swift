@@ -215,7 +215,7 @@ private func makeImportMetrics(
   planDurationSeconds: Double,
   copyDurationSeconds: Double,
   filesCopied: Int,
-  bytesCopied: Int
+  bytesCopied: Int64
 ) -> ImportMetrics {
   ImportMetrics(
     planDurationSeconds: planDurationSeconds,
@@ -226,7 +226,7 @@ private func makeImportMetrics(
   )
 }
 
-private func makeExportMetrics(durationSeconds: Double, bytesWritten: Int) -> ExportMetrics {
+private func makeExportMetrics(durationSeconds: Double, bytesWritten: Int64) -> ExportMetrics {
   ExportMetrics(
     durationSeconds: durationSeconds,
     bytesWritten: bytesWritten,
