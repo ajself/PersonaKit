@@ -47,7 +47,7 @@ struct Options {
 func printUsage() {
   let text = """
     Usage:
-      Scripts/build-compare <base_sha> <head_sha> [options]
+      Scripts/build-compare <baseSha> <headSha> [options]
 
     Options:
       --out <path>            Output directory (default: /tmp/personakit-build-compare/<timestamp>)
@@ -293,30 +293,30 @@ func resolveScheme(defaultScheme: String, schemeIsDefault: Bool, workspace: Stri
 /// Provides the fallback app build recipes when no config is supplied.
 func defaultAppRecipes() -> [AppBuildRecipe] {
   [
-    AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuild_args: []),
+    AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuildArgs: []),
     AppBuildRecipe(
       name: "legacy-driver",
       workspace: nil,
       scheme: nil,
-      xcodebuild_args: ["SWIFT_USE_INTEGRATED_DRIVER=NO"]
+      xcodebuildArgs: ["SWIFT_USE_INTEGRATED_DRIVER=NO"]
     ),
     AppBuildRecipe(
       name: "legacy-explicit-modules-off",
       workspace: nil,
       scheme: nil,
-      xcodebuild_args: ["SWIFT_ENABLE_EXPLICIT_MODULES=NO"]
+      xcodebuildArgs: ["SWIFT_ENABLE_EXPLICIT_MODULES=NO"]
     ),
     AppBuildRecipe(
       name: "legacy-build-system",
       workspace: nil,
       scheme: nil,
-      xcodebuild_args: ["-UseNewBuildSystem=NO"]
+      xcodebuildArgs: ["-UseNewBuildSystem=NO"]
     ),
     AppBuildRecipe(
       name: "legacy-build-system-driver",
       workspace: nil,
       scheme: nil,
-      xcodebuild_args: ["-UseNewBuildSystem=NO", "SWIFT_USE_INTEGRATED_DRIVER=NO"]
+      xcodebuildArgs: ["-UseNewBuildSystem=NO", "SWIFT_USE_INTEGRATED_DRIVER=NO"]
     ),
   ]
 }
@@ -375,11 +375,11 @@ func buildApp(
   let cleanWarnings = countWarnings(cleanResult.output)
   let cleanTiming = parseTimingSummary(cleanResult.output)
   let cleanMetrics = BuildStepMetrics(
-    duration_seconds: cleanResult.duration,
-    warnings_count: cleanWarnings,
-    timing_summary: cleanTiming.isEmpty ? nil : cleanTiming,
-    log_path: cleanLog.path,
-    output_path: derivedData.path
+    durationSeconds: cleanResult.duration,
+    warningsCount: cleanWarnings,
+    timingSummary: cleanTiming.isEmpty ? nil : cleanTiming,
+    logPath: cleanLog.path,
+    outputPath: derivedData.path
   )
 
   var incrementalMetrics: BuildStepMetrics?
@@ -394,11 +394,11 @@ func buildApp(
     let incrWarnings = countWarnings(incrResult.output)
     let incrTiming = parseTimingSummary(incrResult.output)
     incrementalMetrics = BuildStepMetrics(
-      duration_seconds: incrResult.duration,
-      warnings_count: incrWarnings,
-      timing_summary: incrTiming.isEmpty ? nil : incrTiming,
-      log_path: incrLog.path,
-      output_path: derivedData.path
+      durationSeconds: incrResult.duration,
+      warningsCount: incrWarnings,
+      timingSummary: incrTiming.isEmpty ? nil : incrTiming,
+      logPath: incrLog.path,
+      outputPath: derivedData.path
     )
   }
 
@@ -408,10 +408,10 @@ func buildApp(
   var binaryMetric: BinaryMetric?
   if fm.fileExists(atPath: appURL.path) {
     let size = directorySize(at: appURL)
-    binaryMetric = BinaryMetric(path: appURL.path, size_bytes: size)
+    binaryMetric = BinaryMetric(path: appURL.path, sizeBytes: size)
   } else if fm.fileExists(atPath: exeURL.path) {
     let size = fileSize(at: exeURL)
-    binaryMetric = BinaryMetric(path: exeURL.path, size_bytes: size)
+    binaryMetric = BinaryMetric(path: exeURL.path, sizeBytes: size)
   }
 
   return (cleanMetrics, incrementalMetrics, binaryMetric)
@@ -439,11 +439,11 @@ func buildCli(
       "CLI clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)")
   }
   let cleanMetrics = BuildStepMetrics(
-    duration_seconds: cleanResult.duration,
-    warnings_count: countWarnings(cleanResult.output),
-    timing_summary: nil,
-    log_path: cleanLog.path,
-    output_path: buildDir.path
+    durationSeconds: cleanResult.duration,
+    warningsCount: countWarnings(cleanResult.output),
+    timingSummary: nil,
+    logPath: cleanLog.path,
+    outputPath: buildDir.path
   )
 
   var incrementalMetrics: BuildStepMetrics?
@@ -456,11 +456,11 @@ func buildCli(
         "CLI incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)")
     }
     incrementalMetrics = BuildStepMetrics(
-      duration_seconds: incrResult.duration,
-      warnings_count: countWarnings(incrResult.output),
-      timing_summary: nil,
-      log_path: incrLog.path,
-      output_path: buildDir.path
+      durationSeconds: incrResult.duration,
+      warningsCount: countWarnings(incrResult.output),
+      timingSummary: nil,
+      logPath: incrLog.path,
+      outputPath: buildDir.path
     )
   }
 
@@ -470,7 +470,7 @@ func buildCli(
   for name in binariesToCheck {
     let path = releaseDir.appendingPathComponent(name)
     if fm.fileExists(atPath: path.path) {
-      binaries.append(BinaryMetric(path: path.path, size_bytes: fileSize(at: path)))
+      binaries.append(BinaryMetric(path: path.path, sizeBytes: fileSize(at: path)))
     }
   }
 
@@ -494,8 +494,8 @@ func runTests(
     throw ToolError.commandFailed("Tests failed. Log: \(log.path)\n\(result.output)")
   }
   return TestMetrics(
-    duration_seconds: result.duration, warnings_count: warnings, success: success,
-    log_path: log.path)
+    durationSeconds: result.duration, warningsCount: warnings, success: success,
+    logPath: log.path)
 }
 
 /// Executes all build and test steps for a single revision.
@@ -532,7 +532,7 @@ func runForRevision(
         derivedData: derivedData,
         logDir: logDir,
         runIncremental: runIncrementalFlag,
-        extraArgs: recipe.xcodebuild_args,
+        extraArgs: recipe.xcodebuildArgs,
         recipeName: recipe.name
       )
       appClean = clean
@@ -571,18 +571,18 @@ func runForRevision(
   } else {
     let log = logDir.appendingPathComponent("tests.log")
     try writeLog("Tests skipped.\n", to: log)
-    tests = TestMetrics(duration_seconds: 0, warnings_count: 0, success: true, log_path: log.path)
+    tests = TestMetrics(durationSeconds: 0, warningsCount: 0, success: true, logPath: log.path)
   }
 
   return RevisionMetrics(
     sha: sha,
     app: AppMetrics(
-      build_recipe: recipeUsed,
-      clean_build: appClean,
-      incremental_build: appIncr,
+      buildRecipe: recipeUsed,
+      cleanBuild: appClean,
+      incrementalBuild: appIncr,
       binary: appBinary
     ),
-    cli: CliMetrics(clean_build: cliClean, incremental_build: cliIncr, binaries: cliBinaries),
+    cli: CliMetrics(cleanBuild: cliClean, incrementalBuild: cliIncr, binaries: cliBinaries),
     tests: tests
   )
 }
@@ -659,19 +659,19 @@ do {
   )
 
   let metadata = RunMetadata(
-    timestamp_utc: ISO8601DateFormatter().string(from: Date()),
-    repo_root: repo.path,
-    base_sha: options.baseSha,
-    head_sha: options.headSha,
-    worktree_root: options.worktreeRoot.path,
-    output_root: options.outputRoot.path,
+    timestampUTC: ISO8601DateFormatter().string(from: Date()),
+    repoRoot: repo.path,
+    baseSha: options.baseSha,
+    headSha: options.headSha,
+    worktreeRoot: options.worktreeRoot.path,
+    outputRoot: options.outputRoot.path,
     scheme: options.scheme,
     configuration: options.configuration,
-    swift_version: swiftVersion,
-    xcode_version: xcodeVersion
+    swiftVersion: swiftVersion,
+    xcodeVersion: xcodeVersion
   )
 
-  let report = Report(schema_version: 2, run: metadata, base: baseMetrics, head: headMetrics)
+  let report = Report(schemaVersion: 2, run: metadata, base: baseMetrics, head: headMetrics)
   let encoder = JSONEncoder()
   encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
   let jsonData = try encoder.encode(report)

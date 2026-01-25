@@ -4,10 +4,10 @@ import Testing
 @Test
 func countWarningsCountsLines() {
   let output = """
-  warning: something
-  note: informational
-  warning: another
-  """
+    warning: something
+    note: informational
+    warning: another
+    """
 
   #expect(countWarnings(output) == 2)
 }
@@ -15,10 +15,10 @@ func countWarningsCountsLines() {
 @Test
 func parseTimingSummaryParsesNamedEntries() {
   let output = """
-    Compile Swift 1.23s
-    Link 0.45s
-  some other line
-  """
+      Compile Swift 1.23s
+      Link 0.45s
+    some other line
+    """
 
   let entries = parseTimingSummary(output)
   #expect(entries.count == 2)
@@ -43,45 +43,49 @@ func formatBytesDeltaAddsSign() {
 @Test
 func markdownReportIncludesKeySectionsAndDeltas() {
   let baseBuild = BuildStepMetrics(
-    duration_seconds: 10,
-    warnings_count: 1,
-    timing_summary: nil,
-    log_path: "/tmp/base.log",
-    output_path: nil
+    durationSeconds: 10,
+    warningsCount: 1,
+    timingSummary: nil,
+    logPath: "/tmp/base.log",
+    outputPath: nil
   )
   let headBuild = BuildStepMetrics(
-    duration_seconds: 12,
-    warnings_count: 3,
-    timing_summary: nil,
-    log_path: "/tmp/head.log",
-    output_path: nil
+    durationSeconds: 12,
+    warningsCount: 3,
+    timingSummary: nil,
+    logPath: "/tmp/head.log",
+    outputPath: nil
   )
 
   let base = RevisionMetrics(
     sha: "base",
-    app: AppMetrics(build_recipe: "default", clean_build: baseBuild, incremental_build: nil, binary: nil),
-    cli: CliMetrics(clean_build: baseBuild, incremental_build: nil, binaries: []),
-    tests: TestMetrics(duration_seconds: 5, warnings_count: 0, success: true, log_path: "/tmp/tests.log")
+    app: AppMetrics(
+      buildRecipe: "default", cleanBuild: baseBuild, incrementalBuild: nil, binary: nil),
+    cli: CliMetrics(cleanBuild: baseBuild, incrementalBuild: nil, binaries: []),
+    tests: TestMetrics(
+      durationSeconds: 5, warningsCount: 0, success: true, logPath: "/tmp/tests.log")
   )
 
   let head = RevisionMetrics(
     sha: "head",
-    app: AppMetrics(build_recipe: "legacy", clean_build: headBuild, incremental_build: nil, binary: nil),
-    cli: CliMetrics(clean_build: headBuild, incremental_build: nil, binaries: []),
-    tests: TestMetrics(duration_seconds: 6, warnings_count: 1, success: true, log_path: "/tmp/tests.log")
+    app: AppMetrics(
+      buildRecipe: "legacy", cleanBuild: headBuild, incrementalBuild: nil, binary: nil),
+    cli: CliMetrics(cleanBuild: headBuild, incrementalBuild: nil, binaries: []),
+    tests: TestMetrics(
+      durationSeconds: 6, warningsCount: 1, success: true, logPath: "/tmp/tests.log")
   )
 
   let metadata = RunMetadata(
-    timestamp_utc: "2026-01-25T00:00:00Z",
-    repo_root: "/repo",
-    base_sha: "base",
-    head_sha: "head",
-    worktree_root: "/tmp/worktrees",
-    output_root: "/tmp/output",
+    timestampUTC: "2026-01-25T00:00:00Z",
+    repoRoot: "/repo",
+    baseSha: "base",
+    headSha: "head",
+    worktreeRoot: "/tmp/worktrees",
+    outputRoot: "/tmp/output",
     scheme: "PersonaKitApp",
     configuration: "Release",
-    swift_version: "Swift 6.2",
-    xcode_version: "Xcode 16"
+    swiftVersion: "Swift 6.2",
+    xcodeVersion: "Xcode 16"
   )
 
   let report = markdownReport(base: base, head: head, metadata: metadata)
@@ -99,10 +103,11 @@ func markdownReportIncludesKeySectionsAndDeltas() {
 @Test
 func configFiltersRecipesByWorkspace() throws {
   let recipes = [
-    AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuild_args: []),
-    AppBuildRecipe(name: "pad", workspace: "PersonaPad.xcworkspace", scheme: "PersonaPadApp", xcodebuild_args: [])
+    AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuildArgs: []),
+    AppBuildRecipe(
+      name: "pad", workspace: "PersonaPad.xcworkspace", scheme: "PersonaPadApp", xcodebuildArgs: []),
   ]
-  let config = BuildCompareConfig(schema_version: 1, app_recipes: recipes)
+  let config = BuildCompareConfig(schemaVersion: 1, appRecipes: recipes)
 
   let padRecipes = config.appRecipes(forWorkspace: "PersonaPad.xcworkspace")
   #expect(padRecipes.count == 2)
