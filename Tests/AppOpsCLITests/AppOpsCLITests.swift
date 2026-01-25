@@ -8,46 +8,56 @@ import Testing
 @Test
 func runGeneratesReportAndMetrics() throws {
   let fileManager = FileManager.default
-  let root = fileManager.temporaryDirectory.appendingPathComponent(
-    UUID().uuidString, isDirectory: true)
-  try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
-  defer {
-    try? fileManager.removeItem(at: root)
-  }
+  let root = try makeTempRoot(fileManager: fileManager)
+  defer { try? fileManager.removeItem(at: root) }
 
-  let builtInURL = root.appendingPathComponent("BuiltIn.pack.json")
-  let leftURL = root.appendingPathComponent("Left.pack.json")
-  let rightURL = root.appendingPathComponent("Right.pack.json")
-
+  let packURLs = PackURLs(root: root)
   try writePack(
-    to: builtInURL,
+    to: packURLs.builtIn,
     packID: "built-in",
     packName: "Built In",
     personas: [
-      (id: "alpha", name: "Alpha", system: "System A")
+      PersonaSeed(id: "alpha", name: "Alpha", system: "System A")
     ]
   )
-
   try writePack(
-    to: leftURL,
+    to: packURLs.left,
     packID: "left",
     packName: "Left",
     personas: [
-      (id: "alpha", name: "Alpha", system: "System A")
+      PersonaSeed(id: "alpha", name: "Alpha", system: "System A")
     ]
   )
-
   try writePack(
-    to: rightURL,
+    to: packURLs.right,
     packID: "right",
     packName: "Right",
     personas: [
-      (id: "alpha", name: "Alpha", system: "System A (modified)"),
-      (id: "beta", name: "Beta", system: "System B"),
+      PersonaSeed(id: "alpha", name: "Alpha", system: "System A (modified)"),
+      PersonaSeed(id: "beta", name: "Beta", system: "System B"),
     ]
   )
 
-  let environment = AppOpsEnvironment(
+  let environment = makeEnvironment(root: root, builtInURL: packURLs.builtIn)
+  let outputDir = root.appendingPathComponent("Artifacts", isDirectory: true)
+  let args = makeArgs(outputDir: outputDir, leftURL: packURLs.left, rightURL: packURLs.right)
+  let result = try AppOpsCLI.run(arguments: args, environment: environment)
+
+  assertReportMetrics(result.report)
+  assertOutputFiles(result.outputRoot, fileManager: fileManager)
+}
+
+private func makeTempRoot(fileManager: FileManager) throws -> URL {
+  let root = fileManager.temporaryDirectory.appendingPathComponent(
+    UUID().uuidString,
+    isDirectory: true
+  )
+  try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+  return root
+}
+
+private func makeEnvironment(root: URL, builtInURL: URL) -> AppOpsEnvironment {
+  AppOpsEnvironment(
     fileClient: FileClient.liveValue,
     now: { Date(timeIntervalSince1970: 0) },
     repoRoot: { root },
@@ -61,27 +71,30 @@ func runGeneratesReportAndMetrics() throws {
     },
     builtInPackURLs: { _ in [builtInURL] }
   )
+}
 
-  let outputDir = root.appendingPathComponent("Artifacts", isDirectory: true)
-  let args = [
+private func makeArgs(outputDir: URL, leftURL: URL, rightURL: URL) -> [String] {
+  [
     "--out-dir", outputDir.path,
     "--import-source", rightURL.path,
     "--diff-left", leftURL.path,
     "--diff-right", rightURL.path,
     "--no-user-packs",
   ]
+}
 
-  let result = try AppOpsCLI.run(arguments: args, environment: environment)
+private func assertReportMetrics(_ report: AppOpsReport) {
+  #expect(report.reload.totalPacks == 1)
+  #expect(report.reload.totalPersonas == 1)
+  #expect(report.diff.addedCount == 1)
+  #expect(report.diff.modifiedCount == 1)
+  #expect(report.importMetrics.filesCopied == 1)
+  #expect(report.exportMetrics.bytesWritten > 0)
+}
 
-  #expect(result.report.reload.totalPacks == 1)
-  #expect(result.report.reload.totalPersonas == 1)
-  #expect(result.report.diff.addedCount == 1)
-  #expect(result.report.diff.modifiedCount == 1)
-  #expect(result.report.importMetrics.filesCopied == 1)
-  #expect(result.report.exportMetrics.bytesWritten > 0)
-
-  let markdownURL = result.outputRoot.appendingPathComponent("REPORT.md")
-  let jsonURL = result.outputRoot.appendingPathComponent("report.json")
+private func assertOutputFiles(_ outputRoot: URL, fileManager: FileManager) {
+  let markdownURL = outputRoot.appendingPathComponent("REPORT.md")
+  let jsonURL = outputRoot.appendingPathComponent("report.json")
   #expect(fileManager.fileExists(atPath: markdownURL.path))
   #expect(fileManager.fileExists(atPath: jsonURL.path))
 }
@@ -90,7 +103,7 @@ private func writePack(
   to url: URL,
   packID: String,
   packName: String,
-  personas: [(id: String, name: String, system: String)]
+  personas: [PersonaSeed]
 ) throws {
   let personaJSON = personas.map { persona in
     """
@@ -126,6 +139,24 @@ private func escapeJSON(_ value: String) -> String {
   value
     .replacingOccurrences(of: "\\", with: "\\\\")
     .replacingOccurrences(of: "\"", with: "\\\"")
+}
+
+private struct PackURLs {
+  let builtIn: URL
+  let left: URL
+  let right: URL
+
+  init(root: URL) {
+    builtIn = root.appendingPathComponent("BuiltIn.pack.json")
+    left = root.appendingPathComponent("Left.pack.json")
+    right = root.appendingPathComponent("Right.pack.json")
+  }
+}
+
+private struct PersonaSeed {
+  let id: String
+  let name: String
+  let system: String
 }
 
 private struct AppOpsTestError: Error, CustomStringConvertible {

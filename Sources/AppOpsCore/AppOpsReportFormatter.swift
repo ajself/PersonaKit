@@ -36,23 +36,36 @@ package enum AppOpsReportFormatter {
   private static func appendReload(to lines: inout [String], report: AppOpsReport) {
     lines.append("## Reload Pipeline")
     lines.append(
-      "- Total: \(formatSeconds(report.reload.totalDurationSeconds)) | Packs: \(report.reload.totalPacks) | Personas: \(report.reload.totalPersonas) | Diagnostics: \(report.reload.diagnosticsCount)"
+      "- Total: \(formatSeconds(report.reload.totalDurationSeconds))"
+        + " | Packs: \(report.reload.totalPacks)"
+        + " | Personas: \(report.reload.totalPersonas)"
+        + " | Diagnostics: \(report.reload.diagnosticsCount)"
     )
     lines.append(
-      "- Built-ins: \(formatSeconds(report.reload.builtIn.durationSeconds)) | Packs: \(report.reload.builtIn.packCount) | Personas: \(report.reload.builtIn.personaCount) | Diagnostics: \(report.reload.builtIn.diagnosticsCount)"
+      "- Built-ins: \(formatSeconds(report.reload.builtIn.durationSeconds))"
+        + " | Packs: \(report.reload.builtIn.packCount)"
+        + " | Personas: \(report.reload.builtIn.personaCount)"
+        + " | Diagnostics: \(report.reload.builtIn.diagnosticsCount)"
     )
     if let user = report.reload.userPacks {
       lines.append(
-        "- User packs: \(formatSeconds(user.durationSeconds)) | Packs: \(user.packCount) | Personas: \(user.personaCount) | Diagnostics: \(user.diagnosticsCount)"
+        "- User packs: \(formatSeconds(user.durationSeconds))"
+          + " | Packs: \(user.packCount)"
+          + " | Personas: \(user.personaCount)"
+          + " | Diagnostics: \(user.diagnosticsCount)"
       )
     } else {
       lines.append("- User packs: skipped")
     }
     lines.append(
-      "- Merge: \(formatSeconds(report.reload.merge.durationSeconds)) | Personas: \(report.reload.merge.personaCount) | Diagnostics: \(report.reload.merge.diagnosticsCount)"
+      "- Merge: \(formatSeconds(report.reload.merge.durationSeconds))"
+        + " | Personas: \(report.reload.merge.personaCount)"
+        + " | Diagnostics: \(report.reload.merge.diagnosticsCount)"
     )
     lines.append(
-      "- Resolve: \(formatSeconds(report.reload.resolve.durationSeconds)) | Personas: \(report.reload.resolve.personaCount) | Diagnostics: \(report.reload.resolve.diagnosticsCount)"
+      "- Resolve: \(formatSeconds(report.reload.resolve.durationSeconds))"
+        + " | Personas: \(report.reload.resolve.personaCount)"
+        + " | Diagnostics: \(report.reload.resolve.diagnosticsCount)"
     )
     lines.append("")
   }
@@ -60,7 +73,10 @@ package enum AppOpsReportFormatter {
   private static func appendCompose(to lines: inout [String], report: AppOpsReport) {
     lines.append("## Compose")
     lines.append(
-      "- Duration: \(formatSeconds(report.compose.durationSeconds)) | Personas: \(report.compose.personaCount) | Prompt bytes: \(report.compose.promptBytesTotal) | JSON bytes: \(report.compose.jsonBytesTotal)"
+      "- Duration: \(formatSeconds(report.compose.durationSeconds))"
+        + " | Personas: \(report.compose.personaCount)"
+        + " | Prompt bytes: \(report.compose.promptBytesTotal)"
+        + " | JSON bytes: \(report.compose.jsonBytesTotal)"
     )
     lines.append("")
   }
@@ -68,10 +84,14 @@ package enum AppOpsReportFormatter {
   private static func appendDiff(to lines: inout [String], report: AppOpsReport) {
     lines.append("## Diff")
     lines.append(
-      "- Duration: \(formatSeconds(report.diff.durationSeconds)) | Left personas: \(report.diff.leftPersonaCount) | Right personas: \(report.diff.rightPersonaCount)"
+      "- Duration: \(formatSeconds(report.diff.durationSeconds))"
+        + " | Left personas: \(report.diff.leftPersonaCount)"
+        + " | Right personas: \(report.diff.rightPersonaCount)"
     )
     lines.append(
-      "- Added: \(report.diff.addedCount) | Removed: \(report.diff.removedCount) | Modified: \(report.diff.modifiedCount)"
+      "- Added: \(report.diff.addedCount)"
+        + " | Removed: \(report.diff.removedCount)"
+        + " | Modified: \(report.diff.modifiedCount)"
     )
     lines.append("")
   }
@@ -79,10 +99,13 @@ package enum AppOpsReportFormatter {
   private static func appendImport(to lines: inout [String], report: AppOpsReport) {
     lines.append("## Import")
     lines.append(
-      "- Plan: \(formatSeconds(report.importMetrics.planDurationSeconds)) | Copy: \(formatSeconds(report.importMetrics.copyDurationSeconds))"
+      "- Plan: \(formatSeconds(report.importMetrics.planDurationSeconds))"
+        + " | Copy: \(formatSeconds(report.importMetrics.copyDurationSeconds))"
     )
     lines.append(
-      "- Files: \(report.importMetrics.filesCopied) | Bytes: \(report.importMetrics.bytesCopied) | Destination: \(report.importMetrics.destinationRoot)"
+      "- Files: \(report.importMetrics.filesCopied)"
+        + " | Bytes: \(report.importMetrics.bytesCopied)"
+        + " | Destination: \(report.importMetrics.destinationRoot)"
     )
     lines.append("")
   }
@@ -90,7 +113,9 @@ package enum AppOpsReportFormatter {
   private static func appendExport(to lines: inout [String], report: AppOpsReport) {
     lines.append("## Export")
     lines.append(
-      "- Duration: \(formatSeconds(report.exportMetrics.durationSeconds)) | Bytes: \(report.exportMetrics.bytesWritten) | Output: \(report.exportMetrics.outputPath)"
+      "- Duration: \(formatSeconds(report.exportMetrics.durationSeconds))"
+        + " | Bytes: \(report.exportMetrics.bytesWritten)"
+        + " | Output: \(report.exportMetrics.outputPath)"
     )
   }
 
