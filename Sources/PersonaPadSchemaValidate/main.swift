@@ -158,60 +158,124 @@ struct PersonaPadSchemaValidate {
       return "\(url.lastPathComponent): invalid JSON."
     }
 
+    let documentType: String
+    switch validateTopLevel(json: json, config: config, fileName: url.lastPathComponent) {
+    case .success(let value):
+      documentType = value
+    case .failure(let message):
+      return message
+    }
+
+    if documentType == "personaPack" {
+      if let message = validatePersonaPack(json: json, config: config, fileName: url.lastPathComponent)
+      {
+        return message
+      }
+    } else {
+      if let message = validatePersonaDocument(
+        json: json,
+        config: config,
+        fileName: url.lastPathComponent
+      ) {
+        return message
+      }
+    }
+
+    return nil
+  }
+
+  private static func validateTopLevel(
+    json: [String: Any],
+    config: SchemaConfig,
+    fileName: String
+  ) -> Result<String, String> {
     let requiredTop = ["schemaVersion", "documentType"]
     for key in requiredTop where json[key] == nil {
-      return "\(url.lastPathComponent): missing '\(key)'."
+      return .failure("\(fileName): missing '\(key)'.")
     }
 
     guard let schemaVersion = json["schemaVersion"] as? Int, schemaVersion >= 1 else {
-      return "\(url.lastPathComponent): schemaVersion must be >= 1."
+      return .failure("\(fileName): schemaVersion must be >= 1.")
     }
     guard let documentType = json["documentType"] as? String,
       config.documentTypes.contains(documentType)
     else {
-      return
-        "\(url.lastPathComponent): documentType must be one of \(config.documentTypes.sorted())."
+      return .failure(
+        "\(fileName): documentType must be one of \(config.documentTypes.sorted())."
+      )
     }
 
-    if documentType == "personaPack" {
-      for key in config.personaPackRequired where json[key] == nil {
-        return "\(url.lastPathComponent): missing '\(key)' for personaPack."
-      }
-      if let pack = json["pack"] as? [String: Any] {
-        for key in config.packRequired {
-          guard let value = pack[key] as? String,
-            !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-          else {
-            return "\(url.lastPathComponent): pack.\(key) must be a non-empty string."
-          }
-        }
-      } else {
-        return "\(url.lastPathComponent): pack must be an object."
-      }
-      if let defaults = json["defaults"] as? [String: Any],
-        let outputFormat = defaults["outputFormat"] as? String,
-        !config.outputFormats.contains(outputFormat)
-      {
-        return
-          "\(url.lastPathComponent): defaults.outputFormat must be one of \(config.outputFormats.sorted())."
-      }
-      guard let personas = json["personas"] as? [Any], !personas.isEmpty else {
-        return "\(url.lastPathComponent): personas must be a non-empty array."
-      }
-      for (idx, item) in personas.enumerated() {
-        if let message = validatePersonaObject(item, config: config) {
-          return "\(url.lastPathComponent): personas[\(idx)]: \(message)"
-        }
-      }
-    } else {
-      guard let persona = json["persona"] else {
-        return "\(url.lastPathComponent): missing 'persona' for persona."
-      }
-      if let message = validatePersonaObject(persona, config: config) {
-        return "\(url.lastPathComponent): persona: \(message)"
+    return .success(documentType)
+  }
+
+  private static func validatePersonaPack(
+    json: [String: Any],
+    config: SchemaConfig,
+    fileName: String
+  ) -> String? {
+    for key in config.personaPackRequired where json[key] == nil {
+      return "\(fileName): missing '\(key)' for personaPack."
+    }
+    guard let pack = json["pack"] as? [String: Any] else {
+      return "\(fileName): pack must be an object."
+    }
+    if let message = validatePackFields(pack, config: config, fileName: fileName) {
+      return message
+    }
+    if let message = validateDefaults(json: json, config: config, fileName: fileName) {
+      return message
+    }
+    guard let personas = json["personas"] as? [Any], !personas.isEmpty else {
+      return "\(fileName): personas must be a non-empty array."
+    }
+    for (idx, item) in personas.enumerated() {
+      if let message = validatePersonaObject(item, config: config) {
+        return "\(fileName): personas[\(idx)]: \(message)"
       }
     }
+    return nil
+  }
 
+  private static func validatePackFields(
+    _ pack: [String: Any],
+    config: SchemaConfig,
+    fileName: String
+  ) -> String? {
+    for key in config.packRequired {
+      guard let value = pack[key] as? String,
+        !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      else {
+        return "\(fileName): pack.\(key) must be a non-empty string."
+      }
+    }
+    return nil
+  }
+
+  private static func validateDefaults(
+    json: [String: Any],
+    config: SchemaConfig,
+    fileName: String
+  ) -> String? {
+    if let defaults = json["defaults"] as? [String: Any],
+      let outputFormat = defaults["outputFormat"] as? String,
+      !config.outputFormats.contains(outputFormat)
+    {
+      return "\(fileName): defaults.outputFormat must be one of \(config.outputFormats.sorted())."
+    }
+    return nil
+  }
+
+  private static func validatePersonaDocument(
+    json: [String: Any],
+    config: SchemaConfig,
+    fileName: String
+  ) -> String? {
+    guard let persona = json["persona"] else {
+      return "\(fileName): missing 'persona' for persona."
+    }
+    if let message = validatePersonaObject(persona, config: config) {
+      return "\(fileName): persona: \(message)"
+    }
     return nil
   }
 
@@ -237,45 +301,59 @@ struct PersonaPadSchemaValidate {
     }
 
     if let template = persona["template"] {
-      guard let templateObj = template as? [String: Any] else {
-        return "template must be an object."
-      }
-      if let sections = templateObj["sections"] as? [Any] {
-        for (idx, section) in sections.enumerated() {
-          guard let sectionObj = section as? [String: Any] else {
-            return "template.sections[\(idx)] must be an object."
-          }
-          for key in ["key", "label", "required"] {
-            if sectionObj[key] == nil { return "template.sections[\(idx)] missing '\(key)'." }
-          }
-          if let keyStr = sectionObj["key"] as? String, keyStr.isEmpty {
-            return "template.sections[\(idx)].key must be non-empty."
-          }
-          if let labelStr = sectionObj["label"] as? String, labelStr.isEmpty {
-            return "template.sections[\(idx)].label must be non-empty."
-          }
-          if (sectionObj["required"] as? Bool) == nil {
-            return "template.sections[\(idx)].required must be boolean."
-          }
-        }
+      if let message = validateTemplate(template) {
+        return message
       }
     }
 
     if let contract = persona["outputContract"] as? [String: Any] {
-      if let headings = contract["headings"] as? [Any] {
-        for (idx, heading) in headings.enumerated() {
-          if (heading as? String) == nil {
-            return "outputContract.headings[\(idx)] must be a string."
-          }
-        }
-      }
-      if let max = contract["askClarifyingQuestionsMax"] {
-        guard let intVal = max as? Int, intVal >= 0 else {
-          return "outputContract.askClarifyingQuestionsMax must be an integer >= 0."
-        }
+      if let message = validateOutputContract(contract) {
+        return message
       }
     }
 
+    return nil
+  }
+
+  private static func validateTemplate(_ template: Any) -> String? {
+    guard let templateObj = template as? [String: Any] else {
+      return "template must be an object."
+    }
+    if let sections = templateObj["sections"] as? [Any] {
+      for (idx, section) in sections.enumerated() {
+        guard let sectionObj = section as? [String: Any] else {
+          return "template.sections[\(idx)] must be an object."
+        }
+        for key in ["key", "label", "required"] {
+          if sectionObj[key] == nil { return "template.sections[\(idx)] missing '\(key)'." }
+        }
+        if let keyStr = sectionObj["key"] as? String, keyStr.isEmpty {
+          return "template.sections[\(idx)].key must be non-empty."
+        }
+        if let labelStr = sectionObj["label"] as? String, labelStr.isEmpty {
+          return "template.sections[\(idx)].label must be non-empty."
+        }
+        if (sectionObj["required"] as? Bool) == nil {
+          return "template.sections[\(idx)].required must be boolean."
+        }
+      }
+    }
+    return nil
+  }
+
+  private static func validateOutputContract(_ contract: [String: Any]) -> String? {
+    if let headings = contract["headings"] as? [Any] {
+      for (idx, heading) in headings.enumerated() {
+        if (heading as? String) == nil {
+          return "outputContract.headings[\(idx)] must be a string."
+        }
+      }
+    }
+    if let max = contract["askClarifyingQuestionsMax"] {
+      guard let intVal = max as? Int, intVal >= 0 else {
+        return "outputContract.askClarifyingQuestionsMax must be an integer >= 0."
+      }
+    }
     return nil
   }
 }
