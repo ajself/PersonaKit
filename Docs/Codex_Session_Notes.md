@@ -9,9 +9,9 @@
 - Introduced shared in-memory file client support for App tests to keep file-backed state deterministic.
 
 ## Suggested Next Steps
-- Consider AppStore reload tests that include user pack directories (directory vs. file-based packs) to validate packLocations mapping.
-- Add AppStore filter behavior tests for search/tag changes clearing selected saved filter when not applying a saved filter.
-- Evaluate adding IssueReportingTestSupport to App test target if host-app test warnings become noisy.
+- [done] AppStore reload tests include user pack directories (directory vs. file-based packs) to validate packLocations mapping.
+- [pending] Add AppStore filter behavior tests for search/tag changes clearing selected saved filter when not applying a saved filter.
+- [pending] Evaluate adding IssueReportingTestSupport to App test target if host-app test warnings become noisy.
 
 ## Verification
 - swift test

@@ -73,6 +73,8 @@ Tooling configs are authoritative for formatting and linting:
 
 If guidance conflicts, the style guide and tooling configs win.
 
+Agents should operate as SwiftUI and Swift 6 experts and write code that follows the style guide.
+
 ---
 
 ## What Agents Are Allowed To Do

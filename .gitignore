@@ -66,6 +66,7 @@ App.xcconfig
 Derived/
 graph.dot
 .swiftpm/
+.swiftlint_cache/
 
 ### Custom build dir
 .sim

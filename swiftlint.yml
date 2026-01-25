@@ -49,9 +49,10 @@ excluded:
   - Carthage
   - Pods
 
+cache_path: .swiftlint_cache
+
 force_cast: warning
 force_try: warning
-force_unwrapping: warning
 
 line_length:
   warning: 120

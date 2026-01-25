@@ -96,7 +96,11 @@ struct PersonaPadCoreComposeTests {
   @Test("CLI output matches core prompt")
   func cliOutputMatchesCorePrompt() throws {
     let packURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.pack.json")
-    let set = try #require(try? PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get())
+    let set = try #require(
+      try? PersonaLoader
+        .loadDocument(from: packURL, sourceKind: .project)
+        .get()
+    )
     let personaMap = Dictionary(uniqueKeysWithValues: set.personas.map { ($0.id, $0) })
     let resolved = PersonaResolver.resolveAll(from: personaMap).personasByID
     let persona = try #require(resolved["senior-ios-engineer"]?.persona)
@@ -117,13 +121,19 @@ struct PersonaPadCoreComposeTests {
   func cliResolvedJSONMatchesCoreEncoding() throws {
     let personaURL = coreTestsRepoRootURL().appendingPathComponent(
       "Examples/personapad.persona.json")
-    let set = try #require(try? PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get())
+    let set = try #require(
+      try? PersonaLoader
+        .loadDocument(from: personaURL, sourceKind: .project)
+        .get()
+    )
     let persona = try #require(set.personas.first)
 
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let coreText = try #require(String(data: try encoder.encode(persona), encoding: .utf8))
-    let cliText = try #require(PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true))
+    let cliText = try #require(
+      PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true)
+    )
     #expect(coreText == cliText)
   }
 }
