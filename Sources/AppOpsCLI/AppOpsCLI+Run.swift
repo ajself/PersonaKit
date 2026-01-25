@@ -131,7 +131,10 @@ extension AppOpsCLI {
       ? PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs.path
       : nil
     let timestamp = isoTimestampUTC(environment.now())
-    let outputRoot = outDir.appendingPathComponent("appops-\(timestamp)", isDirectory: true)
+    let outputRoot = outDir.appendingPathComponent(
+      "appops-\(fileSafeTimestamp(timestamp))",
+      isDirectory: true
+    )
     try fileClient.createDirectory(outputRoot, true)
 
     let buildCompare = try resolveBuildCompareInputs(
@@ -297,6 +300,10 @@ extension AppOpsCLI {
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter.string(from: date)
+  }
+
+  private static func fileSafeTimestamp(_ timestamp: String) -> String {
+    timestamp.replacingOccurrences(of: ":", with: "-")
   }
 
   private static func printUsage() {

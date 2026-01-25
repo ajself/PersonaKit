@@ -193,16 +193,8 @@ extension AppOpsCLI {
   ) throws -> WorkspacePlan {
     let baseWorkspace = try detectWorkspace(in: worktrees.base, override: context.inputs.workspace)
     let headWorkspace = try detectWorkspace(in: worktrees.head, override: context.inputs.workspace)
-    let baseScheme = resolveScheme(
-      defaultScheme: context.inputs.scheme,
-      schemeIsDefault: context.inputs.schemeIsDefault,
-      workspace: baseWorkspace
-    )
-    let headScheme = resolveScheme(
-      defaultScheme: context.inputs.scheme,
-      schemeIsDefault: context.inputs.schemeIsDefault,
-      workspace: headWorkspace
-    )
+    let baseScheme = resolveScheme(defaultScheme: context.inputs.scheme)
+    let headScheme = resolveScheme(defaultScheme: context.inputs.scheme)
     return WorkspacePlan(
       baseWorkspace: baseWorkspace,
       headWorkspace: headWorkspace,
@@ -369,7 +361,7 @@ extension AppOpsCLI {
       return override
     }
     let fm = FileManager.default
-    let preferred = ["PersonaKit.xcworkspace", "PersonaPad.xcworkspace"]
+    let preferred = ["PersonaKit.xcworkspace"]
     for name in preferred {
       let path = repo.appendingPathComponent(name)
       if fm.fileExists(atPath: path.path) {
@@ -385,16 +377,10 @@ extension AppOpsCLI {
     throw BuildCompareError.notFound("No .xcworkspace found in \(repo.path). Use --build-workspace to override.")
   }
 
-  /// Selects the scheme, switching defaults for PersonaPad workspaces.
+  /// Selects the scheme, honoring the caller's default.
   private static func resolveScheme(
-    defaultScheme: String,
-    schemeIsDefault: Bool,
-    workspace: String
+    defaultScheme: String
   ) -> String {
-    guard schemeIsDefault else { return defaultScheme }
-    if workspace == "PersonaPad.xcworkspace", defaultScheme == "PersonaKitApp" {
-      return "PersonaPadApp"
-    }
     return defaultScheme
   }
 

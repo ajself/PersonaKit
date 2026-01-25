@@ -86,8 +86,8 @@ Example:
     { "name": "default", "workspace": null, "scheme": null, "xcodebuild_args": [] },
     {
       "name": "legacy-driver",
-      "workspace": "PersonaPad.xcworkspace",
-      "scheme": "PersonaPadApp",
+      "workspace": "PersonaKit.xcworkspace",
+      "scheme": "PersonaKitApp",
       "xcodebuild_args": ["SWIFT_USE_INTEGRATED_DRIVER=NO"]
     }
   ]

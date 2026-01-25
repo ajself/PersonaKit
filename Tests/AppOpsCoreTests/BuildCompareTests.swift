@@ -113,15 +113,15 @@ func configFiltersRecipesByWorkspace() throws {
   let recipes = [
     AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuildArgs: []),
     AppBuildRecipe(
-      name: "pad", workspace: "PersonaPad.xcworkspace", scheme: "PersonaPadApp", xcodebuildArgs: []
+      name: "kit", workspace: "PersonaKit.xcworkspace", scheme: "PersonaKitApp", xcodebuildArgs: []
     ),
   ]
   let config = BuildCompareConfig(schemaVersion: 1, appRecipes: recipes)
 
-  let padRecipes = config.appRecipes(forWorkspace: "PersonaPad.xcworkspace")
-  #expect(padRecipes.count == 2)
-
   let kitRecipes = config.appRecipes(forWorkspace: "PersonaKit.xcworkspace")
-  #expect(kitRecipes.count == 1)
-  #expect(kitRecipes[0].name == "default")
+  #expect(kitRecipes.count == 2)
+
+  let otherRecipes = config.appRecipes(forWorkspace: "Other.xcworkspace")
+  #expect(otherRecipes.count == 1)
+  #expect(otherRecipes[0].name == "default")
 }
