@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "app_recipes": [
+    {
+      "name": "persona-kit-default",
+      "workspace": "PersonaKit.xcworkspace",
+      "scheme": "PersonaKitApp",
+      "xcodebuild_args": []
+    },
+    {
+      "name": "persona-pad-default",
+      "workspace": "PersonaPad.xcworkspace",
+      "scheme": "PersonaPadApp",
+      "xcodebuild_args": []
+    }
+  ]
+}

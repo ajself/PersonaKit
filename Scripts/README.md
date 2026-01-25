@@ -61,6 +61,7 @@ Artifacts/
       logs/
         base/
         head/
+      failures/
       derived-data/
         base/
         head/
@@ -69,7 +70,9 @@ Artifacts/
         head/
 ```
 
-`REPORT.md` is a human-readable summary. `report.json` is the machine-readable report.
+`REPORT.md` is a human-readable summary. `report.json` is the machine-readable report. When
+build or test steps fail, AppOps writes a failure summary with the error output under
+`build-compare/failures/` and links to it from the report.
 
 ### App build recipes (legacy support)
 

@@ -75,12 +75,15 @@ extension AppOpsCLI {
   }
 
   struct BuildAppRequest {
+    let label: String
+    let sha: String
     let repo: URL
     let workspace: String
     let scheme: String
     let configuration: String
     let derivedData: URL
     let logDir: URL
+    let outputRoot: URL
     let runIncremental: Bool
     let extraArgs: [String]
     let recipeName: String
@@ -93,9 +96,12 @@ extension AppOpsCLI {
   }
 
   struct BuildCliRequest {
+    let label: String
+    let sha: String
     let repo: URL
     let configuration: String
     let logDir: URL
+    let outputRoot: URL
     let runIncremental: Bool
   }
 
@@ -125,9 +131,12 @@ extension AppOpsCLI {
   }
 
   private struct TestRunRequest {
+    let label: String
+    let sha: String
     let repo: URL
     let configuration: String
     let logDir: URL
+    let outputRoot: URL
     let allowFailures: Bool
   }
 
@@ -339,6 +348,38 @@ extension AppOpsCLI {
     try text.write(to: url, atomically: true, encoding: .utf8)
   }
 
+  private static func recordFailure(
+    outputRoot: URL,
+    label: String,
+    sha: String,
+    step: String,
+    description: String,
+    logPath: String,
+    output: String
+  ) throws -> BuildCompareFailure {
+    let failuresRoot = outputRoot.appendingPathComponent("failures", isDirectory: true)
+    try ensureDirectory(failuresRoot)
+    let fileName = "\(label)-\(step).md"
+    let detailsURL = failuresRoot.appendingPathComponent(fileName)
+    let contents = """
+    # Build Compare Failure
+    Revision: \(sha)
+    Step: \(step)
+    Description: \(description)
+    Log: \(logPath)
+
+    ## Output
+    \(output)
+    """
+    try writeLog(contents, to: detailsURL)
+    return BuildCompareFailure(
+      step: step,
+      description: description,
+      logPath: logPath,
+      detailsPath: detailsURL.path
+    )
+  }
+
   /// Adds a git worktree at the requested path for the given revision.
   private static func addWorktree(repo: URL, path: URL, sha: String) throws {
     let result = try runTool("git", ["worktree", "add", path.path, sha], cwd: repo)
@@ -453,31 +494,48 @@ extension AppOpsCLI {
     let cleanLog = request.logDir.appendingPathComponent("app-clean-\(request.recipeName).log")
     let cleanResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
     try writeLog(cleanResult.output, to: cleanLog)
-    if cleanResult.exitCode != 0 {
-      throw BuildCompareError.commandFailed(
-        "App clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)"
+    let cleanFailure: BuildCompareFailure? = cleanResult.exitCode == 0
+      ? nil
+      : try recordFailure(
+        outputRoot: request.outputRoot,
+        label: request.label,
+        sha: request.sha,
+        step: "app-clean",
+        description: "App clean build failed (recipe: \(request.recipeName)).",
+        logPath: cleanLog.path,
+        output: cleanResult.output
       )
-    }
     let cleanMetrics = buildAppMetrics(
       result: cleanResult,
       logURL: cleanLog,
-      outputPath: request.derivedData.path
+      outputPath: request.derivedData.path,
+      failure: cleanFailure
     )
+    if cleanFailure != nil {
+      return BuildAppResult(clean: cleanMetrics, incremental: nil, binary: nil)
+    }
 
     var incrementalMetrics: BuildStepMetrics?
     if request.runIncremental {
       let incrLog = request.logDir.appendingPathComponent("app-incremental-\(request.recipeName).log")
       let incrResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
       try writeLog(incrResult.output, to: incrLog)
-      if incrResult.exitCode != 0 {
-        throw BuildCompareError.commandFailed(
-          "App incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)"
+      let incrFailure: BuildCompareFailure? = incrResult.exitCode == 0
+        ? nil
+        : try recordFailure(
+          outputRoot: request.outputRoot,
+          label: request.label,
+          sha: request.sha,
+          step: "app-incremental",
+          description: "App incremental build failed (recipe: \(request.recipeName)).",
+          logPath: incrLog.path,
+          output: incrResult.output
         )
-      }
       incrementalMetrics = buildAppMetrics(
         result: incrResult,
         logURL: incrLog,
-        outputPath: request.derivedData.path
+        outputPath: request.derivedData.path,
+        failure: incrFailure
       )
     }
 
@@ -505,17 +563,27 @@ extension AppOpsCLI {
       cwd: request.repo
     )
     try writeLog(cleanResult.output, to: cleanLog)
-    if cleanResult.exitCode != 0 {
-      throw BuildCompareError.commandFailed(
-        "CLI clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)"
+    let cleanFailure: BuildCompareFailure? = cleanResult.exitCode == 0
+      ? nil
+      : try recordFailure(
+        outputRoot: request.outputRoot,
+        label: request.label,
+        sha: request.sha,
+        step: "cli-clean",
+        description: "CLI clean build failed.",
+        logPath: cleanLog.path,
+        output: cleanResult.output
       )
-    }
     let cleanMetrics = buildStepMetrics(
       result: cleanResult,
       logURL: cleanLog,
       outputPath: buildDir.path,
-      timingSummary: nil
+      timingSummary: nil,
+      failure: cleanFailure
     )
+    if cleanFailure != nil {
+      return BuildCliResult(clean: cleanMetrics, incremental: nil, binaries: [])
+    }
 
     var incrementalMetrics: BuildStepMetrics?
     if request.runIncremental {
@@ -526,16 +594,23 @@ extension AppOpsCLI {
         cwd: request.repo
       )
       try writeLog(incrResult.output, to: incrLog)
-      if incrResult.exitCode != 0 {
-        throw BuildCompareError.commandFailed(
-          "CLI incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)"
+      let incrFailure: BuildCompareFailure? = incrResult.exitCode == 0
+        ? nil
+        : try recordFailure(
+          outputRoot: request.outputRoot,
+          label: request.label,
+          sha: request.sha,
+          step: "cli-incremental",
+          description: "CLI incremental build failed.",
+          logPath: incrLog.path,
+          output: incrResult.output
         )
-      }
       incrementalMetrics = buildStepMetrics(
         result: incrResult,
         logURL: incrLog,
         outputPath: buildDir.path,
-        timingSummary: nil
+        timingSummary: nil,
+        failure: incrFailure
       )
     }
 
@@ -555,14 +630,23 @@ extension AppOpsCLI {
     try writeLog(result.output, to: log)
     let warnings = countWarnings(result.output)
     let success = result.exitCode == 0
-    if !success, !request.allowFailures {
-      throw BuildCompareError.commandFailed("Tests failed. Log: \(log.path)\n\(result.output)")
-    }
+    let failure: BuildCompareFailure? = success
+      ? nil
+      : try recordFailure(
+        outputRoot: request.outputRoot,
+        label: request.label,
+        sha: request.sha,
+        step: "tests",
+        description: "Tests failed.",
+        logPath: log.path,
+        output: result.output
+      )
     return TestMetrics(
       durationSeconds: result.duration,
       warningsCount: warnings,
       success: success,
-      logPath: log.path
+      logPath: log.path,
+      failure: failure
     )
   }
 
@@ -574,9 +658,12 @@ extension AppOpsCLI {
     let appOutcome = try buildAppForRevision(request: request, logDir: logDir)
     let cliResult = try buildCli(
       request: BuildCliRequest(
+        label: request.label,
+        sha: request.sha,
         repo: request.repo,
         configuration: request.configuration,
         logDir: logDir,
+        outputRoot: request.outputRoot,
         runIncremental: request.runIncremental
       )
     )
@@ -604,6 +691,7 @@ extension AppOpsCLI {
     logDir: URL
   ) throws -> AppRecipeBuildOutcome {
     var lastError: Error?
+    var lastOutcome: AppRecipeBuildOutcome?
     for recipe in request.recipes {
       do {
         let derivedData = request.outputRoot.appendingPathComponent(
@@ -612,23 +700,33 @@ extension AppOpsCLI {
         let schemeToUse = recipe.scheme ?? request.scheme
         let result = try buildApp(
           request: BuildAppRequest(
+            label: request.label,
+            sha: request.sha,
             repo: request.repo,
             workspace: request.workspace,
             scheme: schemeToUse,
             configuration: request.configuration,
             derivedData: derivedData,
             logDir: logDir,
+            outputRoot: request.outputRoot,
             runIncremental: request.runIncremental,
             extraArgs: recipe.xcodebuildArgs,
             recipeName: recipe.name
           )
         )
-        return AppRecipeBuildOutcome(result: result, recipeName: recipe.name)
+        let outcome = AppRecipeBuildOutcome(result: result, recipeName: recipe.name)
+        if outcome.result.clean.failure == nil {
+          return outcome
+        }
+        lastOutcome = outcome
       } catch {
         lastError = error
       }
     }
 
+    if let lastOutcome {
+      return lastOutcome
+    }
     if let lastError {
       throw lastError
     }
@@ -642,9 +740,12 @@ extension AppOpsCLI {
     if request.runTests {
       return try runTests(
         request: TestRunRequest(
+          label: request.label,
+          sha: request.sha,
           repo: request.repo,
           configuration: request.configuration,
           logDir: logDir,
+          outputRoot: request.outputRoot,
           allowFailures: request.allowTestFailures
         )
       )
@@ -657,14 +758,16 @@ extension AppOpsCLI {
   private static func buildAppMetrics(
     result: CommandResult,
     logURL: URL,
-    outputPath: String
+    outputPath: String,
+    failure: BuildCompareFailure?
   ) -> BuildStepMetrics {
     let timing = parseTimingSummary(result.output)
     return buildStepMetrics(
       result: result,
       logURL: logURL,
       outputPath: outputPath,
-      timingSummary: timing.isEmpty ? nil : timing
+      timingSummary: timing.isEmpty ? nil : timing,
+      failure: failure
     )
   }
 
@@ -672,14 +775,16 @@ extension AppOpsCLI {
     result: CommandResult,
     logURL: URL,
     outputPath: String,
-    timingSummary: [TimingEntry]?
+    timingSummary: [TimingEntry]?,
+    failure: BuildCompareFailure?
   ) -> BuildStepMetrics {
     BuildStepMetrics(
       durationSeconds: result.duration,
       warningsCount: countWarnings(result.output),
       timingSummary: timingSummary,
       logPath: logURL.path,
-      outputPath: outputPath
+      outputPath: outputPath,
+      failure: failure
     )
   }
 

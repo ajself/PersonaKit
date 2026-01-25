@@ -31,6 +31,7 @@ package enum BuildCompareReportFormatter {
     appendTestStatus(to: &lines, report: report)
     appendBinarySizes(to: &lines, report: report)
     appendWarnings(to: &lines, report: report)
+    appendFailures(to: &lines, report: report)
     appendLogs(to: &lines, report: report)
     appendNotes(to: &lines)
   }
@@ -164,6 +165,21 @@ package enum BuildCompareReportFormatter {
     lines.append("")
   }
 
+  private static func appendFailures(to lines: inout [String], report: BuildCompareReport) {
+    let rows = failureRows(report: report)
+    guard !rows.isEmpty else { return }
+    lines.append("### Failures")
+    lines.append("| Revision | Step | Description | Details | Log |")
+    lines.append("| --- | --- | --- | --- | --- |")
+    for row in rows {
+      let failure = row.failure
+      lines.append(
+        "| \(row.revision) | \(escapeTable(failure.step)) | \(escapeTable(failure.description)) | \(failure.detailsPath) | \(failure.logPath) |"
+      )
+    }
+    lines.append("")
+  }
+
   private static func appendLogs(to lines: inout [String], report: BuildCompareReport) {
     lines.append("### Logs")
     lines.append("- Base logs: \(report.run.outputRoot)/logs/base")
@@ -194,5 +210,40 @@ package enum BuildCompareReportFormatter {
 
   private static func binaryName(for path: String) -> String {
     URL(fileURLWithPath: path).lastPathComponent
+  }
+
+  private static func escapeTable(_ value: String) -> String {
+    value.replacingOccurrences(of: "|", with: "\\|")
+  }
+
+  private static func failureRows(report: BuildCompareReport) -> [FailureRow] {
+    let baseRows = failures(for: report.base).map { FailureRow(revision: "Base", failure: $0) }
+    let headRows = failures(for: report.head).map { FailureRow(revision: "Head", failure: $0) }
+    return baseRows + headRows
+  }
+
+  private static func failures(for metrics: BuildCompareRevisionMetrics) -> [BuildCompareFailure] {
+    var failures: [BuildCompareFailure] = []
+    if let failure = metrics.app.cleanBuild.failure {
+      failures.append(failure)
+    }
+    if let failure = metrics.app.incrementalBuild?.failure {
+      failures.append(failure)
+    }
+    if let failure = metrics.cli.cleanBuild.failure {
+      failures.append(failure)
+    }
+    if let failure = metrics.cli.incrementalBuild?.failure {
+      failures.append(failure)
+    }
+    if let failure = metrics.tests.failure {
+      failures.append(failure)
+    }
+    return failures
+  }
+
+  private struct FailureRow {
+    let revision: String
+    let failure: BuildCompareFailure
   }
 }

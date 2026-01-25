@@ -1,5 +1,32 @@
 import Foundation
 
+/// Recorded failure details for a build or test step.
+package struct BuildCompareFailure: Codable, Equatable, Sendable {
+  package let step: String
+  package let description: String
+  package let logPath: String
+  package let detailsPath: String
+
+  package init(
+    step: String,
+    description: String,
+    logPath: String,
+    detailsPath: String
+  ) {
+    self.step = step
+    self.description = description
+    self.logPath = logPath
+    self.detailsPath = detailsPath
+  }
+
+  package enum CodingKeys: String, CodingKey {
+    case step
+    case description
+    case logPath = "log_path"
+    case detailsPath = "details_path"
+  }
+}
+
 /// One entry in an xcodebuild timing summary.
 package struct TimingEntry: Codable, Equatable, Sendable {
   package let name: String
@@ -18,19 +45,22 @@ package struct BuildStepMetrics: Codable, Equatable, Sendable {
   package let timingSummary: [TimingEntry]?
   package let logPath: String
   package let outputPath: String?
+  package let failure: BuildCompareFailure?
 
   package init(
     durationSeconds: Double,
     warningsCount: Int,
     timingSummary: [TimingEntry]?,
     logPath: String,
-    outputPath: String?
+    outputPath: String?,
+    failure: BuildCompareFailure? = nil
   ) {
     self.durationSeconds = durationSeconds
     self.warningsCount = warningsCount
     self.timingSummary = timingSummary
     self.logPath = logPath
     self.outputPath = outputPath
+    self.failure = failure
   }
 
   package enum CodingKeys: String, CodingKey {
@@ -39,6 +69,7 @@ package struct BuildStepMetrics: Codable, Equatable, Sendable {
     case timingSummary = "timing_summary"
     case logPath = "log_path"
     case outputPath = "output_path"
+    case failure
   }
 }
 
@@ -114,17 +145,20 @@ package struct TestMetrics: Codable, Equatable, Sendable {
   package let warningsCount: Int
   package let success: Bool
   package let logPath: String
+  package let failure: BuildCompareFailure?
 
   package init(
     durationSeconds: Double,
     warningsCount: Int,
     success: Bool,
-    logPath: String
+    logPath: String,
+    failure: BuildCompareFailure? = nil
   ) {
     self.durationSeconds = durationSeconds
     self.warningsCount = warningsCount
     self.success = success
     self.logPath = logPath
+    self.failure = failure
   }
 
   package enum CodingKeys: String, CodingKey {
@@ -132,6 +166,7 @@ package struct TestMetrics: Codable, Equatable, Sendable {
     case warningsCount = "warnings_count"
     case success
     case logPath = "log_path"
+    case failure
   }
 }
 
