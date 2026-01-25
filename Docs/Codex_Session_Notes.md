@@ -17,8 +17,10 @@ Known remaining targets:
 - Address remaining `line_length` errors/warnings (120 char limit).
 - Prefer readability; avoid semantic changes.
 - Commit: `style(lint): wrap long lines`.
+✅ No remaining line length violations.
 
 ### Step 5 — Final pass
 - Run `swift-format` on touched files.
 - Run full `swiftlint` and confirm zero violations.
 - Commit: `chore(lint): final cleanup`.
+✅ `swift-format` and full `swiftlint` are clean.
