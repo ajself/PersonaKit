@@ -1,12 +1,14 @@
 import BuildCompareCore
 import Foundation
 
+/// Captures the outcome of running a command-line tool.
 struct CommandResult {
   let exitCode: Int32
   let output: String
   let duration: TimeInterval
 }
 
+/// User-facing errors surfaced by the CLI.
 enum ToolError: Error, CustomStringConvertible {
   case usage(String)
   case commandFailed(String)
@@ -14,16 +16,17 @@ enum ToolError: Error, CustomStringConvertible {
 
   var description: String {
     switch self {
-    case let .usage(message):
+    case .usage(let message):
       return message
-    case let .commandFailed(message):
+    case .commandFailed(let message):
       return message
-    case let .notFound(message):
+    case .notFound(let message):
       return message
     }
   }
 }
 
+/// Parsed command-line options for a build-compare run.
 struct Options {
   let baseSha: String
   let headSha: String
@@ -40,27 +43,29 @@ struct Options {
   let runIncremental: Bool
 }
 
+/// Prints usage help text to stdout.
 func printUsage() {
   let text = """
-  Usage:
-    Scripts/build-compare <base_sha> <head_sha> [options]
+    Usage:
+      Scripts/build-compare <base_sha> <head_sha> [options]
 
-  Options:
-    --out <path>            Output directory (default: /tmp/personakit-build-compare/<timestamp>)
-    --worktree-root <path>  Worktree root (default: <out>/worktrees)
-    --workspace <name>      Xcode workspace (default: auto-detect)
-    --scheme <name>         Xcode scheme (default: PersonaKitApp)
-    --configuration <name>  Build configuration (default: Release)
-    --config <path>         JSON config file for app build recipes (default: Scripts/build-compare.json if present)
-    --allow-test-failures   Record test failures without aborting the run
-    --no-tests              Skip swift test
-    --no-incremental        Skip incremental builds
-    --keep-worktrees        Keep worktrees after run
-    -h, --help              Show help
-  """
+    Options:
+      --out <path>            Output directory (default: /tmp/personakit-build-compare/<timestamp>)
+      --worktree-root <path>  Worktree root (default: <out>/worktrees)
+      --workspace <name>      Xcode workspace (default: auto-detect)
+      --scheme <name>         Xcode scheme (default: PersonaKitApp)
+      --configuration <name>  Build configuration (default: Release)
+      --config <path>         JSON config file for app build recipes (default: Scripts/build-compare.json if present)
+      --allow-test-failures   Record test failures without aborting the run
+      --no-tests              Skip swift test
+      --no-incremental        Skip incremental builds
+      --keep-worktrees        Keep worktrees after run
+      -h, --help              Show help
+    """
   print(text)
 }
 
+/// Parses command-line arguments into strongly typed options.
 func parseArgs() throws -> Options {
   var args = CommandLine.arguments.dropFirst()
   var baseSha: String?
@@ -157,6 +162,7 @@ func parseArgs() throws -> Options {
   )
 }
 
+/// Runs a tool via `/usr/bin/env`, capturing combined output and elapsed time.
 func runTool(_ tool: String, _ args: [String], cwd: URL? = nil) throws -> CommandResult {
   let process = Process()
   process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -171,9 +177,11 @@ func runTool(_ tool: String, _ args: [String], cwd: URL? = nil) throws -> Comman
   process.waitUntilExit()
   let end = Date()
   let output = String(data: data, encoding: .utf8) ?? ""
-  return CommandResult(exitCode: process.terminationStatus, output: output, duration: end.timeIntervalSince(start))
+  return CommandResult(
+    exitCode: process.terminationStatus, output: output, duration: end.timeIntervalSince(start))
 }
 
+/// Calculates the total size of a directory tree in bytes.
 func directorySize(at url: URL) -> Int64 {
   let fm = FileManager.default
   guard let enumerator = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) else {
@@ -182,30 +190,37 @@ func directorySize(at url: URL) -> Int64 {
   var total: Int64 = 0
   for case let fileURL as URL in enumerator {
     if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
-       let size = values.fileSize {
+      let size = values.fileSize
+    {
       total += Int64(size)
     }
   }
   return total
 }
 
+/// Returns the size of a single file in bytes.
 func fileSize(at url: URL) -> Int64 {
   let fm = FileManager.default
   guard let attrs = try? fm.attributesOfItem(atPath: url.path),
-        let size = attrs[.size] as? NSNumber else {
+    let size = attrs[.size] as? NSNumber
+  else {
     return 0
   }
   return size.int64Value
 }
 
+/// Ensures a directory exists, creating intermediate directories as needed.
 func ensureDirectory(_ url: URL) throws {
-  try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+  try FileManager.default.createDirectory(
+    at: url, withIntermediateDirectories: true, attributes: nil)
 }
 
+/// Writes log text to disk using UTF-8 encoding.
 func writeLog(_ text: String, to url: URL) throws {
   try text.write(to: url, atomically: true, encoding: .utf8)
 }
 
+/// Resolves the repository root using `git rev-parse --show-toplevel`.
 func repoRoot() throws -> URL {
   let result = try runTool("git", ["rev-parse", "--show-toplevel"])
   if result.exitCode != 0 {
@@ -218,13 +233,17 @@ func repoRoot() throws -> URL {
   return URL(fileURLWithPath: path)
 }
 
+/// Returns the Swift and Xcode version strings for the current environment.
 func versionInfo() throws -> (swift: String, xcode: String) {
   let swiftResult = try runTool("swift", ["--version"])
   let xcodeResult = try runTool("xcodebuild", ["-version"])
-  return (swiftResult.output.trimmingCharacters(in: .whitespacesAndNewlines),
-          xcodeResult.output.trimmingCharacters(in: .whitespacesAndNewlines))
+  return (
+    swiftResult.output.trimmingCharacters(in: .whitespacesAndNewlines),
+    xcodeResult.output.trimmingCharacters(in: .whitespacesAndNewlines)
+  )
 }
 
+/// Adds a git worktree at the requested path for the given revision.
 func addWorktree(repo: URL, path: URL, sha: String) throws {
   let result = try runTool("git", ["worktree", "add", path.path, sha], cwd: repo)
   if result.exitCode != 0 {
@@ -232,6 +251,7 @@ func addWorktree(repo: URL, path: URL, sha: String) throws {
   }
 }
 
+/// Removes a git worktree at the requested path.
 func removeWorktree(repo: URL, path: URL) throws {
   let result = try runTool("git", ["worktree", "remove", path.path], cwd: repo)
   if result.exitCode != 0 {
@@ -239,6 +259,7 @@ func removeWorktree(repo: URL, path: URL) throws {
   }
 }
 
+/// Detects the workspace name in a repo, honoring an explicit override.
 func detectWorkspace(in repo: URL, override: String?) throws -> String {
   if let override {
     return override
@@ -260,6 +281,7 @@ func detectWorkspace(in repo: URL, override: String?) throws -> String {
   throw ToolError.notFound("No .xcworkspace found in \(repo.path). Use --workspace to override.")
 }
 
+/// Selects the scheme, switching defaults for PersonaPad workspaces.
 func resolveScheme(defaultScheme: String, schemeIsDefault: Bool, workspace: String) -> String {
   guard schemeIsDefault else { return defaultScheme }
   if workspace == "PersonaPad.xcworkspace", defaultScheme == "PersonaKitApp" {
@@ -268,6 +290,7 @@ func resolveScheme(defaultScheme: String, schemeIsDefault: Bool, workspace: Stri
   return defaultScheme
 }
 
+/// Provides the fallback app build recipes when no config is supplied.
 func defaultAppRecipes() -> [AppBuildRecipe] {
   [
     AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuild_args: []),
@@ -294,10 +317,11 @@ func defaultAppRecipes() -> [AppBuildRecipe] {
       workspace: nil,
       scheme: nil,
       xcodebuild_args: ["-UseNewBuildSystem=NO", "SWIFT_USE_INTEGRATED_DRIVER=NO"]
-    )
+    ),
   ]
 }
 
+/// Loads a build-compare configuration JSON from disk when available.
 func loadConfig(repo: URL, overridePath: String?) throws -> BuildCompareConfig? {
   let fm = FileManager.default
   let configURL: URL?
@@ -314,6 +338,7 @@ func loadConfig(repo: URL, overridePath: String?) throws -> BuildCompareConfig? 
   return try decoder.decode(BuildCompareConfig.self, from: data)
 }
 
+/// Builds the app target and collects timing, warnings, and binary size metrics.
 func buildApp(
   repo: URL,
   workspace: String,
@@ -338,13 +363,14 @@ func buildApp(
     "-configuration", configuration,
     "-derivedDataPath", derivedData.path,
     "CODE_SIGNING_ALLOWED=NO",
-    "-showBuildTimingSummary"
+    "-showBuildTimingSummary",
   ]
   let buildArgs = baseArgs + extraArgs + ["build"]
   let cleanResult = try runTool("xcodebuild", buildArgs, cwd: repo)
   try writeLog(cleanResult.output, to: cleanLog)
   if cleanResult.exitCode != 0 {
-    throw ToolError.commandFailed("App clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)")
+    throw ToolError.commandFailed(
+      "App clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)")
   }
   let cleanWarnings = countWarnings(cleanResult.output)
   let cleanTiming = parseTimingSummary(cleanResult.output)
@@ -362,7 +388,8 @@ func buildApp(
     let incrResult = try runTool("xcodebuild", buildArgs, cwd: repo)
     try writeLog(incrResult.output, to: incrLog)
     if incrResult.exitCode != 0 {
-      throw ToolError.commandFailed("App incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)")
+      throw ToolError.commandFailed(
+        "App incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)")
     }
     let incrWarnings = countWarnings(incrResult.output)
     let incrTiming = parseTimingSummary(incrResult.output)
@@ -390,6 +417,7 @@ func buildApp(
   return (cleanMetrics, incrementalMetrics, binaryMetric)
 }
 
+/// Builds the CLI target and collects timing, warnings, and binary size metrics.
 func buildCli(
   repo: URL,
   configuration: String,
@@ -407,7 +435,8 @@ func buildCli(
   let cleanResult = try runTool("swift", ["build", "-c", configuration.lowercased()], cwd: repo)
   try writeLog(cleanResult.output, to: cleanLog)
   if cleanResult.exitCode != 0 {
-    throw ToolError.commandFailed("CLI clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)")
+    throw ToolError.commandFailed(
+      "CLI clean build failed. Log: \(cleanLog.path)\n\(cleanResult.output)")
   }
   let cleanMetrics = BuildStepMetrics(
     duration_seconds: cleanResult.duration,
@@ -423,7 +452,8 @@ func buildCli(
     let incrResult = try runTool("swift", ["build", "-c", configuration.lowercased()], cwd: repo)
     try writeLog(incrResult.output, to: incrLog)
     if incrResult.exitCode != 0 {
-      throw ToolError.commandFailed("CLI incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)")
+      throw ToolError.commandFailed(
+        "CLI incremental build failed. Log: \(incrLog.path)\n\(incrResult.output)")
     }
     incrementalMetrics = BuildStepMetrics(
       duration_seconds: incrResult.duration,
@@ -447,6 +477,7 @@ func buildCli(
   return (cleanMetrics, incrementalMetrics, binaries)
 }
 
+/// Runs `swift test` and returns timing and warning metrics.
 func runTests(
   repo: URL,
   configuration: String,
@@ -462,9 +493,12 @@ func runTests(
   if !success, !allowFailures {
     throw ToolError.commandFailed("Tests failed. Log: \(log.path)\n\(result.output)")
   }
-  return TestMetrics(duration_seconds: result.duration, warnings_count: warnings, success: success, log_path: log.path)
+  return TestMetrics(
+    duration_seconds: result.duration, warnings_count: warnings, success: success,
+    log_path: log.path)
 }
 
+/// Executes all build and test steps for a single revision.
 func runForRevision(
   label: String,
   sha: String,

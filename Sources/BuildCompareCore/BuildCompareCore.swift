@@ -1,5 +1,6 @@
 import Foundation
 
+/// One entry in an xcodebuild timing summary.
 package struct TimingEntry: Codable, Equatable {
   package let name: String
   package let seconds: Double
@@ -10,6 +11,7 @@ package struct TimingEntry: Codable, Equatable {
   }
 }
 
+/// Metrics captured for a single build or test step.
 package struct BuildStepMetrics: Codable, Equatable {
   package let duration_seconds: Double
   package let warnings_count: Int
@@ -32,6 +34,7 @@ package struct BuildStepMetrics: Codable, Equatable {
   }
 }
 
+/// Size information for a built binary on disk.
 package struct BinaryMetric: Codable, Equatable {
   package let path: String
   package let size_bytes: Int64
@@ -42,6 +45,7 @@ package struct BinaryMetric: Codable, Equatable {
   }
 }
 
+/// Aggregated metrics for building the macOS app.
 package struct AppMetrics: Codable, Equatable {
   package let build_recipe: String
   package let clean_build: BuildStepMetrics
@@ -61,6 +65,7 @@ package struct AppMetrics: Codable, Equatable {
   }
 }
 
+/// Aggregated metrics for building command-line tools.
 package struct CliMetrics: Codable, Equatable {
   package let clean_build: BuildStepMetrics
   package let incremental_build: BuildStepMetrics?
@@ -77,6 +82,7 @@ package struct CliMetrics: Codable, Equatable {
   }
 }
 
+/// Metrics captured from running the test suite.
 package struct TestMetrics: Codable, Equatable {
   package let duration_seconds: Double
   package let warnings_count: Int
@@ -96,6 +102,7 @@ package struct TestMetrics: Codable, Equatable {
   }
 }
 
+/// Metrics captured for a single git revision.
 package struct RevisionMetrics: Codable, Equatable {
   package let sha: String
   package let app: AppMetrics
@@ -115,6 +122,7 @@ package struct RevisionMetrics: Codable, Equatable {
   }
 }
 
+/// Metadata that describes the environment and inputs for a run.
 package struct RunMetadata: Codable, Equatable {
   package let timestamp_utc: String
   package let repo_root: String
@@ -152,6 +160,7 @@ package struct RunMetadata: Codable, Equatable {
   }
 }
 
+/// The full report schema emitted by build-compare.
 package struct Report: Codable, Equatable {
   package let schema_version: Int
   package let run: RunMetadata
@@ -171,6 +180,7 @@ package struct Report: Codable, Equatable {
   }
 }
 
+/// Describes an app build recipe and its xcodebuild overrides.
 package struct AppBuildRecipe: Codable, Equatable {
   package let name: String
   package let workspace: String?
@@ -190,6 +200,7 @@ package struct AppBuildRecipe: Codable, Equatable {
   }
 }
 
+/// Configuration file schema for build-compare app recipes.
 package struct BuildCompareConfig: Codable, Equatable {
   package let schema_version: Int
   package let app_recipes: [AppBuildRecipe]
@@ -199,6 +210,7 @@ package struct BuildCompareConfig: Codable, Equatable {
     self.app_recipes = app_recipes
   }
 
+  /// Filters app recipes, preferring workspace-specific entries.
   package func appRecipes(forWorkspace workspace: String) -> [AppBuildRecipe] {
     let matches = app_recipes.filter { recipe in
       guard let target = recipe.workspace else { return true }
@@ -223,9 +235,10 @@ package func parseTimingSummary(_ output: String) -> [TimingEntry] {
     guard let regex else { continue }
     let range = NSRange(text.startIndex..<text.endIndex, in: text)
     if let match = regex.firstMatch(in: text, options: [], range: range),
-       match.numberOfRanges == 3,
-       let nameRange = Range(match.range(at: 1), in: text),
-       let secondsRange = Range(match.range(at: 2), in: text) {
+      match.numberOfRanges == 3,
+      let nameRange = Range(match.range(at: 1), in: text),
+      let secondsRange = Range(match.range(at: 2), in: text)
+    {
       let name = String(text[nameRange]).trimmingCharacters(in: .whitespaces)
       let seconds = Double(text[secondsRange]) ?? 0
       if !name.isEmpty {
@@ -236,23 +249,30 @@ package func parseTimingSummary(_ output: String) -> [TimingEntry] {
   return entries
 }
 
+/// Formats a signed delta for seconds with two decimal places.
 package func formatDelta(_ value: Double) -> String {
   let sign = value >= 0 ? "+" : ""
   return String(format: "%@%.2fs", sign, value)
 }
 
+/// Formats a signed delta for bytes with no unit conversion.
 package func formatBytesDelta(_ value: Int64) -> String {
   let sign = value >= 0 ? "+" : ""
   return "\(sign)\(value)"
 }
 
-package func markdownReport(base: RevisionMetrics, head: RevisionMetrics, metadata: RunMetadata) -> String {
+/// Generates a markdown report comparing two revisions.
+package func markdownReport(
+  base: RevisionMetrics, head: RevisionMetrics, metadata: RunMetadata
+) -> String {
   func delta(_ head: Double, _ base: Double) -> String {
     formatDelta(head - base)
   }
 
-  let appCleanDelta = delta(head.app.clean_build.duration_seconds, base.app.clean_build.duration_seconds)
-  let cliCleanDelta = delta(head.cli.clean_build.duration_seconds, base.cli.clean_build.duration_seconds)
+  let appCleanDelta = delta(
+    head.app.clean_build.duration_seconds, base.app.clean_build.duration_seconds)
+  let cliCleanDelta = delta(
+    head.cli.clean_build.duration_seconds, base.cli.clean_build.duration_seconds)
   let testDelta = delta(head.tests.duration_seconds, base.tests.duration_seconds)
 
   var appBinaryDelta = "n/a"
@@ -271,17 +291,29 @@ package func markdownReport(base: RevisionMetrics, head: RevisionMetrics, metada
   lines.append("## Build Times")
   lines.append("| Metric | Base (s) | Head (s) | Delta |")
   lines.append("| --- | ---: | ---: | ---: |")
-  lines.append("| App clean build | \(String(format: "%.2f", base.app.clean_build.duration_seconds)) | \(String(format: "%.2f", head.app.clean_build.duration_seconds)) | \(appCleanDelta) |")
+  lines.append(
+    "| App clean build | \(String(format: "%.2f", base.app.clean_build.duration_seconds)) | \(String(format: "%.2f", head.app.clean_build.duration_seconds)) | \(appCleanDelta) |"
+  )
   if let baseIncr = base.app.incremental_build?.duration_seconds,
-     let headIncr = head.app.incremental_build?.duration_seconds {
-    lines.append("| App incremental build | \(String(format: "%.2f", baseIncr)) | \(String(format: "%.2f", headIncr)) | \(formatDelta(headIncr - baseIncr)) |")
+    let headIncr = head.app.incremental_build?.duration_seconds
+  {
+    lines.append(
+      "| App incremental build | \(String(format: "%.2f", baseIncr)) | \(String(format: "%.2f", headIncr)) | \(formatDelta(headIncr - baseIncr)) |"
+    )
   }
-  lines.append("| CLI clean build | \(String(format: "%.2f", base.cli.clean_build.duration_seconds)) | \(String(format: "%.2f", head.cli.clean_build.duration_seconds)) | \(cliCleanDelta) |")
+  lines.append(
+    "| CLI clean build | \(String(format: "%.2f", base.cli.clean_build.duration_seconds)) | \(String(format: "%.2f", head.cli.clean_build.duration_seconds)) | \(cliCleanDelta) |"
+  )
   if let baseIncr = base.cli.incremental_build?.duration_seconds,
-     let headIncr = head.cli.incremental_build?.duration_seconds {
-    lines.append("| CLI incremental build | \(String(format: "%.2f", baseIncr)) | \(String(format: "%.2f", headIncr)) | \(formatDelta(headIncr - baseIncr)) |")
+    let headIncr = head.cli.incremental_build?.duration_seconds
+  {
+    lines.append(
+      "| CLI incremental build | \(String(format: "%.2f", baseIncr)) | \(String(format: "%.2f", headIncr)) | \(formatDelta(headIncr - baseIncr)) |"
+    )
   }
-  lines.append("| Tests | \(String(format: "%.2f", base.tests.duration_seconds)) | \(String(format: "%.2f", head.tests.duration_seconds)) | \(testDelta) |")
+  lines.append(
+    "| Tests | \(String(format: "%.2f", base.tests.duration_seconds)) | \(String(format: "%.2f", head.tests.duration_seconds)) | \(testDelta) |"
+  )
   lines.append("")
   lines.append("## Test Status")
   lines.append("| Metric | Base | Head |")
@@ -302,26 +334,38 @@ package func markdownReport(base: RevisionMetrics, head: RevisionMetrics, metada
     }
     if let baseBinary {
       let deltaBytes = binary.size_bytes - baseBinary.size_bytes
-      lines.append("| \(URL(fileURLWithPath: binary.path).lastPathComponent) | \(baseBinary.size_bytes) | \(binary.size_bytes) | \(formatBytesDelta(deltaBytes)) |")
+      lines.append(
+        "| \(URL(fileURLWithPath: binary.path).lastPathComponent) | \(baseBinary.size_bytes) | \(binary.size_bytes) | \(formatBytesDelta(deltaBytes)) |"
+      )
     } else {
-      lines.append("| \(URL(fileURLWithPath: binary.path).lastPathComponent) | n/a | \(binary.size_bytes) | n/a |")
+      lines.append(
+        "| \(URL(fileURLWithPath: binary.path).lastPathComponent) | n/a | \(binary.size_bytes) | n/a |"
+      )
     }
   }
   lines.append("")
   lines.append("## Warnings")
   lines.append("| Metric | Base | Head | Delta |")
   lines.append("| --- | ---: | ---: | ---: |")
-  lines.append("| App clean build | \(base.app.clean_build.warnings_count) | \(head.app.clean_build.warnings_count) | \(head.app.clean_build.warnings_count - base.app.clean_build.warnings_count) |")
+  lines.append(
+    "| App clean build | \(base.app.clean_build.warnings_count) | \(head.app.clean_build.warnings_count) | \(head.app.clean_build.warnings_count - base.app.clean_build.warnings_count) |"
+  )
   if let baseIncr = base.app.incremental_build?.warnings_count,
-     let headIncr = head.app.incremental_build?.warnings_count {
+    let headIncr = head.app.incremental_build?.warnings_count
+  {
     lines.append("| App incremental build | \(baseIncr) | \(headIncr) | \(headIncr - baseIncr) |")
   }
-  lines.append("| CLI clean build | \(base.cli.clean_build.warnings_count) | \(head.cli.clean_build.warnings_count) | \(head.cli.clean_build.warnings_count - base.cli.clean_build.warnings_count) |")
+  lines.append(
+    "| CLI clean build | \(base.cli.clean_build.warnings_count) | \(head.cli.clean_build.warnings_count) | \(head.cli.clean_build.warnings_count - base.cli.clean_build.warnings_count) |"
+  )
   if let baseIncr = base.cli.incremental_build?.warnings_count,
-     let headIncr = head.cli.incremental_build?.warnings_count {
+    let headIncr = head.cli.incremental_build?.warnings_count
+  {
     lines.append("| CLI incremental build | \(baseIncr) | \(headIncr) | \(headIncr - baseIncr) |")
   }
-  lines.append("| Tests | \(base.tests.warnings_count) | \(head.tests.warnings_count) | \(head.tests.warnings_count - base.tests.warnings_count) |")
+  lines.append(
+    "| Tests | \(base.tests.warnings_count) | \(head.tests.warnings_count) | \(head.tests.warnings_count - base.tests.warnings_count) |"
+  )
   lines.append("")
   lines.append("## Logs")
   lines.append("- Base logs: \(metadata.output_root)/logs/base")
