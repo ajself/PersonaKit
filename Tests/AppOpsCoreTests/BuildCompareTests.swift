@@ -1,4 +1,4 @@
-import BuildCompareCore
+import AppOpsCore
 import Testing
 
 @Test
@@ -41,7 +41,7 @@ func formatBytesDeltaAddsSign() {
 }
 
 @Test
-func markdownReportIncludesKeySectionsAndDeltas() {
+func buildCompareSectionIncludesKeySectionsAndDeltas() {
   let baseBuild = BuildStepMetrics(
     durationSeconds: 10,
     warningsCount: 1,
@@ -57,25 +57,29 @@ func markdownReportIncludesKeySectionsAndDeltas() {
     outputPath: nil
   )
 
-  let base = RevisionMetrics(
+  let base = BuildCompareRevisionMetrics(
     sha: "base",
     app: AppMetrics(
-      buildRecipe: "default", cleanBuild: baseBuild, incrementalBuild: nil, binary: nil),
+      buildRecipe: "default", cleanBuild: baseBuild, incrementalBuild: nil, binary: nil
+    ),
     cli: CliMetrics(cleanBuild: baseBuild, incrementalBuild: nil, binaries: []),
     tests: TestMetrics(
-      durationSeconds: 5, warningsCount: 0, success: true, logPath: "/tmp/tests.log")
+      durationSeconds: 5, warningsCount: 0, success: true, logPath: "/tmp/tests.log"
+    )
   )
 
-  let head = RevisionMetrics(
+  let head = BuildCompareRevisionMetrics(
     sha: "head",
     app: AppMetrics(
-      buildRecipe: "legacy", cleanBuild: headBuild, incrementalBuild: nil, binary: nil),
+      buildRecipe: "legacy", cleanBuild: headBuild, incrementalBuild: nil, binary: nil
+    ),
     cli: CliMetrics(cleanBuild: headBuild, incrementalBuild: nil, binaries: []),
     tests: TestMetrics(
-      durationSeconds: 6, warningsCount: 1, success: true, logPath: "/tmp/tests.log")
+      durationSeconds: 6, warningsCount: 1, success: true, logPath: "/tmp/tests.log"
+    )
   )
 
-  let metadata = RunMetadata(
+  let metadata = BuildCompareRunMetadata(
     timestampUTC: "2026-01-25T00:00:00Z",
     repoRoot: "/repo",
     baseSha: "base",
@@ -88,16 +92,20 @@ func markdownReportIncludesKeySectionsAndDeltas() {
     xcodeVersion: "Xcode 16"
   )
 
-  let report = markdownReport(base: base, head: head, metadata: metadata)
-  #expect(report.contains("# Build Compare Report"))
-  #expect(report.contains("Base: base"))
-  #expect(report.contains("Head: head"))
-  #expect(report.contains("App build recipes: base=default, head=legacy"))
-  #expect(report.contains("| App clean build | 10.00 | 12.00 | +2.00s |"))
-  #expect(report.contains("| Tests | 5.00 | 6.00 | +1.00s |"))
-  #expect(report.contains("| Success | true | true |"))
-  #expect(report.contains("## Warnings"))
-  #expect(report.contains("| App clean build | 1 | 3 | 2 |"))
+  let report = BuildCompareReport(schemaVersion: 2, run: metadata, base: base, head: head)
+  var lines: [String] = []
+  BuildCompareReportFormatter.appendSection(to: &lines, report: report)
+  let markdown = lines.joined(separator: "\n")
+
+  #expect(markdown.contains("## Build Compare"))
+  #expect(markdown.contains("Base: base"))
+  #expect(markdown.contains("Head: head"))
+  #expect(markdown.contains("App build recipes: base=default, head=legacy"))
+  #expect(markdown.contains("| App clean build | 10.00 | 12.00 | +2.00s |"))
+  #expect(markdown.contains("| Tests | 5.00 | 6.00 | +1.00s |"))
+  #expect(markdown.contains("| Success | true | true |"))
+  #expect(markdown.contains("### Warnings"))
+  #expect(markdown.contains("| App clean build | 1 | 3 | 2 |"))
 }
 
 @Test
@@ -105,7 +113,8 @@ func configFiltersRecipesByWorkspace() throws {
   let recipes = [
     AppBuildRecipe(name: "default", workspace: nil, scheme: nil, xcodebuildArgs: []),
     AppBuildRecipe(
-      name: "pad", workspace: "PersonaPad.xcworkspace", scheme: "PersonaPadApp", xcodebuildArgs: []),
+      name: "pad", workspace: "PersonaPad.xcworkspace", scheme: "PersonaPadApp", xcodebuildArgs: []
+    ),
   ]
   let config = BuildCompareConfig(schemaVersion: 1, appRecipes: recipes)
 

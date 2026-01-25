@@ -12,6 +12,7 @@ package enum AppOpsReportFormatter {
     appendDiff(to: &lines, report: report)
     appendImport(to: &lines, report: report)
     appendExport(to: &lines, report: report)
+    appendBuildCompare(to: &lines, report: report)
     appendMethodology(to: &lines, report: report)
     appendInterpretation(to: &lines, report: report)
     return lines.joined(separator: "\n")
@@ -121,6 +122,21 @@ package enum AppOpsReportFormatter {
     )
   }
 
+  private static func appendBuildCompare(to lines: inout [String], report: AppOpsReport) {
+    lines.append("")
+    if let buildCompare = report.buildCompare {
+      BuildCompareReportFormatter.appendSection(to: &lines, report: buildCompare)
+    } else {
+      lines.append("## Build Compare")
+      if let reason = report.buildCompareSkippedReason {
+        lines.append("- Status: skipped (\(reason))")
+      } else {
+        lines.append("- Status: skipped")
+      }
+      lines.append("")
+    }
+  }
+
   private static func appendMethodology(to lines: inout [String], report: AppOpsReport) {
     lines.append("")
     lines.append("## Methodology")
@@ -148,6 +164,12 @@ package enum AppOpsReportFormatter {
     lines.append(
       "- Diagnostics counts are the number of diagnostics emitted during load, merge, and resolve."
     )
+    lines.append(
+      "- Build compare runs xcodebuild + swift build/test for base/head SHAs in git worktrees."
+    )
+    lines.append(
+      "- Build compare timings include command duration; warnings are counted from command output."
+    )
   }
 
   private static func appendInterpretation(to lines: inout [String], report: AppOpsReport) {
@@ -162,6 +184,7 @@ package enum AppOpsReportFormatter {
       lines.append("- User packs were skipped for this run; related counts are zero.")
     }
     lines.append("- Diagnostics above zero signal input or merge/resolve issues worth inspection.")
+    lines.append("- Build compare results are sensitive to derived data and worktree cache state.")
   }
 
   private static func formatSeconds(_ value: Double) -> String {

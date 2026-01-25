@@ -20,6 +20,8 @@ func markdownReportIncludesKeySections() {
   #expect(markdown.contains("Files: 2"))
   #expect(markdown.contains("## Export"))
   #expect(markdown.contains("Bytes: 4096"))
+  #expect(markdown.contains("## Build Compare"))
+  #expect(markdown.contains("Status: skipped (missing --build-base/--build-head)"))
   #expect(markdown.contains("## Methodology"))
   #expect(markdown.contains("## Interpretation"))
 }
@@ -77,7 +79,9 @@ private func makeReportWithUserPacks() -> AppOpsReport {
       filesCopied: 2,
       bytesCopied: 2048
     ),
-    exportMetrics: makeExportMetrics(durationSeconds: 0.08, bytesWritten: 4096)
+    exportMetrics: makeExportMetrics(durationSeconds: 0.08, bytesWritten: 4096),
+    buildCompare: nil,
+    buildCompareSkippedReason: "missing --build-base/--build-head"
   )
 }
 
@@ -116,7 +120,9 @@ private func makeReportWithoutUserPacks() -> AppOpsReport {
       filesCopied: 1,
       bytesCopied: 1024
     ),
-    exportMetrics: makeExportMetrics(durationSeconds: 0.04, bytesWritten: 2048)
+    exportMetrics: makeExportMetrics(durationSeconds: 0.04, bytesWritten: 2048),
+    buildCompare: nil,
+    buildCompareSkippedReason: "missing --build-base/--build-head"
   )
 }
 

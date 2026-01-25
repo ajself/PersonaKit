@@ -1,7 +1,7 @@
 import Foundation
 
 /// One entry in an xcodebuild timing summary.
-package struct TimingEntry: Codable, Equatable {
+package struct TimingEntry: Codable, Equatable, Sendable {
   package let name: String
   package let seconds: Double
 
@@ -12,7 +12,7 @@ package struct TimingEntry: Codable, Equatable {
 }
 
 /// Metrics captured for a single build or test step.
-package struct BuildStepMetrics: Codable, Equatable {
+package struct BuildStepMetrics: Codable, Equatable, Sendable {
   package let durationSeconds: Double
   package let warningsCount: Int
   package let timingSummary: [TimingEntry]?
@@ -43,7 +43,7 @@ package struct BuildStepMetrics: Codable, Equatable {
 }
 
 /// Size information for a built binary on disk.
-package struct BinaryMetric: Codable, Equatable {
+package struct BinaryMetric: Codable, Equatable, Sendable {
   package let path: String
   package let sizeBytes: Int64
 
@@ -59,7 +59,7 @@ package struct BinaryMetric: Codable, Equatable {
 }
 
 /// Aggregated metrics for building the macOS app.
-package struct AppMetrics: Codable, Equatable {
+package struct AppMetrics: Codable, Equatable, Sendable {
   package let buildRecipe: String
   package let cleanBuild: BuildStepMetrics
   package let incrementalBuild: BuildStepMetrics?
@@ -86,7 +86,7 @@ package struct AppMetrics: Codable, Equatable {
 }
 
 /// Aggregated metrics for building command-line tools.
-package struct CliMetrics: Codable, Equatable {
+package struct CliMetrics: Codable, Equatable, Sendable {
   package let cleanBuild: BuildStepMetrics
   package let incrementalBuild: BuildStepMetrics?
   package let binaries: [BinaryMetric]
@@ -109,7 +109,7 @@ package struct CliMetrics: Codable, Equatable {
 }
 
 /// Metrics captured from running the test suite.
-package struct TestMetrics: Codable, Equatable {
+package struct TestMetrics: Codable, Equatable, Sendable {
   package let durationSeconds: Double
   package let warningsCount: Int
   package let success: Bool
@@ -136,7 +136,7 @@ package struct TestMetrics: Codable, Equatable {
 }
 
 /// Metrics captured for a single git revision.
-package struct RevisionMetrics: Codable, Equatable {
+package struct BuildCompareRevisionMetrics: Codable, Equatable, Sendable {
   package let sha: String
   package let app: AppMetrics
   package let cli: CliMetrics
@@ -155,8 +155,8 @@ package struct RevisionMetrics: Codable, Equatable {
   }
 }
 
-/// Metadata that describes the environment and inputs for a run.
-package struct RunMetadata: Codable, Equatable {
+/// Metadata that describes the environment and inputs for a build-compare run.
+package struct BuildCompareRunMetadata: Codable, Equatable, Sendable {
   package let timestampUTC: String
   package let repoRoot: String
   package let baseSha: String
@@ -206,18 +206,18 @@ package struct RunMetadata: Codable, Equatable {
   }
 }
 
-/// The full report schema emitted by build-compare.
-package struct Report: Codable, Equatable {
+/// The build-compare report schema embedded in AppOps output.
+package struct BuildCompareReport: Codable, Equatable, Sendable {
   package let schemaVersion: Int
-  package let run: RunMetadata
-  package let base: RevisionMetrics
-  package let head: RevisionMetrics
+  package let run: BuildCompareRunMetadata
+  package let base: BuildCompareRevisionMetrics
+  package let head: BuildCompareRevisionMetrics
 
   package init(
     schemaVersion: Int,
-    run: RunMetadata,
-    base: RevisionMetrics,
-    head: RevisionMetrics
+    run: BuildCompareRunMetadata,
+    base: BuildCompareRevisionMetrics,
+    head: BuildCompareRevisionMetrics
   ) {
     self.schemaVersion = schemaVersion
     self.run = run
@@ -234,7 +234,7 @@ package struct Report: Codable, Equatable {
 }
 
 /// Describes an app build recipe and its xcodebuild overrides.
-package struct AppBuildRecipe: Codable, Equatable {
+package struct AppBuildRecipe: Codable, Equatable, Sendable {
   package let name: String
   package let workspace: String?
   package let scheme: String?
@@ -261,7 +261,7 @@ package struct AppBuildRecipe: Codable, Equatable {
 }
 
 /// Configuration file schema for build-compare app recipes.
-package struct BuildCompareConfig: Codable, Equatable {
+package struct BuildCompareConfig: Codable, Equatable, Sendable {
   package let schemaVersion: Int
   package let appRecipes: [AppBuildRecipe]
 

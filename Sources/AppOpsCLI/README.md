@@ -1,8 +1,9 @@
 # AppOpsCLI
 
 AppOpsCLI is a **local, manual tool** that captures performance metrics for key
-PersonaKit workflows (reload, compose, diff, import, export). It runs entirely
-offline and writes deterministic reports to disk.
+PersonaKit workflows (reload, compose, diff, import, export) and build-compare
+metrics for xcodebuild and SwiftPM runs. It runs entirely offline and writes
+deterministic reports to disk.
 
 ## Run it
 
@@ -23,7 +24,22 @@ swift run AppOpsCLI -- [options]
 - `--diff-left <path>`: left pack file for diff (default: built-in pack)
 - `--diff-right <path>`: right pack file for diff (default: `Examples/personakit.pack.json`)
 - `--no-user-packs`: skip loading user packs from `~/Library/Application Support/PersonaKit/Packs`
+- `--build-base <sha>`: base git SHA for build compare (default: skip build compare)
+- `--build-head <sha>`: head git SHA for build compare (default: skip build compare)
+- `--build-workspace <name>`: Xcode workspace override (default: auto-detect)
+- `--build-scheme <name>`: Xcode scheme (default: `PersonaKitApp`)
+- `--build-configuration <name>`: build configuration (default: `Release`)
+- `--build-config <path>`: JSON config for app build recipes (default: `Scripts/build-compare.json` if present)
+- `--build-allow-test-failures`: record test failures without aborting the run
+- `--build-no-tests`: skip `swift test` during build compare
+- `--build-no-incremental`: skip incremental builds during build compare
+- `--build-keep-worktrees`: keep worktrees after build compare
+- `--build-worktree-root <path>`: worktree root override (default: `<appops-output>/build-compare/worktrees`)
+- `--no-build-compare`: skip build compare even if SHAs are provided
 - `--help`: show usage
+
+Build compare runs only when both `--build-base` and `--build-head` are provided;
+otherwise the build-compare section is marked as skipped in the report.
 
 ## Output layout
 
@@ -34,6 +50,16 @@ Artifacts/
     report.json
     import/
     export/
+    build-compare/
+      logs/
+        base/
+        head/
+      derived-data/
+        base/
+        head/
+      worktrees/
+        base/
+        head/
 ```
 
 `REPORT.md` is the human‑readable summary; `report.json` is the machine‑readable
@@ -56,6 +82,8 @@ section that explains how each metric is derived and how to read the numbers.
 - Export: the first available pack set is encoded to sorted-key JSON and written
   to disk; bytes represent the written file size.
 - Diagnostics: counts reflect diagnostics emitted during load, merge, and resolve.
+- Build compare: runs xcodebuild + swift build/test for base/head SHAs inside git
+  worktrees and captures timing, warning counts, and binary sizes.
 - Timing: all durations use a monotonic clock around each step; report formatting
   is not timed.
 
@@ -65,6 +93,7 @@ section that explains how each metric is derived and how to read the numbers.
   indicators, not normalized benchmarks.
 - Near-zero timings reflect very small work or measurement granularity.
 - Use persona counts and byte sizes to contextualize duration changes.
+- Build compare metrics are sensitive to derived data and cache state.
 
 ## Notes
 

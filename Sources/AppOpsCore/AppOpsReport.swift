@@ -11,6 +11,8 @@ package struct AppOpsReport: Codable, Sendable {
   package let diff: DiffMetrics
   package let importMetrics: ImportMetrics
   package let exportMetrics: ExportMetrics
+  package let buildCompare: BuildCompareReport?
+  package let buildCompareSkippedReason: String?
 
   package init(
     schemaVersion: Int,
@@ -21,7 +23,9 @@ package struct AppOpsReport: Codable, Sendable {
     compose: ComposeMetrics,
     diff: DiffMetrics,
     importMetrics: ImportMetrics,
-    exportMetrics: ExportMetrics
+    exportMetrics: ExportMetrics,
+    buildCompare: BuildCompareReport?,
+    buildCompareSkippedReason: String?
   ) {
     self.schemaVersion = schemaVersion
     self.run = run
@@ -32,6 +36,8 @@ package struct AppOpsReport: Codable, Sendable {
     self.diff = diff
     self.importMetrics = importMetrics
     self.exportMetrics = exportMetrics
+    self.buildCompare = buildCompare
+    self.buildCompareSkippedReason = buildCompareSkippedReason
   }
 
   package enum CodingKeys: String, CodingKey {
@@ -44,6 +50,8 @@ package struct AppOpsReport: Codable, Sendable {
     case diff
     case importMetrics = "import"
     case exportMetrics = "export"
+    case buildCompare = "build_compare"
+    case buildCompareSkippedReason = "build_compare_skipped_reason"
   }
 }
 

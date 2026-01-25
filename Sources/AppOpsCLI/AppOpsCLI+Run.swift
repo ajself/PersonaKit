@@ -24,6 +24,8 @@ extension AppOpsCLI {
     let importSource: URL
     let diffLeft: URL
     let diffRight: URL
+    let buildCompare: BuildCompareInputs?
+    let buildCompareSkippedReason: String?
     let timestamp: String
     let userPacksRoot: String?
   }
@@ -34,6 +36,8 @@ extension AppOpsCLI {
     let diff: DiffMetrics
     let importMetrics: ImportMetrics
     let exportMetrics: ExportMetrics
+    let buildCompare: BuildCompareReport?
+    let buildCompareSkippedReason: String?
   }
 
   /// Runs the CLI with injected dependencies for testability.
@@ -68,12 +72,18 @@ extension AppOpsCLI {
       fileClient: fileClient
     )
 
+    let buildCompareReport = try inputs.buildCompare.map { buildInputs in
+      try runBuildCompare(inputs: buildInputs, repoRoot: inputs.repoRoot, environment: environment)
+    }
+
     let metrics = ReportMetrics(
       reloadSnapshot: reloadSnapshot,
       compose: composeMetrics,
       diff: diffMetrics,
       importMetrics: importMetrics,
-      exportMetrics: exportMetrics
+      exportMetrics: exportMetrics,
+      buildCompare: buildCompareReport,
+      buildCompareSkippedReason: inputs.buildCompareSkippedReason
     )
     let report = makeReport(inputs: inputs, metrics: metrics, environment: environment)
 
@@ -124,6 +134,13 @@ extension AppOpsCLI {
     let outputRoot = outDir.appendingPathComponent("appops-\(timestamp)", isDirectory: true)
     try fileClient.createDirectory(outputRoot, true)
 
+    let buildCompare = try resolveBuildCompareInputs(
+      parsed: parsed,
+      repoRoot: repoRoot,
+      outputRoot: outputRoot,
+      includeBuildCompare: !parsed.hasFlag("no-build-compare")
+    )
+
     return RunInputs(
       repoRoot: repoRoot,
       outputRoot: outputRoot,
@@ -132,6 +149,8 @@ extension AppOpsCLI {
       importSource: importSource,
       diffLeft: diffLeft,
       diffRight: diffRight,
+      buildCompare: buildCompare.inputs,
+      buildCompareSkippedReason: buildCompare.skippedReason,
       timestamp: timestamp,
       userPacksRoot: userPacksRoot
     )
@@ -147,13 +166,78 @@ extension AppOpsCLI {
     }
   }
 
+  private struct BuildCompareResolution {
+    let inputs: BuildCompareInputs?
+    let skippedReason: String?
+  }
+
+  private static func resolveBuildCompareInputs(
+    parsed: ParsedArgs,
+    repoRoot: URL,
+    outputRoot: URL,
+    includeBuildCompare: Bool
+  ) throws -> BuildCompareResolution {
+    guard includeBuildCompare else {
+      return BuildCompareResolution(
+        inputs: nil,
+        skippedReason: "disabled via --no-build-compare"
+      )
+    }
+
+    let baseSha = parsed.value(for: "build-base")
+    let headSha = parsed.value(for: "build-head")
+    if baseSha == nil, headSha == nil {
+      return BuildCompareResolution(
+        inputs: nil,
+        skippedReason: "missing --build-base/--build-head"
+      )
+    }
+    guard let baseSha, let headSha else {
+      throw AppOpsError("Build compare requires both --build-base and --build-head.")
+    }
+
+    let buildOutputRoot = outputRoot.appendingPathComponent("build-compare", isDirectory: true)
+    let worktreeRoot: URL
+    if let override = parsed.value(for: "build-worktree-root") {
+      worktreeRoot = resolvePath(override, relativeTo: repoRoot)
+    } else {
+      worktreeRoot = buildOutputRoot.appendingPathComponent("worktrees", isDirectory: true)
+    }
+
+    let scheme = parsed.value(for: "build-scheme") ?? "PersonaKitApp"
+    let schemeIsDefault = parsed.value(for: "build-scheme") == nil
+    let configuration = parsed.value(for: "build-configuration") ?? "Release"
+    let workspace = parsed.value(for: "build-workspace")
+    let configPath = parsed.value(for: "build-config").map { value in
+      resolvePath(value, relativeTo: repoRoot).path
+    }
+
+    let inputs = BuildCompareInputs(
+      baseSha: baseSha,
+      headSha: headSha,
+      outputRoot: buildOutputRoot,
+      worktreeRoot: worktreeRoot,
+      workspace: workspace,
+      scheme: scheme,
+      schemeIsDefault: schemeIsDefault,
+      configuration: configuration,
+      configPath: configPath,
+      allowTestFailures: parsed.hasFlag("build-allow-test-failures"),
+      keepWorktrees: parsed.hasFlag("build-keep-worktrees"),
+      runTests: !parsed.hasFlag("build-no-tests"),
+      runIncremental: !parsed.hasFlag("build-no-incremental")
+    )
+
+    return BuildCompareResolution(inputs: inputs, skippedReason: nil)
+  }
+
   private static func makeReport(
     inputs: RunInputs,
     metrics: ReportMetrics,
     environment: AppOpsEnvironment
   ) -> AppOpsReport {
     AppOpsReport(
-      schemaVersion: 1,
+      schemaVersion: 2,
       run: RunMetadata(
         timestampUTC: inputs.timestamp,
         repoRoot: inputs.repoRoot.path,
@@ -177,7 +261,9 @@ extension AppOpsCLI {
       compose: metrics.compose,
       diff: metrics.diff,
       importMetrics: metrics.importMetrics,
-      exportMetrics: metrics.exportMetrics
+      exportMetrics: metrics.exportMetrics,
+      buildCompare: metrics.buildCompare,
+      buildCompareSkippedReason: metrics.buildCompareSkippedReason
     )
   }
 
@@ -225,6 +311,18 @@ extension AppOpsCLI {
         --diff-left <path>      Left pack file for diff (default: built-in pack)
         --diff-right <path>     Right pack file for diff (default: Examples/personakit.pack.json)
         --no-user-packs         Skip loading ~/Library/Application Support/PersonaKit/Packs
+        --build-base <sha>      Base git SHA for build-compare (default: skip build compare)
+        --build-head <sha>      Head git SHA for build-compare (default: skip build compare)
+        --build-workspace <name>    Xcode workspace (default: auto-detect)
+        --build-scheme <name>       Xcode scheme (default: PersonaKitApp)
+        --build-configuration <name>  Build configuration (default: Release)
+        --build-config <path>       JSON config for app build recipes (default: Scripts/build-compare.json if present)
+        --build-allow-test-failures Record test failures without aborting the run
+        --build-no-tests             Skip swift test during build compare
+        --build-no-incremental       Skip incremental builds during build compare
+        --build-keep-worktrees       Keep worktrees after build compare
+        --build-worktree-root <path> Worktree root override (default: <appops-output>/build-compare/worktrees)
+        --no-build-compare       Skip build compare even if SHAs are provided
         --help                  Show this message
 
       Methodology summary:
@@ -234,6 +332,7 @@ extension AppOpsCLI {
         Import = plan (scan) + copy to temp + move into destination; count files and bytes copied.
         Export = write first available pack set as sorted-key JSON; report bytes written.
         Timing uses a monotonic clock around each step; report formatting is not timed.
+        Build compare runs xcodebuild + swift build/test for base/head SHAs in git worktrees.
       """
     )
   }
@@ -261,7 +360,7 @@ extension AppOpsCLI {
 
   private static func emptyReport() -> AppOpsReport {
     AppOpsReport(
-      schemaVersion: 1,
+      schemaVersion: 2,
       run: RunMetadata(timestampUTC: "", repoRoot: "", outputRoot: "", gitSha: ""),
       environment: EnvironmentInfo(macOSVersion: "", swiftVersion: "", xcodeVersion: ""),
       inputs: InputConfig(
@@ -300,7 +399,9 @@ extension AppOpsCLI {
         bytesCopied: 0,
         destinationRoot: ""
       ),
-      exportMetrics: ExportMetrics(durationSeconds: 0, bytesWritten: 0, outputPath: "")
+      exportMetrics: ExportMetrics(durationSeconds: 0, bytesWritten: 0, outputPath: ""),
+      buildCompare: nil,
+      buildCompareSkippedReason: nil
     )
   }
 }

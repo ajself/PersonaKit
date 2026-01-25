@@ -7,10 +7,11 @@ It is a lightweight, deterministic model layer used by the AppOps CLI.
 
 - `AppOpsReport` and supporting metric structs
 - `AppOpsReportFormatter` for Markdown summaries
+- Build-compare report structs and formatter helpers used by AppOpsCLI
 
 ## Schema notes
 
-- `schema_version` is currently **1**
+- `schema_version` is currently **2**
 - Field names are **snake_case**
 - Times are **seconds** (Double)
 - Sizes are **bytes**

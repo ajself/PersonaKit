@@ -11,7 +11,6 @@ let package = Package(
     .executable(name: "PersonaKitApp", targets: ["PersonaKitApp"]),
     .executable(name: "personakit", targets: ["PersonaKitCLI"]),
     .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"]),
-    .executable(name: "BuildCompareCLI", targets: ["BuildCompareCLI"]),
     .executable(name: "AppOpsCLI", targets: ["AppOpsCLI"])
   ],
   dependencies: [
@@ -31,11 +30,6 @@ let package = Package(
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
       path: "Sources/PersonaKitCore"
-    ),
-    .target(
-      name: "BuildCompareCore",
-      path: "Sources/BuildCompareCore",
-      exclude: ["README.md"]
     ),
     .target(
       name: "AppOpsCore",
@@ -69,12 +63,6 @@ let package = Package(
       path: "Sources/PersonaKitSchemaValidate"
     ),
     .executableTarget(
-      name: "BuildCompareCLI",
-      dependencies: ["BuildCompareCore"],
-      path: "Sources/BuildCompareCLI",
-      exclude: ["README.md"]
-    ),
-    .executableTarget(
       name: "AppOpsCLI",
       dependencies: [
         "AppOpsCore",
@@ -88,11 +76,6 @@ let package = Package(
       name: "PersonaKitCoreTests",
       dependencies: ["PersonaKitCore"],
       path: "Tests/PersonaKitCoreTests"
-    ),
-    .testTarget(
-      name: "BuildCompareCoreTests",
-      dependencies: ["BuildCompareCore"],
-      path: "Tests/BuildCompareCoreTests"
     ),
     .testTarget(
       name: "AppOpsCoreTests",
