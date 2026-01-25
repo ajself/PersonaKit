@@ -223,7 +223,7 @@ swift-format --configuration swift-format.json --in-place Sources Tests
 
 ### Linting
 ```bash
-swiftlint --config swiftlint.yml
+swiftlint --config .swiftlint.yml
 ```
 
 ---

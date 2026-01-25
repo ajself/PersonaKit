@@ -10,7 +10,7 @@ Goal: resolve all SwiftLint violations in small, reversible steps with frequent 
 - Ask for approval to proceed to Step 1.
 
 ## Step 1 — Tooling alignment
-- If rules conflict with `swift-format`, update `swiftlint.yml` to align.
+- If rules conflict with `swift-format`, update `.swiftlint.yml` to align.
 - Update `Docs/Standards/SwiftUI-App-Style-Guide.md` to match any config changes.
 - Keep changes minimal and explain rationale in the commit message/body.
 - Commit: `chore(lint): align swiftlint with formatter`.

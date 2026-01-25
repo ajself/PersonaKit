@@ -6,6 +6,7 @@ This document is meant to be:
 - **Strict enough for agents (Codex)** to implement and review against.
 - **Platform-agnostic** across iOS and macOS, with small notes where behavior differs.
 
+This guide describes the target architecture and coding posture for the codebase.
 ---
 
 ## Language and toolchain settings (Swift 6.2 + Approachable Concurrency)
@@ -47,25 +48,45 @@ Use a “ratchet” approach: enable checks broadly, then tighten over time.
 
 Linting and formatting are **part of the architecture**, not optional tooling.
 
+### Authoring posture (humans and agents)
+
+This guide is intended to be **internalized before writing code**, not relied on
+as a corrective pass afterward.
+
+Authors (including coding agents) are expected to:
+- write code that already conforms to `swift-format` and SwiftLint rules
+- treat formatting and linting as **verification**, not a discovery mechanism
+- avoid generate → format → fix workflows
+
+If running `swift-format` or SwiftLint produces large diffs, that is a signal
+the code was authored without sufficient adherence to this guide.
+
+### Source of truth
+- `swift-format.json` defines formatter behavior (line length, spacing, wrapping).
+- `.swiftlint.yml` defines lint rules and thresholds.
+- **Consult both before editing code** and keep this guide in sync when they change.
+
 ### Formatting (Authoritative)
 - Use **`swift-format`** as the canonical formatter.
 - Formatter output is considered correct by definition.
-- Formatting should be applied automatically (editor, pre-commit, or CI).
+- Formatting should be applied automatically to confirm correctness, not to normalize arbitrarily generated code.
+- Agents should proactively format code to match `swift-format` output rather than relying on the formatter to restructure expressions.
 
 ### Linting (Opinionated and Curated)
 - Enforced via **SwiftLint** with a curated ruleset.
 - Linting reinforces architectural intent and prevents footguns.
 - Disabling a rule requires a comment explaining why.
-- Formatting-style rules that conflict with `swift-format` output are disabled in SwiftLint
-  (for example, `opening_brace` and `trailing_comma`).
+- Formatting-style rules that conflict with `swift-format` output are disabled in
+  `.swiftlint.yml` (for example, `opening_brace` and `trailing_comma`).
 
 **Enforcement posture**
 - Formatting violations block commits.
 - Lint violations block PRs unless explicitly justified.
 
 **Line length policy**
-- `swift-format` lineLength=100 is authoritative.
-- SwiftLint limits are guardrails for legacy or unformatted code; new code should stay at 100.
+- `swift-format` lineLength=120 (see `swift-format.json`) is authoritative.
+- SwiftLint limits in `.swiftlint.yml` are guardrails for legacy or unformatted code.
+- `swift-format` respects existing line breaks, so wrap long lines intentionally.
 
 ---
 
@@ -276,6 +297,10 @@ After refactoring:
 
 ---
 
+The following templates are **canonical shapes**, not illustrative examples. 
+New feature code is expected to resemble these structures unless there is a documented reason to diverge. 
+Agents are expected to pattern-match against these templates when authoring new code.
+
 ## Store Template (swift-dependencies)
 
 ```swift
@@ -380,6 +405,7 @@ import SwiftUI
 
 Every PR must satisfy the following:
 
+- [ ] Code was authored to match this guide before running lint/format tools
 - [ ] Code is formatted with `swift-format`
 - [ ] No new SwiftLint warnings (or justified inline)
 - [ ] Feature uses UDF (`State` + `Action` + `send`)
