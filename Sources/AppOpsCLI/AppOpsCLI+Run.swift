@@ -48,32 +48,81 @@ extension AppOpsCLI {
       return AppOpsRunResult(outputRoot: URL(fileURLWithPath: "/"), report: emptyReport())
     }
 
+    let logLevel = try AppOpsLog.resolveLevel(parsed.value(for: "log-level"))
+    AppOpsLog.configure(level: logLevel)
+    let logger = AppOpsLog.logger
+    logger.info("AppOps starting.")
+    logger.debug("Arguments: \(arguments.joined(separator: " "))")
+
     let fileClient = environment.fileClient
     let inputs = try resolveRunInputs(parsed: parsed, environment: environment)
+    logger.info("Inputs resolved.")
+    logger.debug("Output root: \(inputs.outputRoot.path)")
+    logger.debug("Built-in packs: \(inputs.builtInURLs.count)")
+    logger.debug("Include user packs: \(inputs.includeUserPacks)")
+    logger.debug("Import source: \(inputs.importSource.path)")
+    logger.debug("Diff left: \(inputs.diffLeft.path)")
+    logger.debug("Diff right: \(inputs.diffRight.path)")
 
+    logger.info("Reload: starting.")
     let reloadSnapshot = try runReload(
       repoRoot: inputs.repoRoot,
       builtInURLs: inputs.builtInURLs,
       includeUserPacks: inputs.includeUserPacks,
       fileClient: fileClient
     )
+    let reloadMetrics = reloadSnapshot.metrics
+    logger.info(
+      "Reload: finished in \(AppOpsLog.formatSeconds(reloadMetrics.totalDurationSeconds))s "
+        + "(packs: \(reloadMetrics.totalPacks), personas: \(reloadMetrics.totalPersonas), "
+        + "diagnostics: \(reloadMetrics.diagnosticsCount))."
+    )
 
+    logger.info("Compose: starting.")
     let composeMetrics = measureCompose(resolved: reloadSnapshot.resolved)
+    logger.info(
+      "Compose: finished in \(AppOpsLog.formatSeconds(composeMetrics.durationSeconds))s "
+        + "(personas: \(composeMetrics.personaCount), prompt bytes: \(composeMetrics.promptBytesTotal), "
+        + "json bytes: \(composeMetrics.jsonBytesTotal))."
+    )
+    logger.info("Diff: starting.")
     let diffMetrics = try measureDiff(left: inputs.diffLeft, right: inputs.diffRight)
+    logger.info(
+      "Diff: finished in \(AppOpsLog.formatSeconds(diffMetrics.durationSeconds))s "
+        + "(added: \(diffMetrics.addedCount), removed: \(diffMetrics.removedCount), "
+        + "modified: \(diffMetrics.modifiedCount))."
+    )
+    logger.info("Import: starting.")
     let importMetrics = try measureImport(
       selection: inputs.importSource,
       destinationRoot: inputs.outputRoot.appendingPathComponent("import", isDirectory: true),
       fileClient: fileClient
     )
+    let importTotal = importMetrics.planDurationSeconds + importMetrics.copyDurationSeconds
+    logger.info(
+      "Import: finished in \(AppOpsLog.formatSeconds(importTotal))s "
+        + "(files: \(importMetrics.filesCopied), bytes: \(importMetrics.bytesCopied))."
+    )
 
+    logger.info("Export: starting.")
     let exportMetrics = try measureExport(
       sets: reloadSnapshot.builtInSets + reloadSnapshot.userSets,
       outputRoot: inputs.outputRoot.appendingPathComponent("export", isDirectory: true),
       fileClient: fileClient
     )
+    logger.info(
+      "Export: finished in \(AppOpsLog.formatSeconds(exportMetrics.durationSeconds))s "
+        + "(bytes: \(exportMetrics.bytesWritten))."
+    )
 
     let buildRunReport = try inputs.buildRun.map { buildInputs in
+      logger.info("Build run: starting.")
       try runBuildRun(inputs: buildInputs, repoRoot: inputs.repoRoot, environment: environment)
+    }
+    if buildRunReport != nil {
+      logger.info("Build run: finished.")
+    } else if let reason = inputs.buildRunSkippedReason {
+      logger.info("Build run: skipped (\(reason)).")
     }
 
     let metrics = ReportMetrics(
@@ -89,11 +138,13 @@ extension AppOpsCLI {
 
     let jsonURL = inputs.outputRoot.appendingPathComponent("report.json")
     let markdownURL = inputs.outputRoot.appendingPathComponent("REPORT.md")
+    logger.info("Report: writing output.")
     try writeReport(report, jsonURL: jsonURL, markdownURL: markdownURL, fileClient: fileClient)
 
     print("Report written to:")
     print("- \(markdownURL.path)")
     print("- \(jsonURL.path)")
+    logger.info("AppOps finished.")
     return AppOpsRunResult(outputRoot: inputs.outputRoot, report: report)
   }
 
@@ -327,6 +378,7 @@ extension AppOpsCLI {
         --build-keep-worktrees       Keep worktree after build run
         --build-worktree-root <path> Worktree path override (default: <appops-output>/build-run/worktree)
         --no-build-run           Skip build run
+        --log-level <level>      Log level: trace|debug|info|notice|warning|error|critical (default: info)
         --help                  Show this message
 
       Methodology summary:

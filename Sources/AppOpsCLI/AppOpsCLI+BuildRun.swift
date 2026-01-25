@@ -135,8 +135,11 @@ extension AppOpsCLI {
     repoRoot: URL,
     environment: AppOpsEnvironment
   ) throws -> BuildRunReport {
+    let logger = AppOpsLog.logger
+    logger.info("Build run: preparing output.")
     try ensureDirectory(inputs.outputRoot)
     if let worktreePath = inputs.worktreePath {
+      logger.debug("Build run: worktree path \(worktreePath.path)")
       try ensureDirectory(worktreePath.deletingLastPathComponent())
     }
 
@@ -145,11 +148,20 @@ extension AppOpsCLI {
       xcode: environment.runCommand(["xcodebuild", "-version"]) ?? "unknown"
     )
     let context = BuildRunContext(inputs: inputs, repo: repoRoot, versions: versions)
+    if let revision = inputs.revision {
+      logger.info("Build run: using revision \(revision).")
+    } else {
+      logger.info("Build run: using working tree.")
+    }
 
     return try withWorktree(context: context) { worktree in
       let workspacePlan = try resolveWorkspace(context: context, repo: worktree.repo)
+      logger.info("Build run: workspace \(workspacePlan.workspace), scheme \(workspacePlan.scheme).")
       let recipePlan = try resolveRecipes(context: context, workspacePlan: workspacePlan)
+      logger.info("Build run: resolved \(recipePlan.recipes.count) app recipe(s).")
+      logger.debug("Build run: recipes \(recipePlan.recipes.map(\.name).joined(separator: \", \")).")
       let resolvedSha = try resolveRevisionSha(repo: worktree.repo)
+      logger.info("Build run: resolved revision SHA \(resolvedSha).")
       let metrics = try runForRevision(
         RevisionRunRequest(
           label: "run",
@@ -170,6 +182,7 @@ extension AppOpsCLI {
         worktree: worktree,
         revisionSha: resolvedSha
       )
+      logger.info("Build run: metrics collected.")
       return BuildRunReport(
         schemaVersion: 1,
         run: metadata,
@@ -193,11 +206,13 @@ extension AppOpsCLI {
     defer {
       if context.inputs.keepWorktree == false {
         for path in cleanupPaths {
+          AppOpsLog.logger.info("Build run: removing worktree at \(path.path).")
           _ = try? removeWorktree(repo: context.repo, path: path)
         }
       }
     }
 
+    AppOpsLog.logger.info("Build run: adding worktree for \(revision).")
     try addWorktree(repo: context.repo, path: worktreePath, revision: revision)
     return try body(WorktreeContext(repo: worktreePath, worktreePath: worktreePath))
   }
@@ -241,6 +256,7 @@ extension AppOpsCLI {
 
   /// Runs a tool via `/usr/bin/env`, capturing combined output and elapsed time.
   private static func runTool(_ tool: String, _ args: [String], cwd: URL? = nil) throws -> CommandResult {
+    AppOpsLog.logger.debug("Build run: executing \(tool) \(args.joined(separator: " ")).")
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
     process.arguments = [tool] + args
@@ -254,11 +270,15 @@ extension AppOpsCLI {
     process.waitUntilExit()
     let end = Date()
     let output = String(data: data, encoding: .utf8) ?? ""
-    return CommandResult(
+    let result = CommandResult(
       exitCode: process.terminationStatus,
       output: output,
       duration: end.timeIntervalSince(start)
     )
+    AppOpsLog.logger.debug(
+      "Build run: \(tool) exited \(result.exitCode) in \(AppOpsLog.formatSeconds(result.duration))s."
+    )
+    return result
   }
 
   private static func resolveRevisionSha(repo: URL) throws -> String {
@@ -443,6 +463,7 @@ extension AppOpsCLI {
 
   /// Builds the app target and collects timing, warnings, and binary size metrics.
   static func buildApp(request: BuildAppRequest) throws -> BuildAppResult {
+    let logger = AppOpsLog.logger
     let fm = FileManager.default
     if fm.fileExists(atPath: request.derivedData.path) {
       try? fm.removeItem(at: request.derivedData)
@@ -460,6 +481,7 @@ extension AppOpsCLI {
     let buildArgs = baseArgs + request.extraArgs + ["build"]
 
     let cleanLog = request.logDir.appendingPathComponent("app-clean-\(request.recipeName).log")
+    logger.info("Build run: app clean build (\(request.recipeName)) started.")
     let cleanResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
     try writeLog(cleanResult.output, to: cleanLog)
     let cleanFailure: BuildRunFailure? = cleanResult.exitCode == 0
@@ -479,6 +501,19 @@ extension AppOpsCLI {
       outputPath: request.derivedData.path,
       failure: cleanFailure
     )
+    if cleanFailure == nil {
+      logger.info(
+        "Build run: app clean build (\(request.recipeName)) finished in "
+          + "\(AppOpsLog.formatSeconds(cleanMetrics.durationSeconds))s "
+          + "(warnings: \(cleanMetrics.warningsCount))."
+      )
+    } else {
+      logger.warning(
+        "Build run: app clean build (\(request.recipeName)) failed in "
+          + "\(AppOpsLog.formatSeconds(cleanMetrics.durationSeconds))s "
+          + "(warnings: \(cleanMetrics.warningsCount))."
+      )
+    }
     if cleanFailure != nil {
       return BuildAppResult(clean: cleanMetrics, incremental: nil, binary: nil)
     }
@@ -486,6 +521,7 @@ extension AppOpsCLI {
     var incrementalMetrics: BuildStepMetrics?
     if request.runIncremental {
       let incrLog = request.logDir.appendingPathComponent("app-incremental-\(request.recipeName).log")
+      logger.info("Build run: app incremental build (\(request.recipeName)) started.")
       let incrResult = try runTool("xcodebuild", buildArgs, cwd: request.repo)
       try writeLog(incrResult.output, to: incrLog)
       let incrFailure: BuildRunFailure? = incrResult.exitCode == 0
@@ -505,6 +541,21 @@ extension AppOpsCLI {
         outputPath: request.derivedData.path,
         failure: incrFailure
       )
+      if let incrementalMetrics {
+        if incrFailure == nil {
+          logger.info(
+            "Build run: app incremental build (\(request.recipeName)) finished in "
+              + "\(AppOpsLog.formatSeconds(incrementalMetrics.durationSeconds))s "
+              + "(warnings: \(incrementalMetrics.warningsCount))."
+          )
+        } else {
+          logger.warning(
+            "Build run: app incremental build (\(request.recipeName)) failed in "
+              + "\(AppOpsLog.formatSeconds(incrementalMetrics.durationSeconds))s "
+              + "(warnings: \(incrementalMetrics.warningsCount))."
+          )
+        }
+      }
     }
 
     let binaryMetric = appBinaryMetric(
@@ -517,6 +568,7 @@ extension AppOpsCLI {
 
   /// Builds the CLI target and collects timing, warnings, and binary size metrics.
   static func buildCli(request: BuildCliRequest) throws -> BuildCliResult {
+    let logger = AppOpsLog.logger
     let fm = FileManager.default
     try ensureDirectory(request.logDir)
     let buildDir = request.repo.appendingPathComponent(".build")
@@ -525,6 +577,7 @@ extension AppOpsCLI {
     }
 
     let cleanLog = request.logDir.appendingPathComponent("cli-clean.log")
+    logger.info("Build run: CLI clean build started.")
     let cleanResult = try runTool(
       "swift",
       ["build", "-c", request.configuration.lowercased()],
@@ -549,6 +602,17 @@ extension AppOpsCLI {
       timingSummary: nil,
       failure: cleanFailure
     )
+    if cleanFailure == nil {
+      logger.info(
+        "Build run: CLI clean build finished in \(AppOpsLog.formatSeconds(cleanMetrics.durationSeconds))s "
+          + "(warnings: \(cleanMetrics.warningsCount))."
+      )
+    } else {
+      logger.warning(
+        "Build run: CLI clean build failed in \(AppOpsLog.formatSeconds(cleanMetrics.durationSeconds))s "
+          + "(warnings: \(cleanMetrics.warningsCount))."
+      )
+    }
     if cleanFailure != nil {
       return BuildCliResult(clean: cleanMetrics, incremental: nil, binaries: [])
     }
@@ -556,6 +620,7 @@ extension AppOpsCLI {
     var incrementalMetrics: BuildStepMetrics?
     if request.runIncremental {
       let incrLog = request.logDir.appendingPathComponent("cli-incremental.log")
+      logger.info("Build run: CLI incremental build started.")
       let incrResult = try runTool(
         "swift",
         ["build", "-c", request.configuration.lowercased()],
@@ -580,6 +645,21 @@ extension AppOpsCLI {
         timingSummary: nil,
         failure: incrFailure
       )
+      if let incrementalMetrics {
+        if incrFailure == nil {
+          logger.info(
+            "Build run: CLI incremental build finished in "
+              + "\(AppOpsLog.formatSeconds(incrementalMetrics.durationSeconds))s "
+              + "(warnings: \(incrementalMetrics.warningsCount))."
+          )
+        } else {
+          logger.warning(
+            "Build run: CLI incremental build failed in "
+              + "\(AppOpsLog.formatSeconds(incrementalMetrics.durationSeconds))s "
+              + "(warnings: \(incrementalMetrics.warningsCount))."
+          )
+        }
+      }
     }
 
     let binaries = cliBinaries(repo: request.repo)
@@ -588,8 +668,10 @@ extension AppOpsCLI {
 
   /// Runs `swift test` and returns timing and warning metrics.
   private static func runTests(request: TestRunRequest) throws -> TestMetrics {
+    let logger = AppOpsLog.logger
     try ensureDirectory(request.logDir)
     let log = request.logDir.appendingPathComponent("tests.log")
+    logger.info("Build run: tests started.")
     let result = try runTool(
       "swift",
       ["test", "-c", request.configuration.lowercased()],
@@ -620,6 +702,8 @@ extension AppOpsCLI {
 
   /// Executes all build and test steps for a single revision.
   static func runForRevision(_ request: RevisionRunRequest) throws -> BuildRunMetrics {
+    let logger = AppOpsLog.logger
+    logger.info("Build run: starting build/test for \(request.sha).")
     let logDir = request.outputRoot.appendingPathComponent("logs/\(request.label)")
     try ensureDirectory(logDir)
 
@@ -636,6 +720,7 @@ extension AppOpsCLI {
       )
     )
     let tests = try testsForRevision(request: request, logDir: logDir)
+    logger.info("Build run: completed build/test for \(request.sha).")
 
     return BuildRunMetrics(
       sha: request.sha,
@@ -658,10 +743,12 @@ extension AppOpsCLI {
     request: RevisionRunRequest,
     logDir: URL
   ) throws -> AppRecipeBuildOutcome {
+    let logger = AppOpsLog.logger
     var lastError: Error?
     var lastOutcome: AppRecipeBuildOutcome?
     for recipe in request.recipes {
       do {
+        logger.info("Build run: trying app recipe \(recipe.name).")
         let derivedData = request.outputRoot.appendingPathComponent(
           "derived-data/\(request.label)/\(recipe.name)"
         )
@@ -686,9 +773,11 @@ extension AppOpsCLI {
         if outcome.result.clean.failure == nil {
           return outcome
         }
+        logger.warning("Build run: app recipe \(recipe.name) failed clean build; trying next.")
         lastOutcome = outcome
       } catch {
         lastError = error
+        logger.warning("Build run: app recipe \(recipe.name) threw error: \(error).")
       }
     }
 
@@ -706,7 +795,7 @@ extension AppOpsCLI {
     logDir: URL
   ) throws -> TestMetrics {
     if request.runTests {
-      return try runTests(
+      let metrics = try runTests(
         request: TestRunRequest(
           label: request.label,
           sha: request.sha,
@@ -717,9 +806,22 @@ extension AppOpsCLI {
           allowFailures: request.allowTestFailures
         )
       )
+      if metrics.success {
+        AppOpsLog.logger.info(
+          "Build run: tests finished in \(AppOpsLog.formatSeconds(metrics.durationSeconds))s "
+            + "(warnings: \(metrics.warningsCount))."
+        )
+      } else {
+        AppOpsLog.logger.warning(
+          "Build run: tests failed in \(AppOpsLog.formatSeconds(metrics.durationSeconds))s "
+            + "(warnings: \(metrics.warningsCount))."
+        )
+      }
+      return metrics
     }
     let log = logDir.appendingPathComponent("tests.log")
     try writeLog("Tests skipped.\n", to: log)
+    AppOpsLog.logger.info("Build run: tests skipped.")
     return TestMetrics(durationSeconds: 0, warningsCount: 0, success: true, logPath: log.path)
   }
 

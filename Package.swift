@@ -14,7 +14,8 @@ let package = Package(
     .executable(name: "AppOpsCLI", targets: ["AppOpsCLI"])
   ],
   dependencies: [
-    .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
+    .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1"),
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0")
   ],
   targets: [
     .target(
@@ -67,7 +68,8 @@ let package = Package(
       dependencies: [
         "AppOpsCore",
         "PersonaKitCore",
-        "PersonaKitResources"
+        "PersonaKitResources",
+        .product(name: "Logging", package: "swift-log")
       ],
       path: "Sources/AppOpsCLI",
       exclude: ["README.md"]

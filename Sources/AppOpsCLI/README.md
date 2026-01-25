@@ -35,6 +35,7 @@ swift run AppOpsCLI -- [options]
 - `--build-keep-worktrees`: keep worktree after build run
 - `--build-worktree-root <path>`: worktree path override (default: `<appops-output>/build-run/worktree`)
 - `--no-build-run`: skip build run
+- `--log-level <level>`: log level (`trace|debug|info|notice|warning|error|critical`, default: `info`)
 - `--help`: show usage
 
 Build run targets the current working tree unless `--build-sha` is provided.
