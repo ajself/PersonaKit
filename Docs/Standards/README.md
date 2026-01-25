@@ -7,3 +7,7 @@ This folder contains the canonical coding and architectural standards for Person
 - Lint config: `swiftlint.yml`
 
 If guidance conflicts, the style guide and tooling configs win.
+
+Notes:
+- Keep the repo mapping section in the guide current after rebrands.
+- When `swift-format.json` or `swiftlint.yml` change, update the guide to match.

@@ -77,6 +77,15 @@ Agents should operate as SwiftUI and Swift 6 experts and write code that follows
 
 ---
 
+## Documentation Hygiene (Required)
+
+- If product naming or top-level paths change, update AGENTS.md and standards docs in the same change.
+- If `swift-format.json` or `swiftlint.yml` change, update `Docs/Standards/SwiftUI-App-Style-Guide.md` to keep rules consistent.
+- Do not commit tool-output artifacts (e.g., citation tokens) into docs.
+- Avoid time-bound “latest” claims in docs; point to source-of-truth files instead.
+
+---
+
 ## What Agents Are Allowed To Do
 
 Automated agents may be used for work that **hardens trust**, **reduces entropy**, and

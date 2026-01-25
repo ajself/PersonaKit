@@ -61,6 +61,10 @@ Linting and formatting are **part of the architecture**, not optional tooling.
 - Formatting violations block commits.
 - Lint violations block PRs unless explicitly justified.
 
+**Line length policy**
+- `swift-format` lineLength=100 is authoritative.
+- SwiftLint limits are guardrails for legacy or unformatted code; new code should stay at 100.
+
 ---
 
 ## Philosophy
@@ -89,12 +93,12 @@ This architecture uses **pointfreeco/swift-dependencies** to control dependencie
 
 **How**
 - Declare dependencies as properties using `@Dependency(...)`.
-- Mark those properties as `@ObservationIgnored` in `@Observable` types to avoid observation churn. citeturn1view0
-- Override dependencies in tests using `withDependencies { ... } operation: { ... }`. citeturn1view0
-- Override dependencies in previews using `prepareDependencies { ... }`. citeturn1view0
+- Mark those properties as `@ObservationIgnored` in `@Observable` types to avoid observation churn.
+- Override dependencies in tests using `withDependencies { ... } operation: { ... }`.
+- Override dependencies in previews using `prepareDependencies { ... }`.
 
 **Version**
-- Pin `swift-dependencies` with SwiftPM. The repo currently lists a latest release of **1.10.1 (Jan 14, 2026)**. citeturn2search1
+- Pin `swift-dependencies` with SwiftPM and treat `Package.swift` / `Package.resolved` as source of truth. Avoid “latest” language in docs.
 
 ---
 
@@ -179,6 +183,17 @@ Packages/
       FeatureB/
   Tests/
 ```
+
+### Repository mapping (keep current)
+When applying this guide to a specific repo, include a short mapping section and keep it updated with rebrands. Example for this repo:
+
+- AppShell: `Sources/PersonaKitApp`
+- Core: `Sources/PersonaKitCore`
+- CLI: `Sources/PersonaKitCLI`
+- Resources: `Sources/PersonaKitResources`
+- Schema validation: `Sources/PersonaKitSchemaValidate`
+
+Keep this list in sync with the repo tree; do not leave stale product names.
 
 ### Dependency direction rules
 - `AppShell` → Features + shared modules
