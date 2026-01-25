@@ -46,9 +46,9 @@ Files touched:
 - The dependency scaffolding was introduced ahead of core/CLI refactors.
 
 ## Follow-ups
-- Preview JSON formatting still uses `DispatchQueue.main.asyncAfter`.
-  If stricter dependency control is required, move that debounce into a store
-  using `@Dependency(\.continuousClock)` with a cancellable task.
+- Resolved on 2026-01-25: preview JSON formatting debounce lives in `AppStore`
+  via `@Dependency(\.continuousClock)` with a cancellable task
+  (`Sources/PersonaPadApp/AppStore+JSONPreview.swift`).
 
 ## Acceptance criteria
 - App compiles with Swift 6.2 language mode.

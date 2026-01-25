@@ -36,9 +36,9 @@ Files touched:
   - Core IO via FileClient: 3e32530
   - CLI filesystem access via dependencies: db09cbf
 - Remaining known deviation from strict dependency usage:
-  - PreviewView uses DispatchQueue for JSON formatting debounce.
-    If stricter dependency control is required, move this into a store
-    using @Dependency(\.continuousClock) with cancellable tasks.
+  - Resolved on 2026-01-25: preview JSON formatting debounce lives in `AppStore`
+    via `@Dependency(\.continuousClock)` with a cancellable task
+    (`Sources/PersonaPadApp/AppStore+JSONPreview.swift`).
 
 ## Acceptance criteria
 - swift test and ./Scripts/release-check.sh pass.
