@@ -71,6 +71,9 @@ extension AppStore {
   func togglePinnedPersona(id: String) {
     if state.pinnedPersonaIDs.contains(id) {
       state.pinnedPersonaIDs.remove(id)
+      if state.pinnedPersonaIDs.isEmpty {
+        state.isPinnedViewActive = false
+      }
     } else {
       state.pinnedPersonaIDs.insert(id)
     }

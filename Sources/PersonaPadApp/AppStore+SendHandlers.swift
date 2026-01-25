@@ -128,6 +128,10 @@ extension AppStore {
   func handlePinned(_ action: Action) -> Bool {
     switch action {
     case .setPinnedViewActive:
+      if state.isPinnedViewActive {
+        state.isPinnedViewActive = false
+        return true
+      }
       state.isPinnedViewActive = true
       state.selectedSavedFilterID = nil
       return true
