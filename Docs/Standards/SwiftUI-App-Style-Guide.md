@@ -56,6 +56,8 @@ Linting and formatting are **part of the architecture**, not optional tooling.
 - Enforced via **SwiftLint** with a curated ruleset.
 - Linting reinforces architectural intent and prevents footguns.
 - Disabling a rule requires a comment explaining why.
+- Formatting-style rules that conflict with `swift-format` output are disabled in SwiftLint
+  (for example, `opening_brace` and `trailing_comma`).
 
 **Enforcement posture**
 - Formatting violations block commits.
