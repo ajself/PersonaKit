@@ -40,7 +40,8 @@ extension AppClient: DependencyKey {
     confirmRemovePack: {
       let alert = NSAlert()
       alert.messageText = "Remove Pack?"
-      alert.informativeText = "This will delete the pack folder from disk. This action cannot be undone."
+      alert.informativeText =
+        "This will delete the pack folder from disk. This action cannot be undone."
       alert.addButton(withTitle: "Remove")
       alert.addButton(withTitle: "Cancel")
       alert.alertStyle = .warning
@@ -68,8 +69,8 @@ extension AppClient: DependencyKey {
   public static var previewValue: AppClient { liveValue }
 }
 
-public extension DependencyValues {
-  var appClient: AppClient {
+extension DependencyValues {
+  public var appClient: AppClient {
     get { self[AppClient.self] }
     set { self[AppClient.self] = newValue }
   }

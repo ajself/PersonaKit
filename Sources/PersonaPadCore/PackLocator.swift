@@ -13,7 +13,8 @@ public enum PersonaPackLocator {
 
   public static func builtInPackURLs(repoRoot: URL) -> [URL] {
     let fileClient = FileClientProvider().fileClient
-    let resourcesRoot = repoRoot.appendingPathComponent("Sources/PersonaPadResources/Resources", isDirectory: true)
+    let resourcesRoot = repoRoot.appendingPathComponent(
+      "Sources/PersonaPadResources/Resources", isDirectory: true)
     let builtInDir = resourcesRoot.appendingPathComponent("BuiltIn", isDirectory: true)
     if fileClient.fileExists(builtInDir) {
       return jsonFiles(in: builtInDir, fileClient: fileClient)
@@ -23,7 +24,8 @@ public enum PersonaPackLocator {
       return [builtInFile]
     }
 
-    let legacyRoot = repoRoot.appendingPathComponent("Sources/PersonaPadApp/Resources", isDirectory: true)
+    let legacyRoot = repoRoot.appendingPathComponent(
+      "Sources/PersonaPadApp/Resources", isDirectory: true)
     let legacyDir = legacyRoot.appendingPathComponent("BuiltIn", isDirectory: true)
     if fileClient.fileExists(legacyDir) {
       return jsonFiles(in: legacyDir, fileClient: fileClient)
@@ -39,8 +41,11 @@ public enum PersonaPackLocator {
     guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return []
     }
-    return contents
+    return
+      contents
       .filter { $0.pathExtension.lowercased() == "json" }
-      .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+      .sorted {
+        $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+      }
   }
 }

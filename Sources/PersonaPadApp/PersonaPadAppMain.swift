@@ -1,9 +1,10 @@
-import SwiftUI
 import PersonaPadCore
+import SwiftUI
 
 @main
 struct PersonaPadAppMain: App {
-  @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+  @NSApplicationDelegateAdaptor(AppDelegate.self)
+  private var appDelegate
   @State private var store = AppStore()
   @State private var showPersonaSwitcher = false
   @State private var showInspector = false
@@ -15,7 +16,7 @@ struct PersonaPadAppMain: App {
         .frame(minWidth: 1100, minHeight: 700)
     }
     .commands {
-      CommandGroup(replacing: .newItem) { }
+      CommandGroup(replacing: .newItem) {}
       CommandGroup(after: .newItem) {
         Button("Import Pack…") {
           store.send(.importPack)

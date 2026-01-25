@@ -12,48 +12,75 @@ struct ComposerView: View {
   private let evidenceHint = "Hint: logs, diffs, screenshots, or repros."
   private let taskHint = "Hint: desired outcome, format, and scope."
 
+  private let contextHelpLines: [String] = {
+    var lines: [String] = []
+    lines.append("Repo: PersonaPad; files: ContentView.swift, PreviewView.swift")
+    lines.append("App: macOS; issue: focus/shortcut conflict after 1.3.0")
+    lines.append("Pack: Examples/personapad.pack.json; persona: senior-ios-engineer")
+    return lines
+  }()
+
+  private let evidenceHelpLines: [String] = {
+    var lines: [String] = []
+    lines.append("Logs: crash at PersonaPadApp/SidebarView.swift:64")
+    lines.append("Diff: git show abc123")
+    lines.append("Screenshot: selection highlight missing in sidebar")
+    return lines
+  }()
+
+  private let taskHelpLines: [String] = {
+    var lines: [String] = []
+    lines.append("Propose minimal fix and exact files to change")
+    lines.append("Explain the root cause in 2–3 bullets")
+    lines.append("Write tests to cover the regression")
+    return lines
+  }()
+
+  private struct ParameterFieldConfig {
+    let key: String
+    let label: String
+    let required: Bool
+    let hint: String
+    let helpTitle: String
+    let helpLines: [String]
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       parameterField(
-        key: "context",
-        label: "Context",
-        required: true,
-        hint: contextHint,
-        showHelp: $showContextHelp,
-        helpTitle: "Context examples",
-        helpLines: [
-          "Repo: PersonaPad; files: ContentView.swift, PreviewView.swift",
-          "App: macOS; issue: focus/shortcut conflict after 1.3.0",
-          "Pack: Examples/personapad.pack.json; persona: senior-ios-engineer",
-        ]
+        config: ParameterFieldConfig(
+          key: "context",
+          label: "Context",
+          required: true,
+          hint: contextHint,
+          helpTitle: "Context examples",
+          helpLines: contextHelpLines
+        ),
+        showHelp: $showContextHelp
       )
 
       parameterField(
-        key: "evidence",
-        label: "Evidence",
-        required: false,
-        hint: evidenceHint,
-        showHelp: $showEvidenceHelp,
-        helpTitle: "Evidence examples",
-        helpLines: [
-          "Logs: crash at PersonaPadApp/SidebarView.swift:64",
-          "Diff: git show abc123",
-          "Screenshot: selection highlight missing in sidebar",
-        ]
+        config: ParameterFieldConfig(
+          key: "evidence",
+          label: "Evidence",
+          required: false,
+          hint: evidenceHint,
+          helpTitle: "Evidence examples",
+          helpLines: evidenceHelpLines
+        ),
+        showHelp: $showEvidenceHelp
       )
 
       parameterField(
-        key: "task",
-        label: "Task",
-        required: true,
-        hint: taskHint,
-        showHelp: $showTaskHelp,
-        helpTitle: "Task examples",
-        helpLines: [
-          "Propose minimal fix and exact files to change",
-          "Explain the root cause in 2–3 bullets",
-          "Write tests to cover the regression",
-        ]
+        config: ParameterFieldConfig(
+          key: "task",
+          label: "Task",
+          required: true,
+          hint: taskHint,
+          helpTitle: "Task examples",
+          helpLines: taskHelpLines
+        ),
+        showHelp: $showTaskHelp
       )
     }
     .onChange(of: store.state.composerFocusRequest) { _, request in
@@ -64,18 +91,13 @@ struct ComposerView: View {
 
   @ViewBuilder
   private func parameterField(
-    key: String,
-    label: String,
-    required: Bool,
-    hint: String,
-    showHelp: Binding<Bool>,
-    helpTitle: String,
-    helpLines: [String]
+    config: ParameterFieldConfig,
+    showHelp: Binding<Bool>
   ) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 8) {
-        Text(label).font(.headline)
-        if required {
+        Text(config.label).font(.headline)
+        if config.required {
           Text("Required")
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -86,22 +108,22 @@ struct ComposerView: View {
           Image(systemName: "questionmark.circle")
         }
         .buttonStyle(.plain)
-        .help("Examples for \(label).")
+        .help("Examples for \(config.label).")
         .popover(isPresented: showHelp) {
-          helpPopover(title: helpTitle, lines: helpLines)
+          helpPopover(title: config.helpTitle, lines: config.helpLines)
         }
       }
 
-      TextEditor(text: store.bindingForComposerValue(key: key))
+      TextEditor(text: store.bindingForComposerValue(key: config.key))
         .font(.system(.body, design: .monospaced))
-        .focused($focusedSectionKey, equals: key)
+        .focused($focusedSectionKey, equals: config.key)
         .frame(minHeight: 90)
         .overlay(
           RoundedRectangle(cornerRadius: 8)
             .stroke(Color.secondary.opacity(0.25))
         )
 
-      Text(hint)
+      Text(config.hint)
         .font(.caption)
         .foregroundStyle(.secondary)
     }

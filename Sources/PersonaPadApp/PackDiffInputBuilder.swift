@@ -8,7 +8,9 @@ struct PackDiffInputResult: Equatable {
 }
 
 enum PackDiffInputBuilder {
-  static func build(for selection: PackSelection, fileClient: FileClient? = nil) -> PackDiffInputResult {
+  static func build(
+    for selection: PackSelection, fileClient: FileClient? = nil
+  ) -> PackDiffInputResult {
     var records: [PersonaDiffRecord] = []
     var diagnostics: [Diagnostic] = []
     let fileClient = fileClient ?? PackDiffEnvironment().fileClient
@@ -55,7 +57,8 @@ enum PackDiffInputBuilder {
         let displayName = name.isEmpty ? nil : name
         let displayID = trimmedID.isEmpty ? key : trimmedID
         let hash = PackDiffBuilder.contentHash(for: persona)
-        records.append(PersonaDiffRecord(key: key, id: displayID, name: displayName, contentHash: hash))
+        records.append(
+          PersonaDiffRecord(key: key, id: displayID, name: displayName, contentHash: hash))
       }
     }
   }
@@ -64,7 +67,8 @@ enum PackDiffInputBuilder {
     guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return []
     }
-    return contents
+    return
+      contents
       .filter { $0.lastPathComponent.lowercased().hasSuffix(".persona.json") }
       .filter { !isMetadataSidecar($0) }
       .sorted { $0.lastPathComponent < $1.lastPathComponent }
@@ -77,5 +81,6 @@ enum PackDiffInputBuilder {
 }
 
 private struct PackDiffEnvironment {
-  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.fileClient)
+  var fileClient
 }

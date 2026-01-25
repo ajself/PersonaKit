@@ -1,6 +1,6 @@
+import Darwin
 import Dependencies
 import Foundation
-import Darwin
 import PersonaPadCore
 import PersonaPadResources
 
@@ -48,10 +48,12 @@ struct PersonaPadCLI {
     var packsByID: [String: PackMeta] = [:]
 
     if builtInURLs.isEmpty {
-      diags.append(.warning(
-        source: PersonaSource(kind: .builtIn, url: nil),
-        message: "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
-      ))
+      diags.append(
+        .warning(
+          source: PersonaSource(kind: .builtIn, url: nil),
+          message:
+            "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
+        ))
     } else {
       for url in builtInURLs {
         switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
@@ -97,13 +99,18 @@ struct PersonaPadCLI {
       // Very simple flag parsing
       let personaID = parsed.value(for: "persona") ?? resolved.personasByID.keys.sorted().first
       guard let id = personaID, let p = resolved.personasByID[id]?.persona else {
-        fputs("Persona not found. Fix: run 'personapad list' and use a valid --persona id.\n", stderr)
+        fputs(
+          "Persona not found. Fix: run 'personapad list' and use a valid --persona id.\n", stderr)
         exit(2)
       }
 
       var sections: [String: String] = [:]
-      let sectionKeys = (p.template?.sections?.map { $0.key } ?? ["context", "goal", "constraints", "evidence", "task"])
-      let wantsStdin = (parsed.value(for: "context") == "-") || (parsed.value(for: "evidence") == "-")
+      let sectionKeys =
+        (p.template?.sections?.map { $0.key } ?? [
+          "context", "goal", "constraints", "evidence", "task",
+        ])
+      let wantsStdin =
+        (parsed.value(for: "context") == "-") || (parsed.value(for: "evidence") == "-")
       let stdinText = wantsStdin ? readStdinIfAvailable() : nil
 
       for key in sectionKeys {
@@ -117,9 +124,10 @@ struct PersonaPadCLI {
       }
 
       if parsed.value(for: "context") == nil,
-         parsed.value(for: "evidence") == nil,
-         let piped = readStdinIfAvailable(),
-         sectionKeys.contains("context") {
+        parsed.value(for: "evidence") == nil,
+        let piped = readStdinIfAvailable(),
+        sectionKeys.contains("context")
+      {
         sections["context"] = piped
       }
 
@@ -181,16 +189,17 @@ struct PersonaPadCLI {
   }
 
   static func printUsage() {
-    print("""
-Usage:
-  personapad list
-  personapad compose --persona <id> [--resolved-json] [--context <text|->] [--goal <text>] [--constraints <text>] [--evidence <text|->] [--task <text>]
-  personapad describe <persona-id>
+    print(
+      """
+      Usage:
+        personapad list
+        personapad compose --persona <id> [--resolved-json] [--context <text|->] [--goal <text>] [--constraints <text>] [--evidence <text|->] [--task <text>]
+        personapad describe <persona-id>
 
-Notes:
-  CLI loads built-ins from the PersonaPadResources bundle (or repo fallback when running from source).
-  The macOS app additionally loads user packs from ~/Library/Application Support/PersonaPad/Packs/
-""")
+      Notes:
+        CLI loads built-ins from the PersonaPadResources bundle (or repo fallback when running from source).
+        The macOS app additionally loads user packs from ~/Library/Application Support/PersonaPad/Packs/
+      """)
   }
 }
 

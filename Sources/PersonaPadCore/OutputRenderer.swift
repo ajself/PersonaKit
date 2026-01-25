@@ -13,7 +13,8 @@ public enum PersonaOutputRenderer {
       encoder.outputFormatting = [.sortedKeys]
     }
     guard let data = try? encoder.encode(persona),
-          let text = String(data: data, encoding: .utf8) else {
+      let text = String(data: data, encoding: .utf8)
+    else {
       return nil
     }
     return text

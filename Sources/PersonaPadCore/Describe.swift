@@ -19,10 +19,11 @@ public struct PersonaDescriptor {
     baseURL: URL? = nil
   ) -> Result<String, PersonaDescribeFailure> {
     guard let personaID, let persona = resolved[personaID]?.persona else {
-      return .failure(PersonaDescribeFailure(
-        message: "Persona not found. Fix: run 'personapad list' and use a valid persona id.",
-        exitCode: 2
-      ))
+      return .failure(
+        PersonaDescribeFailure(
+          message: "Persona not found. Fix: run 'personapad list' and use a valid persona id.",
+          exitCode: 2
+        ))
     }
 
     let source = sourcesByID[persona.id]
@@ -64,7 +65,8 @@ public struct PersonaDescriptor {
     return PersonaMetadata.sortedTags(unique)
   }
 
-  public static func sourceLabel(source: PersonaSource?, pack: PackMeta?, baseURL: URL?) -> String? {
+  public static func sourceLabel(source: PersonaSource?, pack: PackMeta?, baseURL: URL?) -> String?
+  {
     guard let source else {
       return packDisplayLabel(pack)
     }

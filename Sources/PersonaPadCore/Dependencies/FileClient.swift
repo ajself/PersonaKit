@@ -7,7 +7,9 @@ public struct FileClient: Sendable {
   public var writeData: @Sendable (Data, URL, Data.WritingOptions) throws -> Void
   public var createDirectory: @Sendable (URL, Bool) throws -> Void
   public var contentsOfDirectory: @Sendable (URL, [URLResourceKey]?) throws -> [URL]
-  public var enumerator: @Sendable (URL, [URLResourceKey]?, FileManager.DirectoryEnumerationOptions) -> FileManager.DirectoryEnumerator?
+  public var enumerator:
+    @Sendable (URL, [URLResourceKey]?, FileManager.DirectoryEnumerationOptions) -> FileManager
+      .DirectoryEnumerator?
   public var removeItem: @Sendable (URL) throws -> Void
   public var moveItem: @Sendable (URL, URL) throws -> Void
   public var copyItem: @Sendable (URL, URL) throws -> Void
@@ -21,7 +23,9 @@ public struct FileClient: Sendable {
     writeData: @escaping @Sendable (Data, URL, Data.WritingOptions) throws -> Void,
     createDirectory: @escaping @Sendable (URL, Bool) throws -> Void,
     contentsOfDirectory: @escaping @Sendable (URL, [URLResourceKey]?) throws -> [URL],
-    enumerator: @escaping @Sendable (URL, [URLResourceKey]?, FileManager.DirectoryEnumerationOptions) -> FileManager.DirectoryEnumerator?,
+    enumerator:
+      @escaping @Sendable (URL, [URLResourceKey]?, FileManager.DirectoryEnumerationOptions) ->
+      FileManager.DirectoryEnumerator?,
     removeItem: @escaping @Sendable (URL) throws -> Void,
     moveItem: @escaping @Sendable (URL, URL) throws -> Void,
     copyItem: @escaping @Sendable (URL, URL) throws -> Void,
@@ -56,7 +60,8 @@ extension FileClient: DependencyKey {
       try data.write(to: url, options: options)
     },
     createDirectory: { url, withIntermediateDirectories in
-      try FileManager.default.createDirectory(at: url, withIntermediateDirectories: withIntermediateDirectories)
+      try FileManager.default.createDirectory(
+        at: url, withIntermediateDirectories: withIntermediateDirectories)
     },
     contentsOfDirectory: { url, keys in
       try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: keys)
@@ -88,8 +93,8 @@ extension FileClient: DependencyKey {
   public static var previewValue: FileClient { liveValue }
 }
 
-public extension DependencyValues {
-  var fileClient: FileClient {
+extension DependencyValues {
+  public var fileClient: FileClient {
     get { self[FileClient.self] }
     set { self[FileClient.self] = newValue }
   }

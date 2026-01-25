@@ -245,12 +245,12 @@ struct InspectorView: View {
       packDiffDiagnostics = []
       return
     }
-    if let comparisonPackID,
-      !comparisonCandidates.contains(where: { $0.id == comparisonPackID })
-    {
-      self.comparisonPackID = nil
-      packDiff = nil
-      packDiffDiagnostics = []
+    if let comparisonPackID {
+      if !comparisonCandidates.contains(where: { $0.id == comparisonPackID }) {
+        self.comparisonPackID = nil
+        packDiff = nil
+        packDiffDiagnostics = []
+      }
     }
   }
 

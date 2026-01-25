@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import PersonaPadApp
 
 final class SidebarSearchEscapePolicyTests: XCTestCase {

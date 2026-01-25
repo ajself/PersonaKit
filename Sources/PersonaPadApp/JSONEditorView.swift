@@ -83,10 +83,10 @@ final class JSONSyntaxTextView: NSTextView {
 
   func setTextPreservingSelection(_ text: String) {
     let priorSelection = selectedRange()
-    let attrs: [NSAttributedString.Key: Any] = [
-      .font: font ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
-      .foregroundColor: NSColor.textColor,
-    ]
+    var attrs: [NSAttributedString.Key: Any] = [:]
+    attrs[.font] =
+      font ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+    attrs[.foregroundColor] = NSColor.textColor
     textStorage?.setAttributedString(NSAttributedString(string: text, attributes: attrs))
     let clampedLocation = min(priorSelection.location, text.count)
     setSelectedRange(NSRange(location: clampedLocation, length: 0))
@@ -136,10 +136,8 @@ final class JSONSyntaxTextView: NSTextView {
       let match = findMatchingBracket(from: index, in: fullText)
     else { return }
 
-    let ranges = [
-      NSRange(location: index, length: 1),
-      NSRange(location: match, length: 1),
-    ]
+    var ranges = [NSRange(location: index, length: 1)]
+    ranges.append(NSRange(location: match, length: 1))
     let highlightColor = NSColor.controlAccentColor.withAlphaComponent(0.25)
     for range in ranges {
       layoutManager.addTemporaryAttribute(
@@ -186,8 +184,8 @@ final class JSONSyntaxTextView: NSTextView {
     var escaped = false
     let chars = Array(text)
     guard start <= chars.count else { return nil }
-    for i in start..<chars.count {
-      let ch = chars[i]
+    for index in start..<chars.count {
+      let ch = chars[index]
       if inString {
         if escaped {
           escaped = false
@@ -204,7 +202,7 @@ final class JSONSyntaxTextView: NSTextView {
         }
         if ch == open { depth += 1 }
         if ch == close { depth -= 1 }
-        if depth == 0 { return i }
+        if depth == 0 { return index }
       }
     }
     return nil
@@ -218,9 +216,9 @@ final class JSONSyntaxTextView: NSTextView {
     var escaped = false
     let chars = Array(text)
     guard start >= 0 else { return nil }
-    var i = start
-    while i >= 0 {
-      let ch = chars[i]
+    var index = start
+    while index >= 0 {
+      let ch = chars[index]
       if inString {
         if escaped {
           escaped = false
@@ -229,19 +227,19 @@ final class JSONSyntaxTextView: NSTextView {
         } else if ch == "\"" {
           inString = false
         }
-        i -= 1
+        index -= 1
         continue
       } else {
         if ch == "\"" {
           inString = true
-          i -= 1
+          index -= 1
           continue
         }
         if ch == close { depth += 1 }
         if ch == open { depth -= 1 }
-        if depth == 0 { return i }
+        if depth == 0 { return index }
       }
-      i -= 1
+      index -= 1
     }
     return nil
   }

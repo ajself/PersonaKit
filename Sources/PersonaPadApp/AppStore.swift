@@ -20,6 +20,22 @@ struct PackLocation: Equatable {
 }
 
 struct PackSelection: Identifiable, Hashable {
+  struct SortKey: Comparable {
+    let displayName: String
+    let packID: String
+    let packPath: String
+
+    static func < (lhs: SortKey, rhs: SortKey) -> Bool {
+      if lhs.displayName != rhs.displayName {
+        return lhs.displayName < rhs.displayName
+      }
+      if lhs.packID != rhs.packID {
+        return lhs.packID < rhs.packID
+      }
+      return lhs.packPath < rhs.packPath
+    }
+  }
+
   let id: String
   let pack: PackMeta
   let source: PersonaSource
@@ -42,11 +58,11 @@ struct PackSelection: Identifiable, Hashable {
     return "Unknown Pack"
   }
 
-  static func sortKey(_ selection: PackSelection) -> (String, String, String) {
-    (
-      selection.displayName,
-      selection.pack.id,
-      selection.packFile.path
+  static func sortKey(_ selection: PackSelection) -> SortKey {
+    SortKey(
+      displayName: selection.displayName,
+      packID: selection.pack.id,
+      packPath: selection.packFile.path
     )
   }
 }

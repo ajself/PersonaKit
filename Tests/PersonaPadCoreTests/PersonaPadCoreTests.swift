@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import PersonaPadCore
 
 final class PersonaPadCoreTests: XCTestCase {
@@ -38,9 +39,11 @@ final class PersonaPadCoreTests: XCTestCase {
       id: "t",
       name: "Test",
       system: "SYSTEM",
-      template: PromptTemplate(format: nil, sections: [
-        TemplateSection(key: "goal", label: "Goal", required: true)
-      ])
+      template: PromptTemplate(
+        format: nil,
+        sections: [
+          TemplateSection(key: "goal", label: "Goal", required: true)
+        ])
     )
 
     let out = PromptComposer.compose(persona: p, sections: ["goal": "Ship v1"])
@@ -51,18 +54,18 @@ final class PersonaPadCoreTests: XCTestCase {
 
   func testExtendsIsRejected() throws {
     let json = """
-    {
-      "schemaVersion": 1,
-      "documentType": "persona",
-      "persona": {
-        "id": "child",
-        "name": "Child",
-        "system": "SYSTEM",
-        "extends": "parent",
-        "systemAppend": "APPEND"
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": {
+          "id": "child",
+          "name": "Child",
+          "system": "SYSTEM",
+          "extends": "parent",
+          "systemAppend": "APPEND"
+        }
       }
-    }
-    """
+      """
     let url = FileManager.default.temporaryDirectory.appendingPathComponent("extends.persona.json")
     try json.write(to: url, atomically: true, encoding: .utf8)
     defer { try? FileManager.default.removeItem(at: url) }
@@ -72,8 +75,10 @@ final class PersonaPadCoreTests: XCTestCase {
     case .success:
       XCTFail("Expected extends to be rejected")
     case .failure(let error):
-      XCTAssertTrue(error.diagnostics.contains { $0.severity == .error && $0.message.contains("extends") })
-      XCTAssertTrue(error.diagnostics.contains { $0.severity == .error && $0.message.contains("systemAppend") })
+      XCTAssertTrue(
+        error.diagnostics.contains { $0.severity == .error && $0.message.contains("extends") })
+      XCTAssertTrue(
+        error.diagnostics.contains { $0.severity == .error && $0.message.contains("systemAppend") })
     }
   }
 
@@ -91,13 +96,13 @@ final class PersonaPadCoreTests: XCTestCase {
         "goal": "Verify deterministic prompt output",
         "constraints": "No behavior changes",
         "evidence": "Determinism tests",
-        "task": "Review the output"
+        "task": "Review the output",
       ],
       "media-export-correctness": [
         "context": "Export pipeline v2",
         "evidence": "Timing drift in 120fps",
-        "task": "Find deterministic pitfalls"
-      ]
+        "task": "Find deterministic pitfalls",
+      ],
     ]
 
     for id in ids {
@@ -132,7 +137,7 @@ final class PersonaPadCoreTests: XCTestCase {
 
     let personas: [Persona] = [
       resolvedPack["senior-ios-engineer"]?.persona,
-      personaSet.personas.first
+      personaSet.personas.first,
     ].compactMap { $0 }
 
     XCTAssertEqual(personas.count, 2)
@@ -163,7 +168,7 @@ final class PersonaPadCoreTests: XCTestCase {
       "goal": "Prove CLI parity",
       "constraints": "No divergence",
       "evidence": "Unit test",
-      "task": "Compare outputs"
+      "task": "Compare outputs",
     ]
 
     let coreOutput = PromptComposer.compose(persona: persona, sections: sections)
@@ -196,7 +201,8 @@ final class PersonaPadCoreTests: XCTestCase {
     XCTAssertFalse(diags.isEmpty)
     for d in diags {
       XCTAssertTrue(d.message.contains("Fix:"), "Missing fix hint in: \(d.message)")
-      XCTAssertTrue(d.userFacingMessage.contains("Source:"), "Missing source label in: \(d.userFacingMessage)")
+      XCTAssertTrue(
+        d.userFacingMessage.contains("Source:"), "Missing source label in: \(d.userFacingMessage)")
     }
   }
 
@@ -216,18 +222,18 @@ final class PersonaPadCoreTests: XCTestCase {
 
   func testMetadataParsingAndSortedTags() throws {
     let json = """
-    {
-      "schemaVersion": 1,
-      "documentType": "persona",
-      "persona": {
-        "id": "meta",
-        "name": "Meta",
-        "system": "SYSTEM",
-        "tags": ["beta", "Alpha", "alpha"],
-        "description": "Short about text."
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": {
+          "id": "meta",
+          "name": "Meta",
+          "system": "SYSTEM",
+          "tags": ["beta", "Alpha", "alpha"],
+          "description": "Short about text."
+        }
       }
-    }
-    """
+      """
     let url = FileManager.default.temporaryDirectory.appendingPathComponent("meta.persona.json")
     try json.write(to: url, atomically: true, encoding: .utf8)
     defer { try? FileManager.default.removeItem(at: url) }
@@ -258,10 +264,12 @@ final class PersonaPadCoreTests: XCTestCase {
   }
 
   func testMetadataDoesNotAffectComposition() throws {
-    let template = PromptTemplate(format: nil, sections: [
-      TemplateSection(key: "context", label: "Context", required: true),
-      TemplateSection(key: "task", label: "Task", required: true)
-    ])
+    let template = PromptTemplate(
+      format: nil,
+      sections: [
+        TemplateSection(key: "context", label: "Context", required: true),
+        TemplateSection(key: "task", label: "Task", required: true),
+      ])
 
     let base = Persona(
       id: "meta-free",
@@ -281,7 +289,7 @@ final class PersonaPadCoreTests: XCTestCase {
 
     let sections = [
       "context": "Repo: PersonaPad",
-      "task": "Confirm output"
+      "task": "Confirm output",
     ]
 
     let baseOutput = PromptComposer.compose(persona: base, sections: sections)
@@ -349,12 +357,12 @@ final class PersonaPadCoreTests: XCTestCase {
     let left: [PersonaDiffRecord] = [
       PersonaDiffRecord(key: "z", id: "zeta", name: "Zeta", contentHash: "a"),
       PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
-      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha", contentHash: "c")
+      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha", contentHash: "c"),
     ]
     let right: [PersonaDiffRecord] = [
       PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
       PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha Updated", contentHash: "d"),
-      PersonaDiffRecord(key: "c", id: "charlie", name: "Charlie", contentHash: "e")
+      PersonaDiffRecord(key: "c", id: "charlie", name: "Charlie", contentHash: "e"),
     ]
 
     let diff = PackDiffBuilder.diff(left: Array(left.reversed()), right: Array(right.reversed()))
@@ -363,10 +371,12 @@ final class PersonaPadCoreTests: XCTestCase {
     XCTAssertEqual(diff.removed.map(\.id), ["zeta"])
     XCTAssertEqual(diff.modified.map(\.id), ["alpha"])
 
-    let addedDiff = PackDiffBuilder.diff(left: [], right: [
-      PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"),
-      PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1")
-    ])
+    let addedDiff = PackDiffBuilder.diff(
+      left: [],
+      right: [
+        PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"),
+        PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1"),
+      ])
     XCTAssertEqual(addedDiff.added.map(\.id), ["a", "b"])
   }
 
@@ -395,7 +405,7 @@ final class PersonaPadCoreTests: XCTestCase {
         selectedTags: ["tag-a"],
         selectedSources: ["builtIn"],
         groupingMode: "tag"
-      )
+      ),
     ]
 
     let data1 = try XCTUnwrap(SavedFiltersStore.encode(filters))
@@ -405,7 +415,8 @@ final class PersonaPadCoreTests: XCTestCase {
   }
 
   func testSavedFiltersLoadSortsByNameThenId() throws {
-    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("filters.json")
     let store = SavedFiltersStore(fileURL: fileURL)
 
@@ -433,7 +444,7 @@ final class PersonaPadCoreTests: XCTestCase {
         selectedTags: [],
         selectedSources: [],
         groupingMode: nil
-      )
+      ),
     ]
 
     store.save(filters)
@@ -442,7 +453,8 @@ final class PersonaPadCoreTests: XCTestCase {
   }
 
   func testPinnedPersonasMissingFileReturnsEmpty() throws {
-    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("pins.json")
     let store = PinnedPersonasStore(fileURL: fileURL)
 
@@ -450,7 +462,8 @@ final class PersonaPadCoreTests: XCTestCase {
   }
 
   func testPinnedPersonasSaveSortsDeterministically() throws {
-    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("pins.json")
     let store = PinnedPersonasStore(fileURL: fileURL)
 
@@ -468,13 +481,16 @@ final class PersonaPadCoreTests: XCTestCase {
   }
 
   func testPackDirectoryNamingPrefersNameThenId() throws {
-    let pack = PackMeta(id: "pack.id", name: "My Pack", author: nil, description: nil, homepage: nil)
+    let pack = PackMeta(
+      id: "pack.id", name: "My Pack", author: nil, description: nil, homepage: nil)
     XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: pack), "My Pack")
 
-    let fallback = PackMeta(id: "fallback.id", name: "   ", author: nil, description: nil, homepage: nil)
+    let fallback = PackMeta(
+      id: "fallback.id", name: "   ", author: nil, description: nil, homepage: nil)
     XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: fallback), "fallback.id")
 
-    let sanitized = PackMeta(id: "pack/id", name: "My/Pack", author: nil, description: nil, homepage: nil)
+    let sanitized = PackMeta(
+      id: "pack/id", name: "My/Pack", author: nil, description: nil, homepage: nil)
     XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: sanitized), "My-Pack")
   }
 
@@ -498,22 +514,22 @@ final class PersonaPadCoreTests: XCTestCase {
     let nestedPersonaURL = nestedFolder.appendingPathComponent("Nested.persona.json")
 
     let packJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "personaPack",
-      "pack": { "id": "pack.id", "name": "Pack" },
-      "personas": [
-        { "id": "p1", "name": "P1", "system": "SYSTEM" }
-      ]
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
     let personaJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "persona",
-      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+      }
+      """
     try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
     try personaJSON.write(to: personaURL, atomically: true, encoding: .utf8)
     try "{}".write(to: metaURL, atomically: true, encoding: .utf8)
@@ -548,22 +564,22 @@ final class PersonaPadCoreTests: XCTestCase {
     let fileB = subB.appendingPathComponent("Extra.persona.json")
 
     let packJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "personaPack",
-      "pack": { "id": "pack.id", "name": "Pack" },
-      "personas": [
-        { "id": "p1", "name": "P1", "system": "SYSTEM" }
-      ]
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
     let personaJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "persona",
-      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+      }
+      """
     try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
     try personaJSON.write(to: fileA, atomically: true, encoding: .utf8)
     try personaJSON.write(to: fileB, atomically: true, encoding: .utf8)
@@ -586,15 +602,15 @@ final class PersonaPadCoreTests: XCTestCase {
     let packB = root.appendingPathComponent("B.pack.json")
 
     let packJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "personaPack",
-      "pack": { "id": "pack.id", "name": "Pack" },
-      "personas": [
-        { "id": "p1", "name": "P1", "system": "SYSTEM" }
-      ]
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
     try packJSON.write(to: packA, atomically: true, encoding: .utf8)
     try packJSON.write(to: packB, atomically: true, encoding: .utf8)
 
@@ -624,22 +640,22 @@ final class PersonaPadCoreTests: XCTestCase {
     let personaURL = packFolder.appendingPathComponent("Extra.persona.json")
 
     let packJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "personaPack",
-      "pack": { "id": "pack.id", "name": "Pack" },
-      "personas": [
-        { "id": "p1", "name": "P1", "system": "SYSTEM" }
-      ]
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
     let personaJSON = """
-    {
-      "schemaVersion": 1,
-      "documentType": "persona",
-      "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
-    }
-    """
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+      }
+      """
     try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
     try personaJSON.write(to: personaURL, atomically: true, encoding: .utf8)
 

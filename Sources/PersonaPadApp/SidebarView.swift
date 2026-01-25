@@ -23,29 +23,29 @@ struct SidebarView: View {
 
   private var filtered: [ResolvedPersona] {
     allPersonas.filter { rp in
-      let p = rp.persona
+      let persona = rp.persona
       let matchesPinned: Bool = {
         guard store.state.isPinnedViewActive else { return true }
-        return store.state.pinnedPersonaIDs.contains(p.id)
+        return store.state.pinnedPersonaIDs.contains(persona.id)
       }()
       let matchesSearch =
         store.state.searchText.isEmpty
-        || p.name.localizedCaseInsensitiveContains(store.state.searchText)
-        || (p.id.localizedCaseInsensitiveContains(store.state.searchText))
-        || (p.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
-        || p.sortedTags.contains(where: {
+        || persona.name.localizedCaseInsensitiveContains(store.state.searchText)
+        || (persona.id.localizedCaseInsensitiveContains(store.state.searchText))
+        || (persona.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
+        || persona.sortedTags.contains(where: {
           $0.localizedCaseInsensitiveContains(store.state.searchText)
         })
 
       let matchesTag: Bool = {
         guard !store.state.activeFilterTags.isEmpty else { return true }
-        let tags = p.tags ?? []
+        let tags = persona.tags ?? []
         return store.state.activeFilterTags.allSatisfy { tags.contains($0) }
       }()
 
       let matchesSource: Bool = {
         guard !store.state.activeSourceKinds.isEmpty else { return true }
-        guard let kind = store.state.personaSourcesByID[p.id]?.kind else { return false }
+        guard let kind = store.state.personaSourcesByID[persona.id]?.kind else { return false }
         return store.state.activeSourceKinds.contains(kind)
       }()
 
@@ -277,9 +277,8 @@ struct SidebarView: View {
     let trimmed = store.state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmed.isEmpty {
       pendingFilterName = trimmed
-    } else if store.state.activeFilterTags.count == 1, let tag = store.state.activeFilterTags.first
-    {
-      pendingFilterName = tag
+    } else if store.state.activeFilterTags.count == 1 {
+      pendingFilterName = store.state.activeFilterTags.first ?? "Saved Filter"
     } else {
       pendingFilterName = "Saved Filter"
     }
@@ -367,11 +366,13 @@ private struct DiagnosticsFooter: View {
         Text("Diagnostics").font(.caption).foregroundStyle(.secondary)
         ScrollView {
           VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(diagnostics.enumerated()), id: \.offset) { _, d in
-              Text("• [\(d.severity.rawValue.uppercased())] \(d.userFacingMessage)")
-                .font(.caption2)
-                .foregroundStyle(d.severity == .error ? .red : .orange)
-                .textSelection(.enabled)
+            ForEach(Array(diagnostics.enumerated()), id: \.offset) { _, diagnostic in
+              Text(
+                "• [\(diagnostic.severity.rawValue.uppercased())] \(diagnostic.userFacingMessage)"
+              )
+              .font(.caption2)
+              .foregroundStyle(diagnostic.severity == .error ? .red : .orange)
+              .textSelection(.enabled)
             }
           }
           .padding(.bottom, 8)

@@ -42,7 +42,9 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
     var errors: [String] = []
     if !documentTypeIsValid {
       if let rawType {
-        errors.append("Unsupported documentType: \(rawType). Fix: set documentType to 'personaPack' or 'persona'.")
+        errors.append(
+          "Unsupported documentType: \(rawType). Fix: set documentType to 'personaPack' or 'persona'."
+        )
       } else {
         errors.append("Missing documentType. Fix: set documentType to 'personaPack' or 'persona'.")
       }
@@ -60,7 +62,8 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
       }
       let personas = try? container.decode([Persona].self, forKey: .personas)
       if container.contains(.personas), personas == nil {
-        errors.append("Invalid 'personas' array. Fix: ensure it is a JSON array of persona objects.")
+        errors.append(
+          "Invalid 'personas' array. Fix: ensure it is a JSON array of persona objects.")
       }
 
       self.pack = pack
@@ -89,38 +92,46 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
       return .failure(DiagnosticError(diags))
     }
     if schemaVersion != 1 {
-      diags.append(.error(
-        source: source,
-        message: "Unsupported schemaVersion: \(schemaVersion). Fix: set schemaVersion to 1."
-      ))
+      diags.append(
+        .error(
+          source: source,
+          message: "Unsupported schemaVersion: \(schemaVersion). Fix: set schemaVersion to 1."
+        ))
     }
 
     switch documentType {
     case .personaPack:
       guard let pack, let personas, !personas.isEmpty else {
-        diags.append(.error(
-          source: source,
-          message: "personaPack requires 'pack' and non-empty 'personas'. Fix: add pack metadata and at least one persona."
-        ))
+        diags.append(
+          .error(
+            source: source,
+            message:
+              "personaPack requires 'pack' and non-empty 'personas'. Fix: add pack metadata and at least one persona."
+          ))
         return .failure(DiagnosticError(diags))
       }
       let set = PersonaSet(source: source, pack: pack, defaults: defaults, personas: personas)
       diags.append(contentsOf: PersonaValidator.validate(set: set))
-      return diags.contains(where: { $0.severity == .error }) ? .failure(DiagnosticError(diags)) : .success(set)
+      return diags.contains(where: { $0.severity == .error })
+        ? .failure(DiagnosticError(diags)) : .success(set)
 
     case .persona:
       guard let persona else {
-        diags.append(.error(
-          source: source,
-          message: "persona document requires 'persona'. Fix: provide a 'persona' object."
-        ))
+        diags.append(
+          .error(
+            source: source,
+            message: "persona document requires 'persona'. Fix: provide a 'persona' object."
+          ))
         return .failure(DiagnosticError(diags))
       }
       // Wrap single persona as a set for consistent merging.
-      let pack = PackMeta(id: source.idFallback, name: source.displayNameFallback, author: nil, description: nil, homepage: nil)
+      let pack = PackMeta(
+        id: source.idFallback, name: source.displayNameFallback, author: nil, description: nil,
+        homepage: nil)
       let set = PersonaSet(source: source, pack: pack, defaults: nil, personas: [persona])
       diags.append(contentsOf: PersonaValidator.validate(set: set))
-      return diags.contains(where: { $0.severity == .error }) ? .failure(DiagnosticError(diags)) : .success(set)
+      return diags.contains(where: { $0.severity == .error })
+        ? .failure(DiagnosticError(diags)) : .success(set)
     }
   }
 }

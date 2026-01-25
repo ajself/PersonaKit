@@ -1,12 +1,49 @@
 import Foundation
 
 public enum PersonaMetadata {
-  private static func tagSortKey(_ tag: String) -> (String, String) {
-    (tag.lowercased(), tag)
+  private struct TagSortKey: Comparable {
+    let normalized: String
+    let original: String
+
+    static func < (lhs: TagSortKey, rhs: TagSortKey) -> Bool {
+      if lhs.normalized != rhs.normalized {
+        return lhs.normalized < rhs.normalized
+      }
+      return lhs.original < rhs.original
+    }
   }
 
-  public static func personaSortKey(_ persona: Persona) -> (String, String, String, String) {
-    (persona.name.lowercased(), persona.name, persona.id.lowercased(), persona.id)
+  private struct PersonaSortKey: Comparable {
+    let nameNormalized: String
+    let name: String
+    let idNormalized: String
+    let id: String
+
+    static func < (lhs: PersonaSortKey, rhs: PersonaSortKey) -> Bool {
+      if lhs.nameNormalized != rhs.nameNormalized {
+        return lhs.nameNormalized < rhs.nameNormalized
+      }
+      if lhs.name != rhs.name {
+        return lhs.name < rhs.name
+      }
+      if lhs.idNormalized != rhs.idNormalized {
+        return lhs.idNormalized < rhs.idNormalized
+      }
+      return lhs.id < rhs.id
+    }
+  }
+
+  private static func tagSortKey(_ tag: String) -> TagSortKey {
+    TagSortKey(normalized: tag.lowercased(), original: tag)
+  }
+
+  public static func personaSortKey(_ persona: Persona) -> PersonaSortKey {
+    PersonaSortKey(
+      nameNormalized: persona.name.lowercased(),
+      name: persona.name,
+      idNormalized: persona.id.lowercased(),
+      id: persona.id
+    )
   }
 
   public static func sortedTags(_ tags: [String]?) -> [String] {
@@ -20,12 +57,12 @@ public enum PersonaMetadata {
   }
 }
 
-public extension Persona {
-  var about: String? {
+extension Persona {
+  public var about: String? {
     description
   }
 
-  var sortedTags: [String] {
+  public var sortedTags: [String] {
     PersonaMetadata.sortedTags(tags)
   }
 }

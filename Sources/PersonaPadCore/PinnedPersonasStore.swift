@@ -23,8 +23,9 @@ public struct PinnedPersonasStore {
 
   public func load() -> [String] {
     guard fileClient.fileExists(fileURL),
-          let data = try? fileClient.readData(fileURL),
-          let decoded = PinnedPersonasStore.decode(data) else {
+      let data = try? fileClient.readData(fileURL),
+      let decoded = PinnedPersonasStore.decode(data)
+    else {
       return []
     }
     return decoded.sorted()

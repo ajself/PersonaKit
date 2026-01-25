@@ -20,14 +20,18 @@ public enum UserPackLoader {
     do {
       contents = try fileClient.contentsOfDirectory(packsRoot, [.isDirectoryKey])
     } catch {
-      diagnostics.append(.warning(
-        source: PersonaSource(kind: .user, url: packsRoot),
-        message: "Could not read user packs directory. Fix: ensure the directory exists and is readable. (\(error.localizedDescription))"
-      ))
+      diagnostics.append(
+        .warning(
+          source: PersonaSource(kind: .user, url: packsRoot),
+          message:
+            "Could not read user packs directory. Fix: ensure the directory exists and is readable. (\(error.localizedDescription))"
+        ))
       return (packs, diagnostics)
     }
 
-    let sorted = contents.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    let sorted = contents.sorted {
+      $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+    }
     for entry in sorted {
       let isDirectory = fileClient.isDirectory(entry)
       if isDirectory {
@@ -47,41 +51,52 @@ public enum UserPackLoader {
     diagnostics: inout [Diagnostic]
   ) {
     guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
-      diagnostics.append(.warning(
-        source: PersonaSource(kind: .user, url: directory),
-        message: "Could not read pack folder. Fix: ensure the folder is readable."
-      ))
+      diagnostics.append(
+        .warning(
+          source: PersonaSource(kind: .user, url: directory),
+          message: "Could not read pack folder. Fix: ensure the folder is readable."
+        ))
       return
     }
 
-    let packFiles = contents
+    let packFiles =
+      contents
       .filter { $0.lastPathComponent.lowercased().hasSuffix(".pack.json") }
-      .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+      .sorted {
+        $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+      }
 
     guard let packFile = packFiles.first else {
-      diagnostics.append(.warning(
-        source: PersonaSource(kind: .user, url: directory),
-        message: "No .pack.json found in folder. Fix: add a pack file or remove the folder."
-      ))
+      diagnostics.append(
+        .warning(
+          source: PersonaSource(kind: .user, url: directory),
+          message: "No .pack.json found in folder. Fix: add a pack file or remove the folder."
+        ))
       return
     }
 
     if packFiles.count > 1 {
-      diagnostics.append(.warning(
-        source: PersonaSource(kind: .user, url: directory),
-        message: "Multiple .pack.json files found; using \(packFile.lastPathComponent). Fix: keep one pack file per folder."
-      ))
+      diagnostics.append(
+        .warning(
+          source: PersonaSource(kind: .user, url: directory),
+          message:
+            "Multiple .pack.json files found; using \(packFile.lastPathComponent). Fix: keep one pack file per folder."
+        ))
     }
 
     switch PersonaLoader.loadDocument(from: packFile, sourceKind: .user) {
     case .failure(let error):
       diagnostics.append(contentsOf: error.diagnostics)
     case .success(let set):
-      let (extraPersonas, extraDiagnostics) = loadAdditionalPersonas(in: directory, fileClient: fileClient)
+      let (extraPersonas, extraDiagnostics) = loadAdditionalPersonas(
+        in: directory, fileClient: fileClient)
       diagnostics.append(contentsOf: extraDiagnostics)
       let combinedPersonas = set.personas + extraPersonas
-      let combined = PersonaSet(source: set.source, pack: set.pack, defaults: set.defaults, personas: combinedPersonas)
-      packs.append(LoadedUserPack(set: combined, packRoot: directory, packFile: packFile, isDirectoryPack: true))
+      let combined = PersonaSet(
+        source: set.source, pack: set.pack, defaults: set.defaults, personas: combinedPersonas)
+      packs.append(
+        LoadedUserPack(
+          set: combined, packRoot: directory, packFile: packFile, isDirectoryPack: true))
     }
   }
 
@@ -110,9 +125,12 @@ public enum UserPackLoader {
       return ([], [])
     }
 
-    let personaFiles = contents
+    let personaFiles =
+      contents
       .filter { $0.lastPathComponent.lowercased().hasSuffix(".persona.json") }
-      .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+      .sorted {
+        $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+      }
 
     var personas: [Persona] = []
     var diagnostics: [Diagnostic] = []

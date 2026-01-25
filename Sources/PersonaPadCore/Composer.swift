@@ -7,13 +7,14 @@ public enum PromptComposer {
     var parts: [String] = []
     parts.append(persona.system.trimmingCharacters(in: .whitespacesAndNewlines))
 
-    if let template = persona.template, let tmplSections = template.sections, !tmplSections.isEmpty {
-      parts.append("") // blank line
+    if let template = persona.template, let tmplSections = template.sections, !tmplSections.isEmpty
+    {
+      parts.append("")  // blank line
       for s in tmplSections {
         let value = (sections[s.key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if value.isEmpty { continue }
         parts.append("\(s.label.uppercased())\n\(value)")
-        parts.append("") // spacing
+        parts.append("")  // spacing
       }
     } else {
       // Fallback: dump any provided sections in key order.

@@ -10,16 +10,19 @@ public enum PersonaPackImportError: Error, Sendable, Equatable {
   public var userFacingMessage: String {
     switch self {
     case .unsupportedSelection(let url):
-      return "Unsupported selection: \(url.lastPathComponent). Fix: choose a .pack.json file or a folder containing one."
+      return
+        "Unsupported selection: \(url.lastPathComponent). Fix: choose a .pack.json file or a folder containing one."
     case .missingPackFile(let url):
-      return "No .pack.json found in \(url.lastPathComponent). Fix: include a pack file in the selected folder."
+      return
+        "No .pack.json found in \(url.lastPathComponent). Fix: include a pack file in the selected folder."
     case .multiplePackFiles(_, let files):
       let names = files.map { $0.lastPathComponent }.sorted().joined(separator: ", ")
       return "Multiple .pack.json files found. Fix: keep one pack file per folder. Found: \(names)."
     case .invalidPackFile(let url, let message):
       return "Invalid pack file: \(url.lastPathComponent). Fix: \(message)"
     case .fileOutsideSourceRoot(let url):
-      return "File is outside the pack folder: \(url.lastPathComponent). Fix: keep all pack files under the selected folder."
+      return
+        "File is outside the pack folder: \(url.lastPathComponent). Fix: keep all pack files under the selected folder."
     }
   }
 }
@@ -46,7 +49,8 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     }
 
     guard selection.pathExtension.lowercased() == "json",
-          selection.lastPathComponent.lowercased().hasSuffix(".pack.json") else {
+      selection.lastPathComponent.lowercased().hasSuffix(".pack.json")
+    else {
       return .failure(.unsupportedSelection(selection))
     }
     let sourceRoot = selection.deletingLastPathComponent()
@@ -61,9 +65,12 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return .failure(.missingPackFile(directory))
     }
-    let packFiles = contents
+    let packFiles =
+      contents
       .filter { $0.lastPathComponent.lowercased().hasSuffix(".pack.json") }
-      .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+      .sorted {
+        $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+      }
     guard let packFile = packFiles.first else {
       return .failure(.missingPackFile(directory))
     }
@@ -106,12 +113,13 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
       let sorted = filesWithRelative.sorted {
         $0.relative.localizedStandardCompare($1.relative) == .orderedAscending
       }
-      return .success(PersonaPackImportPlan(
-        sourceRoot: sourceRoot,
-        packFile: packFile,
-        filesToCopy: sorted.map(\.url),
-        pack: set.pack
-      ))
+      return .success(
+        PersonaPackImportPlan(
+          sourceRoot: sourceRoot,
+          packFile: packFile,
+          filesToCopy: sorted.map(\.url),
+          pack: set.pack
+        ))
     }
   }
 
@@ -120,11 +128,13 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     excluding packFile: URL,
     fileClient: FileClient
   ) -> [URL] {
-    guard let enumerator = fileClient.enumerator(
-      directory,
-      [.isDirectoryKey],
-      [.skipsHiddenFiles]
-    ) else {
+    guard
+      let enumerator = fileClient.enumerator(
+        directory,
+        [.isDirectoryKey],
+        [.skipsHiddenFiles]
+      )
+    else {
       return []
     }
 
@@ -136,7 +146,9 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
       let canonical = url.resolvingSymlinksInPath().standardizedFileURL
       if canonical == packCanonical { continue }
       let name = url.lastPathComponent.lowercased()
-      if name.hasSuffix(".persona.json") || name.hasSuffix(".meta.json") || name.hasSuffix(".metadata.json") {
+      if name.hasSuffix(".persona.json") || name.hasSuffix(".meta.json")
+        || name.hasSuffix(".metadata.json")
+      {
         results.append(url)
       }
     }

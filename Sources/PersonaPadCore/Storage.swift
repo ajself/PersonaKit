@@ -13,7 +13,8 @@ public struct PersonaPadStoragePaths: Sendable, Hashable {
 
   public static func standard(homeDirectory: URL? = nil) -> PersonaPadStoragePaths {
     let resolvedHome = homeDirectory ?? FileClientProvider().fileClient.homeDirectory()
-    let root = resolvedHome
+    let root =
+      resolvedHome
       .appendingPathComponent("Library", isDirectory: true)
       .appendingPathComponent("Application Support", isDirectory: true)
       .appendingPathComponent("PersonaPad", isDirectory: true)
@@ -42,7 +43,9 @@ public enum PersonaPadStorage {
   }
 
   public static func uniquePackDirectoryName(preferred: String, existing: Set<String>) -> String {
-    let base = preferred.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Untitled Pack" : preferred
+    let base =
+      preferred.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      ? "Untitled Pack" : preferred
     guard existing.contains(base) else { return base }
     var suffix = 2
     while true {

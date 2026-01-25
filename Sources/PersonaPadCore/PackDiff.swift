@@ -1,5 +1,5 @@
-import Foundation
 import CryptoKit
+import Foundation
 
 public enum PersonaChangeKind: String, Sendable, Hashable {
   case added
@@ -65,8 +65,9 @@ public enum PackDiffBuilder {
 
     let modified = leftKeys.intersection(rightKeys).compactMap { key -> PersonaChange? in
       guard let leftRecord = leftByKey[key],
-            let rightRecord = rightByKey[key],
-            leftRecord.contentHash != rightRecord.contentHash else { return nil }
+        let rightRecord = rightByKey[key],
+        leftRecord.contentHash != rightRecord.contentHash
+      else { return nil }
       return PersonaChange(id: rightRecord.id, name: rightRecord.name, kind: .modified)
     }
 

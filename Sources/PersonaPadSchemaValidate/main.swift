@@ -22,7 +22,8 @@ struct PersonaPadSchemaValidate {
 
     let schemaURL = repoRoot.appendingPathComponent("Schema/personapad.schema.json")
     guard let schemaData = try? fileClient.readData(schemaURL),
-          let schemaJSON = try? JSONSerialization.jsonObject(with: schemaData) as? [String: Any] else {
+      let schemaJSON = try? JSONSerialization.jsonObject(with: schemaData) as? [String: Any]
+    else {
       fputs("Schema validation failed: could not read schema at \(schemaURL.path).\n", stderr)
       exit(2)
     }
@@ -30,7 +31,10 @@ struct PersonaPadSchemaValidate {
     let config = loadSchemaConfig(schemaJSON: schemaJSON)
 
     let args = Array(CommandLine.arguments.dropFirst())
-    let inputPaths = args.isEmpty ? [repoRoot.appendingPathComponent("Examples")] : args.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
+    let inputPaths =
+      args.isEmpty
+      ? [repoRoot.appendingPathComponent("Examples")]
+      : args.map { URL(fileURLWithPath: $0, relativeTo: cwd) }
 
     let exampleFiles = collectJSONFiles(paths: inputPaths, fileClient: fileClient)
     if exampleFiles.isEmpty {
@@ -82,21 +86,30 @@ struct PersonaPadSchemaValidate {
         files.append(path)
       }
     }
-    return files.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    return files.sorted {
+      $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+    }
   }
 
   private static func loadSchemaConfig(schemaJSON: [String: Any]) -> SchemaConfig {
-    let documentTypes = Set(readStringArray(schemaJSON["properties"], keyPath: ["documentType", "enum"]))
+    let documentTypes = Set(
+      readStringArray(schemaJSON["properties"], keyPath: ["documentType", "enum"]))
     let personaRequired = readStringArray(schemaJSON["$defs"], keyPath: ["persona", "required"])
     let personaPackRequired = readStringArray(schemaJSON["allOf"], matchConst: "personaPack")
-    let packRequired = readStringArray(schemaJSON["allOf"], matchConst: "personaPack", thenKeyPath: ["properties", "pack", "required"])
-    let outputFormats = Set(readStringArray(schemaJSON["allOf"], matchConst: "personaPack", thenKeyPath: ["properties", "defaults", "properties", "outputFormat", "enum"]))
+    let packRequired = readStringArray(
+      schemaJSON["allOf"], matchConst: "personaPack",
+      thenKeyPath: ["properties", "pack", "required"])
+    let outputFormats = Set(
+      readStringArray(
+        schemaJSON["allOf"], matchConst: "personaPack",
+        thenKeyPath: ["properties", "defaults", "properties", "outputFormat", "enum"]))
 
     return SchemaConfig(
       documentTypes: documentTypes.isEmpty ? ["personaPack", "persona"] : documentTypes,
       packRequired: packRequired.isEmpty ? ["id", "name"] : packRequired,
       personaRequired: personaRequired.isEmpty ? ["id", "name", "system"] : personaRequired,
-      personaPackRequired: personaPackRequired.isEmpty ? ["pack", "personas"] : personaPackRequired,
+      personaPackRequired: personaPackRequired.isEmpty
+        ? ["pack", "personas"] : personaPackRequired,
       outputFormats: outputFormats.isEmpty ? ["markdown", "text", "json"] : outputFormats
     )
   }
@@ -111,15 +124,17 @@ struct PersonaPadSchemaValidate {
     return arr.compactMap { $0 as? String }
   }
 
-  private static func readStringArray(_ root: Any?, matchConst: String, thenKeyPath: [String]? = nil) -> [String] {
+  private static func readStringArray(
+    _ root: Any?, matchConst: String, thenKeyPath: [String]? = nil
+  ) -> [String] {
     guard let list = root as? [Any] else { return [] }
     for item in list {
       guard let dict = item as? [String: Any],
-            let ifObj = dict["if"] as? [String: Any],
-            let props = ifObj["properties"] as? [String: Any],
-            let docType = props["documentType"] as? [String: Any],
-            let constValue = docType["const"] as? String,
-            constValue == matchConst
+        let ifObj = dict["if"] as? [String: Any],
+        let props = ifObj["properties"] as? [String: Any],
+        let docType = props["documentType"] as? [String: Any],
+        let constValue = docType["const"] as? String,
+        constValue == matchConst
       else { continue }
 
       guard let thenObj = dict["then"] as? [String: Any] else { return [] }
@@ -133,7 +148,9 @@ struct PersonaPadSchemaValidate {
     return []
   }
 
-  private static func validateFile(_ url: URL, config: SchemaConfig, fileClient: FileClient) -> String? {
+  private static func validateFile(
+    _ url: URL, config: SchemaConfig, fileClient: FileClient
+  ) -> String? {
     guard let data = try? fileClient.readData(url) else {
       return "\(url.lastPathComponent): could not read file."
     }
@@ -150,8 +167,10 @@ struct PersonaPadSchemaValidate {
       return "\(url.lastPathComponent): schemaVersion must be >= 1."
     }
     guard let documentType = json["documentType"] as? String,
-          config.documentTypes.contains(documentType) else {
-      return "\(url.lastPathComponent): documentType must be one of \(config.documentTypes.sorted())."
+      config.documentTypes.contains(documentType)
+    else {
+      return
+        "\(url.lastPathComponent): documentType must be one of \(config.documentTypes.sorted())."
     }
 
     if documentType == "personaPack" {
@@ -160,7 +179,9 @@ struct PersonaPadSchemaValidate {
       }
       if let pack = json["pack"] as? [String: Any] {
         for key in config.packRequired {
-          guard let value = pack[key] as? String, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+          guard let value = pack[key] as? String,
+            !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+          else {
             return "\(url.lastPathComponent): pack.\(key) must be a non-empty string."
           }
         }
@@ -168,9 +189,11 @@ struct PersonaPadSchemaValidate {
         return "\(url.lastPathComponent): pack must be an object."
       }
       if let defaults = json["defaults"] as? [String: Any],
-         let outputFormat = defaults["outputFormat"] as? String,
-         !config.outputFormats.contains(outputFormat) {
-        return "\(url.lastPathComponent): defaults.outputFormat must be one of \(config.outputFormats.sorted())."
+        let outputFormat = defaults["outputFormat"] as? String,
+        !config.outputFormats.contains(outputFormat)
+      {
+        return
+          "\(url.lastPathComponent): defaults.outputFormat must be one of \(config.outputFormats.sorted())."
       }
       guard let personas = json["personas"] as? [Any], !personas.isEmpty else {
         return "\(url.lastPathComponent): personas must be a non-empty array."
@@ -214,7 +237,9 @@ struct PersonaPadSchemaValidate {
     }
 
     if let template = persona["template"] {
-      guard let templateObj = template as? [String: Any] else { return "template must be an object." }
+      guard let templateObj = template as? [String: Any] else {
+        return "template must be an object."
+      }
       if let sections = templateObj["sections"] as? [Any] {
         for (idx, section) in sections.enumerated() {
           guard let sectionObj = section as? [String: Any] else {

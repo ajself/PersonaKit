@@ -48,8 +48,9 @@ public struct SavedFiltersStore {
 
   public func load() -> [SavedFilter] {
     guard fileClient.fileExists(fileURL),
-          let data = try? fileClient.readData(fileURL),
-          let decoded = SavedFiltersStore.decode(data) else {
+      let data = try? fileClient.readData(fileURL),
+      let decoded = SavedFiltersStore.decode(data)
+    else {
       return []
     }
     return SavedFiltersStore.sorted(decoded)

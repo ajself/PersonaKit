@@ -206,6 +206,28 @@ The app loads built-ins automatically. To load the example pack from `Examples/`
 
 ---
 
+## Development Standards
+
+PersonaPad follows the project style guide at `Docs/Standards/SwiftUI-App-Style-Guide.md`.
+
+Highlights:
+- Swift 6.2 language mode with strict concurrency checks where practical.
+- Unidirectional data flow in app features (`State` + `Action` + `send`).
+- Dependencies routed through `pointfreeco/swift-dependencies` (no direct `Date()`, `UUID()`, or `Task.sleep` in feature logic).
+- Shared logic lives in `PersonaPadCore` so the app and CLI stay behavior-identical.
+
+### Formatting
+```bash
+swift-format --configuration swift-format.json --in-place Sources Tests
+```
+
+### Linting
+```bash
+swiftlint --config swiftlint.yml
+```
+
+---
+
 ## When PersonaPad Is “Done Enough”
 
 PersonaPad is considered complete when:

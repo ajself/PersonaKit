@@ -37,8 +37,8 @@ extension LoggerClient: DependencyKey {
   public static var previewValue: LoggerClient { liveValue }
 }
 
-public extension DependencyValues {
-  var logger: LoggerClient {
+extension DependencyValues {
+  public var logger: LoggerClient {
     get { self[LoggerClient.self] }
     set { self[LoggerClient.self] = newValue }
   }

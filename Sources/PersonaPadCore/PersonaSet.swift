@@ -8,6 +8,6 @@ public struct PersonaSet: Sendable, Hashable {
 }
 
 public struct ResolvedPersona: Sendable, Hashable {
-  public let baseIDs: [String]   // source ids (v1: single id)
+  public let baseIDs: [String]  // source ids (v1: single id)
   public let persona: Persona
 }

@@ -3,68 +3,26 @@ import PersonaPadCore
 import PersonaPadResources
 
 extension AppStore {
+  private struct ReloadIndexes {
+    let packsByID: [String: PackMeta]
+    let sourcesByID: [String: PersonaSource]
+    let packLocationsByID: [String: PackLocation]
+  }
+
   func reloadAll() {
     state.diagnostics.removeAll()
     let previousSelection = state.selectedPersonaID
 
-    var sets: [PersonaSet] = []
-    var packsByID: [String: PackMeta] = [:]
-    var sourcesByID: [String: PersonaSource] = [:]
-    var packLocationsByID: [String: PackLocation] = [:]
-    var packLocationsBySourceURL: [URL: PackLocation] = [:]
-
-    // 1) Built-ins from resources (BuiltIn/*.json)
-    let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
-    if builtInURLs.isEmpty {
-      state.diagnostics.append(
-        .warning(
-          source: PersonaSource(kind: .builtIn, url: nil),
-          message:
-            "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
-        ))
-    } else {
-      for url in builtInURLs {
-        switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
-        case .success(let set):
-          sets.append(set)
-        case .failure(let error):
-          state.diagnostics.append(contentsOf: error.diagnostics)
-        }
-      }
-    }
-
-    // 2) User packs directory (best-effort)
     let userPacks = PersonaPadStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs
-    if fileClient.fileExists(userPacks) {
-      let loaded = UserPackLoader.load(in: userPacks)
-      for pack in loaded.packs {
-        sets.append(pack.set)
-        packLocationsBySourceURL[pack.packFile] = PackLocation(
-          packRoot: pack.packRoot,
-          packFile: pack.packFile,
-          isDirectoryPack: pack.isDirectoryPack
-        )
-      }
-      state.diagnostics.append(contentsOf: loaded.diagnostics)
-    }
+    let builtInSets = loadBuiltInSets()
+    let userPackInfo = loadUserPackInfo(in: userPacks)
+    let sets = builtInSets + userPackInfo.sets
+    appendNoPacksWarningIfNeeded(sets: sets, userPacks: userPacks)
 
-    if sets.isEmpty {
-      state.diagnostics.append(
-        .warning(
-          source: PersonaSource(kind: .adhoc, url: nil),
-          message: "No persona packs loaded. Add packs to \(userPacks.path)."
-        ))
-    }
-
-    for set in sets {
-      for persona in set.personas {
-        packsByID[persona.id] = set.pack
-        sourcesByID[persona.id] = set.source
-        if let url = set.source.url, let location = packLocationsBySourceURL[url] {
-          packLocationsByID[persona.id] = location
-        }
-      }
-    }
+    let indexes = buildIndexes(
+      for: sets,
+      packLocationsBySourceURL: userPackInfo.packLocationsBySourceURL
+    )
 
     let merged = PersonaResolver.mergeSets(sets)
     state.diagnostics.append(contentsOf: merged.diagnostics)
@@ -72,17 +30,13 @@ extension AppStore {
     let resolved = PersonaResolver.resolveAll(from: merged.personas)
     state.diagnostics.append(contentsOf: resolved.diagnostics)
     state.personaIndex = resolved.personasByID
-    state.personaPacksByID = packsByID
-    state.personaSourcesByID = sourcesByID
-    state.packLocationsByPersonaID = packLocationsByID
+    state.personaPacksByID = indexes.packsByID
+    state.personaSourcesByID = indexes.sourcesByID
+    state.packLocationsByPersonaID = indexes.packLocationsByID
     state.availablePacks = buildPackSelections(
-      sets: sets, packLocationsBySourceURL: packLocationsBySourceURL)
+      sets: sets, packLocationsBySourceURL: userPackInfo.packLocationsBySourceURL)
 
-    if let previousSelection, state.personaIndex.keys.contains(previousSelection) {
-      state.selectedPersonaID = previousSelection
-    } else {
-      state.selectedPersonaID = state.personaIndex.keys.sorted().first
-    }
+    restoreSelection(previousSelection: previousSelection)
     recomputePreview()
   }
 
@@ -97,6 +51,94 @@ extension AppStore {
     state.promptPreview = PersonaOutputRenderer.prompt(
       persona: persona, sections: state.composerValues)
     updateJSONPreview(buildPersonaJSON(persona: persona, prettyPrinted: true), scheduleFormat: true)
+  }
+
+  private func loadBuiltInSets() -> [PersonaSet] {
+    var sets: [PersonaSet] = []
+    let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
+    if builtInURLs.isEmpty {
+      state.diagnostics.append(
+        .warning(
+          source: PersonaSource(kind: .builtIn, url: nil),
+          message:
+            "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
+        ))
+      return sets
+    }
+
+    for url in builtInURLs {
+      switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
+      case .success(let set):
+        sets.append(set)
+      case .failure(let error):
+        state.diagnostics.append(contentsOf: error.diagnostics)
+      }
+    }
+    return sets
+  }
+
+  private func loadUserPackInfo(
+    in userPacks: URL
+  ) -> (sets: [PersonaSet], packLocationsBySourceURL: [URL: PackLocation]) {
+    guard fileClient.fileExists(userPacks) else {
+      return (sets: [], packLocationsBySourceURL: [:])
+    }
+
+    var sets: [PersonaSet] = []
+    var packLocationsBySourceURL: [URL: PackLocation] = [:]
+    let loaded = UserPackLoader.load(in: userPacks)
+    for pack in loaded.packs {
+      sets.append(pack.set)
+      packLocationsBySourceURL[pack.packFile] = PackLocation(
+        packRoot: pack.packRoot,
+        packFile: pack.packFile,
+        isDirectoryPack: pack.isDirectoryPack
+      )
+    }
+    state.diagnostics.append(contentsOf: loaded.diagnostics)
+    return (sets: sets, packLocationsBySourceURL: packLocationsBySourceURL)
+  }
+
+  private func appendNoPacksWarningIfNeeded(sets: [PersonaSet], userPacks: URL) {
+    guard sets.isEmpty else { return }
+    state.diagnostics.append(
+      .warning(
+        source: PersonaSource(kind: .adhoc, url: nil),
+        message: "No persona packs loaded. Add packs to \(userPacks.path)."
+      ))
+  }
+
+  private func buildIndexes(
+    for sets: [PersonaSet],
+    packLocationsBySourceURL: [URL: PackLocation]
+  ) -> ReloadIndexes {
+    var packsByID: [String: PackMeta] = [:]
+    var sourcesByID: [String: PersonaSource] = [:]
+    var packLocationsByID: [String: PackLocation] = [:]
+
+    for set in sets {
+      for persona in set.personas {
+        packsByID[persona.id] = set.pack
+        sourcesByID[persona.id] = set.source
+        if let url = set.source.url, let location = packLocationsBySourceURL[url] {
+          packLocationsByID[persona.id] = location
+        }
+      }
+    }
+
+    return ReloadIndexes(
+      packsByID: packsByID,
+      sourcesByID: sourcesByID,
+      packLocationsByID: packLocationsByID
+    )
+  }
+
+  private func restoreSelection(previousSelection: String?) {
+    if let previousSelection, state.personaIndex.keys.contains(previousSelection) {
+      state.selectedPersonaID = previousSelection
+    } else {
+      state.selectedPersonaID = state.personaIndex.keys.sorted().first
+    }
   }
 
   private func buildPackSelections(
