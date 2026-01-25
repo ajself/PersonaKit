@@ -2,10 +2,8 @@ import SwiftUI
 
 struct PersonaPadCommands: Commands {
   let store: AppStore
-  @Binding
-  var showPersonaSwitcher: Bool
-  @Binding
-  var showInspector: Bool
+  @Binding var showPersonaSwitcher: Bool
+  @Binding var showInspector: Bool
 
   var body: some Commands {
     CommandMenu("PersonaPad") {

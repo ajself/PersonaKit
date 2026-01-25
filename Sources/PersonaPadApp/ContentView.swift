@@ -3,10 +3,8 @@ import SwiftUI
 struct ContentView: View {
   @Environment(AppStore.self)
   private var store
-  @Binding
-  var showPersonaSwitcher: Bool
-  @Binding
-  var showInspector: Bool
+  @Binding var showPersonaSwitcher: Bool
+  @Binding var showInspector: Bool
   @State private var selectedPanel: PreviewPanel = .prompt
 
   var body: some View {

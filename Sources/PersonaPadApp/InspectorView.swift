@@ -319,8 +319,7 @@ private struct PackDiffSummaryView: View {
 private struct PackCompareSheet: View {
   let primaryPack: PackSelection?
   let availablePacks: [PackSelection]
-  @Binding
-  var selectionID: String?
+  @Binding var selectionID: String?
   let onConfirm: (PackSelection) -> Void
 
   @Environment(\.dismiss)

@@ -296,8 +296,7 @@ struct SidebarView: View {
 private struct FilterNameSheet: View {
   let title: String
   let confirmLabel: String
-  @Binding
-  var name: String
+  @Binding var name: String
   let onConfirm: (String) -> Void
 
   @Environment(\.dismiss)

@@ -2,8 +2,7 @@ import AppKit
 import SwiftUI
 
 struct JSONEditorView: NSViewRepresentable {
-  @Binding
-  var text: String
+  @Binding var text: String
   var isEditable: Bool = false
 
   func makeCoordinator() -> Coordinator {
@@ -56,8 +55,7 @@ struct JSONEditorView: NSViewRepresentable {
 
 extension JSONEditorView {
   final class Coordinator: NSObject, NSTextViewDelegate {
-    @Binding
-    private var text: String
+    @Binding private var text: String
 
     init(text: Binding<String>) {
       _text = text

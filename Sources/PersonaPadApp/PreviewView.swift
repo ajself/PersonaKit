@@ -3,8 +3,7 @@ import SwiftUI
 struct PreviewView: View {
   @Environment(AppStore.self)
   private var store
-  @Binding
-  var selectedPanel: PreviewPanel
+  @Binding var selectedPanel: PreviewPanel
 
   var body: some View {
     VStack(spacing: 0) {

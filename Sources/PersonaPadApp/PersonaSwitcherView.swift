@@ -4,8 +4,7 @@ import SwiftUI
 struct PersonaSwitcherView: View {
   @Environment(AppStore.self)
   private var store
-  @Binding
-  var isPresented: Bool
+  @Binding var isPresented: Bool
   @State private var query: String = ""
   @State private var selection: String?
   @FocusState private var searchFocused: Bool

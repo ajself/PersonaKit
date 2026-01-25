@@ -152,24 +152,21 @@ final class AppStore {
     case togglePinnedPersona(id: String)
   }
 
-  @ObservationIgnored
-  @Dependency(\.fileClient) private var fileClient
+  @Dependency(\.fileClient)
+  @ObservationIgnored var fileClient
+  @Dependency(\.appClient)
+  @ObservationIgnored var appClient
+  @Dependency(\.uuid)
+  @ObservationIgnored var uuid
+  @Dependency(\.continuousClock)
+  @ObservationIgnored var clock
 
-  @ObservationIgnored
-  @Dependency(\.appClient) private var appClient
+  let savedFiltersStore: SavedFiltersStore
+  let pinnedPersonasStore: PinnedPersonasStore
+  var isApplyingSavedFilter = false
+  var jsonFormatTask: Task<Void, Never>?
 
-  @ObservationIgnored
-  @Dependency(\.uuid) private var uuid
-
-  @ObservationIgnored
-  @Dependency(\.continuousClock) private var clock
-
-  private let savedFiltersStore: SavedFiltersStore
-  private let pinnedPersonasStore: PinnedPersonasStore
-  private var isApplyingSavedFilter = false
-  private var jsonFormatTask: Task<Void, Never>?
-
-  private(set) var state: State
+  var state: State
 
   static let allPersonasFilterID = "all-personas"
 

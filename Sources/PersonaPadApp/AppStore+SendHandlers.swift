@@ -62,6 +62,12 @@ extension AppStore {
   }
 
   func handleFiltering(_ action: Action) -> Bool {
+    if handleSearchFiltering(action) { return true }
+    if handleSavedFilterActions(action) { return true }
+    return false
+  }
+
+  private func handleSearchFiltering(_ action: Action) -> Bool {
     switch action {
     case .setSearchText(let text):
       state.searchText = text
@@ -80,6 +86,13 @@ extension AppStore {
         state.selectedSavedFilterID = nil
       }
       return true
+    default:
+      return false
+    }
+  }
+
+  private func handleSavedFilterActions(_ action: Action) -> Bool {
+    switch action {
     case .applyAllPersonasFilter:
       state.isPinnedViewActive = false
       applySavedFilterState(
