@@ -26,50 +26,129 @@ struct ParsedArgs {
 
 @main
 struct PersonaPadCLI {
+  private struct LoadResult {
+    let resolved: PersonaResolver.ResolutionResult
+    let diagnostics: [Diagnostic]
+    let sourcesByID: [String: PersonaSource]
+    let packsByID: [String: PackMeta]
+  }
+
   static func main() async {
     let fileClient = CLIEnvironment().fileClient
     let allArgs = Array(CommandLine.arguments.dropFirst())
-    guard let first = allArgs.first, let cmd = Command(rawValue: first) else {
+    guard let (cmd, parsed) = parseCommand(allArgs) else {
       printUsage()
       exit(1)
     }
-    let args = Array(allArgs.dropFirst())
-    let parsed = parseArgs(args)
 
     let repoRoot = URL(fileURLWithPath: fileClient.currentDirectoryPath())
+    let loadResult = loadPersonaData(fileClient: fileClient, repoRoot: repoRoot)
+
+    switch cmd {
+    case .list:
+      handleList(resolved: loadResult.resolved, diagnostics: loadResult.diagnostics)
+
+    case .compose:
+      handleCompose(
+        parsed: parsed,
+        resolved: loadResult.resolved,
+        diagnostics: loadResult.diagnostics
+      )
+
+    case .describe:
+      handleDescribe(
+        parsed: parsed,
+        resolved: loadResult.resolved,
+        sourcesByID: loadResult.sourcesByID,
+        packsByID: loadResult.packsByID,
+        repoRoot: repoRoot
+      )
+    }
+  }
+
+  private static func parseCommand(_ allArgs: [String]) -> (Command, ParsedArgs)? {
+    guard let first = allArgs.first, let cmd = Command(rawValue: first) else {
+      return nil
+    }
+    let args = Array(allArgs.dropFirst())
+    let parsed = parseArgs(args)
+    return (cmd, parsed)
+  }
+
+  private static func loadPersonaData(fileClient: FileClient, repoRoot: URL) -> LoadResult {
+    var sets: [PersonaSet] = []
+    var diagnostics: [Diagnostic] = []
+
+    let builtIn = loadBuiltInSets(repoRoot: repoRoot)
+    sets.append(contentsOf: builtIn.sets)
+    diagnostics.append(contentsOf: builtIn.diagnostics)
+
+    let user = loadUserSets(fileClient: fileClient)
+    sets.append(contentsOf: user.sets)
+    diagnostics.append(contentsOf: user.diagnostics)
+
+    let indexes = buildIndexes(sets: sets)
+    let resolved = resolvePersonas(sets: sets, diagnostics: &diagnostics)
+
+    return LoadResult(
+      resolved: resolved,
+      diagnostics: diagnostics,
+      sourcesByID: indexes.sourcesByID,
+      packsByID: indexes.packsByID
+    )
+  }
+
+  private static func loadBuiltInSets(repoRoot: URL) -> (
+    sets: [PersonaSet],
+    diagnostics: [Diagnostic]
+  ) {
     var builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaPadResources.bundle)
     if builtInURLs.isEmpty {
       builtInURLs = PersonaPackLocator.builtInPackURLs(repoRoot: repoRoot)
     }
 
-    var sets: [PersonaSet] = []
-    var diags: [Diagnostic] = []
-    var sourcesByID: [String: PersonaSource] = [:]
-    var packsByID: [String: PackMeta] = [:]
+    guard !builtInURLs.isEmpty else {
+      return (
+        sets: [],
+        diagnostics: [
+          .warning(
+            source: PersonaSource(kind: .builtIn, url: nil),
+            message:
+              "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
+          )
+        ]
+      )
+    }
 
-    if builtInURLs.isEmpty {
-      diags.append(
-        .warning(
-          source: PersonaSource(kind: .builtIn, url: nil),
-          message:
-            "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
-        ))
-    } else {
-      for url in builtInURLs {
-        switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
-        case .success(let set): sets.append(set)
-        case .failure(let error): diags.append(contentsOf: error.diagnostics)
-        }
+    var sets: [PersonaSet] = []
+    var diagnostics: [Diagnostic] = []
+    for url in builtInURLs {
+      switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
+      case .success(let set): sets.append(set)
+      case .failure(let error): diagnostics.append(contentsOf: error.diagnostics)
       }
     }
+    return (sets: sets, diagnostics: diagnostics)
+  }
 
-    // User packs dir
+  private static func loadUserSets(fileClient: FileClient) -> (
+    sets: [PersonaSet],
+    diagnostics: [Diagnostic]
+  ) {
     let userPacks = PersonaPadStoragePaths.standard().packs
-    if fileClient.fileExists(userPacks) {
-      let loadedUser = UserPackLoader.load(in: userPacks)
-      sets.append(contentsOf: loadedUser.packs.map { $0.set })
-      diags.append(contentsOf: loadedUser.diagnostics)
+    guard fileClient.fileExists(userPacks) else {
+      return (sets: [], diagnostics: [])
     }
+    let loadedUser = UserPackLoader.load(in: userPacks)
+    return (sets: loadedUser.packs.map { $0.set }, diagnostics: loadedUser.diagnostics)
+  }
+
+  private static func buildIndexes(sets: [PersonaSet]) -> (
+    sourcesByID: [String: PersonaSource],
+    packsByID: [String: PackMeta]
+  ) {
+    var sourcesByID: [String: PersonaSource] = [:]
+    var packsByID: [String: PackMeta] = [:]
 
     for set in sets {
       for persona in set.personas {
@@ -78,91 +157,118 @@ struct PersonaPadCLI {
       }
     }
 
+    return (sourcesByID: sourcesByID, packsByID: packsByID)
+  }
+
+  private static func resolvePersonas(
+    sets: [PersonaSet],
+    diagnostics: inout [Diagnostic]
+  ) -> PersonaResolver.ResolutionResult {
     let merged = PersonaResolver.mergeSets(sets)
-    diags.append(contentsOf: merged.diagnostics)
+    diagnostics.append(contentsOf: merged.diagnostics)
 
     let resolved = PersonaResolver.resolveAll(from: merged.personas)
-    diags.append(contentsOf: resolved.diagnostics)
+    diagnostics.append(contentsOf: resolved.diagnostics)
+    return resolved
+  }
 
-    switch cmd {
-    case .list:
-      for key in resolved.personasByID.keys.sorted() {
-        if let p = resolved.personasByID[key]?.persona {
-          print("\(p.id)\t\(p.name)")
-        }
+  private static func handleList(
+    resolved: PersonaResolver.ResolutionResult,
+    diagnostics: [Diagnostic]
+  ) {
+    for key in resolved.personasByID.keys.sorted() {
+      if let p = resolved.personasByID[key]?.persona {
+        print("\(p.id)\t\(p.name)")
       }
-      if !diags.isEmpty {
-        printDiagnostics(diags)
-      }
+    }
+    if !diagnostics.isEmpty {
+      printDiagnostics(diagnostics)
+    }
+  }
 
-    case .compose:
-      // Very simple flag parsing
-      let personaID = parsed.value(for: "persona") ?? resolved.personasByID.keys.sorted().first
-      guard let id = personaID, let p = resolved.personasByID[id]?.persona else {
-        fputs(
-          "Persona not found. Fix: run 'personapad list' and use a valid --persona id.\n", stderr)
-        exit(2)
-      }
+  private static func handleCompose(
+    parsed: ParsedArgs,
+    resolved: PersonaResolver.ResolutionResult,
+    diagnostics: [Diagnostic]
+  ) {
+    let personaID = parsed.value(for: "persona") ?? resolved.personasByID.keys.sorted().first
+    guard let id = personaID, let p = resolved.personasByID[id]?.persona else {
+      fputs(
+        "Persona not found. Fix: run 'personapad list' and use a valid --persona id.\n", stderr)
+      exit(2)
+    }
 
-      var sections: [String: String] = [:]
-      let sectionKeys =
-        (p.template?.sections?.map { $0.key } ?? [
-          "context", "goal", "constraints", "evidence", "task",
-        ])
-      let wantsStdin =
-        (parsed.value(for: "context") == "-") || (parsed.value(for: "evidence") == "-")
-      let stdinText = wantsStdin ? readStdinIfAvailable() : nil
+    let sections = buildSections(parsed: parsed, persona: p)
 
-      for key in sectionKeys {
-        if let v = parsed.value(for: key) {
-          if v == "-" {
-            sections[key] = stdinText ?? ""
-          } else {
-            sections[key] = v
-          }
-        }
-      }
-
-      if parsed.value(for: "context") == nil,
-        parsed.value(for: "evidence") == nil,
-        let piped = readStdinIfAvailable(),
-        sectionKeys.contains("context")
-      {
-        sections["context"] = piped
-      }
-
-      if parsed.hasFlag("resolved-json") {
-        if let json = PersonaOutputRenderer.resolvedJSON(persona: p) {
-          print(json)
-        } else {
-          fputs("Failed to encode persona JSON. Fix: ensure the persona data is valid.\n", stderr)
-          exit(3)
-        }
+    if parsed.hasFlag("resolved-json") {
+      if let json = PersonaOutputRenderer.resolvedJSON(persona: p) {
+        print(json)
       } else {
-        let prompt = PersonaOutputRenderer.prompt(persona: p, sections: sections)
-        print(prompt)
+        fputs("Failed to encode persona JSON. Fix: ensure the persona data is valid.\n", stderr)
+        exit(3)
       }
+    } else {
+      let prompt = PersonaOutputRenderer.prompt(persona: p, sections: sections)
+      print(prompt)
+    }
 
-      if !diags.isEmpty {
-        printDiagnostics(diags)
-      }
+    if !diagnostics.isEmpty {
+      printDiagnostics(diagnostics)
+    }
+  }
 
-    case .describe:
-      let personaID = parsed.positionals.first ?? parsed.value(for: "persona")
-      let result = PersonaDescriptor.describe(
-        personaID: personaID,
-        resolved: resolved.personasByID,
-        sourcesByID: sourcesByID,
-        packsByID: packsByID,
-        baseURL: repoRoot
-      )
-      switch result {
-      case .success(let text):
-        print(text)
-      case .failure(let failure):
-        fputs("\(failure.message)\n", stderr)
-        exit(failure.exitCode)
+  private static func buildSections(parsed: ParsedArgs, persona: Persona) -> [String: String] {
+    var sections: [String: String] = [:]
+    let sectionKeys =
+      (persona.template?.sections?.map { $0.key } ?? [
+        "context", "goal", "constraints", "evidence", "task",
+      ])
+    let wantsStdin =
+      (parsed.value(for: "context") == "-") || (parsed.value(for: "evidence") == "-")
+    let stdinText = wantsStdin ? readStdinIfAvailable() : nil
+
+    for key in sectionKeys {
+      if let v = parsed.value(for: key) {
+        if v == "-" {
+          sections[key] = stdinText ?? ""
+        } else {
+          sections[key] = v
+        }
       }
+    }
+
+    if parsed.value(for: "context") == nil,
+      parsed.value(for: "evidence") == nil,
+      let piped = readStdinIfAvailable(),
+      sectionKeys.contains("context")
+    {
+      sections["context"] = piped
+    }
+
+    return sections
+  }
+
+  private static func handleDescribe(
+    parsed: ParsedArgs,
+    resolved: PersonaResolver.ResolutionResult,
+    sourcesByID: [String: PersonaSource],
+    packsByID: [String: PackMeta],
+    repoRoot: URL
+  ) {
+    let personaID = parsed.positionals.first ?? parsed.value(for: "persona")
+    let result = PersonaDescriptor.describe(
+      personaID: personaID,
+      resolved: resolved.personasByID,
+      sourcesByID: sourcesByID,
+      packsByID: packsByID,
+      baseURL: repoRoot
+    )
+    switch result {
+    case .success(let text):
+      print(text)
+    case .failure(let failure):
+      fputs("\(failure.message)\n", stderr)
+      exit(failure.exitCode)
     }
   }
 
