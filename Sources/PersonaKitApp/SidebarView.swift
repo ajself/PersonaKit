@@ -11,65 +11,9 @@ struct SidebarView: View {
   @State private var renameTarget: SavedFilter?
   @State private var deleteTarget: SavedFilter?
 
-  private var searchBinding: Binding<String> {
-    store.bindingForSearchText()
-  }
-
-  private var allPersonas: [ResolvedPersona] {
-    store.state.personaIndex.values.sorted {
-      PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
-    }
-  }
-
-  private var filtered: [ResolvedPersona] {
-    allPersonas.filter { rp in
-      let persona = rp.persona
-      let matchesPinned: Bool = {
-        guard store.state.isPinnedViewActive else { return true }
-        return store.state.pinnedPersonaIDs.contains(persona.id)
-      }()
-      let matchesSearch =
-        store.state.searchText.isEmpty
-        || persona.name.localizedCaseInsensitiveContains(store.state.searchText)
-        || (persona.id.localizedCaseInsensitiveContains(store.state.searchText))
-        || (persona.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
-        || persona.sortedTags.contains(where: {
-          $0.localizedCaseInsensitiveContains(store.state.searchText)
-        })
-
-      let matchesTag: Bool = {
-        guard !store.state.activeFilterTags.isEmpty else { return true }
-        let tags = persona.tags ?? []
-        return store.state.activeFilterTags.allSatisfy { tags.contains($0) }
-      }()
-
-      let matchesSource: Bool = {
-        guard !store.state.activeSourceKinds.isEmpty else { return true }
-        guard let kind = store.state.personaSourcesByID[persona.id]?.kind else { return false }
-        return store.state.activeSourceKinds.contains(kind)
-      }()
-
-      return matchesPinned && matchesSearch && matchesTag && matchesSource
-    }
-  }
-
-  private var allTags: [String] {
-    PersonaMetadata.sortedUniqueTags(from: store.state.personaIndex.values.map { $0.persona })
-  }
-
   var body: some View {
     VStack(spacing: 8) {
-      TextField("Search personas", text: searchBinding)
-        .textFieldStyle(.roundedBorder)
-        .focused($searchFocused)
-        .padding([.top, .horizontal])
-        .onChange(of: store.state.sidebarSearchFocusRequest) { _, request in
-          searchFocused = request.shouldFocus
-        }
-        .onChange(of: searchFocused) { _, newValue in
-          store.send(.setSidebarSearchFocused(newValue))
-        }
-        .help("Search by name, id, description, or tag.")
+      searchField
 
       pinnedSection
         .padding(.horizontal)
@@ -77,64 +21,9 @@ struct SidebarView: View {
       savedFiltersSection
         .padding(.horizontal)
 
-      if !allTags.isEmpty {
-        VStack(alignment: .leading, spacing: 6) {
-          HStack {
-            Menu {
-              Button {
-                store.send(.setSelectedTag(nil))
-              } label: {
-                tagMenuRow(title: "All", isSelected: store.state.activeFilterTags.isEmpty)
-              }
-              Divider()
-              ForEach(allTags, id: \.self) { tag in
-                Button {
-                  store.send(.setSelectedTag(tag))
-                } label: {
-                  tagMenuRow(title: tag, isSelected: store.state.activeFilterTags.contains(tag))
-                }
-              }
-            } label: {
-              Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-            }
-            .help("Filter personas by tag.")
+      tagFilterSection
 
-            Spacer()
-          }
-
-          if let selectedTag = store.state.selectedTag, !selectedTag.isEmpty {
-            HStack(spacing: 6) {
-              Text("Filter: \(selectedTag)")
-              Button {
-                store.send(.setSelectedTag(nil))
-              } label: {
-                Label("Clear", systemImage: "xmark.circle.fill")
-              }
-              .buttonStyle(.plain)
-              .help("Clear tag filter.")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-          } else if store.state.activeFilterTags.count > 1 {
-            Text("Filter: \(store.state.activeFilterTags.count) tags")
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-        }
-        .padding(.horizontal)
-      }
-
-      List(selection: store.bindingForSelectedPersonaID()) {
-        ForEach(filtered, id: \.persona.id) { rp in
-          PersonaRow(
-            persona: rp.persona,
-            isPinned: store.state.pinnedPersonaIDs.contains(rp.persona.id)
-          ) {
-            store.send(.togglePinnedPersona(id: rp.persona.id))
-          }
-          .tag(rp.persona.id)
-        }
-      }
+      personaList
 
       DiagnosticsFooter(diagnostics: store.state.diagnostics)
     }
@@ -181,17 +70,70 @@ struct SidebarView: View {
     }
   }
 
-  private func tagMenuRow(title: String, isSelected: Bool) -> some View {
-    HStack {
-      Text(title)
-      Spacer()
-      if isSelected {
-        Image(systemName: "checkmark")
-      }
+}
+
+extension SidebarView {
+  fileprivate var searchBinding: Binding<String> {
+    store.bindingForSearchText()
+  }
+
+  fileprivate var allPersonas: [ResolvedPersona] {
+    store.state.personaIndex.values.sorted {
+      PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
     }
   }
 
-  private var pinnedSection: some View {
+  fileprivate var filtered: [ResolvedPersona] {
+    allPersonas.filter { rp in
+      let persona = rp.persona
+      let matchesPinned: Bool = {
+        guard store.state.isPinnedViewActive else { return true }
+        return store.state.pinnedPersonaIDs.contains(persona.id)
+      }()
+      let matchesSearch =
+        store.state.searchText.isEmpty
+        || persona.name.localizedCaseInsensitiveContains(store.state.searchText)
+        || (persona.id.localizedCaseInsensitiveContains(store.state.searchText))
+        || (persona.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
+        || persona.sortedTags.contains(where: {
+          $0.localizedCaseInsensitiveContains(store.state.searchText)
+        })
+
+      let matchesTag: Bool = {
+        guard !store.state.activeFilterTags.isEmpty else { return true }
+        let tags = persona.tags ?? []
+        return store.state.activeFilterTags.allSatisfy { tags.contains($0) }
+      }()
+
+      let matchesSource: Bool = {
+        guard !store.state.activeSourceKinds.isEmpty else { return true }
+        guard let kind = store.state.personaSourcesByID[persona.id]?.kind else { return false }
+        return store.state.activeSourceKinds.contains(kind)
+      }()
+
+      return matchesPinned && matchesSearch && matchesTag && matchesSource
+    }
+  }
+
+  fileprivate var allTags: [String] {
+    PersonaMetadata.sortedUniqueTags(from: store.state.personaIndex.values.map { $0.persona })
+  }
+
+  fileprivate var searchField: some View {
+    TextField("Search personas", text: searchBinding)
+      .textFieldStyle(.roundedBorder)
+      .focused($searchFocused)
+      .padding([.top, .horizontal])
+      .onChange(of: store.state.sidebarSearchFocusRequest) { _, request in
+        searchFocused = request.shouldFocus
+      }
+      .onChange(of: searchFocused) { _, newValue in
+        store.send(.setSidebarSearchFocused(newValue))
+      }
+      .help("Search by name, id, description, or tag.")
+  }
+
+  fileprivate var pinnedSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text("Pinned")
         .font(.caption)
@@ -209,7 +151,7 @@ struct SidebarView: View {
     }
   }
 
-  private var savedFiltersSection: some View {
+  fileprivate var savedFiltersSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack {
         Text("Saved")
@@ -259,7 +201,80 @@ struct SidebarView: View {
     }
   }
 
-  private func savedFilterRow(title: String, isSelected: Bool) -> some View {
+  @ViewBuilder fileprivate var tagFilterSection: some View {
+    if !allTags.isEmpty {
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Menu {
+            Button {
+              store.send(.setSelectedTag(nil))
+            } label: {
+              tagMenuRow(title: "All", isSelected: store.state.activeFilterTags.isEmpty)
+            }
+            Divider()
+            ForEach(allTags, id: \.self) { tag in
+              Button {
+                store.send(.setSelectedTag(tag))
+              } label: {
+                tagMenuRow(title: tag, isSelected: store.state.activeFilterTags.contains(tag))
+              }
+            }
+          } label: {
+            Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+          }
+          .help("Filter personas by tag.")
+
+          Spacer()
+        }
+
+        if let selectedTag = store.state.selectedTag, !selectedTag.isEmpty {
+          HStack(spacing: 6) {
+            Text("Filter: \(selectedTag)")
+            Button {
+              store.send(.setSelectedTag(nil))
+            } label: {
+              Label("Clear", systemImage: "xmark.circle.fill")
+            }
+            .buttonStyle(.plain)
+            .help("Clear tag filter.")
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        } else if store.state.activeFilterTags.count > 1 {
+          Text("Filter: \(store.state.activeFilterTags.count) tags")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+      }
+      .padding(.horizontal)
+    }
+  }
+
+  fileprivate var personaList: some View {
+    List(selection: store.bindingForSelectedPersonaID()) {
+      ForEach(filtered, id: \.persona.id) { rp in
+        PersonaRow(
+          persona: rp.persona,
+          isPinned: store.state.pinnedPersonaIDs.contains(rp.persona.id)
+        ) {
+          store.send(.togglePinnedPersona(id: rp.persona.id))
+        }
+        .tag(rp.persona.id)
+      }
+    }
+  }
+
+  fileprivate func tagMenuRow(title: String, isSelected: Bool) -> some View {
+    HStack {
+      Text(title)
+      Spacer()
+      if isSelected {
+        Image(systemName: "checkmark")
+      }
+    }
+  }
+
+  fileprivate func savedFilterRow(title: String, isSelected: Bool) -> some View {
     HStack {
       Text(title)
         .font(.callout)
@@ -273,7 +288,7 @@ struct SidebarView: View {
     .padding(.vertical, 2)
   }
 
-  private func beginSaveFilter() {
+  fileprivate func beginSaveFilter() {
     let trimmed = store.state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmed.isEmpty {
       pendingFilterName = trimmed
@@ -285,7 +300,7 @@ struct SidebarView: View {
     showSaveFilterSheet = true
   }
 
-  private func beginRename(_ filter: SavedFilter) {
+  fileprivate func beginRename(_ filter: SavedFilter) {
     renameTarget = filter
     pendingFilterName = filter.name
     showRenameFilterSheet = true
