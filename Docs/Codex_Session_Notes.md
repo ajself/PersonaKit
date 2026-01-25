@@ -1,24 +1,44 @@
-# Codex Session Notes — Next Session Plan
+# Codex Session Notes
 
-## Goals
-- Support legacy SHAs by automatically trying multiple app build recipes.
-- Preserve deterministic, reusable metrics outputs (JSON + Markdown).
-- Keep failures visible without blocking the run when configured.
+Goal: resolve all SwiftLint violations in small, reversible steps with frequent commits.
 
-## Recommendations
-- Add `Scripts/build-compare.json` with targeted recipes for legacy workspaces/schemes.
-- Treat the report as the source of truth for test pass/fail via `tests.success`.
-- Default to `--allow-test-failures` for historical SHAs where tests are known to fail.
-- Document any new xcodebuild flags needed for a specific SHA in the config file.
+## Step 0 — Baseline audit (no code changes)
+- Run `swiftlint --reporter json` and summarize counts by rule and by file.
+- Identify rules that appear to conflict with `swift-format` output.
+- Identify schema/JSON model files that intentionally use snake_case keys.
+- Commit: `chore(lint): capture baseline lint audit` (notes-only change if needed).
+- Ask for approval to proceed to Step 1.
 
-## Known Findings from Current Run
-- Base SHA `cb61f8fa5c1fe1736f32417810bb5b8e9e5b8f72` has failing tests.
-  - Failure log: `/tmp/personakit-build-compare/2026-01-25T05-59-23Z/logs/base/tests.log`
-- Latest run report:
-  - `/tmp/personakit-build-compare/2026-01-25T05-59-23Z/REPORT.md`
-  - `/tmp/personakit-build-compare/2026-01-25T05-59-23Z/report.json`
+## Step 1 — Tooling alignment
+- If rules conflict with `swift-format`, update `swiftlint.yml` to align.
+- Update `Docs/Standards/SwiftUI-App-Style-Guide.md` to match any config changes.
+- Keep changes minimal and explain rationale in the commit message/body.
+- Commit: `chore(lint): align swiftlint with formatter`.
+- Ask for approval to proceed to Step 2.
 
-## Next Steps
-1) Create and commit `Scripts/build-compare.json` with recipes that cover PersonaPad-era builds.
-2) Re-run the comparison with `--allow-test-failures` and verify report output.
-3) If app builds still fail for a specific SHA, add a targeted recipe and note it in the config.
+## Step 2 — Schema/model naming consistency
+- For schema/JSON-facing models, choose one approach:
+  - Option A: convert to camelCase + `CodingKeys`.
+  - Option B: add file-level `swiftlint:disable identifier_name` with a brief justification comment.
+- Apply consistently to all schema/report model files.
+- Commit: `refactor(schema): normalize lint strategy for encoded keys`.
+- Ask for approval to proceed to Step 3.
+
+## Step 3 — Structural violations (size/length)
+- Refactor files with `function_body_length`, `type_body_length`, and `file_length` issues.
+- Extract helpers or split into new files; keep behavior unchanged.
+- Tackle one file per commit when possible.
+- Commit pattern: `refactor(lint): split <file>` or `refactor(lint): extract helpers from <type>`.
+- Ask for approval to proceed to Step 4.
+
+## Step 4 — Line length cleanup
+- Address remaining `line_length` errors/warnings by wrapping lines or extracting variables.
+- Prefer readability; avoid semantic changes.
+- Commit: `style(lint): wrap long lines`.
+- Ask for approval to proceed to Step 5.
+
+## Step 5 — Final pass
+- Run `swift-format` on touched files.
+- Run full `swiftlint` and confirm zero violations.
+- Commit: `chore(lint): final cleanup`.
+- Report results and wait for further instructions.
