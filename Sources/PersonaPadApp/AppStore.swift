@@ -191,77 +191,10 @@ final class AppStore {
   }
 
   func send(_ action: Action) {
-    switch action {
-    case .task, .reloadAll:
-      reloadAll()
-    case .importPack:
-      importPack()
-    case .revealStorageRoot:
-      revealStorageRoot()
-    case .revealSelectedPack:
-      revealSelectedPack()
-    case .removeSelectedPack:
-      removeSelectedPack()
-    case .copyPromptToClipboard:
-      copyPromptToClipboard()
-    case .requestSidebarSearchFocus:
-      state.sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: uuid(), shouldFocus: true)
-    case .requestSidebarSearchBlur:
-      state.sidebarSearchFocusRequest = SidebarSearchFocusRequest(id: uuid(), shouldFocus: false)
-    case .requestComposerFocus(let sectionKey):
-      state.composerFocusRequest = ComposerFocusRequest(id: uuid(), sectionKey: sectionKey)
-    case .setSidebarSearchFocused(let isFocused):
-      state.isSidebarSearchFocused = isFocused
-    case .setSelectedPersonaID(let id):
-      state.selectedPersonaID = id
-      recomputePreview()
-    case .setComposerValue(let key, let value):
-      state.composerValues[key] = value
-      recomputePreview()
-    case .setJSONPreview(let text):
-      updateJSONPreview(text, scheduleFormat: true)
-    case .setSearchText(let text):
-      state.searchText = text
-      if !isApplyingSavedFilter {
-        state.selectedSavedFilterID = nil
-      }
-    case .setSelectedTag(let tag):
-      state.selectedTag = tag
-      if let tag, !tag.isEmpty {
-        state.activeFilterTags = [tag]
-      } else {
-        state.activeFilterTags = []
-      }
-      if !isApplyingSavedFilter {
-        state.selectedSavedFilterID = nil
-      }
-    case .applyAllPersonasFilter:
-      state.isPinnedViewActive = false
-      applySavedFilterState(
-        id: Self.allPersonasFilterID,
-        queryText: "",
-        tags: [],
-        sources: []
-      )
-    case .applySavedFilter(let filter):
-      state.isPinnedViewActive = false
-      applySavedFilterState(
-        id: filter.id,
-        queryText: filter.queryText,
-        tags: filter.selectedTags,
-        sources: filter.selectedSources
-      )
-    case .saveCurrentFilter(let name):
-      saveCurrentFilter(name: name)
-    case .renameSavedFilter(let id, let newName):
-      renameSavedFilter(id: id, newName: newName)
-    case .deleteSavedFilter(let id):
-      deleteSavedFilter(id: id)
-    case .setPinnedViewActive:
-      state.isPinnedViewActive = true
-      state.selectedSavedFilterID = nil
-    case .togglePinnedPersona(let id):
-      togglePinnedPersona(id: id)
-    }
+    if handleLifecycle(action) { return }
+    if handleFocus(action) { return }
+    if handleSelection(action) { return }
+    if handleFiltering(action) { return }
+    if handlePinned(action) { return }
   }
 }
