@@ -25,7 +25,7 @@ struct ParsedArgs {
 }
 
 @main
-struct PersonaPadCLI {
+enum PersonaPadCLI {
   private struct LoadResult {
     let resolved: PersonaResolver.ResolutionResult
     let diagnostics: [Diagnostic]
@@ -183,8 +183,8 @@ struct PersonaPadCLI {
     diagnostics: [Diagnostic]
   ) {
     for key in resolved.personasByID.keys.sorted() {
-      if let p = resolved.personasByID[key]?.persona {
-        print("\(p.id)\t\(p.name)")
+      if let persona = resolved.personasByID[key]?.persona {
+        print("\(persona.id)\t\(persona.name)")
       }
     }
     if !diagnostics.isEmpty {
@@ -198,23 +198,23 @@ struct PersonaPadCLI {
     diagnostics: [Diagnostic]
   ) {
     let personaID = parsed.value(for: "persona") ?? resolved.personasByID.keys.sorted().first
-    guard let id = personaID, let p = resolved.personasByID[id]?.persona else {
+    guard let id = personaID, let persona = resolved.personasByID[id]?.persona else {
       fputs(
         "Persona not found. Fix: run 'personapad list' and use a valid --persona id.\n", stderr)
       exit(2)
     }
 
-    let sections = buildSections(parsed: parsed, persona: p)
+    let sections = buildSections(parsed: parsed, persona: persona)
 
     if parsed.hasFlag("resolved-json") {
-      if let json = PersonaOutputRenderer.resolvedJSON(persona: p) {
+      if let json = PersonaOutputRenderer.resolvedJSON(persona: persona) {
         print(json)
       } else {
         fputs("Failed to encode persona JSON. Fix: ensure the persona data is valid.\n", stderr)
         exit(3)
       }
     } else {
-      let prompt = PersonaOutputRenderer.prompt(persona: p, sections: sections)
+      let prompt = PersonaOutputRenderer.prompt(persona: persona, sections: sections)
       print(prompt)
     }
 
@@ -226,28 +226,27 @@ struct PersonaPadCLI {
   private static func buildSections(parsed: ParsedArgs, persona: Persona) -> [String: String] {
     var sections: [String: String] = [:]
     let sectionKeys =
-      (persona.template?.sections?.map { $0.key } ?? [
-        "context", "goal", "constraints", "evidence", "task",
-      ])
+      persona.template?.sections?.map { $0.key }
+      ?? ["context", "goal", "constraints", "evidence", "task"]
     let wantsStdin =
       (parsed.value(for: "context") == "-") || (parsed.value(for: "evidence") == "-")
     let stdinText = wantsStdin ? readStdinIfAvailable() : nil
 
     for key in sectionKeys {
-      if let v = parsed.value(for: key) {
-        if v == "-" {
+      if let value = parsed.value(for: key) {
+        if value == "-" {
           sections[key] = stdinText ?? ""
         } else {
-          sections[key] = v
+          sections[key] = value
         }
       }
     }
 
-    if parsed.value(for: "context") == nil,
-      parsed.value(for: "evidence") == nil,
-      let piped = readStdinIfAvailable(),
-      sectionKeys.contains("context")
-    {
+    let shouldUsePipedContext =
+      parsed.value(for: "context") == nil
+      && parsed.value(for: "evidence") == nil
+      && sectionKeys.contains("context")
+    if shouldUsePipedContext, let piped = readStdinIfAvailable() {
       sections["context"] = piped
     }
 
@@ -305,7 +304,8 @@ struct PersonaPadCLI {
       """
       Usage:
         personapad list
-        personapad compose --persona <id> [--resolved-json] [--context <text|->] [--goal <text>] [--constraints <text>] [--evidence <text|->] [--task <text>]
+        personapad compose --persona <id> [--resolved-json] [--context <text|->] [--goal <text>] \
+        [--constraints <text>] [--evidence <text|->] [--task <text>]
         personapad describe <persona-id>
 
       Notes:
@@ -316,7 +316,8 @@ struct PersonaPadCLI {
 }
 
 private struct CLIEnvironment {
-  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.fileClient)
+  var fileClient
 }
 
 private func readStdinIfAvailable() -> String? {
@@ -329,7 +330,7 @@ private func readStdinIfAvailable() -> String? {
 
 private func printDiagnostics(_ diagnostics: [Diagnostic]) {
   fputs("\nDiagnostics:\n", stderr)
-  for d in diagnostics {
-    fputs("- [\(d.severity.rawValue)] \(d.userFacingMessage)\n", stderr)
+  for diagnostic in diagnostics {
+    fputs("- [\(diagnostic.severity.rawValue)] \(diagnostic.userFacingMessage)\n", stderr)
   }
 }

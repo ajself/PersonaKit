@@ -126,8 +126,12 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
       }
       // Wrap single persona as a set for consistent merging.
       let pack = PackMeta(
-        id: source.idFallback, name: source.displayNameFallback, author: nil, description: nil,
-        homepage: nil)
+        id: source.idFallback,
+        name: source.displayNameFallback,
+        author: nil,
+        description: nil,
+        homepage: nil
+      )
       let set = PersonaSet(source: source, pack: pack, defaults: nil, personas: [persona])
       diags.append(contentsOf: PersonaValidator.validate(set: set))
       return diags.contains(where: { $0.severity == .error })

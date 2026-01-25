@@ -17,17 +17,17 @@ public enum PersonaResolver {
 
     // Load order matters: earlier then overridden by later.
     for set in sets {
-      for p in set.personas {
-        if sourcesByID[p.id] != nil {
+      for persona in set.personas {
+        if sourcesByID[persona.id] != nil {
           diags.append(
             .warning(
               source: set.source,
               message:
-                "Persona '\(p.id)' overrides an earlier definition. Fix: remove duplicates or adjust pack load order."
+                "Persona '\(persona.id)' overrides an earlier definition. Fix: remove duplicates or adjust pack load order."
             ))
         }
-        merged[p.id] = p
-        sourcesByID[p.id] = set.source
+        merged[persona.id] = persona
+        sourcesByID[persona.id] = set.source
       }
     }
 

@@ -16,7 +16,8 @@ public enum PersonaLoader {
           .error(
             source: source,
             message:
-              "Failed to decode JSON: \(error.localizedDescription). Fix: ensure the file is valid JSON and matches schema v1."
+              "Failed to decode JSON: \(error.localizedDescription). Fix: ensure the file is valid JSON "
+              + "and matches schema v1."
           )
         ]))
     }
@@ -37,7 +38,8 @@ public enum PersonaLoader {
         .warning(
           source: PersonaSource(kind: sourceKind, url: directory),
           message:
-            "Could not read directory. Fix: ensure the directory exists and is readable. (\(error.localizedDescription))"
+            "Could not read directory. Fix: ensure the directory exists and is readable. ("
+            + error.localizedDescription + ")"
         ))
       return (sets, diagnostics)
     }
@@ -48,8 +50,8 @@ public enum PersonaLoader {
       .sorted {
         $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
       }
-    for f in jsonFiles {
-      switch loadDocument(from: f, sourceKind: sourceKind) {
+    for fileURL in jsonFiles {
+      switch loadDocument(from: fileURL, sourceKind: sourceKind) {
       case .success(let set): sets.append(set)
       case .failure(let error): diagnostics.append(contentsOf: error.diagnostics)
       }

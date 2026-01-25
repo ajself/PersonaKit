@@ -47,12 +47,10 @@ final class PersonaPadCoreMetadataTests: XCTestCase {
   }
 
   func testMetadataDoesNotAffectComposition() throws {
-    let template = PromptTemplate(
-      format: nil,
-      sections: [
-        TemplateSection(key: "context", label: "Context", required: true),
-        TemplateSection(key: "task", label: "Task", required: true),
-      ])
+    var templateSections: [TemplateSection] = []
+    templateSections.append(TemplateSection(key: "context", label: "Context", required: true))
+    templateSections.append(TemplateSection(key: "task", label: "Task", required: true))
+    let template = PromptTemplate(format: nil, sections: templateSections)
 
     let base = Persona(
       id: "meta-free",
@@ -70,10 +68,7 @@ final class PersonaPadCoreMetadataTests: XCTestCase {
       template: template
     )
 
-    let sections = [
-      "context": "Repo: PersonaPad",
-      "task": "Confirm output",
-    ]
+    let sections = ["context": "Repo: PersonaPad", "task": "Confirm output"]
 
     let baseOutput = PromptComposer.compose(persona: base, sections: sections)
     let metaOutput = PromptComposer.compose(persona: withMeta, sections: sections)

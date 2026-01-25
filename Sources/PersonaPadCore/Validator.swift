@@ -2,78 +2,103 @@ import Foundation
 
 public enum PersonaValidator {
   public static func validate(set: PersonaSet) -> [Diagnostic] {
-    var diags: [Diagnostic] = []
+    var diagnostics: [Diagnostic] = []
+    diagnostics.append(contentsOf: validatePack(set))
+    diagnostics.append(contentsOf: validatePersonas(set))
+    return diagnostics
+  }
+
+  private static func validatePack(_ set: PersonaSet) -> [Diagnostic] {
+    var diagnostics: [Diagnostic] = []
 
     // Required fields (light validation; JSON Schema should do most)
     if set.pack.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      diags.append(
+      diagnostics.append(
         .error(
           source: set.source,
           message: "Pack 'id' must be non-empty. Fix: set a stable pack id."
         ))
     }
     if set.pack.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      diags.append(
+      diagnostics.append(
         .error(
           source: set.source,
           message: "Pack 'name' must be non-empty. Fix: set a human-readable pack name."
         ))
     }
 
+    return diagnostics
+  }
+
+  private static func validatePersonas(_ set: PersonaSet) -> [Diagnostic] {
+    var diagnostics: [Diagnostic] = []
     var seen = Set<String>()
-    for p in set.personas {
-      let id = p.id.trimmingCharacters(in: .whitespacesAndNewlines)
-      if id.isEmpty {
-        diags.append(
-          .error(
-            source: set.source,
-            message: "Persona 'id' must be non-empty. Fix: set a unique persona id."
-          ))
-      }
-      if seen.contains(id) {
-        diags.append(
-          .error(
-            source: set.source,
-            message: "Duplicate persona id in pack: '\(id)'. Fix: ensure ids are unique."
-          ))
-      }
-      seen.insert(id)
+    for persona in set.personas {
+      diagnostics.append(contentsOf: validatePersona(persona, source: set.source, seen: &seen))
+    }
+    return diagnostics
+  }
 
-      if p.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        diags.append(
-          .error(
-            source: set.source,
-            message: "Persona '\(p.id)' has empty 'name'. Fix: provide a display name."
-          ))
-      }
-      if p.system.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        diags.append(
-          .error(
-            source: set.source,
-            message: "Persona '\(p.id)' has empty 'system'. Fix: provide a system prompt."
-          ))
-      }
+  private static func validatePersona(
+    _ persona: Persona,
+    source: PersonaSource,
+    seen: inout Set<String>
+  ) -> [Diagnostic] {
+    var diagnostics: [Diagnostic] = []
 
-      if let ext = p.extends, !ext.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        diags.append(
-          .error(
-            source: set.source,
-            message:
-              "Persona '\(p.id)' uses 'extends', which is not supported in v1. Fix: inline the parent content and remove 'extends'."
-          ))
-      }
-      if let append = p.systemAppend,
-        !append.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      {
-        diags.append(
-          .error(
-            source: set.source,
-            message:
-              "Persona '\(p.id)' uses 'systemAppend', which is not supported in v1. Fix: merge the appended text into 'system'."
-          ))
-      }
+    let id = persona.id.trimmingCharacters(in: .whitespacesAndNewlines)
+    if id.isEmpty {
+      diagnostics.append(
+        .error(
+          source: source,
+          message: "Persona 'id' must be non-empty. Fix: set a unique persona id."
+        ))
+    }
+    if seen.contains(id) {
+      diagnostics.append(
+        .error(
+          source: source,
+          message: "Duplicate persona id in pack: '\(id)'. Fix: ensure ids are unique."
+        ))
+    }
+    seen.insert(id)
+
+    if persona.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      diagnostics.append(
+        .error(
+          source: source,
+          message: "Persona '\(persona.id)' has empty 'name'. Fix: provide a display name."
+        ))
+    }
+    if persona.system.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      diagnostics.append(
+        .error(
+          source: source,
+          message: "Persona '\(persona.id)' has empty 'system'. Fix: provide a system prompt."
+        ))
     }
 
-    return diags
+    if let ext = persona.extends, !ext.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      diagnostics.append(
+        .error(
+          source: source,
+          message:
+            "Persona '\(persona.id)' uses 'extends', which is not supported in v1. Fix: "
+            + "inline the parent content and remove 'extends'."
+        ))
+    }
+    let hasSystemAppend =
+      persona.systemAppend?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+    if hasSystemAppend {
+      diagnostics.append(
+        .error(
+          source: source,
+          message:
+            "Persona '\(persona.id)' uses 'systemAppend', which is not supported in v1. Fix: "
+            + "merge the appended text into 'system'."
+        ))
+    }
+
+    return diagnostics
   }
 }

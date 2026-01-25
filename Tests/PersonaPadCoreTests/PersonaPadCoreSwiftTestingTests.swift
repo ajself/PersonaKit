@@ -1,7 +1,7 @@
 #if canImport(Testing)
-  import Testing
-  @testable import PersonaPadCore
   import Foundation
+  @testable import PersonaPadCore
+  import Testing
 
   @Suite("PersonaPadCore Swift Testing")
   struct PersonaPadCoreSwiftTestingTests {

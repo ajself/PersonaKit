@@ -4,7 +4,7 @@ import XCTest
 
 final class PersonaPadCoreComposeTests: XCTestCase {
   func testComposeIncludesSystemAndSections() throws {
-    let p = Persona(
+    let persona = Persona(
       id: "t",
       name: "Test",
       system: "SYSTEM",
@@ -15,7 +15,7 @@ final class PersonaPadCoreComposeTests: XCTestCase {
         ])
     )
 
-    let out = PromptComposer.compose(persona: p, sections: ["goal": "Ship v1"])
+    let out = PromptComposer.compose(persona: persona, sections: ["goal": "Ship v1"])
     XCTAssertTrue(out.contains("SYSTEM"))
     XCTAssertTrue(out.contains("GOAL"))
     XCTAssertTrue(out.contains("Ship v1"))
@@ -29,20 +29,21 @@ final class PersonaPadCoreComposeTests: XCTestCase {
     let resolved = PersonaResolver.resolveAll(from: personaMap).personasByID
 
     let ids = ["senior-ios-engineer", "media-export-correctness"]
-    let sectionsByID: [String: [String: String]] = [
-      "senior-ios-engineer": [
-        "context": "Repo: PersonaPad",
-        "goal": "Verify deterministic prompt output",
-        "constraints": "No behavior changes",
-        "evidence": "Determinism tests",
-        "task": "Review the output",
-      ],
-      "media-export-correctness": [
-        "context": "Export pipeline v2",
-        "evidence": "Timing drift in 120fps",
-        "task": "Find deterministic pitfalls",
-      ],
-    ]
+    var sectionsByID: [String: [String: String]] = [:]
+
+    var seniorSections: [String: String] = [:]
+    seniorSections["context"] = "Repo: PersonaPad"
+    seniorSections["goal"] = "Verify deterministic prompt output"
+    seniorSections["constraints"] = "No behavior changes"
+    seniorSections["evidence"] = "Determinism tests"
+    seniorSections["task"] = "Review the output"
+    sectionsByID["senior-ios-engineer"] = seniorSections
+
+    var exportSections: [String: String] = [:]
+    exportSections["context"] = "Export pipeline v2"
+    exportSections["evidence"] = "Timing drift in 120fps"
+    exportSections["task"] = "Find deterministic pitfalls"
+    sectionsByID["media-export-correctness"] = exportSections
 
     for id in ids {
       guard let persona = resolved[id]?.persona else {
@@ -75,10 +76,8 @@ final class PersonaPadCoreComposeTests: XCTestCase {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
-    let personas: [Persona] = [
-      resolvedPack["senior-ios-engineer"]?.persona,
-      personaSet.personas.first,
-    ].compactMap { $0 }
+    let personas = [resolvedPack["senior-ios-engineer"]?.persona, personaSet.personas.first]
+      .compactMap { $0 }
 
     XCTAssertEqual(personas.count, 2)
 
@@ -103,13 +102,12 @@ final class PersonaPadCoreComposeTests: XCTestCase {
       return
     }
 
-    let sections = [
-      "context": "Repo: PersonaPad",
-      "goal": "Prove CLI parity",
-      "constraints": "No divergence",
-      "evidence": "Unit test",
-      "task": "Compare outputs",
-    ]
+    var sections: [String: String] = [:]
+    sections["context"] = "Repo: PersonaPad"
+    sections["goal"] = "Prove CLI parity"
+    sections["constraints"] = "No divergence"
+    sections["evidence"] = "Unit test"
+    sections["task"] = "Compare outputs"
 
     let coreOutput = PromptComposer.compose(persona: persona, sections: sections)
     let cliOutput = PersonaOutputRenderer.prompt(persona: persona, sections: sections)

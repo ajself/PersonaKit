@@ -4,16 +4,15 @@ import XCTest
 
 final class PersonaPadCoreStorageTests: XCTestCase {
   func testPackDiffClassifiesAndSortsDeterministically() throws {
-    let left: [PersonaDiffRecord] = [
-      PersonaDiffRecord(key: "z", id: "zeta", name: "Zeta", contentHash: "a"),
-      PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
-      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha", contentHash: "c"),
-    ]
-    let right: [PersonaDiffRecord] = [
-      PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"),
-      PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha Updated", contentHash: "d"),
-      PersonaDiffRecord(key: "c", id: "charlie", name: "Charlie", contentHash: "e"),
-    ]
+    var left: [PersonaDiffRecord] = []
+    left.append(PersonaDiffRecord(key: "z", id: "zeta", name: "Zeta", contentHash: "a"))
+    left.append(PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"))
+    left.append(PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha", contentHash: "c"))
+
+    var right: [PersonaDiffRecord] = []
+    right.append(PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"))
+    right.append(PersonaDiffRecord(key: "a", id: "alpha", name: "Alpha Updated", contentHash: "d"))
+    right.append(PersonaDiffRecord(key: "c", id: "charlie", name: "Charlie", contentHash: "e"))
 
     let diff = PackDiffBuilder.diff(left: Array(left.reversed()), right: Array(right.reversed()))
 
@@ -21,12 +20,10 @@ final class PersonaPadCoreStorageTests: XCTestCase {
     XCTAssertEqual(diff.removed.map(\.id), ["zeta"])
     XCTAssertEqual(diff.modified.map(\.id), ["alpha"])
 
-    let addedDiff = PackDiffBuilder.diff(
-      left: [],
-      right: [
-        PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"),
-        PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1"),
-      ])
+    var addedRight: [PersonaDiffRecord] = []
+    addedRight.append(PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"))
+    addedRight.append(PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1"))
+    let addedDiff = PackDiffBuilder.diff(left: [], right: addedRight)
     XCTAssertEqual(addedDiff.added.map(\.id), ["a", "b"])
   }
 
@@ -39,7 +36,8 @@ final class PersonaPadCoreStorageTests: XCTestCase {
   }
 
   func testSavedFiltersRoundTripDeterministicEncoding() throws {
-    let filters = [
+    var filters: [SavedFilter] = []
+    filters.append(
       SavedFilter(
         id: "b",
         name: "Beta",
@@ -47,7 +45,9 @@ final class PersonaPadCoreStorageTests: XCTestCase {
         selectedTags: ["tag-b"],
         selectedSources: ["user"],
         groupingMode: nil
-      ),
+      )
+    )
+    filters.append(
       SavedFilter(
         id: "a",
         name: "Alpha",
@@ -55,8 +55,8 @@ final class PersonaPadCoreStorageTests: XCTestCase {
         selectedTags: ["tag-a"],
         selectedSources: ["builtIn"],
         groupingMode: "tag"
-      ),
-    ]
+      )
+    )
 
     let data1 = try XCTUnwrap(SavedFiltersStore.encode(filters))
     let decoded = try XCTUnwrap(SavedFiltersStore.decode(data1))
@@ -70,7 +70,8 @@ final class PersonaPadCoreStorageTests: XCTestCase {
     let fileURL = tempRoot.appendingPathComponent("filters.json")
     let store = SavedFiltersStore(fileURL: fileURL)
 
-    let filters = [
+    var filters: [SavedFilter] = []
+    filters.append(
       SavedFilter(
         id: "b2",
         name: "Beta",
@@ -78,7 +79,9 @@ final class PersonaPadCoreStorageTests: XCTestCase {
         selectedTags: [],
         selectedSources: [],
         groupingMode: nil
-      ),
+      )
+    )
+    filters.append(
       SavedFilter(
         id: "a2",
         name: "Alpha",
@@ -86,7 +89,9 @@ final class PersonaPadCoreStorageTests: XCTestCase {
         selectedTags: [],
         selectedSources: [],
         groupingMode: nil
-      ),
+      )
+    )
+    filters.append(
       SavedFilter(
         id: "a1",
         name: "Alpha",
@@ -94,8 +99,8 @@ final class PersonaPadCoreStorageTests: XCTestCase {
         selectedTags: [],
         selectedSources: [],
         groupingMode: nil
-      ),
-    ]
+      )
+    )
 
     store.save(filters)
     let loaded = store.load()

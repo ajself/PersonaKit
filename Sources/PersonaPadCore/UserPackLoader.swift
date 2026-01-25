@@ -24,7 +24,8 @@ public enum UserPackLoader {
         .warning(
           source: PersonaSource(kind: .user, url: packsRoot),
           message:
-            "Could not read user packs directory. Fix: ensure the directory exists and is readable. (\(error.localizedDescription))"
+            "Could not read user packs directory. Fix: ensure the directory exists and is readable. ("
+            + error.localizedDescription + ")"
         ))
       return (packs, diagnostics)
     }

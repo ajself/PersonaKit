@@ -11,7 +11,7 @@ struct SchemaConfig {
 }
 
 @main
-struct PersonaPadSchemaValidate {
+enum PersonaPadSchemaValidate {
   static func main() {
     let fileClient = SchemaEnvironment().fileClient
     let cwd = URL(fileURLWithPath: fileClient.currentDirectoryPath())
@@ -59,7 +59,9 @@ struct PersonaPadSchemaValidate {
 
     print("Schema validation passed for \(exampleFiles.count) file(s).")
   }
+}
 
+extension PersonaPadSchemaValidate {
   private static func findRepoRoot(start: URL, fileClient: FileClient) -> URL? {
     var current = start
     for _ in 0..<6 {
@@ -93,16 +95,31 @@ struct PersonaPadSchemaValidate {
 
   private static func loadSchemaConfig(schemaJSON: [String: Any]) -> SchemaConfig {
     let documentTypes = Set(
-      readStringArray(schemaJSON["properties"], keyPath: ["documentType", "enum"]))
-    let personaRequired = readStringArray(schemaJSON["$defs"], keyPath: ["persona", "required"])
-    let personaPackRequired = readStringArray(schemaJSON["allOf"], matchConst: "personaPack")
+      readStringArray(
+        schemaJSON["properties"],
+        keyPath: ["documentType", "enum"]
+      )
+    )
+    let personaRequired = readStringArray(
+      schemaJSON["$defs"],
+      keyPath: ["persona", "required"]
+    )
+    let personaPackRequired = readStringArray(
+      schemaJSON["allOf"],
+      matchConst: "personaPack"
+    )
     let packRequired = readStringArray(
-      schemaJSON["allOf"], matchConst: "personaPack",
-      thenKeyPath: ["properties", "pack", "required"])
+      schemaJSON["allOf"],
+      matchConst: "personaPack",
+      thenKeyPath: ["properties", "pack", "required"]
+    )
     let outputFormats = Set(
       readStringArray(
-        schemaJSON["allOf"], matchConst: "personaPack",
-        thenKeyPath: ["properties", "defaults", "properties", "outputFormat", "enum"]))
+        schemaJSON["allOf"],
+        matchConst: "personaPack",
+        thenKeyPath: ["properties", "defaults", "properties", "outputFormat", "enum"]
+      )
+    )
 
     return SchemaConfig(
       documentTypes: documentTypes.isEmpty ? ["personaPack", "persona"] : documentTypes,
@@ -125,7 +142,9 @@ struct PersonaPadSchemaValidate {
   }
 
   private static func readStringArray(
-    _ root: Any?, matchConst: String, thenKeyPath: [String]? = nil
+    _ root: Any?,
+    matchConst: String,
+    thenKeyPath: [String]? = nil
   ) -> [String] {
     guard let list = root as? [Any] else { return [] }
     for item in list {
@@ -147,9 +166,13 @@ struct PersonaPadSchemaValidate {
     }
     return []
   }
+}
 
+extension PersonaPadSchemaValidate {
   private static func validateFile(
-    _ url: URL, config: SchemaConfig, fileClient: FileClient
+    _ url: URL,
+    config: SchemaConfig,
+    fileClient: FileClient
   ) -> String? {
     guard let data = try? fileClient.readData(url) else {
       return "\(url.lastPathComponent): could not read file."
@@ -165,8 +188,10 @@ struct PersonaPadSchemaValidate {
 
     if documentType == "personaPack" {
       if let message = validatePersonaPack(
-        json: json, config: config, fileName: url.lastPathComponent)
-      {
+        json: json,
+        config: config,
+        fileName: url.lastPathComponent
+      ) {
         return message
       }
     } else {
@@ -255,10 +280,8 @@ struct PersonaPadSchemaValidate {
     config: SchemaConfig,
     fileName: String
   ) -> String? {
-    if let defaults = json["defaults"] as? [String: Any],
-      let outputFormat = defaults["outputFormat"] as? String,
-      !config.outputFormats.contains(outputFormat)
-    {
+    let outputFormat = (json["defaults"] as? [String: Any])?["outputFormat"] as? String
+    if let outputFormat, !config.outputFormats.contains(outputFormat) {
       return "\(fileName): defaults.outputFormat must be one of \(config.outputFormats.sorted())."
     }
     return nil
@@ -282,12 +305,36 @@ struct PersonaPadSchemaValidate {
     guard let persona = value as? [String: Any] else {
       return "must be an object."
     }
+    if let message = validatePersonaExtensions(persona) {
+      return message
+    }
+    if let message = validatePersonaRequiredFields(persona, config: config) {
+      return message
+    }
+    if let message = validateOptionalTemplate(persona) {
+      return message
+    }
+    if let message = validateOptionalOutputContract(persona) {
+      return message
+    }
+
+    return nil
+  }
+
+  private static func validatePersonaExtensions(_ persona: [String: Any]) -> String? {
     if persona["extends"] != nil {
       return "'extends' is not supported in v1."
     }
     if persona["systemAppend"] != nil {
       return "'systemAppend' is not supported in v1."
     }
+    return nil
+  }
+
+  private static func validatePersonaRequiredFields(
+    _ persona: [String: Any],
+    config: SchemaConfig
+  ) -> String? {
     for key in config.personaRequired {
       guard let raw = persona[key] else { return "missing '\(key)'." }
       if let str = raw as? String {
@@ -298,20 +345,17 @@ struct PersonaPadSchemaValidate {
         return "'\(key)' must be a string."
       }
     }
-
-    if let template = persona["template"] {
-      if let message = validateTemplate(template) {
-        return message
-      }
-    }
-
-    if let contract = persona["outputContract"] as? [String: Any] {
-      if let message = validateOutputContract(contract) {
-        return message
-      }
-    }
-
     return nil
+  }
+
+  private static func validateOptionalTemplate(_ persona: [String: Any]) -> String? {
+    guard let template = persona["template"] else { return nil }
+    return validateTemplate(template)
+  }
+
+  private static func validateOptionalOutputContract(_ persona: [String: Any]) -> String? {
+    guard let contract = persona["outputContract"] as? [String: Any] else { return nil }
+    return validateOutputContract(contract)
   }
 
   private static func validateTemplate(_ template: Any) -> String? {
@@ -323,8 +367,8 @@ struct PersonaPadSchemaValidate {
         guard let sectionObj = section as? [String: Any] else {
           return "template.sections[\(idx)] must be an object."
         }
-        for key in ["key", "label", "required"] {
-          if sectionObj[key] == nil { return "template.sections[\(idx)] missing '\(key)'." }
+        for key in ["key", "label", "required"] where sectionObj[key] == nil {
+          return "template.sections[\(idx)] missing '\(key)'."
         }
         if let keyStr = sectionObj["key"] as? String, keyStr.isEmpty {
           return "template.sections[\(idx)].key must be non-empty."
@@ -342,10 +386,8 @@ struct PersonaPadSchemaValidate {
 
   private static func validateOutputContract(_ contract: [String: Any]) -> String? {
     if let headings = contract["headings"] as? [Any] {
-      for (idx, heading) in headings.enumerated() {
-        if (heading as? String) == nil {
-          return "outputContract.headings[\(idx)] must be a string."
-        }
+      for (idx, heading) in headings.enumerated() where (heading as? String) == nil {
+        return "outputContract.headings[\(idx)] must be a string."
       }
     }
     if let max = contract["askClarifyingQuestionsMax"] {
@@ -358,5 +400,6 @@ struct PersonaPadSchemaValidate {
 }
 
 private struct SchemaEnvironment {
-  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.fileClient)
+  var fileClient
 }

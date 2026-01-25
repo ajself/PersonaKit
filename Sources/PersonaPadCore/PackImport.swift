@@ -146,9 +146,11 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
       let canonical = url.resolvingSymlinksInPath().standardizedFileURL
       if canonical == packCanonical { continue }
       let name = url.lastPathComponent.lowercased()
-      if name.hasSuffix(".persona.json") || name.hasSuffix(".meta.json")
+      let isCompanion =
+        name.hasSuffix(".persona.json")
+        || name.hasSuffix(".meta.json")
         || name.hasSuffix(".metadata.json")
-      {
+      if isCompanion {
         results.append(url)
       }
     }
@@ -161,8 +163,8 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     let baseComponents = base.pathComponents
     let targetComponents = target.pathComponents
     guard targetComponents.count >= baseComponents.count else { return nil }
-    for (lhs, rhs) in zip(baseComponents, targetComponents) {
-      if lhs != rhs { return nil }
+    for (lhs, rhs) in zip(baseComponents, targetComponents) where lhs != rhs {
+      return nil
     }
     let relativeComponents = targetComponents.dropFirst(baseComponents.count)
     guard !relativeComponents.isEmpty else { return nil }

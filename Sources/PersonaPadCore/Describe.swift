@@ -10,7 +10,7 @@ public struct PersonaDescribeFailure: Error, Equatable {
   }
 }
 
-public struct PersonaDescriptor {
+public enum PersonaDescriptor {
   public static func describe(
     personaID: String?,
     resolved: [String: ResolvedPersona],
@@ -65,8 +65,11 @@ public struct PersonaDescriptor {
     return PersonaMetadata.sortedTags(unique)
   }
 
-  public static func sourceLabel(source: PersonaSource?, pack: PackMeta?, baseURL: URL?) -> String?
-  {
+  public static func sourceLabel(
+    source: PersonaSource?,
+    pack: PackMeta?,
+    baseURL: URL?
+  ) -> String? {
     guard let source else {
       return packDisplayLabel(pack)
     }

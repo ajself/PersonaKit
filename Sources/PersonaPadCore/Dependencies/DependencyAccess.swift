@@ -1,5 +1,6 @@
 import Dependencies
 
 struct FileClientProvider {
-  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.fileClient)
+  var fileClient
 }

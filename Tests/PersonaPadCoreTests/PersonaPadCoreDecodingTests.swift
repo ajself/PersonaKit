@@ -65,10 +65,15 @@ final class PersonaPadCoreDecodingTests: XCTestCase {
 
     let diags = PersonaValidator.validate(set: set)
     XCTAssertFalse(diags.isEmpty)
-    for d in diags {
-      XCTAssertTrue(d.message.contains("Fix:"), "Missing fix hint in: \(d.message)")
+    for diagnostic in diags {
       XCTAssertTrue(
-        d.userFacingMessage.contains("Source:"), "Missing source label in: \(d.userFacingMessage)")
+        diagnostic.message.contains("Fix:"),
+        "Missing fix hint in: \(diagnostic.message)"
+      )
+      XCTAssertTrue(
+        diagnostic.userFacingMessage.contains("Source:"),
+        "Missing source label in: \(diagnostic.userFacingMessage)"
+      )
     }
   }
 
