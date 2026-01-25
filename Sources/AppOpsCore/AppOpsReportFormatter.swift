@@ -12,6 +12,8 @@ package enum AppOpsReportFormatter {
     appendDiff(to: &lines, report: report)
     appendImport(to: &lines, report: report)
     appendExport(to: &lines, report: report)
+    appendMethodology(to: &lines, report: report)
+    appendInterpretation(to: &lines, report: report)
     return lines.joined(separator: "\n")
   }
 
@@ -119,7 +121,60 @@ package enum AppOpsReportFormatter {
     )
   }
 
+  private static func appendMethodology(to lines: inout [String], report: AppOpsReport) {
+    lines.append("")
+    lines.append("## Methodology")
+    lines.append("- Timing uses a monotonic clock around each step; report formatting is not timed.")
+    lines.append(
+      "- Reload pipeline totals are the sum of built-in load, user-pack load (if enabled), merge, and resolve."
+    )
+    lines.append(
+      "- Built-ins load PersonaKitResources packs; user packs load from the user packs root if enabled."
+    )
+    lines.append("- Merge combines packs into a persona map; resolve applies PersonaResolver over that map.")
+    lines.append(
+      "- Compose renders prompts and pretty JSON for each resolved persona using sample section values."
+    )
+    lines.append("- Prompt/JSON byte counts are UTF-8 byte sizes of the rendered outputs.")
+    lines.append(
+      "- Diff loads left/right pack files and compares personas by content hash (added/removed/modified)."
+    )
+    lines.append(
+      "- Import timing covers planning (scan) and copy (copy to temp then move into final destination)."
+    )
+    lines.append(
+      "- Export writes the first available pack set to sorted-key JSON and reports bytes written."
+    )
+    lines.append(
+      "- Diagnostics counts are the number of diagnostics emitted during load, merge, and resolve."
+    )
+  }
+
+  private static func appendInterpretation(to lines: inout [String], report: AppOpsReport) {
+    lines.append("")
+    lines.append("## Interpretation")
+    lines.append("- Treat timings as local indicators; compare runs on the same machine and similar cache state.")
+    lines.append("- Near-zero values reflect very small work or measurement granularity.")
+    lines.append("- Higher persona counts or bytes indicate larger workloads; use them to contextualize durations.")
+    if report.inputs.includeUserPacks {
+      lines.append("- User pack metrics reflect the packs in the user packs root at run time.")
+    } else {
+      lines.append("- User packs were skipped for this run; related counts are zero.")
+    }
+    lines.append("- Diagnostics above zero signal input or merge/resolve issues worth inspection.")
+  }
+
   private static func formatSeconds(_ value: Double) -> String {
-    String(format: "%.2fs", value)
+    if value <= 0 {
+      return "0.00s"
+    }
+    if value < 0.1 {
+      let milliseconds = value * 1000
+      if milliseconds < 0.1 {
+        return "<0.1ms"
+      }
+      return String(format: "%.1fms", milliseconds)
+    }
+    return String(format: "%.2fs", value)
   }
 }

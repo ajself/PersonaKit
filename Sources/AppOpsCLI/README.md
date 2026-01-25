@@ -37,7 +37,34 @@ Artifacts/
 ```
 
 `REPORT.md` is the human‑readable summary; `report.json` is the machine‑readable
-schema emitted by AppOpsCore.
+schema emitted by AppOpsCore. The report includes a Methodology and Interpretation
+section that explains how each metric is derived and how to read the numbers.
+
+## Report methodology (per metric)
+
+- Reload pipeline: built-in packs are loaded from PersonaKitResources, user packs
+  are loaded from the user packs root when enabled, then packs are merged and
+  resolved. Total reload time is the sum of built-in load, user-pack load (if
+  enabled), merge, and resolve.
+- Compose: for each resolved persona, AppOps renders a prompt and pretty JSON
+  using sample section values and counts UTF-8 bytes. This is a synthetic
+  workload for sizing, not actual user content.
+- Diff: left/right pack files are loaded and compared by persona content hash to
+  produce added/removed/modified counts.
+- Import: planning scans the selected file or folder; copy writes to a temp
+  directory and then moves into the final destination.
+- Export: the first available pack set is encoded to sorted-key JSON and written
+  to disk; bytes represent the written file size.
+- Diagnostics: counts reflect diagnostics emitted during load, merge, and resolve.
+- Timing: all durations use a monotonic clock around each step; report formatting
+  is not timed.
+
+## Interpreting results
+
+- Compare runs on the same machine and similar cache state; these are local
+  indicators, not normalized benchmarks.
+- Near-zero timings reflect very small work or measurement granularity.
+- Use persona counts and byte sizes to contextualize duration changes.
 
 ## Notes
 

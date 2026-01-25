@@ -226,6 +226,14 @@ extension AppOpsCLI {
         --diff-right <path>     Right pack file for diff (default: Examples/personakit.pack.json)
         --no-user-packs         Skip loading ~/Library/Application Support/PersonaKit/Packs
         --help                  Show this message
+
+      Methodology summary:
+        Reload pipeline = built-in load + user-pack load (if enabled) + merge + resolve.
+        Compose = render prompt + pretty JSON per persona using sample section values; count UTF-8 bytes.
+        Diff = compare left/right packs by persona content hash to count added/removed/modified.
+        Import = plan (scan) + copy to temp + move into destination; count files and bytes copied.
+        Export = write first available pack set as sorted-key JSON; report bytes written.
+        Timing uses a monotonic clock around each step; report formatting is not timed.
       """
     )
   }

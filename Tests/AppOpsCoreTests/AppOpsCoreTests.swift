@@ -20,6 +20,8 @@ func markdownReportIncludesKeySections() {
   #expect(markdown.contains("Files: 2"))
   #expect(markdown.contains("## Export"))
   #expect(markdown.contains("Bytes: 4096"))
+  #expect(markdown.contains("## Methodology"))
+  #expect(markdown.contains("## Interpretation"))
 }
 
 @Test
