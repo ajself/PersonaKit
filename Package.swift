@@ -11,7 +11,8 @@ let package = Package(
     .executable(name: "PersonaKitApp", targets: ["PersonaKitApp"]),
     .executable(name: "personakit", targets: ["PersonaKitCLI"]),
     .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"]),
-    .executable(name: "BuildCompareCLI", targets: ["BuildCompareCLI"])
+    .executable(name: "BuildCompareCLI", targets: ["BuildCompareCLI"]),
+    .executable(name: "AppOpsCLI", targets: ["AppOpsCLI"])
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
@@ -33,7 +34,13 @@ let package = Package(
     ),
     .target(
       name: "BuildCompareCore",
-      path: "Sources/BuildCompareCore"
+      path: "Sources/BuildCompareCore",
+      exclude: ["README.md"]
+    ),
+    .target(
+      name: "AppOpsCore",
+      path: "Sources/AppOpsCore",
+      exclude: ["README.md"]
     ),
     .executableTarget(
       name: "PersonaKitApp",
@@ -64,7 +71,18 @@ let package = Package(
     .executableTarget(
       name: "BuildCompareCLI",
       dependencies: ["BuildCompareCore"],
-      path: "Sources/BuildCompareCLI"
+      path: "Sources/BuildCompareCLI",
+      exclude: ["README.md"]
+    ),
+    .executableTarget(
+      name: "AppOpsCLI",
+      dependencies: [
+        "AppOpsCore",
+        "PersonaKitCore",
+        "PersonaKitResources"
+      ],
+      path: "Sources/AppOpsCLI",
+      exclude: ["README.md"]
     ),
     .testTarget(
       name: "PersonaKitCoreTests",
@@ -75,6 +93,20 @@ let package = Package(
       name: "BuildCompareCoreTests",
       dependencies: ["BuildCompareCore"],
       path: "Tests/BuildCompareCoreTests"
+    ),
+    .testTarget(
+      name: "AppOpsCoreTests",
+      dependencies: ["AppOpsCore"],
+      path: "Tests/AppOpsCoreTests"
+    ),
+    .testTarget(
+      name: "AppOpsCLITests",
+      dependencies: [
+        "AppOpsCLI",
+        "AppOpsCore",
+        "PersonaKitCore"
+      ],
+      path: "Tests/AppOpsCLITests"
     ),
     .testTarget(
       name: "PersonaKitAppTests",

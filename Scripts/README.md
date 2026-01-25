@@ -116,3 +116,40 @@ Key naming is snake_case. Times are in seconds. Sizes are bytes.
 
 - Builds are sensitive to the local environment and cache state.
 - Worktrees are removed by default unless `--keep-worktrees` is provided.
+
+## appops
+
+Collect local performance metrics for core app flows (reload, compose, diff, import, export).
+This script is backed by a SwiftPM executable target and is not shipped with the app or user-facing CLI.
+
+### Usage
+
+```bash
+Scripts/appops [options]
+```
+
+This script is a thin wrapper around the SwiftPM executable:
+
+```bash
+swift run AppOpsCLI -- [options]
+```
+
+Options:
+- `--out-dir <path>`: output directory (default: `Artifacts/`)
+- `--import-source <path>`: pack file or folder to import (default: `Examples/personakit.pack.json`)
+- `--diff-left <path>`: left pack file for diff (default: built-in pack)
+- `--diff-right <path>`: right pack file for diff (default: `Examples/personakit.pack.json`)
+- `--no-user-packs`: skip loading user packs from `~/Library/Application Support/PersonaKit/Packs`
+
+### Output layout
+
+```
+Artifacts/
+  appops-<timestamp>/
+    REPORT.md
+    report.json
+    import/
+    export/
+```
+
+`REPORT.md` is a human-readable summary. `report.json` is the machine-readable report.
