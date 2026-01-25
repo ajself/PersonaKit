@@ -1,9 +1,12 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import PersonaPadCore
 
-final class PersonaPadCoreDescribeTests: XCTestCase {
-  func testDescribeIncludesDescriptionAndTags() throws {
+@Suite("PersonaPadCore Describe")
+struct PersonaPadCoreDescribeTests {
+  @Test("Describe includes description and tags")
+  func describeIncludesDescriptionAndTags() {
     let persona = Persona(
       id: "meta",
       name: "Meta",
@@ -25,23 +28,25 @@ final class PersonaPadCoreDescribeTests: XCTestCase {
 
     switch result {
     case .failure(let failure):
-      XCTFail("Unexpected failure: \(failure)")
+      #expect(Bool(false), "Unexpected failure: \(failure)")
     case .success(let text):
       let lines = text.split(separator: "\n").map(String.init)
-      XCTAssertEqual(lines.first, "Name: Meta")
-      XCTAssertTrue(lines.contains("Description: About text."))
-      XCTAssertTrue(lines.contains("Tags: Alpha, alpha, beta"))
-      XCTAssertTrue(lines.contains("Source: /tmp/meta.persona.json"))
+      #expect(lines.first == "Name: Meta")
+      #expect(lines.contains("Description: About text."))
+      #expect(lines.contains("Tags: Alpha, alpha, beta"))
+      #expect(lines.contains("Source: /tmp/meta.persona.json"))
     }
   }
 
-  func testDescribeTagsAreSortedAndUnique() throws {
+  @Test("Describe tags are sorted and unique")
+  func describeTagsAreSortedAndUnique() {
     let tags = ["beta", "Alpha", "alpha", "beta"]
     let sorted = PersonaDescriptor.sortedUniqueTags(from: tags)
-    XCTAssertEqual(sorted, ["Alpha", "alpha", "beta"])
+    #expect(sorted == ["Alpha", "alpha", "beta"])
   }
 
-  func testDescribeUnknownPersonaReturnsFailure() throws {
+  @Test("Describe unknown persona returns failure")
+  func describeUnknownPersonaReturnsFailure() {
     let result = PersonaDescriptor.describe(
       personaID: "missing",
       resolved: [:],
@@ -51,11 +56,11 @@ final class PersonaPadCoreDescribeTests: XCTestCase {
 
     switch result {
     case .success:
-      XCTFail("Expected failure for missing persona")
+      #expect(Bool(false), "Expected failure for missing persona")
     case .failure(let failure):
-      XCTAssertEqual(failure.exitCode, 2)
-      XCTAssertTrue(failure.message.contains("Persona not found"))
-      XCTAssertTrue(failure.message.contains("personapad list"))
+      #expect(failure.exitCode == 2)
+      #expect(failure.message.contains("Persona not found"))
+      #expect(failure.message.contains("personapad list"))
     }
   }
 }

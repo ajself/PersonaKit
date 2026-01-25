@@ -1,9 +1,12 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import PersonaPadCore
 
-final class PersonaPadCoreStorageTests: XCTestCase {
-  func testPackDiffClassifiesAndSortsDeterministically() throws {
+@Suite("PersonaPadCore Storage")
+struct PersonaPadCoreStorageTests {
+  @Test("Pack diff classifies and sorts deterministically")
+  func packDiffClassifiesAndSortsDeterministically() {
     var left: [PersonaDiffRecord] = []
     left.append(PersonaDiffRecord(key: "z", id: "zeta", name: "Zeta", contentHash: "a"))
     left.append(PersonaDiffRecord(key: "b", id: "beta", name: "Beta", contentHash: "b"))
@@ -16,26 +19,28 @@ final class PersonaPadCoreStorageTests: XCTestCase {
 
     let diff = PackDiffBuilder.diff(left: Array(left.reversed()), right: Array(right.reversed()))
 
-    XCTAssertEqual(diff.added.map(\.id), ["charlie"])
-    XCTAssertEqual(diff.removed.map(\.id), ["zeta"])
-    XCTAssertEqual(diff.modified.map(\.id), ["alpha"])
+    #expect(diff.added.map(\.id) == ["charlie"])
+    #expect(diff.removed.map(\.id) == ["zeta"])
+    #expect(diff.modified.map(\.id) == ["alpha"])
 
     var addedRight: [PersonaDiffRecord] = []
     addedRight.append(PersonaDiffRecord(key: "b", id: "b", name: "Beta", contentHash: "1"))
     addedRight.append(PersonaDiffRecord(key: "a", id: "a", name: "Alpha", contentHash: "1"))
     let addedDiff = PackDiffBuilder.diff(left: [], right: addedRight)
-    XCTAssertEqual(addedDiff.added.map(\.id), ["a", "b"])
+    #expect(addedDiff.added.map(\.id) == ["a", "b"])
   }
 
-  func testStoragePathsAreDeterministic() throws {
+  @Test("Storage paths are deterministic")
+  func storagePathsAreDeterministic() {
     let home = URL(fileURLWithPath: "/Users/tester")
     let paths = PersonaPadStoragePaths.standard(homeDirectory: home)
-    XCTAssertEqual(paths.root.path, "/Users/tester/Library/Application Support/PersonaPad")
-    XCTAssertEqual(paths.packs.path, "/Users/tester/Library/Application Support/PersonaPad/Packs")
-    XCTAssertEqual(paths.state.path, "/Users/tester/Library/Application Support/PersonaPad/State")
+    #expect(paths.root.path == "/Users/tester/Library/Application Support/PersonaPad")
+    #expect(paths.packs.path == "/Users/tester/Library/Application Support/PersonaPad/Packs")
+    #expect(paths.state.path == "/Users/tester/Library/Application Support/PersonaPad/State")
   }
 
-  func testSavedFiltersRoundTripDeterministicEncoding() throws {
+  @Test("Saved filters round trip deterministic encoding")
+  func savedFiltersRoundTripDeterministicEncoding() throws {
     var filters: [SavedFilter] = []
     filters.append(
       SavedFilter(
@@ -58,13 +63,14 @@ final class PersonaPadCoreStorageTests: XCTestCase {
       )
     )
 
-    let data1 = try XCTUnwrap(SavedFiltersStore.encode(filters))
-    let decoded = try XCTUnwrap(SavedFiltersStore.decode(data1))
-    let data2 = try XCTUnwrap(SavedFiltersStore.encode(decoded))
-    XCTAssertEqual(data1, data2)
+    let data1 = try #require(SavedFiltersStore.encode(filters))
+    let decoded = try #require(SavedFiltersStore.decode(data1))
+    let data2 = try #require(SavedFiltersStore.encode(decoded))
+    #expect(data1 == data2)
   }
 
-  func testSavedFiltersLoadSortsByNameThenId() throws {
+  @Test("Saved filters load sorts by name then id")
+  func savedFiltersLoadSortsByNameThenId() {
     let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
       UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("filters.json")
@@ -104,19 +110,21 @@ final class PersonaPadCoreStorageTests: XCTestCase {
 
     store.save(filters)
     let loaded = store.load()
-    XCTAssertEqual(loaded.map(\.id), ["a1", "a2", "b2"])
+    #expect(loaded.map(\.id) == ["a1", "a2", "b2"])
   }
 
-  func testPinnedPersonasMissingFileReturnsEmpty() throws {
+  @Test("Pinned personas missing file returns empty")
+  func pinnedPersonasMissingFileReturnsEmpty() {
     let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
       UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("pins.json")
     let store = PinnedPersonasStore(fileURL: fileURL)
 
-    XCTAssertEqual(store.load(), [])
+    #expect(store.load() == [])
   }
 
-  func testPinnedPersonasSaveSortsDeterministically() throws {
+  @Test("Pinned personas save sorts deterministically")
+  func pinnedPersonasSaveSortsDeterministically() {
     let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
       UUID().uuidString, isDirectory: true)
     let fileURL = tempRoot.appendingPathComponent("pins.json")
@@ -124,34 +132,37 @@ final class PersonaPadCoreStorageTests: XCTestCase {
 
     store.save(["zeta", "alpha", "beta"])
     let loaded = store.load()
-    XCTAssertEqual(loaded, ["alpha", "beta", "zeta"])
+    #expect(loaded == ["alpha", "beta", "zeta"])
   }
 
-  func testPinnedPersonasRoundTripDeterministicEncoding() throws {
+  @Test("Pinned personas round trip deterministic encoding")
+  func pinnedPersonasRoundTripDeterministicEncoding() throws {
     let pins = ["beta", "alpha"]
-    let data1 = try XCTUnwrap(PinnedPersonasStore.encode(pins))
-    let decoded = try XCTUnwrap(PinnedPersonasStore.decode(data1))
-    let data2 = try XCTUnwrap(PinnedPersonasStore.encode(decoded))
-    XCTAssertEqual(data1, data2)
+    let data1 = try #require(PinnedPersonasStore.encode(pins))
+    let decoded = try #require(PinnedPersonasStore.decode(data1))
+    let data2 = try #require(PinnedPersonasStore.encode(decoded))
+    #expect(data1 == data2)
   }
 
-  func testPackDirectoryNamingPrefersNameThenId() throws {
+  @Test("Pack directory naming prefers name then id")
+  func packDirectoryNamingPrefersNameThenId() {
     let pack = PackMeta(
       id: "pack.id", name: "My Pack", author: nil, description: nil, homepage: nil)
-    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: pack), "My Pack")
+    #expect(PersonaPadStorage.preferredPackDirectoryName(for: pack) == "My Pack")
 
     let fallback = PackMeta(
       id: "fallback.id", name: "   ", author: nil, description: nil, homepage: nil)
-    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: fallback), "fallback.id")
+    #expect(PersonaPadStorage.preferredPackDirectoryName(for: fallback) == "fallback.id")
 
     let sanitized = PackMeta(
       id: "pack/id", name: "My/Pack", author: nil, description: nil, homepage: nil)
-    XCTAssertEqual(PersonaPadStorage.preferredPackDirectoryName(for: sanitized), "My-Pack")
+    #expect(PersonaPadStorage.preferredPackDirectoryName(for: sanitized) == "My-Pack")
   }
 
-  func testUniquePackDirectoryNameAddsSuffix() throws {
+  @Test("Unique pack directory name adds suffix")
+  func uniquePackDirectoryNameAddsSuffix() {
     let existing: Set<String> = ["Pack", "Pack 2", "Pack 3"]
     let name = PersonaPadStorage.uniquePackDirectoryName(preferred: "Pack", existing: existing)
-    XCTAssertEqual(name, "Pack 4")
+    #expect(name == "Pack 4")
   }
 }

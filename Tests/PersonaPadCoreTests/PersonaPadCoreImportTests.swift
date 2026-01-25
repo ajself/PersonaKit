@@ -1,9 +1,12 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import PersonaPadCore
 
-final class PersonaPadCoreImportTests: XCTestCase {
-  func testImportPlanFromPackFileIncludesCompanions() throws {
+@Suite("PersonaPadCore Import")
+struct PersonaPadCoreImportTests {
+  @Test("Import plan from pack file includes companions")
+  func importPlanFromPackFileIncludesCompanions() throws {
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
     try fm.createDirectory(at: root, withIntermediateDirectories: true)
@@ -38,21 +41,22 @@ final class PersonaPadCoreImportTests: XCTestCase {
     try "{}".write(to: metaURL, atomically: true, encoding: .utf8)
     try personaJSON.write(to: nestedPersonaURL, atomically: true, encoding: .utf8)
 
-    let plan = try PersonaPackImportPlan.plan(from: packURL).get()
-    XCTAssertEqual(plan.sourceRoot.standardizedFileURL, root.standardizedFileURL)
-    XCTAssertEqual(plan.pack.id, "pack.id")
+    let plan = try #require(try? PersonaPackImportPlan.plan(from: packURL).get())
+    #expect(plan.sourceRoot.standardizedFileURL == root.standardizedFileURL)
+    #expect(plan.pack.id == "pack.id")
 
     let filenames = plan.filesToCopy.map(\.lastPathComponent)
-    XCTAssertTrue(filenames.contains("Example.pack.json"))
-    XCTAssertTrue(filenames.contains("Extra.persona.json"))
-    XCTAssertTrue(filenames.contains("Extra.meta.json"))
-    XCTAssertTrue(filenames.contains("Nested.persona.json"))
+    #expect(filenames.contains("Example.pack.json"))
+    #expect(filenames.contains("Extra.persona.json"))
+    #expect(filenames.contains("Extra.meta.json"))
+    #expect(filenames.contains("Nested.persona.json"))
 
     let nestedRelative = plan.relativePath(for: nestedPersonaURL)
-    XCTAssertEqual(nestedRelative, "Sub/Nested.persona.json")
+    #expect(nestedRelative == "Sub/Nested.persona.json")
   }
 
-  func testImportPlanAllowsSameFilenameInDifferentFolders() throws {
+  @Test("Import plan allows same filename in different folders")
+  func importPlanAllowsSameFilenameInDifferentFolders() throws {
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
     try fm.createDirectory(at: root, withIntermediateDirectories: true)
@@ -87,15 +91,16 @@ final class PersonaPadCoreImportTests: XCTestCase {
     try personaJSON.write(to: fileA, atomically: true, encoding: .utf8)
     try personaJSON.write(to: fileB, atomically: true, encoding: .utf8)
 
-    let plan = try PersonaPackImportPlan.plan(from: packURL).get()
+    let plan = try #require(try? PersonaPackImportPlan.plan(from: packURL).get())
     let relativeA = plan.relativePath(for: fileA)
     let relativeB = plan.relativePath(for: fileB)
-    XCTAssertEqual(relativeA, "A/Extra.persona.json")
-    XCTAssertEqual(relativeB, "B/Extra.persona.json")
-    XCTAssertNotEqual(relativeA, relativeB)
+    #expect(relativeA == "A/Extra.persona.json")
+    #expect(relativeB == "B/Extra.persona.json")
+    #expect(relativeA != relativeB)
   }
 
-  func testImportPlanRejectsMultiplePackFilesInFolder() throws {
+  @Test("Import plan rejects multiple pack files in folder")
+  func importPlanRejectsMultiplePackFilesInFolder() throws {
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
     try fm.createDirectory(at: root, withIntermediateDirectories: true)
@@ -120,19 +125,20 @@ final class PersonaPadCoreImportTests: XCTestCase {
     let result = PersonaPackImportPlan.plan(from: root)
     switch result {
     case .success:
-      XCTFail("Expected multiple pack files to be rejected")
+      #expect(Bool(false), "Expected multiple pack files to be rejected")
     case .failure(let error):
       switch error {
       case .multiplePackFiles(let directory, let files):
-        XCTAssertEqual(directory.standardizedFileURL, root.standardizedFileURL)
-        XCTAssertEqual(files.map(\.lastPathComponent).sorted(), ["A.pack.json", "B.pack.json"])
+        #expect(directory.standardizedFileURL == root.standardizedFileURL)
+        #expect(files.map(\.lastPathComponent).sorted() == ["A.pack.json", "B.pack.json"])
       default:
-        XCTFail("Unexpected error: \(error)")
+        #expect(Bool(false), "Unexpected error: \(error)")
       }
     }
   }
 
-  func testUserPackLoaderCombinesFolderPersonas() throws {
+  @Test("User pack loader combines folder personas")
+  func userPackLoaderCombinesFolderPersonas() throws {
     let fm = FileManager.default
     let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
     let packFolder = root.appendingPathComponent("MyPack", isDirectory: true)
@@ -163,8 +169,8 @@ final class PersonaPadCoreImportTests: XCTestCase {
     try personaJSON.write(to: personaURL, atomically: true, encoding: .utf8)
 
     let loaded = UserPackLoader.load(in: root)
-    XCTAssertEqual(loaded.packs.count, 1)
-    XCTAssertEqual(loaded.packs.first?.set.personas.count, 2)
-    XCTAssertEqual(loaded.packs.first?.packRoot.standardizedFileURL, packFolder.standardizedFileURL)
+    #expect(loaded.packs.count == 1)
+    #expect(loaded.packs.first?.set.personas.count == 2)
+    #expect(loaded.packs.first?.packRoot.standardizedFileURL == packFolder.standardizedFileURL)
   }
 }

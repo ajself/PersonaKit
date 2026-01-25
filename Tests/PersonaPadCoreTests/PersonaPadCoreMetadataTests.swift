@@ -1,9 +1,12 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import PersonaPadCore
 
-final class PersonaPadCoreMetadataTests: XCTestCase {
-  func testMetadataParsingAndSortedTags() throws {
+@Suite("PersonaPadCore Metadata")
+struct PersonaPadCoreMetadataTests {
+  @Test("Metadata parsing and sorted tags")
+  func metadataParsingAndSortedTags() throws {
     let json = """
       {
         "schemaVersion": 1,
@@ -22,19 +25,17 @@ final class PersonaPadCoreMetadataTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: url) }
 
     let result = PersonaLoader.loadDocument(from: url, sourceKind: .project)
-    let set = try result.get()
-    guard let persona = set.personas.first else {
-      XCTFail("Missing persona")
-      return
-    }
+    let set = try #require(try? result.get())
+    let persona = try #require(set.personas.first)
 
-    XCTAssertEqual(persona.description, "Short about text.")
-    XCTAssertEqual(persona.about, "Short about text.")
-    XCTAssertEqual(persona.sortedTags, ["Alpha", "alpha", "beta"])
-    XCTAssertEqual(PersonaMetadata.sortedUniqueTags(from: [persona]), ["Alpha", "alpha", "beta"])
+    #expect(persona.description == "Short about text.")
+    #expect(persona.about == "Short about text.")
+    #expect(persona.sortedTags == ["Alpha", "alpha", "beta"])
+    #expect(PersonaMetadata.sortedUniqueTags(from: [persona]) == ["Alpha", "alpha", "beta"])
   }
 
-  func testPersonaSortKeyOrdersByNameThenId() throws {
+  @Test("Persona sort key orders by name then id")
+  func personaSortKeyOrdersByNameThenId() {
     let personaA1 = Persona(id: "alpha-2", name: "Alpha", system: "SYSTEM")
     let personaA0 = Persona(id: "alpha-1", name: "Alpha", system: "SYSTEM")
     let personaB = Persona(id: "beta-1", name: "beta", system: "SYSTEM")
@@ -43,10 +44,11 @@ final class PersonaPadCoreMetadataTests: XCTestCase {
       PersonaMetadata.personaSortKey($0) < PersonaMetadata.personaSortKey($1)
     }
 
-    XCTAssertEqual(sorted.map(\.id), ["alpha-1", "alpha-2", "beta-1"])
+    #expect(sorted.map(\.id) == ["alpha-1", "alpha-2", "beta-1"])
   }
 
-  func testMetadataDoesNotAffectComposition() throws {
+  @Test("Metadata does not affect composition")
+  func metadataDoesNotAffectComposition() {
     var templateSections: [TemplateSection] = []
     templateSections.append(TemplateSection(key: "context", label: "Context", required: true))
     templateSections.append(TemplateSection(key: "task", label: "Task", required: true))
@@ -72,6 +74,6 @@ final class PersonaPadCoreMetadataTests: XCTestCase {
 
     let baseOutput = PromptComposer.compose(persona: base, sections: sections)
     let metaOutput = PromptComposer.compose(persona: withMeta, sections: sections)
-    XCTAssertEqual(baseOutput, metaOutput)
+    #expect(baseOutput == metaOutput)
   }
 }

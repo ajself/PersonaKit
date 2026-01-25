@@ -1,20 +1,24 @@
-import XCTest
+import Testing
 
 @testable import PersonaPadApp
 
-final class SidebarSearchEscapePolicyTests: XCTestCase {
-  func testEscapeClearsAndFocusesWhenSearchHasText() {
+@Suite("Sidebar Search Escape Policy")
+struct SidebarSearchEscapePolicyTests {
+  @Test("Escape clears and focuses when search has text")
+  func escapeClearsAndFocusesWhenSearchHasText() {
     let action = SidebarSearchEscapePolicy.action(searchText: "swift", isFocused: false)
-    XCTAssertEqual(action, .clearAndFocus)
+    #expect(action == .clearAndFocus)
   }
 
-  func testEscapeBlursWhenFocusedAndEmpty() {
+  @Test("Escape blurs when focused and empty")
+  func escapeBlursWhenFocusedAndEmpty() {
     let action = SidebarSearchEscapePolicy.action(searchText: "", isFocused: true)
-    XCTAssertEqual(action, .blur)
+    #expect(action == .blur)
   }
 
-  func testEscapeNoOpWhenNotFocusedAndEmpty() {
+  @Test("Escape no-op when not focused and empty")
+  func escapeNoOpWhenNotFocusedAndEmpty() {
     let action = SidebarSearchEscapePolicy.action(searchText: "", isFocused: false)
-    XCTAssertEqual(action, .noOp)
+    #expect(action == .noOp)
   }
 }

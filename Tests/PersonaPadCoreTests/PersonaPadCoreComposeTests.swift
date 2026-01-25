@@ -1,9 +1,12 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import PersonaPadCore
 
-final class PersonaPadCoreComposeTests: XCTestCase {
-  func testComposeIncludesSystemAndSections() throws {
+@Suite("PersonaPadCore Compose")
+struct PersonaPadCoreComposeTests {
+  @Test("Compose includes system and sections")
+  func composeIncludesSystemAndSections() throws {
     let persona = Persona(
       id: "t",
       name: "Test",
@@ -16,15 +19,16 @@ final class PersonaPadCoreComposeTests: XCTestCase {
     )
 
     let out = PromptComposer.compose(persona: persona, sections: ["goal": "Ship v1"])
-    XCTAssertTrue(out.contains("SYSTEM"))
-    XCTAssertTrue(out.contains("GOAL"))
-    XCTAssertTrue(out.contains("Ship v1"))
+    #expect(out.contains("SYSTEM"))
+    #expect(out.contains("GOAL"))
+    #expect(out.contains("Ship v1"))
   }
 
-  func testDeterministicComposeForExamplePackPersonas() throws {
+  @Test("Deterministic compose for example pack personas")
+  func deterministicComposeForExamplePackPersonas() throws {
     let packURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.pack.json")
     let result = PersonaLoader.loadDocument(from: packURL, sourceKind: .project)
-    let set = try result.get()
+    let set = try #require(try? result.get())
     let personaMap = Dictionary(uniqueKeysWithValues: set.personas.map { ($0.id, $0) })
     let resolved = PersonaResolver.resolveAll(from: personaMap).personasByID
 
@@ -46,29 +50,26 @@ final class PersonaPadCoreComposeTests: XCTestCase {
     sectionsByID["media-export-correctness"] = exportSections
 
     for id in ids {
-      guard let persona = resolved[id]?.persona else {
-        XCTFail("Missing persona \(id)")
-        continue
-      }
-      guard let sections = sectionsByID[id] else {
-        XCTFail("Missing sections for \(id)")
-        continue
-      }
+      let persona = try #require(resolved[id]?.persona)
+      let sections = try #require(sectionsByID[id])
       let first = PromptComposer.compose(persona: persona, sections: sections)
       for _ in 0..<5 {
         let next = PromptComposer.compose(persona: persona, sections: sections)
-        XCTAssertEqual(first, next)
+        #expect(first == next)
       }
     }
   }
 
-  func testResolvedJSONDeterministicEncoding() throws {
+  @Test("Resolved JSON deterministic encoding")
+  func resolvedJSONDeterministicEncoding() throws {
     let packURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.pack.json")
     let personaURL = coreTestsRepoRootURL().appendingPathComponent(
       "Examples/personapad.persona.json")
 
-    let packSet = try PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get()
-    let personaSet = try PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get()
+    let packSet = try #require(
+      try? PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get())
+    let personaSet = try #require(
+      try? PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get())
 
     let packMap = Dictionary(uniqueKeysWithValues: packSet.personas.map { ($0.id, $0) })
     let resolvedPack = PersonaResolver.resolveAll(from: packMap).personasByID
@@ -79,28 +80,26 @@ final class PersonaPadCoreComposeTests: XCTestCase {
     let personas = [resolvedPack["senior-ios-engineer"]?.persona, personaSet.personas.first]
       .compactMap { $0 }
 
-    XCTAssertEqual(personas.count, 2)
+    #expect(personas.count == 2)
 
     for persona in personas {
       let firstData = try encoder.encode(persona)
-      let firstText = String(data: firstData, encoding: .utf8)
+      let firstText = try #require(String(data: firstData, encoding: .utf8))
       for _ in 0..<5 {
         let nextData = try encoder.encode(persona)
-        let nextText = String(data: nextData, encoding: .utf8)
-        XCTAssertEqual(firstText, nextText)
+        let nextText = try #require(String(data: nextData, encoding: .utf8))
+        #expect(firstText == nextText)
       }
     }
   }
 
-  func testCLIOutputMatchesCorePrompt() throws {
+  @Test("CLI output matches core prompt")
+  func cliOutputMatchesCorePrompt() throws {
     let packURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.pack.json")
-    let set = try PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get()
+    let set = try #require(try? PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get())
     let personaMap = Dictionary(uniqueKeysWithValues: set.personas.map { ($0.id, $0) })
     let resolved = PersonaResolver.resolveAll(from: personaMap).personasByID
-    guard let persona = resolved["senior-ios-engineer"]?.persona else {
-      XCTFail("Missing persona")
-      return
-    }
+    let persona = try #require(resolved["senior-ios-engineer"]?.persona)
 
     var sections: [String: String] = [:]
     sections["context"] = "Repo: PersonaPad"
@@ -111,22 +110,20 @@ final class PersonaPadCoreComposeTests: XCTestCase {
 
     let coreOutput = PromptComposer.compose(persona: persona, sections: sections)
     let cliOutput = PersonaOutputRenderer.prompt(persona: persona, sections: sections)
-    XCTAssertEqual(coreOutput, cliOutput)
+    #expect(coreOutput == cliOutput)
   }
 
-  func testCLIResolvedJSONMatchesCoreEncoding() throws {
+  @Test("CLI resolved JSON matches core encoding")
+  func cliResolvedJSONMatchesCoreEncoding() throws {
     let personaURL = coreTestsRepoRootURL().appendingPathComponent(
       "Examples/personapad.persona.json")
-    let set = try PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get()
-    guard let persona = set.personas.first else {
-      XCTFail("Missing persona")
-      return
-    }
+    let set = try #require(try? PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get())
+    let persona = try #require(set.personas.first)
 
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let coreText = String(data: try encoder.encode(persona), encoding: .utf8)
-    let cliText = PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true)
-    XCTAssertEqual(coreText, cliText)
+    let coreText = try #require(String(data: try encoder.encode(persona), encoding: .utf8))
+    let cliText = try #require(PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true))
+    #expect(coreText == cliText)
   }
 }

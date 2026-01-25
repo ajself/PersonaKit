@@ -1,13 +1,15 @@
 import Clocks
 import Dependencies
 import Foundation
-import XCTest
+import Testing
 
 @testable import PersonaPadApp
 
-final class JSONPreviewDebounceTests: XCTestCase {
+@Suite("JSON Preview Debounce")
+struct JSONPreviewDebounceTests {
+  @Test("JSON preview formatting debounces")
   @MainActor
-  func testJSONPreviewFormattingDebounces() async {
+  func jsonPreviewFormattingDebounces() async {
     let clock = TestClock()
     let store = withDependencies {
       $0.continuousClock = clock
@@ -17,19 +19,20 @@ final class JSONPreviewDebounceTests: XCTestCase {
 
     let unformatted = "{\"b\":2,\"a\":1}"
     store.send(.setJSONPreview(unformatted))
-    XCTAssertEqual(store.state.jsonPreview, unformatted)
+    #expect(store.state.jsonPreview == unformatted)
 
     await clock.advance(by: .milliseconds(399))
     await Task.yield()
-    XCTAssertEqual(store.state.jsonPreview, unformatted)
+    #expect(store.state.jsonPreview == unformatted)
 
     await clock.advance(by: .milliseconds(1))
-    await Task.yield()
-    XCTAssertEqual(store.state.jsonPreview, prettyPrintedJSON(from: unformatted))
+    await clock.run()
+    #expect(store.state.jsonPreview == prettyPrintedJSON(from: unformatted))
   }
 
+  @Test("JSON preview formatting uses latest edit")
   @MainActor
-  func testJSONPreviewFormattingUsesLatestEdit() async {
+  func jsonPreviewFormattingUsesLatestEdit() async {
     let clock = TestClock()
     let store = withDependencies {
       $0.continuousClock = clock
@@ -46,14 +49,15 @@ final class JSONPreviewDebounceTests: XCTestCase {
     store.send(.setJSONPreview(second))
 
     await clock.advance(by: .milliseconds(400))
-    await Task.yield()
+    await clock.run()
 
-    XCTAssertEqual(store.state.jsonPreview, prettyPrintedJSON(from: second))
-    XCTAssertNotEqual(store.state.jsonPreview, prettyPrintedJSON(from: first))
+    #expect(store.state.jsonPreview == prettyPrintedJSON(from: second))
+    #expect(store.state.jsonPreview != prettyPrintedJSON(from: first))
   }
 
+  @Test("JSON preview does not format invalid JSON")
   @MainActor
-  func testJSONPreviewDoesNotFormatInvalidJSON() async {
+  func jsonPreviewDoesNotFormatInvalidJSON() async {
     let clock = TestClock()
     let store = withDependencies {
       $0.continuousClock = clock
@@ -65,9 +69,9 @@ final class JSONPreviewDebounceTests: XCTestCase {
     store.send(.setJSONPreview(invalidJSON))
 
     await clock.advance(by: .milliseconds(400))
-    await Task.yield()
+    await clock.run()
 
-    XCTAssertEqual(store.state.jsonPreview, invalidJSON)
+    #expect(store.state.jsonPreview == invalidJSON)
   }
 
   private func prettyPrintedJSON(from text: String) -> String {
