@@ -2,7 +2,9 @@
 # Keep this lean; prefer signal over noise.
 
 disabled_rules:
+  # Disabled to avoid enforcing TODO/FIXME policy in the codebase without a dedicated workflow.
   - todo
+  # Disabled because swift-format already normalizes trailing commas for collections/arguments.
   - trailing_comma
 
 opt_in_rules:
