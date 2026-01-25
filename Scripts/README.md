@@ -1,6 +1,6 @@
 # Scripts
 
-This folder contains development-only tools. These scripts are not part of the app or CLI targets.
+This folder contains development-only tools. `build-compare` is backed by a SwiftPM executable target and is not shipped with the app or user-facing CLI.
 
 ## build-compare
 
@@ -18,11 +18,19 @@ Compare build performance and outputs between two git SHAs for the app and CLI.
 Scripts/build-compare <base_sha> <head_sha> [options]
 ```
 
+This script is a thin wrapper around the SwiftPM executable:
+
+```bash
+swift run BuildCompareCLI -- <base_sha> <head_sha> [options]
+```
+
 Options:
 - `--out <path>`: output directory (default: `/tmp/personakit-build-compare/<timestamp>`)
 - `--worktree-root <path>`: worktree root (default: `<out>/worktrees`)
 - `--scheme <name>`: Xcode scheme (default: `PersonaKitApp`)
 - `--configuration <name>`: build configuration (default: `Release`)
+- `--config <path>`: JSON config for app build recipes (default: `Scripts/build-compare.json` if present)
+- `--allow-test-failures`: record failing tests in the report instead of aborting
 - `--no-tests`: skip `swift test`
 - `--no-incremental`: skip incremental builds
 - `--keep-worktrees`: keep worktrees after run
@@ -66,16 +74,43 @@ Tests (swift test):
 
 `REPORT.md` is a human-readable summary. `report.json` is the machine-readable report.
 
+### App build recipes (legacy support)
+
+The tool can try multiple app build recipes to accommodate older SHAs. Recipes are read from
+`Scripts/build-compare.json` if present (or via `--config`). Each recipe can optionally target
+specific workspaces and override schemes or add extra xcodebuild arguments.
+
+Example:
+
+```json
+{
+  "schema_version": 1,
+  "app_recipes": [
+    { "name": "default", "workspace": null, "scheme": null, "xcodebuild_args": [] },
+    {
+      "name": "legacy-driver",
+      "workspace": "PersonaPad.xcworkspace",
+      "scheme": "PersonaPadApp",
+      "xcodebuild_args": ["SWIFT_USE_INTEGRATED_DRIVER=NO"]
+    }
+  ]
+}
+```
+
+The first recipe that succeeds is recorded in the report.
+
 ### JSON schema (stable keys)
 
 The JSON report is intended to be stable across runs for automated comparison. Top-level keys:
 
-- `schema_version` (Int)
+- `schema_version` (Int, current: 2)
 - `run` (metadata)
 - `base` (metrics for base SHA)
 - `head` (metrics for head SHA)
 
 Key naming is snake_case. Times are in seconds. Sizes are bytes.
+
+`app.build_recipe` records the recipe used for the app build.
 
 ### Notes
 

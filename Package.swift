@@ -10,7 +10,8 @@ let package = Package(
     .library(name: "PersonaKitCore", targets: ["PersonaKitCore"]),
     .executable(name: "PersonaKitApp", targets: ["PersonaKitApp"]),
     .executable(name: "personakit", targets: ["PersonaKitCLI"]),
-    .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"])
+    .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"]),
+    .executable(name: "BuildCompareCLI", targets: ["BuildCompareCLI"])
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
@@ -29,6 +30,10 @@ let package = Package(
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
       path: "Sources/PersonaKitCore"
+    ),
+    .target(
+      name: "BuildCompareCore",
+      path: "Sources/BuildCompareCore"
     ),
     .executableTarget(
       name: "PersonaKitApp",
@@ -56,10 +61,20 @@ let package = Package(
       ],
       path: "Sources/PersonaKitSchemaValidate"
     ),
+    .executableTarget(
+      name: "BuildCompareCLI",
+      dependencies: ["BuildCompareCore"],
+      path: "Sources/BuildCompareCLI"
+    ),
     .testTarget(
       name: "PersonaKitCoreTests",
       dependencies: ["PersonaKitCore"],
       path: "Tests/PersonaKitCoreTests"
+    ),
+    .testTarget(
+      name: "BuildCompareCoreTests",
+      dependencies: ["BuildCompareCore"],
+      path: "Tests/BuildCompareCoreTests"
     ),
     .testTarget(
       name: "PersonaKitAppTests",
