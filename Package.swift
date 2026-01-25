@@ -2,69 +2,69 @@
 import PackageDescription
 
 let package = Package(
-  name: "PersonaPad",
+  name: "PersonaKit",
   platforms: [
     .macOS(.v26)
   ],
   products: [
-    .library(name: "PersonaPadCore", targets: ["PersonaPadCore"]),
-    .executable(name: "PersonaPadApp", targets: ["PersonaPadApp"]),
-    .executable(name: "personapad", targets: ["PersonaPadCLI"]),
-    .executable(name: "personapad-validate", targets: ["PersonaPadSchemaValidate"])
+    .library(name: "PersonaKitCore", targets: ["PersonaKitCore"]),
+    .executable(name: "PersonaKitApp", targets: ["PersonaKitApp"]),
+    .executable(name: "personakit", targets: ["PersonaKitCLI"]),
+    .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"])
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
   ],
   targets: [
     .target(
-      name: "PersonaPadResources",
-      path: "Sources/PersonaPadResources",
+      name: "PersonaKitResources",
+      path: "Sources/PersonaKitResources",
       resources: [
         .process("Resources")
       ]
     ),
     .target(
-      name: "PersonaPadCore",
+      name: "PersonaKitCore",
       dependencies: [
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
-      path: "Sources/PersonaPadCore"
+      path: "Sources/PersonaKitCore"
     ),
     .executableTarget(
-      name: "PersonaPadApp",
+      name: "PersonaKitApp",
       dependencies: [
-        "PersonaPadCore",
-        "PersonaPadResources",
+        "PersonaKitCore",
+        "PersonaKitResources",
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
-      path: "Sources/PersonaPadApp"
+      path: "Sources/PersonaKitApp"
     ),
     .executableTarget(
-      name: "PersonaPadCLI",
+      name: "PersonaKitCLI",
       dependencies: [
-        "PersonaPadCore",
-        "PersonaPadResources",
+        "PersonaKitCore",
+        "PersonaKitResources",
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
-      path: "Sources/PersonaPadCLI"
+      path: "Sources/PersonaKitCLI"
     ),
     .executableTarget(
-      name: "PersonaPadSchemaValidate",
+      name: "PersonaKitSchemaValidate",
       dependencies: [
-        "PersonaPadCore",
+        "PersonaKitCore",
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
-      path: "Sources/PersonaPadSchemaValidate"
+      path: "Sources/PersonaKitSchemaValidate"
     ),
     .testTarget(
-      name: "PersonaPadCoreTests",
-      dependencies: ["PersonaPadCore"],
-      path: "Tests/PersonaPadCoreTests"
+      name: "PersonaKitCoreTests",
+      dependencies: ["PersonaKitCore"],
+      path: "Tests/PersonaKitCoreTests"
     ),
     .testTarget(
-      name: "PersonaPadAppTests",
-      dependencies: ["PersonaPadApp"],
-      path: "Tests/PersonaPadAppTests"
+      name: "PersonaKitAppTests",
+      dependencies: ["PersonaKitApp"],
+      path: "Tests/PersonaKitAppTests"
     )
   ]
 )

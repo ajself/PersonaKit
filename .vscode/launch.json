@@ -4,82 +4,82 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "PersonaPadApp (Debug, lldb)",
-      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Debug/PersonaPadApp",
+      "name": "PersonaKitApp (Debug, lldb)",
+      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Debug/PersonaKitApp",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "xcodebuild: Build Debug PersonaPadApp",
+      "preLaunchTask": "xcodebuild: Build Debug PersonaKitApp",
       "stopOnEntry": false
     },
     {
       "type": "lldb",
       "request": "launch",
-      "name": "PersonaPadApp (Release, lldb)",
-      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Release/PersonaPadApp",
+      "name": "PersonaKitApp (Release, lldb)",
+      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Release/PersonaKitApp",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "xcodebuild: Build Release PersonaPadApp",
+      "preLaunchTask": "xcodebuild: Build Release PersonaKitApp",
       "stopOnEntry": false
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug PersonaPadApp",
-      "target": "PersonaPadApp",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Debug PersonaKitApp",
+      "target": "PersonaKitApp",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug PersonaPadApp"
+      "preLaunchTask": "swift: Build Debug PersonaKitApp"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release PersonaPadApp",
-      "target": "PersonaPadApp",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Release PersonaKitApp",
+      "target": "PersonaKitApp",
       "configuration": "release",
-      "preLaunchTask": "swift: Build Release PersonaPadApp"
+      "preLaunchTask": "swift: Build Release PersonaKitApp"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug personapad",
-      "target": "personapad",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Debug personakit",
+      "target": "personakit",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personapad"
+      "preLaunchTask": "swift: Build Debug personakit"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release personapad",
-      "target": "personapad",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Release personakit",
+      "target": "personakit",
       "configuration": "release",
-      "preLaunchTask": "swift: Build Release personapad"
+      "preLaunchTask": "swift: Build Release personakit"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Debug personapad-validate",
-      "target": "personapad-validate",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Debug personakit-validate",
+      "target": "personakit-validate",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personapad-validate"
+      "preLaunchTask": "swift: Build Debug personakit-validate"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder:PersonaPad}",
-      "name": "Release personapad-validate",
-      "target": "personapad-validate",
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Release personakit-validate",
+      "target": "personakit-validate",
       "configuration": "release",
-      "preLaunchTask": "swift: Build Release personapad-validate"
+      "preLaunchTask": "swift: Build Release personakit-validate"
     }
   ]
 }

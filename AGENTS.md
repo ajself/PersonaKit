@@ -1,7 +1,7 @@
-# AGENTS.md — Working With PersonaPad
+# AGENTS.md — Working With PersonaKit
 
 This document defines how **automated agents (e.g. Codex)** and human contributors
-should interact with the PersonaPad codebase.
+should interact with the PersonaKit codebase.
 
 It exists to:
 - preserve product intent
@@ -15,7 +15,7 @@ If an agent or contribution conflicts with this document, **this document wins**
 
 ## Project Identity (Non-Negotiable)
 
-PersonaPad is a **local, deterministic utility**.
+PersonaKit is a **local, deterministic utility**.
 
 It is:
 - file-based
@@ -39,13 +39,13 @@ Any agent operating on this repository must respect this framing.
 
 All agent behavior is constrained by the following documents, in order of authority:
 
-1. **PersonaPad v1 Scope & Contract**  
-   (`Docs/PersonaPad_v1_Scope_and_Contract.md`)
+1. **PersonaKit v1 Scope & Contract**  
+   (`Docs/PersonaKit_v1_Scope_and_Contract.md`)
    - Governs prompt composition semantics, determinism, schema rules, and non-goals.
    - Nothing may change composition behavior without explicitly revising this contract.
 
-2. **PersonaPad 2.0 Codex Prompt Pack**  
-   (`Docs/PersonaPad_2_0_Prompt_Pack_Index.md`)
+2. **PersonaKit 2.0 Codex Prompt Pack**  
+   (`Docs/PersonaKit_2_0_Prompt_Pack_Index.md`)
    - Governs *which new capabilities are allowed* in 2.0 (organization, import/export, diff, validation).
    - Defines sequencing, scope boundaries, and acceptance criteria for 2.0 work.
    - Each prompt file represents a bounded, shippable unit of work.
@@ -63,7 +63,7 @@ If there is a conflict:
 
 ## Coding Style & Standards (Source of Truth)
 
-PersonaPad’s SwiftUI coding standards are documented here:
+PersonaKit’s SwiftUI coding standards are documented here:
 
 - `Docs/Standards/SwiftUI-App-Style-Guide.md`
 
@@ -128,7 +128,7 @@ If a change increases scope, cleverness, or surprise, it is likely wrong.
 
 ## Schema & Determinism Rules
 
-PersonaPad’s core value depends on **deterministic behavior**.
+PersonaKit’s core value depends on **deterministic behavior**.
 
 Agents must ensure:
 - same persona + same inputs → identical output
@@ -146,7 +146,7 @@ Schema rules:
 
 ## 2.0 Storage & Portability Rules
 
-PersonaPad 2.0 treats user data as **first-class, user-owned files**.
+PersonaKit 2.0 treats user data as **first-class, user-owned files**.
 
 Agents must follow these rules:
 
@@ -157,7 +157,7 @@ Agents must follow these rules:
   - stored in a user-visible on-disk location
 
 - The app must provide:
-  - Import flows (copying files into PersonaPad-managed storage)
+  - Import flows (copying files into PersonaKit-managed storage)
   - Export flows (writing deterministic files to disk)
   - “Reveal in Finder” for storage roots and selected packs
 
@@ -177,7 +177,7 @@ Agents must not:
 
 ## Composition Semantics Are Opinionated
 
-PersonaPad is opinionated about:
+PersonaKit is opinionated about:
 - structure
 - validation
 - failure modes
@@ -200,7 +200,7 @@ The macOS app and CLI must:
 - diverge only in presentation, not behavior
 
 Agents should prefer:
-- refactoring shared logic into `PersonaPadCore`
+- refactoring shared logic into `PersonaKitCore`
 - adding parity tests when touching either surface
 
 ---
@@ -219,7 +219,7 @@ If a proposal cannot justify itself in these terms, it should not proceed.
 
 ## Release-Oriented Mindset
 
-PersonaPad values:
+PersonaKit values:
 - boring releases
 - calm usage
 - predictable behavior

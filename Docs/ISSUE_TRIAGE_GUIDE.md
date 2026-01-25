@@ -1,6 +1,6 @@
-# PersonaPad Issue Triage Guide (v1)
+# PersonaKit Issue Triage Guide (v1)
 
-PersonaPad is a **small, local, deterministic utility**.
+PersonaKit is a **small, local, deterministic utility**.
 This guide exists to keep the project maintainable.
 
 ## Fast accept / fast reject rules
@@ -26,7 +26,7 @@ This guide exists to keep the project maintainable.
 ## Standard responses
 
 ### “Thanks, but out of scope”
-> Thanks for the suggestion! PersonaPad is intentionally a local, deterministic prompt composer.
+> Thanks for the suggestion! PersonaKit is intentionally a local, deterministic prompt composer.
 > This request would move it toward execution/sync/optimization, which we’re explicitly not building.
 > Closing to protect scope and long-term maintainability.
 

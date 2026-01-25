@@ -2,14 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "xcodebuild: Build Debug PersonaPadApp",
+      "label": "xcodebuild: Build Debug PersonaKitApp",
       "type": "shell",
       "command": "xcodebuild",
       "args": [
         "-workspace",
-        "PersonaPad.xcworkspace",
+        "PersonaKit.xcworkspace",
         "-scheme",
-        "PersonaPadApp",
+        "PersonaKitApp",
         "-configuration",
         "Debug",
         "-destination",
@@ -24,14 +24,14 @@
       "problemMatcher": []
     },
     {
-      "label": "xcodebuild: Build Release PersonaPadApp",
+      "label": "xcodebuild: Build Release PersonaKitApp",
       "type": "shell",
       "command": "xcodebuild",
       "args": [
         "-workspace",
-        "PersonaPad.xcworkspace",
+        "PersonaKit.xcworkspace",
         "-scheme",
-        "PersonaPadApp",
+        "PersonaKitApp",
         "-configuration",
         "Release",
         "-destination",
@@ -46,14 +46,14 @@
       "problemMatcher": []
     },
     {
-      "label": "xcodebuild: Run PersonaPadApp",
+      "label": "xcodebuild: Run PersonaKitApp",
       "type": "shell",
       "command": "xcodebuild",
       "args": [
         "-workspace",
-        "PersonaPad.xcworkspace",
+        "PersonaKit.xcworkspace",
         "-scheme",
-        "PersonaPadApp",
+        "PersonaKitApp",
         "-destination",
         "platform=macOS",
         "-derivedDataPath",

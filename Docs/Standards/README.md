@@ -1,6 +1,6 @@
 # Standards (Source of Truth)
 
-This folder contains the canonical coding and architectural standards for PersonaPad.
+This folder contains the canonical coding and architectural standards for PersonaKit.
 
 - SwiftUI app standards: `Docs/Standards/SwiftUI-App-Style-Guide.md`
 - Formatting config: `swift-format.json`

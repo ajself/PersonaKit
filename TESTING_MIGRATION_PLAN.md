@@ -22,14 +22,14 @@ Deliverable: checklist of tests to convert with owner modules and dependencies.
 Deliverable: reusable helpers available to both Core and App tests.
 
 ## Phase 3: Core Tests Migration
-- Convert `PersonaPadCoreTests/*` XCTest suites to Swift Testing.
+- Convert `PersonaKitCoreTests/*` XCTest suites to Swift Testing.
 - Preserve deterministic ordering checks and failure messaging.
 - Replace XCTest-specific APIs with Swift Testing `#expect` and structured tests.
 
 Deliverable: all Core tests running under Swift Testing with matching coverage.
 
 ## Phase 4: App Tests Migration
-- Convert `PersonaPadAppTests/*` to Swift Testing.
+- Convert `PersonaKitAppTests/*` to Swift Testing.
 - Validate dependency overrides and UI-logic behaviors remain deterministic.
 - Confirm new tests still run quickly and do not touch disk/network.
 
