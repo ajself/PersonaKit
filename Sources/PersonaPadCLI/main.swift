@@ -98,7 +98,9 @@ struct PersonaPadCLI {
     )
   }
 
-  private static func loadBuiltInSets(repoRoot: URL) -> (
+  private static func loadBuiltInSets(
+    repoRoot: URL
+  ) -> (
     sets: [PersonaSet],
     diagnostics: [Diagnostic]
   ) {
@@ -131,7 +133,9 @@ struct PersonaPadCLI {
     return (sets: sets, diagnostics: diagnostics)
   }
 
-  private static func loadUserSets(fileClient: FileClient) -> (
+  private static func loadUserSets(
+    fileClient: FileClient
+  ) -> (
     sets: [PersonaSet],
     diagnostics: [Diagnostic]
   ) {
@@ -143,7 +147,9 @@ struct PersonaPadCLI {
     return (sets: loadedUser.packs.map { $0.set }, diagnostics: loadedUser.diagnostics)
   }
 
-  private static func buildIndexes(sets: [PersonaSet]) -> (
+  private static func buildIndexes(
+    sets: [PersonaSet]
+  ) -> (
     sourcesByID: [String: PersonaSource],
     packsByID: [String: PackMeta]
   ) {

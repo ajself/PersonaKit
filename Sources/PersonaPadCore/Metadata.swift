@@ -13,13 +13,13 @@ public enum PersonaMetadata {
     }
   }
 
-  private struct PersonaSortKey: Comparable {
+  public struct PersonaSortKey: Comparable {
     let nameNormalized: String
     let name: String
     let idNormalized: String
     let id: String
 
-    static func < (lhs: PersonaSortKey, rhs: PersonaSortKey) -> Bool {
+    public static func < (lhs: PersonaSortKey, rhs: PersonaSortKey) -> Bool {
       if lhs.nameNormalized != rhs.nameNormalized {
         return lhs.nameNormalized < rhs.nameNormalized
       }

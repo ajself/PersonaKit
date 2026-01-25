@@ -158,16 +158,14 @@ struct PersonaPadSchemaValidate {
       return "\(url.lastPathComponent): invalid JSON."
     }
 
-    let documentType: String
-    switch validateTopLevel(json: json, config: config, fileName: url.lastPathComponent) {
-    case .success(let value):
-      documentType = value
-    case .failure(let message):
-      return message
+    let topLevel = validateTopLevel(json: json, config: config, fileName: url.lastPathComponent)
+    guard let documentType = topLevel.documentType else {
+      return topLevel.message
     }
 
     if documentType == "personaPack" {
-      if let message = validatePersonaPack(json: json, config: config, fileName: url.lastPathComponent)
+      if let message = validatePersonaPack(
+        json: json, config: config, fileName: url.lastPathComponent)
       {
         return message
       }
@@ -188,24 +186,25 @@ struct PersonaPadSchemaValidate {
     json: [String: Any],
     config: SchemaConfig,
     fileName: String
-  ) -> Result<String, String> {
+  ) -> (documentType: String?, message: String?) {
     let requiredTop = ["schemaVersion", "documentType"]
     for key in requiredTop where json[key] == nil {
-      return .failure("\(fileName): missing '\(key)'.")
+      return (nil, "\(fileName): missing '\(key)'.")
     }
 
     guard let schemaVersion = json["schemaVersion"] as? Int, schemaVersion >= 1 else {
-      return .failure("\(fileName): schemaVersion must be >= 1.")
+      return (nil, "\(fileName): schemaVersion must be >= 1.")
     }
     guard let documentType = json["documentType"] as? String,
       config.documentTypes.contains(documentType)
     else {
-      return .failure(
+      return (
+        nil,
         "\(fileName): documentType must be one of \(config.documentTypes.sorted())."
       )
     }
 
-    return .success(documentType)
+    return (documentType, nil)
   }
 
   private static func validatePersonaPack(

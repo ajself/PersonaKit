@@ -63,7 +63,8 @@ final class PersonaPadCoreComposeTests: XCTestCase {
 
   func testResolvedJSONDeterministicEncoding() throws {
     let packURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.pack.json")
-    let personaURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.persona.json")
+    let personaURL = coreTestsRepoRootURL().appendingPathComponent(
+      "Examples/personapad.persona.json")
 
     let packSet = try PersonaLoader.loadDocument(from: packURL, sourceKind: .project).get()
     let personaSet = try PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get()
@@ -116,7 +117,8 @@ final class PersonaPadCoreComposeTests: XCTestCase {
   }
 
   func testCLIResolvedJSONMatchesCoreEncoding() throws {
-    let personaURL = coreTestsRepoRootURL().appendingPathComponent("Examples/personapad.persona.json")
+    let personaURL = coreTestsRepoRootURL().appendingPathComponent(
+      "Examples/personapad.persona.json")
     let set = try PersonaLoader.loadDocument(from: personaURL, sourceKind: .project).get()
     guard let persona = set.personas.first else {
       XCTFail("Missing persona")
