@@ -137,6 +137,138 @@ struct PersonaPadCoreImportTests {
     }
   }
 
+  @Test("Import plan rejects unsupported selection")
+  func importPlanRejectsUnsupportedSelection() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let fileURL = root.appendingPathComponent("Notes.json")
+    try "{ \"schemaVersion\": 1 }".write(to: fileURL, atomically: true, encoding: .utf8)
+
+    let result = PersonaPackImportPlan.plan(from: fileURL)
+    switch result {
+    case .success:
+      #expect(Bool(false), "Expected unsupported selection to be rejected")
+    case .failure(let error):
+      switch error {
+      case .unsupportedSelection(let url):
+        #expect(url.standardizedFileURL == fileURL.standardizedFileURL)
+      default:
+        #expect(Bool(false), "Unexpected error: \(error)")
+      }
+    }
+  }
+
+  @Test("Import plan rejects invalid JSON pack file")
+  func importPlanRejectsInvalidJSONPackFile() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packURL = root.appendingPathComponent("Bad.pack.json")
+    try "{ not json".write(to: packURL, atomically: true, encoding: .utf8)
+
+    let result = PersonaPackImportPlan.plan(from: packURL)
+    switch result {
+    case .success:
+      #expect(Bool(false), "Expected invalid JSON pack file to fail")
+    case .failure(let error):
+      switch error {
+      case .invalidPackFile(let url, let message):
+        #expect(url.standardizedFileURL == packURL.standardizedFileURL)
+        #expect(message.contains("valid JSON"))
+      default:
+        #expect(Bool(false), "Unexpected error: \(error)")
+      }
+    }
+  }
+
+  @Test("Import plan rejects non-pack documentType")
+  func importPlanRejectsNonPackDocumentType() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+
+    let packURL = root.appendingPathComponent("Wrong.pack.json")
+    let json = """
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": { "id": "p1", "name": "P1", "system": "SYSTEM" }
+      }
+      """
+    try json.write(to: packURL, atomically: true, encoding: .utf8)
+
+    let result = PersonaPackImportPlan.plan(from: packURL)
+    switch result {
+    case .success:
+      #expect(Bool(false), "Expected wrong documentType to fail")
+    case .failure(let error):
+      switch error {
+      case .invalidPackFile(let url, let message):
+        #expect(url.standardizedFileURL == packURL.standardizedFileURL)
+        #expect(message.contains("documentType must be 'personaPack'"))
+      default:
+        #expect(Bool(false), "Unexpected error: \(error)")
+      }
+    }
+  }
+
+  @Test("Import plan rejects companion files outside source root")
+  func importPlanRejectsCompanionFilesOutsideSourceRoot() throws {
+    let fm = FileManager.default
+    let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let outsideRoot = fm.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString, isDirectory: true)
+    try fm.createDirectory(at: root, withIntermediateDirectories: true)
+    try fm.createDirectory(at: outsideRoot, withIntermediateDirectories: true)
+    defer { try? fm.removeItem(at: root) }
+    defer { try? fm.removeItem(at: outsideRoot) }
+
+    let packURL = root.appendingPathComponent("Example.pack.json")
+    let packJSON = """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
+    try packJSON.write(to: packURL, atomically: true, encoding: .utf8)
+
+    let outsidePersona = outsideRoot.appendingPathComponent("Outside.persona.json")
+    let personaJSON = """
+      {
+        "schemaVersion": 1,
+        "documentType": "persona",
+        "persona": { "id": "p2", "name": "P2", "system": "SYSTEM" }
+      }
+      """
+    try personaJSON.write(to: outsidePersona, atomically: true, encoding: .utf8)
+
+    let symlinkURL = root.appendingPathComponent("Outside.persona.json")
+    try fm.createSymbolicLink(at: symlinkURL, withDestinationURL: outsidePersona)
+
+    let result = PersonaPackImportPlan.plan(from: packURL)
+    switch result {
+    case .success:
+      #expect(Bool(false), "Expected outside companion file to be rejected")
+    case .failure(let error):
+      switch error {
+      case .fileOutsideSourceRoot(let url):
+        #expect(url.lastPathComponent == "Outside.persona.json")
+      default:
+        #expect(Bool(false), "Unexpected error: \(error)")
+      }
+    }
+  }
+
   @Test("User pack loader combines folder personas")
   func userPackLoaderCombinesFolderPersonas() throws {
     let fm = FileManager.default
