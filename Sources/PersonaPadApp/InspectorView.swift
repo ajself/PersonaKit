@@ -1,8 +1,9 @@
-import SwiftUI
 import PersonaPadCore
+import SwiftUI
 
 struct InspectorView: View {
-  @Environment(AppStore.self) private var store
+  @Environment(AppStore.self)
+  private var store
   @State private var showPackCompare = false
   @State private var comparisonPackID: String?
   @State private var packDiff: PackDiff?
@@ -20,7 +21,8 @@ struct InspectorView: View {
 
   private var selectedPackLabel: String {
     guard let persona = selectedPersona,
-          let pack = store.state.personaPacksByID[persona.id] else {
+      let pack = store.state.personaPacksByID[persona.id]
+    else {
       return "Unknown"
     }
     let name = pack.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,7 +41,8 @@ struct InspectorView: View {
 
   private var selectedPackSelection: PackSelection? {
     guard let persona = selectedPersona,
-          let sourceURL = store.state.personaSourcesByID[persona.id]?.url else {
+      let sourceURL = store.state.personaSourcesByID[persona.id]?.url
+    else {
       return nil
     }
     let canonical = sourceURL.resolvingSymlinksInPath().standardizedFileURL
@@ -63,7 +66,8 @@ struct InspectorView: View {
     let source = store.state.personaSourcesByID[persona.id]
     let pack = store.state.personaPacksByID[persona.id]
     let baseURL = PersonaPadStoragePaths.standard().root
-    let label = PersonaDescriptor.sourceLabel(source: source, pack: pack, baseURL: baseURL) ?? "Unknown"
+    let label =
+      PersonaDescriptor.sourceLabel(source: source, pack: pack, baseURL: baseURL) ?? "Unknown"
     if source?.kind == .builtIn {
       return "\(label) — read-only"
     }
@@ -153,7 +157,9 @@ struct InspectorView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
       } else {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 8)], alignment: .leading, spacing: 8) {
+        LazyVGrid(
+          columns: [GridItem(.adaptive(minimum: 90), spacing: 8)], alignment: .leading, spacing: 8
+        ) {
           ForEach(selectedPersonaTags, id: \.self) { tag in
             TagPill(title: tag)
           }
@@ -223,7 +229,8 @@ struct InspectorView: View {
 
   private var aboutText: String {
     guard let about = selectedPersona?.about?.trimmingCharacters(in: .whitespacesAndNewlines),
-          !about.isEmpty else {
+      !about.isEmpty
+    else {
       return "No description."
     }
     return about
@@ -239,7 +246,8 @@ struct InspectorView: View {
       return
     }
     if let comparisonPackID,
-       !comparisonCandidates.contains(where: { $0.id == comparisonPackID }) {
+      !comparisonCandidates.contains(where: { $0.id == comparisonPackID })
+    {
       self.comparisonPackID = nil
       packDiff = nil
       packDiffDiagnostics = []
@@ -266,7 +274,9 @@ private struct PackDiffSummaryView: View {
     }
   }
 
-  private func diffSection(title: String, systemImage: String, changes: [PersonaChange]) -> some View {
+  private func diffSection(
+    title: String, systemImage: String, changes: [PersonaChange]
+  ) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack {
         Label(title, systemImage: systemImage)
@@ -309,10 +319,12 @@ private struct PackDiffSummaryView: View {
 private struct PackCompareSheet: View {
   let primaryPack: PackSelection?
   let availablePacks: [PackSelection]
-  @Binding var selectionID: String?
+  @Binding
+  var selectionID: String?
   let onConfirm: (PackSelection) -> Void
 
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   private var candidates: [PackSelection] {
     guard let primaryPack else { return availablePacks }
@@ -344,7 +356,8 @@ private struct PackCompareSheet: View {
         }
         Button("Compare") {
           guard let selectionID,
-                let selection = candidates.first(where: { $0.id == selectionID }) else { return }
+            let selection = candidates.first(where: { $0.id == selectionID })
+          else { return }
           onConfirm(selection)
           dismiss()
         }

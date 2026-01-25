@@ -1,8 +1,9 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct JSONEditorView: NSViewRepresentable {
-  @Binding var text: String
+  @Binding
+  var text: String
   var isEditable: Bool = false
 
   func makeCoordinator() -> Coordinator {
@@ -55,7 +56,8 @@ struct JSONEditorView: NSViewRepresentable {
 
 extension JSONEditorView {
   final class Coordinator: NSObject, NSTextViewDelegate {
-    @Binding private var text: String
+    @Binding
+    private var text: String
 
     init(text: Binding<String>) {
       _text = text
@@ -85,7 +87,7 @@ final class JSONSyntaxTextView: NSTextView {
     let priorSelection = selectedRange()
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
-      .foregroundColor: NSColor.textColor
+      .foregroundColor: NSColor.textColor,
     ]
     textStorage?.setAttributedString(NSAttributedString(string: text, attributes: attrs))
     let clampedLocation = min(priorSelection.location, text.count)
@@ -133,15 +135,17 @@ final class JSONSyntaxTextView: NSTextView {
     }
 
     guard let index = indexToCheck,
-          let match = findMatchingBracket(from: index, in: fullText) else { return }
+      let match = findMatchingBracket(from: index, in: fullText)
+    else { return }
 
     let ranges = [
       NSRange(location: index, length: 1),
-      NSRange(location: match, length: 1)
+      NSRange(location: match, length: 1),
     ]
     let highlightColor = NSColor.controlAccentColor.withAlphaComponent(0.25)
     for range in ranges {
-      layoutManager.addTemporaryAttribute(.backgroundColor, value: highlightColor, forCharacterRange: range)
+      layoutManager.addTemporaryAttribute(
+        .backgroundColor, value: highlightColor, forCharacterRange: range)
     }
     braceHighlightRanges = ranges
   }
@@ -176,7 +180,9 @@ final class JSONSyntaxTextView: NSTextView {
     return nil
   }
 
-  private func scanForward(from start: Int, open: Character, close: Character, in text: String) -> Int? {
+  private func scanForward(
+    from start: Int, open: Character, close: Character, in text: String
+  ) -> Int? {
     var depth = 1
     var inString = false
     var escaped = false
@@ -206,7 +212,9 @@ final class JSONSyntaxTextView: NSTextView {
     return nil
   }
 
-  private func scanBackward(from start: Int, open: Character, close: Character, in text: String) -> Int? {
+  private func scanBackward(
+    from start: Int, open: Character, close: Character, in text: String
+  ) -> Int? {
     var depth = 1
     var inString = false
     var escaped = false
@@ -262,12 +270,14 @@ final class JSONSyntaxHighlighter {
     )
 
     let fullRange = NSRange(location: 0, length: textStorage.length)
-    let baseFont = font ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+    let baseFont =
+      font ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
     textStorage.setAttributes([.foregroundColor: theme.base, .font: baseFont], range: fullRange)
 
     apply(pattern: "\"(?:\\\\.|[^\"\\\\])*\"(?=\\s*:)", color: theme.key, to: textStorage)
     apply(pattern: "\"(?:\\\\.|[^\"\\\\])*\"", color: theme.string, to: textStorage)
-    apply(pattern: "-?\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b", color: theme.number, to: textStorage)
+    apply(
+      pattern: "-?\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b", color: theme.number, to: textStorage)
     apply(pattern: "\\btrue\\b|\\bfalse\\b", color: theme.boolean, to: textStorage)
     apply(pattern: "\\bnull\\b", color: theme.null, to: textStorage)
   }

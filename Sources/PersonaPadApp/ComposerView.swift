@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct ComposerView: View {
-  @Environment(AppStore.self) private var store
+  @Environment(AppStore.self)
+  private var store
   @FocusState private var focusedSectionKey: String?
   @State private var showContextHelp = false
   @State private var showEvidenceHelp = false
@@ -23,7 +24,7 @@ struct ComposerView: View {
         helpLines: [
           "Repo: PersonaPad; files: ContentView.swift, PreviewView.swift",
           "App: macOS; issue: focus/shortcut conflict after 1.3.0",
-          "Pack: Examples/personapad.pack.json; persona: senior-ios-engineer"
+          "Pack: Examples/personapad.pack.json; persona: senior-ios-engineer",
         ]
       )
 
@@ -37,7 +38,7 @@ struct ComposerView: View {
         helpLines: [
           "Logs: crash at PersonaPadApp/SidebarView.swift:64",
           "Diff: git show abc123",
-          "Screenshot: selection highlight missing in sidebar"
+          "Screenshot: selection highlight missing in sidebar",
         ]
       )
 
@@ -51,7 +52,7 @@ struct ComposerView: View {
         helpLines: [
           "Propose minimal fix and exact files to change",
           "Explain the root cause in 2–3 bullets",
-          "Write tests to cover the regression"
+          "Write tests to cover the regression",
         ]
       )
     }
@@ -92,13 +93,13 @@ struct ComposerView: View {
       }
 
       TextEditor(text: store.bindingForComposerValue(key: key))
-      .font(.system(.body, design: .monospaced))
-      .focused($focusedSectionKey, equals: key)
-      .frame(minHeight: 90)
-      .overlay(
-        RoundedRectangle(cornerRadius: 8)
-          .stroke(Color.secondary.opacity(0.25))
-      )
+        .font(.system(.body, design: .monospaced))
+        .focused($focusedSectionKey, equals: key)
+        .frame(minHeight: 90)
+        .overlay(
+          RoundedRectangle(cornerRadius: 8)
+            .stroke(Color.secondary.opacity(0.25))
+        )
 
       Text(hint)
         .font(.caption)

@@ -1,11 +1,10 @@
 import SwiftUI
-import Foundation
 
 struct PreviewView: View {
-  @Environment(AppStore.self) private var store
-  @Binding var selectedPanel: PreviewPanel
-  @State private var jsonText: String = ""
-  @State private var jsonFormatWorkItem: DispatchWorkItem?
+  @Environment(AppStore.self)
+  private var store
+  @Binding
+  var selectedPanel: PreviewPanel
 
   var body: some View {
     VStack(spacing: 0) {
@@ -29,78 +28,29 @@ struct PreviewView: View {
         case .prompt:
           ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-              Text(store.state.promptPreview.isEmpty ? "No prompt available." : store.state.promptPreview)
-                .font(.system(.body, design: .monospaced))
-                .textSelection(.enabled)
+              Text(
+                store.state.promptPreview.isEmpty
+                  ? "No prompt available." : store.state.promptPreview
+              )
+              .font(.system(.body, design: .monospaced))
+              .textSelection(.enabled)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
           }
         case .json:
+          let jsonText = store.state.jsonPreview
           if jsonText.isEmpty {
             Text("No JSON available.")
               .foregroundStyle(.secondary)
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
               .padding()
           } else {
-            JSONEditorView(text: $jsonText)
+            JSONEditorView(text: store.bindingForJSONPreview())
               .frame(maxWidth: .infinity, maxHeight: .infinity)
           }
         }
       }
     }
-    .onAppear { refreshJSON() }
-    .onChange(of: store.state.selectedPersonaID) { _, _ in refreshJSON() }
-    .onChange(of: store.state.personaIndex) { _, _ in refreshJSON() }
-    .onChange(of: jsonText) { _, _ in scheduleJSONFormat() }
-  }
-
-  private func refreshJSON() {
-    jsonText = buildPersonaJSON(prettyPrinted: true)
-  }
-
-  private func buildPersonaJSON(prettyPrinted: Bool) -> String {
-    // JSON viewer uses the resolved persona from the store (post-merge).
-    guard let id = store.state.selectedPersonaID, let persona = store.state.personaIndex[id]?.persona else {
-      return ""
-    }
-
-    let encoder = JSONEncoder()
-    if prettyPrinted {
-      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    } else {
-      encoder.outputFormatting = [.sortedKeys]
-    }
-
-    guard let data = try? encoder.encode(persona),
-          let text = String(data: data, encoding: .utf8) else {
-      return ""
-    }
-    return text
-  }
-
-  private func scheduleJSONFormat() {
-    jsonFormatWorkItem?.cancel()
-    let workItem = DispatchWorkItem { formatJSONIfValid() }
-    jsonFormatWorkItem = workItem
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: workItem)
-  }
-
-  private func formatJSONIfValid() {
-    guard let formatted = prettyPrintedJSON(from: jsonText) else { return }
-    if formatted != jsonText {
-      jsonText = formatted
-    }
-  }
-
-  private func prettyPrintedJSON(from text: String) -> String? {
-    guard let data = text.data(using: .utf8) else { return nil }
-    guard let object = try? JSONSerialization.jsonObject(with: data) else { return nil }
-    guard JSONSerialization.isValidJSONObject(object) else { return nil }
-    let options: JSONSerialization.WritingOptions = [.prettyPrinted, .sortedKeys]
-    guard let prettyData = try? JSONSerialization.data(withJSONObject: object, options: options) else {
-      return nil
-    }
-    return String(data: prettyData, encoding: .utf8)
   }
 }

@@ -1,8 +1,9 @@
-import SwiftUI
 import PersonaPadCore
+import SwiftUI
 
 struct SidebarView: View {
-  @Environment(AppStore.self) private var store
+  @Environment(AppStore.self)
+  private var store
   @FocusState private var searchFocused: Bool
   @State private var showSaveFilterSheet = false
   @State private var showRenameFilterSheet = false
@@ -27,11 +28,14 @@ struct SidebarView: View {
         guard store.state.isPinnedViewActive else { return true }
         return store.state.pinnedPersonaIDs.contains(p.id)
       }()
-      let matchesSearch = store.state.searchText.isEmpty
+      let matchesSearch =
+        store.state.searchText.isEmpty
         || p.name.localizedCaseInsensitiveContains(store.state.searchText)
         || (p.id.localizedCaseInsensitiveContains(store.state.searchText))
         || (p.about?.localizedCaseInsensitiveContains(store.state.searchText) ?? false)
-        || p.sortedTags.contains(where: { $0.localizedCaseInsensitiveContains(store.state.searchText) })
+        || p.sortedTags.contains(where: {
+          $0.localizedCaseInsensitiveContains(store.state.searchText)
+        })
 
       let matchesTag: Bool = {
         guard !store.state.activeFilterTags.isEmpty else { return true }
@@ -128,7 +132,7 @@ struct SidebarView: View {
           ) {
             store.send(.togglePinnedPersona(id: rp.persona.id))
           }
-            .tag(rp.persona.id)
+          .tag(rp.persona.id)
         }
       }
 
@@ -156,10 +160,13 @@ struct SidebarView: View {
         pendingFilterName = ""
       }
     }
-    .alert("Delete Saved Filter?", isPresented: Binding(
-      get: { deleteTarget != nil },
-      set: { if !$0 { deleteTarget = nil } }
-    )) {
+    .alert(
+      "Delete Saved Filter?",
+      isPresented: Binding(
+        get: { deleteTarget != nil },
+        set: { if !$0 { deleteTarget = nil } }
+      )
+    ) {
       Button("Delete", role: .destructive) {
         if let target = deleteTarget {
           store.send(.deleteSavedFilter(id: target.id))
@@ -270,7 +277,8 @@ struct SidebarView: View {
     let trimmed = store.state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmed.isEmpty {
       pendingFilterName = trimmed
-    } else if store.state.activeFilterTags.count == 1, let tag = store.state.activeFilterTags.first {
+    } else if store.state.activeFilterTags.count == 1, let tag = store.state.activeFilterTags.first
+    {
       pendingFilterName = tag
     } else {
       pendingFilterName = "Saved Filter"
@@ -288,10 +296,12 @@ struct SidebarView: View {
 private struct FilterNameSheet: View {
   let title: String
   let confirmLabel: String
-  @Binding var name: String
+  @Binding
+  var name: String
   let onConfirm: (String) -> Void
 
-  @Environment(\.dismiss) private var dismiss
+  @Environment(\.dismiss)
+  private var dismiss
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {

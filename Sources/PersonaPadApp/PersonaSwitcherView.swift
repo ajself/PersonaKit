@@ -4,7 +4,8 @@ import SwiftUI
 struct PersonaSwitcherView: View {
   @Environment(AppStore.self)
   private var store
-  @Binding var isPresented: Bool
+  @Binding
+  var isPresented: Bool
   @State private var query: String = ""
   @State private var selection: String?
   @FocusState private var searchFocused: Bool
@@ -20,7 +21,9 @@ struct PersonaSwitcherView: View {
       let persona = rp.persona
       if persona.name.lowercased().contains(needle) { return true }
       if persona.id.lowercased().contains(needle) { return true }
-      if let tags = persona.tags?.joined(separator: " ").lowercased(), tags.contains(needle) { return true }
+      if let tags = persona.tags?.joined(separator: " ").lowercased(), tags.contains(needle) {
+        return true
+      }
       if let about = persona.about?.lowercased(), about.contains(needle) { return true }
       return false
     }
@@ -53,9 +56,9 @@ struct PersonaSwitcherView: View {
       } label: {
         Label("Select", systemImage: "checkmark")
       }
-        .keyboardShortcut(.defaultAction)
-        .frame(width: 0, height: 0)
-        .opacity(0)
+      .keyboardShortcut(.defaultAction)
+      .frame(width: 0, height: 0)
+      .opacity(0)
     }
     .padding()
     .frame(width: 420, height: 360)
