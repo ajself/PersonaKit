@@ -80,6 +80,7 @@ private func makeArgs(outputDir: URL, leftURL: URL, rightURL: URL) -> [String] {
     "--diff-left", leftURL.path,
     "--diff-right", rightURL.path,
     "--no-user-packs",
+    "--no-build-run",
   ]
 }
 
@@ -90,6 +91,8 @@ private func assertReportMetrics(_ report: AppOpsReport) {
   #expect(report.diff.modifiedCount == 1)
   #expect(report.importMetrics.filesCopied == 1)
   #expect(report.exportMetrics.bytesWritten > 0)
+  #expect(report.buildRun == nil)
+  #expect(report.buildRunSkippedReason == "disabled via --no-build-run")
 }
 
 private func assertOutputFiles(_ outputRoot: URL, fileManager: FileManager) {
