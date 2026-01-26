@@ -90,9 +90,11 @@ package enum BuildRunReportFormatter {
     lines.append("| Step | Description | Details | Log |")
     lines.append("| --- | --- | --- | --- |")
     for failure in failures {
-      lines.append(
-        "| \(escapeTable(failure.step)) | \(escapeTable(failure.description)) | \(failure.detailsPath) | \(failure.logPath) |"
-      )
+      let step = escapeTable(failure.step)
+      let description = escapeTable(failure.description)
+      let details = failure.detailsPath
+      let logPath = failure.logPath
+      lines.append("| \(step) | \(description) | \(details) | \(logPath) |")
     }
     lines.append("")
   }

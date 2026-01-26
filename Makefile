@@ -4,7 +4,7 @@ SWIFT ?= swift
 APP_PRODUCT ?= AppOpsCLI
 APP_ARGS ?=
 
-.PHONY: help appops appops-help appops-build appops-clean appops-rebuild
+.PHONY: help appops appops-help appops-build appops-clean appops-rebuild format lint test
 
 help:
 	@printf "%s\n" \
@@ -14,6 +14,9 @@ help:
 		"  make appops-build    Build AppOpsCLI with SwiftPM (debug)" \
 		"  make appops-clean    SwiftPM clean for this package" \
 		"  make appops-rebuild  Clean + build AppOpsCLI" \
+		"  make format          Format Swift files with swift-format" \
+		"  make lint            Lint with SwiftLint" \
+		"  make test            Run SwiftPM tests" \
 		"" \
 		"Variables:" \
 		"  APP_ARGS=\"--help\"      Arguments forwarded to Scripts/appops" \
@@ -33,3 +36,12 @@ appops-clean:
 	@$(SWIFT) package clean
 
 appops-rebuild: appops-clean appops-build
+
+format:
+	@swift-format format --configuration swift-format.json --in-place --recursive Sources Tests
+
+lint:
+	@swiftlint --config .swiftlint.yml
+
+test:
+	@$(SWIFT) test

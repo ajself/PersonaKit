@@ -118,22 +118,22 @@ private func packJSON(
   personaName: String
 ) -> Data {
   let json = """
-  {
-    "schemaVersion": 1,
-    "documentType": "personaPack",
-    "pack": {
-      "id": "\(packID)",
-      "name": "\(packName)"
-    },
-    "personas": [
-      {
-        "id": "\(personaID)",
-        "name": "\(personaName)",
-        "system": "Test system prompt."
-      }
-    ]
-  }
-  """
+    {
+      "schemaVersion": 1,
+      "documentType": "personaPack",
+      "pack": {
+        "id": "\(packID)",
+        "name": "\(packName)"
+      },
+      "personas": [
+        {
+          "id": "\(personaID)",
+          "name": "\(personaName)",
+          "system": "Test system prompt."
+        }
+      ]
+    }
+    """
   return Data(json.utf8)
 }
 

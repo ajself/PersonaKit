@@ -48,82 +48,32 @@ extension AppOpsCLI {
       return AppOpsRunResult(outputRoot: URL(fileURLWithPath: "/"), report: emptyReport())
     }
 
-    let logLevel = try AppOpsLog.resolveLevel(parsed.value(for: "log-level"))
-    AppOpsLog.configure(level: logLevel)
-    let logger = AppOpsLog.logger
-    logger.info("AppOps starting.")
-    logger.debug("Arguments: \(arguments.joined(separator: " "))")
+    let logger = try configureLogger(parsed: parsed, arguments: arguments)
 
     let fileClient = environment.fileClient
     let inputs = try resolveRunInputs(parsed: parsed, environment: environment)
-    logger.info("Inputs resolved.")
-    logger.debug("Output root: \(inputs.outputRoot.path)")
-    logger.debug("Built-in packs: \(inputs.builtInURLs.count)")
-    logger.debug("Include user packs: \(inputs.includeUserPacks)")
-    logger.debug("Import source: \(inputs.importSource.path)")
-    logger.debug("Diff left: \(inputs.diffLeft.path)")
-    logger.debug("Diff right: \(inputs.diffRight.path)")
+    logInputs(logger: logger, inputs: inputs)
 
-    logger.info("Reload: starting.")
-    let reloadSnapshot = try runReload(
-      repoRoot: inputs.repoRoot,
-      builtInURLs: inputs.builtInURLs,
-      includeUserPacks: inputs.includeUserPacks,
-      fileClient: fileClient
-    )
-    let reloadMetrics = reloadSnapshot.metrics
-    logger.info(
-      "Reload: finished in \(AppOpsLog.formatSeconds(reloadMetrics.totalDurationSeconds))s "
-        + "(packs: \(reloadMetrics.totalPacks), personas: \(reloadMetrics.totalPersonas), "
-        + "diagnostics: \(reloadMetrics.diagnosticsCount))."
+    let reloadSnapshot = try runReloadStep(
+      inputs: inputs,
+      fileClient: fileClient,
+      logger: logger
     )
 
-    logger.info("Compose: starting.")
-    let composeMetrics = measureCompose(resolved: reloadSnapshot.resolved)
-    logger.info(
-      "Compose: finished in \(AppOpsLog.formatSeconds(composeMetrics.durationSeconds))s "
-        + "(personas: \(composeMetrics.personaCount), prompt bytes: \(composeMetrics.promptBytesTotal), "
-        + "json bytes: \(composeMetrics.jsonBytesTotal))."
+    let composeMetrics = runComposeStep(reloadSnapshot: reloadSnapshot, logger: logger)
+    let diffMetrics = try runDiffStep(inputs: inputs, logger: logger)
+    let importMetrics = try runImportStep(inputs: inputs, fileClient: fileClient, logger: logger)
+    let exportMetrics = try runExportStep(
+      inputs: inputs,
+      reloadSnapshot: reloadSnapshot,
+      fileClient: fileClient,
+      logger: logger
     )
-    logger.info("Diff: starting.")
-    let diffMetrics = try measureDiff(left: inputs.diffLeft, right: inputs.diffRight)
-    logger.info(
-      "Diff: finished in \(AppOpsLog.formatSeconds(diffMetrics.durationSeconds))s "
-        + "(added: \(diffMetrics.addedCount), removed: \(diffMetrics.removedCount), "
-        + "modified: \(diffMetrics.modifiedCount))."
+    let buildRunReport = try runBuildRunStep(
+      inputs: inputs,
+      environment: environment,
+      logger: logger
     )
-    logger.info("Import: starting.")
-    let importMetrics = try measureImport(
-      selection: inputs.importSource,
-      destinationRoot: inputs.outputRoot.appendingPathComponent("import", isDirectory: true),
-      fileClient: fileClient
-    )
-    let importTotal = importMetrics.planDurationSeconds + importMetrics.copyDurationSeconds
-    logger.info(
-      "Import: finished in \(AppOpsLog.formatSeconds(importTotal))s "
-        + "(files: \(importMetrics.filesCopied), bytes: \(importMetrics.bytesCopied))."
-    )
-
-    logger.info("Export: starting.")
-    let exportMetrics = try measureExport(
-      sets: reloadSnapshot.builtInSets + reloadSnapshot.userSets,
-      outputRoot: inputs.outputRoot.appendingPathComponent("export", isDirectory: true),
-      fileClient: fileClient
-    )
-    logger.info(
-      "Export: finished in \(AppOpsLog.formatSeconds(exportMetrics.durationSeconds))s "
-        + "(bytes: \(exportMetrics.bytesWritten))."
-    )
-
-    let buildRunReport = try inputs.buildRun.map { buildInputs in
-      logger.info("Build run: starting.")
-      try runBuildRun(inputs: buildInputs, repoRoot: inputs.repoRoot, environment: environment)
-    }
-    if buildRunReport != nil {
-      logger.info("Build run: finished.")
-    } else if let reason = inputs.buildRunSkippedReason {
-      logger.info("Build run: skipped (\(reason)).")
-    }
 
     let metrics = ReportMetrics(
       reloadSnapshot: reloadSnapshot,
@@ -136,14 +86,12 @@ extension AppOpsCLI {
     )
     let report = makeReport(inputs: inputs, metrics: metrics, environment: environment)
 
-    let jsonURL = inputs.outputRoot.appendingPathComponent("report.json")
-    let markdownURL = inputs.outputRoot.appendingPathComponent("REPORT.md")
-    logger.info("Report: writing output.")
-    try writeReport(report, jsonURL: jsonURL, markdownURL: markdownURL, fileClient: fileClient)
-
-    print("Report written to:")
-    print("- \(markdownURL.path)")
-    print("- \(jsonURL.path)")
+    try writeReportStep(
+      inputs: inputs,
+      report: report,
+      fileClient: fileClient,
+      logger: logger
+    )
     logger.info("AppOps finished.")
     return AppOpsRunResult(outputRoot: inputs.outputRoot, report: report)
   }
@@ -178,7 +126,8 @@ extension AppOpsCLI {
     try ensureFileExists(diffLeft, label: "Diff-left pack", fileClient: fileClient)
     try ensureFileExists(diffRight, label: "Diff-right pack", fileClient: fileClient)
 
-    let userPacksRoot = includeUserPacks
+    let userPacksRoot =
+      includeUserPacks
       ? PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs.path
       : nil
     let timestamp = isoTimestampUTC(environment.now())

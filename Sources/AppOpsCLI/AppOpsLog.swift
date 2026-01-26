@@ -2,14 +2,29 @@ import Foundation
 import Logging
 
 enum AppOpsLog {
-  private static var didBootstrap = false
-  private static let bootstrapLock = NSLock()
+  private final class State: @unchecked Sendable {
+    let lock = NSLock()
+    var didBootstrap = false
+    var level: Logger.Level = .info
+  }
 
-  static var logger = Logger(label: "PersonaKit.AppOps")
+  private static let state = State()
 
   static func configure(level: Logger.Level) {
     bootstrapIfNeeded()
+    state.lock.lock()
+    state.level = level
+    state.lock.unlock()
+  }
+
+  static var logger: Logger {
+    bootstrapIfNeeded()
+    state.lock.lock()
+    let level = state.level
+    state.lock.unlock()
+    var logger = Logger(label: "PersonaKit.AppOps")
     logger.logLevel = level
+    return logger
   }
 
   static func resolveLevel(_ value: String?) throws -> Logger.Level {
@@ -27,13 +42,13 @@ enum AppOpsLog {
   }
 
   private static func bootstrapIfNeeded() {
-    bootstrapLock.lock()
-    defer { bootstrapLock.unlock() }
-    guard !didBootstrap else { return }
+    state.lock.lock()
+    defer { state.lock.unlock() }
+    guard !state.didBootstrap else { return }
     LoggingSystem.bootstrap { label in
       StreamLogHandler.standardError(label: label)
     }
-    didBootstrap = true
+    state.didBootstrap = true
   }
 
   private static func parseLevel(_ value: String) -> Logger.Level? {
