@@ -10,12 +10,10 @@ let package = Package(
     .library(name: "PersonaKitCore", targets: ["PersonaKitCore"]),
     .executable(name: "PersonaKitApp", targets: ["PersonaKitApp"]),
     .executable(name: "personakit", targets: ["PersonaKitCLI"]),
-    .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"]),
-    .executable(name: "AppOpsCLI", targets: ["AppOpsCLI"])
+    .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"])
   ],
   dependencies: [
-    .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1"),
-    .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0")
+    .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
   ],
   targets: [
     .target(
@@ -31,11 +29,6 @@ let package = Package(
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
       path: "Sources/PersonaKitCore"
-    ),
-    .target(
-      name: "AppOpsCore",
-      path: "Sources/AppOpsCore",
-      exclude: ["README.md"]
     ),
     .executableTarget(
       name: "PersonaKitApp",
@@ -63,35 +56,10 @@ let package = Package(
       ],
       path: "Sources/PersonaKitSchemaValidate"
     ),
-    .executableTarget(
-      name: "AppOpsCLI",
-      dependencies: [
-        "AppOpsCore",
-        "PersonaKitCore",
-        "PersonaKitResources",
-        .product(name: "Logging", package: "swift-log")
-      ],
-      path: "Sources/AppOpsCLI",
-      exclude: ["README.md"]
-    ),
     .testTarget(
       name: "PersonaKitCoreTests",
       dependencies: ["PersonaKitCore"],
       path: "Tests/PersonaKitCoreTests"
-    ),
-    .testTarget(
-      name: "AppOpsCoreTests",
-      dependencies: ["AppOpsCore"],
-      path: "Tests/AppOpsCoreTests"
-    ),
-    .testTarget(
-      name: "AppOpsCLITests",
-      dependencies: [
-        "AppOpsCLI",
-        "AppOpsCore",
-        "PersonaKitCore"
-      ],
-      path: "Tests/AppOpsCLITests"
     ),
     .testTarget(
       name: "PersonaKitAppTests",
