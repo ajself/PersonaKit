@@ -2,16 +2,27 @@ import Dependencies
 import Foundation
 import PersonaKitCore
 
+/// Derived schema constraints used by the validation tool.
+///
+/// Values are read from the JSON schema when possible, and fall back to
+/// known defaults if any segment is missing.
 struct SchemaConfig {
+  /// Supported values for top-level `documentType`.
   let documentTypes: Set<String>
+  /// Required fields for `pack` objects inside a persona pack.
   let packRequired: [String]
+  /// Required fields for a `persona` object.
   let personaRequired: [String]
+  /// Required top-level fields for a persona pack document.
   let personaPackRequired: [String]
+  /// Allowed output formats in `defaults.outputFormat`.
   let outputFormats: Set<String>
 }
 
+/// CLI entry point for validating PersonaKit JSON against the bundled schema.
 @main
 enum PersonaKitSchemaValidate {
+  /// Runs schema validation for `Examples/` or for any JSON files passed as arguments.
   static func main() {
     let fileClient = SchemaEnvironment().fileClient
     let cwd = URL(fileURLWithPath: fileClient.currentDirectoryPath())
@@ -62,6 +73,12 @@ enum PersonaKitSchemaValidate {
 }
 
 extension PersonaKitSchemaValidate {
+  /// Walks up the directory tree to find `Schema/personakit.schema.json`.
+  ///
+  /// - Parameters:
+  ///   - start: The starting directory, typically the current working directory.
+  ///   - fileClient: File system dependency.
+  /// - Returns: The repository root URL if found, otherwise `nil`.
   private static func findRepoRoot(start: URL, fileClient: FileClient) -> URL? {
     var current = start
     for _ in 0..<6 {
@@ -74,6 +91,10 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Collects JSON files from the provided paths.
+  ///
+  /// Directories are scanned non-recursively; files are included if they end in
+  /// `.json`. The returned list is sorted by filename.
   private static func collectJSONFiles(paths: [URL], fileClient: FileClient) -> [URL] {
     var files: [URL] = []
     for path in paths {
@@ -93,6 +114,7 @@ extension PersonaKitSchemaValidate {
     }
   }
 
+  /// Extracts validation constraints from the JSON schema with fallback defaults.
   private static func loadSchemaConfig(schemaJSON: [String: Any]) -> SchemaConfig {
     let documentTypes = Set(
       readStringArray(
@@ -131,6 +153,12 @@ extension PersonaKitSchemaValidate {
     )
   }
 
+  /// Reads an array of strings at a nested key path from a JSON object.
+  ///
+  /// - Parameters:
+  ///   - root: Root JSON object.
+  ///   - keyPath: Sequence of keys leading to the array.
+  /// - Returns: String values at the path, or an empty array if the path is missing.
   private static func readStringArray(_ root: Any?, keyPath: [String]) -> [String] {
     guard var current = root as? [String: Any] else { return [] }
     for key in keyPath.dropLast() {
@@ -141,6 +169,13 @@ extension PersonaKitSchemaValidate {
     return arr.compactMap { $0 as? String }
   }
 
+  /// Reads an array of strings from an `allOf` list with a matching `if` clause.
+  ///
+  /// - Parameters:
+  ///   - root: The `allOf` array.
+  ///   - matchConst: The `documentType` const value to match.
+  ///   - thenKeyPath: Optional key path under the `then` object; if omitted, uses `required`.
+  /// - Returns: String values for the matching clause, or an empty array if missing.
   private static func readStringArray(
     _ root: Any?,
     matchConst: String,
@@ -168,6 +203,7 @@ extension PersonaKitSchemaValidate {
   }
 }
 
+/// Dependency container for schema validation.
 private struct SchemaEnvironment {
   @Dependency(\.fileClient)
   var fileClient

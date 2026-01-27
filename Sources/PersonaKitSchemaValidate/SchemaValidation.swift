@@ -2,6 +2,13 @@ import Foundation
 import PersonaKitCore
 
 extension PersonaKitSchemaValidate {
+  /// Validates a single JSON file against the schema-derived constraints.
+  ///
+  /// - Parameters:
+  ///   - url: File URL to validate.
+  ///   - config: Derived schema constraints.
+  ///   - fileClient: File system dependency.
+  /// - Returns: An error message if validation fails, otherwise `nil`.
   static func validateFile(
     _ url: URL,
     config: SchemaConfig,
@@ -40,6 +47,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates top-level schema properties and extracts the document type.
   private static func validateTopLevel(
     json: [String: Any],
     config: SchemaConfig,
@@ -65,6 +73,7 @@ extension PersonaKitSchemaValidate {
     return (documentType, nil)
   }
 
+  /// Validates a `personaPack` document structure.
   private static func validatePersonaPack(
     json: [String: Any],
     config: SchemaConfig,
@@ -93,6 +102,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates required fields under the `pack` object.
   private static func validatePackFields(
     _ pack: [String: Any],
     config: SchemaConfig,
@@ -108,6 +118,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates `defaults` values against schema constraints.
   private static func validateDefaults(
     json: [String: Any],
     config: SchemaConfig,
@@ -120,6 +131,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates a `persona` document structure.
   private static func validatePersonaDocument(
     json: [String: Any],
     config: SchemaConfig,
@@ -134,6 +146,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates a persona object shared by persona documents and persona packs.
   private static func validatePersonaObject(_ value: Any, config: SchemaConfig) -> String? {
     guard let persona = value as? [String: Any] else {
       return "must be an object."
@@ -154,6 +167,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Rejects unsupported extension fields in schema v1.
   private static func validatePersonaExtensions(_ persona: [String: Any]) -> String? {
     if persona["extends"] != nil {
       return "'extends' is not supported in v1."
@@ -164,6 +178,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates required persona fields are non-empty strings.
   private static func validatePersonaRequiredFields(
     _ persona: [String: Any],
     config: SchemaConfig
@@ -181,16 +196,19 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates an optional `template` object if present.
   private static func validateOptionalTemplate(_ persona: [String: Any]) -> String? {
     guard let template = persona["template"] else { return nil }
     return validateTemplate(template)
   }
 
+  /// Validates an optional `outputContract` object if present.
   private static func validateOptionalOutputContract(_ persona: [String: Any]) -> String? {
     guard let contract = persona["outputContract"] as? [String: Any] else { return nil }
     return validateOutputContract(contract)
   }
 
+  /// Validates template sections for required keys and value types.
   private static func validateTemplate(_ template: Any) -> String? {
     guard let templateObj = template as? [String: Any] else {
       return "template must be an object."
@@ -217,6 +235,7 @@ extension PersonaKitSchemaValidate {
     return nil
   }
 
+  /// Validates output contract headings and numeric constraints.
   private static func validateOutputContract(_ contract: [String: Any]) -> String? {
     if let headings = contract["headings"] as? [Any] {
       for (idx, heading) in headings.enumerated() where (heading as? String) == nil {
