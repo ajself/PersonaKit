@@ -2,7 +2,7 @@
 extension AppModel {
   /// Requests focus for a composer section by key.
   func requestComposerFocus(sectionKey: String) {
-    composer.focusRequest = ComposerFeature.FocusRequest(id: uuid(), sectionKey: sectionKey)
+    composer.focusRequest = ComposerModel.FocusRequest(id: uuid(), sectionKey: sectionKey)
   }
 
   /// Updates the selected persona and schedules preview recompute.

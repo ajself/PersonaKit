@@ -101,6 +101,7 @@ Exit criteria:
 - Updated bindings and tests to use `AppModel` and direct methods.
 - `AppModel+Composer` and `AppModel+Preview` currently live in `App/Model` and will move into
   `Features/Composer` and `Features/Preview` during feature migrations.
+- Composer feature migrated to `ComposerModel`; moved composer files into `Features/Composer/`.
 
 ---
 
@@ -108,7 +109,7 @@ Exit criteria:
 
 ### PersonaKitApp (SwiftUI target)
 - **State owners:** `AppModel` (`@MainActor`, explicit methods) plus feature owners (`SidebarModel` for sidebar).
-- **Feature slices:** `SidebarModel` (explicit owner), `ComposerFeature`, `PreviewFeature` (state-only; logic lives in `AppModel+*` extensions).
+- **Feature slices:** `SidebarModel` (explicit owner), `ComposerModel`, `PreviewFeature` (state-only; logic lives in `AppModel+*` extensions).
 - **Views:** `ContentView`, `SidebarView`, `ComposerView`, `PreviewView`, `InspectorView`, `PersonaSwitcherView`, `JSONEditorView`.
 - **App shell:** `PersonaKitAppMain`, `PersonaKitCommands`.
 - **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
@@ -211,8 +212,8 @@ Sidebar feature:
   -> `Sources/PersonaKitApp/Features/Sidebar/SidebarSearchEscapePolicy.swift` (done)
 
 Composer feature:
-- `Sources/PersonaKitApp/ComposerView.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerView.swift`
-- `Sources/PersonaKitApp/ComposerFeature.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerModel.swift`
+- `Sources/PersonaKitApp/ComposerView.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerView.swift` (done)
+- `Sources/PersonaKitApp/ComposerFeature.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerModel.swift` (done)
 - `Sources/PersonaKitApp/AppStore+ComposerFeature.swift`
   -> `Sources/PersonaKitApp/App/Model/AppModel+Composer.swift` (done)
 
@@ -361,15 +362,15 @@ Tasks:
 Owner: `ComposerModel` (explicit model type).
 
 Tasks:
-- Replace `ComposerFeature.State` with `ComposerModel` properties.
-- Delete `ComposerFeature.Action` enum.
+- Replace `ComposerFeature.State` with `ComposerModel` properties. (done)
+- Delete `ComposerFeature.Action` enum. (done)
 - Move logic from `AppStore+ComposerFeature.swift` into `AppModel+Composer.swift` methods. (done)
-- Update view call sites:
+- Update view call sites: (done)
   - `store.send(.composer(.requestFocus))` -> `model.requestComposerFocus(sectionKey:)`
   - `store.send(.composer(.setSelectedPersonaID))` -> `model.selectPersona(id:)`
   - `store.send(.composer(.setComposerValue))` -> `model.updateComposerValue(key:value:)`
-- Ensure preview recompute is still triggered on persona selection/value changes.
-- Update tests:
+- Ensure preview recompute is still triggered on persona selection/value changes. (done)
+- Update tests: (done)
   - `ComposerPreviewRecomputeTests` to call model methods.
 
 ### Preview feature

@@ -75,7 +75,7 @@ final class AppModel {
   var personaSourcesByID: [String: PersonaSource] = [:]
   var packLocationsByPersonaID: [String: PackLocation] = [:]
   var availablePacks: [PackSelection] = []
-  var composer: ComposerFeature.State = ComposerFeature.State()
+  var composer: ComposerModel = ComposerModel()
   var preview: PreviewFeature.State = PreviewFeature.State()
 
   @Dependency(\.fileClient)
