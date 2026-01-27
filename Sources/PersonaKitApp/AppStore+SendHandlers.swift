@@ -1,4 +1,6 @@
+/// Action routing helpers for ``AppStore.send(_:)``.
 extension AppStore {
+  /// Handles lifecycle and app command actions.
   func handleLifecycle(_ action: Action) -> Bool {
     switch action {
     case .task, .reloadAll:
@@ -24,6 +26,7 @@ extension AppStore {
     }
   }
 
+  /// Handles focus and selection movement actions.
   func handleFocus(_ action: Action) -> Bool {
     switch action {
     case .requestSidebarSearchFocus:
@@ -43,6 +46,7 @@ extension AppStore {
     }
   }
 
+  /// Handles selection updates that trigger preview recomputation.
   func handleSelection(_ action: Action) -> Bool {
     switch action {
     case .setSelectedPersonaID(let id):
@@ -61,6 +65,7 @@ extension AppStore {
     }
   }
 
+  /// Handles filter actions, delegating to search and saved-filter handlers.
   func handleFiltering(_ action: Action) -> Bool {
     if handleSearchFiltering(action) { return true }
     if handleSavedFilterActions(action) { return true }
@@ -125,6 +130,7 @@ extension AppStore {
     }
   }
 
+  /// Handles pinning actions and the pinned view toggle.
   func handlePinned(_ action: Action) -> Bool {
     switch action {
     case .setPinnedViewActive:

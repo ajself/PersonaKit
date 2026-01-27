@@ -1,10 +1,12 @@
 import SwiftUI
 
+/// App command menu definitions for PersonaKit.
 struct PersonaKitCommands: Commands {
   let store: AppStore
   @Binding var showPersonaSwitcher: Bool
   @Binding var showInspector: Bool
 
+  /// Defines the PersonaKit command menu and keyboard shortcuts.
   var body: some Commands {
     CommandMenu("PersonaKit") {
       Button {

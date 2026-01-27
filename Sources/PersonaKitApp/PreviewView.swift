@@ -1,10 +1,12 @@
 import SwiftUI
 
+/// Shows the composed prompt or JSON output for the selected persona.
 struct PreviewView: View {
   @Environment(AppStore.self)
   private var store
   @Binding var selectedPanel: PreviewPanel
 
+  /// Builds the preview picker and the selected output panel.
   var body: some View {
     VStack(spacing: 0) {
       HStack {

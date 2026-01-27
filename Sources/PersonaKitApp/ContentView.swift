@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// The root split-view shell for the PersonaKit app window.
 struct ContentView: View {
   @Environment(AppStore.self)
   private var store
@@ -7,6 +8,7 @@ struct ContentView: View {
   @Binding var showInspector: Bool
   @State private var selectedPanel: PreviewPanel = .prompt
 
+  /// Builds the sidebar/detail layout and wires up global overlays.
   var body: some View {
     NavigationSplitView {
       SidebarView()
@@ -62,6 +64,7 @@ struct ContentView: View {
     }
   }
 
+  /// Handles the escape key to dismiss sheets or clear search focus.
   private func handleEscape() {
     if showPersonaSwitcher {
       showPersonaSwitcher = false

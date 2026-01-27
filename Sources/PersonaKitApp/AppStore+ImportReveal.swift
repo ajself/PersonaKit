@@ -1,12 +1,15 @@
 import Foundation
 import PersonaKitCore
 
+/// Pack import, reveal, and removal behaviors for ``AppStore``.
 extension AppStore {
+  /// Returns true when the selected pack is a directory-based user pack.
   var canRevealSelectedPack: Bool {
     guard let location = selectedPackLocation else { return false }
     return location.isDirectoryPack
   }
 
+  /// Returns true when the selected pack can be removed from disk.
   var canRemoveSelectedPack: Bool {
     guard let location = selectedPackLocation,
       let personaID = state.selectedPersonaID,
@@ -15,6 +18,7 @@ extension AppStore {
     return location.isDirectoryPack && source.kind == .user
   }
 
+  /// Imports a persona pack from disk into PersonaKit-managed storage.
   func importPack() {
     guard let selection = appClient.selectPackURL() else { return }
 
@@ -75,6 +79,7 @@ extension AppStore {
     reloadAll()
   }
 
+  /// Reveals the PersonaKit storage root in Finder, creating it if needed.
   func revealStorageRoot() {
     let paths: PersonaKitStoragePaths
     do {
@@ -89,6 +94,7 @@ extension AppStore {
     appClient.openURL(paths.root)
   }
 
+  /// Reveals the selected pack directory in Finder when applicable.
   func revealSelectedPack() {
     guard let location = selectedPackLocation, location.isDirectoryPack else {
       appClient.presentError("Reveal Failed", "Selected pack is not a user pack folder.")
@@ -97,6 +103,7 @@ extension AppStore {
     appClient.openURL(location.packRoot)
   }
 
+  /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
     guard let location = selectedPackLocation,
       let personaID = state.selectedPersonaID,
@@ -122,6 +129,7 @@ extension AppStore {
     }
   }
 
+  /// Copies the composed prompt preview to the clipboard.
   func copyPromptToClipboard() {
     appClient.copyToClipboard(state.promptPreview)
   }

@@ -3,6 +3,7 @@ import Dependencies
 import Foundation
 import UniformTypeIdentifiers
 
+/// App-facing side effects for file picking, alerts, and system services.
 public struct AppClient: Sendable {
   public var selectPackURL: @MainActor @Sendable () -> URL?
   public var confirmRemovePack: @MainActor @Sendable () -> Bool
@@ -10,6 +11,7 @@ public struct AppClient: Sendable {
   public var openURL: @MainActor @Sendable (URL) -> Void
   public var copyToClipboard: @MainActor @Sendable (String) -> Void
 
+  /// Creates a client with the provided UI and system handlers.
   public init(
     selectPackURL: @escaping @MainActor @Sendable () -> URL?,
     confirmRemovePack: @escaping @MainActor @Sendable () -> Bool,
@@ -70,6 +72,7 @@ extension AppClient: DependencyKey {
 }
 
 extension DependencyValues {
+  /// Accessor for the ``AppClient`` dependency.
   public var appClient: AppClient {
     get { self[AppClient.self] }
     set { self[AppClient.self] = newValue }

@@ -1,6 +1,10 @@
 import PersonaKitCore
 import SwiftUI
 
+/// The PersonaKit macOS app entry point.
+///
+/// This root scene wires the shared ``AppStore`` into the view hierarchy and
+/// installs the app-level commands used for pack management and navigation.
 @main
 struct PersonaKitAppMain: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self)
@@ -9,6 +13,7 @@ struct PersonaKitAppMain: App {
   @State private var showPersonaSwitcher = false
   @State private var showInspector = false
 
+  /// Defines the main window scene and the command groups for PersonaKit.
   var body: some Scene {
     WindowGroup("PersonaKit") {
       ContentView(showPersonaSwitcher: $showPersonaSwitcher, showInspector: $showInspector)
@@ -47,7 +52,9 @@ struct PersonaKitAppMain: App {
   }
 }
 
+/// AppKit delegate that opts the app into a regular activation policy.
 private final class AppDelegate: NSObject, NSApplicationDelegate {
+  /// Brings PersonaKit to the foreground on launch.
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
     NSApp.activate(ignoringOtherApps: true)

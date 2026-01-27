@@ -1,6 +1,7 @@
 import PersonaKitCore
 import SwiftUI
 
+/// Inspector panel showing persona details and pack comparison tools.
 struct InspectorView: View {
   @Environment(AppStore.self)
   private var store
@@ -74,6 +75,7 @@ struct InspectorView: View {
     return label
   }
 
+  /// Builds the inspector layout with persona metadata and diff tools.
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 16) {
@@ -236,6 +238,7 @@ struct InspectorView: View {
     return about
   }
 
+  /// Synchronizes the primary pack selection and resets comparison state.
   private func updatePrimaryPackSelection() {
     let currentID = selectedPackSelection?.id
     if primaryPackID != currentID {
@@ -254,6 +257,7 @@ struct InspectorView: View {
     }
   }
 
+  /// Computes a diff between the selected pack and a comparison pack.
   private func computePackDiff(comparison: PackSelection) {
     guard let selectedPackSelection else { return }
     let left = PackDiffInputBuilder.build(for: selectedPackSelection)
@@ -263,9 +267,11 @@ struct InspectorView: View {
   }
 }
 
+/// Compact summary of added, removed, and modified personas in a diff.
 private struct PackDiffSummaryView: View {
   let diff: PackDiff
 
+  /// Builds the diff summary sections.
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       diffSection(title: "Added", systemImage: "plus", changes: diff.added)
@@ -274,6 +280,7 @@ private struct PackDiffSummaryView: View {
     }
   }
 
+  /// Renders a diff section for a specific change set.
   private func diffSection(
     title: String, systemImage: String, changes: [PersonaChange]
   ) -> some View {
@@ -300,6 +307,7 @@ private struct PackDiffSummaryView: View {
     }
   }
 
+  /// Builds a readable label for a persona change record.
   private func changeLabel(_ change: PersonaChange) -> String {
     let name = change.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let id = change.id.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -316,6 +324,7 @@ private struct PackDiffSummaryView: View {
   }
 }
 
+/// Sheet that lets the user pick a second pack to compare against.
 private struct PackCompareSheet: View {
   let primaryPack: PackSelection?
   let availablePacks: [PackSelection]
@@ -330,6 +339,7 @@ private struct PackCompareSheet: View {
     return availablePacks.filter { $0.id != primaryPack.id }
   }
 
+  /// Builds the pack comparison picker UI.
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       Text("Compare Packs")
@@ -373,9 +383,11 @@ private struct PackCompareSheet: View {
   }
 }
 
+/// A pill-styled tag chip used in the inspector.
 private struct TagPill: View {
   let title: String
 
+  /// Builds the tag pill UI.
   var body: some View {
     Text(title)
       .font(.caption2)

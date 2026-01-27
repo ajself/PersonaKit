@@ -3,23 +3,28 @@ import Foundation
 import Observation
 import PersonaKitCore
 
+/// A tokenized focus request used to drive sidebar search focus changes.
 struct SidebarSearchFocusRequest: Equatable {
   let id: UUID
   let shouldFocus: Bool
 }
 
+/// A focus request that targets a specific composer section by key.
 struct ComposerFocusRequest: Equatable {
   let id: UUID
   let sectionKey: String
 }
 
+/// The resolved on-disk location of a persona pack and its metadata file.
 struct PackLocation: Equatable {
   let packRoot: URL
   let packFile: URL
   let isDirectoryPack: Bool
 }
 
+/// A selectable pack reference used by the UI to identify a pack by file path.
 struct PackSelection: Identifiable, Hashable {
+  /// Sort keys used to keep pack lists stable and human-friendly.
   struct SortKey: Comparable {
     let displayName: String
     let packID: String
@@ -43,6 +48,7 @@ struct PackSelection: Identifiable, Hashable {
   let packRoot: URL
   let isDirectoryPack: Bool
 
+  /// A human-friendly display name derived from the pack metadata.
   var displayName: String {
     let name = pack.name.trimmingCharacters(in: .whitespacesAndNewlines)
     let id = pack.id.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -58,6 +64,7 @@ struct PackSelection: Identifiable, Hashable {
     return "Unknown Pack"
   }
 
+  /// Builds the ``SortKey`` used to sort pack selections deterministically.
   static func sortKey(_ selection: PackSelection) -> SortKey {
     SortKey(
       displayName: selection.displayName,
@@ -67,9 +74,14 @@ struct PackSelection: Identifiable, Hashable {
   }
 }
 
+/// The central app state container and action dispatcher.
+///
+/// ``AppStore`` owns the observable UI state and coordinates I/O through
+/// dependency clients to keep behaviors deterministic and testable.
 @MainActor
 @Observable
 final class AppStore {
+  /// The full mutable state backing PersonaKitApp screens.
   struct State {
     var diagnostics: [Diagnostic]
     var personaIndex: [String: ResolvedPersona]
@@ -142,6 +154,7 @@ final class AppStore {
     }
   }
 
+  /// Actions accepted by ``AppStore.send(_:)``.
   enum Action {
     case task
     case reloadAll
@@ -184,6 +197,7 @@ final class AppStore {
 
   var state: State
 
+  /// Stable identifier for the built-in "All Personas" filter.
   static let allPersonasFilterID = "all-personas"
 
   init(
@@ -203,6 +217,7 @@ final class AppStore {
     state.pinnedPersonaIDs = Set(pinnedPersonasStore.load())
   }
 
+  /// Routes an action to the appropriate handler, returning early when handled.
   func send(_ action: Action) {
     if handleLifecycle(action) { return }
     if handleFocus(action) { return }

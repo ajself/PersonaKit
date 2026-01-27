@@ -1,6 +1,7 @@
 import PersonaKitCore
 import SwiftUI
 
+/// Modal sheet for quickly switching between personas.
 struct PersonaSwitcherView: View {
   @Environment(AppStore.self)
   private var store
@@ -28,6 +29,7 @@ struct PersonaSwitcherView: View {
     }
   }
 
+  /// Builds the search UI and selection list for personas.
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("Switch Persona").font(.headline)
@@ -77,6 +79,7 @@ struct PersonaSwitcherView: View {
     }
   }
 
+  /// Keeps the selection in sync with the filtered results.
   private func syncSelection() {
     let available = filtered
     guard !available.isEmpty else {
@@ -89,6 +92,7 @@ struct PersonaSwitcherView: View {
     selection = available.first?.persona.id
   }
 
+  /// Moves selection in response to keyboard navigation commands.
   private func moveSelection(_ direction: MoveCommandDirection) {
     let available = filtered
     guard !available.isEmpty else { return }
@@ -105,17 +109,20 @@ struct PersonaSwitcherView: View {
     selection = available[nextIndex].persona.id
   }
 
+  /// Commits the current selection and dismisses the sheet.
   private func commitSelection() {
     guard let selection else { return }
     selectPersona(id: selection)
   }
 
+  /// Updates the selected persona and closes the switcher.
   private func selectPersona(id: String) {
     store.send(.setSelectedPersonaID(id))
     isPresented = false
   }
 }
 
+/// Row used in the persona switcher list.
 private struct PersonaSwitchRow: View {
   let persona: Persona
 
@@ -125,6 +132,7 @@ private struct PersonaSwitchRow: View {
     return tags.joined(separator: ", ")
   }
 
+  /// Builds the persona summary row.
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(persona.name).font(.headline)

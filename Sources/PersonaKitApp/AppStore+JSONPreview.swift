@@ -1,7 +1,9 @@
 import Foundation
 import PersonaKitCore
 
+/// JSON preview generation and formatting for ``AppStore``.
 extension AppStore {
+  /// Updates the JSON preview text and optionally schedules formatting.
   func updateJSONPreview(_ text: String, scheduleFormat: Bool) {
     guard text != state.jsonPreview else { return }
     state.jsonPreview = text
@@ -10,6 +12,7 @@ extension AppStore {
     }
   }
 
+  /// Encodes a ``Persona`` as JSON using deterministic key ordering.
   func buildPersonaJSON(persona: Persona, prettyPrinted: Bool) -> String {
     let encoder = JSONEncoder()
     if prettyPrinted {

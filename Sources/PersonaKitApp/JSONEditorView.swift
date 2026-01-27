@@ -1,14 +1,17 @@
 import AppKit
 import SwiftUI
 
+/// A SwiftUI wrapper around an AppKit text view with JSON highlighting.
 struct JSONEditorView: NSViewRepresentable {
   @Binding var text: String
   var isEditable: Bool = false
 
+  /// Creates a coordinator to bridge AppKit delegate events.
   func makeCoordinator() -> Coordinator {
     Coordinator(text: $text)
   }
 
+  /// Builds the scroll view hosting the syntax-aware text view.
   func makeNSView(context: Context) -> NSScrollView {
     let textView = JSONSyntaxTextView()
     textView.isEditable = isEditable
@@ -42,6 +45,7 @@ struct JSONEditorView: NSViewRepresentable {
     return scrollView
   }
 
+  /// Keeps the AppKit view in sync with the bound text and editability.
   func updateNSView(_ nsView: NSScrollView, context: Context) {
     guard let textView = nsView.documentView as? JSONSyntaxTextView else { return }
     textView.isEditable = isEditable
@@ -54,6 +58,7 @@ struct JSONEditorView: NSViewRepresentable {
 }
 
 extension JSONEditorView {
+  /// Coordinator that forwards AppKit text events to the SwiftUI binding.
   final class Coordinator: NSObject, NSTextViewDelegate {
     @Binding private var text: String
 
@@ -61,6 +66,7 @@ extension JSONEditorView {
       _text = text
     }
 
+    /// Updates the bound text and re-applies syntax highlighting.
     func textDidChange(_ notification: Notification) {
       guard let textView = notification.object as? NSTextView else { return }
       text = textView.string
@@ -69,6 +75,7 @@ extension JSONEditorView {
       }
     }
 
+    /// Updates bracket highlighting when the caret moves.
     func textViewDidChangeSelection(_ notification: Notification) {
       guard let textView = notification.object as? JSONSyntaxTextView else { return }
       textView.updateBracketHighlight()
@@ -76,11 +83,13 @@ extension JSONEditorView {
   }
 }
 
+/// NSTextView subclass that highlights JSON and matching brackets.
 final class JSONSyntaxTextView: NSTextView {
   private let highlighter = JSONSyntaxHighlighter()
   private var braceHighlightRanges: [NSRange] = []
   private var cachedAppearanceName: NSAppearance.Name?
 
+  /// Sets the text while keeping the caret position stable.
   func setTextPreservingSelection(_ text: String) {
     let priorSelection = selectedRange()
     var attrs: [NSAttributedString.Key: Any] = [:]
@@ -93,11 +102,13 @@ final class JSONSyntaxTextView: NSTextView {
     applySyntaxHighlighting()
   }
 
+  /// Re-applies highlighting when the system appearance changes.
   override func viewDidChangeEffectiveAppearance() {
     super.viewDidChangeEffectiveAppearance()
     updateAppearanceIfNeeded()
   }
 
+  /// Updates cached appearance and re-highlights when needed.
   func updateAppearanceIfNeeded() {
     let name = effectiveAppearance.name
     if cachedAppearanceName != name {
@@ -106,12 +117,14 @@ final class JSONSyntaxTextView: NSTextView {
     }
   }
 
+  /// Applies JSON syntax highlighting and bracket highlighting.
   func applySyntaxHighlighting() {
     guard let textStorage else { return }
     highlighter.apply(to: textStorage, font: font)
     updateBracketHighlight()
   }
 
+  /// Highlights matching brackets when the caret is adjacent.
   func updateBracketHighlight() {
     guard let layoutManager else { return }
     clearBracketHighlights()
@@ -146,6 +159,7 @@ final class JSONSyntaxTextView: NSTextView {
     braceHighlightRanges = ranges
   }
 
+  /// Clears temporary background attributes used for bracket matching.
   private func clearBracketHighlights() {
     guard let layoutManager else { return }
     for range in braceHighlightRanges {
@@ -154,12 +168,14 @@ final class JSONSyntaxTextView: NSTextView {
     braceHighlightRanges.removeAll()
   }
 
+  /// Returns true when the character at the index is a JSON bracket.
   private func isBracket(at index: Int, in text: String) -> Bool {
     guard index >= 0, index < text.count else { return false }
     let ch = text[text.index(text.startIndex, offsetBy: index)]
     return ch == "{" || ch == "}" || ch == "[" || ch == "]"
   }
 
+  /// Finds the matching bracket index, ignoring text inside strings.
   private func findMatchingBracket(from index: Int, in text: String) -> Int? {
     guard index >= 0, index < text.count else { return nil }
     let ch = text[text.index(text.startIndex, offsetBy: index)]
@@ -176,6 +192,7 @@ final class JSONSyntaxTextView: NSTextView {
     return nil
   }
 
+  /// Scans forward to find the closing bracket that matches the opening.
   private func scanForward(
     from start: Int, open: Character, close: Character, in text: String
   ) -> Int? {
@@ -208,6 +225,7 @@ final class JSONSyntaxTextView: NSTextView {
     return nil
   }
 
+  /// Scans backward to find the opening bracket that matches the closing.
   private func scanBackward(
     from start: Int, open: Character, close: Character, in text: String
   ) -> Int? {
@@ -245,6 +263,7 @@ final class JSONSyntaxTextView: NSTextView {
   }
 }
 
+/// Applies basic JSON syntax highlighting to a text storage.
 final class JSONSyntaxHighlighter {
   private struct Theme {
     let base: NSColor
@@ -255,6 +274,7 @@ final class JSONSyntaxHighlighter {
     let null: NSColor
   }
 
+  /// Applies the full highlighting theme to the text storage.
   func apply(to textStorage: NSTextStorage, font: NSFont?) {
     let theme = Theme(
       base: .textColor,
@@ -278,6 +298,7 @@ final class JSONSyntaxHighlighter {
     apply(pattern: "\\bnull\\b", color: theme.null, to: textStorage)
   }
 
+  /// Applies a regex color rule to the text storage.
   private func apply(pattern: String, color: NSColor, to textStorage: NSTextStorage) {
     guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return }
     let fullRange = NSRange(location: 0, length: textStorage.length)

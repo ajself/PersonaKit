@@ -2,13 +2,16 @@ import Foundation
 import PersonaKitCore
 import PersonaKitResources
 
+/// Pack loading and preview refresh routines for ``AppStore``.
 extension AppStore {
+  /// Bundles computed indexes used during reload to keep lookups consistent.
   private struct ReloadIndexes {
     let packsByID: [String: PackMeta]
     let sourcesByID: [String: PersonaSource]
     let packLocationsByID: [String: PackLocation]
   }
 
+  /// Reloads built-in and user packs, then refreshes selections and previews.
   func reloadAll() {
     state.diagnostics.removeAll()
     let previousSelection = state.selectedPersonaID
@@ -40,6 +43,7 @@ extension AppStore {
     recomputePreview()
   }
 
+  /// Recomputes prompt and JSON previews for the selected persona.
   func recomputePreview() {
     guard let id = state.selectedPersonaID,
       let persona = state.personaIndex[id]?.persona

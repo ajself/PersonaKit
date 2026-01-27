@@ -1,7 +1,9 @@
 import Foundation
 import PersonaKitCore
 
+/// Saved filter and pin management helpers for ``AppStore``.
 extension AppStore {
+  /// Applies a saved filter snapshot to the current UI state.
   func applySavedFilterState(
     id: String?, queryText: String, tags: [String], sources: [String]
   ) {
@@ -18,6 +20,7 @@ extension AppStore {
     isApplyingSavedFilter = false
   }
 
+  /// Persists the current filter configuration under the provided name.
   func saveCurrentFilter(name: String) {
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
@@ -40,6 +43,7 @@ extension AppStore {
     state.isPinnedViewActive = false
   }
 
+  /// Renames a saved filter while preserving its query configuration.
   func renameSavedFilter(id: String, newName: String) {
     let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
@@ -60,6 +64,7 @@ extension AppStore {
     savedFiltersStore.save(state.savedFilters)
   }
 
+  /// Deletes a saved filter and clears selection if needed.
   func deleteSavedFilter(id: String) {
     state.savedFilters.removeAll { $0.id == id }
     savedFiltersStore.save(state.savedFilters)
@@ -68,6 +73,7 @@ extension AppStore {
     }
   }
 
+  /// Toggles a persona's pinned state and persists the pin set.
   func togglePinnedPersona(id: String) {
     if state.pinnedPersonaIDs.contains(id) {
       state.pinnedPersonaIDs.remove(id)

@@ -2,12 +2,15 @@ import Dependencies
 import Foundation
 import PersonaKitCore
 
+/// Output produced by ``PackDiffInputBuilder`` for diff computation.
 struct PackDiffInputResult: Equatable {
   let records: [PersonaDiffRecord]
   let diagnostics: [Diagnostic]
 }
 
+/// Builds diff inputs from persona packs on disk.
 enum PackDiffInputBuilder {
+  /// Loads personas for the given pack selection and prepares diff records.
   static func build(
     for selection: PackSelection, fileClient: FileClient? = nil
   ) -> PackDiffInputResult {
@@ -39,6 +42,7 @@ enum PackDiffInputBuilder {
     return PackDiffInputResult(records: records, diagnostics: diagnostics)
   }
 
+  /// Appends diff records for a specific pack file.
   private static func appendRecords(
     from url: URL,
     sourceKind: PersonaSource.Kind,
@@ -63,6 +67,7 @@ enum PackDiffInputBuilder {
     }
   }
 
+  /// Returns persona JSON files inside a directory pack, excluding sidecars.
   private static func loadPersonaFiles(in directory: URL, fileClient: FileClient) -> [URL] {
     guard let contents = try? fileClient.contentsOfDirectory(directory, nil) else {
       return []
@@ -74,12 +79,14 @@ enum PackDiffInputBuilder {
       .sorted { $0.lastPathComponent < $1.lastPathComponent }
   }
 
+  /// Returns true when the file is a metadata sidecar for a persona file.
   private static func isMetadataSidecar(_ url: URL) -> Bool {
     let name = url.lastPathComponent.lowercased()
     return name.hasSuffix(".meta.json") || name.hasSuffix(".metadata.json")
   }
 }
 
+/// Dependency container for pack diff file access.
 private struct PackDiffEnvironment {
   @Dependency(\.fileClient)
   var fileClient

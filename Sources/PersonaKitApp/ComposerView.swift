@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Edits the core prompt parameters for the selected persona.
 struct ComposerView: View {
   @Environment(AppStore.self)
   private var store
@@ -36,6 +37,7 @@ struct ComposerView: View {
     return lines
   }()
 
+  /// Configuration for a single parameter field row.
   private struct ParameterFieldConfig {
     let key: String
     let label: String
@@ -45,6 +47,7 @@ struct ComposerView: View {
     let helpLines: [String]
   }
 
+  /// Builds the parameter editor fields and help popovers.
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       parameterField(
@@ -89,6 +92,7 @@ struct ComposerView: View {
     }
   }
 
+  /// Renders a labeled, optionally required parameter field with help content.
   @ViewBuilder
   private func parameterField(
     config: ParameterFieldConfig,
@@ -129,6 +133,7 @@ struct ComposerView: View {
     }
   }
 
+  /// Renders the contextual help popover content.
   @ViewBuilder
   private func helpPopover(title: String, lines: [String]) -> some View {
     VStack(alignment: .leading, spacing: 6) {
