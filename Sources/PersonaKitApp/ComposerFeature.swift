@@ -1,6 +1,6 @@
 import Foundation
 
-/// Composer feature state and actions.
+/// Composer feature state.
 enum ComposerFeature {
   /// A focus request that targets a specific composer section by key.
   struct FocusRequest: Equatable {
@@ -25,10 +25,4 @@ enum ComposerFeature {
     }
   }
 
-  /// Actions handled by the composer feature.
-  enum Action {
-    case requestFocus(sectionKey: String)
-    case setSelectedPersonaID(String?)
-    case setComposerValue(key: String, value: String)
-  }
 }

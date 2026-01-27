@@ -3,13 +3,13 @@ import SwiftUI
 
 /// The PersonaKit macOS app entry point.
 ///
-/// This root scene wires the shared ``AppStore`` into the view hierarchy and
+/// This root scene wires the shared ``AppModel`` into the view hierarchy and
 /// installs the app-level commands used for pack management and navigation.
 @main
 struct PersonaKitAppMain: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self)
   private var appDelegate
-  @State private var store = AppStore()
+  @State private var model = AppModel()
   @State private var showPersonaSwitcher = false
   @State private var showInspector = false
 
@@ -17,34 +17,34 @@ struct PersonaKitAppMain: App {
   var body: some Scene {
     WindowGroup("PersonaKit") {
       ContentView(showPersonaSwitcher: $showPersonaSwitcher, showInspector: $showInspector)
-        .environment(store)
+        .environment(model)
         .frame(minWidth: 1100, minHeight: 700)
     }
     .commands {
       CommandGroup(replacing: .newItem) {}
       CommandGroup(after: .newItem) {
         Button("Import Pack…") {
-          store.send(.importPack)
+          model.importPack()
         }
 
         Divider()
 
         Button("Reveal PersonaKit Storage") {
-          store.send(.revealStorageRoot)
+          model.revealStorageRoot()
         }
 
         Button("Reveal Selected Pack in Finder") {
-          store.send(.revealSelectedPack)
+          model.revealSelectedPack()
         }
-        .disabled(!store.canRevealSelectedPack)
+        .disabled(!model.canRevealSelectedPack)
 
         Button("Remove Selected Pack…") {
-          store.send(.removeSelectedPack)
+          model.removeSelectedPack()
         }
-        .disabled(!store.canRemoveSelectedPack)
+        .disabled(!model.canRemoveSelectedPack)
       }
       PersonaKitCommands(
-        store: store,
+        model: model,
         showPersonaSwitcher: $showPersonaSwitcher,
         showInspector: $showInspector
       )

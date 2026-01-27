@@ -2,8 +2,8 @@ import SwiftUI
 
 /// The root split-view shell for the PersonaKit app window.
 struct ContentView: View {
-  @Environment(AppStore.self)
-  private var store
+  @Environment(AppModel.self)
+  private var model
   @Binding var showPersonaSwitcher: Bool
   @Binding var showInspector: Bool
   @State private var selectedPanel: PreviewPanel = .prompt
@@ -16,36 +16,36 @@ struct ContentView: View {
       PreviewView(selectedPanel: $selectedPanel)
     }
     .task {
-      store.send(.task)
+      model.reloadAll()
     }
-    .onChange(of: store.state.composer.focusRequest) { _, request in
+    .onChange(of: model.composer.focusRequest) { _, request in
       guard request != nil else { return }
       showInspector = true
     }
     .sheet(isPresented: $showPersonaSwitcher) {
       PersonaSwitcherView(isPresented: $showPersonaSwitcher)
-        .environment(store)
+        .environment(model)
     }
     .inspector(isPresented: $showInspector) {
       InspectorView()
-        .environment(store)
+        .environment(model)
     }
     .toolbar {
       ToolbarItemGroup(placement: .automatic) {
         Button {
-          store.send(.reloadAll)
+          model.reloadAll()
         } label: {
           Label("Reload", systemImage: "arrow.clockwise")
         }
         .help("Reload persona packs.")
         Button {
-          store.send(.importPack)
+          model.importPack()
         } label: {
           Label("Import Pack", systemImage: "tray.and.arrow.down")
         }
         .help("Import a persona pack into PersonaKit storage.")
         Button {
-          store.send(.copyPromptToClipboard)
+          model.copyPromptToClipboard()
         } label: {
           Label("Copy Prompt", systemImage: "doc.on.doc")
         }
@@ -71,14 +71,14 @@ struct ContentView: View {
       return
     }
     switch SidebarSearchEscapePolicy.action(
-      searchText: store.sidebar.searchText,
-      isFocused: store.sidebar.isSearchFocused
+      searchText: model.sidebar.searchText,
+      isFocused: model.sidebar.isSearchFocused
     ) {
     case .clearAndFocus:
-      store.sidebar.setSearchText("")
-      store.sidebar.requestSearchFocus()
+      model.sidebar.setSearchText("")
+      model.sidebar.requestSearchFocus()
     case .blur:
-      store.sidebar.requestSearchBlur()
+      model.sidebar.requestSearchBlur()
     case .noOp:
       break
     }

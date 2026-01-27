@@ -1,4 +1,4 @@
-/// Preview feature state and actions.
+/// Preview feature state.
 enum PreviewFeature {
   /// Preview-specific UI state.
   struct State {
@@ -17,8 +17,4 @@ enum PreviewFeature {
     }
   }
 
-  /// Actions handled by the preview feature.
-  enum Action {
-    case setJSONPreview(String)
-  }
 }

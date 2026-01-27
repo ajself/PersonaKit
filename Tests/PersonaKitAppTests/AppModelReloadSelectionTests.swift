@@ -5,33 +5,33 @@ import Testing
 
 @testable import PersonaKitApp
 
-@Suite("AppStore Reload Selection")
-struct AppStoreReloadSelectionTests {
+@Suite("AppModel Reload Selection")
+struct AppModelReloadSelectionTests {
   @Test("Reload preserves selection when persona exists")
   @MainActor
   func reloadPreservesSelectionWhenPersonaExists() throws {
-    let store = makeStore()
-    store.send(.reloadAll)
+    let model = makeModel()
+    model.reloadAll()
 
-    let ids = store.state.personaIndex.keys.sorted()
+    let ids = model.personaIndex.keys.sorted()
     let selected = try #require(ids.last)
-    store.send(.composer(.setSelectedPersonaID(selected)))
+    model.selectPersona(id: selected)
 
-    store.send(.reloadAll)
-    #expect(store.state.composer.selectedPersonaID == selected)
+    model.reloadAll()
+    #expect(model.composer.selectedPersonaID == selected)
   }
 
   @Test("Reload falls back to first persona when selection missing")
   @MainActor
   func reloadFallsBackWhenSelectionMissing() throws {
-    let store = makeStore()
-    store.send(.reloadAll)
+    let model = makeModel()
+    model.reloadAll()
 
-    store.state.composer.selectedPersonaID = "missing-persona-id"
-    store.send(.reloadAll)
+    model.composer.selectedPersonaID = "missing-persona-id"
+    model.reloadAll()
 
-    let expected = try #require(store.state.personaIndex.keys.sorted().first)
-    #expect(store.state.composer.selectedPersonaID == expected)
+    let expected = try #require(model.personaIndex.keys.sorted().first)
+    #expect(model.composer.selectedPersonaID == expected)
   }
 
   @Test("Reload maps pack locations for directory and file packs")
@@ -71,26 +71,26 @@ struct AppStoreReloadSelectionTests {
       fileSystem: fileSystem,
       homeDirectory: homeDirectory
     )
-    let store = makeStore(fileClient: fileClient)
+    let model = makeModel(fileClient: fileClient)
     withDependencies {
       $0.fileClient = fileClient
     } operation: {
-      store.send(.reloadAll)
+      model.reloadAll()
     }
 
-    let directoryLocation = try #require(store.state.packLocationsByPersonaID["dir-persona"])
+    let directoryLocation = try #require(model.packLocationsByPersonaID["dir-persona"])
     #expect(directoryLocation.packRoot == directoryPackRoot)
     #expect(directoryLocation.packFile == directoryPackFile)
     #expect(directoryLocation.isDirectoryPack == true)
 
-    let fileLocation = try #require(store.state.packLocationsByPersonaID["file-persona"])
+    let fileLocation = try #require(model.packLocationsByPersonaID["file-persona"])
     #expect(fileLocation.packRoot == packsRoot)
     #expect(fileLocation.packFile == filePackFile)
     #expect(fileLocation.isDirectoryPack == false)
   }
 
   @MainActor
-  private func makeStore(fileClient: FileClient = inMemoryFileClient()) -> AppStore {
+  private func makeModel(fileClient: FileClient = inMemoryFileClient()) -> AppModel {
     let filtersURL = URL(fileURLWithPath: "/tmp/personakit-tests/filters.json")
     let pinsURL = URL(fileURLWithPath: "/tmp/personakit-tests/pins.json")
     let savedFiltersStore = SavedFiltersStore(fileURL: filtersURL, fileClient: fileClient)
@@ -106,7 +106,7 @@ struct AppStoreReloadSelectionTests {
       $0.fileClient = fileClient
       $0.appClient = appClient
     } operation: {
-      AppStore(savedFiltersStore: savedFiltersStore, pinnedPersonasStore: pinnedPersonasStore)
+      AppModel(savedFiltersStore: savedFiltersStore, pinnedPersonasStore: pinnedPersonasStore)
     }
   }
 }

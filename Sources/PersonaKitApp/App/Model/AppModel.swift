@@ -62,57 +62,21 @@ struct PackSelection: Identifiable, Hashable {
   }
 }
 
-/// The central app state container and action dispatcher.
+/// The central app model coordinating state and I/O.
 ///
-/// ``AppStore`` owns the observable UI state and coordinates I/O through
+/// ``AppModel`` owns the observable UI state and coordinates I/O through
 /// dependency clients to keep behaviors deterministic and testable.
 @MainActor
 @Observable
-final class AppStore {
-  /// The full mutable state backing PersonaKitApp screens.
-  struct State {
-    var diagnostics: [Diagnostic]
-    var personaIndex: [String: ResolvedPersona]
-    var personaPacksByID: [String: PackMeta]
-    var personaSourcesByID: [String: PersonaSource]
-    var packLocationsByPersonaID: [String: PackLocation]
-    var availablePacks: [PackSelection]
-    var composer: ComposerFeature.State
-    var preview: PreviewFeature.State
-
-    init(
-      diagnostics: [Diagnostic] = [],
-      personaIndex: [String: ResolvedPersona] = [:],
-      personaPacksByID: [String: PackMeta] = [:],
-      personaSourcesByID: [String: PersonaSource] = [:],
-      packLocationsByPersonaID: [String: PackLocation] = [:],
-      availablePacks: [PackSelection] = [],
-      composer: ComposerFeature.State = ComposerFeature.State(),
-      preview: PreviewFeature.State = PreviewFeature.State()
-    ) {
-      self.diagnostics = diagnostics
-      self.personaIndex = personaIndex
-      self.personaPacksByID = personaPacksByID
-      self.personaSourcesByID = personaSourcesByID
-      self.packLocationsByPersonaID = packLocationsByPersonaID
-      self.availablePacks = availablePacks
-      self.composer = composer
-      self.preview = preview
-    }
-  }
-
-  /// Actions accepted by ``AppStore.send(_:)``.
-  enum Action {
-    case task
-    case reloadAll
-    case importPack
-    case revealStorageRoot
-    case revealSelectedPack
-    case removeSelectedPack
-    case copyPromptToClipboard
-    case composer(ComposerFeature.Action)
-    case preview(PreviewFeature.Action)
-  }
+final class AppModel {
+  var diagnostics: [Diagnostic] = []
+  var personaIndex: [String: ResolvedPersona] = [:]
+  var personaPacksByID: [String: PackMeta] = [:]
+  var personaSourcesByID: [String: PersonaSource] = [:]
+  var packLocationsByPersonaID: [String: PackLocation] = [:]
+  var availablePacks: [PackSelection] = []
+  var composer: ComposerFeature.State = ComposerFeature.State()
+  var preview: PreviewFeature.State = PreviewFeature.State()
 
   @Dependency(\.fileClient)
   @ObservationIgnored var fileClient
@@ -126,8 +90,6 @@ final class AppStore {
   let sidebar: SidebarModel
   var jsonFormatTask: Task<Void, Never>?
 
-  var state: State
-
   init(
     savedFiltersStore: SavedFiltersStore = SavedFiltersStore(),
     pinnedPersonasStore: PinnedPersonasStore = PinnedPersonasStore()
@@ -136,22 +98,5 @@ final class AppStore {
       savedFiltersStore: savedFiltersStore,
       pinnedPersonasStore: pinnedPersonasStore
     )
-    self.state = State()
-  }
-
-  /// Routes an action to the appropriate handler and applies deferred recompute work.
-  func send(_ action: Action) {
-    let handledLifecycle = handleLifecycle(action)
-    if !handledLifecycle {
-      switch action {
-      case .composer(let composerAction):
-        handleComposer(composerAction)
-      case .preview(let previewAction):
-        handlePreview(previewAction)
-      default:
-        break
-      }
-    }
-    handlePreviewRecomputeIfNeeded()
   }
 }

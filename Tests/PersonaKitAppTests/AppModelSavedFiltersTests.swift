@@ -5,8 +5,8 @@ import Testing
 
 @testable import PersonaKitApp
 
-@Suite("AppStore Saved Filters")
-struct AppStoreSavedFiltersTests {
+@Suite("AppModel Saved Filters")
+struct AppModelSavedFiltersTests {
   @Test("Save rename delete saved filters")
   @MainActor
   func saveRenameDeleteSavedFilters() throws {
@@ -15,37 +15,37 @@ struct AppStoreSavedFiltersTests {
     let pinsURL = URL(fileURLWithPath: "/tmp/personakit-tests/pins.json")
     let savedFiltersStore = SavedFiltersStore(fileURL: filtersURL, fileClient: fileClient)
     let pinnedPersonasStore = PinnedPersonasStore(fileURL: pinsURL, fileClient: fileClient)
-    let store = makeStore(
+    let model = makeModel(
       fileClient: fileClient,
       savedFiltersStore: savedFiltersStore,
       pinnedPersonasStore: pinnedPersonasStore
     )
 
-    store.sidebar.searchText = "build determinism"
-    store.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
-    store.sidebar.activeSourceKinds = [.user, .builtIn]
-    store.sidebar.isPinnedViewActive = true
+    model.sidebar.searchText = "build determinism"
+    model.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
+    model.sidebar.activeSourceKinds = [.user, .builtIn]
+    model.sidebar.isPinnedViewActive = true
 
-    store.sidebar.saveCurrentFilter(name: "  My Filter  ")
-    let saved = try #require(store.sidebar.savedFilters.first)
+    model.sidebar.saveCurrentFilter(name: "  My Filter  ")
+    let saved = try #require(model.sidebar.savedFilters.first)
     #expect(saved.name == "My Filter")
     #expect(saved.queryText == "build determinism")
     #expect(saved.selectedTags == ["alpha", "beta"])
     #expect(saved.selectedSources == ["builtIn", "user"])
-    #expect(store.sidebar.selectedSavedFilterID == saved.id)
-    #expect(store.sidebar.isPinnedViewActive == false)
-    #expect(savedFiltersStore.load() == store.sidebar.savedFilters)
+    #expect(model.sidebar.selectedSavedFilterID == saved.id)
+    #expect(model.sidebar.isPinnedViewActive == false)
+    #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
 
     let savedID = saved.id
-    store.sidebar.renameSavedFilter(id: savedID, newName: " Renamed ")
-    let renamed = try #require(store.sidebar.savedFilters.first)
+    model.sidebar.renameSavedFilter(id: savedID, newName: " Renamed ")
+    let renamed = try #require(model.sidebar.savedFilters.first)
     #expect(renamed.name == "Renamed")
-    #expect(savedFiltersStore.load() == store.sidebar.savedFilters)
+    #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
 
-    store.sidebar.selectedSavedFilterID = renamed.id
-    store.sidebar.deleteSavedFilter(id: savedID)
-    #expect(store.sidebar.savedFilters.isEmpty)
-    #expect(store.sidebar.selectedSavedFilterID == nil)
+    model.sidebar.selectedSavedFilterID = renamed.id
+    model.sidebar.deleteSavedFilter(id: savedID)
+    #expect(model.sidebar.savedFilters.isEmpty)
+    #expect(model.sidebar.selectedSavedFilterID == nil)
     #expect(savedFiltersStore.load().isEmpty)
   }
 
@@ -53,7 +53,7 @@ struct AppStoreSavedFiltersTests {
   @MainActor
   func applySavedFiltersUpdatesSelectionAndSearchState() {
     let fileClient = inMemoryFileClient()
-    let store = makeStore(
+    let model = makeModel(
       fileClient: fileClient,
       savedFiltersStore: SavedFiltersStore(
         fileURL: URL(fileURLWithPath: "/tmp/personakit-tests/filters.json"),
@@ -74,36 +74,36 @@ struct AppStoreSavedFiltersTests {
       groupingMode: nil
     )
 
-    store.sidebar.isPinnedViewActive = true
-    store.sidebar.applySavedFilter(filter)
-    #expect(store.sidebar.selectedSavedFilterID == "filter-1")
-    #expect(store.sidebar.searchText == "ios")
-    #expect(store.sidebar.activeFilterTags == ["tag-a"])
-    #expect(store.sidebar.selectedTag == "tag-a")
-    #expect(store.sidebar.activeSourceKinds == [.user])
-    #expect(store.sidebar.isPinnedViewActive == false)
+    model.sidebar.isPinnedViewActive = true
+    model.sidebar.applySavedFilter(filter)
+    #expect(model.sidebar.selectedSavedFilterID == "filter-1")
+    #expect(model.sidebar.searchText == "ios")
+    #expect(model.sidebar.activeFilterTags == ["tag-a"])
+    #expect(model.sidebar.selectedTag == "tag-a")
+    #expect(model.sidebar.activeSourceKinds == [.user])
+    #expect(model.sidebar.isPinnedViewActive == false)
 
-    store.sidebar.searchText = "keep"
-    store.sidebar.activeFilterTags = ["tag-a"]
-    store.sidebar.selectedTag = "tag-a"
-    store.sidebar.activeSourceKinds = [.user]
-    store.sidebar.isPinnedViewActive = true
+    model.sidebar.searchText = "keep"
+    model.sidebar.activeFilterTags = ["tag-a"]
+    model.sidebar.selectedTag = "tag-a"
+    model.sidebar.activeSourceKinds = [.user]
+    model.sidebar.isPinnedViewActive = true
 
-    store.sidebar.applyAllPersonasFilter()
-    #expect(store.sidebar.selectedSavedFilterID == SidebarModel.allPersonasFilterID)
-    #expect(store.sidebar.searchText.isEmpty)
-    #expect(store.sidebar.activeFilterTags.isEmpty)
-    #expect(store.sidebar.selectedTag == nil)
-    #expect(store.sidebar.activeSourceKinds.isEmpty)
-    #expect(store.sidebar.isPinnedViewActive == false)
+    model.sidebar.applyAllPersonasFilter()
+    #expect(model.sidebar.selectedSavedFilterID == SidebarModel.allPersonasFilterID)
+    #expect(model.sidebar.searchText.isEmpty)
+    #expect(model.sidebar.activeFilterTags.isEmpty)
+    #expect(model.sidebar.selectedTag == nil)
+    #expect(model.sidebar.activeSourceKinds.isEmpty)
+    #expect(model.sidebar.isPinnedViewActive == false)
   }
 
   @MainActor
-  private func makeStore(
+  private func makeModel(
     fileClient: FileClient,
     savedFiltersStore: SavedFiltersStore,
     pinnedPersonasStore: PinnedPersonasStore
-  ) -> AppStore {
+  ) -> AppModel {
     let appClient = AppClient(
       selectPackURL: { nil },
       confirmRemovePack: { false },
@@ -116,7 +116,7 @@ struct AppStoreSavedFiltersTests {
       $0.appClient = appClient
       $0.uuid = .incrementing
     } operation: {
-      AppStore(savedFiltersStore: savedFiltersStore, pinnedPersonasStore: pinnedPersonasStore)
+      AppModel(savedFiltersStore: savedFiltersStore, pinnedPersonasStore: pinnedPersonasStore)
     }
   }
 }

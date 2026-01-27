@@ -1,12 +1,12 @@
 import Foundation
 import PersonaKitCore
 
-/// JSON preview generation and formatting for ``AppStore``.
-extension AppStore {
+/// JSON preview generation and formatting for ``AppModel``.
+extension AppModel {
   /// Updates the JSON preview text and optionally schedules formatting.
   func updateJSONPreview(_ text: String, scheduleFormat: Bool) {
-    guard text != state.preview.jsonPreview else { return }
-    state.preview.jsonPreview = text
+    guard text != preview.jsonPreview else { return }
+    preview.jsonPreview = text
     if scheduleFormat {
       scheduleJSONFormat()
     }
@@ -43,9 +43,9 @@ extension AppStore {
   }
 
   private func formatJSONIfValid() {
-    guard let formatted = prettyPrintedJSON(from: state.preview.jsonPreview) else { return }
-    guard formatted != state.preview.jsonPreview else { return }
-    state.preview.jsonPreview = formatted
+    guard let formatted = prettyPrintedJSON(from: preview.jsonPreview) else { return }
+    guard formatted != preview.jsonPreview else { return }
+    preview.jsonPreview = formatted
   }
 
   private func prettyPrintedJSON(from text: String) -> String? {

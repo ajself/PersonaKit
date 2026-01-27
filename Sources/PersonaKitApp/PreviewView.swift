@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Shows the composed prompt or JSON output for the selected persona.
 struct PreviewView: View {
-  @Environment(AppStore.self)
-  private var store
+  @Environment(AppModel.self)
+  private var model
   @Binding var selectedPanel: PreviewPanel
 
   /// Builds the preview picker and the selected output panel.
@@ -30,8 +30,8 @@ struct PreviewView: View {
           ScrollView {
             VStack(alignment: .leading, spacing: 12) {
               Text(
-                store.state.preview.promptPreview.isEmpty
-                  ? "No prompt available." : store.state.preview.promptPreview
+                model.preview.promptPreview.isEmpty
+                  ? "No prompt available." : model.preview.promptPreview
               )
               .font(.system(.body, design: .monospaced))
               .textSelection(.enabled)
@@ -40,14 +40,14 @@ struct PreviewView: View {
             .padding()
           }
         case .json:
-          let jsonText = store.state.preview.jsonPreview
+          let jsonText = model.preview.jsonPreview
           if jsonText.isEmpty {
             Text("No JSON available.")
               .foregroundStyle(.secondary)
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
               .padding()
           } else {
-            JSONEditorView(text: store.bindingForJSONPreview())
+            JSONEditorView(text: model.bindingForJSONPreview())
               .frame(maxWidth: .infinity, maxHeight: .infinity)
           }
         }

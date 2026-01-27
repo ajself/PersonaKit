@@ -2,8 +2,8 @@ import Foundation
 import PersonaKitCore
 import PersonaKitResources
 
-/// Pack loading and preview refresh routines for ``AppStore``.
-extension AppStore {
+/// Pack loading and preview refresh routines for ``AppModel``.
+extension AppModel {
   /// Bundles computed indexes used during reload to keep lookups consistent.
   private struct ReloadIndexes {
     let packsByID: [String: PackMeta]
@@ -13,8 +13,8 @@ extension AppStore {
 
   /// Reloads built-in and user packs, then refreshes selections and previews.
   func reloadAll() {
-    state.diagnostics.removeAll()
-    let previousSelection = state.composer.selectedPersonaID
+    diagnostics.removeAll()
+    let previousSelection = composer.selectedPersonaID
 
     let userPacks = PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs
     let builtInSets = loadBuiltInSets()
@@ -28,32 +28,33 @@ extension AppStore {
     )
 
     let merged = PersonaResolver.mergeSets(sets)
-    state.diagnostics.append(contentsOf: merged.diagnostics)
+    diagnostics.append(contentsOf: merged.diagnostics)
 
     let resolved = PersonaResolver.resolveAll(from: merged.personas)
-    state.diagnostics.append(contentsOf: resolved.diagnostics)
-    state.personaIndex = resolved.personasByID
-    state.personaPacksByID = indexes.packsByID
-    state.personaSourcesByID = indexes.sourcesByID
-    state.packLocationsByPersonaID = indexes.packLocationsByID
-    state.availablePacks = buildPackSelections(
+    diagnostics.append(contentsOf: resolved.diagnostics)
+    personaIndex = resolved.personasByID
+    personaPacksByID = indexes.packsByID
+    personaSourcesByID = indexes.sourcesByID
+    packLocationsByPersonaID = indexes.packLocationsByID
+    availablePacks = buildPackSelections(
       sets: sets, packLocationsBySourceURL: userPackInfo.packLocationsBySourceURL)
 
     restoreSelection(previousSelection: previousSelection)
     requestPreviewRecompute()
+    handlePreviewRecomputeIfNeeded()
   }
 
   /// Recomputes prompt and JSON previews for the selected persona.
   func recomputePreview() {
-    guard let id = state.composer.selectedPersonaID,
-      let persona = state.personaIndex[id]?.persona
+    guard let id = composer.selectedPersonaID,
+      let persona = personaIndex[id]?.persona
     else {
-      state.preview.promptPreview = ""
+      preview.promptPreview = ""
       updateJSONPreview("", scheduleFormat: false)
       return
     }
-    state.preview.promptPreview = PersonaOutputRenderer.prompt(
-      persona: persona, sections: state.composer.composerValues)
+    preview.promptPreview = PersonaOutputRenderer.prompt(
+      persona: persona, sections: composer.composerValues)
     updateJSONPreview(buildPersonaJSON(persona: persona, prettyPrinted: true), scheduleFormat: true)
   }
 
@@ -61,7 +62,7 @@ extension AppStore {
     var sets: [PersonaSet] = []
     let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaKitResources.bundle)
     if builtInURLs.isEmpty {
-      state.diagnostics.append(
+        diagnostics.append(
         .warning(
           source: PersonaSource(kind: .builtIn, url: nil),
           message:
@@ -75,7 +76,7 @@ extension AppStore {
       case .success(let set):
         sets.append(set)
       case .failure(let error):
-        state.diagnostics.append(contentsOf: error.diagnostics)
+        diagnostics.append(contentsOf: error.diagnostics)
       }
     }
     return sets
@@ -99,13 +100,13 @@ extension AppStore {
         isDirectoryPack: pack.isDirectoryPack
       )
     }
-    state.diagnostics.append(contentsOf: loaded.diagnostics)
+    diagnostics.append(contentsOf: loaded.diagnostics)
     return (sets: sets, packLocationsBySourceURL: packLocationsBySourceURL)
   }
 
   private func appendNoPacksWarningIfNeeded(sets: [PersonaSet], userPacks: URL) {
     guard sets.isEmpty else { return }
-    state.diagnostics.append(
+    diagnostics.append(
       .warning(
         source: PersonaSource(kind: .adhoc, url: nil),
         message: "No persona packs loaded. Add packs to \(userPacks.path)."
@@ -138,10 +139,10 @@ extension AppStore {
   }
 
   private func restoreSelection(previousSelection: String?) {
-    if let previousSelection, state.personaIndex.keys.contains(previousSelection) {
-      state.composer.selectedPersonaID = previousSelection
+    if let previousSelection, personaIndex.keys.contains(previousSelection) {
+      composer.selectedPersonaID = previousSelection
     } else {
-      state.composer.selectedPersonaID = state.personaIndex.keys.sorted().first
+      composer.selectedPersonaID = personaIndex.keys.sorted().first
     }
   }
 

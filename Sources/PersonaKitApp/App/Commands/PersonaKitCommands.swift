@@ -2,7 +2,7 @@ import SwiftUI
 
 /// App command menu definitions for PersonaKit.
 struct PersonaKitCommands: Commands {
-  let store: AppStore
+  let model: AppModel
   @Binding var showPersonaSwitcher: Bool
   @Binding var showInspector: Bool
 
@@ -17,28 +17,28 @@ struct PersonaKitCommands: Commands {
       .keyboardShortcut("k", modifiers: [.command])
 
       Button {
-        store.sidebar.requestSearchFocus()
+        model.sidebar.requestSearchFocus()
       } label: {
         Label("Focus Sidebar Search", systemImage: "magnifyingglass")
       }
       .keyboardShortcut("f", modifiers: [.command])
 
       Button {
-        store.send(.composer(.requestFocus(sectionKey: "context")))
+        model.requestComposerFocus(sectionKey: "context")
       } label: {
         Label("Focus Context Field", systemImage: "text.cursor")
       }
       .keyboardShortcut("l", modifiers: [.command])
 
       Button {
-        store.send(.reloadAll)
+        model.reloadAll()
       } label: {
         Label("Reload Packs", systemImage: "arrow.clockwise")
       }
       .keyboardShortcut("r", modifiers: [.command])
 
       Button {
-        store.send(.copyPromptToClipboard)
+        model.copyPromptToClipboard()
       } label: {
         Label("Copy Prompt", systemImage: "doc.on.doc")
       }

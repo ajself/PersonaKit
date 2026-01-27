@@ -94,20 +94,27 @@ Exit criteria:
 - Added `Shared/UI` and `Shared/Clients` folders for safe, low-risk structure.
 - Moved `JSONEditorView` into `Sources/PersonaKitApp/Features/Preview/Components/`.
 
+### Phase 3 global wiring (in progress)
+- Renamed `AppStore` -> `AppModel` and moved files into `Sources/PersonaKitApp/App/Model/`.
+- Replaced `AppStore.State` with direct stored properties on `AppModel`.
+- Removed `Action` enums and `send(_:)` routing; views/commands now call explicit methods.
+- Updated bindings and tests to use `AppModel` and direct methods.
+- `AppModel+Composer` and `AppModel+Preview` currently live in `App/Model` and will move into
+  `Features/Composer` and `Features/Preview` during feature migrations.
+
 ---
 
 ## Inventory snapshot (current state)
 
 ### PersonaKitApp (SwiftUI target)
-- **State owners:** `AppStore` (`@MainActor`, store + action pattern) plus feature owners (`SidebarModel` for sidebar).
-- **Feature slices:** `SidebarModel` (explicit owner), `ComposerFeature`, `PreviewFeature` (state/action only; logic lives in `AppStore+*` extensions).
+- **State owners:** `AppModel` (`@MainActor`, explicit methods) plus feature owners (`SidebarModel` for sidebar).
+- **Feature slices:** `SidebarModel` (explicit owner), `ComposerFeature`, `PreviewFeature` (state-only; logic lives in `AppModel+*` extensions).
 - **Views:** `ContentView`, `SidebarView`, `ComposerView`, `PreviewView`, `InspectorView`, `PersonaSwitcherView`, `JSONEditorView`.
 - **App shell:** `PersonaKitAppMain`, `PersonaKitCommands`.
 - **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
 - **Clients:** `AppClient` (AppKit IO).
-- **IO + storage usage:** `AppStore` calls `FileClient`, `AppClient`. `SidebarModel` calls `SavedFiltersStore`, `PinnedPersonasStore`.
+- **IO + storage usage:** `AppModel` calls `FileClient`, `AppClient`. `SidebarModel` calls `SavedFiltersStore`, `PinnedPersonasStore`.
 - **Known FOSA violations:**
-  - `AppStore` + `Action` enums for non-sidebar features (ELM-style) conflict with updated FOSA guidance.
   - `InspectorView` calls `PackDiffInputBuilder` which reads files (IO in view).
 
 ### PersonaKitCore (domain + IO boundaries)
@@ -189,11 +196,11 @@ App shell:
 - `Sources/PersonaKitApp/PersonaKitCommands.swift` -> `Sources/PersonaKitApp/App/Commands/PersonaKitCommands.swift` (done)
 
 App model:
-- `Sources/PersonaKitApp/AppStore.swift` -> `Sources/PersonaKitApp/App/Model/AppModel.swift`
-- `Sources/PersonaKitApp/AppStore+Reload.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Reload.swift`
-- `Sources/PersonaKitApp/AppStore+ImportReveal.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+ImportReveal.swift`
-- `Sources/PersonaKitApp/AppStore+Bindings.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Bindings.swift`
-- `Sources/PersonaKitApp/AppStore+SendHandlers.swift` -> **remove** (replace with explicit `AppModel` methods)
+- `Sources/PersonaKitApp/AppStore.swift` -> `Sources/PersonaKitApp/App/Model/AppModel.swift` (done)
+- `Sources/PersonaKitApp/AppStore+Reload.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Reload.swift` (done)
+- `Sources/PersonaKitApp/AppStore+ImportReveal.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+ImportReveal.swift` (done)
+- `Sources/PersonaKitApp/AppStore+Bindings.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Bindings.swift` (done)
+- `Sources/PersonaKitApp/AppStore+SendHandlers.swift` -> **remove** (replaced by explicit `AppModel` methods) (done)
 
 Sidebar feature:
 - `Sources/PersonaKitApp/SidebarView.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarView.swift` (done)
@@ -207,16 +214,16 @@ Composer feature:
 - `Sources/PersonaKitApp/ComposerView.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerView.swift`
 - `Sources/PersonaKitApp/ComposerFeature.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerModel.swift`
 - `Sources/PersonaKitApp/AppStore+ComposerFeature.swift`
-  -> `Sources/PersonaKitApp/Features/Composer/AppModel+Composer.swift`
+  -> `Sources/PersonaKitApp/App/Model/AppModel+Composer.swift` (done)
 
 Preview feature:
 - `Sources/PersonaKitApp/PreviewView.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewView.swift`
 - `Sources/PersonaKitApp/PreviewPanel.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewPanel.swift`
 - `Sources/PersonaKitApp/PreviewFeature.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewModel.swift`
 - `Sources/PersonaKitApp/AppStore+PreviewFeature.swift`
-  -> `Sources/PersonaKitApp/Features/Preview/AppModel+Preview.swift`
+  -> `Sources/PersonaKitApp/App/Model/AppModel+Preview.swift` (done)
 - `Sources/PersonaKitApp/AppStore+JSONPreview.swift`
-  -> `Sources/PersonaKitApp/Features/Preview/AppModel+JSONPreview.swift`
+  -> `Sources/PersonaKitApp/App/Model/AppModel+JSONPreview.swift` (done)
 - `Sources/PersonaKitApp/JSONEditorView.swift`
   -> `Sources/PersonaKitApp/Features/Preview/Components/JSONEditorView.swift` (done; feature-local)
 
@@ -224,7 +231,7 @@ Inspector feature:
 - `Sources/PersonaKitApp/InspectorView.swift` -> `Sources/PersonaKitApp/Features/Inspector/InspectorView.swift`
 - `Sources/PersonaKitApp/PackDiffInputBuilder.swift`
   -> `Sources/PersonaKitApp/Features/Inspector/PackDiffInputBuilder.swift`
-  (Phase 3: move IO behind AppStore or a feature-local client)
+  (Phase 3: move IO behind AppModel or a feature-local client)
 
 Persona switcher feature:
 - `Sources/PersonaKitApp/PersonaSwitcherView.swift`
@@ -320,11 +327,11 @@ Use this checklist per feature when removing `Action` enums and `send(_:)` flows
 Use this as a scoped execution checklist. Each line should map to a small PR.
 
 ### App shell (global wiring)
-- Rename `AppStore` -> `AppModel` (`@MainActor @Observable`).
-- Replace `state` access with direct stored properties or feature models.
-- Remove `Action` + `send(_:)` and `AppStore+SendHandlers.swift`.
-- Update environment injection in `PersonaKitAppMain` + `ContentView` + `PersonaKitCommands`.
-- Update bindings to call explicit model methods (no action enums).
+- Rename `AppStore` -> `AppModel` (`@MainActor @Observable`). (done)
+- Replace `state` access with direct stored properties or feature models. (done)
+- Remove `Action` + `send(_:)` and `AppStore+SendHandlers.swift`. (done)
+- Update environment injection in `PersonaKitAppMain` + `ContentView` + `PersonaKitCommands`. (done)
+- Update bindings to call explicit model methods (no action enums). (done)
 
 ### Sidebar feature
 Owner: `SidebarModel` (explicit model type).
@@ -348,7 +355,7 @@ Tasks:
   - `store.send(.sidebar(.requestSearchBlur))` -> `model.requestSidebarSearchBlur()`
   - `store.send(.sidebar(.setSearchFocused))` -> `model.setSidebarSearchFocused(_:)`
 - Update tests:
-  - `PinnedViewToggleTests`, `AppStoreSavedFiltersTests`, `SidebarSearchEscapePolicyTests` to call methods.
+  - `PinnedViewToggleTests`, `AppModelSavedFiltersTests`, `SidebarSearchEscapePolicyTests` to call methods.
 
 ### Composer feature
 Owner: `ComposerModel` (explicit model type).
@@ -356,7 +363,7 @@ Owner: `ComposerModel` (explicit model type).
 Tasks:
 - Replace `ComposerFeature.State` with `ComposerModel` properties.
 - Delete `ComposerFeature.Action` enum.
-- Move logic from `AppStore+ComposerFeature.swift` into `AppModel+Composer.swift` methods.
+- Move logic from `AppStore+ComposerFeature.swift` into `AppModel+Composer.swift` methods. (done)
 - Update view call sites:
   - `store.send(.composer(.requestFocus))` -> `model.requestComposerFocus(sectionKey:)`
   - `store.send(.composer(.setSelectedPersonaID))` -> `model.selectPersona(id:)`
@@ -371,8 +378,8 @@ Owner: `PreviewModel` (explicit model type).
 Tasks:
 - Replace `PreviewFeature.State` with `PreviewModel` properties.
 - Delete `PreviewFeature.Action` enum.
-- Move logic from `AppStore+PreviewFeature.swift` into `AppModel+Preview.swift` methods.
-- Move JSON formatting from `AppStore+JSONPreview.swift` into `AppModel+JSONPreview.swift` or `PreviewModel`.
+- Move logic from `AppStore+PreviewFeature.swift` into `AppModel+Preview.swift` methods. (done)
+- Move JSON formatting from `AppStore+JSONPreview.swift` into `AppModel+JSONPreview.swift` or `PreviewModel`. (done)
 - Update view call sites:
   - `store.send(.preview(.setJSONPreview))` -> `model.updatePreviewJSON(_:)`
 - Ensure debounce behavior stays deterministic.
@@ -468,7 +475,7 @@ Record each phase’s status, owner, and date here.
 Phase 0:
 Phase 1:
 Phase 2: completed — Codex — 2026-01-27
-Phase 3:
+Phase 3: in progress — Codex — 2026-01-27
 Phase 4:
 Phase 5:
 ```

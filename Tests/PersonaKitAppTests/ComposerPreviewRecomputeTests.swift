@@ -8,7 +8,7 @@ struct ComposerPreviewRecomputeTests {
   @Test("Composer edits recompute the prompt preview")
   @MainActor
   func composerEditsRecomputePreview() {
-    let store = AppStore()
+    let model = AppModel()
     let persona = Persona(
       id: "test-persona",
       name: "Test Persona",
@@ -20,11 +20,11 @@ struct ComposerPreviewRecomputeTests {
       )
     )
     let resolution = PersonaResolver.resolveAll(from: ["test-persona": persona])
-    store.state.personaIndex = resolution.personasByID
-    store.state.composer.selectedPersonaID = "test-persona"
+    model.personaIndex = resolution.personasByID
+    model.composer.selectedPersonaID = "test-persona"
 
-    store.send(.composer(.setComposerValue(key: "context", value: "Hello")))
+    model.updateComposerValue(key: "context", value: "Hello")
 
-    #expect(store.state.preview.promptPreview == "System\n\nCONTEXT\nHello\n")
+    #expect(model.preview.promptPreview == "System\n\nCONTEXT\nHello\n")
   }
 }

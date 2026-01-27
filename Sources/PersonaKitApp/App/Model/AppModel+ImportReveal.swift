@@ -1,8 +1,8 @@
 import Foundation
 import PersonaKitCore
 
-/// Pack import, reveal, and removal behaviors for ``AppStore``.
-extension AppStore {
+/// Pack import, reveal, and removal behaviors for ``AppModel``.
+extension AppModel {
   /// Returns true when the selected pack is a directory-based user pack.
   var canRevealSelectedPack: Bool {
     guard let location = selectedPackLocation else { return false }
@@ -12,8 +12,8 @@ extension AppStore {
   /// Returns true when the selected pack can be removed from disk.
   var canRemoveSelectedPack: Bool {
     guard let location = selectedPackLocation,
-      let personaID = state.composer.selectedPersonaID,
-      let source = state.personaSourcesByID[personaID]
+      let personaID = composer.selectedPersonaID,
+      let source = personaSourcesByID[personaID]
     else { return false }
     return location.isDirectoryPack && source.kind == .user
   }
@@ -106,8 +106,8 @@ extension AppStore {
   /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
     guard let location = selectedPackLocation,
-      let personaID = state.composer.selectedPersonaID,
-      let source = state.personaSourcesByID[personaID],
+      let personaID = composer.selectedPersonaID,
+      let source = personaSourcesByID[personaID],
       location.isDirectoryPack,
       source.kind == .user
     else {
@@ -131,12 +131,12 @@ extension AppStore {
 
   /// Copies the composed prompt preview to the clipboard.
   func copyPromptToClipboard() {
-    appClient.copyToClipboard(state.preview.promptPreview)
+    appClient.copyToClipboard(preview.promptPreview)
   }
 
   private var selectedPackLocation: PackLocation? {
-    guard let personaID = state.composer.selectedPersonaID else { return nil }
-    return state.packLocationsByPersonaID[personaID]
+    guard let personaID = composer.selectedPersonaID else { return nil }
+    return packLocationsByPersonaID[personaID]
   }
 
   private func ensureStorageDirectories() throws -> PersonaKitStoragePaths {

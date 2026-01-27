@@ -3,15 +3,15 @@ import SwiftUI
 
 /// Modal sheet for quickly switching between personas.
 struct PersonaSwitcherView: View {
-  @Environment(AppStore.self)
-  private var store
+  @Environment(AppModel.self)
+  private var model
   @Binding var isPresented: Bool
   @State private var query: String = ""
   @State private var selection: String?
   @FocusState private var searchFocused: Bool
 
   private var filtered: [ResolvedPersona] {
-    let all = store.state.personaIndex.values.sorted {
+    let all = model.personaIndex.values.sorted {
       PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
     }
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -65,10 +65,10 @@ struct PersonaSwitcherView: View {
     .frame(width: 420, height: 360)
     .onAppear {
       searchFocused = true
-      selection = store.state.composer.selectedPersonaID
+      selection = model.composer.selectedPersonaID
       syncSelection()
     }
-    .onChange(of: store.state.personaIndex) { _, _ in
+    .onChange(of: model.personaIndex) { _, _ in
       syncSelection()
     }
     .onMoveCommand { direction in
@@ -117,7 +117,7 @@ struct PersonaSwitcherView: View {
 
   /// Updates the selected persona and closes the switcher.
   private func selectPersona(id: String) {
-    store.send(.composer(.setSelectedPersonaID(id)))
+    model.selectPersona(id: id)
     isPresented = false
   }
 }
