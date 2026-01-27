@@ -260,10 +260,9 @@ struct InspectorView: View {
   /// Computes a diff between the selected pack and a comparison pack.
   private func computePackDiff(comparison: PackSelection) {
     guard let selectedPackSelection else { return }
-    let left = PackDiffInputBuilder.build(for: selectedPackSelection)
-    let right = PackDiffInputBuilder.build(for: comparison)
-    packDiffDiagnostics = left.diagnostics + right.diagnostics
-    packDiff = PackDiffBuilder.diff(left: left.records, right: right.records)
+    let result = model.computePackDiff(primary: selectedPackSelection, comparison: comparison)
+    packDiffDiagnostics = result.diagnostics
+    packDiff = result.diff
   }
 }
 

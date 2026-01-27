@@ -103,6 +103,7 @@ Exit criteria:
   `Features/Composer` and `Features/Preview` during feature migrations.
 - Composer feature migrated to `ComposerModel`; moved composer files into `Features/Composer/`.
 - Preview feature migrated to `PreviewModel`; moved preview files into `Features/Preview/`.
+- Inspector feature moved into `Features/Inspector/`; diff IO routed through `AppModel`.
 
 ---
 
@@ -116,8 +117,7 @@ Exit criteria:
 - **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
 - **Clients:** `AppClient` (AppKit IO).
 - **IO + storage usage:** `AppModel` calls `FileClient`, `AppClient`. `SidebarModel` calls `SavedFiltersStore`, `PinnedPersonasStore`.
-- **Known FOSA violations:**
-  - `InspectorView` calls `PackDiffInputBuilder` which reads files (IO in view).
+- **Known FOSA violations:** None currently identified.
 
 ### PersonaKitCore (domain + IO boundaries)
 - **Domain logic:** models, resolver, loader, composer, validator, renderer.
@@ -230,10 +230,10 @@ Preview feature:
   -> `Sources/PersonaKitApp/Features/Preview/Components/JSONEditorView.swift` (done; feature-local)
 
 Inspector feature:
-- `Sources/PersonaKitApp/InspectorView.swift` -> `Sources/PersonaKitApp/Features/Inspector/InspectorView.swift`
+- `Sources/PersonaKitApp/InspectorView.swift`
+  -> `Sources/PersonaKitApp/Features/Inspector/InspectorView.swift` (done)
 - `Sources/PersonaKitApp/PackDiffInputBuilder.swift`
-  -> `Sources/PersonaKitApp/Features/Inspector/PackDiffInputBuilder.swift`
-  (Phase 3: move IO behind AppModel or a feature-local client)
+  -> `Sources/PersonaKitApp/Features/Inspector/PackDiffInputBuilder.swift` (done)
 
 Persona switcher feature:
 - `Sources/PersonaKitApp/PersonaSwitcherView.swift`
@@ -393,9 +393,9 @@ Owner: `InspectorModel` optional (only if needed); keep UI state local unless it
 
 Tasks:
 - Remove IO from `InspectorView`:
-  - Move pack diff computation into `AppModel` method (or a `PackDiffClient`).
-  - `InspectorView` calls `model.computePackDiff(primary:comparison:)` and receives diff + diagnostics.
-- Keep view-local UI state for sheets/selection if no cross-feature ownership is required.
+  - Move pack diff computation into `AppModel` method (or a `PackDiffClient`). (done)
+  - `InspectorView` calls `model.computePackDiff(primary:comparison:)` and receives diff + diagnostics. (done)
+- Keep view-local UI state for sheets/selection if no cross-feature ownership is required. (done)
 
 ### PersonaSwitcher feature
 Owner: view-local state OK (UI-only); AppModel owns selection.
