@@ -12,23 +12,6 @@ extension AppModel {
     }
   }
 
-  /// Encodes a ``Persona`` as JSON using deterministic key ordering.
-  func buildPersonaJSON(persona: Persona, prettyPrinted: Bool) -> String {
-    let encoder = JSONEncoder()
-    if prettyPrinted {
-      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    } else {
-      encoder.outputFormatting = [.sortedKeys]
-    }
-
-    guard let data = try? encoder.encode(persona),
-      let text = String(data: data, encoding: .utf8)
-    else {
-      return ""
-    }
-    return text
-  }
-
   private func scheduleJSONFormat() {
     jsonFormatTask?.cancel()
     jsonFormatTask = Task { @MainActor [weak self] in

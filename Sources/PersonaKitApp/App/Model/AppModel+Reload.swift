@@ -55,7 +55,8 @@ extension AppModel {
     }
     preview.promptPreview = PersonaOutputRenderer.prompt(
       persona: persona, sections: composer.composerValues)
-    updateJSONPreview(buildPersonaJSON(persona: persona, prettyPrinted: true), scheduleFormat: true)
+    let json = PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true) ?? ""
+    updateJSONPreview(json, scheduleFormat: true)
   }
 
   private func loadBuiltInSets() -> [PersonaSet] {

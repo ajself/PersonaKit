@@ -94,7 +94,7 @@ Exit criteria:
 - Added `Shared/UI` and `Shared/Clients` folders for safe, low-risk structure.
 - Moved `JSONEditorView` into `Sources/PersonaKitApp/Features/Preview/Components/`.
 
-### Phase 3 global wiring (in progress)
+### Phase 3 global wiring (completed)
 - Renamed `AppStore` -> `AppModel` and moved files into `Sources/PersonaKitApp/App/Model/`.
 - Replaced `AppStore.State` with direct stored properties on `AppModel`.
 - Removed `Action` enums and `send(_:)` routing; views/commands now call explicit methods.
@@ -104,6 +104,17 @@ Exit criteria:
 - Composer feature migrated to `ComposerModel`; moved composer files into `Features/Composer/`.
 - Preview feature migrated to `PreviewModel`; moved preview files into `Features/Preview/`.
 - Inspector feature moved into `Features/Inspector/`; diff IO routed through `AppModel`.
+
+### Phase 4 parity hardening (in progress)
+- App JSON preview now uses `PersonaOutputRenderer.resolvedJSON` to align with CLI output.
+- Audit findings (app/CLI duplication):
+  - Built-in pack loading: App uses bundle-only lookup; CLI uses bundle + repo-root fallback with shared diagnostics.
+  - User pack loading: App gathers pack locations for UI; CLI loads packs only.
+  - Index building: both targets build `sourcesByID`/`packsByID` maps from `PersonaSet`.
+- Proposed Phase 4 tasks:
+  - Extract a core helper for built-in pack loading (bundle + optional repo-root fallback) and reuse in App/CLI.
+  - Extract a core index builder for `sourcesByID`/`packsByID` to remove duplication.
+  - Add app-level parity tests for preview outputs (prompt + JSON) against `PersonaOutputRenderer`.
 
 ---
 
@@ -477,7 +488,7 @@ Record each phase’s status, owner, and date here.
 Phase 0:
 Phase 1:
 Phase 2: completed — Codex — 2026-01-27
-Phase 3: in progress — Codex — 2026-01-27
-Phase 4:
+Phase 3: completed — Codex — 2026-01-27
+Phase 4: in progress — Codex — 2026-01-27
 Phase 5:
 ```
