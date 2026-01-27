@@ -237,7 +237,7 @@ Inspector feature:
 
 Persona switcher feature:
 - `Sources/PersonaKitApp/PersonaSwitcherView.swift`
-  -> `Sources/PersonaKitApp/Features/PersonaSwitcher/PersonaSwitcherView.swift`
+  -> `Sources/PersonaKitApp/Features/PersonaSwitcher/PersonaSwitcherView.swift` (done)
 
 Clients:
 - `Sources/PersonaKitApp/Dependencies/AppClient.swift`
@@ -402,7 +402,7 @@ Owner: view-local state OK (UI-only); AppModel owns selection.
 
 Tasks:
 - Replace `store.send(.composer(.setSelectedPersonaID))` with `model.selectPersona(id:)`.
-- Keep local query/selection state in view.
+- Keep local query/selection state in view. (done)
 
 ### Shared clients + IO boundaries
 - Move `AppClient` to `Shared/Clients`.
