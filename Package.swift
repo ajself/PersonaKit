@@ -13,7 +13,6 @@ let package = Package(
     .executable(name: "personakit-validate", targets: ["PersonaKitSchemaValidate"])
   ],
   dependencies: [
-    .package(url: "https://github.com/ajself/FOSA.git", branch: "main"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies.git", from: "1.10.1")
   ],
   targets: [

@@ -21,31 +21,31 @@ struct AppStoreSavedFiltersTests {
       pinnedPersonasStore: pinnedPersonasStore
     )
 
-    store.state.sidebar.searchText = "build determinism"
-    store.state.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
-    store.state.sidebar.activeSourceKinds = [.user, .builtIn]
-    store.state.sidebar.isPinnedViewActive = true
+    store.sidebar.searchText = "build determinism"
+    store.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
+    store.sidebar.activeSourceKinds = [.user, .builtIn]
+    store.sidebar.isPinnedViewActive = true
 
-    store.send(.sidebar(.saveCurrentFilter(name: "  My Filter  ")))
-    let saved = try #require(store.state.sidebar.savedFilters.first)
+    store.sidebar.saveCurrentFilter(name: "  My Filter  ")
+    let saved = try #require(store.sidebar.savedFilters.first)
     #expect(saved.name == "My Filter")
     #expect(saved.queryText == "build determinism")
     #expect(saved.selectedTags == ["alpha", "beta"])
     #expect(saved.selectedSources == ["builtIn", "user"])
-    #expect(store.state.sidebar.selectedSavedFilterID == saved.id)
-    #expect(store.state.sidebar.isPinnedViewActive == false)
-    #expect(savedFiltersStore.load() == store.state.sidebar.savedFilters)
+    #expect(store.sidebar.selectedSavedFilterID == saved.id)
+    #expect(store.sidebar.isPinnedViewActive == false)
+    #expect(savedFiltersStore.load() == store.sidebar.savedFilters)
 
     let savedID = saved.id
-    store.send(.sidebar(.renameSavedFilter(id: savedID, newName: " Renamed ")))
-    let renamed = try #require(store.state.sidebar.savedFilters.first)
+    store.sidebar.renameSavedFilter(id: savedID, newName: " Renamed ")
+    let renamed = try #require(store.sidebar.savedFilters.first)
     #expect(renamed.name == "Renamed")
-    #expect(savedFiltersStore.load() == store.state.sidebar.savedFilters)
+    #expect(savedFiltersStore.load() == store.sidebar.savedFilters)
 
-    store.state.sidebar.selectedSavedFilterID = renamed.id
-    store.send(.sidebar(.deleteSavedFilter(id: savedID)))
-    #expect(store.state.sidebar.savedFilters.isEmpty)
-    #expect(store.state.sidebar.selectedSavedFilterID == nil)
+    store.sidebar.selectedSavedFilterID = renamed.id
+    store.sidebar.deleteSavedFilter(id: savedID)
+    #expect(store.sidebar.savedFilters.isEmpty)
+    #expect(store.sidebar.selectedSavedFilterID == nil)
     #expect(savedFiltersStore.load().isEmpty)
   }
 
@@ -74,28 +74,28 @@ struct AppStoreSavedFiltersTests {
       groupingMode: nil
     )
 
-    store.state.sidebar.isPinnedViewActive = true
-    store.send(.sidebar(.applySavedFilter(filter)))
-    #expect(store.state.sidebar.selectedSavedFilterID == "filter-1")
-    #expect(store.state.sidebar.searchText == "ios")
-    #expect(store.state.sidebar.activeFilterTags == ["tag-a"])
-    #expect(store.state.sidebar.selectedTag == "tag-a")
-    #expect(store.state.sidebar.activeSourceKinds == [.user])
-    #expect(store.state.sidebar.isPinnedViewActive == false)
+    store.sidebar.isPinnedViewActive = true
+    store.sidebar.applySavedFilter(filter)
+    #expect(store.sidebar.selectedSavedFilterID == "filter-1")
+    #expect(store.sidebar.searchText == "ios")
+    #expect(store.sidebar.activeFilterTags == ["tag-a"])
+    #expect(store.sidebar.selectedTag == "tag-a")
+    #expect(store.sidebar.activeSourceKinds == [.user])
+    #expect(store.sidebar.isPinnedViewActive == false)
 
-    store.state.sidebar.searchText = "keep"
-    store.state.sidebar.activeFilterTags = ["tag-a"]
-    store.state.sidebar.selectedTag = "tag-a"
-    store.state.sidebar.activeSourceKinds = [.user]
-    store.state.sidebar.isPinnedViewActive = true
+    store.sidebar.searchText = "keep"
+    store.sidebar.activeFilterTags = ["tag-a"]
+    store.sidebar.selectedTag = "tag-a"
+    store.sidebar.activeSourceKinds = [.user]
+    store.sidebar.isPinnedViewActive = true
 
-    store.send(.sidebar(.applyAllPersonasFilter))
-    #expect(store.state.sidebar.selectedSavedFilterID == SidebarFeature.allPersonasFilterID)
-    #expect(store.state.sidebar.searchText.isEmpty)
-    #expect(store.state.sidebar.activeFilterTags.isEmpty)
-    #expect(store.state.sidebar.selectedTag == nil)
-    #expect(store.state.sidebar.activeSourceKinds.isEmpty)
-    #expect(store.state.sidebar.isPinnedViewActive == false)
+    store.sidebar.applyAllPersonasFilter()
+    #expect(store.sidebar.selectedSavedFilterID == SidebarModel.allPersonasFilterID)
+    #expect(store.sidebar.searchText.isEmpty)
+    #expect(store.sidebar.activeFilterTags.isEmpty)
+    #expect(store.sidebar.selectedTag == nil)
+    #expect(store.sidebar.activeSourceKinds.isEmpty)
+    #expect(store.sidebar.isPinnedViewActive == false)
   }
 
   @MainActor

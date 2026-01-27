@@ -17,7 +17,7 @@ struct PersonaKitCommands: Commands {
       .keyboardShortcut("k", modifiers: [.command])
 
       Button {
-        store.send(.sidebar(.requestSearchFocus))
+        store.sidebar.requestSearchFocus()
       } label: {
         Label("Focus Sidebar Search", systemImage: "magnifyingglass")
       }

@@ -77,7 +77,6 @@ final class AppStore {
     var personaSourcesByID: [String: PersonaSource]
     var packLocationsByPersonaID: [String: PackLocation]
     var availablePacks: [PackSelection]
-    var sidebar: SidebarFeature.State
     var composer: ComposerFeature.State
     var preview: PreviewFeature.State
 
@@ -88,7 +87,6 @@ final class AppStore {
       personaSourcesByID: [String: PersonaSource] = [:],
       packLocationsByPersonaID: [String: PackLocation] = [:],
       availablePacks: [PackSelection] = [],
-      sidebar: SidebarFeature.State = SidebarFeature.State(),
       composer: ComposerFeature.State = ComposerFeature.State(),
       preview: PreviewFeature.State = PreviewFeature.State()
     ) {
@@ -98,7 +96,6 @@ final class AppStore {
       self.personaSourcesByID = personaSourcesByID
       self.packLocationsByPersonaID = packLocationsByPersonaID
       self.availablePacks = availablePacks
-      self.sidebar = sidebar
       self.composer = composer
       self.preview = preview
     }
@@ -113,7 +110,6 @@ final class AppStore {
     case revealSelectedPack
     case removeSelectedPack
     case copyPromptToClipboard
-    case sidebar(SidebarFeature.Action)
     case composer(ComposerFeature.Action)
     case preview(PreviewFeature.Action)
   }
@@ -127,9 +123,7 @@ final class AppStore {
   @Dependency(\.continuousClock)
   @ObservationIgnored var clock
 
-  let savedFiltersStore: SavedFiltersStore
-  let pinnedPersonasStore: PinnedPersonasStore
-  var isApplyingSavedFilter = false
+  let sidebar: SidebarModel
   var jsonFormatTask: Task<Void, Never>?
 
   var state: State
@@ -138,13 +132,11 @@ final class AppStore {
     savedFiltersStore: SavedFiltersStore = SavedFiltersStore(),
     pinnedPersonasStore: PinnedPersonasStore = PinnedPersonasStore()
   ) {
-    self.savedFiltersStore = savedFiltersStore
-    self.pinnedPersonasStore = pinnedPersonasStore
+    self.sidebar = SidebarModel(
+      savedFiltersStore: savedFiltersStore,
+      pinnedPersonasStore: pinnedPersonasStore
+    )
     self.state = State()
-
-    state.sidebar.savedFilters = savedFiltersStore.load()
-    state.sidebar.selectedSavedFilterID = SidebarFeature.allPersonasFilterID
-    state.sidebar.pinnedPersonaIDs = Set(pinnedPersonasStore.load())
   }
 
   /// Routes an action to the appropriate handler and applies deferred recompute work.
@@ -152,8 +144,6 @@ final class AppStore {
     let handledLifecycle = handleLifecycle(action)
     if !handledLifecycle {
       switch action {
-      case .sidebar(let sidebarAction):
-        handleSidebar(sidebarAction)
       case .composer(let composerAction):
         handleComposer(composerAction)
       case .preview(let previewAction):

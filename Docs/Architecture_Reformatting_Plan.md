@@ -41,7 +41,7 @@ scope control, and predictable execution.
 Checklist:
 - Read FOSA `AGENTS.md` and `STYLE_GUIDE.md`.
 - Read PersonaKit contract and 2.0 prompt pack.
-- Decide default state-owner pattern (Observable Model or Store + Action).
+- Decide default state-owner pattern (explicit Model owner).
 - Create `Sources/PersonaKitApp/App/ArchitectureDefaults.md` with:
   - State-owner pattern
   - Concurrency rules
@@ -78,18 +78,30 @@ Exit criteria:
 
 ---
 
+## Progress updates
+
+### Sidebar pilot (completed)
+- Added `Sources/PersonaKitApp/App/ArchitectureDefaults.md` with FOSA defaults.
+- Introduced `SidebarModel` as the sidebar owner (no actions/state containers).
+- Rewired sidebar UI, commands, and escape handling to call explicit model methods.
+- Removed sidebar action routing (`AppStore+SidebarFeature.swift`) and filter helpers (`AppStore+Filters.swift`).
+- Updated sidebar tests to use `store.sidebar`.
+- Moved sidebar files into `Sources/PersonaKitApp/Features/Sidebar/`.
+
+---
+
 ## Inventory snapshot (current state)
 
 ### PersonaKitApp (SwiftUI target)
-- **State owner:** `AppStore` (`@MainActor`, store + action pattern).
-- **Feature slices:** `SidebarFeature`, `ComposerFeature`, `PreviewFeature` (state/action only; logic lives in `AppStore+*` extensions).
+- **State owners:** `AppStore` (`@MainActor`, store + action pattern) plus feature owners (`SidebarModel` for sidebar).
+- **Feature slices:** `SidebarModel` (explicit owner), `ComposerFeature`, `PreviewFeature` (state/action only; logic lives in `AppStore+*` extensions).
 - **Views:** `ContentView`, `SidebarView`, `ComposerView`, `PreviewView`, `InspectorView`, `PersonaSwitcherView`, `JSONEditorView`.
 - **App shell:** `PersonaKitAppMain`, `PersonaKitCommands`.
 - **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
 - **Clients:** `AppClient` (AppKit IO).
-- **IO + storage usage:** `AppStore` calls `FileClient`, `SavedFiltersStore`, `PinnedPersonasStore`, `AppClient`.
+- **IO + storage usage:** `AppStore` calls `FileClient`, `AppClient`. `SidebarModel` calls `SavedFiltersStore`, `PinnedPersonasStore`.
 - **Known FOSA violations:**
-  - `AppStore` + `Action` enums (ELM-style) conflict with updated FOSA guidance.
+  - `AppStore` + `Action` enums for non-sidebar features (ELM-style) conflict with updated FOSA guidance.
   - `InspectorView` calls `PackDiffInputBuilder` which reads files (IO in view).
 
 ### PersonaKitCore (domain + IO boundaries)
@@ -178,12 +190,12 @@ App model:
 - `Sources/PersonaKitApp/AppStore+SendHandlers.swift` -> **remove** (replace with explicit `AppModel` methods)
 
 Sidebar feature:
-- `Sources/PersonaKitApp/SidebarView.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarView.swift`
-- `Sources/PersonaKitApp/SidebarFeature.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarModel.swift`
-- `Sources/PersonaKitApp/AppStore+SidebarFeature.swift` -> `Sources/PersonaKitApp/Features/Sidebar/AppModel+Sidebar.swift`
-- `Sources/PersonaKitApp/AppStore+Filters.swift` -> `Sources/PersonaKitApp/Features/Sidebar/AppModel+Filters.swift`
+- `Sources/PersonaKitApp/SidebarView.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarView.swift` (done)
+- `Sources/PersonaKitApp/SidebarFeature.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarModel.swift` (done)
+- `Sources/PersonaKitApp/AppStore+SidebarFeature.swift` -> **remove** (logic moved into `SidebarModel`) (done)
+- `Sources/PersonaKitApp/AppStore+Filters.swift` -> **remove** (logic moved into `SidebarModel`) (done)
 - `Sources/PersonaKitApp/SidebarSearchEscapePolicy.swift`
-  -> `Sources/PersonaKitApp/Features/Sidebar/SidebarSearchEscapePolicy.swift`
+  -> `Sources/PersonaKitApp/Features/Sidebar/SidebarSearchEscapePolicy.swift` (done)
 
 Composer feature:
 - `Sources/PersonaKitApp/ComposerView.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerView.swift`

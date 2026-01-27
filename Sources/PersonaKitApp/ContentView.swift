@@ -71,14 +71,14 @@ struct ContentView: View {
       return
     }
     switch SidebarSearchEscapePolicy.action(
-      searchText: store.state.sidebar.searchText,
-      isFocused: store.state.sidebar.isSearchFocused
+      searchText: store.sidebar.searchText,
+      isFocused: store.sidebar.isSearchFocused
     ) {
     case .clearAndFocus:
-      store.send(.sidebar(.setSearchText("")))
-      store.send(.sidebar(.requestSearchFocus))
+      store.sidebar.setSearchText("")
+      store.sidebar.requestSearchFocus()
     case .blur:
-      store.send(.sidebar(.requestSearchBlur))
+      store.sidebar.requestSearchBlur()
     case .noOp:
       break
     }

@@ -2,14 +2,6 @@ import SwiftUI
 
 /// SwiftUI bindings that forward updates back into ``AppStore`` actions.
 extension AppStore {
-  /// Binds the sidebar search text to ``SidebarFeature.Action.setSearchText``.
-  func bindingForSearchText() -> Binding<String> {
-    Binding(
-      get: { self.state.sidebar.searchText },
-      set: { self.send(.sidebar(.setSearchText($0))) }
-    )
-  }
-
   /// Binds the currently selected persona identifier.
   func bindingForSelectedPersonaID() -> Binding<String?> {
     Binding(
