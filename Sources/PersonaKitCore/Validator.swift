@@ -1,6 +1,8 @@
 import Foundation
 
+/// Performs schema v1 validation for persona packs and personas.
 public enum PersonaValidator {
+  /// Validates a full persona set and returns diagnostics.
   public static func validate(set: PersonaSet) -> [Diagnostic] {
     var diagnostics: [Diagnostic] = []
     diagnostics.append(contentsOf: validatePack(set))

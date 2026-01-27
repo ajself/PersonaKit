@@ -1,5 +1,6 @@
 import Foundation
 
+/// File-backed store for pinned persona identifiers.
 public struct PinnedPersonasStore {
   /// Storage location: Application Support/PersonaKit/State/pins.json
   public static func defaultFileURL(
@@ -13,6 +14,7 @@ public struct PinnedPersonasStore {
   public let fileURL: URL
   private let fileClient: FileClient
 
+  /// Creates a pinned personas store with an optional custom file client.
   public init(
     fileURL: URL = PinnedPersonasStore.defaultFileURL(),
     fileClient: FileClient? = nil
@@ -21,6 +23,7 @@ public struct PinnedPersonasStore {
     self.fileClient = fileClient ?? FileClientProvider().fileClient
   }
 
+  /// Loads pinned persona ids from disk, returning an empty array on failure.
   public func load() -> [String] {
     guard fileClient.fileExists(fileURL),
       let data = try? fileClient.readData(fileURL),
@@ -31,6 +34,7 @@ public struct PinnedPersonasStore {
     return decoded.sorted()
   }
 
+  /// Saves pinned persona ids to disk using deterministic ordering.
   public func save(_ pins: [String]) {
     let sorted = pins.sorted()
     guard let data = PinnedPersonasStore.encode(sorted) else { return }
@@ -39,12 +43,14 @@ public struct PinnedPersonasStore {
     try? fileClient.writeData(data, fileURL, [.atomic])
   }
 
+  /// Encodes pins as pretty-printed, sorted JSON data.
   static func encode(_ pins: [String]) -> Data? {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     return try? encoder.encode(pins)
   }
 
+  /// Decodes pins from JSON data.
   static func decode(_ data: Data) -> [String]? {
     let decoder = JSONDecoder()
     return try? decoder.decode([String].self, from: data)

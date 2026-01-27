@@ -1,6 +1,8 @@
 import Foundation
 
+/// Loads persona documents from disk and validates them against schema v1.
 public enum PersonaLoader {
+  /// Loads a single JSON document and returns a validated ``PersonaSet``.
   public static func loadDocument(
     from url: URL, sourceKind: PersonaSource.Kind
   ) -> Result<PersonaSet, DiagnosticError> {
@@ -23,6 +25,7 @@ public enum PersonaLoader {
     }
   }
 
+  /// Loads all JSON documents in a directory, collecting diagnostics.
   public static func loadDocuments(
     in directory: URL, sourceKind: PersonaSource.Kind
   ) -> (sets: [PersonaSet], diagnostics: [Diagnostic]) {

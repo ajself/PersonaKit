@@ -1,5 +1,6 @@
 import Foundation
 
+/// Errors that can occur when planning a pack import.
 public enum PersonaPackImportError: Error, Sendable, Equatable {
   case unsupportedSelection(URL)
   case missingPackFile(URL)
@@ -7,6 +8,7 @@ public enum PersonaPackImportError: Error, Sendable, Equatable {
   case invalidPackFile(URL, String)
   case fileOutsideSourceRoot(URL)
 
+  /// Human-readable guidance for the import error.
   public var userFacingMessage: String {
     switch self {
     case .unsupportedSelection(let url):
@@ -27,16 +29,19 @@ public enum PersonaPackImportError: Error, Sendable, Equatable {
   }
 }
 
+/// A deterministic plan describing which files to import into storage.
 public struct PersonaPackImportPlan: Sendable, Hashable {
   public let sourceRoot: URL
   public let packFile: URL
   public let filesToCopy: [URL]
   public let pack: PackMeta
 
+  /// Computes the relative path for a file under the source root.
   public func relativePath(for file: URL) -> String? {
     PersonaPackImportPlan.relativePath(for: file, sourceRoot: sourceRoot)
   }
 
+  /// Creates an import plan for a selected pack file or directory.
   public static func plan(
     from selection: URL,
     fileClient: FileClient? = nil

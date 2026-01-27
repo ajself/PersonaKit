@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: - Top-level documents
 
+/// Top-level envelope for persona pack or single persona documents.
 public struct PersonaDocumentEnvelope: Codable, Sendable {
   public let schemaVersion: Int
   public let documentType: DocumentType
@@ -15,6 +16,7 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
   private let decodingErrors: [String]
   private let documentTypeIsValid: Bool
 
+  /// The supported document types in schema v1.
   public enum DocumentType: String, Codable, Sendable {
     case personaPack
     case persona
@@ -86,6 +88,7 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
     self.decodingErrors = errors
   }
 
+  /// Converts the envelope to a ``PersonaSet`` or diagnostics.
   public func asResolvedSet(source: PersonaSource) -> Result<PersonaSet, DiagnosticError> {
     var diags: [Diagnostic] = decodingErrors.map { .error(source: source, message: $0) }
     if !documentTypeIsValid {
@@ -142,6 +145,7 @@ public struct PersonaDocumentEnvelope: Codable, Sendable {
 
 // MARK: - Pack metadata
 
+/// Metadata describing a persona pack.
 public struct PackMeta: Codable, Sendable, Hashable {
   public let id: String
   public let name: String
@@ -150,7 +154,9 @@ public struct PackMeta: Codable, Sendable, Hashable {
   public let homepage: String?
 }
 
+/// Default settings that may apply to personas within a pack.
 public struct PackDefaults: Codable, Sendable, Hashable {
+  /// Allowed output formats for a pack default.
   public enum OutputFormat: String, Codable, Sendable {
     case markdown, text, json
   }
@@ -160,6 +166,7 @@ public struct PackDefaults: Codable, Sendable, Hashable {
 
 // MARK: - Persona
 
+/// Schema v1 persona definition.
 public struct Persona: Codable, Sendable, Identifiable, Hashable {
   public let id: String
   public var name: String
@@ -201,6 +208,7 @@ public struct Persona: Codable, Sendable, Identifiable, Hashable {
   }
 }
 
+/// Optional structured template that describes user-provided sections.
 public struct PromptTemplate: Codable, Sendable, Hashable {
   public var format: String?
   public var sections: [TemplateSection]?
@@ -211,6 +219,7 @@ public struct PromptTemplate: Codable, Sendable, Hashable {
   }
 }
 
+/// A single section within a prompt template.
 public struct TemplateSection: Codable, Sendable, Hashable {
   public var key: String
   public var label: String
@@ -225,6 +234,7 @@ public struct TemplateSection: Codable, Sendable, Hashable {
   }
 }
 
+/// Constraints describing expected output structure.
 public struct OutputContract: Codable, Sendable, Hashable {
   public var headings: [String]?
   public var askClarifyingQuestionsMax: Int?

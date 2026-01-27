@@ -1,7 +1,9 @@
 import Foundation
 
+/// Resolves and merges persona sets into a single index.
 public enum PersonaResolver {
 
+  /// Output of resolving a set of personas.
   public struct ResolutionResult: Sendable {
     public let personasByID: [String: ResolvedPersona]
     public let diagnostics: [Diagnostic]
@@ -34,6 +36,7 @@ public enum PersonaResolver {
     return (merged, diags)
   }
 
+  /// Resolves merged personas into deterministic order.
   public static func resolveAll(from merged: [String: Persona]) -> ResolutionResult {
     let diags: [Diagnostic] = []
     var resolved: [String: ResolvedPersona] = [:]

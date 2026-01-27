@@ -1,5 +1,6 @@
 import Foundation
 
+/// Helpers for sorting and presenting persona metadata.
 public enum PersonaMetadata {
   private struct TagSortKey: Comparable {
     let normalized: String
@@ -13,6 +14,7 @@ public enum PersonaMetadata {
     }
   }
 
+  /// Deterministic sort key for persona lists.
   public struct PersonaSortKey: Comparable {
     let nameNormalized: String
     let name: String
@@ -37,6 +39,7 @@ public enum PersonaMetadata {
     TagSortKey(normalized: tag.lowercased(), original: tag)
   }
 
+  /// Builds a sort key for the provided persona.
   public static func personaSortKey(_ persona: Persona) -> PersonaSortKey {
     PersonaSortKey(
       nameNormalized: persona.name.lowercased(),
@@ -46,11 +49,13 @@ public enum PersonaMetadata {
     )
   }
 
+  /// Sorts tags deterministically, preserving original case order.
   public static func sortedTags(_ tags: [String]?) -> [String] {
     guard let tags, !tags.isEmpty else { return [] }
     return tags.sorted { tagSortKey($0) < tagSortKey($1) }
   }
 
+  /// Returns a sorted, unique tag list derived from personas.
   public static func sortedUniqueTags(from personas: [Persona]) -> [String] {
     let unique = Set(personas.flatMap { $0.tags ?? [] })
     return sortedTags(Array(unique))
@@ -58,10 +63,12 @@ public enum PersonaMetadata {
 }
 
 extension Persona {
+  /// Convenience alias for ``Persona/description``.
   public var about: String? {
     description
   }
 
+  /// Tags sorted using ``PersonaMetadata`` rules.
   public var sortedTags: [String] {
     PersonaMetadata.sortedTags(tags)
   }

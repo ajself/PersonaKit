@@ -1,16 +1,19 @@
 import Foundation
 
+/// Standard on-disk locations for PersonaKit packs and state.
 public struct PersonaKitStoragePaths: Sendable, Hashable {
   public let root: URL
   public let packs: URL
   public let state: URL
 
+  /// Creates storage paths rooted at the provided folder.
   public init(root: URL) {
     self.root = root
     self.packs = root.appendingPathComponent("Packs", isDirectory: true)
     self.state = root.appendingPathComponent("State", isDirectory: true)
   }
 
+  /// Returns the default Application Support paths for the current user.
   public static func standard(homeDirectory: URL? = nil) -> PersonaKitStoragePaths {
     let resolvedHome = homeDirectory ?? FileClientProvider().fileClient.homeDirectory()
     let root =
@@ -22,7 +25,9 @@ public struct PersonaKitStoragePaths: Sendable, Hashable {
   }
 }
 
+/// Helpers for naming pack directories in storage.
 public enum PersonaKitStorage {
+  /// Returns the preferred directory name for the given pack metadata.
   public static func preferredPackDirectoryName(for pack: PackMeta) -> String {
     let name = pack.name.trimmingCharacters(in: .whitespacesAndNewlines)
     let id = pack.id.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -30,6 +35,7 @@ public enum PersonaKitStorage {
     return sanitizePackDirectoryName(preferred)
   }
 
+  /// Sanitizes a pack name for safe directory use.
   public static func sanitizePackDirectoryName(_ name: String) -> String {
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty {
@@ -42,6 +48,7 @@ public enum PersonaKitStorage {
     return sanitized
   }
 
+  /// Produces a unique directory name by appending a numeric suffix when needed.
   public static func uniquePackDirectoryName(preferred: String, existing: Set<String>) -> String {
     let base =
       preferred.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

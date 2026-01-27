@@ -2,11 +2,13 @@ import Dependencies
 import Foundation
 import OSLog
 
+/// Dependency wrapper for logging PersonaKit core events.
 public struct LoggerClient: Sendable {
   public var info: @Sendable (String) -> Void
   public var warning: @Sendable (String) -> Void
   public var error: @Sendable (String) -> Void
 
+  /// Creates a logger client from the provided closures.
   public init(
     info: @escaping @Sendable (String) -> Void,
     warning: @escaping @Sendable (String) -> Void,
@@ -38,6 +40,7 @@ extension LoggerClient: DependencyKey {
 }
 
 extension DependencyValues {
+  /// Accessor for the ``LoggerClient`` dependency.
   public var logger: LoggerClient {
     get { self[LoggerClient.self] }
     set { self[LoggerClient.self] = newValue }

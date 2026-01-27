@@ -1,8 +1,12 @@
 import Foundation
 
+/// Composes deterministic prompts from a persona and user-provided inputs.
 public enum PromptComposer {
 
   /// Compose a prompt using a resolved persona and user-provided section values.
+  ///
+  /// The resulting prompt always starts with the persona system text, followed by
+  /// section blocks in template order (or sorted key order as a fallback).
   public static func compose(persona: Persona, sections: [String: String]) -> String {
     var parts: [String] = []
     parts.append(persona.system.trimmingCharacters(in: .whitespacesAndNewlines))

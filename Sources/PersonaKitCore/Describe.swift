@@ -1,16 +1,20 @@
 import Foundation
 
+/// Failure describing a persona for CLI output.
 public struct PersonaDescribeFailure: Error, Equatable {
   public let message: String
   public let exitCode: Int32
 
+  /// Creates a failure with a user-facing message and exit code.
   public init(message: String, exitCode: Int32) {
     self.message = message
     self.exitCode = exitCode
   }
 }
 
+/// Builds human-readable descriptions for personas and their sources.
 public enum PersonaDescriptor {
+  /// Returns a formatted description string or a CLI-friendly failure.
   public static func describe(
     personaID: String?,
     resolved: [String: ResolvedPersona],
@@ -33,6 +37,7 @@ public enum PersonaDescriptor {
     return .success(lines.joined(separator: "\n"))
   }
 
+  /// Returns individual description lines for a persona.
   public static func describeLines(
     persona: Persona,
     source: PersonaSource?,
@@ -59,12 +64,14 @@ public enum PersonaDescriptor {
     return lines
   }
 
+  /// Returns a sorted, unique tag list for display.
   public static func sortedUniqueTags(from tags: [String]?) -> [String] {
     guard let tags, !tags.isEmpty else { return [] }
     let unique = Array(Set(tags))
     return PersonaMetadata.sortedTags(unique)
   }
 
+  /// Returns a display label describing the persona source and pack.
   public static func sourceLabel(
     source: PersonaSource?,
     pack: PackMeta?,

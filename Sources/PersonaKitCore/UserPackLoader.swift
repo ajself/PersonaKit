@@ -1,5 +1,6 @@
 import Foundation
 
+/// A user pack plus its on-disk locations.
 public struct LoadedUserPack: Sendable, Hashable {
   public let set: PersonaSet
   public let packRoot: URL
@@ -7,7 +8,9 @@ public struct LoadedUserPack: Sendable, Hashable {
   public let isDirectoryPack: Bool
 }
 
+/// Loads user persona packs from a storage root.
 public enum UserPackLoader {
+  /// Loads all user packs and returns any diagnostics.
   public static func load(
     in packsRoot: URL,
     fileClient: FileClient? = nil

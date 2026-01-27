@@ -1,6 +1,8 @@
 import Foundation
 
+/// Locates built-in persona packs in bundles or repo layouts.
 public enum PersonaPackLocator {
+  /// Returns built-in pack URLs from a resource bundle.
   public static func builtInPackURLs(bundle: Bundle) -> [URL] {
     if let file = bundle.url(forResource: "BuiltIn.pack", withExtension: "json") {
       return [file]
@@ -11,6 +13,7 @@ public enum PersonaPackLocator {
     return []
   }
 
+  /// Returns built-in pack URLs from a repo checkout on disk.
   public static func builtInPackURLs(repoRoot: URL) -> [URL] {
     let fileClient = FileClientProvider().fileClient
     let resourcesRoot = repoRoot.appendingPathComponent(

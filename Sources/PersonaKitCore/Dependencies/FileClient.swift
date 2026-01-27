@@ -1,6 +1,7 @@
 import Dependencies
 import Foundation
 
+/// Dependency wrapper for file system operations.
 public struct FileClient: Sendable {
   public var fileExists: @Sendable (URL) -> Bool
   public var readData: @Sendable (URL) throws -> Data
@@ -17,6 +18,7 @@ public struct FileClient: Sendable {
   public var currentDirectoryPath: @Sendable () -> String
   public var isDirectory: @Sendable (URL) -> Bool
 
+  /// Creates a file client from the provided closures.
   public init(
     fileExists: @escaping @Sendable (URL) -> Bool,
     readData: @escaping @Sendable (URL) throws -> Data,
@@ -94,6 +96,7 @@ extension FileClient: DependencyKey {
 }
 
 extension DependencyValues {
+  /// Accessor for the ``FileClient`` dependency.
   public var fileClient: FileClient {
     get { self[FileClient.self] }
     set { self[FileClient.self] = newValue }
