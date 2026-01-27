@@ -17,9 +17,14 @@ extension AppModel {
     let previousSelection = composer.selectedPersonaID
 
     let userPacks = PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs
-    let builtInSets = loadBuiltInSets()
+    let builtIn = PersonaBuiltInPackLoader.loadBuiltInSets(
+      bundle: PersonaKitResources.bundle,
+      missingResourcesMessage:
+        "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
+    )
+    diagnostics.append(contentsOf: builtIn.diagnostics)
     let userPackInfo = loadUserPackInfo(in: userPacks)
-    let sets = builtInSets + userPackInfo.sets
+    let sets = builtIn.sets + userPackInfo.sets
     appendNoPacksWarningIfNeeded(sets: sets, userPacks: userPacks)
 
     let indexes = buildIndexes(
@@ -57,30 +62,6 @@ extension AppModel {
       persona: persona, sections: composer.composerValues)
     let json = PersonaOutputRenderer.resolvedJSON(persona: persona, prettyPrinted: true) ?? ""
     updateJSONPreview(json, scheduleFormat: true)
-  }
-
-  private func loadBuiltInSets() -> [PersonaSet] {
-    var sets: [PersonaSet] = []
-    let builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaKitResources.bundle)
-    if builtInURLs.isEmpty {
-        diagnostics.append(
-        .warning(
-          source: PersonaSource(kind: .builtIn, url: nil),
-          message:
-            "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
-        ))
-      return sets
-    }
-
-    for url in builtInURLs {
-      switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
-      case .success(let set):
-        sets.append(set)
-      case .failure(let error):
-        diagnostics.append(contentsOf: error.diagnostics)
-      }
-    }
-    return sets
   }
 
   private func loadUserPackInfo(

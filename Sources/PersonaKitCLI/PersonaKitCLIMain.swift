@@ -79,7 +79,12 @@ enum PersonaKitCLI {
     var sets: [PersonaSet] = []
     var diagnostics: [Diagnostic] = []
 
-    let builtIn = loadBuiltInSets(repoRoot: repoRoot)
+    let builtIn = PersonaBuiltInPackLoader.loadBuiltInSets(
+      bundle: PersonaKitResources.bundle,
+      repoRoot: repoRoot,
+      missingResourcesMessage:
+        "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
+    )
     sets.append(contentsOf: builtIn.sets)
     diagnostics.append(contentsOf: builtIn.diagnostics)
 
@@ -96,41 +101,6 @@ enum PersonaKitCLI {
       sourcesByID: indexes.sourcesByID,
       packsByID: indexes.packsByID
     )
-  }
-
-  private static func loadBuiltInSets(
-    repoRoot: URL
-  ) -> (
-    sets: [PersonaSet],
-    diagnostics: [Diagnostic]
-  ) {
-    var builtInURLs = PersonaPackLocator.builtInPackURLs(bundle: PersonaKitResources.bundle)
-    if builtInURLs.isEmpty {
-      builtInURLs = PersonaPackLocator.builtInPackURLs(repoRoot: repoRoot)
-    }
-
-    guard !builtInURLs.isEmpty else {
-      return (
-        sets: [],
-        diagnostics: [
-          .warning(
-            source: PersonaSource(kind: .builtIn, url: nil),
-            message:
-              "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled or run from repo root."
-          )
-        ]
-      )
-    }
-
-    var sets: [PersonaSet] = []
-    var diagnostics: [Diagnostic] = []
-    for url in builtInURLs {
-      switch PersonaLoader.loadDocument(from: url, sourceKind: .builtIn) {
-      case .success(let set): sets.append(set)
-      case .failure(let error): diagnostics.append(contentsOf: error.diagnostics)
-      }
-    }
-    return (sets: sets, diagnostics: diagnostics)
   }
 
   private static func loadUserSets(

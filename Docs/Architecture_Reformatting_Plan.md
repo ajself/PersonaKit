@@ -107,6 +107,7 @@ Exit criteria:
 
 ### Phase 4 parity hardening (in progress)
 - App JSON preview now uses `PersonaOutputRenderer.resolvedJSON` to align with CLI output.
+- Built-in pack loading now uses a shared core helper with optional repo-root fallback.
 - Audit findings (app/CLI duplication):
   - Built-in pack loading: App uses bundle-only lookup; CLI uses bundle + repo-root fallback with shared diagnostics.
   - User pack loading: App gathers pack locations for UI; CLI loads packs only.
