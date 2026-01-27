@@ -88,6 +88,12 @@ Exit criteria:
 - Updated sidebar tests to use `store.sidebar`.
 - Moved sidebar files into `Sources/PersonaKitApp/Features/Sidebar/`.
 
+### Phase 2 foundations (completed)
+- Moved app shell files into `Sources/PersonaKitApp/App/` and `App/Commands/`.
+- Moved `AppClient` into `Sources/PersonaKitApp/Shared/Clients/`.
+- Added `Shared/UI` and `Shared/Clients` folders for safe, low-risk structure.
+- Moved `JSONEditorView` into `Sources/PersonaKitApp/Features/Preview/Components/`.
+
 ---
 
 ## Inventory snapshot (current state)
@@ -178,9 +184,9 @@ Notes:
 ## File move map (first pass)
 
 App shell:
-- `Sources/PersonaKitApp/PersonaKitAppMain.swift` -> `Sources/PersonaKitApp/App/PersonaKitAppMain.swift`
-- `Sources/PersonaKitApp/ContentView.swift` -> `Sources/PersonaKitApp/App/ContentView.swift`
-- `Sources/PersonaKitApp/PersonaKitCommands.swift` -> `Sources/PersonaKitApp/App/Commands/PersonaKitCommands.swift`
+- `Sources/PersonaKitApp/PersonaKitAppMain.swift` -> `Sources/PersonaKitApp/App/PersonaKitAppMain.swift` (done)
+- `Sources/PersonaKitApp/ContentView.swift` -> `Sources/PersonaKitApp/App/ContentView.swift` (done)
+- `Sources/PersonaKitApp/PersonaKitCommands.swift` -> `Sources/PersonaKitApp/App/Commands/PersonaKitCommands.swift` (done)
 
 App model:
 - `Sources/PersonaKitApp/AppStore.swift` -> `Sources/PersonaKitApp/App/Model/AppModel.swift`
@@ -212,7 +218,7 @@ Preview feature:
 - `Sources/PersonaKitApp/AppStore+JSONPreview.swift`
   -> `Sources/PersonaKitApp/Features/Preview/AppModel+JSONPreview.swift`
 - `Sources/PersonaKitApp/JSONEditorView.swift`
-  -> `Sources/PersonaKitApp/Features/Preview/Components/JSONEditorView.swift` (or `Shared/UI/Components`)
+  -> `Sources/PersonaKitApp/Features/Preview/Components/JSONEditorView.swift` (done; feature-local)
 
 Inspector feature:
 - `Sources/PersonaKitApp/InspectorView.swift` -> `Sources/PersonaKitApp/Features/Inspector/InspectorView.swift`
@@ -226,7 +232,7 @@ Persona switcher feature:
 
 Clients:
 - `Sources/PersonaKitApp/Dependencies/AppClient.swift`
-  -> `Sources/PersonaKitApp/Shared/Clients/AppClient.swift`
+  -> `Sources/PersonaKitApp/Shared/Clients/AppClient.swift` (done)
 
 ---
 
@@ -461,7 +467,7 @@ Record each phase’s status, owner, and date here.
 ```
 Phase 0:
 Phase 1:
-Phase 2:
+Phase 2: completed — Codex — 2026-01-27
 Phase 3:
 Phase 4:
 Phase 5:
