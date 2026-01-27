@@ -65,7 +65,7 @@ struct PersonaSwitcherView: View {
     .frame(width: 420, height: 360)
     .onAppear {
       searchFocused = true
-      selection = store.state.selectedPersonaID
+      selection = store.state.composer.selectedPersonaID
       syncSelection()
     }
     .onChange(of: store.state.personaIndex) { _, _ in
@@ -117,7 +117,7 @@ struct PersonaSwitcherView: View {
 
   /// Updates the selected persona and closes the switcher.
   private func selectPersona(id: String) {
-    store.send(.setSelectedPersonaID(id))
+    store.send(.composer(.setSelectedPersonaID(id)))
     isPresented = false
   }
 }

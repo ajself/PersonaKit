@@ -86,7 +86,7 @@ struct ComposerView: View {
         showHelp: $showTaskHelp
       )
     }
-    .onChange(of: store.state.composerFocusRequest) { _, request in
+    .onChange(of: store.state.composer.focusRequest) { _, request in
       guard let request else { return }
       focusedSectionKey = request.sectionKey
     }

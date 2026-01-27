@@ -8,15 +8,15 @@ extension AppStore {
     id: String?, queryText: String, tags: [String], sources: [String]
   ) {
     isApplyingSavedFilter = true
-    state.selectedSavedFilterID = id
-    state.searchText = queryText
-    state.activeFilterTags = tags
+    state.sidebar.selectedSavedFilterID = id
+    state.sidebar.searchText = queryText
+    state.sidebar.activeFilterTags = tags
     if tags.count == 1, let only = tags.first {
-      state.selectedTag = only
+      state.sidebar.selectedTag = only
     } else {
-      state.selectedTag = nil
+      state.sidebar.selectedTag = nil
     }
-    state.activeSourceKinds = parseSourceKinds(from: sources)
+    state.sidebar.activeSourceKinds = parseSourceKinds(from: sources)
     isApplyingSavedFilter = false
   }
 
@@ -25,31 +25,31 @@ extension AppStore {
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
 
-    let tags = Array(Set(state.activeFilterTags)).sorted()
-    let sources = Array(Set(state.activeSourceKinds.map(\.rawValue))).sorted()
+    let tags = Array(Set(state.sidebar.activeFilterTags)).sorted()
+    let sources = Array(Set(state.sidebar.activeSourceKinds.map(\.rawValue))).sorted()
 
     let filter = SavedFilter(
       id: uuid().uuidString,
       name: trimmed,
-      queryText: state.searchText,
+      queryText: state.sidebar.searchText,
       selectedTags: tags,
       selectedSources: sources,
       groupingMode: nil
     )
 
-    state.savedFilters = sortSavedFilters(state.savedFilters + [filter])
-    savedFiltersStore.save(state.savedFilters)
-    state.selectedSavedFilterID = filter.id
-    state.isPinnedViewActive = false
+    state.sidebar.savedFilters = sortSavedFilters(state.sidebar.savedFilters + [filter])
+    savedFiltersStore.save(state.sidebar.savedFilters)
+    state.sidebar.selectedSavedFilterID = filter.id
+    state.sidebar.isPinnedViewActive = false
   }
 
   /// Renames a saved filter while preserving its query configuration.
   func renameSavedFilter(id: String, newName: String) {
     let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
-    guard let index = state.savedFilters.firstIndex(where: { $0.id == id }) else { return }
+    guard let index = state.sidebar.savedFilters.firstIndex(where: { $0.id == id }) else { return }
 
-    let existing = state.savedFilters[index]
+    let existing = state.sidebar.savedFilters[index]
     let renamed = SavedFilter(
       id: existing.id,
       name: trimmed,
@@ -58,32 +58,32 @@ extension AppStore {
       selectedSources: existing.selectedSources,
       groupingMode: existing.groupingMode
     )
-    var next = state.savedFilters
+    var next = state.sidebar.savedFilters
     next[index] = renamed
-    state.savedFilters = sortSavedFilters(next)
-    savedFiltersStore.save(state.savedFilters)
+    state.sidebar.savedFilters = sortSavedFilters(next)
+    savedFiltersStore.save(state.sidebar.savedFilters)
   }
 
   /// Deletes a saved filter and clears selection if needed.
   func deleteSavedFilter(id: String) {
-    state.savedFilters.removeAll { $0.id == id }
-    savedFiltersStore.save(state.savedFilters)
-    if state.selectedSavedFilterID == id {
-      state.selectedSavedFilterID = nil
+    state.sidebar.savedFilters.removeAll { $0.id == id }
+    savedFiltersStore.save(state.sidebar.savedFilters)
+    if state.sidebar.selectedSavedFilterID == id {
+      state.sidebar.selectedSavedFilterID = nil
     }
   }
 
   /// Toggles a persona's pinned state and persists the pin set.
   func togglePinnedPersona(id: String) {
-    if state.pinnedPersonaIDs.contains(id) {
-      state.pinnedPersonaIDs.remove(id)
-      if state.pinnedPersonaIDs.isEmpty {
-        state.isPinnedViewActive = false
+    if state.sidebar.pinnedPersonaIDs.contains(id) {
+      state.sidebar.pinnedPersonaIDs.remove(id)
+      if state.sidebar.pinnedPersonaIDs.isEmpty {
+        state.sidebar.isPinnedViewActive = false
       }
     } else {
-      state.pinnedPersonaIDs.insert(id)
+      state.sidebar.pinnedPersonaIDs.insert(id)
     }
-    pinnedPersonasStore.save(Array(state.pinnedPersonaIDs))
+    pinnedPersonasStore.save(Array(state.sidebar.pinnedPersonaIDs))
   }
 
   private func parseSourceKinds(from values: [String]) -> Set<PersonaSource.Kind> {

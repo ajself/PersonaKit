@@ -30,8 +30,8 @@ struct PreviewView: View {
           ScrollView {
             VStack(alignment: .leading, spacing: 12) {
               Text(
-                store.state.promptPreview.isEmpty
-                  ? "No prompt available." : store.state.promptPreview
+                store.state.preview.promptPreview.isEmpty
+                  ? "No prompt available." : store.state.preview.promptPreview
               )
               .font(.system(.body, design: .monospaced))
               .textSelection(.enabled)
@@ -40,7 +40,7 @@ struct PreviewView: View {
             .padding()
           }
         case .json:
-          let jsonText = store.state.jsonPreview
+          let jsonText = store.state.preview.jsonPreview
           if jsonText.isEmpty {
             Text("No JSON available.")
               .foregroundStyle(.secondary)

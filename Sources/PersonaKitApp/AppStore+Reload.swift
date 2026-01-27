@@ -14,7 +14,7 @@ extension AppStore {
   /// Reloads built-in and user packs, then refreshes selections and previews.
   func reloadAll() {
     state.diagnostics.removeAll()
-    let previousSelection = state.selectedPersonaID
+    let previousSelection = state.composer.selectedPersonaID
 
     let userPacks = PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory()).packs
     let builtInSets = loadBuiltInSets()
@@ -40,20 +40,20 @@ extension AppStore {
       sets: sets, packLocationsBySourceURL: userPackInfo.packLocationsBySourceURL)
 
     restoreSelection(previousSelection: previousSelection)
-    recomputePreview()
+    requestPreviewRecompute()
   }
 
   /// Recomputes prompt and JSON previews for the selected persona.
   func recomputePreview() {
-    guard let id = state.selectedPersonaID,
+    guard let id = state.composer.selectedPersonaID,
       let persona = state.personaIndex[id]?.persona
     else {
-      state.promptPreview = ""
+      state.preview.promptPreview = ""
       updateJSONPreview("", scheduleFormat: false)
       return
     }
-    state.promptPreview = PersonaOutputRenderer.prompt(
-      persona: persona, sections: state.composerValues)
+    state.preview.promptPreview = PersonaOutputRenderer.prompt(
+      persona: persona, sections: state.composer.composerValues)
     updateJSONPreview(buildPersonaJSON(persona: persona, prettyPrinted: true), scheduleFormat: true)
   }
 
@@ -139,9 +139,9 @@ extension AppStore {
 
   private func restoreSelection(previousSelection: String?) {
     if let previousSelection, state.personaIndex.keys.contains(previousSelection) {
-      state.selectedPersonaID = previousSelection
+      state.composer.selectedPersonaID = previousSelection
     } else {
-      state.selectedPersonaID = state.personaIndex.keys.sorted().first
+      state.composer.selectedPersonaID = state.personaIndex.keys.sorted().first
     }
   }
 

@@ -3,18 +3,6 @@ import Foundation
 import Observation
 import PersonaKitCore
 
-/// A tokenized focus request used to drive sidebar search focus changes.
-struct SidebarSearchFocusRequest: Equatable {
-  let id: UUID
-  let shouldFocus: Bool
-}
-
-/// A focus request that targets a specific composer section by key.
-struct ComposerFocusRequest: Equatable {
-  let id: UUID
-  let sectionKey: String
-}
-
 /// The resolved on-disk location of a persona pack and its metadata file.
 struct PackLocation: Equatable {
   let packRoot: URL
@@ -89,23 +77,9 @@ final class AppStore {
     var personaSourcesByID: [String: PersonaSource]
     var packLocationsByPersonaID: [String: PackLocation]
     var availablePacks: [PackSelection]
-
-    var selectedPersonaID: String?
-    var composerValues: [String: String]
-    var promptPreview: String
-    var jsonPreview: String
-
-    var searchText: String
-    var selectedTag: String?
-    var activeFilterTags: [String]
-    var activeSourceKinds: Set<PersonaSource.Kind>
-    var savedFilters: [SavedFilter]
-    var selectedSavedFilterID: String?
-    var pinnedPersonaIDs: Set<String>
-    var isPinnedViewActive: Bool
-    var sidebarSearchFocusRequest: SidebarSearchFocusRequest
-    var isSidebarSearchFocused: Bool
-    var composerFocusRequest: ComposerFocusRequest?
+    var sidebar: SidebarFeature.State
+    var composer: ComposerFeature.State
+    var preview: PreviewFeature.State
 
     init(
       diagnostics: [Diagnostic] = [],
@@ -114,21 +88,9 @@ final class AppStore {
       personaSourcesByID: [String: PersonaSource] = [:],
       packLocationsByPersonaID: [String: PackLocation] = [:],
       availablePacks: [PackSelection] = [],
-      selectedPersonaID: String? = nil,
-      composerValues: [String: String] = [:],
-      promptPreview: String = "",
-      jsonPreview: String = "",
-      searchText: String = "",
-      selectedTag: String? = nil,
-      activeFilterTags: [String] = [],
-      activeSourceKinds: Set<PersonaSource.Kind> = [],
-      savedFilters: [SavedFilter] = [],
-      selectedSavedFilterID: String? = nil,
-      pinnedPersonaIDs: Set<String> = [],
-      isPinnedViewActive: Bool = false,
-      sidebarSearchFocusRequest: SidebarSearchFocusRequest,
-      isSidebarSearchFocused: Bool = false,
-      composerFocusRequest: ComposerFocusRequest? = nil
+      sidebar: SidebarFeature.State = SidebarFeature.State(),
+      composer: ComposerFeature.State = ComposerFeature.State(),
+      preview: PreviewFeature.State = PreviewFeature.State()
     ) {
       self.diagnostics = diagnostics
       self.personaIndex = personaIndex
@@ -136,21 +98,9 @@ final class AppStore {
       self.personaSourcesByID = personaSourcesByID
       self.packLocationsByPersonaID = packLocationsByPersonaID
       self.availablePacks = availablePacks
-      self.selectedPersonaID = selectedPersonaID
-      self.composerValues = composerValues
-      self.promptPreview = promptPreview
-      self.jsonPreview = jsonPreview
-      self.searchText = searchText
-      self.selectedTag = selectedTag
-      self.activeFilterTags = activeFilterTags
-      self.activeSourceKinds = activeSourceKinds
-      self.savedFilters = savedFilters
-      self.selectedSavedFilterID = selectedSavedFilterID
-      self.pinnedPersonaIDs = pinnedPersonaIDs
-      self.isPinnedViewActive = isPinnedViewActive
-      self.sidebarSearchFocusRequest = sidebarSearchFocusRequest
-      self.isSidebarSearchFocused = isSidebarSearchFocused
-      self.composerFocusRequest = composerFocusRequest
+      self.sidebar = sidebar
+      self.composer = composer
+      self.preview = preview
     }
   }
 
@@ -163,22 +113,9 @@ final class AppStore {
     case revealSelectedPack
     case removeSelectedPack
     case copyPromptToClipboard
-    case requestSidebarSearchFocus
-    case requestSidebarSearchBlur
-    case requestComposerFocus(sectionKey: String)
-    case setSidebarSearchFocused(Bool)
-    case setSelectedPersonaID(String?)
-    case setComposerValue(key: String, value: String)
-    case setJSONPreview(String)
-    case setSearchText(String)
-    case setSelectedTag(String?)
-    case applyAllPersonasFilter
-    case applySavedFilter(SavedFilter)
-    case saveCurrentFilter(name: String)
-    case renameSavedFilter(id: String, newName: String)
-    case deleteSavedFilter(id: String)
-    case setPinnedViewActive
-    case togglePinnedPersona(id: String)
+    case sidebar(SidebarFeature.Action)
+    case composer(ComposerFeature.Action)
+    case preview(PreviewFeature.Action)
   }
 
   @Dependency(\.fileClient)
@@ -197,32 +134,34 @@ final class AppStore {
 
   var state: State
 
-  /// Stable identifier for the built-in "All Personas" filter.
-  static let allPersonasFilterID = "all-personas"
-
   init(
     savedFiltersStore: SavedFiltersStore = SavedFiltersStore(),
     pinnedPersonasStore: PinnedPersonasStore = PinnedPersonasStore()
   ) {
     self.savedFiltersStore = savedFiltersStore
     self.pinnedPersonasStore = pinnedPersonasStore
-    let focusRequest = SidebarSearchFocusRequest(
-      id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
-      shouldFocus: false
-    )
-    self.state = State(sidebarSearchFocusRequest: focusRequest)
+    self.state = State()
 
-    state.savedFilters = savedFiltersStore.load()
-    state.selectedSavedFilterID = Self.allPersonasFilterID
-    state.pinnedPersonaIDs = Set(pinnedPersonasStore.load())
+    state.sidebar.savedFilters = savedFiltersStore.load()
+    state.sidebar.selectedSavedFilterID = SidebarFeature.allPersonasFilterID
+    state.sidebar.pinnedPersonaIDs = Set(pinnedPersonasStore.load())
   }
 
-  /// Routes an action to the appropriate handler, returning early when handled.
+  /// Routes an action to the appropriate handler and applies deferred recompute work.
   func send(_ action: Action) {
-    if handleLifecycle(action) { return }
-    if handleFocus(action) { return }
-    if handleSelection(action) { return }
-    if handleFiltering(action) { return }
-    if handlePinned(action) { return }
+    let handledLifecycle = handleLifecycle(action)
+    if !handledLifecycle {
+      switch action {
+      case .sidebar(let sidebarAction):
+        handleSidebar(sidebarAction)
+      case .composer(let composerAction):
+        handleComposer(composerAction)
+      case .preview(let previewAction):
+        handlePreview(previewAction)
+      default:
+        break
+      }
+    }
+    handlePreviewRecomputeIfNeeded()
   }
 }

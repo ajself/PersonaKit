@@ -18,7 +18,7 @@ struct ContentView: View {
     .task {
       store.send(.task)
     }
-    .onChange(of: store.state.composerFocusRequest) { _, request in
+    .onChange(of: store.state.composer.focusRequest) { _, request in
       guard request != nil else { return }
       showInspector = true
     }
@@ -71,14 +71,14 @@ struct ContentView: View {
       return
     }
     switch SidebarSearchEscapePolicy.action(
-      searchText: store.state.searchText,
-      isFocused: store.state.isSidebarSearchFocused
+      searchText: store.state.sidebar.searchText,
+      isFocused: store.state.sidebar.isSearchFocused
     ) {
     case .clearAndFocus:
-      store.send(.setSearchText(""))
-      store.send(.requestSidebarSearchFocus)
+      store.send(.sidebar(.setSearchText("")))
+      store.send(.sidebar(.requestSearchFocus))
     case .blur:
-      store.send(.requestSidebarSearchBlur)
+      store.send(.sidebar(.requestSearchBlur))
     case .noOp:
       break
     }

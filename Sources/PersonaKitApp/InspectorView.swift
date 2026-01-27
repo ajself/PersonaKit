@@ -12,7 +12,7 @@ struct InspectorView: View {
   @State private var primaryPackID: String?
 
   private var selectedPersona: Persona? {
-    guard let id = store.state.selectedPersonaID else { return nil }
+    guard let id = store.state.composer.selectedPersonaID else { return nil }
     return store.state.personaIndex[id]?.persona
   }
 
@@ -109,7 +109,7 @@ struct InspectorView: View {
     .onAppear {
       updatePrimaryPackSelection()
     }
-    .onChange(of: store.state.selectedPersonaID) { _, _ in
+    .onChange(of: store.state.composer.selectedPersonaID) { _, _ in
       updatePrimaryPackSelection()
     }
     .onChange(of: store.state.availablePacks) { _, _ in

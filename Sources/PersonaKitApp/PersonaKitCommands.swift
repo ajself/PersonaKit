@@ -17,14 +17,14 @@ struct PersonaKitCommands: Commands {
       .keyboardShortcut("k", modifiers: [.command])
 
       Button {
-        store.send(.requestSidebarSearchFocus)
+        store.send(.sidebar(.requestSearchFocus))
       } label: {
         Label("Focus Sidebar Search", systemImage: "magnifyingglass")
       }
       .keyboardShortcut("f", modifiers: [.command])
 
       Button {
-        store.send(.requestComposerFocus(sectionKey: "context"))
+        store.send(.composer(.requestFocus(sectionKey: "context")))
       } label: {
         Label("Focus Context Field", systemImage: "text.cursor")
       }

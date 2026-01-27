@@ -15,10 +15,10 @@ struct AppStoreReloadSelectionTests {
 
     let ids = store.state.personaIndex.keys.sorted()
     let selected = try #require(ids.last)
-    store.send(.setSelectedPersonaID(selected))
+    store.send(.composer(.setSelectedPersonaID(selected)))
 
     store.send(.reloadAll)
-    #expect(store.state.selectedPersonaID == selected)
+    #expect(store.state.composer.selectedPersonaID == selected)
   }
 
   @Test("Reload falls back to first persona when selection missing")
@@ -27,11 +27,11 @@ struct AppStoreReloadSelectionTests {
     let store = makeStore()
     store.send(.reloadAll)
 
-    store.state.selectedPersonaID = "missing-persona-id"
+    store.state.composer.selectedPersonaID = "missing-persona-id"
     store.send(.reloadAll)
 
     let expected = try #require(store.state.personaIndex.keys.sorted().first)
-    #expect(store.state.selectedPersonaID == expected)
+    #expect(store.state.composer.selectedPersonaID == expected)
   }
 
   @Test("Reload maps pack locations for directory and file packs")

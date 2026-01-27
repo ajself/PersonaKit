@@ -18,16 +18,16 @@ struct JSONPreviewDebounceTests {
     }
 
     let unformatted = "{\"b\":2,\"a\":1}"
-    store.send(.setJSONPreview(unformatted))
-    #expect(store.state.jsonPreview == unformatted)
+    store.send(.preview(.setJSONPreview(unformatted)))
+    #expect(store.state.preview.jsonPreview == unformatted)
 
     await clock.advance(by: .milliseconds(399))
     await Task.yield()
-    #expect(store.state.jsonPreview == unformatted)
+    #expect(store.state.preview.jsonPreview == unformatted)
 
     await clock.advance(by: .milliseconds(1))
     await clock.run()
-    #expect(store.state.jsonPreview == prettyPrintedJSON(from: unformatted))
+    #expect(store.state.preview.jsonPreview == prettyPrintedJSON(from: unformatted))
   }
 
   @Test("JSON preview formatting uses latest edit")
@@ -42,17 +42,17 @@ struct JSONPreviewDebounceTests {
 
     let first = "{\"z\":1}"
     let second = "{\"a\":2}"
-    store.send(.setJSONPreview(first))
+    store.send(.preview(.setJSONPreview(first)))
 
     await clock.advance(by: .milliseconds(200))
     await Task.yield()
-    store.send(.setJSONPreview(second))
+    store.send(.preview(.setJSONPreview(second)))
 
     await clock.advance(by: .milliseconds(400))
     await clock.run()
 
-    #expect(store.state.jsonPreview == prettyPrintedJSON(from: second))
-    #expect(store.state.jsonPreview != prettyPrintedJSON(from: first))
+    #expect(store.state.preview.jsonPreview == prettyPrintedJSON(from: second))
+    #expect(store.state.preview.jsonPreview != prettyPrintedJSON(from: first))
   }
 
   @Test("JSON preview does not format invalid JSON")
@@ -66,12 +66,12 @@ struct JSONPreviewDebounceTests {
     }
 
     let invalidJSON = "{invalid"
-    store.send(.setJSONPreview(invalidJSON))
+    store.send(.preview(.setJSONPreview(invalidJSON)))
 
     await clock.advance(by: .milliseconds(400))
     await clock.run()
 
-    #expect(store.state.jsonPreview == invalidJSON)
+    #expect(store.state.preview.jsonPreview == invalidJSON)
   }
 
   @Test("JSON preview formatting is skipped when scheduling is disabled")
@@ -90,7 +90,7 @@ struct JSONPreviewDebounceTests {
     await clock.advance(by: .milliseconds(400))
     await clock.run()
 
-    #expect(store.state.jsonPreview == unformatted)
+    #expect(store.state.preview.jsonPreview == unformatted)
   }
 
   private func prettyPrintedJSON(from text: String) -> String {

@@ -12,7 +12,7 @@ extension AppStore {
   /// Returns true when the selected pack can be removed from disk.
   var canRemoveSelectedPack: Bool {
     guard let location = selectedPackLocation,
-      let personaID = state.selectedPersonaID,
+      let personaID = state.composer.selectedPersonaID,
       let source = state.personaSourcesByID[personaID]
     else { return false }
     return location.isDirectoryPack && source.kind == .user
@@ -106,7 +106,7 @@ extension AppStore {
   /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
     guard let location = selectedPackLocation,
-      let personaID = state.selectedPersonaID,
+      let personaID = state.composer.selectedPersonaID,
       let source = state.personaSourcesByID[personaID],
       location.isDirectoryPack,
       source.kind == .user
@@ -131,11 +131,11 @@ extension AppStore {
 
   /// Copies the composed prompt preview to the clipboard.
   func copyPromptToClipboard() {
-    appClient.copyToClipboard(state.promptPreview)
+    appClient.copyToClipboard(state.preview.promptPreview)
   }
 
   private var selectedPackLocation: PackLocation? {
-    guard let personaID = state.selectedPersonaID else { return nil }
+    guard let personaID = state.composer.selectedPersonaID else { return nil }
     return state.packLocationsByPersonaID[personaID]
   }
 
