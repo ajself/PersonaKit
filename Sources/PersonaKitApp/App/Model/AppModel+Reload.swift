@@ -99,14 +99,11 @@ extension AppModel {
     for sets: [PersonaSet],
     packLocationsBySourceURL: [URL: PackLocation]
   ) -> ReloadIndexes {
-    var packsByID: [String: PackMeta] = [:]
-    var sourcesByID: [String: PersonaSource] = [:]
+    let baseIndexes = PersonaIndexBuilder.buildIndexes(sets: sets)
     var packLocationsByID: [String: PackLocation] = [:]
 
     for set in sets {
       for persona in set.personas {
-        packsByID[persona.id] = set.pack
-        sourcesByID[persona.id] = set.source
         if let url = set.source.url, let location = packLocationsBySourceURL[url] {
           packLocationsByID[persona.id] = location
         }
@@ -114,8 +111,8 @@ extension AppModel {
     }
 
     return ReloadIndexes(
-      packsByID: packsByID,
-      sourcesByID: sourcesByID,
+      packsByID: baseIndexes.packsByID,
+      sourcesByID: baseIndexes.sourcesByID,
       packLocationsByID: packLocationsByID
     )
   }

@@ -92,7 +92,7 @@ enum PersonaKitCLI {
     sets.append(contentsOf: user.sets)
     diagnostics.append(contentsOf: user.diagnostics)
 
-    let indexes = buildIndexes(sets: sets)
+    let indexes = PersonaIndexBuilder.buildIndexes(sets: sets)
     let resolved = resolvePersonas(sets: sets, diagnostics: &diagnostics)
 
     return LoadResult(
@@ -115,25 +115,6 @@ enum PersonaKitCLI {
     }
     let loadedUser = UserPackLoader.load(in: userPacks)
     return (sets: loadedUser.packs.map { $0.set }, diagnostics: loadedUser.diagnostics)
-  }
-
-  private static func buildIndexes(
-    sets: [PersonaSet]
-  ) -> (
-    sourcesByID: [String: PersonaSource],
-    packsByID: [String: PackMeta]
-  ) {
-    var sourcesByID: [String: PersonaSource] = [:]
-    var packsByID: [String: PackMeta] = [:]
-
-    for set in sets {
-      for persona in set.personas {
-        sourcesByID[persona.id] = set.source
-        packsByID[persona.id] = set.pack
-      }
-    }
-
-    return (sourcesByID: sourcesByID, packsByID: packsByID)
   }
 
   private static func resolvePersonas(
