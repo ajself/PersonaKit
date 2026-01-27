@@ -8,14 +8,15 @@ scope control, and predictable execution.
 - PersonaKit v1 Scope & Contract: `Docs/PersonaKit_v1_Scope_and_Contract.md`
 - PersonaKit 2.0 Prompt Pack: `Docs/PersonaKit_2_0_Prompt_Pack_Index.md`
 - PersonaKit agent rules: `AGENTS.md`
-- FOSA rules and defaults: `FOSA` repo docs (`AGENTS.md`, `STYLE_GUIDE.md`, `App/ArchitectureDefaults.md`)
+- FOSA rules and defaults: `FOSA` repo docs (`AGENTS.md`, `STYLE_GUIDE.md`, `SWIFT_STYLE_GUIDE.md`, `App/ArchitectureDefaults.md`)
 
 ## Guardrails (non-negotiable)
 - No behavior changes to composition semantics or schema rules.
 - No new product features or scope expansion.
 - Determinism preserved: same input -> same output.
 - IO never performed in SwiftUI views.
-- Single-owner state; mutations traceable through named methods/actions.
+- Single-owner data; mutations traceable through named methods on explicit owners.
+- No ELM-style reducers/actions/stores (per updated FOSA guidance).
 - App and CLI stay in parity for identical inputs.
 
 ## Non-goals
@@ -27,7 +28,7 @@ scope control, and predictable execution.
 ## Deliverables
 - A repo-wide target architecture map (feature-first, per FOSA).
 - A concrete file move map (old path -> new path).
-- `Sources/App/ArchitectureDefaults.md` (repo defaults, minimal and stable).
+- `Sources/PersonaKitApp/App/ArchitectureDefaults.md` (repo defaults, minimal and stable).
 - Incremental, low-risk refactors with parity tests.
 - Updated docs reflecting the new structure.
 
@@ -41,7 +42,7 @@ Checklist:
 - Read FOSA `AGENTS.md` and `STYLE_GUIDE.md`.
 - Read PersonaKit contract and 2.0 prompt pack.
 - Decide default state-owner pattern (Observable Model or Store + Action).
-- Create `Sources/App/ArchitectureDefaults.md` with:
+- Create `Sources/PersonaKitApp/App/ArchitectureDefaults.md` with:
   - State-owner pattern
   - Concurrency rules
   - IO boundary rules
@@ -77,6 +78,146 @@ Exit criteria:
 
 ---
 
+## Inventory snapshot (current state)
+
+### PersonaKitApp (SwiftUI target)
+- **State owner:** `AppStore` (`@MainActor`, store + action pattern).
+- **Feature slices:** `SidebarFeature`, `ComposerFeature`, `PreviewFeature` (state/action only; logic lives in `AppStore+*` extensions).
+- **Views:** `ContentView`, `SidebarView`, `ComposerView`, `PreviewView`, `InspectorView`, `PersonaSwitcherView`, `JSONEditorView`.
+- **App shell:** `PersonaKitAppMain`, `PersonaKitCommands`.
+- **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
+- **Clients:** `AppClient` (AppKit IO).
+- **IO + storage usage:** `AppStore` calls `FileClient`, `SavedFiltersStore`, `PinnedPersonasStore`, `AppClient`.
+- **Known FOSA violations:**
+  - `AppStore` + `Action` enums (ELM-style) conflict with updated FOSA guidance.
+  - `InspectorView` calls `PackDiffInputBuilder` which reads files (IO in view).
+
+### PersonaKitCore (domain + IO boundaries)
+- **Domain logic:** models, resolver, loader, composer, validator, renderer.
+- **IO boundaries:** `FileClient`, `LoggerClient`.
+- **File-backed state:** `SavedFiltersStore`, `PinnedPersonasStore`.
+
+### CLI + Schema tools
+- CLI is a thin shell over core logic (`PersonaKitCLIMain.swift`).
+- Schema validator uses core validation (`PersonaKitSchemaValidate`).
+
+### Test coverage (not exhaustive)
+- App tests: JSON preview debounce, composer preview recompute, sidebar escape policy, pinned view toggles, saved filters, reload selection.
+- Core tests: decoding, metadata, storage, loader, resolver, import, describe, compose.
+
+---
+
+## Target structure (proposed, app-only)
+
+Adapt FOSA layout to the SPM target root `Sources/PersonaKitApp/`.
+
+```
+Sources/PersonaKitApp/
+  App/
+    PersonaKitAppMain.swift
+    ContentView.swift
+    Commands/
+      PersonaKitCommands.swift
+    Model/
+      AppModel.swift
+      AppModel+Reload.swift
+      AppModel+ImportReveal.swift
+      AppModel+Bindings.swift
+  Features/
+    Sidebar/
+      SidebarView.swift
+      SidebarModel.swift
+      AppModel+Sidebar.swift
+      AppModel+Filters.swift
+      SidebarSearchEscapePolicy.swift
+      Components/ (optional extraction)
+    Composer/
+      ComposerView.swift
+      ComposerModel.swift
+      AppModel+Composer.swift
+    Preview/
+      PreviewView.swift
+      PreviewPanel.swift
+      PreviewModel.swift
+      AppModel+Preview.swift
+      AppModel+JSONPreview.swift
+      Components/JSONEditorView.swift (or Shared/UI/Components)
+    Inspector/
+      InspectorView.swift
+      PackDiffInputBuilder.swift (move to client/state-owner in Phase 3)
+    PersonaSwitcher/
+      PersonaSwitcherView.swift
+  Shared/
+    Clients/
+      AppClient.swift
+    UI/
+      Components/ (if JSONEditorView is shared)
+```
+
+Notes:
+- `AppModel` is the single state owner; feature behaviors are grouped as `AppModel+*` extensions.
+- All `Action` enums and `send(_:)` routing are removed in favor of explicit model methods.
+- Feature `State` containers are replaced with explicit owner models (`SidebarModel`, `ComposerModel`, `PreviewModel`).
+- Any IO used by views must move behind AppModel + Clients (e.g., pack diff building).
+- Core target stays unchanged unless a move is strictly necessary for parity or reuse.
+
+---
+
+## File move map (first pass)
+
+App shell:
+- `Sources/PersonaKitApp/PersonaKitAppMain.swift` -> `Sources/PersonaKitApp/App/PersonaKitAppMain.swift`
+- `Sources/PersonaKitApp/ContentView.swift` -> `Sources/PersonaKitApp/App/ContentView.swift`
+- `Sources/PersonaKitApp/PersonaKitCommands.swift` -> `Sources/PersonaKitApp/App/Commands/PersonaKitCommands.swift`
+
+App model:
+- `Sources/PersonaKitApp/AppStore.swift` -> `Sources/PersonaKitApp/App/Model/AppModel.swift`
+- `Sources/PersonaKitApp/AppStore+Reload.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Reload.swift`
+- `Sources/PersonaKitApp/AppStore+ImportReveal.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+ImportReveal.swift`
+- `Sources/PersonaKitApp/AppStore+Bindings.swift` -> `Sources/PersonaKitApp/App/Model/AppModel+Bindings.swift`
+- `Sources/PersonaKitApp/AppStore+SendHandlers.swift` -> **remove** (replace with explicit `AppModel` methods)
+
+Sidebar feature:
+- `Sources/PersonaKitApp/SidebarView.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarView.swift`
+- `Sources/PersonaKitApp/SidebarFeature.swift` -> `Sources/PersonaKitApp/Features/Sidebar/SidebarModel.swift`
+- `Sources/PersonaKitApp/AppStore+SidebarFeature.swift` -> `Sources/PersonaKitApp/Features/Sidebar/AppModel+Sidebar.swift`
+- `Sources/PersonaKitApp/AppStore+Filters.swift` -> `Sources/PersonaKitApp/Features/Sidebar/AppModel+Filters.swift`
+- `Sources/PersonaKitApp/SidebarSearchEscapePolicy.swift`
+  -> `Sources/PersonaKitApp/Features/Sidebar/SidebarSearchEscapePolicy.swift`
+
+Composer feature:
+- `Sources/PersonaKitApp/ComposerView.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerView.swift`
+- `Sources/PersonaKitApp/ComposerFeature.swift` -> `Sources/PersonaKitApp/Features/Composer/ComposerModel.swift`
+- `Sources/PersonaKitApp/AppStore+ComposerFeature.swift`
+  -> `Sources/PersonaKitApp/Features/Composer/AppModel+Composer.swift`
+
+Preview feature:
+- `Sources/PersonaKitApp/PreviewView.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewView.swift`
+- `Sources/PersonaKitApp/PreviewPanel.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewPanel.swift`
+- `Sources/PersonaKitApp/PreviewFeature.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewModel.swift`
+- `Sources/PersonaKitApp/AppStore+PreviewFeature.swift`
+  -> `Sources/PersonaKitApp/Features/Preview/AppModel+Preview.swift`
+- `Sources/PersonaKitApp/AppStore+JSONPreview.swift`
+  -> `Sources/PersonaKitApp/Features/Preview/AppModel+JSONPreview.swift`
+- `Sources/PersonaKitApp/JSONEditorView.swift`
+  -> `Sources/PersonaKitApp/Features/Preview/Components/JSONEditorView.swift` (or `Shared/UI/Components`)
+
+Inspector feature:
+- `Sources/PersonaKitApp/InspectorView.swift` -> `Sources/PersonaKitApp/Features/Inspector/InspectorView.swift`
+- `Sources/PersonaKitApp/PackDiffInputBuilder.swift`
+  -> `Sources/PersonaKitApp/Features/Inspector/PackDiffInputBuilder.swift`
+  (Phase 3: move IO behind AppStore or a feature-local client)
+
+Persona switcher feature:
+- `Sources/PersonaKitApp/PersonaSwitcherView.swift`
+  -> `Sources/PersonaKitApp/Features/PersonaSwitcher/PersonaSwitcherView.swift`
+
+Clients:
+- `Sources/PersonaKitApp/Dependencies/AppClient.swift`
+  -> `Sources/PersonaKitApp/Shared/Clients/AppClient.swift`
+
+---
+
 ## Phase 2 — Foundations (structure and safe moves)
 
 **Objective:** Create the target skeleton and move safe, low-risk components.
@@ -109,6 +250,137 @@ For each feature:
 Exit criteria (per feature):
 - Compiles and tests pass.
 - No behavior changes and no new dependencies.
+
+---
+
+## De-ELM refactor checklist (explicit owners, no actions)
+
+Use this checklist per feature when removing `Action` enums and `send(_:)` flows.
+
+### A) Owner type conversion (App + feature)
+- Convert `AppStore` -> `AppModel` (`@Observable @MainActor`).
+- Replace `AppStore.State` with direct stored properties on `AppModel`
+  (or introduce explicit feature owner models where appropriate).
+- Replace `Feature.State` types with `FeatureModel` (explicit owner).
+- Remove `Feature.Action` enums entirely.
+- Remove `send(_:)` and `handle*` routing.
+
+### B) Method mapping (explicit intent)
+- For each action, create a direct method on the owner:
+  - `send(.reloadAll)` -> `reloadAll()`
+  - `send(.importPack)` -> `importPack()`
+  - `send(.sidebar(.setSearchText))` -> `sidebar.updateSearchText(_:)` or `updateSidebarSearchText(_:)`
+  - `send(.composer(.setComposerValue))` -> `composer.updateValue(key:value:)` or `updateComposerValue(key:value:)`
+  - `send(.preview(.setJSONPreview))` -> `preview.updateJSONPreview(_:)`
+- Ensure names are verbs and express intent (per FOSA / Swift style).
+
+### C) View integration
+- Replace `store.send(...)` in views with explicit model calls.
+- Replace `@Environment(AppStore.self)` with `@Environment(AppModel.self)`.
+- Replace `bindingFor*` helpers to call explicit model methods (no action enums).
+- Ensure any view `.task` or `.onChange` does not do IO; call model methods only.
+
+### D) IO boundaries
+- Keep IO only in owner types (AppModel / FeatureModel) and Clients.
+- For any feature that does IO in a view (e.g., pack diff), move the call
+  into the owner and expose a method (`computeDiff(...)`) that the view calls.
+
+### E) Tests
+- Update App tests to call model methods directly (no actions).
+- Replace action-based tests with method-based tests.
+- Keep deterministic output checks unchanged.
+
+### F) Acceptance gate (per feature)
+- No action enums remain for the feature.
+- Views only call explicit model methods.
+- All behavior unchanged and tests green.
+
+---
+
+## Feature-by-feature task list (concrete)
+
+Use this as a scoped execution checklist. Each line should map to a small PR.
+
+### App shell (global wiring)
+- Rename `AppStore` -> `AppModel` (`@MainActor @Observable`).
+- Replace `state` access with direct stored properties or feature models.
+- Remove `Action` + `send(_:)` and `AppStore+SendHandlers.swift`.
+- Update environment injection in `PersonaKitAppMain` + `ContentView` + `PersonaKitCommands`.
+- Update bindings to call explicit model methods (no action enums).
+
+### Sidebar feature
+Owner: `SidebarModel` (explicit model type).
+
+Tasks:
+- Replace `SidebarFeature.State` with `SidebarModel` properties.
+- Delete `SidebarFeature.Action` enum.
+- Move logic from `AppStore+SidebarFeature.swift` into `AppModel+Sidebar.swift` methods.
+- Move filter + pin logic from `AppStore+Filters.swift` into `AppModel+Filters.swift` or `SidebarModel` methods.
+- Update view call sites:
+  - `store.send(.sidebar(.setSearchText))` -> `model.updateSidebarSearchText(_:)`
+  - `store.send(.sidebar(.setSelectedTag))` -> `model.updateSidebarSelectedTag(_:)`
+  - `store.send(.sidebar(.applyAllPersonasFilter))` -> `model.applyAllPersonasFilter()`
+  - `store.send(.sidebar(.applySavedFilter))` -> `model.applySavedFilter(_:)`
+  - `store.send(.sidebar(.saveCurrentFilter))` -> `model.saveCurrentFilter(name:)`
+  - `store.send(.sidebar(.renameSavedFilter))` -> `model.renameSavedFilter(id:newName:)`
+  - `store.send(.sidebar(.deleteSavedFilter))` -> `model.deleteSavedFilter(id:)`
+  - `store.send(.sidebar(.setPinnedViewActive))` -> `model.togglePinnedViewActive()`
+  - `store.send(.sidebar(.togglePinnedPersona))` -> `model.togglePinnedPersona(id:)`
+  - `store.send(.sidebar(.requestSearchFocus))` -> `model.requestSidebarSearchFocus()`
+  - `store.send(.sidebar(.requestSearchBlur))` -> `model.requestSidebarSearchBlur()`
+  - `store.send(.sidebar(.setSearchFocused))` -> `model.setSidebarSearchFocused(_:)`
+- Update tests:
+  - `PinnedViewToggleTests`, `AppStoreSavedFiltersTests`, `SidebarSearchEscapePolicyTests` to call methods.
+
+### Composer feature
+Owner: `ComposerModel` (explicit model type).
+
+Tasks:
+- Replace `ComposerFeature.State` with `ComposerModel` properties.
+- Delete `ComposerFeature.Action` enum.
+- Move logic from `AppStore+ComposerFeature.swift` into `AppModel+Composer.swift` methods.
+- Update view call sites:
+  - `store.send(.composer(.requestFocus))` -> `model.requestComposerFocus(sectionKey:)`
+  - `store.send(.composer(.setSelectedPersonaID))` -> `model.selectPersona(id:)`
+  - `store.send(.composer(.setComposerValue))` -> `model.updateComposerValue(key:value:)`
+- Ensure preview recompute is still triggered on persona selection/value changes.
+- Update tests:
+  - `ComposerPreviewRecomputeTests` to call model methods.
+
+### Preview feature
+Owner: `PreviewModel` (explicit model type).
+
+Tasks:
+- Replace `PreviewFeature.State` with `PreviewModel` properties.
+- Delete `PreviewFeature.Action` enum.
+- Move logic from `AppStore+PreviewFeature.swift` into `AppModel+Preview.swift` methods.
+- Move JSON formatting from `AppStore+JSONPreview.swift` into `AppModel+JSONPreview.swift` or `PreviewModel`.
+- Update view call sites:
+  - `store.send(.preview(.setJSONPreview))` -> `model.updatePreviewJSON(_:)`
+- Ensure debounce behavior stays deterministic.
+- Update tests:
+  - `JSONPreviewDebounceTests` to call model methods.
+
+### Inspector feature
+Owner: `InspectorModel` optional (only if needed); keep UI state local unless it needs ownership.
+
+Tasks:
+- Remove IO from `InspectorView`:
+  - Move pack diff computation into `AppModel` method (or a `PackDiffClient`).
+  - `InspectorView` calls `model.computePackDiff(primary:comparison:)` and receives diff + diagnostics.
+- Keep view-local UI state for sheets/selection if no cross-feature ownership is required.
+
+### PersonaSwitcher feature
+Owner: view-local state OK (UI-only); AppModel owns selection.
+
+Tasks:
+- Replace `store.send(.composer(.setSelectedPersonaID))` with `model.selectPersona(id:)`.
+- Keep local query/selection state in view.
+
+### Shared clients + IO boundaries
+- Move `AppClient` to `Shared/Clients`.
+- Ensure any file/OS access is only in `AppModel` or Clients.
+- Confirm no view performs IO after refactor.
 
 ---
 
@@ -161,12 +433,12 @@ Primary risks and mitigations:
 
 ---
 
-## Open decisions (fill in before Phase 2)
-- Default state-owner pattern:
-- Target top-level feature list:
-- Shared UI location:
-- Client boundaries:
-- Parity test approach:
+## Open decisions (filled)
+- Default owner shape: **Explicit model types** (`AppModel`, `SidebarModel`, `ComposerModel`, `PreviewModel`).
+- Target top-level feature list: **Sidebar, Composer, Preview, Inspector, PersonaSwitcher**.
+- Shared UI location: **Feature-local `Components/`** unless a component is reused.
+- Client boundaries: **AppClient** (AppKit IO) under `Shared/Clients`; Core clients remain in core.
+- Parity test approach: **Expand App/Core parity tests** for prompt/JSON output stability.
 
 ---
 
