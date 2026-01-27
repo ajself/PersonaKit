@@ -102,6 +102,7 @@ Exit criteria:
 - `AppModel+Composer` and `AppModel+Preview` currently live in `App/Model` and will move into
   `Features/Composer` and `Features/Preview` during feature migrations.
 - Composer feature migrated to `ComposerModel`; moved composer files into `Features/Composer/`.
+- Preview feature migrated to `PreviewModel`; moved preview files into `Features/Preview/`.
 
 ---
 
@@ -109,7 +110,7 @@ Exit criteria:
 
 ### PersonaKitApp (SwiftUI target)
 - **State owners:** `AppModel` (`@MainActor`, explicit methods) plus feature owners (`SidebarModel` for sidebar).
-- **Feature slices:** `SidebarModel` (explicit owner), `ComposerModel`, `PreviewFeature` (state-only; logic lives in `AppModel+*` extensions).
+- **Feature slices:** `SidebarModel` (explicit owner), `ComposerModel`, `PreviewModel` (state-only; logic lives in `AppModel+*` extensions).
 - **Views:** `ContentView`, `SidebarView`, `ComposerView`, `PreviewView`, `InspectorView`, `PersonaSwitcherView`, `JSONEditorView`.
 - **App shell:** `PersonaKitAppMain`, `PersonaKitCommands`.
 - **Utilities:** `PreviewPanel`, `SidebarSearchEscapePolicy`.
@@ -218,9 +219,9 @@ Composer feature:
   -> `Sources/PersonaKitApp/App/Model/AppModel+Composer.swift` (done)
 
 Preview feature:
-- `Sources/PersonaKitApp/PreviewView.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewView.swift`
-- `Sources/PersonaKitApp/PreviewPanel.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewPanel.swift`
-- `Sources/PersonaKitApp/PreviewFeature.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewModel.swift`
+- `Sources/PersonaKitApp/PreviewView.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewView.swift` (done)
+- `Sources/PersonaKitApp/PreviewPanel.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewPanel.swift` (done)
+- `Sources/PersonaKitApp/PreviewFeature.swift` -> `Sources/PersonaKitApp/Features/Preview/PreviewModel.swift` (done)
 - `Sources/PersonaKitApp/AppStore+PreviewFeature.swift`
   -> `Sources/PersonaKitApp/App/Model/AppModel+Preview.swift` (done)
 - `Sources/PersonaKitApp/AppStore+JSONPreview.swift`
@@ -377,14 +378,14 @@ Tasks:
 Owner: `PreviewModel` (explicit model type).
 
 Tasks:
-- Replace `PreviewFeature.State` with `PreviewModel` properties.
-- Delete `PreviewFeature.Action` enum.
+- Replace `PreviewFeature.State` with `PreviewModel` properties. (done)
+- Delete `PreviewFeature.Action` enum. (done)
 - Move logic from `AppStore+PreviewFeature.swift` into `AppModel+Preview.swift` methods. (done)
 - Move JSON formatting from `AppStore+JSONPreview.swift` into `AppModel+JSONPreview.swift` or `PreviewModel`. (done)
-- Update view call sites:
+- Update view call sites: (done)
   - `store.send(.preview(.setJSONPreview))` -> `model.updatePreviewJSON(_:)`
-- Ensure debounce behavior stays deterministic.
-- Update tests:
+- Ensure debounce behavior stays deterministic. (done)
+- Update tests: (done)
   - `JSONPreviewDebounceTests` to call model methods.
 
 ### Inspector feature
