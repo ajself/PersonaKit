@@ -3,6 +3,8 @@
 ## Owner shape
 **Default:** Explicit model (e.g. `FeatureModel`)
 - Feature views bind `@Environment(FeatureModel.self)` where possible.
+- Prefer `@Bindable` for single-property bindings; expose draft properties when edits must route through orchestration.
+- Keyed/parameterized bindings should remain helper methods (e.g. composer values).
 - `AppModel` coordinates IO and cross-feature orchestration only.
 - Pass shared indexes/diagnostics as explicit view inputs (avoid reaching into `AppModel` from feature views).
 - Avoid `State`/`Action` routing; model methods are the mutation surface.
