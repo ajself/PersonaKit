@@ -10,12 +10,13 @@ struct ContentView: View {
 
   /// Builds the sidebar/detail layout and wires up global overlays.
   var body: some View {
+    @Bindable var composer = model.composer
     NavigationSplitView {
       SidebarView(
         personaIndex: model.personaIndex,
         personaSourcesByID: model.personaSourcesByID,
         diagnostics: model.diagnostics,
-        selectedPersonaID: model.bindingForSelectedPersonaID()
+        selectedPersonaID: $composer.selectedPersonaIDDraft
       )
       .environment(model.sidebar)
     } detail: {

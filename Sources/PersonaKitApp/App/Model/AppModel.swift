@@ -103,6 +103,10 @@ final class AppModel {
       self.requestPreviewRecompute()
       self.handlePreviewRecomputeIfNeeded()
     }
+    composer.onSelectedPersonaIDChange = { [weak self] id in
+      guard let self else { return }
+      self.selectPersona(id: id)
+    }
     preview.onJSONChange = { [weak self] text in
       guard let self else { return }
       self.updatePreviewJSON(text)

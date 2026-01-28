@@ -8,6 +8,7 @@ struct PreviewView: View {
 
   /// Builds the preview picker and the selected output panel.
   var body: some View {
+    @Bindable var preview = preview
     VStack(spacing: 0) {
       HStack {
         Picker("Output", selection: $selectedPanel) {
@@ -40,14 +41,13 @@ struct PreviewView: View {
             .padding()
           }
         case .json:
-          let jsonText = preview.jsonPreview
-          if jsonText.isEmpty {
+          if preview.jsonPreview.isEmpty {
             Text("No JSON available.")
               .foregroundStyle(.secondary)
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
               .padding()
           } else {
-            JSONEditorView(text: preview.bindingForJSONPreview())
+            JSONEditorView(text: $preview.jsonPreviewDraft)
               .frame(maxWidth: .infinity, maxHeight: .infinity)
           }
         }

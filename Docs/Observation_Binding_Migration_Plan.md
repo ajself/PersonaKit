@@ -33,10 +33,18 @@ Phase 0 notes:
 - Preserve side effects deterministically (e.g., `didSet` or existing callback).
 - Run tests; commit.
 
+Phase 1 notes:
+- `PreviewView` binds to `jsonPreviewDraft`, which forwards edits through `onJSONChange`.
+- Removed `PreviewModel+Bindings` and the JSON forwarder in `AppModel+Bindings`.
+
 ## Phase 2: Remaining singleton bindings
 - Convert remaining singleton bindings (e.g., selected persona) to `@Bindable`.
 - Remove corresponding helpers and call sites.
 - Run tests; commit.
+
+Phase 2 notes:
+- `SidebarView` selection now binds to `ComposerModel.selectedPersonaIDDraft`.
+- `AppModel` sets `composer.onSelectedPersonaIDChange` to preserve recompute behavior.
 
 ## Phase 3: Keyed/parameterized bindings decision
 - Evaluate composer value binding.

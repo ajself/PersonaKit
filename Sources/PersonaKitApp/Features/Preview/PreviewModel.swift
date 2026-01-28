@@ -10,6 +10,11 @@ final class PreviewModel {
 
   @ObservationIgnored var onJSONChange: (@MainActor (String) -> Void)?
 
+  var jsonPreviewDraft: String {
+    get { jsonPreview }
+    set { onJSONChange?(newValue) }
+  }
+
   init(
     promptPreview: String = "",
     jsonPreview: String = "",
