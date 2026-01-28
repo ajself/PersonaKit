@@ -37,10 +37,7 @@ let package = Package(
         "PersonaKitResources",
         .product(name: "Dependencies", package: "swift-dependencies")
       ],
-      path: "Sources/PersonaKitApp",
-      exclude: [
-        "App/ArchitectureDefaults.md"
-      ]
+      path: "Sources/PersonaKitApp"
     ),
     .executableTarget(
       name: "PersonaKitCLI",
