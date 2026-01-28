@@ -16,7 +16,8 @@ enum PackDiffInputBuilder {
   ) -> PackDiffInputResult {
     var records: [PersonaDiffRecord] = []
     var diagnostics: [Diagnostic] = []
-    let fileClient = fileClient ?? DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var resolvedFileClient
+    let fileClient = fileClient ?? resolvedFileClient
 
     appendRecords(
       from: selection.packFile,

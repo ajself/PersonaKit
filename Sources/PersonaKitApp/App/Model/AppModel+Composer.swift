@@ -5,7 +5,7 @@ import PersonaKitCore
 extension AppModel {
   /// Requests focus for a composer section by key.
   func requestComposerFocus(sectionKey: String) {
-    let uuid = DependencyValues.current.uuid
+    @Dependency(\.uuid) var uuid
     composer.focusRequest = ComposerModel.FocusRequest(id: uuid(), sectionKey: sectionKey)
   }
 

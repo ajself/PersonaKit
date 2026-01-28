@@ -24,7 +24,7 @@ struct SchemaConfig {
 enum PersonaKitSchemaValidate {
   /// Runs schema validation for `Examples/` or for any JSON files passed as arguments.
   static func main() {
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     let cwd = URL(fileURLWithPath: fileClient.currentDirectoryPath())
     guard let repoRoot = findRepoRoot(start: cwd, fileClient: fileClient) else {
       fputs("Schema validation failed: could not locate Schema/personakit.schema.json.\n", stderr)

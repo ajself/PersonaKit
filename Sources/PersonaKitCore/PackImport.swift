@@ -47,7 +47,8 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     from selection: URL,
     fileClient: FileClient? = nil
   ) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
-    let fileClient = fileClient ?? DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var resolvedFileClient
+    let fileClient = fileClient ?? resolvedFileClient
     let isDirectory = fileClient.isDirectory(selection)
 
     if isDirectory {

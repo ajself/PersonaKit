@@ -136,7 +136,8 @@ public enum PersonaDescriptor {
   }
 
   private static func abbreviateHome(_ path: String) -> String {
-    let home = DependencyValues.current.fileClient.homeDirectory().standardizedFileURL.path
+    @Dependency(\.fileClient) var fileClient
+    let home = fileClient.homeDirectory().standardizedFileURL.path
     guard path.hasPrefix(home) else { return path }
     return "~" + path.dropFirst(home.count)
   }

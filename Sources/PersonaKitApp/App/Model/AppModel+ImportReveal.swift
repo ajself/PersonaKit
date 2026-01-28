@@ -22,8 +22,8 @@ extension AppModel {
   /// Imports a persona pack from disk into PersonaKit-managed storage.
   func importPack() {
     let appClient = DependencyValues.current.appClient
-    let fileClient = DependencyValues.current.fileClient
-    let uuid = DependencyValues.current.uuid
+    @Dependency(\.fileClient) var fileClient
+    @Dependency(\.uuid) var uuid
     guard let selection = appClient.selectPackURL() else { return }
 
     let paths: PersonaKitStoragePaths
@@ -86,7 +86,7 @@ extension AppModel {
   /// Reveals the PersonaKit storage root in Finder, creating it if needed.
   func revealStorageRoot() {
     let appClient = DependencyValues.current.appClient
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     let paths: PersonaKitStoragePaths
     do {
       paths = try ensureStorageDirectories(fileClient: fileClient)
@@ -113,7 +113,7 @@ extension AppModel {
   /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
     let appClient = DependencyValues.current.appClient
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     guard let location = selectedPackLocation,
       let personaID = composer.selectedPersonaID,
       let source = personaSourcesByID[personaID],

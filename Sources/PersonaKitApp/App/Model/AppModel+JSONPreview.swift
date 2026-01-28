@@ -14,7 +14,7 @@ extension AppModel {
   }
 
   private func scheduleJSONFormat() {
-    let clock = DependencyValues.current.continuousClock
+    @Dependency(\.continuousClock) var clock
     jsonFormatTask?.cancel()
     jsonFormatTask = Task { @MainActor [weak self] in
       guard let self else { return }

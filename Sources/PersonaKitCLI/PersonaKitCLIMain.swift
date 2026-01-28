@@ -34,7 +34,7 @@ enum PersonaKitCLI {
   }
 
   static func main() async {
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     let allArgs = Array(CommandLine.arguments.dropFirst())
     guard let (cmd, parsed) = parseCommand(allArgs) else {
       printUsage()

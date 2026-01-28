@@ -16,7 +16,8 @@ public struct PersonaKitStoragePaths: Sendable, Hashable {
 
   /// Returns the default Application Support paths for the current user.
   public static func standard(homeDirectory: URL? = nil) -> PersonaKitStoragePaths {
-    let resolvedHome = homeDirectory ?? DependencyValues.current.fileClient.homeDirectory()
+    @Dependency(\.fileClient) var fileClient
+    let resolvedHome = homeDirectory ?? fileClient.homeDirectory()
     let root =
       resolvedHome
       .appendingPathComponent("Library", isDirectory: true)

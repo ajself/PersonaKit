@@ -18,7 +18,8 @@ public enum UserPackLoader {
   ) -> (packs: [LoadedUserPack], diagnostics: [Diagnostic]) {
     var packs: [LoadedUserPack] = []
     var diagnostics: [Diagnostic] = []
-    let fileClient = fileClient ?? DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var resolvedFileClient
+    let fileClient = fileClient ?? resolvedFileClient
 
     let contents: [URL]
     do {

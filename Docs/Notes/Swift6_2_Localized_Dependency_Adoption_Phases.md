@@ -7,9 +7,9 @@ swift-dependencies, avoiding stored `@Dependency` properties on long-lived
 Status:
 - Phase 1 complete: CLI/schema/pack diff fallbacks use localized resolution.
 - Phase 2 complete: AppModel + SidebarModel migrated; stored `@Dependency` removed.
-- Phase 3 complete: Core helpers use localized resolution; legacy shim removed.
-- Phase 4 in progress: added storage-path defaults coverage.
-- Phase 5 pending: optional local `@Dependency` style review.
+- Phase 3 complete: Core helpers use localized resolution; DependencyAccess shim removed.
+- Phase 4 complete: added storage-path defaults and dependency fallback tests.
+- Phase 5 complete: adopt local `@Dependency` variables for localized resolution.
 
 ## Inventory (Phase 0 Notes)
 Captured before migrations; see Status for completion state.
@@ -64,7 +64,7 @@ let fileClient = CLIEnvironment().fileClient
 
 CLI after (localized resolution):
 ```swift
-let fileClient = DependencyValues.current.fileClient
+@Dependency(\.fileClient) var fileClient
 ```
 
 Schema validate before:
@@ -78,7 +78,7 @@ let fileClient = SchemaEnvironment().fileClient
 
 Schema validate after (localized resolution):
 ```swift
-let fileClient = DependencyValues.current.fileClient
+@Dependency(\.fileClient) var fileClient
 ```
 
 PackDiffInputBuilder before:
@@ -88,7 +88,8 @@ let fileClient = fileClient ?? PackDiffEnvironment().fileClient
 
 PackDiffInputBuilder after (localized resolution):
 ```swift
-let fileClient = fileClient ?? DependencyValues.current.fileClient
+@Dependency(\.fileClient) var resolvedFileClient
+let fileClient = fileClient ?? resolvedFileClient
 ```
 
 Review checkpoint: verify the changes are minimal and no behavioral drift.
@@ -109,8 +110,8 @@ unchanged.
 - Remove any legacy helper shims added during earlier phases.
 
 Completed in Phase 3:
-- Replaced `FileClientProvider` usage in PersonaKitCore with localized
-  `DependencyValues.current.fileClient`.
+- Replaced `FileClientProvider` usage in PersonaKitCore with localized file
+  client resolution.
 - Added `DependencyValues.current` shim in PersonaKitCore and removed
   `DependencyAccess.swift`.
 
@@ -121,19 +122,29 @@ Review checkpoint: confirm the pattern is consistent and still minimal.
   dependencies.
 - Ensure CLI and app parity remains intact.
 
-In progress:
+Completed:
 - Added storage-path defaults coverage for dependency-driven home directory
   resolution.
-- Added tests for dependency fallback in import planning, user pack loading,
-  and pinned personas default path.
+- Added tests for dependency fallback in import planning, user pack loading, and
+  pinned personas default path.
 - Verified PersonaKitCore tests pass via shared macOS scheme.
 
 Review checkpoint: confirm tests cover the intended behaviors and no new
 dependencies were introduced.
 
 ### Phase 5: Optional Local `@Dependency` Style Review
-- Evaluate swapping `DependencyValues.current` uses to local `@Dependency`
-  variables inside methods for consistency and readability.
-- Decide on a single localized-resolution style and apply it uniformly.
+- Apply local `@Dependency` variables inside methods for consistency and
+  readability.
+- Decide whether to keep `DependencyValues.current` shim available for future
+  use or remove it once the migration is complete.
 
 Review checkpoint: agree on the preferred localized style before finalizing.
+
+Working notes:
+- Preferred localized style: local `@Dependency` variables inside methods.
+- Spike: `AppModel.requestComposerFocus` uses local `@Dependency`; PersonaKitApp
+  builds cleanly with Swift 6.2.
+- Exception: `AppClient` access remains `DependencyValues.current.appClient`
+  in `AppModel+ImportReveal` because local `@Dependency(\.appClient)` triggers a
+  Swift 6.2 Sendable key path error; revisit when swift-dependencies updates or
+  compiler behavior changes.

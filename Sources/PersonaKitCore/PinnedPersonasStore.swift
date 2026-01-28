@@ -20,8 +20,9 @@ public struct PinnedPersonasStore {
     fileURL: URL = PinnedPersonasStore.defaultFileURL(),
     fileClient: FileClient? = nil
   ) {
+    @Dependency(\.fileClient) var resolvedFileClient
     self.fileURL = fileURL
-    self.fileClient = fileClient ?? DependencyValues.current.fileClient
+    self.fileClient = fileClient ?? resolvedFileClient
   }
 
   /// Loads pinned persona ids from disk, returning an empty array on failure.

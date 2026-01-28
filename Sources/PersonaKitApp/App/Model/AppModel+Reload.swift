@@ -14,7 +14,7 @@ extension AppModel {
 
   /// Reloads built-in and user packs, then refreshes selections and previews.
   func reloadAll() {
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     diagnostics.removeAll()
     let previousSelection = composer.selectedPersonaID
 

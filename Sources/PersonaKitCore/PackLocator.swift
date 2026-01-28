@@ -5,18 +5,19 @@ import Foundation
 public enum PersonaPackLocator {
   /// Returns built-in pack URLs from a resource bundle.
   public static func builtInPackURLs(bundle: Bundle) -> [URL] {
+    @Dependency(\.fileClient) var fileClient
     if let file = bundle.url(forResource: "BuiltIn.pack", withExtension: "json") {
       return [file]
     }
     if let dir = bundle.url(forResource: "BuiltIn", withExtension: nil) {
-      return jsonFiles(in: dir, fileClient: DependencyValues.current.fileClient)
+      return jsonFiles(in: dir, fileClient: fileClient)
     }
     return []
   }
 
   /// Returns built-in pack URLs from a repo checkout on disk.
   public static func builtInPackURLs(repoRoot: URL) -> [URL] {
-    let fileClient = DependencyValues.current.fileClient
+    @Dependency(\.fileClient) var fileClient
     let resourcesRoot = repoRoot.appendingPathComponent(
       "Sources/PersonaKitResources/Resources", isDirectory: true)
     let builtInDir = resourcesRoot.appendingPathComponent("BuiltIn", isDirectory: true)

@@ -47,8 +47,9 @@ public struct SavedFiltersStore {
     fileURL: URL = SavedFiltersStore.defaultFileURL(),
     fileClient: FileClient? = nil
   ) {
+    @Dependency(\.fileClient) var resolvedFileClient
     self.fileURL = fileURL
-    self.fileClient = fileClient ?? DependencyValues.current.fileClient
+    self.fileClient = fileClient ?? resolvedFileClient
   }
 
   /// Loads saved filters from disk, returning an empty array on failure.
