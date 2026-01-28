@@ -91,7 +91,7 @@ Exit criteria:
 ### Phase 2 foundations (completed)
 - Moved app shell files into `Sources/PersonaKitApp/App/` and `App/Commands/`.
 - Moved `AppClient` into `Sources/PersonaKitApp/Shared/Clients/`.
-- Added `Shared/UI` and `Shared/Clients` folders for safe, low-risk structure.
+- Added `Shared/Clients` folder for safe, low-risk structure.
 - Moved `JSONEditorView` into `Sources/PersonaKitApp/Features/Preview/Components/`.
 
 ### Phase 3 global wiring (completed)
@@ -182,7 +182,7 @@ Sources/PersonaKitApp/
       PreviewModel.swift
       AppModel+Preview.swift
       AppModel+JSONPreview.swift
-      Components/JSONEditorView.swift (or Shared/UI/Components)
+      Components/JSONEditorView.swift
     Inspector/
       InspectorView.swift
       PackDiffInputBuilder.swift (move to client/state-owner in Phase 3)
@@ -266,7 +266,7 @@ Clients:
 Checklist:
 - Add feature-first folders under App target.
 - Add Shared folders for UI, Clients, Domain, Utilities.
-- Move UI-only components into `Shared/UI` or feature `Components`.
+- Move UI-only components into feature `Components`.
 - Move IO boundary code into `Shared/Clients` (no behavior changes).
 - Ensure any shared domain types live in Core (not UI targets).
 
@@ -446,10 +446,14 @@ Exit criteria:
 **Objective:** Remove legacy structure and confirm documentation accuracy.
 
 Checklist:
-- Remove empty/legacy folders.
-- Update docs and internal references to new paths.
-- Verify style guide and lint alignment.
-- Capture final architecture summary in README or docs.
+- Remove empty/legacy folders (unused `Shared/UI`, old `AppStore` artifacts, stale feature paths). (done)
+- Sweep for obsolete identifiers (`AppStore`, `Feature.State`, `Action`, `send(`) and delete leftovers. (done)
+- Update internal references to new paths in docs and comments.
+- Inject feature models into feature views (e.g., `@Environment(ComposerModel.self)`), minimizing direct `AppModel` access and wiring model environments at the feature boundary. (done)
+- Verify `Package.swift` excludes/ resources remain clean (no unhandled file warnings). (done)
+- Confirm `ArchitectureDefaults.md` reflects the final owner pattern and IO boundaries. (done)
+- Capture a final architecture summary (append to this plan or add a short README section). (done)
+- Run full test suite and spot-check app launch if needed.
 
 Exit criteria:
 - Clean tree, docs updated, no regressions.
@@ -492,6 +496,33 @@ Phase 0:
 Phase 1:
 Phase 2: completed — Codex — 2026-01-27
 Phase 3: completed — Codex — 2026-01-27
-Phase 4: in progress — Codex — 2026-01-27
-Phase 5:
+Phase 4: completed — Codex — 2026-01-27
+Phase 5: completed — Codex — 2026-01-27
 ```
+
+---
+
+## Final architecture summary (v2)
+
+**Intent:** The app is now aligned with FOSA’s explicit owner pattern: feature views observe feature models, and `AppModel` orchestrates IO and cross-feature coordination without `State/Action/send` routing.
+
+### Structure
+- `Sources/PersonaKitApp/App/`: app shell + commands + `AppModel` extensions for IO and cross-feature behaviors.
+- `Sources/PersonaKitApp/Features/*`: feature-local models and views (`Sidebar`, `Composer`, `Preview`, `Inspector`, `PersonaSwitcher`) with optional `Components/`.
+- `Sources/PersonaKitApp/Shared/Clients`: app-facing IO clients (AppKit, file system).
+- `PersonaKitCore`: deterministic parsing, resolving, rendering, and validation shared by app + CLI.
+
+### Ownership and data flow
+- Feature state lives in `@Observable` model types: `SidebarModel`, `ComposerModel`, `PreviewModel`.
+- Feature views bind to their model via `@Environment(FeatureModel.self)` (no direct `AppModel` access except where global IO is required).
+- `AppModel` owns pack IO, selection, and preview recompute, and wires callbacks from feature models (`composer.onValuesChange`, `preview.onJSONChange`).
+
+### Determinism + parity
+- Pack loading flows through `PersonaBuiltInPackLoader` and `PersonaIndexBuilder`.
+- Prompt and JSON previews use `PersonaOutputRenderer`; app and CLI outputs are parity-tested.
+- IO remains outside SwiftUI views; view mutation is explicit and observable.
+
+### Safety and scope constraints honored
+- No new runtime abstractions or network dependencies.
+- Schema semantics unchanged; invalid input still fails loudly.
+- All changes remain file-based, deterministic, and offline.

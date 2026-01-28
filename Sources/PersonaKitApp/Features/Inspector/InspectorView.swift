@@ -5,6 +5,8 @@ import SwiftUI
 struct InspectorView: View {
   @Environment(AppModel.self)
   private var model
+  @Environment(ComposerModel.self)
+  private var composer
   @State private var showPackCompare = false
   @State private var comparisonPackID: String?
   @State private var packDiff: PackDiff?
@@ -12,7 +14,7 @@ struct InspectorView: View {
   @State private var primaryPackID: String?
 
   private var selectedPersona: Persona? {
-    guard let id = model.composer.selectedPersonaID else { return nil }
+    guard let id = composer.selectedPersonaID else { return nil }
     return model.personaIndex[id]?.persona
   }
 
@@ -109,7 +111,7 @@ struct InspectorView: View {
     .onAppear {
       updatePrimaryPackSelection()
     }
-    .onChange(of: model.composer.selectedPersonaID) { _, _ in
+    .onChange(of: composer.selectedPersonaID) { _, _ in
       updatePrimaryPackSelection()
     }
     .onChange(of: model.availablePacks) { _, _ in

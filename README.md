@@ -212,7 +212,7 @@ PersonaKit follows the project style guide at `Docs/Standards/SwiftUI-App-Style-
 
 Highlights:
 - Swift 6.2 language mode with strict concurrency checks where practical.
-- Unidirectional data flow in app features (`State` + `Action` + `send`).
+- Explicit feature models (`@Observable`) with direct method calls; no `State`/`Action` routing.
 - Dependencies routed through `pointfreeco/swift-dependencies` (no direct `Date()`, `UUID()`, or `Task.sleep` in feature logic).
 - Shared logic lives in `PersonaKitCore` so the app and CLI stay behavior-identical.
 

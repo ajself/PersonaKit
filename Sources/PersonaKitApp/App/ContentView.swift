@@ -11,9 +11,16 @@ struct ContentView: View {
   /// Builds the sidebar/detail layout and wires up global overlays.
   var body: some View {
     NavigationSplitView {
-      SidebarView()
+      SidebarView(
+        personaIndex: model.personaIndex,
+        personaSourcesByID: model.personaSourcesByID,
+        diagnostics: model.diagnostics,
+        selectedPersonaID: model.bindingForSelectedPersonaID()
+      )
+      .environment(model.sidebar)
     } detail: {
       PreviewView(selectedPanel: $selectedPanel)
+        .environment(model.preview)
     }
     .task {
       model.reloadAll()
@@ -29,6 +36,7 @@ struct ContentView: View {
     .inspector(isPresented: $showInspector) {
       InspectorView()
         .environment(model)
+        .environment(model.composer)
     }
     .toolbar {
       ToolbarItemGroup(placement: .automatic) {

@@ -15,6 +15,8 @@ final class ComposerModel {
   var composerValues: [String: String]
   var focusRequest: FocusRequest?
 
+  @ObservationIgnored var onValuesChange: (@MainActor () -> Void)?
+
   init(
     selectedPersonaID: String? = nil,
     composerValues: [String: String] = [:],

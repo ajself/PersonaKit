@@ -12,17 +12,11 @@ extension AppModel {
 
   /// Binds a composer input field by key.
   func bindingForComposerValue(key: String) -> Binding<String> {
-    Binding(
-      get: { self.composer.composerValues[key] ?? "" },
-      set: { self.updateComposerValue(key: key, value: $0) }
-    )
+    composer.bindingForComposerValue(key: key)
   }
 
   /// Binds the JSON preview editor to ``AppModel`` JSON preview updates.
   func bindingForJSONPreview() -> Binding<String> {
-    Binding(
-      get: { self.preview.jsonPreview },
-      set: { self.updatePreviewJSON($0) }
-    )
+    preview.bindingForJSONPreview()
   }
 }

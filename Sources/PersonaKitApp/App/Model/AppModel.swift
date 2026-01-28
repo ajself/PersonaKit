@@ -98,5 +98,14 @@ final class AppModel {
       savedFiltersStore: savedFiltersStore,
       pinnedPersonasStore: pinnedPersonasStore
     )
+    composer.onValuesChange = { [weak self] in
+      guard let self else { return }
+      self.requestPreviewRecompute()
+      self.handlePreviewRecomputeIfNeeded()
+    }
+    preview.onJSONChange = { [weak self] text in
+      guard let self else { return }
+      self.updatePreviewJSON(text)
+    }
   }
 }

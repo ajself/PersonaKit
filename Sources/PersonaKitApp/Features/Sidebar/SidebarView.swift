@@ -3,8 +3,12 @@ import SwiftUI
 
 /// Sidebar showing search, filters, and the persona list.
 struct SidebarView: View {
-  @Environment(AppModel.self)
-  private var model
+  @Environment(SidebarModel.self)
+  private var sidebar
+  let personaIndex: [String: ResolvedPersona]
+  let personaSourcesByID: [String: PersonaSource]
+  let diagnostics: [Diagnostic]
+  let selectedPersonaID: Binding<String?>
   @FocusState private var searchFocused: Bool
   @State private var showSaveFilterSheet = false
   @State private var showRenameFilterSheet = false
@@ -27,7 +31,7 @@ struct SidebarView: View {
 
       personaList
 
-      DiagnosticsFooter(diagnostics: model.diagnostics)
+      DiagnosticsFooter(diagnostics: diagnostics)
     }
     .sheet(isPresented: $showSaveFilterSheet) {
       FilterNameSheet(
@@ -75,11 +79,6 @@ struct SidebarView: View {
 }
 
 extension SidebarView {
-  /// Sidebar state owner.
-  fileprivate var sidebar: SidebarModel {
-    model.sidebar
-  }
-
   /// Binding for the search field text.
   fileprivate var searchBinding: Binding<String> {
     Binding(
@@ -90,7 +89,7 @@ extension SidebarView {
 
   /// All personas sorted by the canonical metadata sort key.
   fileprivate var allPersonas: [ResolvedPersona] {
-    model.personaIndex.values.sorted {
+    personaIndex.values.sorted {
       PersonaMetadata.personaSortKey($0.persona) < PersonaMetadata.personaSortKey($1.persona)
     }
   }
@@ -120,7 +119,7 @@ extension SidebarView {
 
       let matchesSource: Bool = {
         guard !sidebar.activeSourceKinds.isEmpty else { return true }
-        guard let kind = model.personaSourcesByID[persona.id]?.kind else { return false }
+        guard let kind = personaSourcesByID[persona.id]?.kind else { return false }
         return sidebar.activeSourceKinds.contains(kind)
       }()
 
@@ -130,7 +129,7 @@ extension SidebarView {
 
   /// A sorted list of all known tags from available personas.
   fileprivate var allTags: [String] {
-    PersonaMetadata.sortedUniqueTags(from: model.personaIndex.values.map { $0.persona })
+    PersonaMetadata.sortedUniqueTags(from: personaIndex.values.map { $0.persona })
   }
 
   /// Search field with focus management and sidebar bindings.
@@ -273,7 +272,7 @@ extension SidebarView {
 
   /// List of personas matching the active filters.
   fileprivate var personaList: some View {
-    List(selection: model.bindingForSelectedPersonaID()) {
+    List(selection: selectedPersonaID) {
       ForEach(filtered, id: \.persona.id) { rp in
         PersonaRow(
           persona: rp.persona,

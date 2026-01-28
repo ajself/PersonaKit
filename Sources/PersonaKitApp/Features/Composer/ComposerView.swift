@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Edits the core prompt parameters for the selected persona.
 struct ComposerView: View {
-  @Environment(AppModel.self)
-  private var model
+  @Environment(ComposerModel.self)
+  private var composer
   @FocusState private var focusedSectionKey: String?
   @State private var showContextHelp = false
   @State private var showEvidenceHelp = false
@@ -86,7 +86,7 @@ struct ComposerView: View {
         showHelp: $showTaskHelp
       )
     }
-    .onChange(of: model.composer.focusRequest) { _, request in
+    .onChange(of: composer.focusRequest) { _, request in
       guard let request else { return }
       focusedSectionKey = request.sectionKey
     }
@@ -118,7 +118,7 @@ struct ComposerView: View {
         }
       }
 
-      TextEditor(text: model.bindingForComposerValue(key: config.key))
+      TextEditor(text: composer.bindingForComposerValue(key: config.key))
         .font(.system(.body, design: .monospaced))
         .focused($focusedSectionKey, equals: config.key)
         .frame(minHeight: 90)

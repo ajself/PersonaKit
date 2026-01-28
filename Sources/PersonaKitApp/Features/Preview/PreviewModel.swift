@@ -8,6 +8,8 @@ final class PreviewModel {
   var jsonPreview: String
   var needsRecompute: Bool
 
+  @ObservationIgnored var onJSONChange: (@MainActor (String) -> Void)?
+
   init(
     promptPreview: String = "",
     jsonPreview: String = "",
