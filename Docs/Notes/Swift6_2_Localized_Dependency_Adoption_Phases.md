@@ -10,6 +10,7 @@ Status:
 - Phase 3 complete: Core helpers use localized resolution; DependencyAccess shim removed.
 - Phase 4 complete: added storage-path defaults and dependency fallback tests.
 - Phase 5 complete: adopt local `@Dependency` variables for localized resolution.
+- Phase 6 complete: test targets link Dependencies + Clocks; PersonaKitApp tests pass.
 
 ## Inventory (Phase 0 Notes)
 Captured before migrations; see Status for completion state.
@@ -140,10 +141,22 @@ dependencies were introduced.
 
 Review checkpoint: agree on the preferred localized style before finalizing.
 
+### Phase 6: Test Infra Alignment
+- Ensure test targets link the same packages relied on by tests (Dependencies,
+  Clocks) to avoid undefined symbol failures.
+- Confirm PersonaKitApp tests pass with Swift 6.2 settings.
+
+Review checkpoint: verify tests pass without relying on live dependency values.
+
 Working notes:
 - Preferred localized style: local `@Dependency` variables inside methods.
 - Spike: `AppModel.requestComposerFocus` uses local `@Dependency`; PersonaKitApp
   builds cleanly with Swift 6.2.
+- PersonaKitApp tests pass on macOS scheme after linking Dependencies + Clocks
+  in test targets.
+- Attempted local `@Dependency(\.appClient)` in `AppModel+ImportReveal`; Swift
+  6.2 still reports `WritableKeyPath<DependencyValues, AppClient>` as
+  non-Sendable. Keeping `DependencyValues.current.appClient` for now.
 - Exception: `AppClient` access remains `DependencyValues.current.appClient`
   in `AppModel+ImportReveal` because local `@Dependency(\.appClient)` triggers a
   Swift 6.2 Sendable key path error; revisit when swift-dependencies updates or

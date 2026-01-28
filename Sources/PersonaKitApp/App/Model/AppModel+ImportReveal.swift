@@ -21,6 +21,7 @@ extension AppModel {
 
   /// Imports a persona pack from disk into PersonaKit-managed storage.
   func importPack() {
+    // Swift 6.2: @Dependency(\.appClient) fails (WritableKeyPath not Sendable), so use current values.
     let appClient = DependencyValues.current.appClient
     @Dependency(\.fileClient) var fileClient
     @Dependency(\.uuid) var uuid
@@ -85,6 +86,7 @@ extension AppModel {
 
   /// Reveals the PersonaKit storage root in Finder, creating it if needed.
   func revealStorageRoot() {
+    // Swift 6.2: @Dependency(\.appClient) fails (WritableKeyPath not Sendable), so use current values.
     let appClient = DependencyValues.current.appClient
     @Dependency(\.fileClient) var fileClient
     let paths: PersonaKitStoragePaths
@@ -102,6 +104,7 @@ extension AppModel {
 
   /// Reveals the selected pack directory in Finder when applicable.
   func revealSelectedPack() {
+    // Swift 6.2: @Dependency(\.appClient) fails (WritableKeyPath not Sendable), so use current values.
     let appClient = DependencyValues.current.appClient
     guard let location = selectedPackLocation, location.isDirectoryPack else {
       appClient.presentError("Reveal Failed", "Selected pack is not a user pack folder.")
@@ -112,6 +115,7 @@ extension AppModel {
 
   /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
+    // Swift 6.2: @Dependency(\.appClient) fails (WritableKeyPath not Sendable), so use current values.
     let appClient = DependencyValues.current.appClient
     @Dependency(\.fileClient) var fileClient
     guard let location = selectedPackLocation,
@@ -140,6 +144,7 @@ extension AppModel {
 
   /// Copies the composed prompt preview to the clipboard.
   func copyPromptToClipboard() {
+    // Swift 6.2: @Dependency(\.appClient) fails (WritableKeyPath not Sendable), so use current values.
     let appClient = DependencyValues.current.appClient
     appClient.copyToClipboard(preview.promptPreview)
   }
