@@ -1,0 +1,1132 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00E109CA5F9841C0B8982043 /* PersonaKitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; };
+		013A648943A5498A9D5EF94A /* PersonaKitCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0DAFEB51A5A64FFDA2C1167E /* PersonaKitCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		2F239AAE5B654E7C853D60E7 /* PersonaKitResources.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		3B47DFBC1EF6488DB9D2E195 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
+		40271A371ADD4ADB882060F5 /* PersonaKitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; };
+		48F075F474414A02BA558685 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
+		6AFC1BF0963249D6A3900272 /* PersonaKitResources.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		87D4733E56C14BF3BE903995 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
+		8F6003FB33E4487492CF78F4 /* PersonaKitResources.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; };
+		B48857A14C0C445BBA32BE18 /* PersonaKitResources.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; };
+		BB95B5E95BFB4008A6F6FD75 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
+		C85E4B0235A54585821742C3 /* PersonaKitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; };
+		EFBD59D1DCC34AE6979E0772 /* PersonaKitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		32823F4E883744BA862EC6ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52573EDD922A4C26A67CFBD8;
+			remoteInfo = PersonaKitCore;
+		};
+		3CB56646A0484DE8AAB2389E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52573EDD922A4C26A67CFBD8;
+			remoteInfo = PersonaKitCore;
+		};
+		6E5EE47BC68B429D9C1F54AC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0187511E25D4B63A440362C;
+			remoteInfo = PersonaKitResources;
+		};
+		85E5DF5D78164D69A93EC4DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52573EDD922A4C26A67CFBD8;
+			remoteInfo = PersonaKitCore;
+		};
+		D14AC4AB2F2A523B0068F8F2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D14AC49C2F2A523A0068F8F2;
+			remoteInfo = PersonaKitApp;
+		};
+		DF2D1BE913254A8AA09FB46F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0187511E25D4B63A440362C;
+			remoteInfo = PersonaKitResources;
+		};
+		F8C79CDCE67F45008F8FBECC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D14AC4952F2A523A0068F8F2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52573EDD922A4C26A67CFBD8;
+			remoteInfo = PersonaKitCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		893F4EEF290E4DDA9100981D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0DAFEB51A5A64FFDA2C1167E /* PersonaKitCore.framework in Embed Frameworks */,
+				6AFC1BF0963249D6A3900272 /* PersonaKitResources.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B57DA721BB3B493DA671B5BE /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				013A648943A5498A9D5EF94A /* PersonaKitCore.framework in Embed Frameworks */,
+				2F239AAE5B654E7C853D60E7 /* PersonaKitResources.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1BC5257B29064821AD3D7E38 /* personakit-validate */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "personakit-validate"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7223418A5B20441BAD091269 /* PersonaKitCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PersonaKitCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A430158DA0524357BDD3F238 /* PersonaKitResources.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PersonaKitResources.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D14AC49D2F2A523A0068F8F2 /* PersonaKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D14AC4AA2F2A523B0068F8F2 /* PersonaKitAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D14AC4B42F2A523C0068F8F2 /* PersonaKitCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1BE367C66AF4BE39BE33813 /* personakit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = personakit; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0D20A81B054844FB89701989 /* Sources/PersonaKitCLI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/PersonaKitCLI;
+			sourceTree = "<group>";
+		};
+		28D99B84F5B944EC9F4AFC0E /* Sources/PersonaKitCore */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/PersonaKitCore;
+			sourceTree = "<group>";
+		};
+		5D1FEEE498734B1CB87F8C22 /* Sources/PersonaKitResources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/PersonaKitResources;
+			sourceTree = "<group>";
+		};
+		D14AC49F2F2A523A0068F8F2 /* Sources/PersonaKitApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/PersonaKitApp;
+			sourceTree = "<group>";
+		};
+		D14AC4AD2F2A523B0068F8F2 /* Tests/PersonaKitAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests/PersonaKitAppTests;
+			sourceTree = "<group>";
+		};
+		D14AC4B72F2A523C0068F8F2 /* Tests/PersonaKitCoreTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests/PersonaKitCoreTests;
+			sourceTree = "<group>";
+		};
+		EF909608F66B430FB2D12107 /* Sources/PersonaKitSchemaValidate */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sources/PersonaKitSchemaValidate;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		01F1639A819F4722BEA133DA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C85E4B0235A54585821742C3 /* PersonaKitCore.framework in Frameworks */,
+				3B47DFBC1EF6488DB9D2E195 /* Dependencies in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C6E723F77F52486195D2B6ED /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB95B5E95BFB4008A6F6FD75 /* Dependencies in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC49A2F2A523A0068F8F2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00E109CA5F9841C0B8982043 /* PersonaKitCore.framework in Frameworks */,
+				8F6003FB33E4487492CF78F4 /* PersonaKitResources.framework in Frameworks */,
+				48F075F474414A02BA558685 /* Dependencies in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4A72F2A523B0068F8F2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4B12F2A523C0068F8F2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				40271A371ADD4ADB882060F5 /* PersonaKitCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EF55FEF56D0A44B7825CD9ED /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EFBD59D1DCC34AE6979E0772 /* PersonaKitCore.framework in Frameworks */,
+				B48857A14C0C445BBA32BE18 /* PersonaKitResources.framework in Frameworks */,
+				87D4733E56C14BF3BE903995 /* Dependencies in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EF7EC84AC232400BB6E019DD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D14AC4942F2A523A0068F8F2 = {
+			isa = PBXGroup;
+			children = (
+				28D99B84F5B944EC9F4AFC0E /* Sources/PersonaKitCore */,
+				5D1FEEE498734B1CB87F8C22 /* Sources/PersonaKitResources */,
+				0D20A81B054844FB89701989 /* Sources/PersonaKitCLI */,
+				EF909608F66B430FB2D12107 /* Sources/PersonaKitSchemaValidate */,
+				D14AC49F2F2A523A0068F8F2 /* Sources/PersonaKitApp */,
+				D14AC4AD2F2A523B0068F8F2 /* Tests/PersonaKitAppTests */,
+				D14AC4B72F2A523C0068F8F2 /* Tests/PersonaKitCoreTests */,
+				D14AC49E2F2A523A0068F8F2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D14AC49E2F2A523A0068F8F2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D14AC49D2F2A523A0068F8F2 /* PersonaKit.app */,
+				7223418A5B20441BAD091269 /* PersonaKitCore.framework */,
+				A430158DA0524357BDD3F238 /* PersonaKitResources.framework */,
+				F1BE367C66AF4BE39BE33813 /* personakit */,
+				1BC5257B29064821AD3D7E38 /* personakit-validate */,
+				D14AC4AA2F2A523B0068F8F2 /* PersonaKitAppTests.xctest */,
+				D14AC4B42F2A523C0068F8F2 /* PersonaKitCoreTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4406CDC80B10458FBB31CA41 /* PersonaKitCLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5667A9BF45994693877AC7A9 /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */;
+			buildPhases = (
+				51E8769178D74A1CB550490A /* Sources */,
+				EF55FEF56D0A44B7825CD9ED /* Frameworks */,
+				96D12741D099495A994C9B00 /* Resources */,
+				893F4EEF290E4DDA9100981D /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6FA0D4E259674F11BBEBC577 /* PBXTargetDependency */,
+				A127ACF5CC4349C797CF31CB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0D20A81B054844FB89701989 /* Sources/PersonaKitCLI */,
+			);
+			name = PersonaKitCLI;
+			packageProductDependencies = (
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
+			);
+			productName = personakit;
+			productReference = F1BE367C66AF4BE39BE33813 /* personakit */;
+			productType = "com.apple.product-type.tool";
+		};
+		52573EDD922A4C26A67CFBD8 /* PersonaKitCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3677252322694367BC505018 /* Build configuration list for PBXNativeTarget "PersonaKitCore" */;
+			buildPhases = (
+				817C1515B4494304AFD6B5F4 /* Sources */,
+				C6E723F77F52486195D2B6ED /* Frameworks */,
+				212389CC95BF4DB4A6CA9D73 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				28D99B84F5B944EC9F4AFC0E /* Sources/PersonaKitCore */,
+			);
+			name = PersonaKitCore;
+			packageProductDependencies = (
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
+			);
+			productName = PersonaKitCore;
+			productReference = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		AFBC63A3B6B4474092137A24 /* PersonaKitSchemaValidate */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BEDF89BA5F7B4A09AA72BDD4 /* Build configuration list for PBXNativeTarget "PersonaKitSchemaValidate" */;
+			buildPhases = (
+				6F04E123F09D484A8789B0DE /* Sources */,
+				01F1639A819F4722BEA133DA /* Frameworks */,
+				62805F309219474AB006276C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2AA2A41B459040AD9BA39DB0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				EF909608F66B430FB2D12107 /* Sources/PersonaKitSchemaValidate */,
+			);
+			name = PersonaKitSchemaValidate;
+			packageProductDependencies = (
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
+			);
+			productName = "personakit-validate";
+			productReference = 1BC5257B29064821AD3D7E38 /* personakit-validate */;
+			productType = "com.apple.product-type.tool";
+		};
+		C0187511E25D4B63A440362C /* PersonaKitResources */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C776576321014167BF8EBB94 /* Build configuration list for PBXNativeTarget "PersonaKitResources" */;
+			buildPhases = (
+				D9CB7936024C49218659076D /* Sources */,
+				EF7EC84AC232400BB6E019DD /* Frameworks */,
+				BC4A14B8E3DD4CF79C926045 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5D1FEEE498734B1CB87F8C22 /* Sources/PersonaKitResources */,
+			);
+			name = PersonaKitResources;
+			packageProductDependencies = (
+			);
+			productName = PersonaKitResources;
+			productReference = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		D14AC49C2F2A523A0068F8F2 /* PersonaKitApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D14AC4BE2F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitApp" */;
+			buildPhases = (
+				D14AC4992F2A523A0068F8F2 /* Sources */,
+				D14AC49A2F2A523A0068F8F2 /* Frameworks */,
+				D14AC49B2F2A523A0068F8F2 /* Resources */,
+				B57DA721BB3B493DA671B5BE /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				72167C8C29BA44E8B8B58C52 /* PBXTargetDependency */,
+				392D31E0FE294A90B13DFB72 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D14AC49F2F2A523A0068F8F2 /* Sources/PersonaKitApp */,
+			);
+			name = PersonaKitApp;
+			packageProductDependencies = (
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
+			);
+			productName = PersonaKit;
+			productReference = D14AC49D2F2A523A0068F8F2 /* PersonaKit.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D14AC4A92F2A523B0068F8F2 /* PersonaKitAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D14AC4C12F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitAppTests" */;
+			buildPhases = (
+				D14AC4A62F2A523B0068F8F2 /* Sources */,
+				D14AC4A72F2A523B0068F8F2 /* Frameworks */,
+				D14AC4A82F2A523B0068F8F2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D14AC4AC2F2A523B0068F8F2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D14AC4AD2F2A523B0068F8F2 /* Tests/PersonaKitAppTests */,
+			);
+			name = PersonaKitAppTests;
+			packageProductDependencies = (
+			);
+			productName = PersonaKitAppTests;
+			productReference = D14AC4AA2F2A523B0068F8F2 /* PersonaKitAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D14AC4B32F2A523C0068F8F2 /* PersonaKitCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D14AC4C42F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitCoreTests" */;
+			buildPhases = (
+				D14AC4B02F2A523C0068F8F2 /* Sources */,
+				D14AC4B12F2A523C0068F8F2 /* Frameworks */,
+				D14AC4B22F2A523C0068F8F2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				78CD1CDFFEEE457D857D94FE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D14AC4B72F2A523C0068F8F2 /* Tests/PersonaKitCoreTests */,
+			);
+			name = PersonaKitCoreTests;
+			packageProductDependencies = (
+			);
+			productName = PersonaKitCoreTests;
+			productReference = D14AC4B42F2A523C0068F8F2 /* PersonaKitCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D14AC4952F2A523A0068F8F2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					4406CDC80B10458FBB31CA41 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					52573EDD922A4C26A67CFBD8 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					AFBC63A3B6B4474092137A24 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					C0187511E25D4B63A440362C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					D14AC49C2F2A523A0068F8F2 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					D14AC4A92F2A523B0068F8F2 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = D14AC49C2F2A523A0068F8F2;
+					};
+					D14AC4B32F2A523C0068F8F2 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = D14AC4982F2A523A0068F8F2 /* Build configuration list for PBXProject "PersonaKit" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D14AC4942F2A523A0068F8F2;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D14AC49E2F2A523A0068F8F2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D14AC49C2F2A523A0068F8F2 /* PersonaKitApp */,
+				52573EDD922A4C26A67CFBD8 /* PersonaKitCore */,
+				C0187511E25D4B63A440362C /* PersonaKitResources */,
+				4406CDC80B10458FBB31CA41 /* PersonaKitCLI */,
+				AFBC63A3B6B4474092137A24 /* PersonaKitSchemaValidate */,
+				D14AC4A92F2A523B0068F8F2 /* PersonaKitAppTests */,
+				D14AC4B32F2A523C0068F8F2 /* PersonaKitCoreTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		212389CC95BF4DB4A6CA9D73 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		62805F309219474AB006276C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		96D12741D099495A994C9B00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC4A14B8E3DD4CF79C926045 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC49B2F2A523A0068F8F2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4A82F2A523B0068F8F2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4B22F2A523C0068F8F2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		51E8769178D74A1CB550490A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6F04E123F09D484A8789B0DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		817C1515B4494304AFD6B5F4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4992F2A523A0068F8F2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4A62F2A523B0068F8F2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D14AC4B02F2A523C0068F8F2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9CB7936024C49218659076D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2AA2A41B459040AD9BA39DB0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52573EDD922A4C26A67CFBD8 /* PersonaKitCore */;
+			targetProxy = 32823F4E883744BA862EC6ED /* PBXContainerItemProxy */;
+		};
+		392D31E0FE294A90B13DFB72 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0187511E25D4B63A440362C /* PersonaKitResources */;
+			targetProxy = 6E5EE47BC68B429D9C1F54AC /* PBXContainerItemProxy */;
+		};
+		6FA0D4E259674F11BBEBC577 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52573EDD922A4C26A67CFBD8 /* PersonaKitCore */;
+			targetProxy = 3CB56646A0484DE8AAB2389E /* PBXContainerItemProxy */;
+		};
+		72167C8C29BA44E8B8B58C52 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52573EDD922A4C26A67CFBD8 /* PersonaKitCore */;
+			targetProxy = 85E5DF5D78164D69A93EC4DE /* PBXContainerItemProxy */;
+		};
+		78CD1CDFFEEE457D857D94FE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52573EDD922A4C26A67CFBD8 /* PersonaKitCore */;
+			targetProxy = F8C79CDCE67F45008F8FBECC /* PBXContainerItemProxy */;
+		};
+		A127ACF5CC4349C797CF31CB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0187511E25D4B63A440362C /* PersonaKitResources */;
+			targetProxy = DF2D1BE913254A8AA09FB46F /* PBXContainerItemProxy */;
+		};
+		D14AC4AC2F2A523B0068F8F2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D14AC49C2F2A523A0068F8F2 /* PersonaKitApp */;
+			targetProxy = D14AC4AB2F2A523B0068F8F2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		15E40D26C7F04780B6BB6F3D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitResources;
+				PRODUCT_NAME = PersonaKitResources;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		362571FF1BF341B7927A2A74 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.personakit;
+				PRODUCT_MODULE_NAME = PersonaKitCLI;
+				PRODUCT_NAME = personakit;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		59228BE38CDA4A4BB68EC826 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitSchemaValidate;
+				PRODUCT_MODULE_NAME = PersonaKitSchemaValidate;
+				PRODUCT_NAME = "personakit-validate";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		633B050CB99F4FBA8F70A530 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitResources;
+				PRODUCT_NAME = PersonaKitResources;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		9E5946ACC07B4373802521DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitSchemaValidate;
+				PRODUCT_MODULE_NAME = PersonaKitSchemaValidate;
+				PRODUCT_NAME = "personakit-validate";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		CD428580AB764A949DB1A51C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.personakit;
+				PRODUCT_MODULE_NAME = PersonaKitCLI;
+				PRODUCT_NAME = personakit;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D14AC4BC2F2A523C0068F8F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D14AC4BD2F2A523C0068F8F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		D14AC4BF2F2A523C0068F8F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKit;
+				PRODUCT_MODULE_NAME = PersonaKitApp;
+				PRODUCT_NAME = PersonaKit;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D14AC4C02F2A523C0068F8F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKit;
+				PRODUCT_MODULE_NAME = PersonaKitApp;
+				PRODUCT_NAME = PersonaKit;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		D14AC4C22F2A523C0068F8F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
+			};
+			name = Debug;
+		};
+		D14AC4C32F2A523C0068F8F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
+			};
+			name = Release;
+		};
+		D14AC4C52F2A523C0068F8F2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D14AC4C62F2A523C0068F8F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		F077654069FA42498525C6C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitCore;
+				PRODUCT_NAME = PersonaKitCore;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		F827B57DAB0E43DBB2661928 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitCore;
+				PRODUCT_NAME = PersonaKitCore;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3677252322694367BC505018 /* Build configuration list for PBXNativeTarget "PersonaKitCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F827B57DAB0E43DBB2661928 /* Debug */,
+				F077654069FA42498525C6C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5667A9BF45994693877AC7A9 /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD428580AB764A949DB1A51C /* Debug */,
+				362571FF1BF341B7927A2A74 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BEDF89BA5F7B4A09AA72BDD4 /* Build configuration list for PBXNativeTarget "PersonaKitSchemaValidate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59228BE38CDA4A4BB68EC826 /* Debug */,
+				9E5946ACC07B4373802521DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C776576321014167BF8EBB94 /* Build configuration list for PBXNativeTarget "PersonaKitResources" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				633B050CB99F4FBA8F70A530 /* Debug */,
+				15E40D26C7F04780B6BB6F3D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D14AC4982F2A523A0068F8F2 /* Build configuration list for PBXProject "PersonaKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D14AC4BC2F2A523C0068F8F2 /* Debug */,
+				D14AC4BD2F2A523C0068F8F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D14AC4BE2F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D14AC4BF2F2A523C0068F8F2 /* Debug */,
+				D14AC4C02F2A523C0068F8F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D14AC4C12F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D14AC4C22F2A523C0068F8F2 /* Debug */,
+				D14AC4C32F2A523C0068F8F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D14AC4C42F2A523C0068F8F2 /* Build configuration list for PBXNativeTarget "PersonaKitCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D14AC4C52F2A523C0068F8F2 /* Debug */,
+				D14AC4C62F2A523C0068F8F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-dependencies.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6F6E8756972D40E18DA999F9 /* Dependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */;
+			productName = Dependencies;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D14AC4952F2A523A0068F8F2 /* Project object */;
+}

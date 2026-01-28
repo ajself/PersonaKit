@@ -9,7 +9,7 @@ help:
 		"PersonaKit Makefile targets:" \
 		"  make format          Format Swift files with swift-format" \
 		"  make lint            Lint with SwiftLint" \
-		"  make test            Run SwiftPM tests" \
+		"  make test            Run Xcode tests" \
 		"" \
 		"Variables:" \
 		"  SWIFT=swift            Swift toolchain command"
@@ -21,4 +21,4 @@ lint:
 	@swiftlint --config .swiftlint.yml
 
 test:
-	@$(SWIFT) test
+	@xcodebuild -project PersonaKit.xcodeproj -scheme PersonaKitApp -configuration Debug test

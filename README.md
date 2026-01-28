@@ -22,7 +22,7 @@ PersonaKit does not:
 
 ### App
 ```bash
-swift run PersonaKitApp
+open PersonaKit.xcodeproj
 ```
 1) Select a persona in the left sidebar.  
 2) Open the inspector and fill **Context**, **Evidence**, and **Task**.  
@@ -30,8 +30,10 @@ swift run PersonaKitApp
 
 ### CLI
 ```bash
-swift run personakit list
-swift run personakit compose --persona senior-ios-engineer --context "Repo: PersonaKit" --evidence "Determinism tests" --task "Review changes"
+xcodebuild -project PersonaKit.xcodeproj -target PersonaKitCLI -configuration Debug build
+CLI_PATH="$(xcodebuild -project PersonaKit.xcodeproj -target PersonaKitCLI -configuration Debug -showBuildSettings | awk -F ' = ' '/TARGET_BUILD_DIR/ {dir=$2} /EXECUTABLE_PATH/ {exe=$2} END {print dir \"/\" exe}')"
+"$CLI_PATH" list
+"$CLI_PATH" compose --persona senior-ios-engineer --context "Repo: PersonaKit" --evidence "Determinism tests" --task "Review changes"
 ```
 
 The built-in pack is included, so both commands work out of the box.
@@ -187,15 +189,17 @@ This is a tool, not a promise to support everything forever.
 
 ## Installation & Running
 
-### App (SwiftPM)
+### App (Xcode)
 ```bash
-swift run PersonaKitApp
+open PersonaKit.xcodeproj
 ```
 
 ### CLI
 ```bash
-swift run personakit list
-swift run personakit compose --persona <id> --context "Example" --evidence "Example" --task "Example"
+xcodebuild -project PersonaKit.xcodeproj -target PersonaKitCLI -configuration Debug build
+CLI_PATH="$(xcodebuild -project PersonaKit.xcodeproj -target PersonaKitCLI -configuration Debug -showBuildSettings | awk -F ' = ' '/TARGET_BUILD_DIR/ {dir=$2} /EXECUTABLE_PATH/ {exe=$2} END {print dir \"/\" exe}')"
+"$CLI_PATH" list
+"$CLI_PATH" compose --persona <id> --context "Example" --evidence "Example" --task "Example"
 ```
 Other section flags (`--goal`, `--constraints`) are optional when a persona defines them.
 

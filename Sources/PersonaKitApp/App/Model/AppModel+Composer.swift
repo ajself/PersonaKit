@@ -1,3 +1,5 @@
+import Dependencies
+
 /// Composer feature behaviors for ``AppModel``.
 extension AppModel {
   /// Requests focus for a composer section by key.

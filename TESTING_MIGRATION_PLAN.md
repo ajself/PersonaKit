@@ -37,12 +37,12 @@ Deliverable: all App tests running under Swift Testing.
 
 ## Phase 5: Cleanup + CI
 - Remove XCTest-only imports and any leftover `XCTestCase` scaffolding.
-- Update `Package.swift` or build scripts if needed (target settings, test discovery).
+- Update the Xcode project or build scripts if needed (target settings, test discovery).
 - Run full test suite to confirm parity with pre-migration behavior.
 
-Deliverable: clean test targets, green `swift test`, and no XCTest dependencies in test code.
+Deliverable: clean test targets, green `xcodebuild -project PersonaKit.xcodeproj -scheme PersonaKitApp -configuration Debug test`, and no XCTest dependencies in test code.
 
 ## Acceptance Criteria
 - All tests are implemented in Swift Testing.
 - No behavioral regressions or coverage gaps.
-- `swift test` passes without XCTest-based suites.
+- `xcodebuild -project PersonaKit.xcodeproj -scheme PersonaKitApp -configuration Debug test` passes without XCTest-based suites.

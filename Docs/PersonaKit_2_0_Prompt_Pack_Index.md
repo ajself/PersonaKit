@@ -108,7 +108,7 @@ Out of scope:
 - New features
 
 Acceptance criteria:
-- `swift test` and `./Scripts/release-check.sh` stay green
+- `xcodebuild -project PersonaKit.xcodeproj -scheme PersonaKitApp -configuration Debug test` and `./Scripts/release-check.sh` stay green
 - Parity tests cover core flows
 
 ---
