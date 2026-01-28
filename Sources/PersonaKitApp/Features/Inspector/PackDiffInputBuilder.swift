@@ -16,7 +16,7 @@ enum PackDiffInputBuilder {
   ) -> PackDiffInputResult {
     var records: [PersonaDiffRecord] = []
     var diagnostics: [Diagnostic] = []
-    let fileClient = fileClient ?? PackDiffEnvironment().fileClient
+    let fileClient = fileClient ?? DependencyValues.current.fileClient
 
     appendRecords(
       from: selection.packFile,
@@ -84,10 +84,4 @@ enum PackDiffInputBuilder {
     let name = url.lastPathComponent.lowercased()
     return name.hasSuffix(".meta.json") || name.hasSuffix(".metadata.json")
   }
-}
-
-/// Dependency container for pack diff file access.
-private struct PackDiffEnvironment {
-  @Dependency(\.fileClient)
-  var fileClient
 }

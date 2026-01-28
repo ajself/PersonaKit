@@ -34,7 +34,7 @@ enum PersonaKitCLI {
   }
 
   static func main() async {
-    let fileClient = CLIEnvironment().fileClient
+    let fileClient = DependencyValues.current.fileClient
     let allArgs = Array(CommandLine.arguments.dropFirst())
     guard let (cmd, parsed) = parseCommand(allArgs) else {
       printUsage()
@@ -264,11 +264,6 @@ enum PersonaKitCLI {
         The macOS app additionally loads user packs from ~/Library/Application Support/PersonaKit/Packs/
       """)
   }
-}
-
-private struct CLIEnvironment {
-  @Dependency(\.fileClient)
-  var fileClient
 }
 
 private func readStdinIfAvailable() -> String? {
