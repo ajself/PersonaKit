@@ -86,6 +86,19 @@ Agents should operate as SwiftUI and Swift 6 experts and write code that follows
 
 ---
 
+## Tooling Defaults
+
+- Prefer XcodeBuildMCP for builds/tests when available; fall back to `xcodebuild` only if needed.
+- Set XcodeBuildMCP defaults once per session using:
+  - project: `session-set-defaults { "projectPath": "/Users/ajself/Code/PersonaKit/PersonaKit.xcodeproj" }`
+  - scheme: `session-set-defaults { "scheme": "PersonaKitApp" | "PersonaKitCLI" | "PersonaKitCore" | "PersonaKitResources" | "PersonaKitSchemaValidate" }`
+- Common XcodeBuildMCP calls (after defaults):
+  - build app: `build_macos`
+  - build CLI/core: `build_macos`
+  - run tests: `test_macos` (requires scheme configured for test action)
+
+---
+
 ## What Agents Are Allowed To Do
 
 Automated agents may be used for work that **hardens trust**, **reduces entropy**, and

@@ -124,6 +124,9 @@ Review checkpoint: confirm the pattern is consistent and still minimal.
 In progress:
 - Added storage-path defaults coverage for dependency-driven home directory
   resolution.
+- Added tests for dependency fallback in import planning, user pack loading,
+  and pinned personas default path.
+- Verified PersonaKitCore tests pass via shared macOS scheme.
 
 Review checkpoint: confirm tests cover the intended behaviors and no new
 dependencies were introduced.

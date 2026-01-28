@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import Testing
 
@@ -53,6 +54,38 @@ struct PersonaKitCoreImportTests {
 
     let nestedRelative = plan.relativePath(for: nestedPersonaURL)
     #expect(nestedRelative == "Sub/Nested.persona.json")
+  }
+
+  @Test("Import plan uses dependency file client when none provided")
+  func importPlanUsesDependencyFileClientWhenNoneProvided() throws {
+    let packURL = URL(fileURLWithPath: "/tmp/Example.pack.json")
+    let packJSON = """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
+
+    var fileClient = FileClient.liveValue
+    fileClient.isDirectory = { _ in false }
+    fileClient.contentsOfDirectory = { _, _ in [] }
+    fileClient.enumerator = { _, _, _ in nil }
+    fileClient.readData = { _ in
+      return Data(packJSON.utf8)
+    }
+
+    let result = withDependencies {
+      $0.fileClient = fileClient
+    } operation: {
+      PersonaPackImportPlan.plan(from: packURL)
+    }
+
+    let plan = try #require(try? result.get())
+    #expect(plan.pack.id == "pack.id")
   }
 
   @Test("Import plan allows same filename in different folders")
@@ -304,5 +337,44 @@ struct PersonaKitCoreImportTests {
     #expect(loaded.packs.count == 1)
     #expect(loaded.packs.first?.set.personas.count == 2)
     #expect(loaded.packs.first?.packRoot.standardizedFileURL == packFolder.standardizedFileURL)
+  }
+
+  @Test("User pack loader uses dependency file client when none provided")
+  func userPackLoaderUsesDependencyFileClientWhenNoneProvided() throws {
+    let root = URL(fileURLWithPath: "/tmp/user-packs")
+    let packURL = root.appendingPathComponent("Pack.pack.json")
+    let packJSON = """
+      {
+        "schemaVersion": 1,
+        "documentType": "personaPack",
+        "pack": { "id": "pack.id", "name": "Pack" },
+        "personas": [
+          { "id": "p1", "name": "P1", "system": "SYSTEM" }
+        ]
+      }
+      """
+
+    var fileClient = FileClient.liveValue
+    fileClient.contentsOfDirectory = { url, _ in
+      guard url.standardizedFileURL == root.standardizedFileURL else { return [] }
+      return [packURL]
+    }
+    fileClient.isDirectory = { _ in false }
+    fileClient.readData = { url in
+      guard url.standardizedFileURL == packURL.standardizedFileURL else {
+        struct UnexpectedRead: Error {}
+        throw UnexpectedRead()
+      }
+      return Data(packJSON.utf8)
+    }
+
+    let loaded = withDependencies {
+      $0.fileClient = fileClient
+    } operation: {
+      UserPackLoader.load(in: root)
+    }
+
+    #expect(loaded.packs.count == 1)
+    #expect(loaded.packs.first?.set.pack.id == "pack.id")
   }
 }

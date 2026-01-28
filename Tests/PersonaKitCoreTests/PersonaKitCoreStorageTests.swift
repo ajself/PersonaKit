@@ -68,6 +68,20 @@ struct PersonaKitCoreStorageTests {
     #expect(url.path == "/Users/dependency/Library/Application Support/PersonaKit/State/filters.json")
   }
 
+  @Test("Pinned personas default URL uses dependency home directory")
+  func pinnedPersonasDefaultURLUsesDependencyHomeDirectory() {
+    var fileClient = FileClient.liveValue
+    fileClient.homeDirectory = { URL(fileURLWithPath: "/Users/dependency") }
+
+    let url = withDependencies {
+      $0.fileClient = fileClient
+    } operation: {
+      PinnedPersonasStore.defaultFileURL()
+    }
+
+    #expect(url.path == "/Users/dependency/Library/Application Support/PersonaKit/State/pins.json")
+  }
+
   @Test("Saved filters round trip deterministic encoding")
   func savedFiltersRoundTripDeterministicEncoding() throws {
     var filters: [SavedFilter] = []
