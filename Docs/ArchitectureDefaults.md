@@ -1,5 +1,7 @@
 # Architecture Defaults — FOSA
 
+See also: [Architecture System Design](Architecture_System_Design.md)
+
 ## Owner shape
 **Default:** Explicit model (e.g. `FeatureModel`)
 - Feature views bind `@Environment(FeatureModel.self)` where possible.
