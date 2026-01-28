@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// Loads persona documents from disk and validates them against schema v1.
@@ -7,7 +8,7 @@ public enum PersonaLoader {
     from url: URL, sourceKind: PersonaSource.Kind
   ) -> Result<PersonaSet, DiagnosticError> {
     let source = PersonaSource(kind: sourceKind, url: url)
-    let fileClient = FileClientProvider().fileClient
+    let fileClient = DependencyValues.current.fileClient
     do {
       let data = try fileClient.readData(url)
       let doc = try JSONDecoder().decode(PersonaDocumentEnvelope.self, from: data)
@@ -31,7 +32,7 @@ public enum PersonaLoader {
   ) -> (sets: [PersonaSet], diagnostics: [Diagnostic]) {
     var sets: [PersonaSet] = []
     var diagnostics: [Diagnostic] = []
-    let fileClient = FileClientProvider().fileClient
+    let fileClient = DependencyValues.current.fileClient
 
     let contents: [URL]
     do {

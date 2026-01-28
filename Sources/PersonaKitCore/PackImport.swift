@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// Errors that can occur when planning a pack import.
@@ -46,7 +47,7 @@ public struct PersonaPackImportPlan: Sendable, Hashable {
     from selection: URL,
     fileClient: FileClient? = nil
   ) -> Result<PersonaPackImportPlan, PersonaPackImportError> {
-    let fileClient = fileClient ?? FileClientProvider().fileClient
+    let fileClient = fileClient ?? DependencyValues.current.fileClient
     let isDirectory = fileClient.isDirectory(selection)
 
     if isDirectory {

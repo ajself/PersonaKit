@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// A persisted sidebar filter configuration.
@@ -47,7 +48,7 @@ public struct SavedFiltersStore {
     fileClient: FileClient? = nil
   ) {
     self.fileURL = fileURL
-    self.fileClient = fileClient ?? FileClientProvider().fileClient
+    self.fileClient = fileClient ?? DependencyValues.current.fileClient
   }
 
   /// Loads saved filters from disk, returning an empty array on failure.

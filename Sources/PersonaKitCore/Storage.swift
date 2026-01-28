@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// Standard on-disk locations for PersonaKit packs and state.
@@ -15,7 +16,7 @@ public struct PersonaKitStoragePaths: Sendable, Hashable {
 
   /// Returns the default Application Support paths for the current user.
   public static func standard(homeDirectory: URL? = nil) -> PersonaKitStoragePaths {
-    let resolvedHome = homeDirectory ?? FileClientProvider().fileClient.homeDirectory()
+    let resolvedHome = homeDirectory ?? DependencyValues.current.fileClient.homeDirectory()
     let root =
       resolvedHome
       .appendingPathComponent("Library", isDirectory: true)

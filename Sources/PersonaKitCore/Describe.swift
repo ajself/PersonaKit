@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// Failure describing a persona for CLI output.
@@ -135,7 +136,7 @@ public enum PersonaDescriptor {
   }
 
   private static func abbreviateHome(_ path: String) -> String {
-    let home = FileClientProvider().fileClient.homeDirectory().standardizedFileURL.path
+    let home = DependencyValues.current.fileClient.homeDirectory().standardizedFileURL.path
     guard path.hasPrefix(home) else { return path }
     return "~" + path.dropFirst(home.count)
   }

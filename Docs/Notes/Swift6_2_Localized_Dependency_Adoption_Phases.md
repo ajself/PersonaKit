@@ -4,7 +4,15 @@ Goal: Resolve dependencies locally (per method or short-lived scope) using
 swift-dependencies, avoiding stored `@Dependency` properties on long-lived
 `@Observable` types. Each phase ends with a review checkpoint before proceeding.
 
+Status:
+- Phase 1 complete: CLI/schema/pack diff fallbacks use localized resolution.
+- Phase 2 complete: AppModel + SidebarModel migrated; stored `@Dependency` removed.
+- Phase 3 complete: Core helpers use localized resolution; legacy shim removed.
+- Phase 4 in progress: added storage-path defaults coverage.
+- Phase 5 pending: optional local `@Dependency` style review.
+
 ## Inventory (Phase 0 Notes)
+Captured before migrations; see Status for completion state.
 
 ### Stored `@Dependency` sites
 - `Sources/PersonaKitCLI/PersonaKitCLIMain.swift`: `CLIEnvironment` uses
@@ -100,12 +108,22 @@ unchanged.
 - Update team conventions or documentation if needed.
 - Remove any legacy helper shims added during earlier phases.
 
+Completed in Phase 3:
+- Replaced `FileClientProvider` usage in PersonaKitCore with localized
+  `DependencyValues.current.fileClient`.
+- Added `DependencyValues.current` shim in PersonaKitCore and removed
+  `DependencyAccess.swift`.
+
 Review checkpoint: confirm the pattern is consistent and still minimal.
 
 ### Phase 4: Tests and Regression Coverage
 - Add targeted tests for any behavior that was previously implicit in stored
   dependencies.
 - Ensure CLI and app parity remains intact.
+
+In progress:
+- Added storage-path defaults coverage for dependency-driven home directory
+  resolution.
 
 Review checkpoint: confirm tests cover the intended behaviors and no new
 dependencies were introduced.

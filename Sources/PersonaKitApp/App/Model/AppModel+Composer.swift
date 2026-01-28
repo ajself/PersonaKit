@@ -1,4 +1,5 @@
 import Dependencies
+import PersonaKitCore
 
 /// Composer feature behaviors for ``AppModel``.
 extension AppModel {

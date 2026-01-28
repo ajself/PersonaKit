@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// File-backed store for pinned persona identifiers.
@@ -20,7 +21,7 @@ public struct PinnedPersonasStore {
     fileClient: FileClient? = nil
   ) {
     self.fileURL = fileURL
-    self.fileClient = fileClient ?? FileClientProvider().fileClient
+    self.fileClient = fileClient ?? DependencyValues.current.fileClient
   }
 
   /// Loads pinned persona ids from disk, returning an empty array on failure.

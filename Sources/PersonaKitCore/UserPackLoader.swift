@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// A user pack plus its on-disk locations.
@@ -17,7 +18,7 @@ public enum UserPackLoader {
   ) -> (packs: [LoadedUserPack], diagnostics: [Diagnostic]) {
     var packs: [LoadedUserPack] = []
     var diagnostics: [Diagnostic] = []
-    let fileClient = fileClient ?? FileClientProvider().fileClient
+    let fileClient = fileClient ?? DependencyValues.current.fileClient
 
     let contents: [URL]
     do {

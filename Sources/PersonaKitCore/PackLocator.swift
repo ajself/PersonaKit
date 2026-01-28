@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// Locates built-in persona packs in bundles or repo layouts.
@@ -8,14 +9,14 @@ public enum PersonaPackLocator {
       return [file]
     }
     if let dir = bundle.url(forResource: "BuiltIn", withExtension: nil) {
-      return jsonFiles(in: dir, fileClient: FileClientProvider().fileClient)
+      return jsonFiles(in: dir, fileClient: DependencyValues.current.fileClient)
     }
     return []
   }
 
   /// Returns built-in pack URLs from a repo checkout on disk.
   public static func builtInPackURLs(repoRoot: URL) -> [URL] {
-    let fileClient = FileClientProvider().fileClient
+    let fileClient = DependencyValues.current.fileClient
     let resourcesRoot = repoRoot.appendingPathComponent(
       "Sources/PersonaKitResources/Resources", isDirectory: true)
     let builtInDir = resourcesRoot.appendingPathComponent("BuiltIn", isDirectory: true)

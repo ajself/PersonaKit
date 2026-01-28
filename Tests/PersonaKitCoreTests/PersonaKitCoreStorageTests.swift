@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import Testing
 
@@ -37,6 +38,34 @@ struct PersonaKitCoreStorageTests {
     #expect(paths.root.path == "/Users/tester/Library/Application Support/PersonaKit")
     #expect(paths.packs.path == "/Users/tester/Library/Application Support/PersonaKit/Packs")
     #expect(paths.state.path == "/Users/tester/Library/Application Support/PersonaKit/State")
+  }
+
+  @Test("Storage paths default to dependency home directory")
+  func storagePathsDefaultToDependencyHomeDirectory() {
+    var fileClient = FileClient.liveValue
+    fileClient.homeDirectory = { URL(fileURLWithPath: "/Users/dependency") }
+
+    let paths = withDependencies {
+      $0.fileClient = fileClient
+    } operation: {
+      PersonaKitStoragePaths.standard()
+    }
+
+    #expect(paths.root.path == "/Users/dependency/Library/Application Support/PersonaKit")
+  }
+
+  @Test("Saved filters default URL uses dependency home directory")
+  func savedFiltersDefaultURLUsesDependencyHomeDirectory() {
+    var fileClient = FileClient.liveValue
+    fileClient.homeDirectory = { URL(fileURLWithPath: "/Users/dependency") }
+
+    let url = withDependencies {
+      $0.fileClient = fileClient
+    } operation: {
+      SavedFiltersStore.defaultFileURL()
+    }
+
+    #expect(url.path == "/Users/dependency/Library/Application Support/PersonaKit/State/filters.json")
   }
 
   @Test("Saved filters round trip deterministic encoding")
