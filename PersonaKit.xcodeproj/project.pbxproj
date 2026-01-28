@@ -14,7 +14,10 @@
 		3B47DFBC1EF6488DB9D2E195 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
 		40271A371ADD4ADB882060F5 /* PersonaKitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7223418A5B20441BAD091269 /* PersonaKitCore.framework */; };
 		48F075F474414A02BA558685 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
+		5E7B9B6C2F3D4A1E9C8B7A6D /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
 		6AFC1BF0963249D6A3900272 /* PersonaKitResources.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7F8E9D0C1B2A3E4D5C6B7A8F /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = 1A2B3C4D5E6F708192A3B4C5 /* Clocks */; };
+		8C1A2B3D4E5F60718293A4B5 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
 		87D4733E56C14BF3BE903995 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6E8756972D40E18DA999F9 /* Dependencies */; };
 		8F6003FB33E4487492CF78F4 /* PersonaKitResources.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; };
 		B48857A14C0C445BBA32BE18 /* PersonaKitResources.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A430158DA0524357BDD3F238 /* PersonaKitResources.framework */; };
@@ -182,6 +185,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7F8E9D0C1B2A3E4D5C6B7A8F /* Clocks in Frameworks */,
+				5E7B9B6C2F3D4A1E9C8B7A6D /* Dependencies in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +195,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				40271A371ADD4ADB882060F5 /* PersonaKitCore.framework in Frameworks */,
+				8C1A2B3D4E5F60718293A4B5 /* Dependencies in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +389,8 @@
 			);
 			name = PersonaKitAppTests;
 			packageProductDependencies = (
+				1A2B3C4D5E6F708192A3B4C5 /* Clocks */,
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
 			);
 			productName = PersonaKitAppTests;
 			productReference = D14AC4AA2F2A523B0068F8F2 /* PersonaKitAppTests.xctest */;
@@ -406,6 +414,7 @@
 			);
 			name = PersonaKitCoreTests;
 			packageProductDependencies = (
+				6F6E8756972D40E18DA999F9 /* Dependencies */,
 			);
 			productName = PersonaKitCoreTests;
 			productReference = D14AC4B42F2A523C0068F8F2 /* PersonaKitCoreTests.xctest */;
@@ -455,6 +464,7 @@
 			mainGroup = D14AC4942F2A523A0068F8F2;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				2B1C3D4E5F60718293A4B5C6 /* XCRemoteSwiftPackageReference "swift-clocks" */,
 				69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -1110,6 +1120,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		2B1C3D4E5F60718293A4B5C6 /* XCRemoteSwiftPackageReference "swift-clocks" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-clocks.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-dependencies.git";
@@ -1121,6 +1139,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1A2B3C4D5E6F708192A3B4C5 /* Clocks */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2B1C3D4E5F60718293A4B5C6 /* XCRemoteSwiftPackageReference "swift-clocks" */;
+			productName = Clocks;
+		};
 		6F6E8756972D40E18DA999F9 /* Dependencies */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 69D14607639A47C89BAA25DA /* XCRemoteSwiftPackageReference "swift-dependencies" */;

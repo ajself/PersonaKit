@@ -2,6 +2,7 @@ import Testing
 
 @testable import PersonaKitApp
 
+@MainActor
 @Suite("Sidebar Search Escape Policy")
 struct SidebarSearchEscapePolicyTests {
   @Test("Escape clears and focuses when search has text")

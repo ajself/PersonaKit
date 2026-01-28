@@ -11,86 +11,82 @@ struct JSONPreviewDebounceTests {
   @MainActor
   func jsonPreviewFormattingDebounces() async {
     let clock = TestClock()
-    let model = withDependencies {
+    await withDependencies {
       $0.continuousClock = clock
     } operation: {
-      AppModel()
+      let model = AppModel()
+      let unformatted = "{\"b\":2,\"a\":1}"
+      model.updatePreviewJSON(unformatted)
+      #expect(model.preview.jsonPreview == unformatted)
+
+      await clock.advance(by: .milliseconds(399))
+      await Task.yield()
+      #expect(model.preview.jsonPreview == unformatted)
+
+      await clock.advance(by: .milliseconds(1))
+      await clock.run()
+      #expect(model.preview.jsonPreview == prettyPrintedJSON(from: unformatted))
     }
-
-    let unformatted = "{\"b\":2,\"a\":1}"
-    model.updatePreviewJSON(unformatted)
-    #expect(model.preview.jsonPreview == unformatted)
-
-    await clock.advance(by: .milliseconds(399))
-    await Task.yield()
-    #expect(model.preview.jsonPreview == unformatted)
-
-    await clock.advance(by: .milliseconds(1))
-    await clock.run()
-    #expect(model.preview.jsonPreview == prettyPrintedJSON(from: unformatted))
   }
 
   @Test("JSON preview formatting uses latest edit")
   @MainActor
   func jsonPreviewFormattingUsesLatestEdit() async {
     let clock = TestClock()
-    let model = withDependencies {
+    await withDependencies {
       $0.continuousClock = clock
     } operation: {
-      AppModel()
+      let model = AppModel()
+      let first = "{\"z\":1}"
+      let second = "{\"a\":2}"
+      model.updatePreviewJSON(first)
+
+      await clock.advance(by: .milliseconds(200))
+      await Task.yield()
+      model.updatePreviewJSON(second)
+
+      await clock.advance(by: .milliseconds(400))
+      await clock.run()
+
+      #expect(model.preview.jsonPreview == prettyPrintedJSON(from: second))
+      #expect(model.preview.jsonPreview != prettyPrintedJSON(from: first))
     }
-
-    let first = "{\"z\":1}"
-    let second = "{\"a\":2}"
-    model.updatePreviewJSON(first)
-
-    await clock.advance(by: .milliseconds(200))
-    await Task.yield()
-    model.updatePreviewJSON(second)
-
-    await clock.advance(by: .milliseconds(400))
-    await clock.run()
-
-    #expect(model.preview.jsonPreview == prettyPrintedJSON(from: second))
-    #expect(model.preview.jsonPreview != prettyPrintedJSON(from: first))
   }
 
   @Test("JSON preview does not format invalid JSON")
   @MainActor
   func jsonPreviewDoesNotFormatInvalidJSON() async {
     let clock = TestClock()
-    let model = withDependencies {
+    await withDependencies {
       $0.continuousClock = clock
     } operation: {
-      AppModel()
+      let model = AppModel()
+      let invalidJSON = "{invalid"
+      model.updatePreviewJSON(invalidJSON)
+
+      await clock.advance(by: .milliseconds(400))
+      await clock.run()
+
+      #expect(model.preview.jsonPreview == invalidJSON)
     }
-
-    let invalidJSON = "{invalid"
-    model.updatePreviewJSON(invalidJSON)
-
-    await clock.advance(by: .milliseconds(400))
-    await clock.run()
-
-    #expect(model.preview.jsonPreview == invalidJSON)
   }
 
   @Test("JSON preview formatting is skipped when scheduling is disabled")
   @MainActor
   func jsonPreviewFormattingIsSkippedWhenSchedulingDisabled() async {
     let clock = TestClock()
-    let model = withDependencies {
+    await withDependencies {
       $0.continuousClock = clock
     } operation: {
-      AppModel()
+      let model = AppModel()
+      let unformatted = "{\"b\":2,\"a\":1}"
+      model.updateJSONPreview(unformatted, scheduleFormat: false)
+
+      await clock.advance(by: .milliseconds(400))
+      await clock.run()
+
+      #expect(model.preview.jsonPreview == unformatted)
     }
-
-    let unformatted = "{\"b\":2,\"a\":1}"
-    model.updateJSONPreview(unformatted, scheduleFormat: false)
-
-    await clock.advance(by: .milliseconds(400))
-    await clock.run()
-
-    #expect(model.preview.jsonPreview == unformatted)
   }
 
   private func prettyPrintedJSON(from text: String) -> String {

@@ -21,32 +21,36 @@ struct AppModelSavedFiltersTests {
       pinnedPersonasStore: pinnedPersonasStore
     )
 
-    model.sidebar.searchText = "build determinism"
-    model.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
-    model.sidebar.activeSourceKinds = [.user, .builtIn]
-    model.sidebar.isPinnedViewActive = true
+    try withDependencies {
+      $0.uuid = .incrementing
+    } operation: {
+      model.sidebar.searchText = "build determinism"
+      model.sidebar.activeFilterTags = ["beta", "alpha", "beta"]
+      model.sidebar.activeSourceKinds = [.user, .builtIn]
+      model.sidebar.isPinnedViewActive = true
 
-    model.sidebar.saveCurrentFilter(name: "  My Filter  ")
-    let saved = try #require(model.sidebar.savedFilters.first)
-    #expect(saved.name == "My Filter")
-    #expect(saved.queryText == "build determinism")
-    #expect(saved.selectedTags == ["alpha", "beta"])
-    #expect(saved.selectedSources == ["builtIn", "user"])
-    #expect(model.sidebar.selectedSavedFilterID == saved.id)
-    #expect(model.sidebar.isPinnedViewActive == false)
-    #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
+      model.sidebar.saveCurrentFilter(name: "  My Filter  ")
+      let saved = try #require(model.sidebar.savedFilters.first)
+      #expect(saved.name == "My Filter")
+      #expect(saved.queryText == "build determinism")
+      #expect(saved.selectedTags == ["alpha", "beta"])
+      #expect(saved.selectedSources == ["builtIn", "user"])
+      #expect(model.sidebar.selectedSavedFilterID == saved.id)
+      #expect(model.sidebar.isPinnedViewActive == false)
+      #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
 
-    let savedID = saved.id
-    model.sidebar.renameSavedFilter(id: savedID, newName: " Renamed ")
-    let renamed = try #require(model.sidebar.savedFilters.first)
-    #expect(renamed.name == "Renamed")
-    #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
+      let savedID = saved.id
+      model.sidebar.renameSavedFilter(id: savedID, newName: " Renamed ")
+      let renamed = try #require(model.sidebar.savedFilters.first)
+      #expect(renamed.name == "Renamed")
+      #expect(savedFiltersStore.load() == model.sidebar.savedFilters)
 
-    model.sidebar.selectedSavedFilterID = renamed.id
-    model.sidebar.deleteSavedFilter(id: savedID)
-    #expect(model.sidebar.savedFilters.isEmpty)
-    #expect(model.sidebar.selectedSavedFilterID == nil)
-    #expect(savedFiltersStore.load().isEmpty)
+      model.sidebar.selectedSavedFilterID = renamed.id
+      model.sidebar.deleteSavedFilter(id: savedID)
+      #expect(model.sidebar.savedFilters.isEmpty)
+      #expect(model.sidebar.selectedSavedFilterID == nil)
+      #expect(savedFiltersStore.load().isEmpty)
+    }
   }
 
   @Test("Apply saved filters updates selection and search state")
