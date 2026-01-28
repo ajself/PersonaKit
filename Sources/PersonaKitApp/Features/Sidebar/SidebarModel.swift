@@ -27,9 +27,6 @@ final class SidebarModel {
   var searchFocusRequest: SearchFocusRequest
   var isSearchFocused: Bool
 
-  @Dependency(\.uuid)
-  @ObservationIgnored private var uuid
-
   private let savedFiltersStore: SavedFiltersStore
   private let pinnedPersonasStore: PinnedPersonasStore
   private var isApplyingSavedFilter = false
@@ -54,11 +51,13 @@ final class SidebarModel {
 
   /// Requests focus for the sidebar search field.
   func requestSearchFocus() {
+    let uuid = DependencyValues.current.uuid
     searchFocusRequest = SearchFocusRequest(id: uuid(), shouldFocus: true)
   }
 
   /// Requests blur for the sidebar search field.
   func requestSearchBlur() {
+    let uuid = DependencyValues.current.uuid
     searchFocusRequest = SearchFocusRequest(id: uuid(), shouldFocus: false)
   }
 
@@ -135,6 +134,7 @@ final class SidebarModel {
 
   /// Persists the current filter configuration under the provided name.
   func saveCurrentFilter(name: String) {
+    let uuid = DependencyValues.current.uuid
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
 

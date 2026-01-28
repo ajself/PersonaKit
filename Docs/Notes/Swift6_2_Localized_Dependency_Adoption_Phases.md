@@ -109,3 +109,10 @@ Review checkpoint: confirm the pattern is consistent and still minimal.
 
 Review checkpoint: confirm tests cover the intended behaviors and no new
 dependencies were introduced.
+
+### Phase 5: Optional Local `@Dependency` Style Review
+- Evaluate swapping `DependencyValues.current` uses to local `@Dependency`
+  variables inside methods for consistency and readability.
+- Decide on a single localized-resolution style and apply it uniformly.
+
+Review checkpoint: agree on the preferred localized style before finalizing.

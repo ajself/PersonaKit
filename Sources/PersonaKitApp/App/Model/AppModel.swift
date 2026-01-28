@@ -1,4 +1,3 @@
-import Dependencies
 import Foundation
 import Observation
 import PersonaKitCore
@@ -77,15 +76,6 @@ final class AppModel {
   var availablePacks: [PackSelection] = []
   var composer: ComposerModel = ComposerModel()
   var preview: PreviewModel = PreviewModel()
-
-  @Dependency(\.fileClient)
-  @ObservationIgnored var fileClient
-  @Dependency(\.appClient)
-  @ObservationIgnored var appClient
-  @Dependency(\.uuid)
-  @ObservationIgnored var uuid
-  @Dependency(\.continuousClock)
-  @ObservationIgnored var clock
 
   let sidebar: SidebarModel
   var jsonFormatTask: Task<Void, Never>?

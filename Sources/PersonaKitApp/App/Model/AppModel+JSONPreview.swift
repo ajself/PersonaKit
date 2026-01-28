@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PersonaKitCore
 
@@ -13,6 +14,7 @@ extension AppModel {
   }
 
   private func scheduleJSONFormat() {
+    let clock = DependencyValues.current.continuousClock
     jsonFormatTask?.cancel()
     jsonFormatTask = Task { @MainActor [weak self] in
       guard let self else { return }

@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import PersonaKitCore
 import PersonaKitResources
@@ -13,6 +14,7 @@ extension AppModel {
 
   /// Reloads built-in and user packs, then refreshes selections and previews.
   func reloadAll() {
+    let fileClient = DependencyValues.current.fileClient
     diagnostics.removeAll()
     let previousSelection = composer.selectedPersonaID
 
@@ -23,7 +25,7 @@ extension AppModel {
         "Built-in resources not found. Fix: ensure BuiltIn.pack.json is bundled in the app."
     )
     diagnostics.append(contentsOf: builtIn.diagnostics)
-    let userPackInfo = loadUserPackInfo(in: userPacks)
+    let userPackInfo = loadUserPackInfo(in: userPacks, fileClient: fileClient)
     let sets = builtIn.sets + userPackInfo.sets
     appendNoPacksWarningIfNeeded(sets: sets, userPacks: userPacks)
 
@@ -65,7 +67,8 @@ extension AppModel {
   }
 
   private func loadUserPackInfo(
-    in userPacks: URL
+    in userPacks: URL,
+    fileClient: FileClient
   ) -> (sets: [PersonaSet], packLocationsBySourceURL: [URL: PackLocation]) {
     guard fileClient.fileExists(userPacks) else {
       return (sets: [], packLocationsBySourceURL: [:])

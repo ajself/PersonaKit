@@ -21,11 +21,14 @@ extension AppModel {
 
   /// Imports a persona pack from disk into PersonaKit-managed storage.
   func importPack() {
+    let appClient = DependencyValues.current.appClient
+    let fileClient = DependencyValues.current.fileClient
+    let uuid = DependencyValues.current.uuid
     guard let selection = appClient.selectPackURL() else { return }
 
     let paths: PersonaKitStoragePaths
     do {
-      paths = try ensureStorageDirectories()
+      paths = try ensureStorageDirectories(fileClient: fileClient)
     } catch {
       appClient.presentError(
         "Import Failed",
@@ -40,7 +43,7 @@ extension AppModel {
       appClient.presentError("Import Failed", error.userFacingMessage)
       return
     case .success(let plan):
-      let existingNames = existingPackDirectoryNames(in: paths.packs)
+      let existingNames = existingPackDirectoryNames(in: paths.packs, fileClient: fileClient)
       let preferred = PersonaKitStorage.preferredPackDirectoryName(for: plan.pack)
       let folderName = PersonaKitStorage.uniquePackDirectoryName(
         preferred: preferred, existing: existingNames)
@@ -82,9 +85,11 @@ extension AppModel {
 
   /// Reveals the PersonaKit storage root in Finder, creating it if needed.
   func revealStorageRoot() {
+    let appClient = DependencyValues.current.appClient
+    let fileClient = DependencyValues.current.fileClient
     let paths: PersonaKitStoragePaths
     do {
-      paths = try ensureStorageDirectories()
+      paths = try ensureStorageDirectories(fileClient: fileClient)
     } catch {
       appClient.presentError(
         "Reveal Failed",
@@ -97,6 +102,7 @@ extension AppModel {
 
   /// Reveals the selected pack directory in Finder when applicable.
   func revealSelectedPack() {
+    let appClient = DependencyValues.current.appClient
     guard let location = selectedPackLocation, location.isDirectoryPack else {
       appClient.presentError("Reveal Failed", "Selected pack is not a user pack folder.")
       return
@@ -106,6 +112,8 @@ extension AppModel {
 
   /// Deletes the selected user pack directory after confirmation.
   func removeSelectedPack() {
+    let appClient = DependencyValues.current.appClient
+    let fileClient = DependencyValues.current.fileClient
     guard let location = selectedPackLocation,
       let personaID = composer.selectedPersonaID,
       let source = personaSourcesByID[personaID],
@@ -132,6 +140,7 @@ extension AppModel {
 
   /// Copies the composed prompt preview to the clipboard.
   func copyPromptToClipboard() {
+    let appClient = DependencyValues.current.appClient
     appClient.copyToClipboard(preview.promptPreview)
   }
 
@@ -140,14 +149,14 @@ extension AppModel {
     return packLocationsByPersonaID[personaID]
   }
 
-  private func ensureStorageDirectories() throws -> PersonaKitStoragePaths {
+  private func ensureStorageDirectories(fileClient: FileClient) throws -> PersonaKitStoragePaths {
     let paths = PersonaKitStoragePaths.standard(homeDirectory: fileClient.homeDirectory())
     try fileClient.createDirectory(paths.packs, true)
     try fileClient.createDirectory(paths.state, true)
     return paths
   }
 
-  private func existingPackDirectoryNames(in packsRoot: URL) -> Set<String> {
+  private func existingPackDirectoryNames(in packsRoot: URL, fileClient: FileClient) -> Set<String> {
     guard let contents = try? fileClient.contentsOfDirectory(packsRoot, [.isDirectoryKey]) else {
       return []
     }

@@ -1,3 +1,4 @@
+import Dependencies
 import PersonaKitCore
 
 /// Inspector-related behaviors for ``AppModel``.
@@ -7,6 +8,7 @@ extension AppModel {
     primary: PackSelection,
     comparison: PackSelection
   ) -> (diff: PackDiff, diagnostics: [Diagnostic]) {
+    let fileClient = DependencyValues.current.fileClient
     let left = PackDiffInputBuilder.build(for: primary, fileClient: fileClient)
     let right = PackDiffInputBuilder.build(for: comparison, fileClient: fileClient)
     let diagnostics = left.diagnostics + right.diagnostics
