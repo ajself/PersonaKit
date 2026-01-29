@@ -2,25 +2,45 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "xcodebuild: Resolve Packages",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-project",
+        "PersonaKit.xcodeproj",
+        "-resolvePackageDependencies",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "xcodebuild: Build Debug PersonaKitApp",
       "type": "shell",
       "command": "xcodebuild",
       "args": [
-        "-workspace",
-        "PersonaKit.xcworkspace",
+        "-project",
+        "PersonaKit.xcodeproj",
         "-scheme",
         "PersonaKitApp",
         "-configuration",
         "Debug",
         "-destination",
         "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
         "-derivedDataPath",
-        ".build/DerivedData",
+        "/tmp/PersonaKitDerivedData",
         "build"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
       "problemMatcher": []
     },
     {
@@ -28,41 +48,141 @@
       "type": "shell",
       "command": "xcodebuild",
       "args": [
-        "-workspace",
-        "PersonaKit.xcworkspace",
+        "-project",
+        "PersonaKit.xcodeproj",
         "-scheme",
         "PersonaKitApp",
         "-configuration",
         "Release",
         "-destination",
         "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
         "-derivedDataPath",
-        ".build/DerivedData",
+        "/tmp/PersonaKitDerivedData",
         "build"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
       "problemMatcher": []
     },
     {
       "label": "xcodebuild: Run PersonaKitApp",
       "type": "shell",
+      "command": "open",
+      "args": ["/tmp/PersonaKitDerivedData/Build/Products/Debug/PersonaKit.app"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "xcodebuild: Build Debug PersonaKitApp",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "xcodebuild: Build Debug PersonaKitCLI",
+      "type": "shell",
       "command": "xcodebuild",
       "args": [
-        "-workspace",
-        "PersonaKit.xcworkspace",
+        "-project",
+        "PersonaKit.xcodeproj",
         "-scheme",
-        "PersonaKitApp",
+        "PersonaKitCLI",
+        "-configuration",
+        "Debug",
         "-destination",
         "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
         "-derivedDataPath",
-        ".build/DerivedData",
-        "run"
+        "/tmp/PersonaKitDerivedData",
+        "build"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "xcodebuild: Build Release PersonaKitCLI",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-project",
+        "PersonaKit.xcodeproj",
+        "-scheme",
+        "PersonaKitCLI",
+        "-configuration",
+        "Release",
+        "-destination",
+        "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
+        "-derivedDataPath",
+        "/tmp/PersonaKitDerivedData",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "xcodebuild: Build Debug PersonaKitSchemaValidate",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-project",
+        "PersonaKit.xcodeproj",
+        "-scheme",
+        "PersonaKitSchemaValidate",
+        "-configuration",
+        "Debug",
+        "-destination",
+        "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
+        "-derivedDataPath",
+        "/tmp/PersonaKitDerivedData",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "xcodebuild: Build Release PersonaKitSchemaValidate",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-project",
+        "PersonaKit.xcodeproj",
+        "-scheme",
+        "PersonaKitSchemaValidate",
+        "-configuration",
+        "Release",
+        "-destination",
+        "platform=macOS",
+        "-clonedSourcePackagesDirPath",
+        ".build/SourcePackages",
+        "-derivedDataPath",
+        "/tmp/PersonaKitDerivedData",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": "xcodebuild: Resolve Packages",
+      "dependsOrder": "sequence",
       "problemMatcher": []
     }
   ]

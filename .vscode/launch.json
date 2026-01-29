@@ -5,7 +5,7 @@
       "type": "lldb",
       "request": "launch",
       "name": "PersonaKitApp (Debug, lldb)",
-      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Debug/PersonaKitApp",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Debug/PersonaKit.app/Contents/MacOS/PersonaKit",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "xcodebuild: Build Debug PersonaKitApp",
@@ -15,91 +15,51 @@
       "type": "lldb",
       "request": "launch",
       "name": "PersonaKitApp (Release, lldb)",
-      "program": "${workspaceFolder}/.build/DerivedData/Build/Products/Release/PersonaKitApp",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Release/PersonaKit.app/Contents/MacOS/PersonaKit",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "xcodebuild: Build Release PersonaKitApp",
       "stopOnEntry": false
     },
     {
-      "type": "swift",
+      "type": "lldb",
       "request": "launch",
+      "name": "PersonaKitCLI (Debug, lldb)",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Debug/personakit",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "name": "Debug PersonaKitApp",
-      "target": "PersonaKitApp",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug PersonaKitApp"
+      "preLaunchTask": "xcodebuild: Build Debug PersonaKitCLI",
+      "stopOnEntry": false
     },
     {
-      "type": "swift",
+      "type": "lldb",
       "request": "launch",
+      "name": "PersonaKitCLI (Release, lldb)",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Release/personakit",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "name": "Release PersonaKitApp",
-      "target": "PersonaKitApp",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release PersonaKitApp"
+      "preLaunchTask": "xcodebuild: Build Release PersonaKitCLI",
+      "stopOnEntry": false
     },
     {
-      "type": "swift",
+      "type": "lldb",
       "request": "launch",
+      "name": "PersonaKitSchemaValidate (Debug, lldb)",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Debug/personakit-validate",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "name": "Debug personakit",
-      "target": "personakit",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit"
+      "preLaunchTask": "xcodebuild: Build Debug PersonaKitSchemaValidate",
+      "stopOnEntry": false
     },
     {
-      "type": "swift",
+      "type": "lldb",
       "request": "launch",
+      "name": "PersonaKitSchemaValidate (Release, lldb)",
+      "program": "/tmp/PersonaKitDerivedData/Build/Products/Release/personakit-validate",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "name": "Release personakit",
-      "target": "personakit",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release personakit"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "name": "Debug personakit-validate",
-      "target": "personakit-validate",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit-validate"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder}",
-      "name": "Release personakit-validate",
-      "target": "personakit-validate",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release personakit-validate"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Debug AppOpsCLI",
-      "target": "AppOpsCLI",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug AppOpsCLI"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [],
-      "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Release AppOpsCLI",
-      "target": "AppOpsCLI",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release AppOpsCLI"
+      "preLaunchTask": "xcodebuild: Build Release PersonaKitSchemaValidate",
+      "stopOnEntry": false
     }
   ]
 }
