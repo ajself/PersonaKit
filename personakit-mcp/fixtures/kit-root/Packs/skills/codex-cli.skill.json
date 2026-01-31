@@ -1,0 +1,17 @@
+{
+  "id": "codex-cli",
+  "version": "1.0",
+  "name": "Codex CLI",
+  "description": "Edits files and produces PR-sized diffs (outside PersonaKit).",
+  "providedBy": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": false,
+    "notes": []
+  },
+  "notes": [
+    "PersonaKit never executes tools."
+  ]
+}
