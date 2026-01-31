@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { test } from "node:test";
-import { runPersonakit } from "../personakit-cli.js";
+import { resolvePersonakitBin, runPersonakit } from "../personakit-cli.js";
 import { getPromptContent, listPrompts } from "../prompts.js";
-import { readResource } from "../resources.js";
+import { listResources, readResource } from "../resources.js";
 
 const cwd = process.cwd();
 const repoRoot = path.basename(cwd) === "personakit-mcp" ? path.resolve(cwd, "..") : cwd;
@@ -72,6 +72,13 @@ test("resources/read returns correct mime types", async () => {
   assert.equal(essential.mimeType, "text/markdown");
 });
 
+test("resources/list returns sorted URIs", async () => {
+  const resources = await listResources(fixtureRoot);
+  const uris = resources.map((resource) => resource.uri);
+  const sorted = uris.slice().sort((a, b) => a.localeCompare(b));
+  assert.deepEqual(uris, sorted);
+});
+
 test("resources/read not found error includes URI and expected path", async () => {
   const uri = "personakit://packs/personas/missing-persona";
   try {
@@ -81,5 +88,22 @@ test("resources/read not found error includes URI and expected path", async () =
     const message = error instanceof Error ? error.message : String(error);
     assert.ok(message.includes(uri));
     assert.ok(message.includes("Packs/personas/missing-persona.persona.json"));
+  }
+});
+
+test("personakit cli rejects non-personakit binaries", async () => {
+  const original = process.env.PERSONAKIT_BIN;
+  process.env.PERSONAKIT_BIN = "/bin/ls";
+  try {
+    await assert.rejects(
+      async () => resolvePersonakitBin(),
+      /personakit binary/
+    );
+  } finally {
+    if (original === undefined) {
+      delete process.env.PERSONAKIT_BIN;
+    } else {
+      process.env.PERSONAKIT_BIN = original;
+    }
   }
 });

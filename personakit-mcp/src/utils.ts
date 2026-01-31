@@ -1,5 +1,3 @@
-import path from "node:path";
-
 export type PackMapping = {
   dir: string;
   suffix: string;
@@ -48,11 +46,3 @@ export const ESSENTIALS_MAPPING: PackMapping = {
   uriPrefix: "personakit://essentials/",
   mimeType: "text/markdown",
 };
-
-export function uniqueSorted(values: string[]): string[] {
-  return Array.from(new Set(values)).sort();
-}
-
-export function toPosixPath(value: string): string {
-  return value.split(path.sep).join("/");
-}

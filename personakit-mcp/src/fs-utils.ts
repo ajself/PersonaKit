@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { MAX_FILE_BYTES, toPosixPath } from "./utils.js";
+import { MAX_FILE_BYTES } from "./utils.js";
 
 export class ResourceNotFoundError extends Error {
   relPath: string;
@@ -59,8 +59,4 @@ export async function resolveSafePath(root: string, relPath: string): Promise<st
   }
 
   return realPath;
-}
-
-export function relativePath(root: string, filePath: string): string {
-  return toPosixPath(path.relative(root, filePath));
 }

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { assertPacksDirectory, resolveSafePath, ResourceNotFoundError } from "./fs-utils.js";
-import { ESSENTIALS_MAPPING, PACK_MAPPINGS, PackMapping } from "./utils.js";
+import { ESSENTIALS_MAPPING, PACK_MAPPINGS } from "./utils.js";
 
 export type ResourceEntry = {
   uri: string;
@@ -157,11 +157,4 @@ export async function readResource(
     }
     throw error;
   }
-}
-
-export function mappingForDir(dir: string): PackMapping | undefined {
-  if (dir === ESSENTIALS_MAPPING.dir) {
-    return ESSENTIALS_MAPPING;
-  }
-  return PACK_MAPPINGS.find((entry) => entry.dir === dir);
 }
