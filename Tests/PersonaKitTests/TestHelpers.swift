@@ -1,0 +1,35 @@
+import Foundation
+
+func makeTempDirectory() throws -> URL {
+    let base = FileManager.default.temporaryDirectory
+    let destination = base.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+    return destination
+}
+
+func snapshotFiles(at root: URL) throws -> [String: Data] {
+    let fileManager = FileManager.default
+    let rootComponents = root.standardizedFileURL.pathComponents
+    var results: [String: Data] = [:]
+
+    guard let enumerator = fileManager.enumerator(
+        at: root,
+        includingPropertiesForKeys: [.isDirectoryKey],
+        options: [.skipsHiddenFiles]
+    ) else {
+        return results
+    }
+
+    for case let fileURL as URL in enumerator {
+        let values = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
+        if values.isDirectory == true {
+            continue
+        }
+        let fileComponents = fileURL.standardizedFileURL.pathComponents
+        let relativeComponents = fileComponents.dropFirst(rootComponents.count)
+        let relativePath = relativeComponents.joined(separator: "/")
+        results[relativePath] = try Data(contentsOf: fileURL)
+    }
+
+    return results
+}

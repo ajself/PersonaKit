@@ -39,9 +39,8 @@ struct PersonaKitCLI {
             }
             try PersonaKitInitializer().run(destination: arguments[2])
         case "validate":
-            if arguments.count > 2 {
-                throw CLIError.usage("validate takes no arguments.")
-            }
+            let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
+            _ = options
             throw CLIError.failure("validate is not implemented yet.")
         case "export":
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
@@ -63,7 +62,7 @@ struct PersonaKitCLI {
 
         Usage:
           personakit init <path>
-          personakit validate
+          personakit validate [--root <path>]
           personakit export [--persona <id>] [--task <id>]
           personakit list
         """
@@ -85,6 +84,10 @@ struct StandardError: TextOutputStream {
 struct ExportOptions {
     let personaId: String?
     let taskId: String?
+}
+
+struct ValidateOptions {
+    let rootPath: String?
 }
 
 struct ExportOptionsParser {
@@ -115,5 +118,29 @@ struct ExportOptionsParser {
         }
 
         return ExportOptions(personaId: personaId, taskId: taskId)
+    }
+}
+
+struct ValidateOptionsParser {
+    func parse(arguments: [String]) throws -> ValidateOptions {
+        var rootPath: String?
+        var index = 0
+
+        while index < arguments.count {
+            let argument = arguments[index]
+            switch argument {
+            case "--root":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--root requires a value.")
+                }
+                rootPath = arguments[index]
+            default:
+                throw CLIError.usage("Unknown validate option: \(argument)")
+            }
+            index += 1
+        }
+
+        return ValidateOptions(rootPath: rootPath)
     }
 }
