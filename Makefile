@@ -40,6 +40,7 @@ build:
 .PHONY: test
 test:
 	swift test
+	npm --prefix personakit-mcp test
 
 .PHONY: run
 run:
