@@ -110,6 +110,10 @@ enum StarterKitManifest {
             contents: "{\n  \"id\": \"swift-refactor-safe\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Refactor (Safe)\",\n  \"description\": \"Perform a small refactor without changing behavior.\",\n  \"parameters\": [\n    {\n      \"name\": \"targetFiles\",\n      \"type\": \"string[]\",\n      \"required\": true\n    }\n  ],\n  \"includesEssentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"risk\": {\n    \"level\": \"medium\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"No public API changes\",\n      \"No behavior changes\"\n    ]\n  }\n}".utf8Data
         ),
         StarterFile(
+            relativePath: "Packs/skills/autonomous-agent-loop.skill.json",
+            contents: "{\n  \"id\": \"autonomous-agent-loop\",\n  \"version\": \"1.0\",\n  \"name\": \"Autonomous Agent Loop\",\n  \"description\": \"Executes tasks without human checkpoints.\",\n  \"providedBy\": [\n    \"autonomous-agent-loop\"\n  ],\n  \"risk\": {\n    \"level\": \"high\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"Execution is not allowed in PersonaKit\"\n    ]\n  },\n  \"notes\": [\n    \"Forbidden by default.\"\n  ]\n}".utf8Data
+        ),
+        StarterFile(
             relativePath: "Packs/skills/codex-cli.skill.json",
             contents: "{\n  \"id\": \"codex-cli\",\n  \"version\": \"1.0\",\n  \"name\": \"Codex CLI\",\n  \"description\": \"Edits files and produces PR-sized diffs (outside PersonaKit).\",\n  \"providedBy\": [\n    \"codex-cli\"\n  ],\n  \"risk\": {\n    \"level\": \"medium\",\n    \"requiresHumanReview\": false,\n    \"notes\": []\n  },\n  \"notes\": [\n    \"PersonaKit never executes tools.\"\n  ]\n}".utf8Data
         ),

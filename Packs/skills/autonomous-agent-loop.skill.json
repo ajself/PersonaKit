@@ -1,0 +1,19 @@
+{
+  "id": "autonomous-agent-loop",
+  "version": "1.0",
+  "name": "Autonomous Agent Loop",
+  "description": "Executes tasks without human checkpoints.",
+  "providedBy": [
+    "autonomous-agent-loop"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Execution is not allowed in PersonaKit"
+    ]
+  },
+  "notes": [
+    "Forbidden by default."
+  ]
+}

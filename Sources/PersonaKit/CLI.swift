@@ -15,6 +15,8 @@ struct PersonaKitCLI {
                 stderrStream.write("Error: \(message)\n")
             }
             return 1
+        } catch let error as CLIExitError {
+            return error.status
         } catch let error as InitError {
             stderrStream.write("Error: \(error.description)\n")
             return 1
@@ -40,8 +42,15 @@ struct PersonaKitCLI {
             try PersonaKitInitializer().run(destination: arguments[2])
         case "validate":
             let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            _ = options
-            throw CLIError.failure("validate is not implemented yet.")
+            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            let result = try Validator.validate(root: rootURL)
+            print(result.summary)
+            if !result.errors.isEmpty {
+                for error in result.errors {
+                    print(error.lineDescription())
+                }
+                throw CLIExitError(status: 1)
+            }
         case "export":
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
             _ = options
@@ -72,6 +81,10 @@ struct PersonaKitCLI {
 enum CLIError: Error {
     case usage(String)
     case failure(String)
+}
+
+struct CLIExitError: Error {
+    let status: Int32
 }
 
 struct StandardError: TextOutputStream {
@@ -142,5 +155,22 @@ struct ValidateOptionsParser {
         }
 
         return ValidateOptions(rootPath: rootPath)
+    }
+}
+
+struct RootPathResolver {
+    private let fileManager = FileManager.default
+
+    func resolve(path: String?) -> URL {
+        let inputPath = path ?? fileManager.currentDirectoryPath
+        let expanded = (inputPath as NSString).expandingTildeInPath
+        let absolutePath: String
+        if expanded.hasPrefix("/") {
+            absolutePath = expanded
+        } else {
+            absolutePath = (fileManager.currentDirectoryPath as NSString)
+                .appendingPathComponent(expanded)
+        }
+        return URL(fileURLWithPath: absolutePath).standardizedFileURL
     }
 }

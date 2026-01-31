@@ -12,7 +12,7 @@ final class RegistryTests: XCTestCase {
         XCTAssertEqual(registry.kits.map(\.id), ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"])
         XCTAssertEqual(registry.tasks.map(\.id), ["apply-style"])
         XCTAssertEqual(registry.intentTemplates.map(\.id), ["swift-refactor-safe"])
-        XCTAssertEqual(registry.skills.map(\.id), ["codex-cli"])
+        XCTAssertEqual(registry.skills.map(\.id), ["autonomous-agent-loop", "codex-cli"])
     }
 
     func testRegistryDetectsDuplicateIDs() throws {
