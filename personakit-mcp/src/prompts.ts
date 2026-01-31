@@ -1,11 +1,4 @@
-import {
-  buildExportOutput,
-  renderGraph,
-} from "./renderers.js";
-import { loadRegistry, PackLoadErrorList } from "./registry.js";
-import { resolveSession, ResolverErrorList } from "./resolver.js";
-import { SessionDefinition } from "./types.js";
-import { uniqueSorted } from "./utils.js";
+import { PersonakitCLIError, runPersonakit } from "./personakit-cli.js";
 import { loadSession } from "./sessions.js";
 
 export type PromptDefinition = {
@@ -62,68 +55,77 @@ function requireArg(args: Record<string, unknown>, name: string): string {
   return value.trim();
 }
 
-export async function getPromptContent(
+type PromptSessionInput = {
+  personaId: string;
+  taskId: string;
+  kitOverrides: string[];
+};
+
+async function resolvePromptSessionInput(
   root: string,
-  promptId: string,
   args: Record<string, unknown>
-): Promise<string> {
+): Promise<PromptSessionInput> {
   const sessionId = typeof args.sessionId === "string" ? args.sessionId.trim() : "";
   const hasSession = sessionId.length > 0;
-
-  let definition: SessionDefinition;
-  let kitOverrides: string[] = [];
 
   if (hasSession) {
     if (args.personaId || args.taskId || args.kits) {
       throw new Error("Provide sessionId or personaId/taskId/kits, not both.");
     }
     const session = await loadSession(root, sessionId);
-    kitOverrides = session.kitOverrides ?? [];
-    definition = {
+    return {
       personaId: session.personaId,
       taskId: session.taskId,
-      kitOverrides: kitOverrides.length > 0 ? kitOverrides : undefined,
-    };
-  } else {
-    const personaId = requireArg(args, "personaId");
-    const taskId = requireArg(args, "taskId");
-    kitOverrides = parseKitOverrides(
-      typeof args.kits === "string" ? args.kits : undefined
-    );
-    definition = {
-      personaId,
-      taskId,
-      kitOverrides: kitOverrides.length > 0 ? kitOverrides : undefined,
+      kitOverrides: session.kitOverrides ?? [],
     };
   }
 
-  const registry = await loadRegistry(root);
-  const session = await resolveSession(root, definition, registry);
+  const personaId = requireArg(args, "personaId");
+  const taskId = requireArg(args, "taskId");
+  const kitOverrides = parseKitOverrides(
+    typeof args.kits === "string" ? args.kits : undefined
+  );
+
+  return {
+    personaId,
+    taskId,
+    kitOverrides,
+  };
+}
+
+export async function getPromptContent(
+  root: string,
+  promptId: string,
+  args: Record<string, unknown>
+): Promise<string> {
+  const sessionInput = await resolvePromptSessionInput(root, args);
 
   if (promptId === "personakit.session.export") {
-    return await buildExportOutput(root, session);
+    return await runPersonakit({
+      kind: "export",
+      root,
+      personaId: sessionInput.personaId,
+      taskId: sessionInput.taskId,
+      kitOverrides: sessionInput.kitOverrides,
+    });
   }
 
   if (promptId === "personakit.session.graph") {
-    return renderGraph(session, uniqueSorted(kitOverrides));
+    return await runPersonakit({
+      kind: "graph",
+      root,
+      personaId: sessionInput.personaId,
+      taskId: sessionInput.taskId,
+      kitOverrides: sessionInput.kitOverrides,
+    });
   }
 
   throw new Error(`Unknown prompt id: ${promptId}`);
 }
 
 export function formatPromptError(error: unknown): string {
-  if (error instanceof PackLoadErrorList) {
-    return error.errors
-      .map((entry) => `${entry.path}: ${entry.message}`)
-      .join("\n");
-  }
-  if (error instanceof ResolverErrorList) {
-    return error.errors
-      .map(
-        (entry) =>
-          `${entry.entityType} ${entry.entityId} ${entry.field}: missing ${entry.missingId}`
-      )
-      .join("\n");
+  if (error instanceof PersonakitCLIError) {
+    return error.message;
   }
   return error instanceof Error ? error.message : String(error);
 }

@@ -5,6 +5,7 @@ This is a read-only MCP server that exposes PersonaKit packs as resources and pr
 ## Requirements
 - Node.js 18+
 - PERSONAKIT_ROOT env var pointing to a directory that contains `Packs/`
+- `personakit` Swift CLI binary available (see "Personakit binary" below)
 
 ## Build
 
@@ -17,6 +18,21 @@ npm run build
 
 ```sh
 PERSONAKIT_ROOT=/path/to/PersonaKit npm run start
+```
+
+## Personakit binary
+
+The MCP adapter invokes the Swift `personakit` binary for prompt output.
+
+Resolution order:
+1. `PERSONAKIT_BIN` environment variable (must point to a `personakit` executable)
+2. `../.build/debug/personakit` relative to `personakit-mcp/`
+3. `../.build/release/personakit` relative to `personakit-mcp/`
+
+Build the binary from the repo root:
+
+```sh
+swift build
 ```
 
 ## Verify

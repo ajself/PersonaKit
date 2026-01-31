@@ -1,24 +1,26 @@
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
+import { runPersonakit } from "../personakit-cli.js";
 import { getPromptContent, listPrompts } from "../prompts.js";
 import { readResource } from "../resources.js";
 
 const cwd = process.cwd();
 const repoRoot = path.basename(cwd) === "personakit-mcp" ? path.resolve(cwd, "..") : cwd;
 const fixtureRoot = path.resolve(repoRoot, "Fixtures/kit-root");
-const expectedExportPath = path.resolve(
-  repoRoot,
-  "Fixtures/expected/export_senior-swiftui-engineer_apply-style.md"
-);
-const expectedGraphPath = path.resolve(
-  repoRoot,
-  "Fixtures/expected/graph_senior-swiftui-engineer_apply-style.txt"
-);
+const exportOutput = await runPersonakit({
+  kind: "export",
+  root: fixtureRoot,
+  personaId: "senior-swiftui-engineer",
+  taskId: "apply-style",
+});
 
-const expectedExport = await fs.readFile(expectedExportPath, "utf8");
-const expectedGraph = await fs.readFile(expectedGraphPath, "utf8");
+const graphOutput = await runPersonakit({
+  kind: "graph",
+  root: fixtureRoot,
+  personaId: "senior-swiftui-engineer",
+  taskId: "apply-style",
+});
 
 test("prompts/list returns stable prompt ids", () => {
   const prompts = listPrompts();
@@ -31,14 +33,14 @@ test("prompts/get export returns deterministic output", async () => {
     personaId: "senior-swiftui-engineer",
     taskId: "apply-style",
   });
-  assert.equal(output, expectedExport);
+  assert.equal(output, exportOutput);
 });
 
 test("prompts/get export supports sessionId", async () => {
   const output = await getPromptContent(fixtureRoot, "personakit.session.export", {
     sessionId: "senior-swiftui-engineer_apply-style",
   });
-  assert.equal(output, expectedExport);
+  assert.equal(output, exportOutput);
 });
 
 test("prompts/get graph returns deterministic output", async () => {
@@ -46,14 +48,14 @@ test("prompts/get graph returns deterministic output", async () => {
     personaId: "senior-swiftui-engineer",
     taskId: "apply-style",
   });
-  assert.equal(output, expectedGraph);
+  assert.equal(output, graphOutput);
 });
 
 test("prompts/get graph supports sessionId", async () => {
   const output = await getPromptContent(fixtureRoot, "personakit.session.graph", {
     sessionId: "senior-swiftui-engineer_apply-style",
   });
-  assert.equal(output, expectedGraph);
+  assert.equal(output, graphOutput);
 });
 
 test("resources/read returns correct mime types", async () => {
