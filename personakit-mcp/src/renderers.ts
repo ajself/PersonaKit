@@ -296,7 +296,7 @@ export function renderGraph(session: ResolvedSession, kitOverrides: string[]): s
   const finalLines = ["Essentials:", ...resolvedEssentialLines, "Intents:", ...resolvedIntentLines, "Skills:", ...resolvedSkillLines];
   appendSection(lines, "## Final resolved sets", finalLines);
 
-  return lines.join("\n");
+  return `${lines.join("\n")}\n`;
 }
 
 function formatLine(id: string, name?: string): string {

@@ -71,7 +71,7 @@ struct GraphPrinter {
         finalLines.append(contentsOf: resolvedSkillLines)
         appendSection("## Final resolved sets", body: finalLines, to: &lines)
 
-        return lines.joined(separator: "\n")
+        return lines.joined(separator: "\n") + "\n"
     }
 
     private static func formatLine(id: String, name: String?) -> String {
