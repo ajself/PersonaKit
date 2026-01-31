@@ -19,6 +19,8 @@ struct Kit: Codable {
     let name: String
     let summary: String
     let essentialIds: [String]
+    let intentTemplateIds: [String]?
+    let skillIds: [String]?
 }
 
 struct Task: Codable {
