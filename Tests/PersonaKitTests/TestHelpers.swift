@@ -33,3 +33,23 @@ func snapshotFiles(at root: URL) throws -> [String: Data] {
 
     return results
 }
+
+func repoRootURL() -> URL {
+    let fileURL = URL(fileURLWithPath: #filePath)
+    return fileURL
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+}
+
+func fixturesRootURL() -> URL {
+    repoRootURL().appendingPathComponent("Fixtures")
+}
+
+func fixtureKitRootURL() -> URL {
+    fixturesRootURL().appendingPathComponent("kit-root")
+}
+
+func copyFixtureKit(to destination: URL) throws {
+    try FileManager.default.copyItem(at: fixtureKitRootURL(), to: destination)
+}

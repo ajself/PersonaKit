@@ -200,6 +200,7 @@ MCP Server (read-only)
 Configuring the MCP server
 
 The PersonaKit MCP server is a standalone Node.js process that exposes PersonaKit context over stdio.
+See `Docs/MCP/README.md` for a quick setup guide and example client configs.
 
 Basic setup:
 

@@ -55,11 +55,12 @@ struct PersonaKitCLI {
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
             let rootURL = RootPathResolver().resolve(path: options.rootPath)
             do {
+                let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
                 let output = try SessionExporter.export(
                     root: rootURL,
-                    personaId: options.personaId,
-                    taskId: options.taskId,
-                    kitOverrides: options.kitIds
+                    personaId: sessionInput.personaId,
+                    taskId: sessionInput.taskId,
+                    kitOverrides: sessionInput.kitOverrides
                 )
                 if let outputPath = options.outputPath {
                     let outputURL = RootPathResolver().resolve(path: outputPath)
@@ -103,18 +104,19 @@ struct PersonaKitCLI {
             let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
             let rootURL = RootPathResolver().resolve(path: options.rootPath)
             do {
+                let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
                 let registry = try Registry.load(root: rootURL)
                 let definition = SessionDefinition(
-                    personaId: options.personaId,
-                    taskId: options.taskId,
-                    kitOverrides: options.kitIds
+                    personaId: sessionInput.personaId,
+                    taskId: sessionInput.taskId,
+                    kitOverrides: sessionInput.kitOverrides.isEmpty ? nil : sessionInput.kitOverrides
                 )
                 let resolved = try Resolver.resolve(
                     definition: definition,
                     registry: registry,
                     rootURL: rootURL
                 )
-                let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: options.kitIds)
+                let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: sessionInput.kitOverrides)
                 print(output)
             } catch let error as RegistryLoadError {
                 var stderrStream = StandardError()
@@ -142,12 +144,56 @@ struct PersonaKitCLI {
           personakit init <path>
           personakit validate [--root <path>]
           personakit export --root <path> --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
+          personakit export --root <path> --session <id> [--output <file>]
           personakit list --root <path> <entityType>
           personakit graph --root <path> --persona <id> --task <id> [--kits <id,id,...>]
+          personakit graph --root <path> --session <id>
 
         Entity types:
           personas | kits | tasks | intents | skills | essentials
         """
+    }
+
+    private func resolveSessionInput(from options: ExportOptions, rootURL: URL) throws -> SessionInput {
+        if let sessionId = options.sessionId {
+            let session = try SessionFileLoader.load(root: rootURL, sessionId: sessionId)
+            let overrides = session.kitOverrides ?? []
+            return SessionInput(
+                personaId: session.personaId,
+                taskId: session.taskId,
+                kitOverrides: overrides
+            )
+        }
+
+        guard let personaId = options.personaId, let taskId = options.taskId else {
+            throw CLIError.usage("export requires --session <id> or --persona <id> and --task <id>.")
+        }
+        return SessionInput(
+            personaId: personaId,
+            taskId: taskId,
+            kitOverrides: options.kitIds
+        )
+    }
+
+    private func resolveSessionInput(from options: GraphOptions, rootURL: URL) throws -> SessionInput {
+        if let sessionId = options.sessionId {
+            let session = try SessionFileLoader.load(root: rootURL, sessionId: sessionId)
+            let overrides = session.kitOverrides ?? []
+            return SessionInput(
+                personaId: session.personaId,
+                taskId: session.taskId,
+                kitOverrides: overrides
+            )
+        }
+
+        guard let personaId = options.personaId, let taskId = options.taskId else {
+            throw CLIError.usage("graph requires --session <id> or --persona <id> and --task <id>.")
+        }
+        return SessionInput(
+            personaId: personaId,
+            taskId: taskId,
+            kitOverrides: options.kitIds
+        )
     }
 
     private func formatResolutionError(_ error: ResolverError) -> String {
@@ -206,8 +252,9 @@ struct StandardError: TextOutputStream {
 
 struct ExportOptions {
     let rootPath: String
-    let personaId: String
-    let taskId: String
+    let sessionId: String?
+    let personaId: String?
+    let taskId: String?
     let kitIds: [String]
     let outputPath: String?
 }
@@ -223,14 +270,22 @@ struct ListOptions {
 
 struct GraphOptions {
     let rootPath: String
+    let sessionId: String?
+    let personaId: String?
+    let taskId: String?
+    let kitIds: [String]
+}
+
+struct SessionInput {
     let personaId: String
     let taskId: String
-    let kitIds: [String]
+    let kitOverrides: [String]
 }
 
 struct ExportOptionsParser {
     func parse(arguments: [String]) throws -> ExportOptions {
         var rootPath: String?
+        var sessionId: String?
         var personaId: String?
         var taskId: String?
         var kitIds: [String] = []
@@ -258,6 +313,12 @@ struct ExportOptionsParser {
                     throw CLIError.usage("--task requires a value.")
                 }
                 taskId = arguments[index]
+            case "--session":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--session requires a value.")
+                }
+                sessionId = arguments[index]
             case "--kits":
                 index += 1
                 guard index < arguments.count else {
@@ -282,6 +343,21 @@ struct ExportOptionsParser {
         guard let rootPath else {
             throw CLIError.usage("export requires --root <path>.")
         }
+
+        if let sessionId {
+            if personaId != nil || taskId != nil || !kitIds.isEmpty {
+                throw CLIError.usage("export requires --session or --persona/--task, not both.")
+            }
+            return ExportOptions(
+                rootPath: rootPath,
+                sessionId: sessionId,
+                personaId: nil,
+                taskId: nil,
+                kitIds: [],
+                outputPath: outputPath
+            )
+        }
+
         guard let personaId else {
             throw CLIError.usage("export requires --persona <id>.")
         }
@@ -291,6 +367,7 @@ struct ExportOptionsParser {
 
         return ExportOptions(
             rootPath: rootPath,
+            sessionId: nil,
             personaId: personaId,
             taskId: taskId,
             kitIds: kitIds,
@@ -367,6 +444,7 @@ struct ListOptionsParser {
 struct GraphOptionsParser {
     func parse(arguments: [String]) throws -> GraphOptions {
         var rootPath: String?
+        var sessionId: String?
         var personaId: String?
         var taskId: String?
         var kitIds: [String] = []
@@ -393,6 +471,12 @@ struct GraphOptionsParser {
                     throw CLIError.usage("--task requires a value.")
                 }
                 taskId = arguments[index]
+            case "--session":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--session requires a value.")
+                }
+                sessionId = arguments[index]
             case "--kits":
                 index += 1
                 guard index < arguments.count else {
@@ -411,6 +495,20 @@ struct GraphOptionsParser {
         guard let rootPath else {
             throw CLIError.usage("graph requires --root <path>.")
         }
+
+        if let sessionId {
+            if personaId != nil || taskId != nil || !kitIds.isEmpty {
+                throw CLIError.usage("graph requires --session or --persona/--task, not both.")
+            }
+            return GraphOptions(
+                rootPath: rootPath,
+                sessionId: sessionId,
+                personaId: nil,
+                taskId: nil,
+                kitIds: []
+            )
+        }
+
         guard let personaId else {
             throw CLIError.usage("graph requires --persona <id>.")
         }
@@ -420,6 +518,7 @@ struct GraphOptionsParser {
 
         return GraphOptions(
             rootPath: rootPath,
+            sessionId: nil,
             personaId: personaId,
             taskId: taskId,
             kitIds: kitIds

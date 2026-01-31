@@ -20,7 +20,11 @@ Agents may interact with PersonaKit via:
 • the [Swift CLI](./README.md#using-personakit)
 • the [PersonaKit MCP server](./README.md#mcp-server-read-only) (agent-invoked, read-only)
 
-In both cases, PersonaKit is a source of context, not an execution engine.
+In both cases, PersonaKit is a source of context, not an execution engine. MCP access does not authorize action.
+
+Reference:
+• [Using PersonaKit](./README.md#using-personakit)
+• [MCP Server (read-only)](./README.md#mcp-server-read-only)
 
 They are not expected to:
 	•	invent plans

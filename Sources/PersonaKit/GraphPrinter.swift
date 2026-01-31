@@ -49,6 +49,7 @@ struct GraphPrinter {
         let resolvedSkillLines = resolvedSession.skills.map { $0.id }.sorted().map { "- \($0)" }
 
         var lines: [String] = []
+        lines.append("PersonaKit-Graph-Version: 1")
         lines.append("# Graph")
         lines.append("Persona: \(formatLine(id: persona.id, name: persona.name))")
         lines.append("Task: \(formatLine(id: task.id, name: task.title))")

@@ -1,3 +1,4 @@
+PersonaKit-Graph-Version: 1
 # Graph
 Persona: senior-swiftui-engineer — Senior SwiftUI Engineer
 Task: apply-style — Apply Swift + SwiftUI style guides

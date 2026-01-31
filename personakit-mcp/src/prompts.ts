@@ -6,6 +6,7 @@ import { loadRegistry, PackLoadErrorList } from "./registry.js";
 import { resolveSession, ResolverErrorList } from "./resolver.js";
 import { SessionDefinition } from "./types.js";
 import { uniqueSorted } from "./utils.js";
+import { loadSession } from "./sessions.js";
 
 export type PromptDefinition = {
   id: string;
@@ -20,8 +21,9 @@ const PROMPTS: PromptDefinition[] = [
     name: "Session Export",
     description: "Assemble Persona+Kits+Task into a single Markdown prompt.",
     arguments: [
-      { name: "personaId", description: "Persona id", required: true },
-      { name: "taskId", description: "Task id", required: true },
+      { name: "sessionId", description: "Session id (alternative to persona/task)" },
+      { name: "personaId", description: "Persona id" },
+      { name: "taskId", description: "Task id" },
       { name: "kits", description: "Comma-separated kit ids" },
     ],
   },
@@ -30,8 +32,9 @@ const PROMPTS: PromptDefinition[] = [
     name: "Session Graph",
     description: "Print a readable dependency graph for a session.",
     arguments: [
-      { name: "personaId", description: "Persona id", required: true },
-      { name: "taskId", description: "Task id", required: true },
+      { name: "sessionId", description: "Session id (alternative to persona/task)" },
+      { name: "personaId", description: "Persona id" },
+      { name: "taskId", description: "Task id" },
       { name: "kits", description: "Comma-separated kit ids" },
     ],
   },
@@ -64,17 +67,35 @@ export async function getPromptContent(
   promptId: string,
   args: Record<string, unknown>
 ): Promise<string> {
-  const personaId = requireArg(args, "personaId");
-  const taskId = requireArg(args, "taskId");
-  const kitOverrides = parseKitOverrides(
-    typeof args.kits === "string" ? args.kits : undefined
-  );
+  const sessionId = typeof args.sessionId === "string" ? args.sessionId.trim() : "";
+  const hasSession = sessionId.length > 0;
 
-  const definition: SessionDefinition = {
-    personaId,
-    taskId,
-    kitOverrides: kitOverrides.length > 0 ? kitOverrides : undefined,
-  };
+  let definition: SessionDefinition;
+  let kitOverrides: string[] = [];
+
+  if (hasSession) {
+    if (args.personaId || args.taskId || args.kits) {
+      throw new Error("Provide sessionId or personaId/taskId/kits, not both.");
+    }
+    const session = await loadSession(root, sessionId);
+    kitOverrides = session.kitOverrides ?? [];
+    definition = {
+      personaId: session.personaId,
+      taskId: session.taskId,
+      kitOverrides: kitOverrides.length > 0 ? kitOverrides : undefined,
+    };
+  } else {
+    const personaId = requireArg(args, "personaId");
+    const taskId = requireArg(args, "taskId");
+    kitOverrides = parseKitOverrides(
+      typeof args.kits === "string" ? args.kits : undefined
+    );
+    definition = {
+      personaId,
+      taskId,
+      kitOverrides: kitOverrides.length > 0 ? kitOverrides : undefined,
+    };
+  }
 
   const registry = await loadRegistry(root);
   const session = await resolveSession(root, definition, registry);

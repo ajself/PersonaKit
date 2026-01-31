@@ -52,6 +52,7 @@ export function renderExport(session: ResolvedSession, essentials: ResolvedEssen
     output += "\n";
   };
 
+  appendLine("PersonaKit-Output-Version: 1");
   appendLine("# Persona");
   appendLine(`Name: ${persona.name}`);
   appendLine(`Id: ${persona.id}`);
@@ -278,6 +279,7 @@ export function renderGraph(session: ResolvedSession, kitOverrides: string[]): s
     .map((id) => `- ${id}`);
 
   const lines: string[] = [];
+  lines.push("PersonaKit-Graph-Version: 1");
   lines.push("# Graph");
   lines.push(`Persona: ${formatLine(persona.id, persona.name)}`);
   lines.push(`Task: ${formatLine(task.id, task.title)}`);

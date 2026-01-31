@@ -5,8 +5,7 @@ import Testing
 struct GraphPrinterTests {
     @Test
     func graphOutputIsDeterministic() throws {
-        let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-        try PersonaKitInitializer().run(destination: root.path)
+        let root = fixtureKitRootURL()
 
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
@@ -18,10 +17,36 @@ struct GraphPrinterTests {
 
         let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: [])
 
-        let fixtureURL = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Fixtures/graph_golden.md")
+        let fixtureURL = fixturesRootURL()
+            .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style.txt")
+        let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+        #expect(output == expected)
+    }
+
+    @Test
+    func graphOutputMatchesGoldenFileUsingSession() throws {
+        let root = fixtureKitRootURL()
+        let session = try SessionFileLoader.load(
+            root: root,
+            sessionId: "senior-swiftui-engineer_apply-style"
+        )
+
+        let registry = try Registry.load(root: root)
+        let definition = SessionDefinition(
+            personaId: session.personaId,
+            taskId: session.taskId,
+            kitOverrides: (session.kitOverrides ?? []).isEmpty ? nil : session.kitOverrides
+        )
+        let resolved = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
+
+        let output = GraphPrinter.render(
+            resolvedSession: resolved,
+            kitOverrides: session.kitOverrides ?? []
+        )
+
+        let fixtureURL = fixturesRootURL()
+            .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style.txt")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
         #expect(output == expected)
@@ -30,7 +55,7 @@ struct GraphPrinterTests {
     @Test
     func graphUsesOverrides() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-        try PersonaKitInitializer().run(destination: root.path)
+        try copyFixtureKit(to: root)
 
         let extraKitURL = root.appendingPathComponent("Packs/kits/extra-kit.kit.json")
         let extraKit = """
