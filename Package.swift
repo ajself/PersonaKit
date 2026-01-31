@@ -20,7 +20,10 @@ let package = Package(
         .testTarget(
             name: "PersonaKitTests",
             dependencies: ["PersonaKit"],
-            path: "Tests/PersonaKitTests"
+            path: "Tests/PersonaKitTests",
+            swiftSettings: [
+                .enableExperimentalFeature("Testing")
+            ]
         )
     ]
 )

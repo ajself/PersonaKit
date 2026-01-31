@@ -1,18 +1,18 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PersonaKit
 
-final class ValidatorTests: XCTestCase {
-    func testValidateStarterKitClean() throws {
+struct ValidatorTests {
+    @Test
+    func validateStarterKitClean() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
         let result = try Validator.validate(root: root)
 
-        XCTAssertTrue(result.errors.isEmpty)
-        XCTAssertEqual(
-            result.counts,
-            ValidationCounts(
+        #expect(result.errors.isEmpty)
+        #expect(
+            result.counts == ValidationCounts(
                 personas: 1,
                 kits: 3,
                 tasks: 1,
@@ -23,7 +23,8 @@ final class ValidatorTests: XCTestCase {
         )
     }
 
-    func testValidateMissingEssentialFile() throws {
+    @Test
+    func validateMissingEssentialFile() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -32,9 +33,8 @@ final class ValidatorTests: XCTestCase {
 
         let result = try Validator.validate(root: root)
 
-        XCTAssertEqual(
-            result.errors,
-            [
+        #expect(
+            result.errors == [
                 ValidationError(
                     entityType: .kit,
                     entityId: "swiftui-style-kit",
@@ -47,7 +47,8 @@ final class ValidatorTests: XCTestCase {
         )
     }
 
-    func testValidateUnknownKitId() throws {
+    @Test
+    func validateUnknownKitId() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -73,9 +74,8 @@ final class ValidatorTests: XCTestCase {
 
         let result = try Validator.validate(root: root)
 
-        XCTAssertEqual(
-            result.errors,
-            [
+        #expect(
+            result.errors == [
                 ValidationError(
                     entityType: .persona,
                     entityId: "senior-swiftui-engineer",

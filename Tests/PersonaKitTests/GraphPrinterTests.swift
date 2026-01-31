@@ -1,9 +1,10 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PersonaKit
 
-final class GraphPrinterTests: XCTestCase {
-    func testGraphOutputIsDeterministic() throws {
+struct GraphPrinterTests {
+    @Test
+    func graphOutputIsDeterministic() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -23,10 +24,11 @@ final class GraphPrinterTests: XCTestCase {
             .appendingPathComponent("Fixtures/graph_golden.md")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
-        XCTAssertEqual(output, expected)
+        #expect(output == expected)
     }
 
-    func testGraphUsesOverrides() throws {
+    @Test
+    func graphUsesOverrides() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -43,7 +45,8 @@ final class GraphPrinterTests: XCTestCase {
         }
         """
         guard let extraKitData = extraKit.data(using: .utf8) else {
-            return XCTFail("Failed to encode extra kit JSON.")
+            #expect(Bool(false))
+            return
         }
         try extraKitData.write(to: extraKitURL, options: .atomic)
 
@@ -57,7 +60,7 @@ final class GraphPrinterTests: XCTestCase {
 
         let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: ["extra-kit"])
 
-        XCTAssertTrue(output.contains("Kit overrides: extra-kit"))
-        XCTAssertTrue(output.contains("- extra-kit — Extra Kit"))
+        #expect(output.contains("Kit overrides: extra-kit"))
+        #expect(output.contains("- extra-kit — Extra Kit"))
     }
 }

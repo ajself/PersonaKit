@@ -1,9 +1,10 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PersonaKit
 
-final class ResolverTests: XCTestCase {
-    func testResolveHappyPath() throws {
+struct ResolverTests {
+    @Test
+    func resolveHappyPath() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
         let registry = try Registry.load(root: root)
@@ -16,17 +17,15 @@ final class ResolverTests: XCTestCase {
 
         let session = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
 
-        XCTAssertEqual(session.persona.id, "senior-swiftui-engineer")
-        XCTAssertEqual(session.task.id, "apply-style")
-        XCTAssertEqual(
-            session.kits.map { $0.id },
-            ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"]
+        #expect(session.persona.id == "senior-swiftui-engineer")
+        #expect(session.task.id == "apply-style")
+        #expect(
+            session.kits.map { $0.id } == ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"]
         )
-        XCTAssertEqual(session.intents.map { $0.id }, ["swift-refactor-safe"])
-        XCTAssertEqual(session.skills.map { $0.id }, ["codex-cli"])
-        XCTAssertEqual(
-            session.essentials.map { $0.id },
-            [
+        #expect(session.intents.map { $0.id } == ["swift-refactor-safe"])
+        #expect(session.skills.map { $0.id } == ["codex-cli"])
+        #expect(
+            session.essentials.map { $0.id } == [
                 "environment",
                 "non-goals",
                 "swift-style-guide",
@@ -36,7 +35,8 @@ final class ResolverTests: XCTestCase {
         )
     }
 
-    func testMissingKitIdError() throws {
+    @Test
+    func missingKitIdError() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -67,13 +67,12 @@ final class ResolverTests: XCTestCase {
             kitOverrides: nil
         )
 
-        XCTAssertThrowsError(try Resolver.resolve(definition: definition, registry: registry, rootURL: root)) { error in
-            guard let resolutionError = error as? ResolverResolutionError else {
-                return XCTFail("Expected ResolverResolutionError")
-            }
-            XCTAssertEqual(
-                resolutionError.errors,
-                [
+        do {
+            _ = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
+            #expect(Bool(false))
+        } catch let error as ResolverResolutionError {
+            #expect(
+                error.errors == [
                     .missingKitId(
                         sourceType: .persona,
                         sourceId: "senior-swiftui-engineer",
@@ -85,7 +84,8 @@ final class ResolverTests: XCTestCase {
         }
     }
 
-    func testMissingEssentialFileError() throws {
+    @Test
+    func missingEssentialFileError() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -99,13 +99,12 @@ final class ResolverTests: XCTestCase {
             kitOverrides: nil
         )
 
-        XCTAssertThrowsError(try Resolver.resolve(definition: definition, registry: registry, rootURL: root)) { error in
-            guard let resolutionError = error as? ResolverResolutionError else {
-                return XCTFail("Expected ResolverResolutionError")
-            }
-            XCTAssertEqual(
-                resolutionError.errors,
-                [
+        do {
+            _ = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
+            #expect(Bool(false))
+        } catch let error as ResolverResolutionError {
+            #expect(
+                error.errors == [
                     .missingEssentialFile(
                         sourceType: .kit,
                         sourceId: "swiftui-style-kit",
@@ -118,7 +117,8 @@ final class ResolverTests: XCTestCase {
         }
     }
 
-    func testDeterministicOrdering() throws {
+    @Test
+    func deterministicOrdering() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
         let registry = try Registry.load(root: root)
@@ -131,9 +131,9 @@ final class ResolverTests: XCTestCase {
 
         let session = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
 
-        XCTAssertEqual(session.kits.map { $0.id }, session.kits.map { $0.id }.sorted())
-        XCTAssertEqual(session.intents.map { $0.id }, session.intents.map { $0.id }.sorted())
-        XCTAssertEqual(session.skills.map { $0.id }, session.skills.map { $0.id }.sorted())
-        XCTAssertEqual(session.essentials.map { $0.id }, session.essentials.map { $0.id }.sorted())
+        #expect(session.kits.map { $0.id } == session.kits.map { $0.id }.sorted())
+        #expect(session.intents.map { $0.id } == session.intents.map { $0.id }.sorted())
+        #expect(session.skills.map { $0.id } == session.skills.map { $0.id }.sorted())
+        #expect(session.essentials.map { $0.id } == session.essentials.map { $0.id }.sorted())
     }
 }

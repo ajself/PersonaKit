@@ -1,18 +1,20 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PersonaKit
 
-final class ListCommandTests: XCTestCase {
-    func testListPersonas() throws {
+struct ListCommandTests {
+    @Test
+    func listPersonas() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
         let output = try ListCommand.list(root: root, entityType: .personas)
 
-        XCTAssertEqual(output, "senior-swiftui-engineer — Senior SwiftUI Engineer")
+        #expect(output == "senior-swiftui-engineer — Senior SwiftUI Engineer")
     }
 
-    func testListEssentials() throws {
+    @Test
+    func listEssentials() throws {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: root.path)
 
@@ -26,6 +28,6 @@ final class ListCommandTests: XCTestCase {
             "tools-and-constraints"
         ].joined(separator: "\n")
 
-        XCTAssertEqual(output, expected)
+        #expect(output == expected)
     }
 }

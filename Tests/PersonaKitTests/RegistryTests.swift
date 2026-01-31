@@ -1,21 +1,24 @@
-import XCTest
+import Foundation
+import Testing
 @testable import PersonaKit
 
-final class RegistryTests: XCTestCase {
-    func testRegistryLoadsStarterKit() throws {
+struct RegistryTests {
+    @Test
+    func registryLoadsStarterKit() throws {
         let destination = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: destination.path)
 
         let registry = try Registry.load(root: destination)
 
-        XCTAssertEqual(registry.personas.map(\.id), ["senior-swiftui-engineer"])
-        XCTAssertEqual(registry.kits.map(\.id), ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"])
-        XCTAssertEqual(registry.tasks.map(\.id), ["apply-style"])
-        XCTAssertEqual(registry.intentTemplates.map(\.id), ["swift-refactor-safe"])
-        XCTAssertEqual(registry.skills.map(\.id), ["autonomous-agent-loop", "codex-cli"])
+        #expect(registry.personas.map(\.id) == ["senior-swiftui-engineer"])
+        #expect(registry.kits.map(\.id) == ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"])
+        #expect(registry.tasks.map(\.id) == ["apply-style"])
+        #expect(registry.intentTemplates.map(\.id) == ["swift-refactor-safe"])
+        #expect(registry.skills.map(\.id) == ["autonomous-agent-loop", "codex-cli"])
     }
 
-    func testRegistryDetectsDuplicateIDs() throws {
+    @Test
+    func registryDetectsDuplicateIDs() throws {
         let root = try makeTempDirectory()
         let packs = root.appendingPathComponent("Packs/personas")
         try FileManager.default.createDirectory(at: packs, withIntermediateDirectories: true)
@@ -40,29 +43,30 @@ final class RegistryTests: XCTestCase {
 
         do {
             _ = try Registry.load(root: root)
-            XCTFail("Expected duplicate error")
+            #expect(Bool(false))
         } catch let error as RegistryLoadError {
-            XCTAssertEqual(error.errors.count, 1)
+            #expect(error.errors.count == 1)
             let first = error.errors[0]
-            XCTAssertEqual(first.entityType, .persona)
-            XCTAssertEqual(first.id, "duplicate-persona")
-            XCTAssertEqual(first.relativePath, "Packs/personas/beta.persona.json")
-            XCTAssertEqual(first.message, "Duplicate id \"duplicate-persona\".")
+            #expect(first.entityType == .persona)
+            #expect(first.id == "duplicate-persona")
+            #expect(first.relativePath == "Packs/personas/beta.persona.json")
+            #expect(first.message == "Duplicate id \"duplicate-persona\".")
         }
     }
 
-    func testRegistryFailsOnMissingPacksDirectory() throws {
+    @Test
+    func registryFailsOnMissingPacksDirectory() throws {
         let root = try makeTempDirectory()
 
         do {
             _ = try Registry.load(root: root)
-            XCTFail("Expected missing Packs error")
+            #expect(Bool(false))
         } catch let error as RegistryLoadError {
-            XCTAssertEqual(error.errors.count, 1)
+            #expect(error.errors.count == 1)
             let first = error.errors[0]
-            XCTAssertEqual(first.entityType, .packsRoot)
-            XCTAssertEqual(first.relativePath, "Packs")
-            XCTAssertEqual(first.message, "Missing Packs directory.")
+            #expect(first.entityType == .packsRoot)
+            #expect(first.relativePath == "Packs")
+            #expect(first.message == "Missing Packs directory.")
         }
     }
 }

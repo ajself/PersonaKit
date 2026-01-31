@@ -1,22 +1,25 @@
-import XCTest
+import Foundation
+import Testing
 @testable import PersonaKit
 
-final class PersonaKitInitTests: XCTestCase {
-    func testInitCreatesExpectedFiles() throws {
+struct PersonaKitInitTests {
+    @Test
+    func initCreatesExpectedFiles() throws {
         let destination = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: destination.path)
 
         let snapshot = try snapshotFiles(at: destination)
         let expectedPaths = Set(StarterKitManifest.entries.map { $0.relativePath })
 
-        XCTAssertEqual(Set(snapshot.keys), expectedPaths)
+        #expect(Set(snapshot.keys) == expectedPaths)
 
         for entry in StarterKitManifest.entries {
-            XCTAssertEqual(snapshot[entry.relativePath], entry.contents)
+            #expect(snapshot[entry.relativePath] == entry.contents)
         }
     }
 
-    func testInitIsDeterministicAndRemovesExtras() throws {
+    @Test
+    func initIsDeterministicAndRemovesExtras() throws {
         let destination = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try PersonaKitInitializer().run(destination: destination.path)
 
@@ -27,30 +30,42 @@ final class PersonaKitInitTests: XCTestCase {
         try PersonaKitInitializer().run(destination: destination.path)
         let secondSnapshot = try snapshotFiles(at: destination)
 
-        XCTAssertEqual(firstSnapshot, secondSnapshot)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: extraURL.path))
+        #expect(firstSnapshot == secondSnapshot)
+        #expect(!FileManager.default.fileExists(atPath: extraURL.path))
     }
 
-    func testInitRefusesDangerousDestinations() throws {
+    @Test
+    func initRefusesDangerousDestinations() throws {
         let initializer = PersonaKitInitializer()
 
-        XCTAssertThrowsError(try initializer.run(destination: "")) { error in
-            XCTAssertEqual(error as? InitError, .emptyPath)
+        do {
+            try initializer.run(destination: "")
+            #expect(Bool(false))
+        } catch {
+            #expect(error as? InitError == .emptyPath)
         }
 
-        XCTAssertThrowsError(try initializer.run(destination: "/")) { error in
+        do {
+            try initializer.run(destination: "/")
+            #expect(Bool(false))
+        } catch {
             guard case let InitError.disallowedPath(path) = error else {
-                return XCTFail("Expected disallowedPath error")
+                #expect(Bool(false))
+                return
             }
-            XCTAssertEqual(path, "/")
+            #expect(path == "/")
         }
 
         let homePath = FileManager.default.homeDirectoryForCurrentUser.path
-        XCTAssertThrowsError(try initializer.run(destination: homePath)) { error in
+        do {
+            try initializer.run(destination: homePath)
+            #expect(Bool(false))
+        } catch {
             guard case let InitError.disallowedPath(path) = error else {
-                return XCTFail("Expected disallowedPath error")
+                #expect(Bool(false))
+                return
             }
-            XCTAssertEqual(path, homePath)
+            #expect(path == homePath)
         }
     }
 }
