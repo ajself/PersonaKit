@@ -71,4 +71,4 @@ graph:
 
 .PHONY: zip
 zip:
-	zip -r $(ZIP_NAME) . -x "*.git/*" -x "__MACOSX/*" -x "*.DS_Store" -x "*/.DS_Store" -x "._*" -x "*.build/"
+	zip -r $(ZIP_NAME) . -x "*.git/*" -x "__MACOSX/*" -x "*.DS_Store" -x "*/.DS_Store" -x "._*" -x "*.build/*"
