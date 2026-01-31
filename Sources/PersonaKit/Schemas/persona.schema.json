@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "persona.schema.json",
+  "title": "Persona",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nonGoals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "defaultKitIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowedSkillIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbiddenSkillIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "name",
+    "summary",
+    "responsibilities",
+    "values",
+    "nonGoals",
+    "defaultKitIds",
+    "allowedSkillIds",
+    "forbiddenSkillIds"
+  ]
+}

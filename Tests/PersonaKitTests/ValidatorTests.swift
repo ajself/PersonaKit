@@ -87,4 +87,24 @@ struct ValidatorTests {
             ]
         )
     }
+
+    @Test
+    func validateSchemaViolation() throws {
+        let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+        try PersonaKitInitializer().run(destination: root.path)
+
+        let personaURL = root.appendingPathComponent("Packs/personas/senior-swiftui-engineer.persona.json")
+        let data = try Data(contentsOf: personaURL)
+        var object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        object?["id"] = nil
+
+        let updatedData = try JSONSerialization.data(withJSONObject: object ?? [:], options: [.prettyPrinted, .sortedKeys])
+        try updatedData.write(to: personaURL)
+
+        let result = try Validator.validate(root: root)
+
+        #expect(result.errors.count >= 1)
+        #expect(result.errors.contains { $0.expectedPath == "Packs/personas/senior-swiftui-engineer.persona.json" })
+        #expect(result.errors.contains { $0.field == "schema" && $0.message.contains("Missing required property \"id\"") })
+    }
 }

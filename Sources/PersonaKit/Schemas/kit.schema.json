@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kit.schema.json",
+  "title": "Kit",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "essentialIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "intentTemplateIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skillIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "name",
+    "summary",
+    "essentialIds"
+  ]
+}

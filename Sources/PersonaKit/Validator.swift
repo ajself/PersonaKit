@@ -106,25 +106,56 @@ struct ValidationResult: Equatable {
 
 struct Validator {
     static func validate(root: URL, fileManager: FileManager = .default) throws -> ValidationResult {
+        let schemaErrors = SchemaValidator.validate(root: root, fileManager: fileManager)
+        var errors: [ValidationError] = schemaErrors.map { error in
+            let message: String
+            if let location = error.instanceLocation {
+                message = "Schema \(error.schemaName): \(error.message) location=\(location)"
+            } else {
+                message = "Schema \(error.schemaName): \(error.message)"
+            }
+            return ValidationError(
+                entityType: map(schemaPath: error.relativePath),
+                entityId: nil,
+                field: "schema",
+                missingId: nil,
+                expectedPath: error.relativePath,
+                message: message
+            )
+        }
+
         let registry: Registry
         do {
             registry = try Registry.load(root: root, fileManager: fileManager)
         } catch let error as RegistryLoadError {
-            let errors = error.errors.map { registryError in
-                ValidationError(
-                    entityType: map(entityType: registryError.entityType),
-                    entityId: registryError.id,
-                    field: registryError.id == nil ? "file" : "id",
-                    missingId: nil,
-                    expectedPath: registryError.relativePath,
-                    message: registryError.message
-                )
-            }
+            errors.append(
+                contentsOf: error.errors.map { registryError in
+                    ValidationError(
+                        entityType: map(entityType: registryError.entityType),
+                        entityId: registryError.id,
+                        field: registryError.id == nil ? "file" : "id",
+                        missingId: nil,
+                        expectedPath: registryError.relativePath,
+                        message: registryError.message
+                    )
+                }
+            )
             return ValidationResult(counts: .zero, errors: errors)
         }
 
         let essentialsDirectory = root.appendingPathComponent("Packs/essentials")
-        var errors: [ValidationError] = []
+        if !schemaErrors.isEmpty {
+            // Skip reference checks when schema errors exist to avoid noisy cascades.
+            let counts = ValidationCounts(
+                personas: registry.personasById.count,
+                kits: registry.kitsById.count,
+                tasks: registry.tasksById.count,
+                intents: registry.intentTemplatesById.count,
+                skills: registry.skillsById.count,
+                essentials: countEssentialFiles(at: essentialsDirectory, fileManager: fileManager)
+            )
+            return ValidationResult(counts: counts, errors: errors)
+        }
 
         for persona in registry.personas {
             for kitId in persona.defaultKitIds {
@@ -309,6 +340,25 @@ struct Validator {
         case .skill: return .skill
         case .packsRoot: return .essentials
         }
+    }
+
+    private static func map(schemaPath: String) -> ValidationEntityType {
+        if schemaPath.contains("/personas/") || schemaPath.hasSuffix(".persona.json") {
+            return .persona
+        }
+        if schemaPath.contains("/kits/") || schemaPath.hasSuffix(".kit.json") {
+            return .kit
+        }
+        if schemaPath.contains("/tasks/") || schemaPath.hasSuffix(".task.json") {
+            return .task
+        }
+        if schemaPath.contains("/intents/") || schemaPath.hasSuffix(".intent.json") {
+            return .intent
+        }
+        if schemaPath.contains("/skills/") || schemaPath.hasSuffix(".skill.json") {
+            return .skill
+        }
+        return .essentials
     }
 
     private static func countEssentialFiles(at directory: URL, fileManager: FileManager) -> Int {
