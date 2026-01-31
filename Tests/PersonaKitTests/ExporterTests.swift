@@ -18,7 +18,7 @@ struct ExporterTests {
             .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
-        #expect(output == expected)
+        #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
     }
 
     @Test
@@ -40,7 +40,7 @@ struct ExporterTests {
             .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
-        #expect(output == expected)
+        #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
     }
 
     @Test

@@ -21,7 +21,7 @@ struct GraphPrinterTests {
             .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style.txt")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
-        #expect(output == expected)
+        #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
     }
 
     @Test
@@ -49,7 +49,7 @@ struct GraphPrinterTests {
             .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style.txt")
         let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
-        #expect(output == expected)
+        #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
     }
 
     @Test

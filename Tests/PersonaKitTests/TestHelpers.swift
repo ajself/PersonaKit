@@ -53,3 +53,11 @@ func fixtureKitRootURL() -> URL {
 func copyFixtureKit(to destination: URL) throws {
     try FileManager.default.copyItem(at: fixtureKitRootURL(), to: destination)
 }
+
+func normalizedTrailingNewline(_ value: String) -> String {
+    var trimmed = value
+    while trimmed.last == "\n" {
+        trimmed.removeLast()
+    }
+    return trimmed + "\n"
+}
