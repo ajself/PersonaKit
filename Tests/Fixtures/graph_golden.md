@@ -1,0 +1,56 @@
+# Graph
+Persona: senior-swiftui-engineer — Senior SwiftUI Engineer
+Task: apply-style — Apply Swift + SwiftUI style guides
+Kit overrides: none
+
+## Persona default kits
+- repo-constraints-kit — Repository Constraints Kit
+- swift-style-kit — Swift Style Kit
+- swiftui-style-kit — SwiftUI Style Kit
+
+## Applied kits (after overrides)
+- repo-constraints-kit — Repository Constraints Kit
+- swift-style-kit — Swift Style Kit
+- swiftui-style-kit — SwiftUI Style Kit
+
+## Kits → Essentials
+repo-constraints-kit
+  - essential:environment
+  - essential:non-goals
+  - essential:tools-and-constraints
+swift-style-kit
+  - essential:non-goals
+  - essential:swift-style-guide
+  - essential:tools-and-constraints
+swiftui-style-kit
+  - essential:non-goals
+  - essential:swiftui-style-guide
+  - essential:tools-and-constraints
+
+## Kits → Intent templates
+repo-constraints-kit
+swift-style-kit
+swiftui-style-kit
+
+## Kits → Skills
+repo-constraints-kit
+swift-style-kit
+swiftui-style-kit
+
+## Task → Intent templates
+- intent:swift-refactor-safe
+
+## Task → Skills
+- skill:codex-cli
+
+## Final resolved sets
+Essentials:
+- environment
+- non-goals
+- swift-style-guide
+- swiftui-style-guide
+- tools-and-constraints
+Intents:
+- swift-refactor-safe
+Skills:
+- codex-cli

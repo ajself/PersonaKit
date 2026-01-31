@@ -85,10 +85,50 @@ struct PersonaKitCLI {
                 throw CLIExitError(status: 1)
             }
         case "list":
-            if arguments.count > 2 {
-                throw CLIError.usage("list takes no arguments.")
+            let options = try ListOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
+            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            do {
+                let output = try ListCommand.list(root: rootURL, entityType: options.entityType)
+                if !output.isEmpty {
+                    print(output)
+                }
+            } catch let error as RegistryLoadError {
+                var stderrStream = StandardError()
+                for registryError in error.errors {
+                    stderrStream.write(formatRegistryError(registryError) + "\n")
+                }
+                throw CLIExitError(status: 1)
             }
-            throw CLIError.failure("list is not implemented yet.")
+        case "graph":
+            let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
+            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            do {
+                let registry = try Registry.load(root: rootURL)
+                let definition = SessionDefinition(
+                    personaId: options.personaId,
+                    taskId: options.taskId,
+                    kitOverrides: options.kitIds
+                )
+                let resolved = try Resolver.resolve(
+                    definition: definition,
+                    registry: registry,
+                    rootURL: rootURL
+                )
+                let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: options.kitIds)
+                print(output)
+            } catch let error as RegistryLoadError {
+                var stderrStream = StandardError()
+                for registryError in error.errors {
+                    stderrStream.write(formatRegistryError(registryError) + "\n")
+                }
+                throw CLIExitError(status: 1)
+            } catch let error as ResolverResolutionError {
+                var stderrStream = StandardError()
+                for resolutionError in error.errors {
+                    stderrStream.write(formatResolutionError(resolutionError) + "\n")
+                }
+                throw CLIExitError(status: 1)
+            }
         default:
             throw CLIError.usage("Unknown command: \(command)")
         }
@@ -102,7 +142,11 @@ struct PersonaKitCLI {
           personakit init <path>
           personakit validate [--root <path>]
           personakit export --root <path> --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
-          personakit list
+          personakit list --root <path> <entityType>
+          personakit graph --root <path> --persona <id> --task <id> [--kits <id,id,...>]
+
+        Entity types:
+          personas | kits | tasks | intents | skills | essentials
         """
     }
 
@@ -128,6 +172,19 @@ struct PersonaKitCLI {
             parts.append("missingId=\(missingId)")
         }
         return parts.joined(separator: " ")
+    }
+
+    private func formatRegistryError(_ error: RegistryError) -> String {
+        var parts: [String] = []
+        parts.append(error.entityType.rawValue)
+        if let id = error.id {
+            parts.append(id)
+        }
+        if let relativePath = error.relativePath {
+            parts.append(relativePath)
+        }
+        parts.append(error.message)
+        return "Error: " + parts.joined(separator: " ")
     }
 }
 
@@ -157,6 +214,18 @@ struct ExportOptions {
 
 struct ValidateOptions {
     let rootPath: String?
+}
+
+struct ListOptions {
+    let rootPath: String
+    let entityType: ListEntityType
+}
+
+struct GraphOptions {
+    let rootPath: String
+    let personaId: String
+    let taskId: String
+    let kitIds: [String]
 }
 
 struct ExportOptionsParser {
@@ -251,6 +320,110 @@ struct ValidateOptionsParser {
         }
 
         return ValidateOptions(rootPath: rootPath)
+    }
+}
+
+struct ListOptionsParser {
+    func parse(arguments: [String]) throws -> ListOptions {
+        var rootPath: String?
+        var entityType: ListEntityType?
+        var index = 0
+
+        while index < arguments.count {
+            let argument = arguments[index]
+            switch argument {
+            case "--root":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--root requires a value.")
+                }
+                rootPath = arguments[index]
+            default:
+                if argument.hasPrefix("-") {
+                    throw CLIError.usage("Unknown list option: \(argument)")
+                }
+                guard entityType == nil else {
+                    throw CLIError.usage("list expects a single entity type.")
+                }
+                entityType = ListEntityType(rawValue: argument)
+                if entityType == nil {
+                    throw CLIError.usage("Unknown entity type: \(argument)")
+                }
+            }
+            index += 1
+        }
+
+        guard let rootPath else {
+            throw CLIError.usage("list requires --root <path>.")
+        }
+        guard let entityType else {
+            throw CLIError.usage("list requires an entity type.")
+        }
+
+        return ListOptions(rootPath: rootPath, entityType: entityType)
+    }
+}
+
+struct GraphOptionsParser {
+    func parse(arguments: [String]) throws -> GraphOptions {
+        var rootPath: String?
+        var personaId: String?
+        var taskId: String?
+        var kitIds: [String] = []
+        var index = 0
+
+        while index < arguments.count {
+            let argument = arguments[index]
+            switch argument {
+            case "--root":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--root requires a value.")
+                }
+                rootPath = arguments[index]
+            case "--persona":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--persona requires a value.")
+                }
+                personaId = arguments[index]
+            case "--task":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--task requires a value.")
+                }
+                taskId = arguments[index]
+            case "--kits":
+                index += 1
+                guard index < arguments.count else {
+                    throw CLIError.usage("--kits requires a value.")
+                }
+                kitIds = arguments[index]
+                    .split(separator: ",")
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            default:
+                throw CLIError.usage("Unknown graph option: \(argument)")
+            }
+            index += 1
+        }
+
+        guard let rootPath else {
+            throw CLIError.usage("graph requires --root <path>.")
+        }
+        guard let personaId else {
+            throw CLIError.usage("graph requires --persona <id>.")
+        }
+        guard let taskId else {
+            throw CLIError.usage("graph requires --task <id>.")
+        }
+
+        return GraphOptions(
+            rootPath: rootPath,
+            personaId: personaId,
+            taskId: taskId,
+            kitIds: kitIds
+        )
     }
 }
 
