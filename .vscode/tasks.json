@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "PersonaKit: Build",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "build"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Test",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "test"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Init /tmp/PersonaKit",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "init"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Validate /tmp/PersonaKit",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "validate"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Export /tmp/session.md",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "export"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: List Personas",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "list"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Graph",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "graph"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Zip Review",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "zip"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
