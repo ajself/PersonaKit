@@ -95,14 +95,14 @@ function buildArgs(command: PersonakitCommand, rootOverride?: string): string[] 
   const rootArg = rootOverride?.trim();
 
   if (command.kind === "validate") {
-    const args = ["validate"];
+    const args: string[] = ["validate"];
     if (rootArg) {
       args.push("--root", rootArg);
     }
     return args;
   }
 
-  const baseArgs = [command.kind];
+  const baseArgs: string[] = [command.kind];
   if (rootArg) {
     baseArgs.push("--root", rootArg);
   }
