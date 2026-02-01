@@ -68,6 +68,7 @@ graph.dot
 .swiftpm/
 .swiftlint_cache/
 *.zip
+*.docc-build/
 
 ### Custom build dir
 .sim
