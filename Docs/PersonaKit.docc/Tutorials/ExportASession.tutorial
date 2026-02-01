@@ -1,14 +1,11 @@
 @Tutorial(time: 10) {
 
   @Intro(title: "Export a session") {
-    PersonaKit exports deterministic session context that an AI agent can consume.
+    PersonaKit exports deterministic session context that an AI agent can consume under human supervision.
 
-    A session is defined by:
-    - Persona id
-    - Task id
-    - optional Kit overrides
+    A session is defined by a Persona id and a Task id, with optional Kit overrides. You can also export by Session id using `Sessions/<id>.session.json`.
 
-    PersonaKit can also export by Session id (`Sessions/<id>.session.json`).
+    Always validate before exporting so the output you hand to an agent is complete and consistent.
   }
 
   @Section(title: "Validate first") {

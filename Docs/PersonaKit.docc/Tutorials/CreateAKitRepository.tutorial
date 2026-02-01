@@ -1,20 +1,33 @@
 @Tutorial(time: 10) {
 
   @Intro(title: "Create a kit repository") {
-    In this tutorial you’ll create a PersonaKit repository on disk and learn how PersonaKit discovers content.
+    In this tutorial you’ll create a PersonaKit repository on disk and learn how PersonaKit discovers and merges content.
 
-    PersonaKit sources content from two scopes (like .gitignore):
-    - Global scope: `~/.personakit/`
-    - Project scope: `<project>/.personakit/`
+    PersonaKit uses a gitignore-style discovery model:
+    - A **global scope** at `~/.personakit/`
+    - A **project scope** at `<project>/.personakit/`
 
-    Both scopes are loaded; project overrides global by id.
+    Both scopes are loaded automatically when PersonaKit runs.
+    If the same entity id exists in both scopes, the project version takes precedence.
+
+    This allows you to maintain shared standards globally while overriding or extending them per project.
+  }
+
+  @Section(title: "What you will create") {
+    @Steps {
+      @Step {
+        By the end of this tutorial you will have a PersonaKit directory containing Packs and optional Sessions, at least one Persona that represents a real role, one or more Kits that bundle standards and constraints, and a foundation that can be reused across projects.
+      }
+    }
   }
 
   @Section(title: "Create a repository") {
     @Steps {
 
       @Step {
-        Create a new kit repository in a folder of your choice, then confirm the output includes `Packs/` (Personas, Kits, Tasks, Essentials) and `Sessions/` (optional, reusable session specs).
+        Create a new PersonaKit repository using the Swift CLI. This command creates the required directory structure and example files.
+
+        You should see `Packs/` (required) and `Sessions/` (optional).
 
         @Code(name: "Create kit", file: "CreateKit.sh")
       }
@@ -32,7 +45,17 @@
     }
   }
 
+  @Section(title: "Understanding Packs and Sessions") {
+    @Steps {
+      @Step {
+        PersonaKit organizes content into two top-level directories: `Packs/` contains all versioned, shareable entities (Personas, Kits, Tasks, Intent Templates, Skills, and Essentials). `Sessions/` is optional and contains reusable bindings of persona + task (+ optional kit overrides); sessions are conveniences and do not introduce new behavior.
+      }
+    }
+  }
+
   @Section(title: "Edit a persona") {
+    A Persona defines *who* the agent is supposed to be. It is the highest-level constraint in PersonaKit.
+
     @Steps {
 
       @Step {
@@ -43,6 +66,14 @@
         Open a Kit file, for example `Packs/kits/swiftui-style-kit.kit.json`. A Kit bundles Essentials and optional references to intent templates and skills.
       }
 
+    }
+  }
+
+  @Section(title: "Global vs project scope") {
+    @Steps {
+      @Step {
+        You can place PersonaKit directories in two locations: `~/.personakit/` for global, reusable standards and `<project>/.personakit/` for project-specific overrides. PersonaKit loads both automatically; if the same entity id appears in both locations, the project version is used. This mirrors how `.gitignore` and similar developer tools resolve configuration.
+      }
     }
   }
 }

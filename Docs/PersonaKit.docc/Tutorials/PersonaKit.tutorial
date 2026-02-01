@@ -1,14 +1,41 @@
 @Tutorials(name: "PersonaKit") {
 
   @Intro(title: "Personas and kits for reliable agent sessions") {
-    PersonaKit is an execution-free system that makes AI agents behave like disciplined teammates.
+    PersonaKit is an execution-free system that helps you work with AI agents the same way you work with people on a strong team: clear roles, shared standards, and explicit tasks.
 
-    You define:
-    - a Persona (the role)
-    - one or more Kits (how that role works)
-    - a Task or Session (what work is happening now)
+    PersonaKit does not make decisions or execute actions. Instead, it assembles deterministic context that an agent can consume under human supervision.
 
-    Then PersonaKit validates and assembles deterministic context for an agent to consume.
+    In PersonaKit, you define:
+    - **Personas** — who the agent is supposed to be (a role you would actually hire)
+    - **Kits** — how that role works (standards, constraints, and guardrails)
+    - **Tasks** — what work is being done right now
+    - **Sessions** — reusable bindings of persona + task (+ optional kit overrides)
+
+    PersonaKit then validates your configuration, resolves relationships by identifier, and produces stable outputs you can trust.
+
+    ## What you will learn
+    - How PersonaKit discovers content on disk using global and project scopes
+    - How Personas, Kits, Tasks, and Sessions relate to each other
+    - How to validate a PersonaKit configuration before using it
+    - How to export deterministic session context for an AI agent
+    - How to connect an MCP client to PersonaKit safely
+
+    ## Prerequisites
+    - Familiarity with the command line
+    - A local Swift toolchain capable of running the PersonaKit CLI
+    - Basic understanding of working in a Git repository
+
+    You do not need prior experience with AI agents or MCP to follow this tutorial.
+
+    ## How this tutorial is structured
+    This tutorial is organized as a sequence of short, focused chapters.
+
+    Each chapter builds on the previous one:
+    - First, you create and understand a PersonaKit repository on disk.
+    - Next, you validate and export a session using the Swift CLI.
+    - Finally, you connect an MCP client to consume PersonaKit context programmatically.
+
+    You can stop after any chapter and still have a working, useful setup.
   }
 
   @Chapter(name: "Create a kit repository") {
