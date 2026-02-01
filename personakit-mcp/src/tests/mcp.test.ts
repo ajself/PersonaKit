@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { resolvePersonakitBin } from "../personakit-cli.js";
@@ -19,8 +20,88 @@ const graphOutput = await fs.readFile(
   path.join(expectedDir, "graph_senior-swiftui-engineer_apply-style.txt"),
   "utf8"
 );
+const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "personakit-mcp-"));
+const projectRoot = await createProjectRoot(fixtureRoot, tempRoot);
+const emptyHome = await fs.mkdtemp(path.join(os.tmpdir(), "personakit-home-"));
 const normalizeTrailingNewline = (value: string): string =>
   `${value.replace(/\n+$/, "")}\n`;
+
+async function createProjectRoot(sourceRoot: string, tempDir: string): Promise<string> {
+  const projectRoot = path.join(tempDir, "project");
+  const scopeRoot = path.join(projectRoot, ".personakit");
+  await fs.mkdir(scopeRoot, { recursive: true });
+  await fs.cp(path.join(sourceRoot, "Packs"), path.join(scopeRoot, "Packs"), {
+    recursive: true,
+  });
+  const sessionsSource = path.join(sourceRoot, "Sessions");
+  const sessionsTarget = path.join(scopeRoot, "Sessions");
+  try {
+    await fs.cp(sessionsSource, sessionsTarget, { recursive: true });
+  } catch (error: any) {
+    if (error?.code === "ENOENT") {
+      await fs.mkdir(sessionsTarget, { recursive: true });
+    } else {
+      throw error;
+    }
+  }
+  return projectRoot;
+}
+
+async function withEnv<T>(
+  overrides: Record<string, string | undefined>,
+  action: () => Promise<T>
+): Promise<T> {
+  const previous: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    previous[key] = process.env[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+  try {
+    return await action();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+async function withCwd<T>(cwd: string, action: () => Promise<T>): Promise<T> {
+  const previous = process.cwd();
+  process.chdir(cwd);
+  try {
+    return await action();
+  } finally {
+    process.chdir(previous);
+  }
+}
+
+async function runDefaultPrompt(
+  promptId: string,
+  args: Record<string, unknown>
+): Promise<string> {
+  return await withEnv(
+    { PERSONAKIT_ROOT_OVERRIDE: undefined, HOME: emptyHome },
+    async () => getPromptContent(projectRoot, promptId, args)
+  );
+}
+
+async function runOverridePrompt(
+  promptId: string,
+  args: Record<string, unknown>
+): Promise<string> {
+  return await withEnv(
+    { PERSONAKIT_ROOT_OVERRIDE: "1", HOME: emptyHome },
+    async () => withCwd(emptyHome, async () => getPromptContent(fixtureRoot, promptId, args))
+  );
+}
 
 test("prompts/list returns stable prompt ids", () => {
   const prompts = listPrompts();
@@ -29,7 +110,7 @@ test("prompts/list returns stable prompt ids", () => {
 });
 
 test("prompts/get export returns deterministic output", async () => {
-  const output = await getPromptContent(fixtureRoot, "personakit.session.export", {
+  const output = await runDefaultPrompt("personakit.session.export", {
     personaId: "senior-swiftui-engineer",
     taskId: "apply-style",
   });
@@ -37,14 +118,14 @@ test("prompts/get export returns deterministic output", async () => {
 });
 
 test("prompts/get export supports sessionId", async () => {
-  const output = await getPromptContent(fixtureRoot, "personakit.session.export", {
+  const output = await runDefaultPrompt("personakit.session.export", {
     sessionId: "senior-swiftui-engineer_apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(exportOutput));
 });
 
 test("prompts/get graph returns deterministic output", async () => {
-  const output = await getPromptContent(fixtureRoot, "personakit.session.graph", {
+  const output = await runDefaultPrompt("personakit.session.graph", {
     personaId: "senior-swiftui-engineer",
     taskId: "apply-style",
   });
@@ -52,8 +133,24 @@ test("prompts/get graph returns deterministic output", async () => {
 });
 
 test("prompts/get graph supports sessionId", async () => {
-  const output = await getPromptContent(fixtureRoot, "personakit.session.graph", {
+  const output = await runDefaultPrompt("personakit.session.graph", {
     sessionId: "senior-swiftui-engineer_apply-style",
+  });
+  assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(graphOutput));
+});
+
+test("prompts/get export respects override root", async () => {
+  const output = await runOverridePrompt("personakit.session.export", {
+    personaId: "senior-swiftui-engineer",
+    taskId: "apply-style",
+  });
+  assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(exportOutput));
+});
+
+test("prompts/get graph respects override root", async () => {
+  const output = await runOverridePrompt("personakit.session.graph", {
+    personaId: "senior-swiftui-engineer",
+    taskId: "apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(graphOutput));
 });

@@ -30,6 +30,7 @@ PersonaKit is designed to be used with a human in the loop. The typical workflow
    • MCP (recommended for live agent integration):
      - Run the PersonaKit MCP adapter with PERSONAKIT_ROOT=./MyKit
      - Let your MCP-compatible agent read Resources and Prompts directly
+     - Default behavior relies on Swift scope discovery unless override mode is enabled
 
 Agents are expected to *consume* PersonaKit output, not modify it.
 
@@ -216,13 +217,13 @@ The Node project exists only to support MCP.
 
 The Swift CLI and Swift code are the single source of truth for PersonaKit behavior and contracts.
 
-Basic setup:
+Basic setup (default, recommended):
 
-1. Choose a PersonaKit root directory (the directory that contains `Packs/`).
+1. Choose a project directory that contains `.personakit/` (project scope), or ensure `~/.personakit` exists (global scope).
 
-2. Set the root as an environment variable:
+2. Set a working directory for discovery:
 
-   PERSONAKIT_ROOT=/path/to/your/kit
+   PERSONAKIT_ROOT=/path/to/your/project
 
 3. Start the MCP adapter:
 
@@ -254,7 +255,8 @@ A minimal example (stdio transport):
 
 Notes:
 - `command` and `args` must match how the PersonaKit MCP adapter is started in `personakit-mcp/package.json`.
-- `PERSONAKIT_ROOT` must point to the directory that contains `Packs/`.
+- In default mode, `PERSONAKIT_ROOT` sets the working directory for Swift scope discovery (project/global).
+- To bypass discovery, set `PERSONAKIT_ROOT_OVERRIDE=1` and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
 - The server communicates over **stdio**; no ports are opened.
 - Paths should be absolute to avoid ambiguity.
 

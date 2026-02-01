@@ -86,16 +86,26 @@ export async function resolvePersonakitBin(): Promise<string> {
   );
 }
 
-function buildArgs(command: PersonakitCommand): string[] {
-  if (!command.root.trim()) {
-    throw new Error("Root path is required.");
-  }
+// Swift CLI invocation notes:
+// - Default mode should NOT pass --root. The CLI then discovers project/global
+//   scopes based on the subprocess cwd.
+// - Override mode should pass --root explicitly, but only when the caller opts
+//   in via PERSONAKIT_ROOT_OVERRIDE=1 (and provides PERSONAKIT_ROOT).
+function buildArgs(command: PersonakitCommand, rootOverride?: string): string[] {
+  const rootArg = rootOverride?.trim();
 
   if (command.kind === "validate") {
-    return ["validate", "--root", command.root];
+    const args = ["validate"];
+    if (rootArg) {
+      args.push("--root", rootArg);
+    }
+    return args;
   }
 
-  const baseArgs = [command.kind, "--root", command.root];
+  const baseArgs = [command.kind];
+  if (rootArg) {
+    baseArgs.push("--root", rootArg);
+  }
 
   if ("sessionId" in command) {
     const sessionId = command.sessionId.trim();
@@ -127,10 +137,11 @@ function buildArgs(command: PersonakitCommand): string[] {
 
 function spawnPersonakit(
   binPath: string,
-  args: string[]
+  args: string[],
+  cwd: string
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(binPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(binPath, args, { stdio: ["ignore", "pipe", "pipe"], cwd });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
 
@@ -155,9 +166,15 @@ function spawnPersonakit(
 
 export async function runPersonakit(command: PersonakitCommand): Promise<string> {
   const binPath = await resolvePersonakitBin();
-  const args = buildArgs(command);
+  const root = command.root.trim();
+  const overrideMode = process.env.PERSONAKIT_ROOT_OVERRIDE?.trim() === "1";
+  if (overrideMode && !root) {
+    throw new Error("PERSONAKIT_ROOT is required when PERSONAKIT_ROOT_OVERRIDE=1.");
+  }
+  const args = buildArgs(command, overrideMode ? root : undefined);
+  const cwd = overrideMode ? process.cwd() : root || process.cwd();
 
-  const { stdout, stderr, exitCode } = await spawnPersonakit(binPath, args);
+  const { stdout, stderr, exitCode } = await spawnPersonakit(binPath, args, cwd);
   if (exitCode !== 0) {
     const message =
       stderr.trim() ||

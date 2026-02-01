@@ -4,8 +4,9 @@ This is a read-only MCP server that exposes PersonaKit packs as resources and pr
 
 ## Requirements
 - Node.js 18+
-- PERSONAKIT_ROOT env var pointing to a directory that contains `Packs/`
 - `personakit` Swift CLI binary available (see "Personakit binary" below)
+- Default mode: `PERSONAKIT_ROOT` set to the working directory for Swift scope discovery
+- Override mode: `PERSONAKIT_ROOT_OVERRIDE=1` and `PERSONAKIT_ROOT` pointing to a directory that contains `Packs/`
 
 ## Build
 
@@ -16,8 +17,16 @@ npm run build
 
 ## Run (stdio)
 
+Default mode (recommended; uses Swift scope discovery):
+
 ```sh
-PERSONAKIT_ROOT=/path/to/PersonaKit npm run start
+PERSONAKIT_ROOT=/path/to/your/project npm run start
+```
+
+Override mode (advanced; bypasses discovery):
+
+```sh
+PERSONAKIT_ROOT_OVERRIDE=1 PERSONAKIT_ROOT=/path/to/PersonaKit npm run start
 ```
 
 ## Personakit binary
