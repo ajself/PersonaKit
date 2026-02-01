@@ -1,0 +1,39 @@
+@Tutorial(time: 10) {
+
+  @Intro(title: "Connect the MCP adapter") {
+    PersonaKit includes a Node.js MCP adapter that exposes PersonaKit context to MCP-compatible clients.
+
+    Important:
+    - The MCP adapter is read-only.
+    - The Swift CLI is the single source of truth.
+    - The adapter should not become a replacement for Swift.
+  }
+
+  @Section(title: "Start the adapter") {
+    @Steps {
+
+      @Step {
+        Set the PersonaKit root directory for the adapter, then start the adapter from the repo's `personakit-mcp/` folder.
+
+        @Code(name: "Start adapter", file: "StartAdapter.sh")
+      }
+
+    }
+  }
+
+  @Section(title: "Configure an MCP client") {
+    @Steps {
+
+      @Step {
+        Most MCP clients use a JSON configuration file to declare servers launched over stdio.
+
+        @Code(name: "Example config", file: "MCPClientConfig.json")
+      }
+
+      @Step {
+        Confirm the MCP adapter can serve resources and prompts. Resources include `personakit://packs/personas/senior-swiftui-engineer` and `personakit://essentials/swiftui-style-guide`. Prompts include `personakit.session.export` and `personakit.session.graph`.
+      }
+
+    }
+  } 
+}

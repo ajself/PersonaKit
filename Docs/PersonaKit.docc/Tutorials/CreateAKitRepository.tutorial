@@ -1,0 +1,48 @@
+@Tutorial(time: 10) {
+
+  @Intro(title: "Create a kit repository") {
+    In this tutorial you’ll create a PersonaKit repository on disk and learn how PersonaKit discovers content.
+
+    PersonaKit sources content from two scopes (like .gitignore):
+    - Global scope: `~/.personakit/`
+    - Project scope: `<project>/.personakit/`
+
+    Both scopes are loaded; project overrides global by id.
+  }
+
+  @Section(title: "Create a repository") {
+    @Steps {
+
+      @Step {
+        Create a new kit repository in a folder of your choice, then confirm the output includes `Packs/` (Personas, Kits, Tasks, Essentials) and `Sessions/` (optional, reusable session specs).
+
+        @Code(name: "Create kit", file: "CreateKit.sh")
+      }
+
+      @Step {
+        Open the `Packs/` directory and skim the core entity folders. PersonaKit identifies entities by filename suffix like `*.persona.json`, `*.kit.json`, `*.task.json`, `*.intent.json`, `*.skill.json`, and essentials are markdown in `Packs/essentials/*.md`.
+
+        @Code(name: "Packs layout", file: "PacksLayout.txt")
+      }
+
+      @Step {
+        Decide where this kit repository should live: project scope at `<project>/.personakit/` (checked into your repo) or global scope at `~/.personakit/` (shared across projects). PersonaKit merges both if both exist.
+      }
+
+    }
+  }
+
+  @Section(title: "Edit a persona") {
+    @Steps {
+
+      @Step {
+        Open a Persona file, for example `Packs/personas/senior-swiftui-engineer.persona.json`. A Persona represents a role you would hire for, brings default Kits (by id), and defines judgment boundaries.
+      }
+
+      @Step {
+        Open a Kit file, for example `Packs/kits/swiftui-style-kit.kit.json`. A Kit bundles Essentials and optional references to intent templates and skills.
+      }
+
+    }
+  }
+}

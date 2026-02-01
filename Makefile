@@ -17,6 +17,7 @@ help:
 	@printf "  build           Build the CLI\n"
 	@printf "  test            Run tests\n"
 	@printf "  run             Run the CLI with ARGS\n\n"
+	@printf "  docc-preview    Preview DocC tutorials\n\n"
 	@printf "Project workflow:\n"
 	@printf "  init            Initialize a starter kit at ROOT (default: %s)\n" "$(ROOT)"
 	@printf "  validate        Validate a kit at ROOT\n"
@@ -45,6 +46,10 @@ test:
 .PHONY: run
 run:
 	swift run personakit $(ARGS)
+
+.PHONY: docc-preview
+docc-preview:
+	xcrun docc preview Docs/PersonaKit.docc --fallback-display-name PersonaKit --fallback-bundle-identifier com.ajself.PersonaKit --fallback-bundle-version 1
 
 .PHONY: init
 init:

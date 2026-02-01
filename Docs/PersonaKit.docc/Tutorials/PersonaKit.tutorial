@@ -1,0 +1,37 @@
+@Tutorials(name: "PersonaKit") {
+
+  @Intro(title: "Personas and kits for reliable agent sessions") {
+    PersonaKit is an execution-free system that makes AI agents behave like disciplined teammates.
+
+    You define:
+    - a Persona (the role)
+    - one or more Kits (how that role works)
+    - a Task or Session (what work is happening now)
+
+    Then PersonaKit validates and assembles deterministic context for an agent to consume.
+  }
+
+  @Chapter(name: "Create a kit repository") {
+    Set up PersonaKit content on disk and understand the directory structure.
+
+    @Image(source: "ChapterCreateKit.png", alt: "Create a kit repository")
+
+    @TutorialReference(tutorial: "doc:CreateAKitRepository")
+  }
+
+  @Chapter(name: "Export a session") {
+    Validate and export a deterministic session context using the Swift CLI.
+
+    @Image(source: "ChapterExportSession.png", alt: "Export a session")
+
+    @TutorialReference(tutorial: "doc:ExportASession")
+  }
+
+  @Chapter(name: "Connect the MCP adapter") {
+    Configure an MCP client to read PersonaKit Resources and Prompts.
+
+    @Image(source: "ChapterConnectMCP.png", alt: "Connect the MCP adapter")
+
+    @TutorialReference(tutorial: "doc:ConnectMCPAdapter")
+  }
+}
