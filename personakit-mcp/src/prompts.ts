@@ -1,5 +1,4 @@
 import { PersonakitCLIError, runPersonakit } from "./personakit-cli.js";
-import { loadSession } from "./sessions.js";
 
 export type PromptDefinition = {
   id: string;
@@ -55,14 +54,11 @@ function requireArg(args: Record<string, unknown>, name: string): string {
   return value.trim();
 }
 
-type PromptSessionInput = {
-  personaId: string;
-  taskId: string;
-  kitOverrides: string[];
-};
+type PromptSessionInput =
+  | { mode: "session"; sessionId: string }
+  | { mode: "persona"; personaId: string; taskId: string; kitOverrides: string[] };
 
 async function resolvePromptSessionInput(
-  root: string,
   args: Record<string, unknown>
 ): Promise<PromptSessionInput> {
   const sessionId = typeof args.sessionId === "string" ? args.sessionId.trim() : "";
@@ -72,11 +68,9 @@ async function resolvePromptSessionInput(
     if (args.personaId || args.taskId || args.kits) {
       throw new Error("Provide sessionId or personaId/taskId/kits, not both.");
     }
-    const session = await loadSession(root, sessionId);
     return {
-      personaId: session.personaId,
-      taskId: session.taskId,
-      kitOverrides: session.kitOverrides ?? [],
+      mode: "session",
+      sessionId,
     };
   }
 
@@ -87,6 +81,7 @@ async function resolvePromptSessionInput(
   );
 
   return {
+    mode: "persona",
     personaId,
     taskId,
     kitOverrides,
@@ -98,9 +93,16 @@ export async function getPromptContent(
   promptId: string,
   args: Record<string, unknown>
 ): Promise<string> {
-  const sessionInput = await resolvePromptSessionInput(root, args);
+  const sessionInput = await resolvePromptSessionInput(args);
 
   if (promptId === "personakit.session.export") {
+    if (sessionInput.mode === "session") {
+      return await runPersonakit({
+        kind: "export",
+        root,
+        sessionId: sessionInput.sessionId,
+      });
+    }
     return await runPersonakit({
       kind: "export",
       root,
@@ -111,6 +113,13 @@ export async function getPromptContent(
   }
 
   if (promptId === "personakit.session.graph") {
+    if (sessionInput.mode === "session") {
+      return await runPersonakit({
+        kind: "graph",
+        root,
+        sessionId: sessionInput.sessionId,
+      });
+    }
     return await runPersonakit({
       kind: "graph",
       root,

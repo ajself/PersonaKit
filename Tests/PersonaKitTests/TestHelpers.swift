@@ -1,4 +1,7 @@
 import Foundation
+import Darwin
+
+private let stdoutCaptureLock = NSLock()
 
 func makeTempDirectory() throws -> URL {
     let base = FileManager.default.temporaryDirectory
@@ -60,4 +63,22 @@ func normalizedTrailingNewline(_ value: String) -> String {
         trimmed.removeLast()
     }
     return trimmed + "\n"
+}
+
+func captureStdout(_ work: () -> Void) -> String {
+    stdoutCaptureLock.lock()
+    defer { stdoutCaptureLock.unlock() }
+
+    let pipe = Pipe()
+    let stdoutFd = dup(STDOUT_FILENO)
+    dup2(pipe.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
+
+    work()
+    fflush(stdout)
+    pipe.fileHandleForWriting.closeFile()
+    dup2(stdoutFd, STDOUT_FILENO)
+    close(stdoutFd)
+
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: data, encoding: .utf8) ?? ""
 }

@@ -4,12 +4,19 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-type ExportOrGraphCommand = {
+type SessionCommand = {
+  root: string;
+  sessionId: string;
+};
+
+type PersonaTaskCommand = {
   root: string;
   personaId: string;
   taskId: string;
   kitOverrides?: string[];
 };
+
+type ExportOrGraphCommand = SessionCommand | PersonaTaskCommand;
 
 export type PersonakitCommand =
   | { kind: "validate"; root: string }
@@ -88,11 +95,16 @@ function buildArgs(command: PersonakitCommand): string[] {
     return ["validate", "--root", command.root];
   }
 
-  const baseArgs = [
-    command.kind,
-    "--root",
-    command.root,
-  ];
+  const baseArgs = [command.kind, "--root", command.root];
+
+  if ("sessionId" in command) {
+    const sessionId = command.sessionId.trim();
+    if (!sessionId) {
+      throw new Error("Session id is required.");
+    }
+    baseArgs.push("--session", sessionId);
+    return baseArgs;
+  }
 
   if (!command.personaId.trim()) {
     throw new Error("Persona id is required.");
