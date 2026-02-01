@@ -1,6 +1,12 @@
 import Foundation
 
 struct PersonaKitCLI {
+    private let scopeRootResolver: ScopeRootResolver
+
+    init(scopeRootResolver: ScopeRootResolver = ScopeRootResolver()) {
+        self.scopeRootResolver = scopeRootResolver
+    }
+
     func run(arguments: [String]) -> Int32 {
         var stderrStream = StandardError()
         do {
@@ -42,7 +48,7 @@ struct PersonaKitCLI {
             try PersonaKitInitializer().run(destination: arguments[2])
         case "validate":
             let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            let rootURL = try resolveRootURL(rootPath: options.rootPath)
             let result = try Validator.validate(root: rootURL)
             print(result.summary)
             if !result.errors.isEmpty {
@@ -53,7 +59,7 @@ struct PersonaKitCLI {
             }
         case "export":
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            let rootURL = try resolveRootURL(rootPath: options.rootPath)
             do {
                 let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
                 let output = try SessionExporter.export(
@@ -87,7 +93,7 @@ struct PersonaKitCLI {
             }
         case "list":
             let options = try ListOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            let rootURL = try resolveRootURL(rootPath: options.rootPath)
             do {
                 let output = try ListCommand.list(root: rootURL, entityType: options.entityType)
                 if !output.isEmpty {
@@ -102,7 +108,7 @@ struct PersonaKitCLI {
             }
         case "graph":
             let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = RootPathResolver().resolve(path: options.rootPath)
+            let rootURL = try resolveRootURL(rootPath: options.rootPath)
             do {
                 let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
                 let registry = try Registry.load(root: rootURL)
@@ -143,14 +149,18 @@ struct PersonaKitCLI {
         Usage:
           personakit init <path>
           personakit validate [--root <path>]
-          personakit export --root <path> --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
-          personakit export --root <path> --session <id> [--output <file>]
-          personakit list --root <path> <entityType>
-          personakit graph --root <path> --persona <id> --task <id> [--kits <id,id,...>]
-          personakit graph --root <path> --session <id>
+          personakit export [--root <path>] --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
+          personakit export [--root <path>] --session <id> [--output <file>]
+          personakit list [--root <path>] <entityType>
+          personakit graph [--root <path>] --persona <id> --task <id> [--kits <id,id,...>]
+          personakit graph [--root <path>] --session <id>
 
         Entity types:
           personas | kits | tasks | intents | skills | essentials
+
+        Scope resolution (when --root is omitted):
+          - nearest .personakit in the current directory or its parents
+          - ~/.personakit
         """
     }
 
@@ -193,6 +203,18 @@ struct PersonaKitCLI {
             personaId: personaId,
             taskId: taskId,
             kitOverrides: options.kitIds
+        )
+    }
+
+    private func resolveRootURL(rootPath: String?) throws -> URL {
+        if let rootPath {
+            return RootPathResolver().resolve(path: rootPath)
+        }
+        if let rootURL = scopeRootResolver.locate() {
+            return rootURL
+        }
+        throw CLIError.usage(
+            "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
         )
     }
 
@@ -251,7 +273,7 @@ struct StandardError: TextOutputStream {
 }
 
 struct ExportOptions {
-    let rootPath: String
+    let rootPath: String?
     let sessionId: String?
     let personaId: String?
     let taskId: String?
@@ -264,12 +286,12 @@ struct ValidateOptions {
 }
 
 struct ListOptions {
-    let rootPath: String
+    let rootPath: String?
     let entityType: ListEntityType
 }
 
 struct GraphOptions {
-    let rootPath: String
+    let rootPath: String?
     let sessionId: String?
     let personaId: String?
     let taskId: String?
@@ -338,10 +360,6 @@ struct ExportOptionsParser {
                 throw CLIError.usage("Unknown export option: \(argument)")
             }
             index += 1
-        }
-
-        guard let rootPath else {
-            throw CLIError.usage("export requires --root <path>.")
         }
 
         if let sessionId {
@@ -430,9 +448,6 @@ struct ListOptionsParser {
             index += 1
         }
 
-        guard let rootPath else {
-            throw CLIError.usage("list requires --root <path>.")
-        }
         guard let entityType else {
             throw CLIError.usage("list requires an entity type.")
         }
@@ -490,10 +505,6 @@ struct GraphOptionsParser {
                 throw CLIError.usage("Unknown graph option: \(argument)")
             }
             index += 1
-        }
-
-        guard let rootPath else {
-            throw CLIError.usage("graph requires --root <path>.")
         }
 
         if let sessionId {

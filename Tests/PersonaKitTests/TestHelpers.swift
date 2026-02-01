@@ -2,6 +2,7 @@ import Foundation
 import Darwin
 
 private let stdoutCaptureLock = NSLock()
+private let stderrCaptureLock = NSLock()
 
 func makeTempDirectory() throws -> URL {
     let base = FileManager.default.temporaryDirectory
@@ -78,6 +79,24 @@ func captureStdout(_ work: () -> Void) -> String {
     pipe.fileHandleForWriting.closeFile()
     dup2(stdoutFd, STDOUT_FILENO)
     close(stdoutFd)
+
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    return String(data: data, encoding: .utf8) ?? ""
+}
+
+func captureStderr(_ work: () -> Void) -> String {
+    stderrCaptureLock.lock()
+    defer { stderrCaptureLock.unlock() }
+
+    let pipe = Pipe()
+    let stderrFd = dup(STDERR_FILENO)
+    dup2(pipe.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
+
+    work()
+    fflush(stderr)
+    pipe.fileHandleForWriting.closeFile()
+    dup2(stderrFd, STDERR_FILENO)
+    close(stderrFd)
 
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     return String(data: data, encoding: .utf8) ?? ""
