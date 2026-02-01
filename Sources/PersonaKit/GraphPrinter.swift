@@ -50,6 +50,7 @@ struct GraphPrinter {
 
         var lines: [String] = []
         lines.append("PersonaKit-Graph-Version: 1")
+        lines.append("")
         lines.append("# Graph")
         lines.append("Persona: \(formatLine(id: persona.id, name: persona.name))")
         lines.append("Task: \(formatLine(id: task.id, name: task.title))")

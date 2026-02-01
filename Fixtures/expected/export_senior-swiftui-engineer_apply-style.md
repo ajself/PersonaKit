@@ -1,4 +1,5 @@
 PersonaKit-Output-Version: 1
+
 # Persona
 Name: Senior SwiftUI Engineer
 Id: senior-swiftui-engineer

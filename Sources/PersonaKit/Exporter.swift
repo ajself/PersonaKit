@@ -87,6 +87,7 @@ struct SessionExporter {
         }
 
         appendLine("PersonaKit-Output-Version: 1")
+        appendLine()
         appendLine("# Persona")
         appendLine("Name: \(persona.name)")
         appendLine("Id: \(persona.id)")
