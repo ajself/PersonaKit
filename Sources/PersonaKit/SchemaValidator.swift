@@ -39,6 +39,14 @@ struct SchemaValidator {
         SchemaMapping(directory: "skills", suffix: ".skill.json", schemaName: "skill.schema.json")
     ]
 
+    static func validate(scopes: ScopeSet, fileManager: FileManager = .default) -> [SchemaValidationError] {
+        var errors: [SchemaValidationError] = []
+        for root in scopes.loadOrder {
+            errors.append(contentsOf: validate(root: root, fileManager: fileManager))
+        }
+        return SchemaValidationError.sort(errors: errors)
+    }
+
     static func validate(root: URL, fileManager: FileManager = .default) -> [SchemaValidationError] {
         var errors: [SchemaValidationError] = []
         var schemaCache: [String: SchemaNode] = [:]

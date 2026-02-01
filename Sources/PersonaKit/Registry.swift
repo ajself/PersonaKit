@@ -82,9 +82,12 @@ struct Registry {
     }
 
     static func load(root: URL, fileManager: FileManager = .default) throws -> Registry {
-        let packsURL = root.appendingPathComponent("Packs")
-        var isDirectory: ObjCBool = false
-        guard fileManager.fileExists(atPath: packsURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+        try load(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil), fileManager: fileManager)
+    }
+
+    static func load(scopes: ScopeSet, fileManager: FileManager = .default) throws -> Registry {
+        let roots = scopes.loadOrder
+        guard !roots.isEmpty else {
             let error = RegistryError(
                 relativePath: "Packs",
                 entityType: .packsRoot,
@@ -96,67 +99,104 @@ struct Registry {
 
         var errors: [RegistryError] = []
         let decoder = JSONDecoder()
+        var personasById: [String: Persona] = [:]
+        var kitsById: [String: Kit] = [:]
+        var tasksById: [String: Task] = [:]
+        var intentTemplatesById: [String: IntentTemplate] = [:]
+        var skillsById: [String: Skill] = [:]
 
-        let personas: [String: Persona] = loadEntities(
-            root: root,
-            directory: packsURL.appendingPathComponent("personas"),
-            suffix: ".persona.json",
-            entityType: .persona,
-            decoder: decoder,
-            fileManager: fileManager,
-            errors: &errors
-        )
+        for root in roots {
+            let packsURL = PersonaKitDirectory.packsURL(root: root)
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: packsURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                errors.append(
+                    RegistryError(
+                        relativePath: "Packs",
+                        entityType: .packsRoot,
+                        id: nil,
+                        message: "Missing Packs directory."
+                    )
+                )
+                continue
+            }
 
-        let kits: [String: Kit] = loadEntities(
-            root: root,
-            directory: packsURL.appendingPathComponent("kits"),
-            suffix: ".kit.json",
-            entityType: .kit,
-            decoder: decoder,
-            fileManager: fileManager,
-            errors: &errors
-        )
+            let personas: [String: Persona] = loadEntities(
+                root: root,
+                directory: packsURL.appendingPathComponent("personas"),
+                suffix: ".persona.json",
+                entityType: .persona,
+                decoder: decoder,
+                fileManager: fileManager,
+                errors: &errors
+            )
 
-        let tasks: [String: Task] = loadEntities(
-            root: root,
-            directory: packsURL.appendingPathComponent("tasks"),
-            suffix: ".task.json",
-            entityType: .task,
-            decoder: decoder,
-            fileManager: fileManager,
-            errors: &errors
-        )
+            let kits: [String: Kit] = loadEntities(
+                root: root,
+                directory: packsURL.appendingPathComponent("kits"),
+                suffix: ".kit.json",
+                entityType: .kit,
+                decoder: decoder,
+                fileManager: fileManager,
+                errors: &errors
+            )
 
-        let intents: [String: IntentTemplate] = loadEntities(
-            root: root,
-            directory: packsURL.appendingPathComponent("intents"),
-            suffix: ".intent.json",
-            entityType: .intentTemplate,
-            decoder: decoder,
-            fileManager: fileManager,
-            errors: &errors
-        )
+            let tasks: [String: Task] = loadEntities(
+                root: root,
+                directory: packsURL.appendingPathComponent("tasks"),
+                suffix: ".task.json",
+                entityType: .task,
+                decoder: decoder,
+                fileManager: fileManager,
+                errors: &errors
+            )
 
-        let skills: [String: Skill] = loadEntities(
-            root: root,
-            directory: packsURL.appendingPathComponent("skills"),
-            suffix: ".skill.json",
-            entityType: .skill,
-            decoder: decoder,
-            fileManager: fileManager,
-            errors: &errors
-        )
+            let intents: [String: IntentTemplate] = loadEntities(
+                root: root,
+                directory: packsURL.appendingPathComponent("intents"),
+                suffix: ".intent.json",
+                entityType: .intentTemplate,
+                decoder: decoder,
+                fileManager: fileManager,
+                errors: &errors
+            )
+
+            let skills: [String: Skill] = loadEntities(
+                root: root,
+                directory: packsURL.appendingPathComponent("skills"),
+                suffix: ".skill.json",
+                entityType: .skill,
+                decoder: decoder,
+                fileManager: fileManager,
+                errors: &errors
+            )
+
+            for (id, persona) in personas {
+                personasById[id] = persona
+            }
+            for (id, kit) in kits {
+                kitsById[id] = kit
+            }
+            for (id, task) in tasks {
+                tasksById[id] = task
+            }
+            for (id, intent) in intents {
+                intentTemplatesById[id] = intent
+            }
+            for (id, skill) in skills {
+                skillsById[id] = skill
+            }
+        }
 
         if !errors.isEmpty {
             throw RegistryLoadError(errors: errors)
         }
 
         return Registry(
-            personasById: personas,
-            kitsById: kits,
-            tasksById: tasks,
-            intentTemplatesById: intents,
-            skillsById: skills
+            personasById: personasById,
+            kitsById: kitsById,
+            tasksById: tasksById,
+            intentTemplatesById: intentTemplatesById,
+            skillsById: skillsById
         )
     }
 }

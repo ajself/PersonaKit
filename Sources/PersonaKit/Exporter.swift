@@ -14,12 +14,28 @@ struct SessionExporter {
         kitOverrides: [String],
         fileManager: FileManager = .default
     ) throws -> String {
-        let validation = try Validator.validate(root: root, fileManager: fileManager)
+        try export(
+            scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil),
+            personaId: personaId,
+            taskId: taskId,
+            kitOverrides: kitOverrides,
+            fileManager: fileManager
+        )
+    }
+
+    static func export(
+        scopes: ScopeSet,
+        personaId: String,
+        taskId: String,
+        kitOverrides: [String],
+        fileManager: FileManager = .default
+    ) throws -> String {
+        let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
         if !validation.errors.isEmpty {
             throw ExportError.validationFailed(validation)
         }
 
-        let registry = try Registry.load(root: root, fileManager: fileManager)
+        let registry = try Registry.load(scopes: scopes, fileManager: fileManager)
         let definition = SessionDefinition(
             personaId: personaId,
             taskId: taskId,
@@ -31,7 +47,7 @@ struct SessionExporter {
             session = try Resolver.resolve(
                 definition: definition,
                 registry: registry,
-                rootURL: root,
+                scopes: scopes,
                 fileManager: fileManager
             )
         } catch let error as ResolverResolutionError {

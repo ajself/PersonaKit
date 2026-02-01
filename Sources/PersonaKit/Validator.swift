@@ -106,7 +106,11 @@ struct ValidationResult: Equatable {
 
 struct Validator {
     static func validate(root: URL, fileManager: FileManager = .default) throws -> ValidationResult {
-        let schemaErrors = SchemaValidator.validate(root: root, fileManager: fileManager)
+        try validate(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil), fileManager: fileManager)
+    }
+
+    static func validate(scopes: ScopeSet, fileManager: FileManager = .default) throws -> ValidationResult {
+        let schemaErrors = SchemaValidator.validate(scopes: scopes, fileManager: fileManager)
         var errors: [ValidationError] = schemaErrors.map { error in
             let message: String
             if let location = error.instanceLocation {
@@ -126,7 +130,7 @@ struct Validator {
 
         let registry: Registry
         do {
-            registry = try Registry.load(root: root, fileManager: fileManager)
+            registry = try Registry.load(scopes: scopes, fileManager: fileManager)
         } catch let error as RegistryLoadError {
             errors.append(
                 contentsOf: error.errors.map { registryError in
@@ -143,7 +147,7 @@ struct Validator {
             return ValidationResult(counts: .zero, errors: errors)
         }
 
-        let essentialsDirectory = root.appendingPathComponent("Packs/essentials")
+        let essentialIds = listEssentialIds(scopes: scopes, fileManager: fileManager)
         if !schemaErrors.isEmpty {
             // Skip reference checks when schema errors exist to avoid noisy cascades.
             let counts = ValidationCounts(
@@ -152,7 +156,7 @@ struct Validator {
                 tasks: registry.tasksById.count,
                 intents: registry.intentTemplatesById.count,
                 skills: registry.skillsById.count,
-                essentials: countEssentialFiles(at: essentialsDirectory, fileManager: fileManager)
+                essentials: essentialIds.count
             )
             return ValidationResult(counts: counts, errors: errors)
         }
@@ -237,8 +241,7 @@ struct Validator {
 
             for essentialId in kit.essentialIds {
                 let expectedPath = "Packs/essentials/\(essentialId).md"
-                let fileURL = root.appendingPathComponent(expectedPath)
-                if !fileManager.fileExists(atPath: fileURL.path) {
+                if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
                     errors.append(
                         ValidationError(
                             entityType: .kit,
@@ -288,8 +291,7 @@ struct Validator {
         for intent in registry.intentTemplates {
             for essentialId in intent.includesEssentialIds {
                 let expectedPath = "Packs/essentials/\(essentialId).md"
-                let fileURL = root.appendingPathComponent(expectedPath)
-                if !fileManager.fileExists(atPath: fileURL.path) {
+                if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
                     errors.append(
                         ValidationError(
                             entityType: .intent,
@@ -325,7 +327,7 @@ struct Validator {
             tasks: registry.tasksById.count,
             intents: registry.intentTemplatesById.count,
             skills: registry.skillsById.count,
-            essentials: countEssentialFiles(at: essentialsDirectory, fileManager: fileManager)
+            essentials: essentialIds.count
         )
 
         return ValidationResult(counts: counts, errors: errors)
@@ -361,20 +363,40 @@ struct Validator {
         return .essentials
     }
 
-    private static func countEssentialFiles(at directory: URL, fileManager: FileManager) -> Int {
-        var isDirectory: ObjCBool = false
-        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory), isDirectory.boolValue else {
-            return 0
-        }
-        do {
-            let files = try fileManager.contentsOfDirectory(
-                at: directory,
-                includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles]
-            )
-            return files.filter { $0.lastPathComponent.hasSuffix(".md") }.count
-        } catch {
-            return 0
+}
+
+private func resolveEssentialURL(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileManager: FileManager
+) -> URL? {
+    let expectedPath = "Packs/essentials/\(essentialId).md"
+    for root in scopes.resolutionOrder {
+        let fileURL = root.appendingPathComponent(expectedPath)
+        if fileManager.fileExists(atPath: fileURL.path) {
+            return fileURL
         }
     }
+    return nil
+}
+
+private func listEssentialIds(scopes: ScopeSet, fileManager: FileManager) -> [String] {
+    var ids: Set<String> = []
+    for root in scopes.loadOrder {
+        let essentialsURL = root.appendingPathComponent("Packs/essentials")
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            continue
+        }
+        if let files = try? fileManager.contentsOfDirectory(
+            at: essentialsURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ) {
+            for file in files where file.pathExtension == "md" {
+                ids.insert(file.deletingPathExtension().lastPathComponent)
+            }
+        }
+    }
+    return ids.sorted()
 }

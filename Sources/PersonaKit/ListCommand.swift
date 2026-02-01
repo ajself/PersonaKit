@@ -15,7 +15,19 @@ struct ListCommand {
         entityType: ListEntityType,
         fileManager: FileManager = .default
     ) throws -> String {
-        let registry = try Registry.load(root: root, fileManager: fileManager)
+        try list(
+            scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil),
+            entityType: entityType,
+            fileManager: fileManager
+        )
+    }
+
+    static func list(
+        scopes: ScopeSet,
+        entityType: ListEntityType,
+        fileManager: FileManager = .default
+    ) throws -> String {
+        let registry = try Registry.load(scopes: scopes, fileManager: fileManager)
         let lines: [String]
 
         switch entityType {
@@ -30,7 +42,7 @@ struct ListCommand {
         case .skills:
             lines = registry.skills.map { formatLine(id: $0.id, name: $0.name) }
         case .essentials:
-            lines = try listEssentials(root: root, fileManager: fileManager)
+            lines = try listEssentials(scopes: scopes, fileManager: fileManager)
         }
 
         return lines.joined(separator: "\n")
@@ -44,22 +56,25 @@ struct ListCommand {
         return "\(id) — \(trimmedName)"
     }
 
-    private static func listEssentials(root: URL, fileManager: FileManager) throws -> [String] {
-        let essentialsURL = root.appendingPathComponent("Packs/essentials")
-        var isDirectory: ObjCBool = false
-        guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
-            return []
+    private static func listEssentials(scopes: ScopeSet, fileManager: FileManager) throws -> [String] {
+        var ids: Set<String> = []
+        for root in scopes.loadOrder {
+            let essentialsURL = root.appendingPathComponent("Packs/essentials")
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                continue
+            }
+
+            let files = try fileManager.contentsOfDirectory(
+                at: essentialsURL,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )
+            for file in files where file.pathExtension == "md" {
+                ids.insert(file.deletingPathExtension().lastPathComponent)
+            }
         }
 
-        let files = try fileManager.contentsOfDirectory(
-            at: essentialsURL,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        )
-
-        return files
-            .filter { $0.pathExtension == "md" }
-            .map { $0.deletingPathExtension().lastPathComponent }
-            .sorted()
+        return ids.sorted()
     }
 }

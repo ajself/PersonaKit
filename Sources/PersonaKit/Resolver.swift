@@ -171,7 +171,7 @@ struct Resolver {
     static func resolve(
         definition: SessionDefinition,
         registry: Registry,
-        rootURL: URL,
+        scopes: ScopeSet,
         fileManager: FileManager = .default
     ) throws -> ResolvedSession {
         var errors: [ResolverError] = []
@@ -312,8 +312,7 @@ struct Resolver {
         for kit in resolvedKits {
             for essentialId in kit.essentialIds {
                 let expectedPath = "Packs/essentials/\(essentialId).md"
-                let fileURL = rootURL.appendingPathComponent(expectedPath)
-                if !fileManager.fileExists(atPath: fileURL.path) {
+                if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
                     errors.append(
                         .missingEssentialFile(
                             sourceType: .kit,
@@ -331,8 +330,7 @@ struct Resolver {
         for intent in resolvedIntents {
             for essentialId in intent.includesEssentialIds {
                 let expectedPath = "Packs/essentials/\(essentialId).md"
-                let fileURL = rootURL.appendingPathComponent(expectedPath)
-                if !fileManager.fileExists(atPath: fileURL.path) {
+                if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
                     errors.append(
                         .missingEssentialFile(
                             sourceType: .intentTemplate,
@@ -353,9 +351,7 @@ struct Resolver {
 
         let uniqueEssentialIds = uniqueSorted(essentialIds)
         let resolvedEssentials = uniqueEssentialIds.compactMap { essentialId -> ResolvedEssential? in
-            let expectedPath = "Packs/essentials/\(essentialId).md"
-            let fileURL = rootURL.appendingPathComponent(expectedPath)
-            guard fileManager.fileExists(atPath: fileURL.path) else {
+            guard let fileURL = resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) else {
                 return nil
             }
             return ResolvedEssential(id: essentialId, url: fileURL, content: nil)
@@ -370,8 +366,33 @@ struct Resolver {
             skills: resolvedSkills.sorted { $0.id < $1.id }
         )
     }
+
+    static func resolve(
+        definition: SessionDefinition,
+        registry: Registry,
+        rootURL: URL,
+        fileManager: FileManager = .default
+    ) throws -> ResolvedSession {
+        let scopes = ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
+        return try resolve(definition: definition, registry: registry, scopes: scopes, fileManager: fileManager)
+    }
 }
 
 private func uniqueSorted(_ ids: [String]) -> [String] {
     return Set(ids).sorted()
+}
+
+private func resolveEssentialURL(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileManager: FileManager
+) -> URL? {
+    let expectedPath = "Packs/essentials/\(essentialId).md"
+    for root in scopes.resolutionOrder {
+        let fileURL = root.appendingPathComponent(expectedPath)
+        if fileManager.fileExists(atPath: fileURL.path) {
+            return fileURL
+        }
+    }
+    return nil
 }

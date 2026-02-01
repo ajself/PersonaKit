@@ -13,13 +13,12 @@ struct ScopeRootResolver {
         self.globalLocator = GlobalPersonaKitLocator(homeDirectory: homeDirectory, fileManager: fileManager)
     }
 
-    func locate() -> URL? {
-        if let project = projectLocator.locate() {
-            return project
+    func locate() -> ScopeSet? {
+        let project = projectLocator.locate()
+        let global = globalLocator.locate()
+        if project == nil && global == nil {
+            return nil
         }
-        if let global = globalLocator.locate() {
-            return global
-        }
-        return nil
+        return ScopeSet(projectScopeURL: project, globalScopeURL: global)
     }
 }

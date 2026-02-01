@@ -29,6 +29,31 @@ enum SessionFileError: LocalizedError {
 
 struct SessionFileLoader {
     static func load(
+        scopes: ScopeSet,
+        sessionId: String,
+        fileManager: FileManager = .default
+    ) throws -> SessionFile {
+        let trimmedId = sessionId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedId.isEmpty else {
+            throw SessionFileError.invalidSessionId
+        }
+
+        let relativePath = "Sessions/\(trimmedId).session.json"
+        for root in scopes.resolutionOrder {
+            let fileURL = root.appendingPathComponent(relativePath)
+            if fileManager.fileExists(atPath: fileURL.path) {
+                return try loadSessionFile(
+                    fileURL: fileURL,
+                    sessionId: trimmedId,
+                    relativePath: relativePath
+                )
+            }
+        }
+
+        throw SessionFileError.notFound(trimmedId, relativePath)
+    }
+
+    static func load(
         root: URL,
         sessionId: String,
         fileManager: FileManager = .default
@@ -45,22 +70,34 @@ struct SessionFileLoader {
             throw SessionFileError.notFound(trimmedId, relativePath)
         }
 
+        return try loadSessionFile(
+            fileURL: fileURL,
+            sessionId: trimmedId,
+            relativePath: relativePath
+        )
+    }
+
+    private static func loadSessionFile(
+        fileURL: URL,
+        sessionId: String,
+        relativePath: String
+    ) throws -> SessionFile {
         let data: Data
         do {
             data = try Data(contentsOf: fileURL)
         } catch {
-            throw SessionFileError.decodeFailed(trimmedId, error.localizedDescription)
+            throw SessionFileError.decodeFailed(sessionId, error.localizedDescription)
         }
 
         let session: SessionFile
         do {
             session = try JSONDecoder().decode(SessionFile.self, from: data)
         } catch {
-            throw SessionFileError.decodeFailed(trimmedId, error.localizedDescription)
+            throw SessionFileError.decodeFailed(sessionId, error.localizedDescription)
         }
 
-        guard session.id == trimmedId else {
-            throw SessionFileError.idMismatch(trimmedId, session.id, relativePath)
+        guard session.id == sessionId else {
+            throw SessionFileError.idMismatch(sessionId, session.id, relativePath)
         }
 
         return session

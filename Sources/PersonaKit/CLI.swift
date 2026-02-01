@@ -48,8 +48,8 @@ struct PersonaKitCLI {
             try PersonaKitInitializer().run(destination: arguments[2])
         case "validate":
             let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = try resolveRootURL(rootPath: options.rootPath)
-            let result = try Validator.validate(root: rootURL)
+            let scopes = try resolveScopes(rootPath: options.rootPath)
+            let result = try Validator.validate(scopes: scopes)
             print(result.summary)
             if !result.errors.isEmpty {
                 for error in result.errors {
@@ -59,11 +59,11 @@ struct PersonaKitCLI {
             }
         case "export":
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = try resolveRootURL(rootPath: options.rootPath)
+            let scopes = try resolveScopes(rootPath: options.rootPath)
             do {
-                let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
+                let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
                 let output = try SessionExporter.export(
-                    root: rootURL,
+                    scopes: scopes,
                     personaId: sessionInput.personaId,
                     taskId: sessionInput.taskId,
                     kitOverrides: sessionInput.kitOverrides
@@ -93,9 +93,9 @@ struct PersonaKitCLI {
             }
         case "list":
             let options = try ListOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = try resolveRootURL(rootPath: options.rootPath)
+            let scopes = try resolveScopes(rootPath: options.rootPath)
             do {
-                let output = try ListCommand.list(root: rootURL, entityType: options.entityType)
+                let output = try ListCommand.list(scopes: scopes, entityType: options.entityType)
                 if !output.isEmpty {
                     print(output)
                 }
@@ -108,10 +108,10 @@ struct PersonaKitCLI {
             }
         case "graph":
             let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let rootURL = try resolveRootURL(rootPath: options.rootPath)
+            let scopes = try resolveScopes(rootPath: options.rootPath)
             do {
-                let sessionInput = try resolveSessionInput(from: options, rootURL: rootURL)
-                let registry = try Registry.load(root: rootURL)
+                let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
+                let registry = try Registry.load(scopes: scopes)
                 let definition = SessionDefinition(
                     personaId: sessionInput.personaId,
                     taskId: sessionInput.taskId,
@@ -120,7 +120,7 @@ struct PersonaKitCLI {
                 let resolved = try Resolver.resolve(
                     definition: definition,
                     registry: registry,
-                    rootURL: rootURL
+                    scopes: scopes
                 )
                 let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: sessionInput.kitOverrides)
                 print(output)
@@ -164,9 +164,9 @@ struct PersonaKitCLI {
         """
     }
 
-    private func resolveSessionInput(from options: ExportOptions, rootURL: URL) throws -> SessionInput {
+    private func resolveSessionInput(from options: ExportOptions, scopes: ScopeSet) throws -> SessionInput {
         if let sessionId = options.sessionId {
-            let session = try SessionFileLoader.load(root: rootURL, sessionId: sessionId)
+            let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
             let overrides = session.kitOverrides ?? []
             return SessionInput(
                 personaId: session.personaId,
@@ -185,9 +185,9 @@ struct PersonaKitCLI {
         )
     }
 
-    private func resolveSessionInput(from options: GraphOptions, rootURL: URL) throws -> SessionInput {
+    private func resolveSessionInput(from options: GraphOptions, scopes: ScopeSet) throws -> SessionInput {
         if let sessionId = options.sessionId {
-            let session = try SessionFileLoader.load(root: rootURL, sessionId: sessionId)
+            let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
             let overrides = session.kitOverrides ?? []
             return SessionInput(
                 personaId: session.personaId,
@@ -206,12 +206,13 @@ struct PersonaKitCLI {
         )
     }
 
-    private func resolveRootURL(rootPath: String?) throws -> URL {
+    private func resolveScopes(rootPath: String?) throws -> ScopeSet {
         if let rootPath {
-            return RootPathResolver().resolve(path: rootPath)
+            let rootURL = RootPathResolver().resolve(path: rootPath)
+            return ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
         }
-        if let rootURL = scopeRootResolver.locate() {
-            return rootURL
+        if let scopes = scopeRootResolver.locate() {
+            return scopes
         }
         throw CLIError.usage(
             "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
