@@ -186,10 +186,15 @@ PersonaKit provides two ways to consume context.
 Swift CLI
 
 personakit init <path>
-personakit validate --root <path>
-personakit export --root <path> --persona <id> --task <id>
-personakit list personas|kits|tasks|intents|skills|essentials
-personakit graph --root <path> --persona <id> --task <id>
+personakit validate [--root <path>] [--no-project] [--no-global]
+personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --task <id>
+personakit list [--root <path>] [--no-project] [--no-global] personas|kits|tasks|intents|skills|essentials
+personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --task <id>
+
+When `--root` is omitted, PersonaKit loads the nearest `.personakit` in the
+current directory (project scope) and `~/.personakit` (global scope), merging
+with project overrides. Use `--root` to bypass scope discovery, or
+`--no-project` / `--no-global` to disable a scope.
 
 The CLI is deterministic, testable, and intended for local workflows.
 

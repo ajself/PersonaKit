@@ -48,7 +48,11 @@ struct PersonaKitCLI {
             try PersonaKitInitializer().run(destination: arguments[2])
         case "validate":
             let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(rootPath: options.rootPath)
+            let scopes = try resolveScopes(
+                rootPath: options.rootPath,
+                useProjectScope: options.useProjectScope,
+                useGlobalScope: options.useGlobalScope
+            )
             let result = try Validator.validate(scopes: scopes)
             print(result.summary)
             if !result.errors.isEmpty {
@@ -59,7 +63,11 @@ struct PersonaKitCLI {
             }
         case "export":
             let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(rootPath: options.rootPath)
+            let scopes = try resolveScopes(
+                rootPath: options.rootPath,
+                useProjectScope: options.useProjectScope,
+                useGlobalScope: options.useGlobalScope
+            )
             do {
                 let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
                 let output = try SessionExporter.export(
@@ -93,7 +101,11 @@ struct PersonaKitCLI {
             }
         case "list":
             let options = try ListOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(rootPath: options.rootPath)
+            let scopes = try resolveScopes(
+                rootPath: options.rootPath,
+                useProjectScope: options.useProjectScope,
+                useGlobalScope: options.useGlobalScope
+            )
             do {
                 let output = try ListCommand.list(scopes: scopes, entityType: options.entityType)
                 if !output.isEmpty {
@@ -108,7 +120,11 @@ struct PersonaKitCLI {
             }
         case "graph":
             let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(rootPath: options.rootPath)
+            let scopes = try resolveScopes(
+                rootPath: options.rootPath,
+                useProjectScope: options.useProjectScope,
+                useGlobalScope: options.useGlobalScope
+            )
             do {
                 let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
                 let registry = try Registry.load(scopes: scopes)
@@ -148,19 +164,20 @@ struct PersonaKitCLI {
 
         Usage:
           personakit init <path>
-          personakit validate [--root <path>]
-          personakit export [--root <path>] --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
-          personakit export [--root <path>] --session <id> [--output <file>]
-          personakit list [--root <path>] <entityType>
-          personakit graph [--root <path>] --persona <id> --task <id> [--kits <id,id,...>]
-          personakit graph [--root <path>] --session <id>
+          personakit validate [--root <path>] [--no-project] [--no-global]
+          personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
+          personakit export [--root <path>] [--no-project] [--no-global] --session <id> [--output <file>]
+          personakit list [--root <path>] [--no-project] [--no-global] <entityType>
+          personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --task <id> [--kits <id,id,...>]
+          personakit graph [--root <path>] [--no-project] [--no-global] --session <id>
 
         Entity types:
           personas | kits | tasks | intents | skills | essentials
 
         Scope resolution (when --root is omitted):
-          - nearest .personakit in the current directory or its parents
-          - ~/.personakit
+          - merge nearest .personakit (project scope) with ~/.personakit (global scope)
+          - project scope overrides global by id
+          - use --no-project or --no-global to disable a scope
         """
     }
 
@@ -206,17 +223,35 @@ struct PersonaKitCLI {
         )
     }
 
-    private func resolveScopes(rootPath: String?) throws -> ScopeSet {
+    private func resolveScopes(
+        rootPath: String?,
+        useProjectScope: Bool,
+        useGlobalScope: Bool
+    ) throws -> ScopeSet {
         if let rootPath {
             let rootURL = RootPathResolver().resolve(path: rootPath)
             return ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
         }
-        if let scopes = scopeRootResolver.locate() {
-            return scopes
+        guard useProjectScope || useGlobalScope else {
+            throw CLIError.usage(
+                "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+            )
         }
-        throw CLIError.usage(
-            "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+        guard let discovered = scopeRootResolver.locate() else {
+            throw CLIError.usage(
+                "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+            )
+        }
+        let filtered = ScopeSet(
+            projectScopeURL: useProjectScope ? discovered.projectScopeURL : nil,
+            globalScopeURL: useGlobalScope ? discovered.globalScopeURL : nil
         )
+        guard !filtered.isEmpty else {
+            throw CLIError.usage(
+                "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+            )
+        }
+        return filtered
     }
 
     private func formatResolutionError(_ error: ResolverError) -> String {
@@ -275,6 +310,8 @@ struct StandardError: TextOutputStream {
 
 struct ExportOptions {
     let rootPath: String?
+    let useProjectScope: Bool
+    let useGlobalScope: Bool
     let sessionId: String?
     let personaId: String?
     let taskId: String?
@@ -284,15 +321,21 @@ struct ExportOptions {
 
 struct ValidateOptions {
     let rootPath: String?
+    let useProjectScope: Bool
+    let useGlobalScope: Bool
 }
 
 struct ListOptions {
     let rootPath: String?
+    let useProjectScope: Bool
+    let useGlobalScope: Bool
     let entityType: ListEntityType
 }
 
 struct GraphOptions {
     let rootPath: String?
+    let useProjectScope: Bool
+    let useGlobalScope: Bool
     let sessionId: String?
     let personaId: String?
     let taskId: String?
@@ -308,6 +351,8 @@ struct SessionInput {
 struct ExportOptionsParser {
     func parse(arguments: [String]) throws -> ExportOptions {
         var rootPath: String?
+        var useProjectScope = true
+        var useGlobalScope = true
         var sessionId: String?
         var personaId: String?
         var taskId: String?
@@ -324,6 +369,10 @@ struct ExportOptionsParser {
                     throw CLIError.usage("--root requires a value.")
                 }
                 rootPath = arguments[index]
+            case "--no-project":
+                useProjectScope = false
+            case "--no-global":
+                useGlobalScope = false
             case "--persona":
                 index += 1
                 guard index < arguments.count else {
@@ -369,6 +418,8 @@ struct ExportOptionsParser {
             }
             return ExportOptions(
                 rootPath: rootPath,
+                useProjectScope: useProjectScope,
+                useGlobalScope: useGlobalScope,
                 sessionId: sessionId,
                 personaId: nil,
                 taskId: nil,
@@ -386,6 +437,8 @@ struct ExportOptionsParser {
 
         return ExportOptions(
             rootPath: rootPath,
+            useProjectScope: useProjectScope,
+            useGlobalScope: useGlobalScope,
             sessionId: nil,
             personaId: personaId,
             taskId: taskId,
@@ -398,6 +451,8 @@ struct ExportOptionsParser {
 struct ValidateOptionsParser {
     func parse(arguments: [String]) throws -> ValidateOptions {
         var rootPath: String?
+        var useProjectScope = true
+        var useGlobalScope = true
         var index = 0
 
         while index < arguments.count {
@@ -409,19 +464,29 @@ struct ValidateOptionsParser {
                     throw CLIError.usage("--root requires a value.")
                 }
                 rootPath = arguments[index]
+            case "--no-project":
+                useProjectScope = false
+            case "--no-global":
+                useGlobalScope = false
             default:
                 throw CLIError.usage("Unknown validate option: \(argument)")
             }
             index += 1
         }
 
-        return ValidateOptions(rootPath: rootPath)
+        return ValidateOptions(
+            rootPath: rootPath,
+            useProjectScope: useProjectScope,
+            useGlobalScope: useGlobalScope
+        )
     }
 }
 
 struct ListOptionsParser {
     func parse(arguments: [String]) throws -> ListOptions {
         var rootPath: String?
+        var useProjectScope = true
+        var useGlobalScope = true
         var entityType: ListEntityType?
         var index = 0
 
@@ -434,6 +499,10 @@ struct ListOptionsParser {
                     throw CLIError.usage("--root requires a value.")
                 }
                 rootPath = arguments[index]
+            case "--no-project":
+                useProjectScope = false
+            case "--no-global":
+                useGlobalScope = false
             default:
                 if argument.hasPrefix("-") {
                     throw CLIError.usage("Unknown list option: \(argument)")
@@ -453,13 +522,20 @@ struct ListOptionsParser {
             throw CLIError.usage("list requires an entity type.")
         }
 
-        return ListOptions(rootPath: rootPath, entityType: entityType)
+        return ListOptions(
+            rootPath: rootPath,
+            useProjectScope: useProjectScope,
+            useGlobalScope: useGlobalScope,
+            entityType: entityType
+        )
     }
 }
 
 struct GraphOptionsParser {
     func parse(arguments: [String]) throws -> GraphOptions {
         var rootPath: String?
+        var useProjectScope = true
+        var useGlobalScope = true
         var sessionId: String?
         var personaId: String?
         var taskId: String?
@@ -475,6 +551,10 @@ struct GraphOptionsParser {
                     throw CLIError.usage("--root requires a value.")
                 }
                 rootPath = arguments[index]
+            case "--no-project":
+                useProjectScope = false
+            case "--no-global":
+                useGlobalScope = false
             case "--persona":
                 index += 1
                 guard index < arguments.count else {
@@ -514,6 +594,8 @@ struct GraphOptionsParser {
             }
             return GraphOptions(
                 rootPath: rootPath,
+                useProjectScope: useProjectScope,
+                useGlobalScope: useGlobalScope,
                 sessionId: sessionId,
                 personaId: nil,
                 taskId: nil,
@@ -530,6 +612,8 @@ struct GraphOptionsParser {
 
         return GraphOptions(
             rootPath: rootPath,
+            useProjectScope: useProjectScope,
+            useGlobalScope: useGlobalScope,
             sessionId: nil,
             personaId: personaId,
             taskId: taskId,
