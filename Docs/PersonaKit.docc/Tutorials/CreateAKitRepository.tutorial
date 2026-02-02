@@ -33,7 +33,7 @@
       }
 
       @Step {
-        Open the `Packs/` directory and skim the core entity folders. PersonaKit identifies entities by filename suffix like `*.persona.json`, `*.kit.json`, `*.task.json`, `*.intent.json`, `*.skill.json`, and essentials are markdown in `Packs/essentials/*.md`.
+        Open the `Packs/` directory and skim the core entity folders. PersonaKit identifies entities by filename suffix like `*.persona.json`, `*.kit.json`, `*.directive.json`, `*.intent.json`, `*.skill.json`, and essentials are markdown in `Packs/essentials/*.md`.
 
         @Code(name: "Packs layout", file: "PacksLayout.txt")
       }
@@ -48,7 +48,7 @@
   @Section(title: "Understanding Packs and Sessions") {
     @Steps {
       @Step {
-        PersonaKit organizes content into two top-level directories: `Packs/` contains all versioned, shareable entities (Personas, Kits, Tasks, Intent Templates, Skills, and Essentials). `Sessions/` is optional and contains reusable bindings of persona + task (+ optional kit overrides); sessions are conveniences and do not introduce new behavior.
+        PersonaKit organizes content into two top-level directories: `Packs/` contains all versioned, shareable entities (Personas, Kits, Directives, Intent Templates, Skills, and Essentials). `Sessions/` is optional and contains reusable bindings of persona + directive (+ optional kit overrides); sessions are conveniences and do not introduce new behavior.
       }
     }
   }

@@ -3,7 +3,7 @@ import Foundation
 struct GraphPrinter {
     static func render(resolvedSession: ResolvedSession, kitOverrides: [String]) -> String {
         let persona = resolvedSession.persona
-        let task = resolvedSession.task
+        let directive = resolvedSession.directive
         let overrides = uniqueSorted(kitOverrides)
         let overrideDisplay = overrides.isEmpty ? "none" : overrides.joined(separator: ", ")
 
@@ -41,8 +41,8 @@ struct GraphPrinter {
             return lines
         }
 
-        let taskIntentLines = uniqueSorted(task.requiresIntentTemplateIds).map { "- intent:\($0)" }
-        let taskSkillLines = uniqueSorted(task.requiresSkillIds).map { "- skill:\($0)" }
+        let directiveIntentLines = uniqueSorted(directive.requiresIntentTemplateIds).map { "- intent:\($0)" }
+        let directiveSkillLines = uniqueSorted(directive.requiresSkillIds).map { "- skill:\($0)" }
 
         let resolvedEssentialLines = resolvedSession.essentials.map { $0.id }.sorted().map { "- \($0)" }
         let resolvedIntentLines = resolvedSession.intents.map { $0.id }.sorted().map { "- \($0)" }
@@ -53,7 +53,7 @@ struct GraphPrinter {
         lines.append("")
         lines.append("# Graph")
         lines.append("Persona: \(formatLine(id: persona.id, name: persona.name))")
-        lines.append("Task: \(formatLine(id: task.id, name: task.title))")
+        lines.append("Directive: \(formatLine(id: directive.id, name: directive.title))")
         lines.append("Kit overrides: \(overrideDisplay)")
 
         appendSection("## Persona default kits", body: defaultKitLines, to: &lines)
@@ -61,8 +61,8 @@ struct GraphPrinter {
         appendSection("## Kits \u{2192} Essentials", body: kitsToEssentialsLines, to: &lines)
         appendSection("## Kits \u{2192} Intent templates", body: kitsToIntentLines, to: &lines)
         appendSection("## Kits \u{2192} Skills", body: kitsToSkillLines, to: &lines)
-        appendSection("## Task \u{2192} Intent templates", body: taskIntentLines, to: &lines)
-        appendSection("## Task \u{2192} Skills", body: taskSkillLines, to: &lines)
+        appendSection("## Directive \u{2192} Intent templates", body: directiveIntentLines, to: &lines)
+        appendSection("## Directive \u{2192} Skills", body: directiveSkillLines, to: &lines)
 
         var finalLines: [String] = ["Essentials:"]
         finalLines.append(contentsOf: resolvedEssentialLines)

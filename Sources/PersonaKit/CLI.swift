@@ -2,9 +2,14 @@ import Foundation
 
 struct PersonaKitCLI {
     private let scopeRootResolver: ScopeRootResolver
+    private let mcpServerRunner: any MCPServerRunning
 
-    init(scopeRootResolver: ScopeRootResolver = ScopeRootResolver()) {
+    init(
+        scopeRootResolver: ScopeRootResolver = ScopeRootResolver(),
+        mcpServerRunner: any MCPServerRunning = MCPServerRunner()
+    ) {
         self.scopeRootResolver = scopeRootResolver
+        self.mcpServerRunner = mcpServerRunner
     }
 
     func run(arguments: [String]) -> Int32 {
@@ -73,7 +78,7 @@ struct PersonaKitCLI {
                 let output = try SessionExporter.export(
                     scopes: scopes,
                     personaId: sessionInput.personaId,
-                    taskId: sessionInput.taskId,
+                    directiveId: sessionInput.directiveId,
                     kitOverrides: sessionInput.kitOverrides
                 )
                 if let outputPath = options.outputPath {
@@ -130,7 +135,7 @@ struct PersonaKitCLI {
                 let registry = try Registry.load(scopes: scopes)
                 let definition = SessionDefinition(
                     personaId: sessionInput.personaId,
-                    taskId: sessionInput.taskId,
+                    directiveId: sessionInput.directiveId,
                     kitOverrides: sessionInput.kitOverrides.isEmpty ? nil : sessionInput.kitOverrides
                 )
                 let resolved = try Resolver.resolve(
@@ -153,6 +158,11 @@ struct PersonaKitCLI {
                 }
                 throw CLIExitError(status: 1)
             }
+        case "mcp":
+            guard arguments.count == 2 else {
+                throw CLIError.usage("mcp does not accept arguments.")
+            }
+            try mcpServerRunner.run(version: PersonaKitVersion.current)
         default:
             throw CLIError.usage("Unknown command: \(command)")
         }
@@ -165,14 +175,15 @@ struct PersonaKitCLI {
         Usage:
           personakit init <path>
           personakit validate [--root <path>] [--no-project] [--no-global]
-          personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --task <id> [--kits <id,id,...>] [--output <file>]
+          personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id> [--kits <id,id,...>] [--output <file>]
           personakit export [--root <path>] [--no-project] [--no-global] --session <id> [--output <file>]
           personakit list [--root <path>] [--no-project] [--no-global] <entityType>
-          personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --task <id> [--kits <id,id,...>]
+          personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id> [--kits <id,id,...>]
           personakit graph [--root <path>] [--no-project] [--no-global] --session <id>
+          personakit mcp
 
         Entity types:
-          personas | kits | tasks | intents | skills | essentials
+          personas | kits | directives | intents | skills | essentials
 
         Scope resolution (when --root is omitted):
           - merge nearest .personakit (project scope) with ~/.personakit (global scope)
@@ -187,17 +198,17 @@ struct PersonaKitCLI {
             let overrides = session.kitOverrides ?? []
             return SessionInput(
                 personaId: session.personaId,
-                taskId: session.taskId,
+                directiveId: session.directiveId,
                 kitOverrides: overrides
             )
         }
 
-        guard let personaId = options.personaId, let taskId = options.taskId else {
-            throw CLIError.usage("export requires --session <id> or --persona <id> and --task <id>.")
+        guard let personaId = options.personaId, let directiveId = options.directiveId else {
+            throw CLIError.usage("export requires --session <id> or --persona <id> and --directive <id>.")
         }
         return SessionInput(
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitOverrides: options.kitIds
         )
     }
@@ -208,17 +219,17 @@ struct PersonaKitCLI {
             let overrides = session.kitOverrides ?? []
             return SessionInput(
                 personaId: session.personaId,
-                taskId: session.taskId,
+                directiveId: session.directiveId,
                 kitOverrides: overrides
             )
         }
 
-        guard let personaId = options.personaId, let taskId = options.taskId else {
-            throw CLIError.usage("graph requires --session <id> or --persona <id> and --task <id>.")
+        guard let personaId = options.personaId, let directiveId = options.directiveId else {
+            throw CLIError.usage("graph requires --session <id> or --persona <id> and --directive <id>.")
         }
         return SessionInput(
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitOverrides: options.kitIds
         )
     }
@@ -272,7 +283,7 @@ struct PersonaKitCLI {
             parts.append("missingId=\(missingId)")
         } else if case .missingPersona(_, let missingId) = error {
             parts.append("missingId=\(missingId)")
-        } else if case .missingTask(_, let missingId) = error {
+        } else if case .missingDirective(_, let missingId) = error {
             parts.append("missingId=\(missingId)")
         }
         return parts.joined(separator: " ")
@@ -314,7 +325,7 @@ struct ExportOptions {
     let useGlobalScope: Bool
     let sessionId: String?
     let personaId: String?
-    let taskId: String?
+    let directiveId: String?
     let kitIds: [String]
     let outputPath: String?
 }
@@ -338,13 +349,13 @@ struct GraphOptions {
     let useGlobalScope: Bool
     let sessionId: String?
     let personaId: String?
-    let taskId: String?
+    let directiveId: String?
     let kitIds: [String]
 }
 
 struct SessionInput {
     let personaId: String
-    let taskId: String
+    let directiveId: String
     let kitOverrides: [String]
 }
 
@@ -355,7 +366,7 @@ struct ExportOptionsParser {
         var useGlobalScope = true
         var sessionId: String?
         var personaId: String?
-        var taskId: String?
+        var directiveId: String?
         var kitIds: [String] = []
         var outputPath: String?
         var index = 0
@@ -379,12 +390,12 @@ struct ExportOptionsParser {
                     throw CLIError.usage("--persona requires a value.")
                 }
                 personaId = arguments[index]
-            case "--task":
+            case "--directive":
                 index += 1
                 guard index < arguments.count else {
-                    throw CLIError.usage("--task requires a value.")
+                    throw CLIError.usage("--directive requires a value.")
                 }
-                taskId = arguments[index]
+                directiveId = arguments[index]
             case "--session":
                 index += 1
                 guard index < arguments.count else {
@@ -413,8 +424,8 @@ struct ExportOptionsParser {
         }
 
         if let sessionId {
-            if personaId != nil || taskId != nil || !kitIds.isEmpty {
-                throw CLIError.usage("export requires --session or --persona/--task, not both.")
+            if personaId != nil || directiveId != nil || !kitIds.isEmpty {
+                throw CLIError.usage("export requires --session or --persona/--directive, not both.")
             }
             return ExportOptions(
                 rootPath: rootPath,
@@ -422,7 +433,7 @@ struct ExportOptionsParser {
                 useGlobalScope: useGlobalScope,
                 sessionId: sessionId,
                 personaId: nil,
-                taskId: nil,
+                directiveId: nil,
                 kitIds: [],
                 outputPath: outputPath
             )
@@ -431,8 +442,8 @@ struct ExportOptionsParser {
         guard let personaId else {
             throw CLIError.usage("export requires --persona <id>.")
         }
-        guard let taskId else {
-            throw CLIError.usage("export requires --task <id>.")
+        guard let directiveId else {
+            throw CLIError.usage("export requires --directive <id>.")
         }
 
         return ExportOptions(
@@ -441,7 +452,7 @@ struct ExportOptionsParser {
             useGlobalScope: useGlobalScope,
             sessionId: nil,
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitIds: kitIds,
             outputPath: outputPath
         )
@@ -538,7 +549,7 @@ struct GraphOptionsParser {
         var useGlobalScope = true
         var sessionId: String?
         var personaId: String?
-        var taskId: String?
+        var directiveId: String?
         var kitIds: [String] = []
         var index = 0
 
@@ -561,12 +572,12 @@ struct GraphOptionsParser {
                     throw CLIError.usage("--persona requires a value.")
                 }
                 personaId = arguments[index]
-            case "--task":
+            case "--directive":
                 index += 1
                 guard index < arguments.count else {
-                    throw CLIError.usage("--task requires a value.")
+                    throw CLIError.usage("--directive requires a value.")
                 }
-                taskId = arguments[index]
+                directiveId = arguments[index]
             case "--session":
                 index += 1
                 guard index < arguments.count else {
@@ -589,8 +600,8 @@ struct GraphOptionsParser {
         }
 
         if let sessionId {
-            if personaId != nil || taskId != nil || !kitIds.isEmpty {
-                throw CLIError.usage("graph requires --session or --persona/--task, not both.")
+            if personaId != nil || directiveId != nil || !kitIds.isEmpty {
+                throw CLIError.usage("graph requires --session or --persona/--directive, not both.")
             }
             return GraphOptions(
                 rootPath: rootPath,
@@ -598,7 +609,7 @@ struct GraphOptionsParser {
                 useGlobalScope: useGlobalScope,
                 sessionId: sessionId,
                 personaId: nil,
-                taskId: nil,
+                directiveId: nil,
                 kitIds: []
             )
         }
@@ -606,8 +617,8 @@ struct GraphOptionsParser {
         guard let personaId else {
             throw CLIError.usage("graph requires --persona <id>.")
         }
-        guard let taskId else {
-            throw CLIError.usage("graph requires --task <id>.")
+        guard let directiveId else {
+            throw CLIError.usage("graph requires --directive <id>.")
         }
 
         return GraphOptions(
@@ -616,7 +627,7 @@ struct GraphOptionsParser {
             useGlobalScope: useGlobalScope,
             sessionId: nil,
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitIds: kitIds
         )
     }

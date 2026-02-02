@@ -1,7 +1,7 @@
 Packs/
   personas/
   kits/
-  tasks/
+  directives/
   intents/
   skills/
   essentials/

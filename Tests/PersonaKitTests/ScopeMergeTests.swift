@@ -31,21 +31,21 @@ struct ScopeMergeTests {
     }
 
     @Test
-    func projectOverridesGlobalTask() throws {
+    func projectOverridesGlobalDirective() throws {
         let root = try makeTempDirectory()
         let home = try makeTempDirectory()
         let projectScope = root.appendingPathComponent(".personakit")
         let globalScope = home.appendingPathComponent(".personakit")
 
-        try writeTask(
-            id: "shared-task",
-            title: "Project Task",
+        try writeDirective(
+            id: "shared-directive",
+            title: "Project Directive",
             goal: "Project goal",
             root: projectScope
         )
-        try writeTask(
-            id: "shared-task",
-            title: "Global Task",
+        try writeDirective(
+            id: "shared-directive",
+            title: "Global Directive",
             goal: "Global goal",
             root: globalScope
         )
@@ -53,8 +53,8 @@ struct ScopeMergeTests {
         let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
         let registry = try Registry.load(scopes: scopes)
 
-        #expect(registry.tasksById["shared-task"]?.title == "Project Task")
-        #expect(registry.tasksById["shared-task"]?.goal == "Project goal")
+        #expect(registry.directivesById["shared-directive"]?.title == "Project Directive")
+        #expect(registry.directivesById["shared-directive"]?.goal == "Project goal")
     }
 
     @Test
@@ -78,9 +78,9 @@ struct ScopeMergeTests {
             essentialIds: ["shared-essential"],
             root: projectScope
         )
-        try writeTask(
-            id: "task",
-            title: "Task",
+        try writeDirective(
+            id: "directive",
+            title: "Directive",
             goal: "Goal",
             root: projectScope
         )
@@ -92,7 +92,7 @@ struct ScopeMergeTests {
 
         let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
         let registry = try Registry.load(scopes: scopes)
-        let definition = SessionDefinition(personaId: "persona", taskId: "task", kitOverrides: nil)
+        let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
         let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
 
         #expect(resolved.essentials.count == 1)
@@ -122,9 +122,9 @@ struct ScopeMergeTests {
             essentialIds: ["shared-essential"],
             root: projectScope
         )
-        try writeTask(
-            id: "task",
-            title: "Task",
+        try writeDirective(
+            id: "directive",
+            title: "Directive",
             goal: "Goal",
             root: projectScope
         )
@@ -141,7 +141,7 @@ struct ScopeMergeTests {
 
         let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
         let registry = try Registry.load(scopes: scopes)
-        let definition = SessionDefinition(personaId: "persona", taskId: "task", kitOverrides: nil)
+        let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
         let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
 
         #expect(resolved.essentials.count == 1)
@@ -198,13 +198,13 @@ private func writeKit(
     try Data(json.utf8).write(to: directory.appendingPathComponent("\(id).kit.json"))
 }
 
-private func writeTask(
+private func writeDirective(
     id: String,
     title: String,
     goal: String,
     root: URL
 ) throws {
-    let directory = root.appendingPathComponent("Packs/tasks")
+    let directory = root.appendingPathComponent("Packs/directives")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let json = """
     {
@@ -219,7 +219,7 @@ private func writeTask(
       \"requiresSkillIds\": []
     }
     """
-    try Data(json.utf8).write(to: directory.appendingPathComponent("\(id).task.json"))
+    try Data(json.utf8).write(to: directory.appendingPathComponent("\(id).directive.json"))
 }
 
 private func writeEssential(

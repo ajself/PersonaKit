@@ -10,11 +10,11 @@ Run these steps from the repo root:
 
 1. `swift test`
 2. `swift run personakit validate --root Fixtures/kit-root`
-3. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --task apply-style > /tmp/personakit-validate/export-1.md`
-4. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --task apply-style > /tmp/personakit-validate/export-2.md`
+3. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-1.md`
+4. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-2.md`
 5. `cmp -s /tmp/personakit-validate/export-1.md /tmp/personakit-validate/export-2.md`
-6. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --task apply-style > /tmp/personakit-validate/graph-1.txt`
-7. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --task apply-style > /tmp/personakit-validate/graph-2.txt`
+6. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-1.txt`
+7. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-2.txt`
 8. `cmp -s /tmp/personakit-validate/graph-1.txt /tmp/personakit-validate/graph-2.txt`
 
 If either `cmp` fails, the output is not deterministic and should be

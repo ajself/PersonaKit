@@ -13,12 +13,16 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/mattt/JSONSchema.git", from: "1.3.0")
+        .package(url: "https://github.com/mattt/JSONSchema.git", from: "1.3.0"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0")
     ],
     targets: [
         .executableTarget(
             name: "PersonaKit",
-            dependencies: ["JSONSchema"],
+            dependencies: [
+                "JSONSchema",
+                .product(name: "MCP", package: "swift-sdk")
+            ],
             path: "Sources/PersonaKit",
             resources: [
                 .process("Schemas")

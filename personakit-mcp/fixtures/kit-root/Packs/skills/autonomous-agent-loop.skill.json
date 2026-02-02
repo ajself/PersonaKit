@@ -2,7 +2,7 @@
   "id": "autonomous-agent-loop",
   "version": "1.0",
   "name": "Autonomous Agent Loop",
-  "description": "Executes tasks without human checkpoints.",
+  "description": "Executes directives without human checkpoints.",
   "providedBy": [
     "autonomous-agent-loop"
   ],

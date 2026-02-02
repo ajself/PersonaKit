@@ -7,7 +7,7 @@ cd "$repo_root"
 
 kit_root="Fixtures/kit-root"
 persona_id="senior-swiftui-engineer"
-task_id="apply-style"
+directive_id="apply-style"
 session_id="senior-swiftui-engineer_apply-style"
 
 work_dir="${TMPDIR:-/tmp}/personakit-validate"
@@ -32,8 +32,8 @@ echo "Validating kit..."
 swift run personakit validate --root "$kit_root"
 
 echo "Checking export determinism..."
-swift run personakit export --root "$kit_root" --persona "$persona_id" --task "$task_id" > "$work_dir/export-1.md"
-swift run personakit export --root "$kit_root" --persona "$persona_id" --task "$task_id" > "$work_dir/export-2.md"
+swift run personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-1.md"
+swift run personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-2.md"
 if ! cmp -s "$work_dir/export-1.md" "$work_dir/export-2.md"; then
   echo "Export output is not deterministic."
   diff -u "$work_dir/export-1.md" "$work_dir/export-2.md" || true
@@ -52,8 +52,8 @@ if ! cmp -s "$work_dir/export-session-1.md" "$work_dir/export-session-2.md"; the
 fi
 
 echo "Checking graph determinism..."
-swift run personakit graph --root "$kit_root" --persona "$persona_id" --task "$task_id" > "$work_dir/graph-1.txt"
-swift run personakit graph --root "$kit_root" --persona "$persona_id" --task "$task_id" > "$work_dir/graph-2.txt"
+swift run personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-1.txt"
+swift run personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-2.txt"
 if ! cmp -s "$work_dir/graph-1.txt" "$work_dir/graph-2.txt"; then
   echo "Graph output is not deterministic."
   diff -u "$work_dir/graph-1.txt" "$work_dir/graph-2.txt" || true

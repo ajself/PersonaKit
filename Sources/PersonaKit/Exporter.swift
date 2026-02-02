@@ -10,14 +10,14 @@ struct SessionExporter {
     static func export(
         root: URL,
         personaId: String,
-        taskId: String,
+        directiveId: String,
         kitOverrides: [String],
         fileManager: FileManager = .default
     ) throws -> String {
         try export(
             scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil),
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitOverrides: kitOverrides,
             fileManager: fileManager
         )
@@ -26,7 +26,7 @@ struct SessionExporter {
     static func export(
         scopes: ScopeSet,
         personaId: String,
-        taskId: String,
+        directiveId: String,
         kitOverrides: [String],
         fileManager: FileManager = .default
     ) throws -> String {
@@ -38,7 +38,7 @@ struct SessionExporter {
         let registry = try Registry.load(scopes: scopes, fileManager: fileManager)
         let definition = SessionDefinition(
             personaId: personaId,
-            taskId: taskId,
+            directiveId: directiveId,
             kitOverrides: kitOverrides.isEmpty ? nil : kitOverrides
         )
 
@@ -58,7 +58,7 @@ struct SessionExporter {
 
         return renderSession(
             persona: session.persona,
-            task: session.task,
+            directive: session.directive,
             kits: session.kits.sorted { $0.id < $1.id },
             intents: session.intents.sorted { $0.id < $1.id },
             skills: session.skills.sorted { $0.id < $1.id },
@@ -89,7 +89,7 @@ struct SessionExporter {
 
     private static func renderSession(
         persona: Persona,
-        task: Task,
+        directive: Directive,
         kits: [Kit],
         intents: [IntentTemplate],
         skills: [Skill],
@@ -138,15 +138,15 @@ struct SessionExporter {
         }
 
         appendLine()
-        appendLine("# Task")
-        appendLine("Title: \(task.title)")
-        appendLine("Id: \(task.id)")
-        appendLine("Goal: \(task.goal)")
+        appendLine("# Directive")
+        appendLine("Title: \(directive.title)")
+        appendLine("Id: \(directive.id)")
+        appendLine("Goal: \(directive.goal)")
 
-        if !task.steps.isEmpty {
+        if !directive.steps.isEmpty {
             appendLine()
             appendLine("Steps:")
-            for (index, step) in task.steps.enumerated() {
+            for (index, step) in directive.steps.enumerated() {
                 var line = "\(index + 1). \(step.text)"
                 if step.requiresReview == true {
                     line += " (requires review)"
@@ -155,17 +155,17 @@ struct SessionExporter {
             }
         }
 
-        appendListSection(title: "Acceptance Criteria", items: task.acceptanceCriteria, appendLine: appendLine)
+        appendListSection(title: "Acceptance Criteria", items: directive.acceptanceCriteria, appendLine: appendLine)
 
-        if !task.verification.isEmpty {
+        if !directive.verification.isEmpty {
             appendLine()
             appendLine("Verification:")
-            for item in task.verification {
+            for item in directive.verification {
                 appendLine("- \(item.kind): \(item.text)")
             }
         }
 
-        let stopPoints = task.steps.filter { $0.requiresReview == true }.map { $0.text }
+        let stopPoints = directive.steps.filter { $0.requiresReview == true }.map { $0.text }
         appendListSection(title: "Stop Points", items: stopPoints, appendLine: appendLine)
 
         appendLine()

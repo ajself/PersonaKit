@@ -23,7 +23,7 @@ struct Kit: Codable {
     let skillIds: [String]?
 }
 
-struct Task: Codable {
+struct Directive: Codable {
     struct Step: Codable {
         let text: String
         let requiresReview: Bool?

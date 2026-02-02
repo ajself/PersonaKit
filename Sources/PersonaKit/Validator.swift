@@ -3,7 +3,7 @@ import Foundation
 enum ValidationEntityType: String {
     case persona
     case kit
-    case task
+    case directive
     case intent
     case skill
     case essentials
@@ -12,7 +12,7 @@ enum ValidationEntityType: String {
         switch self {
         case .persona: return 1
         case .kit: return 2
-        case .task: return 3
+        case .directive: return 3
         case .intent: return 4
         case .skill: return 5
         case .essentials: return 6
@@ -48,7 +48,7 @@ struct ValidationError: Error, Equatable {
 struct ValidationCounts: Equatable {
     let personas: Int
     let kits: Int
-    let tasks: Int
+    let directives: Int
     let intents: Int
     let skills: Int
     let essentials: Int
@@ -56,7 +56,7 @@ struct ValidationCounts: Equatable {
     static let zero = ValidationCounts(
         personas: 0,
         kits: 0,
-        tasks: 0,
+        directives: 0,
         intents: 0,
         skills: 0,
         essentials: 0
@@ -68,7 +68,7 @@ struct ValidationResult: Equatable {
     let errors: [ValidationError]
 
     var summary: String {
-        return "Validation summary: personas=\(counts.personas) kits=\(counts.kits) tasks=\(counts.tasks) intents=\(counts.intents) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
+        return "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) intents=\(counts.intents) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
     }
 
     init(counts: ValidationCounts, errors: [ValidationError]) {
@@ -153,7 +153,7 @@ struct Validator {
             let counts = ValidationCounts(
                 personas: registry.personasById.count,
                 kits: registry.kitsById.count,
-                tasks: registry.tasksById.count,
+                directives: registry.directivesById.count,
                 intents: registry.intentTemplatesById.count,
                 skills: registry.skillsById.count,
                 essentials: essentialIds.count
@@ -256,13 +256,13 @@ struct Validator {
             }
         }
 
-        for task in registry.tasks {
-            for intentId in task.requiresIntentTemplateIds {
+        for directive in registry.directives {
+            for intentId in directive.requiresIntentTemplateIds {
                 if registry.intentTemplatesById[intentId] == nil {
                     errors.append(
                         ValidationError(
-                            entityType: .task,
-                            entityId: task.id,
+                            entityType: .directive,
+                            entityId: directive.id,
                             field: "requiresIntentTemplateIds",
                             missingId: intentId,
                             expectedPath: nil,
@@ -272,12 +272,12 @@ struct Validator {
                 }
             }
 
-            for skillId in task.requiresSkillIds {
+            for skillId in directive.requiresSkillIds {
                 if registry.skillsById[skillId] == nil {
                     errors.append(
                         ValidationError(
-                            entityType: .task,
-                            entityId: task.id,
+                            entityType: .directive,
+                            entityId: directive.id,
                             field: "requiresSkillIds",
                             missingId: skillId,
                             expectedPath: nil,
@@ -324,7 +324,7 @@ struct Validator {
         let counts = ValidationCounts(
             personas: registry.personasById.count,
             kits: registry.kitsById.count,
-            tasks: registry.tasksById.count,
+            directives: registry.directivesById.count,
             intents: registry.intentTemplatesById.count,
             skills: registry.skillsById.count,
             essentials: essentialIds.count
@@ -337,7 +337,7 @@ struct Validator {
         switch entityType {
         case .persona: return .persona
         case .kit: return .kit
-        case .task: return .task
+        case .directive: return .directive
         case .intentTemplate: return .intent
         case .skill: return .skill
         case .packsRoot: return .essentials
@@ -351,8 +351,8 @@ struct Validator {
         if schemaPath.contains("/kits/") || schemaPath.hasSuffix(".kit.json") {
             return .kit
         }
-        if schemaPath.contains("/tasks/") || schemaPath.hasSuffix(".task.json") {
-            return .task
+        if schemaPath.contains("/directives/") || schemaPath.hasSuffix(".directive.json") {
+            return .directive
         }
         if schemaPath.contains("/intents/") || schemaPath.hasSuffix(".intent.json") {
             return .intent

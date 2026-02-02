@@ -54,7 +54,7 @@ Use an MCP inspector/client to call:
   - id: personakit.session.export
   - arguments:
     - personaId: senior-swiftui-engineer
-    - taskId: apply-style
+    - directiveId: apply-style
 
 Notes:
 - This server never writes to disk.

@@ -11,14 +11,14 @@ struct ResolverTests {
 
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: nil
         )
 
         let session = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
 
         #expect(session.persona.id == "senior-swiftui-engineer")
-        #expect(session.task.id == "apply-style")
+        #expect(session.directive.id == "apply-style")
         #expect(
             session.kits.map { $0.id } == ["repo-constraints", "swift-style", "swiftui-style"]
         )
@@ -63,7 +63,7 @@ struct ResolverTests {
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: nil
         )
 
@@ -95,7 +95,7 @@ struct ResolverTests {
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: nil
         )
 
@@ -125,7 +125,7 @@ struct ResolverTests {
 
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: nil
         )
 

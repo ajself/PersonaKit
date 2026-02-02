@@ -58,7 +58,7 @@ Forbidden Skills:
 - No large refactors
 - No new dependencies without approval
 
-# Task
+# Directive
 Title: Apply Swift + SwiftUI style guides
 Id: apply-style
 Goal: Ensure the change matches Swift and SwiftUI style guides.

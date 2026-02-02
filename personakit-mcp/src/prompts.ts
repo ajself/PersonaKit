@@ -11,11 +11,11 @@ const PROMPTS: PromptDefinition[] = [
   {
     id: "personakit.session.export",
     name: "Session Export",
-    description: "Assemble Persona+Kits+Task into a single Markdown prompt.",
+    description: "Assemble Persona+Kits+Directive into a single Markdown prompt.",
     arguments: [
-      { name: "sessionId", description: "Session id (alternative to persona/task)" },
+      { name: "sessionId", description: "Session id (alternative to persona/directive)" },
       { name: "personaId", description: "Persona id" },
-      { name: "taskId", description: "Task id" },
+      { name: "directiveId", description: "Directive id" },
       { name: "kits", description: "Comma-separated kit ids" },
     ],
   },
@@ -24,9 +24,9 @@ const PROMPTS: PromptDefinition[] = [
     name: "Session Graph",
     description: "Print a readable dependency graph for a session.",
     arguments: [
-      { name: "sessionId", description: "Session id (alternative to persona/task)" },
+      { name: "sessionId", description: "Session id (alternative to persona/directive)" },
       { name: "personaId", description: "Persona id" },
-      { name: "taskId", description: "Task id" },
+      { name: "directiveId", description: "Directive id" },
       { name: "kits", description: "Comma-separated kit ids" },
     ],
   },
@@ -56,7 +56,7 @@ function requireArg(args: Record<string, unknown>, name: string): string {
 
 type PromptSessionInput =
   | { mode: "session"; sessionId: string }
-  | { mode: "persona"; personaId: string; taskId: string; kitOverrides: string[] };
+  | { mode: "persona"; personaId: string; directiveId: string; kitOverrides: string[] };
 
 async function resolvePromptSessionInput(
   args: Record<string, unknown>
@@ -65,8 +65,8 @@ async function resolvePromptSessionInput(
   const hasSession = sessionId.length > 0;
 
   if (hasSession) {
-    if (args.personaId || args.taskId || args.kits) {
-      throw new Error("Provide sessionId or personaId/taskId/kits, not both.");
+    if (args.personaId || args.directiveId || args.kits) {
+      throw new Error("Provide sessionId or personaId/directiveId/kits, not both.");
     }
     return {
       mode: "session",
@@ -75,7 +75,7 @@ async function resolvePromptSessionInput(
   }
 
   const personaId = requireArg(args, "personaId");
-  const taskId = requireArg(args, "taskId");
+  const directiveId = requireArg(args, "directiveId");
   const kitOverrides = parseKitOverrides(
     typeof args.kits === "string" ? args.kits : undefined
   );
@@ -83,7 +83,7 @@ async function resolvePromptSessionInput(
   return {
     mode: "persona",
     personaId,
-    taskId,
+    directiveId,
     kitOverrides,
   };
 }
@@ -107,7 +107,7 @@ export async function getPromptContent(
       kind: "export",
       root,
       personaId: sessionInput.personaId,
-      taskId: sessionInput.taskId,
+      directiveId: sessionInput.directiveId,
       kitOverrides: sessionInput.kitOverrides,
     });
   }
@@ -124,7 +124,7 @@ export async function getPromptContent(
       kind: "graph",
       root,
       personaId: sessionInput.personaId,
-      taskId: sessionInput.taskId,
+      directiveId: sessionInput.directiveId,
       kitOverrides: sessionInput.kitOverrides,
     });
   }

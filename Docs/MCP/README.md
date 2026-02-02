@@ -11,7 +11,7 @@ Important:
 The MCP adapter does not provide Tools.
 
 What it provides
-- Resources: read-only access to Personas, Kits, Tasks, Intent Templates, Skills, and Essentials.
+- Resources: read-only access to Personas, Kits, Directives, Intent Templates, Skills, and Essentials.
 - Prompts: session export and session graph.
 
 Transport: stdio

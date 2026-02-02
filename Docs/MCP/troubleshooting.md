@@ -13,6 +13,6 @@ Resource not found
 - Fix: confirm the file exists under Packs/ and that the id matches the filename.
 
 Prompts fail due to missing ids
-- Symptom: prompts/get fails with a missing persona, task, kit, intent, skill, or essential id.
+- Symptom: prompts/get fails with a missing persona, directive, kit, intent, skill, or essential id.
 - Fix: verify the ids exist in the kit and that referenced files are present.
 - Tip: run the CLI validator to identify missing references before using MCP.

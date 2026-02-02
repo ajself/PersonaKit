@@ -4,7 +4,7 @@ enum RegistryEntityType: String {
     case packsRoot = "packs"
     case persona
     case kit
-    case task
+    case directive
     case intentTemplate
     case skill
 
@@ -13,7 +13,7 @@ enum RegistryEntityType: String {
         case .packsRoot: return 0
         case .persona: return 1
         case .kit: return 2
-        case .task: return 3
+        case .directive: return 3
         case .intentTemplate: return 4
         case .skill: return 5
         }
@@ -57,7 +57,7 @@ struct RegistryLoadError: Error, Equatable {
 struct Registry {
     let personasById: [String: Persona]
     let kitsById: [String: Kit]
-    let tasksById: [String: Task]
+    let directivesById: [String: Directive]
     let intentTemplatesById: [String: IntentTemplate]
     let skillsById: [String: Skill]
 
@@ -69,8 +69,8 @@ struct Registry {
         kitsById.sorted { $0.key < $1.key }.map { $0.value }
     }
 
-    var tasks: [Task] {
-        tasksById.sorted { $0.key < $1.key }.map { $0.value }
+    var directives: [Directive] {
+        directivesById.sorted { $0.key < $1.key }.map { $0.value }
     }
 
     var intentTemplates: [IntentTemplate] {
@@ -101,7 +101,7 @@ struct Registry {
         let decoder = JSONDecoder()
         var personasById: [String: Persona] = [:]
         var kitsById: [String: Kit] = [:]
-        var tasksById: [String: Task] = [:]
+        var directivesById: [String: Directive] = [:]
         var intentTemplatesById: [String: IntentTemplate] = [:]
         var skillsById: [String: Skill] = [:]
 
@@ -140,11 +140,11 @@ struct Registry {
                 errors: &errors
             )
 
-            let tasks: [String: Task] = loadEntities(
+            let directives: [String: Directive] = loadEntities(
                 root: root,
-                directory: packsURL.appendingPathComponent("tasks"),
-                suffix: ".task.json",
-                entityType: .task,
+                directory: packsURL.appendingPathComponent("directives"),
+                suffix: ".directive.json",
+                entityType: .directive,
                 decoder: decoder,
                 fileManager: fileManager,
                 errors: &errors
@@ -176,8 +176,8 @@ struct Registry {
             for (id, kit) in kits {
                 kitsById[id] = kit
             }
-            for (id, task) in tasks {
-                tasksById[id] = task
+            for (id, directive) in directives {
+                directivesById[id] = directive
             }
             for (id, intent) in intents {
                 intentTemplatesById[id] = intent
@@ -194,7 +194,7 @@ struct Registry {
         return Registry(
             personasById: personasById,
             kitsById: kitsById,
-            tasksById: tasksById,
+            directivesById: directivesById,
             intentTemplatesById: intentTemplatesById,
             skillsById: skillsById
         )
@@ -207,7 +207,7 @@ private protocol EntityWithID {
 
 extension Persona: EntityWithID {}
 extension Kit: EntityWithID {}
-extension Task: EntityWithID {}
+extension Directive: EntityWithID {}
 extension IntentTemplate: EntityWithID {}
 extension Skill: EntityWithID {}
 

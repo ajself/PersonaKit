@@ -2,7 +2,7 @@ import Foundation
 
 struct SessionDefinition {
     let personaId: String
-    let taskId: String
+    let directiveId: String
     let kitOverrides: [String]?
 }
 
@@ -14,7 +14,7 @@ struct ResolvedEssential: Equatable {
 
 struct ResolvedSession {
     let persona: Persona
-    let task: Task
+    let directive: Directive
     let kits: [Kit]
     let essentials: [ResolvedEssential]
     let intents: [IntentTemplate]
@@ -25,7 +25,7 @@ enum ResolverEntityType: String {
     case sessionDefinition = "session"
     case persona
     case kit
-    case task
+    case directive
     case intentTemplate
     case skill
 
@@ -34,7 +34,7 @@ enum ResolverEntityType: String {
         case .sessionDefinition: return 0
         case .persona: return 1
         case .kit: return 2
-        case .task: return 3
+        case .directive: return 3
         case .intentTemplate: return 4
         case .skill: return 5
         }
@@ -43,7 +43,7 @@ enum ResolverEntityType: String {
 
 enum ResolverError: Error, Equatable {
     case missingPersona(field: String, id: String)
-    case missingTask(field: String, id: String)
+    case missingDirective(field: String, id: String)
     case missingKitId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
     case missingIntentId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
     case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
@@ -59,7 +59,7 @@ enum ResolverError: Error, Equatable {
         switch self {
         case .missingPersona:
             return .sessionDefinition
-        case .missingTask:
+        case .missingDirective:
             return .sessionDefinition
         case .missingKitId(let sourceType, _, _, _):
             return sourceType
@@ -76,7 +76,7 @@ enum ResolverError: Error, Equatable {
         switch self {
         case .missingPersona:
             return "session"
-        case .missingTask:
+        case .missingDirective:
             return "session"
         case .missingKitId(_, let sourceId, _, _):
             return sourceId
@@ -93,7 +93,7 @@ enum ResolverError: Error, Equatable {
         switch self {
         case .missingPersona(let field, _):
             return field
-        case .missingTask(let field, _):
+        case .missingDirective(let field, _):
             return field
         case .missingKitId(_, _, let field, _):
             return field
@@ -110,7 +110,7 @@ enum ResolverError: Error, Equatable {
         switch self {
         case .missingPersona(_, let id):
             return id
-        case .missingTask(_, let id):
+        case .missingDirective(_, let id):
             return id
         case .missingKitId(_, _, _, let missingId):
             return missingId
@@ -127,8 +127,8 @@ enum ResolverError: Error, Equatable {
         switch self {
         case .missingPersona:
             return "Missing persona id."
-        case .missingTask:
-            return "Missing task id."
+        case .missingDirective:
+            return "Missing directive id."
         case .missingKitId:
             return "Missing kit id."
         case .missingIntentId:
@@ -181,16 +181,16 @@ struct Resolver {
             errors.append(.missingPersona(field: "personaId", id: definition.personaId))
         }
 
-        let task = registry.tasksById[definition.taskId]
-        if task == nil {
-            errors.append(.missingTask(field: "taskId", id: definition.taskId))
+        let directive = registry.directivesById[definition.directiveId]
+        if directive == nil {
+            errors.append(.missingDirective(field: "directiveId", id: definition.directiveId))
         }
 
         if !errors.isEmpty {
             throw ResolverResolutionError(errors: errors)
         }
 
-        guard let resolvedPersona = persona, let resolvedTask = task else {
+        guard let resolvedPersona = persona, let resolvedDirective = directive else {
             throw ResolverResolutionError(errors: errors)
         }
 
@@ -241,12 +241,12 @@ struct Resolver {
             }
         }
 
-        for intentId in resolvedTask.requiresIntentTemplateIds {
+        for intentId in resolvedDirective.requiresIntentTemplateIds {
             if registry.intentTemplatesById[intentId] == nil {
                 errors.append(
                     .missingIntentId(
-                        sourceType: .task,
-                        sourceId: resolvedTask.id,
+                        sourceType: .directive,
+                        sourceId: resolvedDirective.id,
                         field: "requiresIntentTemplateIds",
                         missingId: intentId
                     )
@@ -275,12 +275,12 @@ struct Resolver {
             }
         }
 
-        for skillId in resolvedTask.requiresSkillIds {
+        for skillId in resolvedDirective.requiresSkillIds {
             if registry.skillsById[skillId] == nil {
                 errors.append(
                     .missingSkillId(
-                        sourceType: .task,
-                        sourceId: resolvedTask.id,
+                        sourceType: .directive,
+                        sourceId: resolvedDirective.id,
                         field: "requiresSkillIds",
                         missingId: skillId
                     )
@@ -359,7 +359,7 @@ struct Resolver {
 
         return ResolvedSession(
             persona: resolvedPersona,
-            task: resolvedTask,
+            directive: resolvedDirective,
             kits: resolvedKits.sorted { $0.id < $1.id },
             essentials: resolvedEssentials.sorted { $0.id < $1.id },
             intents: resolvedIntents.sorted { $0.id < $1.id },

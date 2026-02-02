@@ -2,7 +2,7 @@
 
 ROOT ?=
 PERSONA ?= senior-swiftui-engineer
-TASK ?= apply-style
+DIRECTIVE ?= apply-style
 KITS ?=
 OUTPUT ?= /tmp/session.md
 ARGS ?=
@@ -30,14 +30,14 @@ help:
 	@printf "  init            Initialize a starter kit in ./.personakit\n"
 	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
-	@printf "  list            List entities (TYPE=personas|kits|tasks|intents|skills|essentials)\n"
+	@printf "  list            List entities (TYPE=personas|kits|directives|intents|skills|essentials)\n"
 	@printf "  graph           Print the resolution graph\n"
 	@printf "  zip             Create a review zip (excluding VCS/build/OS files)\n"
 	@printf "\n"
 	@printf "Variables:\n"
 	@printf "  ROOT            Root kit path override (optional)\n"
 	@printf "  PERSONA         Persona id (default: %s)\n" "$(PERSONA)"
-	@printf "  TASK            Task id (default: %s)\n" "$(TASK)"
+	@printf "  DIRECTIVE       Directive id (default: %s)\n" "$(DIRECTIVE)"
 	@printf "  KITS            Comma-separated kit overrides (optional)\n"
 	@printf "  OUTPUT          Export output path (default: %s)\n" "$(OUTPUT)"
 	@printf "  ARGS            Arguments passed to 'swift run personakit'\n"
@@ -85,7 +85,7 @@ validate:
 
 .PHONY: export
 export:
-	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
+	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
 
 .PHONY: list
 list:
@@ -97,7 +97,7 @@ list:
 
 .PHONY: graph
 graph:
-	personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),)
+	personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),)
 
 .PHONY: zip
 zip:

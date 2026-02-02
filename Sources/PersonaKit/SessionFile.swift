@@ -3,7 +3,7 @@ import Foundation
 struct SessionFile: Codable {
     let id: String
     let personaId: String
-    let taskId: String
+    let directiveId: String
     let kitOverrides: [String]?
 }
 

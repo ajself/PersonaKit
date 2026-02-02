@@ -3,7 +3,7 @@
   @Intro(title: "Export a session") {
     PersonaKit exports deterministic session context that an AI agent can consume under human supervision.
 
-    A session is defined by a Persona id and a Task id, with optional Kit overrides. You can also export by Session id using `Sessions/<id>.session.json`.
+    A session is defined by a Persona id and a Directive id, with optional Kit overrides. You can also export by Session id using `Sessions/<id>.session.json`.
 
     Always validate before exporting so the output you hand to an agent is complete and consistent.
   }
@@ -20,11 +20,11 @@
     }
   }
 
-  @Section(title: "Export with persona and task") {
+  @Section(title: "Export with persona and directive") {
     @Steps {
 
       @Step {
-        Export a session by specifying persona and task. The export includes Persona, applied Kits, Essentials (verbatim), Task, Intent Templates, and Skill Awareness.
+        Export a session by specifying persona and directive. The export includes Persona, applied Kits, Essentials (verbatim), Directive, Intent Templates, and Skill Awareness.
 
         @Code(name: "Export", file: "ExportSession.sh")
       }

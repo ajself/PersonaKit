@@ -9,14 +9,14 @@ type SessionCommand = {
   sessionId: string;
 };
 
-type PersonaTaskCommand = {
+type PersonaDirectiveCommand = {
   root: string;
   personaId: string;
-  taskId: string;
+  directiveId: string;
   kitOverrides?: string[];
 };
 
-type ExportOrGraphCommand = SessionCommand | PersonaTaskCommand;
+type ExportOrGraphCommand = SessionCommand | PersonaDirectiveCommand;
 
 export type PersonakitCommand =
   | { kind: "validate"; root: string }
@@ -119,11 +119,11 @@ function buildArgs(command: PersonakitCommand, rootOverride?: string): string[] 
   if (!command.personaId.trim()) {
     throw new Error("Persona id is required.");
   }
-  if (!command.taskId.trim()) {
-    throw new Error("Task id is required.");
+  if (!command.directiveId.trim()) {
+    throw new Error("Directive id is required.");
   }
 
-  baseArgs.push("--persona", command.personaId, "--task", command.taskId);
+  baseArgs.push("--persona", command.personaId, "--directive", command.directiveId);
 
   const kitOverrides = (command.kitOverrides ?? [])
     .map((entry) => entry.trim())

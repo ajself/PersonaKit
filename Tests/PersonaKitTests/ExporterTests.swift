@@ -10,7 +10,7 @@ struct ExporterTests {
         let output = try SessionExporter.export(
             root: root,
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: []
         )
 
@@ -32,7 +32,7 @@ struct ExporterTests {
         let output = try SessionExporter.export(
             root: root,
             personaId: session.personaId,
-            taskId: session.taskId,
+            directiveId: session.directiveId,
             kitOverrides: session.kitOverrides ?? []
         )
 
@@ -55,7 +55,7 @@ struct ExporterTests {
             _ = try SessionExporter.export(
                 root: root,
                 personaId: "senior-swiftui-engineer",
-                taskId: "apply-style",
+                directiveId: "apply-style",
                 kitOverrides: []
             )
             #expect(Bool(false))

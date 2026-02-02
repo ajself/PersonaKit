@@ -10,7 +10,7 @@ struct GraphPrinterTests {
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: []
         )
         let resolved = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
@@ -35,7 +35,7 @@ struct GraphPrinterTests {
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
             personaId: session.personaId,
-            taskId: session.taskId,
+            directiveId: session.directiveId,
             kitOverrides: (session.kitOverrides ?? []).isEmpty ? nil : session.kitOverrides
         )
         let resolved = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
@@ -78,7 +78,7 @@ struct GraphPrinterTests {
         let registry = try Registry.load(root: root)
         let definition = SessionDefinition(
             personaId: "senior-swiftui-engineer",
-            taskId: "apply-style",
+            directiveId: "apply-style",
             kitOverrides: ["extra-kit"]
         )
         let resolved = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)

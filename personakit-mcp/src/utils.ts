@@ -21,9 +21,9 @@ export const PACK_MAPPINGS: PackMapping[] = [
     mimeType: "application/json",
   },
   {
-    dir: "tasks",
-    suffix: ".task.json",
-    uriPrefix: "personakit://packs/tasks/",
+    dir: "directives",
+    suffix: ".directive.json",
+    uriPrefix: "personakit://packs/directives/",
     mimeType: "application/json",
   },
   {

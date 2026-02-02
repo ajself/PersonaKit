@@ -112,7 +112,7 @@ test("prompts/list returns stable prompt ids", () => {
 test("prompts/get export returns deterministic output", async () => {
   const output = await runDefaultPrompt("personakit.session.export", {
     personaId: "senior-swiftui-engineer",
-    taskId: "apply-style",
+    directiveId: "apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(exportOutput));
 });
@@ -127,7 +127,7 @@ test("prompts/get export supports sessionId", async () => {
 test("prompts/get graph returns deterministic output", async () => {
   const output = await runDefaultPrompt("personakit.session.graph", {
     personaId: "senior-swiftui-engineer",
-    taskId: "apply-style",
+    directiveId: "apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(graphOutput));
 });
@@ -142,7 +142,7 @@ test("prompts/get graph supports sessionId", async () => {
 test("prompts/get export respects override root", async () => {
   const output = await runOverridePrompt("personakit.session.export", {
     personaId: "senior-swiftui-engineer",
-    taskId: "apply-style",
+    directiveId: "apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(exportOutput));
 });
@@ -150,7 +150,7 @@ test("prompts/get export respects override root", async () => {
 test("prompts/get graph respects override root", async () => {
   const output = await runOverridePrompt("personakit.session.graph", {
     personaId: "senior-swiftui-engineer",
-    taskId: "apply-style",
+    directiveId: "apply-style",
   });
   assert.equal(normalizeTrailingNewline(output), normalizeTrailingNewline(graphOutput));
 });

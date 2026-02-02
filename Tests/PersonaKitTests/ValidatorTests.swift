@@ -15,7 +15,7 @@ struct ValidatorTests {
             result.counts == ValidationCounts(
                 personas: 1,
                 kits: 3,
-                tasks: 1,
+                directives: 1,
                 intents: 1,
                 skills: 2,
                 essentials: 5

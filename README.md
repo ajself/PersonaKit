@@ -2,7 +2,7 @@ PersonaKit
 
 PersonaKit is an execution-free system for structuring AI work around real professional roles.
 
-It helps you work with AI agents the same way you work with people on a strong team: clear roles, explicit constraints, shared standards, and well-defined tasks — without automation magic or hidden behavior.
+It helps you work with AI agents the same way you work with people on a strong team: clear roles, explicit constraints, shared standards, and well-defined directives — without automation magic or hidden behavior.
 
 If you’ve ever thought “this agent is smart, but it doesn’t work the way we do”, PersonaKit is for you.
 
@@ -16,7 +16,7 @@ PersonaKit is designed to be used with a human in the loop. The typical workflow
 
    personakit init ./MyKit
 
-2. Edit Personas, Kits, Tasks, and Essentials under `Packs/` until they reflect how you actually work.
+2. Edit Personas, Kits, Directives, and Essentials under `Packs/` until they reflect how you actually work.
 
 3. Validate the kit:
 
@@ -25,7 +25,7 @@ PersonaKit is designed to be used with a human in the loop. The typical workflow
 4. Consume the session context in one of two ways:
 
    • CLI export (paste into an agent):
-     personakit export --root ./MyKit --persona <persona-id> --task <task-id>
+     personakit export --root ./MyKit --persona <persona-id> --directive <directive-id>
 
    • MCP (recommended for live agent integration):
      - Run the PersonaKit MCP adapter with PERSONAKIT_ROOT=./MyKit
@@ -39,7 +39,7 @@ What PersonaKit is
 PersonaKit lets you define:
 	•	Personas — who the agent is supposed to be (a role you would actually hire)
 	•	Kits — how that role works (standards, constraints, style, guardrails)
-	•	Tasks — what work is being done right now
+	•	Directives — what work is being done right now
 
 PersonaKit then:
 	•	validates everything deterministically
@@ -69,7 +69,7 @@ Persona (role)
    ↓ brings
 Kit(s) (standards + constraints)
    ↓ applied to
-Task (work to do now)
+Directive (work to do now)
    ↓
 Session context → consumed by an agent
 
@@ -114,18 +114,18 @@ A Persona defines the role. A Kit defines how that role works.
 
 ⸻
 
-Tasks: explicit work, no improvisation
+Directives: explicit work, no improvisation
 
-A Task defines the work being done right now.
+A Directive defines the work being done right now.
 
-Tasks include:
+Directives include:
 	•	a concrete goal
 	•	ordered steps
 	•	acceptance criteria
 	•	verification instructions
 	•	explicit stop points for review
 
-Tasks prevent scope creep and invented plans.
+Directives prevent scope creep and invented plans.
 
 ⸻
 
@@ -188,9 +188,9 @@ Swift CLI
 
 personakit init <path>
 personakit validate [--root <path>] [--no-project] [--no-global]
-personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --task <id>
-personakit list [--root <path>] [--no-project] [--no-global] personas|kits|tasks|intents|skills|essentials
-personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --task <id>
+personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
+personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials
+personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
 
 When `--root` is omitted, PersonaKit loads the nearest `.personakit` in the
 current directory (project scope) and `~/.personakit` (global scope), merging
@@ -262,7 +262,7 @@ Notes:
 
 Once configured, MCP clients can:
 - list PersonaKit resources
-- read Personas, Kits, Tasks, and Essentials
+- read Personas, Kits, Directives, and Essentials
 - request session export and graph prompts
 
 No write or execution permissions are granted to the server.
@@ -277,7 +277,7 @@ Multiple agents may safely connect to the same kit root concurrently.
 Resources (read-only)
 	•	personakit://packs/personas/<id>
 	•	personakit://packs/kits/<id>
-	•	personakit://packs/tasks/<id>
+	•	personakit://packs/directives/<id>
 	•	personakit://packs/intents/<id>
 	•	personakit://packs/skills/<id>
 	•	personakit://essentials/<id>
@@ -350,7 +350,7 @@ PersonaKit assumes AI agents are assistants operating under human supervision.
 When using PersonaKit with agents:
 - Follow the rules defined in AGENTS.md
 - Do not allow agents to execute commands autonomously
-- Do not allow agents to expand scope beyond the Task
+- Do not allow agents to expand scope beyond the Directive
 - Require review at explicit stop points
 
 [AGENTS.md](./AGENTS.md) is considered a binding contract for agent behavior in this repo.

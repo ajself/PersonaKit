@@ -1,7 +1,7 @@
 PersonaKit-Graph-Version: 1
 # Graph
 Persona: senior-swiftui-engineer — Senior SwiftUI Engineer
-Task: apply-style — Apply Swift + SwiftUI style guides
+Directive: apply-style — Apply Swift + SwiftUI style guides
 Kit overrides: none
 
 ## Persona default kits
@@ -38,10 +38,10 @@ repo-constraints
 swift-style
 swiftui-style
 
-## Task → Intent templates
+## Directive → Intent templates
 - intent:swift-refactor-safe
 
-## Task → Skills
+## Directive → Skills
 - skill:codex-cli
 
 ## Final resolved sets

@@ -12,7 +12,7 @@ AI agents (Codex, ChatGPT, editor agents, etc.) are assistants, not decision-mak
 
 They are expected to:
 	•	read PersonaKit configuration and packs
-	•	follow Personas, Kits, and Tasks exactly
+	•	follow Personas, Kits, and Directives exactly
 	•	propose changes as diffs or patches
 	•	stop when constraints or stop points are reached
 
@@ -43,7 +43,7 @@ Agents must follow these rules at all times:
 	•	Do not attempt to use MCP Tools to perform execution (PersonaKit MCP exposes Resources and Prompts only).
 	•	Do not request or simulate command execution via MCP prompts.
 	2.	No autonomous planning
-	•	Do not invent steps beyond what is defined in a Task
+	•	Do not invent steps beyond what is defined in a Directive
 	•	If something is unclear, ask for clarification
 	3.	No scope expansion
 	•	Do not refactor unrelated code
@@ -53,7 +53,7 @@ Agents must follow these rules at all times:
 	•	Sort by id where ordering matters
 	•	Do not add timestamps, UUIDs, or environment-specific data
 	5.	Human review is mandatory at stop points
-	•	If a Task or IntentTemplate indicates a stop point or review requirement, stop and wait
+	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
 	6. MCP usage is read-only
 	   • Treat all MCP Resources as immutable context
 	   • Prompts return assembled context only; they do not imply permission to act
@@ -68,12 +68,12 @@ Agents should treat PersonaKit as the source of truth for context.
 When working on this repo, agents should:
 	1.	Identify the active Persona
 	2.	Identify the active Kit(s)
-	3.	Identify the active Task
+	3.	Identify the active Directive
 	4.	Use only the skills allowed by the Persona
 	5.	Follow all constraints and non-goals verbatim
 
 When using the MCP server specifically:
-• Prefer reading [Resources](./README.md#mcp-server-read-only) for raw context (personas, kits, tasks, essentials)
+• Prefer reading [Resources](./README.md#mcp-server-read-only) for raw context (personas, kits, directives, essentials)
 • Prefer [Prompts](./README.md#mcp-server-read-only) for resolved session views (export, graph)
 • Do not mix MCP-derived context with ad-hoc assumptions
 
@@ -86,7 +86,7 @@ Expected Agent Outputs
 Agents should prefer:
 	•	small, reviewable diffs
 	•	explicit explanations of changes
-	•	clear mapping between changes and Task steps
+	•	clear mapping between changes and Directive steps
 
 Agents should avoid:
 	•	rewriting large sections of code
@@ -116,7 +116,7 @@ If an agent encounters ambiguity:
 
 Example:
 
-“The Task does not specify whether API behavior may change. Should this change be behavior-preserving only?”
+“The Directive does not specify whether API behavior may change. Should this change be behavior-preserving only?”
 
 ⸻
 
@@ -134,7 +134,7 @@ PersonaKit is designed to keep humans in control while still benefiting from AI 
 ⸻
 
 Summary (for agents)
-	•	PersonaKit defines the role, constraints, and task — not you
+	•	PersonaKit defines the role, constraints, and directive — not you
 	•	Use CLI outputs and MCP [Resources](./README.md#mcp-server-read-only) / [Prompts](./README.md#mcp-server-read-only) as authoritative context
 	•	MCP is read-only; no execution or writes are permitted
 	•	Do not expand scope or invent steps

@@ -3,7 +3,7 @@ import Foundation
 enum ListEntityType: String, CaseIterable {
     case personas
     case kits
-    case tasks
+    case directives
     case intents
     case skills
     case essentials
@@ -35,8 +35,8 @@ struct ListCommand {
             lines = registry.personas.map { formatLine(id: $0.id, name: $0.name) }
         case .kits:
             lines = registry.kits.map { formatLine(id: $0.id, name: $0.name) }
-        case .tasks:
-            lines = registry.tasks.map { formatLine(id: $0.id, name: $0.title) }
+        case .directives:
+            lines = registry.directives.map { formatLine(id: $0.id, name: $0.title) }
         case .intents:
             lines = registry.intentTemplates.map { formatLine(id: $0.id, name: $0.name) }
         case .skills:

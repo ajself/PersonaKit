@@ -102,7 +102,7 @@ enum StarterKitManifest {
             contents: "{\n  \"id\": \"repo-constraints\",\n  \"version\": \"1.0\",\n  \"name\": \"Repository Constraints Kit\",\n  \"summary\": \"Rules specific to this codebase.\",\n  \"essentialIds\": [\n    \"environment\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
         ),
         StarterFile(
-            relativePath: "Packs/tasks/apply-style.task.json",
+            relativePath: "Packs/directives/apply-style.directive.json",
             contents: "{\n  \"id\": \"apply-style\",\n  \"version\": \"1.0\",\n  \"title\": \"Apply Swift + SwiftUI style guides\",\n  \"goal\": \"Ensure the change matches Swift and SwiftUI style guides.\",\n  \"steps\": [\n    {\n      \"text\": \"Identify the target files and intended behavior.\"\n    },\n    {\n      \"text\": \"Apply Swift and SwiftUI style rules consistently.\"\n    },\n    {\n      \"text\": \"Avoid unrelated refactors.\",\n      \"requiresReview\": true\n    },\n    {\n      \"text\": \"Update or add tests as needed.\"\n    },\n    {\n      \"text\": \"Provide a concise diff summary.\"\n    }\n  ],\n  \"acceptanceCriteria\": [\n    \"Code matches Swift style guide\",\n    \"Code matches SwiftUI style guide\",\n    \"Tests pass\",\n    \"No unintended behavior changes\"\n  ],\n  \"verification\": [\n    {\n      \"kind\": \"command\",\n      \"text\": \"swift test\"\n    },\n    {\n      \"kind\": \"manual\",\n      \"text\": \"Review diff for scope creep\"\n    }\n  ],\n  \"requiresIntentTemplateIds\": [\n    \"swift-refactor-safe\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ]\n}".utf8Data
         ),
         StarterFile(
@@ -111,7 +111,7 @@ enum StarterKitManifest {
         ),
         StarterFile(
             relativePath: "Packs/skills/autonomous-agent-loop.skill.json",
-            contents: "{\n  \"id\": \"autonomous-agent-loop\",\n  \"version\": \"1.0\",\n  \"name\": \"Autonomous Agent Loop\",\n  \"description\": \"Executes tasks without human checkpoints.\",\n  \"providedBy\": [\n    \"autonomous-agent-loop\"\n  ],\n  \"risk\": {\n    \"level\": \"high\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"Execution is not allowed in PersonaKit\"\n    ]\n  },\n  \"notes\": [\n    \"Forbidden by default.\"\n  ]\n}".utf8Data
+            contents: "{\n  \"id\": \"autonomous-agent-loop\",\n  \"version\": \"1.0\",\n  \"name\": \"Autonomous Agent Loop\",\n  \"description\": \"Executes directives without human checkpoints.\",\n  \"providedBy\": [\n    \"autonomous-agent-loop\"\n  ],\n  \"risk\": {\n    \"level\": \"high\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"Execution is not allowed in PersonaKit\"\n    ]\n  },\n  \"notes\": [\n    \"Forbidden by default.\"\n  ]\n}".utf8Data
         ),
         StarterFile(
             relativePath: "Packs/skills/codex-cli.skill.json",
