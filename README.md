@@ -8,31 +8,150 @@ If you’ve ever thought “this agent is smart, but it doesn’t work the way w
 
 ⸻
 
-Quick start (CLI + MCP)
+The mental model (60 seconds)
 
-PersonaKit is designed to be used with a human in the loop. The typical workflow looks like this:
+PersonaKit assembles context by combining **who** is working with **what** they are doing, using shared standards.
 
-1. Initialize a kit repository:
+Think in questions, not files:
+- **Persona** — Who is doing the work?
+- **Kits** — How do we do things here?
+- **Directive** — What needs to be done now?
+- **Essentials** — What rules or references must always be followed?
+- **Session** — This exact situation (Persona + Directive, with optional overrides).
 
-   personakit init ./MyKit
+A Session is not a workflow or runtime. It’s simply the result of combining inputs into a single, deterministic context.
 
-2. Edit Personas, Kits, Directives, and Essentials under `Packs/` until they reflect how you actually work.
+⸻
 
-3. Validate the kit:
+Quick start: from zero to grounded agent (5 minutes)
 
-   personakit validate --root ./MyKit
+This is the shortest path to using PersonaKit for real work.
 
-4. Consume the session context in one of two ways:
+Scenario: you want an AI agent to review a SwiftUI change as a **Senior SwiftUI Engineer**, following your Swift and SwiftUI style guides, without inventing scope.
 
-   • CLI export (paste into an agent):
-     personakit export --root ./MyKit --persona <persona-id> --directive <directive-id>
+1) Have a `.personakit/` directory
 
-   • MCP (recommended for live agent integration):
-     - Run the PersonaKit MCP server from the kit directory with `personakit mcp`
-     - Let your MCP-compatible agent read Resources and Prompts directly
-     - Default behavior relies on Swift scope discovery unless override mode is enabled
+In your project root:
 
-Agents are expected to *consume* PersonaKit output, not modify it.
+```
+.project/
+  .personakit/
+    Packs/
+      personas/
+      directives/
+      kits/
+      essentials/
+```
+
+PersonaKit will also load `~/.personakit/` if it exists and merge both scopes (project overrides global).
+
+2) Validate
+
+From the project root:
+
+```
+personakit validate
+```
+
+If validation fails, stop here and fix the first error.
+
+3) Discover available IDs (optional)
+
+```
+personakit list personas
+personakit list directives
+```
+
+This tells you exactly which IDs are valid.
+
+4) Export the session context (CLI)
+
+```
+personakit export \
+  --persona senior-swiftui-engineer \
+  --directive apply-style
+```
+
+This output is the canonical session context—paste it into an agent or consume it via MCP.
+
+With a Session in place, you can export the same context more simply:
+
+```
+personakit export --session review-swiftui
+```
+
+4a) Save this pairing as a Session (optional, recommended)
+
+If you find yourself using the same Persona + Directive repeatedly, you can save that pairing as a Session.
+
+Create a file under `Sessions/`:
+
+```
+Sessions/review-swiftui.session.json
+```
+
+```json
+{
+  "id": "review-swiftui",
+  "personaId": "senior-swiftui-engineer",
+  "directiveId": "apply-style"
+}
+```
+
+A Session is a named shortcut for a Persona + Directive pairing. It introduces no new behavior.
+
+For you, this means:
+- fewer flags to remember
+- a stable name you can reuse across tools
+
+For the agent, this means:
+- a consistent, repeatable context
+- no ambiguity about which Persona or Directive is active
+
+5) Use MCP instead of copy/paste (optional)
+
+Start the MCP server from the project directory:
+
+```
+personakit mcp
+```
+
+Configure your MCP client (example):
+
+```json
+{
+  "mcpServers": {
+    "personakit": {
+      "command": "personakit",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Your agent can now read PersonaKit resources and prompts directly.
+
+No copy/paste is required, and the agent always sees the same context as the CLI.
+
+6) Ground the agent (one line)
+
+When you prompt an agent, give it a one-line grounding cue:
+
+```
+Ground with PersonaKit: senior-swiftui-engineer / apply-style
+```
+
+Or, if you are using a Session:
+
+```
+Ground with PersonaKit: review-swiftui
+```
+
+Then ask for the work you want done.
+
+At this point, the agent is fully grounded. You can now ask for work—reviews, refactors, explanations—without restating roles, rules, or constraints.
+
+⸻
 
 What PersonaKit is
 
@@ -65,15 +184,13 @@ PersonaKit prepares context. Agents execute elsewhere.
 
 The core model (in one minute)
 
-Persona (role)
-   ↓ brings
-Kit(s) (standards + constraints)
-   ↓ applied to
-Directive (work to do now)
-   ↓
-Session context → consumed by an agent
+Persona (who)
++ default Kits (how)
++ Directive (what)
+------------------
+Session (assembled context)
 
-This mirrors how strong engineering teams actually work.
+A Session is the assembled context that an agent consumes. It’s derived, not authored.
 
 ⸻
 
@@ -127,6 +244,8 @@ Directives include:
 
 Directives prevent scope creep and invented plans.
 
+If you can explain a piece of work in plain English, it belongs in a Directive.
+
 ⸻
 
 Intent Templates: repeatable judgment
@@ -177,6 +296,22 @@ Typically:
 	•	non-goals
 
 Essentials are included verbatim in exports and MCP prompts.
+
+⸻
+
+Creating new Directives and Sessions (fast path)
+
+You don’t need generators or special commands.
+
+To create a new Directive:
+- Copy an existing file in `Packs/directives/`
+- Rename it
+- Edit the words
+
+To create a Session (optional convenience):
+- Create a file in `Sessions/` that names a Persona and a Directive
+
+Sessions are shortcuts. If you don’t need one, you can always export directly with `--persona` and `--directive`.
 
 ⸻
 
