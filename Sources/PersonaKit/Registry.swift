@@ -54,7 +54,7 @@ struct RegistryLoadError: Error, Equatable {
     }
 }
 
-struct Registry {
+struct Registry: Sendable {
     let personasById: [String: Persona]
     let kitsById: [String: Kit]
     let directivesById: [String: Directive]

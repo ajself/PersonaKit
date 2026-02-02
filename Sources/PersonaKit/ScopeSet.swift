@@ -1,6 +1,6 @@
 import Foundation
 
-struct ScopeSet: Equatable {
+struct ScopeSet: Equatable, Sendable {
     let projectScopeURL: URL?
     let globalScopeURL: URL?
 

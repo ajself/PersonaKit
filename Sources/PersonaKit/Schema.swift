@@ -1,6 +1,6 @@
 import Foundation
 
-struct Persona: Codable {
+struct Persona: Codable, Sendable {
     let id: String
     let version: String
     let name: String
@@ -13,7 +13,7 @@ struct Persona: Codable {
     let forbiddenSkillIds: [String]
 }
 
-struct Kit: Codable {
+struct Kit: Codable, Sendable {
     let id: String
     let version: String
     let name: String
@@ -23,13 +23,13 @@ struct Kit: Codable {
     let skillIds: [String]?
 }
 
-struct Directive: Codable {
-    struct Step: Codable {
+struct Directive: Codable, Sendable {
+    struct Step: Codable, Sendable {
         let text: String
         let requiresReview: Bool?
     }
 
-    struct VerificationItem: Codable {
+    struct VerificationItem: Codable, Sendable {
         let kind: String
         let text: String
     }
@@ -45,14 +45,14 @@ struct Directive: Codable {
     let requiresSkillIds: [String]
 }
 
-struct IntentTemplate: Codable {
-    struct Parameter: Codable {
+struct IntentTemplate: Codable, Sendable {
+    struct Parameter: Codable, Sendable {
         let name: String
         let type: String
         let required: Bool
     }
 
-    struct Risk: Codable {
+    struct Risk: Codable, Sendable {
         let level: String
         let requiresHumanReview: Bool
         let notes: [String]
@@ -68,8 +68,8 @@ struct IntentTemplate: Codable {
     let risk: Risk
 }
 
-struct Skill: Codable {
-    struct Risk: Codable {
+struct Skill: Codable, Sendable {
+    struct Risk: Codable, Sendable {
         let level: String
         let requiresHumanReview: Bool
         let notes: [String]
@@ -84,7 +84,7 @@ struct Skill: Codable {
     let notes: [String]
 }
 
-struct EssentialDocument {
+struct EssentialDocument: Sendable {
     let id: String
     let content: String
 }
