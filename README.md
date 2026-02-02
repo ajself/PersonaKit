@@ -28,7 +28,7 @@ PersonaKit is designed to be used with a human in the loop. The typical workflow
      personakit export --root ./MyKit --persona <persona-id> --directive <directive-id>
 
    • MCP (recommended for live agent integration):
-     - Run the PersonaKit MCP adapter with PERSONAKIT_ROOT=./MyKit
+     - Run the PersonaKit MCP server via `personakit mcp` with PERSONAKIT_ROOT=./MyKit
      - Let your MCP-compatible agent read Resources and Prompts directly
      - Default behavior relies on Swift scope discovery unless override mode is enabled
 
@@ -201,21 +201,18 @@ The CLI is deterministic, testable, and intended for local workflows.
 
 ⸻
 
-MCP Adapter (read-only)
+MCP Server (read-only)
 
-Configuring the MCP adapter
+Configuring the MCP server
 
-The PersonaKit MCP adapter is a standalone Node.js process that exposes PersonaKit context over stdio.
+The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit context over stdio.
 See `Docs/MCP/README.md` for a quick setup guide and example client configs.
 
 Important
 
-The Node project exists only to support MCP.
-- It is not a user-facing CLI.
-- It is not a second implementation of PersonaKit logic.
-- It must not become a replacement for the Swift package.
-
 The Swift CLI and Swift code are the single source of truth for PersonaKit behavior and contracts.
+- The Swift MCP server is the supported integration path.
+- The legacy Node adapter is deprecated and will be removed after verification.
 
 Basic setup (default, recommended):
 
@@ -225,13 +222,11 @@ Basic setup (default, recommended):
 
    PERSONAKIT_ROOT=/path/to/your/project
 
-3. Start the MCP adapter:
+3. Start the MCP server:
 
-   npm run start
+   personakit mcp
 
-   (or the equivalent command defined in `personakit-mcp/package.json`)
-
-4. Configure your MCP-compatible agent or client to connect to the adapter via stdio.
+4. Configure your MCP-compatible agent or client to connect to the server via stdio.
 
 Example MCP client configuration
 
@@ -243,8 +238,8 @@ A minimal example (stdio transport):
 {
   "mcpServers": {
     "personakit": {
-      "command": "npm",
-      "args": ["run", "start"],
+      "command": "personakit",
+      "args": ["mcp"],
       "env": {
         "PERSONAKIT_ROOT": "/absolute/path/to/your/kit"
       }
@@ -254,7 +249,7 @@ A minimal example (stdio transport):
 ```
 
 Notes:
-- `command` and `args` must match how the PersonaKit MCP adapter is started in `personakit-mcp/package.json`.
+- `command` and `args` must launch `personakit mcp`.
 - In default mode, `PERSONAKIT_ROOT` sets the working directory for Swift scope discovery (project/global).
 - To bypass discovery, set `PERSONAKIT_ROOT_OVERRIDE=1` and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
 - The server communicates over **stdio**; no ports are opened.
@@ -269,8 +264,7 @@ No write or execution permissions are granted to the server.
 
 The MCP server is read-only:
 - it never writes to the kit
-- it never executes commands
-- it never shells out to the Swift CLI
+- it never executes external commands
 
 Multiple agents may safely connect to the same kit root concurrently.
 
@@ -288,8 +282,7 @@ Prompts
 
 The MCP server:
 	•	is read-only
-	•	never executes commands
-	•	never shells out to the Swift CLI
+	•	never executes external commands
 	•	enforces deterministic ordering and stable output
 
 This enables copy/paste-free, live integration with MCP-compatible agents while keeping Swift as the single source of truth.

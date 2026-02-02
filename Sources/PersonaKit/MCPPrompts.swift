@@ -1,0 +1,224 @@
+import Foundation
+import MCP
+
+enum MCPPromptName: String, CaseIterable {
+    case sessionExport = "personakit.session.export"
+    case sessionGraph = "personakit.session.graph"
+
+    var description: String {
+        switch self {
+        case .sessionExport:
+            return "Assemble Persona+Kits+Directive into a single Markdown prompt."
+        case .sessionGraph:
+            return "Print a readable dependency graph for a session."
+        }
+    }
+
+    var arguments: [Prompt.Argument] {
+        return [
+            .init(name: "personaId", description: "Persona id", required: true),
+            .init(name: "directiveId", description: "Directive id", required: true),
+            .init(name: "kits", description: "Comma-separated kit ids")
+        ]
+    }
+}
+
+struct MCPPromptArguments: Equatable {
+    let personaId: String
+    let directiveId: String
+    let kitOverrides: [String]
+}
+
+enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
+    case missing(String)
+    case invalidType(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .missing(let name):
+            return "Missing required argument: \(name)"
+        case .invalidType(let name):
+            return "Invalid argument type for \(name); expected string."
+        }
+    }
+}
+
+enum MCPPromptArgumentParser {
+    static func parse(_ arguments: [String: Value]?) throws -> MCPPromptArguments {
+        let personaId = try requireString(arguments, name: "personaId")
+        let directiveId = try requireString(arguments, name: "directiveId")
+        let kitOverrides = try parseKitOverrides(arguments?["kits"])
+        return MCPPromptArguments(
+            personaId: personaId,
+            directiveId: directiveId,
+            kitOverrides: kitOverrides
+        )
+    }
+
+    private static func requireString(_ arguments: [String: Value]?, name: String) throws -> String {
+        guard let value = arguments?[name] else {
+            throw MCPPromptArgumentError.missing(name)
+        }
+        guard let stringValue = value.stringValue else {
+            throw MCPPromptArgumentError.invalidType(name)
+        }
+        let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw MCPPromptArgumentError.missing(name)
+        }
+        return trimmed
+    }
+
+    private static func parseKitOverrides(_ value: Value?) throws -> [String] {
+        guard let value else {
+            return []
+        }
+        guard let stringValue = value.stringValue else {
+            throw MCPPromptArgumentError.invalidType("kits")
+        }
+        return stringValue
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+}
+
+struct MCPPromptService: Sendable {
+    let scopes: ScopeSet
+
+    func listPrompts() -> [Prompt] {
+        return MCPPromptName.allCases
+            .sorted { $0.rawValue < $1.rawValue }
+            .map { prompt in
+                Prompt(
+                    name: prompt.rawValue,
+                    description: prompt.description,
+                    arguments: prompt.arguments
+                )
+            }
+    }
+
+    func getPrompt(
+        name: String,
+        arguments: [String: Value]?
+    ) throws -> GetPrompt.Result {
+        guard let prompt = MCPPromptName(rawValue: name) else {
+            throw MCPError.invalidParams("Unknown prompt name: \(name)")
+        }
+
+        let input: MCPPromptArguments
+        do {
+            input = try MCPPromptArgumentParser.parse(arguments)
+        } catch let error as MCPPromptArgumentError {
+            throw MCPError.invalidParams(error.localizedDescription)
+        }
+
+        let output: String
+        switch prompt {
+        case .sessionExport:
+            output = try exportPrompt(input: input)
+        case .sessionGraph:
+            output = try graphPrompt(input: input)
+        }
+
+        let message: Prompt.Message = .user(.text(text: output))
+        return GetPrompt.Result(description: nil, messages: [message])
+    }
+
+    private func exportPrompt(input: MCPPromptArguments) throws -> String {
+        do {
+            let output = try SessionExporter.export(
+                scopes: scopes,
+                personaId: input.personaId,
+                directiveId: input.directiveId,
+                kitOverrides: input.kitOverrides
+            )
+            return output + "\n"
+        } catch let error as ExportError {
+            throw MCPError.invalidParams(formatExportError(error))
+        }
+    }
+
+    private func graphPrompt(input: MCPPromptArguments) throws -> String {
+        do {
+            let registry = try Registry.load(scopes: scopes)
+            let definition = SessionDefinition(
+                personaId: input.personaId,
+                directiveId: input.directiveId,
+                kitOverrides: input.kitOverrides.isEmpty ? nil : input.kitOverrides
+            )
+            let resolved = try Resolver.resolve(
+                definition: definition,
+                registry: registry,
+                scopes: scopes
+            )
+            let output = GraphPrinter.render(
+                resolvedSession: resolved,
+                kitOverrides: input.kitOverrides
+            )
+            return output + "\n"
+        } catch let error as RegistryLoadError {
+            throw MCPError.invalidParams(formatRegistryErrors(error.errors))
+        } catch let error as ResolverResolutionError {
+            throw MCPError.invalidParams(formatResolutionErrors(error.errors))
+        }
+    }
+}
+
+private func formatExportError(_ error: ExportError) -> String {
+    switch error {
+    case .validationFailed(let result):
+        var lines: [String] = [result.summary]
+        lines.append(contentsOf: result.errors.map { $0.lineDescription() })
+        return lines.joined(separator: "\n")
+    case .resolutionFailed(let resolutionError):
+        return formatResolutionErrors(resolutionError.errors)
+    case .readFailed(let message):
+        return "Error: \(message)"
+    }
+}
+
+private func formatResolutionErrors(_ errors: [ResolverError]) -> String {
+    return errors.map { formatResolutionError($0) }.joined(separator: "\n")
+}
+
+private func formatResolutionError(_ error: ResolverError) -> String {
+    var parts: [String] = [
+        error.sourceType.rawValue,
+        error.sourceId,
+        error.field + ":",
+        error.message
+    ]
+    if case .missingEssentialFile(_, _, _, let missingId, let expectedPath) = error {
+        parts.append("missingId=\(missingId)")
+        parts.append("expectedPath=\(expectedPath)")
+    } else if case .missingKitId(_, _, _, let missingId) = error {
+        parts.append("missingId=\(missingId)")
+    } else if case .missingIntentId(_, _, _, let missingId) = error {
+        parts.append("missingId=\(missingId)")
+    } else if case .missingSkillId(_, _, _, let missingId) = error {
+        parts.append("missingId=\(missingId)")
+    } else if case .missingPersona(_, let missingId) = error {
+        parts.append("missingId=\(missingId)")
+    } else if case .missingDirective(_, let missingId) = error {
+        parts.append("missingId=\(missingId)")
+    }
+    return parts.joined(separator: " ")
+}
+
+private func formatRegistryErrors(_ errors: [RegistryError]) -> String {
+    return errors.map { formatRegistryError($0) }.joined(separator: "\n")
+}
+
+private func formatRegistryError(_ error: RegistryError) -> String {
+    var parts: [String] = []
+    parts.append(error.entityType.rawValue)
+    if let id = error.id {
+        parts.append(id)
+    }
+    if let relativePath = error.relativePath {
+        parts.append(relativePath)
+    }
+    parts.append(error.message)
+    return "Error: " + parts.joined(separator: " ")
+}

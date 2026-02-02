@@ -33,12 +33,16 @@ struct MCPServerRunner: MCPServerRunning {
         }
 
         let resourceService = MCPResourceService(registry: registry, scopes: scopes)
+        let promptService = MCPPromptService(scopes: scopes)
+        let toolService = MCPToolService(scopes: scopes)
 
         let server = Server(
             name: "PersonaKit",
             version: version,
             capabilities: .init(
-                resources: .init(subscribe: false, listChanged: false)
+                prompts: .init(listChanged: false),
+                resources: .init(subscribe: false, listChanged: false),
+                tools: .init(listChanged: false)
             )
         )
 
@@ -50,6 +54,30 @@ struct MCPServerRunner: MCPServerRunning {
         await server.withMethodHandler(ReadResource.self) { params in
             let content = try resourceService.readResource(uri: params.uri)
             return ReadResource.Result(contents: [content])
+        }
+
+        await server.withMethodHandler(ListPrompts.self) { _ in
+            let prompts = promptService.listPrompts()
+            return ListPrompts.Result(prompts: prompts, nextCursor: nil)
+        }
+
+        await server.withMethodHandler(GetPrompt.self) { params in
+            return try promptService.getPrompt(
+                name: params.name,
+                arguments: params.arguments
+            )
+        }
+
+        await server.withMethodHandler(ListTools.self) { _ in
+            let tools = toolService.listTools()
+            return ListTools.Result(tools: tools, nextCursor: nil)
+        }
+
+        await server.withMethodHandler(CallTool.self) { params in
+            return try toolService.callTool(
+                name: params.name,
+                arguments: params.arguments
+            )
         }
 
         let transport = StdioTransport()

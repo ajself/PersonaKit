@@ -30,7 +30,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PersonaKitTests",
-            dependencies: ["PersonaKit"],
+            dependencies: [
+                "PersonaKit",
+                .product(name: "MCP", package: "swift-sdk")
+            ],
             path: "Tests/PersonaKitTests",
             swiftSettings: [
                 .enableExperimentalFeature("Testing")
