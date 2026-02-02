@@ -2,7 +2,7 @@ import Dispatch
 import Foundation
 import MCP
 
-protocol MCPServerRunning {
+protocol MCPServerRunning: Sendable {
     func run(version: String) throws
 }
 

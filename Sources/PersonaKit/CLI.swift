@@ -1,3 +1,4 @@
+import ArgumentParser
 import Foundation
 
 struct PersonaKitCLI {
@@ -13,186 +14,334 @@ struct PersonaKitCLI {
     }
 
     func run(arguments: [String]) -> Int32 {
-        var stderrStream = StandardError()
+        let context = CLIContext(
+            scopeRootResolver: scopeRootResolver,
+            mcpServerRunner: mcpServerRunner
+        )
+
+        return CLIEnvironment.withContext(context) {
+            do {
+                var command = try PersonaKitCommand.parseAsRoot(Array(arguments.dropFirst()))
+                try command.run()
+                return 0
+            } catch is CleanExit {
+                return 0
+            } catch is ExitCode {
+                return 1
+            } catch {
+                var stderrStream = StandardError()
+                stderrStream.write("Error: \(error.localizedDescription)\n")
+                return 1
+            }
+        }
+    }
+}
+
+struct PersonaKitCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "personakit",
+        abstract: "PersonaKit CLI",
+        subcommands: [
+            InitCommand.self,
+            ValidateCommand.self,
+            ExportCommand.self,
+            ListCLICommand.self,
+            GraphCommand.self,
+            MCPCommand.self,
+        ]
+    )
+}
+
+struct InitCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Initialize a PersonaKit root."
+    )
+
+    @Argument(help: "Destination path.")
+    var path: String
+
+    func run() throws {
+        try PersonaKitInitializer().run(destination: path)
+    }
+}
+
+struct ValidateCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Validate PersonaKit packs."
+    )
+
+    @OptionGroup
+    var scope: ScopeOptions
+
+    func run() throws {
+        let scopes = try CLIHelpers.resolveScopes(options: scope)
+        let result = try Validator.validate(scopes: scopes)
+        print(result.summary)
+        if !result.errors.isEmpty {
+            for error in result.errors {
+                print(error.lineDescription())
+            }
+            throw ExitCode.failure
+        }
+    }
+}
+
+struct ExportCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Export a session prompt."
+    )
+
+    @OptionGroup
+    var scope: ScopeOptions
+
+    @OptionGroup
+    var session: SessionSelection
+
+    @Option(name: .customLong("output"), help: "Write output to a file path.")
+    var outputPath: String?
+
+    mutating func validate() throws {
+        try session.validate(mode: .export)
+    }
+
+    func run() throws {
+        let scopes = try CLIHelpers.resolveScopes(options: scope)
         do {
-            try runThrowing(arguments: arguments)
-            return 0
-        } catch let error as CLIError {
-            switch error {
-            case .usage(let message):
-                stderrStream.write("Error: \(message)\n")
-                stderrStream.write("\(usage)\n")
-            case .failure(let message):
-                stderrStream.write("Error: \(message)\n")
-            }
-            return 1
-        } catch let error as CLIExitError {
-            return error.status
-        } catch let error as InitError {
-            stderrStream.write("Error: \(error.description)\n")
-            return 1
-        } catch {
-            stderrStream.write("Error: \(error.localizedDescription)\n")
-            return 1
-        }
-    }
-
-    private func runThrowing(arguments: [String]) throws {
-        guard arguments.count >= 2 else {
-            throw CLIError.usage("Missing command.")
-        }
-
-        let command = arguments[1]
-        switch command {
-        case "-h", "--help", "help":
-            print(usage)
-        case "init":
-            guard arguments.count == 3 else {
-                throw CLIError.usage("init requires a destination path.")
-            }
-            try PersonaKitInitializer().run(destination: arguments[2])
-        case "validate":
-            let options = try ValidateOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(
-                rootPath: options.rootPath,
-                useProjectScope: options.useProjectScope,
-                useGlobalScope: options.useGlobalScope
+            let sessionInput = try CLIHelpers.resolveSessionInput(
+                from: session,
+                scopes: scopes
             )
-            let result = try Validator.validate(scopes: scopes)
-            print(result.summary)
-            if !result.errors.isEmpty {
-                for error in result.errors {
-                    print(error.lineDescription())
-                }
-                throw CLIExitError(status: 1)
-            }
-        case "export":
-            let options = try ExportOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(
-                rootPath: options.rootPath,
-                useProjectScope: options.useProjectScope,
-                useGlobalScope: options.useGlobalScope
+            let output = try SessionExporter.export(
+                scopes: scopes,
+                personaId: sessionInput.personaId,
+                directiveId: sessionInput.directiveId,
+                kitOverrides: sessionInput.kitOverrides
             )
-            do {
-                let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
-                let output = try SessionExporter.export(
-                    scopes: scopes,
-                    personaId: sessionInput.personaId,
-                    directiveId: sessionInput.directiveId,
-                    kitOverrides: sessionInput.kitOverrides
-                )
-                if let outputPath = options.outputPath {
-                    let outputURL = RootPathResolver().resolve(path: outputPath)
-                    try AtomicFileWriter().write(contents: output, to: outputURL)
-                } else {
-                    print(output)
-                }
-            } catch let error as ExportError {
-                var stderrStream = StandardError()
-                switch error {
-                case .validationFailed(let result):
-                    stderrStream.write(result.summary + "\n")
-                    for validationError in result.errors {
-                        stderrStream.write(validationError.lineDescription() + "\n")
-                    }
-                case .resolutionFailed(let resolutionError):
-                    for resolutionError in resolutionError.errors {
-                        stderrStream.write(formatResolutionError(resolutionError) + "\n")
-                    }
-                case .readFailed(let message):
-                    stderrStream.write("Error: \(message)\n")
-                }
-                throw CLIExitError(status: 1)
-            }
-        case "list":
-            let options = try ListOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(
-                rootPath: options.rootPath,
-                useProjectScope: options.useProjectScope,
-                useGlobalScope: options.useGlobalScope
-            )
-            do {
-                let output = try ListCommand.list(scopes: scopes, entityType: options.entityType)
-                if !output.isEmpty {
-                    print(output)
-                }
-            } catch let error as RegistryLoadError {
-                var stderrStream = StandardError()
-                for registryError in error.errors {
-                    stderrStream.write(formatRegistryError(registryError) + "\n")
-                }
-                throw CLIExitError(status: 1)
-            }
-        case "graph":
-            let options = try GraphOptionsParser().parse(arguments: Array(arguments.dropFirst(2)))
-            let scopes = try resolveScopes(
-                rootPath: options.rootPath,
-                useProjectScope: options.useProjectScope,
-                useGlobalScope: options.useGlobalScope
-            )
-            do {
-                let sessionInput = try resolveSessionInput(from: options, scopes: scopes)
-                let registry = try Registry.load(scopes: scopes)
-                let definition = SessionDefinition(
-                    personaId: sessionInput.personaId,
-                    directiveId: sessionInput.directiveId,
-                    kitOverrides: sessionInput.kitOverrides.isEmpty ? nil : sessionInput.kitOverrides
-                )
-                let resolved = try Resolver.resolve(
-                    definition: definition,
-                    registry: registry,
-                    scopes: scopes
-                )
-                let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: sessionInput.kitOverrides)
+            if let outputPath {
+                let outputURL = RootPathResolver().resolve(path: outputPath)
+                try AtomicFileWriter().write(contents: output, to: outputURL)
+            } else {
                 print(output)
-            } catch let error as RegistryLoadError {
-                var stderrStream = StandardError()
-                for registryError in error.errors {
-                    stderrStream.write(formatRegistryError(registryError) + "\n")
-                }
-                throw CLIExitError(status: 1)
-            } catch let error as ResolverResolutionError {
-                var stderrStream = StandardError()
-                for resolutionError in error.errors {
-                    stderrStream.write(formatResolutionError(resolutionError) + "\n")
-                }
-                throw CLIExitError(status: 1)
             }
-        case "mcp":
-            guard arguments.count == 2 else {
-                throw CLIError.usage("mcp does not accept arguments.")
+        } catch let error as ExportError {
+            var stderrStream = StandardError()
+            switch error {
+            case .validationFailed(let result):
+                stderrStream.write(result.summary + "\n")
+                for validationError in result.errors {
+                    stderrStream.write(validationError.lineDescription() + "\n")
+                }
+            case .resolutionFailed(let resolutionError):
+                for resolutionError in resolutionError.errors {
+                    stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+                }
+            case .readFailed(let message):
+                stderrStream.write("Error: \(message)\n")
             }
-            try mcpServerRunner.run(version: PersonaKitVersion.current)
-        default:
-            throw CLIError.usage("Unknown command: \(command)")
+            throw ExitCode.failure
+        }
+    }
+}
+
+struct ListCLICommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "List entities from loaded scopes."
+    )
+
+    @OptionGroup
+    var scope: ScopeOptions
+
+    @Argument(help: "Entity type to list.")
+    var entityType: ListEntityType
+
+    func run() throws {
+        let scopes = try CLIHelpers.resolveScopes(options: scope)
+        do {
+            let output = try ListCommand.list(scopes: scopes, entityType: entityType)
+            if !output.isEmpty {
+                print(output)
+            }
+        } catch let error as RegistryLoadError {
+            var stderrStream = StandardError()
+            for registryError in error.errors {
+                stderrStream.write(CLIHelpers.formatRegistryError(registryError) + "\n")
+            }
+            throw ExitCode.failure
+        }
+    }
+}
+
+struct GraphCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Render a session graph."
+    )
+
+    @OptionGroup
+    var scope: ScopeOptions
+
+    @OptionGroup
+    var session: SessionSelection
+
+    mutating func validate() throws {
+        try session.validate(mode: .graph)
+    }
+
+    func run() throws {
+        let scopes = try CLIHelpers.resolveScopes(options: scope)
+        do {
+            let sessionInput = try CLIHelpers.resolveSessionInput(
+                from: session,
+                scopes: scopes
+            )
+            let registry = try Registry.load(scopes: scopes)
+            let definition = SessionDefinition(
+                personaId: sessionInput.personaId,
+                directiveId: sessionInput.directiveId,
+                kitOverrides: sessionInput.kitOverrides.isEmpty ? nil : sessionInput.kitOverrides
+            )
+            let resolved = try Resolver.resolve(
+                definition: definition,
+                registry: registry,
+                scopes: scopes
+            )
+            let output = GraphPrinter.render(
+                resolvedSession: resolved,
+                kitOverrides: sessionInput.kitOverrides
+            )
+            print(output)
+        } catch let error as RegistryLoadError {
+            var stderrStream = StandardError()
+            for registryError in error.errors {
+                stderrStream.write(CLIHelpers.formatRegistryError(registryError) + "\n")
+            }
+            throw ExitCode.failure
+        } catch let error as ResolverResolutionError {
+            var stderrStream = StandardError()
+            for resolutionError in error.errors {
+                stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+            }
+            throw ExitCode.failure
+        }
+    }
+}
+
+struct MCPCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Run the PersonaKit MCP server."
+    )
+
+    func run() throws {
+        try CLIEnvironment.current.mcpServerRunner.run(version: PersonaKitVersion.current)
+    }
+}
+
+struct ScopeOptions: ParsableArguments {
+    @Option(name: .customLong("root"), help: "Use a specific PersonaKit root.")
+    var rootPath: String?
+
+    @Flag(name: .customLong("no-project"), help: "Disable project scope discovery.")
+    var noProject = false
+
+    @Flag(name: .customLong("no-global"), help: "Disable global scope discovery.")
+    var noGlobal = false
+
+    var useProjectScope: Bool {
+        !noProject
+    }
+
+    var useGlobalScope: Bool {
+        !noGlobal
+    }
+}
+
+struct SessionSelection: ParsableArguments {
+    @Option(name: .customLong("session"), help: "Session id to load.")
+    var sessionId: String?
+
+    @Option(name: .customLong("persona"), help: "Persona id to export or graph.")
+    var personaId: String?
+
+    @Option(name: .customLong("directive"), help: "Directive id to export or graph.")
+    var directiveId: String?
+
+    @Option(name: .customLong("kits"), help: "Comma-separated kit ids.")
+    var kits: String?
+
+    var kitIds: [String] {
+        Self.parseKitIds(kits)
+    }
+
+    func validate(mode: SessionMode) throws {
+        if sessionId != nil {
+            if personaId != nil || directiveId != nil || !kitIds.isEmpty {
+                throw ArgumentParser.ValidationError(
+                    "\(mode.commandName) requires --session or --persona/--directive, not both."
+                )
+            }
+            return
+        }
+
+        guard personaId != nil else {
+            throw ArgumentParser.ValidationError("\(mode.commandName) requires --persona <id>.")
+        }
+        guard directiveId != nil else {
+            throw ArgumentParser.ValidationError("\(mode.commandName) requires --directive <id>.")
         }
     }
 
-    private var usage: String {
-        return """
-        PersonaKit CLI
+    private static func parseKitIds(_ input: String?) -> [String] {
+        guard let input else {
+            return []
+        }
+        return input
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+}
 
-        Usage:
-          personakit init <path>
-          personakit validate [--root <path>] [--no-project] [--no-global]
-          personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id> [--kits <id,id,...>] [--output <file>]
-          personakit export [--root <path>] [--no-project] [--no-global] --session <id> [--output <file>]
-          personakit list [--root <path>] [--no-project] [--no-global] <entityType>
-          personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id> [--kits <id,id,...>]
-          personakit graph [--root <path>] [--no-project] [--no-global] --session <id>
-          personakit mcp
+enum SessionMode {
+    case export
+    case graph
 
-        Entity types:
-          personas | kits | directives | intents | skills | essentials
+    var commandName: String {
+        switch self {
+        case .export:
+            return "export"
+        case .graph:
+            return "graph"
+        }
+    }
+}
 
-        Scope resolution (when --root is omitted):
-          - merge nearest .personakit (project scope) with ~/.personakit (global scope)
-          - project scope overrides global by id
-          - use --no-project or --no-global to disable a scope
-        """
+struct CLIContext: Sendable {
+    let scopeRootResolver: ScopeRootResolver
+    let mcpServerRunner: any MCPServerRunning
+}
+
+enum CLIEnvironment {
+    @TaskLocal
+    static var context: CLIContext = CLIContext(
+        scopeRootResolver: ScopeRootResolver(),
+        mcpServerRunner: MCPServerRunner()
+    )
+
+    static var current: CLIContext {
+        context
     }
 
-    private func resolveSessionInput(from options: ExportOptions, scopes: ScopeSet) throws -> SessionInput {
+    static func withContext<T>(_ context: CLIContext, _ body: () throws -> T) rethrows -> T {
+        try $context.withValue(context) {
+            try body()
+        }
+    }
+}
+
+enum CLIHelpers {
+    static func resolveSessionInput(
+        from options: SessionSelection,
+        scopes: ScopeSet
+    ) throws -> SessionInput {
         if let sessionId = options.sessionId {
             let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
             let overrides = session.kitOverrides ?? []
@@ -204,7 +353,7 @@ struct PersonaKitCLI {
         }
 
         guard let personaId = options.personaId, let directiveId = options.directiveId else {
-            throw CLIError.usage("export requires --session <id> or --persona <id> and --directive <id>.")
+            throw ArgumentParser.ValidationError("Missing session input.")
         }
         return SessionInput(
             personaId: personaId,
@@ -213,59 +362,37 @@ struct PersonaKitCLI {
         )
     }
 
-    private func resolveSessionInput(from options: GraphOptions, scopes: ScopeSet) throws -> SessionInput {
-        if let sessionId = options.sessionId {
-            let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
-            let overrides = session.kitOverrides ?? []
-            return SessionInput(
-                personaId: session.personaId,
-                directiveId: session.directiveId,
-                kitOverrides: overrides
-            )
-        }
-
-        guard let personaId = options.personaId, let directiveId = options.directiveId else {
-            throw CLIError.usage("graph requires --session <id> or --persona <id> and --directive <id>.")
-        }
-        return SessionInput(
-            personaId: personaId,
-            directiveId: directiveId,
-            kitOverrides: options.kitIds
-        )
-    }
-
-    private func resolveScopes(
-        rootPath: String?,
-        useProjectScope: Bool,
-        useGlobalScope: Bool
-    ) throws -> ScopeSet {
-        if let rootPath {
+    static func resolveScopes(options: ScopeOptions) throws -> ScopeSet {
+        if let rootPath = options.rootPath {
             let rootURL = RootPathResolver().resolve(path: rootPath)
             return ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
         }
-        guard useProjectScope || useGlobalScope else {
-            throw CLIError.usage(
+
+        guard options.useProjectScope || options.useGlobalScope else {
+            throw ArgumentParser.ValidationError(
                 "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
             )
         }
-        guard let discovered = scopeRootResolver.locate() else {
-            throw CLIError.usage(
+        guard let discovered = CLIEnvironment.current.scopeRootResolver.locate() else {
+            throw ArgumentParser.ValidationError(
                 "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
             )
         }
+
         let filtered = ScopeSet(
-            projectScopeURL: useProjectScope ? discovered.projectScopeURL : nil,
-            globalScopeURL: useGlobalScope ? discovered.globalScopeURL : nil
+            projectScopeURL: options.useProjectScope ? discovered.projectScopeURL : nil,
+            globalScopeURL: options.useGlobalScope ? discovered.globalScopeURL : nil
         )
         guard !filtered.isEmpty else {
-            throw CLIError.usage(
+            throw ArgumentParser.ValidationError(
                 "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
             )
         }
+
         return filtered
     }
 
-    private func formatResolutionError(_ error: ResolverError) -> String {
+    static func formatResolutionError(_ error: ResolverError) -> String {
         var parts: [String] = [
             error.sourceType.rawValue,
             error.sourceId,
@@ -289,7 +416,7 @@ struct PersonaKitCLI {
         return parts.joined(separator: " ")
     }
 
-    private func formatRegistryError(_ error: RegistryError) -> String {
+    static func formatRegistryError(_ error: RegistryError) -> String {
         var parts: [String] = []
         parts.append(error.entityType.rawValue)
         if let id = error.id {
@@ -303,13 +430,15 @@ struct PersonaKitCLI {
     }
 }
 
-enum CLIError: Error {
-    case usage(String)
+enum CLIError: LocalizedError {
     case failure(String)
-}
 
-struct CLIExitError: Error {
-    let status: Int32
+    var errorDescription: String? {
+        switch self {
+        case .failure(let message):
+            return message
+        }
+    }
 }
 
 struct StandardError: TextOutputStream {
@@ -319,318 +448,10 @@ struct StandardError: TextOutputStream {
     }
 }
 
-struct ExportOptions {
-    let rootPath: String?
-    let useProjectScope: Bool
-    let useGlobalScope: Bool
-    let sessionId: String?
-    let personaId: String?
-    let directiveId: String?
-    let kitIds: [String]
-    let outputPath: String?
-}
-
-struct ValidateOptions {
-    let rootPath: String?
-    let useProjectScope: Bool
-    let useGlobalScope: Bool
-}
-
-struct ListOptions {
-    let rootPath: String?
-    let useProjectScope: Bool
-    let useGlobalScope: Bool
-    let entityType: ListEntityType
-}
-
-struct GraphOptions {
-    let rootPath: String?
-    let useProjectScope: Bool
-    let useGlobalScope: Bool
-    let sessionId: String?
-    let personaId: String?
-    let directiveId: String?
-    let kitIds: [String]
-}
-
 struct SessionInput {
     let personaId: String
     let directiveId: String
     let kitOverrides: [String]
-}
-
-struct ExportOptionsParser {
-    func parse(arguments: [String]) throws -> ExportOptions {
-        var rootPath: String?
-        var useProjectScope = true
-        var useGlobalScope = true
-        var sessionId: String?
-        var personaId: String?
-        var directiveId: String?
-        var kitIds: [String] = []
-        var outputPath: String?
-        var index = 0
-
-        while index < arguments.count {
-            let argument = arguments[index]
-            switch argument {
-            case "--root":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--root requires a value.")
-                }
-                rootPath = arguments[index]
-            case "--no-project":
-                useProjectScope = false
-            case "--no-global":
-                useGlobalScope = false
-            case "--persona":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--persona requires a value.")
-                }
-                personaId = arguments[index]
-            case "--directive":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--directive requires a value.")
-                }
-                directiveId = arguments[index]
-            case "--session":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--session requires a value.")
-                }
-                sessionId = arguments[index]
-            case "--kits":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--kits requires a value.")
-                }
-                kitIds = arguments[index]
-                    .split(separator: ",")
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
-            case "--output":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--output requires a value.")
-                }
-                outputPath = arguments[index]
-            default:
-                throw CLIError.usage("Unknown export option: \(argument)")
-            }
-            index += 1
-        }
-
-        if let sessionId {
-            if personaId != nil || directiveId != nil || !kitIds.isEmpty {
-                throw CLIError.usage("export requires --session or --persona/--directive, not both.")
-            }
-            return ExportOptions(
-                rootPath: rootPath,
-                useProjectScope: useProjectScope,
-                useGlobalScope: useGlobalScope,
-                sessionId: sessionId,
-                personaId: nil,
-                directiveId: nil,
-                kitIds: [],
-                outputPath: outputPath
-            )
-        }
-
-        guard let personaId else {
-            throw CLIError.usage("export requires --persona <id>.")
-        }
-        guard let directiveId else {
-            throw CLIError.usage("export requires --directive <id>.")
-        }
-
-        return ExportOptions(
-            rootPath: rootPath,
-            useProjectScope: useProjectScope,
-            useGlobalScope: useGlobalScope,
-            sessionId: nil,
-            personaId: personaId,
-            directiveId: directiveId,
-            kitIds: kitIds,
-            outputPath: outputPath
-        )
-    }
-}
-
-struct ValidateOptionsParser {
-    func parse(arguments: [String]) throws -> ValidateOptions {
-        var rootPath: String?
-        var useProjectScope = true
-        var useGlobalScope = true
-        var index = 0
-
-        while index < arguments.count {
-            let argument = arguments[index]
-            switch argument {
-            case "--root":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--root requires a value.")
-                }
-                rootPath = arguments[index]
-            case "--no-project":
-                useProjectScope = false
-            case "--no-global":
-                useGlobalScope = false
-            default:
-                throw CLIError.usage("Unknown validate option: \(argument)")
-            }
-            index += 1
-        }
-
-        return ValidateOptions(
-            rootPath: rootPath,
-            useProjectScope: useProjectScope,
-            useGlobalScope: useGlobalScope
-        )
-    }
-}
-
-struct ListOptionsParser {
-    func parse(arguments: [String]) throws -> ListOptions {
-        var rootPath: String?
-        var useProjectScope = true
-        var useGlobalScope = true
-        var entityType: ListEntityType?
-        var index = 0
-
-        while index < arguments.count {
-            let argument = arguments[index]
-            switch argument {
-            case "--root":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--root requires a value.")
-                }
-                rootPath = arguments[index]
-            case "--no-project":
-                useProjectScope = false
-            case "--no-global":
-                useGlobalScope = false
-            default:
-                if argument.hasPrefix("-") {
-                    throw CLIError.usage("Unknown list option: \(argument)")
-                }
-                guard entityType == nil else {
-                    throw CLIError.usage("list expects a single entity type.")
-                }
-                entityType = ListEntityType(rawValue: argument)
-                if entityType == nil {
-                    throw CLIError.usage("Unknown entity type: \(argument)")
-                }
-            }
-            index += 1
-        }
-
-        guard let entityType else {
-            throw CLIError.usage("list requires an entity type.")
-        }
-
-        return ListOptions(
-            rootPath: rootPath,
-            useProjectScope: useProjectScope,
-            useGlobalScope: useGlobalScope,
-            entityType: entityType
-        )
-    }
-}
-
-struct GraphOptionsParser {
-    func parse(arguments: [String]) throws -> GraphOptions {
-        var rootPath: String?
-        var useProjectScope = true
-        var useGlobalScope = true
-        var sessionId: String?
-        var personaId: String?
-        var directiveId: String?
-        var kitIds: [String] = []
-        var index = 0
-
-        while index < arguments.count {
-            let argument = arguments[index]
-            switch argument {
-            case "--root":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--root requires a value.")
-                }
-                rootPath = arguments[index]
-            case "--no-project":
-                useProjectScope = false
-            case "--no-global":
-                useGlobalScope = false
-            case "--persona":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--persona requires a value.")
-                }
-                personaId = arguments[index]
-            case "--directive":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--directive requires a value.")
-                }
-                directiveId = arguments[index]
-            case "--session":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--session requires a value.")
-                }
-                sessionId = arguments[index]
-            case "--kits":
-                index += 1
-                guard index < arguments.count else {
-                    throw CLIError.usage("--kits requires a value.")
-                }
-                kitIds = arguments[index]
-                    .split(separator: ",")
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
-            default:
-                throw CLIError.usage("Unknown graph option: \(argument)")
-            }
-            index += 1
-        }
-
-        if let sessionId {
-            if personaId != nil || directiveId != nil || !kitIds.isEmpty {
-                throw CLIError.usage("graph requires --session or --persona/--directive, not both.")
-            }
-            return GraphOptions(
-                rootPath: rootPath,
-                useProjectScope: useProjectScope,
-                useGlobalScope: useGlobalScope,
-                sessionId: sessionId,
-                personaId: nil,
-                directiveId: nil,
-                kitIds: []
-            )
-        }
-
-        guard let personaId else {
-            throw CLIError.usage("graph requires --persona <id>.")
-        }
-        guard let directiveId else {
-            throw CLIError.usage("graph requires --directive <id>.")
-        }
-
-        return GraphOptions(
-            rootPath: rootPath,
-            useProjectScope: useProjectScope,
-            useGlobalScope: useGlobalScope,
-            sessionId: nil,
-            personaId: personaId,
-            directiveId: directiveId,
-            kitIds: kitIds
-        )
-    }
 }
 
 struct RootPathResolver {

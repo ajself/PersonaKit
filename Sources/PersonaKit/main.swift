@@ -1,4 +1,3 @@
-import Foundation
+import ArgumentParser
 
-let exitCode = PersonaKitCLI().run(arguments: CommandLine.arguments)
-exit(exitCode)
+PersonaKitCommand.main()

@@ -1,16 +1,15 @@
 import Foundation
 
-struct ScopeRootResolver {
+struct ScopeRootResolver: Sendable {
     private let projectLocator: ProjectPersonaKitLocator
     private let globalLocator: GlobalPersonaKitLocator
 
     init(
         startingURL: URL? = nil,
-        homeDirectory: URL? = nil,
-        fileManager: FileManager = .default
+        homeDirectory: URL? = nil
     ) {
-        self.projectLocator = ProjectPersonaKitLocator(startingURL: startingURL, fileManager: fileManager)
-        self.globalLocator = GlobalPersonaKitLocator(homeDirectory: homeDirectory, fileManager: fileManager)
+        self.projectLocator = ProjectPersonaKitLocator(startingURL: startingURL)
+        self.globalLocator = GlobalPersonaKitLocator(homeDirectory: homeDirectory)
     }
 
     func locate() -> ScopeSet? {

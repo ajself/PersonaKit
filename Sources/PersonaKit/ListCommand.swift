@@ -1,6 +1,7 @@
+import ArgumentParser
 import Foundation
 
-enum ListEntityType: String, CaseIterable {
+enum ListEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
     case personas
     case kits
     case directives

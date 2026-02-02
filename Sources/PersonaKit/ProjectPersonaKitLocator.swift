@@ -1,16 +1,14 @@
 import Foundation
 
-struct ProjectPersonaKitLocator {
-    private let fileManager: FileManager
+struct ProjectPersonaKitLocator: Sendable {
     private let startingURL: URL
 
-    init(startingURL: URL? = nil, fileManager: FileManager = .default) {
+    init(startingURL: URL? = nil) {
         if let startingURL {
             self.startingURL = startingURL
         } else {
-            self.startingURL = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+            self.startingURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         }
-        self.fileManager = fileManager
     }
 
     func locate() -> URL? {
@@ -33,6 +31,7 @@ struct ProjectPersonaKitLocator {
     private func hasPersonaKitDirectory(at root: URL) -> Bool {
         let candidate = root.appendingPathComponent(".personakit")
         var isDirectory: ObjCBool = false
-        return fileManager.fileExists(atPath: candidate.path, isDirectory: &isDirectory) && isDirectory.boolValue
+        return FileManager.default.fileExists(atPath: candidate.path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
     }
 }

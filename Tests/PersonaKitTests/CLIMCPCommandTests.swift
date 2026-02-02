@@ -21,7 +21,10 @@ struct CLIMCPCommandTests {
     }
 }
 
-final class TestMCPServerRunner: MCPServerRunning {
+// EXCEPTION(SwiftStyle): Test runner used synchronously in CLI tests.
+// Default rule: Avoid @unchecked Sendable.
+// Tradeoff: Tests run on a single thread; mutable state is safe here.
+final class TestMCPServerRunner: MCPServerRunning, @unchecked Sendable {
     private(set) var invocations: [String] = []
 
     func run(version: String) throws {
