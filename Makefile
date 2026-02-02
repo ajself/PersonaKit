@@ -1,12 +1,20 @@
 .DEFAULT_GOAL := help
 
-ROOT ?= /tmp/PersonaKit
+ROOT ?=
+INIT_ROOT ?= $(HOME)/.personakit
 PERSONA ?= senior-swiftui-engineer
 TASK ?= apply-style
 KITS ?=
 OUTPUT ?= /tmp/session.md
 ARGS ?=
 ZIP_NAME ?= PersonaKit_review.zip
+NO_PROJECT ?= 0
+NO_GLOBAL ?= 0
+PREFIX ?= /usr/local
+INSTALL_DIR ?= $(PREFIX)/bin
+
+ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
+SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
 .PHONY: help
 help:
@@ -15,28 +23,40 @@ help:
 	@printf "Common targets:\n"
 	@printf "  help            Show this help message\n"
 	@printf "  build           Build the CLI\n"
+	@printf "  install         Build release and install to INSTALL_DIR\n"
 	@printf "  test            Run tests\n"
 	@printf "  run             Run the CLI with ARGS\n\n"
 	@printf "  docc-preview    Preview DocC tutorials\n\n"
 	@printf "Project workflow:\n"
-	@printf "  init            Initialize a starter kit at ROOT (default: %s)\n" "$(ROOT)"
-	@printf "  validate        Validate a kit at ROOT\n"
+	@printf "  init            Initialize a starter kit in the home directory\n"
+	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
 	@printf "  list            List entities (TYPE=personas|kits|tasks|intents|skills|essentials)\n"
 	@printf "  graph           Print the resolution graph\n\n"
 	@printf "  zip             Create a review zip (excluding VCS/build/OS files)\n\n"
 	@printf "Variables:\n"
-	@printf "  ROOT            Root kit path (default: %s)\n" "$(ROOT)"
+	@printf "  ROOT            Root kit path override (optional)\n"
+	@printf "  INIT_ROOT       Init path (default: %s)\n" "$(INIT_ROOT)"
 	@printf "  PERSONA         Persona id (default: %s)\n" "$(PERSONA)"
 	@printf "  TASK            Task id (default: %s)\n" "$(TASK)"
 	@printf "  KITS            Comma-separated kit overrides (optional)\n"
 	@printf "  OUTPUT          Export output path (default: %s)\n" "$(OUTPUT)"
 	@printf "  ARGS            Arguments passed to 'swift run personakit'\n"
+	@printf "  NO_PROJECT      Set to 1 to disable project scope discovery\n"
+	@printf "  NO_GLOBAL       Set to 1 to disable global scope discovery\n"
+	@printf "  PREFIX          Install prefix (default: %s)\n" "$(PREFIX)"
+	@printf "  INSTALL_DIR     Install directory (default: %s)\n" "$(INSTALL_DIR)"
 	@printf "  ZIP_NAME        Zip file name (default: %s)\n" "$(ZIP_NAME)"
 
 .PHONY: build
 build:
 	swift build
+
+.PHONY: install
+install:
+	swift build -c release
+	install -d "$(INSTALL_DIR)"
+	install -m 755 ".build/release/personakit" "$(INSTALL_DIR)/personakit"
 
 .PHONY: test
 test:
@@ -53,15 +73,20 @@ docc-preview:
 
 .PHONY: init
 init:
-	swift run personakit init $(ROOT)
+	@dest="$(INIT_ROOT)"; \
+	if [ -e "$$dest" ]; then \
+		printf "Init skipped: %s already exists.\n" "$$dest"; \
+	else \
+		swift run personakit init "$$dest"; \
+	fi
 
 .PHONY: validate
 validate:
-	swift run personakit validate --root $(ROOT)
+	swift run personakit validate $(SCOPE_ARGS)
 
 .PHONY: export
 export:
-	swift run personakit export --root $(ROOT) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
+	swift run personakit export $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
 
 .PHONY: list
 list:
@@ -69,11 +94,11 @@ list:
 		printf "Missing TYPE. Example: make list TYPE=personas\n"; \
 		exit 1; \
 	fi
-	swift run personakit list --root $(ROOT) $(TYPE)
+	swift run personakit list $(SCOPE_ARGS) $(TYPE)
 
 .PHONY: graph
 graph:
-	swift run personakit graph --root $(ROOT) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),)
+	swift run personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),)
 
 .PHONY: zip
 zip:
