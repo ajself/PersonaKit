@@ -28,7 +28,7 @@ PersonaKit is designed to be used with a human in the loop. The typical workflow
      personakit export --root ./MyKit --persona <persona-id> --directive <directive-id>
 
    • MCP (recommended for live agent integration):
-     - Run the PersonaKit MCP server via `personakit mcp` with PERSONAKIT_ROOT=./MyKit
+     - Run the PersonaKit MCP server from the kit directory with `personakit mcp`
      - Let your MCP-compatible agent read Resources and Prompts directly
      - Default behavior relies on Swift scope discovery unless override mode is enabled
 
@@ -212,21 +212,16 @@ Important
 
 The Swift CLI and Swift code are the single source of truth for PersonaKit behavior and contracts.
 - The Swift MCP server is the supported integration path.
-- The legacy Node adapter is deprecated and will be removed after verification.
 
 Basic setup (default, recommended):
 
 1. Choose a project directory that contains `.personakit/` (project scope), or ensure `~/.personakit` exists (global scope).
 
-2. Set a working directory for discovery:
-
-   PERSONAKIT_ROOT=/path/to/your/project
-
-3. Start the MCP server:
+2. Start the MCP server from that directory:
 
    personakit mcp
 
-4. Configure your MCP-compatible agent or client to connect to the server via stdio.
+3. Configure your MCP-compatible agent or client to connect to the server via stdio.
 
 Example MCP client configuration
 
@@ -239,10 +234,7 @@ A minimal example (stdio transport):
   "mcpServers": {
     "personakit": {
       "command": "personakit",
-      "args": ["mcp"],
-      "env": {
-        "PERSONAKIT_ROOT": "/absolute/path/to/your/kit"
-      }
+      "args": ["mcp"]
     }
   }
 }
@@ -250,7 +242,7 @@ A minimal example (stdio transport):
 
 Notes:
 - `command` and `args` must launch `personakit mcp`.
-- In default mode, `PERSONAKIT_ROOT` sets the working directory for Swift scope discovery (project/global).
+- To override the working directory, set `PERSONAKIT_ROOT` for scope discovery (project/global).
 - To bypass discovery, set `PERSONAKIT_ROOT_OVERRIDE=1` and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
 - The server communicates over **stdio**; no ports are opened.
 - Paths should be absolute to avoid ambiguity.

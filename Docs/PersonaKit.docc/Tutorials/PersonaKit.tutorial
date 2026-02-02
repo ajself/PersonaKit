@@ -54,11 +54,11 @@
     @TutorialReference(tutorial: "doc:ExportASession")
   }
 
-  @Chapter(name: "Connect the MCP adapter") {
+  @Chapter(name: "Connect the MCP server") {
     Configure an MCP client to read PersonaKit Resources and Prompts.
 
-    @Image(source: "ChapterConnectMCP.png", alt: "Connect the MCP adapter")
+    @Image(source: "ChapterConnectMCP.png", alt: "Connect the MCP server")
 
-    @TutorialReference(tutorial: "doc:ConnectMCPAdapter")
+    @TutorialReference(tutorial: "doc:ConnectMCPServer")
   }
 }

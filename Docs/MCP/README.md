@@ -5,7 +5,6 @@ The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit co
 Important:
 - The Swift CLI and Swift codebase are the single source of truth for PersonaKit behavior and contracts.
 - The Swift MCP server is the supported integration path.
-- The legacy Node adapter is deprecated and will be removed after verification.
 
 The MCP server does not provide Tools.
 
@@ -17,11 +16,12 @@ Transport: stdio
 The server runs as a local process and communicates over stdin/stdout. No ports are opened.
 The server is designed to be launched and managed by an MCP client, not used directly by end users.
 
-Required environment
-- PERSONAKIT_ROOT: absolute path to the directory that contains Packs/.
+Optional environment
+- PERSONAKIT_ROOT: override the working directory for scope discovery (project/global).
+- PERSONAKIT_ROOT_OVERRIDE=1: bypass discovery and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
 
 Example launch (stdio)
-From the repo root:
+From a kit or project directory:
 - personakit mcp
 
 Example MCP client config
@@ -44,4 +44,3 @@ Notes
 - The MCP server is read-only and never writes to disk.
 - The MCP server never executes external commands.
 - Output is deterministic (stable ordering, no timestamps).
-- The legacy Node adapter must not evolve into a general-purpose replacement for the Swift CLI.

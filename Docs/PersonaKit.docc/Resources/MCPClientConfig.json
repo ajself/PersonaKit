@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "personakit": {
-      "command": "npm",
-      "args": ["run", "start"],
-      "env": {
-        "PERSONAKIT_ROOT": "/absolute/path/to/MyKit"
-      }
+      "command": "personakit",
+      "args": ["mcp"]
     }
   }
 }

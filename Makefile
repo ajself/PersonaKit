@@ -60,7 +60,6 @@ install:
 .PHONY: test
 test:
 	swift test
-	npm --prefix personakit-mcp test
 
 .PHONY: run
 run:
@@ -107,5 +106,4 @@ zip:
 	-x "*.DS_Store" \
 	-x "*/.DS_Store" \
 	-x "._*" \
-	-x "*.build/*" \
-	-x "*personakkit-mcp/node_modules/*"
+	-x "*.build/*"
