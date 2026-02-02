@@ -37,7 +37,7 @@ struct ValidatorTests {
             result.errors == [
                 ValidationError(
                     entityType: .kit,
-                    entityId: "swiftui-style-kit",
+                    entityId: "swiftui-style",
                     field: "essentialIds",
                     missingId: "swiftui-style-guide",
                     expectedPath: "Packs/essentials/swiftui-style-guide.md",

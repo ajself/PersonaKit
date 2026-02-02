@@ -6,38 +6,38 @@ Task: apply-style — Apply Swift + SwiftUI style guides
 Kit overrides: none
 
 ## Persona default kits
-- repo-constraints-kit — Repository Constraints Kit
-- swift-style-kit — Swift Style Kit
-- swiftui-style-kit — SwiftUI Style Kit
+- repo-constraints — Repository Constraints Kit
+- swift-style — Swift Style Kit
+- swiftui-style — SwiftUI Style Kit
 
 ## Applied kits (after overrides)
-- repo-constraints-kit — Repository Constraints Kit
-- swift-style-kit — Swift Style Kit
-- swiftui-style-kit — SwiftUI Style Kit
+- repo-constraints — Repository Constraints Kit
+- swift-style — Swift Style Kit
+- swiftui-style — SwiftUI Style Kit
 
 ## Kits → Essentials
-repo-constraints-kit
+repo-constraints
   - essential:environment
   - essential:non-goals
   - essential:tools-and-constraints
-swift-style-kit
+swift-style
   - essential:non-goals
   - essential:swift-style-guide
   - essential:tools-and-constraints
-swiftui-style-kit
+swiftui-style
   - essential:non-goals
   - essential:swiftui-style-guide
   - essential:tools-and-constraints
 
 ## Kits → Intent templates
-repo-constraints-kit
-swift-style-kit
-swiftui-style-kit
+repo-constraints
+swift-style
+swiftui-style
 
 ## Kits → Skills
-repo-constraints-kit
-swift-style-kit
-swiftui-style-kit
+repo-constraints
+swift-style
+swiftui-style
 
 ## Task → Intent templates
 - intent:swift-refactor-safe

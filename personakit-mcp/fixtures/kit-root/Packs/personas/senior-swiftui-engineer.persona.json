@@ -18,9 +18,9 @@
     "introducing new frameworks without approval"
   ],
   "defaultKitIds": [
-    "swift-style-kit",
-    "swiftui-style-kit",
-    "repo-constraints-kit"
+    "swift-style",
+    "swiftui-style",
+    "repo-constraints"
   ],
   "allowedSkillIds": [
     "codex-cli"

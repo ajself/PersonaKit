@@ -87,19 +87,19 @@ enum StarterKitManifest {
     static let entries: [StarterFile] = [
         StarterFile(
             relativePath: "Packs/personas/senior-swiftui-engineer.persona.json",
-            contents: "{\n  \"id\": \"senior-swiftui-engineer\",\n  \"version\": \"1.0\",\n  \"name\": \"Senior SwiftUI Engineer\",\n  \"summary\": \"Pragmatic, accessibility-first, small diffs.\",\n  \"responsibilities\": [\n    \"Implement SwiftUI features\",\n    \"Maintain accessibility\",\n    \"Write tests for changes\"\n  ],\n  \"values\": [\n    \"correctness over cleverness\",\n    \"small diffs\",\n    \"clarity\"\n  ],\n  \"nonGoals\": [\n    \"architecture rewrites\",\n    \"introducing new frameworks without approval\"\n  ],\n  \"defaultKitIds\": [\n    \"swift-style-kit\",\n    \"swiftui-style-kit\",\n    \"repo-constraints-kit\"\n  ],\n  \"allowedSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"forbiddenSkillIds\": [\n    \"autonomous-agent-loop\"\n  ]\n}".utf8Data
+            contents: "{\n  \"id\": \"senior-swiftui-engineer\",\n  \"version\": \"1.0\",\n  \"name\": \"Senior SwiftUI Engineer\",\n  \"summary\": \"Pragmatic, accessibility-first, small diffs.\",\n  \"responsibilities\": [\n    \"Implement SwiftUI features\",\n    \"Maintain accessibility\",\n    \"Write tests for changes\"\n  ],\n  \"values\": [\n    \"correctness over cleverness\",\n    \"small diffs\",\n    \"clarity\"\n  ],\n  \"nonGoals\": [\n    \"architecture rewrites\",\n    \"introducing new frameworks without approval\"\n  ],\n  \"defaultKitIds\": [\n    \"swift-style\",\n    \"swiftui-style\",\n    \"repo-constraints\"\n  ],\n  \"allowedSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"forbiddenSkillIds\": [\n    \"autonomous-agent-loop\"\n  ]\n}".utf8Data
         ),
         StarterFile(
-            relativePath: "Packs/kits/swift-style-kit.kit.json",
-            contents: "{\n  \"id\": \"swift-style-kit\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Kit\",\n  \"summary\": \"Swift language style and conventions.\",\n  \"essentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
+            relativePath: "Packs/kits/swift-style.kit.json",
+            contents: "{\n  \"id\": \"swift-style\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Kit\",\n  \"summary\": \"Swift language style and conventions.\",\n  \"essentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
         ),
         StarterFile(
-            relativePath: "Packs/kits/swiftui-style-kit.kit.json",
-            contents: "{\n  \"id\": \"swiftui-style-kit\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Kit\",\n  \"summary\": \"SwiftUI-specific style and accessibility rules.\",\n  \"essentialIds\": [\n    \"swiftui-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
+            relativePath: "Packs/kits/swiftui-style.kit.json",
+            contents: "{\n  \"id\": \"swiftui-style\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Kit\",\n  \"summary\": \"SwiftUI-specific style and accessibility rules.\",\n  \"essentialIds\": [\n    \"swiftui-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
         ),
         StarterFile(
-            relativePath: "Packs/kits/repo-constraints-kit.kit.json",
-            contents: "{\n  \"id\": \"repo-constraints-kit\",\n  \"version\": \"1.0\",\n  \"name\": \"Repository Constraints Kit\",\n  \"summary\": \"Rules specific to this codebase.\",\n  \"essentialIds\": [\n    \"environment\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
+            relativePath: "Packs/kits/repo-constraints.kit.json",
+            contents: "{\n  \"id\": \"repo-constraints\",\n  \"version\": \"1.0\",\n  \"name\": \"Repository Constraints Kit\",\n  \"summary\": \"Rules specific to this codebase.\",\n  \"essentialIds\": [\n    \"environment\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}".utf8Data
         ),
         StarterFile(
             relativePath: "Packs/tasks/apply-style.task.json",

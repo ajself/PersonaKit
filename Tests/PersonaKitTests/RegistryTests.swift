@@ -11,7 +11,7 @@ struct RegistryTests {
         let registry = try Registry.load(root: destination)
 
         #expect(registry.personas.map(\.id) == ["senior-swiftui-engineer"])
-        #expect(registry.kits.map(\.id) == ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"])
+        #expect(registry.kits.map(\.id) == ["repo-constraints", "swift-style", "swiftui-style"])
         #expect(registry.tasks.map(\.id) == ["apply-style"])
         #expect(registry.intentTemplates.map(\.id) == ["swift-refactor-safe"])
         #expect(registry.skills.map(\.id) == ["autonomous-agent-loop", "codex-cli"])

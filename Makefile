@@ -1,7 +1,6 @@
 .DEFAULT_GOAL := help
 
 ROOT ?=
-INIT_ROOT ?= $(HOME)/.personakit
 PERSONA ?= senior-swiftui-engineer
 TASK ?= apply-style
 KITS ?=
@@ -28,7 +27,7 @@ help:
 	@printf "  run             Run the CLI with ARGS\n\n"
 	@printf "  docc-preview    Preview DocC tutorials\n\n"
 	@printf "Project workflow:\n"
-	@printf "  init            Initialize a starter kit in the home directory\n"
+	@printf "  init            Initialize a starter kit in ./.personakit\n"
 	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
 	@printf "  list            List entities (TYPE=personas|kits|tasks|intents|skills|essentials)\n"
@@ -36,7 +35,6 @@ help:
 	@printf "  zip             Create a review zip (excluding VCS/build/OS files)\n\n"
 	@printf "Variables:\n"
 	@printf "  ROOT            Root kit path override (optional)\n"
-	@printf "  INIT_ROOT       Init path (default: %s)\n" "$(INIT_ROOT)"
 	@printf "  PERSONA         Persona id (default: %s)\n" "$(PERSONA)"
 	@printf "  TASK            Task id (default: %s)\n" "$(TASK)"
 	@printf "  KITS            Comma-separated kit overrides (optional)\n"
@@ -65,7 +63,7 @@ test:
 
 .PHONY: run
 run:
-	swift run personakit $(ARGS)
+	personakit $(ARGS)
 
 .PHONY: docc-preview
 docc-preview:
@@ -73,20 +71,20 @@ docc-preview:
 
 .PHONY: init
 init:
-	@dest="$(INIT_ROOT)"; \
+	@dest="$(CURDIR)/.personakit"; \
 	if [ -e "$$dest" ]; then \
-		printf "Init skipped: %s already exists.\n" "$$dest"; \
+		printf "%s already exists.\n" "$$dest"; \
 	else \
-		swift run personakit init "$$dest"; \
+		personakit init "$$dest"; \
 	fi
 
 .PHONY: validate
 validate:
-	swift run personakit validate $(SCOPE_ARGS)
+	personakit validate $(SCOPE_ARGS)
 
 .PHONY: export
 export:
-	swift run personakit export $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
+	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
 
 .PHONY: list
 list:
@@ -94,11 +92,11 @@ list:
 		printf "Missing TYPE. Example: make list TYPE=personas\n"; \
 		exit 1; \
 	fi
-	swift run personakit list $(SCOPE_ARGS) $(TYPE)
+	personakit list $(SCOPE_ARGS) $(TYPE)
 
 .PHONY: graph
 graph:
-	swift run personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),)
+	personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --task $(TASK) $(if $(KITS),--kits $(KITS),)
 
 .PHONY: zip
 zip:

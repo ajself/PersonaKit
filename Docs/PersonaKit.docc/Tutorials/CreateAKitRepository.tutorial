@@ -63,7 +63,7 @@
       }
 
       @Step {
-        Open a Kit file, for example `Packs/kits/swiftui-style-kit.kit.json`. A Kit bundles Essentials and optional references to intent templates and skills.
+        Open a Kit file, for example `Packs/kits/swiftui-style.kit.json`. A Kit bundles Essentials and optional references to intent templates and skills.
       }
 
     }

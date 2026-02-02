@@ -57,7 +57,7 @@ struct GraphPrinterTests {
         let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
         try copyFixtureKit(to: root)
 
-        let extraKitURL = root.appendingPathComponent("Packs/kits/extra-kit.kit.json")
+        let extraKitURL = root.appendingPathComponent("Packs/kits/extra.kit.json")
         let extraKit = """
         {
           "id": "extra-kit",

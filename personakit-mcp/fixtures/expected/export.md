@@ -25,9 +25,9 @@ Forbidden Skills:
 - autonomous-agent-loop
 
 # Applied Kits
-- Repository Constraints Kit (repo-constraints-kit)
-- Swift Style Kit (swift-style-kit)
-- SwiftUI Style Kit (swiftui-style-kit)
+- Repository Constraints Kit (repo-constraints)
+- Swift Style Kit (swift-style)
+- SwiftUI Style Kit (swiftui-style)
 
 # Essentials
 ## environment

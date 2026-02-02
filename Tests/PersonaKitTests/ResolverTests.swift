@@ -20,7 +20,7 @@ struct ResolverTests {
         #expect(session.persona.id == "senior-swiftui-engineer")
         #expect(session.task.id == "apply-style")
         #expect(
-            session.kits.map { $0.id } == ["repo-constraints-kit", "swift-style-kit", "swiftui-style-kit"]
+            session.kits.map { $0.id } == ["repo-constraints", "swift-style", "swiftui-style"]
         )
         #expect(session.intents.map { $0.id } == ["swift-refactor-safe"])
         #expect(session.skills.map { $0.id } == ["codex-cli"])
@@ -107,7 +107,7 @@ struct ResolverTests {
                 error.errors == [
                     .missingEssentialFile(
                         sourceType: .kit,
-                        sourceId: "swiftui-style-kit",
+                        sourceId: "swiftui-style",
                         field: "essentialIds",
                         missingId: "swiftui-style-guide",
                         expectedPath: "Packs/essentials/swiftui-style-guide.md"
