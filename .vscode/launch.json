@@ -3,69 +3,37 @@
     {
       "type": "swift",
       "request": "launch",
-      "args": [],
+      "args": [
+        "--help"
+      ],
       "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Debug personakit",
+      "name": "Build personakit (CLI)",
       "target": "personakit",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit"
+      "preLaunchTask": "PersonaKit: Build"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [
-        "init",
-        "/tmp/PersonaKit"
+        "mcp",
+        "--help"
       ],
       "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Debug personakit (init)",
+      "name": "Build personakit (MCP)",
       "target": "personakit",
       "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [
-        "validate",
-        "--root",
-        "/tmp/PersonaKit"
-      ],
-      "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Debug personakit (validate)",
-      "target": "personakit",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit"
-    },
-    {
-      "type": "swift",
-      "request": "launch",
-      "args": [
-        "export",
-        "--root",
-        "/tmp/PersonaKit",
-        "--persona",
-        "senior-swiftui-engineer",
-        "--task",
-        "apply-style",
-        "--output",
-        "/tmp/session.md"
-      ],
-      "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Debug personakit (export)",
-      "target": "personakit",
-      "configuration": "debug",
-      "preLaunchTask": "swift: Build Debug personakit"
+      "preLaunchTask": "PersonaKit: Build"
     },
     {
       "type": "swift",
       "request": "launch",
       "args": [],
       "cwd": "${workspaceFolder:PersonaKit}",
-      "name": "Release personakit",
+      "name": "Run personakit (CLI)",
       "target": "personakit",
-      "configuration": "release",
-      "preLaunchTask": "swift: Build Release personakit"
+      "configuration": "debug",
+      "preLaunchTask": "PersonaKit: Build"
     }
   ]
 }

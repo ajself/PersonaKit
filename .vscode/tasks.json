@@ -28,6 +28,24 @@
       "problemMatcher": []
     },
     {
+      "label": "PersonaKit: Format",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "format"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "PersonaKit: Format Check",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "format-check"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "PersonaKit: Init /tmp/PersonaKit",
       "type": "shell",
       "command": "make",

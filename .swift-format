@@ -7,7 +7,7 @@
   "tabWidth": 2,
   "respectsExistingLineBreaks": true,
   "maximumBlankLines": 1,
-  "lineBreakBeforeEachArgument": false,
+  "lineBreakBeforeEachArgument": true,
   "lineBreakBeforeEachGenericRequirement": false,
   "prioritizeKeepingFunctionOutputTogether": true,
   "prioritizeKeepingFunctionCallArgumentsTogether": true,

@@ -11,6 +11,8 @@ NO_PROJECT ?= 0
 NO_GLOBAL ?= 0
 PREFIX ?= /usr/local
 INSTALL_DIR ?= $(PREFIX)/bin
+FORMAT_PATHS ?= Sources Tests
+SWIFT_FORMAT ?= ./Scripts/swift-format-project.sh
 
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
@@ -24,6 +26,8 @@ help:
 	@printf "  build           Build the CLI\n"
 	@printf "  install         Build release and install to INSTALL_DIR\n"
 	@printf "  test            Run tests\n"
+	@printf "  format          Format Swift source using project config\n"
+	@printf "  format-check    Verify formatting is clean (CI-safe)\n"
 	@printf "  run             Run the CLI with ARGS\n\n"
 	@printf "  docc-preview    Preview DocC tutorials\n\n"
 	@printf "Project workflow:\n"
@@ -60,6 +64,15 @@ install:
 .PHONY: test
 test:
 	swift test
+
+.PHONY: format
+format:
+	$(SWIFT_FORMAT) --in-place --recursive $(FORMAT_PATHS)
+
+.PHONY: format-check
+format-check:
+	$(SWIFT_FORMAT) --in-place --recursive $(FORMAT_PATHS)
+	git diff --exit-code
 
 .PHONY: run
 run:

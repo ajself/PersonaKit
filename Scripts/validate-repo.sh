@@ -25,6 +25,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "Checking formatting..."
+make format-check
+
 echo "Running swift test..."
 swift test
 
