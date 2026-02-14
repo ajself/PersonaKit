@@ -6,6 +6,7 @@ DIRECTIVE ?= apply-style
 KITS ?=
 OUTPUT ?= /tmp/session.md
 ARGS ?=
+STUDIO_ARGS ?=
 ZIP_NAME ?= PersonaKit_review.zip
 NO_PROJECT ?= 0
 NO_GLOBAL ?= 0
@@ -29,6 +30,8 @@ help:
 	@printf "  format          Format Swift source using project config\n"
 	@printf "  format-check    Verify formatting is clean (CI-safe)\n"
 	@printf "  run             Run the CLI with ARGS\n\n"
+	@printf "  studio-build    Build PersonaKitStudio (debug)\n"
+	@printf "  studio-run      Build and run PersonaKitStudio (debug)\n\n"
 	@printf "  docc-preview    Preview DocC tutorials\n\n"
 	@printf "Project workflow:\n"
 	@printf "  init            Initialize a starter kit in ./.personakit\n"
@@ -45,6 +48,7 @@ help:
 	@printf "  KITS            Comma-separated kit overrides (optional)\n"
 	@printf "  OUTPUT          Export output path (default: %s)\n" "$(OUTPUT)"
 	@printf "  ARGS            Arguments passed to 'swift run personakit'\n"
+	@printf "  STUDIO_ARGS     Arguments passed to 'swift run PersonaKitStudio'\n"
 	@printf "  NO_PROJECT      Set to 1 to disable project scope discovery\n"
 	@printf "  NO_GLOBAL       Set to 1 to disable global scope discovery\n"
 	@printf "  PREFIX          Install prefix (default: %s)\n" "$(PREFIX)"
@@ -77,6 +81,14 @@ format-check:
 .PHONY: run
 run:
 	personakit $(ARGS)
+
+.PHONY: studio-build
+studio-build:
+	swift build --product PersonaKitStudio
+
+.PHONY: studio-run
+studio-run:
+	swift run PersonaKitStudio $(STUDIO_ARGS)
 
 .PHONY: docc-preview
 docc-preview:
