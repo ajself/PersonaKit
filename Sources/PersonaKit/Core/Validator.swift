@@ -156,6 +156,8 @@ struct Validator {
   ) throws
     -> ValidationResult
   {
+    try checkCancellation()
+
     let schemaErrors = SchemaValidator.validate(scopes: scopes, fileManager: fileManager)
     var errors: [ValidationError] = schemaErrors.map { error in
       let message: String
@@ -208,6 +210,8 @@ struct Validator {
     }
 
     for persona in registry.personas {
+      try checkCancellation()
+
       for kitId in persona.defaultKitIds {
         if registry.kitsById[kitId] == nil {
           errors.append(
@@ -255,6 +259,8 @@ struct Validator {
     }
 
     for kit in registry.kits {
+      try checkCancellation()
+
       for intentId in kit.intentTemplateIds ?? [] {
         if registry.intentTemplatesById[intentId] == nil {
           errors.append(
@@ -303,6 +309,8 @@ struct Validator {
     }
 
     for directive in registry.directives {
+      try checkCancellation()
+
       for intentId in directive.requiresIntentTemplateIds {
         if registry.intentTemplatesById[intentId] == nil {
           errors.append(
@@ -335,6 +343,8 @@ struct Validator {
     }
 
     for intent in registry.intentTemplates {
+      try checkCancellation()
+
       for essentialId in intent.includesEssentialIds {
         let expectedPath = "Packs/essentials/\(essentialId).md"
         if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
@@ -415,6 +425,12 @@ struct Validator {
       return .skill
     }
     return .essentials
+  }
+
+  private static func checkCancellation() throws {
+    if Task.isCancelled {
+      throw CancellationError()
+    }
   }
 }
 

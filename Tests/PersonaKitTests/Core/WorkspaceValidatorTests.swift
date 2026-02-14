@@ -1,0 +1,119 @@
+import Foundation
+import Testing
+
+@testable import PersonaKitCore
+
+/// Coverage for workspace validation mapping and project-root preconditions.
+struct WorkspaceValidatorTests {
+  @Test
+  func validateMapsIssuesAndResolvesFilePaths() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let globalScopeURL = URL(fileURLWithPath: "/Global/.personakit")
+    let projectPersonaPath = "Packs/personas/senior-swiftui-engineer.persona.json"
+    let globalKitPath = "Packs/kits/swift-style.kit.json"
+    let ambiguousPath = "Packs/essentials/non-goals.md"
+    let projectPersonaURL = projectScopeURL.appendingPathComponent(projectPersonaPath)
+    let globalKitURL = globalScopeURL.appendingPathComponent(globalKitPath)
+    let projectAmbiguousURL = projectScopeURL.appendingPathComponent(ambiguousPath)
+    let globalAmbiguousURL = globalScopeURL.appendingPathComponent(ambiguousPath)
+    let projectPacksURL = PersonaKitDirectory.packsURL(root: projectScopeURL)
+
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { url in
+        url.standardizedFileURL == projectPacksURL.standardizedFileURL
+      },
+      fileExists: { url in
+        let normalizedURL = url.standardizedFileURL
+
+        return normalizedURL == projectPersonaURL.standardizedFileURL
+          || normalizedURL == globalKitURL.standardizedFileURL
+          || normalizedURL == projectAmbiguousURL.standardizedFileURL
+          || normalizedURL == globalAmbiguousURL.standardizedFileURL
+      },
+      defaultGlobalScopeURL: {
+        globalScopeURL
+      },
+      validateScopes: { _ in
+        ValidationResult(
+          counts: ValidationCounts(
+            personas: 1,
+            kits: 1,
+            directives: 0,
+            intents: 0,
+            skills: 0,
+            essentials: 0
+          ),
+          errors: [
+            ValidationError(
+              entityType: .persona,
+              entityId: "senior-swiftui-engineer",
+              field: "schema",
+              missingId: nil,
+              expectedPath: projectPersonaPath,
+              message: "Missing required property \"id\""
+            ),
+            ValidationError(
+              entityType: .kit,
+              entityId: "swift-style",
+              field: "essentialIds",
+              missingId: "swift-style-guide",
+              expectedPath: globalKitPath,
+              message: "Missing essential file"
+            ),
+            ValidationError(
+              entityType: .essentials,
+              entityId: "non-goals",
+              field: "schema",
+              missingId: nil,
+              expectedPath: ambiguousPath,
+              message: "Ambiguous essentials path"
+            ),
+          ]
+        )
+      }
+    )
+
+    let validator = WorkspaceValidator(
+      globalScopeURL: globalScopeURL,
+      dependencies: dependencies
+    )
+    let snapshot = try validator.validate(workspaceURL: workspaceURL)
+
+    #expect(snapshot.summary.contains("errors=3"))
+    #expect(snapshot.issues.count == 3)
+    #expect(snapshot.issues[0].entityType == .persona)
+    #expect(snapshot.issues[0].filePath == projectPersonaURL.path())
+    #expect(snapshot.issues[0].severity == .error)
+    #expect(snapshot.issues[1].entityType == .kit)
+    #expect(snapshot.issues[1].filePath == globalKitURL.path())
+    #expect(snapshot.issues[2].entityType == .essentials)
+    #expect(snapshot.issues[2].filePath == ambiguousPath)
+  }
+
+  @Test
+  func validateFailsWhenProjectPersonaKitDirectoryIsMissing() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { _ in false },
+      fileExists: { _ in false },
+      defaultGlobalScopeURL: { nil },
+      validateScopes: { _ in
+        ValidationResult(counts: .zero, errors: [])
+      }
+    )
+
+    let validator = WorkspaceValidator(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try validator.validate(workspaceURL: workspaceURL)
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message.contains("Missing PersonaKit directory"))
+    }
+  }
+}

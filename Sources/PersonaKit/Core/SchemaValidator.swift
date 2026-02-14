@@ -57,6 +57,10 @@ struct SchemaValidator {
     var errors: [SchemaValidationError] = []
 
     for root in scopes.loadOrder {
+      if Task.isCancelled {
+        return SchemaValidationError.sort(errors: errors)
+      }
+
       errors.append(contentsOf: validate(root: root, fileManager: fileManager))
     }
 
@@ -74,6 +78,10 @@ struct SchemaValidator {
     var schemaCache: [String: SchemaNode] = [:]
 
     for mapping in mappings {
+      if Task.isCancelled {
+        return SchemaValidationError.sort(errors: errors)
+      }
+
       let directoryURL = root.appendingPathComponent("Packs/\(mapping.directory)")
       var isDirectory: ObjCBool = false
 
@@ -136,6 +144,10 @@ struct SchemaValidator {
       }
 
       for fileURL in sortedFiles {
+        if Task.isCancelled {
+          return SchemaValidationError.sort(errors: errors)
+        }
+
         let relativePath = relativePath(for: fileURL, root: root)
         let data: Data
 

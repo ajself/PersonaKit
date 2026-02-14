@@ -59,6 +59,7 @@ let package = Package(
       name: "PersonaKitTests",
       dependencies: [
         "PersonaKitCore",
+        "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
       ],
       path: "Tests/PersonaKitTests",

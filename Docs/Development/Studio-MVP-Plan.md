@@ -38,6 +38,8 @@ Create a macOS SwiftUI app target that links PersonaKitCore.
 
 # Milestone 1 — Workspace Loading (Read-Only)
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Load project + global scope and show lists.
 
@@ -72,6 +74,8 @@ Load project + global scope and show lists.
 ---
 
 # Milestone 2 — Validation Panel
+
+Status: Completed on February 14, 2026.
 
 ## Goal
 Surface schema validation results.

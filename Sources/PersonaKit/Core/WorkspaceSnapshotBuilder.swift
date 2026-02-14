@@ -1,7 +1,7 @@
 import Foundation
 
 /// Dependency contract for snapshot loading so app code and tests can inject behavior.
-public protocol WorkspaceSnapshotBuilding {
+public protocol WorkspaceSnapshotBuilding: Sendable {
   func build(workspaceURL: URL) throws -> WorkspaceSnapshot
 }
 
@@ -117,7 +117,7 @@ public struct WorkspaceSnapshotBuildError: LocalizedError, Sendable {
 }
 
 /// Loads deterministic, read-only Studio lists from PersonaKit project/global scopes.
-public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
+public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
   private let dependencies: WorkspaceSnapshotBuilderDependencies
   private let globalScopeURL: URL?
 
@@ -156,7 +156,9 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
   /// - Returns: Snapshot containing merged project/global list items.
   /// - Throws: ``WorkspaceSnapshotBuildError`` when project structure is missing or reads fail.
   public func build(workspaceURL: URL) throws -> WorkspaceSnapshot {
-    let projectScopeURL = try resolveProjectScopeURL(workspaceURL: workspaceURL)
+    try checkCancellation()
+
+    let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
     let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScopeURL)
 
     do {
@@ -183,29 +185,6 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
     )
   }
 
-  private func resolveProjectScopeURL(
-    workspaceURL: URL
-  ) throws -> URL {
-    let workspace = workspaceURL.standardizedFileURL
-    let candidate: URL
-
-    if workspace.lastPathComponent == ".personakit" {
-      candidate = workspace
-    } else {
-      candidate = workspace.appendingPathComponent(".personakit")
-    }
-
-    let packsURL = PersonaKitDirectory.packsURL(root: candidate)
-
-    guard dependencies.directoryExists(packsURL) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(candidate.path())."
-      )
-    }
-
-    return candidate
-  }
-
   private static func formatRegistryError(_ error: RegistryError) -> String {
     var parts: [String] = [error.entityType.rawValue]
 
@@ -228,6 +207,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
     let decoder = JSONDecoder()
 
     for root in scopes.loadOrder {
+      try checkCancellation()
+
       let sessionsURL = PersonaKitDirectory.sessionsURL(root: root)
       let files = try listFiles(
         in: sessionsURL,
@@ -236,6 +217,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
       let sourceScope = sourceScope(for: root, scopes: scopes)
 
       for fileURL in files {
+        try checkCancellation()
+
         let data = try readData(fileURL)
         let session = try decode(data: data, as: SessionFile.self, fileURL: fileURL, decoder: decoder)
 
@@ -258,6 +241,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
     var recordsByID: [String: WorkspaceListItem] = [:]
 
     for root in scopes.loadOrder {
+      try checkCancellation()
+
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       let files = try listFiles(
         in: essentialsURL,
@@ -266,6 +251,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
       let sourceScope = sourceScope(for: root, scopes: scopes)
 
       for fileURL in files {
+        try checkCancellation()
+
         let id = fileURL.deletingPathExtension().lastPathComponent
         recordsByID[id] = WorkspaceListItem(
           id: id,
@@ -287,6 +274,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
     let decoder = JSONDecoder()
 
     for root in scopes.loadOrder {
+      try checkCancellation()
+
       let directoryURL = root.appendingPathComponent("Packs/\(T.directoryName)")
       let files = try listFiles(
         in: directoryURL,
@@ -295,6 +284,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
       let sourceScope = sourceScope(for: root, scopes: scopes)
 
       for fileURL in files {
+        try checkCancellation()
+
         let data = try readData(fileURL)
         let entity = try decode(data: data, as: T.self, fileURL: fileURL, decoder: decoder)
 
@@ -314,6 +305,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
     in directoryURL: URL,
     pathSuffix: String
   ) throws -> [URL] {
+    try checkCancellation()
+
     guard dependencies.directoryExists(directoryURL) else {
       return []
     }
@@ -364,27 +357,41 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding {
 
     return .global
   }
+
+  private func checkCancellation() throws {
+    if Task.isCancelled {
+      throw CancellationError()
+    }
+  }
+
+  private func scopeResolver() -> WorkspaceScopeResolver {
+    WorkspaceScopeResolver(
+      directoryExists: dependencies.directoryExists
+    )
+  }
 }
 
 /// Injectable IO and validation hooks for snapshot builder behavior.
 struct WorkspaceSnapshotBuilderDependencies {
-  let directoryExists: (URL) -> Bool
-  let contentsOfDirectory: (URL) throws -> [URL]
-  let readData: (URL) throws -> Data
-  let defaultGlobalScopeURL: () -> URL?
-  let validateRegistry: (ScopeSet) throws -> Void
+  let directoryExists: @Sendable (URL) -> Bool
+  let contentsOfDirectory: @Sendable (URL) throws -> [URL]
+  let readData: @Sendable (URL) throws -> Data
+  let defaultGlobalScopeURL: @Sendable () -> URL?
+  let validateRegistry: @Sendable (ScopeSet) throws -> Void
 
   /// Live filesystem-backed dependency set used by default builder construction.
-  static func live(fileManager: FileManager = .default) -> WorkspaceSnapshotBuilderDependencies {
+  static func live() -> WorkspaceSnapshotBuilderDependencies {
     WorkspaceSnapshotBuilderDependencies(
       directoryExists: { url in
-        var isDirectory: ObjCBool = false
-
-        return fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory)
-          && isDirectory.boolValue
+        WorkspaceScopeResolver.directoryExists(
+          url,
+          fileManager: .default
+        )
       },
       contentsOfDirectory: { url in
-        try fileManager.contentsOfDirectory(
+        let fileManager = FileManager.default
+
+        return try fileManager.contentsOfDirectory(
           at: url,
           includingPropertiesForKeys: nil,
           options: [.skipsHiddenFiles]
@@ -394,19 +401,10 @@ struct WorkspaceSnapshotBuilderDependencies {
         try Data(contentsOf: url)
       },
       defaultGlobalScopeURL: {
-        let candidate = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".personakit")
-        var isDirectory: ObjCBool = false
-
-        guard fileManager.fileExists(atPath: candidate.path, isDirectory: &isDirectory),
-          isDirectory.boolValue
-        else {
-          return nil
-        }
-
-        return candidate.standardizedFileURL
+        WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default)
       },
       validateRegistry: { scopes in
-        _ = try Registry.load(scopes: scopes, fileManager: fileManager)
+        _ = try Registry.load(scopes: scopes, fileManager: .default)
       }
     )
   }
