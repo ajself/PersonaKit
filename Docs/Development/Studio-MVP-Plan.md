@@ -8,6 +8,8 @@ When it is appropriate to commit code pause to review with me first.
 
 # Milestone 0 — App Shell
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Create a macOS SwiftUI app target that links PersonaKitCore.
 

@@ -1,8 +1,9 @@
 import SwiftUI
 
+/// Entry point for the PersonaKit Studio macOS app.
 @main
 struct PersonaKitStudioApp: App {
-  @StateObject private var workspaceStore = WorkspaceStore()
+  @State private var workspaceStore = WorkspaceStore()
 
   var body: some Scene {
     WindowGroup {
