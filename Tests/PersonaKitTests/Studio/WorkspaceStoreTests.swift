@@ -303,6 +303,291 @@ struct WorkspaceStoreTests {
 
     try await store.deleteSession(sessionID: "session-delete")
   }
+
+  @Test
+  func refreshSessionPreviewLoadsPreviewForSelectedSession() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let snapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a.session.json"
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, session in
+          "preview-\(session.id)"
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    await waitFor {
+      store.sessionPreview == "preview-session-a"
+        && !store.isLoadingSessionPreview
+    }
+
+    #expect(store.sessionPreviewErrorMessage == nil)
+  }
+
+  @Test
+  func refreshSessionPreviewPublishesPreviewErrorMessageOnFailure() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let snapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a.session.json"
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, _ in
+          throw WorkspaceSnapshotBuildError(message: "preview failed")
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    await waitFor {
+      store.sessionPreviewErrorMessage == "preview failed"
+        && !store.isLoadingSessionPreview
+    }
+
+    #expect(store.sessionPreview.isEmpty)
+  }
+
+  @Test
+  func newerPreviewResultWinsWhenPreviewLoadsOverlap() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "persona-a",
+          directiveId: "directive-a",
+          fileURL: URL(fileURLWithPath: "/session-a.session.json"),
+          sourceScope: .project
+        ),
+        WorkspaceSessionListItem(
+          id: "session-b",
+          personaId: "persona-b",
+          directiveId: "directive-b",
+          fileURL: URL(fileURLWithPath: "/session-b.session.json"),
+          sourceScope: .project
+        ),
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, session in
+          if session.id == "session-a" {
+            Thread.sleep(forTimeInterval: 0.3)
+            return "preview-a"
+          }
+
+          return "preview-b"
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.count == 2
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first { $0.id == "session-a" })
+    try? await Task.sleep(for: .milliseconds(20))
+    store.refreshSessionPreview(for: store.snapshot.sessions.first { $0.id == "session-b" })
+
+    await waitFor {
+      store.sessionPreview == "preview-b"
+        && !store.isLoadingSessionPreview
+    }
+
+    try? await Task.sleep(for: .milliseconds(350))
+    #expect(store.sessionPreview == "preview-b")
+  }
+
+  @Test
+  func loadWorkspaceRestoresPreviewForSameSessionID() async {
+    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
+    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+
+    let firstSnapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a-first.session.json"
+    )
+    let secondSnapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a-second.session.json"
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { workspaceURL in
+        if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
+          return firstSnapshot
+        }
+
+        return secondSnapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, session in
+          session.fileURL.lastPathComponent
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = firstWorkspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.fileURL.lastPathComponent == "session-a-first.session.json"
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    await waitFor {
+      store.sessionPreview == "session-a-first.session.json"
+    }
+
+    store.workspaceURL = secondWorkspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.fileURL.lastPathComponent == "session-a-second.session.json"
+    }
+
+    await waitFor {
+      store.sessionPreview == "session-a-second.session.json"
+        && !store.isLoadingSessionPreview
+    }
+  }
+
+  @Test
+  func openWorkspacePickerLoadsSelectedWorkspaceFromInjectedPicker() async {
+    let selectedWorkspaceURL = URL(fileURLWithPath: "/PickedWorkspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { workspaceURL in
+        #expect(workspaceURL.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL)
+        return WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspacePicker: StubWorkspacePicker(
+        selectedURL: selectedWorkspaceURL
+      )
+    )
+
+    store.openWorkspacePicker()
+
+    await waitFor {
+      store.workspaceURL?.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL
+    }
+  }
+
+  @Test
+  func copySessionPreviewUsesInjectedPasteboardWriter() throws {
+    let expectedPreview = "preview-to-copy"
+    let store = WorkspaceStore(
+      pasteboardWriter: StubPasteboardWriter(
+        expectedValue: expectedPreview,
+        shouldSucceed: true
+      )
+    )
+
+    store.sessionPreview = expectedPreview
+    try store.copySessionPreviewToPasteboard()
+  }
+
+  @Test
+  func exportSessionPreviewUsesInjectedDestinationPicker() async throws {
+    let destinationURL = URL(fileURLWithPath: "/Exports/preview.md")
+    let expectedPreview = "preview-to-export"
+
+    let store = WorkspaceStore(
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, _ in
+          "unused"
+        },
+        exportPreviewHandler: { preview, destination in
+          #expect(preview == expectedPreview)
+          #expect(destination == destinationURL)
+        }
+      ),
+      previewExportDestinationPicker: StubPreviewExportDestinationPicker(
+        destinationURL: destinationURL
+      )
+    )
+
+    store.sessionPreview = expectedPreview
+    let didExport = try await store.exportSessionPreviewWithSavePanel()
+
+    #expect(didExport)
+  }
+
+  @Test
+  func exportSessionPreviewReturnsFalseWhenDestinationPickerCancels() async throws {
+    let store = WorkspaceStore(
+      previewExportDestinationPicker: StubPreviewExportDestinationPicker(
+        destinationURL: nil
+      )
+    )
+
+    store.sessionPreview = "preview-to-export"
+    let didExport = try await store.exportSessionPreviewWithSavePanel()
+
+    #expect(!didExport)
+  }
 }
 
 private struct StubSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
@@ -373,6 +658,29 @@ private func makeSnapshot(id: String) -> WorkspaceSnapshot {
   )
 }
 
+private func makeSessionSnapshot(
+  sessionID: String,
+  fileName: String
+) -> WorkspaceSnapshot {
+  WorkspaceSnapshot(
+    sessions: [
+      WorkspaceSessionListItem(
+        id: sessionID,
+        personaId: "persona-\(sessionID)",
+        directiveId: "directive-\(sessionID)",
+        fileURL: URL(fileURLWithPath: "/\(fileName)"),
+        sourceScope: .project
+      )
+    ],
+    personas: [],
+    directives: [],
+    kits: [],
+    skills: [],
+    intents: [],
+    essentials: []
+  )
+}
+
 private func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
   WorkspaceValidationSnapshot(
     summary: "Validation summary: personas=1 kits=0 directives=0 intents=0 skills=0 essentials=0 errors=1",
@@ -387,4 +695,55 @@ private func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
       )
     ]
   )
+}
+
+private struct StubSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable {
+  let loadPreviewHandler: @Sendable (URL, WorkspaceSessionListItem) throws -> String
+  let exportPreviewHandler: @Sendable (String, URL) throws -> Void
+
+  func loadPreview(
+    workspaceURL: URL,
+    session: WorkspaceSessionListItem
+  ) throws -> String {
+    try loadPreviewHandler(workspaceURL, session)
+  }
+
+  func exportPreview(
+    _ preview: String,
+    to destinationURL: URL
+  ) throws {
+    try exportPreviewHandler(preview, destinationURL)
+  }
+}
+
+private struct StubWorkspacePicker: WorkspacePicking {
+  let selectedURL: URL?
+
+  @MainActor
+  func pickWorkspaceURL() -> URL? {
+    selectedURL
+  }
+}
+
+private struct StubPreviewExportDestinationPicker: PreviewExportDestinationPicking {
+  let destinationURL: URL?
+
+  @MainActor
+  func pickPreviewDestination(suggestedFilename: String) -> URL? {
+    destinationURL
+  }
+}
+
+private struct StubPasteboardWriter: PasteboardWriting {
+  let expectedValue: String
+  let shouldSucceed: Bool
+
+  @MainActor
+  func writeString(_ value: String) -> Bool {
+    guard value == expectedValue else {
+      return false
+    }
+
+    return shouldSucceed
+  }
 }

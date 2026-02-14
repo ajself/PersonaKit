@@ -133,6 +133,8 @@ Full create/edit/delete workflow for Sessions.
 
 # Milestone 4 — Session Preview + Export
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Display resolved output.
 
