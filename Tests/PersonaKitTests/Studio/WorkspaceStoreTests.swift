@@ -305,6 +305,121 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func newerLibraryEditorLoadResultWinsWhenRequestsOverlap() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let firstItem = WorkspaceListItem(
+      id: "persona-a",
+      displayName: "Persona A",
+      fileURL: URL(fileURLWithPath: "/personas/persona-a.persona.json"),
+      sourceScope: .project
+    )
+    let secondItem = WorkspaceListItem(
+      id: "persona-b",
+      displayName: "Persona B",
+      fileURL: URL(fileURLWithPath: "/personas/persona-b.persona.json"),
+      sourceScope: .project
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { fileURL in
+          if fileURL.lastPathComponent == "persona-a.persona.json" {
+            Thread.sleep(forTimeInterval: 0.3)
+            return #"{"id":"persona-a"}"#
+          }
+
+          return #"{"id":"persona-b"}"#
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    let firstTask = Task {
+      await store.openLibraryEditor(
+        selectedItem: firstItem,
+        entityType: .persona
+      )
+    }
+    try? await Task.sleep(for: .milliseconds(20))
+
+    let secondTask = Task {
+      await store.openLibraryEditor(
+        selectedItem: secondItem,
+        entityType: .persona
+      )
+    }
+
+    let secondResult = await secondTask.value
+    #expect(secondResult?.itemID == "persona-b")
+    #expect(secondResult?.rawJSON == #"{"id":"persona-b"}"#)
+
+    let firstResult = await firstTask.value
+    #expect(firstResult == nil)
+    #expect(!store.isLoadingLibraryEditor)
+  }
+
+  @Test
+  func staleLibrarySaveResultIsIgnoredAfterWorkspaceReload() async {
+    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
+    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let presentation = WorkspaceLibraryEditorPresentation(
+      itemID: "persona-a",
+      entityType: .persona,
+      rawJSON: #"{"id":"persona-a"}"#
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          #"{"id":"persona-a"}"#
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { workspaceURL, _, _, _ in
+          if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
+            Thread.sleep(forTimeInterval: 0.3)
+          }
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = firstWorkspaceURL
+    let saveTask = Task {
+      await store.saveLibraryEditorRawJSON(
+        presentation.rawJSON,
+        presentation: presentation
+      )
+    }
+
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = secondWorkspaceURL
+    store.loadWorkspace()
+
+    let saveResult = await saveTask.value
+
+    #expect(saveResult == nil)
+    #expect(store.libraryActionMessage == nil)
+    #expect(!store.isLoadingLibraryEditor)
+    #expect(store.workspaceURL?.standardizedFileURL == secondWorkspaceURL.standardizedFileURL)
+  }
+
+  @Test
   func refreshSessionPreviewLoadsPreviewForSelectedSession() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let snapshot = makeSessionSnapshot(
@@ -713,6 +828,42 @@ private struct StubSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
     to destinationURL: URL
   ) throws {
     try exportPreviewHandler(preview, destinationURL)
+  }
+}
+
+private struct StubLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
+  let loadRawJSONHandler: @Sendable (URL) throws -> String
+  let validateRawJSONHandler: @Sendable (String, WorkspaceLibraryEntityType, String) throws -> Void
+  let saveRawJSONHandler: @Sendable (URL, String, String, WorkspaceLibraryEntityType) throws -> Void
+  let copyGlobalItemToProjectHandler: @Sendable (URL, WorkspaceListItem, WorkspaceLibraryEntityType) throws -> Void
+
+  func loadRawJSON(fileURL: URL) throws -> String {
+    try loadRawJSONHandler(fileURL)
+  }
+
+  func validateRawJSON(
+    _ rawJSON: String,
+    entityType: WorkspaceLibraryEntityType,
+    expectedID: String
+  ) throws {
+    try validateRawJSONHandler(rawJSON, entityType, expectedID)
+  }
+
+  func saveRawJSON(
+    workspaceURL: URL,
+    itemID: String,
+    rawJSON: String,
+    entityType: WorkspaceLibraryEntityType
+  ) throws {
+    try saveRawJSONHandler(workspaceURL, itemID, rawJSON, entityType)
+  }
+
+  func copyGlobalItemToProject(
+    workspaceURL: URL,
+    item: WorkspaceListItem,
+    entityType: WorkspaceLibraryEntityType
+  ) throws {
+    try copyGlobalItemToProjectHandler(workspaceURL, item, entityType)
   }
 }
 

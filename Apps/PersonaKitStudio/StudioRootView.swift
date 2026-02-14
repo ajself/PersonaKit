@@ -7,6 +7,7 @@ struct StudioRootView: View {
   @State private var selection: SidebarItem? = .sessions
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
+  @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
 
   var body: some View {
     NavigationSplitView {
@@ -74,36 +75,118 @@ struct StudioRootView: View {
   }
 
   private func libraryListView(items: [WorkspaceListItem]) -> some View {
-    List(items, id: \.id, selection: $selectedLibraryItemID) { item in
-      VStack(alignment: .leading, spacing: 6) {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-          Text(item.id)
-            .font(.headline)
+    let selectedItem = selectedLibraryItem(items: items)
+    let entityType = editableEntityTypeForSelection()
+    let canEditRawJSON =
+      selectedItem?.sourceScope == .project
+      && entityType != nil
+      && !workspaceStore.isLoadingLibraryEditor
+    let canCopyToProject =
+      selectedItem?.sourceScope == .global
+      && entityType != nil
+      && !workspaceStore.isLoadingLibraryEditor
 
-          Spacer()
+    return VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        Button("Edit Raw JSON") {
+          openRawJSONEditorForSelectedItem(
+            selectedItem: selectedItem,
+            entityType: entityType
+          )
+        }
+        .disabled(!canEditRawJSON)
 
-          scopeBadge(scope: item.sourceScope)
+        Button("Copy to Project") {
+          copySelectedGlobalItemToProject(
+            selectedItem: selectedItem,
+            entityType: entityType
+          )
+        }
+        .disabled(!canCopyToProject)
+
+        if workspaceStore.isLoadingLibraryEditor {
+          ProgressView()
+            .controlSize(.small)
         }
 
-        if item.displayName != item.id {
-          Text(item.displayName)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-
-        Text(item.fileURL.path())
-          .font(.caption.monospaced())
-          .foregroundStyle(.tertiary)
-          .textSelection(.enabled)
+        Spacer()
       }
-      .padding(.vertical, 4)
-      .tag(Optional(item.id))
+
+      if selection == .essentials {
+        Text(
+          "Raw JSON editing is available for Personas, Directives, Kits, Skills, and Intents. Essentials editing is in Milestone 6."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+      }
+
+      if let libraryActionMessage = workspaceStore.libraryActionMessage {
+        Text(libraryActionMessage)
+          .font(.footnote)
+          .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
+      }
+
+      List(items, id: \.id, selection: $selectedLibraryItemID) { item in
+        VStack(alignment: .leading, spacing: 6) {
+          HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(item.id)
+              .font(.headline)
+
+            Spacer()
+
+            scopeBadge(scope: item.sourceScope)
+          }
+
+          if item.displayName != item.id {
+            Text(item.displayName)
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
+          }
+
+          Text(item.fileURL.path())
+            .font(.caption.monospaced())
+            .foregroundStyle(.tertiary)
+            .textSelection(.enabled)
+        }
+        .padding(.vertical, 4)
+        .tag(Optional(item.id))
+      }
+      .overlay {
+        if items.isEmpty {
+          ContentUnavailableView.search
+        }
+      }
     }
     .searchable(text: $searchText, prompt: "Search \(selection?.title ?? "Items")")
-    .overlay {
-      if items.isEmpty {
-        ContentUnavailableView.search
-      }
+    .sheet(item: $rawJSONEditorPresentation) { presentation in
+      RawJSONEditorView(
+        title: "Edit \(presentation.itemID)",
+        entityDisplayName: presentation.entityType.displayName,
+        initialRawJSON: presentation.rawJSON,
+        onCancel: {
+          rawJSONEditorPresentation = nil
+        },
+        onValidate: { rawJSON in
+          await workspaceStore.validateLibraryEditorRawJSON(
+            rawJSON,
+            presentation: presentation
+          )
+        },
+        onSave: { rawJSON in
+          let saveError = await workspaceStore.saveLibraryEditorRawJSON(
+            rawJSON,
+            presentation: presentation
+          )
+
+          if saveError == nil {
+            await MainActor.run {
+              selectedLibraryItemID = presentation.itemID
+            }
+          }
+
+          return saveError
+        }
+      )
     }
   }
 
@@ -323,6 +406,68 @@ struct StudioRootView: View {
     return String(value.dropLast(suffix.count))
   }
 
+  private func editableEntityTypeForSelection() -> WorkspaceLibraryEntityType? {
+    switch selection {
+    case .some(.personas):
+      return .persona
+    case .some(.directives):
+      return .directive
+    case .some(.kits):
+      return .kit
+    case .some(.skills):
+      return .skill
+    case .some(.intents):
+      return .intent
+    default:
+      return nil
+    }
+  }
+
+  private func selectedLibraryItem(
+    items: [WorkspaceListItem]
+  ) -> WorkspaceListItem? {
+    guard let selectedLibraryItemID else {
+      return nil
+    }
+
+    return items.first { $0.id == selectedLibraryItemID }
+  }
+
+  private func openRawJSONEditorForSelectedItem(
+    selectedItem: WorkspaceListItem?,
+    entityType: WorkspaceLibraryEntityType?
+  ) {
+    Task {
+      let presentation = await workspaceStore.openLibraryEditor(
+        selectedItem: selectedItem,
+        entityType: entityType
+      )
+
+      await MainActor.run {
+        rawJSONEditorPresentation = presentation
+      }
+    }
+  }
+
+  private func copySelectedGlobalItemToProject(
+    selectedItem: WorkspaceListItem?,
+    entityType: WorkspaceLibraryEntityType?
+  ) {
+    Task {
+      let didCopy = await workspaceStore.copySelectedGlobalLibraryItem(
+        selectedItem: selectedItem,
+        entityType: entityType
+      )
+
+      guard didCopy, let selectedItemID = selectedItem?.id else {
+        return
+      }
+
+      await MainActor.run {
+        selectedLibraryItemID = selectedItemID
+      }
+    }
+  }
 }
 
 private struct DiagnosticsNavigationTarget {

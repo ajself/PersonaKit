@@ -96,13 +96,13 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     validPersonaIDs: Set<String>,
     validDirectiveIDs: Set<String>
   ) throws -> String {
-    let sessionID = normalizedRequiredID(draft.id)
+    let sessionID = WorkspaceEntityIDPolicy.normalized(draft.id)
 
     guard !sessionID.isEmpty else {
       throw WorkspaceSessionManagerError.invalidSessionID
     }
 
-    guard isValidSessionID(sessionID) else {
+    guard WorkspaceEntityIDPolicy.isValid(sessionID) else {
       throw WorkspaceSessionManagerError.invalidSessionIDFormat(sessionID)
     }
 
@@ -130,7 +130,7 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     let normalizedOriginalID = normalizedOptionalID(originalSessionID)
 
     if let normalizedOriginalID,
-      !isValidSessionID(normalizedOriginalID)
+      !WorkspaceEntityIDPolicy.isValid(normalizedOriginalID)
     {
       throw WorkspaceSessionManagerError.invalidSessionIDFormat(normalizedOriginalID)
     }
@@ -215,13 +215,13 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     workspaceURL: URL,
     sessionID: String
   ) throws {
-    let normalizedSessionID = normalizedRequiredID(sessionID)
+    let normalizedSessionID = WorkspaceEntityIDPolicy.normalized(sessionID)
 
     guard !normalizedSessionID.isEmpty else {
       throw WorkspaceSessionManagerError.invalidSessionID
     }
 
-    guard isValidSessionID(normalizedSessionID) else {
+    guard WorkspaceEntityIDPolicy.isValid(normalizedSessionID) else {
       throw WorkspaceSessionManagerError.invalidSessionIDFormat(normalizedSessionID)
     }
 
@@ -250,16 +250,12 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     sessionsDirectory.appendingPathComponent("\(sessionID).session.json")
   }
 
-  private func normalizedRequiredID(_ value: String) -> String {
-    value.trimmingCharacters(in: .whitespacesAndNewlines)
-  }
-
   private func normalizedOptionalID(_ value: String?) -> String? {
     guard let value else {
       return nil
     }
 
-    let normalizedValue = normalizedRequiredID(value)
+    let normalizedValue = WorkspaceEntityIDPolicy.normalized(value)
 
     guard !normalizedValue.isEmpty else {
       return nil
@@ -305,22 +301,6 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     }
 
     return normalizedValues
-  }
-
-  private func isValidSessionID(_ value: String) -> Bool {
-    let allowedCharacters = CharacterSet(
-      charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_."
-    )
-
-    if value.rangeOfCharacter(from: allowedCharacters.inverted) != nil {
-      return false
-    }
-
-    if value.hasPrefix(".") {
-      return false
-    }
-
-    return value != "." && value != ".."
   }
 }
 

@@ -199,6 +199,56 @@ struct SchemaValidator {
     return SchemaValidationError.sort(errors: errors)
   }
 
+  /// Validates raw JSON bytes against a specific bundled schema.
+  ///
+  /// - Parameters:
+  ///   - jsonData: UTF-8 JSON payload.
+  ///   - schemaName: Bundled schema filename (for example, `persona.schema.json`).
+  ///   - relativePath: Relative path label used in error output.
+  /// - Returns: Sorted schema validation errors.
+  static func validate(
+    jsonData: Data,
+    schemaName: String,
+    relativePath: String
+  ) -> [SchemaValidationError] {
+    guard let schemaNode = loadSchema(named: schemaName) else {
+      return [
+        SchemaValidationError(
+          relativePath: relativePath,
+          schemaName: schemaName,
+          message: "Missing schema file \(schemaName).",
+          instanceLocation: nil
+        )
+      ]
+    }
+
+    let json: Any
+
+    do {
+      json = try JSONSerialization.jsonObject(with: jsonData)
+    } catch {
+      return [
+        SchemaValidationError(
+          relativePath: relativePath,
+          schemaName: schemaName,
+          message: "Invalid JSON: \(error.localizedDescription)",
+          instanceLocation: nil
+        )
+      ]
+    }
+
+    var errors: [SchemaValidationError] = []
+    schemaNode.validate(
+      value: json,
+      path: "",
+      relativePath: relativePath,
+      schemaName: schemaName,
+      errors: &errors
+    )
+
+    return SchemaValidationError.sort(errors: errors)
+  }
+
   /// Loads and parses a bundled JSON schema by filename.
   private static func loadSchema(named schemaName: String) -> SchemaNode? {
     guard let url = Bundle.module.url(forResource: schemaName, withExtension: nil) else {

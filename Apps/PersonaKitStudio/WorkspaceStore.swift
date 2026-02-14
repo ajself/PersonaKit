@@ -2,6 +2,17 @@ import Foundation
 import Observation
 import PersonaKitCore
 
+/// Raw JSON editor payload used by Studio library editing flows.
+struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {
+  let itemID: String
+  let entityType: WorkspaceLibraryEntityType
+  let rawJSON: String
+
+  var id: String {
+    "\(entityType.rawValue)::\(itemID)"
+  }
+}
+
 /// Main-actor workspace state owner for Studio view rendering.
 @Observable
 @MainActor
@@ -14,6 +25,9 @@ final class WorkspaceStore {
   var sessionPreview: String = ""
   var sessionPreviewErrorMessage: String?
   var isLoadingSessionPreview = false
+  var libraryActionMessage: String?
+  var libraryActionIsError = false
+  var isLoadingLibraryEditor = false
 
   private let operationRunner: WorkspaceOperationRunner
   private let workspacePicker: any WorkspacePicking
@@ -23,17 +37,23 @@ final class WorkspaceStore {
   private var validationTask: Task<Void, Never>?
   private var sessionPreviewTask: Task<Void, Never>?
   private var previewSessionID: String?
+  private var libraryActionRequestID: Int = 0
 
   init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
     sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
+    libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
     sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
     workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
     previewExportDestinationPicker: any PreviewExportDestinationPicking =
       PreviewExportDestinationPickerClient(),
     pasteboardWriter: any PasteboardWriting = PasteboardClient()
   ) {
+    let resolvedLibraryEntityManager =
+      libraryEntityManager
+      ?? WorkspaceLibraryEntityManager()
+
     let resolvedSessionPreviewManager =
       sessionPreviewManager
       ?? WorkspaceSessionPreviewManager(sessionManager: sessionManager)
@@ -42,6 +62,7 @@ final class WorkspaceStore {
       snapshotBuilder: snapshotBuilder,
       workspaceValidator: workspaceValidator,
       sessionManager: sessionManager,
+      libraryEntityManager: resolvedLibraryEntityManager,
       sessionPreviewManager: resolvedSessionPreviewManager
     )
     self.workspacePicker = workspacePicker
@@ -61,6 +82,8 @@ final class WorkspaceStore {
 
   /// Reloads workspace data into the current snapshot and error state.
   func loadWorkspace() {
+    invalidateLibraryActionRequests()
+
     guard let workspaceURL else {
       loadTask?.cancel()
       validationTask?.cancel()
@@ -69,6 +92,7 @@ final class WorkspaceStore {
       loadErrorMessage = nil
       validation = .empty
       validationErrorMessage = nil
+      resetLibraryActionState()
       return
     }
 
@@ -178,6 +202,182 @@ final class WorkspaceStore {
     )
 
     loadWorkspace()
+  }
+
+  /// Loads raw JSON for a selected project-scoped library item.
+  func openLibraryEditor(
+    selectedItem: WorkspaceListItem?,
+    entityType: WorkspaceLibraryEntityType?
+  ) async -> WorkspaceLibraryEditorPresentation? {
+    guard let selectedItem else {
+      return nil
+    }
+
+    guard let entityType else {
+      setLibraryAction(
+        message: "Raw JSON editing is not available for this category.",
+        isError: true
+      )
+      return nil
+    }
+
+    guard selectedItem.sourceScope == .project else {
+      setLibraryAction(
+        message: "Global items are read-only. Use Copy to Project first.",
+        isError: true
+      )
+      return nil
+    }
+
+    let requestID = beginLibraryActionRequest()
+    let requestWorkspaceURL = workspaceURL
+
+    do {
+      let rawJSON = try await operationRunner.loadLibraryItemRawJSON(fileURL: selectedItem.fileURL)
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      return WorkspaceLibraryEditorPresentation(
+        itemID: selectedItem.id,
+        entityType: entityType,
+        rawJSON: rawJSON
+      )
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return nil
+    }
+  }
+
+  /// Validates raw JSON from the library editor and returns an optional error message.
+  func validateLibraryEditorRawJSON(
+    _ rawJSON: String,
+    presentation: WorkspaceLibraryEditorPresentation
+  ) async -> String? {
+    do {
+      try await operationRunner.validateLibraryItemRawJSON(
+        rawJSON,
+        itemID: presentation.itemID,
+        entityType: presentation.entityType
+      )
+
+      return nil
+    } catch {
+      return error.localizedDescription
+    }
+  }
+
+  /// Saves raw JSON from the library editor and returns an optional error message.
+  func saveLibraryEditorRawJSON(
+    _ rawJSON: String,
+    presentation: WorkspaceLibraryEditorPresentation
+  ) async -> String? {
+    let requestID = beginLibraryActionRequest()
+    let requestWorkspaceURL = workspaceURL
+
+    do {
+      let workspaceURL = try requiredWorkspaceURL()
+
+      try await operationRunner.saveLibraryItemRawJSON(
+        workspaceURL: workspaceURL,
+        itemID: presentation.itemID,
+        rawJSON: rawJSON,
+        entityType: presentation.entityType
+      )
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: "Saved \(presentation.itemID).",
+        isError: false
+      )
+
+      loadWorkspace()
+      return nil
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return error.localizedDescription
+    }
+  }
+
+  /// Copies a selected global library item into project scope and updates status state.
+  func copySelectedGlobalLibraryItem(
+    selectedItem: WorkspaceListItem?,
+    entityType: WorkspaceLibraryEntityType?
+  ) async -> Bool {
+    guard let selectedItem else {
+      return false
+    }
+
+    guard let entityType else {
+      setLibraryAction(
+        message: "Raw JSON copy is not available for this category.",
+        isError: true
+      )
+      return false
+    }
+
+    guard selectedItem.sourceScope == .global else {
+      setLibraryAction(
+        message: "Copy to Project is only available for global items.",
+        isError: true
+      )
+      return false
+    }
+
+    let requestID = beginLibraryActionRequest()
+    let requestWorkspaceURL = workspaceURL
+
+    do {
+      let workspaceURL = try requiredWorkspaceURL()
+
+      try await operationRunner.copyLibraryItemToProject(
+        workspaceURL: workspaceURL,
+        item: selectedItem,
+        entityType: entityType
+      )
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return false
+      }
+
+      setLibraryAction(
+        message: "Copied \(selectedItem.id) to project scope.",
+        isError: false
+      )
+
+      loadWorkspace()
+      return true
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return false
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+      return false
+    }
   }
 
   /// Loads markdown preview text for the selected session.
@@ -362,23 +562,70 @@ final class WorkspaceStore {
 
     return workspaceURL
   }
+
+  private func beginLibraryActionRequest() -> Int {
+    libraryActionRequestID += 1
+    isLoadingLibraryEditor = true
+    libraryActionMessage = nil
+    libraryActionIsError = false
+
+    return libraryActionRequestID
+  }
+
+  private func completeLibraryActionRequest(
+    requestID: Int,
+    workspaceURL: URL?
+  ) -> Bool {
+    guard libraryActionRequestID == requestID else {
+      return false
+    }
+
+    guard self.workspaceURL == workspaceURL else {
+      return false
+    }
+
+    isLoadingLibraryEditor = false
+    return true
+  }
+
+  private func invalidateLibraryActionRequests() {
+    libraryActionRequestID += 1
+    isLoadingLibraryEditor = false
+  }
+
+  private func resetLibraryActionState() {
+    libraryActionMessage = nil
+    libraryActionIsError = false
+    isLoadingLibraryEditor = false
+  }
+
+  private func setLibraryAction(
+    message: String,
+    isError: Bool
+  ) {
+    libraryActionMessage = message
+    libraryActionIsError = isError
+  }
 }
 
 private actor WorkspaceOperationRunner {
   private let snapshotBuilder: any WorkspaceSnapshotBuilding
   private let workspaceValidator: any WorkspaceValidating
   private let sessionManager: any WorkspaceSessionManaging
+  private let libraryEntityManager: any WorkspaceLibraryEntityManaging
   private let sessionPreviewManager: any WorkspaceSessionPreviewManaging
 
   init(
     snapshotBuilder: any WorkspaceSnapshotBuilding,
     workspaceValidator: any WorkspaceValidating,
     sessionManager: any WorkspaceSessionManaging,
+    libraryEntityManager: any WorkspaceLibraryEntityManaging,
     sessionPreviewManager: any WorkspaceSessionPreviewManaging
   ) {
     self.snapshotBuilder = snapshotBuilder
     self.workspaceValidator = workspaceValidator
     self.sessionManager = sessionManager
+    self.libraryEntityManager = libraryEntityManager
     self.sessionPreviewManager = sessionPreviewManager
   }
 
@@ -417,6 +664,48 @@ private actor WorkspaceOperationRunner {
     try sessionManager.deleteSession(
       workspaceURL: workspaceURL,
       sessionID: sessionID
+    )
+  }
+
+  func loadLibraryItemRawJSON(fileURL: URL) throws -> String {
+    try libraryEntityManager.loadRawJSON(fileURL: fileURL)
+  }
+
+  func validateLibraryItemRawJSON(
+    _ rawJSON: String,
+    itemID: String,
+    entityType: WorkspaceLibraryEntityType
+  ) throws {
+    try libraryEntityManager.validateRawJSON(
+      rawJSON,
+      entityType: entityType,
+      expectedID: itemID
+    )
+  }
+
+  func saveLibraryItemRawJSON(
+    workspaceURL: URL,
+    itemID: String,
+    rawJSON: String,
+    entityType: WorkspaceLibraryEntityType
+  ) throws {
+    try libraryEntityManager.saveRawJSON(
+      workspaceURL: workspaceURL,
+      itemID: itemID,
+      rawJSON: rawJSON,
+      entityType: entityType
+    )
+  }
+
+  func copyLibraryItemToProject(
+    workspaceURL: URL,
+    item: WorkspaceListItem,
+    entityType: WorkspaceLibraryEntityType
+  ) throws {
+    try libraryEntityManager.copyGlobalItemToProject(
+      workspaceURL: workspaceURL,
+      item: item,
+      entityType: entityType
     )
   }
 

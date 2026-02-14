@@ -168,7 +168,7 @@ struct MCPPromptService: Sendable {
         resolvedSession: resolved,
         kitOverrides: input.kitOverrides
       )
-      
+
       return output + "\n"
     } catch let error as RegistryLoadError {
       throw MCPError.invalidParams(formatRegistryErrors(error.errors))
@@ -182,9 +182,9 @@ private func formatExportError(_ error: ExportError) -> String {
   switch error {
   case .validationFailed(let result):
     var lines: [String] = [result.summary]
-    
+
     lines.append(contentsOf: result.errors.map { $0.lineDescription() })
-    
+
     return lines.joined(separator: "\n")
   case .resolutionFailed(let resolutionError):
     return formatResolutionErrors(resolutionError.errors)
@@ -229,18 +229,18 @@ private func formatRegistryErrors(_ errors: [RegistryError]) -> String {
 
 private func formatRegistryError(_ error: RegistryError) -> String {
   var parts: [String] = []
-  
+
   parts.append(error.entityType.rawValue)
-  
+
   if let id = error.id {
     parts.append(id)
   }
-  
+
   if let relativePath = error.relativePath {
     parts.append(relativePath)
   }
-  
+
   parts.append(error.message)
-  
+
   return "Error: " + parts.joined(separator: " ")
 }

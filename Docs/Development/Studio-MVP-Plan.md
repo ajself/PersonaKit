@@ -156,6 +156,8 @@ Display resolved output.
 
 # Milestone 5 — Library Editing (Raw JSON First)
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Enable editing of Project-scope entities.
 
