@@ -40,6 +40,8 @@ In your project root:
       personas/
       directives/
       kits/
+      intents/
+      skills/
       essentials/
 ```
 

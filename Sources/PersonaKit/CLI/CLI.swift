@@ -26,6 +26,10 @@ struct PersonaKitCLI {
                 return 0
             } catch is CleanExit {
                 return 0
+            } catch let error as ArgumentParser.ValidationError {
+                var stderrStream = StandardError()
+                stderrStream.write("Error: \(error.message)\n")
+                return 1
             } catch is ExitCode {
                 return 1
             } catch {
@@ -54,6 +58,7 @@ struct PersonaKitCommand: ParsableCommand {
 
 struct InitCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "init",
         abstract: "Initialize a PersonaKit root."
     )
 
@@ -67,6 +72,7 @@ struct InitCommand: ParsableCommand {
 
 struct ValidateCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "validate",
         abstract: "Validate PersonaKit packs."
     )
 
@@ -88,6 +94,7 @@ struct ValidateCommand: ParsableCommand {
 
 struct ExportCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "export",
         abstract: "Export a session prompt."
     )
 
@@ -145,6 +152,7 @@ struct ExportCommand: ParsableCommand {
 
 struct ListCLICommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "list",
         abstract: "List entities from loaded scopes."
     )
 
@@ -173,6 +181,7 @@ struct ListCLICommand: ParsableCommand {
 
 struct GraphCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "graph",
         abstract: "Render a session graph."
     )
 
@@ -227,6 +236,7 @@ struct GraphCommand: ParsableCommand {
 
 struct MCPCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "mcp",
         abstract: "Run the PersonaKit MCP server."
     )
 

@@ -39,11 +39,19 @@ func snapshotFiles(at root: URL) throws -> [String: Data] {
 }
 
 func repoRootURL() -> URL {
-    let fileURL = URL(fileURLWithPath: #filePath)
-    return fileURL
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
+    let fileManager = FileManager.default
+    var candidate = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+
+    while candidate.path != "/" {
+        let packageURL = candidate.appendingPathComponent("Package.swift")
+        if fileManager.fileExists(atPath: packageURL.path) {
+            return candidate
+        }
+
+        candidate.deleteLastPathComponent()
+    }
+
+    preconditionFailure("Unable to locate repo root from \(#filePath)")
 }
 
 func fixturesRootURL() -> URL {

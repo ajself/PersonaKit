@@ -4,6 +4,38 @@ PersonaKit is the authoritative context compiler. This repo uses a small,
 deterministic validation harness against the canonical kit in
 `Fixtures/kit-root` so contributors can confirm behavior and stability.
 
+## Implementation architecture
+
+The implementation is intentionally small, with clear responsibilities split by
+file group under `Sources/PersonaKit/`:
+
+- CLI surface:
+  - `main.swift`
+  - `CLI.swift` (command definitions, scope/session option parsing, error
+    reporting)
+- Core context pipeline:
+  - `Validator.swift`
+  - `Registry.swift`
+  - `Resolver.swift`
+  - `Exporter.swift`
+  - `GraphPrinter.swift`
+- MCP server surface:
+  - `MCPServerRunner.swift`
+  - `MCPResources.swift`
+  - `MCPPrompts.swift`
+  - `MCPTools.swift`
+- Schema resources:
+  - `Schemas/*.json`, loaded via package resources and used by
+    `SchemaValidator.swift` during validation.
+
+Data flow is:
+1. CLI or MCP receives the request.
+2. Scopes are resolved (`project`, `global`, or explicit `--root`).
+3. Validator checks pack files and schema conformance.
+4. Registry loads entities by id from `Packs/`.
+5. Resolver assembles the resolved session from Persona + Directive + Kits.
+6. Export/Graph rendering emits deterministic output.
+
 ## Standard workflow (manual)
 
 Run these steps from the repo root:
