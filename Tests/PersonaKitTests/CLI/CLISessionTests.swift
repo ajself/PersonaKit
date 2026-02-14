@@ -48,4 +48,40 @@ struct CLISessionTests {
         #expect(status == 0)
         #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
     }
+
+    @Test
+    func exportRequiresDirectiveWhenPersonaProvided() {
+        var status: Int32 = 0
+        let stderrOutput = captureStderr {
+            status = PersonaKitCLI().run(arguments: [
+                "personakit",
+                "export",
+                "--persona",
+                "senior-swiftui-engineer",
+            ])
+        }
+
+        #expect(status == 1)
+        #expect(stderrOutput.contains("Error:"))
+    }
+
+    @Test
+    func exportRejectsMixingSessionWithPersonaDirectiveFlags() {
+        var status: Int32 = 0
+        let stderrOutput = captureStderr {
+            status = PersonaKitCLI().run(arguments: [
+                "personakit",
+                "export",
+                "--session",
+                "senior-swiftui-engineer_apply-style",
+                "--persona",
+                "senior-swiftui-engineer",
+                "--directive",
+                "apply-style",
+            ])
+        }
+
+        #expect(status == 1)
+        #expect(stderrOutput.contains("Error:"))
+    }
 }
