@@ -1,5 +1,5 @@
 import Testing
-@testable import PersonaKit
+@testable import PersonaKitCore
 
 struct CLIMCPCommandTests {
     @Test

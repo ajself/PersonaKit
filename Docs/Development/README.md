@@ -7,24 +7,17 @@ deterministic validation harness against the canonical kit in
 ## Implementation architecture
 
 The implementation is intentionally small, with clear responsibilities split by
-file group under `Sources/PersonaKit/`:
+target and file group:
 
-- CLI surface:
-  - `main.swift`
-  - `CLI.swift` (command definitions, scope/session option parsing, error
-    reporting)
-- Core context pipeline:
-  - `Validator.swift`
-  - `Registry.swift`
-  - `Resolver.swift`
-  - `Exporter.swift`
-  - `GraphPrinter.swift`
-- MCP server surface:
-  - `MCPServerRunner.swift`
-  - `MCPResources.swift`
-  - `MCPPrompts.swift`
-  - `MCPTools.swift`
-- Schema resources:
+- `PersonaKit` (executable adapter):
+  - `Sources/PersonaKitApp/main.swift`
+- `PersonaKitCore` (library):
+  - `Sources/PersonaKit/CLI/` (command definitions, scope/session option
+    parsing, error reporting)
+  - `Sources/PersonaKit/Core/` (validator, registry, resolver, exporter, graph)
+  - `Sources/PersonaKit/MCP/` (MCP server resources, prompts, tools, runner)
+  - `Sources/PersonaKit/Support/` (locators, starter kit, shared helpers)
+  - Schema resources:
   - `Schemas/*.json`, loaded via package resources and used by
     `SchemaValidator.swift` during validation.
 

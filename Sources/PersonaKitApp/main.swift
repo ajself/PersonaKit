@@ -1,0 +1,3 @@
+import PersonaKitCore
+
+PersonaKitEntrypoint.main()

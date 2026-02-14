@@ -10,6 +10,10 @@ let package = Package(
         .executable(
             name: "personakit",
             targets: ["PersonaKit"]
+        ),
+        .library(
+            name: "PersonaKitCore",
+            targets: ["PersonaKitCore"]
         )
     ],
     dependencies: [
@@ -21,8 +25,8 @@ let package = Package(
         )
     ],
     targets: [
-        .executableTarget(
-            name: "PersonaKit",
+        .target(
+            name: "PersonaKitCore",
             dependencies: [
                 "JSONSchema",
                 .product(name: "MCP", package: "swift-sdk"),
@@ -33,10 +37,17 @@ let package = Package(
                 .process("Schemas")
             ]
         ),
+        .executableTarget(
+            name: "PersonaKit",
+            dependencies: [
+                "PersonaKitCore"
+            ],
+            path: "Sources/PersonaKitApp"
+        ),
         .testTarget(
             name: "PersonaKitTests",
             dependencies: [
-                "PersonaKit",
+                "PersonaKitCore",
                 .product(name: "MCP", package: "swift-sdk")
             ],
             path: "Tests/PersonaKitTests",

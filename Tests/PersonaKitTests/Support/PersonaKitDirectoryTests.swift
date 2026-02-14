@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import PersonaKit
+@testable import PersonaKitCore
 
 struct PersonaKitDirectoryTests {
     @Test

@@ -1,6 +1,6 @@
 import MCP
 import Testing
-@testable import PersonaKit
+@testable import PersonaKitCore
 
 struct MCPPromptTests {
     @Test
