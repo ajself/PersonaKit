@@ -96,6 +96,8 @@ Surface schema validation results.
 
 # Milestone 3 — Session Editor
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Full create/edit/delete workflow for Sessions.
 

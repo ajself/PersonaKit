@@ -1,12 +1,17 @@
 import PersonaKitCore
 import SwiftUI
 
-/// Root Studio split view with sidebar navigation and read-only list content.
+/// Root Studio split view with sidebar navigation, session editing, and diagnostics.
 struct StudioRootView: View {
   let workspaceStore: WorkspaceStore
   @State private var selection: SidebarItem? = .sessions
+  @State private var selectedSessionID: String?
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
+  @State private var sessionEditorPresentation: SessionEditorPresentation?
+  @State private var pendingSessionDeletion: WorkspaceSessionListItem?
+  @State private var isLoadingSessionDraft = false
+  @State private var sessionActionErrorMessage: String?
 
   var body: some View {
     NavigationSplitView {
@@ -73,33 +78,111 @@ struct StudioRootView: View {
   private var sessionsView: some View {
     let items = filteredSessions(workspaceStore.snapshot.sessions)
 
-    return List(items, id: \.id) { session in
-      VStack(alignment: .leading, spacing: 6) {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-          Text(session.id)
-            .font(.headline)
-
-          Spacer()
-
-          scopeBadge(scope: session.sourceScope)
+    return VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        Button("New Session") {
+          sessionEditorPresentation = SessionEditorPresentation(
+            title: "New Session",
+            originalSessionID: nil,
+            draft: workspaceStore.defaultSessionDraft()
+          )
         }
 
-        Text("persona: \(session.personaId) · directive: \(session.directiveId)")
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
+        Button("Edit Session") {
+          openEditorForSelectedSession(items: items)
+        }
+        .disabled(selectedSession(items: items) == nil || isLoadingSessionDraft)
 
-        Text(session.fileURL.path())
-          .font(.caption.monospaced())
-          .foregroundStyle(.tertiary)
-          .textSelection(.enabled)
+        Button("Delete Session") {
+          requestDeleteForSelectedSession(items: items)
+        }
+        .disabled(!canDeleteSelectedSession(items: items))
+
+        if isLoadingSessionDraft {
+          ProgressView()
+            .controlSize(.small)
+        }
+
+        Spacer()
       }
-      .padding(.vertical, 4)
+
+      if let sessionActionErrorMessage {
+        Text(sessionActionErrorMessage)
+          .font(.footnote)
+          .foregroundStyle(.red)
+      }
+
+      List(items, id: \.id, selection: $selectedSessionID) { session in
+        VStack(alignment: .leading, spacing: 6) {
+          HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(session.id)
+              .font(.headline)
+
+            Spacer()
+
+            scopeBadge(scope: session.sourceScope)
+          }
+
+          Text("persona: \(session.personaId) · directive: \(session.directiveId)")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+
+          Text(session.fileURL.path())
+            .font(.caption.monospaced())
+            .foregroundStyle(.tertiary)
+            .textSelection(.enabled)
+        }
+        .padding(.vertical, 4)
+        .tag(Optional(session.id))
+      }
+      .overlay {
+        if items.isEmpty {
+          ContentUnavailableView.search
+        }
+      }
     }
     .searchable(text: $searchText, prompt: "Search Sessions")
-    .overlay {
-      if items.isEmpty {
-        ContentUnavailableView.search
+    .sheet(item: $sessionEditorPresentation) { presentation in
+      SessionEditorView(
+        title: presentation.title,
+        initialDraft: presentation.draft,
+        personaIDs: workspaceStore.snapshot.personas.map(\.id).sorted(),
+        directiveIDs: workspaceStore.snapshot.directives.map(\.id).sorted(),
+        kitIDs: workspaceStore.snapshot.kits.map(\.id).sorted(),
+        onCancel: {
+          sessionEditorPresentation = nil
+        },
+        onSave: { draft in
+          await saveSessionDraft(
+            draft,
+            originalSessionID: presentation.originalSessionID
+          )
+        }
+      )
+    }
+    .alert(
+      "Delete Session?",
+      isPresented: Binding(
+        get: {
+          pendingSessionDeletion != nil
+        },
+        set: { isPresented in
+          if !isPresented {
+            pendingSessionDeletion = nil
+          }
+        }
+      ),
+      presenting: pendingSessionDeletion
+    ) { session in
+      Button("Delete", role: .destructive) {
+        deleteSession(session)
       }
+
+      Button("Cancel", role: .cancel) {
+        pendingSessionDeletion = nil
+      }
+    } message: { session in
+      Text("Delete session \"\(session.id)\" from project scope?")
     }
   }
 
@@ -367,12 +450,138 @@ struct StudioRootView: View {
 
     return String(value.dropLast(suffix.count))
   }
+
+  private func selectedSession(
+    items: [WorkspaceSessionListItem]
+  ) -> WorkspaceSessionListItem? {
+    guard let selectedSessionID else {
+      return nil
+    }
+
+    return items.first { $0.id == selectedSessionID }
+  }
+
+  private func canDeleteSelectedSession(
+    items: [WorkspaceSessionListItem]
+  ) -> Bool {
+    if isLoadingSessionDraft {
+      return false
+    }
+
+    guard let selectedSession = selectedSession(items: items) else {
+      return false
+    }
+
+    return selectedSession.sourceScope == .project
+  }
+
+  private func openEditorForSelectedSession(items: [WorkspaceSessionListItem]) {
+    guard let selectedSession = selectedSession(items: items) else {
+      return
+    }
+
+    isLoadingSessionDraft = true
+    sessionActionErrorMessage = nil
+
+    Task {
+      do {
+        let draft = try await workspaceStore.loadSessionDraft(for: selectedSession)
+
+        await MainActor.run {
+          let originalSessionID: String?
+          let title: String
+
+          if selectedSession.sourceScope == .project {
+            originalSessionID = selectedSession.id
+            title = "Edit Session"
+          } else {
+            originalSessionID = nil
+            title = "Copy Session to Project"
+          }
+
+          sessionEditorPresentation = SessionEditorPresentation(
+            title: title,
+            originalSessionID: originalSessionID,
+            draft: draft
+          )
+          isLoadingSessionDraft = false
+        }
+      } catch {
+        await MainActor.run {
+          sessionActionErrorMessage = error.localizedDescription
+          isLoadingSessionDraft = false
+        }
+      }
+    }
+  }
+
+  private func requestDeleteForSelectedSession(items: [WorkspaceSessionListItem]) {
+    guard let selectedSession = selectedSession(items: items) else {
+      return
+    }
+
+    if selectedSession.sourceScope != .project {
+      sessionActionErrorMessage = "Global sessions are read-only. Create a project session to edit or delete."
+      return
+    }
+
+    pendingSessionDeletion = selectedSession
+    sessionActionErrorMessage = nil
+  }
+
+  private func deleteSession(_ session: WorkspaceSessionListItem) {
+    pendingSessionDeletion = nil
+    sessionActionErrorMessage = nil
+
+    Task {
+      do {
+        try await workspaceStore.deleteSession(sessionID: session.id)
+
+        await MainActor.run {
+          if selectedSessionID == session.id {
+            selectedSessionID = nil
+          }
+        }
+      } catch {
+        await MainActor.run {
+          sessionActionErrorMessage = error.localizedDescription
+        }
+      }
+    }
+  }
+
+  private func saveSessionDraft(
+    _ draft: WorkspaceSessionDraft,
+    originalSessionID: String?
+  ) async -> String? {
+    do {
+      let savedSessionID = try await workspaceStore.saveSession(
+        draft: draft,
+        originalSessionID: originalSessionID
+      )
+      selectedSessionID = savedSessionID
+      sessionActionErrorMessage = nil
+      return nil
+    } catch {
+      return error.localizedDescription
+    }
+  }
 }
 
 private struct DiagnosticsNavigationTarget {
   let sidebarItem: SidebarItem
   let selectedLibraryItemID: String?
   let searchText: String
+}
+
+private struct SessionEditorPresentation: Identifiable {
+  let title: String
+  let originalSessionID: String?
+  let draft: WorkspaceSessionDraft
+
+  var id: String {
+    "\(title)::\(originalSessionID ?? "new")"
+  }
 }
 
 private enum SidebarItem: Hashable {

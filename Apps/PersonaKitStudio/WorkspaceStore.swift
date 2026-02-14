@@ -19,11 +19,13 @@ final class WorkspaceStore {
 
   init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
-    workspaceValidator: any WorkspaceValidating = WorkspaceValidator()
+    workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
+    sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager()
   ) {
     self.operationRunner = WorkspaceOperationRunner(
       snapshotBuilder: snapshotBuilder,
-      workspaceValidator: workspaceValidator
+      workspaceValidator: workspaceValidator,
+      sessionManager: sessionManager
     )
   }
 
@@ -115,6 +117,54 @@ final class WorkspaceStore {
     runValidationTask(for: workspaceURL)
   }
 
+  /// Creates a prefilled draft for new-session creation.
+  func defaultSessionDraft() -> WorkspaceSessionDraft {
+    WorkspaceSessionDraft(
+      id: "",
+      personaId: snapshot.personas.first?.id ?? "",
+      directiveId: snapshot.directives.first?.id ?? "",
+      kitOverrides: []
+    )
+  }
+
+  /// Loads an editable session draft from an existing on-disk session file.
+  func loadSessionDraft(
+    for session: WorkspaceSessionListItem
+  ) async throws -> WorkspaceSessionDraft {
+    try await operationRunner.loadSessionDraft(fileURL: session.fileURL)
+  }
+
+  /// Saves a session draft to project scope and refreshes workspace data.
+  func saveSession(
+    draft: WorkspaceSessionDraft,
+    originalSessionID: String?
+  ) async throws -> String {
+    let workspaceURL = try requiredWorkspaceURL()
+
+    let sessionID = try await operationRunner.saveSession(
+      workspaceURL: workspaceURL,
+      draft: draft,
+      originalSessionID: originalSessionID,
+      validPersonaIDs: Set(snapshot.personas.map(\.id)),
+      validDirectiveIDs: Set(snapshot.directives.map(\.id))
+    )
+
+    loadWorkspace()
+    return sessionID
+  }
+
+  /// Deletes a project-scoped session file and refreshes workspace data.
+  func deleteSession(sessionID: String) async throws {
+    let workspaceURL = try requiredWorkspaceURL()
+
+    try await operationRunner.deleteSession(
+      workspaceURL: workspaceURL,
+      sessionID: sessionID
+    )
+
+    loadWorkspace()
+  }
+
   private func runValidationTask(for workspaceURL: URL) {
     validationTask?.cancel()
     validation = WorkspaceValidationSnapshot(
@@ -156,18 +206,31 @@ final class WorkspaceStore {
       }
     }
   }
+
+  private func requiredWorkspaceURL() throws -> URL {
+    guard let workspaceURL else {
+      throw WorkspaceSnapshotBuildError(
+        message: "No workspace is currently selected."
+      )
+    }
+
+    return workspaceURL
+  }
 }
 
 private actor WorkspaceOperationRunner {
   private let snapshotBuilder: any WorkspaceSnapshotBuilding
   private let workspaceValidator: any WorkspaceValidating
+  private let sessionManager: any WorkspaceSessionManaging
 
   init(
     snapshotBuilder: any WorkspaceSnapshotBuilding,
-    workspaceValidator: any WorkspaceValidating
+    workspaceValidator: any WorkspaceValidating,
+    sessionManager: any WorkspaceSessionManaging
   ) {
     self.snapshotBuilder = snapshotBuilder
     self.workspaceValidator = workspaceValidator
+    self.sessionManager = sessionManager
   }
 
   func loadSnapshot(workspaceURL: URL) throws -> WorkspaceSnapshot {
@@ -176,5 +239,35 @@ private actor WorkspaceOperationRunner {
 
   func validate(workspaceURL: URL) throws -> WorkspaceValidationSnapshot {
     try workspaceValidator.validate(workspaceURL: workspaceURL)
+  }
+
+  func loadSessionDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
+    try sessionManager.loadDraft(fileURL: fileURL)
+  }
+
+  func saveSession(
+    workspaceURL: URL,
+    draft: WorkspaceSessionDraft,
+    originalSessionID: String?,
+    validPersonaIDs: Set<String>,
+    validDirectiveIDs: Set<String>
+  ) throws -> String {
+    try sessionManager.saveSession(
+      workspaceURL: workspaceURL,
+      draft: draft,
+      originalSessionID: originalSessionID,
+      validPersonaIDs: validPersonaIDs,
+      validDirectiveIDs: validDirectiveIDs
+    )
+  }
+
+  func deleteSession(
+    workspaceURL: URL,
+    sessionID: String
+  ) throws {
+    try sessionManager.deleteSession(
+      workspaceURL: workspaceURL,
+      sessionID: sessionID
+    )
   }
 }
