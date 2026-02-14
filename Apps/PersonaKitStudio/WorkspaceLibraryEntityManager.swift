@@ -101,7 +101,10 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
       expectedID: normalizedItemID
     )
 
-    let projectScopeURL = try resolveProjectScopeURL(workspaceURL)
+    let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
+      workspaceURL,
+      directoryExists: dependencies.directoryExists
+    )
     let destinationURL = destinationFileURL(
       projectScopeURL: projectScopeURL,
       itemID: normalizedItemID,
@@ -137,27 +140,6 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
       rawJSON: rawJSON,
       entityType: entityType
     )
-  }
-
-  private func resolveProjectScopeURL(_ workspaceURL: URL) throws -> URL {
-    let workspace = workspaceURL.standardizedFileURL
-    let projectScopeURL: URL
-
-    if workspace.lastPathComponent == ".personakit" {
-      projectScopeURL = workspace
-    } else {
-      projectScopeURL = workspace.appendingPathComponent(".personakit")
-    }
-
-    let packsURL = projectScopeURL.appendingPathComponent("Packs")
-
-    guard dependencies.directoryExists(packsURL) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(projectScopeURL.path())."
-      )
-    }
-
-    return projectScopeURL
   }
 
   private func destinationFileURL(

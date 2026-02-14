@@ -114,7 +114,10 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
       throw WorkspaceSessionManagerError.invalidDirectiveID(draft.directiveId)
     }
 
-    let projectScopeURL = try resolveProjectScopeURL(workspaceURL)
+    let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
+      workspaceURL,
+      directoryExists: dependencies.directoryExists
+    )
     let sessionsDirectory = projectScopeURL.appendingPathComponent("Sessions")
 
     do {
@@ -225,7 +228,10 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
       throw WorkspaceSessionManagerError.invalidSessionIDFormat(normalizedSessionID)
     }
 
-    let projectScopeURL = try resolveProjectScopeURL(workspaceURL)
+    let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
+      workspaceURL,
+      directoryExists: dependencies.directoryExists
+    )
     let sessionsDirectory = projectScopeURL.appendingPathComponent("Sessions")
     let fileURL = sessionFileURL(
       sessionsDirectory: sessionsDirectory,
@@ -262,27 +268,6 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     }
 
     return normalizedValue
-  }
-
-  private func resolveProjectScopeURL(_ workspaceURL: URL) throws -> URL {
-    let workspace = workspaceURL.standardizedFileURL
-    let projectScopeURL: URL
-
-    if workspace.lastPathComponent == ".personakit" {
-      projectScopeURL = workspace
-    } else {
-      projectScopeURL = workspace.appendingPathComponent(".personakit")
-    }
-
-    let packsURL = projectScopeURL.appendingPathComponent("Packs")
-
-    guard dependencies.directoryExists(packsURL) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(projectScopeURL.path())."
-      )
-    }
-
-    return projectScopeURL
   }
 
   private func normalizedKitOverrides(_ values: [String]) -> [String]? {

@@ -6,10 +6,24 @@ import PersonaKitCore
 struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {
   let itemID: String
   let entityType: WorkspaceLibraryEntityType
+  let fileURL: URL
   let rawJSON: String
+  let workspaceURL: URL
 
   var id: String {
-    "\(entityType.rawValue)::\(itemID)"
+    "\(workspaceURL.path())::\(entityType.rawValue)::\(itemID)"
+  }
+}
+
+/// Markdown editor payload used by Studio essentials editing flows.
+struct WorkspaceEssentialEditorPresentation: Equatable, Identifiable, Sendable {
+  let fileURL: URL
+  let itemID: String
+  let markdown: String
+  let workspaceURL: URL
+
+  var id: String {
+    "\(workspaceURL.path())::\(itemID)"
   }
 }
 
@@ -43,6 +57,7 @@ final class WorkspaceStore {
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
     sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
+    essentialManager: (any WorkspaceEssentialManaging)? = nil,
     libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
     sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
     workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
@@ -50,6 +65,10 @@ final class WorkspaceStore {
       PreviewExportDestinationPickerClient(),
     pasteboardWriter: any PasteboardWriting = PasteboardClient()
   ) {
+    let resolvedEssentialManager =
+      essentialManager
+      ?? WorkspaceEssentialManager()
+
     let resolvedLibraryEntityManager =
       libraryEntityManager
       ?? WorkspaceLibraryEntityManager()
@@ -62,6 +81,7 @@ final class WorkspaceStore {
       snapshotBuilder: snapshotBuilder,
       workspaceValidator: workspaceValidator,
       sessionManager: sessionManager,
+      essentialManager: resolvedEssentialManager,
       libraryEntityManager: resolvedLibraryEntityManager,
       sessionPreviewManager: resolvedSessionPreviewManager
     )
@@ -229,20 +249,111 @@ final class WorkspaceStore {
       return nil
     }
 
+    guard
+      let projectItem = libraryItemFromSnapshot(
+        matching: selectedItem,
+        entityType: entityType,
+        sourceScope: .project
+      )
+    else {
+      setLibraryAction(
+        message:
+          "Selected item is not a project library entity in the current snapshot. Reload the workspace and try again.",
+        isError: true
+      )
+      return nil
+    }
+
+    guard let requestWorkspaceURL = workspaceURL?.standardizedFileURL else {
+      setLibraryAction(
+        message: "No workspace is currently selected.",
+        isError: true
+      )
+      return nil
+    }
+
     let requestID = beginLibraryActionRequest()
-    let requestWorkspaceURL = workspaceURL
 
     do {
-      let rawJSON = try await operationRunner.loadLibraryItemRawJSON(fileURL: selectedItem.fileURL)
+      let rawJSON = try await operationRunner.loadLibraryItemRawJSON(fileURL: projectItem.fileURL)
 
       guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
         return nil
       }
 
       return WorkspaceLibraryEditorPresentation(
-        itemID: selectedItem.id,
+        itemID: projectItem.id,
         entityType: entityType,
-        rawJSON: rawJSON
+        fileURL: projectItem.fileURL.standardizedFileURL,
+        rawJSON: rawJSON,
+        workspaceURL: requestWorkspaceURL
+      )
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return nil
+    }
+  }
+
+  /// Loads markdown for a selected project-scoped essential.
+  func openEssentialEditor(
+    selectedItem: WorkspaceListItem?
+  ) async -> WorkspaceEssentialEditorPresentation? {
+    guard let selectedItem else {
+      return nil
+    }
+
+    guard selectedItem.sourceScope == .project else {
+      setLibraryAction(
+        message: "Global essentials are read-only. Use Copy to Project first.",
+        isError: true
+      )
+      return nil
+    }
+
+    guard
+      let projectEssential = essentialItemFromSnapshot(
+        matching: selectedItem,
+        sourceScope: .project
+      )
+    else {
+      setLibraryAction(
+        message:
+          "Selected item is not a project essential in the current snapshot. Reload the workspace and try again.",
+        isError: true
+      )
+      return nil
+    }
+
+    guard let requestWorkspaceURL = workspaceURL?.standardizedFileURL else {
+      setLibraryAction(
+        message: "No workspace is currently selected.",
+        isError: true
+      )
+      return nil
+    }
+
+    let requestID = beginLibraryActionRequest()
+
+    do {
+      let markdown = try await operationRunner.loadEssentialMarkdown(fileURL: projectEssential.fileURL)
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      return WorkspaceEssentialEditorPresentation(
+        fileURL: projectEssential.fileURL.standardizedFileURL,
+        itemID: projectEssential.id,
+        markdown: markdown,
+        workspaceURL: requestWorkspaceURL
       )
     } catch {
       guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
@@ -276,20 +387,139 @@ final class WorkspaceStore {
     }
   }
 
+  /// Saves markdown from the essentials editor and returns an optional error message.
+  func saveEssentialEditorMarkdown(
+    _ markdown: String,
+    presentation: WorkspaceEssentialEditorPresentation
+  ) async -> String? {
+    guard let currentWorkspaceURL = workspaceURL?.standardizedFileURL else {
+      let message = "No workspace is currently selected."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
+    guard currentWorkspaceURL == presentation.workspaceURL.standardizedFileURL else {
+      let message =
+        "Workspace changed while this editor was open. Close and reopen the editor before saving."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
+    guard
+      let projectEssential = projectEssentialItem(
+        id: presentation.itemID,
+        fileURL: presentation.fileURL
+      )
+    else {
+      let message =
+        "Selected essential is not available in project scope. Reload the workspace and try again."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
+    let requestID = beginLibraryActionRequest()
+    let requestWorkspaceURL = currentWorkspaceURL
+
+    do {
+      try await operationRunner.saveEssentialMarkdown(
+        workspaceURL: currentWorkspaceURL,
+        itemID: projectEssential.id,
+        markdown: markdown
+      )
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: "Saved \(projectEssential.id).",
+        isError: false
+      )
+
+      loadWorkspace()
+      return nil
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return nil
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return error.localizedDescription
+    }
+  }
+
   /// Saves raw JSON from the library editor and returns an optional error message.
   func saveLibraryEditorRawJSON(
     _ rawJSON: String,
     presentation: WorkspaceLibraryEditorPresentation
   ) async -> String? {
+    guard let currentWorkspaceURL = workspaceURL?.standardizedFileURL else {
+      let message = "No workspace is currently selected."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
+    guard currentWorkspaceURL == presentation.workspaceURL.standardizedFileURL else {
+      let message =
+        "Workspace changed while this editor was open. Close and reopen the editor before saving."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
+    guard
+      let projectItem = projectLibraryItem(
+        itemID: presentation.itemID,
+        fileURL: presentation.fileURL,
+        entityType: presentation.entityType
+      )
+    else {
+      let message =
+        "Selected item is not available in project scope. Reload the workspace and try again."
+
+      setLibraryAction(
+        message: message,
+        isError: true
+      )
+
+      return message
+    }
+
     let requestID = beginLibraryActionRequest()
-    let requestWorkspaceURL = workspaceURL
+    let requestWorkspaceURL = currentWorkspaceURL
 
     do {
-      let workspaceURL = try requiredWorkspaceURL()
-
       try await operationRunner.saveLibraryItemRawJSON(
-        workspaceURL: workspaceURL,
-        itemID: presentation.itemID,
+        workspaceURL: currentWorkspaceURL,
+        itemID: projectItem.id,
         rawJSON: rawJSON,
         entityType: presentation.entityType
       )
@@ -299,7 +529,7 @@ final class WorkspaceStore {
       }
 
       setLibraryAction(
-        message: "Saved \(presentation.itemID).",
+        message: "Saved \(projectItem.id).",
         isError: false
       )
 
@@ -344,6 +574,21 @@ final class WorkspaceStore {
       return false
     }
 
+    guard
+      let globalItem = libraryItemFromSnapshot(
+        matching: selectedItem,
+        entityType: entityType,
+        sourceScope: .global
+      )
+    else {
+      setLibraryAction(
+        message:
+          "Selected item is not a global library entity in the current snapshot. Reload the workspace and try again.",
+        isError: true
+      )
+      return false
+    }
+
     let requestID = beginLibraryActionRequest()
     let requestWorkspaceURL = workspaceURL
 
@@ -352,7 +597,7 @@ final class WorkspaceStore {
 
       try await operationRunner.copyLibraryItemToProject(
         workspaceURL: workspaceURL,
-        item: selectedItem,
+        item: globalItem,
         entityType: entityType
       )
 
@@ -361,7 +606,72 @@ final class WorkspaceStore {
       }
 
       setLibraryAction(
-        message: "Copied \(selectedItem.id) to project scope.",
+        message: "Copied \(globalItem.id) to project scope.",
+        isError: false
+      )
+
+      loadWorkspace()
+      return true
+    } catch {
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return false
+      }
+
+      setLibraryAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+      return false
+    }
+  }
+
+  /// Copies a selected global essential into project scope and updates status state.
+  func copySelectedGlobalEssentialToProject(
+    selectedItem: WorkspaceListItem?
+  ) async -> Bool {
+    guard let selectedItem else {
+      return false
+    }
+
+    guard selectedItem.sourceScope == .global else {
+      setLibraryAction(
+        message: "Copy to Project is only available for global essentials.",
+        isError: true
+      )
+      return false
+    }
+
+    guard
+      let globalEssential = essentialItemFromSnapshot(
+        matching: selectedItem,
+        sourceScope: .global
+      )
+    else {
+      setLibraryAction(
+        message:
+          "Selected item is not a global essential in the current snapshot. Reload the workspace and try again.",
+        isError: true
+      )
+      return false
+    }
+
+    let requestID = beginLibraryActionRequest()
+    let requestWorkspaceURL = workspaceURL
+
+    do {
+      let workspaceURL = try requiredWorkspaceURL()
+
+      try await operationRunner.copyGlobalEssentialToProject(
+        workspaceURL: workspaceURL,
+        item: globalEssential
+      )
+
+      guard completeLibraryActionRequest(requestID: requestID, workspaceURL: requestWorkspaceURL) else {
+        return false
+      }
+
+      setLibraryAction(
+        message: "Copied \(globalEssential.id) to project scope.",
         isError: false
       )
 
@@ -563,6 +873,77 @@ final class WorkspaceStore {
     return workspaceURL
   }
 
+  private func essentialItemFromSnapshot(
+    matching selectedItem: WorkspaceListItem,
+    sourceScope: WorkspaceSourceScope
+  ) -> WorkspaceListItem? {
+    let selectedFileURL = selectedItem.fileURL.standardizedFileURL
+
+    return snapshot.essentials.first { item in
+      item.id == selectedItem.id
+        && item.sourceScope == sourceScope
+        && item.fileURL.standardizedFileURL == selectedFileURL
+    }
+  }
+
+  private func projectEssentialItem(
+    id: String,
+    fileURL: URL
+  ) -> WorkspaceListItem? {
+    let standardizedFileURL = fileURL.standardizedFileURL
+
+    return snapshot.essentials.first { item in
+      item.id == id
+        && item.sourceScope == .project
+        && item.fileURL.standardizedFileURL == standardizedFileURL
+    }
+  }
+
+  private func libraryItemFromSnapshot(
+    matching selectedItem: WorkspaceListItem,
+    entityType: WorkspaceLibraryEntityType,
+    sourceScope: WorkspaceSourceScope
+  ) -> WorkspaceListItem? {
+    let selectedFileURL = selectedItem.fileURL.standardizedFileURL
+
+    return libraryItems(for: entityType).first { item in
+      item.id == selectedItem.id
+        && item.sourceScope == sourceScope
+        && item.fileURL.standardizedFileURL == selectedFileURL
+    }
+  }
+
+  private func projectLibraryItem(
+    itemID: String,
+    fileURL: URL,
+    entityType: WorkspaceLibraryEntityType
+  ) -> WorkspaceListItem? {
+    let standardizedFileURL = fileURL.standardizedFileURL
+
+    return libraryItems(for: entityType).first { item in
+      item.id == itemID
+        && item.sourceScope == .project
+        && item.fileURL.standardizedFileURL == standardizedFileURL
+    }
+  }
+
+  private func libraryItems(
+    for entityType: WorkspaceLibraryEntityType
+  ) -> [WorkspaceListItem] {
+    switch entityType {
+    case .directive:
+      return snapshot.directives
+    case .intent:
+      return snapshot.intents
+    case .kit:
+      return snapshot.kits
+    case .persona:
+      return snapshot.personas
+    case .skill:
+      return snapshot.skills
+    }
+  }
+
   private func beginLibraryActionRequest() -> Int {
     libraryActionRequestID += 1
     isLoadingLibraryEditor = true
@@ -612,6 +993,7 @@ private actor WorkspaceOperationRunner {
   private let snapshotBuilder: any WorkspaceSnapshotBuilding
   private let workspaceValidator: any WorkspaceValidating
   private let sessionManager: any WorkspaceSessionManaging
+  private let essentialManager: any WorkspaceEssentialManaging
   private let libraryEntityManager: any WorkspaceLibraryEntityManaging
   private let sessionPreviewManager: any WorkspaceSessionPreviewManaging
 
@@ -619,12 +1001,14 @@ private actor WorkspaceOperationRunner {
     snapshotBuilder: any WorkspaceSnapshotBuilding,
     workspaceValidator: any WorkspaceValidating,
     sessionManager: any WorkspaceSessionManaging,
+    essentialManager: any WorkspaceEssentialManaging,
     libraryEntityManager: any WorkspaceLibraryEntityManaging,
     sessionPreviewManager: any WorkspaceSessionPreviewManaging
   ) {
     self.snapshotBuilder = snapshotBuilder
     self.workspaceValidator = workspaceValidator
     self.sessionManager = sessionManager
+    self.essentialManager = essentialManager
     self.libraryEntityManager = libraryEntityManager
     self.sessionPreviewManager = sessionPreviewManager
   }
@@ -664,6 +1048,32 @@ private actor WorkspaceOperationRunner {
     try sessionManager.deleteSession(
       workspaceURL: workspaceURL,
       sessionID: sessionID
+    )
+  }
+
+  func loadEssentialMarkdown(fileURL: URL) throws -> String {
+    try essentialManager.loadMarkdown(fileURL: fileURL)
+  }
+
+  func saveEssentialMarkdown(
+    workspaceURL: URL,
+    itemID: String,
+    markdown: String
+  ) throws {
+    try essentialManager.saveMarkdown(
+      workspaceURL: workspaceURL,
+      itemID: itemID,
+      markdown: markdown
+    )
+  }
+
+  func copyGlobalEssentialToProject(
+    workspaceURL: URL,
+    item: WorkspaceListItem
+  ) throws {
+    try essentialManager.copyGlobalEssentialToProject(
+      workspaceURL: workspaceURL,
+      item: item
     )
   }
 

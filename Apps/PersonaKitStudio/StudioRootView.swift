@@ -7,6 +7,7 @@ struct StudioRootView: View {
   @State private var selection: SidebarItem? = .sessions
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
+  @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
 
   var body: some View {
@@ -27,6 +28,10 @@ struct StudioRootView: View {
       .navigationTitle("PersonaKit Studio")
     } detail: {
       detailView
+    }
+    .onChange(of: workspaceStore.workspaceURL) { _, _ in
+      markdownEditorPresentation = nil
+      rawJSONEditorPresentation = nil
     }
   }
 
@@ -76,31 +81,52 @@ struct StudioRootView: View {
 
   private func libraryListView(items: [WorkspaceListItem]) -> some View {
     let selectedItem = selectedLibraryItem(items: items)
+    let isEssentialsSelection = selection == .essentials
     let entityType = editableEntityTypeForSelection()
     let canEditRawJSON =
-      selectedItem?.sourceScope == .project
+      !isEssentialsSelection
+      && selectedItem?.sourceScope == .project
       && entityType != nil
+      && !workspaceStore.isLoadingLibraryEditor
+    let canEditMarkdown =
+      isEssentialsSelection
+      && selectedItem?.sourceScope == .project
       && !workspaceStore.isLoadingLibraryEditor
     let canCopyToProject =
       selectedItem?.sourceScope == .global
-      && entityType != nil
+      && (isEssentialsSelection || entityType != nil)
       && !workspaceStore.isLoadingLibraryEditor
 
     return VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 8) {
-        Button("Edit Raw JSON") {
-          openRawJSONEditorForSelectedItem(
-            selectedItem: selectedItem,
-            entityType: entityType
-          )
+        if isEssentialsSelection {
+          Button("Edit Markdown") {
+            openMarkdownEditorForSelectedItem(
+              selectedItem: selectedItem
+            )
+          }
+          .disabled(!canEditMarkdown)
+        } else {
+          Button("Edit Raw JSON") {
+            openRawJSONEditorForSelectedItem(
+              selectedItem: selectedItem,
+              entityType: entityType
+            )
+          }
+          .disabled(!canEditRawJSON)
         }
-        .disabled(!canEditRawJSON)
 
         Button("Copy to Project") {
-          copySelectedGlobalItemToProject(
-            selectedItem: selectedItem,
-            entityType: entityType
-          )
+          if isEssentialsSelection {
+            copySelectedGlobalEssentialToProject(
+              selectedItem: selectedItem
+            )
+          } else {
+            copySelectedGlobalItemToProject(
+              selectedItem: selectedItem,
+              entityType: entityType
+            )
+          }
         }
         .disabled(!canCopyToProject)
 
@@ -110,14 +136,6 @@ struct StudioRootView: View {
         }
 
         Spacer()
-      }
-
-      if selection == .essentials {
-        Text(
-          "Raw JSON editing is available for Personas, Directives, Kits, Skills, and Intents. Essentials editing is in Milestone 6."
-        )
-        .font(.footnote)
-        .foregroundStyle(.secondary)
       }
 
       if let libraryActionMessage = workspaceStore.libraryActionMessage {
@@ -158,6 +176,29 @@ struct StudioRootView: View {
       }
     }
     .searchable(text: $searchText, prompt: "Search \(selection?.title ?? "Items")")
+    .sheet(item: $markdownEditorPresentation) { presentation in
+      MarkdownEditorView(
+        title: "Edit \(presentation.itemID)",
+        initialMarkdown: presentation.markdown,
+        onCancel: {
+          markdownEditorPresentation = nil
+        },
+        onSave: { markdown in
+          let saveError = await workspaceStore.saveEssentialEditorMarkdown(
+            markdown,
+            presentation: presentation
+          )
+
+          if saveError == nil {
+            await MainActor.run {
+              selectedLibraryItemID = presentation.itemID
+            }
+          }
+
+          return saveError
+        }
+      )
+    }
     .sheet(item: $rawJSONEditorPresentation) { presentation in
       RawJSONEditorView(
         title: "Edit \(presentation.itemID)",
@@ -449,6 +490,20 @@ struct StudioRootView: View {
     }
   }
 
+  private func openMarkdownEditorForSelectedItem(
+    selectedItem: WorkspaceListItem?
+  ) {
+    Task {
+      let presentation = await workspaceStore.openEssentialEditor(
+        selectedItem: selectedItem
+      )
+
+      await MainActor.run {
+        markdownEditorPresentation = presentation
+      }
+    }
+  }
+
   private func copySelectedGlobalItemToProject(
     selectedItem: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?
@@ -457,6 +512,24 @@ struct StudioRootView: View {
       let didCopy = await workspaceStore.copySelectedGlobalLibraryItem(
         selectedItem: selectedItem,
         entityType: entityType
+      )
+
+      guard didCopy, let selectedItemID = selectedItem?.id else {
+        return
+      }
+
+      await MainActor.run {
+        selectedLibraryItemID = selectedItemID
+      }
+    }
+  }
+
+  private func copySelectedGlobalEssentialToProject(
+    selectedItem: WorkspaceListItem?
+  ) {
+    Task {
+      let didCopy = await workspaceStore.copySelectedGlobalEssentialToProject(
+        selectedItem: selectedItem
       )
 
       guard didCopy, let selectedItemID = selectedItem?.id else {

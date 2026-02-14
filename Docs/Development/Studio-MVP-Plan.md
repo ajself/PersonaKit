@@ -184,6 +184,8 @@ Enable editing of Project-scope entities.
 
 # Milestone 6 — Essentials Editor
 
+Status: Completed on February 14, 2026.
+
 ## Goal
 Edit Markdown essentials.
 
