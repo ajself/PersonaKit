@@ -20,7 +20,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
   }
 
   /// Creates a snapshot builder with injected dependencies (for tests).
-  init(
+  public init(
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceSnapshotBuilderDependencies
   ) {
@@ -256,12 +256,27 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
 }
 
 /// Injectable IO and validation hooks for snapshot builder behavior.
-struct WorkspaceSnapshotBuilderDependencies {
+public struct WorkspaceSnapshotBuilderDependencies: Sendable {
   let directoryExists: @Sendable (URL) -> Bool
   let contentsOfDirectory: @Sendable (URL) throws -> [URL]
   let readData: @Sendable (URL) throws -> Data
   let defaultGlobalScopeURL: @Sendable () -> URL?
   let validateRegistry: @Sendable (ScopeSet) throws -> Void
+
+  /// Creates snapshot builder dependencies with caller-provided IO behavior.
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    contentsOfDirectory: @escaping @Sendable (URL) throws -> [URL],
+    readData: @escaping @Sendable (URL) throws -> Data,
+    defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
+    validateRegistry: @escaping @Sendable (ScopeSet) throws -> Void
+  ) {
+    self.directoryExists = directoryExists
+    self.contentsOfDirectory = contentsOfDirectory
+    self.readData = readData
+    self.defaultGlobalScopeURL = defaultGlobalScopeURL
+    self.validateRegistry = validateRegistry
+  }
 
   /// Live filesystem-backed dependency set used by default builder construction.
   static func live() -> WorkspaceSnapshotBuilderDependencies {
