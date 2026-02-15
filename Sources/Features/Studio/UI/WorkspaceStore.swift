@@ -59,15 +59,12 @@ public final class WorkspaceStore {
     libraryFeatureModel.isLoadingEditor
   }
 
-  private let operationRunner: WorkspaceOperationRunner
+  private let loadFeatureModel: WorkspaceLoadFeatureModel
+  private let systemFeatureModel: WorkspaceSystemFeatureModel
   private let libraryFeatureModel: WorkspaceLibraryFeatureModel
   private let sessionEditorFeatureModel: WorkspaceSessionEditorFeatureModel
   private let sessionFeatureModel: WorkspaceSessionFeatureModel
   private let validationFeatureModel: WorkspaceValidationFeatureModel
-  private let workspacePicker: any WorkspacePicking
-  private let workspaceInitializer: WorkspaceInitializer
-  private let fileRevealer: any FileRevealing
-  private var loadTask: Task<Void, Never>?
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -103,10 +100,12 @@ public final class WorkspaceStore {
       libraryEntityManager: resolvedLibraryEntityManager,
       sessionPreviewManager: resolvedSessionPreviewManager
     )
-    self.operationRunner = operationRunner
-    self.workspacePicker = workspacePicker
-    self.workspaceInitializer = workspaceInitializer
-    self.fileRevealer = fileRevealer
+    self.loadFeatureModel = WorkspaceLoadFeatureModel(operationRunner: operationRunner)
+    self.systemFeatureModel = WorkspaceSystemFeatureModel(
+      workspacePicker: workspacePicker,
+      workspaceInitializer: workspaceInitializer,
+      fileRevealer: fileRevealer
+    )
     self.libraryFeatureModel = WorkspaceLibraryFeatureModel(operationRunner: operationRunner)
     self.sessionEditorFeatureModel = WorkspaceSessionEditorFeatureModel(
       operationRunner: operationRunner
@@ -123,24 +122,24 @@ public final class WorkspaceStore {
 
   /// Presents the folder picker and loads the selected workspace snapshot.
   public func openWorkspacePicker() {
-    guard let selectedURL = workspacePicker.pickWorkspaceURL() else {
+    guard let selectedURL = systemFeatureModel.pickWorkspaceURL() else {
       return
     }
 
-    workspaceURL = selectedURL.standardizedFileURL
+    workspaceURL = selectedURL
     loadWorkspace()
   }
 
   /// Creates a minimal PersonaKit folder structure at the selected workspace and reloads state.
   func initializeWorkspaceStructure() {
-    guard let workspaceURL else {
-      return
-    }
-
     do {
-      try workspaceInitializer.initialize(
-        at: workspaceURL
-      )
+      guard
+        try systemFeatureModel.initializeWorkspaceStructure(
+          at: workspaceURL
+        )
+      else {
+        return
+      }
 
       loadWorkspace()
     } catch {
@@ -155,9 +154,9 @@ public final class WorkspaceStore {
     libraryFeatureModel.invalidateRequests()
 
     guard let workspaceURL else {
-      loadTask?.cancel()
+      loadFeatureModel.cancelLoadTask()
       validationFeatureModel.cancelValidationTask()
-      clearSessionPreview()
+      sessionFeatureModel.clearPreview()
       snapshot = .empty
       loadErrorMessage = nil
       canInitializeWorkspaceStructure = false
@@ -167,68 +166,45 @@ public final class WorkspaceStore {
       return
     }
 
-    loadTask?.cancel()
+    loadFeatureModel.cancelLoadTask()
     validationFeatureModel.cancelValidationTask()
     sessionFeatureModel.cancelPreviewTask()
 
-    loadTask = Task { [workspaceURL] in
-      do {
-        let snapshot = try await operationRunner.loadSnapshot(workspaceURL: workspaceURL)
-
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
+    loadFeatureModel.loadWorkspace(
+      workspaceURL: workspaceURL,
+      currentWorkspaceURL: { self.workspaceURL },
+      onLoaded: { [workspaceURL] snapshot in
         self.snapshot = snapshot
-        loadErrorMessage = nil
-        canInitializeWorkspaceStructure = false
-        validation = .empty
-        validationErrorMessage = nil
-        restoreSessionPreviewIfPossible()
-        runValidationTask(for: workspaceURL)
-      } catch let error as MissingPersonaKitDirectoryError {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        snapshot = .empty
-        loadErrorMessage = error.localizedDescription
-        canInitializeWorkspaceStructure = true
-        validation = .empty
-        validationErrorMessage = nil
-        clearSessionPreview()
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        snapshot = .empty
-        loadErrorMessage = error.message
-        canInitializeWorkspaceStructure = false
-        validation = .empty
-        validationErrorMessage = nil
-        clearSessionPreview()
-      } catch {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        snapshot = .empty
-        loadErrorMessage = error.localizedDescription
-        canInitializeWorkspaceStructure = false
-        validation = .empty
-        validationErrorMessage = nil
-        clearSessionPreview()
+        self.loadErrorMessage = nil
+        self.canInitializeWorkspaceStructure = false
+        self.validation = .empty
+        self.validationErrorMessage = nil
+        self.sessionFeatureModel.restorePreviewIfPossible(
+          snapshot: self.snapshot,
+          workspaceURL: self.workspaceURL
+        )
+        self.validationFeatureModel.runValidation(
+          workspaceURL: workspaceURL,
+          snapshotAtValidationStart: self.snapshot
+        )
+      },
+      onMissingPersonaKitDirectory: { error in
+        self.snapshot = .empty
+        self.loadErrorMessage = error.localizedDescription
+        self.canInitializeWorkspaceStructure = true
+        self.validation = .empty
+        self.validationErrorMessage = nil
+        self.sessionFeatureModel.clearPreview()
+      },
+      onLoadFailure: { message in
+        self.snapshot = .empty
+        self.loadErrorMessage = message
+        self.canInitializeWorkspaceStructure = false
+        self.validation = .empty
+        self.validationErrorMessage = nil
+        self.sessionFeatureModel.clearPreview()
       }
-    }
+    )
   }
 
   /// Runs validator checks and refreshes diagnostics state.
@@ -239,7 +215,10 @@ public final class WorkspaceStore {
       return
     }
 
-    runValidationTask(for: workspaceURL)
+    validationFeatureModel.runValidation(
+      workspaceURL: workspaceURL,
+      snapshotAtValidationStart: snapshot
+    )
   }
 
   /// Creates a prefilled draft for new-session creation.
@@ -396,39 +375,15 @@ public final class WorkspaceStore {
 
   /// Reveals a file in Finder.
   func revealInFinder(fileURL: URL) {
-    fileRevealer.reveal(fileURL.standardizedFileURL)
+    systemFeatureModel.revealInFinder(fileURL: fileURL)
   }
 
   /// Resolves a diagnostics file path and reveals the resulting URL in Finder when possible.
   func revealValidationIssueInFinder(filePath: String) {
-    guard
-      let fileURL = WorkspaceSnapshotLookup.resolveValidationIssueFileURL(
-        filePath,
-        workspaceURL: workspaceURL,
-        snapshot: snapshot
-      )
-    else {
-      return
-    }
-
-    fileRevealer.reveal(fileURL)
-  }
-
-  private func runValidationTask(for workspaceURL: URL) {
-    validationFeatureModel.runValidation(
+    systemFeatureModel.revealValidationIssueInFinder(
+      filePath: filePath,
       workspaceURL: workspaceURL,
-      snapshotAtValidationStart: snapshot
-    )
-  }
-
-  private func clearSessionPreview() {
-    sessionFeatureModel.clearPreview()
-  }
-
-  private func restoreSessionPreviewIfPossible() {
-    sessionFeatureModel.restorePreviewIfPossible(
-      snapshot: snapshot,
-      workspaceURL: workspaceURL
+      snapshot: snapshot
     )
   }
 
