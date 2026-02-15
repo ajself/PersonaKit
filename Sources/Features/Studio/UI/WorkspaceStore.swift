@@ -295,11 +295,13 @@ public final class WorkspaceStore {
     }
 
     guard
-      let projectItem = libraryItemFromSnapshot(
-        matching: selectedItem,
-        entityType: entityType,
-        sourceScope: .project
-      )
+      let projectItem = WorkspaceSnapshotLookup.libraryItem(
+        snapshot: snapshot,
+        itemID: selectedItem.id,
+        entityType: entityType
+      ),
+      projectItem.sourceScope == .project,
+      projectItem.fileURL.standardizedFileURL == selectedItem.fileURL.standardizedFileURL
     else {
       setLibraryAction(
         message:
@@ -364,10 +366,12 @@ public final class WorkspaceStore {
     }
 
     guard
-      let projectEssential = essentialItemFromSnapshot(
-        matching: selectedItem,
-        sourceScope: .project
-      )
+      let projectEssential = WorkspaceSnapshotLookup.essentialItem(
+        snapshot: snapshot,
+        itemID: selectedItem.id
+      ),
+      projectEssential.sourceScope == .project,
+      projectEssential.fileURL.standardizedFileURL == selectedItem.fileURL.standardizedFileURL
     else {
       setLibraryAction(
         message:
@@ -461,10 +465,11 @@ public final class WorkspaceStore {
     }
 
     guard
-      let projectEssential = projectEssentialItem(
-        id: presentation.itemID,
-        fileURL: presentation.fileURL
-      )
+      let projectEssential = WorkspaceSnapshotLookup.projectEssentialItem(
+        snapshot: snapshot,
+        itemID: presentation.itemID
+      ),
+      projectEssential.fileURL.standardizedFileURL == presentation.fileURL.standardizedFileURL
     else {
       let message =
         "Selected essential is not available in project scope. Reload the workspace and try again."
@@ -541,11 +546,12 @@ public final class WorkspaceStore {
     }
 
     guard
-      let projectItem = projectLibraryItem(
+      let projectItem = WorkspaceSnapshotLookup.projectLibraryItem(
+        snapshot: snapshot,
         itemID: presentation.itemID,
-        fileURL: presentation.fileURL,
         entityType: presentation.entityType
-      )
+      ),
+      projectItem.fileURL.standardizedFileURL == presentation.fileURL.standardizedFileURL
     else {
       let message =
         "Selected item is not available in project scope. Reload the workspace and try again."
@@ -620,11 +626,13 @@ public final class WorkspaceStore {
     }
 
     guard
-      let globalItem = libraryItemFromSnapshot(
-        matching: selectedItem,
-        entityType: entityType,
-        sourceScope: .global
-      )
+      let globalItem = WorkspaceSnapshotLookup.libraryItem(
+        snapshot: snapshot,
+        itemID: selectedItem.id,
+        entityType: entityType
+      ),
+      globalItem.sourceScope == .global,
+      globalItem.fileURL.standardizedFileURL == selectedItem.fileURL.standardizedFileURL
     else {
       setLibraryAction(
         message:
@@ -687,10 +695,12 @@ public final class WorkspaceStore {
     }
 
     guard
-      let globalEssential = essentialItemFromSnapshot(
-        matching: selectedItem,
-        sourceScope: .global
-      )
+      let globalEssential = WorkspaceSnapshotLookup.essentialItem(
+        snapshot: snapshot,
+        itemID: selectedItem.id
+      ),
+      globalEssential.sourceScope == .global,
+      globalEssential.fileURL.standardizedFileURL == selectedItem.fileURL.standardizedFileURL
     else {
       setLibraryAction(
         message:
@@ -845,7 +855,13 @@ public final class WorkspaceStore {
 
   /// Resolves a diagnostics file path and reveals the resulting URL in Finder when possible.
   func revealValidationIssueInFinder(filePath: String) {
-    guard let fileURL = resolveValidationIssueFileURL(filePath) else {
+    guard
+      let fileURL = WorkspaceSnapshotLookup.resolveValidationIssueFileURL(
+        filePath,
+        workspaceURL: workspaceURL,
+        snapshot: snapshot
+      )
+    else {
       return
     }
 
@@ -936,139 +952,6 @@ public final class WorkspaceStore {
     return workspaceURL
   }
 
-  private func resolveValidationIssueFileURL(_ filePath: String) -> URL? {
-    let normalizedPath = filePath.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    guard !normalizedPath.isEmpty else {
-      return nil
-    }
-
-    if normalizedPath.hasPrefix("/") {
-      return URL(fileURLWithPath: normalizedPath).standardizedFileURL
-    }
-
-    let matchingSnapshotFileURLs = snapshotFileURLs().filter { fileURL in
-      fileURL.path().hasSuffix("/\(normalizedPath)")
-        || fileURL.path() == normalizedPath
-    }
-
-    if matchingSnapshotFileURLs.count == 1 {
-      return matchingSnapshotFileURLs[0]
-    }
-
-    guard let workspaceURL else {
-      return matchingSnapshotFileURLs.first
-    }
-
-    let workspace = workspaceURL.standardizedFileURL
-    let projectScopeURL: URL
-
-    if workspace.lastPathComponent == ".personakit" {
-      projectScopeURL = workspace
-    } else {
-      projectScopeURL = workspace.appendingPathComponent(".personakit")
-    }
-
-    let candidates: [URL] = [
-      workspace.appendingPathComponent(normalizedPath),
-      projectScopeURL.appendingPathComponent(normalizedPath),
-    ]
-    .map(\.standardizedFileURL)
-
-    if let existingCandidate = candidates.first(where: { candidate in
-      FileManager.default.fileExists(atPath: candidate.path())
-    }) {
-      return existingCandidate
-    }
-
-    return matchingSnapshotFileURLs.first
-  }
-
-  private func snapshotFileURLs() -> [URL] {
-    var fileURLs: [URL] = []
-
-    fileURLs.append(contentsOf: snapshot.sessions.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.personas.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.directives.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.kits.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.skills.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.intents.map(\.fileURL))
-    fileURLs.append(contentsOf: snapshot.essentials.map(\.fileURL))
-
-    return fileURLs.map(\.standardizedFileURL)
-  }
-
-  private func essentialItemFromSnapshot(
-    matching selectedItem: WorkspaceListItem,
-    sourceScope: WorkspaceSourceScope
-  ) -> WorkspaceListItem? {
-    let selectedFileURL = selectedItem.fileURL.standardizedFileURL
-
-    return snapshot.essentials.first { item in
-      item.id == selectedItem.id
-        && item.sourceScope == sourceScope
-        && item.fileURL.standardizedFileURL == selectedFileURL
-    }
-  }
-
-  private func projectEssentialItem(
-    id: String,
-    fileURL: URL
-  ) -> WorkspaceListItem? {
-    let standardizedFileURL = fileURL.standardizedFileURL
-
-    return snapshot.essentials.first { item in
-      item.id == id
-        && item.sourceScope == .project
-        && item.fileURL.standardizedFileURL == standardizedFileURL
-    }
-  }
-
-  private func libraryItemFromSnapshot(
-    matching selectedItem: WorkspaceListItem,
-    entityType: WorkspaceLibraryEntityType,
-    sourceScope: WorkspaceSourceScope
-  ) -> WorkspaceListItem? {
-    let selectedFileURL = selectedItem.fileURL.standardizedFileURL
-
-    return libraryItems(for: entityType).first { item in
-      item.id == selectedItem.id
-        && item.sourceScope == sourceScope
-        && item.fileURL.standardizedFileURL == selectedFileURL
-    }
-  }
-
-  private func projectLibraryItem(
-    itemID: String,
-    fileURL: URL,
-    entityType: WorkspaceLibraryEntityType
-  ) -> WorkspaceListItem? {
-    let standardizedFileURL = fileURL.standardizedFileURL
-
-    return libraryItems(for: entityType).first { item in
-      item.id == itemID
-        && item.sourceScope == .project
-        && item.fileURL.standardizedFileURL == standardizedFileURL
-    }
-  }
-
-  private func libraryItems(
-    for entityType: WorkspaceLibraryEntityType
-  ) -> [WorkspaceListItem] {
-    switch entityType {
-    case .directive:
-      return snapshot.directives
-    case .intent:
-      return snapshot.intents
-    case .kit:
-      return snapshot.kits
-    case .persona:
-      return snapshot.personas
-    case .skill:
-      return snapshot.skills
-    }
-  }
-
   private func beginLibraryActionRequest() -> Int {
     libraryActionRequestID += 1
     isLoadingLibraryEditor = true
@@ -1111,174 +994,5 @@ public final class WorkspaceStore {
   ) {
     libraryActionMessage = message
     libraryActionIsError = isError
-  }
-}
-
-private actor WorkspaceOperationRunner {
-  private let snapshotBuilder: any WorkspaceSnapshotBuilding
-  private let workspaceValidator: any WorkspaceValidating
-  private let sessionManager: any WorkspaceSessionManaging
-  private let essentialManager: any WorkspaceEssentialManaging
-  private let libraryEntityManager: any WorkspaceLibraryEntityManaging
-  private let sessionPreviewManager: any WorkspaceSessionPreviewManaging
-
-  init(
-    snapshotBuilder: any WorkspaceSnapshotBuilding,
-    workspaceValidator: any WorkspaceValidating,
-    sessionManager: any WorkspaceSessionManaging,
-    essentialManager: any WorkspaceEssentialManaging,
-    libraryEntityManager: any WorkspaceLibraryEntityManaging,
-    sessionPreviewManager: any WorkspaceSessionPreviewManaging
-  ) {
-    self.snapshotBuilder = snapshotBuilder
-    self.workspaceValidator = workspaceValidator
-    self.sessionManager = sessionManager
-    self.essentialManager = essentialManager
-    self.libraryEntityManager = libraryEntityManager
-    self.sessionPreviewManager = sessionPreviewManager
-  }
-
-  func loadSnapshot(workspaceURL: URL) throws -> WorkspaceSnapshot {
-    try snapshotBuilder.build(workspaceURL: workspaceURL)
-  }
-
-  func validate(workspaceURL: URL) throws -> WorkspaceValidationSnapshot {
-    try workspaceValidator.validate(workspaceURL: workspaceURL)
-  }
-
-  func validate(
-    workspaceURL: URL,
-    snapshot: WorkspaceSnapshot
-  ) throws -> WorkspaceValidationSnapshot {
-    let coreValidation = try workspaceValidator.validate(workspaceURL: workspaceURL)
-    let sessionIssues = WorkspaceSessionDiagnostics.validateSessions(
-      workspaceURL: workspaceURL,
-      snapshot: snapshot
-    )
-
-    return WorkspaceValidationSnapshot(
-      summary: coreValidation.summary,
-      issues: coreValidation.issues + sessionIssues
-    )
-  }
-
-  func loadSessionDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
-    try sessionManager.loadDraft(fileURL: fileURL)
-  }
-
-  func saveSession(
-    workspaceURL: URL,
-    draft: WorkspaceSessionDraft,
-    originalSessionID: String?,
-    validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>,
-    validKitIDs: Set<String>
-  ) throws -> String {
-    try sessionManager.saveSession(
-      workspaceURL: workspaceURL,
-      draft: draft,
-      originalSessionID: originalSessionID,
-      validPersonaIDs: validPersonaIDs,
-      validDirectiveIDs: validDirectiveIDs,
-      validKitIDs: validKitIDs
-    )
-  }
-
-  func deleteSession(
-    workspaceURL: URL,
-    sessionID: String
-  ) throws {
-    try sessionManager.deleteSession(
-      workspaceURL: workspaceURL,
-      sessionID: sessionID
-    )
-  }
-
-  func loadEssentialMarkdown(fileURL: URL) throws -> String {
-    try essentialManager.loadMarkdown(fileURL: fileURL)
-  }
-
-  func saveEssentialMarkdown(
-    workspaceURL: URL,
-    itemID: String,
-    markdown: String
-  ) throws {
-    try essentialManager.saveMarkdown(
-      workspaceURL: workspaceURL,
-      itemID: itemID,
-      markdown: markdown
-    )
-  }
-
-  func copyGlobalEssentialToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem
-  ) throws {
-    try essentialManager.copyGlobalEssentialToProject(
-      workspaceURL: workspaceURL,
-      item: item
-    )
-  }
-
-  func loadLibraryItemRawJSON(fileURL: URL) throws -> String {
-    try libraryEntityManager.loadRawJSON(fileURL: fileURL)
-  }
-
-  func validateLibraryItemRawJSON(
-    _ rawJSON: String,
-    itemID: String,
-    entityType: WorkspaceLibraryEntityType
-  ) throws {
-    try libraryEntityManager.validateRawJSON(
-      rawJSON,
-      entityType: entityType,
-      expectedID: itemID
-    )
-  }
-
-  func saveLibraryItemRawJSON(
-    workspaceURL: URL,
-    itemID: String,
-    rawJSON: String,
-    entityType: WorkspaceLibraryEntityType
-  ) throws {
-    try libraryEntityManager.saveRawJSON(
-      workspaceURL: workspaceURL,
-      itemID: itemID,
-      rawJSON: rawJSON,
-      entityType: entityType
-    )
-  }
-
-  func copyLibraryItemToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem,
-    entityType: WorkspaceLibraryEntityType
-  ) throws {
-    try libraryEntityManager.copyGlobalItemToProject(
-      workspaceURL: workspaceURL,
-      item: item,
-      entityType: entityType
-    )
-  }
-
-  func loadSessionPreview(
-    workspaceURL: URL,
-    session: WorkspaceSessionListItem
-  ) throws -> String {
-    try sessionPreviewManager.loadPreview(
-      workspaceURL: workspaceURL,
-      session: session
-    )
-  }
-
-  func exportSessionPreview(
-    _ preview: String,
-    to destinationURL: URL
-  ) throws {
-    try sessionPreviewManager.exportPreview(
-      preview,
-      to: destinationURL
-    )
   }
 }

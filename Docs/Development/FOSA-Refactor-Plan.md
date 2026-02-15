@@ -12,7 +12,10 @@ redefined here.
 
 - PR0 — Architecture Contract and Codification: completed
 - PR1 — Target Graph and Source Scaffold: completed
-- PR2 — Shared/Core Migration: in progress
+- PR2 — Shared/Core Migration: completed
+- PR3 — CLI and MCP Migration: completed
+- PR4 — Studio Source Migration: completed
+- PR5 — Studio Owner Decomposition: in progress
 
 ## Scope
 
