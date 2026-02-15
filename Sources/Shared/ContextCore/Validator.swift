@@ -1,14 +1,14 @@
 import Foundation
 
 /// Performs schema and cross-reference validation for PersonaKit pack data.
-struct Validator {
+public struct Validator {
   /// Validates a single root as project scope only.
   ///
   /// - Parameters:
   ///   - root: PersonaKit root directory containing `Packs/`.
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Deterministic validation result.
-  static func validate(root: URL, fileManager: FileManager = .default) throws -> ValidationResult {
+  public static func validate(root: URL, fileManager: FileManager = .default) throws -> ValidationResult {
     try validate(
       scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil),
       fileManager: fileManager
@@ -21,7 +21,7 @@ struct Validator {
   ///   - scopes: Scope set used for loading, schema checks, and path resolution.
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Deterministic validation result.
-  static func validate(
+  public static func validate(
     scopes: ScopeSet,
     fileManager: FileManager = .default
   ) throws

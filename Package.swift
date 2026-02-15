@@ -32,7 +32,10 @@ let package = Package(
     .target(
       name: "ContextCore",
       dependencies: [],
-      path: "Sources/Shared/ContextCore"
+      path: "Sources/Shared/ContextCore",
+      resources: [
+        .process("Schemas")
+      ]
     ),
     .target(
       name: "ContextCLI",
@@ -72,10 +75,7 @@ let package = Package(
         .product(name: "MCP", package: "swift-sdk"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
-      path: "Sources/PersonaKit",
-      resources: [
-        .process("Schemas")
-      ]
+      path: "Sources/PersonaKit"
     ),
     .executableTarget(
       name: "PersonaKit",
