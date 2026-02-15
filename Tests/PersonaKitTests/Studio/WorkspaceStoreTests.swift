@@ -1103,6 +1103,65 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func initializeWorkspaceStructureCreatesFoldersAndReloadsWorkspace() async throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let state = WorkspaceInitializationState()
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        if state.isInitialized {
+          return WorkspaceSnapshot.empty
+        }
+
+        throw MissingPersonaKitDirectoryError(
+          projectScopeURL: URL(fileURLWithPath: "/Workspace/.personakit")
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspaceInitializer: WorkspaceInitializer(
+        dependencies: WorkspaceInitializerDependencies(
+          createDirectory: { directoryURL in
+            state.createdDirectories.append(directoryURL.standardizedFileURL)
+            state.isInitialized = true
+          }
+        )
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.loadErrorMessage?.hasPrefix("Missing PersonaKit directory at ") == true
+    }
+    #expect(store.canInitializeWorkspaceStructure)
+
+    store.initializeWorkspaceStructure()
+
+    await waitFor {
+      store.loadErrorMessage == nil
+    }
+    #expect(!store.canInitializeWorkspaceStructure)
+
+    let expectedDirectories: [URL] = [
+      workspaceURL.appendingPathComponent(".personakit"),
+      workspaceURL.appendingPathComponent(".personakit/Packs"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/personas"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/directives"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/kits"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/intents"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/skills"),
+      workspaceURL.appendingPathComponent(".personakit/Packs/essentials"),
+      workspaceURL.appendingPathComponent(".personakit/Sessions"),
+    ]
+    .map(\.standardizedFileURL)
+
+    #expect(state.createdDirectories == expectedDirectories)
+  }
+
+  @Test
   func copySessionPreviewUsesInjectedPasteboardWriter() throws {
     let expectedPreview = "preview-to-copy"
     let store = WorkspaceStore(
@@ -1155,6 +1214,11 @@ struct WorkspaceStoreTests {
 
     #expect(!didExport)
   }
+}
+
+private final class WorkspaceInitializationState: @unchecked Sendable {
+  var createdDirectories: [URL] = []
+  var isInitialized = false
 }
 
 private struct StubSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {

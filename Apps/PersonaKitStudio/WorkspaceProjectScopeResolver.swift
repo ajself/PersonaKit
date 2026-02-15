@@ -19,9 +19,7 @@ enum WorkspaceProjectScopeResolver {
     let packsURL = projectScopeURL.appendingPathComponent("Packs")
 
     guard directoryExists(packsURL) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(projectScopeURL.path())."
-      )
+      throw MissingPersonaKitDirectoryError(projectScopeURL: projectScopeURL)
     }
 
     return projectScopeURL

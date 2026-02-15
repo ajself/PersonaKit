@@ -49,11 +49,15 @@ struct StudioRootView: View {
         description: Text("Use File > Open Workspace… to load a workspace.")
       )
     } else if let loadErrorMessage = workspaceStore.loadErrorMessage {
-      ContentUnavailableView(
-        "Workspace Load Failed",
-        systemImage: "exclamationmark.triangle",
-        description: Text(loadErrorMessage)
-      )
+      if workspaceStore.canInitializeWorkspaceStructure {
+        workspaceInitializationView(loadErrorMessage: loadErrorMessage)
+      } else {
+        ContentUnavailableView(
+          "Workspace Load Failed",
+          systemImage: "exclamationmark.triangle",
+          description: Text(loadErrorMessage)
+        )
+      }
     } else {
       switch selection ?? .sessions {
       case .sessions:
@@ -259,6 +263,30 @@ struct StudioRootView: View {
         RoundedRectangle(cornerRadius: 8)
           .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
       )
+  }
+
+  private func workspaceInitializationView(
+    loadErrorMessage: String
+  ) -> some View {
+    VStack(spacing: 16) {
+      ContentUnavailableView(
+        "Workspace Missing PersonaKit",
+        systemImage: "folder.badge.plus",
+        description: Text(loadErrorMessage)
+      )
+
+      HStack(spacing: 10) {
+        Button("Initialize PersonaKit Structure") {
+          workspaceStore.initializeWorkspaceStructure()
+        }
+        .buttonStyle(.borderedProminent)
+
+        Button("Choose another folder") {
+          workspaceStore.openWorkspacePicker()
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 
   private var diagnosticsView: some View {

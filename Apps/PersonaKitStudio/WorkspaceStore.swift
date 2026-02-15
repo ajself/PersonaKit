@@ -34,6 +34,7 @@ final class WorkspaceStore {
   var workspaceURL: URL?
   var snapshot: WorkspaceSnapshot = .empty
   var loadErrorMessage: String?
+  var canInitializeWorkspaceStructure = false
   var validation: WorkspaceValidationSnapshot = .empty
   var validationErrorMessage: String?
   var sessionPreview: String = ""
@@ -45,6 +46,7 @@ final class WorkspaceStore {
 
   private let operationRunner: WorkspaceOperationRunner
   private let workspacePicker: any WorkspacePicking
+  private let workspaceInitializer: WorkspaceInitializer
   private let previewExportDestinationPicker: any PreviewExportDestinationPicking
   private let pasteboardWriter: any PasteboardWriting
   private var loadTask: Task<Void, Never>?
@@ -60,6 +62,7 @@ final class WorkspaceStore {
     essentialManager: (any WorkspaceEssentialManaging)? = nil,
     libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
     sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
+    workspaceInitializer: WorkspaceInitializer = WorkspaceInitializer(),
     workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
     previewExportDestinationPicker: any PreviewExportDestinationPicking =
       PreviewExportDestinationPickerClient(),
@@ -86,6 +89,7 @@ final class WorkspaceStore {
       sessionPreviewManager: resolvedSessionPreviewManager
     )
     self.workspacePicker = workspacePicker
+    self.workspaceInitializer = workspaceInitializer
     self.previewExportDestinationPicker = previewExportDestinationPicker
     self.pasteboardWriter = pasteboardWriter
   }
@@ -100,6 +104,25 @@ final class WorkspaceStore {
     loadWorkspace()
   }
 
+  /// Creates a minimal PersonaKit folder structure at the selected workspace and reloads state.
+  func initializeWorkspaceStructure() {
+    guard let workspaceURL else {
+      return
+    }
+
+    do {
+      try workspaceInitializer.initialize(
+        at: workspaceURL
+      )
+
+      loadWorkspace()
+    } catch {
+      loadErrorMessage =
+        "Failed to initialize PersonaKit structure: \(error.localizedDescription)"
+      canInitializeWorkspaceStructure = false
+    }
+  }
+
   /// Reloads workspace data into the current snapshot and error state.
   func loadWorkspace() {
     invalidateLibraryActionRequests()
@@ -110,6 +133,7 @@ final class WorkspaceStore {
       clearSessionPreview()
       snapshot = .empty
       loadErrorMessage = nil
+      canInitializeWorkspaceStructure = false
       validation = .empty
       validationErrorMessage = nil
       resetLibraryActionState()
@@ -132,10 +156,24 @@ final class WorkspaceStore {
 
         self.snapshot = snapshot
         loadErrorMessage = nil
+        canInitializeWorkspaceStructure = false
         validation = .empty
         validationErrorMessage = nil
         restoreSessionPreviewIfPossible()
         runValidationTask(for: workspaceURL)
+      } catch let error as MissingPersonaKitDirectoryError {
+        guard !Task.isCancelled,
+          self.workspaceURL == workspaceURL
+        else {
+          return
+        }
+
+        snapshot = .empty
+        loadErrorMessage = error.localizedDescription
+        canInitializeWorkspaceStructure = true
+        validation = .empty
+        validationErrorMessage = nil
+        clearSessionPreview()
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
           self.workspaceURL == workspaceURL
@@ -145,6 +183,7 @@ final class WorkspaceStore {
 
         snapshot = .empty
         loadErrorMessage = error.message
+        canInitializeWorkspaceStructure = false
         validation = .empty
         validationErrorMessage = nil
         clearSessionPreview()
@@ -157,6 +196,7 @@ final class WorkspaceStore {
 
         snapshot = .empty
         loadErrorMessage = error.localizedDescription
+        canInitializeWorkspaceStructure = false
         validation = .empty
         validationErrorMessage = nil
         clearSessionPreview()

@@ -38,8 +38,8 @@ struct WorkspaceEssentialManagerTests {
         markdown: "# Essential A\n"
       )
       Issue.record("Expected saveMarkdown to throw.")
-    } catch let error as WorkspaceSnapshotBuildError {
-      #expect(error.message.contains("Missing PersonaKit directory"))
+    } catch let error as MissingPersonaKitDirectoryError {
+      #expect(error.projectScopeURL.path().contains("/Workspace/.personakit"))
     }
   }
 

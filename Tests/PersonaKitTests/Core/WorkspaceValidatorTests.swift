@@ -112,8 +112,8 @@ struct WorkspaceValidatorTests {
     do {
       _ = try validator.validate(workspaceURL: workspaceURL)
       #expect(Bool(false))
-    } catch let error as WorkspaceSnapshotBuildError {
-      #expect(error.message.contains("Missing PersonaKit directory"))
+    } catch let error as MissingPersonaKitDirectoryError {
+      #expect(error.projectScopeURL.path().contains("/Workspace/.personakit"))
     }
   }
 }

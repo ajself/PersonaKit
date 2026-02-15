@@ -39,9 +39,7 @@ struct WorkspaceScopeResolver {
     let packsURL = PersonaKitDirectory.packsURL(root: projectScopeURL)
 
     guard directoryExists(packsURL) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(projectScopeURL.path())."
-      )
+      throw MissingPersonaKitDirectoryError(projectScopeURL: projectScopeURL)
     }
 
     return projectScopeURL
