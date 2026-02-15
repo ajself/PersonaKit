@@ -18,7 +18,7 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
   }
 
   /// Creates a workspace validator with injected dependencies (for tests).
-  init(
+  public init(
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceValidatorDependencies
   ) {
@@ -112,11 +112,24 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
 }
 
 /// Injectable filesystem and validation behavior for `WorkspaceValidator`.
-struct WorkspaceValidatorDependencies {
+public struct WorkspaceValidatorDependencies: Sendable {
   let directoryExists: @Sendable (URL) -> Bool
   let fileExists: @Sendable (URL) -> Bool
   let defaultGlobalScopeURL: @Sendable () -> URL?
   let validateScopes: @Sendable (ScopeSet) throws -> ValidationResult
+
+  /// Creates dependency closures for deterministic validator behavior in tests or previews.
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    fileExists: @escaping @Sendable (URL) -> Bool,
+    defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
+    validateScopes: @escaping @Sendable (ScopeSet) throws -> ValidationResult
+  ) {
+    self.directoryExists = directoryExists
+    self.fileExists = fileExists
+    self.defaultGlobalScopeURL = defaultGlobalScopeURL
+    self.validateScopes = validateScopes
+  }
 
   /// Live dependency set backed by `FileManager` and `Validator`.
   static func live() -> WorkspaceValidatorDependencies {

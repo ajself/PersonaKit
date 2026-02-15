@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors produced while exporting a resolved PersonaKit session.
-enum ExportError: Error {
+public enum ExportError: Error {
   /// Validation failed for one or more entities in the requested scopes.
   case validationFailed(ValidationResult)
 
@@ -13,7 +13,7 @@ enum ExportError: Error {
 }
 
 /// Renders deterministic Markdown output for a Persona + Directive session.
-struct SessionExporter {
+public struct SessionExporter {
   /// Exports a session by treating `root` as the only active PersonaKit scope.
   ///
   /// - Parameters:
@@ -24,7 +24,7 @@ struct SessionExporter {
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Deterministic Markdown session output.
   /// - Throws: ``ExportError`` when validation, resolution, or file reads fail.
-  static func export(
+  public static func export(
     root: URL,
     personaId: String,
     directiveId: String,
@@ -50,7 +50,7 @@ struct SessionExporter {
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Deterministic Markdown session output.
   /// - Throws: ``ExportError`` when validation, resolution, or file reads fail.
-  static func export(
+  public static func export(
     scopes: ScopeSet,
     personaId: String,
     directiveId: String,
