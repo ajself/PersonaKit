@@ -61,6 +61,7 @@ public final class WorkspaceStore {
 
   private let operationRunner: WorkspaceOperationRunner
   private let libraryFeatureModel: WorkspaceLibraryFeatureModel
+  private let sessionEditorFeatureModel: WorkspaceSessionEditorFeatureModel
   private let sessionFeatureModel: WorkspaceSessionFeatureModel
   private let validationFeatureModel: WorkspaceValidationFeatureModel
   private let workspacePicker: any WorkspacePicking
@@ -107,6 +108,9 @@ public final class WorkspaceStore {
     self.workspaceInitializer = workspaceInitializer
     self.fileRevealer = fileRevealer
     self.libraryFeatureModel = WorkspaceLibraryFeatureModel(operationRunner: operationRunner)
+    self.sessionEditorFeatureModel = WorkspaceSessionEditorFeatureModel(
+      operationRunner: operationRunner
+    )
     self.sessionFeatureModel = WorkspaceSessionFeatureModel(
       operationRunner: operationRunner,
       previewExportDestinationPicker: previewExportDestinationPicker,
@@ -240,11 +244,8 @@ public final class WorkspaceStore {
 
   /// Creates a prefilled draft for new-session creation.
   func defaultSessionDraft() -> WorkspaceSessionDraft {
-    WorkspaceSessionDraft(
-      id: "",
-      personaId: snapshot.personas.first?.id ?? "",
-      directiveId: snapshot.directives.first?.id ?? "",
-      kitOverrides: []
+    sessionEditorFeatureModel.defaultSessionDraft(
+      snapshot: snapshot
     )
   }
 
@@ -252,7 +253,9 @@ public final class WorkspaceStore {
   func loadSessionDraft(
     for session: WorkspaceSessionListItem
   ) async throws -> WorkspaceSessionDraft {
-    try await operationRunner.loadSessionDraft(fileURL: session.fileURL)
+    try await sessionEditorFeatureModel.loadSessionDraft(
+      for: session
+    )
   }
 
   /// Saves a session draft to project scope and refreshes workspace data.
@@ -260,31 +263,22 @@ public final class WorkspaceStore {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?
   ) async throws -> String {
-    let workspaceURL = try requiredWorkspaceURL()
-
-    let sessionID = try await operationRunner.saveSession(
-      workspaceURL: workspaceURL,
+    try await sessionEditorFeatureModel.saveSession(
       draft: draft,
       originalSessionID: originalSessionID,
-      validPersonaIDs: Set(snapshot.personas.map(\.id)),
-      validDirectiveIDs: Set(snapshot.directives.map(\.id)),
-      validKitIDs: Set(snapshot.kits.map(\.id))
+      snapshot: snapshot,
+      workspaceURL: workspaceURL,
+      onWorkspaceMutation: { self.loadWorkspace() }
     )
-
-    loadWorkspace()
-    return sessionID
   }
 
   /// Deletes a project-scoped session file and refreshes workspace data.
   func deleteSession(sessionID: String) async throws {
-    let workspaceURL = try requiredWorkspaceURL()
-
-    try await operationRunner.deleteSession(
+    try await sessionEditorFeatureModel.deleteSession(
+      sessionID: sessionID,
       workspaceURL: workspaceURL,
-      sessionID: sessionID
+      onWorkspaceMutation: { self.loadWorkspace() }
     )
-
-    loadWorkspace()
   }
 
   /// Loads raw JSON for a selected project-scoped library item.
@@ -438,13 +432,4 @@ public final class WorkspaceStore {
     )
   }
 
-  private func requiredWorkspaceURL() throws -> URL {
-    guard let workspaceURL else {
-      throw WorkspaceSnapshotBuildError(
-        message: "No workspace is currently selected."
-      )
-    }
-
-    return workspaceURL
-  }
 }
