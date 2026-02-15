@@ -32,20 +32,20 @@ public final class WorkspaceStore {
   }
   var sessionPreview: String {
     get {
-      sessionPreviewState.preview
+      sessionFeatureModel.preview
     }
 
     set {
-      sessionPreviewState.setPreview(newValue)
+      sessionFeatureModel.preview = newValue
     }
   }
 
   var sessionPreviewErrorMessage: String? {
-    sessionPreviewState.errorMessage
+    sessionFeatureModel.previewErrorMessage
   }
 
   var isLoadingSessionPreview: Bool {
-    sessionPreviewState.isLoading
+    sessionFeatureModel.isLoadingPreview
   }
   var libraryActionMessage: String? {
     libraryActionState.message
@@ -60,16 +60,13 @@ public final class WorkspaceStore {
   }
 
   private let operationRunner: WorkspaceOperationRunner
+  private let sessionFeatureModel: WorkspaceSessionFeatureModel
   private let workspacePicker: any WorkspacePicking
   private let workspaceInitializer: WorkspaceInitializer
-  private let previewExportDestinationPicker: any PreviewExportDestinationPicking
-  private let pasteboardWriter: any PasteboardWriting
   private let fileRevealer: any FileRevealing
   private var loadTask: Task<Void, Never>?
   private var validationState = WorkspaceValidationState()
   private var validationTask: Task<Void, Never>?
-  private var sessionPreviewTask: Task<Void, Never>?
-  private var sessionPreviewState = WorkspaceSessionPreviewState()
   private var libraryActionState = WorkspaceLibraryActionState()
 
   public init(
@@ -98,7 +95,7 @@ public final class WorkspaceStore {
       sessionPreviewManager
       ?? WorkspaceSessionPreviewManager(sessionManager: sessionManager)
 
-    self.operationRunner = WorkspaceOperationRunner(
+    let operationRunner = WorkspaceOperationRunner(
       snapshotBuilder: snapshotBuilder,
       workspaceValidator: workspaceValidator,
       sessionManager: sessionManager,
@@ -106,11 +103,15 @@ public final class WorkspaceStore {
       libraryEntityManager: resolvedLibraryEntityManager,
       sessionPreviewManager: resolvedSessionPreviewManager
     )
+    self.operationRunner = operationRunner
     self.workspacePicker = workspacePicker
     self.workspaceInitializer = workspaceInitializer
-    self.previewExportDestinationPicker = previewExportDestinationPicker
-    self.pasteboardWriter = pasteboardWriter
     self.fileRevealer = fileRevealer
+    self.sessionFeatureModel = WorkspaceSessionFeatureModel(
+      operationRunner: operationRunner,
+      previewExportDestinationPicker: previewExportDestinationPicker,
+      pasteboardWriter: pasteboardWriter
+    )
   }
 
   /// Presents the folder picker and loads the selected workspace snapshot.
@@ -161,7 +162,7 @@ public final class WorkspaceStore {
 
     loadTask?.cancel()
     validationTask?.cancel()
-    sessionPreviewTask?.cancel()
+    sessionFeatureModel.cancelPreviewTask()
 
     loadTask = Task { [workspaceURL] in
       do {
@@ -764,94 +765,20 @@ public final class WorkspaceStore {
   func refreshSessionPreview(
     for session: WorkspaceSessionListItem?
   ) {
-    sessionPreviewTask?.cancel()
-
-    guard let session else {
-      clearSessionPreview()
-      return
-    }
-
-    guard let workspaceURL else {
-      clearSessionPreview()
-      return
-    }
-
-    sessionPreviewState.beginLoading(sessionID: session.id)
-
-    sessionPreviewTask = Task { [workspaceURL, session] in
-      do {
-        let preview = try await operationRunner.loadSessionPreview(
-          workspaceURL: workspaceURL,
-          session: session
-        )
-
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL,
-          sessionPreviewState.previewSessionID == session.id
-        else {
-          return
-        }
-
-        sessionPreviewState.setLoadedPreview(preview)
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL,
-          sessionPreviewState.previewSessionID == session.id
-        else {
-          return
-        }
-
-        sessionPreviewState.setFailedPreview(message: error.message)
-      } catch {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL,
-          sessionPreviewState.previewSessionID == session.id
-        else {
-          return
-        }
-
-        sessionPreviewState.setFailedPreview(message: error.localizedDescription)
-      }
-    }
+    sessionFeatureModel.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
   }
 
   /// Copies the current preview text into the system pasteboard.
   func copySessionPreviewToPasteboard() throws {
-    guard !sessionPreview.isEmpty else {
-      throw WorkspaceSnapshotBuildError(
-        message: "No preview is available to copy."
-      )
-    }
-
-    guard pasteboardWriter.writeString(sessionPreview) else {
-      throw WorkspaceSnapshotBuildError(
-        message: "Failed to copy preview to the clipboard."
-      )
-    }
+    try sessionFeatureModel.copyPreviewToPasteboard()
   }
 
   /// Presents a save panel and exports preview markdown to the selected path.
   func exportSessionPreviewWithSavePanel() async throws -> Bool {
-    guard !sessionPreview.isEmpty else {
-      throw WorkspaceSnapshotBuildError(
-        message: "No preview is available to export."
-      )
-    }
-
-    guard
-      let destinationURL = previewExportDestinationPicker.pickPreviewDestination(
-        suggestedFilename: defaultPreviewFilename()
-      )
-    else {
-      return false
-    }
-
-    try await operationRunner.exportSessionPreview(
-      sessionPreview,
-      to: destinationURL
-    )
-
-    return true
+    try await sessionFeatureModel.exportPreviewWithSavePanel()
   }
 
   /// Reveals a file in Finder.
@@ -921,24 +848,14 @@ public final class WorkspaceStore {
   }
 
   private func clearSessionPreview() {
-    sessionPreviewTask?.cancel()
-    sessionPreviewTask = nil
-    sessionPreviewState.clear()
+    sessionFeatureModel.clearPreview()
   }
 
   private func restoreSessionPreviewIfPossible() {
-    guard let previewSessionID = sessionPreviewState.previewSessionID,
-      let session = snapshot.sessions.first(where: { $0.id == previewSessionID })
-    else {
-      clearSessionPreview()
-      return
-    }
-
-    refreshSessionPreview(for: session)
-  }
-
-  private func defaultPreviewFilename() -> String {
-    sessionPreviewState.defaultFilename()
+    sessionFeatureModel.restorePreviewIfPossible(
+      snapshot: snapshot,
+      workspaceURL: workspaceURL
+    )
   }
 
   private func requiredWorkspaceURL() throws -> URL {
