@@ -91,7 +91,10 @@ let package = Package(
       dependencies: [
         "StudioFeatures",
       ],
-      path: "Apps/PersonaKitStudio"
+      path: "Sources/App/Studio",
+      exclude: [
+        "README.md"
+      ]
     ),
     .testTarget(
       name: "PersonaKitTests",
