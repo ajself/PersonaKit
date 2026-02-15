@@ -1,8 +1,8 @@
-import PersonaKitCore
+import ContextCore
 import SwiftUI
 
 /// Root Studio split view with sidebar navigation, session editing, and diagnostics.
-struct StudioRootView: View {
+public struct StudioRootView: View {
   let workspaceStore: WorkspaceStore
   @State private var selection: SidebarItem? = .sessions
   @State private var selectedLibraryItemID: String?
@@ -10,7 +10,11 @@ struct StudioRootView: View {
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
 
-  var body: some View {
+  public init(workspaceStore: WorkspaceStore) {
+    self.workspaceStore = workspaceStore
+  }
+
+  public var body: some View {
     NavigationSplitView {
       List(selection: $selection) {
         Section("Sessions") {

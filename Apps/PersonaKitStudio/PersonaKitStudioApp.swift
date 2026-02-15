@@ -1,4 +1,5 @@
 import AppKit
+import StudioFeatures
 import SwiftUI
 
 /// Entry point for the PersonaKit Studio macOS app.

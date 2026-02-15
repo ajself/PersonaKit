@@ -1,9 +1,8 @@
 import Foundation
 import PersonaKitCore
+@testable import StudioFeatures
 import StudioFoundation
 import Testing
-
-@testable import PersonaKitStudio
 
 @MainActor
 struct WorkspaceStoreTests {

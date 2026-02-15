@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-import PersonaKitCore
+import ContextCore
 import StudioFoundation
 
 /// Raw JSON editor payload used by Studio library editing flows.
@@ -31,7 +31,7 @@ struct WorkspaceEssentialEditorPresentation: Equatable, Identifiable, Sendable {
 /// Main-actor workspace state owner for Studio view rendering.
 @Observable
 @MainActor
-final class WorkspaceStore {
+public final class WorkspaceStore {
   var workspaceURL: URL?
   var snapshot: WorkspaceSnapshot = .empty
   var loadErrorMessage: String?
@@ -57,7 +57,7 @@ final class WorkspaceStore {
   private var previewSessionID: String?
   private var libraryActionRequestID: Int = 0
 
-  init(
+  public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
     sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
@@ -99,7 +99,7 @@ final class WorkspaceStore {
   }
 
   /// Presents the folder picker and loads the selected workspace snapshot.
-  func openWorkspacePicker() {
+  public func openWorkspacePicker() {
     guard let selectedURL = workspacePicker.pickWorkspaceURL() else {
       return
     }

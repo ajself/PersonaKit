@@ -1,4 +1,4 @@
-import PersonaKitCore
+import ContextCore
 import StudioFoundation
 import SwiftUI
 

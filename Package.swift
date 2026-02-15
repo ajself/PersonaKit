@@ -64,6 +64,7 @@ let package = Package(
     .target(
       name: "StudioFeatures",
       dependencies: [
+        "ContextCore",
         "StudioFoundation"
       ],
       path: "Sources/Features/Studio/UI"
@@ -88,8 +89,7 @@ let package = Package(
     .executableTarget(
       name: "PersonaKitStudio",
       dependencies: [
-        "PersonaKitCore",
-        "StudioFoundation",
+        "StudioFeatures",
       ],
       path: "Apps/PersonaKitStudio"
     ),
@@ -99,6 +99,7 @@ let package = Package(
         "ContextCLI",
         "ContextMCP",
         "PersonaKitCore",
+        "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
       ],
