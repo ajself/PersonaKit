@@ -38,9 +38,23 @@ public final class WorkspaceStore {
   var canInitializeWorkspaceStructure = false
   var validation: WorkspaceValidationSnapshot = .empty
   var validationErrorMessage: String?
-  var sessionPreview: String = ""
-  var sessionPreviewErrorMessage: String?
-  var isLoadingSessionPreview = false
+  var sessionPreview: String {
+    get {
+      sessionPreviewState.preview
+    }
+
+    set {
+      sessionPreviewState.setPreview(newValue)
+    }
+  }
+
+  var sessionPreviewErrorMessage: String? {
+    sessionPreviewState.errorMessage
+  }
+
+  var isLoadingSessionPreview: Bool {
+    sessionPreviewState.isLoading
+  }
   var libraryActionMessage: String? {
     libraryActionState.message
   }
@@ -62,7 +76,7 @@ public final class WorkspaceStore {
   private var loadTask: Task<Void, Never>?
   private var validationTask: Task<Void, Never>?
   private var sessionPreviewTask: Task<Void, Never>?
-  private var previewSessionID: String?
+  private var sessionPreviewState = WorkspaceSessionPreviewState()
   private var libraryActionState = WorkspaceLibraryActionState()
 
   public init(
@@ -769,10 +783,7 @@ public final class WorkspaceStore {
       return
     }
 
-    previewSessionID = session.id
-    sessionPreview = ""
-    sessionPreviewErrorMessage = nil
-    isLoadingSessionPreview = true
+    sessionPreviewState.beginLoading(sessionID: session.id)
 
     sessionPreviewTask = Task { [workspaceURL, session] in
       do {
@@ -783,36 +794,30 @@ public final class WorkspaceStore {
 
         guard !Task.isCancelled,
           self.workspaceURL == workspaceURL,
-          previewSessionID == session.id
+          sessionPreviewState.previewSessionID == session.id
         else {
           return
         }
 
-        sessionPreview = preview
-        sessionPreviewErrorMessage = nil
-        isLoadingSessionPreview = false
+        sessionPreviewState.setLoadedPreview(preview)
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
           self.workspaceURL == workspaceURL,
-          previewSessionID == session.id
+          sessionPreviewState.previewSessionID == session.id
         else {
           return
         }
 
-        sessionPreview = ""
-        sessionPreviewErrorMessage = error.message
-        isLoadingSessionPreview = false
+        sessionPreviewState.setFailedPreview(message: error.message)
       } catch {
         guard !Task.isCancelled,
           self.workspaceURL == workspaceURL,
-          previewSessionID == session.id
+          sessionPreviewState.previewSessionID == session.id
         else {
           return
         }
 
-        sessionPreview = ""
-        sessionPreviewErrorMessage = error.localizedDescription
-        isLoadingSessionPreview = false
+        sessionPreviewState.setFailedPreview(message: error.localizedDescription)
       }
     }
   }
@@ -925,14 +930,11 @@ public final class WorkspaceStore {
   private func clearSessionPreview() {
     sessionPreviewTask?.cancel()
     sessionPreviewTask = nil
-    previewSessionID = nil
-    sessionPreview = ""
-    sessionPreviewErrorMessage = nil
-    isLoadingSessionPreview = false
+    sessionPreviewState.clear()
   }
 
   private func restoreSessionPreviewIfPossible() {
-    guard let previewSessionID,
+    guard let previewSessionID = sessionPreviewState.previewSessionID,
       let session = snapshot.sessions.first(where: { $0.id == previewSessionID })
     else {
       clearSessionPreview()
@@ -943,11 +945,7 @@ public final class WorkspaceStore {
   }
 
   private func defaultPreviewFilename() -> String {
-    guard let previewSessionID else {
-      return "session-preview.md"
-    }
-
-    return "\(previewSessionID).md"
+    sessionPreviewState.defaultFilename()
   }
 
   private func requiredWorkspaceURL() throws -> URL {
