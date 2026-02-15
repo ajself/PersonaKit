@@ -1,5 +1,6 @@
 import Foundation
 import PersonaKitCore
+import StudioFoundation
 import Testing
 
 @testable import PersonaKitStudio

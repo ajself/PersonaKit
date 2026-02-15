@@ -1,3 +1,4 @@
+import StudioFoundation
 import SwiftUI
 
 /// Modal editor for creating and updating session files.

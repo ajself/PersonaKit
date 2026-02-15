@@ -1,8 +1,8 @@
 import Foundation
-import PersonaKitCore
+import ContextCore
 
 /// Session preview contract used by `WorkspaceStore` for preview and export actions.
-protocol WorkspaceSessionPreviewManaging: Sendable {
+public protocol WorkspaceSessionPreviewManaging: Sendable {
   func loadPreview(
     workspaceURL: URL,
     session: WorkspaceSessionListItem
@@ -15,12 +15,12 @@ protocol WorkspaceSessionPreviewManaging: Sendable {
 }
 
 /// Filesystem-backed preview manager using `PersonaKitCore` resolver/exporter logic.
-struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable {
+public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable {
   private let sessionManager: any WorkspaceSessionManaging
   private let previewBuilder: any WorkspaceSessionPreviewBuilding
   private let dependencies: WorkspaceSessionPreviewManagerDependencies
 
-  init(
+  public init(
     sessionManager: any WorkspaceSessionManaging,
     previewBuilder: any WorkspaceSessionPreviewBuilding = WorkspaceSessionPreviewBuilder(),
     dependencies: WorkspaceSessionPreviewManagerDependencies = .live()
@@ -30,7 +30,7 @@ struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable
     self.dependencies = dependencies
   }
 
-  func loadPreview(
+  public func loadPreview(
     workspaceURL: URL,
     session: WorkspaceSessionListItem
   ) throws -> String {
@@ -47,7 +47,7 @@ struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable
     )
   }
 
-  func exportPreview(
+  public func exportPreview(
     _ preview: String,
     to destinationURL: URL
   ) throws {
@@ -84,13 +84,25 @@ struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable
 }
 
 /// Injectable filesystem/global-scope dependencies for preview generation and export.
-struct WorkspaceSessionPreviewManagerDependencies {
-  let directoryExists: @Sendable (URL) -> Bool
-  let defaultGlobalScopeURL: @Sendable () -> URL?
-  let createDirectory: @Sendable (URL) throws -> Void
-  let writeData: @Sendable (Data, URL) throws -> Void
+public struct WorkspaceSessionPreviewManagerDependencies: Sendable {
+  public let directoryExists: @Sendable (URL) -> Bool
+  public let defaultGlobalScopeURL: @Sendable () -> URL?
+  public let createDirectory: @Sendable (URL) throws -> Void
+  public let writeData: @Sendable (Data, URL) throws -> Void
 
-  static func live() -> WorkspaceSessionPreviewManagerDependencies {
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
+    createDirectory: @escaping @Sendable (URL) throws -> Void,
+    writeData: @escaping @Sendable (Data, URL) throws -> Void
+  ) {
+    self.directoryExists = directoryExists
+    self.defaultGlobalScopeURL = defaultGlobalScopeURL
+    self.createDirectory = createDirectory
+    self.writeData = writeData
+  }
+
+  public static func live() -> WorkspaceSessionPreviewManagerDependencies {
     WorkspaceSessionPreviewManagerDependencies(
       directoryExists: { url in
         let fileManager = FileManager.default

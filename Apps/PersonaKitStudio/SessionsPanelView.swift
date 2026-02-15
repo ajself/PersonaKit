@@ -1,4 +1,5 @@
 import PersonaKitCore
+import StudioFoundation
 import SwiftUI
 
 /// Sessions feature panel with list CRUD and preview/export workflows.

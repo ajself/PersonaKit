@@ -1,17 +1,28 @@
 import Foundation
-import PersonaKitCore
-import StudioFoundation
+import ContextCore
 
 /// Editable session draft model used by Studio session editor UI.
-struct WorkspaceSessionDraft: Equatable, Sendable {
-  var id: String
-  var personaId: String
-  var directiveId: String
-  var kitOverrides: [String]
+public struct WorkspaceSessionDraft: Equatable, Sendable {
+  public var id: String
+  public var personaId: String
+  public var directiveId: String
+  public var kitOverrides: [String]
+
+  public init(
+    id: String,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String]
+  ) {
+    self.id = id
+    self.personaId = personaId
+    self.directiveId = directiveId
+    self.kitOverrides = kitOverrides
+  }
 }
 
 /// Errors surfaced by Studio session editing workflows.
-enum WorkspaceSessionManagerError: LocalizedError {
+public enum WorkspaceSessionManagerError: LocalizedError {
   case invalidSessionID
   case invalidSessionIDFormat(String)
   case invalidPersonaID(String)
@@ -23,7 +34,7 @@ enum WorkspaceSessionManagerError: LocalizedError {
   case saveFailed(String)
   case deleteFailed(String)
 
-  var errorDescription: String? {
+  public var errorDescription: String? {
     switch self {
     case .invalidSessionID:
       return "Session id is required."
@@ -51,7 +62,7 @@ enum WorkspaceSessionManagerError: LocalizedError {
 }
 
 /// Session CRUD contract used by `WorkspaceStore`.
-protocol WorkspaceSessionManaging: Sendable {
+public protocol WorkspaceSessionManaging: Sendable {
   func loadDraft(fileURL: URL) throws -> WorkspaceSessionDraft
 
   func saveSession(
@@ -70,14 +81,14 @@ protocol WorkspaceSessionManaging: Sendable {
 }
 
 /// Filesystem-backed session manager for Studio create/edit/delete workflows.
-struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
+public struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
   private let dependencies: WorkspaceSessionManagerDependencies
 
-  init(dependencies: WorkspaceSessionManagerDependencies = .live()) {
+  public init(dependencies: WorkspaceSessionManagerDependencies = .live()) {
     self.dependencies = dependencies
   }
 
-  func loadDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
+  public func loadDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
     do {
       let data = try dependencies.readData(fileURL)
       let session = try JSONDecoder().decode(SessionFileDocument.self, from: data)
@@ -94,7 +105,7 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     }
   }
 
-  func saveSession(
+  public func saveSession(
     workspaceURL: URL,
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
@@ -228,7 +239,7 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     return sessionID
   }
 
-  func deleteSession(
+  public func deleteSession(
     workspaceURL: URL,
     sessionID: String
   ) throws {
@@ -304,15 +315,31 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
 }
 
 /// Injectable filesystem hooks for `WorkspaceSessionManager`.
-struct WorkspaceSessionManagerDependencies {
-  let directoryExists: @Sendable (URL) -> Bool
-  let createDirectory: @Sendable (URL) throws -> Void
-  let fileExists: @Sendable (URL) -> Bool
-  let readData: @Sendable (URL) throws -> Data
-  let writeData: @Sendable (Data, URL) throws -> Void
-  let removeItem: @Sendable (URL) throws -> Void
+public struct WorkspaceSessionManagerDependencies: Sendable {
+  public let directoryExists: @Sendable (URL) -> Bool
+  public let createDirectory: @Sendable (URL) throws -> Void
+  public let fileExists: @Sendable (URL) -> Bool
+  public let readData: @Sendable (URL) throws -> Data
+  public let writeData: @Sendable (Data, URL) throws -> Void
+  public let removeItem: @Sendable (URL) throws -> Void
 
-  static func live() -> WorkspaceSessionManagerDependencies {
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    createDirectory: @escaping @Sendable (URL) throws -> Void,
+    fileExists: @escaping @Sendable (URL) -> Bool,
+    readData: @escaping @Sendable (URL) throws -> Data,
+    writeData: @escaping @Sendable (Data, URL) throws -> Void,
+    removeItem: @escaping @Sendable (URL) throws -> Void
+  ) {
+    self.directoryExists = directoryExists
+    self.createDirectory = createDirectory
+    self.fileExists = fileExists
+    self.readData = readData
+    self.writeData = writeData
+    self.removeItem = removeItem
+  }
+
+  public static func live() -> WorkspaceSessionManagerDependencies {
     WorkspaceSessionManagerDependencies(
       directoryExists: { url in
         let fileManager = FileManager.default
