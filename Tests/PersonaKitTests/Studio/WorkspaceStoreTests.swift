@@ -113,6 +113,99 @@ struct WorkspaceStoreTests {
     #expect(store.validation.issues.first?.entityId == "persona-b")
   }
 
+  @Test
+  func validateWorkspaceAppendsSessionDiagnosticsIssues() async throws {
+    let workspaceURL = try makeTempDirectory()
+    let sessionFileURL = workspaceURL.appendingPathComponent(".personakit/Sessions/session-a.session.json")
+
+    try FileManager.default.createDirectory(
+      at: sessionFileURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try Data(
+      """
+      {
+        "directiveId" : "directive-a",
+        "id" : "session-a",
+        "kitOverrides" : [
+          "missing-kit"
+        ],
+        "personaId" : "persona-a"
+      }
+      """.utf8
+    )
+    .write(to: sessionFileURL, options: [.atomic])
+
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "persona-a",
+          directiveId: "directive-a",
+          fileURL: sessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [
+        WorkspaceListItem(
+          id: "persona-a",
+          displayName: "Persona A",
+          fileURL: URL(fileURLWithPath: "/unused/persona-a.persona.json"),
+          sourceScope: .project
+        )
+      ],
+      directives: [
+        WorkspaceListItem(
+          id: "directive-a",
+          displayName: "Directive A",
+          fileURL: URL(fileURLWithPath: "/unused/directive-a.directive.json"),
+          sourceScope: .project
+        )
+      ],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+    let coreValidation = WorkspaceValidationSnapshot(
+      summary: "core-summary",
+      issues: [
+        WorkspaceValidationIssue(
+          entityType: .persona,
+          entityId: "persona-a",
+          field: "schema",
+          filePath: nil,
+          message: "Core issue",
+          severity: .error
+        )
+      ]
+    )
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        coreValidation
+      }
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.validation.issues.count == 2
+    }
+
+    #expect(store.validation.summary == "core-summary")
+    #expect(store.validation.issues[0].entityType == .persona)
+    let hasSessionKitIssue = store.validation.issues.contains(where: { issue in
+      issue.entityType == .session
+        && issue.entityId == "session-a"
+        && issue.field == "kitOverrides"
+    })
+    #expect(hasSessionKitIssue)
+  }
+
   private func waitFor(
     timeout: Duration = .seconds(2),
     condition: @escaping () -> Bool
@@ -223,7 +316,20 @@ struct WorkspaceStoreTests {
               sourceScope: .project
             )
           ],
-          kits: [],
+          kits: [
+            WorkspaceListItem(
+              id: "kit-a",
+              displayName: "Kit A",
+              fileURL: URL(fileURLWithPath: "/kit-a.kit.json"),
+              sourceScope: .project
+            ),
+            WorkspaceListItem(
+              id: "kit-b",
+              displayName: "Kit B",
+              fileURL: URL(fileURLWithPath: "/kit-b.kit.json"),
+              sourceScope: .project
+            ),
+          ],
           skills: [],
           intents: [],
           essentials: []
@@ -241,12 +347,13 @@ struct WorkspaceStoreTests {
             kitOverrides: []
           )
         },
-        saveSessionHandler: { workspaceURL, draft, originalSessionID, validPersonaIDs, validDirectiveIDs in
+        saveSessionHandler: { workspaceURL, draft, originalSessionID, validPersonaIDs, validDirectiveIDs, validKitIDs in
           #expect(workspaceURL.path() == "/Workspace")
           #expect(draft == expectedDraft)
           #expect(originalSessionID == "session-old")
           #expect(validPersonaIDs == Set(["persona-a"]))
           #expect(validDirectiveIDs == Set(["directive-a"]))
+          #expect(validKitIDs == Set(["kit-a", "kit-b"]))
 
           return "session-a"
         },
@@ -289,7 +396,7 @@ struct WorkspaceStoreTests {
             kitOverrides: []
           )
         },
-        saveSessionHandler: { _, _, _, _, _ in
+        saveSessionHandler: { _, _, _, _, _, _ in
           "unused"
         },
         deleteSessionHandler: { workspaceURL, sessionID in
@@ -1239,7 +1346,14 @@ private struct StubWorkspaceValidator: WorkspaceValidating, Sendable {
 
 private struct StubSessionManager: WorkspaceSessionManaging, Sendable {
   let loadDraftHandler: @Sendable (URL) throws -> WorkspaceSessionDraft
-  let saveSessionHandler: @Sendable (URL, WorkspaceSessionDraft, String?, Set<String>, Set<String>) throws -> String
+  let saveSessionHandler: @Sendable (
+    URL,
+    WorkspaceSessionDraft,
+    String?,
+    Set<String>,
+    Set<String>,
+    Set<String>
+  ) throws -> String
   let deleteSessionHandler: @Sendable (URL, String) throws -> Void
 
   func loadDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
@@ -1251,14 +1365,16 @@ private struct StubSessionManager: WorkspaceSessionManaging, Sendable {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
     validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>
+    validDirectiveIDs: Set<String>,
+    validKitIDs: Set<String>
   ) throws -> String {
     try saveSessionHandler(
       workspaceURL,
       draft,
       originalSessionID,
       validPersonaIDs,
-      validDirectiveIDs
+      validDirectiveIDs,
+      validKitIDs
     )
   }
 

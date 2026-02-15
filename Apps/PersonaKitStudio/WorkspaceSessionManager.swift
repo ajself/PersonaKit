@@ -15,6 +15,7 @@ enum WorkspaceSessionManagerError: LocalizedError {
   case invalidSessionIDFormat(String)
   case invalidPersonaID(String)
   case invalidDirectiveID(String)
+  case invalidKitOverrideID(String)
   case sessionAlreadyExists(String)
   case sessionNotFound(String)
   case loadFailed(String)
@@ -32,6 +33,8 @@ enum WorkspaceSessionManagerError: LocalizedError {
       return "Persona id \"\(personaID)\" is not valid."
     case .invalidDirectiveID(let directiveID):
       return "Directive id \"\(directiveID)\" is not valid."
+    case .invalidKitOverrideID(let kitID):
+      return "Kit id \"\(kitID)\" is not valid."
     case .sessionAlreadyExists(let sessionID):
       return "A session with id \"\(sessionID)\" already exists."
     case .sessionNotFound(let sessionID):
@@ -55,7 +58,8 @@ protocol WorkspaceSessionManaging: Sendable {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
     validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>
+    validDirectiveIDs: Set<String>,
+    validKitIDs: Set<String>
   ) throws -> String
 
   func deleteSession(
@@ -94,7 +98,8 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
     validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>
+    validDirectiveIDs: Set<String>,
+    validKitIDs: Set<String>
   ) throws -> String {
     let sessionID = WorkspaceEntityIDPolicy.normalized(draft.id)
 
@@ -112,6 +117,14 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
 
     guard validDirectiveIDs.contains(draft.directiveId) else {
       throw WorkspaceSessionManagerError.invalidDirectiveID(draft.directiveId)
+    }
+
+    let normalizedKitOverrideIDs = normalizedKitOverrides(draft.kitOverrides) ?? []
+
+    for kitID in normalizedKitOverrideIDs {
+      guard validKitIDs.contains(kitID) else {
+        throw WorkspaceSessionManagerError.invalidKitOverrideID(kitID)
+      }
     }
 
     let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
@@ -165,7 +178,7 @@ struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
       id: sessionID,
       personaId: draft.personaId,
       directiveId: draft.directiveId,
-      kitOverrides: normalizedKitOverrides(draft.kitOverrides)
+      kitOverrides: normalizedKitOverrideIDs.isEmpty ? nil : normalizedKitOverrideIDs
     )
     let data: Data
 

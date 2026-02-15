@@ -207,7 +207,8 @@ private struct StubPreviewSessionManager: WorkspaceSessionManaging, Sendable {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
     validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>
+    validDirectiveIDs: Set<String>,
+    validKitIDs: Set<String>
   ) throws -> String {
     "unused"
   }

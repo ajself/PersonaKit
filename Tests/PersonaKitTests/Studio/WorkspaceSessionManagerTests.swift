@@ -19,7 +19,8 @@ struct WorkspaceSessionManagerTests {
         ),
         originalSessionID: nil,
         validPersonaIDs: Set(["persona-a"]),
-        validDirectiveIDs: Set(["directive-a"])
+        validDirectiveIDs: Set(["directive-a"]),
+        validKitIDs: []
       )
       #expect(Bool(false))
     } catch let error as WorkspaceSessionManagerError {
@@ -53,7 +54,8 @@ struct WorkspaceSessionManagerTests {
       ),
       originalSessionID: nil,
       validPersonaIDs: Set(["persona-a"]),
-      validDirectiveIDs: Set(["directive-a"])
+      validDirectiveIDs: Set(["directive-a"]),
+      validKitIDs: Set(["kit-a", "kit-b"])
     )
 
     #expect(savedID == "session-a")
@@ -141,7 +143,8 @@ struct WorkspaceSessionManagerTests {
         ),
         originalSessionID: "session-old",
         validPersonaIDs: Set(["persona-a"]),
-        validDirectiveIDs: Set(["directive-a"])
+        validDirectiveIDs: Set(["directive-a"]),
+        validKitIDs: []
       )
       #expect(Bool(false))
     } catch let error as WorkspaceSessionManagerError {
@@ -154,5 +157,33 @@ struct WorkspaceSessionManagerTests {
 
     #expect(FileManager.default.fileExists(atPath: sourceURL.path()))
     #expect(!FileManager.default.fileExists(atPath: destinationURL.path()))
+  }
+
+  @Test
+  func saveRejectsUnknownKitOverrideID() throws {
+    let manager = WorkspaceSessionManager()
+
+    do {
+      _ = try manager.saveSession(
+        workspaceURL: URL(fileURLWithPath: "/Workspace"),
+        draft: WorkspaceSessionDraft(
+          id: "session-a",
+          personaId: "persona-a",
+          directiveId: "directive-a",
+          kitOverrides: ["missing-kit"]
+        ),
+        originalSessionID: nil,
+        validPersonaIDs: Set(["persona-a"]),
+        validDirectiveIDs: Set(["directive-a"]),
+        validKitIDs: Set(["kit-a"])
+      )
+      #expect(Bool(false))
+    } catch let error as WorkspaceSessionManagerError {
+      if case .invalidKitOverrideID(let kitID) = error {
+        #expect(kitID == "missing-kit")
+      } else {
+        #expect(Bool(false))
+      }
+    }
   }
 }

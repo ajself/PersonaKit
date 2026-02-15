@@ -7,6 +7,7 @@ public enum WorkspaceValidationSeverity: String, Codable, Sendable {
 
 /// Entity categories used for diagnostics navigation in Studio.
 public enum WorkspaceValidationEntityType: String, Codable, Sendable {
+  case session
   case persona
   case kit
   case directive

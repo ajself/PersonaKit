@@ -245,7 +245,8 @@ final class WorkspaceStore {
       draft: draft,
       originalSessionID: originalSessionID,
       validPersonaIDs: Set(snapshot.personas.map(\.id)),
-      validDirectiveIDs: Set(snapshot.directives.map(\.id))
+      validDirectiveIDs: Set(snapshot.directives.map(\.id)),
+      validKitIDs: Set(snapshot.kits.map(\.id))
     )
 
     loadWorkspace()
@@ -840,10 +841,14 @@ final class WorkspaceStore {
       issues: []
     )
     validationErrorMessage = nil
+    let snapshotAtValidationStart = self.snapshot
 
-    validationTask = Task { [workspaceURL] in
+    validationTask = Task { [workspaceURL, snapshotAtValidationStart] in
       do {
-        let validation = try await operationRunner.validate(workspaceURL: workspaceURL)
+        let validation = try await operationRunner.validate(
+          workspaceURL: workspaceURL,
+          snapshot: snapshotAtValidationStart
+        )
 
         guard !Task.isCancelled,
           self.workspaceURL == workspaceURL
@@ -1061,6 +1066,22 @@ private actor WorkspaceOperationRunner {
     try workspaceValidator.validate(workspaceURL: workspaceURL)
   }
 
+  func validate(
+    workspaceURL: URL,
+    snapshot: WorkspaceSnapshot
+  ) throws -> WorkspaceValidationSnapshot {
+    let coreValidation = try workspaceValidator.validate(workspaceURL: workspaceURL)
+    let sessionIssues = WorkspaceSessionDiagnostics.validateSessions(
+      workspaceURL: workspaceURL,
+      snapshot: snapshot
+    )
+
+    return WorkspaceValidationSnapshot(
+      summary: coreValidation.summary,
+      issues: coreValidation.issues + sessionIssues
+    )
+  }
+
   func loadSessionDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
     try sessionManager.loadDraft(fileURL: fileURL)
   }
@@ -1070,14 +1091,16 @@ private actor WorkspaceOperationRunner {
     draft: WorkspaceSessionDraft,
     originalSessionID: String?,
     validPersonaIDs: Set<String>,
-    validDirectiveIDs: Set<String>
+    validDirectiveIDs: Set<String>,
+    validKitIDs: Set<String>
   ) throws -> String {
     try sessionManager.saveSession(
       workspaceURL: workspaceURL,
       draft: draft,
       originalSessionID: originalSessionID,
       validPersonaIDs: validPersonaIDs,
-      validDirectiveIDs: validDirectiveIDs
+      validDirectiveIDs: validDirectiveIDs,
+      validKitIDs: validKitIDs
     )
   }
 

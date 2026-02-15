@@ -400,6 +400,8 @@ struct StudioRootView: View {
 
   private func sidebarItem(for entityType: WorkspaceValidationEntityType) -> SidebarItem {
     switch entityType {
+    case .session:
+      return .sessions
     case .persona:
       return .personas
     case .kit:
@@ -452,6 +454,8 @@ struct StudioRootView: View {
     let lastPathComponent = URL(fileURLWithPath: filePath).lastPathComponent
 
     switch issue.entityType {
+    case .session:
+      return removingSuffix(".session.json", from: lastPathComponent)
     case .persona:
       return removingSuffix(".persona.json", from: lastPathComponent)
     case .kit:
