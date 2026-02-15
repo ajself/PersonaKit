@@ -1,14 +1,14 @@
 import Foundation
 
 /// Renders a deterministic dependency graph for a resolved PersonaKit session.
-struct GraphPrinter {
+public struct GraphPrinter {
   /// Builds the text graph output for a resolved session and optional kit overrides.
   ///
   /// - Parameters:
   ///   - resolvedSession: The fully resolved session graph inputs.
   ///   - kitOverrides: User-specified kit overrides applied for this render.
   /// - Returns: A newline-terminated graph representation.
-  static func render(resolvedSession: ResolvedSession, kitOverrides: [String]) -> String {
+  public static func render(resolvedSession: ResolvedSession, kitOverrides: [String]) -> String {
     let persona = resolvedSession.persona
     let directive = resolvedSession.directive
     let overrides = uniqueSorted(kitOverrides)
