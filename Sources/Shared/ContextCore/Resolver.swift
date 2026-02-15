@@ -1,7 +1,7 @@
 import Foundation
 
 /// Resolves a session definition into concrete PersonaKit entities.
-struct Resolver {
+public struct Resolver {
   /// Resolves a session using explicit scope inputs.
   ///
   /// - Parameters:
@@ -11,7 +11,7 @@ struct Resolver {
   ///   - fileManager: File system interface used for file existence checks.
   /// - Returns: Fully resolved session entities.
   /// - Throws: ``ResolverResolutionError`` when references cannot be resolved.
-  static func resolve(
+  public static func resolve(
     definition: SessionDefinition,
     registry: Registry,
     scopes: ScopeSet,
@@ -221,7 +221,7 @@ struct Resolver {
   ///   - fileManager: File system interface used for file existence checks.
   /// - Returns: Fully resolved session entities.
   /// - Throws: ``ResolverResolutionError`` when references cannot be resolved.
-  static func resolve(
+  public static func resolve(
     definition: SessionDefinition,
     registry: Registry,
     rootURL: URL,
