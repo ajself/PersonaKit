@@ -1,11 +1,18 @@
 import Foundation
 
 /// Resolves workspace roots used by Studio for project and global scope operations.
-struct WorkspaceScopeResolver {
-  let directoryExists: @Sendable (URL) -> Bool
+public struct WorkspaceScopeResolver {
+  public let directoryExists: @Sendable (URL) -> Bool
+
+  /// Creates a resolver with an injected directory existence check.
+  ///
+  /// - Parameter directoryExists: Closure used to check whether a URL exists as a directory.
+  public init(directoryExists: @escaping @Sendable (URL) -> Bool) {
+    self.directoryExists = directoryExists
+  }
 
   /// Resolves the default global PersonaKit scope (`~/.personakit`) when present.
-  static func defaultGlobalScopeURL(fileManager: FileManager = .default) -> URL? {
+  public static func defaultGlobalScopeURL(fileManager: FileManager = .default) -> URL? {
     let candidate = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".personakit")
 
     guard directoryExists(candidate, fileManager: fileManager) else {
@@ -16,7 +23,7 @@ struct WorkspaceScopeResolver {
   }
 
   /// Returns `true` when the provided URL exists as a directory.
-  static func directoryExists(
+  public static func directoryExists(
     _ url: URL,
     fileManager: FileManager = .default
   ) -> Bool {
@@ -26,7 +33,7 @@ struct WorkspaceScopeResolver {
       && isDirectory.boolValue
   }
 
-  func resolveProjectScopeURL(_ workspaceURL: URL) throws -> URL {
+  public func resolveProjectScopeURL(_ workspaceURL: URL) throws -> URL {
     let workspace = workspaceURL.standardizedFileURL
     let projectScopeURL: URL
 

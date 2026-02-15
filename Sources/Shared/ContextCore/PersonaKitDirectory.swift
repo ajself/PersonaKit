@@ -1,7 +1,7 @@
 import Foundation
 
 /// Directory helpers for canonical PersonaKit root subpaths.
-struct PersonaKitDirectory {
+public struct PersonaKitDirectory {
   private static let packsDirectoryName = "Packs"
   private static let sessionsDirectoryName = "Sessions"
 
@@ -9,7 +9,7 @@ struct PersonaKitDirectory {
   ///
   /// - Parameter root: PersonaKit root directory URL.
   /// - Returns: URL for the `Packs` directory under `root`.
-  static func packsURL(root: URL) -> URL {
+  public static func packsURL(root: URL) -> URL {
     root.appendingPathComponent(packsDirectoryName)
   }
 
@@ -17,7 +17,7 @@ struct PersonaKitDirectory {
   ///
   /// - Parameter root: PersonaKit root directory URL.
   /// - Returns: URL for the `Sessions` directory under `root`.
-  static func sessionsURL(root: URL) -> URL {
+  public static func sessionsURL(root: URL) -> URL {
     root.appendingPathComponent(sessionsDirectoryName)
   }
 
@@ -27,7 +27,7 @@ struct PersonaKitDirectory {
   ///   - root: PersonaKit root directory URL.
   ///   - fileManager: File manager used for existence checks.
   /// - Returns: `true` when `root/Packs` exists and is a directory.
-  static func hasPacks(root: URL, fileManager: FileManager = .default) -> Bool {
+  public static func hasPacks(root: URL, fileManager: FileManager = .default) -> Bool {
     hasDirectory(at: packsURL(root: root), fileManager: fileManager)
   }
 
@@ -37,13 +37,16 @@ struct PersonaKitDirectory {
   ///   - root: PersonaKit root directory URL.
   ///   - fileManager: File manager used for existence checks.
   /// - Returns: `true` when `root/Sessions` exists and is a directory.
-  static func hasSessions(root: URL, fileManager: FileManager = .default) -> Bool {
+  public static func hasSessions(root: URL, fileManager: FileManager = .default) -> Bool {
     hasDirectory(at: sessionsURL(root: root), fileManager: fileManager)
   }
 
   private static func hasDirectory(at url: URL, fileManager: FileManager) -> Bool {
     var isDirectory: ObjCBool = false
 
-    return fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+    return fileManager.fileExists(
+      atPath: url.path,
+      isDirectory: &isDirectory
+    ) && isDirectory.boolValue
   }
 }

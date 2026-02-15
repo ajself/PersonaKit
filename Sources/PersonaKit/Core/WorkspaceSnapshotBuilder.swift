@@ -103,19 +103,6 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
   )
 }
 
-/// Error emitted when a workspace is missing the `.personakit/Packs` directory.
-public struct MissingPersonaKitDirectoryError: LocalizedError, Sendable {
-  public let projectScopeURL: URL
-
-  public init(projectScopeURL: URL) {
-    self.projectScopeURL = projectScopeURL
-  }
-
-  public var errorDescription: String? {
-    "Missing PersonaKit directory at \(projectScopeURL.path())."
-  }
-}
-
 /// User-facing workspace snapshot loading failure.
 public struct WorkspaceSnapshotBuildError: LocalizedError, Sendable {
   public let message: String

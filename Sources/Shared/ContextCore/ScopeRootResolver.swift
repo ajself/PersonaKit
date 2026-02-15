@@ -1,7 +1,7 @@
 import Foundation
 
 /// Resolves project/global PersonaKit scope roots from local environment paths.
-struct ScopeRootResolver: Sendable {
+public struct ScopeRootResolver: Sendable {
   private let projectLocator: ProjectPersonaKitLocator
   private let globalLocator: GlobalPersonaKitLocator
 
@@ -10,7 +10,7 @@ struct ScopeRootResolver: Sendable {
   /// - Parameters:
   ///   - startingURL: Optional project walk-up starting point.
   ///   - homeDirectory: Optional home directory for global scope lookup.
-  init(
+  public init(
     startingURL: URL? = nil,
     homeDirectory: URL? = nil
   ) {
@@ -21,7 +21,7 @@ struct ScopeRootResolver: Sendable {
   /// Returns discovered scope roots, or `nil` when neither scope exists.
   ///
   /// - Returns: A `ScopeSet` containing discovered project/global URLs.
-  func locate() -> ScopeSet? {
+  public func locate() -> ScopeSet? {
     let project = projectLocator.locate()
     let global = globalLocator.locate()
 

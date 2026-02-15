@@ -1,13 +1,13 @@
 import Foundation
 
 /// Locates the nearest project PersonaKit root by walking parent directories.
-struct ProjectPersonaKitLocator: Sendable {
+public struct ProjectPersonaKitLocator: Sendable {
   private let startingURL: URL
 
   /// Creates a locator rooted at `startingURL` or the current working directory.
   ///
   /// - Parameter startingURL: Optional starting directory override for tests.
-  init(startingURL: URL? = nil) {
+  public init(startingURL: URL? = nil) {
     if let startingURL {
       self.startingURL = startingURL
     } else {
@@ -18,7 +18,7 @@ struct ProjectPersonaKitLocator: Sendable {
   /// Returns the nearest `/.personakit` directory from current to filesystem root.
   ///
   /// - Returns: The first matching PersonaKit directory URL, or `nil` when none exists.
-  func locate() -> URL? {
+  public func locate() -> URL? {
     var current = startingURL.standardizedFileURL
     var remaining = current.pathComponents.count + 1
 
