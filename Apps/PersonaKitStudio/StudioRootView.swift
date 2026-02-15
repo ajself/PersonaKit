@@ -218,7 +218,7 @@ struct StudioRootView: View {
     .sheet(item: $rawJSONEditorPresentation) { presentation in
       RawJSONEditorView(
         title: "Edit \(presentation.itemID)",
-        entityDisplayName: presentation.entityType.displayName,
+        entityType: presentation.entityType,
         initialRawJSON: presentation.rawJSON,
         onCancel: {
           rawJSONEditorPresentation = nil
