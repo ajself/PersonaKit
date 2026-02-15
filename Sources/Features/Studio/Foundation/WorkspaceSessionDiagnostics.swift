@@ -1,8 +1,8 @@
 import Foundation
-import PersonaKitCore
+import ContextCore
 
 /// Session-specific diagnostics appended to workspace validation results.
-enum WorkspaceSessionDiagnostics {
+public enum WorkspaceSessionDiagnostics {
   /// Minimal session document used for diagnostics-level decoding.
   struct SessionDocument: Codable, Sendable {
     let id: String
@@ -12,7 +12,7 @@ enum WorkspaceSessionDiagnostics {
   }
 
   /// Validates project-scoped session files against filename and reference rules.
-  static func validateSessions(
+  public static func validateSessions(
     workspaceURL _: URL,
     snapshot: WorkspaceSnapshot,
     fileManager: FileManager = .default

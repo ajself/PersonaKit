@@ -1,14 +1,30 @@
 import Foundation
-import PersonaKitCore
+import ContextCore
 
 /// Minimal two-array form metadata for a PersonaKit library entity type.
-struct WorkspaceLibraryEntityFormDescriptor: Sendable {
-  let primaryFieldKey: String
-  let primaryFieldLabel: String
-  let firstArrayKey: String
-  let firstArrayLabel: String
-  let secondArrayKey: String
-  let secondArrayLabel: String
+public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
+  public let primaryFieldKey: String
+  public let primaryFieldLabel: String
+  public let firstArrayKey: String
+  public let firstArrayLabel: String
+  public let secondArrayKey: String
+  public let secondArrayLabel: String
+
+  public init(
+    primaryFieldKey: String,
+    primaryFieldLabel: String,
+    firstArrayKey: String,
+    firstArrayLabel: String,
+    secondArrayKey: String,
+    secondArrayLabel: String
+  ) {
+    self.primaryFieldKey = primaryFieldKey
+    self.primaryFieldLabel = primaryFieldLabel
+    self.firstArrayKey = firstArrayKey
+    self.firstArrayLabel = firstArrayLabel
+    self.secondArrayKey = secondArrayKey
+    self.secondArrayLabel = secondArrayLabel
+  }
 }
 
 extension WorkspaceLibraryEntityType {
@@ -64,13 +80,25 @@ extension WorkspaceLibraryEntityType {
 }
 
 /// Editable minimal form values for supported PersonaKit library entities.
-struct WorkspaceLibraryEntityFormState: Equatable, Sendable {
-  var id: String
-  var primaryText: String
-  var firstArrayLines: String
-  var secondArrayLines: String
+public struct WorkspaceLibraryEntityFormState: Equatable, Sendable {
+  public var id: String
+  public var primaryText: String
+  public var firstArrayLines: String
+  public var secondArrayLines: String
 
-  static let empty = WorkspaceLibraryEntityFormState(
+  public init(
+    id: String,
+    primaryText: String,
+    firstArrayLines: String,
+    secondArrayLines: String
+  ) {
+    self.id = id
+    self.primaryText = primaryText
+    self.firstArrayLines = firstArrayLines
+    self.secondArrayLines = secondArrayLines
+  }
+
+  public static let empty = WorkspaceLibraryEntityFormState(
     id: "",
     primaryText: "",
     firstArrayLines: "",
@@ -79,12 +107,12 @@ struct WorkspaceLibraryEntityFormState: Equatable, Sendable {
 }
 
 /// Errors emitted when synchronizing between minimal form and raw JSON.
-enum WorkspaceLibraryEntityFormAdapterError: LocalizedError {
+public enum WorkspaceLibraryEntityFormAdapterError: LocalizedError {
   case invalidJSON(String)
   case rootObjectRequired
   case jsonEncodingFailed
 
-  var errorDescription: String? {
+  public var errorDescription: String? {
     switch self {
     case .invalidJSON(let description):
       return "Form editing requires valid JSON: \(description)"
@@ -97,14 +125,14 @@ enum WorkspaceLibraryEntityFormAdapterError: LocalizedError {
 }
 
 /// Converts between raw JSON text and the Studio minimal library form.
-struct WorkspaceLibraryEntityFormAdapter: Sendable {
-  let descriptor: WorkspaceLibraryEntityFormDescriptor
+public struct WorkspaceLibraryEntityFormAdapter: Sendable {
+  public let descriptor: WorkspaceLibraryEntityFormDescriptor
 
-  init(entityType: WorkspaceLibraryEntityType) {
+  public init(entityType: WorkspaceLibraryEntityType) {
     descriptor = entityType.minimalFormDescriptor
   }
 
-  func parseFormState(from rawJSON: String) throws -> WorkspaceLibraryEntityFormState {
+  public func parseFormState(from rawJSON: String) throws -> WorkspaceLibraryEntityFormState {
     let object = try parseJSONObject(rawJSON)
 
     return WorkspaceLibraryEntityFormState(
@@ -119,7 +147,7 @@ struct WorkspaceLibraryEntityFormAdapter: Sendable {
     )
   }
 
-  func applyFormState(
+  public func applyFormState(
     _ formState: WorkspaceLibraryEntityFormState,
     to rawJSON: String
   ) throws -> String {

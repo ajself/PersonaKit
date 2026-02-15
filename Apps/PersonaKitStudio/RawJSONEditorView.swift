@@ -1,4 +1,5 @@
 import PersonaKitCore
+import StudioFoundation
 import SwiftUI
 
 /// Modal editor with minimal form fields and full-fidelity raw JSON editing.
