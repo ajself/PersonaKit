@@ -36,8 +36,25 @@ public final class WorkspaceStore {
   var snapshot: WorkspaceSnapshot = .empty
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
-  var validation: WorkspaceValidationSnapshot = .empty
-  var validationErrorMessage: String?
+  var validation: WorkspaceValidationSnapshot {
+    get {
+      validationState.snapshot
+    }
+
+    set {
+      validationState.setSnapshot(newValue)
+    }
+  }
+
+  var validationErrorMessage: String? {
+    get {
+      validationState.errorMessage
+    }
+
+    set {
+      validationState.setErrorMessage(newValue)
+    }
+  }
   var sessionPreview: String {
     get {
       sessionPreviewState.preview
@@ -74,6 +91,7 @@ public final class WorkspaceStore {
   private let pasteboardWriter: any PasteboardWriting
   private let fileRevealer: any FileRevealing
   private var loadTask: Task<Void, Never>?
+  private var validationState = WorkspaceValidationState()
   private var validationTask: Task<Void, Never>?
   private var sessionPreviewTask: Task<Void, Never>?
   private var sessionPreviewState = WorkspaceSessionPreviewState()
