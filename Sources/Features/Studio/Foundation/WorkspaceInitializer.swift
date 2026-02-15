@@ -1,16 +1,16 @@
 import Foundation
 
 /// Creates the minimal project PersonaKit directory structure for Studio.
-struct WorkspaceInitializer {
+public struct WorkspaceInitializer {
   private let dependencies: WorkspaceInitializerDependencies
 
-  init(
+  public init(
     dependencies: WorkspaceInitializerDependencies = .live()
   ) {
     self.dependencies = dependencies
   }
 
-  func initialize(
+  public func initialize(
     at workspaceURL: URL
   ) throws {
     let workspace = workspaceURL.standardizedFileURL
@@ -41,10 +41,16 @@ struct WorkspaceInitializer {
 }
 
 /// Injectable filesystem dependencies for workspace initialization.
-struct WorkspaceInitializerDependencies {
+public struct WorkspaceInitializerDependencies {
   let createDirectory: (URL) throws -> Void
 
-  static func live() -> WorkspaceInitializerDependencies {
+  public init(
+    createDirectory: @escaping (URL) throws -> Void
+  ) {
+    self.createDirectory = createDirectory
+  }
+
+  public static func live() -> WorkspaceInitializerDependencies {
     WorkspaceInitializerDependencies(
       createDirectory: { directoryURL in
         try FileManager.default.createDirectory(

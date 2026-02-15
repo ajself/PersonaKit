@@ -1,5 +1,6 @@
 import Foundation
 import PersonaKitCore
+import StudioFoundation
 
 /// Editable session draft model used by Studio session editor UI.
 struct WorkspaceSessionDraft: Equatable, Sendable {

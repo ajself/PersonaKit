@@ -3,33 +3,35 @@ import Foundation
 import UniformTypeIdentifiers
 
 /// Picks a workspace URL from the local file system.
-protocol WorkspacePicking {
+public protocol WorkspacePicking {
   @MainActor
   func pickWorkspaceURL() -> URL?
 }
 
 /// Picks a markdown export destination for session preview output.
-protocol PreviewExportDestinationPicking {
+public protocol PreviewExportDestinationPicking {
   @MainActor
   func pickPreviewDestination(suggestedFilename: String) -> URL?
 }
 
 /// Writes plain text to the system pasteboard.
-protocol PasteboardWriting {
+public protocol PasteboardWriting {
   @MainActor
   func writeString(_ value: String) -> Bool
 }
 
 /// Reveals a file URL in Finder.
-protocol FileRevealing {
+public protocol FileRevealing {
   @MainActor
   func reveal(_ url: URL)
 }
 
 /// macOS open-panel implementation for workspace selection.
-struct WorkspacePickerClient: WorkspacePicking {
+public struct WorkspacePickerClient: WorkspacePicking {
+  public init() {}
+
   @MainActor
-  func pickWorkspaceURL() -> URL? {
+  public func pickWorkspaceURL() -> URL? {
     let panel = NSOpenPanel()
     panel.canChooseDirectories = true
     panel.canChooseFiles = false
@@ -47,9 +49,11 @@ struct WorkspacePickerClient: WorkspacePicking {
 }
 
 /// macOS save-panel implementation for markdown export destination picking.
-struct PreviewExportDestinationPickerClient: PreviewExportDestinationPicking {
+public struct PreviewExportDestinationPickerClient: PreviewExportDestinationPicking {
+  public init() {}
+
   @MainActor
-  func pickPreviewDestination(suggestedFilename: String) -> URL? {
+  public func pickPreviewDestination(suggestedFilename: String) -> URL? {
     let savePanel = NSSavePanel()
 
     if let markdownType = UTType(filenameExtension: "md") {
@@ -72,9 +76,11 @@ struct PreviewExportDestinationPickerClient: PreviewExportDestinationPicking {
 }
 
 /// macOS pasteboard implementation for copy actions.
-struct PasteboardClient: PasteboardWriting {
+public struct PasteboardClient: PasteboardWriting {
+  public init() {}
+
   @MainActor
-  func writeString(_ value: String) -> Bool {
+  public func writeString(_ value: String) -> Bool {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     return pasteboard.setString(value, forType: .string)
@@ -82,9 +88,11 @@ struct PasteboardClient: PasteboardWriting {
 }
 
 /// macOS Finder implementation for reveal-in-file-viewer actions.
-struct FileRevealerClient: FileRevealing {
+public struct FileRevealerClient: FileRevealing {
+  public init() {}
+
   @MainActor
-  func reveal(_ url: URL) {
+  public func reveal(_ url: URL) {
     NSWorkspace.shared.activateFileViewerSelecting([url])
   }
 }

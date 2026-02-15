@@ -88,7 +88,8 @@ let package = Package(
     .executableTarget(
       name: "PersonaKitStudio",
       dependencies: [
-        "PersonaKitCore"
+        "PersonaKitCore",
+        "StudioFoundation",
       ],
       path: "Apps/PersonaKitStudio"
     ),

@@ -1,9 +1,9 @@
 import Foundation
-import PersonaKitCore
+import ContextCore
 
 /// Shared resolver for deriving the project PersonaKit root used by Studio write flows.
-enum WorkspaceProjectScopeResolver {
-  static func resolveProjectScopeURL(
+public enum WorkspaceProjectScopeResolver {
+  public static func resolveProjectScopeURL(
     _ workspaceURL: URL,
     directoryExists: @Sendable (URL) -> Bool
   ) throws -> URL {

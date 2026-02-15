@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import PersonaKitCore
+import StudioFoundation
 
 /// Raw JSON editor payload used by Studio library editing flows.
 struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {

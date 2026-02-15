@@ -1,5 +1,6 @@
 import Foundation
 import PersonaKitCore
+import StudioFoundation
 
 /// Library JSON editing contract used by `WorkspaceStore`.
 protocol WorkspaceLibraryEntityManaging: Sendable {

@@ -1,5 +1,6 @@
 import Foundation
 import PersonaKitCore
+import StudioFoundation
 
 /// Essentials markdown editing contract used by `WorkspaceStore`.
 protocol WorkspaceEssentialManaging: Sendable {
