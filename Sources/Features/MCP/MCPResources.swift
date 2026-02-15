@@ -1,6 +1,8 @@
+import ContextCore
 import Foundation
 import MCP
 
+/// Resource URI parse failures for `personakit://` resource lookups.
 enum MCPResourceURIError: Error, LocalizedError, Equatable {
   case invalidURI(String)
   case invalidScheme(String)
@@ -30,6 +32,7 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
   }
 }
 
+/// Supported pack entity categories for MCP resource URIs.
 enum MCPPackResourceType: String, CaseIterable, Equatable {
   case personas
   case kits
@@ -57,6 +60,7 @@ enum MCPPackResourceType: String, CaseIterable, Equatable {
   }
 }
 
+/// Parsed resource reference describing a pack JSON or essential markdown file.
 enum MCPResourceReference: Equatable {
   case pack(type: MCPPackResourceType, id: String)
   case essential(id: String)
@@ -97,6 +101,7 @@ enum MCPResourceReference: Equatable {
     }
   }
 
+  /// Parses and validates a `personakit://` resource URI.
   static func parse(uri: String) throws -> MCPResourceReference {
     guard let components = URLComponents(string: uri) else {
       throw MCPResourceURIError.invalidURI(uri)
@@ -139,6 +144,7 @@ enum MCPResourceReference: Equatable {
   }
 }
 
+/// Resource metadata entry used to build MCP `Resource` values.
 struct MCPResourceEntry: Equatable {
   let uri: String
   let name: String
@@ -149,6 +155,7 @@ struct MCPResourceEntry: Equatable {
   }
 }
 
+/// MCP resource handler service for listing and reading PersonaKit assets.
 struct MCPResourceService: Sendable {
   let registry: Registry
   let scopes: ScopeSet
@@ -161,6 +168,7 @@ struct MCPResourceService: Sendable {
     self.scopes = scopes
   }
 
+  /// Lists available resources with deterministic URI ordering.
   func listResources() throws -> [Resource] {
     var entries: [MCPResourceEntry] = []
 
@@ -194,6 +202,7 @@ struct MCPResourceService: Sendable {
     }
   }
 
+  /// Reads a resource by URI and returns text content with metadata.
   func readResource(uri: String) throws -> Resource.Content {
     let reference: MCPResourceReference
     do {

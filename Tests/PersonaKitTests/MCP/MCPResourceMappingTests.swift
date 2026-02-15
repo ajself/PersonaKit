@@ -1,6 +1,6 @@
 import Testing
 
-@testable import PersonaKitCore
+@testable import ContextMCP
 
 struct MCPResourceMappingTests {
   @Test

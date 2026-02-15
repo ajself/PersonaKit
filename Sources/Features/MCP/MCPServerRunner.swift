@@ -1,18 +1,25 @@
+import ContextCore
 import Dispatch
 import Foundation
 import MCP
 
-protocol MCPServerRunning: Sendable {
+/// Runner abstraction for starting the PersonaKit MCP server process.
+public protocol MCPServerRunning: Sendable {
+  /// Starts the MCP server using the provided semantic version string.
   func run(version: String) throws
 }
 
-struct MCPServerRunner: MCPServerRunning {
-  func run(version: String) throws {
+/// Default MCP server bootstrap implementation for CLI `personakit mcp`.
+public struct MCPServerRunner: MCPServerRunning {
+  public init() {}
+
+  /// Starts the async MCP server loop and blocks the process main thread.
+  public func run(version: String) throws {
     Task {
       do {
         try await runServer(version: version)
       } catch {
-        var stderrStream = StandardError()
+        var stderrStream = MCPStandardError()
         stderrStream.write("Error: MCP server failed to start: \(error.localizedDescription)\n")
         exit(1)
       }
@@ -113,4 +120,15 @@ private func formatRegistryError(_ error: RegistryError) -> String {
   }
   parts.append(error.message)
   return parts.joined(separator: " ")
+}
+
+/// `stderr` text stream used by MCP server startup failures.
+private struct MCPStandardError: TextOutputStream {
+  mutating func write(_ string: String) {
+    guard let data = string.data(using: .utf8) else {
+      return
+    }
+
+    FileHandle.standardError.write(data)
+  }
 }

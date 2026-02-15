@@ -71,8 +71,8 @@ let package = Package(
       name: "PersonaKitCore",
       dependencies: [
         "ContextCore",
+        "ContextMCP",
         "JSONSchema",
-        .product(name: "MCP", package: "swift-sdk"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
       path: "Sources/PersonaKit"
@@ -94,6 +94,7 @@ let package = Package(
     .testTarget(
       name: "PersonaKitTests",
       dependencies: [
+        "ContextMCP",
         "PersonaKitCore",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),

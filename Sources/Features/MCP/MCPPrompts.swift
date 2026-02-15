@@ -1,6 +1,8 @@
+import ContextCore
 import Foundation
 import MCP
 
+/// Supported prompt names exposed by the PersonaKit MCP server.
 enum MCPPromptName: String, CaseIterable {
   case sessionExport = "personakit.session.export"
   case sessionGraph = "personakit.session.graph"
@@ -23,12 +25,14 @@ enum MCPPromptName: String, CaseIterable {
   }
 }
 
+/// Parsed and normalized prompt input arguments.
 struct MCPPromptArguments: Equatable {
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]
 }
 
+/// Prompt argument parsing failures returned as MCP invalid-params errors.
 enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
   case missing(String)
   case invalidType(String)
@@ -43,7 +47,9 @@ enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
   }
 }
 
+/// Decoder for `GetPrompt` argument payloads.
 enum MCPPromptArgumentParser {
+  /// Parses required persona/directive values and optional kit overrides.
   static func parse(_ arguments: [String: Value]?) throws -> MCPPromptArguments {
     let personaId = try requireString(arguments, name: "personaId")
     let directiveId = try requireString(arguments, name: "directiveId")
@@ -91,9 +97,11 @@ enum MCPPromptArgumentParser {
   }
 }
 
+/// MCP prompt handler service for export and graph prompts.
 struct MCPPromptService: Sendable {
   let scopes: ScopeSet
 
+  /// Returns prompt definitions in deterministic name order.
   func listPrompts() -> [Prompt] {
     return MCPPromptName.allCases
       .sorted { $0.rawValue < $1.rawValue }
@@ -106,6 +114,7 @@ struct MCPPromptService: Sendable {
       }
   }
 
+  /// Resolves and executes a prompt by name using validated prompt arguments.
   func getPrompt(
     name: String,
     arguments: [String: Value]?

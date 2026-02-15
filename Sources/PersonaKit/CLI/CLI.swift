@@ -1,4 +1,5 @@
 import ArgumentParser
+import ContextMCP
 import Foundation
 
 /// Runtime wrapper for executing the PersonaKit command tree.

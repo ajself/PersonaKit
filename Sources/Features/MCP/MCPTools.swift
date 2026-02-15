@@ -1,6 +1,8 @@
+import ContextCore
 import Foundation
 import MCP
 
+/// Supported tool names exposed by the PersonaKit MCP server.
 enum MCPToolName: String, CaseIterable {
   case validate = "personakit_validate"
   case export = "personakit_export"
@@ -60,12 +62,14 @@ enum MCPToolName: String, CaseIterable {
   }
 }
 
+/// Parsed and normalized session arguments for export/graph tool calls.
 struct MCPToolArguments: Equatable {
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]
 }
 
+/// Tool argument parsing failures returned as MCP invalid-params errors.
 enum MCPToolArgumentError: Error, LocalizedError, Equatable {
   case missing(String)
   case invalidType(String)
@@ -84,7 +88,9 @@ enum MCPToolArgumentError: Error, LocalizedError, Equatable {
   }
 }
 
+/// Decoder for tool call arguments.
 enum MCPToolArgumentParser {
+  /// Parses and validates common session arguments for MCP tool calls.
   static func parse(_ arguments: [String: Value]?) throws -> MCPToolArguments {
     let personaId = try requireString(arguments, name: "personaId")
     let directiveId = try requireString(arguments, name: "directiveId")
@@ -147,9 +153,11 @@ enum MCPToolArgumentParser {
   }
 }
 
+/// MCP tool handler service for validate, export, and graph operations.
 struct MCPToolService: Sendable {
   let scopes: ScopeSet
 
+  /// Returns tool definitions in deterministic name order.
   func listTools() -> [Tool] {
     return MCPToolName.allCases
       .sorted { $0.rawValue < $1.rawValue }
@@ -163,6 +171,7 @@ struct MCPToolService: Sendable {
       }
   }
 
+  /// Executes an MCP tool call and returns a text-only response payload.
   func callTool(name: String, arguments: [String: Value]?) throws -> CallTool.Result {
     guard let tool = MCPToolName(rawValue: name) else {
       throw MCPError.invalidParams("Unknown tool name: \(name)")

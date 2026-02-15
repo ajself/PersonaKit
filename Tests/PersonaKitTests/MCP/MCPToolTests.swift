@@ -2,7 +2,8 @@ import Foundation
 import MCP
 import Testing
 
-@testable import PersonaKitCore
+import ContextCore
+@testable import ContextMCP
 
 struct MCPToolTests {
   @Test
