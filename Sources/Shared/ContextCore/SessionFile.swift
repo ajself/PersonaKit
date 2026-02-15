@@ -1,22 +1,34 @@
 import Foundation
 
 /// On-disk session selection file loaded from `Sessions/*.session.json`.
-struct SessionFile: Codable {
-  let id: String
-  let personaId: String
-  let directiveId: String
-  let kitOverrides: [String]?
+public struct SessionFile: Codable {
+  public let id: String
+  public let personaId: String
+  public let directiveId: String
+  public let kitOverrides: [String]?
+
+  public init(
+    id: String,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String]?
+  ) {
+    self.id = id
+    self.personaId = personaId
+    self.directiveId = directiveId
+    self.kitOverrides = kitOverrides
+  }
 }
 
 /// Session loading failures surfaced to CLI and MCP callers.
-enum SessionFileError: LocalizedError {
+public enum SessionFileError: LocalizedError {
   case notFound(String, String)
   case decodeFailed(String, String)
   case idMismatch(String, String, String)
   case invalidSessionId
 
   /// Human-readable error description for session loading failures.
-  var errorDescription: String? {
+  public var errorDescription: String? {
     switch self {
     case .notFound(let sessionId, let expectedPath):
       return "Session file not found for \(sessionId). Expected \(expectedPath)."
@@ -31,7 +43,7 @@ enum SessionFileError: LocalizedError {
 }
 
 /// Loads session files from project/global scope roots.
-struct SessionFileLoader {
+public struct SessionFileLoader {
   /// Loads a session by id from the first matching root in resolution order.
   ///
   /// - Parameters:
@@ -40,7 +52,7 @@ struct SessionFileLoader {
   ///   - fileManager: File system interface used for existence checks.
   /// - Returns: Decoded ``SessionFile``.
   /// - Throws: ``SessionFileError`` for empty ids, missing files, decode failures, or id mismatches.
-  static func load(
+  public static func load(
     scopes: ScopeSet,
     sessionId: String,
     fileManager: FileManager = .default
@@ -76,7 +88,7 @@ struct SessionFileLoader {
   ///   - fileManager: File system interface used for existence checks.
   /// - Returns: Decoded ``SessionFile``.
   /// - Throws: ``SessionFileError`` for empty ids, missing files, decode failures, or id mismatches.
-  static func load(
+  public static func load(
     root: URL,
     sessionId: String,
     fileManager: FileManager = .default
