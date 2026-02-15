@@ -41,9 +41,17 @@ public final class WorkspaceStore {
   var sessionPreview: String = ""
   var sessionPreviewErrorMessage: String?
   var isLoadingSessionPreview = false
-  var libraryActionMessage: String?
-  var libraryActionIsError = false
-  var isLoadingLibraryEditor = false
+  var libraryActionMessage: String? {
+    libraryActionState.message
+  }
+
+  var libraryActionIsError: Bool {
+    libraryActionState.isError
+  }
+
+  var isLoadingLibraryEditor: Bool {
+    libraryActionState.isLoadingEditor
+  }
 
   private let operationRunner: WorkspaceOperationRunner
   private let workspacePicker: any WorkspacePicking
@@ -55,7 +63,7 @@ public final class WorkspaceStore {
   private var validationTask: Task<Void, Never>?
   private var sessionPreviewTask: Task<Void, Never>?
   private var previewSessionID: String?
-  private var libraryActionRequestID: Int = 0
+  private var libraryActionState = WorkspaceLibraryActionState()
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -953,46 +961,35 @@ public final class WorkspaceStore {
   }
 
   private func beginLibraryActionRequest() -> Int {
-    libraryActionRequestID += 1
-    isLoadingLibraryEditor = true
-    libraryActionMessage = nil
-    libraryActionIsError = false
-
-    return libraryActionRequestID
+    libraryActionState.beginRequest()
   }
 
   private func completeLibraryActionRequest(
     requestID: Int,
     workspaceURL: URL?
   ) -> Bool {
-    guard libraryActionRequestID == requestID else {
-      return false
-    }
-
-    guard self.workspaceURL == workspaceURL else {
-      return false
-    }
-
-    isLoadingLibraryEditor = false
-    return true
+    libraryActionState.completeRequest(
+      requestID: requestID,
+      currentWorkspaceURL: self.workspaceURL,
+      expectedWorkspaceURL: workspaceURL
+    )
   }
 
   private func invalidateLibraryActionRequests() {
-    libraryActionRequestID += 1
-    isLoadingLibraryEditor = false
+    libraryActionState.invalidateRequests()
   }
 
   private func resetLibraryActionState() {
-    libraryActionMessage = nil
-    libraryActionIsError = false
-    isLoadingLibraryEditor = false
+    libraryActionState.reset()
   }
 
   private func setLibraryAction(
     message: String,
     isError: Bool
   ) {
-    libraryActionMessage = message
-    libraryActionIsError = isError
+    libraryActionState.setAction(
+      message: message,
+      isError: isError
+    )
   }
 }
