@@ -49,6 +49,7 @@ final class WorkspaceStore {
   private let workspaceInitializer: WorkspaceInitializer
   private let previewExportDestinationPicker: any PreviewExportDestinationPicking
   private let pasteboardWriter: any PasteboardWriting
+  private let fileRevealer: any FileRevealing
   private var loadTask: Task<Void, Never>?
   private var validationTask: Task<Void, Never>?
   private var sessionPreviewTask: Task<Void, Never>?
@@ -66,7 +67,8 @@ final class WorkspaceStore {
     workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
     previewExportDestinationPicker: any PreviewExportDestinationPicking =
       PreviewExportDestinationPickerClient(),
-    pasteboardWriter: any PasteboardWriting = PasteboardClient()
+    pasteboardWriter: any PasteboardWriting = PasteboardClient(),
+    fileRevealer: any FileRevealing = FileRevealerClient()
   ) {
     let resolvedEssentialManager =
       essentialManager
@@ -92,6 +94,7 @@ final class WorkspaceStore {
     self.workspaceInitializer = workspaceInitializer
     self.previewExportDestinationPicker = previewExportDestinationPicker
     self.pasteboardWriter = pasteboardWriter
+    self.fileRevealer = fileRevealer
   }
 
   /// Presents the folder picker and loads the selected workspace snapshot.
@@ -834,6 +837,20 @@ final class WorkspaceStore {
     return true
   }
 
+  /// Reveals a file in Finder.
+  func revealInFinder(fileURL: URL) {
+    fileRevealer.reveal(fileURL.standardizedFileURL)
+  }
+
+  /// Resolves a diagnostics file path and reveals the resulting URL in Finder when possible.
+  func revealValidationIssueInFinder(filePath: String) {
+    guard let fileURL = resolveValidationIssueFileURL(filePath) else {
+      return
+    }
+
+    fileRevealer.reveal(fileURL)
+  }
+
   private func runValidationTask(for workspaceURL: URL) {
     validationTask?.cancel()
     validation = WorkspaceValidationSnapshot(
@@ -916,6 +933,68 @@ final class WorkspaceStore {
     }
 
     return workspaceURL
+  }
+
+  private func resolveValidationIssueFileURL(_ filePath: String) -> URL? {
+    let normalizedPath = filePath.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !normalizedPath.isEmpty else {
+      return nil
+    }
+
+    if normalizedPath.hasPrefix("/") {
+      return URL(fileURLWithPath: normalizedPath).standardizedFileURL
+    }
+
+    let matchingSnapshotFileURLs = snapshotFileURLs().filter { fileURL in
+      fileURL.path().hasSuffix("/\(normalizedPath)")
+        || fileURL.path() == normalizedPath
+    }
+
+    if matchingSnapshotFileURLs.count == 1 {
+      return matchingSnapshotFileURLs[0]
+    }
+
+    guard let workspaceURL else {
+      return matchingSnapshotFileURLs.first
+    }
+
+    let workspace = workspaceURL.standardizedFileURL
+    let projectScopeURL: URL
+
+    if workspace.lastPathComponent == ".personakit" {
+      projectScopeURL = workspace
+    } else {
+      projectScopeURL = workspace.appendingPathComponent(".personakit")
+    }
+
+    let candidates: [URL] = [
+      workspace.appendingPathComponent(normalizedPath),
+      projectScopeURL.appendingPathComponent(normalizedPath),
+    ]
+    .map(\.standardizedFileURL)
+
+    if let existingCandidate = candidates.first(where: { candidate in
+      FileManager.default.fileExists(atPath: candidate.path())
+    }) {
+      return existingCandidate
+    }
+
+    return matchingSnapshotFileURLs.first
+  }
+
+  private func snapshotFileURLs() -> [URL] {
+    var fileURLs: [URL] = []
+
+    fileURLs.append(contentsOf: snapshot.sessions.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.personas.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.directives.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.kits.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.skills.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.intents.map(\.fileURL))
+    fileURLs.append(contentsOf: snapshot.essentials.map(\.fileURL))
+
+    return fileURLs.map(\.standardizedFileURL)
   }
 
   private func essentialItemFromSnapshot(

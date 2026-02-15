@@ -103,6 +103,15 @@ struct StudioRootView: View {
 
     return VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 8) {
+        Button("Reveal in Finder") {
+          guard let selectedItem else {
+            return
+          }
+
+          workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
+        }
+        .disabled(selectedItem == nil)
+
         if isEssentialsSelection {
           Button("Edit Markdown") {
             openMarkdownEditorForSelectedItem(
@@ -187,6 +196,9 @@ struct StudioRootView: View {
         onCancel: {
           markdownEditorPresentation = nil
         },
+        onRevealInFinder: {
+          workspaceStore.revealInFinder(fileURL: presentation.fileURL)
+        },
         onSave: { markdown in
           let saveError = await workspaceStore.saveEssentialEditorMarkdown(
             markdown,
@@ -210,6 +222,9 @@ struct StudioRootView: View {
         initialRawJSON: presentation.rawJSON,
         onCancel: {
           rawJSONEditorPresentation = nil
+        },
+        onRevealInFinder: {
+          workspaceStore.revealInFinder(fileURL: presentation.fileURL)
         },
         onValidate: { rawJSON in
           await workspaceStore.validateLibraryEditorRawJSON(
@@ -318,52 +333,65 @@ struct StudioRootView: View {
       } else {
         List(issues.indices, id: \.self) { index in
           let issue = issues[index]
+          let canRevealIssue = issue.filePath != nil
 
-          Button {
-            let navigationTarget = diagnosticsNavigationTarget(for: issue)
-            selection = navigationTarget.sidebarItem
-            selectedLibraryItemID = navigationTarget.selectedLibraryItemID
-            searchText = navigationTarget.searchText
-          } label: {
-            VStack(alignment: .leading, spacing: 6) {
-              HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(issue.severity.rawValue.capitalized)
-                  .font(.caption2)
-                  .fontWeight(.semibold)
-                  .padding(.horizontal, 6)
-                  .padding(.vertical, 2)
-                  .background(
-                    RoundedRectangle(cornerRadius: 8)
-                      .fill(.red.opacity(0.16))
-                  )
+          HStack(alignment: .top, spacing: 12) {
+            Button {
+              let navigationTarget = diagnosticsNavigationTarget(for: issue)
+              selection = navigationTarget.sidebarItem
+              selectedLibraryItemID = navigationTarget.selectedLibraryItemID
+              searchText = navigationTarget.searchText
+            } label: {
+              VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                  Text(issue.severity.rawValue.capitalized)
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                      RoundedRectangle(cornerRadius: 8)
+                        .fill(.red.opacity(0.16))
+                    )
 
-                Text(issue.entityType.rawValue.capitalized)
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-
-                if let entityId = issue.entityId {
-                  Text(entityId)
+                  Text(issue.entityType.rawValue.capitalized)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                  if let entityId = issue.entityId {
+                    Text(entityId)
+                      .font(.caption)
+                      .foregroundStyle(.secondary)
+                  }
+                }
+
+                Text(issue.message)
+                  .font(.subheadline)
+                  .foregroundStyle(.primary)
+                  .multilineTextAlignment(.leading)
+
+                if let filePath = issue.filePath {
+                  Text(filePath)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
                 }
               }
-
-              Text(issue.message)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.leading)
-
-              if let filePath = issue.filePath {
-                Text(filePath)
-                  .font(.caption.monospaced())
-                  .foregroundStyle(.tertiary)
-              }
+              .padding(.vertical, 4)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .contentShape(Rectangle())
             }
-            .padding(.vertical, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+
+            Button("Reveal") {
+              guard let filePath = issue.filePath else {
+                return
+              }
+
+              workspaceStore.revealValidationIssueInFinder(filePath: filePath)
+            }
+            .disabled(!canRevealIssue)
+            .buttonStyle(.borderless)
           }
-          .buttonStyle(.plain)
         }
         .overlay {
           if issues.isEmpty {

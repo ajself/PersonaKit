@@ -20,6 +20,12 @@ protocol PasteboardWriting {
   func writeString(_ value: String) -> Bool
 }
 
+/// Reveals a file URL in Finder.
+protocol FileRevealing {
+  @MainActor
+  func reveal(_ url: URL)
+}
+
 /// macOS open-panel implementation for workspace selection.
 struct WorkspacePickerClient: WorkspacePicking {
   @MainActor
@@ -72,5 +78,13 @@ struct PasteboardClient: PasteboardWriting {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     return pasteboard.setString(value, forType: .string)
+  }
+}
+
+/// macOS Finder implementation for reveal-in-file-viewer actions.
+struct FileRevealerClient: FileRevealing {
+  @MainActor
+  func reveal(_ url: URL) {
+    NSWorkspace.shared.activateFileViewerSelecting([url])
   }
 }

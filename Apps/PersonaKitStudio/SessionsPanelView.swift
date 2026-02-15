@@ -91,7 +91,9 @@ struct SessionsPanelView: View {
   private func sessionsListTab(
     items: [WorkspaceSessionListItem]
   ) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
+    let selectedSession = selectedSession(items: items)
+
+    return VStack(alignment: .leading, spacing: 10) {
       HStack(spacing: 8) {
         Button("New Session") {
           sessionEditorPresentation = SessionEditorPresentation(
@@ -104,12 +106,21 @@ struct SessionsPanelView: View {
         Button("Edit Session") {
           openEditorForSelectedSession(items: items)
         }
-        .disabled(selectedSession(items: items) == nil || isLoadingSessionDraft)
+        .disabled(selectedSession == nil || isLoadingSessionDraft)
 
         Button("Delete Session") {
           requestDeleteForSelectedSession(items: items)
         }
         .disabled(!canDeleteSelectedSession(items: items))
+
+        Button("Reveal in Finder") {
+          guard let selectedSession else {
+            return
+          }
+
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+        }
+        .disabled(selectedSession == nil)
 
         if isLoadingSessionDraft {
           ProgressView()
@@ -179,6 +190,15 @@ struct SessionsPanelView: View {
           refreshSelectedSessionPreview(items: items)
         }
         .disabled(selectedSession == nil || workspaceStore.isLoadingSessionPreview)
+
+        Button("Reveal in Finder") {
+          guard let selectedSession else {
+            return
+          }
+
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+        }
+        .disabled(selectedSession == nil)
 
         Button("Copy") {
           copySessionPreview()

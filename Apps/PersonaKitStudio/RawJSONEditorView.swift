@@ -5,6 +5,7 @@ struct RawJSONEditorView: View {
   let title: String
   let entityDisplayName: String
   let onCancel: () -> Void
+  let onRevealInFinder: (() -> Void)?
   let onValidate: @Sendable (String) async -> String?
   let onSave: @Sendable (String) async -> String?
 
@@ -19,12 +20,14 @@ struct RawJSONEditorView: View {
     entityDisplayName: String,
     initialRawJSON: String,
     onCancel: @escaping () -> Void,
+    onRevealInFinder: (() -> Void)? = nil,
     onValidate: @escaping @Sendable (String) async -> String?,
     onSave: @escaping @Sendable (String) async -> String?
   ) {
     self.title = title
     self.entityDisplayName = entityDisplayName
     self.onCancel = onCancel
+    self.onRevealInFinder = onRevealInFinder
     self.onValidate = onValidate
     self.onSave = onSave
 
@@ -57,6 +60,11 @@ struct RawJSONEditorView: View {
       }
 
       HStack {
+        Button("Reveal in Finder") {
+          onRevealInFinder?()
+        }
+        .disabled(isSaving || isValidating || onRevealInFinder == nil)
+
         Spacer()
 
         Button("Cancel") {

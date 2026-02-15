@@ -4,6 +4,7 @@ import SwiftUI
 struct MarkdownEditorView: View {
   let title: String
   let onCancel: () -> Void
+  let onRevealInFinder: (() -> Void)?
   let onSave: @Sendable (String) async -> String?
 
   @State private var markdown: String
@@ -14,10 +15,12 @@ struct MarkdownEditorView: View {
     title: String,
     initialMarkdown: String,
     onCancel: @escaping () -> Void,
+    onRevealInFinder: (() -> Void)? = nil,
     onSave: @escaping @Sendable (String) async -> String?
   ) {
     self.title = title
     self.onCancel = onCancel
+    self.onRevealInFinder = onRevealInFinder
     self.onSave = onSave
 
     _markdown = State(initialValue: initialMarkdown)
@@ -45,6 +48,11 @@ struct MarkdownEditorView: View {
       }
 
       HStack {
+        Button("Reveal in Finder") {
+          onRevealInFinder?()
+        }
+        .disabled(isSaving || onRevealInFinder == nil)
+
         Spacer()
 
         Button("Cancel") {
