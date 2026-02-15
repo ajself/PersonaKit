@@ -1,9 +1,8 @@
 import Foundation
-import PersonaKitCore
-import StudioFoundation
+import ContextCore
 
 /// Essentials markdown editing contract used by `WorkspaceStore`.
-protocol WorkspaceEssentialManaging: Sendable {
+public protocol WorkspaceEssentialManaging: Sendable {
   func loadMarkdown(fileURL: URL) throws -> String
 
   func saveMarkdown(
@@ -19,16 +18,16 @@ protocol WorkspaceEssentialManaging: Sendable {
 }
 
 /// Filesystem-backed essentials manager for Studio markdown editing workflows.
-struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
+public struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
   private let dependencies: WorkspaceEssentialManagerDependencies
 
-  init(
+  public init(
     dependencies: WorkspaceEssentialManagerDependencies = .live()
   ) {
     self.dependencies = dependencies
   }
 
-  func loadMarkdown(fileURL: URL) throws -> String {
+  public func loadMarkdown(fileURL: URL) throws -> String {
     do {
       let data = try dependencies.readData(fileURL)
 
@@ -48,7 +47,7 @@ struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
     }
   }
 
-  func saveMarkdown(
+  public func saveMarkdown(
     workspaceURL: URL,
     itemID: String,
     markdown: String
@@ -82,7 +81,7 @@ struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
     }
   }
 
-  func copyGlobalEssentialToProject(
+  public func copyGlobalEssentialToProject(
     workspaceURL: URL,
     item: WorkspaceListItem
   ) throws {
@@ -111,13 +110,25 @@ struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
 }
 
 /// Injectable filesystem behavior for essentials markdown editing.
-struct WorkspaceEssentialManagerDependencies {
-  let directoryExists: @Sendable (URL) -> Bool
-  let createDirectory: @Sendable (URL) throws -> Void
-  let readData: @Sendable (URL) throws -> Data
-  let writeData: @Sendable (Data, URL) throws -> Void
+public struct WorkspaceEssentialManagerDependencies: Sendable {
+  public let directoryExists: @Sendable (URL) -> Bool
+  public let createDirectory: @Sendable (URL) throws -> Void
+  public let readData: @Sendable (URL) throws -> Data
+  public let writeData: @Sendable (Data, URL) throws -> Void
 
-  static func live() -> WorkspaceEssentialManagerDependencies {
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    createDirectory: @escaping @Sendable (URL) throws -> Void,
+    readData: @escaping @Sendable (URL) throws -> Data,
+    writeData: @escaping @Sendable (Data, URL) throws -> Void
+  ) {
+    self.directoryExists = directoryExists
+    self.createDirectory = createDirectory
+    self.readData = readData
+    self.writeData = writeData
+  }
+
+  public static func live() -> WorkspaceEssentialManagerDependencies {
     WorkspaceEssentialManagerDependencies(
       directoryExists: { url in
         let fileManager = FileManager.default

@@ -1,9 +1,8 @@
 import Foundation
-import PersonaKitCore
-import StudioFoundation
+import ContextCore
 
 /// Library JSON editing contract used by `WorkspaceStore`.
-protocol WorkspaceLibraryEntityManaging: Sendable {
+public protocol WorkspaceLibraryEntityManaging: Sendable {
   func loadRawJSON(fileURL: URL) throws -> String
 
   func validateRawJSON(
@@ -27,11 +26,11 @@ protocol WorkspaceLibraryEntityManaging: Sendable {
 }
 
 /// Filesystem-backed library JSON manager for Studio raw editing workflows.
-struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
+public struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
   private let schemaValidator: any WorkspaceEntityJSONSchemaValidating
   private let dependencies: WorkspaceLibraryEntityManagerDependencies
 
-  init(
+  public init(
     schemaValidator: any WorkspaceEntityJSONSchemaValidating = WorkspaceEntityJSONSchemaValidator(),
     dependencies: WorkspaceLibraryEntityManagerDependencies = .live()
   ) {
@@ -39,7 +38,7 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
     self.dependencies = dependencies
   }
 
-  func loadRawJSON(fileURL: URL) throws -> String {
+  public func loadRawJSON(fileURL: URL) throws -> String {
     do {
       let data = try dependencies.readData(fileURL)
 
@@ -59,7 +58,7 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
     }
   }
 
-  func validateRawJSON(
+  public func validateRawJSON(
     _ rawJSON: String,
     entityType: WorkspaceLibraryEntityType,
     expectedID: String
@@ -88,7 +87,7 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
     }
   }
 
-  func saveRawJSON(
+  public func saveRawJSON(
     workspaceURL: URL,
     itemID: String,
     rawJSON: String,
@@ -123,7 +122,7 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
     }
   }
 
-  func copyGlobalItemToProject(
+  public func copyGlobalItemToProject(
     workspaceURL: URL,
     item: WorkspaceListItem,
     entityType: WorkspaceLibraryEntityType
@@ -181,13 +180,25 @@ struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
 }
 
 /// Injectable filesystem behavior for library JSON editing.
-struct WorkspaceLibraryEntityManagerDependencies {
-  let directoryExists: @Sendable (URL) -> Bool
-  let createDirectory: @Sendable (URL) throws -> Void
-  let readData: @Sendable (URL) throws -> Data
-  let writeData: @Sendable (Data, URL) throws -> Void
+public struct WorkspaceLibraryEntityManagerDependencies: Sendable {
+  public let directoryExists: @Sendable (URL) -> Bool
+  public let createDirectory: @Sendable (URL) throws -> Void
+  public let readData: @Sendable (URL) throws -> Data
+  public let writeData: @Sendable (Data, URL) throws -> Void
 
-  static func live() -> WorkspaceLibraryEntityManagerDependencies {
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    createDirectory: @escaping @Sendable (URL) throws -> Void,
+    readData: @escaping @Sendable (URL) throws -> Data,
+    writeData: @escaping @Sendable (Data, URL) throws -> Void
+  ) {
+    self.directoryExists = directoryExists
+    self.createDirectory = createDirectory
+    self.readData = readData
+    self.writeData = writeData
+  }
+
+  public static func live() -> WorkspaceLibraryEntityManagerDependencies {
     WorkspaceLibraryEntityManagerDependencies(
       directoryExists: { url in
         let fileManager = FileManager.default
