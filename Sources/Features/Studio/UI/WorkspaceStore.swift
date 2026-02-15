@@ -13,21 +13,21 @@ public final class WorkspaceStore {
   var canInitializeWorkspaceStructure = false
   var validation: WorkspaceValidationSnapshot {
     get {
-      validationState.snapshot
+      validationFeatureModel.validation
     }
 
     set {
-      validationState.setSnapshot(newValue)
+      validationFeatureModel.validation = newValue
     }
   }
 
   var validationErrorMessage: String? {
     get {
-      validationState.errorMessage
+      validationFeatureModel.validationErrorMessage
     }
 
     set {
-      validationState.setErrorMessage(newValue)
+      validationFeatureModel.validationErrorMessage = newValue
     }
   }
   var sessionPreview: String {
@@ -61,12 +61,11 @@ public final class WorkspaceStore {
 
   private let operationRunner: WorkspaceOperationRunner
   private let sessionFeatureModel: WorkspaceSessionFeatureModel
+  private let validationFeatureModel: WorkspaceValidationFeatureModel
   private let workspacePicker: any WorkspacePicking
   private let workspaceInitializer: WorkspaceInitializer
   private let fileRevealer: any FileRevealing
   private var loadTask: Task<Void, Never>?
-  private var validationState = WorkspaceValidationState()
-  private var validationTask: Task<Void, Never>?
   private var libraryActionState = WorkspaceLibraryActionState()
 
   public init(
@@ -112,6 +111,9 @@ public final class WorkspaceStore {
       previewExportDestinationPicker: previewExportDestinationPicker,
       pasteboardWriter: pasteboardWriter
     )
+    self.validationFeatureModel = WorkspaceValidationFeatureModel(
+      operationRunner: operationRunner
+    )
   }
 
   /// Presents the folder picker and loads the selected workspace snapshot.
@@ -149,7 +151,7 @@ public final class WorkspaceStore {
 
     guard let workspaceURL else {
       loadTask?.cancel()
-      validationTask?.cancel()
+      validationFeatureModel.cancelValidationTask()
       clearSessionPreview()
       snapshot = .empty
       loadErrorMessage = nil
@@ -161,7 +163,7 @@ public final class WorkspaceStore {
     }
 
     loadTask?.cancel()
-    validationTask?.cancel()
+    validationFeatureModel.cancelValidationTask()
     sessionFeatureModel.cancelPreviewTask()
 
     loadTask = Task { [workspaceURL] in
@@ -227,9 +229,8 @@ public final class WorkspaceStore {
   /// Runs validator checks and refreshes diagnostics state.
   func validateWorkspace() {
     guard let workspaceURL else {
-      validationTask?.cancel()
-      validation = .empty
-      validationErrorMessage = nil
+      validationFeatureModel.cancelValidationTask()
+      validationFeatureModel.reset()
       return
     }
 
@@ -802,49 +803,10 @@ public final class WorkspaceStore {
   }
 
   private func runValidationTask(for workspaceURL: URL) {
-    validationTask?.cancel()
-    validation = WorkspaceValidationSnapshot(
-      summary: "Validating workspace...",
-      issues: []
+    validationFeatureModel.runValidation(
+      workspaceURL: workspaceURL,
+      snapshotAtValidationStart: snapshot
     )
-    validationErrorMessage = nil
-    let snapshotAtValidationStart = self.snapshot
-
-    validationTask = Task { [workspaceURL, snapshotAtValidationStart] in
-      do {
-        let validation = try await operationRunner.validate(
-          workspaceURL: workspaceURL,
-          snapshot: snapshotAtValidationStart
-        )
-
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        self.validation = validation
-        validationErrorMessage = nil
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        validation = .empty
-        validationErrorMessage = error.message
-      } catch {
-        guard !Task.isCancelled,
-          self.workspaceURL == workspaceURL
-        else {
-          return
-        }
-
-        validation = .empty
-        validationErrorMessage = error.localizedDescription
-      }
-    }
   }
 
   private func clearSessionPreview() {
