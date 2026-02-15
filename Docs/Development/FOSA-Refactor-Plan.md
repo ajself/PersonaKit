@@ -8,6 +8,11 @@ into a cleaner, FOSA-aligned codebase. It is not a product-feature specification
 `Docs/Development/Studio-MVP.md` remains the product-development spec and is not
 redefined here.
 
+## Current Status
+
+- PR0 — Architecture Contract and Codification: completed
+- PR1 — Target Graph and Source Scaffold: in progress
+
 ## Scope
 
 In scope:

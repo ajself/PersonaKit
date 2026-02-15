@@ -30,6 +30,41 @@ let package = Package(
   ],
   targets: [
     .target(
+      name: "ContextCore",
+      dependencies: [],
+      path: "Sources/Shared/ContextCore"
+    ),
+    .target(
+      name: "ContextCLI",
+      dependencies: [
+        "ContextCore",
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+      ],
+      path: "Sources/Features/CLI"
+    ),
+    .target(
+      name: "ContextMCP",
+      dependencies: [
+        "ContextCore",
+        .product(name: "MCP", package: "swift-sdk"),
+      ],
+      path: "Sources/Features/MCP"
+    ),
+    .target(
+      name: "StudioFoundation",
+      dependencies: [
+        "ContextCore"
+      ],
+      path: "Sources/Features/Studio/Foundation"
+    ),
+    .target(
+      name: "StudioFeatures",
+      dependencies: [
+        "StudioFoundation"
+      ],
+      path: "Sources/Features/Studio/UI"
+    ),
+    .target(
       name: "PersonaKitCore",
       dependencies: [
         "JSONSchema",
