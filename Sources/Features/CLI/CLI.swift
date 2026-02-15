@@ -1,4 +1,5 @@
 import ArgumentParser
+import ContextCore
 import ContextMCP
 import Foundation
 

@@ -1,6 +1,7 @@
 import Testing
 
 import ContextMCP
+@testable import ContextCLI
 @testable import PersonaKitCore
 
 struct CLIMCPCommandTests {

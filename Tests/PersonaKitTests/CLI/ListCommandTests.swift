@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 
+@testable import ContextCLI
 @testable import PersonaKitCore
 
 struct ListCommandTests {

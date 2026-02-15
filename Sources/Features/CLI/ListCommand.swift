@@ -1,4 +1,5 @@
 import ArgumentParser
+import ContextCore
 import Foundation
 
 /// Supported entity categories for the `list` CLI command.
