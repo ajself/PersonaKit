@@ -11,7 +11,8 @@ redefined here.
 ## Current Status
 
 - PR0 — Architecture Contract and Codification: completed
-- PR1 — Target Graph and Source Scaffold: in progress
+- PR1 — Target Graph and Source Scaffold: completed
+- PR2 — Shared/Core Migration: in progress
 
 ## Scope
 

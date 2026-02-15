@@ -67,6 +67,7 @@ let package = Package(
     .target(
       name: "PersonaKitCore",
       dependencies: [
+        "ContextCore",
         "JSONSchema",
         .product(name: "MCP", package: "swift-sdk"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
