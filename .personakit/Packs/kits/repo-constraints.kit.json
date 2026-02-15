@@ -4,8 +4,9 @@
   "name": "Repository Constraints Kit",
   "summary": "Rules specific to this codebase.",
   "essentialIds": [
+    "architecture-defaults",
     "environment",
-    "tools-and-constraints",
-    "non-goals"
+    "non-goals",
+    "tools-and-constraints"
   ]
 }

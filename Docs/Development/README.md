@@ -4,6 +4,9 @@ PersonaKit is the authoritative context compiler. This repo uses a small,
 deterministic validation harness against the canonical kit in
 `Fixtures/kit-root` so contributors can confirm behavior and stability.
 
+Architecture execution planning for the FOSA migration is tracked in
+`Docs/Development/FOSA-Refactor-Plan.md`.
+
 ## Implementation architecture
 
 The implementation is intentionally small, with clear responsibilities split by
