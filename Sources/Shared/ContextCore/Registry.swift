@@ -1,30 +1,30 @@
 import Foundation
 
 /// In-memory lookup tables for all loaded PersonaKit entities.
-struct Registry: Sendable {
-  let personasById: [String: Persona]
-  let kitsById: [String: Kit]
-  let directivesById: [String: Directive]
-  let intentTemplatesById: [String: IntentTemplate]
-  let skillsById: [String: Skill]
+public struct Registry: Sendable {
+  public let personasById: [String: Persona]
+  public let kitsById: [String: Kit]
+  public let directivesById: [String: Directive]
+  public let intentTemplatesById: [String: IntentTemplate]
+  public let skillsById: [String: Skill]
 
-  var personas: [Persona] {
+  public var personas: [Persona] {
     personasById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
-  var kits: [Kit] {
+  public var kits: [Kit] {
     kitsById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
-  var directives: [Directive] {
+  public var directives: [Directive] {
     directivesById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
-  var intentTemplates: [IntentTemplate] {
+  public var intentTemplates: [IntentTemplate] {
     intentTemplatesById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
-  var skills: [Skill] {
+  public var skills: [Skill] {
     skillsById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
@@ -35,7 +35,7 @@ struct Registry: Sendable {
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Populated ``Registry``.
   /// - Throws: ``RegistryLoadError`` when directory, read, or decode failures occur.
-  static func load(root: URL, fileManager: FileManager = .default) throws -> Registry {
+  public static func load(root: URL, fileManager: FileManager = .default) throws -> Registry {
     try load(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil), fileManager: fileManager)
   }
 
@@ -48,7 +48,7 @@ struct Registry: Sendable {
   ///   - fileManager: File system interface used for reads.
   /// - Returns: Populated ``Registry``.
   /// - Throws: ``RegistryLoadError`` when directory, read, or decode failures occur.
-  static func load(scopes: ScopeSet, fileManager: FileManager = .default) throws -> Registry {
+  public static func load(scopes: ScopeSet, fileManager: FileManager = .default) throws -> Registry {
     let roots = scopes.loadOrder
 
     guard !roots.isEmpty else {

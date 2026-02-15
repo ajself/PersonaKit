@@ -1,15 +1,5 @@
 import Foundation
 
-/// Fully resolved PersonaKit entities for a single session.
-struct ResolvedSession {
-  let persona: Persona
-  let directive: Directive
-  let kits: [Kit]
-  let essentials: [ResolvedEssential]
-  let intents: [IntentTemplate]
-  let skills: [Skill]
-}
-
 /// Resolves a session definition into concrete PersonaKit entities.
 struct Resolver {
   /// Resolves a session using explicit scope inputs.

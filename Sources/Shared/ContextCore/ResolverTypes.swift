@@ -18,7 +18,7 @@ public struct SessionDefinition {
 }
 
 /// Metadata for an essential referenced by a resolved session.
-public struct ResolvedEssential: Equatable {
+public struct ResolvedEssential: Equatable, Sendable {
   public let id: String
   public let url: URL
   public let content: String?
@@ -31,6 +31,32 @@ public struct ResolvedEssential: Equatable {
     self.id = id
     self.url = url
     self.content = content
+  }
+}
+
+/// Fully resolved PersonaKit entities for a single session.
+public struct ResolvedSession: Sendable {
+  public let persona: Persona
+  public let directive: Directive
+  public let kits: [Kit]
+  public let essentials: [ResolvedEssential]
+  public let intents: [IntentTemplate]
+  public let skills: [Skill]
+
+  public init(
+    persona: Persona,
+    directive: Directive,
+    kits: [Kit],
+    essentials: [ResolvedEssential],
+    intents: [IntentTemplate],
+    skills: [Skill]
+  ) {
+    self.persona = persona
+    self.directive = directive
+    self.kits = kits
+    self.essentials = essentials
+    self.intents = intents
+    self.skills = skills
   }
 }
 
