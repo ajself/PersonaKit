@@ -15,8 +15,8 @@ redefined here.
 - PR2 — Shared/Core Migration: completed
 - PR3 — CLI and MCP Migration: completed
 - PR4 — Studio Source Migration: completed
-- PR5 — Studio Owner Decomposition: in progress
-- PR6 — Opportunistic Quality Improvements: not started
+- PR5 — Studio Owner Decomposition: completed
+- PR6 — Opportunistic Quality Improvements: in progress
 - PR7 — Test Reorganization and Coverage Hardening: not started
 - PR8 — Cleanup and Final Hardening: not started
 
@@ -52,19 +52,32 @@ Completed in the active refactor stream:
   - save essential editor action
   - editor validation action
 
-## Next Up
+## PR5 Stop-Point Review Result (2026-02-16)
 
-Immediate next step is to close PR5 with the stop-point review, then begin PR6.
+Review outcome: pass, with PR5 accepted as complete.
 
-1. PR5 stop-point review (ownership and boundaries):
-   - Verify `WorkspaceStore` remains a coordinator-only owner and does not perform direct IO.
-   - Verify each feature model owns a single responsibility boundary and keeps behavior parity.
-   - Run full regression checks (`swift build`, `swift test`, Studio manual workflow smoke checks).
-2. If PR5 review passes, mark PR5 as completed and start PR6.
-3. PR6 kickoff scope:
-   - Apply only low-risk, deterministic cleanups discovered during PR5 decomposition.
-   - Add focused regression tests for any changed behavior surface.
-   - Keep PR6 changes behavior-preserving unless explicitly approved.
+Validated:
+
+- `WorkspaceStore` remains coordinator-oriented and delegates feature behavior to
+  feature models.
+- No direct IO calls were identified in `WorkspaceStore` or Studio feature-model
+  files.
+- Regression suite remains green:
+  - `swift build` passed
+  - `swift test` passed
+
+Open check before PR6 completion:
+
+- Run Studio manual workflow smoke checks listed in this plan and record outcome.
+
+## Next Up (PR6 Active)
+
+PR6 is now the active milestone.
+
+1. Execute low-risk, deterministic cleanup slices discovered during PR5.
+2. Keep each PR6 slice behavior-preserving unless explicitly approved.
+3. Add or retain focused regression tests for touched behavior surfaces.
+4. Complete Studio manual workflow smoke checks and attach results to PR6 review.
 
 ## Scope
 
