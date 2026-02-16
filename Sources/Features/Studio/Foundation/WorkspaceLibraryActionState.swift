@@ -38,7 +38,10 @@ package struct WorkspaceLibraryActionState: Sendable {
       return false
     }
 
-    guard currentWorkspaceURL == expectedWorkspaceURL else {
+    let currentWorkspace = currentWorkspaceURL?.standardizedFileURL
+    let expectedWorkspace = expectedWorkspaceURL?.standardizedFileURL
+
+    guard currentWorkspace == expectedWorkspace else {
       return false
     }
 
