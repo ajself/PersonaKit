@@ -16,6 +16,55 @@ redefined here.
 - PR3 — CLI and MCP Migration: completed
 - PR4 — Studio Source Migration: completed
 - PR5 — Studio Owner Decomposition: in progress
+- PR6 — Opportunistic Quality Improvements: not started
+- PR7 — Test Reorganization and Coverage Hardening: not started
+- PR8 — Cleanup and Final Hardening: not started
+
+## PR5 Progress Snapshot (2026-02-16)
+
+Completed in the active refactor stream:
+
+- Workspace ownership split into focused feature models:
+  - `WorkspaceLoadFeatureModel`
+  - `WorkspaceSystemFeatureModel`
+  - `WorkspaceLibraryFeatureModel`
+  - `WorkspaceSessionEditorFeatureModel`
+  - `WorkspaceSessionFeatureModel`
+  - `WorkspaceValidationFeatureModel`
+- `WorkspaceStore` split into feature-oriented extensions:
+  - `WorkspaceStore+WorkspaceFlow.swift`
+  - `WorkspaceStore+SessionActions.swift`
+  - `WorkspaceStore+LibraryActions.swift`
+- Studio UI decomposition into focused panels and tab views:
+  - root/panels split
+  - sessions panel tab split
+  - library panel split
+  - diagnostics panel split
+  - session editor split
+  - raw JSON editor split
+- Session preview responsibilities split into focused model extensions.
+- Library feature action decomposition split into focused files:
+  - copy library action
+  - copy essential action
+  - open library editor action
+  - open essential editor action
+  - save library editor action
+  - save essential editor action
+  - editor validation action
+
+## Next Up
+
+Immediate next step is to close PR5 with the stop-point review, then begin PR6.
+
+1. PR5 stop-point review (ownership and boundaries):
+   - Verify `WorkspaceStore` remains a coordinator-only owner and does not perform direct IO.
+   - Verify each feature model owns a single responsibility boundary and keeps behavior parity.
+   - Run full regression checks (`swift build`, `swift test`, Studio manual workflow smoke checks).
+2. If PR5 review passes, mark PR5 as completed and start PR6.
+3. PR6 kickoff scope:
+   - Apply only low-risk, deterministic cleanups discovered during PR5 decomposition.
+   - Add focused regression tests for any changed behavior surface.
+   - Keep PR6 changes behavior-preserving unless explicitly approved.
 
 ## Scope
 
