@@ -1319,6 +1319,55 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func refreshSessionPreviewIgnoresStaleResultAfterWorkspaceIsCleared() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let snapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a.session.json"
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { _, session in
+          Thread.sleep(forTimeInterval: 0.3)
+          return "preview-\(session.id)"
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = nil
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    #expect(store.sessionPreview.isEmpty)
+    #expect(store.sessionPreviewErrorMessage == nil)
+    #expect(!store.isLoadingSessionPreview)
+
+    try? await Task.sleep(for: .milliseconds(350))
+
+    #expect(store.sessionPreview.isEmpty)
+    #expect(store.sessionPreviewErrorMessage == nil)
+    #expect(!store.isLoadingSessionPreview)
+  }
+
+  @Test
   func newerPreviewResultWinsWhenPreviewLoadsOverlap() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let snapshot = WorkspaceSnapshot(

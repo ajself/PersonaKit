@@ -80,11 +80,11 @@ extension WorkspaceSessionFeatureModel {
   func cancelPreviewTask() {
     previewTask?.cancel()
     previewTask = nil
+    activeWorkspaceURL = nil
   }
 
   func clearPreview() {
     cancelPreviewTask()
-    activeWorkspaceURL = nil
     state.clear()
   }
 }
