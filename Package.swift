@@ -33,6 +33,13 @@ let package = Package(
       ]
     ),
     .target(
+      name: "ContextWorkspaceCore",
+      dependencies: [
+        "ContextCore"
+      ],
+      path: "Sources/Shared/ContextWorkspaceCore"
+    ),
+    .target(
       name: "ContextCLI",
       dependencies: [
         "ContextCore",
@@ -52,7 +59,8 @@ let package = Package(
     .target(
       name: "StudioFoundation",
       dependencies: [
-        "ContextCore"
+        "ContextCore",
+        "ContextWorkspaceCore"
       ],
       path: "Sources/Features/Studio/Foundation"
     ),
@@ -60,6 +68,7 @@ let package = Package(
       name: "StudioFeatures",
       dependencies: [
         "ContextCore",
+        "ContextWorkspaceCore",
         "StudioFoundation"
       ],
       path: "Sources/Features/Studio/UI"
@@ -87,6 +96,7 @@ let package = Package(
         "ContextCLI",
         "ContextMCP",
         "ContextCore",
+        "ContextWorkspaceCore",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),

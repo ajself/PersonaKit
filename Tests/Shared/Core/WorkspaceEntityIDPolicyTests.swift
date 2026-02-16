@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Testing
 
 struct WorkspaceEntityIDPolicyTests {

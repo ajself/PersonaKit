@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 
 /// Contract for building markdown previews from workspace session selections.

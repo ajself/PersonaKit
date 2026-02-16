@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Package-scoped async operation coordinator used by Studio workspace owners.

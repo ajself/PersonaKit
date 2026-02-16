@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 
 /// Public validation bridge between Studio and PersonaKit validator internals.

@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Shared resolver for deriving the project PersonaKit root used by Studio write flows.

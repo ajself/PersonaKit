@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Session-specific diagnostics appended to workspace validation results.

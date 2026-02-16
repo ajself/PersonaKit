@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Diagnostics panel with validation issue search and navigation helpers.

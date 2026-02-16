@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Session preview contract used by `WorkspaceStore` for preview and export actions.

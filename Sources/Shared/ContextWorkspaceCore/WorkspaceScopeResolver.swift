@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 
 /// Resolves workspace roots used by Studio for project and global scope operations.

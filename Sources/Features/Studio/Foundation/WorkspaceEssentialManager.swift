@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Essentials markdown editing contract used by `WorkspaceStore`.

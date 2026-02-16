@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Diagnostics issue list with navigation and reveal actions.

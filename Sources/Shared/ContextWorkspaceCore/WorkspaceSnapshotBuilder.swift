@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 
 /// Loads deterministic, read-only Studio lists from PersonaKit project/global scopes.
