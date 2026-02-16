@@ -137,11 +137,19 @@ struct WorkspaceLoadFeatureModelTests {
   func loadWorkspaceIgnoresStaleResultAfterWorkspaceChange() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let gate = StaleLoadGate()
     let model = WorkspaceLoadFeatureModel(
       operationRunner: makeOperationRunner(
         snapshotBuilder: StubSnapshotBuilder { workspaceURL in
           if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            Thread.sleep(forTimeInterval: 0.3)
+            gate.markLoadStarted()
+            let timeout = Date().addingTimeInterval(1)
+
+            while !gate.isLoadAllowedToFinish, Date() < timeout {
+              Thread.sleep(forTimeInterval: 0.001)
+            }
+
+            gate.markLoadFinished()
           }
 
           return WorkspaceSnapshot.empty
@@ -158,19 +166,32 @@ struct WorkspaceLoadFeatureModelTests {
       currentWorkspaceURL: { activeWorkspaceURL },
       onLoaded: { _ in
         didLoadSnapshot = true
+        gate.markCallbackInvoked()
       },
       onMissingPersonaKitDirectory: { _ in
         didReportMissingPersonaKit = true
+        gate.markCallbackInvoked()
       },
       onLoadFailure: { _ in
         didReportFailure = true
+        gate.markCallbackInvoked()
       }
     )
 
-    try? await Task.sleep(for: .milliseconds(20))
-    activeWorkspaceURL = secondWorkspaceURL
-    try? await Task.sleep(for: .milliseconds(350))
+    await waitFor {
+      gate.isLoadStarted
+    }
 
+    activeWorkspaceURL = secondWorkspaceURL
+    gate.allowLoadToFinish()
+
+    await waitFor {
+      gate.isLoadFinished
+    }
+
+    try? await Task.sleep(for: .milliseconds(250))
+
+    #expect(!gate.isCallbackInvoked)
     #expect(!didLoadSnapshot)
     #expect(!didReportFailure)
     #expect(!didReportMissingPersonaKit)
@@ -364,6 +385,62 @@ private struct NoOpSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
     _ preview: String,
     to destinationURL: URL
   ) throws {}
+}
+
+private final class StaleLoadGate: @unchecked Sendable {
+  private let lock = NSLock()
+  private var loadStarted = false
+  private var loadAllowedToFinish = false
+  private var loadFinished = false
+  private var callbackInvoked = false
+
+  var isLoadStarted: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return loadStarted
+  }
+
+  var isLoadAllowedToFinish: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return loadAllowedToFinish
+  }
+
+  var isLoadFinished: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return loadFinished
+  }
+
+  var isCallbackInvoked: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return callbackInvoked
+  }
+
+  func markLoadStarted() {
+    lock.lock()
+    defer { lock.unlock() }
+    loadStarted = true
+  }
+
+  func allowLoadToFinish() {
+    lock.lock()
+    defer { lock.unlock() }
+    loadAllowedToFinish = true
+  }
+
+  func markLoadFinished() {
+    lock.lock()
+    defer { lock.unlock() }
+    loadFinished = true
+  }
+
+  func markCallbackInvoked() {
+    lock.lock()
+    defer { lock.unlock() }
+    callbackInvoked = true
+  }
 }
 
 private func makeOperationRunner(

@@ -182,6 +182,24 @@ Completed slice 3 on `codex/fosa-pr7-test-reorg`:
   - `Tests/Features/MCP/MCPResourceMappingTests.swift`
   - `Tests/Features/MCP/MCPToolTests.swift`
 
+Completed slice 4 on `codex/fosa-pr7-test-reorg`:
+
+- Studio test cluster moved to feature layout:
+  - `Tests/Features/Studio/StudioLaunchConfigurationTests.swift`
+  - `Tests/Features/Studio/WorkspaceEssentialManagerTests.swift`
+  - `Tests/Features/Studio/WorkspaceInitializerTests.swift`
+  - `Tests/Features/Studio/WorkspaceLibraryActionStateTests.swift`
+  - `Tests/Features/Studio/WorkspaceLibraryEntityFormAdapterTests.swift`
+  - `Tests/Features/Studio/WorkspaceLibraryEntityManagerTests.swift`
+  - `Tests/Features/Studio/WorkspaceLoadFeatureModelTests.swift`
+  - `Tests/Features/Studio/WorkspaceSessionDiagnosticsTests.swift`
+  - `Tests/Features/Studio/WorkspaceSessionManagerTests.swift`
+  - `Tests/Features/Studio/WorkspaceSessionPreviewManagerTests.swift`
+  - `Tests/Features/Studio/WorkspaceStoreTests.swift`
+  - `Tests/Features/Studio/WorkspaceSystemFeatureModelTests.swift`
+- stale-load overlap regression test hardened to remove timing-only gating in
+  `WorkspaceLoadFeatureModelTests.loadWorkspaceIgnoresStaleResultAfterWorkspaceChange`
+
 Validation status:
 
 - `swift test` passed (156 tests)
