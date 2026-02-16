@@ -86,7 +86,14 @@ struct RawJSONEditorView: View {
       .pickerStyle(.segmented)
 
       if editorMode == .form {
-        minimalFormEditor
+        RawJSONEditorMinimalFormView(
+          formDescriptor: formDescriptor,
+          formSyncErrorMessage: formSyncErrorMessage,
+          idBinding: idBinding,
+          primaryTextBinding: primaryTextBinding,
+          firstArrayLinesBinding: firstArrayLinesBinding,
+          secondArrayLinesBinding: secondArrayLinesBinding
+        )
       } else {
         rawJSONTextEditor
       }
@@ -97,29 +104,17 @@ struct RawJSONEditorView: View {
           .foregroundStyle(isErrorMessage ? .red : .secondary)
       }
 
-      HStack {
-        Button("Reveal in Finder") {
+      RawJSONEditorActionFooterView(
+        canRevealInFinder: onRevealInFinder != nil,
+        isSaving: isSaving,
+        isValidating: isValidating,
+        onRevealInFinder: {
           onRevealInFinder?()
-        }
-        .disabled(isSaving || isValidating || onRevealInFinder == nil)
-
-        Spacer()
-
-        Button("Cancel") {
-          onCancel()
-        }
-        .disabled(isSaving || isValidating)
-
-        Button(isValidating ? "Validating…" : "Validate") {
-          validate()
-        }
-        .disabled(isSaving || isValidating)
-
-        Button(isSaving ? "Saving…" : "Save") {
-          save()
-        }
-        .disabled(isSaving || isValidating)
-      }
+        },
+        onCancel: onCancel,
+        onValidate: validate,
+        onSave: save
+      )
     }
     .padding()
     .frame(minWidth: 720, minHeight: 600)
@@ -174,45 +169,6 @@ struct RawJSONEditorView: View {
     }
   }
 
-  private var minimalFormEditor: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text("Edit a minimal subset of fields. Raw JSON remains the full editor.")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-
-      if let formSyncErrorMessage {
-        Text(formSyncErrorMessage)
-          .font(.footnote)
-          .foregroundStyle(.red)
-      }
-
-      Group {
-        TextField("ID", text: idBinding)
-          .textFieldStyle(.roundedBorder)
-
-        TextField(formDescriptor.primaryFieldLabel, text: primaryTextBinding)
-          .textFieldStyle(.roundedBorder)
-
-        multiLineListField(
-          title: formDescriptor.firstArrayLabel,
-          text: firstArrayLinesBinding
-        )
-
-        multiLineListField(
-          title: formDescriptor.secondArrayLabel,
-          text: secondArrayLinesBinding
-        )
-      }
-      .disabled(formSyncErrorMessage != nil)
-    }
-    .frame(minHeight: 420, alignment: .top)
-    .padding(12)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(.quaternary.opacity(0.2))
-    )
-  }
-
   private var rawJSONTextEditor: some View {
     TextEditor(text: $rawJSON)
       .font(.body.monospaced())
@@ -222,26 +178,6 @@ struct RawJSONEditorView: View {
         RoundedRectangle(cornerRadius: 8)
           .fill(.quaternary.opacity(0.2))
       )
-  }
-
-  private func multiLineListField(
-    title: String,
-    text: Binding<String>
-  ) -> some View {
-    VStack(alignment: .leading, spacing: 6) {
-      Text(title)
-        .font(.caption)
-        .foregroundStyle(.secondary)
-
-      TextEditor(text: text)
-        .font(.body.monospaced())
-        .frame(minHeight: 84)
-        .padding(6)
-        .background(
-          RoundedRectangle(cornerRadius: 6)
-            .fill(.background)
-        )
-    }
   }
 
   private var idBinding: Binding<String> {
