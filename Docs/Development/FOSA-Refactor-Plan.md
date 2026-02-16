@@ -175,6 +175,13 @@ Completed slice 2 on `codex/fosa-pr7-test-reorg`:
   - `Tests/Features/CLI/CLISessionTests.swift`
   - `Tests/Features/CLI/ListCommandTests.swift`
 
+Completed slice 3 on `codex/fosa-pr7-test-reorg`:
+
+- MCP test cluster moved to feature layout:
+  - `Tests/Features/MCP/MCPPromptTests.swift`
+  - `Tests/Features/MCP/MCPResourceMappingTests.swift`
+  - `Tests/Features/MCP/MCPToolTests.swift`
+
 Validation status:
 
 - `swift test` passed (156 tests)
