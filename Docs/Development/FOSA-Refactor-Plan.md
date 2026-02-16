@@ -153,6 +153,23 @@ PR7 is now the active milestone.
 4. Run `swift test` after each PR7 slice and record a final full-suite pass at
    the PR7 stop point.
 
+## PR7 Progress Snapshot (2026-02-16)
+
+Completed slice 1 on `codex/fosa-pr7-test-reorg`:
+
+- test target root updated from `Tests/PersonaKitTests` to `Tests` with
+  `Tests/Fixtures` excluded from source discovery
+- support test cluster moved to shared layout:
+  - `Tests/Shared/Support/GlobalPersonaKitLocatorTests.swift`
+  - `Tests/Shared/Support/PersonaKitDirectoryTests.swift`
+  - `Tests/Shared/Support/PersonaKitInitTests.swift`
+  - `Tests/Shared/Support/ProjectPersonaKitLocatorTests.swift`
+  - `Tests/Shared/Support/TestHelpers.swift`
+
+Validation status:
+
+- `swift test` passed (156 tests)
+
 ## Scope
 
 In scope:

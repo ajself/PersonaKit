@@ -106,7 +106,10 @@ let package = Package(
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
       ],
-      path: "Tests/PersonaKitTests",
+      path: "Tests",
+      exclude: [
+        "Fixtures",
+      ],
       swiftSettings: [
         .enableExperimentalFeature("Testing")
       ]
