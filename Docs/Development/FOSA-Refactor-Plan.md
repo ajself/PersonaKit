@@ -66,9 +66,54 @@ Validated:
   - `swift build` passed
   - `swift test` passed
 
-Open check before PR6 completion:
+Follow-up check carried into PR6:
 
-- Run Studio manual workflow smoke checks listed in this plan and record outcome.
+- Complete Studio manual UI smoke checks listed in this plan and record outcome.
+
+## PR6 Studio Workflow Smoke Check (2026-02-16)
+
+Status:
+
+- Automated workflow smoke coverage: passed.
+- Manual UI smoke pass in the Studio app: pending.
+
+Coverage mapping from the Studio workflow checklist:
+
+- open workspace:
+  - `WorkspaceStoreTests.openWorkspacePickerLoadsSelectedWorkspaceFromInjectedPicker`
+  - `WorkspaceSystemFeatureModelTests.pickWorkspaceURLReturnsStandardizedSelection`
+- initialize missing `.personakit` structure:
+  - `WorkspaceStoreTests.initializeWorkspaceStructureCreatesFoldersAndReloadsWorkspace`
+  - `WorkspaceSystemFeatureModelTests.initializeWorkspaceStructureCreatesExpectedDirectoryLayout`
+- session create/edit/delete/validate/preview/export:
+  - `WorkspaceStoreTests.saveSessionForwardsValidatedIDsToSessionManager`
+  - `WorkspaceStoreTests.deleteSessionForwardsToSessionManager`
+  - `WorkspaceStoreTests.validateWorkspaceAppendsSessionDiagnosticsIssues`
+  - `WorkspaceStoreTests.refreshSessionPreviewLoadsPreviewForSelectedSession`
+  - `WorkspaceStoreTests.exportSessionPreviewUsesInjectedDestinationPicker`
+- library minimal form and raw JSON editing:
+  - `WorkspaceLibraryEntityFormAdapterTests.applyFormStateUpdatesMappedFieldsAndPreservesOtherData`
+  - `WorkspaceLibraryEntityManagerTests.saveRawJSONWritesToProjectScopeEntityPath`
+  - `WorkspaceStoreTests.openLibraryEditorRejectsItemOutsideCurrentSnapshot`
+  - `WorkspaceStoreTests.saveLibraryEditorRawJSONRejectsWorkspaceMismatch`
+- essentials markdown editing:
+  - `WorkspaceEssentialManagerTests.saveMarkdownWritesToProjectScopeEssentialPath`
+  - `WorkspaceStoreTests.openEssentialEditorLoadsMarkdownForProjectItem`
+  - `WorkspaceStoreTests.saveEssentialEditorMarkdownRejectsWorkspaceMismatch`
+- diagnostics navigation and reveal-in-finder actions:
+  - `WorkspaceStoreTests.validateWorkspaceAppendsSessionDiagnosticsIssues`
+  - `WorkspaceSystemFeatureModelTests.revealValidationIssueInFinderUsesSnapshotPathResolution`
+  - `WorkspaceSystemFeatureModelTests.revealInFinderForwardsStandardizedURLToRevealer`
+
+Commands run for this smoke pass:
+
+- `swift test --filter WorkspaceStoreTests`
+- `swift test --filter WorkspaceSystemFeatureModelTests`
+- `swift test --filter WorkspaceLibraryEntityFormAdapterTests`
+- `swift test --filter WorkspaceLibraryEntityManagerTests`
+- `swift test --filter WorkspaceEssentialManagerTests`
+- `swift test --filter WorkspaceSessionManagerTests`
+- `swift test --filter StudioLaunchConfigurationTests`
 
 ## Next Up (PR6 Active)
 
@@ -77,7 +122,7 @@ PR6 is now the active milestone.
 1. Execute low-risk, deterministic cleanup slices discovered during PR5.
 2. Keep each PR6 slice behavior-preserving unless explicitly approved.
 3. Add or retain focused regression tests for touched behavior surfaces.
-4. Complete Studio manual workflow smoke checks and attach results to PR6 review.
+4. Run the pending manual UI Studio smoke pass and attach results to PR6 review.
 
 ## Scope
 
