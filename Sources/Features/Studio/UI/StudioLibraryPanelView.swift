@@ -17,46 +17,47 @@ struct StudioLibraryPanelView: View {
     let selectedItem = selectedLibraryItem(items: visibleItems)
     let isEssentialsSelection = selection == .essentials
     let entityType = editableEntityTypeForSelection()
-    let canEditRawJSON = !isEssentialsSelection
+    let canEditRawJSON =
+      !isEssentialsSelection
       && selectedItem?.sourceScope == .project
       && entityType != nil
       && !workspaceStore.isLoadingLibraryEditor
-    let canEditMarkdown = isEssentialsSelection
+    let canEditMarkdown =
+      isEssentialsSelection
       && selectedItem?.sourceScope == .project
       && !workspaceStore.isLoadingLibraryEditor
-    let canCopyToProject = selectedItem?.sourceScope == .global
+    let canCopyToProject =
+      selectedItem?.sourceScope == .global
       && (isEssentialsSelection || entityType != nil)
       && !workspaceStore.isLoadingLibraryEditor
 
     VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Button("Reveal in Finder") {
+      StudioLibraryToolbarView(
+        selectedItem: selectedItem,
+        isEssentialsSelection: isEssentialsSelection,
+        isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor,
+        canEditRawJSON: canEditRawJSON,
+        canEditMarkdown: canEditMarkdown,
+        canCopyToProject: canCopyToProject,
+        onRevealInFinder: {
           guard let selectedItem else {
             return
           }
 
           workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
-        }
-        .disabled(selectedItem == nil)
-
-        if isEssentialsSelection {
-          Button("Edit Markdown") {
-            openMarkdownEditorForSelectedItem(
-              selectedItem: selectedItem
-            )
-          }
-          .disabled(!canEditMarkdown)
-        } else {
-          Button("Edit Raw JSON") {
-            openRawJSONEditorForSelectedItem(
-              selectedItem: selectedItem,
-              entityType: entityType
-            )
-          }
-          .disabled(!canEditRawJSON)
-        }
-
-        Button("Copy to Project") {
+        },
+        onEditMarkdown: {
+          openMarkdownEditorForSelectedItem(
+            selectedItem: selectedItem
+          )
+        },
+        onEditRawJSON: {
+          openRawJSONEditorForSelectedItem(
+            selectedItem: selectedItem,
+            entityType: entityType
+          )
+        },
+        onCopyToProject: {
           if isEssentialsSelection {
             copySelectedGlobalEssentialToProject(
               selectedItem: selectedItem
@@ -68,15 +69,7 @@ struct StudioLibraryPanelView: View {
             )
           }
         }
-        .disabled(!canCopyToProject)
-
-        if workspaceStore.isLoadingLibraryEditor {
-          ProgressView()
-            .controlSize(.small)
-        }
-
-        Spacer()
-      }
+      )
 
       if let libraryActionMessage = workspaceStore.libraryActionMessage {
         Text(libraryActionMessage)
@@ -84,36 +77,10 @@ struct StudioLibraryPanelView: View {
           .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
       }
 
-      List(visibleItems, id: \.id, selection: $selectedLibraryItemID) { item in
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(item.id)
-              .font(.headline)
-
-            Spacer()
-
-            scopeBadge(scope: item.sourceScope)
-          }
-
-          if item.displayName != item.id {
-            Text(item.displayName)
-              .font(.subheadline)
-              .foregroundStyle(.secondary)
-          }
-
-          Text(item.fileURL.path())
-            .font(.caption.monospaced())
-            .foregroundStyle(.tertiary)
-            .textSelection(.enabled)
-        }
-        .padding(.vertical, 4)
-        .tag(Optional(item.id))
-      }
-      .overlay {
-        if visibleItems.isEmpty {
-          ContentUnavailableView.search
-        }
-      }
+      StudioLibraryItemListView(
+        visibleItems: visibleItems,
+        selectedLibraryItemID: $selectedLibraryItemID
+      )
     }
     .searchable(text: $searchText, prompt: "Search \(selection.title)")
     .sheet(item: $markdownEditorPresentation) { presentation in
@@ -197,18 +164,6 @@ struct StudioLibraryPanelView: View {
 
   private var normalizedSearchText: String {
     searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-  }
-
-  private func scopeBadge(scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
-      )
   }
 
   private func editableEntityTypeForSelection() -> WorkspaceLibraryEntityType? {
