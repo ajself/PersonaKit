@@ -12,21 +12,12 @@ struct StudioDiagnosticsPanelView: View {
     let issues = filteredValidationIssues(workspaceStore.validation.issues)
 
     VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 12) {
-        Text("Validation Results")
-          .font(.title3)
-          .fontWeight(.semibold)
-
-        Spacer()
-
-        Button("Validate Workspace") {
+      StudioDiagnosticsHeaderView(
+        summary: workspaceStore.validation.summary,
+        onValidateWorkspace: {
           workspaceStore.validateWorkspace()
         }
-      }
-
-      Text(workspaceStore.validation.summary)
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+      )
 
       if let validationErrorMessage = workspaceStore.validationErrorMessage {
         ContentUnavailableView(
@@ -35,78 +26,23 @@ struct StudioDiagnosticsPanelView: View {
           description: Text(validationErrorMessage)
         )
       } else {
-        List(issues.indices, id: \.self) { index in
-          let issue = issues[index]
-          let canRevealIssue = issue.filePath != nil
-
-          HStack(alignment: .top, spacing: 12) {
-            Button {
-              let navigationTarget = diagnosticsNavigationTarget(for: issue)
-              selection = navigationTarget.sidebarItem
-              selectedLibraryItemID = navigationTarget.selectedLibraryItemID
-              searchText = navigationTarget.searchText
-            } label: {
-              VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                  Text(issue.severity.rawValue.capitalized)
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                      RoundedRectangle(cornerRadius: 8)
-                        .fill(.red.opacity(0.16))
-                    )
-
-                  Text(issue.entityType.rawValue.capitalized)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                  if let entityId = issue.entityId {
-                    Text(entityId)
-                      .font(.caption)
-                      .foregroundStyle(.secondary)
-                  }
-                }
-
-                Text(issue.message)
-                  .font(.subheadline)
-                  .foregroundStyle(.primary)
-                  .multilineTextAlignment(.leading)
-
-                if let filePath = issue.filePath {
-                  Text(filePath)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.tertiary)
-                }
-              }
-              .padding(.vertical, 4)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .contentShape(Rectangle())
+        StudioDiagnosticsIssueListView(
+          issues: issues,
+          searchText: $searchText,
+          onNavigateToIssue: { issue in
+            let navigationTarget = diagnosticsNavigationTarget(for: issue)
+            selection = navigationTarget.sidebarItem
+            selectedLibraryItemID = navigationTarget.selectedLibraryItemID
+            searchText = navigationTarget.searchText
+          },
+          onRevealIssueFile: { issue in
+            guard let filePath = issue.filePath else {
+              return
             }
-            .buttonStyle(.plain)
 
-            Button("Reveal") {
-              guard let filePath = issue.filePath else {
-                return
-              }
-
-              workspaceStore.revealValidationIssueInFinder(filePath: filePath)
-            }
-            .disabled(!canRevealIssue)
-            .buttonStyle(.borderless)
+            workspaceStore.revealValidationIssueInFinder(filePath: filePath)
           }
-        }
-        .overlay {
-          if issues.isEmpty {
-            ContentUnavailableView(
-              "No Issues",
-              systemImage: "checkmark.circle",
-              description: Text("Workspace validation is clean.")
-            )
-          }
-        }
-        .searchable(text: $searchText, prompt: "Search Validation")
+        )
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
