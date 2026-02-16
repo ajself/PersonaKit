@@ -16,8 +16,8 @@ redefined here.
 - PR3 — CLI and MCP Migration: completed
 - PR4 — Studio Source Migration: completed
 - PR5 — Studio Owner Decomposition: completed
-- PR6 — Opportunistic Quality Improvements: in progress
-- PR7 — Test Reorganization and Coverage Hardening: not started
+- PR6 — Opportunistic Quality Improvements: completed
+- PR7 — Test Reorganization and Coverage Hardening: in progress
 - PR8 — Cleanup and Final Hardening: not started
 
 ## PR5 Progress Snapshot (2026-02-16)
@@ -138,16 +138,20 @@ Completed deterministic cleanup slices on `codex/fosa-pr6-opportunistic-quality`
 Validation status:
 
 - targeted Studio slices remain green after each incremental change
-- latest full regression run: `swift test` passed (155 tests)
+- latest full regression run: `swift test` passed (156 tests)
 
-## Next Up (PR6 Active)
+## Next Up (PR7 Active)
 
-PR6 is now the active milestone.
+PR7 is now the active milestone.
 
-1. Execute low-risk, deterministic cleanup slices discovered during PR5.
-2. Keep each PR6 slice behavior-preserving unless explicitly approved.
-3. Add or retain focused regression tests for touched behavior surfaces.
-4. Run the pending manual UI Studio smoke pass and attach results to PR6 review.
+1. Reorganize Studio and shared tests into `Tests/Features` and `Tests/Shared` in
+   small deterministic slices.
+2. Keep test import boundaries aligned with the current module graph while files
+   move.
+3. Retain existing regression coverage and add focused tests only where moves
+   expose boundary risk.
+4. Run `swift test` after each PR7 slice and record a final full-suite pass at
+   the PR7 stop point.
 
 ## Scope
 
