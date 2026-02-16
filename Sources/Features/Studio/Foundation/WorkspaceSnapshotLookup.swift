@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Package-scoped helpers for snapshot item lookup and diagnostics file resolution.

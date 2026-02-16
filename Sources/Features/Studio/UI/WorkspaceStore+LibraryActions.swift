@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 
 extension WorkspaceStore {
   /// Loads raw JSON for a selected project-scoped library item.

@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 
 /// Schema-backed editable PersonaKit entity kinds used by Studio raw JSON workflows.
@@ -95,7 +96,7 @@ public struct WorkspaceEntityJSONSchemaValidator: WorkspaceEntityJSONSchemaValid
     entityType: WorkspaceLibraryEntityType
   ) throws {
     let relativePath = "Packs/\(entityType.directoryName)/draft\(entityType.fileSuffix)"
-    let errors = SchemaValidator.validate(
+    let errors = SchemaValidationBridge.validate(
       jsonData: jsonData,
       schemaName: entityType.schemaName,
       relativePath: relativePath
@@ -109,7 +110,7 @@ public struct WorkspaceEntityJSONSchemaValidator: WorkspaceEntityJSONSchemaValid
   }
 
   private static func validationMessage(
-    for errors: [SchemaValidationError]
+    for errors: [SchemaValidationIssue]
   ) -> String {
     let details = errors.prefix(3).map { error in
       if let instanceLocation = error.instanceLocation {

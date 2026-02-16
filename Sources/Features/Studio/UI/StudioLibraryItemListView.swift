@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Library and essentials list rows with scope badges.

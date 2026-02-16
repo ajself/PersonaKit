@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 
 extension WorkspaceSessionFeatureModel {
   func copyPreviewToPasteboard() throws {

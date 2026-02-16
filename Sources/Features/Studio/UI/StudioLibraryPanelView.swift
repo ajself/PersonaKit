@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Library and essentials panel with edit/copy/reveal workflows.

@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Session preview tab with refresh, copy, export, and reveal actions.

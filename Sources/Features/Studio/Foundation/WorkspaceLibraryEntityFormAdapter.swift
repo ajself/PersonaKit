@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 /// Minimal two-array form metadata for a PersonaKit library entity type.

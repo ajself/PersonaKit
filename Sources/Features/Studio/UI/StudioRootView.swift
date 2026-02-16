@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import SwiftUI
 
 /// Root Studio split view with sidebar navigation, session editing, and diagnostics.
