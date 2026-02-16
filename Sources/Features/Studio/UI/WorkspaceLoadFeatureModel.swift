@@ -27,36 +27,45 @@ final class WorkspaceLoadFeatureModel {
   ) {
     cancelLoadTask()
 
+    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+
     loadTask = Task { [workspaceURL] in
       do {
         let snapshot = try await operationRunner.loadSnapshot(workspaceURL: workspaceURL)
+        let currentWorkspace = currentWorkspaceURL()?.standardizedFileURL
 
         guard !Task.isCancelled,
-          currentWorkspaceURL() == workspaceURL
+          currentWorkspace == requestedWorkspaceURL
         else {
           return
         }
 
         onLoaded(snapshot)
       } catch let error as MissingPersonaKitDirectoryError {
+        let currentWorkspace = currentWorkspaceURL()?.standardizedFileURL
+
         guard !Task.isCancelled,
-          currentWorkspaceURL() == workspaceURL
+          currentWorkspace == requestedWorkspaceURL
         else {
           return
         }
 
         onMissingPersonaKitDirectory(error)
       } catch let error as WorkspaceSnapshotBuildError {
+        let currentWorkspace = currentWorkspaceURL()?.standardizedFileURL
+
         guard !Task.isCancelled,
-          currentWorkspaceURL() == workspaceURL
+          currentWorkspace == requestedWorkspaceURL
         else {
           return
         }
 
         onLoadFailure(error.message)
       } catch {
+        let currentWorkspace = currentWorkspaceURL()?.standardizedFileURL
+
         guard !Task.isCancelled,
-          currentWorkspaceURL() == workspaceURL
+          currentWorkspace == requestedWorkspaceURL
         else {
           return
         }

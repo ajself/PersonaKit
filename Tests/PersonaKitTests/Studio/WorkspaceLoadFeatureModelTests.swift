@@ -60,6 +60,50 @@ struct WorkspaceLoadFeatureModelTests {
   }
 
   @Test
+  func loadWorkspacePublishesSnapshotForEquivalentStandardizedWorkspaceURL() async {
+    let requestedWorkspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let currentWorkspaceURL = URL(fileURLWithPath: "/Workspace")
+    let expectedSnapshot = WorkspaceSnapshot(
+      sessions: [],
+      personas: [
+        WorkspaceListItem(
+          id: "persona-a",
+          displayName: "Persona A",
+          fileURL: URL(fileURLWithPath: "/persona-a.persona.json"),
+          sourceScope: .project
+        )
+      ],
+      directives: [],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+    let model = WorkspaceLoadFeatureModel(
+      operationRunner: makeOperationRunner(
+        snapshotBuilder: StubSnapshotBuilder { _ in
+          expectedSnapshot
+        }
+      )
+    )
+    var loadedSnapshot: WorkspaceSnapshot?
+
+    model.loadWorkspace(
+      workspaceURL: requestedWorkspaceURL,
+      currentWorkspaceURL: { currentWorkspaceURL },
+      onLoaded: { snapshot in
+        loadedSnapshot = snapshot
+      },
+      onMissingPersonaKitDirectory: { _ in },
+      onLoadFailure: { _ in }
+    )
+
+    await waitFor {
+      loadedSnapshot?.personas.first?.id == "persona-a"
+    }
+  }
+
+  @Test
   func loadWorkspaceIgnoresStaleResultAfterWorkspaceChange() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
