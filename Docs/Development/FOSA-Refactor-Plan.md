@@ -17,8 +17,8 @@ redefined here.
 - PR4 — Studio Source Migration: completed
 - PR5 — Studio Owner Decomposition: completed
 - PR6 — Opportunistic Quality Improvements: completed
-- PR7 — Test Reorganization and Coverage Hardening: in progress
-- PR8 — Cleanup and Final Hardening: not started
+- PR7 — Test Reorganization and Coverage Hardening: completed
+- PR8 — Cleanup and Final Hardening: in progress
 
 ## PR5 Progress Snapshot (2026-02-16)
 
@@ -140,18 +140,16 @@ Validation status:
 - targeted Studio slices remain green after each incremental change
 - latest full regression run: `swift test` passed (156 tests)
 
-## Next Up (PR7 Active)
+## Next Up (PR8 Active)
 
-PR7 is now the active milestone.
+PR8 is now the active milestone.
 
-1. Reorganize Studio and shared tests into `Tests/Features` and `Tests/Shared` in
-   small deterministic slices.
-2. Keep test import boundaries aligned with the current module graph while files
-   move.
-3. Retain existing regression coverage and add focused tests only where moves
-   expose boundary risk.
-4. Run `swift test` after each PR7 slice and record a final full-suite pass at
-   the PR7 stop point.
+1. Remove stale forwarding code and empty legacy directories left behind after
+   PR6/PR7 migrations.
+2. Finalize architecture and refactor docs so they reflect the post-PR7 test
+   and source layout.
+3. Execute final validation checklist across build/test and critical workflow
+   smoke paths before release-readiness review.
 
 ## PR7 Progress Snapshot (2026-02-16)
 
@@ -220,6 +218,19 @@ Completed slice 5 on `codex/fosa-pr7-test-reorg`:
 Validation status:
 
 - `swift test` passed (156 tests)
+
+## PR7 Stop-Point Review Result (2026-02-16)
+
+Review outcome: pass, with PR7 accepted as complete.
+
+Validated:
+
+- tests are reorganized under the target layout:
+  - `Tests/Features`
+  - `Tests/Shared`
+- moved test clusters retained passing behavior without product-code regressions
+- full regression suite remains green:
+  - `swift test` passed (156 tests)
 
 ## Scope
 
