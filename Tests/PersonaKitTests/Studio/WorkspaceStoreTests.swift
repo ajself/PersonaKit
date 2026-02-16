@@ -855,6 +855,64 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func copySelectedGlobalEssentialToProjectRejectsItemOutsideCurrentSnapshot() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let selectedItem = WorkspaceListItem(
+      id: "essential-a",
+      displayName: "Essential A",
+      fileURL: URL(fileURLWithPath: "/OtherRoot/Packs/essentials/essential-a.md"),
+      sourceScope: .global
+    )
+    let snapshotItem = WorkspaceListItem(
+      id: "essential-a",
+      displayName: "Essential A",
+      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/essentials/essential-a.md"),
+      sourceScope: .global
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: [snapshotItem]
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      essentialManager: StubEssentialManager(
+        loadMarkdownHandler: { _ in
+          "# Essential A\n"
+        },
+        saveMarkdownHandler: { _, _, _ in },
+        copyGlobalEssentialToProjectHandler: { _, _ in
+          Issue.record("copyGlobalEssentialToProject should not run when selected item is stale.")
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.essentials.count == 1
+    }
+
+    let didCopy = await store.copySelectedGlobalEssentialToProject(
+      selectedItem: selectedItem
+    )
+
+    #expect(!didCopy)
+    #expect(store.libraryActionIsError)
+    #expect(store.libraryActionMessage?.contains("not a global essential") == true)
+  }
+
+  @Test
   func openEssentialEditorLoadsMarkdownForProjectItem() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let projectEssential = WorkspaceListItem(
