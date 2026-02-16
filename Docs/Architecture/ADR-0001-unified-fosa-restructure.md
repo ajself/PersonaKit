@@ -60,5 +60,5 @@ Tradeoffs:
 ## Rollout Notes
 
 - Architecture defaults are defined in `App/ArchitectureDefaults.md`.
-- Detailed execution and git workflow are tracked in
-  `Docs/Development/FOSA-Refactor-Plan.md`.
+- Detailed execution and git workflow were tracked in the FOSA refactor plan,
+  and the migration completed on 2026-02-16.
