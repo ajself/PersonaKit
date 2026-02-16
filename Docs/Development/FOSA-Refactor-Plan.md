@@ -144,9 +144,7 @@ Validation status:
 
 PR8 remains active with one slice left.
 
-1. Execute the final validation checklist across build/test and critical
-   workflow smoke paths before release-readiness review.
-2. Run PR8 stop-point review and merge-readiness checks.
+1. Run PR8 stop-point review and merge-readiness checks.
 
 ## PR8 Progress Snapshot (2026-02-16)
 
@@ -177,10 +175,18 @@ Completed slice 2 on `codex/fosa-pr8-cleanup`:
   - `Sources/App/README.md`
   - `Sources/App/Studio/README.md`
 
-Validation status for slices 1-2:
+Completed slice 3 on `codex/fosa-pr8-cleanup`:
+
+- completed final validation checklist with clean deterministic outputs via:
+  - `Scripts/validate-repo.sh`
+- addressed formatter drift required by the validation harness:
+  - import ordering normalization in Studio foundation and moved test files
+
+Validation status for slices 1-3:
 
 - `swift build` passed
 - `swift test` passed (156 tests)
+- `Scripts/validate-repo.sh` passed
 
 ## PR7 Progress Snapshot (2026-02-16)
 
