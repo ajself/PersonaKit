@@ -7,7 +7,21 @@ import StudioFoundation
 @Observable
 @MainActor
 public final class WorkspaceStore {
-  var workspaceURL: URL?
+  var workspaceURL: URL? {
+    didSet {
+      guard let workspaceURL else {
+        return
+      }
+
+      let standardizedWorkspaceURL = workspaceURL.standardizedFileURL
+
+      guard standardizedWorkspaceURL != workspaceURL else {
+        return
+      }
+
+      self.workspaceURL = standardizedWorkspaceURL
+    }
+  }
   var snapshot: WorkspaceSnapshot = .empty
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false

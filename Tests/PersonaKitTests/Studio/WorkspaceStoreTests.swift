@@ -137,6 +137,22 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func workspaceURLAssignmentStandardizesValue() {
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        .empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      }
+    )
+
+    store.workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+
+    #expect(store.workspaceURL?.path() == "/Workspace")
+  }
+
+  @Test
   func validateWorkspaceIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
 
