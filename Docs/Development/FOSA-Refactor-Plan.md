@@ -200,6 +200,23 @@ Completed slice 4 on `codex/fosa-pr7-test-reorg`:
 - stale-load overlap regression test hardened to remove timing-only gating in
   `WorkspaceLoadFeatureModelTests.loadWorkspaceIgnoresStaleResultAfterWorkspaceChange`
 
+Completed slice 5 on `codex/fosa-pr7-test-reorg`:
+
+- core/shared test cluster moved to shared layout:
+  - `Tests/Shared/Core/ExporterTests.swift`
+  - `Tests/Shared/Core/GraphPrinterTests.swift`
+  - `Tests/Shared/Core/RegistryTests.swift`
+  - `Tests/Shared/Core/ResolverTests.swift`
+  - `Tests/Shared/Core/ScopeMergeTests.swift`
+  - `Tests/Shared/Core/ScopeSetTests.swift`
+  - `Tests/Shared/Core/SessionFileLoaderTests.swift`
+  - `Tests/Shared/Core/ValidatorTests.swift`
+  - `Tests/Shared/Core/WorkspaceEntityIDPolicyTests.swift`
+  - `Tests/Shared/Core/WorkspaceEntityJSONSchemaValidatorTests.swift`
+  - `Tests/Shared/Core/WorkspaceSessionPreviewBuilderTests.swift`
+  - `Tests/Shared/Core/WorkspaceSnapshotBuilderTests.swift`
+  - `Tests/Shared/Core/WorkspaceValidatorTests.swift`
+
 Validation status:
 
 - `swift test` passed (156 tests)
