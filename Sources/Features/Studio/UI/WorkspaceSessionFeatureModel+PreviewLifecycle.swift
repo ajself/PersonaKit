@@ -18,18 +18,20 @@ extension WorkspaceSessionFeatureModel {
       return
     }
 
-    activeWorkspaceURL = workspaceURL
+    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+
+    activeWorkspaceURL = requestedWorkspaceURL
     state.beginLoading(sessionID: session.id)
 
-    previewTask = Task { [workspaceURL, session] in
+    previewTask = Task { [requestedWorkspaceURL, session] in
       do {
         let preview = try await operationRunner.loadSessionPreview(
-          workspaceURL: workspaceURL,
+          workspaceURL: requestedWorkspaceURL,
           session: session
         )
 
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL,
+          activeWorkspaceURL == requestedWorkspaceURL,
           state.previewSessionID == session.id
         else {
           return
@@ -38,7 +40,7 @@ extension WorkspaceSessionFeatureModel {
         state.setLoadedPreview(preview)
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL,
+          activeWorkspaceURL == requestedWorkspaceURL,
           state.previewSessionID == session.id
         else {
           return
@@ -47,7 +49,7 @@ extension WorkspaceSessionFeatureModel {
         state.setFailedPreview(message: error.message)
       } catch {
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL,
+          activeWorkspaceURL == requestedWorkspaceURL,
           state.previewSessionID == session.id
         else {
           return

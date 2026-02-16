@@ -1187,6 +1187,45 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func refreshSessionPreviewForwardsStandardizedWorkspaceURL() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let snapshot = makeSessionSnapshot(
+      sessionID: "session-a",
+      fileName: "session-a.session.json"
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionPreviewManager: StubSessionPreviewManager(
+        loadPreviewHandler: { workspaceURL, session in
+          #expect(workspaceURL.path() == "/Workspace")
+          return "preview-\(session.id)"
+        },
+        exportPreviewHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionPreview(for: store.snapshot.sessions.first)
+
+    await waitFor {
+      store.sessionPreview == "preview-session-a"
+        && !store.isLoadingSessionPreview
+    }
+  }
+
+  @Test
   func refreshSessionPreviewPublishesPreviewErrorMessageOnFailure() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let snapshot = makeSessionSnapshot(
