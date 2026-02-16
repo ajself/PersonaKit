@@ -209,7 +209,7 @@ Session Preview supports:
 
 ## 6. Data Flow
 
-Studio is a thin UI shell over PersonaKitCore.
+Studio is a thin UI shell over ContextCore.
 
 ### WorkspaceStore (@MainActor)
 
@@ -261,4 +261,4 @@ Each element includes:
 - File-backed
 - Small and durable
 - No invented abstractions
-- Reuse PersonaKitCore wherever possible
+- Reuse ContextCore wherever possible

@@ -14,7 +14,7 @@ public protocol WorkspaceSessionPreviewManaging: Sendable {
   ) throws
 }
 
-/// Filesystem-backed preview manager using `PersonaKitCore` resolver/exporter logic.
+/// Filesystem-backed preview manager using `ContextCore` resolver/exporter logic.
 public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable {
   private let sessionManager: any WorkspaceSessionManaging
   private let previewBuilder: any WorkspaceSessionPreviewBuilding

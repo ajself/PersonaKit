@@ -2,7 +2,7 @@ import Foundation
 import Testing
 
 @testable import ContextCLI
-@testable import PersonaKitCore
+@testable import ContextCore
 
 struct ListCommandTests {
   @Test

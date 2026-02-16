@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PersonaKitCore
+@testable import ContextCore
 
 /// Coverage for workspace validation mapping and project-root preconditions.
 struct WorkspaceValidatorTests {

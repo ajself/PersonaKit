@@ -27,8 +27,6 @@ target and file group:
 - `StudioFoundation` and `StudioFeatures` (Studio app foundation and UI):
   - `Sources/Features/Studio/Foundation/`
   - `Sources/Features/Studio/UI/`
-- `PersonaKitCore` (transitional compatibility library):
-  - `Sources/PersonaKit/ContextCoreReexports.swift`
 - Schema resources:
   - `Sources/Shared/ContextCore/Schemas/*.json`, loaded via package resources
     and used by `SchemaValidator.swift` during validation.

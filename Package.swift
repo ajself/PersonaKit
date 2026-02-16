@@ -15,13 +15,8 @@ let package = Package(
       name: "PersonaKitStudio",
       targets: ["PersonaKitStudio"]
     ),
-    .library(
-      name: "PersonaKitCore",
-      targets: ["PersonaKitCore"]
-    ),
   ],
   dependencies: [
-    .package(url: "https://github.com/mattt/JSONSchema.git", from: "1.3.0"),
     .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
     .package(
       url: "https://github.com/apple/swift-argument-parser",
@@ -69,16 +64,6 @@ let package = Package(
       ],
       path: "Sources/Features/Studio/UI"
     ),
-    .target(
-      name: "PersonaKitCore",
-      dependencies: [
-        "ContextCore",
-        "ContextCLI",
-        "ContextMCP",
-        "JSONSchema",
-      ],
-      path: "Sources/PersonaKit"
-    ),
     .executableTarget(
       name: "PersonaKit",
       dependencies: [
@@ -101,7 +86,7 @@ let package = Package(
       dependencies: [
         "ContextCLI",
         "ContextMCP",
-        "PersonaKitCore",
+        "ContextCore",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),

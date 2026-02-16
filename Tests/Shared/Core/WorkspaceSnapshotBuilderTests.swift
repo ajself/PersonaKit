@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PersonaKitCore
+@testable import ContextCore
 
 /// Coverage for snapshot loading, scope precedence, and dependency stubbing behavior.
 struct WorkspaceSnapshotBuilderTests {
