@@ -1,8 +1,9 @@
 import Foundation
 import PersonaKitCore
-@testable import StudioFeatures
 import StudioFoundation
 import Testing
+
+@testable import StudioFeatures
 
 @MainActor
 struct WorkspaceStoreTests {
@@ -288,7 +289,7 @@ struct WorkspaceStoreTests {
 
   @Test
   func saveSessionForwardsValidatedIDsToSessionManager() async throws {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
     let expectedDraft = WorkspaceSessionDraft(
       id: "session-a",
       personaId: "persona-a",
@@ -378,7 +379,7 @@ struct WorkspaceStoreTests {
 
   @Test
   func deleteSessionForwardsToSessionManager() async throws {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
 
     let store = WorkspaceStore(
       snapshotBuilder: StubSnapshotBuilder { _ in
@@ -684,6 +685,62 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func copySelectedGlobalLibraryItemForwardsStandardizedWorkspaceURL() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let globalItem = WorkspaceListItem(
+      id: "persona-a",
+      displayName: "Persona A",
+      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/personas/persona-a.persona.json"),
+      sourceScope: .global
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [globalItem],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          #"{"id":"persona-a"}"#
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in },
+        copyGlobalItemToProjectHandler: { workspaceURL, item, entityType in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(item.id == "persona-a")
+          #expect(entityType == .persona)
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.personas.count == 1
+    }
+
+    let didCopy = await store.copySelectedGlobalLibraryItem(
+      selectedItem: globalItem,
+      entityType: .persona
+    )
+
+    #expect(didCopy)
+    #expect(!store.libraryActionIsError)
+    #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
+  }
+
+  @Test
   func saveLibraryEditorRawJSONRejectsWorkspaceMismatch() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
@@ -742,6 +799,59 @@ struct WorkspaceStoreTests {
 
     #expect(saveError?.contains("Workspace changed while this editor was open") == true)
     #expect(store.libraryActionIsError)
+  }
+
+  @Test
+  func copySelectedGlobalEssentialToProjectForwardsStandardizedWorkspaceURL() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let globalEssential = WorkspaceListItem(
+      id: "essential-a",
+      displayName: "Essential A",
+      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/essentials/essential-a.md"),
+      sourceScope: .global
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: [globalEssential]
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      essentialManager: StubEssentialManager(
+        loadMarkdownHandler: { _ in
+          "# Essential A\n"
+        },
+        saveMarkdownHandler: { _, _, _ in },
+        copyGlobalEssentialToProjectHandler: { workspaceURL, item in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(item.id == "essential-a")
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.essentials.count == 1
+    }
+
+    let didCopy = await store.copySelectedGlobalEssentialToProject(
+      selectedItem: globalEssential
+    )
+
+    #expect(didCopy)
+    #expect(!store.libraryActionIsError)
+    #expect(store.libraryActionMessage?.contains("Copied essential-a to project scope.") == true)
   }
 
   @Test
@@ -1346,14 +1456,15 @@ private struct StubWorkspaceValidator: WorkspaceValidating, Sendable {
 
 private struct StubSessionManager: WorkspaceSessionManaging, Sendable {
   let loadDraftHandler: @Sendable (URL) throws -> WorkspaceSessionDraft
-  let saveSessionHandler: @Sendable (
-    URL,
-    WorkspaceSessionDraft,
-    String?,
-    Set<String>,
-    Set<String>,
-    Set<String>
-  ) throws -> String
+  let saveSessionHandler:
+    @Sendable (
+      URL,
+      WorkspaceSessionDraft,
+      String?,
+      Set<String>,
+      Set<String>,
+      Set<String>
+    ) throws -> String
   let deleteSessionHandler: @Sendable (URL, String) throws -> Void
 
   func loadDraft(fileURL: URL) throws -> WorkspaceSessionDraft {

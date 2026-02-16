@@ -25,7 +25,7 @@ extension WorkspaceLibraryFeatureModel {
       )
     }
 
-    return workspaceURL
+    return workspaceURL.standardizedFileURL
   }
 
   func setAction(

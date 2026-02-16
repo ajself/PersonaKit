@@ -72,6 +72,6 @@ final class WorkspaceSessionEditorFeatureModel {
       )
     }
 
-    return workspaceURL
+    return workspaceURL.standardizedFileURL
   }
 }
