@@ -115,6 +115,28 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func validateWorkspaceForwardsStandardizedWorkspaceURL() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { workspaceURL in
+        #expect(workspaceURL.path() == "/Workspace")
+        return makeValidation(entityID: "persona-a")
+      }
+    )
+
+    store.workspaceURL = workspaceURL
+    store.validateWorkspace()
+
+    await waitFor {
+      store.validation.issues.first?.entityId == "persona-a"
+    }
+  }
+
+  @Test
   func validateWorkspaceAppendsSessionDiagnosticsIssues() async throws {
     let workspaceURL = try makeTempDirectory()
     let sessionFileURL = workspaceURL.appendingPathComponent(".personakit/Sessions/session-a.session.json")

@@ -50,7 +50,9 @@ final class WorkspaceValidationFeatureModel {
     snapshotAtValidationStart: WorkspaceSnapshot
   ) {
     cancelValidationTask()
-    activeWorkspaceURL = workspaceURL
+    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+
+    activeWorkspaceURL = requestedWorkspaceURL
     state.setSnapshot(
       WorkspaceValidationSnapshot(
         summary: "Validating workspace...",
@@ -59,15 +61,15 @@ final class WorkspaceValidationFeatureModel {
     )
     state.setErrorMessage(nil)
 
-    validationTask = Task { [workspaceURL, snapshotAtValidationStart] in
+    validationTask = Task { [requestedWorkspaceURL, snapshotAtValidationStart] in
       do {
         let validation = try await operationRunner.validate(
-          workspaceURL: workspaceURL,
+          workspaceURL: requestedWorkspaceURL,
           snapshot: snapshotAtValidationStart
         )
 
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL
+          activeWorkspaceURL == requestedWorkspaceURL
         else {
           return
         }
@@ -76,7 +78,7 @@ final class WorkspaceValidationFeatureModel {
         state.setErrorMessage(nil)
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL
+          activeWorkspaceURL == requestedWorkspaceURL
         else {
           return
         }
@@ -85,7 +87,7 @@ final class WorkspaceValidationFeatureModel {
         state.setErrorMessage(error.message)
       } catch {
         guard !Task.isCancelled,
-          activeWorkspaceURL == workspaceURL
+          activeWorkspaceURL == requestedWorkspaceURL
         else {
           return
         }
