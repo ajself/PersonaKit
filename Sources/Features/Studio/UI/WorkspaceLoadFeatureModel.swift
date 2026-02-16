@@ -29,9 +29,9 @@ final class WorkspaceLoadFeatureModel {
 
     let requestedWorkspaceURL = workspaceURL.standardizedFileURL
 
-    loadTask = Task { [workspaceURL] in
+    loadTask = Task { [requestedWorkspaceURL] in
       do {
-        let snapshot = try await operationRunner.loadSnapshot(workspaceURL: workspaceURL)
+        let snapshot = try await operationRunner.loadSnapshot(workspaceURL: requestedWorkspaceURL)
         let currentWorkspace = currentWorkspaceURL()?.standardizedFileURL
 
         guard !Task.isCancelled,

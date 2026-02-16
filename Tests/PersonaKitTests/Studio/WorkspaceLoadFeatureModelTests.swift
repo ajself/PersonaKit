@@ -104,6 +104,36 @@ struct WorkspaceLoadFeatureModelTests {
   }
 
   @Test
+  func loadWorkspaceForwardsStandardizedWorkspaceURL() async {
+    let requestedWorkspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let currentWorkspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let model = WorkspaceLoadFeatureModel(
+      operationRunner: makeOperationRunner(
+        snapshotBuilder: StubSnapshotBuilder { workspaceURL in
+          #expect(workspaceURL.path() == "/Workspace")
+          return WorkspaceSnapshot.empty
+        }
+      )
+    )
+    var didLoadSnapshot = false
+
+    model.loadWorkspace(
+      workspaceURL: requestedWorkspaceURL,
+      currentWorkspaceURL: { currentWorkspaceURL },
+      onLoaded: { _ in
+        didLoadSnapshot = true
+      },
+      onMissingPersonaKitDirectory: { _ in },
+      onLoadFailure: { _ in }
+    )
+
+    await waitFor {
+      didLoadSnapshot
+    }
+  }
+
+  @Test
   func loadWorkspaceIgnoresStaleResultAfterWorkspaceChange() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
