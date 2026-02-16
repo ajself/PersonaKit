@@ -166,6 +166,15 @@ Completed slice 1 on `codex/fosa-pr7-test-reorg`:
   - `Tests/Shared/Support/ProjectPersonaKitLocatorTests.swift`
   - `Tests/Shared/Support/TestHelpers.swift`
 
+Completed slice 2 on `codex/fosa-pr7-test-reorg`:
+
+- CLI test cluster moved to feature layout:
+  - `Tests/Features/CLI/CLIMCPCommandTests.swift`
+  - `Tests/Features/CLI/CLIScopeFlagTests.swift`
+  - `Tests/Features/CLI/CLIScopeResolutionTests.swift`
+  - `Tests/Features/CLI/CLISessionTests.swift`
+  - `Tests/Features/CLI/ListCommandTests.swift`
+
 Validation status:
 
 - `swift test` passed (156 tests)
