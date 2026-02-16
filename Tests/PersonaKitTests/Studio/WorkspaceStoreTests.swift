@@ -876,6 +876,62 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func clearingWorkspaceClearsPriorLibraryActionMessage() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let globalItem = WorkspaceListItem(
+      id: "persona-a",
+      displayName: "Persona A",
+      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/personas/persona-a.persona.json"),
+      sourceScope: .global
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [globalItem],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          #"{"id":"persona-a"}"#
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.personas.count == 1
+    }
+
+    let didCopy = await store.copySelectedGlobalLibraryItem(
+      selectedItem: globalItem,
+      entityType: .persona
+    )
+
+    #expect(didCopy)
+    #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
+
+    store.workspaceURL = nil
+
+    #expect(store.libraryActionMessage == nil)
+    #expect(!store.libraryActionIsError)
+  }
+
+  @Test
   func saveLibraryEditorRawJSONRejectsWorkspaceMismatch() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
