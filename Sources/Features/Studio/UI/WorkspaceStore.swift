@@ -9,17 +9,28 @@ import StudioFoundation
 public final class WorkspaceStore {
   var workspaceURL: URL? {
     didSet {
+      let standardizedOldWorkspaceURL = oldValue?.standardizedFileURL
+
       guard let workspaceURL else {
+        guard standardizedOldWorkspaceURL != nil else {
+          return
+        }
+
+        libraryFeatureModel.resetState()
         return
       }
 
       let standardizedWorkspaceURL = workspaceURL.standardizedFileURL
 
-      guard standardizedWorkspaceURL != workspaceURL else {
+      if standardizedWorkspaceURL != workspaceURL {
+        self.workspaceURL = standardizedWorkspaceURL
+      }
+
+      guard standardizedOldWorkspaceURL != standardizedWorkspaceURL else {
         return
       }
 
-      self.workspaceURL = standardizedWorkspaceURL
+      libraryFeatureModel.resetState()
     }
   }
   var snapshot: WorkspaceSnapshot = .empty

@@ -810,6 +810,72 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func workspaceSwitchClearsPriorLibraryActionMessage() async {
+    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
+    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let globalItem = WorkspaceListItem(
+      id: "persona-a",
+      displayName: "Persona A",
+      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/personas/persona-a.persona.json"),
+      sourceScope: .global
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { workspaceURL in
+        if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
+          return WorkspaceSnapshot(
+            sessions: [],
+            personas: [globalItem],
+            directives: [],
+            kits: [],
+            skills: [],
+            intents: [],
+            essentials: []
+          )
+        }
+
+        return WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          #"{"id":"persona-a"}"#
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = firstWorkspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.personas.count == 1
+    }
+
+    let didCopy = await store.copySelectedGlobalLibraryItem(
+      selectedItem: globalItem,
+      entityType: .persona
+    )
+
+    #expect(didCopy)
+    #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
+
+    store.workspaceURL = secondWorkspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot == .empty
+    }
+
+    #expect(store.libraryActionMessage == nil)
+    #expect(!store.libraryActionIsError)
+  }
+
+  @Test
   func saveLibraryEditorRawJSONRejectsWorkspaceMismatch() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
