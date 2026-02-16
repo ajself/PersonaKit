@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Minimal two-array form metadata for a PersonaKit library entity type.
 public struct WorkspaceLibraryEntityFormDescriptor: Sendable {

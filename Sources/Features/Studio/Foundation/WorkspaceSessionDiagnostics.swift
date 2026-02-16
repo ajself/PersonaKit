@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Session-specific diagnostics appended to workspace validation results.
 public enum WorkspaceSessionDiagnostics {

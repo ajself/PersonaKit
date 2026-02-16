@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Library JSON editing contract used by `WorkspaceStore`.
 public protocol WorkspaceLibraryEntityManaging: Sendable {

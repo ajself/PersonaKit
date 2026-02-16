@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Editable session draft model used by Studio session editor UI.
 public struct WorkspaceSessionDraft: Equatable, Sendable {

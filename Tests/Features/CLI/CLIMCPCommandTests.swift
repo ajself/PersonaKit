@@ -1,6 +1,6 @@
+import ContextMCP
 import Testing
 
-import ContextMCP
 @testable import ContextCLI
 @testable import PersonaKitCore
 

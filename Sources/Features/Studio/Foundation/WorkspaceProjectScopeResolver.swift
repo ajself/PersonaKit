@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Shared resolver for deriving the project PersonaKit root used by Studio write flows.
 public enum WorkspaceProjectScopeResolver {

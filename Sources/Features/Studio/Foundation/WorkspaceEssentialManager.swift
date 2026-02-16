@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Essentials markdown editing contract used by `WorkspaceStore`.
 public protocol WorkspaceEssentialManaging: Sendable {

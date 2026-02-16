@@ -1,7 +1,7 @@
+import ContextCore
 import MCP
 import Testing
 
-import ContextCore
 @testable import ContextMCP
 
 struct MCPPromptTests {

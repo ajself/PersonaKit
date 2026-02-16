@@ -1,7 +1,7 @@
 import Foundation
+import StudioFoundation
 import Testing
 
-import StudioFoundation
 @testable import PersonaKitStudio
 
 struct WorkspaceInitializerTests {

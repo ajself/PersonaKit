@@ -1,5 +1,5 @@
-import Foundation
 import ContextCore
+import Foundation
 
 /// Session preview contract used by `WorkspaceStore` for preview and export actions.
 public protocol WorkspaceSessionPreviewManaging: Sendable {

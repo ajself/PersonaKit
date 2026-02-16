@@ -1,8 +1,8 @@
+import ContextCore
 import Foundation
 import MCP
 import Testing
 
-import ContextCore
 @testable import ContextMCP
 
 struct MCPToolTests {
