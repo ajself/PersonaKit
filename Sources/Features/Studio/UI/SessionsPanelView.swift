@@ -16,19 +16,70 @@ struct SessionsPanelView: View {
 
   var body: some View {
     let items = filteredSessions(workspaceStore.snapshot.sessions)
+    let selectedSession = selectedSession(items: items)
+    let canDeleteSelectedSession = canDeleteSelectedSession(items: items)
 
     return TabView(selection: $selectedTab) {
-      sessionsListTab(items: items)
-        .tabItem {
-          Label("Sessions", systemImage: "list.bullet")
-        }
-        .tag(SessionsTab.sessions)
+      SessionsListTabView(
+        items: items,
+        selectedSession: selectedSession,
+        selectedSessionID: $selectedSessionID,
+        sessionActionErrorMessage: sessionActionErrorMessage,
+        isLoadingSessionDraft: isLoadingSessionDraft,
+        canDeleteSelectedSession: canDeleteSelectedSession,
+        onNewSession: {
+          sessionEditorPresentation = SessionEditorPresentation(
+            title: "New Session",
+            originalSessionID: nil,
+            draft: workspaceStore.defaultSessionDraft()
+          )
+        },
+        onEditSession: {
+          openEditorForSelectedSession(items: items)
+        },
+        onDeleteSession: {
+          requestDeleteForSelectedSession(items: items)
+        },
+        onRevealInFinder: {
+          guard let selectedSession else {
+            return
+          }
 
-      sessionsPreviewTab(items: items)
-        .tabItem {
-          Label("Preview", systemImage: "doc.plaintext")
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
         }
-        .tag(SessionsTab.preview)
+      )
+      .tabItem {
+        Label("Sessions", systemImage: "list.bullet")
+      }
+      .tag(SessionsTab.sessions)
+
+      SessionsPreviewTabView(
+        selectedSession: selectedSession,
+        sessionPreview: workspaceStore.sessionPreview,
+        sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
+        sessionPreviewActionMessage: sessionPreviewActionMessage,
+        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview,
+        onRefresh: {
+          refreshSelectedSessionPreview(items: items)
+        },
+        onRevealInFinder: {
+          guard let selectedSession else {
+            return
+          }
+
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+        },
+        onCopy: {
+          copySessionPreview()
+        },
+        onExport: {
+          exportSessionPreview()
+        }
+      )
+      .tabItem {
+        Label("Preview", systemImage: "doc.plaintext")
+      }
+      .tag(SessionsTab.preview)
     }
     .searchable(text: $searchText, prompt: "Search Sessions")
     .onChange(of: selectedSessionID) { _, _ in
@@ -89,178 +140,6 @@ struct SessionsPanelView: View {
     }
   }
 
-  private func sessionsListTab(
-    items: [WorkspaceSessionListItem]
-  ) -> some View {
-    let selectedSession = selectedSession(items: items)
-
-    return VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Button("New Session") {
-          sessionEditorPresentation = SessionEditorPresentation(
-            title: "New Session",
-            originalSessionID: nil,
-            draft: workspaceStore.defaultSessionDraft()
-          )
-        }
-
-        Button("Edit Session") {
-          openEditorForSelectedSession(items: items)
-        }
-        .disabled(selectedSession == nil || isLoadingSessionDraft)
-
-        Button("Delete Session") {
-          requestDeleteForSelectedSession(items: items)
-        }
-        .disabled(!canDeleteSelectedSession(items: items))
-
-        Button("Reveal in Finder") {
-          guard let selectedSession else {
-            return
-          }
-
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-        }
-        .disabled(selectedSession == nil)
-
-        if isLoadingSessionDraft {
-          ProgressView()
-            .controlSize(.small)
-        }
-
-        Spacer()
-      }
-
-      if let sessionActionErrorMessage {
-        Text(sessionActionErrorMessage)
-          .font(.footnote)
-          .foregroundStyle(.red)
-      }
-
-      List(items, id: \.id, selection: $selectedSessionID) { session in
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(session.id)
-              .font(.headline)
-
-            Spacer()
-
-            scopeBadge(scope: session.sourceScope)
-          }
-
-          Text("persona: \(session.personaId) · directive: \(session.directiveId)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-
-          Text(session.fileURL.path())
-            .font(.caption.monospaced())
-            .foregroundStyle(.tertiary)
-            .textSelection(.enabled)
-        }
-        .padding(.vertical, 4)
-        .tag(Optional(session.id))
-      }
-      .overlay {
-        if items.isEmpty {
-          ContentUnavailableView.search
-        }
-      }
-    }
-  }
-
-  private func sessionsPreviewTab(
-    items: [WorkspaceSessionListItem]
-  ) -> some View {
-    let selectedSession = selectedSession(items: items)
-
-    return VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Text("Session Preview")
-          .font(.title3)
-          .fontWeight(.semibold)
-
-        if let selectedSession {
-          Text("· \(selectedSession.id)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-
-        Spacer()
-
-        Button("Refresh") {
-          refreshSelectedSessionPreview(items: items)
-        }
-        .disabled(selectedSession == nil || workspaceStore.isLoadingSessionPreview)
-
-        Button("Reveal in Finder") {
-          guard let selectedSession else {
-            return
-          }
-
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-        }
-        .disabled(selectedSession == nil)
-
-        Button("Copy") {
-          copySessionPreview()
-        }
-        .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
-
-        Button("Export Markdown…") {
-          exportSessionPreview()
-        }
-        .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
-      }
-
-      if let sessionPreviewActionMessage {
-        Text(sessionPreviewActionMessage)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      }
-
-      if selectedSession == nil {
-        ContentUnavailableView(
-          "No Session Selected",
-          systemImage: "doc.text.magnifyingglass",
-          description: Text("Select a session to generate a preview.")
-        )
-      } else if workspaceStore.isLoadingSessionPreview {
-        VStack(alignment: .center, spacing: 10) {
-          ProgressView()
-          Text("Loading preview...")
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-      } else if let sessionPreviewErrorMessage = workspaceStore.sessionPreviewErrorMessage {
-        ContentUnavailableView(
-          "Preview Failed",
-          systemImage: "exclamationmark.triangle",
-          description: Text(sessionPreviewErrorMessage)
-        )
-      } else if workspaceStore.sessionPreview.isEmpty {
-        ContentUnavailableView(
-          "No Preview",
-          systemImage: "doc.plaintext",
-          description: Text("Generate a preview for the selected session.")
-        )
-      } else {
-        ScrollView {
-          Text(workspaceStore.sessionPreview)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .font(.body.monospaced())
-            .textSelection(.enabled)
-            .padding(12)
-        }
-        .background(
-          RoundedRectangle(cornerRadius: 8)
-            .fill(.quaternary.opacity(0.2))
-        )
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .padding()
-  }
-
   private func filteredSessions(_ items: [WorkspaceSessionListItem]) -> [WorkspaceSessionListItem] {
     let normalizedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -274,18 +153,6 @@ struct SessionsPanelView: View {
         || item.directiveId.localizedCaseInsensitiveContains(normalizedSearch)
         || item.fileURL.path().localizedCaseInsensitiveContains(normalizedSearch)
     }
-  }
-
-  private func scopeBadge(scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
-      )
   }
 
   private func selectedSession(
