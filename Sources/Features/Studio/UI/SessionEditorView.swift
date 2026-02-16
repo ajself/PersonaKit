@@ -54,65 +54,26 @@ struct SessionEditorView: View {
         .font(.title3)
         .fontWeight(.semibold)
 
-      Form {
-        Section("Session") {
-          TextField("Session id", text: $id)
-
-          Picker("Persona", selection: $personaID) {
-            ForEach(personaIDs, id: \.self) { item in
-              Text(item)
-                .tag(item)
-            }
-          }
-
-          Picker("Directive", selection: $directiveID) {
-            ForEach(directiveIDs, id: \.self) { item in
-              Text(item)
-                .tag(item)
-            }
-          }
+      SessionEditorFormSectionsView(
+        id: $id,
+        personaID: $personaID,
+        directiveID: $directiveID,
+        personaIDs: personaIDs,
+        directiveIDs: directiveIDs,
+        kitIDs: kitIDs,
+        bindingForKitOverride: { kitID in
+          bindingForKitOverride(kitID)
         }
+      )
 
-        Section("Kit Overrides") {
-          if kitIDs.isEmpty {
-            Text("No kits available.")
-              .foregroundStyle(.secondary)
-          } else {
-            ForEach(kitIDs, id: \.self) { kitID in
-              Toggle(isOn: bindingForKitOverride(kitID)) {
-                Text(kitID)
-              }
-            }
-          }
-        }
-      }
-      .formStyle(.grouped)
-
-      if let saveErrorMessage {
-        Text(saveErrorMessage)
-          .font(.footnote)
-          .foregroundStyle(.red)
-      }
-
-      if !validationMessage.isEmpty {
-        Text(validationMessage)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      }
-
-      HStack {
-        Spacer()
-
-        Button("Cancel") {
-          onCancel()
-        }
-        .disabled(isSaving)
-
-        Button(isSaving ? "Saving…" : "Save") {
-          save()
-        }
-        .disabled(!canSave)
-      }
+      SessionEditorFooterView(
+        saveErrorMessage: saveErrorMessage,
+        validationMessage: validationMessage,
+        isSaving: isSaving,
+        canSave: canSave,
+        onCancel: onCancel,
+        onSave: save
+      )
     }
     .padding()
     .frame(minWidth: 520, minHeight: 520)
@@ -152,7 +113,7 @@ struct SessionEditorView: View {
   }
 
   private var canSave: Bool {
-    !isSaving && validationMessage.isEmpty
+    validationMessage.isEmpty
   }
 
   private func bindingForKitOverride(_ kitID: String) -> Binding<Bool> {
