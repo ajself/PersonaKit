@@ -38,9 +38,11 @@ final class WorkspaceValidationFeatureModel {
   func cancelValidationTask() {
     validationTask?.cancel()
     validationTask = nil
+    activeWorkspaceURL = nil
   }
 
   func reset() {
+    activeWorkspaceURL = nil
     state.setSnapshot(.empty)
     state.setErrorMessage(nil)
   }

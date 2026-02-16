@@ -137,6 +137,37 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func validateWorkspaceIgnoresStaleResultAfterWorkspaceIsCleared() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        Thread.sleep(forTimeInterval: 0.3)
+        return makeValidation(entityID: "persona-a")
+      }
+    )
+
+    store.workspaceURL = workspaceURL
+    store.validateWorkspace()
+
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = nil
+    store.validateWorkspace()
+
+    #expect(store.validation == .empty)
+    #expect(store.validationErrorMessage == nil)
+
+    try? await Task.sleep(for: .milliseconds(350))
+
+    #expect(store.validation == .empty)
+    #expect(store.validationErrorMessage == nil)
+  }
+
+  @Test
   func validateWorkspaceAppendsSessionDiagnosticsIssues() async throws {
     let workspaceURL = try makeTempDirectory()
     let sessionFileURL = workspaceURL.appendingPathComponent(".personakit/Sessions/session-a.session.json")
