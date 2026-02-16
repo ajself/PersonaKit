@@ -115,6 +115,31 @@ Commands run for this smoke pass:
 - `swift test --filter WorkspaceSessionManagerTests`
 - `swift test --filter StudioLaunchConfigurationTests`
 
+## PR6 Progress Snapshot (2026-02-16)
+
+Completed deterministic cleanup slices on `codex/fosa-pr6-opportunistic-quality`:
+
+- workspace URL identity and forwarding normalization:
+  - `refactor(studio): normalize library request workspace URLs`
+  - `refactor(studio): standardize workspace checks in load model`
+  - `refactor(studio): standardize workspace URLs in store action flows`
+  - `refactor(studio): standardize preview workspace identity`
+  - `refactor(studio): standardize validation workspace identity`
+  - `refactor(studio): standardize workspace forwarding in load and validation`
+- stale-result and cancellation hardening:
+  - `refactor(studio): clear active validation workspace on cancel`
+  - `refactor(studio): clear active preview workspace on cancel`
+  - `test(studio): cover stale global essential copy guard`
+- store/system boundary consistency:
+  - `refactor(studio): normalize store workspace URL assignment`
+  - `refactor(studio): clear library action state on workspace switch`
+  - `refactor(studio): standardize workspace init URL in system model`
+
+Validation status:
+
+- targeted Studio slices remain green after each incremental change
+- latest full regression run: `swift test` passed (155 tests)
+
 ## Next Up (PR6 Active)
 
 PR6 is now the active milestone.
