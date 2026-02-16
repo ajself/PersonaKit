@@ -151,6 +151,19 @@ PR8 is now the active milestone.
 3. Execute final validation checklist across build/test and critical workflow
    smoke paths before release-readiness review.
 
+## PR8 Progress Snapshot (2026-02-16)
+
+Completed slice 1 on `codex/fosa-pr7-test-reorg`:
+
+- removed stale empty legacy test directories left by PR7 migration:
+  - `Tests/PersonaKitTests`
+  - `Tests/PersonaKitTests/AppSupport`
+
+Validation status for slice 1:
+
+- `swift build` passed
+- `swift test` passed (156 tests)
+
 ## PR7 Progress Snapshot (2026-02-16)
 
 Completed slice 1 on `codex/fosa-pr7-test-reorg`:
