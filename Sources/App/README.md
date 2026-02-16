@@ -1,9 +1,6 @@
-# App Entry Scaffolding
+# App Entry Targets
 
-This directory is reserved for app/executable entry wrappers as the FOSA
-migration progresses.
+This directory contains executable app entry targets.
 
-Planned wrappers:
-
-- CLI wrapper for `personakit`
-- GUI wrapper for `PersonaKit`
+- `Sources/App/CLI` provides the `personakit` executable entrypoint.
+- `Sources/App/Studio` provides the `PersonaKitStudio` executable entrypoint.

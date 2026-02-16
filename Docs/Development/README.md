@@ -12,17 +12,26 @@ Architecture execution planning for the FOSA migration is tracked in
 The implementation is intentionally small, with clear responsibilities split by
 target and file group:
 
-- `PersonaKit` (executable adapter):
-  - `Sources/PersonaKitApp/main.swift`
-- `PersonaKitCore` (library):
-  - `Sources/PersonaKit/CLI/` (command definitions, scope/session option
-    parsing, error reporting)
-  - `Sources/PersonaKit/Core/` (validator, registry, resolver, exporter, graph)
-  - `Sources/PersonaKit/MCP/` (MCP server resources, prompts, tools, runner)
-  - `Sources/PersonaKit/Support/` (locators, starter kit, shared helpers)
-  - Schema resources:
-  - `Schemas/*.json`, loaded via package resources and used by
-    `SchemaValidator.swift` during validation.
+- `PersonaKit` (CLI executable adapter):
+  - `Sources/App/CLI/main.swift`
+- `PersonaKitStudio` (Studio executable adapter):
+  - `Sources/App/Studio/PersonaKitStudioApp.swift`
+- `ContextCLI` (CLI command definitions, scope/session option parsing, error
+  reporting):
+  - `Sources/Features/CLI/`
+- `ContextMCP` (MCP server resources, prompts, tools, runner):
+  - `Sources/Features/MCP/`
+- `ContextCore` (validator, registry, resolver, exporter, graph, locators, and
+  shared helpers):
+  - `Sources/Shared/ContextCore/`
+- `StudioFoundation` and `StudioFeatures` (Studio app foundation and UI):
+  - `Sources/Features/Studio/Foundation/`
+  - `Sources/Features/Studio/UI/`
+- `PersonaKitCore` (transitional compatibility library):
+  - `Sources/PersonaKit/ContextCoreReexports.swift`
+- Schema resources:
+  - `Sources/Shared/ContextCore/Schemas/*.json`, loaded via package resources
+    and used by `SchemaValidator.swift` during validation.
 
 Data flow is:
 1. CLI or MCP receives the request.

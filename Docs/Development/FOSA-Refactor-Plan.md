@@ -142,14 +142,11 @@ Validation status:
 
 ## Next Up (PR8 Active)
 
-PR8 is now the active milestone.
+PR8 remains active with one slice left.
 
-1. Remove stale forwarding code and empty legacy directories left behind after
-   PR6/PR7 migrations.
-2. Finalize architecture and refactor docs so they reflect the post-PR7 test
-   and source layout.
-3. Execute final validation checklist across build/test and critical workflow
-   smoke paths before release-readiness review.
+1. Execute the final validation checklist across build/test and critical
+   workflow smoke paths before release-readiness review.
+2. Run PR8 stop-point review and merge-readiness checks.
 
 ## PR8 Progress Snapshot (2026-02-16)
 
@@ -159,7 +156,28 @@ Completed slice 1 on `codex/fosa-pr7-test-reorg`:
   - `Tests/PersonaKitTests`
   - `Tests/PersonaKitTests/AppSupport`
 
-Validation status for slice 1:
+Completed slice 2 on `codex/fosa-pr8-cleanup`:
+
+- removed stale forwarding and wrapper scaffolding after source migration:
+  - moved CLI executable entrypoint to `Sources/App/CLI/main.swift`
+  - removed `Sources/PersonaKit/CLI/PersonaKitEntrypoint.swift`
+  - updated `PersonaKit` executable target to `Sources/App/CLI` with
+    dependency on `ContextCLI`
+- removed stale empty legacy source directories left behind after migration:
+  - `Sources/PersonaKit/CLI`
+  - `Sources/PersonaKit/Core`
+  - `Sources/PersonaKit/MCP`
+  - `Sources/PersonaKit/Support`
+  - `Sources/PersonaKit/AppSupport`
+  - `Sources/PersonaKitApp`
+  - `Sources/PersonaKitMenuBarApp`
+  - `Sources/PersonaKitStudioApp`
+- finalized architecture docs for post-PR7/PR8 source layout:
+  - `Docs/Development/README.md`
+  - `Sources/App/README.md`
+  - `Sources/App/Studio/README.md`
+
+Validation status for slices 1-2:
 
 - `swift build` passed
 - `swift test` passed (156 tests)

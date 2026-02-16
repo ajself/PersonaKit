@@ -82,9 +82,9 @@ let package = Package(
     .executableTarget(
       name: "PersonaKit",
       dependencies: [
-        "PersonaKitCore"
+        "ContextCLI"
       ],
-      path: "Sources/PersonaKitApp"
+      path: "Sources/App/CLI"
     ),
     .executableTarget(
       name: "PersonaKitStudio",

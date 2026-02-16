@@ -1,3 +1,3 @@
-# Studio Wrapper Placeholder
+# Studio App Entry
 
-This folder will host the compatibility Studio app entry wrapper during migration.
+This folder contains the `PersonaKitStudio` executable entrypoint.
