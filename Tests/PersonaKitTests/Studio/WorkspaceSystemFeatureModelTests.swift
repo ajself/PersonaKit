@@ -81,6 +81,28 @@ struct WorkspaceSystemFeatureModelTests {
   }
 
   @Test
+  func initializeWorkspaceStructureStandardizesWorkspaceURL() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
+    let state = WorkspaceInitializationState()
+    let model = WorkspaceSystemFeatureModel(
+      workspacePicker: StubWorkspacePicker(selectedURL: workspaceURL),
+      workspaceInitializer: WorkspaceInitializer(
+        dependencies: WorkspaceInitializerDependencies(
+          createDirectory: { directoryURL in
+            state.createdDirectories.append(directoryURL.standardizedFileURL)
+          }
+        )
+      ),
+      fileRevealer: SpyFileRevealer()
+    )
+
+    let didInitialize = try model.initializeWorkspaceStructure(at: workspaceURL)
+
+    #expect(didInitialize)
+    #expect(state.createdDirectories.first?.path() == "/Workspace/.personakit")
+  }
+
+  @Test
   func revealInFinderForwardsStandardizedURLToRevealer() {
     let revealer = SpyFileRevealer()
     let model = WorkspaceSystemFeatureModel(

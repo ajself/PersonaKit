@@ -31,7 +31,7 @@ final class WorkspaceSystemFeatureModel {
     }
 
     try workspaceInitializer.initialize(
-      at: workspaceURL
+      at: workspaceURL.standardizedFileURL
     )
 
     return true
