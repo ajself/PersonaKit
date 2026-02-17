@@ -1,9 +1,11 @@
 import ContextCore
 import ContextWorkspaceCore
 import Foundation
+import Observation
 import StudioFoundation
 
 /// Feature-owned session preview model used by `WorkspaceStore`.
+@Observable
 @MainActor
 final class WorkspaceSessionFeatureModel {
   let operationRunner: WorkspaceOperationRunner

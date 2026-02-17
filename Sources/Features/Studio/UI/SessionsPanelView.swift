@@ -171,6 +171,10 @@ struct SessionsPanelView: View {
     }
   }
 
+  private var sessionFeatureModel: WorkspaceSessionFeatureModel {
+    workspaceStore.sessionFeatureModel
+  }
+
   private var detailMode: SessionsDetailMode {
     SessionsPanelLayoutState.resolvedDetailMode(
       persistedRawValue: persistedDetailModeRawValue
@@ -197,17 +201,17 @@ struct SessionsPanelView: View {
     switch detailMode {
     case .preview:
       SessionsPreviewTabView(
-        sessionPreview: workspaceStore.sessionPreview,
-        sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
-        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview
+        sessionPreview: sessionFeatureModel.preview,
+        sessionPreviewErrorMessage: sessionFeatureModel.previewErrorMessage,
+        isLoadingSessionPreview: sessionFeatureModel.isLoadingPreview
       )
 
     case .map:
       SessionsMapTabView(
         selectedSession: selectedSession,
-        sessionMap: workspaceStore.sessionMap,
-        sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
-        isLoadingSessionMap: workspaceStore.isLoadingSessionMap,
+        sessionMap: sessionFeatureModel.map,
+        sessionMapErrorMessage: sessionFeatureModel.mapErrorMessage,
+        isLoadingSessionMap: sessionFeatureModel.isLoadingMap,
         snapshot: workspaceStore.snapshot,
         onNavigateToDiagnostics: {
           onNavigate(
@@ -268,7 +272,12 @@ struct SessionsPanelView: View {
           Button("Refresh") {
             refreshSelectedSessionPreview()
           }
-          .disabled(workspaceStore.isLoadingSessionPreview)
+          .disabled(sessionFeatureModel.isLoadingPreview)
+
+          if sessionFeatureModel.isLoadingPreview {
+            ProgressView()
+              .controlSize(.small)
+          }
 
           Button("Reveal in Finder") {
             workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
@@ -277,19 +286,19 @@ struct SessionsPanelView: View {
           Button("Copy") {
             copySessionPreview()
           }
-          .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
+          .disabled(sessionFeatureModel.preview.isEmpty || sessionFeatureModel.isLoadingPreview)
 
           Button("Export Markdown…") {
             exportSessionPreview()
           }
-          .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
+          .disabled(sessionFeatureModel.preview.isEmpty || sessionFeatureModel.isLoadingPreview)
 
           Spacer()
         }
 
       case .map:
         HStack(spacing: 8) {
-          if let sessionMap = workspaceStore.sessionMap {
+          if let sessionMap = sessionFeatureModel.map {
             Text(sessionMapHealthSummary(map: sessionMap))
               .font(.caption)
               .fontWeight(.semibold)
@@ -305,7 +314,7 @@ struct SessionsPanelView: View {
           Button("Refresh") {
             refreshSelectedSessionMap()
           }
-          .disabled(workspaceStore.isLoadingSessionMap)
+          .disabled(sessionFeatureModel.isLoadingMap)
 
           Spacer()
         }
