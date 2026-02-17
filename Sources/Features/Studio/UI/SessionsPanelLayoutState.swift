@@ -70,13 +70,50 @@ enum SessionsPanelLayoutState {
   static func unresolvedIssueBadgeText(
     issueCount: Int?
   ) -> String? {
-    guard
-      let issueCount,
-      issueCount > 0
-    else {
+    guard let issueCount, issueCount > 0 else {
       return nil
     }
 
     return String(issueCount)
+  }
+
+  static func personaMetadataLine(
+    personaID: String
+  ) -> String {
+    "persona: \(personaID)"
+  }
+
+  static func directiveMetadataLine(
+    directiveID: String
+  ) -> String {
+    "directive: \(directiveID)"
+  }
+
+  static func mapHealthText(
+    isLoading: Bool,
+    mapIsFullyResolved: Bool?,
+    unresolvedIssueCount: Int?
+  ) -> String {
+    if isLoading {
+      return "Refreshing..."
+    }
+
+    guard let mapIsFullyResolved else {
+      return "Unavailable"
+    }
+
+    if mapIsFullyResolved {
+      return "Resolved"
+    }
+
+    return unresolvedIssueSummary(
+      issueCount: unresolvedIssueCount ?? 0
+    )
+  }
+
+  static func unresolvedIssueSummary(
+    issueCount: Int
+  ) -> String {
+    "\(issueCount) issue\(issueCount == 1 ? "" : "s")"
   }
 }

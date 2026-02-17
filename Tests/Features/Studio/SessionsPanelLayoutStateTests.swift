@@ -90,4 +90,77 @@ struct SessionsPanelLayoutStateTests {
 
     #expect(badgeText == "3")
   }
+
+  @Test
+  func personaMetadataLineFormatsPersonaID() {
+    let personaLine = SessionsPanelLayoutState.personaMetadataLine(
+      personaID: "persona-a"
+    )
+
+    #expect(personaLine == "persona: persona-a")
+  }
+
+  @Test
+  func directiveMetadataLineFormatsDirectiveID() {
+    let directiveLine = SessionsPanelLayoutState.directiveMetadataLine(
+      directiveID: "directive-b"
+    )
+
+    #expect(directiveLine == "directive: directive-b")
+  }
+
+  @Test
+  func mapHealthTextReturnsRefreshingWhileLoading() {
+    let healthText = SessionsPanelLayoutState.mapHealthText(
+      isLoading: true,
+      mapIsFullyResolved: nil,
+      unresolvedIssueCount: nil
+    )
+
+    #expect(healthText == "Refreshing...")
+  }
+
+  @Test
+  func mapHealthTextReturnsUnavailableWhenMapIsMissing() {
+    let healthText = SessionsPanelLayoutState.mapHealthText(
+      isLoading: false,
+      mapIsFullyResolved: nil,
+      unresolvedIssueCount: nil
+    )
+
+    #expect(healthText == "Unavailable")
+  }
+
+  @Test
+  func mapHealthTextReturnsResolvedWhenMapIsFullyResolved() {
+    let healthText = SessionsPanelLayoutState.mapHealthText(
+      isLoading: false,
+      mapIsFullyResolved: true,
+      unresolvedIssueCount: 0
+    )
+
+    #expect(healthText == "Resolved")
+  }
+
+  @Test
+  func mapHealthTextReturnsIssueCountWhenMapHasResolutionErrors() {
+    let healthText = SessionsPanelLayoutState.mapHealthText(
+      isLoading: false,
+      mapIsFullyResolved: false,
+      unresolvedIssueCount: 3
+    )
+
+    #expect(healthText == "3 issues")
+  }
+
+  @Test
+  func mapHealthTextReturnsSingularIssueWhenMapHasSingleResolutionError() {
+    let healthText = SessionsPanelLayoutState.mapHealthText(
+      isLoading: false,
+      mapIsFullyResolved: false,
+      unresolvedIssueCount: 1
+    )
+
+    #expect(healthText == "1 issue")
+  }
 }

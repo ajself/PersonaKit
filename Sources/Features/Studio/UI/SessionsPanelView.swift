@@ -226,6 +226,52 @@ struct SessionsPanelView: View {
     }
   }
 
+  private var mapHealthText: String {
+    let sessionMap = sessionFeatureModel.map
+
+    return SessionsPanelLayoutState.mapHealthText(
+      isLoading: sessionFeatureModel.isLoadingMap,
+      mapIsFullyResolved: sessionMap?.isFullyResolved,
+      unresolvedIssueCount: sessionMap?.resolutionErrors.count
+    )
+  }
+
+  @ViewBuilder
+  private var mapHealthStatusView: some View {
+    if sessionFeatureModel.isLoadingMap {
+      HStack(spacing: 6) {
+        ProgressView()
+          .controlSize(.small)
+
+        Text(mapHealthText)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    } else if let sessionMap = sessionFeatureModel.map {
+      Text(mapHealthText)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+          Capsule()
+            .fill(sessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
+        )
+        .foregroundStyle(sessionMap.isFullyResolved ? .green : .orange)
+    } else {
+      Text(mapHealthText)
+        .font(.caption)
+        .fontWeight(.medium)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+          Capsule()
+            .fill(.quaternary.opacity(0.16))
+        )
+    }
+  }
+
   @ViewBuilder
   private func detailContent(
     selectedSession: WorkspaceSessionListItem
@@ -277,13 +323,31 @@ struct SessionsPanelView: View {
     VStack(alignment: .leading, spacing: 10) {
       HStack(alignment: .top, spacing: 12) {
         VStack(alignment: .leading, spacing: 4) {
-          Text("Session Detail")
+          Text(selectedSession.id)
             .font(.title3)
             .fontWeight(.semibold)
+            .lineLimit(1)
+            .truncationMode(.middle)
 
-          Text(selectedSession.id)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+          VStack(alignment: .leading, spacing: 2) {
+            Text(
+              SessionsPanelLayoutState.personaMetadataLine(
+                personaID: selectedSession.personaId
+              )
+            )
+            .lineLimit(1)
+            .truncationMode(.tail)
+
+            Text(
+              SessionsPanelLayoutState.directiveMetadataLine(
+                directiveID: selectedSession.directiveId
+              )
+            )
+            .lineLimit(1)
+            .truncationMode(.tail)
+          }
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
         }
 
         Spacer()
@@ -334,26 +398,25 @@ struct SessionsPanelView: View {
         }
 
       case .map:
-        HStack(spacing: 8) {
-          if let sessionMap = sessionFeatureModel.map {
-            Text(sessionMapHealthSummary(map: sessionMap))
+        HStack(spacing: 12) {
+          HStack(spacing: 8) {
+            Text("Map Health")
               .font(.caption)
               .fontWeight(.semibold)
-              .padding(.horizontal, 8)
-              .padding(.vertical, 4)
-              .background(
-                Capsule()
-                  .fill(sessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
-              )
-              .foregroundStyle(sessionMap.isFullyResolved ? .green : .orange)
+              .foregroundStyle(.secondary)
+
+            mapHealthStatusView
           }
+          .accessibilityElement(children: .combine)
+          .accessibilityLabel("Map Health")
+          .accessibilityValue(mapHealthText)
+
+          Spacer()
 
           Button("Refresh") {
             refreshSelectedSessionMap()
           }
           .disabled(sessionFeatureModel.isLoadingMap)
-
-          Spacer()
         }
       }
 
@@ -590,14 +653,6 @@ struct SessionsPanelView: View {
 
   private func currentSelectedSession() -> WorkspaceSessionListItem? {
     selectedSession(items: workspaceStore.snapshot.sessions)
-  }
-
-  private func sessionMapHealthSummary(map: WorkspaceSessionMap) -> String {
-    if map.isFullyResolved {
-      return "Resolved"
-    }
-
-    return "\(map.resolutionErrors.count) issue\(map.resolutionErrors.count == 1 ? "" : "s")"
   }
 
   private func copySessionPreview() {
