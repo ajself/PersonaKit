@@ -77,6 +77,26 @@ enum SessionsPanelLayoutState {
     return String(issueCount)
   }
 
+  static func expectedSessionMapRequestKey(
+    for selectedSessionID: String
+  ) -> String {
+    return "session:\(selectedSessionID)"
+  }
+
+  static func unresolvedIssueBadgeText(
+    issueCount: Int?,
+    mapRequestKey: String,
+    selectedSessionID: String
+  ) -> String? {
+    guard mapRequestKey == expectedSessionMapRequestKey(for: selectedSessionID) else {
+      return nil
+    }
+
+    return unresolvedIssueBadgeText(
+      issueCount: issueCount
+    )
+  }
+
   static func personaMetadataLine(
     personaID: String
   ) -> String {

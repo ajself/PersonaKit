@@ -57,6 +57,10 @@ final class WorkspaceSessionFeatureModel {
     mapState.map
   }
 
+  var mapRequestKey: String? {
+    mapState.requestKey
+  }
+
   var mapErrorMessage: String? {
     mapState.errorMessage
   }

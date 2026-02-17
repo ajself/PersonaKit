@@ -6,10 +6,9 @@ import StudioFoundation
 extension WorkspaceSessionFeatureModel {
   func refreshMap(
     for session: WorkspaceSessionListItem?,
-    workspaceURL: URL?
+    workspaceURL: URL?,
+    forceReload: Bool = false
   ) {
-    cancelMapTask()
-
     guard let session else {
       clearMap()
       return
@@ -22,6 +21,22 @@ extension WorkspaceSessionFeatureModel {
 
     let requestedWorkspaceURL = workspaceURL.standardizedFileURL
     let requestKey = "session:\(session.id)"
+    let isSameMapRequest = mapState.requestKey == requestKey
+
+    if !forceReload, isSameMapRequest {
+      if mapState.isLoading, mapTask != nil {
+        return
+      }
+
+      if !mapState.isLoading,
+        mapState.errorMessage == nil,
+        mapState.map != nil
+      {
+        return
+      }
+    }
+
+    cancelMapTask()
 
     activeMapWorkspaceURL = requestedWorkspaceURL
     mapState.beginLoading(requestKey: requestKey)
@@ -145,7 +160,8 @@ extension WorkspaceSessionFeatureModel {
 
     refreshMap(
       for: session,
-      workspaceURL: workspaceURL
+      workspaceURL: workspaceURL,
+      forceReload: true
     )
   }
 

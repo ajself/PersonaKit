@@ -38,7 +38,16 @@ public final class WorkspaceStore {
       libraryFeatureModel.resetState()
     }
   }
-  var snapshot: WorkspaceSnapshot = .empty
+  var snapshot: WorkspaceSnapshot = .empty {
+    didSet {
+      guard snapshot != oldValue else {
+        return
+      }
+
+      snapshotRevision &+= 1
+    }
+  }
+  private(set) var snapshotRevision = 0
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var validation: WorkspaceValidationSnapshot {

@@ -92,6 +92,35 @@ struct SessionsPanelLayoutStateTests {
   }
 
   @Test
+  func expectedSessionMapRequestKeyBuildsSessionRequestKey() {
+    let requestKey = SessionsPanelLayoutState.expectedSessionMapRequestKey(for: "session-a")
+
+    #expect(requestKey == "session:session-a")
+  }
+
+  @Test
+  func unresolvedIssueBadgeTextReturnsCountWhenMapRequestMatchesSelection() {
+    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: 2,
+      mapRequestKey: "session:session-a",
+      selectedSessionID: "session-a"
+    )
+
+    #expect(badgeText == "2")
+  }
+
+  @Test
+  func unresolvedIssueBadgeTextReturnsNilWhenMapRequestIsStale() {
+    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: 2,
+      mapRequestKey: "session:session-a",
+      selectedSessionID: "session-b"
+    )
+
+    #expect(badgeText == nil)
+  }
+
+  @Test
   func personaMetadataLineFormatsPersonaID() {
     let personaLine = SessionsPanelLayoutState.personaMetadataLine(
       personaID: "persona-a"

@@ -44,21 +44,25 @@ extension WorkspaceStore {
 
   /// Loads markdown preview text for the selected session.
   func refreshSessionPreview(
-    for session: WorkspaceSessionListItem?
+    for session: WorkspaceSessionListItem?,
+    forceReload: Bool = false
   ) {
     sessionFeatureModel.refreshPreview(
       for: session,
-      workspaceURL: workspaceURL
+      workspaceURL: workspaceURL,
+      forceReload: forceReload
     )
   }
 
   /// Loads a dependency map for the selected session.
   func refreshSessionMap(
-    for session: WorkspaceSessionListItem?
+    for session: WorkspaceSessionListItem?,
+    forceReload: Bool = false
   ) {
     sessionFeatureModel.refreshMap(
       for: session,
-      workspaceURL: workspaceURL
+      workspaceURL: workspaceURL,
+      forceReload: forceReload
     )
   }
 

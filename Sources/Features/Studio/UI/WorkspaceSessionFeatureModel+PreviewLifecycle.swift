@@ -5,10 +5,9 @@ import Foundation
 extension WorkspaceSessionFeatureModel {
   func refreshPreview(
     for session: WorkspaceSessionListItem?,
-    workspaceURL: URL?
+    workspaceURL: URL?,
+    forceReload: Bool = false
   ) {
-    cancelPreviewTask()
-
     guard let session else {
       clearPreview()
       return
@@ -20,6 +19,19 @@ extension WorkspaceSessionFeatureModel {
     }
 
     let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+    let isSamePreviewRequest = state.previewSessionID == session.id
+
+    if !forceReload, isSamePreviewRequest {
+      if state.isLoading, previewTask != nil {
+        return
+      }
+
+      if !state.isLoading, state.errorMessage == nil {
+        return
+      }
+    }
+
+    cancelPreviewTask()
 
     activeWorkspaceURL = requestedWorkspaceURL
     state.beginLoading(sessionID: session.id)
@@ -74,7 +86,8 @@ extension WorkspaceSessionFeatureModel {
 
     refreshPreview(
       for: session,
-      workspaceURL: workspaceURL
+      workspaceURL: workspaceURL,
+      forceReload: true
     )
   }
 

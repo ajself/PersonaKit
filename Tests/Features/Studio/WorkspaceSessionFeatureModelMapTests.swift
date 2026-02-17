@@ -9,6 +9,172 @@ import Testing
 @MainActor
 struct WorkspaceSessionFeatureModelMapTests {
   @Test
+  func refreshPreviewSkipsDuplicateRequestForSameSession() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
+      sourceScope: .project
+    )
+    let model = WorkspaceSessionFeatureModel(
+      operationRunner: makeOperationRunner(
+        sessionManager: StubSessionManager { _ in
+          WorkspaceSessionDraft(
+            id: "unused",
+            personaId: "unused",
+            directiveId: "unused",
+            kitOverrides: []
+          )
+        },
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+          Self.makeMap(personaID: "unused")
+        },
+        sessionPreviewManager: StubSessionPreviewManager(
+          loadPreviewHandler: { _, _ in
+            Thread.sleep(forTimeInterval: 0.05)
+            return "preview-text"
+          }
+        )
+      ),
+      previewExportDestinationPicker: StubPreviewDestinationPicker(),
+      pasteboardWriter: StubPasteboardWriter()
+    )
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    await waitFor {
+      !model.isLoadingPreview && model.preview == "preview-text"
+    }
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    #expect(model.preview == "preview-text")
+    #expect(!model.isLoadingPreview)
+  }
+
+  @Test
+  func refreshPreviewForceReloadBypassesCache() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
+      sourceScope: .project
+    )
+    let model = WorkspaceSessionFeatureModel(
+      operationRunner: makeOperationRunner(
+        sessionManager: StubSessionManager { _ in
+          WorkspaceSessionDraft(
+            id: "unused",
+            personaId: "unused",
+            directiveId: "unused",
+            kitOverrides: []
+          )
+        },
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+          Self.makeMap(personaID: "unused")
+        },
+        sessionPreviewManager: StubSessionPreviewManager(
+          loadPreviewHandler: { _, _ in
+            Thread.sleep(forTimeInterval: 0.05)
+            return "preview-text"
+          }
+        )
+      ),
+      previewExportDestinationPicker: StubPreviewDestinationPicker(),
+      pasteboardWriter: StubPasteboardWriter()
+    )
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    await waitFor {
+      !model.isLoadingPreview && model.preview == "preview-text"
+    }
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL,
+      forceReload: true
+    )
+
+    #expect(model.isLoadingPreview)
+
+    await waitFor {
+      !model.isLoadingPreview
+    }
+
+    #expect(model.preview == "preview-text")
+  }
+
+  @Test
+  func refreshPreviewRestartsAfterCancellationForSameSession() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
+      sourceScope: .project
+    )
+    let model = WorkspaceSessionFeatureModel(
+      operationRunner: makeOperationRunner(
+        sessionManager: StubSessionManager { _ in
+          WorkspaceSessionDraft(
+            id: "unused",
+            personaId: "unused",
+            directiveId: "unused",
+            kitOverrides: []
+          )
+        },
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+          Self.makeMap(personaID: "unused")
+        },
+        sessionPreviewManager: StubSessionPreviewManager(
+          loadPreviewHandler: { _, _ in
+            Thread.sleep(forTimeInterval: 0.2)
+            return "preview-text"
+          }
+        )
+      ),
+      previewExportDestinationPicker: StubPreviewDestinationPicker(),
+      pasteboardWriter: StubPasteboardWriter()
+    )
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+    try? await Task.sleep(for: .milliseconds(20))
+
+    model.cancelPreviewTask()
+    #expect(model.isLoadingPreview)
+
+    model.refreshPreview(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    await waitFor {
+      !model.isLoadingPreview
+    }
+
+    #expect(model.preview == "preview-text")
+    #expect(model.previewErrorMessage == nil)
+  }
+
+  @Test
   func refreshMapForSessionPublishesMap() async {
     let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
@@ -53,6 +219,120 @@ struct WorkspaceSessionFeatureModelMapTests {
 
     #expect(model.mapErrorMessage == nil)
     #expect(model.map?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true)
+  }
+
+  @Test
+  func refreshMapSkipsDuplicateRequestForSameSession() async {
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let mapBuildCount = ThreadSafeCounter()
+    let model = WorkspaceSessionFeatureModel(
+      operationRunner: makeOperationRunner(
+        sessionManager: StubSessionManager { _ in
+          WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: ["kit-a"]
+          )
+        },
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+          Thread.sleep(forTimeInterval: 0.05)
+          let buildNumber = mapBuildCount.increment()
+
+          return Self.makeMap(personaID: "persona-\(buildNumber)")
+        }
+      ),
+      previewExportDestinationPicker: StubPreviewDestinationPicker(),
+      pasteboardWriter: StubPasteboardWriter()
+    )
+
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: sessionFileURL,
+      sourceScope: .project
+    )
+
+    model.refreshMap(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    await waitFor {
+      !model.isLoadingMap
+        && model.map?.nodes.contains(where: { $0.key == "persona:persona-1" }) == true
+    }
+
+    model.refreshMap(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    #expect(!model.isLoadingMap)
+    #expect(model.map?.nodes.contains(where: { $0.key == "persona:persona-1" }) == true)
+    #expect(mapBuildCount.currentValue() == 1)
+  }
+
+  @Test
+  func refreshMapForceReloadBypassesCache() async {
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let mapBuildCount = ThreadSafeCounter()
+    let model = WorkspaceSessionFeatureModel(
+      operationRunner: makeOperationRunner(
+        sessionManager: StubSessionManager { _ in
+          WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: ["kit-a"]
+          )
+        },
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+          Thread.sleep(forTimeInterval: 0.05)
+          let buildNumber = mapBuildCount.increment()
+
+          return Self.makeMap(personaID: "persona-\(buildNumber)")
+        }
+      ),
+      previewExportDestinationPicker: StubPreviewDestinationPicker(),
+      pasteboardWriter: StubPasteboardWriter()
+    )
+
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: sessionFileURL,
+      sourceScope: .project
+    )
+
+    model.refreshMap(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+
+    await waitFor {
+      !model.isLoadingMap
+        && model.map?.nodes.contains(where: { $0.key == "persona:persona-1" }) == true
+    }
+
+    model.refreshMap(
+      for: session,
+      workspaceURL: workspaceURL,
+      forceReload: true
+    )
+
+    #expect(model.isLoadingMap)
+
+    await waitFor {
+      !model.isLoadingMap
+        && model.map?.nodes.contains(where: { $0.key == "persona:persona-2" }) == true
+    }
+
+    #expect(mapBuildCount.currentValue() == 2)
   }
 
   @Test
@@ -416,6 +696,7 @@ struct WorkspaceSessionFeatureModelMapTests {
   private func makeOperationRunner(
     sessionManager: StubSessionManager,
     sessionMapBuilder: StubSessionMapBuilder,
+    sessionPreviewManager: any WorkspaceSessionPreviewManaging = StubSessionPreviewManager(),
     workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder =
       StubWorkspaceRelationshipMapBuilder()
   ) -> WorkspaceOperationRunner {
@@ -429,10 +710,34 @@ struct WorkspaceSessionFeatureModelMapTests {
       sessionManager: sessionManager,
       essentialManager: StubEssentialManager(),
       libraryEntityManager: StubLibraryEntityManager(),
-      sessionPreviewManager: StubSessionPreviewManager(),
+      sessionPreviewManager: sessionPreviewManager,
       sessionMapBuilder: sessionMapBuilder,
       workspaceRelationshipMapBuilder: workspaceRelationshipMapBuilder
     )
+  }
+}
+
+private final class ThreadSafeCounter: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value = 0
+
+  func increment() -> Int {
+    lock.lock()
+    defer {
+      lock.unlock()
+    }
+
+    value += 1
+    return value
+  }
+
+  func currentValue() -> Int {
+    lock.lock()
+    defer {
+      lock.unlock()
+    }
+
+    return value
   }
 }
 
@@ -519,11 +824,21 @@ private struct StubLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendabl
 }
 
 private struct StubSessionPreviewManager: WorkspaceSessionPreviewManaging, Sendable {
+  let loadPreviewHandler: @Sendable (URL, WorkspaceSessionListItem) throws -> String
+
+  init(
+    loadPreviewHandler: @escaping @Sendable (URL, WorkspaceSessionListItem) throws -> String = { _, _ in
+      ""
+    }
+  ) {
+    self.loadPreviewHandler = loadPreviewHandler
+  }
+
   func loadPreview(
     workspaceURL: URL,
     session: WorkspaceSessionListItem
   ) throws -> String {
-    ""
+    try loadPreviewHandler(workspaceURL, session)
   }
 
   func exportPreview(

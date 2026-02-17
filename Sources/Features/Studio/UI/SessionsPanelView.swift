@@ -16,8 +16,9 @@ struct SessionsPanelView: View {
   @Binding var searchText: String
   let onNavigate: (SessionsNavigationTarget) -> Void
 
-  @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
   @State private var selectedSessionID: String?
+  @State private var detailMode = SessionsDetailMode.preview
+  @State private var detailModeTransitionTask: Task<Void, Never>?
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
   @State private var sessionEditorPresentation: SessionEditorPresentation?
@@ -72,12 +73,6 @@ struct SessionsPanelView: View {
           Divider()
 
           detailContent(selectedSession: selectedSession)
-            .animation(
-              accessibilityReduceMotion
-                ? nil
-                : .easeInOut(duration: 0.16),
-              value: detailMode
-            )
         } else {
           Color.clear
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -88,26 +83,39 @@ struct SessionsPanelView: View {
     .searchable(text: $searchText, prompt: "Search Sessions")
     .onChange(of: selectedSessionID) { _, _ in
       refreshSelectedSessionPreview()
-      refreshSelectedSessionMap()
+
+      if detailMode == .map {
+        refreshSelectedSessionMap()
+      }
     }
     .onChange(of: availableSessionIDs) { _, availableSessionIDs in
       selectedSessionID = SessionsPanelLayoutState.reconciledSelection(
         currentSelectedSessionID: selectedSessionID,
         availableSessionIDs: availableSessionIDs
       )
-      refreshSelectedSessionPreview()
-      refreshSelectedSessionMap()
+      refreshSelectedSessionPreview(forceReload: true)
+
+      if detailMode == .map {
+        refreshSelectedSessionMap()
+      }
     }
-    .onChange(of: sessionMapRefreshToken) { _, _ in
-      refreshSelectedSessionMap()
+    .onChange(of: workspaceStore.snapshotRevision) { _, _ in
+      if detailMode == .map {
+        refreshSelectedSessionMap()
+      }
     }
     .onChange(of: detailMode) { _, _ in
-      refreshSelectedSessionPreview()
-      refreshSelectedSessionMap()
+      scheduleDetailModeTransition(for: detailMode)
     }
     .onAppear {
-      refreshSelectedSessionPreview()
-      refreshSelectedSessionMap()
+      detailMode = SessionsPanelLayoutState.resolvedDetailMode(
+        persistedRawValue: persistedDetailModeRawValue
+      )
+      performDetailModeTransition(for: detailMode)
+    }
+    .onDisappear {
+      detailModeTransitionTask?.cancel()
+      detailModeTransitionTask = nil
     }
     .sheet(
       item: $sessionEditorPresentation,
@@ -182,18 +190,13 @@ struct SessionsPanelView: View {
     workspaceStore.sessionFeatureModel
   }
 
-  private var detailMode: SessionsDetailMode {
-    SessionsPanelLayoutState.resolvedDetailMode(
-      persistedRawValue: persistedDetailModeRawValue
-    )
-  }
-
   private var detailModeBinding: Binding<SessionsDetailMode> {
     Binding(
       get: {
         detailMode
       },
       set: { mode in
+        detailMode = mode
         persistedDetailModeRawValue = SessionsPanelLayoutState.persistedRawValue(
           for: mode
         )
@@ -203,9 +206,19 @@ struct SessionsPanelView: View {
 
   private var detailModeItems: [StudioModeSwitchItem<SessionsDetailMode>] {
     let unresolvedIssueCount = sessionFeatureModel.map?.resolutionErrors.count
-    let unresolvedIssueBadgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: unresolvedIssueCount
-    )
+    let unresolvedIssueBadgeText: String?
+
+    if let mapRequestKey = sessionFeatureModel.mapRequestKey,
+      let selectedSessionID
+    {
+      unresolvedIssueBadgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+        issueCount: unresolvedIssueCount,
+        mapRequestKey: mapRequestKey,
+        selectedSessionID: selectedSessionID
+      )
+    } else {
+      unresolvedIssueBadgeText = nil
+    }
 
     return SessionsDetailMode.allCases.map { mode in
       let badgeText: String?
@@ -371,7 +384,7 @@ struct SessionsPanelView: View {
       case .preview:
         HStack(spacing: 8) {
           Button("Refresh") {
-            refreshSelectedSessionPreview()
+            refreshSelectedSessionPreview(forceReload: true)
           }
           .disabled(sessionFeatureModel.isLoadingPreview)
 
@@ -414,7 +427,7 @@ struct SessionsPanelView: View {
           Spacer()
 
           Button("Refresh") {
-            refreshSelectedSessionMap()
+            refreshSelectedSessionMap(forceReload: true)
           }
           .disabled(sessionFeatureModel.isLoadingMap)
         }
@@ -465,56 +478,6 @@ struct SessionsPanelView: View {
     }
 
     return scopes
-  }
-
-  private var sessionMapRefreshToken: String {
-    let snapshot = workspaceStore.snapshot
-
-    let sessionToken = snapshot.sessions
-      .map { "\($0.id)::\($0.personaId)::\($0.directiveId)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let personaToken = snapshot.personas
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let directiveToken = snapshot.directives
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let kitToken = snapshot.kits
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let intentToken = snapshot.intents
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let skillToken = snapshot.skills
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    let essentialToken = snapshot.essentials
-      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
-      .sorted()
-      .joined(separator: "|")
-
-    return [
-      sessionToken,
-      personaToken,
-      directiveToken,
-      kitToken,
-      intentToken,
-      skillToken,
-      essentialToken,
-    ]
-    .joined(separator: "||")
   }
 
   private func filteredSessions(_ items: [WorkspaceSessionListItem]) -> [WorkspaceSessionListItem] {
@@ -638,17 +601,78 @@ struct SessionsPanelView: View {
     }
   }
 
-  private func refreshSelectedSessionPreview() {
+  private func refreshSelectedSessionPreview(
+    forceReload: Bool = false
+  ) {
     guard detailMode == .preview else {
       return
     }
 
-    sessionPreviewActionMessage = nil
-    workspaceStore.refreshSessionPreview(for: currentSelectedSession())
+    refreshDetailContent(
+      for: .preview,
+      forceReload: forceReload
+    )
   }
 
-  private func refreshSelectedSessionMap() {
-    workspaceStore.refreshSessionMap(for: currentSelectedSession())
+  private func refreshSelectedSessionMap(
+    forceReload: Bool = false
+  ) {
+    guard detailMode == .map else {
+      return
+    }
+
+    refreshDetailContent(
+      for: .map,
+      forceReload: forceReload
+    )
+  }
+
+  private func refreshDetailContent(
+    for mode: SessionsDetailMode,
+    forceReload: Bool = false
+  ) {
+    switch mode {
+    case .preview:
+      sessionPreviewActionMessage = nil
+      workspaceStore.refreshSessionPreview(
+        for: currentSelectedSession(),
+        forceReload: forceReload
+      )
+
+    case .map:
+      workspaceStore.refreshSessionMap(
+        for: currentSelectedSession(),
+        forceReload: forceReload
+      )
+    }
+  }
+
+  private func scheduleDetailModeTransition(
+    for mode: SessionsDetailMode
+  ) {
+    detailModeTransitionTask?.cancel()
+    detailModeTransitionTask = Task { @MainActor [mode] in
+      await Task.yield()
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      performDetailModeTransition(for: mode)
+    }
+  }
+
+  private func performDetailModeTransition(
+    for mode: SessionsDetailMode
+  ) {
+    switch mode {
+    case .preview:
+      sessionFeatureModel.cancelMapTask()
+    case .map:
+      sessionFeatureModel.cancelPreviewTask()
+    }
+
+    refreshDetailContent(for: mode)
   }
 
   private func currentSelectedSession() -> WorkspaceSessionListItem? {

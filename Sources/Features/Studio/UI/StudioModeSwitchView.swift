@@ -1,10 +1,10 @@
 import SwiftUI
 
 private enum StudioModeSwitchTokens {
-  static let railHeight = CGFloat(30)
-  static let railHorizontalPadding = CGFloat(4)
-  static let segmentHorizontalPadding = CGFloat(10)
-  static let segmentMinimumWidth = CGFloat(88)
+  static let railHeight = CGFloat(32)
+  static let railHorizontalPadding = CGFloat(3)
+  static let segmentHorizontalPadding = CGFloat(12)
+  static let segmentMinimumWidth = CGFloat(92)
 }
 
 /// Reusable capsule-rail switch for compact mode toggles in Studio panels.
@@ -35,11 +35,22 @@ struct StudioModeSwitchView<ID: Hashable>: View {
         itemButton(item)
       }
     }
+    .animation(
+      accessibilityReduceMotion
+        ? nil
+        : .snappy(duration: 0.16),
+      value: selection
+    )
     .padding(.horizontal, StudioModeSwitchTokens.railHorizontalPadding)
     .frame(height: StudioModeSwitchTokens.railHeight)
     .background(
       Capsule(style: .continuous)
-        .fill(.quaternary.opacity(0.14))
+        .fill(.ultraThinMaterial)
+        .overlay(
+          Capsule(style: .continuous)
+            .strokeBorder(.white.opacity(0.12), lineWidth: 0.8)
+        )
+        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 4)
     )
     .accessibilityElement(children: .contain)
     .accessibilityLabel("Detail Mode")
@@ -82,17 +93,7 @@ struct StudioModeSwitchView<ID: Hashable>: View {
   }
 
   private func assignSelection(_ itemID: ID) {
-    let updateSelection = {
-      selection = itemID
-    }
-
-    if accessibilityReduceMotion {
-      updateSelection()
-    } else {
-      withAnimation(.snappy(duration: 0.18)) {
-        updateSelection()
-      }
-    }
+    selection = itemID
   }
 
   private func segmentContent(
@@ -102,14 +103,31 @@ struct StudioModeSwitchView<ID: Hashable>: View {
     ZStack {
       if isSelected {
         Capsule(style: .continuous)
-          .fill(.tint.opacity(0.9))
+          .fill(.tint.opacity(0.82))
+          .overlay(
+            Capsule(style: .continuous)
+              .strokeBorder(.white.opacity(0.22), lineWidth: 0.8)
+          )
+          .overlay(
+            Capsule(style: .continuous)
+              .fill(
+                LinearGradient(
+                  colors: [
+                    .white.opacity(0.18),
+                    .clear,
+                  ],
+                  startPoint: .top,
+                  endPoint: .bottom
+                )
+              )
+          )
           .matchedGeometryEffect(
             id: "studio.mode-switch.active-segment",
             in: activeSegmentNamespace
           )
       } else if hoveredItemID == item.id {
         Capsule(style: .continuous)
-          .fill(.quaternary.opacity(0.22))
+          .fill(.white.opacity(0.08))
       }
 
       HStack(spacing: 6) {
