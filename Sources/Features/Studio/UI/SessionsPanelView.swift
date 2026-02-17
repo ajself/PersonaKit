@@ -17,7 +17,8 @@ struct SessionsPanelView: View {
   let onNavigate: (SessionsNavigationTarget) -> Void
 
   @State private var selectedSessionID: String?
-  @State private var selectedTab: SessionsTab = .sessions
+  @SceneStorage("studio.sessions.detailMode")
+  private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
   @State private var sessionEditorPresentation: SessionEditorPresentation?
   @State private var pendingSessionDeletion: WorkspaceSessionListItem?
   @State private var isLoadingSessionDraft = false
@@ -25,11 +26,15 @@ struct SessionsPanelView: View {
   @State private var sessionPreviewActionMessage: String?
 
   var body: some View {
-    let items = filteredSessions(workspaceStore.snapshot.sessions)
-    let selectedSession = selectedSession(items: items)
-    let canDeleteSelectedSession = canDeleteSelectedSession(items: items)
+    let sessions = workspaceStore.snapshot.sessions
+    let items = filteredSessions(sessions)
+    let availableSessionIDs = sessions.map(\.id).sorted()
+    let selectedSession = currentSelectedSession()
+    let canDeleteSelectedSession = canDeleteSelectedSession(
+      selectedSession: selectedSession
+    )
 
-    return TabView(selection: $selectedTab) {
+    return HSplitView {
       SessionsListTabView(
         items: items,
         selectedSession: selectedSession,
@@ -45,10 +50,10 @@ struct SessionsPanelView: View {
           )
         },
         onEditSession: {
-          openEditorForSelectedSession(items: items)
+          openEditorForSelectedSession(selectedSession: selectedSession)
         },
         onDeleteSession: {
-          requestDeleteForSelectedSession(items: items)
+          requestDeleteForSelectedSession(selectedSession: selectedSession)
         },
         onRevealInFinder: {
           guard let selectedSession else {
@@ -58,102 +63,45 @@ struct SessionsPanelView: View {
           workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
         }
       )
-      .tabItem {
-        Label("Sessions", systemImage: "list.bullet")
-      }
-      .tag(SessionsTab.sessions)
+      .frame(minWidth: 330, idealWidth: 390, maxWidth: 500)
 
-      SessionsPreviewTabView(
-        selectedSession: selectedSession,
-        sessionPreview: workspaceStore.sessionPreview,
-        sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
-        sessionPreviewActionMessage: sessionPreviewActionMessage,
-        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview,
-        onRefresh: {
-          refreshSelectedSessionPreview(items: items)
-        },
-        onRevealInFinder: {
-          guard let selectedSession else {
-            return
-          }
+      VStack(spacing: 0) {
+        if let selectedSession {
+          detailHeader(selectedSession: selectedSession)
 
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-        },
-        onCopy: {
-          copySessionPreview()
-        },
-        onExport: {
-          exportSessionPreview()
+          Divider()
+
+          detailContent(selectedSession: selectedSession)
+        } else {
+          Color.clear
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-      )
-      .tabItem {
-        Label("Preview", systemImage: "doc.plaintext")
       }
-      .tag(SessionsTab.preview)
-
-      SessionsMapTabView(
-        selectedSession: selectedSession,
-        sessionMap: workspaceStore.sessionMap,
-        sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
-        isLoadingSessionMap: workspaceStore.isLoadingSessionMap,
-        snapshot: workspaceStore.snapshot,
-        onRefresh: {
-          refreshSelectedSessionMap(items: items)
-        },
-        onNavigateToDiagnostics: {
-          onNavigate(
-            SessionsNavigationTarget(
-              sidebarItem: .validationResults,
-              selectedLibraryItemID: nil,
-              searchText: ""
-            )
-          )
-        },
-        onSelectNode: { node in
-          guard
-            let target = SessionsMapNavigationResolver.navigationTarget(
-              for: node,
-              selectedSessionID: selectedSession?.id
-            )
-          else {
-            return
-          }
-
-          onNavigate(target)
-        }
-      )
-      .tabItem {
-        Label("Map", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-      }
-      .tag(SessionsTab.map)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .searchable(text: $searchText, prompt: "Search Sessions")
     .onChange(of: selectedSessionID) { _, _ in
-      refreshSelectedSessionPreview(items: items)
-      refreshSelectedSessionMap(items: items)
+      refreshSelectedSessionPreview()
+      refreshSelectedSessionMap()
     }
-    .onChange(of: items.map(\.id)) { _, _ in
-      refreshSelectedSessionPreview(items: items)
-      refreshSelectedSessionMap(items: items)
+    .onChange(of: availableSessionIDs) { _, availableSessionIDs in
+      selectedSessionID = SessionsPanelLayoutState.reconciledSelection(
+        currentSelectedSessionID: selectedSessionID,
+        availableSessionIDs: availableSessionIDs
+      )
+      refreshSelectedSessionPreview()
+      refreshSelectedSessionMap()
     }
     .onChange(of: sessionMapRefreshToken) { _, _ in
-      refreshSelectedSessionMap(items: items)
+      refreshSelectedSessionMap()
     }
-    .onChange(of: selectedTab) { _, selectedTab in
-      switch selectedTab {
-      case .preview:
-        refreshSelectedSessionPreview(items: items)
-
-      case .map:
-        refreshSelectedSessionMap(items: items)
-
-      case .sessions:
-        break
-      }
+    .onChange(of: detailMode) { _, _ in
+      refreshSelectedSessionPreview()
+      refreshSelectedSessionMap()
     }
     .onAppear {
-      refreshSelectedSessionPreview(items: items)
-      refreshSelectedSessionMap(items: items)
+      refreshSelectedSessionPreview()
+      refreshSelectedSessionMap()
     }
     .sheet(
       item: $sessionEditorPresentation,
@@ -222,6 +170,159 @@ struct SessionsPanelView: View {
     } message: { session in
       Text("Delete session \"\(session.id)\" from project scope?")
     }
+  }
+
+  private var detailMode: SessionsDetailMode {
+    SessionsPanelLayoutState.resolvedDetailMode(
+      persistedRawValue: persistedDetailModeRawValue
+    )
+  }
+
+  private var detailModeBinding: Binding<SessionsDetailMode> {
+    Binding(
+      get: {
+        detailMode
+      },
+      set: { mode in
+        persistedDetailModeRawValue = SessionsPanelLayoutState.persistedRawValue(
+          for: mode
+        )
+      }
+    )
+  }
+
+  @ViewBuilder
+  private func detailContent(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    switch detailMode {
+    case .preview:
+      SessionsPreviewTabView(
+        sessionPreview: workspaceStore.sessionPreview,
+        sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
+        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview
+      )
+
+    case .map:
+      SessionsMapTabView(
+        selectedSession: selectedSession,
+        sessionMap: workspaceStore.sessionMap,
+        sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
+        isLoadingSessionMap: workspaceStore.isLoadingSessionMap,
+        snapshot: workspaceStore.snapshot,
+        onNavigateToDiagnostics: {
+          onNavigate(
+            SessionsNavigationTarget(
+              sidebarItem: .validationResults,
+              selectedLibraryItemID: nil,
+              searchText: ""
+            )
+          )
+        },
+        onSelectNode: { node in
+          guard
+            let target = SessionsMapNavigationResolver.navigationTarget(
+              for: node,
+              selectedSessionID: selectedSession.id
+            )
+          else {
+            return
+          }
+
+          onNavigate(target)
+        }
+      )
+    }
+  }
+
+  @ViewBuilder
+  private func detailHeader(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Session Detail")
+            .font(.title3)
+            .fontWeight(.semibold)
+
+          Text(selectedSession.id)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+        }
+
+        Spacer()
+
+        Picker("Detail Mode", selection: detailModeBinding) {
+          ForEach(SessionsDetailMode.allCases, id: \.self) { mode in
+            Text(mode.title).tag(mode)
+          }
+        }
+        .labelsHidden()
+        .pickerStyle(.segmented)
+        .frame(width: 190)
+      }
+
+      switch detailMode {
+      case .preview:
+        HStack(spacing: 8) {
+          Button("Refresh") {
+            refreshSelectedSessionPreview()
+          }
+          .disabled(workspaceStore.isLoadingSessionPreview)
+
+          Button("Reveal in Finder") {
+            workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+          }
+
+          Button("Copy") {
+            copySessionPreview()
+          }
+          .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
+
+          Button("Export Markdown…") {
+            exportSessionPreview()
+          }
+          .disabled(workspaceStore.sessionPreview.isEmpty || workspaceStore.isLoadingSessionPreview)
+
+          Spacer()
+        }
+
+      case .map:
+        HStack(spacing: 8) {
+          if let sessionMap = workspaceStore.sessionMap {
+            Text(sessionMapHealthSummary(map: sessionMap))
+              .font(.caption)
+              .fontWeight(.semibold)
+              .padding(.horizontal, 8)
+              .padding(.vertical, 4)
+              .background(
+                Capsule()
+                  .fill(sessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
+              )
+              .foregroundStyle(sessionMap.isFullyResolved ? .green : .orange)
+          }
+
+          Button("Refresh") {
+            refreshSelectedSessionMap()
+          }
+          .disabled(workspaceStore.isLoadingSessionMap)
+
+          Spacer()
+        }
+      }
+
+      if detailMode == .preview,
+        let sessionPreviewActionMessage
+      {
+        Text(sessionPreviewActionMessage)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.quaternary.opacity(0.07))
   }
 
   private var scopeByNodeKey: [String: WorkspaceSourceScope] {
@@ -334,21 +435,23 @@ struct SessionsPanelView: View {
   }
 
   private func canDeleteSelectedSession(
-    items: [WorkspaceSessionListItem]
+    selectedSession: WorkspaceSessionListItem?
   ) -> Bool {
     if isLoadingSessionDraft {
       return false
     }
 
-    guard let selectedSession = selectedSession(items: items) else {
+    guard let selectedSession else {
       return false
     }
 
     return selectedSession.sourceScope == .project
   }
 
-  private func openEditorForSelectedSession(items: [WorkspaceSessionListItem]) {
-    guard let selectedSession = selectedSession(items: items) else {
+  private func openEditorForSelectedSession(
+    selectedSession: WorkspaceSessionListItem?
+  ) {
+    guard let selectedSession else {
       return
     }
 
@@ -387,8 +490,10 @@ struct SessionsPanelView: View {
     }
   }
 
-  private func requestDeleteForSelectedSession(items: [WorkspaceSessionListItem]) {
-    guard let selectedSession = selectedSession(items: items) else {
+  private func requestDeleteForSelectedSession(
+    selectedSession: WorkspaceSessionListItem?
+  ) {
+    guard let selectedSession else {
       return
     }
 
@@ -439,29 +544,33 @@ struct SessionsPanelView: View {
     }
   }
 
-  private func refreshSelectedSessionPreview(
-    items: [WorkspaceSessionListItem]
-  ) {
-    guard selectedTab == .preview else {
+  private func refreshSelectedSessionPreview() {
+    guard detailMode == .preview else {
       return
     }
 
     sessionPreviewActionMessage = nil
-    workspaceStore.refreshSessionPreview(
-      for: selectedSession(items: items)
-    )
+    workspaceStore.refreshSessionPreview(for: currentSelectedSession())
   }
 
-  private func refreshSelectedSessionMap(
-    items: [WorkspaceSessionListItem]
-  ) {
-    guard selectedTab == .map else {
+  private func refreshSelectedSessionMap() {
+    guard detailMode == .map else {
       return
     }
 
-    workspaceStore.refreshSessionMap(
-      for: selectedSession(items: items)
-    )
+    workspaceStore.refreshSessionMap(for: currentSelectedSession())
+  }
+
+  private func currentSelectedSession() -> WorkspaceSessionListItem? {
+    selectedSession(items: workspaceStore.snapshot.sessions)
+  }
+
+  private func sessionMapHealthSummary(map: WorkspaceSessionMap) -> String {
+    if map.isFullyResolved {
+      return "Resolved"
+    }
+
+    return "\(map.resolutionErrors.count) issue\(map.resolutionErrors.count == 1 ? "" : "s")"
   }
 
   private func copySessionPreview() {
@@ -502,10 +611,4 @@ private struct SessionEditorPresentation: Identifiable {
   var id: String {
     "\(title)::\(originalSessionID ?? "new")"
   }
-}
-
-private enum SessionsTab: Hashable {
-  case sessions
-  case preview
-  case map
 }

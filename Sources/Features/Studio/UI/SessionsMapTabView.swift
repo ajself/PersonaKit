@@ -2,14 +2,13 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Session map tab with layered dependency visualization and health indicators.
+/// Session map detail content with layered dependency visualization.
 struct SessionsMapTabView: View {
-  let selectedSession: WorkspaceSessionListItem?
+  let selectedSession: WorkspaceSessionListItem
   let sessionMap: WorkspaceSessionMap?
   let sessionMapErrorMessage: String?
   let isLoadingSessionMap: Bool
   let snapshot: WorkspaceSnapshot
-  let onRefresh: () -> Void
   let onNavigateToDiagnostics: () -> Void
   let onSelectNode: (WorkspaceSessionMapNode) -> Void
 
@@ -17,45 +16,7 @@ struct SessionsMapTabView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Text("Session Map")
-          .font(.title3)
-          .fontWeight(.semibold)
-
-        if let selectedSession {
-          Text("· \(selectedSession.id)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-
-        Spacer()
-
-        if let sessionMap {
-          Text(healthSummary(map: sessionMap))
-            .font(.caption)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-              Capsule()
-                .fill(sessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
-            )
-            .foregroundStyle(sessionMap.isFullyResolved ? .green : .orange)
-        }
-
-        Button("Refresh") {
-          onRefresh()
-        }
-        .disabled(selectedSession == nil || isLoadingSessionMap)
-      }
-
-      if selectedSession == nil {
-        ContentUnavailableView(
-          "No Session Selected",
-          systemImage: "point.topleft.down.curvedto.point.bottomright.up",
-          description: Text("Select a session to generate a visual dependency map.")
-        )
-      } else if isLoadingSessionMap {
+      if isLoadingSessionMap {
         VStack(spacing: 10) {
           ProgressView()
 
@@ -146,19 +107,9 @@ struct SessionsMapTabView: View {
       scopes["essential:\(essential.id)"] = essential.sourceScope
     }
 
-    if let selectedSession {
-      scopes["session:active-session"] = selectedSession.sourceScope
-    }
+    scopes["session:active-session"] = selectedSession.sourceScope
 
     return scopes
-  }
-
-  private func healthSummary(map: WorkspaceSessionMap) -> String {
-    if map.isFullyResolved {
-      return "Resolved"
-    }
-
-    return "\(map.resolutionErrors.count) issue\(map.resolutionErrors.count == 1 ? "" : "s")"
   }
 
   private func issueRow(

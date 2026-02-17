@@ -1,68 +1,14 @@
-import ContextCore
-import ContextWorkspaceCore
 import SwiftUI
 
-/// Session preview tab with refresh, copy, export, and reveal actions.
+/// Session preview detail content.
 struct SessionsPreviewTabView: View {
-  let selectedSession: WorkspaceSessionListItem?
   let sessionPreview: String
   let sessionPreviewErrorMessage: String?
-  let sessionPreviewActionMessage: String?
   let isLoadingSessionPreview: Bool
-  let onRefresh: () -> Void
-  let onRevealInFinder: () -> Void
-  let onCopy: () -> Void
-  let onExport: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Text("Session Preview")
-          .font(.title3)
-          .fontWeight(.semibold)
-
-        if let selectedSession {
-          Text("· \(selectedSession.id)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-
-        Spacer()
-
-        Button("Refresh") {
-          onRefresh()
-        }
-        .disabled(selectedSession == nil || isLoadingSessionPreview)
-
-        Button("Reveal in Finder") {
-          onRevealInFinder()
-        }
-        .disabled(selectedSession == nil)
-
-        Button("Copy") {
-          onCopy()
-        }
-        .disabled(sessionPreview.isEmpty || isLoadingSessionPreview)
-
-        Button("Export Markdown…") {
-          onExport()
-        }
-        .disabled(sessionPreview.isEmpty || isLoadingSessionPreview)
-      }
-
-      if let sessionPreviewActionMessage {
-        Text(sessionPreviewActionMessage)
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      }
-
-      if selectedSession == nil {
-        ContentUnavailableView(
-          "No Session Selected",
-          systemImage: "doc.text.magnifyingglass",
-          description: Text("Select a session to generate a preview.")
-        )
-      } else if isLoadingSessionPreview {
+      if isLoadingSessionPreview {
         VStack(alignment: .center, spacing: 10) {
           ProgressView()
           Text("Loading preview...")

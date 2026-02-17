@@ -2,7 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Sessions list tab with CRUD actions and project/global scope labels.
+/// Sessions list panel with CRUD actions and project/global scope labels.
 struct SessionsListTabView: View {
   let items: [WorkspaceSessionListItem]
   let selectedSession: WorkspaceSessionListItem?
