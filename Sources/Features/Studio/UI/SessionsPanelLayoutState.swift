@@ -12,6 +12,24 @@ enum SessionsDetailMode: String, CaseIterable, Sendable {
       return "Map"
     }
   }
+
+  var systemImage: String {
+    switch self {
+    case .preview:
+      return "doc.text.magnifyingglass"
+    case .map:
+      return "point.3.connected.trianglepath.dotted"
+    }
+  }
+
+  var accessibilityHint: String {
+    switch self {
+    case .preview:
+      return "Shows resolved export text for the selected session."
+    case .map:
+      return "Shows dependency relationships and resolution issues for the selected session."
+    }
+  }
 }
 
 enum SessionsPanelLayoutState {
@@ -47,5 +65,18 @@ enum SessionsPanelLayoutState {
     }
 
     return nil
+  }
+
+  static func unresolvedIssueBadgeText(
+    issueCount: Int?
+  ) -> String? {
+    guard
+      let issueCount,
+      issueCount > 0
+    else {
+      return nil
+    }
+
+    return String(issueCount)
   }
 }

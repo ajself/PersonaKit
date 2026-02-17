@@ -68,4 +68,26 @@ struct SessionsPanelLayoutStateTests {
 
     #expect(reconciledSelection == nil)
   }
+
+  @Test
+  func unresolvedIssueBadgeTextReturnsNilForMissingOrZeroIssueCount() {
+    let nilBadge = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: nil
+    )
+    let zeroBadge = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: 0
+    )
+
+    #expect(nilBadge == nil)
+    #expect(zeroBadge == nil)
+  }
+
+  @Test
+  func unresolvedIssueBadgeTextReturnsCountForPositiveIssueCount() {
+    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: 3
+    )
+
+    #expect(badgeText == "3")
+  }
 }

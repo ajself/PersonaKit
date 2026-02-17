@@ -16,6 +16,7 @@ struct SessionsPanelView: View {
   @Binding var searchText: String
   let onNavigate: (SessionsNavigationTarget) -> Void
 
+  @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
   @State private var selectedSessionID: String?
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
@@ -71,6 +72,12 @@ struct SessionsPanelView: View {
           Divider()
 
           detailContent(selectedSession: selectedSession)
+            .animation(
+              accessibilityReduceMotion
+                ? nil
+                : .easeInOut(duration: 0.16),
+              value: detailMode
+            )
         } else {
           Color.clear
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -194,6 +201,31 @@ struct SessionsPanelView: View {
     )
   }
 
+  private var detailModeItems: [StudioModeSwitchItem<SessionsDetailMode>] {
+    let unresolvedIssueCount = sessionFeatureModel.map?.resolutionErrors.count
+    let unresolvedIssueBadgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
+      issueCount: unresolvedIssueCount
+    )
+
+    return SessionsDetailMode.allCases.map { mode in
+      let badgeText: String?
+
+      if mode == .map {
+        badgeText = unresolvedIssueBadgeText
+      } else {
+        badgeText = nil
+      }
+
+      return StudioModeSwitchItem(
+        id: mode,
+        title: mode.title,
+        systemImage: mode.systemImage,
+        badgeText: badgeText,
+        accessibilityHint: mode.accessibilityHint
+      )
+    }
+  }
+
   @ViewBuilder
   private func detailContent(
     selectedSession: WorkspaceSessionListItem
@@ -256,14 +288,19 @@ struct SessionsPanelView: View {
 
         Spacer()
 
-        Picker("Detail Mode", selection: detailModeBinding) {
-          ForEach(SessionsDetailMode.allCases, id: \.self) { mode in
-            Text(mode.title).tag(mode)
+        StudioModeSwitchView(
+          items: detailModeItems,
+          selection: detailModeBinding,
+          keyboardShortcut: { mode in
+            switch mode {
+            case .preview:
+              return ("1", [.command])
+            case .map:
+              return ("2", [.command])
+            }
           }
-        }
-        .labelsHidden()
-        .pickerStyle(.segmented)
-        .frame(width: 190)
+        )
+        .frame(width: 220)
       }
 
       switch detailMode {
@@ -548,10 +585,6 @@ struct SessionsPanelView: View {
   }
 
   private func refreshSelectedSessionMap() {
-    guard detailMode == .map else {
-      return
-    }
-
     workspaceStore.refreshSessionMap(for: currentSelectedSession())
   }
 

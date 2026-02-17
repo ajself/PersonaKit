@@ -224,6 +224,19 @@ CRUD list panels use a shared command-bar pattern:
 
 ---
 
+### 5.8 Detail Mode Switch (Studio Standard)
+
+Detail panes with multiple visual modes (for example Session Preview/Map) use a shared capsule-rail mode switch:
+
+- Icon + text labels for each mode segment.
+- Persistent visibility of all modes; no hidden overflow.
+- Animated active-pill state for clear mode identity.
+- Optional badge text for unresolved issue counts (for example map issues).
+- Keyboard shortcuts for direct mode access (for Sessions: `⌘1` Preview, `⌘2` Map).
+- Respect accessibility Reduce Motion by disabling nonessential animations.
+
+---
+
 ## 6. Data Flow
 
 Studio is a thin UI shell over ContextWorkspaceCore plus ContextCore compiler
