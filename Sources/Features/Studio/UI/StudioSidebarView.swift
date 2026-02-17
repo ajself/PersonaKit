@@ -17,6 +17,7 @@ struct StudioSidebarView: View {
       }
 
       Section("Diagnostics") {
+        sidebarRow(for: .relationshipMap)
         sidebarRow(for: .validationResults)
       }
     }

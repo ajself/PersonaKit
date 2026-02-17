@@ -3,10 +3,19 @@ import ContextWorkspaceCore
 import StudioFoundation
 import SwiftUI
 
-/// Sessions feature panel with list CRUD and preview/export workflows.
+/// Navigation request emitted from the sessions map to jump into another Studio panel.
+struct SessionsNavigationTarget {
+  let sidebarItem: SidebarItem
+  let selectedLibraryItemID: String?
+  let searchText: String
+}
+
+/// Sessions feature panel with list CRUD, preview/export workflows, and dependency maps.
 struct SessionsPanelView: View {
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
+  let onNavigate: (SessionsNavigationTarget) -> Void
+
   @State private var selectedSessionID: String?
   @State private var selectedTab: SessionsTab = .sessions
   @State private var sessionEditorPresentation: SessionEditorPresentation?
@@ -81,30 +90,89 @@ struct SessionsPanelView: View {
         Label("Preview", systemImage: "doc.plaintext")
       }
       .tag(SessionsTab.preview)
+
+      SessionsMapTabView(
+        selectedSession: selectedSession,
+        sessionMap: workspaceStore.sessionMap,
+        sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
+        isLoadingSessionMap: workspaceStore.isLoadingSessionMap,
+        snapshot: workspaceStore.snapshot,
+        onRefresh: {
+          refreshSelectedSessionMap(items: items)
+        },
+        onNavigateToDiagnostics: {
+          onNavigate(
+            SessionsNavigationTarget(
+              sidebarItem: .validationResults,
+              selectedLibraryItemID: nil,
+              searchText: ""
+            )
+          )
+        },
+        onSelectNode: { node in
+          guard
+            let target = SessionsMapNavigationResolver.navigationTarget(
+              for: node,
+              selectedSessionID: selectedSession?.id
+            )
+          else {
+            return
+          }
+
+          onNavigate(target)
+        }
+      )
+      .tabItem {
+        Label("Map", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+      }
+      .tag(SessionsTab.map)
     }
     .searchable(text: $searchText, prompt: "Search Sessions")
     .onChange(of: selectedSessionID) { _, _ in
       refreshSelectedSessionPreview(items: items)
+      refreshSelectedSessionMap(items: items)
     }
     .onChange(of: items.map(\.id)) { _, _ in
       refreshSelectedSessionPreview(items: items)
+      refreshSelectedSessionMap(items: items)
+    }
+    .onChange(of: sessionMapRefreshToken) { _, _ in
+      refreshSelectedSessionMap(items: items)
     }
     .onChange(of: selectedTab) { _, selectedTab in
-      if selectedTab == .preview {
+      switch selectedTab {
+      case .preview:
         refreshSelectedSessionPreview(items: items)
+
+      case .map:
+        refreshSelectedSessionMap(items: items)
+
+      case .sessions:
+        break
       }
     }
     .onAppear {
       refreshSelectedSessionPreview(items: items)
+      refreshSelectedSessionMap(items: items)
     }
-    .sheet(item: $sessionEditorPresentation) { presentation in
+    .sheet(
+      item: $sessionEditorPresentation,
+      onDismiss: {
+        workspaceStore.clearDraftSessionMap()
+      }
+    ) { presentation in
       SessionEditorView(
         title: presentation.title,
         initialDraft: presentation.draft,
         personaIDs: workspaceStore.snapshot.personas.map(\.id).sorted(),
         directiveIDs: workspaceStore.snapshot.directives.map(\.id).sorted(),
         kitIDs: workspaceStore.snapshot.kits.map(\.id).sorted(),
+        draftSessionMap: workspaceStore.draftSessionMap,
+        draftSessionMapErrorMessage: workspaceStore.draftSessionMapErrorMessage,
+        isLoadingDraftSessionMap: workspaceStore.isLoadingDraftSessionMap,
+        scopeByNodeKey: scopeByNodeKey,
         onCancel: {
+          workspaceStore.clearDraftSessionMap()
           sessionEditorPresentation = nil
         },
         onSave: { draft in
@@ -112,6 +180,21 @@ struct SessionsPanelView: View {
             draft,
             originalSessionID: presentation.originalSessionID
           )
+        },
+        onRefreshMap: { draft in
+          workspaceStore.refreshDraftSessionMap(for: draft)
+        },
+        onSelectMapNode: { node in
+          guard
+            let target = SessionsMapNavigationResolver.navigationTarget(
+              for: node,
+              selectedSessionID: presentation.originalSessionID
+            )
+          else {
+            return
+          }
+
+          onNavigate(target)
         }
       )
     }
@@ -139,6 +222,90 @@ struct SessionsPanelView: View {
     } message: { session in
       Text("Delete session \"\(session.id)\" from project scope?")
     }
+  }
+
+  private var scopeByNodeKey: [String: WorkspaceSourceScope] {
+    var scopes: [String: WorkspaceSourceScope] = [:]
+
+    for session in workspaceStore.snapshot.sessions {
+      scopes["session:\(session.id)"] = session.sourceScope
+    }
+
+    for persona in workspaceStore.snapshot.personas {
+      scopes["persona:\(persona.id)"] = persona.sourceScope
+    }
+
+    for directive in workspaceStore.snapshot.directives {
+      scopes["directive:\(directive.id)"] = directive.sourceScope
+    }
+
+    for kit in workspaceStore.snapshot.kits {
+      scopes["kit:\(kit.id)"] = kit.sourceScope
+    }
+
+    for intent in workspaceStore.snapshot.intents {
+      scopes["intent:\(intent.id)"] = intent.sourceScope
+    }
+
+    for skill in workspaceStore.snapshot.skills {
+      scopes["skill:\(skill.id)"] = skill.sourceScope
+    }
+
+    for essential in workspaceStore.snapshot.essentials {
+      scopes["essential:\(essential.id)"] = essential.sourceScope
+    }
+
+    return scopes
+  }
+
+  private var sessionMapRefreshToken: String {
+    let snapshot = workspaceStore.snapshot
+
+    let sessionToken = snapshot.sessions
+      .map { "\($0.id)::\($0.personaId)::\($0.directiveId)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let personaToken = snapshot.personas
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let directiveToken = snapshot.directives
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let kitToken = snapshot.kits
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let intentToken = snapshot.intents
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let skillToken = snapshot.skills
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    let essentialToken = snapshot.essentials
+      .map { "\($0.id)::\($0.sourceScope.rawValue)" }
+      .sorted()
+      .joined(separator: "|")
+
+    return [
+      sessionToken,
+      personaToken,
+      directiveToken,
+      kitToken,
+      intentToken,
+      skillToken,
+      essentialToken,
+    ]
+    .joined(separator: "||")
   }
 
   private func filteredSessions(_ items: [WorkspaceSessionListItem]) -> [WorkspaceSessionListItem] {
@@ -285,6 +452,18 @@ struct SessionsPanelView: View {
     )
   }
 
+  private func refreshSelectedSessionMap(
+    items: [WorkspaceSessionListItem]
+  ) {
+    guard selectedTab == .map else {
+      return
+    }
+
+    workspaceStore.refreshSessionMap(
+      for: selectedSession(items: items)
+    )
+  }
+
   private func copySessionPreview() {
     do {
       try workspaceStore.copySessionPreviewToPasteboard()
@@ -312,6 +491,7 @@ struct SessionsPanelView: View {
       }
     }
   }
+
 }
 
 private struct SessionEditorPresentation: Identifiable {
@@ -327,4 +507,5 @@ private struct SessionEditorPresentation: Identifiable {
 private enum SessionsTab: Hashable {
   case sessions
   case preview
+  case map
 }

@@ -55,7 +55,19 @@ public struct StudioRootView: View {
       case .sessions:
         SessionsPanelView(
           workspaceStore: workspaceStore,
-          searchText: $searchText
+          searchText: $searchText,
+          onNavigate: { target in
+            applyNavigationTarget(target)
+          }
+        )
+
+      case .relationshipMap:
+        WorkspaceRelationshipMapPanelView(
+          workspaceStore: workspaceStore,
+          searchText: $searchText,
+          onNavigate: { target in
+            applyNavigationTarget(target)
+          }
         )
 
       case .personas,
@@ -101,6 +113,20 @@ public struct StudioRootView: View {
       return []
     }
   }
+
+  private func applyNavigationTarget(_ target: SessionsNavigationTarget) {
+    var state = StudioRootNavigationState(
+      selection: selection,
+      selectedLibraryItemID: selectedLibraryItemID,
+      searchText: searchText
+    )
+
+    state.apply(target)
+
+    selection = state.selection
+    selectedLibraryItemID = state.selectedLibraryItemID
+    searchText = state.searchText
+  }
 }
 
 enum SidebarItem: Hashable {
@@ -111,6 +137,7 @@ enum SidebarItem: Hashable {
   case essentials
   case skills
   case intents
+  case relationshipMap
   case validationResults
 
   static let libraryItems: [SidebarItem] = [
@@ -138,6 +165,8 @@ enum SidebarItem: Hashable {
       return "Skills"
     case .intents:
       return "Intents"
+    case .relationshipMap:
+      return "Relationship Map"
     case .validationResults:
       return "Validation Results"
     }
@@ -159,6 +188,8 @@ enum SidebarItem: Hashable {
       return "hammer"
     case .intents:
       return "scope"
+    case .relationshipMap:
+      return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
       return "checklist"
     }

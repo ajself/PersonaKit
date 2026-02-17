@@ -10,6 +10,8 @@ package actor WorkspaceOperationRunner {
   private let essentialManager: any WorkspaceEssentialManaging
   private let libraryEntityManager: any WorkspaceLibraryEntityManaging
   private let sessionPreviewManager: any WorkspaceSessionPreviewManaging
+  private let sessionMapBuilder: any WorkspaceSessionMapBuilding
+  private let workspaceRelationshipMapBuilder: any WorkspaceRelationshipMapBuilding
 
   package init(
     snapshotBuilder: any WorkspaceSnapshotBuilding,
@@ -17,7 +19,9 @@ package actor WorkspaceOperationRunner {
     sessionManager: any WorkspaceSessionManaging,
     essentialManager: any WorkspaceEssentialManaging,
     libraryEntityManager: any WorkspaceLibraryEntityManaging,
-    sessionPreviewManager: any WorkspaceSessionPreviewManaging
+    sessionPreviewManager: any WorkspaceSessionPreviewManaging,
+    sessionMapBuilder: any WorkspaceSessionMapBuilding,
+    workspaceRelationshipMapBuilder: any WorkspaceRelationshipMapBuilding
   ) {
     self.snapshotBuilder = snapshotBuilder
     self.workspaceValidator = workspaceValidator
@@ -25,6 +29,8 @@ package actor WorkspaceOperationRunner {
     self.essentialManager = essentialManager
     self.libraryEntityManager = libraryEntityManager
     self.sessionPreviewManager = sessionPreviewManager
+    self.sessionMapBuilder = sessionMapBuilder
+    self.workspaceRelationshipMapBuilder = workspaceRelationshipMapBuilder
   }
 
   package func loadSnapshot(workspaceURL: URL) throws -> WorkspaceSnapshot {
@@ -169,5 +175,23 @@ package actor WorkspaceOperationRunner {
       preview,
       to: destinationURL
     )
+  }
+
+  package func loadSessionMap(
+    workspaceURL: URL,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String]
+  ) throws -> WorkspaceSessionMap {
+    try sessionMapBuilder.build(
+      workspaceURL: workspaceURL,
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: kitOverrides
+    )
+  }
+
+  package func loadWorkspaceRelationshipMap(workspaceURL: URL) throws -> WorkspaceSessionMap {
+    try workspaceRelationshipMapBuilder.build(workspaceURL: workspaceURL)
   }
 }

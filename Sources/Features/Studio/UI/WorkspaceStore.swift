@@ -18,6 +18,10 @@ public final class WorkspaceStore {
         }
 
         libraryFeatureModel.resetState()
+        sessionFeatureModel.clearPreview()
+        sessionFeatureModel.clearMap()
+        sessionFeatureModel.clearDraftMap()
+        sessionFeatureModel.clearWorkspaceRelationshipMap()
         return
       }
 
@@ -73,6 +77,40 @@ public final class WorkspaceStore {
   var isLoadingSessionPreview: Bool {
     sessionFeatureModel.isLoadingPreview
   }
+  var sessionMap: WorkspaceSessionMap? {
+    sessionFeatureModel.map
+  }
+
+  var sessionMapErrorMessage: String? {
+    sessionFeatureModel.mapErrorMessage
+  }
+
+  var isLoadingSessionMap: Bool {
+    sessionFeatureModel.isLoadingMap
+  }
+
+  var draftSessionMap: WorkspaceSessionMap? {
+    sessionFeatureModel.draftMap
+  }
+
+  var draftSessionMapErrorMessage: String? {
+    sessionFeatureModel.draftMapErrorMessage
+  }
+
+  var isLoadingDraftSessionMap: Bool {
+    sessionFeatureModel.isLoadingDraftMap
+  }
+  var workspaceRelationshipMap: WorkspaceSessionMap? {
+    sessionFeatureModel.workspaceRelationshipMap
+  }
+
+  var workspaceRelationshipMapErrorMessage: String? {
+    sessionFeatureModel.workspaceRelationshipMapErrorMessage
+  }
+
+  var isLoadingWorkspaceRelationshipMap: Bool {
+    sessionFeatureModel.isLoadingWorkspaceRelationshipMap
+  }
   var libraryActionMessage: String? {
     libraryFeatureModel.actionMessage
   }
@@ -99,6 +137,8 @@ public final class WorkspaceStore {
     essentialManager: (any WorkspaceEssentialManaging)? = nil,
     libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
     sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
+    sessionMapBuilder: (any WorkspaceSessionMapBuilding)? = nil,
+    workspaceRelationshipMapBuilder: (any WorkspaceRelationshipMapBuilding)? = nil,
     workspaceInitializer: WorkspaceInitializer = WorkspaceInitializer(),
     workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
     previewExportDestinationPicker: any PreviewExportDestinationPicking =
@@ -117,6 +157,12 @@ public final class WorkspaceStore {
     let resolvedSessionPreviewManager =
       sessionPreviewManager
       ?? WorkspaceSessionPreviewManager(sessionManager: sessionManager)
+    let resolvedSessionMapBuilder =
+      sessionMapBuilder
+      ?? WorkspaceSessionMapBuilder()
+    let resolvedWorkspaceRelationshipMapBuilder =
+      workspaceRelationshipMapBuilder
+      ?? WorkspaceRelationshipMapBuilder()
 
     let operationRunner = WorkspaceOperationRunner(
       snapshotBuilder: snapshotBuilder,
@@ -124,7 +170,9 @@ public final class WorkspaceStore {
       sessionManager: sessionManager,
       essentialManager: resolvedEssentialManager,
       libraryEntityManager: resolvedLibraryEntityManager,
-      sessionPreviewManager: resolvedSessionPreviewManager
+      sessionPreviewManager: resolvedSessionPreviewManager,
+      sessionMapBuilder: resolvedSessionMapBuilder,
+      workspaceRelationshipMapBuilder: resolvedWorkspaceRelationshipMapBuilder
     )
     self.loadFeatureModel = WorkspaceLoadFeatureModel(operationRunner: operationRunner)
     self.systemFeatureModel = WorkspaceSystemFeatureModel(

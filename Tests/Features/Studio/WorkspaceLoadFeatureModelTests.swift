@@ -388,6 +388,33 @@ private struct NoOpSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
   ) throws {}
 }
 
+private struct NoOpSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
+  func build(
+    workspaceURL: URL,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String]
+  ) throws -> WorkspaceSessionMap {
+    WorkspaceSessionMap(
+      nodes: [],
+      edges: [],
+      resolutionErrors: [],
+      isFullyResolved: true
+    )
+  }
+}
+
+private struct NoOpWorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding, Sendable {
+  func build(workspaceURL: URL) throws -> WorkspaceSessionMap {
+    WorkspaceSessionMap(
+      nodes: [],
+      edges: [],
+      resolutionErrors: [],
+      isFullyResolved: true
+    )
+  }
+}
+
 private final class StaleLoadGate: @unchecked Sendable {
   private let lock = NSLock()
   private var loadStarted = false
@@ -453,6 +480,8 @@ private func makeOperationRunner(
     sessionManager: NoOpSessionManager(),
     essentialManager: NoOpEssentialManager(),
     libraryEntityManager: NoOpLibraryEntityManager(),
-    sessionPreviewManager: NoOpSessionPreviewManager()
+    sessionPreviewManager: NoOpSessionPreviewManager(),
+    sessionMapBuilder: NoOpSessionMapBuilder(),
+    workspaceRelationshipMapBuilder: NoOpWorkspaceRelationshipMapBuilder()
   )
 }

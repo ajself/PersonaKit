@@ -52,6 +52,41 @@ extension WorkspaceStore {
     )
   }
 
+  /// Loads a dependency map for the selected session.
+  func refreshSessionMap(
+    for session: WorkspaceSessionListItem?
+  ) {
+    sessionFeatureModel.refreshMap(
+      for: session,
+      workspaceURL: workspaceURL
+    )
+  }
+
+  /// Loads a dependency map for an in-flight session draft.
+  func refreshDraftSessionMap(
+    for draft: WorkspaceSessionDraft
+  ) {
+    sessionFeatureModel.refreshMap(
+      for: draft,
+      workspaceURL: workspaceURL
+    )
+  }
+
+  /// Clears in-flight draft map state when the session editor is dismissed.
+  func clearDraftSessionMap() {
+    sessionFeatureModel.clearDraftMap()
+  }
+
+  /// Loads or reloads the workspace-wide relationship map.
+  func refreshWorkspaceRelationshipMap() {
+    sessionFeatureModel.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
+  }
+
+  /// Clears workspace-wide relationship map state.
+  func clearWorkspaceRelationshipMap() {
+    sessionFeatureModel.clearWorkspaceRelationshipMap()
+  }
+
   /// Copies the current preview text into the system pasteboard.
   func copySessionPreviewToPasteboard() throws {
     try sessionFeatureModel.copyPreviewToPasteboard()

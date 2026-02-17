@@ -39,6 +39,9 @@ extension WorkspaceStore {
       loadFeatureModel.cancelLoadTask()
       validationFeatureModel.cancelValidationTask()
       sessionFeatureModel.clearPreview()
+      sessionFeatureModel.clearMap()
+      sessionFeatureModel.clearDraftMap()
+      sessionFeatureModel.clearWorkspaceRelationshipMap()
       snapshot = .empty
       loadErrorMessage = nil
       canInitializeWorkspaceStructure = false
@@ -51,6 +54,9 @@ extension WorkspaceStore {
     loadFeatureModel.cancelLoadTask()
     validationFeatureModel.cancelValidationTask()
     sessionFeatureModel.cancelPreviewTask()
+    sessionFeatureModel.cancelMapTask()
+    sessionFeatureModel.cancelDraftMapTask()
+    sessionFeatureModel.cancelWorkspaceRelationshipMapTask()
 
     loadFeatureModel.loadWorkspace(
       workspaceURL: workspaceURL,
@@ -62,6 +68,10 @@ extension WorkspaceStore {
         self.validation = .empty
         self.validationErrorMessage = nil
         self.sessionFeatureModel.restorePreviewIfPossible(
+          snapshot: self.snapshot,
+          workspaceURL: self.workspaceURL
+        )
+        self.sessionFeatureModel.restoreMapIfPossible(
           snapshot: self.snapshot,
           workspaceURL: self.workspaceURL
         )
@@ -77,6 +87,9 @@ extension WorkspaceStore {
         self.validation = .empty
         self.validationErrorMessage = nil
         self.sessionFeatureModel.clearPreview()
+        self.sessionFeatureModel.clearMap()
+        self.sessionFeatureModel.clearDraftMap()
+        self.sessionFeatureModel.clearWorkspaceRelationshipMap()
       },
       onLoadFailure: { message in
         self.snapshot = .empty
@@ -85,6 +98,9 @@ extension WorkspaceStore {
         self.validation = .empty
         self.validationErrorMessage = nil
         self.sessionFeatureModel.clearPreview()
+        self.sessionFeatureModel.clearMap()
+        self.sessionFeatureModel.clearDraftMap()
+        self.sessionFeatureModel.clearWorkspaceRelationshipMap()
       }
     )
   }

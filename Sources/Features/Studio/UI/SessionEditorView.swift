@@ -1,3 +1,4 @@
+import ContextWorkspaceCore
 import StudioFoundation
 import SwiftUI
 
@@ -7,8 +8,14 @@ struct SessionEditorView: View {
   let personaIDs: [String]
   let directiveIDs: [String]
   let kitIDs: [String]
+  let draftSessionMap: WorkspaceSessionMap?
+  let draftSessionMapErrorMessage: String?
+  let isLoadingDraftSessionMap: Bool
+  let scopeByNodeKey: [String: WorkspaceSourceScope]
   let onCancel: () -> Void
   let onSave: @Sendable (WorkspaceSessionDraft) async -> String?
+  let onRefreshMap: (WorkspaceSessionDraft) -> Void
+  let onSelectMapNode: (WorkspaceSessionMapNode) -> Void
 
   @State private var id: String
   @State private var personaID: String
@@ -16,6 +23,8 @@ struct SessionEditorView: View {
   @State private var selectedKitIDs: Set<String>
   @State private var isSaving = false
   @State private var saveErrorMessage: String?
+  @State private var highlightedNodeKey: String?
+  @State private var mapRefreshTask: Task<Void, Never>?
 
   init(
     title: String,
@@ -23,15 +32,27 @@ struct SessionEditorView: View {
     personaIDs: [String],
     directiveIDs: [String],
     kitIDs: [String],
+    draftSessionMap: WorkspaceSessionMap?,
+    draftSessionMapErrorMessage: String?,
+    isLoadingDraftSessionMap: Bool,
+    scopeByNodeKey: [String: WorkspaceSourceScope],
     onCancel: @escaping () -> Void,
-    onSave: @escaping @Sendable (WorkspaceSessionDraft) async -> String?
+    onSave: @escaping @Sendable (WorkspaceSessionDraft) async -> String?,
+    onRefreshMap: @escaping (WorkspaceSessionDraft) -> Void,
+    onSelectMapNode: @escaping (WorkspaceSessionMapNode) -> Void
   ) {
     self.title = title
     self.personaIDs = personaIDs
     self.directiveIDs = directiveIDs
     self.kitIDs = kitIDs
+    self.draftSessionMap = draftSessionMap
+    self.draftSessionMapErrorMessage = draftSessionMapErrorMessage
+    self.isLoadingDraftSessionMap = isLoadingDraftSessionMap
+    self.scopeByNodeKey = scopeByNodeKey
     self.onCancel = onCancel
     self.onSave = onSave
+    self.onRefreshMap = onRefreshMap
+    self.onSelectMapNode = onSelectMapNode
 
     let resolvedPersonaID = Self.resolvedSelection(
       requestedID: initialDraft.personaId,
@@ -66,6 +87,8 @@ struct SessionEditorView: View {
         }
       )
 
+      miniMapSection
+
       SessionEditorFooterView(
         saveErrorMessage: saveErrorMessage,
         validationMessage: validationMessage,
@@ -76,8 +99,80 @@ struct SessionEditorView: View {
       )
     }
     .padding()
-    .frame(minWidth: 520, minHeight: 520)
+    .frame(minWidth: 620, minHeight: 680)
     .interactiveDismissDisabled(isSaving)
+    .onAppear {
+      scheduleMapRefresh()
+    }
+    .onDisappear {
+      mapRefreshTask?.cancel()
+      mapRefreshTask = nil
+    }
+    .onChange(of: personaID) { _, _ in
+      scheduleMapRefresh()
+    }
+    .onChange(of: directiveID) { _, _ in
+      scheduleMapRefresh()
+    }
+    .onChange(of: selectedKitIDs) { _, _ in
+      scheduleMapRefresh()
+    }
+  }
+
+  private var miniMapSection: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 8) {
+        Text("Dependency Mini-Map")
+          .font(.headline)
+
+        if let draftSessionMap {
+          Text(miniMapSummary(for: draftSessionMap))
+            .font(.caption)
+            .fontWeight(.semibold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+              Capsule()
+                .fill(draftSessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
+            )
+            .foregroundStyle(draftSessionMap.isFullyResolved ? .green : .orange)
+        }
+      }
+
+      if isLoadingDraftSessionMap {
+        HStack(spacing: 8) {
+          ProgressView()
+
+          Text("Refreshing map...")
+            .foregroundStyle(.secondary)
+            .font(.footnote)
+        }
+      } else if let draftSessionMapErrorMessage {
+        Text(draftSessionMapErrorMessage)
+          .font(.footnote)
+          .foregroundStyle(.red)
+      } else if let draftSessionMap {
+        SessionDependencyMapView(
+          map: draftSessionMap,
+          scopeByNodeKey: scopeByNodeKey,
+          highlightedNodeKey: highlightedNodeKey,
+          compact: true,
+          onSelectNode: { node in
+            highlightedNodeKey = node.key
+            onSelectMapNode(node)
+          }
+        )
+        .frame(minHeight: 180)
+        .background(
+          RoundedRectangle(cornerRadius: 8)
+            .fill(.quaternary.opacity(0.15))
+        )
+      } else {
+        Text("Choose a persona and directive to render the dependency map.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+    }
   }
 
   private var normalizedID: String {
@@ -116,6 +211,14 @@ struct SessionEditorView: View {
     validationMessage.isEmpty
   }
 
+  private func miniMapSummary(for map: WorkspaceSessionMap) -> String {
+    if map.isFullyResolved {
+      return "Resolved"
+    }
+
+    return "\(map.resolutionErrors.count) issue\(map.resolutionErrors.count == 1 ? "" : "s")"
+  }
+
   private func bindingForKitOverride(_ kitID: String) -> Binding<Bool> {
     Binding(
       get: {
@@ -131,18 +234,38 @@ struct SessionEditorView: View {
     )
   }
 
+  private func scheduleMapRefresh() {
+    mapRefreshTask?.cancel()
+    let draft = currentDraft()
+
+    mapRefreshTask = Task {
+      try? await Task.sleep(for: .milliseconds(200))
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      await MainActor.run {
+        onRefreshMap(draft)
+      }
+    }
+  }
+
+  private func currentDraft() -> WorkspaceSessionDraft {
+    WorkspaceSessionDraft(
+      id: normalizedID,
+      personaId: personaID,
+      directiveId: directiveID,
+      kitOverrides: selectedKitIDs.sorted()
+    )
+  }
+
   private func save() {
     isSaving = true
     saveErrorMessage = nil
 
     Task {
-      let draft = WorkspaceSessionDraft(
-        id: normalizedID,
-        personaId: personaID,
-        directiveId: directiveID,
-        kitOverrides: selectedKitIDs.sorted()
-      )
-      let saveErrorMessage = await onSave(draft)
+      let saveErrorMessage = await onSave(currentDraft())
 
       await MainActor.run {
         isSaving = false

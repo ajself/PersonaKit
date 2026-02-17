@@ -1634,6 +1634,341 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func refreshSessionMapLoadsMapForSelectedSession() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "unused",
+          directiveId: "unused",
+          fileURL: sessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: StubSessionManager(
+        loadDraftHandler: { fileURL in
+          #expect(fileURL == sessionFileURL)
+
+          return WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: ["kit-a"]
+          )
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          "session-a"
+        },
+        deleteSessionHandler: { _, _ in }
+      ),
+      sessionMapBuilder: StubSessionMapBuilder(
+        buildHandler: { workspaceURL, personaId, directiveId, kitOverrides in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(personaId == "persona-a")
+          #expect(directiveId == "directive-a")
+          #expect(kitOverrides == ["kit-a"])
+
+          return WorkspaceSessionMap(
+            nodes: [
+              WorkspaceSessionMapNode(
+                key: "persona:\(personaId)",
+                id: personaId,
+                displayName: personaId,
+                kind: .persona,
+                isMissing: false,
+                badges: []
+              )
+            ],
+            edges: [],
+            resolutionErrors: [],
+            isFullyResolved: true
+          )
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionMap(for: store.snapshot.sessions.first)
+
+    await waitFor {
+      store.sessionMap?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true
+        && !store.isLoadingSessionMap
+    }
+
+    #expect(store.sessionMapErrorMessage == nil)
+  }
+
+  @Test
+  func refreshSessionMapIgnoresStaleResultAfterWorkspaceIsCleared() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "unused",
+          directiveId: "unused",
+          fileURL: sessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: StubSessionManager(
+        loadDraftHandler: { _ in
+          WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: []
+          )
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          "session-a"
+        },
+        deleteSessionHandler: { _, _ in }
+      ),
+      sessionMapBuilder: StubSessionMapBuilder(
+        buildHandler: { _, _, _, _ in
+          Thread.sleep(forTimeInterval: 0.3)
+
+          return WorkspaceSessionMap(
+            nodes: [
+              WorkspaceSessionMapNode(
+                key: "persona:persona-a",
+                id: "persona-a",
+                displayName: "Persona A",
+                kind: .persona,
+                isMissing: false,
+                badges: []
+              )
+            ],
+            edges: [],
+            resolutionErrors: [],
+            isFullyResolved: true
+          )
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionMap(for: store.snapshot.sessions.first)
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = nil
+    store.refreshSessionMap(for: nil)
+
+    #expect(store.sessionMap == nil)
+    #expect(store.sessionMapErrorMessage == nil)
+    #expect(!store.isLoadingSessionMap)
+
+    try? await Task.sleep(for: .milliseconds(350))
+
+    #expect(store.sessionMap == nil)
+    #expect(store.sessionMapErrorMessage == nil)
+    #expect(!store.isLoadingSessionMap)
+  }
+
+  @Test
+  func refreshWorkspaceRelationshipMapLoadsMap() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
+        buildHandler: { workspaceURL in
+          #expect(workspaceURL.path() == "/Workspace")
+          return makeWorkspaceRelationshipMap(personaID: "persona-a")
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+    store.refreshWorkspaceRelationshipMap()
+
+    await waitFor {
+      store.workspaceRelationshipMap?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true
+        && !store.isLoadingWorkspaceRelationshipMap
+    }
+
+    #expect(store.workspaceRelationshipMapErrorMessage == nil)
+  }
+
+  @Test
+  func refreshWorkspaceRelationshipMapIgnoresStaleResultAfterWorkspaceIsCleared() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
+        buildHandler: { _ in
+          Thread.sleep(forTimeInterval: 0.3)
+          return makeWorkspaceRelationshipMap(personaID: "persona-a")
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    store.refreshWorkspaceRelationshipMap()
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = nil
+    store.refreshWorkspaceRelationshipMap()
+
+    #expect(store.workspaceRelationshipMap == nil)
+    #expect(store.workspaceRelationshipMapErrorMessage == nil)
+    #expect(!store.isLoadingWorkspaceRelationshipMap)
+
+    try? await Task.sleep(for: .milliseconds(350))
+
+    #expect(store.workspaceRelationshipMap == nil)
+    #expect(store.workspaceRelationshipMapErrorMessage == nil)
+    #expect(!store.isLoadingWorkspaceRelationshipMap)
+  }
+
+  @Test
+  func clearingWorkspaceClearsWorkspaceRelationshipMapState() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
+        buildHandler: { _ in
+          makeWorkspaceRelationshipMap(personaID: "persona-a")
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+    store.refreshWorkspaceRelationshipMap()
+
+    await waitFor {
+      store.workspaceRelationshipMap?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true
+    }
+
+    store.workspaceURL = nil
+
+    #expect(store.workspaceRelationshipMap == nil)
+    #expect(store.workspaceRelationshipMapErrorMessage == nil)
+    #expect(!store.isLoadingWorkspaceRelationshipMap)
+  }
+
+  @Test
+  func clearingWorkspaceClearsDraftSessionMapState() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionMapBuilder: StubSessionMapBuilder(
+        buildHandler: { _, personaId, _, _ in
+          WorkspaceSessionMap(
+            nodes: [
+              WorkspaceSessionMapNode(
+                key: "persona:\(personaId)",
+                id: personaId,
+                displayName: personaId,
+                kind: .persona,
+                isMissing: false,
+                badges: []
+              )
+            ],
+            edges: [],
+            resolutionErrors: [],
+            isFullyResolved: true
+          )
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+    store.refreshDraftSessionMap(
+      for: WorkspaceSessionDraft(
+        id: "draft",
+        personaId: "persona-a",
+        directiveId: "directive-a",
+        kitOverrides: []
+      )
+    )
+
+    await waitFor {
+      store.draftSessionMap?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true
+    }
+
+    store.workspaceURL = nil
+
+    #expect(store.draftSessionMap == nil)
+    #expect(store.draftSessionMapErrorMessage == nil)
+    #expect(!store.isLoadingDraftSessionMap)
+  }
+
+  @Test
   func openWorkspacePickerLoadsSelectedWorkspaceFromInjectedPicker() async {
     let selectedWorkspaceURL = URL(fileURLWithPath: "/PickedWorkspace")
 
@@ -1877,6 +2212,24 @@ private func makeSessionSnapshot(
   )
 }
 
+private func makeWorkspaceRelationshipMap(personaID: String) -> WorkspaceSessionMap {
+  WorkspaceSessionMap(
+    nodes: [
+      WorkspaceSessionMapNode(
+        key: "persona:\(personaID)",
+        id: personaID,
+        displayName: personaID,
+        kind: .persona,
+        isMissing: false,
+        badges: []
+      )
+    ],
+    edges: [],
+    resolutionErrors: [],
+    isFullyResolved: true
+  )
+}
+
 private func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
   WorkspaceValidationSnapshot(
     summary: "Validation summary: personas=1 kits=0 directives=0 intents=0 skills=0 essentials=0 errors=1",
@@ -1909,6 +2262,32 @@ private struct StubSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
     to destinationURL: URL
   ) throws {
     try exportPreviewHandler(preview, destinationURL)
+  }
+}
+
+private struct StubSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
+  let buildHandler: @Sendable (URL, String, String, [String]) throws -> WorkspaceSessionMap
+
+  func build(
+    workspaceURL: URL,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String]
+  ) throws -> WorkspaceSessionMap {
+    try buildHandler(
+      workspaceURL,
+      personaId,
+      directiveId,
+      kitOverrides
+    )
+  }
+}
+
+private struct StubWorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding, Sendable {
+  let buildHandler: @Sendable (URL) throws -> WorkspaceSessionMap
+
+  func build(workspaceURL: URL) throws -> WorkspaceSessionMap {
+    try buildHandler(workspaceURL)
   }
 }
 
