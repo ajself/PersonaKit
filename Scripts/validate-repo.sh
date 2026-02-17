@@ -28,6 +28,19 @@ trap cleanup EXIT
 echo "Checking formatting..."
 make format-check
 
+echo "Checking module boundaries..."
+if find Sources/Shared/ContextCore -maxdepth 1 -type f -name 'Workspace*.swift' | grep -q .; then
+  echo "ContextCore must not contain workspace-prefixed source files."
+  find Sources/Shared/ContextCore -maxdepth 1 -type f -name 'Workspace*.swift' | sort
+  exit 1
+fi
+
+if rg -n "import ContextWorkspaceCore" Sources/Shared/ContextCore >/dev/null; then
+  echo "ContextCore must not import ContextWorkspaceCore."
+  rg -n "import ContextWorkspaceCore" Sources/Shared/ContextCore || true
+  exit 1
+fi
+
 echo "Running swift test..."
 swift test
 

@@ -21,15 +21,19 @@ target and file group:
   - `Sources/Features/CLI/`
 - `ContextMCP` (MCP server resources, prompts, tools, runner):
   - `Sources/Features/MCP/`
-- `ContextCore` (validator, registry, resolver, exporter, graph, locators, and
-  shared helpers):
+- `ContextCore` (core compiler/pipeline primitives, validator/registry/resolver,
+  exporter/graph, locators, and schema resources):
   - `Sources/Shared/ContextCore/`
+- `ContextWorkspaceCore` (workspace snapshot/build/validation models and
+  workspace-specific policies used by Studio):
+  - `Sources/Shared/ContextWorkspaceCore/`
 - `StudioFoundation` and `StudioFeatures` (Studio app foundation and UI):
   - `Sources/Features/Studio/Foundation/`
   - `Sources/Features/Studio/UI/`
 - Schema resources:
   - `Sources/Shared/ContextCore/Schemas/*.json`, loaded via package resources
-    and used by `SchemaValidator.swift` during validation.
+    and used by `SchemaValidator.swift`, exposed to workspace modules through
+    `SchemaValidationBridge.swift`.
 
 Data flow is:
 1. CLI or MCP receives the request.

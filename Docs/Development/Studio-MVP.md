@@ -209,7 +209,8 @@ Session Preview supports:
 
 ## 6. Data Flow
 
-Studio is a thin UI shell over ContextCore.
+Studio is a thin UI shell over ContextWorkspaceCore plus ContextCore compiler
+primitives.
 
 ### WorkspaceStore (@MainActor)
 
@@ -261,4 +262,4 @@ Each element includes:
 - File-backed
 - Small and durable
 - No invented abstractions
-- Reuse ContextCore wherever possible
+- Reuse ContextWorkspaceCore and ContextCore wherever possible
