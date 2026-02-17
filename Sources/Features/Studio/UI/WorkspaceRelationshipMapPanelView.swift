@@ -103,12 +103,24 @@ struct WorkspaceRelationshipMapPanelView: View {
 
       Spacer()
 
-      Button("Refresh") {
+      StudioUtilityActionRowView(
+        primaryAction: refreshUtilityAction,
+        secondaryActions: []
+      )
+    }
+  }
+
+  private var refreshUtilityAction: StudioUtilityActionItem {
+    StudioUtilityActionItem(
+      id: "relationship-map-refresh",
+      title: "Refresh",
+      systemImage: "arrow.clockwise",
+      isEnabled: workspaceStore.workspaceURL != nil && !workspaceStore.isLoadingWorkspaceRelationshipMap,
+      action: {
         workspaceStore.refreshWorkspaceRelationshipMap()
         refreshFocusSessionMapIfNeeded()
       }
-      .disabled(workspaceStore.workspaceURL == nil || workspaceStore.isLoadingWorkspaceRelationshipMap)
-    }
+    )
   }
 
   private var filterControls: some View {

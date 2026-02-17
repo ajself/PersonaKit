@@ -383,29 +383,17 @@ struct SessionsPanelView: View {
       switch detailMode {
       case .preview:
         HStack(spacing: 8) {
-          Button("Refresh") {
-            refreshSelectedSessionPreview(forceReload: true)
-          }
-          .disabled(sessionFeatureModel.isLoadingPreview)
+          StudioUtilityActionRowView(
+            primaryAction: previewPrimaryUtilityAction,
+            secondaryActions: previewSecondaryUtilityActions(
+              selectedSession: selectedSession
+            )
+          )
 
           if sessionFeatureModel.isLoadingPreview {
             ProgressView()
               .controlSize(.small)
           }
-
-          Button("Reveal in Finder") {
-            workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-          }
-
-          Button("Copy") {
-            copySessionPreview()
-          }
-          .disabled(sessionFeatureModel.preview.isEmpty || sessionFeatureModel.isLoadingPreview)
-
-          Button("Export Markdown…") {
-            exportSessionPreview()
-          }
-          .disabled(sessionFeatureModel.preview.isEmpty || sessionFeatureModel.isLoadingPreview)
 
           Spacer()
         }
@@ -426,10 +414,10 @@ struct SessionsPanelView: View {
 
           Spacer()
 
-          Button("Refresh") {
-            refreshSelectedSessionMap(forceReload: true)
-          }
-          .disabled(sessionFeatureModel.isLoadingMap)
+          StudioUtilityActionRowView(
+            primaryAction: mapPrimaryUtilityAction,
+            secondaryActions: []
+          )
         }
       }
 
@@ -444,6 +432,64 @@ struct SessionsPanelView: View {
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(.quaternary.opacity(0.07))
+  }
+
+  private var previewPrimaryUtilityAction: StudioUtilityActionItem {
+    StudioUtilityActionItem(
+      id: "session-preview-refresh",
+      title: "Refresh",
+      systemImage: "arrow.clockwise",
+      isEnabled: !sessionFeatureModel.isLoadingPreview,
+      action: {
+        refreshSelectedSessionPreview(forceReload: true)
+      }
+    )
+  }
+
+  private func previewSecondaryUtilityActions(
+    selectedSession: WorkspaceSessionListItem
+  ) -> [StudioUtilityActionItem] {
+    [
+      StudioUtilityActionItem(
+        id: "session-preview-reveal",
+        title: "Reveal in Finder",
+        systemImage: "folder",
+        isEnabled: true,
+        action: {
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+        }
+      ),
+      StudioUtilityActionItem(
+        id: "session-preview-copy",
+        title: "Copy",
+        systemImage: "doc.on.doc",
+        isEnabled: !sessionFeatureModel.preview.isEmpty && !sessionFeatureModel.isLoadingPreview,
+        action: {
+          copySessionPreview()
+        }
+      ),
+      StudioUtilityActionItem(
+        id: "session-preview-export",
+        title: "Export Markdown…",
+        systemImage: "square.and.arrow.up",
+        isEnabled: !sessionFeatureModel.preview.isEmpty && !sessionFeatureModel.isLoadingPreview,
+        action: {
+          exportSessionPreview()
+        }
+      ),
+    ]
+  }
+
+  private var mapPrimaryUtilityAction: StudioUtilityActionItem {
+    StudioUtilityActionItem(
+      id: "session-map-refresh",
+      title: "Refresh",
+      systemImage: "arrow.clockwise",
+      isEnabled: !sessionFeatureModel.isLoadingMap,
+      action: {
+        refreshSelectedSessionMap(forceReload: true)
+      }
+    )
   }
 
   private var scopeByNodeKey: [String: WorkspaceSourceScope] {
