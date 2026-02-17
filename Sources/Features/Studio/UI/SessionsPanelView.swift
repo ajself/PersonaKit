@@ -21,6 +21,8 @@ struct SessionsPanelView: View {
   @State private var detailModeTransitionTask: Task<Void, Never>?
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
+  @SceneStorage("studio.help.sessions.expanded")
+  private var isSessionsHelpExpanded = false
   @State private var sessionEditorPresentation: SessionEditorPresentation?
   @State private var pendingSessionDeletion: WorkspaceSessionListItem?
   @State private var isLoadingSessionDraft = false
@@ -43,6 +45,8 @@ struct SessionsPanelView: View {
         selectedSessionID: $selectedSessionID,
         sessionActionErrorMessage: sessionActionErrorMessage,
         actionState: listActionState,
+        helpTopic: sessionsHelpTopic,
+        isHelpExpanded: $isSessionsHelpExpanded,
         onNewSession: {
           sessionEditorPresentation = SessionEditorPresentation(
             title: "New Session",
@@ -490,6 +494,10 @@ struct SessionsPanelView: View {
         refreshSelectedSessionMap(forceReload: true)
       }
     )
+  }
+
+  private var sessionsHelpTopic: StudioHelpTopic? {
+    StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions)
   }
 
   private var scopeByNodeKey: [String: WorkspaceSourceScope] {
