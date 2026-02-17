@@ -4,47 +4,47 @@ import SwiftUI
 
 /// Toolbar for library and essentials list actions.
 struct StudioLibraryToolbarView: View {
-  let selectedItem: WorkspaceListItem?
-  let isEssentialsSelection: Bool
-  let isLoadingLibraryEditor: Bool
-  let canEditRawJSON: Bool
-  let canEditMarkdown: Bool
-  let canCopyToProject: Bool
+  let actionState: StudioLibraryActionBarState
   let onRevealInFinder: () -> Void
-  let onEditMarkdown: () -> Void
-  let onEditRawJSON: () -> Void
+  let onEdit: () -> Void
   let onCopyToProject: () -> Void
 
   var body: some View {
-    HStack(spacing: 8) {
-      Button("Reveal in Finder") {
-        onRevealInFinder()
-      }
-      .disabled(selectedItem == nil)
+    StudioActionBarView(
+      actions: actionItems,
+      isLoading: actionState.isLoadingEditor
+    )
+  }
 
-      if isEssentialsSelection {
-        Button("Edit Markdown") {
-          onEditMarkdown()
-        }
-        .disabled(!canEditMarkdown)
-      } else {
-        Button("Edit Raw JSON") {
-          onEditRawJSON()
-        }
-        .disabled(!canEditRawJSON)
-      }
-
-      Button("Copy to Project") {
-        onCopyToProject()
-      }
-      .disabled(!canCopyToProject)
-
-      if isLoadingLibraryEditor {
-        ProgressView()
-          .controlSize(.small)
-      }
-
-      Spacer()
-    }
+  private var actionItems: [StudioActionItem] {
+    [
+      StudioActionItem(
+        id: "library-reveal",
+        group: .selection,
+        title: "Reveal",
+        systemImage: "folder",
+        role: .standard,
+        isEnabled: actionState.canReveal,
+        action: onRevealInFinder
+      ),
+      StudioActionItem(
+        id: "library-edit",
+        group: .selection,
+        title: "Edit",
+        systemImage: "pencil",
+        role: .standard,
+        isEnabled: actionState.canEdit,
+        action: onEdit
+      ),
+      StudioActionItem(
+        id: "library-copy",
+        group: .selection,
+        title: "Copy to Project",
+        systemImage: "arrow.down.doc",
+        role: .standard,
+        isEnabled: actionState.canCopyToProject,
+        action: onCopyToProject
+      ),
+    ]
   }
 }

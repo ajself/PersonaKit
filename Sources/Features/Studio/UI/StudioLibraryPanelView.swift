@@ -16,30 +16,16 @@ struct StudioLibraryPanelView: View {
   var body: some View {
     let visibleItems = filteredItems(items)
     let selectedItem = selectedLibraryItem(items: visibleItems)
-    let isEssentialsSelection = selection == .essentials
     let entityType = editableEntityTypeForSelection()
-    let canEditRawJSON =
-      !isEssentialsSelection
-      && selectedItem?.sourceScope == .project
-      && entityType != nil
-      && !workspaceStore.isLoadingLibraryEditor
-    let canEditMarkdown =
-      isEssentialsSelection
-      && selectedItem?.sourceScope == .project
-      && !workspaceStore.isLoadingLibraryEditor
-    let canCopyToProject =
-      selectedItem?.sourceScope == .global
-      && (isEssentialsSelection || entityType != nil)
-      && !workspaceStore.isLoadingLibraryEditor
+    let actionState = StudioLibraryActionBarState(
+      selection: selection,
+      selectedItem: selectedItem,
+      isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor
+    )
 
     VStack(alignment: .leading, spacing: 10) {
       StudioLibraryToolbarView(
-        selectedItem: selectedItem,
-        isEssentialsSelection: isEssentialsSelection,
-        isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor,
-        canEditRawJSON: canEditRawJSON,
-        canEditMarkdown: canEditMarkdown,
-        canCopyToProject: canCopyToProject,
+        actionState: actionState,
         onRevealInFinder: {
           guard let selectedItem else {
             return
@@ -47,27 +33,32 @@ struct StudioLibraryPanelView: View {
 
           workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
         },
-        onEditMarkdown: {
-          openMarkdownEditorForSelectedItem(
-            selectedItem: selectedItem
-          )
-        },
-        onEditRawJSON: {
-          openRawJSONEditorForSelectedItem(
-            selectedItem: selectedItem,
-            entityType: entityType
-          )
+        onEdit: {
+          switch actionState.editAction {
+          case .markdown:
+            openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
+          case .rawJSON:
+            openRawJSONEditorForSelectedItem(
+              selectedItem: selectedItem,
+              entityType: entityType
+            )
+          case nil:
+            break
+          }
         },
         onCopyToProject: {
-          if isEssentialsSelection {
+          switch actionState.editAction {
+          case .markdown:
             copySelectedGlobalEssentialToProject(
               selectedItem: selectedItem
             )
-          } else {
+          case .rawJSON:
             copySelectedGlobalItemToProject(
               selectedItem: selectedItem,
               entityType: entityType
             )
+          case nil:
+            break
           }
         }
       )

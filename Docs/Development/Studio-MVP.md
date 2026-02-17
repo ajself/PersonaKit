@@ -205,6 +205,23 @@ Session Preview supports:
 - Copy to clipboard
 - Export to file (Markdown preferred canonical format)
 
+### 5.7 CRUD Action Bars (Studio Standard)
+
+CRUD list panels use a shared command-bar pattern:
+
+- Labeled actions use icon + text with `Label(...)`, not text-only buttons.
+- Action groups are left-to-right:
+  - Primary (for create/new)
+  - Selection-scoped (edit/reveal)
+  - Destructive (delete)
+- Button semantics:
+  - Primary actions use bordered-prominent styling.
+  - Standard actions use bordered styling.
+  - Destructive actions remain visible with destructive role styling and confirmation dialogs.
+- Disabled actions stay visible for affordance learning.
+- Progress indicators render inline in the action bar when list/editor actions are loading.
+- Sessions and Library are implementation targets for this standard; Diagnostics adopts the same standard in follow-up work.
+
 ---
 
 ## 6. Data Flow

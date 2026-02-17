@@ -30,18 +30,17 @@ struct SessionsPanelView: View {
     let items = filteredSessions(sessions)
     let availableSessionIDs = sessions.map(\.id).sorted()
     let selectedSession = currentSelectedSession()
-    let canDeleteSelectedSession = canDeleteSelectedSession(
-      selectedSession: selectedSession
+    let listActionState = SessionsListActionState(
+      selectedSession: selectedSession,
+      isLoadingSessionDraft: isLoadingSessionDraft
     )
 
     return HSplitView {
       SessionsListTabView(
         items: items,
-        selectedSession: selectedSession,
         selectedSessionID: $selectedSessionID,
         sessionActionErrorMessage: sessionActionErrorMessage,
-        isLoadingSessionDraft: isLoadingSessionDraft,
-        canDeleteSelectedSession: canDeleteSelectedSession,
+        actionState: listActionState,
         onNewSession: {
           sessionEditorPresentation = SessionEditorPresentation(
             title: "New Session",
@@ -432,20 +431,6 @@ struct SessionsPanelView: View {
     }
 
     return items.first { $0.id == selectedSessionID }
-  }
-
-  private func canDeleteSelectedSession(
-    selectedSession: WorkspaceSessionListItem?
-  ) -> Bool {
-    if isLoadingSessionDraft {
-      return false
-    }
-
-    guard let selectedSession else {
-      return false
-    }
-
-    return selectedSession.sourceScope == .project
   }
 
   private func openEditorForSelectedSession(

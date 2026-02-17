@@ -5,50 +5,27 @@ import SwiftUI
 /// Sessions list panel with CRUD actions and project/global scope labels.
 struct SessionsListTabView: View {
   let items: [WorkspaceSessionListItem]
-  let selectedSession: WorkspaceSessionListItem?
   @Binding var selectedSessionID: String?
   let sessionActionErrorMessage: String?
-  let isLoadingSessionDraft: Bool
-  let canDeleteSelectedSession: Bool
+  let actionState: SessionsListActionState
   let onNewSession: () -> Void
   let onEditSession: () -> Void
   let onDeleteSession: () -> Void
   let onRevealInFinder: () -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 8) {
-        Button("New Session") {
-          onNewSession()
-        }
-
-        Button("Edit Session") {
-          onEditSession()
-        }
-        .disabled(selectedSession == nil || isLoadingSessionDraft)
-
-        Button("Delete Session") {
-          onDeleteSession()
-        }
-        .disabled(!canDeleteSelectedSession)
-
-        Button("Reveal in Finder") {
-          onRevealInFinder()
-        }
-        .disabled(selectedSession == nil)
-
-        if isLoadingSessionDraft {
-          ProgressView()
-            .controlSize(.small)
-        }
-
-        Spacer()
-      }
+    VStack(alignment: .leading, spacing: 0) {
+      StudioActionBarView(
+        actions: actionItems,
+        isLoading: actionState.isLoadingDraft
+      )
 
       if let sessionActionErrorMessage {
         Text(sessionActionErrorMessage)
           .font(.footnote)
           .foregroundStyle(.red)
+          .padding(.horizontal, 12)
+          .padding(.top, 8)
       }
 
       List(items, id: \.id, selection: $selectedSessionID) { session in
@@ -79,7 +56,49 @@ struct SessionsListTabView: View {
           ContentUnavailableView.search
         }
       }
+      .padding(.top, sessionActionErrorMessage == nil ? 0 : 8)
     }
+  }
+
+  private var actionItems: [StudioActionItem] {
+    [
+      StudioActionItem(
+        id: "new-session",
+        group: .primary,
+        title: "New",
+        systemImage: "plus",
+        role: .primary,
+        isEnabled: actionState.canCreate,
+        action: onNewSession
+      ),
+      StudioActionItem(
+        id: "edit-session",
+        group: .selection,
+        title: "Edit",
+        systemImage: "pencil",
+        role: .standard,
+        isEnabled: actionState.canEdit,
+        action: onEditSession
+      ),
+      StudioActionItem(
+        id: "reveal-session",
+        group: .selection,
+        title: "Reveal",
+        systemImage: "folder",
+        role: .standard,
+        isEnabled: actionState.canReveal,
+        action: onRevealInFinder
+      ),
+      StudioActionItem(
+        id: "delete-session",
+        group: .destructive,
+        title: "Delete",
+        systemImage: "trash",
+        role: .destructive,
+        isEnabled: actionState.canDelete,
+        action: onDeleteSession
+      ),
+    ]
   }
 
   private func scopeBadge(scope: WorkspaceSourceScope) -> some View {
