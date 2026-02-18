@@ -10,6 +10,19 @@ struct StudioLibraryPanelView: View {
   @Binding var searchText: String
   @Binding var selectedLibraryItemID: String?
 
+  @SceneStorage("studio.help.personas.expanded")
+  private var isPersonasHelpExpanded = false
+  @SceneStorage("studio.help.directives.expanded")
+  private var isDirectivesHelpExpanded = false
+  @SceneStorage("studio.help.kits.expanded")
+  private var isKitsHelpExpanded = false
+  @SceneStorage("studio.help.essentials.expanded")
+  private var isEssentialsHelpExpanded = false
+  @SceneStorage("studio.help.skills.expanded")
+  private var isSkillsHelpExpanded = false
+  @SceneStorage("studio.help.intents.expanded")
+  private var isIntentsHelpExpanded = false
+
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
 
@@ -63,6 +76,13 @@ struct StudioLibraryPanelView: View {
         }
       )
 
+      if let helpTopic = StudioHelpCatalog.topic(for: selection) {
+        StudioInlineHelpView(
+          topic: helpTopic,
+          isExpanded: libraryHelpExpandedBinding
+        )
+      }
+
       if let libraryActionMessage = workspaceStore.libraryActionMessage {
         Text(libraryActionMessage)
           .font(.footnote)
@@ -73,8 +93,10 @@ struct StudioLibraryPanelView: View {
         visibleItems: visibleItems,
         selectedLibraryItemID: $selectedLibraryItemID
       )
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .searchable(text: $searchText, prompt: "Search \(selection.title)")
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .sheet(item: $markdownEditorPresentation) { presentation in
       MarkdownEditorView(
         title: "Edit \(presentation.itemID)",
@@ -250,6 +272,27 @@ struct StudioLibraryPanelView: View {
       await MainActor.run {
         selectedLibraryItemID = selectedItemID
       }
+    }
+  }
+
+  private var libraryHelpExpandedBinding: Binding<Bool> {
+    switch selection {
+    case .personas:
+      return $isPersonasHelpExpanded
+    case .directives:
+      return $isDirectivesHelpExpanded
+    case .kits:
+      return $isKitsHelpExpanded
+    case .essentials:
+      return $isEssentialsHelpExpanded
+    case .skills:
+      return $isSkillsHelpExpanded
+    case .intents:
+      return $isIntentsHelpExpanded
+    case .sessions,
+      .relationshipMap,
+      .validationResults:
+      return .constant(false)
     }
   }
 }

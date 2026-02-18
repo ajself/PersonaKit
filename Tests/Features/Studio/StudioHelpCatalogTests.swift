@@ -35,6 +35,7 @@ struct StudioHelpCatalogTests {
       #expect(!trimmed(topic.nextStepText).isEmpty)
       #expect(!topic.keyFields.isEmpty)
       #expect(!topic.commonMistakes.isEmpty)
+      #expect(!topic.examples.isEmpty)
       #expect(!topic.relatedLinks.isEmpty)
 
       for field in topic.keyFields {
@@ -43,6 +44,10 @@ struct StudioHelpCatalogTests {
 
       for commonMistake in topic.commonMistakes {
         #expect(!trimmed(commonMistake).isEmpty)
+      }
+
+      for example in topic.examples {
+        #expect(!trimmed(example).isEmpty)
       }
 
       for relatedLink in topic.relatedLinks {

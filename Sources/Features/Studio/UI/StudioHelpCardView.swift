@@ -16,7 +16,6 @@ struct StudioHelpCardView: View {
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
         }
       )
 
@@ -35,13 +34,19 @@ struct StudioHelpCardView: View {
       )
 
       section(
+        title: "Examples",
+        content: {
+          bulletList(topic.examples)
+        }
+      )
+
+      section(
         title: "Next Step",
         content: {
           Text(topic.nextStepText)
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
         }
       )
     }
@@ -69,7 +74,6 @@ struct StudioHelpCardView: View {
           .font(.subheadline)
           .foregroundStyle(.secondary)
           .lineLimit(nil)
-          .fixedSize(horizontal: false, vertical: true)
       }
     }
   }

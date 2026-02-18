@@ -21,6 +21,9 @@ enum StudioHelpCatalog {
           "Mixing multiple unrelated tasks into one directive.",
           "Forgetting to include explicit stop/review points.",
         ],
+        examples: [
+          "Example directive: \"Refactor session preview caching without changing export behavior.\""
+        ],
         nextStepText: "Link this directive from a session, then inspect session preview and map before saving.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
@@ -45,6 +48,9 @@ enum StudioHelpCatalog {
           "Duplicating the same rule across multiple files.",
           "Using unclear filenames that are hard to discover.",
         ],
+        examples: [
+          "Example essential: \"All Swift edits must pass swift-format before commit.\""
+        ],
         nextStepText: "Confirm essentials are referenced by kits or personas used in your active sessions.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
@@ -68,6 +74,9 @@ enum StudioHelpCatalog {
           "Encoding one specific ticket instead of a reusable pattern.",
           "Leaving expected deliverables implicit.",
           "Overlapping heavily with directive content.",
+        ],
+        examples: [
+          "Example intent: \"When blocked by ambiguity, stop and request a single clarifying decision.\""
         ],
         nextStepText: "Reference intent ids from kits/directives, then validate workspace for missing links.",
         relatedLinks: [
@@ -94,6 +103,9 @@ enum StudioHelpCatalog {
           "Relying on implicit context not written in the kit.",
           "Creating duplicate kits with slight wording differences.",
         ],
+        examples: [
+          "Example kit: \"swiftui-style\" including formatting, testing, and accessibility constraints."
+        ],
         nextStepText: "Verify kit ids used by sessions and directives resolve cleanly in the relationship map.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
@@ -118,6 +130,9 @@ enum StudioHelpCatalog {
           "Using vague role descriptions without boundaries.",
           "Combining multiple roles into one persona.",
           "Omitting non-goals and escalation guidance.",
+        ],
+        examples: [
+          "Example persona: \"Senior SwiftUI Engineer\" with explicit responsibilities and non-goals."
         ],
         nextStepText:
           "Pair this persona with a directive in Sessions and verify the preview output matches expectations.",
@@ -144,6 +159,9 @@ enum StudioHelpCatalog {
           "Troubleshooting from list views without checking graph dependencies.",
           "Assuming missing nodes are safe if preview still renders.",
         ],
+        examples: [
+          "Example check: select a session, enable focus mode, then resolve every orange issue badge."
+        ],
         nextStepText: "Drill into unresolved nodes or jump to Validation Results to fix broken references.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
@@ -169,6 +187,9 @@ enum StudioHelpCatalog {
           "Selecting persona/directive ids that no longer exist.",
           "Adding unnecessary kit overrides that duplicate defaults.",
           "Saving before reviewing dependency mini-map resolution.",
+        ],
+        examples: [
+          "Example session draft: id \"ios-bugfix\", persona \"senior-swiftui-engineer\", directive \"apply-style\"."
         ],
         nextStepText:
           "After save, review Preview output, inspect Map health, and run Validation Results if references fail.",
@@ -197,6 +218,9 @@ enum StudioHelpCatalog {
           "Ignoring map resolution issues before exporting.",
           "Editing global-scope sessions instead of copying to project scope.",
         ],
+        examples: [
+          "Example usage: export markdown from one session and paste it into a fresh AI chat as starting context."
+        ],
         nextStepText:
           "Create or edit a session, confirm preview/map health, then export markdown for your active agent context.",
         relatedLinks: [
@@ -224,6 +248,9 @@ enum StudioHelpCatalog {
           "Using ambiguous descriptions that hide capability limits.",
           "Referencing missing skills from kits/directives.",
         ],
+        examples: [
+          "Example skill entry: \"ajself-code-style\" with a short description and usage boundaries."
+        ],
         nextStepText: "Confirm referenced skills resolve in map/validation before exporting session context.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
@@ -248,6 +275,9 @@ enum StudioHelpCatalog {
           "Ignoring warnings/errors and exporting anyway.",
           "Fixing one issue without re-validating workspace.",
           "Searching manually instead of navigating from issue links.",
+        ],
+        examples: [
+          "Example workflow: fix one missing persona id, rerun validation, then verify zero unresolved issues."
         ],
         nextStepText: "Resolve listed issues, re-run validation, and return to Sessions when the workspace is clean.",
         relatedLinks: [

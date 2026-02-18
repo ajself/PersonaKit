@@ -8,6 +8,9 @@ struct WorkspaceRelationshipMapPanelView: View {
   @Binding var searchText: String
   let onNavigate: (SessionsNavigationTarget) -> Void
 
+  @SceneStorage("studio.help.relationshipMap.expanded")
+  private var isRelationshipMapHelpExpanded = false
+
   @State private var selectedSessionContextID: String?
   @State private var focusModeEnabled = false
   @State private var selectedScopeFilter: RelationshipScopeFilter = .all
@@ -37,6 +40,14 @@ struct WorkspaceRelationshipMapPanelView: View {
 
     VStack(alignment: .leading, spacing: 12) {
       headerView
+
+      if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.relationshipMap) {
+        StudioInlineHelpView(
+          topic: helpTopic,
+          isExpanded: $isRelationshipMapHelpExpanded
+        )
+      }
+
       filterControls
 
       if workspaceStore.isLoadingWorkspaceRelationshipMap {

@@ -29,6 +29,7 @@ struct StudioHelpTopic: Equatable, Sendable {
   let purpose: String
   let keyFields: [String]
   let commonMistakes: [String]
+  let examples: [String]
   let nextStepText: String
   let relatedLinks: [StudioHelpLink]
 }

@@ -23,41 +23,12 @@ struct SessionsListTabView: View {
       )
 
       if let helpTopic {
-        VStack(alignment: .leading, spacing: 0) {
-          StudioHelpHintChipView(
-            hintText: helpTopic.shortHint,
-            isExpanded: $isHelpExpanded
-          )
-          .padding(.horizontal, 10)
-          .padding(.vertical, 10)
-
-          if isHelpExpanded {
-            Divider()
-              .overlay(.white.opacity(0.08))
-              .padding(.horizontal, 10)
-              .padding(.bottom, 12)
-
-            StudioHelpCardView(
-              topic: helpTopic
-            )
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
-            .transition(.opacity)
-          }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(
-          RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(.quaternary.opacity(0.1))
-            .overlay(
-              RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(.white.opacity(0.08), lineWidth: 0.8)
-            )
+        StudioInlineHelpView(
+          topic: helpTopic,
+          isExpanded: $isHelpExpanded,
+          horizontalInset: 8,
+          topInset: 8
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .padding(.horizontal, 8)
-        .padding(.top, 8)
         .layoutPriority(1)
       }
 

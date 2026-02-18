@@ -9,6 +9,9 @@ struct StudioDiagnosticsPanelView: View {
   @Binding var selectedLibraryItemID: String?
   @Binding var searchText: String
 
+  @SceneStorage("studio.help.validationResults.expanded")
+  private var isValidationResultsHelpExpanded = false
+
   var body: some View {
     let issues = filteredValidationIssues(workspaceStore.validation.issues)
 
@@ -19,6 +22,13 @@ struct StudioDiagnosticsPanelView: View {
           workspaceStore.validateWorkspace()
         }
       )
+
+      if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.validationResults) {
+        StudioInlineHelpView(
+          topic: helpTopic,
+          isExpanded: $isValidationResultsHelpExpanded
+        )
+      }
 
       if let validationErrorMessage = workspaceStore.validationErrorMessage {
         ContentUnavailableView(
