@@ -34,6 +34,16 @@
       "target": "personakit",
       "configuration": "debug",
       "preLaunchTask": "PersonaKit: Build"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:PersonaKit}",
+      "name": "Run PersonaKitStudio (macOS app)",
+      "target": "PersonaKitStudio",
+      "configuration": "debug",
+      "preLaunchTask": "PersonaKit: Build"
     }
   ]
 }
