@@ -26,9 +26,7 @@ struct StudioDiagnosticsPanelView: View {
       if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.validationResults) {
         StudioInlineHelpView(
           topic: helpTopic,
-          isExpanded: $isValidationResultsHelpExpanded,
-          horizontalInset: 8,
-          topInset: 8
+          isExpanded: $isValidationResultsHelpExpanded
         )
       }
 

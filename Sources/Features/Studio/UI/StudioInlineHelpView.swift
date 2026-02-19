@@ -4,8 +4,6 @@ import SwiftUI
 struct StudioInlineHelpView: View {
   let topic: StudioHelpTopic
   @Binding var isExpanded: Bool
-  var horizontalInset: CGFloat = 0
-  var topInset: CGFloat = 0
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -41,7 +39,7 @@ struct StudioInlineHelpView: View {
         )
     )
     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    .padding(.horizontal, horizontalInset)
-    .padding(.top, topInset)
+    .padding(.horizontal, 8)
+    .padding(.top, 8)
   }
 }

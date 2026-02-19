@@ -25,9 +25,7 @@ struct SessionsListTabView: View {
       if let helpTopic {
         StudioInlineHelpView(
           topic: helpTopic,
-          isExpanded: $isHelpExpanded,
-          horizontalInset: 8,
-          topInset: 8
+          isExpanded: $isHelpExpanded
         )
         .layoutPriority(1)
       }

@@ -44,9 +44,7 @@ struct WorkspaceRelationshipMapPanelView: View {
       if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.relationshipMap) {
         StudioInlineHelpView(
           topic: helpTopic,
-          isExpanded: $isRelationshipMapHelpExpanded,
-          horizontalInset: 8,
-          topInset: 8
+          isExpanded: $isRelationshipMapHelpExpanded
         )
       }
 

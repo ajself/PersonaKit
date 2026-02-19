@@ -36,7 +36,7 @@ struct StudioLibraryPanelView: View {
       isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor
     )
 
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 0) {
       StudioLibraryToolbarView(
         actionState: actionState,
         onRevealInFinder: {
@@ -79,9 +79,7 @@ struct StudioLibraryPanelView: View {
       if let helpTopic = StudioHelpCatalog.topic(for: selection) {
         StudioInlineHelpView(
           topic: helpTopic,
-          isExpanded: libraryHelpExpandedBinding,
-          horizontalInset: 8,
-          topInset: 0
+          isExpanded: libraryHelpExpandedBinding
         )
       }
 
