@@ -67,6 +67,38 @@ struct StudioHelpCatalogTests {
     }
   }
 
+  @Test
+  func everySidebarItemMapsToStableHelpExpansionStorageKey() {
+    #expect(SidebarItem.sessions.helpExpansionStorageKey == "studio.help.sessions.expanded")
+    #expect(SidebarItem.personas.helpExpansionStorageKey == "studio.help.personas.expanded")
+    #expect(SidebarItem.directives.helpExpansionStorageKey == "studio.help.directives.expanded")
+    #expect(SidebarItem.kits.helpExpansionStorageKey == "studio.help.kits.expanded")
+    #expect(SidebarItem.essentials.helpExpansionStorageKey == "studio.help.essentials.expanded")
+    #expect(SidebarItem.skills.helpExpansionStorageKey == "studio.help.skills.expanded")
+    #expect(SidebarItem.intents.helpExpansionStorageKey == "studio.help.intents.expanded")
+    #expect(SidebarItem.relationshipMap.helpExpansionStorageKey == "studio.help.relationshipMap.expanded")
+    #expect(
+      SidebarItem.validationResults.helpExpansionStorageKey == "studio.help.validationResults.expanded"
+    )
+  }
+
+  @Test
+  func helpExpansionStorageKeysAreUnique() {
+    let keys = [
+      SidebarItem.sessions.helpExpansionStorageKey,
+      SidebarItem.personas.helpExpansionStorageKey,
+      SidebarItem.directives.helpExpansionStorageKey,
+      SidebarItem.kits.helpExpansionStorageKey,
+      SidebarItem.essentials.helpExpansionStorageKey,
+      SidebarItem.skills.helpExpansionStorageKey,
+      SidebarItem.intents.helpExpansionStorageKey,
+      SidebarItem.relationshipMap.helpExpansionStorageKey,
+      SidebarItem.validationResults.helpExpansionStorageKey,
+    ]
+
+    #expect(Set(keys).count == keys.count)
+  }
+
   private func trimmed(
     _ value: String
   ) -> String {

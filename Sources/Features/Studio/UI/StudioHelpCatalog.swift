@@ -318,4 +318,27 @@ extension SidebarItem {
       return .validationResults
     }
   }
+
+  var helpExpansionStorageKey: String {
+    switch self {
+    case .sessions:
+      return StudioHelpStorageKey.sessions
+    case .personas:
+      return StudioHelpStorageKey.personas
+    case .directives:
+      return StudioHelpStorageKey.directives
+    case .kits:
+      return StudioHelpStorageKey.kits
+    case .essentials:
+      return StudioHelpStorageKey.essentials
+    case .skills:
+      return StudioHelpStorageKey.skills
+    case .intents:
+      return StudioHelpStorageKey.intents
+    case .relationshipMap:
+      return StudioHelpStorageKey.relationshipMap
+    case .validationResults:
+      return StudioHelpStorageKey.validationResults
+    }
+  }
 }

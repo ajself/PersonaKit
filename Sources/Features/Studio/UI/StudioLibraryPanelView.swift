@@ -10,17 +10,17 @@ struct StudioLibraryPanelView: View {
   @Binding var searchText: String
   @Binding var selectedLibraryItemID: String?
 
-  @SceneStorage("studio.help.personas.expanded")
+  @SceneStorage(StudioHelpStorageKey.personas)
   private var isPersonasHelpExpanded = false
-  @SceneStorage("studio.help.directives.expanded")
+  @SceneStorage(StudioHelpStorageKey.directives)
   private var isDirectivesHelpExpanded = false
-  @SceneStorage("studio.help.kits.expanded")
+  @SceneStorage(StudioHelpStorageKey.kits)
   private var isKitsHelpExpanded = false
-  @SceneStorage("studio.help.essentials.expanded")
+  @SceneStorage(StudioHelpStorageKey.essentials)
   private var isEssentialsHelpExpanded = false
-  @SceneStorage("studio.help.skills.expanded")
+  @SceneStorage(StudioHelpStorageKey.skills)
   private var isSkillsHelpExpanded = false
-  @SceneStorage("studio.help.intents.expanded")
+  @SceneStorage(StudioHelpStorageKey.intents)
   private var isIntentsHelpExpanded = false
 
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?

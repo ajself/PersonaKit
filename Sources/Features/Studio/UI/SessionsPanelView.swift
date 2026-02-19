@@ -21,7 +21,7 @@ struct SessionsPanelView: View {
   @State private var detailModeTransitionTask: Task<Void, Never>?
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
-  @SceneStorage("studio.help.sessions.expanded")
+  @SceneStorage(StudioHelpStorageKey.sessions)
   private var isSessionsHelpExpanded = false
   @State private var sessionEditorPresentation: SessionEditorPresentation?
   @State private var pendingSessionDeletion: WorkspaceSessionListItem?

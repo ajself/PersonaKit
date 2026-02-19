@@ -9,7 +9,7 @@ struct StudioDiagnosticsPanelView: View {
   @Binding var selectedLibraryItemID: String?
   @Binding var searchText: String
 
-  @SceneStorage("studio.help.validationResults.expanded")
+  @SceneStorage(StudioHelpStorageKey.validationResults)
   private var isValidationResultsHelpExpanded = false
 
   var body: some View {

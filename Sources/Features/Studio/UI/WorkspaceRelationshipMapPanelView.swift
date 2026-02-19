@@ -8,7 +8,7 @@ struct WorkspaceRelationshipMapPanelView: View {
   @Binding var searchText: String
   let onNavigate: (SessionsNavigationTarget) -> Void
 
-  @SceneStorage("studio.help.relationshipMap.expanded")
+  @SceneStorage(StudioHelpStorageKey.relationshipMap)
   private var isRelationshipMapHelpExpanded = false
 
   @State private var selectedSessionContextID: String?
