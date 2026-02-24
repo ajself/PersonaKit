@@ -71,7 +71,10 @@ let package = Package(
         "ContextWorkspaceCore",
         "StudioFoundation"
       ],
-      path: "Sources/Features/Studio/UI"
+      path: "Sources/Features/Studio",
+      exclude: [
+        "Foundation"
+      ]
     ),
     .executableTarget(
       name: "PersonaKit",
