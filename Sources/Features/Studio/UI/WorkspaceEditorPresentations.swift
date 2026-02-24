@@ -1,6 +1,7 @@
 import ContextCore
 import ContextWorkspaceCore
 import Foundation
+import StudioFoundation
 
 /// Raw JSON editor payload used by Studio library editing flows.
 struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {
@@ -24,5 +25,18 @@ struct WorkspaceEssentialEditorPresentation: Equatable, Identifiable, Sendable {
 
   var id: String {
     "\(workspaceURL.path())::\(itemID)"
+  }
+}
+
+/// Persona editor payload used by Studio persona-creation workflows.
+struct PersonaEditorPresentation: Equatable, Identifiable, Sendable {
+  let workspaceURL: URL
+  let draft: WorkspacePersonaDraft
+  let existingPersonaIDs: [String]
+  let knownKits: [WorkspaceListItem]
+  let knownSkills: [WorkspaceListItem]
+
+  var id: String {
+    "\(workspaceURL.path())::persona-editor"
   }
 }

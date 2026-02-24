@@ -5,6 +5,7 @@ import SwiftUI
 /// Toolbar for library and essentials list actions.
 struct StudioLibraryToolbarView: View {
   let actionState: StudioLibraryActionBarState
+  let onNew: () -> Void
   let onRevealInFinder: () -> Void
   let onEdit: () -> Void
   let onCopyToProject: () -> Void
@@ -17,7 +18,23 @@ struct StudioLibraryToolbarView: View {
   }
 
   private var actionItems: [StudioActionItem] {
-    [
+    var actions: [StudioActionItem] = []
+
+    if actionState.showsCreateAction {
+      actions.append(
+        StudioActionItem(
+          id: "library-new",
+          group: .primary,
+          title: "New",
+          systemImage: "plus",
+          role: .primary,
+          isEnabled: actionState.canCreate,
+          action: onNew
+        )
+      )
+    }
+
+    actions.append(
       StudioActionItem(
         id: "library-reveal",
         group: .selection,
@@ -26,7 +43,9 @@ struct StudioLibraryToolbarView: View {
         role: .standard,
         isEnabled: actionState.canReveal,
         action: onRevealInFinder
-      ),
+      )
+    )
+    actions.append(
       StudioActionItem(
         id: "library-edit",
         group: .selection,
@@ -35,7 +54,9 @@ struct StudioLibraryToolbarView: View {
         role: .standard,
         isEnabled: actionState.canEdit,
         action: onEdit
-      ),
+      )
+    )
+    actions.append(
       StudioActionItem(
         id: "library-copy",
         group: .selection,
@@ -44,7 +65,9 @@ struct StudioLibraryToolbarView: View {
         role: .standard,
         isEnabled: actionState.canCopyToProject,
         action: onCopyToProject
-      ),
-    ]
+      )
+    )
+
+    return actions
   }
 }

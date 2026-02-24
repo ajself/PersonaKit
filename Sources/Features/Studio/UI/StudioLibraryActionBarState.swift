@@ -9,6 +9,8 @@ enum StudioLibraryEditAction: Equatable, Sendable {
 /// Consolidated action state for Studio library/essentials command bars.
 struct StudioLibraryActionBarState {
   let editAction: StudioLibraryEditAction?
+  let canCreate: Bool
+  let showsCreateAction: Bool
   let canReveal: Bool
   let canEdit: Bool
   let canCopyToProject: Bool
@@ -37,6 +39,8 @@ struct StudioLibraryActionBarState {
       editAction = nil
     }
 
+    showsCreateAction = selection == .personas
+    canCreate = showsCreateAction && !isLoadingLibraryEditor
     canReveal = selectedItem != nil
     canEdit = editAction != nil && isProjectSelection && !isLoadingLibraryEditor
     canCopyToProject = editAction != nil && isGlobalSelection && !isLoadingLibraryEditor

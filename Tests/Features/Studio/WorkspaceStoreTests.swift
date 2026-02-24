@@ -358,6 +358,290 @@ struct WorkspaceStoreTests {
   }
 
   @Test
+  func createPersonaSavesDeterministicJSONAndReloadsWorkspace() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let state = MutableBooleanState(value: false)
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        if state.value {
+          return WorkspaceSnapshot(
+            sessions: [],
+            personas: [
+              WorkspaceListItem(
+                id: "persona-new",
+                displayName: "Persona New",
+                fileURL: URL(fileURLWithPath: "/personas/persona-new.persona.json"),
+                sourceScope: .project
+              )
+            ],
+            directives: [],
+            kits: [
+              WorkspaceListItem(
+                id: "kit-a",
+                displayName: "Kit A",
+                fileURL: URL(fileURLWithPath: "/kits/kit-a.kit.json"),
+                sourceScope: .project
+              )
+            ],
+            skills: [
+              WorkspaceListItem(
+                id: "skill-a",
+                displayName: "Skill A",
+                fileURL: URL(fileURLWithPath: "/skills/skill-a.skill.json"),
+                sourceScope: .project
+              )
+            ],
+            intents: [],
+            essentials: []
+          )
+        }
+
+        return WorkspaceSnapshot(
+          sessions: [],
+          personas: [],
+          directives: [],
+          kits: [
+            WorkspaceListItem(
+              id: "kit-a",
+              displayName: "Kit A",
+              fileURL: URL(fileURLWithPath: "/kits/kit-a.kit.json"),
+              sourceScope: .project
+            )
+          ],
+          skills: [
+            WorkspaceListItem(
+              id: "skill-a",
+              displayName: "Skill A",
+              fileURL: URL(fileURLWithPath: "/skills/skill-a.skill.json"),
+              sourceScope: .project
+            )
+          ],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          "{}"
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { workspaceURL, itemID, rawJSON, entityType in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(itemID == "persona-new")
+          #expect(entityType == .persona)
+          #expect(rawJSON.contains("\"id\" : \"persona-new\""))
+          #expect(rawJSON.contains("\"version\" : \"1.0\""))
+          #expect(rawJSON.contains("\"defaultKitIds\" : [\n    \"kit-a\"\n  ]"))
+          #expect(rawJSON.contains("\"allowedSkillIds\" : [\n    \"skill-a\"\n  ]"))
+          state.value = true
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.kits.count == 1
+    }
+
+    let saveError = await store.createPersona(
+      draft: WorkspacePersonaDraft(
+        id: "persona-new",
+        name: "Persona New",
+        summary: "Summary",
+        responsibilities: ["Build features"],
+        values: ["clarity"],
+        nonGoals: ["scope creep"],
+        defaultKitIds: ["kit-a"],
+        allowedSkillIds: ["skill-a"],
+        forbiddenSkillIds: []
+      )
+    )
+
+    #expect(saveError == nil)
+
+    await waitFor {
+      store.snapshot.personas.contains(where: { item in
+        item.id == "persona-new"
+      })
+    }
+
+    #expect(store.libraryActionMessage == "Created persona-new.")
+    #expect(!store.libraryActionIsError)
+  }
+
+  @Test
+  func createPersonaRejectsDuplicateIDBeforeSave() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [
+            WorkspaceListItem(
+              id: "persona-a",
+              displayName: "Persona A",
+              fileURL: URL(fileURLWithPath: "/personas/persona-a.persona.json"),
+              sourceScope: .project
+            )
+          ],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          "{}"
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in
+          Issue.record("saveRawJSON should not run for duplicate persona ids.")
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.personas.count == 1
+    }
+
+    let saveError = await store.createPersona(
+      draft: WorkspacePersonaDraft(
+        id: "persona-a",
+        name: "Persona A",
+        summary: "Summary",
+        responsibilities: [],
+        values: [],
+        nonGoals: [],
+        defaultKitIds: [],
+        allowedSkillIds: [],
+        forbiddenSkillIds: []
+      )
+    )
+
+    #expect(saveError?.contains("already exists") == true)
+    #expect(store.libraryActionIsError)
+  }
+
+  @Test
+  func createPersonaRejectsInvalidIDBeforeSave() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          "{}"
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in
+          Issue.record("saveRawJSON should not run for invalid persona ids.")
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    let saveError = await store.createPersona(
+      draft: WorkspacePersonaDraft(
+        id: "../persona-a",
+        name: "Persona A",
+        summary: "Summary",
+        responsibilities: [],
+        values: [],
+        nonGoals: [],
+        defaultKitIds: [],
+        allowedSkillIds: [],
+        forbiddenSkillIds: []
+      )
+    )
+
+    #expect(saveError?.contains("not valid") == true)
+    #expect(store.libraryActionIsError)
+  }
+
+  @Test
+  func staleCreatePersonaResultIsIgnoredAfterWorkspaceReload() async {
+    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
+    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+
+    let store = WorkspaceStore(
+      snapshotBuilder: StubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: StubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: StubLibraryEntityManager(
+        loadRawJSONHandler: { _ in
+          "{}"
+        },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { workspaceURL, _, _, _ in
+          if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
+            Thread.sleep(forTimeInterval: 0.3)
+          }
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = firstWorkspaceURL
+    store.loadWorkspace()
+
+    let saveTask = Task {
+      await store.createPersona(
+        draft: WorkspacePersonaDraft(
+          id: "persona-new",
+          name: "Persona New",
+          summary: "Summary",
+          responsibilities: [],
+          values: [],
+          nonGoals: [],
+          defaultKitIds: [],
+          allowedSkillIds: [],
+          forbiddenSkillIds: []
+        )
+      )
+    }
+
+    try? await Task.sleep(for: .milliseconds(20))
+
+    store.workspaceURL = secondWorkspaceURL
+    store.loadWorkspace()
+
+    let saveResult = await saveTask.value
+
+    #expect(saveResult == nil)
+    #expect(store.libraryActionMessage == nil)
+    #expect(!store.isLoadingLibraryEditor)
+    #expect(store.workspaceURL?.standardizedFileURL == secondWorkspaceURL.standardizedFileURL)
+  }
+
+  @Test
   func saveSessionForwardsValidatedIDsToSessionManager() async throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
     let expectedDraft = WorkspaceSessionDraft(
@@ -2381,5 +2665,13 @@ private struct StubPasteboardWriter: PasteboardWriting {
     }
 
     return shouldSucceed
+  }
+}
+
+private final class MutableBooleanState: @unchecked Sendable {
+  var value: Bool
+
+  init(value: Bool) {
+    self.value = value
   }
 }

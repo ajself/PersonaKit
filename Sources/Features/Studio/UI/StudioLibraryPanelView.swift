@@ -1,5 +1,6 @@
 import ContextCore
 import ContextWorkspaceCore
+import StudioFoundation
 import SwiftUI
 
 /// Library and essentials panel with edit/copy/reveal workflows.
@@ -25,6 +26,7 @@ struct StudioLibraryPanelView: View {
 
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
+  @State private var personaEditorPresentation: PersonaEditorPresentation?
 
   var body: some View {
     let visibleItems = filteredItems(items)
@@ -39,6 +41,9 @@ struct StudioLibraryPanelView: View {
     VStack(alignment: .leading, spacing: 0) {
       StudioLibraryToolbarView(
         actionState: actionState,
+        onNew: {
+          openPersonaEditor()
+        },
         onRevealInFinder: {
           guard let selectedItem else {
             return
@@ -97,6 +102,37 @@ struct StudioLibraryPanelView: View {
     }
     .searchable(text: $searchText, prompt: "Search \(selection.title)")
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .sheet(item: $personaEditorPresentation) { presentation in
+      PersonaEditorView(
+        title: "New Persona",
+        initialDraft: presentation.draft,
+        existingPersonaIDs: presentation.existingPersonaIDs,
+        knownKits: presentation.knownKits,
+        knownSkills: presentation.knownSkills,
+        onCancel: {
+          personaEditorPresentation = nil
+        },
+        onSave: { draft in
+          let normalizedDraft = WorkspacePersonaDraftBuilder().normalizedDraft(draft)
+          let expectedWorkspaceURL = presentation.workspaceURL.standardizedFileURL
+          let saveError = await workspaceStore.createPersona(draft: draft)
+
+          if saveError == nil {
+            await MainActor.run {
+              guard
+                workspaceStore.workspaceURL?.standardizedFileURL == expectedWorkspaceURL
+              else {
+                return
+              }
+
+              selectedLibraryItemID = normalizedDraft.id
+            }
+          }
+
+          return saveError
+        }
+      )
+    }
     .sheet(item: $markdownEditorPresentation) { presentation in
       MarkdownEditorView(
         title: "Edit \(presentation.itemID)",
@@ -158,6 +194,7 @@ struct StudioLibraryPanelView: View {
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       markdownEditorPresentation = nil
+      personaEditorPresentation = nil
       rawJSONEditorPresentation = nil
     }
   }
@@ -235,6 +272,24 @@ struct StudioLibraryPanelView: View {
         markdownEditorPresentation = presentation
       }
     }
+  }
+
+  private func openPersonaEditor() {
+    guard selection == .personas else {
+      return
+    }
+
+    guard let workspaceURL = workspaceStore.workspaceURL?.standardizedFileURL else {
+      return
+    }
+
+    personaEditorPresentation = PersonaEditorPresentation(
+      workspaceURL: workspaceURL,
+      draft: workspaceStore.defaultPersonaDraft(),
+      existingPersonaIDs: workspaceStore.snapshot.personas.map(\.id),
+      knownKits: workspaceStore.snapshot.kits,
+      knownSkills: workspaceStore.snapshot.skills
+    )
   }
 
   private func copySelectedGlobalItemToProject(

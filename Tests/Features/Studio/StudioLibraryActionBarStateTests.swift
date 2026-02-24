@@ -15,6 +15,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .rawJSON)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
     #expect(state.canReveal)
     #expect(state.canEdit)
     #expect(!state.canCopyToProject)
@@ -30,6 +32,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .rawJSON)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
     #expect(state.canReveal)
     #expect(!state.canEdit)
     #expect(state.canCopyToProject)
@@ -44,6 +48,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .markdown)
+    #expect(!state.showsCreateAction)
+    #expect(!state.canCreate)
     #expect(state.canReveal)
     #expect(state.canEdit)
     #expect(!state.canCopyToProject)
@@ -58,6 +64,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .markdown)
+    #expect(!state.showsCreateAction)
+    #expect(!state.canCreate)
     #expect(state.canReveal)
     #expect(!state.canEdit)
     #expect(state.canCopyToProject)
@@ -66,16 +74,31 @@ struct StudioLibraryActionBarStateTests {
   @Test
   func loadingDisablesEditAndCopyAcrossLibrarySelections() {
     let state = StudioLibraryActionBarState(
-      selection: .directives,
+      selection: .personas,
       selectedItem: makeItem(scope: .project),
       isLoadingLibraryEditor: true
     )
 
     #expect(state.editAction == .rawJSON)
+    #expect(state.showsCreateAction)
+    #expect(!state.canCreate)
     #expect(state.canReveal)
     #expect(!state.canEdit)
     #expect(!state.canCopyToProject)
     #expect(state.isLoadingEditor)
+  }
+
+  @Test
+  func directivesSelectionHidesCreateAction() {
+    let state = StudioLibraryActionBarState(
+      selection: .directives,
+      selectedItem: makeItem(scope: .project),
+      isLoadingLibraryEditor: false
+    )
+
+    #expect(state.editAction == .rawJSON)
+    #expect(!state.showsCreateAction)
+    #expect(!state.canCreate)
   }
 
   private func makeItem(

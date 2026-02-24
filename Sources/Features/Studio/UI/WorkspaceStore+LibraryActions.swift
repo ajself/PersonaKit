@@ -1,7 +1,24 @@
 import ContextCore
 import ContextWorkspaceCore
+import StudioFoundation
 
 extension WorkspaceStore {
+  /// Creates a prefilled draft for new-persona creation.
+  func defaultPersonaDraft() -> WorkspacePersonaDraft {
+    libraryFeatureModel.defaultPersonaDraft()
+  }
+
+  /// Saves a new persona draft to project scope and returns an optional error message.
+  func createPersona(draft: WorkspacePersonaDraft) async -> String? {
+    await libraryFeatureModel.createPersona(
+      draft: draft,
+      snapshot: snapshot,
+      workspaceURL: workspaceURL,
+      currentWorkspaceURLProvider: { self.workspaceURL },
+      onWorkspaceMutation: { self.loadWorkspace() }
+    )
+  }
+
   /// Loads raw JSON for a selected project-scoped library item.
   func openLibraryEditor(
     selectedItem: WorkspaceListItem?,
