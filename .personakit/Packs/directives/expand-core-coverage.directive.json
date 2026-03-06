@@ -1,0 +1,43 @@
+{
+  "id": "expand-core-coverage",
+  "version": "1.0",
+  "title": "Expand deterministic core coverage",
+  "goal": "Increase deterministic test coverage for relationship-map and scope/path edge cases.",
+  "steps": [
+    {
+      "text": "Identify highest-risk untested graph and scope behaviors."
+    },
+    {
+      "text": "Add deterministic tests that capture merge ordering, missing-node, and edge-deduplication behavior."
+    },
+    {
+      "text": "Add scope/path edge-case tests without broad source rewrites.",
+      "requiresReview": true
+    },
+    {
+      "text": "Run tests and report residual coverage gaps clearly."
+    }
+  ],
+  "acceptanceCriteria": [
+    "High-risk graph behaviors have deterministic coverage",
+    "Scope and path edge-case tests are added",
+    "No timing-sensitive flaky assertions are introduced",
+    "No unrelated refactors were introduced"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "manual",
+      "text": "Review new tests for determinism and focused scope"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "swift-refactor-safe"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

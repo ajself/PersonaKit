@@ -1,0 +1,47 @@
+{
+  "id": "integrate-lanes-with-stop-points",
+  "version": "1.0",
+  "title": "Integrate lane outputs with explicit stop points",
+  "goal": "Integrate multi-agent lane outputs in a controlled sequence with invariant enforcement and human review gates.",
+  "steps": [
+    {
+      "text": "Collect lane outputs and confirm each lane stayed inside allowed scope."
+    },
+    {
+      "text": "Integrate lanes in approved order while preserving architectural invariants."
+    },
+    {
+      "text": "Pause at each defined stop point for human review before continuing.",
+      "requiresReview": true
+    },
+    {
+      "text": "Run final verification and produce a concise integration risk summary."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Integration follows approved lane order",
+    "All stop points were respected",
+    "No new invariant violations were introduced",
+    "No scope expansion occurred during integration"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/validate-repo.sh"
+    },
+    {
+      "kind": "manual",
+      "text": "Review integration summary for unresolved risks"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "swift-refactor-safe"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

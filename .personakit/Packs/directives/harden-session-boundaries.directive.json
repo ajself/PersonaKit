@@ -1,0 +1,43 @@
+{
+  "id": "harden-session-boundaries",
+  "version": "1.0",
+  "title": "Harden Studio session boundary ownership",
+  "goal": "Ensure session UI interactions pass through store-owned APIs and preserve architectural boundaries.",
+  "steps": [
+    {
+      "text": "Identify view-level calls that bypass store API boundaries."
+    },
+    {
+      "text": "Refactor interactions to route through store-level methods without changing behavior."
+    },
+    {
+      "text": "Verify view purity and ownership constraints remain intact.",
+      "requiresReview": true
+    },
+    {
+      "text": "Run targeted tests and summarize architectural risk changes."
+    }
+  ],
+  "acceptanceCriteria": [
+    "No direct view-to-feature-model internal coupling remains in target scope",
+    "Behavior remains unchanged",
+    "No IO is introduced into view layer",
+    "No unrelated refactors were introduced"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "manual",
+      "text": "Review boundary diff for scope creep"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "swift-refactor-safe"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "harden-validation-workflow",
+  "version": "1.0",
+  "title": "Harden multi-agent validation workflow",
+  "goal": "Make repository validation safer and more practical for concurrent multi-agent execution.",
+  "steps": [
+    {
+      "text": "Identify workflow bottlenecks and collision points for concurrent validation runs."
+    },
+    {
+      "text": "Apply minimal workflow and documentation updates to support parallel-safe validation."
+    },
+    {
+      "text": "Verify command-path consistency and contributor guidance.",
+      "requiresReview": true
+    },
+    {
+      "text": "Run validation checks and summarize remaining operational risks."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Validation workflow is safe for concurrent use",
+    "Contributor guidance is clear and consistent",
+    "Scope remains limited to workflow surfaces",
+    "No unrelated implementation changes were introduced"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/validate-repo.sh"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "swift-refactor-safe"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

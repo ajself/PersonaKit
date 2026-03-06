@@ -1,0 +1,43 @@
+{
+  "id": "stabilize-preview-cancellation",
+  "version": "1.0",
+  "title": "Stabilize Studio preview cancellation behavior",
+  "goal": "Make preview cancellation and restart behavior deterministic and reliable.",
+  "steps": [
+    {
+      "text": "Identify the exact cancellation and restart state transitions involved in preview loading."
+    },
+    {
+      "text": "Implement the smallest behavior-preserving correction to ensure consistent loading state after cancellation."
+    },
+    {
+      "text": "Replace timing-fragile test synchronization with deterministic coordination.",
+      "requiresReview": true
+    },
+    {
+      "text": "Run focused and full verification checks and summarize residual concurrency risk."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Preview cancellation and restart behavior is deterministic",
+    "No unrelated refactors were introduced",
+    "Scope remains limited to reliability concerns",
+    "Verification checks pass"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "manual",
+      "text": "Review diff to confirm no scope expansion"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "swift-refactor-safe"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
