@@ -10,7 +10,8 @@ persona_id="senior-swiftui-engineer"
 directive_id="apply-style"
 session_id="senior-swiftui-engineer_apply-style"
 
-work_dir="${TMPDIR:-/tmp}/personakit-validate"
+validate_tmp_root="${PERSONAKIT_VALIDATE_TMP_ROOT:-${TMPDIR:-/tmp}}"
+work_dir="${validate_tmp_root}/personakit-validate"
 cleanup_on_success="true"
 unchecked_sendable_approval_file="Docs/Architecture/unchecked-sendable-approvals.txt"
 

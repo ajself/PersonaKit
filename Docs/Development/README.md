@@ -50,7 +50,7 @@ Run development validation from a dedicated git worktree.
 1. Keep one active lane or task per worktree.
 2. Run all commands from that worktree root.
 3. For parallel runs, use a unique agent/lane temp root per worktree:
-   - `TMPDIR=/tmp/personakit-$USER-<agent>`
+   - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-<agent>`
 
 ## Standard workflow (manual)
 
@@ -72,14 +72,16 @@ investigated before proceeding.
 ## Scripted workflow
 
 `Scripts/validate-repo.sh` runs the same steps and handles output comparison.
-It uses `"$TMPDIR/personakit-validate"` for outputs. Set a unique `TMPDIR` per
-lane or agent to avoid collisions in parallel execution. Output remains
-deterministic (no timestamps).
+It uses `"$PERSONAKIT_VALIDATE_TMP_ROOT/personakit-validate"` for outputs when
+that variable is set. Otherwise it falls back to `"$TMPDIR/personakit-validate"`
+and then `/tmp/personakit-validate`. Set a unique temp root per lane or agent
+to avoid collisions in parallel execution. Output remains deterministic (no
+timestamps).
 
 Run it from the repo root:
 
 1. Direct script form:
-   - `TMPDIR=/tmp/personakit-$USER-lane-d Scripts/validate-repo.sh`
+   - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-lane-d Scripts/validate-repo.sh`
 2. Makefile wrapper:
    - `make validate-repo VALIDATE_AGENT=lane-d`
 

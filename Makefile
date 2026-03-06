@@ -39,7 +39,7 @@ help:
 	@printf "Project workflow:\n"
 	@printf "  init            Initialize a starter kit in ./.personakit\n"
 	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
-	@printf "  validate-repo   Run full deterministic repo validation (parallel-safe via TMPDIR)\n"
+	@printf "  validate-repo   Run full deterministic repo validation (parallel-safe temp root)\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
 	@printf "  list            List entities (TYPE=personas|kits|directives|intents|skills|essentials)\n"
 	@printf "  graph           Print the resolution graph\n"
@@ -59,7 +59,7 @@ help:
 	@printf "  INSTALL_DIR     Install directory (default: %s)\n" "$(INSTALL_DIR)"
 	@printf "  ZIP_NAME        Zip file name (default: %s)\n" "$(ZIP_NAME)"
 	@printf "  VALIDATE_AGENT  Agent/lane id for parallel-safe validation temp paths (default: %s)\n" "$(VALIDATE_AGENT)"
-	@printf "  VALIDATE_TMPDIR TMPDIR used by validate-repo (default: %s)\n" "$(VALIDATE_TMPDIR)"
+	@printf "  VALIDATE_TMPDIR Temp root passed as PERSONAKIT_VALIDATE_TMP_ROOT (default: %s)\n" "$(VALIDATE_TMPDIR)"
 
 .PHONY: build
 build:
@@ -115,7 +115,7 @@ validate:
 
 .PHONY: validate-repo
 validate-repo:
-	TMPDIR=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
+	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
 .PHONY: export
 export:
