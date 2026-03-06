@@ -48,28 +48,29 @@ if [[ ! -f "$unchecked_sendable_approval_file" ]]; then
   exit 1
 fi
 
-unchecked_matches=()
-while IFS= read -r match; do
-  [[ -n "$match" ]] && unchecked_matches+=("$match")
-done < <(rg -n --no-heading "@unchecked[[:space:]]+Sendable" App Sources Tests || true)
-unauthorized_matches=()
+unchecked_matches_file="$work_dir/unchecked-sendable-matches.txt"
+unauthorized_matches_file="$work_dir/unchecked-sendable-unapproved.txt"
 
-for match in "${unchecked_matches[@]}"; do
+rg -n --no-heading "@unchecked[[:space:]]+Sendable" App Sources Tests >"$unchecked_matches_file" || true
+: >"$unauthorized_matches_file"
+
+while IFS= read -r match; do
+  [[ -z "$match" ]] && continue
   match_path="${match%%:*}"
   match_remainder="${match#*:}"
   match_line="${match_remainder%%:*}"
   match_id="${match_path}:${match_line}"
 
   if ! grep -Fxq "$match_id" "$unchecked_sendable_approval_file"; then
-    unauthorized_matches+=("$match")
+    printf '%s\n' "$match" >>"$unauthorized_matches_file"
   fi
-done
+done <"$unchecked_matches_file"
 
-if [[ ${#unauthorized_matches[@]} -gt 0 ]]; then
+if [[ -s "$unauthorized_matches_file" ]]; then
   echo "Unapproved @unchecked Sendable usage detected."
   echo "Repository policy requires explicit owner approval for each usage."
   echo "Add an exact path:line entry to $unchecked_sendable_approval_file only when approved."
-  printf '%s\n' "${unauthorized_matches[@]}"
+  cat "$unauthorized_matches_file"
   exit 1
 fi
 
