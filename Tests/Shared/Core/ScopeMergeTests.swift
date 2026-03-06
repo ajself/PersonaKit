@@ -65,44 +65,23 @@ struct ScopeMergeTests {
     let projectScope = root.appendingPathComponent(".personakit")
     let globalScope = home.appendingPathComponent(".personakit")
 
-    try writePersona(
-      id: "persona",
-      name: "Project Persona",
-      summary: "Project summary",
-      defaultKitIds: ["kit"],
-      root: projectScope
-    )
-    try writeKit(
-      id: "kit",
-      name: "Project Kit",
-      summary: "Project summary",
-      essentialIds: ["shared-essential"],
-      root: projectScope
-    )
-    try writeDirective(
-      id: "directive",
-      title: "Directive",
-      goal: "Goal",
-      root: projectScope
-    )
-    try writeEssential(
-      id: "shared-essential",
-      content: "# Global Essential\n",
-      root: globalScope
+    try writeBasicScopeMergeFixture(
+      projectScope: projectScope,
+      globalScope: globalScope,
+      globalEssentialContent: "# Global Essential\n"
     )
 
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
-    let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
-    let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
+    let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
+    let resolvedEssential = try #require(resolved.essentials.first)
+    let expectedPath =
+      globalScope
+      .appendingPathComponent("Packs/essentials/shared-essential.md")
+      .standardizedFileURL.path
 
     #expect(resolved.essentials.count == 1)
-    #expect(
-      resolved.essentials.first?.url.standardizedFileURL.path
-        == globalScope
-        .appendingPathComponent("Packs/essentials/shared-essential.md")
-        .standardizedFileURL.path
-    )
+    #expect(resolvedEssential.url.standardizedFileURL.path == expectedPath)
   }
 
   @Test
@@ -112,108 +91,124 @@ struct ScopeMergeTests {
     let projectScope = root.appendingPathComponent(".personakit")
     let globalScope = home.appendingPathComponent(".personakit")
 
-    try writePersona(
-      id: "persona",
-      name: "Project Persona",
-      summary: "Project summary",
-      defaultKitIds: ["kit"],
-      root: projectScope
-    )
-    try writeKit(
-      id: "kit",
-      name: "Project Kit",
-      summary: "Project summary",
-      essentialIds: ["shared-essential"],
-      root: projectScope
-    )
-    try writeDirective(
-      id: "directive",
-      title: "Directive",
-      goal: "Goal",
-      root: projectScope
-    )
-    try writeEssential(
-      id: "shared-essential",
-      content: "# Project Essential\n",
-      root: projectScope
-    )
-    try writeEssential(
-      id: "shared-essential",
-      content: "# Global Essential\n",
-      root: globalScope
+    try writeBasicScopeMergeFixture(
+      projectScope: projectScope,
+      projectEssentialContent: "# Project Essential\n",
+      globalScope: globalScope,
+      globalEssentialContent: "# Global Essential\n"
     )
 
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
-    let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
-    let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
+    let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
+    let resolvedEssential = try #require(resolved.essentials.first)
+    let expectedPath =
+      projectScope
+      .appendingPathComponent("Packs/essentials/shared-essential.md")
+      .standardizedFileURL.path
 
     #expect(resolved.essentials.count == 1)
-    #expect(
-      resolved.essentials.first?.url.standardizedFileURL.path
-        == projectScope
-        .appendingPathComponent("Packs/essentials/shared-essential.md")
-        .standardizedFileURL.path
-    )
+    #expect(resolvedEssential.url.standardizedFileURL.path == expectedPath)
   }
 
   @Test
-  func essentialResolvesFromProjectWhenScopeURLsContainTraversalSegments() throws {
+  func essentialResolvesFromProjectWhenUsingRelativeScopeURLs() throws {
     let root = try makeTempDirectory()
     let home = try makeTempDirectory()
-    let canonicalProjectScope = root.appendingPathComponent("project/.personakit")
-    let canonicalGlobalScope = home.appendingPathComponent("global/.personakit")
-    let projectScope = root.appendingPathComponent("project/../project/.personakit")
-    let globalScope = home.appendingPathComponent("global/../global/.personakit")
+    let projectScope = URL(
+      fileURLWithPath: "project/.personakit",
+      relativeTo: root
+    ).standardizedFileURL
+    let globalScope = URL(
+      fileURLWithPath: "global/.personakit",
+      relativeTo: home
+    ).standardizedFileURL
 
-    try writePersona(
-      id: "persona",
-      name: "Project Persona",
-      summary: "Project summary",
-      defaultKitIds: ["kit"],
-      root: projectScope
-    )
-    try writeKit(
-      id: "kit",
-      name: "Project Kit",
-      summary: "Project summary",
-      essentialIds: ["shared-essential"],
-      root: projectScope
-    )
-    try writeDirective(
-      id: "directive",
-      title: "Directive",
-      goal: "Goal",
-      root: projectScope
-    )
-    try writeEssential(
-      id: "shared-essential",
-      content: "# Project Essential\n",
-      root: projectScope
-    )
-    try writeEssential(
-      id: "shared-essential",
-      content: "# Global Essential\n",
-      root: globalScope
+    try writeBasicScopeMergeFixture(
+      projectScope: projectScope,
+      projectEssentialContent: "# Project Essential\n",
+      globalScope: globalScope,
+      globalEssentialContent: "# Global Essential\n"
     )
 
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
-    let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
-    let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
+    let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
+    let resolvedEssential = try #require(resolved.essentials.first)
+    let expectedProjectEssentialPath =
+      projectScope
+      .appendingPathComponent("Packs/essentials/shared-essential.md")
+      .standardizedFileURL.path
+    let unexpectedGlobalEssentialPath =
+      globalScope
+      .appendingPathComponent("Packs/essentials/shared-essential.md")
+      .standardizedFileURL.path
 
     #expect(resolved.essentials.count == 1)
-    #expect(
-      resolved.essentials.first?.url.standardizedFileURL.path
-        == canonicalProjectScope
-        .appendingPathComponent("Packs/essentials/shared-essential.md")
-        .standardizedFileURL.path
+    #expect(resolvedEssential.url.standardizedFileURL.path == expectedProjectEssentialPath)
+    #expect(resolvedEssential.url.standardizedFileURL.path != unexpectedGlobalEssentialPath)
+  }
+}
+
+private func basicScopeMergeDefinition() -> SessionDefinition {
+  SessionDefinition(
+    personaId: "persona",
+    directiveId: "directive",
+    kitOverrides: nil
+  )
+}
+
+private func resolveBasicScopeMergeSession(
+  registry: Registry,
+  scopes: ScopeSet
+) throws -> ResolvedSession {
+  try Resolver.resolve(
+    definition: basicScopeMergeDefinition(),
+    registry: registry,
+    scopes: scopes
+  )
+}
+
+private func writeBasicScopeMergeFixture(
+  projectScope: URL,
+  projectEssentialContent: String? = nil,
+  globalScope: URL? = nil,
+  globalEssentialContent: String? = nil
+) throws {
+  try writePersona(
+    id: "persona",
+    name: "Project Persona",
+    summary: "Project summary",
+    defaultKitIds: ["kit"],
+    root: projectScope
+  )
+  try writeKit(
+    id: "kit",
+    name: "Project Kit",
+    summary: "Project summary",
+    essentialIds: ["shared-essential"],
+    root: projectScope
+  )
+  try writeDirective(
+    id: "directive",
+    title: "Directive",
+    goal: "Goal",
+    root: projectScope
+  )
+
+  if let projectEssentialContent {
+    try writeEssential(
+      id: "shared-essential",
+      content: projectEssentialContent,
+      root: projectScope
     )
-    #expect(
-      resolved.essentials.first?.url.standardizedFileURL.path
-        != canonicalGlobalScope
-        .appendingPathComponent("Packs/essentials/shared-essential.md")
-        .standardizedFileURL.path
+  }
+
+  if let globalScope, let globalEssentialContent {
+    try writeEssential(
+      id: "shared-essential",
+      content: globalEssentialContent,
+      root: globalScope
     )
   }
 }

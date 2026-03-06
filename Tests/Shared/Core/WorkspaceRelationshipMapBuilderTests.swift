@@ -6,11 +6,7 @@ import Testing
 struct WorkspaceRelationshipMapBuilderTests {
   @Test
   func relationshipMapOrderingIsDeterministicAcrossRuns() throws {
-    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
-
-    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
-    try copyFixtureKit(to: projectScopeURL)
+    let (workspaceURL, _) = try makeWorkspaceWithProjectFixture()
 
     let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
     let first = try builder.build(workspaceURL: workspaceURL)
@@ -21,13 +17,7 @@ struct WorkspaceRelationshipMapBuilderTests {
 
   @Test
   func relationshipMapPrefersProjectEntitiesOverGlobalScope() throws {
-    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
-    let globalScopeURL = try makeTempDirectory().appendingPathComponent(".personakit")
-
-    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
-    try copyFixtureKit(to: projectScopeURL)
-    try copyFixtureKit(to: globalScopeURL)
+    let (workspaceURL, _, globalScopeURL) = try makeWorkspaceWithProjectAndGlobalFixtures()
 
     let globalSkillURL = globalScopeURL.appendingPathComponent("Packs/skills/codex-cli.skill.json")
     try mutateJSONFile(globalSkillURL, as: Skill.self) { skill in
@@ -45,23 +35,15 @@ struct WorkspaceRelationshipMapBuilderTests {
     let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: globalScopeURL)
     let map = try builder.build(workspaceURL: workspaceURL)
 
-    let codexNode = try #require(
-      map.nodes.first(where: { $0.key == "skill:codex-cli" })
-    )
+    let codexNode = try #require(map.nodes.first(where: { $0.key == "skill:codex-cli" }))
     #expect(codexNode.displayName == "Codex CLI")
   }
 
   @Test
   func relationshipMapDeduplicatesDuplicateMissingReferencesForSameSource() throws {
-    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
 
-    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
-    try copyFixtureKit(to: projectScopeURL)
-
-    let personaURL = projectScopeURL.appendingPathComponent(
-      "Packs/personas/senior-swiftui-engineer.persona.json"
-    )
+    let personaURL = projectScopeURL.appendingPathComponent("Packs/personas/senior-swiftui-engineer.persona.json")
     try mutateJSONFile(personaURL, as: Persona.self) { persona in
       Persona(
         id: persona.id,
@@ -84,9 +66,7 @@ struct WorkspaceRelationshipMapBuilderTests {
     let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
     let map = try builder.build(workspaceURL: workspaceURL)
 
-    let missingKitNode = try #require(
-      map.nodes.first(where: { $0.key == "kit:missing-kit" })
-    )
+    let missingKitNode = try #require(map.nodes.first(where: { $0.key == "kit:missing-kit" }))
     #expect(missingKitNode.isMissing)
 
     let duplicateMissingKitErrors = map.resolutionErrors.filter { error in
@@ -107,25 +87,42 @@ struct WorkspaceRelationshipMapBuilderTests {
 
   @Test
   func relationshipMapIncludesUnreferencedEssentialNodesFromScope() throws {
-    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
-    let globalScopeURL = try makeTempDirectory().appendingPathComponent(".personakit")
+    let (workspaceURL, _, globalScopeURL) = try makeWorkspaceWithProjectAndGlobalFixtures()
 
-    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
-    try copyFixtureKit(to: projectScopeURL)
-    try copyFixtureKit(to: globalScopeURL)
-
-    let globalEssentialURL =
-      globalScopeURL.appendingPathComponent("Packs/essentials/workspace-only-doc.md")
+    let globalEssentialURL = globalScopeURL.appendingPathComponent("Packs/essentials/workspace-only-doc.md")
     try Data("# Workspace-only Essential\n".utf8).write(to: globalEssentialURL, options: [.atomic])
 
     let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: globalScopeURL)
     let map = try builder.build(workspaceURL: workspaceURL)
 
-    let workspaceOnlyEssential = try #require(
-      map.nodes.first(where: { $0.key == "essential:workspace-only-doc" })
-    )
+    let workspaceOnlyEssential = try #require(map.nodes.first(where: { $0.key == "essential:workspace-only-doc" }))
     #expect(!workspaceOnlyEssential.isMissing)
+  }
+
+  private func makeWorkspaceWithProjectFixture() throws -> (
+    workspaceURL: URL,
+    projectScopeURL: URL
+  ) {
+    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+
+    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    try copyFixtureKit(to: projectScopeURL)
+
+    return (workspaceURL, projectScopeURL)
+  }
+
+  private func makeWorkspaceWithProjectAndGlobalFixtures() throws -> (
+    workspaceURL: URL,
+    projectScopeURL: URL,
+    globalScopeURL: URL
+  ) {
+    let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
+    let globalScopeURL = try makeTempDirectory().appendingPathComponent(".personakit")
+
+    try copyFixtureKit(to: globalScopeURL)
+
+    return (workspaceURL, projectScopeURL, globalScopeURL)
   }
 
   private func mutateJSONFile<T: Codable>(

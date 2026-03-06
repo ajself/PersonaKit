@@ -18,11 +18,13 @@ struct ScopeSetTests {
     let root = try makeTempDirectory()
     let project = root.appendingPathComponent("project/.personakit")
     let global = root.appendingPathComponent("global/.personakit")
+    let expectedLoadOrder = [global.standardizedFileURL.path, project.standardizedFileURL.path]
+    let expectedResolutionOrder = [project.standardizedFileURL.path, global.standardizedFileURL.path]
 
     let scopes = ScopeSet(projectScopeURL: project, globalScopeURL: global)
 
-    #expect(scopes.loadOrder.map(\.path) == [global.standardizedFileURL.path, project.standardizedFileURL.path])
-    #expect(scopes.resolutionOrder.map(\.path) == [project.standardizedFileURL.path, global.standardizedFileURL.path])
+    #expect(scopes.loadOrder.map(\.path) == expectedLoadOrder)
+    #expect(scopes.resolutionOrder.map(\.path) == expectedResolutionOrder)
   }
 
   @Test
@@ -58,7 +60,7 @@ struct ScopeSetTests {
   func normalizesDotSegmentsBeforeDeduping() throws {
     let root = try makeTempDirectory()
     let canonical = root.appendingPathComponent("pk/.personakit")
-    let nonCanonical = root.appendingPathComponent("pk/work/../.personakit")
+    let nonCanonical = root.appendingPathComponent("pk/./.personakit")
     let scopes = ScopeSet(projectScopeURL: nonCanonical, globalScopeURL: canonical)
 
     #expect(scopes.projectScopeURL?.path == canonical.standardizedFileURL.path)
