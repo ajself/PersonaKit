@@ -164,7 +164,7 @@ struct WorkspaceSystemFeatureModelTests {
   }
 }
 
-private final class WorkspaceInitializationState: @unchecked Sendable {
+private final class WorkspaceInitializationState {
   var createdDirectories: [URL] = []
 }
 
@@ -177,7 +177,7 @@ private struct StubWorkspacePicker: WorkspacePicking {
   }
 }
 
-private final class SpyFileRevealer: FileRevealing, @unchecked Sendable {
+private final class SpyFileRevealer: FileRevealing {
   private(set) var revealedURLs: [URL] = []
 
   @MainActor

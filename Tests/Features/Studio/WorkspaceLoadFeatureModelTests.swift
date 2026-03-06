@@ -138,19 +138,15 @@ struct WorkspaceLoadFeatureModelTests {
   func loadWorkspaceIgnoresStaleResultAfterWorkspaceChange() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
-    let gate = StaleLoadGate()
+    let gate = BlockingCallGate()
+    let callbackInvoked = MutableBooleanState(value: false)
     let model = WorkspaceLoadFeatureModel(
       operationRunner: makeOperationRunner(
         snapshotBuilder: StubSnapshotBuilder { workspaceURL in
           if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            gate.markLoadStarted()
-            let timeout = Date().addingTimeInterval(1)
-
-            while !gate.isLoadAllowedToFinish, Date() < timeout {
-              Thread.sleep(forTimeInterval: 0.001)
-            }
-
-            gate.markLoadFinished()
+            _ = gate.markStarted()
+            gate.waitUntilReleased()
+            gate.markFinished()
           }
 
           return WorkspaceSnapshot.empty
@@ -167,32 +163,32 @@ struct WorkspaceLoadFeatureModelTests {
       currentWorkspaceURL: { activeWorkspaceURL },
       onLoaded: { _ in
         didLoadSnapshot = true
-        gate.markCallbackInvoked()
+        callbackInvoked.value = true
       },
       onMissingPersonaKitDirectory: { _ in
         didReportMissingPersonaKit = true
-        gate.markCallbackInvoked()
+        callbackInvoked.value = true
       },
       onLoadFailure: { _ in
         didReportFailure = true
-        gate.markCallbackInvoked()
+        callbackInvoked.value = true
       }
     )
 
     await waitFor {
-      gate.isLoadStarted
+      gate.hasStarted
     }
 
     activeWorkspaceURL = secondWorkspaceURL
-    gate.allowLoadToFinish()
+    gate.release()
 
     await waitFor {
-      gate.isLoadFinished
+      gate.hasFinished
     }
 
-    try? await Task.sleep(for: .milliseconds(250))
+    await yieldTasks()
 
-    #expect(!gate.isCallbackInvoked)
+    #expect(!callbackInvoked.value)
     #expect(!didLoadSnapshot)
     #expect(!didReportFailure)
     #expect(!didReportMissingPersonaKit)
@@ -284,10 +280,16 @@ struct WorkspaceLoadFeatureModelTests {
         return
       }
 
-      try? await Task.sleep(for: .milliseconds(10))
+      await Task.yield()
     }
 
     #expect(condition())
+  }
+
+  private func yieldTasks(_ iterations: Int = 50) async {
+    for _ in 0..<iterations {
+      await Task.yield()
+    }
   }
 }
 
@@ -412,62 +414,6 @@ private struct NoOpWorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuil
       resolutionErrors: [],
       isFullyResolved: true
     )
-  }
-}
-
-private final class StaleLoadGate: @unchecked Sendable {
-  private let lock = NSLock()
-  private var loadStarted = false
-  private var loadAllowedToFinish = false
-  private var loadFinished = false
-  private var callbackInvoked = false
-
-  var isLoadStarted: Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return loadStarted
-  }
-
-  var isLoadAllowedToFinish: Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return loadAllowedToFinish
-  }
-
-  var isLoadFinished: Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return loadFinished
-  }
-
-  var isCallbackInvoked: Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return callbackInvoked
-  }
-
-  func markLoadStarted() {
-    lock.lock()
-    defer { lock.unlock() }
-    loadStarted = true
-  }
-
-  func allowLoadToFinish() {
-    lock.lock()
-    defer { lock.unlock() }
-    loadAllowedToFinish = true
-  }
-
-  func markLoadFinished() {
-    lock.lock()
-    defer { lock.unlock() }
-    loadFinished = true
-  }
-
-  func markCallbackInvoked() {
-    lock.lock()
-    defer { lock.unlock() }
-    callbackInvoked = true
   }
 }
 

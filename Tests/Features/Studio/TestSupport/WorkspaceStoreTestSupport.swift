@@ -2,6 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import Foundation
 import StudioFoundation
+import Synchronization
 import Testing
 
 @MainActor
@@ -17,15 +18,39 @@ func waitFor(
       return
     }
 
-    try? await Task.sleep(for: .milliseconds(10))
+    await Task.yield()
   }
 
   #expect(condition())
 }
 
-final class WorkspaceStoreInitializationState: @unchecked Sendable {
-  var createdDirectories: [URL] = []
-  var isInitialized = false
+final class WorkspaceStoreInitializationState: Sendable {
+  private struct State: Sendable {
+    var createdDirectories: [URL] = []
+    var isInitialized = false
+  }
+
+  private let state = Mutex(State())
+
+  var createdDirectories: [URL] {
+    state.withLock { $0.createdDirectories }
+  }
+
+  var isInitialized: Bool {
+    state.withLock { $0.isInitialized }
+  }
+
+  func appendCreatedDirectory(_ url: URL) {
+    state.withLock { state in
+      state.createdDirectories.append(url)
+    }
+  }
+
+  func markInitialized() {
+    state.withLock { state in
+      state.isInitialized = true
+    }
+  }
 }
 
 struct WorkspaceStoreStubSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
@@ -301,10 +326,71 @@ struct WorkspaceStoreStubPasteboardWriter: PasteboardWriting {
   }
 }
 
-final class MutableBooleanState: @unchecked Sendable {
-  var value: Bool
+final class MutableBooleanState: Sendable {
+  private let state: Mutex<Bool>
 
   init(value: Bool) {
-    self.value = value
+    state = Mutex(value)
+  }
+
+  var value: Bool {
+    get {
+      state.withLock { $0 }
+    }
+
+    set {
+      state.withLock { value in
+        value = newValue
+      }
+    }
+  }
+}
+
+final class BlockingCallGate: Sendable {
+  private struct State: Sendable {
+    var startedCount = 0
+    var isReleased = false
+    var hasFinished = false
+  }
+
+  private let state = Mutex(State())
+
+  func markStarted() -> Int {
+    state.withLock { state in
+      state.startedCount += 1
+      return state.startedCount
+    }
+  }
+
+  var hasStarted: Bool {
+    state.withLock { $0.startedCount > 0 }
+  }
+
+  var hasFinished: Bool {
+    state.withLock { $0.hasFinished }
+  }
+
+  func waitUntilReleased() {
+    while true {
+      if state.withLock({ $0.isReleased }) {
+        return
+      }
+    }
+  }
+
+  func release() {
+    state.withLock { state in
+      state.isReleased = true
+    }
+  }
+
+  func markFinished() {
+    state.withLock { state in
+      state.hasFinished = true
+    }
+  }
+
+  func currentStartCount() -> Int {
+    state.withLock { $0.startedCount }
   }
 }

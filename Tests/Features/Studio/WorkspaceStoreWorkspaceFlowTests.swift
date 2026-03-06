@@ -199,8 +199,8 @@ struct WorkspaceStoreWorkspaceFlowTests {
       workspaceInitializer: WorkspaceInitializer(
         dependencies: WorkspaceInitializerDependencies(
           createDirectory: { directoryURL in
-            state.createdDirectories.append(directoryURL.standardizedFileURL)
-            state.isInitialized = true
+            state.appendCreatedDirectory(directoryURL.standardizedFileURL)
+            state.markInitialized()
           }
         )
       )

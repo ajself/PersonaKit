@@ -317,6 +317,7 @@ struct WorkspaceStoreSessionActionsTests {
   @Test
   func refreshSessionPreviewIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let previewGate = BlockingCallGate()
     let snapshot = makeSessionSnapshot(
       sessionID: "session-a",
       fileName: "session-a.session.json"
@@ -331,7 +332,9 @@ struct WorkspaceStoreSessionActionsTests {
       },
       sessionPreviewManager: WorkspaceStoreStubSessionPreviewManager(
         loadPreviewHandler: { _, session in
-          Thread.sleep(forTimeInterval: 0.3)
+          _ = previewGate.markStarted()
+          previewGate.waitUntilReleased()
+          previewGate.markFinished()
           return "preview-\(session.id)"
         },
         exportPreviewHandler: { _, _ in }
@@ -347,7 +350,9 @@ struct WorkspaceStoreSessionActionsTests {
 
     store.refreshSessionPreview(for: store.snapshot.sessions.first)
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      previewGate.hasStarted
+    }
 
     store.workspaceURL = nil
     store.refreshSessionPreview(for: store.snapshot.sessions.first)
@@ -356,7 +361,12 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(store.sessionPreviewErrorMessage == nil)
     #expect(!store.isLoadingSessionPreview)
 
-    try? await Task.sleep(for: .milliseconds(350))
+    previewGate.release()
+
+    await waitFor {
+      previewGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.sessionPreview.isEmpty)
     #expect(store.sessionPreviewErrorMessage == nil)
@@ -366,6 +376,7 @@ struct WorkspaceStoreSessionActionsTests {
   @Test
   func newerPreviewResultWinsWhenPreviewLoadsOverlap() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let previewGate = BlockingCallGate()
     let snapshot = WorkspaceSnapshot(
       sessions: [
         WorkspaceSessionListItem(
@@ -401,7 +412,9 @@ struct WorkspaceStoreSessionActionsTests {
       sessionPreviewManager: WorkspaceStoreStubSessionPreviewManager(
         loadPreviewHandler: { _, session in
           if session.id == "session-a" {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = previewGate.markStarted()
+            previewGate.waitUntilReleased()
+            previewGate.markFinished()
             return "preview-a"
           }
 
@@ -419,15 +432,21 @@ struct WorkspaceStoreSessionActionsTests {
     }
 
     store.refreshSessionPreview(for: store.snapshot.sessions.first { $0.id == "session-a" })
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      previewGate.hasStarted
+    }
     store.refreshSessionPreview(for: store.snapshot.sessions.first { $0.id == "session-b" })
+    previewGate.release()
 
     await waitFor {
       store.sessionPreview == "preview-b"
         && !store.isLoadingSessionPreview
     }
 
-    try? await Task.sleep(for: .milliseconds(350))
+    await waitFor {
+      previewGate.hasFinished
+    }
+    await yieldTasks()
     #expect(store.sessionPreview == "preview-b")
   }
 
@@ -523,6 +542,7 @@ struct WorkspaceStoreSessionActionsTests {
   func refreshSessionMapIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let mapGate = BlockingCallGate()
     let snapshot = WorkspaceSnapshot(
       sessions: [
         WorkspaceSessionListItem(
@@ -564,7 +584,9 @@ struct WorkspaceStoreSessionActionsTests {
       ),
       sessionMapBuilder: WorkspaceStoreStubSessionMapBuilder(
         buildHandler: { _, _, _, _ in
-          Thread.sleep(forTimeInterval: 0.3)
+          _ = mapGate.markStarted()
+          mapGate.waitUntilReleased()
+          mapGate.markFinished()
 
           return WorkspaceSessionMap(
             nodes: [
@@ -593,7 +615,9 @@ struct WorkspaceStoreSessionActionsTests {
     }
 
     store.refreshSessionMap(for: store.snapshot.sessions.first)
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      mapGate.hasStarted
+    }
 
     store.workspaceURL = nil
     store.refreshSessionMap(for: nil)
@@ -602,7 +626,12 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(store.sessionMapErrorMessage == nil)
     #expect(!store.isLoadingSessionMap)
 
-    try? await Task.sleep(for: .milliseconds(350))
+    mapGate.release()
+
+    await waitFor {
+      mapGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.sessionMap == nil)
     #expect(store.sessionMapErrorMessage == nil)
@@ -643,6 +672,7 @@ struct WorkspaceStoreSessionActionsTests {
   @Test
   func refreshWorkspaceRelationshipMapIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let relationshipGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
@@ -653,7 +683,9 @@ struct WorkspaceStoreSessionActionsTests {
       },
       workspaceRelationshipMapBuilder: WorkspaceStoreStubWorkspaceRelationshipMapBuilder(
         buildHandler: { _ in
-          Thread.sleep(forTimeInterval: 0.3)
+          _ = relationshipGate.markStarted()
+          relationshipGate.waitUntilReleased()
+          relationshipGate.markFinished()
           return makeWorkspaceRelationshipMap(personaID: "persona-a")
         }
       )
@@ -663,7 +695,9 @@ struct WorkspaceStoreSessionActionsTests {
     store.loadWorkspace()
 
     store.refreshWorkspaceRelationshipMap()
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      relationshipGate.hasStarted
+    }
 
     store.workspaceURL = nil
     store.refreshWorkspaceRelationshipMap()
@@ -672,7 +706,12 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(store.workspaceRelationshipMapErrorMessage == nil)
     #expect(!store.isLoadingWorkspaceRelationshipMap)
 
-    try? await Task.sleep(for: .milliseconds(350))
+    relationshipGate.release()
+
+    await waitFor {
+      relationshipGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.workspaceRelationshipMap == nil)
     #expect(store.workspaceRelationshipMapErrorMessage == nil)
@@ -710,6 +749,12 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(store.workspaceRelationshipMap == nil)
     #expect(store.workspaceRelationshipMapErrorMessage == nil)
     #expect(!store.isLoadingWorkspaceRelationshipMap)
+  }
+
+  private func yieldTasks(_ iterations: Int = 50) async {
+    for _ in 0..<iterations {
+      await Task.yield()
+    }
   }
 
   @Test

@@ -18,6 +18,7 @@ struct WorkspaceSessionFeatureModelMapTests {
       fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
       sourceScope: .project
     )
+    let loadGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -33,7 +34,7 @@ struct WorkspaceSessionFeatureModelMapTests {
         },
         sessionPreviewManager: StubSessionPreviewManager(
           loadPreviewHandler: { _, _ in
-            Thread.sleep(forTimeInterval: 0.05)
+            _ = loadGate.markStarted()
             return "preview-text"
           }
         )
@@ -58,6 +59,7 @@ struct WorkspaceSessionFeatureModelMapTests {
 
     #expect(model.preview == "preview-text")
     #expect(!model.isLoadingPreview)
+    #expect(loadGate.currentStartCount() == 1)
   }
 
   @Test
@@ -70,6 +72,7 @@ struct WorkspaceSessionFeatureModelMapTests {
       fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
       sourceScope: .project
     )
+    let loadGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -85,7 +88,13 @@ struct WorkspaceSessionFeatureModelMapTests {
         },
         sessionPreviewManager: StubSessionPreviewManager(
           loadPreviewHandler: { _, _ in
-            Thread.sleep(forTimeInterval: 0.05)
+            let loadCount = loadGate.markStarted()
+
+            if loadCount == 2 {
+              loadGate.waitUntilReleased()
+            }
+
+            loadGate.markFinished()
             return "preview-text"
           }
         )
@@ -109,13 +118,20 @@ struct WorkspaceSessionFeatureModelMapTests {
       forceReload: true
     )
 
+    await waitFor {
+      loadGate.currentStartCount() == 2
+    }
+
     #expect(model.isLoadingPreview)
+
+    loadGate.release()
 
     await waitFor {
       !model.isLoadingPreview
     }
 
     #expect(model.preview == "preview-text")
+    #expect(loadGate.currentStartCount() == 2)
   }
 
   @Test
@@ -128,6 +144,7 @@ struct WorkspaceSessionFeatureModelMapTests {
       fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
       sourceScope: .project
     )
+    let loadGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -143,7 +160,12 @@ struct WorkspaceSessionFeatureModelMapTests {
         },
         sessionPreviewManager: StubSessionPreviewManager(
           loadPreviewHandler: { _, _ in
-            Thread.sleep(forTimeInterval: 0.2)
+            let currentLoadCount = loadGate.markStarted()
+
+            if currentLoadCount == 1 {
+              loadGate.waitUntilReleased()
+            }
+
             return "preview-text"
           }
         )
@@ -156,10 +178,19 @@ struct WorkspaceSessionFeatureModelMapTests {
       for: session,
       workspaceURL: workspaceURL
     )
-    try? await Task.sleep(for: .milliseconds(20))
+
+    await waitFor {
+      model.isLoadingPreview
+    }
+
+    await waitFor {
+      loadGate.hasStarted
+    }
 
     model.cancelPreviewTask()
     #expect(model.isLoadingPreview)
+
+    loadGate.release()
 
     model.refreshPreview(
       for: session,
@@ -170,6 +201,7 @@ struct WorkspaceSessionFeatureModelMapTests {
       !model.isLoadingPreview
     }
 
+    #expect(loadGate.currentStartCount() == 2)
     #expect(model.preview == "preview-text")
     #expect(model.previewErrorMessage == nil)
   }
@@ -225,7 +257,7 @@ struct WorkspaceSessionFeatureModelMapTests {
   func refreshMapSkipsDuplicateRequestForSameSession() async {
     let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let mapBuildCount = ThreadSafeCounter()
+    let mapBuildGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -237,8 +269,7 @@ struct WorkspaceSessionFeatureModelMapTests {
           )
         },
         sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
-          Thread.sleep(forTimeInterval: 0.05)
-          let buildNumber = mapBuildCount.increment()
+          let buildNumber = mapBuildGate.markStarted()
 
           return Self.makeMap(personaID: "persona-\(buildNumber)")
         }
@@ -272,14 +303,14 @@ struct WorkspaceSessionFeatureModelMapTests {
 
     #expect(!model.isLoadingMap)
     #expect(model.map?.nodes.contains(where: { $0.key == "persona:persona-1" }) == true)
-    #expect(mapBuildCount.currentValue() == 1)
+    #expect(mapBuildGate.currentStartCount() == 1)
   }
 
   @Test
   func refreshMapForceReloadBypassesCache() async {
     let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let mapBuildCount = ThreadSafeCounter()
+    let mapBuildGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -291,8 +322,12 @@ struct WorkspaceSessionFeatureModelMapTests {
           )
         },
         sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
-          Thread.sleep(forTimeInterval: 0.05)
-          let buildNumber = mapBuildCount.increment()
+          let buildNumber = mapBuildGate.markStarted()
+
+          if buildNumber == 2 {
+            mapBuildGate.waitUntilReleased()
+            mapBuildGate.markFinished()
+          }
 
           return Self.makeMap(personaID: "persona-\(buildNumber)")
         }
@@ -325,14 +360,20 @@ struct WorkspaceSessionFeatureModelMapTests {
       forceReload: true
     )
 
+    await waitFor {
+      mapBuildGate.currentStartCount() == 2
+    }
+
     #expect(model.isLoadingMap)
+
+    mapBuildGate.release()
 
     await waitFor {
       !model.isLoadingMap
         && model.map?.nodes.contains(where: { $0.key == "persona:persona-2" }) == true
     }
 
-    #expect(mapBuildCount.currentValue() == 2)
+    #expect(mapBuildGate.currentStartCount() == 2)
   }
 
   @Test
@@ -340,6 +381,7 @@ struct WorkspaceSessionFeatureModelMapTests {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let slowSessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-slow.session.json")
     let fastSessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-fast.session.json")
+    let slowMapGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { fileURL in
@@ -361,7 +403,9 @@ struct WorkspaceSessionFeatureModelMapTests {
         },
         sessionMapBuilder: StubSessionMapBuilder { _, personaId, _, _ in
           if personaId == "persona-slow" {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = slowMapGate.markStarted()
+            slowMapGate.waitUntilReleased()
+            slowMapGate.markFinished()
           }
 
           return Self.makeMap(personaID: personaId)
@@ -382,7 +426,9 @@ struct WorkspaceSessionFeatureModelMapTests {
       workspaceURL: workspaceURL
     )
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      slowMapGate.hasStarted
+    }
 
     model.refreshMap(
       for: WorkspaceSessionListItem(
@@ -395,11 +441,17 @@ struct WorkspaceSessionFeatureModelMapTests {
       workspaceURL: workspaceURL
     )
 
+    slowMapGate.release()
+
     await waitFor {
       model.map?.nodes.contains(where: { $0.key == "persona:persona-fast" }) == true
+        && !model.isLoadingMap
     }
 
-    try? await Task.sleep(for: .milliseconds(350))
+    await waitFor {
+      slowMapGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(model.map?.nodes.contains(where: { $0.key == "persona:persona-fast" }) == true)
     #expect(model.map?.nodes.contains(where: { $0.key == "persona:persona-slow" }) == false)
@@ -599,6 +651,7 @@ struct WorkspaceSessionFeatureModelMapTests {
   @Test
   func refreshWorkspaceRelationshipMapIgnoresStaleResultAfterWorkspaceClear() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let mapGate = BlockingCallGate()
     let model = WorkspaceSessionFeatureModel(
       operationRunner: makeOperationRunner(
         sessionManager: StubSessionManager { _ in
@@ -614,7 +667,9 @@ struct WorkspaceSessionFeatureModelMapTests {
         },
         workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
           buildHandler: { _ in
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = mapGate.markStarted()
+            mapGate.waitUntilReleased()
+            mapGate.markFinished()
             return Self.makeWorkspaceRelationshipMap(personaID: "persona-slow")
           }
         )
@@ -624,7 +679,9 @@ struct WorkspaceSessionFeatureModelMapTests {
     )
 
     model.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      mapGate.hasStarted
+    }
 
     model.refreshWorkspaceRelationshipMap(workspaceURL: nil)
 
@@ -632,7 +689,11 @@ struct WorkspaceSessionFeatureModelMapTests {
     #expect(model.workspaceRelationshipMapErrorMessage == nil)
     #expect(!model.isLoadingWorkspaceRelationshipMap)
 
-    try? await Task.sleep(for: .milliseconds(350))
+    mapGate.release()
+    await waitFor {
+      mapGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(model.workspaceRelationshipMap == nil)
     #expect(model.workspaceRelationshipMapErrorMessage == nil)
@@ -651,10 +712,16 @@ struct WorkspaceSessionFeatureModelMapTests {
         return
       }
 
-      try? await Task.sleep(for: .milliseconds(10))
+      await Task.yield()
     }
 
     #expect(condition())
+  }
+
+  private func yieldTasks(_ iterations: Int = 50) async {
+    for _ in 0..<iterations {
+      await Task.yield()
+    }
   }
 
   nonisolated private static func makeMap(personaID: String) -> WorkspaceSessionMap {
@@ -714,30 +781,6 @@ struct WorkspaceSessionFeatureModelMapTests {
       sessionMapBuilder: sessionMapBuilder,
       workspaceRelationshipMapBuilder: workspaceRelationshipMapBuilder
     )
-  }
-}
-
-private final class ThreadSafeCounter: @unchecked Sendable {
-  private let lock = NSLock()
-  private var value = 0
-
-  func increment() -> Int {
-    lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    value += 1
-    return value
-  }
-
-  func currentValue() -> Int {
-    lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    return value
   }
 }
 
