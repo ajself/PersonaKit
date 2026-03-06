@@ -107,6 +107,19 @@ Agents should never assume they are operating autonomously.
 
 ⸻
 
+Local-Only Closeout Protocol
+
+When the user requests `closeout local-only`, agents must use the repository
+workflow command:
+
+• `make closeout-local`
+
+Hard rule:
+	•	Never delete a lane branch or worktree before verifying that `main`
+	contains the lane commits (ancestor verification is mandatory).
+
+⸻
+
 Questions & Uncertainty
 
 If an agent encounters ambiguity:

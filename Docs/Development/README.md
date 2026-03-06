@@ -52,6 +52,28 @@ Run development validation from a dedicated git worktree.
 3. For parallel runs, use a unique agent/lane temp root per worktree:
    - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-<agent>`
 
+## Local-only branch closeout
+
+When a lane is complete and this repo is being used without remote PR
+coordination, use one command to close out safely:
+
+- `make closeout-local`
+
+Behavior:
+
+1. Requires a clean feature worktree.
+2. Rebases the feature branch onto local `main` (no fetch).
+3. Fast-forward merges into local `main`.
+4. Verifies the feature branch is an ancestor of `main`.
+5. Removes the feature worktree and deletes the feature branch.
+
+Optional variables:
+
+- `CLOSEOUT_BRANCH=<branch>` to target a specific branch.
+- `CLOSEOUT_WORKTREE=<path>` to target a specific worktree path.
+- `CLOSEOUT_MAIN=<branch>` to use a main branch other than `main`.
+- `CLOSEOUT_NO_CLEANUP=1` to keep branch/worktree after merge.
+
 ## Standard workflow (manual)
 
 Run these steps from the repo root:

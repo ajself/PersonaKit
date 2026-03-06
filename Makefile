@@ -17,6 +17,10 @@ SWIFT_FORMAT ?= ./Scripts/swift-format-project.sh
 VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
+CLOSEOUT_BRANCH ?=
+CLOSEOUT_WORKTREE ?=
+CLOSEOUT_MAIN ?= main
+CLOSEOUT_NO_CLEANUP ?= 0
 
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
@@ -40,6 +44,7 @@ help:
 	@printf "  init            Initialize a starter kit in ./.personakit\n"
 	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
 	@printf "  validate-repo   Run full deterministic repo validation (parallel-safe temp root)\n"
+	@printf "  closeout-local  Rebase lane branch onto local main, FF merge, verify, cleanup\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
 	@printf "  list            List entities (TYPE=personas|kits|directives|intents|skills|essentials)\n"
 	@printf "  graph           Print the resolution graph\n"
@@ -60,6 +65,10 @@ help:
 	@printf "  ZIP_NAME        Zip file name (default: %s)\n" "$(ZIP_NAME)"
 	@printf "  VALIDATE_AGENT  Agent/lane id for parallel-safe validation temp paths (default: %s)\n" "$(VALIDATE_AGENT)"
 	@printf "  VALIDATE_TMPDIR Temp root passed as PERSONAKIT_VALIDATE_TMP_ROOT (default: %s)\n" "$(VALIDATE_TMPDIR)"
+	@printf "  CLOSEOUT_BRANCH Feature branch for closeout-local (default: current branch)\n"
+	@printf "  CLOSEOUT_WORKTREE Feature worktree path for closeout-local (default: branch worktree)\n"
+	@printf "  CLOSEOUT_MAIN   Main branch for closeout-local (default: %s)\n" "$(CLOSEOUT_MAIN)"
+	@printf "  CLOSEOUT_NO_CLEANUP Set to 1 to keep branch/worktree after merge\n"
 
 .PHONY: build
 build:
@@ -116,6 +125,14 @@ validate:
 .PHONY: validate-repo
 validate-repo:
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
+
+.PHONY: closeout-local
+closeout-local:
+	./Scripts/closeout-local.sh \
+		$(if $(CLOSEOUT_BRANCH),--branch $(CLOSEOUT_BRANCH),) \
+		$(if $(CLOSEOUT_WORKTREE),--worktree $(CLOSEOUT_WORKTREE),) \
+		--main $(CLOSEOUT_MAIN) \
+		$(if $(filter 1 true yes,$(CLOSEOUT_NO_CLEANUP)),--no-cleanup,)
 
 .PHONY: export
 export:
