@@ -166,6 +166,8 @@ struct WorkspaceSessionFeatureModelMapTests {
               loadGate.waitUntilReleased()
             }
 
+            loadGate.markFinished()
+
             return "preview-text"
           }
         )
@@ -191,6 +193,10 @@ struct WorkspaceSessionFeatureModelMapTests {
     #expect(model.isLoadingPreview)
 
     loadGate.release()
+
+    await waitFor {
+      loadGate.hasFinished
+    }
 
     model.refreshPreview(
       for: session,

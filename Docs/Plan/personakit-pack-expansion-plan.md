@@ -43,7 +43,10 @@ Verification results:
 3. `swift run personakit list directives` includes all new directive IDs.
 4. `swift run personakit export --session studio-reliability` is deterministic across repeated runs.
 5. `swift run personakit graph --session studio-reliability` is deterministic across repeated runs.
-6. `Scripts/validate-repo.sh` remains blocked by the known flaky test in `Tests/Features/Studio/WorkspaceSessionFeatureModelMapTests.swift` (`refreshPreviewRestartsAfterCancellationForSameSession`), which is outside pack-schema validity.
+6. The previously flaky test in `Tests/Features/Studio/WorkspaceSessionFeatureModelMapTests.swift` (`refreshPreviewRestartsAfterCancellationForSameSession`) has been stabilized as of March 6, 2026:
+   - deterministic synchronization was tightened in the test
+   - the test passed 20 consecutive stress runs
+   - `swift test` passes with this test included in the full suite
 
 Execution order:
 
