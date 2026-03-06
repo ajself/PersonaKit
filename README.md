@@ -339,6 +339,7 @@ personakit validate [--root <path>] [--no-project] [--no-global]
 personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
 personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials
 personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
+personakit mcp [--root <path>] [--no-project] [--no-global]
 
 When `--root` is omitted, PersonaKit loads the nearest `.personakit` in the
 current directory (project scope) and `~/.personakit` (global scope), merging
@@ -365,7 +366,7 @@ Basic setup (default, recommended):
 
 1. Choose a project directory that contains `.personakit/` (project scope), or ensure `~/.personakit` exists (global scope).
 
-2. Start the MCP server from that directory:
+2. Start the MCP server:
 
    personakit mcp
 
@@ -390,10 +391,31 @@ A minimal example (stdio transport):
 
 Notes:
 - `command` and `args` must launch `personakit mcp`.
-- To override the working directory, set `PERSONAKIT_ROOT` for scope discovery (project/global).
-- To bypass discovery, set `PERSONAKIT_ROOT_OVERRIDE=1` and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
+- MCP scope resolution is local-first and single-scope:
+  1) `--root <path>` (highest priority)
+  2) `PERSONAKIT_ROOT`
+  3) local project `.personakit`
+  4) `~/.personakit`
+  5) fail if none are available
+- `PERSONAKIT_ROOT` must point to a PersonaKit root containing `Packs/`.
+- `PERSONAKIT_ROOT_OVERRIDE=1` remains supported and requires `PERSONAKIT_ROOT`.
+- MCP loads only one scope (project or global). It does not merge both scopes.
+- Use `--no-project` or `--no-global` to disable fallback steps in discovery.
 - The server communicates over **stdio**; no ports are opened.
 - Paths should be absolute to avoid ambiguity.
+
+Example: force local project identity context
+
+```json
+{
+  "mcpServers": {
+    "personakit": {
+      "command": "personakit",
+      "args": ["mcp", "--root", "/Users/ajself/Code/PersonaKit/.personakit"]
+    }
+  }
+}
+```
 
 Once configured, MCP clients can:
 - list PersonaKit resources

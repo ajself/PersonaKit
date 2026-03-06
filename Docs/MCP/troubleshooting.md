@@ -1,12 +1,22 @@
 Troubleshooting
 
 Root not set
-- Symptom: errors that PERSONAKIT_ROOT is missing or empty.
-- Fix: set PERSONAKIT_ROOT to an absolute path that contains Packs/.
+- Symptom: MCP cannot find a local or global PersonaKit scope.
+- Fix: provide `--root <path>`, set `PERSONAKIT_ROOT`, or run from a project with `.personakit/`.
 
 Packs directory missing
-- Symptom: errors that Packs/ does not exist under the root.
-- Fix: point PERSONAKIT_ROOT to the kit root that contains Packs/.
+- Symptom: errors that root must contain `Packs/`.
+- Fix: point `--root` or `PERSONAKIT_ROOT` at a PersonaKit root containing `Packs/`.
+
+Project/global fallback controls
+- Symptom: expected global fallback did not occur.
+- Fix: ensure `--no-global` is not set.
+- Symptom: expected local project scope was skipped.
+- Fix: ensure `--no-project` is not set.
+
+Override compatibility
+- Symptom: errors that `PERSONAKIT_ROOT_OVERRIDE` requires `PERSONAKIT_ROOT`.
+- Fix: set `PERSONAKIT_ROOT` to a valid PersonaKit root path when using `PERSONAKIT_ROOT_OVERRIDE=1`.
 
 Resource not found
 - Symptom: a resource read fails with a message that includes the URI and an expected Packs/... path.

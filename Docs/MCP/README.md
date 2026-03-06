@@ -17,12 +17,13 @@ The server runs as a local process and communicates over stdin/stdout. No ports 
 The server is designed to be launched and managed by an MCP client, not used directly by end users.
 
 Optional environment
-- PERSONAKIT_ROOT: override the working directory for scope discovery (project/global).
-- PERSONAKIT_ROOT_OVERRIDE=1: bypass discovery and point `PERSONAKIT_ROOT` at a directory that contains `Packs/`.
+- PERSONAKIT_ROOT: explicit PersonaKit root path (must contain `Packs/`).
+- PERSONAKIT_ROOT_OVERRIDE=1: compatibility mode; requires `PERSONAKIT_ROOT`.
 
 Example launch (stdio)
-From a kit or project directory:
+From any directory:
 - personakit mcp
+- personakit mcp --root /absolute/path/to/.personakit
 
 Example MCP client config
 Most MCP-compatible clients connect to servers using a JSON configuration file that declares how the server is launched.
@@ -44,3 +45,11 @@ Notes
 - The MCP server is read-only and never writes to disk.
 - The MCP server never executes external commands.
 - Output is deterministic (stable ordering, no timestamps).
+- MCP scope selection is local-first and single-scope:
+  1) `--root <path>`
+  2) `PERSONAKIT_ROOT`
+  3) local project `.personakit`
+  4) `~/.personakit`
+  5) error when none exist
+- MCP chooses one scope only (project or global), not project/global merge.
+- `--no-project` and `--no-global` disable discovery fallback steps.

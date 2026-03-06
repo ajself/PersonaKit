@@ -6,7 +6,7 @@ import MCP
 /// Runner abstraction for starting the PersonaKit MCP server process.
 public protocol MCPServerRunning: Sendable {
   /// Starts the MCP server using the provided semantic version string.
-  func run(version: String) throws
+  func run(version: String, scopes: ScopeSet) throws
 }
 
 /// Default MCP server bootstrap implementation for CLI `personakit mcp`.
@@ -14,10 +14,10 @@ public struct MCPServerRunner: MCPServerRunning {
   public init() {}
 
   /// Starts the async MCP server loop and blocks the process main thread.
-  public func run(version: String) throws {
+  public func run(version: String, scopes: ScopeSet) throws {
     Task {
       do {
-        try await runServer(version: version)
+        try await runServer(version: version, scopes: scopes)
       } catch {
         var stderrStream = MCPStandardError()
         stderrStream.write("Error: MCP server failed to start: \(error.localizedDescription)\n")
@@ -27,8 +27,8 @@ public struct MCPServerRunner: MCPServerRunning {
     dispatchMain()
   }
 
-  private func runServer(version: String) async throws {
-    guard let scopes = ScopeRootResolver().locate(), !scopes.isEmpty else {
+  private func runServer(version: String, scopes: ScopeSet) async throws {
+    guard !scopes.isEmpty else {
       throw MCPServerRunnerError.missingScopes
     }
 

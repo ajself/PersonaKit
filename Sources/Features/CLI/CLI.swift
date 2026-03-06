@@ -255,8 +255,15 @@ struct MCPCommand: ParsableCommand {
     abstract: "Run the PersonaKit MCP server."
   )
 
+  @OptionGroup
+  var scope: ScopeOptions
+
   func run() throws {
-    try CLIEnvironment.current.mcpServerRunner.run(version: PersonaKitVersion.current)
+    let scopes = try CLIHelpers.resolveMCPScopes(options: scope)
+    try CLIEnvironment.current.mcpServerRunner.run(
+      version: PersonaKitVersion.current,
+      scopes: scopes
+    )
   }
 }
 
@@ -432,6 +439,122 @@ enum CLIHelpers {
     }
 
     return filtered
+  }
+
+  /// Resolves MCP startup scopes using local-first single-scope selection.
+  ///
+  /// Resolution order:
+  /// 1. `--root`
+  /// 2. `PERSONAKIT_ROOT` (and compatibility with `PERSONAKIT_ROOT_OVERRIDE`)
+  /// 3. Local project `.personakit`
+  /// 4. Global `~/.personakit`
+  static func resolveMCPScopes(
+    options: ScopeOptions,
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    currentDirectoryPath: String = FileManager.default.currentDirectoryPath,
+    homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+  ) throws -> ScopeSet {
+    if let rootPath = normalizedRootPath(options.rootPath) {
+      let rootURL = RootPathResolver().resolve(path: rootPath)
+      return try resolveExplicitMCPRoot(rootURL: rootURL, source: "--root")
+    }
+
+    if isTruthy(environment["PERSONAKIT_ROOT_OVERRIDE"]) {
+      guard let envRootPath = normalizedRootPath(environment["PERSONAKIT_ROOT"]) else {
+        throw ArgumentParser.ValidationError(
+          "PERSONAKIT_ROOT_OVERRIDE requires PERSONAKIT_ROOT to be set to a PersonaKit root path."
+        )
+      }
+
+      let rootURL = RootPathResolver().resolve(path: envRootPath)
+      return try resolveExplicitMCPRoot(rootURL: rootURL, source: "PERSONAKIT_ROOT")
+    }
+
+    if let envRootPath = normalizedRootPath(environment["PERSONAKIT_ROOT"]) {
+      let rootURL = RootPathResolver().resolve(path: envRootPath)
+      return try resolveExplicitMCPRoot(rootURL: rootURL, source: "PERSONAKIT_ROOT")
+    }
+
+    guard options.useProjectScope || options.useGlobalScope else {
+      throw ArgumentParser.ValidationError(
+        "No PersonaKit scope found for MCP. Provide --root <path>, set PERSONAKIT_ROOT, or enable project/global discovery."
+      )
+    }
+
+    if options.useProjectScope {
+      let projectLocator = ProjectPersonaKitLocator(
+        startingURL: URL(fileURLWithPath: currentDirectoryPath)
+      )
+
+      if let projectScopeURL = projectLocator.locate() {
+        return ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: nil)
+      }
+    }
+
+    if options.useGlobalScope {
+      let globalLocator = GlobalPersonaKitLocator(homeDirectory: homeDirectory)
+
+      if let globalScopeURL = globalLocator.locate() {
+        return ScopeSet(projectScopeURL: nil, globalScopeURL: globalScopeURL)
+      }
+    }
+
+    throw ArgumentParser.ValidationError(
+      "No PersonaKit scope found for MCP. Provide --root <path>, set PERSONAKIT_ROOT, or create .personakit in this project or ~/.personakit."
+    )
+  }
+
+  private static func normalizedRootPath(_ value: String?) -> String? {
+    guard let value else {
+      return nil
+    }
+
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmed.isEmpty else {
+      return nil
+    }
+
+    return trimmed
+  }
+
+  private static func resolveExplicitMCPRoot(
+    rootURL: URL,
+    source: String
+  ) throws -> ScopeSet {
+    var isDirectory: ObjCBool = false
+
+    guard
+      FileManager.default.fileExists(atPath: rootURL.path, isDirectory: &isDirectory),
+      isDirectory.boolValue
+    else {
+      throw ArgumentParser.ValidationError(
+        "\(source) root does not exist or is not a directory: \(rootURL.path)"
+      )
+    }
+
+    guard PersonaKitDirectory.hasPacks(root: rootURL) else {
+      throw ArgumentParser.ValidationError(
+        "\(source) root must contain Packs/: \(rootURL.path)"
+      )
+    }
+
+    return ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
+  }
+
+  private static func isTruthy(_ value: String?) -> Bool {
+    guard let value else {
+      return false
+    }
+
+    let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+    switch normalized {
+    case "1", "true", "yes":
+      return true
+    default:
+      return false
+    }
   }
 
   /// Formats a resolution error for stable CLI output.
