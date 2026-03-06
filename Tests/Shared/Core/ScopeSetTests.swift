@@ -53,4 +53,17 @@ struct ScopeSetTests {
     #expect(scopes.loadOrder.count == 1)
     #expect(scopes.resolutionOrder.count == 1)
   }
+
+  @Test
+  func normalizesDotSegmentsBeforeDeduping() throws {
+    let root = try makeTempDirectory()
+    let canonical = root.appendingPathComponent("pk/.personakit")
+    let nonCanonical = root.appendingPathComponent("pk/work/../.personakit")
+    let scopes = ScopeSet(projectScopeURL: nonCanonical, globalScopeURL: canonical)
+
+    #expect(scopes.projectScopeURL?.path == canonical.standardizedFileURL.path)
+    #expect(scopes.globalScopeURL?.path == canonical.standardizedFileURL.path)
+    #expect(scopes.loadOrder.map(\.path) == [canonical.standardizedFileURL.path])
+    #expect(scopes.resolutionOrder.map(\.path) == [canonical.standardizedFileURL.path])
+  }
 }

@@ -156,6 +156,66 @@ struct ScopeMergeTests {
         .standardizedFileURL.path
     )
   }
+
+  @Test
+  func essentialResolvesFromProjectWhenScopeURLsContainTraversalSegments() throws {
+    let root = try makeTempDirectory()
+    let home = try makeTempDirectory()
+    let canonicalProjectScope = root.appendingPathComponent("project/.personakit")
+    let canonicalGlobalScope = home.appendingPathComponent("global/.personakit")
+    let projectScope = root.appendingPathComponent("project/../project/.personakit")
+    let globalScope = home.appendingPathComponent("global/../global/.personakit")
+
+    try writePersona(
+      id: "persona",
+      name: "Project Persona",
+      summary: "Project summary",
+      defaultKitIds: ["kit"],
+      root: projectScope
+    )
+    try writeKit(
+      id: "kit",
+      name: "Project Kit",
+      summary: "Project summary",
+      essentialIds: ["shared-essential"],
+      root: projectScope
+    )
+    try writeDirective(
+      id: "directive",
+      title: "Directive",
+      goal: "Goal",
+      root: projectScope
+    )
+    try writeEssential(
+      id: "shared-essential",
+      content: "# Project Essential\n",
+      root: projectScope
+    )
+    try writeEssential(
+      id: "shared-essential",
+      content: "# Global Essential\n",
+      root: globalScope
+    )
+
+    let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
+    let registry = try Registry.load(scopes: scopes)
+    let definition = SessionDefinition(personaId: "persona", directiveId: "directive", kitOverrides: nil)
+    let resolved = try Resolver.resolve(definition: definition, registry: registry, scopes: scopes)
+
+    #expect(resolved.essentials.count == 1)
+    #expect(
+      resolved.essentials.first?.url.standardizedFileURL.path
+        == canonicalProjectScope
+        .appendingPathComponent("Packs/essentials/shared-essential.md")
+        .standardizedFileURL.path
+    )
+    #expect(
+      resolved.essentials.first?.url.standardizedFileURL.path
+        != canonicalGlobalScope
+        .appendingPathComponent("Packs/essentials/shared-essential.md")
+        .standardizedFileURL.path
+    )
+  }
 }
 
 private func writePersona(
