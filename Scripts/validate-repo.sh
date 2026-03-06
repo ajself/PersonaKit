@@ -12,6 +12,7 @@ session_id="senior-swiftui-engineer_apply-style"
 
 work_dir="${TMPDIR:-/tmp}/personakit-validate"
 cleanup_on_success="true"
+unchecked_sendable_approval_file="Docs/Architecture/unchecked-sendable-approvals.txt"
 
 rm -rf "$work_dir"
 mkdir -p "$work_dir"
@@ -38,6 +39,37 @@ fi
 if rg -n "import ContextWorkspaceCore" Sources/Shared/ContextCore >/dev/null; then
   echo "ContextCore must not import ContextWorkspaceCore."
   rg -n "import ContextWorkspaceCore" Sources/Shared/ContextCore || true
+  exit 1
+fi
+
+echo "Checking @unchecked Sendable policy..."
+if [[ ! -f "$unchecked_sendable_approval_file" ]]; then
+  echo "Missing approval registry: $unchecked_sendable_approval_file"
+  exit 1
+fi
+
+unchecked_matches=()
+while IFS= read -r match; do
+  [[ -n "$match" ]] && unchecked_matches+=("$match")
+done < <(rg -n --no-heading "@unchecked[[:space:]]+Sendable" App Sources Tests || true)
+unauthorized_matches=()
+
+for match in "${unchecked_matches[@]}"; do
+  match_path="${match%%:*}"
+  match_remainder="${match#*:}"
+  match_line="${match_remainder%%:*}"
+  match_id="${match_path}:${match_line}"
+
+  if ! grep -Fxq "$match_id" "$unchecked_sendable_approval_file"; then
+    unauthorized_matches+=("$match")
+  fi
+done
+
+if [[ ${#unauthorized_matches[@]} -gt 0 ]]; then
+  echo "Unapproved @unchecked Sendable usage detected."
+  echo "Repository policy requires explicit owner approval for each usage."
+  echo "Add an exact path:line entry to $unchecked_sendable_approval_file only when approved."
+  printf '%s\n' "${unauthorized_matches[@]}"
   exit 1
 fi
 

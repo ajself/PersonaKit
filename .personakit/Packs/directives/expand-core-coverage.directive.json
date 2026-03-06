@@ -22,6 +22,7 @@
     "High-risk graph behaviors have deterministic coverage",
     "Scope and path edge-case tests are added",
     "No timing-sensitive flaky assertions are introduced",
+    "No agent may introduce or use @unchecked Sendable anywhere in code, tests, or tooling context unless explicitly approved by the repository owner for that exact change",
     "No unrelated refactors were introduced"
   ],
   "verification": [

@@ -7,7 +7,9 @@
     "Stabilize concurrency-sensitive feature behavior",
     "Eliminate timing-based test fragility",
     "Keep async state transitions deterministic",
-    "Require cancellation paths to leave loading and error state consistent"
+    "Require cancellation paths to leave loading and error state consistent",
+    "Prefer actor and continuation based test synchronization over blocking primitives",
+    "Enforce the global invariant that @unchecked Sendable is prohibited anywhere unless explicitly approved by the repository owner for the exact change"
   ],
   "values": [
     "determinism over convenience",
@@ -18,7 +20,9 @@
   "nonGoals": [
     "UI redesigns",
     "scope expansion beyond reliability fixes",
-    "introducing detached tasks or unchecked sendable exceptions without explicit approval"
+    "introducing detached tasks without explicit approval",
+    "introducing or using @unchecked Sendable anywhere without explicit repository-owner approval for the exact change",
+    "using semaphores as the default test coordination strategy when async alternatives exist"
   ],
   "defaultKitIds": [
     "swift-style",

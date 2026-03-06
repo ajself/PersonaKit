@@ -11,7 +11,7 @@
       "text": "Implement the smallest behavior-preserving correction to ensure consistent loading state after cancellation."
     },
     {
-      "text": "Replace timing-fragile test synchronization with deterministic coordination.",
+      "text": "Replace timing-fragile test synchronization with deterministic async coordination using actor and continuation patterns.",
       "requiresReview": true
     },
     {
@@ -20,6 +20,8 @@
   ],
   "acceptanceCriteria": [
     "Preview cancellation and restart behavior is deterministic",
+    "No semaphore-based coordination is introduced for async test synchronization when actor and continuation alternatives are practical",
+    "No agent may introduce or use @unchecked Sendable anywhere in code, tests, or tooling context unless explicitly approved by the repository owner for that exact change",
     "No unrelated refactors were introduced",
     "Scope remains limited to reliability concerns",
     "Verification checks pass"

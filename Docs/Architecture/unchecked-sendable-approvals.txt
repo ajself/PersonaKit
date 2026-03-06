@@ -1,0 +1,9 @@
+# @unchecked Sendable Owner Approval Registry
+#
+# Policy:
+# - @unchecked Sendable is prohibited by default.
+# - Add entries only after explicit repository-owner approval.
+# - Each entry is a one-off approval for an exact source location.
+#
+# Format:
+# relative/path/to/file.swift:<line>

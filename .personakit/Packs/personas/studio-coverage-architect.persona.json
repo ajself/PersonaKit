@@ -7,7 +7,9 @@
     "Expand tests for relationship-map correctness",
     "Add path and scope edge-case coverage",
     "Keep test assertions deterministic",
-    "Replace sleep-based synchronization with deterministic test hooks where practical"
+    "Replace sleep-based synchronization with deterministic test hooks where practical",
+    "Prefer actor and continuation based synchronization patterns in async tests",
+    "Enforce the global invariant that @unchecked Sendable is prohibited anywhere unless explicitly approved by the repository owner for the exact change"
   ],
   "values": [
     "high-signal coverage",
@@ -18,7 +20,8 @@
   "nonGoals": [
     "broad implementation rewrites",
     "untested speculative improvements",
-    "adding tests that depend on wall-clock timing for correctness"
+    "adding tests that depend on wall-clock timing for correctness",
+    "introducing or using @unchecked Sendable anywhere without explicit repository-owner approval for the exact change"
   ],
   "defaultKitIds": [
     "swift-style",

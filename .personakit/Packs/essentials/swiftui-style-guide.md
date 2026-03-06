@@ -329,11 +329,15 @@ The following are considered **code smells** and MUST NOT be used casually:
 - `nonisolated(unsafe)`
 - `Task.detached`
 
-They are allowed ONLY when:
+Repository policy override (PersonaKit): `@unchecked Sendable` is prohibited in all code and tests unless the repository owner gives explicit approval for the exact change. Approval records MUST be tracked in `Docs/Architecture/unchecked-sendable-approvals.txt`.
+
+`nonisolated(unsafe)` and `Task.detached` are allowed ONLY when:
 - Ownership and lifetimes are fully understood
 - No safer alternative exists
 - The usage is localized
 - An exception is documented
+
+`@unchecked Sendable` remains prohibited unless the repository owner gives explicit approval for the exact change.
 
 ```swift
 // EXCEPTION(FOSA): Required to bridge legacy C API that is externally synchronized.
