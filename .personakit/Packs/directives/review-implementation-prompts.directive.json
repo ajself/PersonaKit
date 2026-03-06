@@ -1,0 +1,42 @@
+{
+  "id": "review-implementation-prompts",
+  "version": "1.0",
+  "title": "Review implementation prompts for architectural safety",
+  "goal": "Harden implementation prompts so agents cannot accidentally create architectural drift.",
+  "steps": [
+    {
+      "text": "Check that success criteria are falsifiable and observable."
+    },
+    {
+      "text": "Verify allowed files, forbidden files, stop conditions, and verification steps are explicit and consistent."
+    },
+    {
+      "text": "Pause for human review when prompt ambiguity could enable architectural drift.",
+      "requiresReview": true
+    },
+    {
+      "text": "Return a tightened prompt specification with invariant-preserving constraints."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Success conditions are falsifiable",
+    "Allowed and forbidden file scopes are explicit",
+    "Stop conditions are clear and enforceable",
+    "Verification steps are concrete and observable",
+    "Prompt constraints prevent architectural boundary drift"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Review tightened prompt for contradictory or missing constraints"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm constraints prevent IO in Views and boundary violations"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "architectural-editor-core",
+  "version": "1.0",
+  "name": "Architectural Editor Core Kit",
+  "summary": "Architectural and concurrency guardrails for review-first work.",
+  "essentialIds": [
+    "architectural-editor-guardrails",
+    "architecture-defaults",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

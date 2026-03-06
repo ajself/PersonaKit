@@ -1,0 +1,41 @@
+{
+  "id": "review-architecture-invariants",
+  "version": "1.0",
+  "title": "Review architecture invariants before implementation",
+  "goal": "Detect and prevent architectural, concurrency, and safety drift before code generation or integration.",
+  "steps": [
+    {
+      "text": "Evaluate architecture and spec context using declared authority order and identify conflicts."
+    },
+    {
+      "text": "Review for actor isolation violations, IO leakage, mutation-boundary drift, and cancellation safety gaps."
+    },
+    {
+      "text": "Classify findings by severity and flaw type, then pause for human review before any large implementation action.",
+      "requiresReview": true
+    },
+    {
+      "text": "Propose only bounded, invariant-preserving corrections and summarize residual risks."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Architecture and concurrency hazards are explicitly identified",
+    "Findings are categorized as architectural, concurrency, safety, or style",
+    "Human review stop point is observed before broad implementation",
+    "Recommendations preserve product intent and do not expand scope"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Review findings for correct classification and concrete evidence"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm proposed changes preserve invariants and remain scoped"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

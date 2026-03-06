@@ -1,0 +1,5 @@
+{
+  "id": "architectural-editor-prompt-review",
+  "personaId": "architectural-editor",
+  "directiveId": "review-implementation-prompts"
+}

@@ -110,6 +110,17 @@ For the agent, this means:
 - a consistent, repeatable context
 - no ambiguity about which Persona or Directive is active
 
+Architectural Editor sessions (project example):
+
+```
+personakit export --session architectural-editor-review
+personakit export --session architectural-editor-prompt-review
+```
+
+These pair the `architectural-editor` persona with directive-specific review flows:
+- `architectural-editor-review` → `review-architecture-invariants`
+- `architectural-editor-prompt-review` → `review-implementation-prompts`
+
 5) Use MCP instead of copy/paste (optional)
 
 Start the MCP server from the project directory:
