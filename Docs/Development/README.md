@@ -43,6 +43,15 @@ Data flow is:
 5. Resolver assembles the resolved session from Persona + Directive + Kits.
 6. Export/Graph rendering emits deterministic output.
 
+## Worktree-first execution model
+
+Run development validation from a dedicated git worktree.
+
+1. Keep one active lane or task per worktree.
+2. Run all commands from that worktree root.
+3. For parallel runs, use a unique agent/lane temp root per worktree:
+   - `TMPDIR=/tmp/personakit-$USER-<agent>`
+
 ## Standard workflow (manual)
 
 Run these steps from the repo root:
@@ -63,15 +72,20 @@ investigated before proceeding.
 ## Scripted workflow
 
 `Scripts/validate-repo.sh` runs the same steps and handles output comparison.
-It uses a fixed temp path (`/tmp/personakit-validate`) and does not emit any
-timestamps.
+It uses `"$TMPDIR/personakit-validate"` for outputs. Set a unique `TMPDIR` per
+lane or agent to avoid collisions in parallel execution. Output remains
+deterministic (no timestamps).
 
 Run it from the repo root:
 
-`Scripts/validate-repo.sh`
+1. Direct script form:
+   - `TMPDIR=/tmp/personakit-$USER-lane-d Scripts/validate-repo.sh`
+2. Makefile wrapper:
+   - `make validate-repo VALIDATE_AGENT=lane-d`
 
 ## Before and after changes
 
-1. Before you start: run `Scripts/validate-repo.sh` to confirm the baseline.
-2. After your changes: run it again to ensure no regressions and no
+1. Before you start: run `make validate-repo VALIDATE_AGENT=<agent>` to confirm
+   baseline behavior in your worktree.
+2. After your changes: run it again with the same `VALIDATE_AGENT` to ensure no
    determinism issues were introduced.

@@ -14,6 +14,9 @@ PREFIX ?= /usr/local
 INSTALL_DIR ?= $(PREFIX)/bin
 FORMAT_PATHS ?= Sources Tests
 SWIFT_FORMAT ?= ./Scripts/swift-format-project.sh
+VALIDATE_AGENT ?= local
+VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
+VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
 
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
@@ -36,6 +39,7 @@ help:
 	@printf "Project workflow:\n"
 	@printf "  init            Initialize a starter kit in ./.personakit\n"
 	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
+	@printf "  validate-repo   Run full deterministic repo validation (parallel-safe via TMPDIR)\n"
 	@printf "  export          Export a session prompt to OUTPUT\n"
 	@printf "  list            List entities (TYPE=personas|kits|directives|intents|skills|essentials)\n"
 	@printf "  graph           Print the resolution graph\n"
@@ -54,6 +58,8 @@ help:
 	@printf "  PREFIX          Install prefix (default: %s)\n" "$(PREFIX)"
 	@printf "  INSTALL_DIR     Install directory (default: %s)\n" "$(INSTALL_DIR)"
 	@printf "  ZIP_NAME        Zip file name (default: %s)\n" "$(ZIP_NAME)"
+	@printf "  VALIDATE_AGENT  Agent/lane id for parallel-safe validation temp paths (default: %s)\n" "$(VALIDATE_AGENT)"
+	@printf "  VALIDATE_TMPDIR TMPDIR used by validate-repo (default: %s)\n" "$(VALIDATE_TMPDIR)"
 
 .PHONY: build
 build:
@@ -106,6 +112,10 @@ init:
 .PHONY: validate
 validate:
 	personakit validate $(SCOPE_ARGS)
+
+.PHONY: validate-repo
+validate-repo:
+	TMPDIR=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
 .PHONY: export
 export:
