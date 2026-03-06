@@ -66,6 +66,16 @@ extension WorkspaceStore {
     )
   }
 
+  /// Cancels any in-flight session preview refresh task.
+  func cancelSessionPreviewRefresh() {
+    sessionFeatureModel.cancelPreviewTask()
+  }
+
+  /// Cancels any in-flight session map refresh task.
+  func cancelSessionMapRefresh() {
+    sessionFeatureModel.cancelMapTask()
+  }
+
   /// Loads a dependency map for an in-flight session draft.
   func refreshDraftSessionMap(
     for draft: WorkspaceSessionDraft

@@ -190,10 +190,6 @@ struct SessionsPanelView: View {
     }
   }
 
-  private var sessionFeatureModel: WorkspaceSessionFeatureModel {
-    workspaceStore.sessionFeatureModel
-  }
-
   private var detailModeBinding: Binding<SessionsDetailMode> {
     Binding(
       get: {
@@ -209,10 +205,10 @@ struct SessionsPanelView: View {
   }
 
   private var detailModeItems: [StudioModeSwitchItem<SessionsDetailMode>] {
-    let unresolvedIssueCount = sessionFeatureModel.map?.resolutionErrors.count
+    let unresolvedIssueCount = workspaceStore.sessionMap?.resolutionErrors.count
     let unresolvedIssueBadgeText: String?
 
-    if let mapRequestKey = sessionFeatureModel.mapRequestKey,
+    if let mapRequestKey = workspaceStore.sessionMapRequestKey,
       let selectedSessionID
     {
       unresolvedIssueBadgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
@@ -244,10 +240,10 @@ struct SessionsPanelView: View {
   }
 
   private var mapHealthText: String {
-    let sessionMap = sessionFeatureModel.map
+    let sessionMap = workspaceStore.sessionMap
 
     return SessionsPanelLayoutState.mapHealthText(
-      isLoading: sessionFeatureModel.isLoadingMap,
+      isLoading: workspaceStore.isLoadingSessionMap,
       mapIsFullyResolved: sessionMap?.isFullyResolved,
       unresolvedIssueCount: sessionMap?.resolutionErrors.count
     )
@@ -255,7 +251,7 @@ struct SessionsPanelView: View {
 
   @ViewBuilder
   private var mapHealthStatusView: some View {
-    if sessionFeatureModel.isLoadingMap {
+    if workspaceStore.isLoadingSessionMap {
       HStack(spacing: 6) {
         ProgressView()
           .controlSize(.small)
@@ -264,7 +260,7 @@ struct SessionsPanelView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
       }
-    } else if let sessionMap = sessionFeatureModel.map {
+    } else if let sessionMap = workspaceStore.sessionMap {
       Text(mapHealthText)
         .font(.caption)
         .fontWeight(.semibold)
@@ -296,17 +292,17 @@ struct SessionsPanelView: View {
     switch detailMode {
     case .preview:
       SessionsPreviewTabView(
-        sessionPreview: sessionFeatureModel.preview,
-        sessionPreviewErrorMessage: sessionFeatureModel.previewErrorMessage,
-        isLoadingSessionPreview: sessionFeatureModel.isLoadingPreview
+        sessionPreview: workspaceStore.sessionPreview,
+        sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
+        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview
       )
 
     case .map:
       SessionsMapTabView(
         selectedSession: selectedSession,
-        sessionMap: sessionFeatureModel.map,
-        sessionMapErrorMessage: sessionFeatureModel.mapErrorMessage,
-        isLoadingSessionMap: sessionFeatureModel.isLoadingMap,
+        sessionMap: workspaceStore.sessionMap,
+        sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
+        isLoadingSessionMap: workspaceStore.isLoadingSessionMap,
         snapshot: workspaceStore.snapshot,
         onNavigateToDiagnostics: {
           onNavigate(
@@ -394,7 +390,7 @@ struct SessionsPanelView: View {
             )
           )
 
-          if sessionFeatureModel.isLoadingPreview {
+          if workspaceStore.isLoadingSessionPreview {
             ProgressView()
               .controlSize(.small)
           }
@@ -443,7 +439,7 @@ struct SessionsPanelView: View {
       id: "session-preview-refresh",
       title: "Refresh",
       systemImage: "arrow.clockwise",
-      isEnabled: !sessionFeatureModel.isLoadingPreview,
+      isEnabled: !workspaceStore.isLoadingSessionPreview,
       action: {
         refreshSelectedSessionPreview(forceReload: true)
       }
@@ -467,7 +463,7 @@ struct SessionsPanelView: View {
         id: "session-preview-copy",
         title: "Copy",
         systemImage: "doc.on.doc",
-        isEnabled: !sessionFeatureModel.preview.isEmpty && !sessionFeatureModel.isLoadingPreview,
+        isEnabled: !workspaceStore.sessionPreview.isEmpty && !workspaceStore.isLoadingSessionPreview,
         action: {
           copySessionPreview()
         }
@@ -476,7 +472,7 @@ struct SessionsPanelView: View {
         id: "session-preview-export",
         title: "Export Markdown…",
         systemImage: "square.and.arrow.up",
-        isEnabled: !sessionFeatureModel.preview.isEmpty && !sessionFeatureModel.isLoadingPreview,
+        isEnabled: !workspaceStore.sessionPreview.isEmpty && !workspaceStore.isLoadingSessionPreview,
         action: {
           exportSessionPreview()
         }
@@ -489,7 +485,7 @@ struct SessionsPanelView: View {
       id: "session-map-refresh",
       title: "Refresh",
       systemImage: "arrow.clockwise",
-      isEnabled: !sessionFeatureModel.isLoadingMap,
+      isEnabled: !workspaceStore.isLoadingSessionMap,
       action: {
         refreshSelectedSessionMap(forceReload: true)
       }
@@ -721,9 +717,9 @@ struct SessionsPanelView: View {
   ) {
     switch mode {
     case .preview:
-      sessionFeatureModel.cancelMapTask()
+      workspaceStore.cancelSessionMapRefresh()
     case .map:
-      sessionFeatureModel.cancelPreviewTask()
+      workspaceStore.cancelSessionPreviewRefresh()
     }
 
     refreshDetailContent(for: mode)

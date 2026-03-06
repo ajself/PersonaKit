@@ -90,6 +90,10 @@ public final class WorkspaceStore {
     sessionFeatureModel.map
   }
 
+  var sessionMapRequestKey: String? {
+    sessionFeatureModel.mapRequestKey
+  }
+
   var sessionMapErrorMessage: String? {
     sessionFeatureModel.mapErrorMessage
   }
