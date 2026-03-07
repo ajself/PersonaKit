@@ -42,7 +42,7 @@
 
 /* Begin PBXFileReference section */
 		D156979B2F5BA3AB00670F8F /* PersonaKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitHostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D15697CC2F5BA47200670F8F /* PersonaKitCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PersonaKitCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -53,9 +53,9 @@
 			path = PersonaKit;
 			sourceTree = "<group>";
 		};
-		D15697AB2F5BA3AC00670F8F /* PersonaKitTests */ = {
+		D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaKitTests;
+			path = PersonaKitHostTests;
 			sourceTree = "<group>";
 		};
 		D15697B52F5BA3AC00670F8F /* PersonaKitUITests */ = {
@@ -108,7 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				D156979D2F5BA3AB00670F8F /* PersonaKit */,
-				D15697AB2F5BA3AC00670F8F /* PersonaKitTests */,
+				D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */,
 				D15697B52F5BA3AC00670F8F /* PersonaKitUITests */,
 				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
 				D156979C2F5BA3AB00670F8F /* Products */,
@@ -119,7 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				D156979B2F5BA3AB00670F8F /* PersonaKit.app */,
-				D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */,
+				D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */,
 				D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */,
 				D15697CC2F5BA47200670F8F /* PersonaKitCLI */,
 			);
@@ -152,9 +152,9 @@
 			productReference = D156979B2F5BA3AB00670F8F /* PersonaKit.app */;
 			productType = "com.apple.product-type.application";
 		};
-		D15697A72F5BA3AC00670F8F /* PersonaKitTests */ = {
+		D15697A72F5BA3AC00670F8F /* PersonaKitHostTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitTests" */;
+			buildConfigurationList = D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitHostTests" */;
 			buildPhases = (
 				D15697A42F5BA3AC00670F8F /* Sources */,
 				D15697A52F5BA3AC00670F8F /* Frameworks */,
@@ -166,13 +166,13 @@
 				D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				D15697AB2F5BA3AC00670F8F /* PersonaKitTests */,
+				D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */,
 			);
-			name = PersonaKitTests;
+			name = PersonaKitHostTests;
 			packageProductDependencies = (
 			);
-			productName = PersonaKitTests;
-			productReference = D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */;
+			productName = PersonaKitHostTests;
+			productReference = D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		D15697B12F5BA3AC00670F8F /* PersonaKitUITests */ = {
@@ -265,7 +265,7 @@
 			projectRoot = "";
 			targets = (
 				D156979A2F5BA3AB00670F8F /* PersonaKit */,
-				D15697A72F5BA3AC00670F8F /* PersonaKitTests */,
+				D15697A72F5BA3AC00670F8F /* PersonaKitHostTests */,
 				D15697B12F5BA3AC00670F8F /* PersonaKitUITests */,
 				D15697CB2F5BA47200670F8F /* PersonaKitCLI */,
 			);
@@ -535,7 +535,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitHostTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -556,7 +556,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitHostTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -652,7 +652,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitTests" */ = {
+		D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitHostTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D15697C02F5BA3AC00670F8F /* Debug */,

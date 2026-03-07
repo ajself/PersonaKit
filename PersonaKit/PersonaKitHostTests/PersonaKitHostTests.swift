@@ -1,7 +1,7 @@
 import Testing
 @testable import PersonaKit
 
-struct PersonaKitTests {
+struct PersonaKitHostTests {
   @Test
   func autoActivateDefaultsToTrue() {
     #expect(PersonaKitLaunchConfiguration.shouldAutoActivate(environment: [:], arguments: []) == true)
