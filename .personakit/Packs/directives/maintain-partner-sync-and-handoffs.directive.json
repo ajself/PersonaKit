@@ -19,13 +19,17 @@
     },
     {
       "text": "Apply approved updates and refresh handoff register and verification notes."
+    },
+    {
+      "text": "At day close, run `samwise-daily-closeout` and append one diary entry with outcomes, learnings, and next-day goals."
     }
   ],
   "acceptanceCriteria": [
     "Partner context log has a new update entry",
     "Affected packs/sessions are explicitly identified",
     "Subagent handoff boundaries are clear and reviewable",
-    "Validation and residual risks are documented"
+    "Validation and residual risks are documented",
+    "A daily closeout diary entry exists when a workday wraps"
   ],
   "verification": [
     {

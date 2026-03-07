@@ -85,6 +85,31 @@ Exit criteria:
 2. Future closeout passes include pack/session maintenance by default.
 3. Docs are updated and internally consistent.
 
+### 4) Samwise Daily Closeout Ritual (Ongoing)
+
+Plan source:
+
+- `.personakit/Sessions/samwise-daily-closeout.session.json`
+- `.personakit/Packs/directives/run-samwise-daily-closeout.directive.json`
+- `Docs/Plan/logs/samwise-diary.jsonl`
+
+Objective:
+
+- Run a consistent end-of-day routine that records progress, learning, and next-day restart goals.
+
+Actions:
+
+1. Run `samwise-daily-closeout` when AJ or Samwise ends an active workday.
+2. Append one schema-valid entry to `Docs/Plan/logs/samwise-diary.jsonl`.
+3. Include concrete `whatLearned`, `improvements`, and `nextGoals`.
+4. If pack/session behavior changed, mirror updates in gardening and partner logs.
+
+Exit criteria:
+
+1. One diary entry exists for each active workday closeout.
+2. Entries are specific, actionable, and continuity-ready.
+3. Related logs are synchronized when context changes.
+
 ## Plan Hygiene Rules
 
 1. Keep only active plans in `Docs/Plan/`.

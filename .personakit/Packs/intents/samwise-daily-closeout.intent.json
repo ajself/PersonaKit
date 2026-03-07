@@ -1,0 +1,39 @@
+{
+  "id": "samwise-daily-closeout",
+  "version": "1.0",
+  "name": "Samwise Daily Closeout",
+  "description": "Capture end-of-day progress, learning, and next-step readiness for AJ/Samwise continuity.",
+  "parameters": [
+    {
+      "name": "daySummary",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "keyLearning",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "nextGoals",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "samwise-daily-closeout",
+    "partner-trust-contract",
+    "non-goals"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "low",
+    "requiresHumanReview": false,
+    "notes": [
+      "Keep closeout notes concise and evidence-backed.",
+      "Use explicit next-day goals so restart is fast and low-friction."
+    ]
+  }
+}

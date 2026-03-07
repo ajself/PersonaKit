@@ -1,0 +1,49 @@
+{
+  "id": "run-samwise-daily-closeout",
+  "version": "1.0",
+  "title": "Run Samwise daily closeout",
+  "goal": "End each workday with clear continuity notes, self-improvement signals, and next-step readiness.",
+  "steps": [
+    {
+      "text": "Review today's completed changes, validation checks, and remaining open tasks."
+    },
+    {
+      "text": "Summarize outcomes, key learnings, and effectiveness gaps in plain language."
+    },
+    {
+      "text": "Write one new JSONL entry in Docs/Plan/logs/samwise-diary.jsonl using the schema contract."
+    },
+    {
+      "text": "If pack/session behavior changed, update partner and gardening records for traceability."
+    },
+    {
+      "text": "Define next-day goals and the first concrete action to resume quickly."
+    }
+  ],
+  "acceptanceCriteria": [
+    "A new samwise diary entry exists for the day",
+    "Learning and improvement items are concrete and actionable",
+    "Next-day goals are explicit and restart-ready",
+    "Related logs are updated when pack/session context changed"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm new JSONL diary entry matches schema-required fields"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm summary, learnings, and next goals are present and specific"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm related logs were updated when context changed"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "samwise-daily-closeout"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

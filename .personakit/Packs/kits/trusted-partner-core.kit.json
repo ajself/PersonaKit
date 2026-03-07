@@ -5,6 +5,7 @@
   "summary": "Partner operating standards for trusted AJ/Samwise collaboration and subagent handoff quality.",
   "essentialIds": [
     "partner-trust-contract",
+    "samwise-daily-closeout",
     "environment",
     "non-goals",
     "tools-and-constraints"
