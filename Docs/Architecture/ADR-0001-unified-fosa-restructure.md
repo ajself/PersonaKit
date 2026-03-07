@@ -59,6 +59,7 @@ Tradeoffs:
 
 ## Rollout Notes
 
-- Architecture defaults are defined in `App/ArchitectureDefaults.md`.
+- Architecture defaults are defined in
+  `Docs/Architecture/ADR-0003-fosa-implementation-defaults.md`.
 - Detailed execution and git workflow were tracked in the FOSA refactor plan,
   and the migration completed on 2026-02-16.
