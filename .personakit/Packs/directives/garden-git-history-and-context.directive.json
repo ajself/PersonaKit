@@ -11,10 +11,13 @@
       "text": "Classify each candidate with rationale, risk, and non-destructive alternatives."
     },
     {
+      "text": "Produce a proposal report with candidate commits, rationale, risk, and exact command plan marked pending approval."
+    },
+    {
       "text": "Record each decision and proposed action in markdown, session-specific JSONL, and shared gardening JSONL logs using required fields."
     },
     {
-      "text": "Pause for review before any history-altering action.",
+      "text": "Pause for review and approval before any history-altering action.",
       "requiresReview": true
     },
     {
@@ -23,11 +26,16 @@
   ],
   "acceptanceCriteria": [
     "Candidate commits and decisions are captured with stable IDs",
+    "Proposal report is generated before any history-altering action is attempted",
     "Session-specific and shared gardening JSONL entries satisfy required field contracts",
     "No history-altering action occurs without explicit approval",
     "Post-action verification status is recorded"
   ],
   "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm Docs/Plan/git-history-gardener-proposals.md exists and proposal statuses are explicit"
+    },
     {
       "kind": "manual",
       "text": "Confirm Docs/Plan/git-history-gardener-log.md captures range, decisions, and review outcomes"

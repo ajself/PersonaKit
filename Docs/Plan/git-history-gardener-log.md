@@ -24,3 +24,5 @@ Structured records are mirrored to:
 | Date | Phase | Commit Range | Drift Observed | Decision | Candidate Actions | Verification |
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-03-07 | Bootstrap | `HEAD~1..HEAD` | Session and deterministic log system not defined | Added pack/session/directive/intent + JSONL contract | `doc-only` | `personakit validate` passed |
+| 2026-03-07 | Analysis pass #1 | `HEAD~10..HEAD` | Follow-up commits identified that can be folded for cleaner narrative history | Generated proposal report with no history edits executed | `GHP-001`, `GHP-002` (both pending approval) | Proposal report written; `Scripts/check-gardening-logs.sh` passed |
+| 2026-03-07 | Execution pass #1 | `HEAD~10..HEAD` | Approved proposals `GHP-001` and `GHP-002` selected for execution | Applied local rebase fixups for both approved proposals; no new execution commit created | `GHP-001` executed, `GHP-002` executed | Rebase succeeded; `personakit validate` and `Scripts/check-gardening-logs.sh` passed |

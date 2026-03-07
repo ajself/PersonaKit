@@ -14,6 +14,7 @@ Centralized machine-readable logs for gardening workflows.
 - `gardening-events.schema.json`: base schema for shared event entries.
 - `git-history-gardener.jsonl`: session-specific git-history log profile.
 - `git-history-gardener.schema.json`: session-specific schema extension profile.
+- `../git-history-gardener-proposals.md`: approval-gated proposed history changes.
 
 ## Contract Rule
 

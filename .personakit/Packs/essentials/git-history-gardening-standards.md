@@ -16,6 +16,7 @@ For each git-history gardening pass, maintain both:
 1. `Docs/Plan/git-history-gardener-log.md`
 2. `Docs/Plan/logs/git-history-gardener.jsonl`
 3. `Docs/Plan/logs/gardening-events.jsonl` (shared gardening stream)
+4. `Docs/Plan/git-history-gardener-proposals.md`
 
 The git-history JSONL entry extends the shared `gardening-log-contract`.
 
@@ -41,6 +42,21 @@ and git-history profile fields:
 
 - `commitRange`
 - `candidateCommit`
+
+## Required Proposal Report Fields
+
+Each proposal report entry must include:
+
+- `proposalId`
+- `commitRange`
+- `candidateCommit`
+- `proposedAction`
+- `rationale`
+- `risk`
+- `exactCommandPlan` (commands listed but not executed)
+- `approvalStatus` (`pending`, `approved`, `rejected`)
+
+Hard rule: history-altering commands require `approvalStatus=approved` first.
 
 ## Determinism Rules
 
