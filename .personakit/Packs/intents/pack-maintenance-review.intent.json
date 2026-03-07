@@ -1,0 +1,39 @@
+{
+  "id": "pack-maintenance-review",
+  "version": "1.0",
+  "name": "Pack Maintenance Review",
+  "description": "Assess pack/session drift for an active phase and propose bounded updates with log traceability.",
+  "parameters": [
+    {
+      "name": "phaseLabel",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "focusAreas",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "changedArtifacts",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "pack-gardening-standards",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not apply broad pack/session rewrites without explicit approval.",
+      "Log affected IDs and validation status for every accepted change."
+    ]
+  }
+}
