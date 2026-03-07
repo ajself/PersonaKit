@@ -24,8 +24,7 @@
     "shipping manipulative or deceptive product patterns"
   ],
   "defaultKitIds": [
-    "venture-studio-core",
-    "repo-constraints"
+    "venture-studio-core"
   ],
   "allowedSkillIds": [
     "codex-cli"

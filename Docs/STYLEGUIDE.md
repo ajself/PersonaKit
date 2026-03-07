@@ -20,14 +20,19 @@ Keep docs easy to scan, easy to trust, and easy to maintain.
 
 Use this three-line metadata block near the top of operational docs:
 
+- Required for all new operational docs.
+- Required when substantially editing an existing operational doc.
+- Legacy docs may adopt this gradually when they are touched.
+
 - `Status: Draft | Active | Archived`
 - `Owner: <person or team>`
 - `Last Reviewed: YYYY-MM-DD`
 
 ## File Naming Rules
 
-- Use `kebab-case.md` for standard docs.
+- Prefer `kebab-case.md` for new standard docs.
 - Use `ADR-####-short-title.md` for architecture decisions.
+- Existing mixed-case docs may remain until a dedicated rename cleanup.
 - Avoid vague names like `notes.md`, `misc.md`, or `temp.md`.
 
 ## Folder Intent

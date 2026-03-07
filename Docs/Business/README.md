@@ -14,6 +14,8 @@ This folder is the operating system for "what next?" decisions:
 
 ## Daily Operating Loop
 
+Run commands from the repository root.
+
 1. Run the session context:
    - `swift run personakit export --root .personakit --session venture-studio-daily`
 2. Generate three opportunities.
