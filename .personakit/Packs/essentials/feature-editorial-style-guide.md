@@ -13,6 +13,12 @@
 - Use concrete attribution for claims, timelines, and quotes.
 - When an AP-specific rule is uncertain, choose clarity, stay consistent in the piece, and flag the uncertainty for human review.
 
+## Attribution and Influence
+
+- Use a Studs Terkel-inspired lens, not direct imitation.
+- Do not present invented language as historical quotation.
+- Prefer contemporary plain-language phrasing over period mimicry.
+
 ## Voice and Tenor
 
 - Sound like a city desk feature: people-first, specific, and observant.
@@ -33,4 +39,3 @@
 - No sensational hero framing, spy-thriller hype, or inflated claims.
 - No sterile institutional prose that drains narrative energy.
 - No scope drift away from the story's central arc and evidence.
-

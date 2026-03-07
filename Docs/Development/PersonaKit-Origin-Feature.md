@@ -4,18 +4,18 @@
 
 ## Deck
 
-From a single commit on January 23, 2026 to a local-first, deterministic toolchain by March 6, PersonaKit became a working record of reviewer-led AI development: one human shaping intent and review, one agent accelerating execution, and a codebase that kept choosing clarity over convenience.
+From a single commit on January 23, 2026 to a local-first, deterministic toolchain by March 6, PersonaKit became a working record of reviewer-led AI development: one human shaping intent and review, one agent accelerating execution and a codebase that kept choosing clarity over convenience.
 
 ## Byline
 
 Date: 2026-03-07  
-Source window: `2026-01-23` to `2026-03-06` (`306` commits)
+Source window: `2026-01-23` to `2026-03-06` (captured for this draft)
 
 ---
 
 There are projects that arrive with a slogan. This one arrived with a question.
 
-Not, "Can we ship faster?"  
+Not "Can we ship faster?"  
 The better question: "Can we move fast and still trust what we built yesterday?"
 
 PersonaKit starts on **January 23, 2026** with `chore: initial commit` (`aec0ff8`). The early work is modest on paper: persona metadata helpers, parsing tests, filtering, docs cleanup. But the rhythm is already there: code, test, docs, repeat.
