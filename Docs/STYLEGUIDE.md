@@ -41,7 +41,7 @@ Use this three-line metadata block near the top of operational docs:
 - `Docs/Development/`: development process, branch closeouts, and working agreements.
 - `Docs/MCP/`: MCP-specific usage and debugging guidance.
 - `Docs/Plan/`: short-lived plans; remove or close when work is complete.
-- `Docs/Business/`: business strategy artifacts (ethics, scoring, backlog).
+- `Workspaces/<name>/`: initiative subprojects with isolated docs and `.personakit` roots.
 
 ## Structure Expectations
 
@@ -75,4 +75,4 @@ For plan docs, also include explicit status and next checkpoint.
 Related docs:
 
 - [Documentation Index](./README.md)
-- [Business Docs](./Business/README.md)
+- [Workspaces Index](../Workspaces/README.md)
