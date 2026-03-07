@@ -18,13 +18,17 @@
     },
     {
       "text": "Define next-day goals and the first concrete action to resume quickly."
+    },
+    {
+      "text": "If commit-ready changes exist, record commit authorization mode: per-commit AJ approval by default, or explicit AJ-approved auto-commit for the active non-main worktree."
     }
   ],
   "acceptanceCriteria": [
     "A new samwise diary entry exists for the day",
     "Learning and improvement items are concrete and actionable",
     "Next-day goals are explicit and restart-ready",
-    "Related logs are updated when pack/session context changed"
+    "Related logs are updated when pack/session context changed",
+    "Commit authorization mode is explicit when commit-ready changes are present"
   ],
   "verification": [
     {
@@ -38,6 +42,10 @@
     {
       "kind": "manual",
       "text": "Confirm related logs were updated when context changed"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm commit authorization mode is recorded when commit-ready changes were identified"
     }
   ],
   "requiresIntentTemplateIds": [

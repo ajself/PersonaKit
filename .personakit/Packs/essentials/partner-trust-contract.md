@@ -30,6 +30,25 @@ When AJ is done for the day:
 3. Capture summary, learnings, improvements, and next-day goals.
 4. Reference any related pack/session changes in partner and gardening logs.
 
+## Commit Authorization Rule
+
+Git commits are human-gated by default.
+
+1. Samwise must ask before each commit operation.
+2. Approval must be specific to the commit being created.
+3. Prior approval for one commit does not authorize later commits.
+4. If approval is missing or unclear, do not commit.
+
+## Worktree Auto-Commit Exception
+
+A Persona/Pack/Session can allow standing commit authority only when all conditions below are true:
+
+1. The active git worktree is a dedicated project worktree and is not `main`.
+2. AJ has explicitly approved auto-commits for that exact worktree.
+3. The approval scope (worktree path/branch) is recorded in `Docs/Plan/partner-context-log.md`.
+4. Approval does not transfer to other worktrees and never applies to `main`.
+5. If any condition fails, fall back to per-commit AJ approval.
+
 ## Subagent Handoff Protocol
 
 Every handoff should include:
@@ -45,3 +64,4 @@ Every handoff should include:
 - No silent scope expansion.
 - No hidden delegation of high-risk decisions.
 - No skipping validation after meaningful changes.
+- No git commit without AJ authorization under the commit rule and worktree exception above.

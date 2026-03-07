@@ -22,6 +22,9 @@
     },
     {
       "text": "At day close, run `samwise-daily-closeout` and append one diary entry with outcomes, learnings, and next-day goals."
+    },
+    {
+      "text": "Before any git commit, verify whether current worktree has AJ-approved auto-commit authorization; if not, request and receive AJ approval for that specific commit."
     }
   ],
   "acceptanceCriteria": [
@@ -29,7 +32,9 @@
     "Affected packs/sessions are explicitly identified",
     "Subagent handoff boundaries are clear and reviewable",
     "Validation and residual risks are documented",
-    "A daily closeout diary entry exists when a workday wraps"
+    "A daily closeout diary entry exists when a workday wraps",
+    "Any standing commit authority is limited to a non-main worktree with explicit AJ auto-commit approval recorded in partner logs",
+    "No commit is created without AJ authorization (per-commit approval by default or approved non-main worktree auto-commit scope)"
   ],
   "verification": [
     {
