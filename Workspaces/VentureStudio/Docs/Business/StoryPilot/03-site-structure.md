@@ -21,5 +21,5 @@ Last Reviewed: 2026-03-07
 
 ## Implementation Location
 
-- Current live draft: `Docs/Marketing/`
-- Iteration snapshots: `Docs/Marketing/Sprints/`
+- Current live draft: `Workspaces/VentureStudio/Docs/Marketing/`
+- Iteration snapshots: `Workspaces/VentureStudio/Docs/Marketing/Sprints/`

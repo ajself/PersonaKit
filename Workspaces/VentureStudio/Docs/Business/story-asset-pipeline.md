@@ -29,7 +29,7 @@ website artifacts.
 
 ## Required Artifacts
 
-Store all pilot artifacts in `Docs/Business/StoryPilot/`.
+Store all pilot artifacts in `Workspaces/VentureStudio/Docs/Business/StoryPilot/`.
 
 1. `01-customer-brief.md`
 2. `02-message-arc.md`

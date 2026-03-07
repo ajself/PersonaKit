@@ -4,7 +4,7 @@ A static concept landing page for the PersonaKit story/motif.
 
 ## Preview
 
-Open `Docs/Marketing/index.html` in a browser.
+Open `Workspaces/VentureStudio/Docs/Marketing/index.html` in a browser.
 
 ## Files
 

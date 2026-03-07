@@ -1,0 +1,12 @@
+{
+  "id": "repo-constraints",
+  "version": "1.0",
+  "name": "Repository Constraints Kit",
+  "summary": "Rules specific to this codebase.",
+  "essentialIds": [
+    "architecture-defaults",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

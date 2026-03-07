@@ -17,7 +17,7 @@ This folder is the operating system for "what next?" decisions:
 Run commands from the repository root.
 
 1. Run the session context:
-   - `swift run personakit export --root .personakit --session venture-studio-daily`
+   - `swift run personakit export --root Workspaces/VentureStudio/.personakit --session venture-studio-daily`
 2. Generate three opportunities.
 3. Score each one using [Idea-Scorecard.md](./Idea-Scorecard.md).
 4. Update [Opportunity-Backlog.md](./Opportunity-Backlog.md).
@@ -45,5 +45,7 @@ Run commands from the repository root.
 
 Related docs:
 
-- [Documentation Style Guide](../STYLEGUIDE.md)
-- [Collaboration Charter](../Development/Collaboration-Charter.md)
+- [Venture Studio Docs Index](../README.md)
+- [Venture Studio Session Directory](../Development/session-directory.md)
+- [Repository Documentation Style Guide](../../../../Docs/STYLEGUIDE.md)
+- [Repository Collaboration Charter](../../../../Docs/Development/Collaboration-Charter.md)

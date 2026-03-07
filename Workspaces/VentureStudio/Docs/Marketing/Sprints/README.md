@@ -16,7 +16,7 @@ Three consecutive sprint passes were run for the Chelsea narrative pilot.
 
 - `sprint-01/` baseline snapshot
 - `sprint-02/` refinement snapshot
-- `sprint-03/` final delivery snapshot (matches current `Docs/Marketing/`)
+- `sprint-03/` final delivery snapshot (matches current `Workspaces/VentureStudio/Docs/Marketing/`)
 
 ## Recommendation
 

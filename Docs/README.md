@@ -8,7 +8,7 @@ Use this file as the navigation map for project documentation.
 - [Session Directory](./Development/session-directory.md): phase-grouped list of available sessions.
 - [MCP](./MCP/): MCP behavior, usage, and troubleshooting.
 - [Plan](./Plan/): short-lived execution plans and TODO state.
-- [Business](./Business/): ethics, opportunity scoring, and venture backlog.
+- [Workspaces](../Workspaces/): initiative subprojects with their own docs and `.personakit` roots.
 
 When adding a new document:
 

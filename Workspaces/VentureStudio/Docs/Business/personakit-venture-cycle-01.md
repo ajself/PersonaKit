@@ -34,7 +34,7 @@ ranked requirements list for macOS app team workflows.
 
 1. Translate AJ's intent into a clear customer-facing narrative brief.
 2. Produce a compelling message arc and story-site direction.
-3. Build a first interactive narrative site draft in `Docs/Marketing/`.
+3. Build a first interactive narrative site draft in `Workspaces/VentureStudio/Docs/Marketing/`.
 4. Run architecture, QA, and VQA passes through role sessions.
 5. Produce ranked product requirements for macOS app team workflow support.
 
@@ -43,7 +43,7 @@ ranked requirements list for macOS app team workflows.
 1. Narrative customer brief for Chelsea.
 2. Message arc and story outline.
 3. Story-site wireframe or section map.
-4. Story-site draft artifact set in `Docs/Marketing/`.
+4. Story-site draft artifact set in `Workspaces/VentureStudio/Docs/Marketing/`.
 5. Architecture/QA/VQA review notes.
 6. Ranked requirement list (12 total):
    - minimum 5 macOS-app workflow requirements

@@ -54,4 +54,4 @@ Related docs:
 
 - [Idea Scorecard](./Idea-Scorecard.md)
 - [Opportunity Backlog](./Opportunity-Backlog.md)
-- [Documentation Style Guide](../STYLEGUIDE.md)
+- [Repository Documentation Style Guide](../../../../Docs/STYLEGUIDE.md)
