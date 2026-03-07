@@ -1,6 +1,6 @@
 # Story Pilot Artifact 01: Customer Brief
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -9,22 +9,27 @@ Last Reviewed: 2026-03-07
 - Primary: Chelsea
 - Secondary: future collaborators
 
-## Problem
+## Core Need
 
-Explain why PersonaKit matters personally and practically, without drowning the
-reader in tooling details.
+Explain why PersonaKit matters personally and practically, with clarity and
+heart, while still showing technical discipline and evidence.
 
 ## Desired Reader Outcome
 
-The reader understands:
+The reader should leave with confidence that:
 
-1. Why this work happened.
-2. What PersonaKit does.
-3. How this process protects quality and ethics.
-4. Why the next steps are credible.
+1. The work has a real purpose.
+2. PersonaKit is a structured practice, not a hype project.
+3. Progress is measurable and reviewed.
+4. The next steps are grounded and responsible.
 
 ## Constraints
 
 - Keep it honest and direct.
 - Keep it readable in under 8 minutes.
 - No sensitive internal IP details.
+
+## Success Signal
+
+Chelsea can explain PersonaKit's value and process back in plain language after
+one read-through.
