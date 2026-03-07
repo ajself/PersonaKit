@@ -7,6 +7,10 @@ deterministic validation harness against the canonical kit in
 The FOSA migration is complete; this guide reflects the post-migration
 implementation layout and validation workflow.
 
+## Team operating agreement
+
+- [Collaboration Charter](./Collaboration-Charter.md)
+
 ## Implementation architecture
 
 The implementation is intentionally small, with clear responsibilities split by
