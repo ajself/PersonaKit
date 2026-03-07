@@ -28,6 +28,12 @@ Run commands from the repository root.
 - [Ethics.md](./Ethics.md)
 - [Idea-Scorecard.md](./Idea-Scorecard.md)
 - [Opportunity-Backlog.md](./Opportunity-Backlog.md)
+- [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md)
+
+## Current Selected Venture
+
+- `VS-006`: PersonaKit evolution loop
+- Working brief: [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md)
 
 ## Ground Rules
 

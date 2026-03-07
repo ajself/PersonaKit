@@ -20,6 +20,7 @@ Track opportunity candidates in one place with scoring, state, and next action.
 
 | ID | Opportunity | Target User | Score | Status | Next Action |
 | --- | --- | --- | --- | --- | --- |
+| VS-006 | PersonaKit evolution loop (our first venture) | AI-native builders and teams using PersonaKit | 77/85 | Selected | Execute [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md) and review at day 7 |
 | VS-001 | Daily context reset planner for solo founders | Independent builders | TBD | Exploring | Write 3 concrete workflows and score |
 | VS-002 | Opportunity triage assistant for AI-native app ideas | Small product teams | TBD | Exploring | Collect 5 competitor examples |
 | VS-003 | Lightweight founder decision journal with AI summaries | Founder-operators | TBD | Exploring | Define retention signal and MVP scope |
