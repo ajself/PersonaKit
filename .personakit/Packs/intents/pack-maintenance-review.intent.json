@@ -22,6 +22,7 @@
   ],
   "includesEssentialIds": [
     "pack-gardening-standards",
+    "gardening-v2-checklist",
     "gardening-log-contract",
     "non-goals",
     "tools-and-constraints"
@@ -34,7 +35,8 @@
     "requiresHumanReview": true,
     "notes": [
       "Do not apply broad pack/session rewrites without explicit approval.",
-      "Log affected IDs and validation status for every accepted change."
+      "Log affected IDs and validation status for every accepted change.",
+      "Self-gardening updates must use the same review stop points and cannot bypass approval gates."
     ]
   }
 }

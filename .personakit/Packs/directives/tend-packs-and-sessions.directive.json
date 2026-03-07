@@ -11,6 +11,12 @@
       "text": "Identify pack/session drift, stale entries, and missing coverage."
     },
     {
+      "text": "If proposed changes include gardener-owned artifacts, mark the pass as self-gardening and keep standard review gates."
+    },
+    {
+      "text": "Run `gardening-v2-checklist` and capture pass status before recommendations are finalized."
+    },
+    {
       "text": "Update markdown and JSONL maintenance logs with findings and prioritized recommendations."
     },
     {
@@ -24,6 +30,8 @@
   "acceptanceCriteria": [
     "Maintenance log entry is recorded for the active phase",
     "JSONL gardening entry is recorded using the shared contract",
+    "Self-gardening passes are explicitly labeled when gardener-owned artifacts are modified",
+    "Gardening v2 checklist pass status is recorded",
     "Improvement backlog is updated with prioritized follow-ups",
     "Approved pack/session updates are bounded and traceable",
     "Validation passes after updates"

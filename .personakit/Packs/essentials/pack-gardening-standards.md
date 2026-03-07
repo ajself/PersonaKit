@@ -26,6 +26,8 @@ Run a maintenance pass:
 2. At major milestone transitions.
 3. At phase closeout.
 
+Run `gardening-v2-checklist` during every maintenance pass.
+
 ## Required Log Fields
 
 Each log entry should include:
@@ -45,3 +47,5 @@ Each JSONL entry should follow `gardening-log-contract` required fields.
 - No deleting sessions without replacement or deprecation note.
 - No scope expansion beyond pack/session maintenance intent.
 - Revalidate after edits.
+- Keep analysis-only and execution phases explicitly separated.
+- Self-gardening is allowed, but follows the same analysis-only, review, and approved-execution flow as any other gardening pass.
