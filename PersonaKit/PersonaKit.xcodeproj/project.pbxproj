@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D15697C72F5BA42E00670F8F /* PersonaKitStudio in Frameworks */ = {isa = PBXBuildFile; productRef = D15697C62F5BA42E00670F8F /* PersonaKitStudio */; };
-		D15697D52F5BA48E00670F8F /* PersonaKitStudio in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D42F5BA48E00670F8F /* PersonaKitStudio */; };
-		D15697D72F5BA48E00670F8F /* personakit in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D62F5BA48E00670F8F /* personakit */; };
+		D15697C72F5BA42E00670F8F /* StudioFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D15697C62F5BA42E00670F8F /* StudioFeatures */; };
+		D15697D72F5BA48E00670F8F /* ContextCLI in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D62F5BA48E00670F8F /* ContextCLI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,8 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D15697D52F5BA48E00670F8F /* PersonaKitStudio in Frameworks */,
-				D15697C72F5BA42E00670F8F /* PersonaKitStudio in Frameworks */,
+				D15697C72F5BA42E00670F8F /* StudioFeatures in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,7 +97,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D15697D72F5BA48E00670F8F /* personakit in Frameworks */,
+				D15697D72F5BA48E00670F8F /* ContextCLI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,8 +146,7 @@
 			);
 			name = PersonaKit;
 			packageProductDependencies = (
-				D15697C62F5BA42E00670F8F /* PersonaKitStudio */,
-				D15697D42F5BA48E00670F8F /* PersonaKitStudio */,
+				D15697C62F5BA42E00670F8F /* StudioFeatures */,
 			);
 			productName = PersonaKit;
 			productReference = D156979B2F5BA3AB00670F8F /* PersonaKit.app */;
@@ -218,7 +215,7 @@
 			);
 			name = PersonaKitCLI;
 			packageProductDependencies = (
-				D15697D62F5BA48E00670F8F /* personakit */,
+				D15697D62F5BA48E00670F8F /* ContextCLI */,
 			);
 			productName = PersonaKitCLI;
 			productReference = D15697CC2F5BA47200670F8F /* PersonaKitCLI */;
@@ -692,17 +689,13 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		D15697C62F5BA42E00670F8F /* PersonaKitStudio */ = {
+		D15697C62F5BA42E00670F8F /* StudioFeatures */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = PersonaKitStudio;
+			productName = StudioFeatures;
 		};
-		D15697D42F5BA48E00670F8F /* PersonaKitStudio */ = {
+		D15697D62F5BA48E00670F8F /* ContextCLI */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = PersonaKitStudio;
-		};
-		D15697D62F5BA48E00670F8F /* personakit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = personakit;
+			productName = ContextCLI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

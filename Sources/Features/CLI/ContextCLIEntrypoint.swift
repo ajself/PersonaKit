@@ -1,7 +1,7 @@
 /// Feature-module entrypoint that delegates to the ArgumentParser command tree.
-package enum ContextCLIEntrypoint {
+public enum ContextCLIEntrypoint {
   /// Executes the PersonaKit CLI process.
-  package static func main() {
+  public static func main() {
     PersonaKitCommand.main()
   }
 }

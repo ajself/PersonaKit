@@ -7,6 +7,14 @@ let package = Package(
     .macOS(.v26)
   ],
   products: [
+    .library(
+      name: "ContextCLI",
+      targets: ["ContextCLI"]
+    ),
+    .library(
+      name: "StudioFeatures",
+      targets: ["StudioFeatures"]
+    ),
     .executable(
       name: "personakit",
       targets: ["PersonaKit"]
@@ -60,7 +68,7 @@ let package = Package(
       name: "StudioFoundation",
       dependencies: [
         "ContextCore",
-        "ContextWorkspaceCore"
+        "ContextWorkspaceCore",
       ],
       path: "Sources/Features/Studio/Foundation"
     ),
@@ -69,7 +77,7 @@ let package = Package(
       dependencies: [
         "ContextCore",
         "ContextWorkspaceCore",
-        "StudioFoundation"
+        "StudioFoundation",
       ],
       path: "Sources/Features/Studio",
       exclude: [
@@ -86,7 +94,7 @@ let package = Package(
     .executableTarget(
       name: "PersonaKitStudio",
       dependencies: [
-        "StudioFeatures",
+        "StudioFeatures"
       ],
       path: "Sources/App/Studio",
       exclude: [
@@ -106,7 +114,7 @@ let package = Package(
       ],
       path: "Tests",
       exclude: [
-        "Fixtures",
+        "Fixtures"
       ],
       swiftSettings: [
         .enableExperimentalFeature("Testing")
