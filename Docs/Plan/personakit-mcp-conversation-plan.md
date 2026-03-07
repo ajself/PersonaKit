@@ -1,7 +1,7 @@
 # PersonaKit MCP Conversation Plan
 
 Last Updated: 2026-03-07
-Status: Active (M1 complete, M2 initial implementation complete)
+Status: Complete (M1, M2, M3 complete)
 
 ## Grounding Session
 
@@ -110,13 +110,21 @@ Acceptance criteria:
 2. Errors are explicit and recoverable.
 3. Onboarding docs are sufficient for first-use success.
 
+Progress:
+
+1. Complete on 2026-03-07.
+2. Added integration tests for catalog->recommend->trace conversation flows.
+3. Added deterministic repeatability coverage for recommendation output.
+4. Added recovery-hint error contracts in MCP tool responses and documented contracts in `Docs/MCP/Error-Contracts.md`.
+5. Added onboarding playbook in `Docs/MCP/Starter-Flows.md` and linked MCP docs.
+
 ## Execution Plan (Current)
 
 1. Author and commit this plan doc (complete).
 2. Start M1 with domain map draft and MCP catalog surface inventory (complete).
 3. Implement M1 in small, reviewable increments with tests (complete).
 4. Implement M2 discussion primitives and deterministic recommendation policy (initial complete).
-5. Continue into M3 (E2E + error UX + starter flows).
+5. M3 execution complete.
 
 ## Risks and Mitigations
 

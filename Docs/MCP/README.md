@@ -1,34 +1,50 @@
-PersonaKit MCP Server (Swift)
+# PersonaKit MCP Server (Swift)
 
-The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit context over stdio as read-only MCP Resources and Prompts.
+The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit context over stdio as read-only MCP resources, prompts, and tools.
 
 Important:
+
 - The Swift CLI and Swift codebase are the single source of truth for PersonaKit behavior and contracts.
 - The Swift MCP server is the supported integration path.
 
-The MCP server does not provide Tools.
+## Capabilities
 
-What it provides
-- Resources: read-only access to Personas, Kits, Directives, Intent Templates, Skills, and Essentials.
+- Resources: read-only access to Personas, Kits, Directives, Intent Templates, Skills, Essentials, and catalog endpoints.
 - Prompts: session export and session graph.
+- Tools: validate/export/graph plus discussion primitives (`explain`, `compare`, `recommend`, `trace`).
 
-Transport: stdio
-The server runs as a local process and communicates over stdin/stdout. No ports are opened.
-The server is designed to be launched and managed by an MCP client, not used directly by end users.
+All MCP capabilities are read-only. The server never writes pack files and never executes shell commands.
 
-Optional environment
-- PERSONAKIT_ROOT: explicit PersonaKit root path (must contain `Packs/`).
-- PERSONAKIT_ROOT_OVERRIDE=1: compatibility mode; requires `PERSONAKIT_ROOT`.
+## Transport
 
-Example launch (stdio)
+- `stdio` only.
+- No network ports are opened.
+- The server is meant to be launched by an MCP client.
+
+## Scope Selection (MCP Local-First, Single Scope)
+
+MCP scope resolution is deterministic and selects exactly one scope:
+
+1. `--root <path>`
+2. `PERSONAKIT_ROOT`
+3. local project `.personakit`
+4. `~/.personakit`
+5. fail with explicit startup error
+
+Notes:
+
+- `PERSONAKIT_ROOT` must point to a PersonaKit root containing `Packs/`.
+- `PERSONAKIT_ROOT_OVERRIDE=1` is compatibility mode and requires `PERSONAKIT_ROOT`.
+- `--no-project` and `--no-global` disable discovery fallback steps.
+
+## Launch
+
 From any directory:
-- personakit mcp
-- personakit mcp --root /absolute/path/to/.personakit
 
-Example MCP client config
-Most MCP-compatible clients connect to servers using a JSON configuration file that declares how the server is launched.
+- `personakit mcp`
+- `personakit mcp --root /absolute/path/to/.personakit`
 
-A minimal example (stdio transport):
+## MCP Client Config Example
 
 ```json
 {
@@ -41,15 +57,8 @@ A minimal example (stdio transport):
 }
 ```
 
-Notes
-- The MCP server is read-only and never writes to disk.
-- The MCP server never executes external commands.
-- Output is deterministic (stable ordering, no timestamps).
-- MCP scope selection is local-first and single-scope:
-  1) `--root <path>`
-  2) `PERSONAKIT_ROOT`
-  3) local project `.personakit`
-  4) `~/.personakit`
-  5) error when none exist
-- MCP chooses one scope only (project or global), not project/global merge.
-- `--no-project` and `--no-global` disable discovery fallback steps.
+## First-Use Guides
+
+- [Starter Flows](./Starter-Flows.md)
+- [Error Contracts](./Error-Contracts.md)
+- [Troubleshooting](./troubleshooting.md)

@@ -8,7 +8,7 @@ Keep plan execution focused. This file is the ordered queue for open plans.
 
 ## Open Plan Queue (In Order)
 
-### 1) VentureStudio Pilot Validation (Execute Now)
+### 1) VentureStudio Pilot Validation (Done; pending AJ signoff)
 
 Plan source:
 
@@ -31,7 +31,11 @@ Exit criteria:
 2. Gate evidence is complete.
 3. Phase-2 decision is explicit.
 
-### 2) PersonaKit MCP Conversation Plan (Finish M3)
+Execution note:
+
+- Completed on 2026-03-07; see `Workspaces/VentureStudio/Docs/Plan/pilot-validation-report.md`.
+
+### 2) PersonaKit MCP Conversation Plan (Done; pending AJ signoff)
 
 Plan source:
 
@@ -53,7 +57,11 @@ Exit criteria:
 1. M3 acceptance criteria are all met.
 2. Plan status no longer active.
 
-### 3) Xcode Host Integration Closeout (Interactive Confirmation)
+Execution note:
+
+- Completed on 2026-03-07; see `Docs/MCP/Starter-Flows.md`, `Docs/MCP/Error-Contracts.md`, and `Tests/Features/MCP/MCPConversationFlowTests.swift`.
+
+### 3) Xcode Host Integration Closeout (Execute Next)
 
 Plan source:
 
@@ -66,7 +74,7 @@ Objective:
 Actions:
 
 1. Run interactive app smoke in Xcode.
-2. Run host test targets interactively.
+2. Confirm host test coverage state (latest headless run passed: `xcodebuild ... -only-testing:PersonaKitHostTests`).
 3. Record pass/fail outcomes in the plan doc.
 4. Archive plan after confirmation.
 
@@ -74,6 +82,10 @@ Exit criteria:
 
 1. Interactive checks are explicitly recorded.
 2. Plan can be archived without open caveats.
+
+Execution note:
+
+- Headless host test preflight passed on 2026-03-07; remaining work is the interactive app smoke confirmation.
 
 ### 4) Git History Gardening Cadence (Ongoing)
 
