@@ -25,6 +25,7 @@ root `.personakit`.
 ## Pack Maintenance Workflows
 
 - `pack-gardener-maintenance` - owner: `pack-gardener`
+- `git-history-gardener` - owner: `pack-gardener`
 
 ## Partner Sync Workflows
 

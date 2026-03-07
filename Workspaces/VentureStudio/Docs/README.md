@@ -13,6 +13,7 @@ Navigation map for Venture Studio workspace documents.
 - [Business](./Business/): ethics, scoring, backlog, and cycle planning.
 - [Development](./Development/): workspace execution context and session index.
 - [Marketing](./Marketing/): storytelling website and sprint snapshots.
+- [Plan](./Plan/): planning-management specs, gate tracker, and pilot validation.
 
 Related docs:
 

@@ -15,6 +15,8 @@ For each project using this pack, maintain:
 
 1. `Docs/Plan/pack-gardener-log.md`
 2. `Docs/Plan/pack-session-improvement-backlog.md`
+3. `Docs/Plan/logs/gardening-events.jsonl`
+4. `Docs/Plan/logs/gardening-events.schema.json`
 
 ## Maintenance Cadence
 
@@ -34,6 +36,8 @@ Each log entry should include:
 - decision taken
 - affected IDs (persona/kit/directive/session)
 - verification status
+
+Each JSONL entry should follow `gardening-log-contract` required fields.
 
 ## Guardrails
 

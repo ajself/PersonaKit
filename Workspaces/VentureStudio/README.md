@@ -28,6 +28,7 @@ Run from the repository root.
 
 - [Workspace Docs](./Docs/)
 - [Workspace Session Directory](./Docs/Development/session-directory.md)
+- [Planning Management](./Docs/Plan/README.md)
 
 Related docs:
 

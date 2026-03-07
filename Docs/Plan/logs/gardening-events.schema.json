@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/gardening-events.schema.json",
+  "title": "Gardening Event JSONL Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "date",
+    "sessionId",
+    "phaseLabel",
+    "scope",
+    "category",
+    "subject",
+    "proposedAction",
+    "decision",
+    "rationale",
+    "affectedArtifacts",
+    "validationStatus",
+    "reviewer"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,4}-[0-9]{4}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phaseLabel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "pack-session",
+        "git-history",
+        "docs-governance",
+        "workspace-content",
+        "other"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposedAction": {
+      "type": "string",
+      "enum": [
+        "keep",
+        "update",
+        "add",
+        "deprecate",
+        "squash",
+        "fixup-followup",
+        "drop-proposal",
+        "doc-only",
+        "escalate"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "deferred"
+      ]
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affectedArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validationStatus": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "not-run"
+      ]
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

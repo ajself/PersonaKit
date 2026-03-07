@@ -1,11 +1,11 @@
 {
-  "id": "pack-maintenance-review",
+  "id": "git-history-garden-review",
   "version": "1.0",
-  "name": "Pack Maintenance Review",
-  "description": "Assess pack/session drift for an active phase and propose bounded updates with log traceability.",
+  "name": "Git History Garden Review",
+  "description": "Assess commit history quality, propose bounded pruning actions, and record deterministic decision traces.",
   "parameters": [
     {
-      "name": "phaseLabel",
+      "name": "commitRange",
       "type": "string",
       "required": true
     },
@@ -15,14 +15,15 @@
       "required": false
     },
     {
-      "name": "changedArtifacts",
-      "type": "string[]",
+      "name": "logPath",
+      "type": "string",
       "required": false
     }
   ],
   "includesEssentialIds": [
     "pack-gardening-standards",
     "gardening-log-contract",
+    "git-history-gardening-standards",
     "non-goals",
     "tools-and-constraints"
   ],
@@ -33,8 +34,8 @@
     "level": "medium",
     "requiresHumanReview": true,
     "notes": [
-      "Do not apply broad pack/session rewrites without explicit approval.",
-      "Log affected IDs and validation status for every accepted change."
+      "Do not rewrite history without explicit approval.",
+      "Log every decision before proposing commit-level actions."
     ]
   }
 }
