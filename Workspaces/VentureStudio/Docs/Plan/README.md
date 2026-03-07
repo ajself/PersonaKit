@@ -24,6 +24,7 @@ initiative work. It is docs-first, gate-driven, and deterministic.
 - [Gardening Cadence and Drift Policy](./gardening-cadence-and-drift-policy.md)
 - [Automation Command Spec](./automation-command-spec.md)
 - [Pilot Validation Plan](./pilot-validation-plan.md)
+- [Pilot Validation Report](./pilot-validation-report.md)
 
 ## Status Board
 
@@ -43,12 +44,12 @@ Hard rule: No gate skipping.
 
 | Gate | Name | Pass Criteria | Fail Criteria | Evidence Required | State | Reviewer Signoff |
 | --- | --- | --- | --- | --- | --- | --- |
-| G0 | Foundation | Planning index exists with scope, ownership, and status model | Missing scope, ownership, status board, or gate tracker | `README.md` + status board + gate tracker | Defined (Pending approval) | Required |
-| G1 | Protocol | Canonical pass sequence + pass entry/exit criteria are complete | Missing sequence item, missing entry/exit criteria, or skip/exception allowance | `pass-protocol-spec.md` | Defined (Pending approval) | Required |
-| G2 | QA | Rubric weights, severity model, and stop rules are complete | Missing weighted model, missing severity definitions, or missing stop rules | `content-qa-rubric-spec.md` | Defined (Pending approval) | Required |
-| G3 | Templates | Required template schema + minimum depth are complete | Missing required template section, metadata requirement, or traceability expectation | `artifact-template-library-spec.md` | Defined (Pending approval) | Required |
-| G4 | Operations | Cadence/drift policy and automation contracts are complete | Missing cadence trigger, drift trigger, or command contract section | `gardening-cadence-and-drift-policy.md` + `automation-command-spec.md` | Defined (Pending approval) | Required |
-| G5 | Pilot Ready | Pilot scenarios, acceptance criteria, and reporting are complete | Missing one required scenario, acceptance criterion, or reporting field | `pilot-validation-plan.md` | Defined (Pending approval) | Required |
+| G0 | Foundation | Planning index exists with scope, ownership, and status model | Missing scope, ownership, status board, or gate tracker | `README.md` + status board + gate tracker | Evidence complete (Pending AJ signoff) | Required |
+| G1 | Protocol | Canonical pass sequence + pass entry/exit criteria are complete | Missing sequence item, missing entry/exit criteria, or skip/exception allowance | `pass-protocol-spec.md` | Evidence complete (Pending AJ signoff) | Required |
+| G2 | QA | Rubric weights, severity model, and stop rules are complete | Missing weighted model, missing severity definitions, or missing stop rules | `content-qa-rubric-spec.md` | Evidence complete (Pending AJ signoff) | Required |
+| G3 | Templates | Required template schema + minimum depth are complete | Missing required template section, metadata requirement, or traceability expectation | `artifact-template-library-spec.md` | Evidence complete (Pending AJ signoff) | Required |
+| G4 | Operations | Cadence/drift policy and automation contracts are complete | Missing cadence trigger, drift trigger, or command contract section | `gardening-cadence-and-drift-policy.md` + `automation-command-spec.md` | Evidence complete (Pending AJ signoff) | Required |
+| G5 | Pilot Ready | Pilot scenarios, acceptance criteria, and reporting are complete | Missing one required scenario, acceptance criterion, or reporting field | `pilot-validation-plan.md` + `pilot-validation-report.md` | Evidence complete (Pending AJ signoff) | Required |
 
 ## Approval Model
 

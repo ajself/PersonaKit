@@ -1,6 +1,6 @@
 # Pilot Validation Plan
 
-Status: Active  
+Status: Active (Executed; pending AJ signoff)  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -57,3 +57,9 @@ Pilot report must include:
 ## Exit Decision Rule
 
 Advance to phase-2 PersonaKit encoding only if all acceptance criteria are met.
+
+## Execution Snapshot
+
+Execution evidence recorded in:
+
+- `Workspaces/VentureStudio/Docs/Plan/pilot-validation-report.md`
