@@ -1,0 +1,12 @@
+{
+  "id": "trusted-partner-core",
+  "version": "1.0",
+  "name": "Trusted Partner Core Kit",
+  "summary": "Partner operating standards for trusted AJ/Samwise collaboration and subagent handoff quality.",
+  "essentialIds": [
+    "partner-trust-contract",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

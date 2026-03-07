@@ -60,7 +60,7 @@ If we strip the jargon, the technical wins were straightforward:
   - `compare` answers "how are these different?"
   - `recommend` answers "what should I use for this situation?"
   - `trace` answers "how does this session resolve end to end?"
-- We wrote down how AJ and Codex work together.
+- We wrote down how AJ and Samwise work together.
   - Not as folklore, as a committed doc.
 
 That is why this branch feels bigger than its file list. It reduced ambiguity.

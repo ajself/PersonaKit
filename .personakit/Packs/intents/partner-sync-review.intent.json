@@ -1,0 +1,39 @@
+{
+  "id": "partner-sync-review",
+  "version": "1.0",
+  "name": "Partner Sync Review",
+  "description": "Convert AJ updates into explicit context, pack/session implications, and safe handoff plans.",
+  "parameters": [
+    {
+      "name": "updateSummary",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "affectedWorkstreams",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "riskNotes",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not proceed with broad cross-pack changes without AJ review.",
+      "Record all affected pack/session IDs in partner logs."
+    ]
+  }
+}

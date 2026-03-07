@@ -38,6 +38,10 @@ Provide a compact, phase-grouped index of available sessions.
 
 - `pack-gardener-maintenance`
 
+## Partner Sync Workflows
+
+- `samwise-partner-sync`
+
 ## Story Pilot Recommended Order
 
 1. `story-product-kickoff`
