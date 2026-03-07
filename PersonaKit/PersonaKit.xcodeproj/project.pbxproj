@@ -1,0 +1,710 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D15697C72F5BA42E00670F8F /* PersonaKitStudio in Frameworks */ = {isa = PBXBuildFile; productRef = D15697C62F5BA42E00670F8F /* PersonaKitStudio */; };
+		D15697D52F5BA48E00670F8F /* PersonaKitStudio in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D42F5BA48E00670F8F /* PersonaKitStudio */; };
+		D15697D72F5BA48E00670F8F /* personakit in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D62F5BA48E00670F8F /* personakit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D15697A92F5BA3AC00670F8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D156979A2F5BA3AB00670F8F;
+			remoteInfo = PersonaKit;
+		};
+		D15697B32F5BA3AC00670F8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D156979A2F5BA3AB00670F8F;
+			remoteInfo = PersonaKit;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D15697CA2F5BA47200670F8F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		D156979B2F5BA3AB00670F8F /* PersonaKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D15697CC2F5BA47200670F8F /* PersonaKitCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PersonaKitCLI; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D156979D2F5BA3AB00670F8F /* PersonaKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PersonaKit;
+			sourceTree = "<group>";
+		};
+		D15697AB2F5BA3AC00670F8F /* PersonaKitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PersonaKitTests;
+			sourceTree = "<group>";
+		};
+		D15697B52F5BA3AC00670F8F /* PersonaKitUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PersonaKitUITests;
+			sourceTree = "<group>";
+		};
+		D15697CD2F5BA47200670F8F /* PersonaKitCLI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PersonaKitCLI;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D15697982F5BA3AB00670F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D15697D52F5BA48E00670F8F /* PersonaKitStudio in Frameworks */,
+				D15697C72F5BA42E00670F8F /* PersonaKitStudio in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697A52F5BA3AC00670F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697AF2F5BA3AC00670F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697C92F5BA47200670F8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D15697D72F5BA48E00670F8F /* personakit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D15697922F5BA3AB00670F8F = {
+			isa = PBXGroup;
+			children = (
+				D156979D2F5BA3AB00670F8F /* PersonaKit */,
+				D15697AB2F5BA3AC00670F8F /* PersonaKitTests */,
+				D15697B52F5BA3AC00670F8F /* PersonaKitUITests */,
+				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
+				D156979C2F5BA3AB00670F8F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D156979C2F5BA3AB00670F8F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D156979B2F5BA3AB00670F8F /* PersonaKit.app */,
+				D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */,
+				D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */,
+				D15697CC2F5BA47200670F8F /* PersonaKitCLI */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D156979A2F5BA3AB00670F8F /* PersonaKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D15697BC2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKit" */;
+			buildPhases = (
+				D15697972F5BA3AB00670F8F /* Sources */,
+				D15697982F5BA3AB00670F8F /* Frameworks */,
+				D15697992F5BA3AB00670F8F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D156979D2F5BA3AB00670F8F /* PersonaKit */,
+			);
+			name = PersonaKit;
+			packageProductDependencies = (
+				D15697C62F5BA42E00670F8F /* PersonaKitStudio */,
+				D15697D42F5BA48E00670F8F /* PersonaKitStudio */,
+			);
+			productName = PersonaKit;
+			productReference = D156979B2F5BA3AB00670F8F /* PersonaKit.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D15697A72F5BA3AC00670F8F /* PersonaKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitTests" */;
+			buildPhases = (
+				D15697A42F5BA3AC00670F8F /* Sources */,
+				D15697A52F5BA3AC00670F8F /* Frameworks */,
+				D15697A62F5BA3AC00670F8F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D15697AB2F5BA3AC00670F8F /* PersonaKitTests */,
+			);
+			name = PersonaKitTests;
+			packageProductDependencies = (
+			);
+			productName = PersonaKitTests;
+			productReference = D15697A82F5BA3AC00670F8F /* PersonaKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D15697B12F5BA3AC00670F8F /* PersonaKitUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D15697C22F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitUITests" */;
+			buildPhases = (
+				D15697AE2F5BA3AC00670F8F /* Sources */,
+				D15697AF2F5BA3AC00670F8F /* Frameworks */,
+				D15697B02F5BA3AC00670F8F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D15697B42F5BA3AC00670F8F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D15697B52F5BA3AC00670F8F /* PersonaKitUITests */,
+			);
+			name = PersonaKitUITests;
+			packageProductDependencies = (
+			);
+			productName = PersonaKitUITests;
+			productReference = D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		D15697CB2F5BA47200670F8F /* PersonaKitCLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D15697D02F5BA47200670F8F /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */;
+			buildPhases = (
+				D15697C82F5BA47200670F8F /* Sources */,
+				D15697C92F5BA47200670F8F /* Frameworks */,
+				D15697CA2F5BA47200670F8F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
+			);
+			name = PersonaKitCLI;
+			packageProductDependencies = (
+				D15697D62F5BA48E00670F8F /* personakit */,
+			);
+			productName = PersonaKitCLI;
+			productReference = D15697CC2F5BA47200670F8F /* PersonaKitCLI */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D15697932F5BA3AB00670F8F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					D156979A2F5BA3AB00670F8F = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					D15697A72F5BA3AC00670F8F = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = D156979A2F5BA3AB00670F8F;
+					};
+					D15697B12F5BA3AC00670F8F = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = D156979A2F5BA3AB00670F8F;
+					};
+					D15697CB2F5BA47200670F8F = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = D15697962F5BA3AB00670F8F /* Build configuration list for PBXProject "PersonaKit" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D15697922F5BA3AB00670F8F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D15697D32F5BA48E00670F8F /* XCLocalSwiftPackageReference "../../PersonaKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D156979C2F5BA3AB00670F8F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D156979A2F5BA3AB00670F8F /* PersonaKit */,
+				D15697A72F5BA3AC00670F8F /* PersonaKitTests */,
+				D15697B12F5BA3AC00670F8F /* PersonaKitUITests */,
+				D15697CB2F5BA47200670F8F /* PersonaKitCLI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D15697992F5BA3AB00670F8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697A62F5BA3AC00670F8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697B02F5BA3AC00670F8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D15697972F5BA3AB00670F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697A42F5BA3AC00670F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697AE2F5BA3AC00670F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D15697C82F5BA47200670F8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D156979A2F5BA3AB00670F8F /* PersonaKit */;
+			targetProxy = D15697A92F5BA3AC00670F8F /* PBXContainerItemProxy */;
+		};
+		D15697B42F5BA3AC00670F8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D156979A2F5BA3AB00670F8F /* PersonaKit */;
+			targetProxy = D15697B32F5BA3AC00670F8F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D15697BA2F5BA3AC00670F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D15697BB2F5BA3AC00670F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		D15697BD2F5BA3AC00670F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D15697BE2F5BA3AC00670F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D15697C02F5BA3AC00670F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
+			};
+			name = Debug;
+		};
+		D15697C12F5BA3AC00670F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
+			};
+			name = Release;
+		};
+		D15697C32F5BA3AC00670F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = PersonaKit;
+			};
+			name = Debug;
+		};
+		D15697C42F5BA3AC00670F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = PersonaKit;
+			};
+			name = Release;
+		};
+		D15697D12F5BA47200670F8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D15697D22F5BA47200670F8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = QW7RW77V32;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D15697962F5BA3AB00670F8F /* Build configuration list for PBXProject "PersonaKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D15697BA2F5BA3AC00670F8F /* Debug */,
+				D15697BB2F5BA3AC00670F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D15697BC2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D15697BD2F5BA3AC00670F8F /* Debug */,
+				D15697BE2F5BA3AC00670F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D15697C02F5BA3AC00670F8F /* Debug */,
+				D15697C12F5BA3AC00670F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D15697C22F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D15697C32F5BA3AC00670F8F /* Debug */,
+				D15697C42F5BA3AC00670F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D15697D02F5BA47200670F8F /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D15697D12F5BA47200670F8F /* Debug */,
+				D15697D22F5BA47200670F8F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D15697D32F5BA48E00670F8F /* XCLocalSwiftPackageReference "../../PersonaKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../PersonaKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D15697C62F5BA42E00670F8F /* PersonaKitStudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PersonaKitStudio;
+		};
+		D15697D42F5BA48E00670F8F /* PersonaKitStudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PersonaKitStudio;
+		};
+		D15697D62F5BA48E00670F8F /* personakit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = personakit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D15697932F5BA3AB00670F8F /* Project object */;
+}
