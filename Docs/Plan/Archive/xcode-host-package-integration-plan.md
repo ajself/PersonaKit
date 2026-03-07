@@ -1,7 +1,7 @@
 # PersonaKit Xcode Host + Package Integration Plan
 
 Last Updated: 2026-03-07
-Status: Implementation complete in local `main`; pending final interactive app smoke confirmation.
+Status: Complete in local `main`; ready to archive after AJ signoff.
 
 ## Goal
 
@@ -39,12 +39,14 @@ Passed in this environment:
 3. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
 4. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitCLI --configuration Debug --derived-data-path .sim/DerivedData`
 5. `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
+6. `xcodebuildmcp macos build-and-run --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
+7. `xcodebuildmcp macos stop --app-name PersonaKit`
 
-Current caveat:
+Interactive launch evidence:
 
-1. One manual GUI smoke run is still recommended to confirm expected Studio behavior in an interactive desktop session.
+1. `build-and-run` launched app bundle at `.sim/DerivedData/Build/Products/Debug/PersonaKit.app`.
+2. UI smoke assertion (`PersonaKitUITests.testLaunchShowsStudioEmptyState`) passed within scheme test run.
 
 ## Remaining Follow-Up
 
-1. Run interactive app smoke in Xcode and confirm Studio root behavior in normal desktop session.
-2. After that check passes, archive or remove this plan doc per `Docs/Plan` temp-convention.
+1. Archive or remove this plan doc after AJ signoff per `Docs/Plan` temp-convention.
