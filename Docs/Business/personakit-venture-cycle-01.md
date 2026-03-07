@@ -4,6 +4,8 @@ Status: Active
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
+Cycle Window: 2026-03-08 to 2026-03-21
+
 ## Why this exists
 
 Our first venture is PersonaKit itself. This brief defines a focused 14-day
@@ -14,74 +16,86 @@ cycle to improve product clarity, adoption, and execution confidence.
 Build PersonaKit into the easiest, most trustworthy way for individuals and
 small teams to ground AI work in clear roles, constraints, and directives.
 
-## 14-Day Objective
+## SMART Objective (Cycle 01)
 
-Ship one measurable improvement set that reduces onboarding friction and
-increases confidence in day-to-day use.
+By 2026-03-21, run PersonaKit as a small agency pilot and secure one real
+client engagement (paid pilot or signed LOI), then complete one kickoff cycle
+that produces at least 10 ranked product insights, including at least 3
+macOS-app workflow improvements.
+
+- Specific: one real client, one delivered kickoff, one ranked insight list.
+- Measurable: outreach, calls, conversion, and insight counts are tracked.
+- Achievable: uses existing docs/process and a focused 14-day window.
+- Relevant: client problems directly inform PersonaKit product priorities.
+- Time-bound: closes on 2026-03-21.
 
 ## Scope for Cycle 01
 
-1. Improve first-run clarity for business and technical users.
-2. Make documentation navigation and decision artifacts obvious.
-3. Tighten daily operating rhythm for opportunity generation and selection.
-4. Capture one publish-ready narrative artifact that explains the value simply.
+1. Define agency offer and ideal first-client profile.
+2. Run outbound and discovery to secure one pilot client.
+3. Deliver one PersonaKit-guided kickoff session.
+4. Translate client pain into ranked product improvements.
+5. Identify which improvements should land in CLI vs MCP vs macOS app.
 
 ## Deliverables
 
-1. Documentation orientation baseline:
-   - Docs index and style guide are active and linked.
-2. Venture operating baseline:
-   - ethics policy, scorecard, backlog, selected venture brief.
-3. PersonaKit venture loop baseline:
-   - one selected `VS-006` path with concrete checkpoints.
-4. End-of-cycle review note:
-   - what worked, what failed, what to change in Cycle 02.
+1. One-page agency offer and first-client profile.
+2. Outreach tracker with at least 15 qualified prospects.
+3. Discovery notes from at least 3 real calls.
+4. One paid pilot or signed LOI.
+5. One kickoff summary with 10 ranked product insights:
+   - minimum 3 macOS-app workflow insights
+   - minimum 3 MCP/CLI workflow insights
+6. End-of-cycle review note:
+   - wins, misses, and Cycle 02 recommendation.
 
 ## Milestones
 
 ### M1 (Days 1-3): Alignment
 
-- Confirm cycle objective and success criteria.
-- Run one daily venture cycle and score opportunities.
-- Keep `VS-006` as the only selected initiative.
+- Finalize offer, ICP, and outreach message.
+- Build a list of 15 qualified prospects.
+- Begin outreach and schedule first discovery calls.
 
 ### M2 (Days 4-9): Execution
 
-- Produce or refine priority artifacts tied to onboarding and trust.
-- Verify each artifact is linkable, current, and reviewable.
-- Record decisions and rationale in backlog/brief.
+- Hold at least 3 discovery calls.
+- Close one paid pilot or signed LOI.
+- Prepare pilot kickoff structure and artifacts.
 
 ### M3 (Days 10-14): Review and reset
 
-- Run final scoring check against expected outcomes.
-- Write Cycle 01 review and propose Cycle 02 scope.
-- Decide continue/pivot/park for `VS-006`.
+- Deliver one kickoff session using PersonaKit workflows.
+- Produce and rank product insight list with owner/proposed lane.
+- Write Cycle 01 review and propose continue/pivot/park for Cycle 02.
 
 ## Success Metrics (Cycle 01)
 
-- A new collaborator can find relevant docs in under 3 minutes.
-- Daily venture loop can be run in under 20 minutes.
-- Exactly one selected venture remains active in backlog.
-- At least one narrative artifact explains PersonaKit in plain language.
+- 15 qualified outreach attempts completed.
+- 3 discovery calls completed.
+- 1 paid pilot or signed LOI closed.
+- 1 kickoff session delivered.
+- 10 ranked product insights captured.
+- At least 3 insights explicitly scoped to macOS app workflows.
 
 ## Risks and Mitigations
 
-- Risk: scope creep across too many ideas.
-  - Mitigation: enforce single selected venture rule.
-- Risk: docs drift from behavior.
-  - Mitigation: update docs in same commit as behavior changes.
-- Risk: overfitting to one audience too early.
-  - Mitigation: capture assumptions and test with real user feedback notes.
+- Risk: no client closes during cycle.
+  - Mitigation: allow paid pilot or LOI, focus on speed of outreach.
+- Risk: weak discovery quality.
+  - Mitigation: use a consistent interview template and record direct quotes.
+- Risk: insights do not translate to product action.
+  - Mitigation: each insight must include severity, target surface, and owner.
 
 ## Evidence Log (Initial)
 
-- Branch history demonstrates demand for clear identity and context workflows.
-- MCP feature additions improved explainability and comparability.
-- Documentation structure now supports operational and strategic navigation.
+- Branch history shows strong demand for clearer identity and workflow context.
+- MCP additions now support explain/compare/recommend/trace for better guidance.
+- Venture docs now support ethics, scoring, backlog selection, and execution.
 
 ## Next Action
 
-Run the daily venture cycle and append first review notes here at end of day.
+Create the first 15-prospect outreach list and send the first 5 messages.
 
 Related docs:
 

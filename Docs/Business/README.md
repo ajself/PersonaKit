@@ -32,7 +32,7 @@ Run commands from the repository root.
 
 ## Current Selected Venture
 
-- `VS-006`: PersonaKit evolution loop
+- `VS-006`: PersonaKit agency pilot
 - Working brief: [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md)
 
 ## Ground Rules
