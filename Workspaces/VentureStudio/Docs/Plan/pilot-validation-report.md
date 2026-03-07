@@ -17,7 +17,7 @@ Result:
 
 Recommendation:
 
-- `ready for phase-2` (pending AJ signoff).
+- `ready for phase-2` (AJ approved on 2026-03-07).
 
 ## Scenario Results
 
@@ -32,12 +32,12 @@ Recommendation:
 
 | Gate | State | Evidence | Notes |
 | --- | --- | --- | --- |
-| G0 Foundation | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/README.md` | Planning index, scope, ownership, gate model present |
-| G1 Protocol | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/pass-protocol-spec.md` | Canonical pass sequence and no-skip contract defined |
-| G2 QA | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/content-qa-rubric-spec.md` | Weighted rubric, severity taxonomy, and stop rules defined |
-| G3 Templates | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/artifact-template-library-spec.md` | Template schema and minimum depth defined |
-| G4 Operations | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/gardening-cadence-and-drift-policy.md`, `automation-command-spec.md` | Cadence, drift triggers, and command contracts defined |
-| G5 Pilot Ready | Evidence complete (pending AJ signoff) | `Workspaces/VentureStudio/Docs/Plan/pilot-validation-plan.md`, `pilot-validation-report.md` | Required scenarios executed and logged |
+| G0 Foundation | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/README.md` | Planning index, scope, ownership, gate model present |
+| G1 Protocol | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/pass-protocol-spec.md` | Canonical pass sequence and no-skip contract defined |
+| G2 QA | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/content-qa-rubric-spec.md` | Weighted rubric, severity taxonomy, and stop rules defined |
+| G3 Templates | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/artifact-template-library-spec.md` | Template schema and minimum depth defined |
+| G4 Operations | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/gardening-cadence-and-drift-policy.md`, `automation-command-spec.md` | Cadence, drift triggers, and command contracts defined |
+| G5 Pilot Ready | Approved (2026-03-07) | `Workspaces/VentureStudio/Docs/Plan/pilot-validation-plan.md`, `pilot-validation-report.md` | Required scenarios executed and logged |
 
 ## Calibration Results
 
@@ -60,7 +60,7 @@ Calibration outcome:
 
 1. Evidence-traceability quality is still uneven at single-artifact level (not a blocker for pilot close, but important for phase-2 tooling).
 2. `docs-doctor` / `docs-qa` / `docs-garden` remain spec-only; implementation is a phase-2 dependency for stronger automation.
-3. Gate states are evidence-complete but still require explicit AJ signoff per governance model.
+3. Phase-2 depends on implementing `docs-doctor` / `docs-qa` / `docs-garden` to reduce manual QA load.
 
 ## Recommendation
 

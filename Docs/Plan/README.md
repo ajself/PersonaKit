@@ -11,8 +11,6 @@ Provide a compact index of active vs archived plan artifacts.
 ## Active Plan Docs
 
 - `TODO.md` (ordered execution queue)
-- `personakit-mcp-conversation-plan.md`
-- `xcode-host-package-integration-plan.md`
 - `git-history-gardener-proposals.md`
 - `git-history-gardener-log.md`
 - `pack-gardener-log.md`
@@ -24,6 +22,8 @@ Provide a compact index of active vs archived plan artifacts.
 
 - `Archive/personakit-pack-expansion-plan.md`
 - `Archive/studio-multi-agent-acceleration-plan.md`
+- `Archive/personakit-mcp-conversation-plan.md`
+- `Archive/xcode-host-package-integration-plan.md`
 
 ## Rule of Use
 

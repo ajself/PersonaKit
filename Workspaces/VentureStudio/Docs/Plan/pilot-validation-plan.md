@@ -1,6 +1,6 @@
 # Pilot Validation Plan
 
-Status: Active (Executed; pending AJ signoff)  
+Status: Complete (Executed; AJ approved)  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
