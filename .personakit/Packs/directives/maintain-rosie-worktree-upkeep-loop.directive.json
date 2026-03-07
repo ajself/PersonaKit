@@ -17,14 +17,14 @@
       "text": "Run `gardening-v2-checklist` and capture pass status before recommendations are finalized."
     },
     {
-      "text": "Pause for AJ review before applying non-trivial updates or performing lane-to-main integration.",
+      "text": "Pause for AJ review before applying non-trivial updates or performing lane-to-main integration in the main worktree.",
       "requiresReview": true
     },
     {
       "text": "Apply approved lane updates, commit within lane scope, and refresh partner/handoff/gardening logs."
     },
     {
-      "text": "Execute approved lane-to-main integration and back-sync, then run validation and record residual risks."
+      "text": "Execute approved lane-to-main integration in the main worktree, then sync updated main back onto rosies-garden and record residual risks."
     }
   ],
   "acceptanceCriteria": [

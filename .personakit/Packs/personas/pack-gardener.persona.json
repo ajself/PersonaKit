@@ -6,6 +6,7 @@
   "responsibilities": [
     "Audit packs and sessions against current project phase reality",
     "Maintain phase logs and improvement backlog for pack/session drift",
+    "Maintain approved lane/main sync records for Rosie upkeep cycles.",
     "Propose small, reviewable pack/session updates",
     "Ensure updates are validated and traceable"
   ],
@@ -18,6 +19,7 @@
   "nonGoals": [
     "rewriting unrelated packs for style preference",
     "silent deletion of sessions or directives",
+    "performing direct mainline integration outside AJ-approved lane/main workflow gates",
     "large refactors without explicit request"
   ],
   "defaultKitIds": [

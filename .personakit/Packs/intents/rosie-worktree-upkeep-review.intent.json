@@ -12,12 +12,12 @@
     {
       "name": "laneBranch",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "integrationBranch",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "focusAreas",
@@ -43,7 +43,8 @@
     "notes": [
       "Pause for AJ review before any history-altering lane-to-main integration.",
       "Record lane scope, affected IDs, and validation status in partner and gardening logs.",
-      "If lane/main sync conflicts appear, stop and present a bounded resolution plan before applying edits."
+      "If lane/main sync conflicts appear, stop and present a bounded resolution plan before applying edits.",
+      "If laneBranch or integrationBranch differ from approved scope, stop and request AJ confirmation before proceeding."
     ]
   }
 }
