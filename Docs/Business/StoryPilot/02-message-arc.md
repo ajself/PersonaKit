@@ -1,25 +1,25 @@
 # Story Pilot Artifact 02: Message Arc
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
 ## Arc
 
-1. Before: chaos, context loss, emotional drag.
-2. During: disciplined collaboration with clear roles.
-3. After: evidence-backed progress and a repeatable system.
+1. Before: context loss and emotional drag.
+2. During: disciplined collaboration with explicit roles and gates.
+3. After: evidence-backed progress and a repeatable operating model.
 
 ## Key Beats
 
-1. Why this started.
-2. What changed in workflow.
-3. What changed in software.
-4. What changed in confidence.
-5. What comes next.
+1. Why AJ built PersonaKit.
+2. How the team workflow prevents chaos.
+3. What changed technically (MCP, sessions, maintenance discipline).
+4. Why this creates trust, not just output.
+5. What the next cycle will improve.
 
-## Proof Points
+## Proof Points Used
 
-- Timeline commits and documented milestones.
-- MCP tooling and docs improvements.
-- Venture loop artifacts and checkpoints.
+- Branch timeline and integrated commit history.
+- Story-team role sessions and handoff artifacts.
+- Ongoing validation and pack-gardener maintenance logs.

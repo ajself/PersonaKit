@@ -1,26 +1,27 @@
 # Story Pilot Artifact 07: Ranked Requirements
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
 ## Purpose
 
-Capture ranked product requirements discovered from the narrative pilot.
+Capture ranked product requirements discovered from running three story-team
+sprints end to end.
 
 ## Ranked List
 
 | Rank | Requirement | Surface | Severity | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | Team role board with active session indicator | macOS app | High | TBD |
-| 2 | Artifact timeline with checkpoint approvals | macOS app | High | TBD |
-| 3 | Session runner with deterministic handoff order | macOS app | High | TBD |
-| 4 | Prompt assembly preview for current role | macOS app | Medium | TBD |
-| 5 | QA/VQA review state and gating | macOS app | Medium | TBD |
-| 6 | Session recommendation based on workflow phase | MCP | Medium | TBD |
-| 7 | Cross-artifact traceability links | MCP | Medium | TBD |
-| 8 | Template-backed artifact generation | CLI | Medium | TBD |
-| 9 | Role-specific export shortcuts | CLI | Low | TBD |
-| 10 | Review bundle export for sharing | macOS app | Medium | TBD |
-| 11 | Built-in plain-language readability checks | macOS app | Medium | TBD |
-| 12 | Narrative package archive/versioning | macOS app | Low | TBD |
+| 1 | Team board showing active stage, owner, and stop point | macOS app | High | Needed for fast orientation during handoffs |
+| 2 | Session runner with ordered pipeline presets | macOS app | High | Reduces manual sequence mistakes |
+| 3 | Artifact panel with stage-linked files and status badges | macOS app | High | Keeps context and outputs together |
+| 4 | Review gate UI for Architecture/QA/VQA with approve/block actions | macOS app | High | Critical for quality discipline |
+| 5 | Partner sync pane wired to `samwise-partner-sync` and logs | macOS app | High | Supports trusted continuity with AJ updates |
+| 6 | Session recommendation by current phase and artifact state | MCP | Medium | Improves workflow guidance |
+| 7 | Session export bundle that includes relevant logs/artifacts | MCP | Medium | Enables sharing and auditing |
+| 8 | One-command story-pilot scaffold generator | CLI | Medium | Speeds startup for new story projects |
+| 9 | Story sprint snapshot helper (`sprint-01/02/03`) | CLI | Medium | Makes iteration evidence easy to preserve |
+| 10 | Session lifecycle labels (`active/candidate/deprecated`) | Pack/docs convention | Medium | Prevents stale workflow confusion |
+| 11 | Owner annotation requirement in session directory | Docs convention | Low | Already implemented; keep enforced |
+| 12 | VQA checklist template baked into app workflow | macOS app | Low | Improves consistency of final pass decisions |

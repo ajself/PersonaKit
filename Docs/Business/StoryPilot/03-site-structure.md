@@ -1,20 +1,25 @@
 # Story Pilot Artifact 03: Site Structure
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
-## Proposed Sections
+## Final Sections
 
-1. Hero: one-sentence thesis.
-2. Origin: why PersonaKit was built.
-3. Method: the role/kit/directive model in plain language.
-4. Evidence: timeline, artifacts, and measurable outcomes.
-5. Venture: what the next cycle is and why.
-6. Close: personal note and invitation to follow progress.
+1. Hero: "This Is Why I Stayed Up"
+2. Chapter 1: Origin
+3. Chapter 2: Practice (team workflow)
+4. Chapter 3: Evidence (metrics + proof)
+5. Chapter 4: Tomorrow (next promise)
 
-## UX Notes
+## UX Decisions
 
-- Mobile-first readability.
-- Scannable typography and short sections.
-- Narrative pacing with visual breaks.
+- Sticky chapter navigation for orientation.
+- Chapter-by-chapter reveal pacing.
+- Animated evidence counters for proof visibility.
+- Mobile-first responsive layout.
+
+## Implementation Location
+
+- Current live draft: `Docs/Marketing/`
+- Iteration snapshots: `Docs/Marketing/Sprints/`
