@@ -1,0 +1,47 @@
+{
+  "id": "venture-studio-daily-cycle",
+  "version": "1.0",
+  "title": "Run the daily venture studio cycle",
+  "goal": "Generate three opportunities, score them, and select one candidate for a focused MVP cycle.",
+  "steps": [
+    {
+      "text": "Review ethics and operating constraints before generating ideas."
+    },
+    {
+      "text": "Generate exactly three opportunity candidates in plain language with target user, pain, and value proposition."
+    },
+    {
+      "text": "Score each candidate with the shared weighted scorecard and record assumptions, risks, and confidence."
+    },
+    {
+      "text": "Rank candidates and recommend one with explicit tradeoffs.",
+      "requiresReview": true
+    },
+    {
+      "text": "Draft a 14-day MVP outline for the selected candidate with scope, success metric, and first customer outreach step."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Exactly three candidates are generated",
+    "Each candidate has transparent weighted scoring",
+    "A single recommended candidate is selected with tradeoff rationale",
+    "Recommendation includes ethics and risk notes",
+    "Selected candidate includes a concrete 14-day MVP outline"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm scoring is complete and legible for all candidates"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm the selected candidate was explicitly reviewed before MVP planning"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "venture-opportunity-triage"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
