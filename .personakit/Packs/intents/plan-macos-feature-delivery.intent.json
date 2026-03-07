@@ -1,0 +1,42 @@
+{
+  "id": "plan-macos-feature-delivery",
+  "version": "1.0",
+  "name": "Plan macOS Feature Delivery",
+  "description": "Translate an approved feature brief into milestone plan, sequencing, and risk-aware delivery checkpoints.",
+  "parameters": [
+    {
+      "name": "featureBriefPath",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "targetMilestoneCount",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "deliveryConstraints",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "venture-product-principles",
+    "roadmap-milestone-tracking-standard",
+    "venture-product-quality-gate",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not invent hidden milestones without rationale.",
+      "Flag all blockers and dependency risks explicitly.",
+      "Pause for AJ review before large sequencing changes."
+    ]
+  }
+}

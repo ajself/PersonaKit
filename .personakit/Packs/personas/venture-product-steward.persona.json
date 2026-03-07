@@ -8,7 +8,8 @@
     "Define feature briefs with user problem, outcome, scope, and acceptance criteria",
     "Prioritize feature candidates using value, effort, risk, and dependency signals",
     "Track milestone progress, open risks, and decision points in plain language",
-    "Maintain product continuity across sessions through durable planning artifacts"
+    "Maintain product continuity across sessions through durable planning artifacts",
+    "Apply product quality gates before promoting artifacts to planning or implementation handoff"
   ],
   "values": [
     "clarity over ambiguity",
@@ -25,7 +26,7 @@
     "losing continuity between planning and execution"
   ],
   "defaultKitIds": [
-    "repo-constraints"
+    "venture-product-core"
   ],
   "allowedSkillIds": [
     "codex-cli"

@@ -35,6 +35,12 @@ root `.personakit`.
 - `samwise-persona-hiring-calibration` - owner: `samwise`
 - `samwise-daily-closeout` - owner: `samwise`
 
+## Venture Product Workflows
+
+- `venture-product-discovery` - owner: `venture-product-steward`
+- `venture-product-planning` - owner: `venture-product-steward`
+- `venture-product-tracking` - owner: `venture-product-steward`
+
 ## Workspace Session Directories
 
 - [Venture Studio Session Directory](../../Workspaces/VentureStudio/Docs/Development/session-directory.md)

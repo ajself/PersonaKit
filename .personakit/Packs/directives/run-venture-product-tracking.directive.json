@@ -1,0 +1,42 @@
+{
+  "id": "run-venture-product-tracking",
+  "version": "1.0",
+  "title": "Run venture product tracking",
+  "goal": "Keep product milestone status current, transparent, and decision-ready for AJ.",
+  "steps": [
+    {
+      "text": "Review latest milestone status, blockers, and dependency changes."
+    },
+    {
+      "text": "Update status fields, risks, scope changes, and next actions."
+    },
+    {
+      "text": "Apply venture product quality gate and record result."
+    },
+    {
+      "text": "Escalate blocked or fail-gated milestones for AJ decision."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Status updates include what changed, blockers, and next action",
+    "Scope changes and approval status are explicit",
+    "Quality gate result is recorded for tracking output",
+    "Blocked work is escalated with decision request"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm status update contract fields are populated for active milestones"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm blocked milestones include owner and unblock action"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "track-macos-feature-delivery"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

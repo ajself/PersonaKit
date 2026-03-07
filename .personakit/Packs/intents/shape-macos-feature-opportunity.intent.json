@@ -1,0 +1,42 @@
+{
+  "id": "shape-macos-feature-opportunity",
+  "version": "1.0",
+  "name": "Shape macOS Feature Opportunity",
+  "description": "Turn a product idea into a bounded feature brief with explicit user outcome, risks, and decision gate.",
+  "parameters": [
+    {
+      "name": "ideaSummary",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "targetUser",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "constraints",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "venture-product-principles",
+    "feature-brief-template",
+    "venture-product-quality-gate",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not transform idea shaping into implementation tasks.",
+      "Keep output bounded to a single feature brief candidate.",
+      "Record explicit unknowns before recommending commitment."
+    ]
+  }
+}
