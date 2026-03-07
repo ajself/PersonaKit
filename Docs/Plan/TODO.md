@@ -4,9 +4,9 @@ Last Updated: 2026-03-07
 
 ## Purpose
 
-Keep plan execution focused. This file is the ordered queue for open plans.
+Keep execution focused. This file lists only actionable, in-order tasks.
 
-## Open Plan Queue (In Order)
+## Action Queue (In Order)
 
 ### 1) Git History Gardening Cadence (Execute Next, Ongoing)
 
@@ -35,23 +35,55 @@ Execution note:
 
 - Analysis pass #3 completed on 2026-03-07 with no new pending proposals.
 
-## Completed Plans (AJ Approved 2026-03-07)
+### 2) Session Lifecycle States (`PSG-002`)
 
-### 1) VentureStudio Pilot Validation
+Plan source:
 
-- Plan: `Workspaces/VentureStudio/Docs/Plan/pilot-validation-plan.md`
-- Report: `Workspaces/VentureStudio/Docs/Plan/pilot-validation-report.md`
-- Outcome: `ready for phase-2`
+- `Docs/Plan/pack-session-improvement-backlog.md`
+- `Docs/Development/session-directory.md`
+- `.personakit/Sessions/*`
 
-### 2) PersonaKit MCP Conversation Plan
+Objective:
 
-- Archived plan: `Docs/Plan/Archive/personakit-mcp-conversation-plan.md`
-- Key outputs: `Docs/MCP/Starter-Flows.md`, `Docs/MCP/Error-Contracts.md`, `Tests/Features/MCP/MCPConversationFlowTests.swift`
+- Define and apply lifecycle states for sessions: `active`, `candidate`, `deprecated`.
 
-### 3) Xcode Host Integration Closeout
+Actions:
 
-- Archived plan: `Docs/Plan/Archive/xcode-host-package-integration-plan.md`
-- Key evidence: `xcodebuildmcp macos build-and-run` launch + UI smoke verification recorded before archive
+1. Define lifecycle-state convention and usage rules.
+2. Apply states to current session inventory.
+3. Reflect states in session directory and related docs.
+4. Validate PersonaKit packs and session references.
+
+Exit criteria:
+
+1. All sessions have one lifecycle state.
+2. Session directory and conventions agree with assigned states.
+3. `personakit validate` passes.
+
+### 3) Recurring Closeout Checklist (`PSG-003`)
+
+Plan source:
+
+- `Docs/Plan/pack-session-improvement-backlog.md`
+- `Docs/Plan/pack-gardener-log.md`
+- `Docs/Plan/TODO.md`
+
+Objective:
+
+- Add a recurring closeout checklist entry so pack/session maintenance is not skipped at phase transitions.
+
+Actions:
+
+1. Define checklist trigger (for example, end of milestone or closeout pass).
+2. Add checklist step in the appropriate maintenance docs.
+3. Ensure TODO queue references the recurring check.
+4. Log adoption in pack gardener records.
+
+Exit criteria:
+
+1. Closeout checklist location is documented and reusable.
+2. Future closeout passes include pack/session maintenance by default.
+3. Docs are updated and internally consistent.
 
 ## Plan Hygiene Rules
 
