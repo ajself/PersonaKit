@@ -32,6 +32,7 @@ root `.personakit`.
 
 - `samwise-partner-sync` - owner: `samwise`
 - `samwise-persona-hiring` - owner: `samwise`
+- `samwise-persona-hiring-calibration` - owner: `samwise`
 - `samwise-daily-closeout` - owner: `samwise`
 
 ## Workspace Session Directories

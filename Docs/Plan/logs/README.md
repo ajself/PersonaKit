@@ -30,7 +30,9 @@ mirror accepted decisions into `gardening-events.jsonl`.
 Run:
 
 - `Scripts/check-gardening-logs.sh`
+- `Scripts/check-persona-hiring-logs.sh`
 
 Expected output:
 
 - `GARDENING_LOGS_CHECK:PASS`
+- `PERSONA_HIRING_LOGS_CHECK:PASS`

@@ -1,0 +1,15 @@
+{
+  "id": "persona-hiring-core",
+  "version": "1.0",
+  "name": "Persona Hiring Core Kit",
+  "summary": "Core standards, research loop, calibration, and log contracts for role-fit reverse interviews.",
+  "essentialIds": [
+    "persona-hiring-standards",
+    "persona-hiring-research-loop",
+    "persona-hiring-log-contract",
+    "persona-hiring-calibration-playbook",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

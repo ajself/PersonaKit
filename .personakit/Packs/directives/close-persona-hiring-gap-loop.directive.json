@@ -1,0 +1,57 @@
+{
+  "id": "close-persona-hiring-gap-loop",
+  "version": "1.0",
+  "title": "Close approved persona hiring gaps",
+  "goal": "Implement approved hiring-gap remediations in bounded scope and record closure evidence in hiring artifacts.",
+  "steps": [
+    {
+      "text": "Load hiring review report and JSONL entry for the target candidate."
+    },
+    {
+      "text": "Select only AJ-approved gaps for remediation and map each to specific artifact updates."
+    },
+    {
+      "text": "Draft bounded remediation changes with explicit acceptance checks."
+    },
+    {
+      "text": "Pause for AJ review before applying structural updates.",
+      "requiresReview": true
+    },
+    {
+      "text": "Apply approved changes and run validation plus hiring-log checks."
+    },
+    {
+      "text": "Append updated closure status to hiring report and hiring JSONL stream."
+    },
+    {
+      "text": "If calibration-related gaps were remediated, run calibration playbook checks."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Only approved gaps were modified",
+    "Remediation scope is traceable to target artifacts",
+    "Validation and hiring-log checks pass",
+    "Hiring report and JSONL entries reflect remediation status",
+    "Calibration checks are recorded when applicable"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift run personakit validate --root .personakit"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-persona-hiring-logs.sh"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm remediation notes reference hiringReviewEntryId and updated artifact list"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "remediate-persona-hiring-gaps"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

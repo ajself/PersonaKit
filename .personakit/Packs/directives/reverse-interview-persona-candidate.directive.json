@@ -75,6 +75,10 @@
       "text": "Confirm JSONL entry includes required contract fields and valid reportPath"
     },
     {
+      "kind": "command",
+      "text": "Scripts/check-persona-hiring-logs.sh"
+    },
+    {
       "kind": "manual",
       "text": "Confirm missing-artifact list includes at least one concrete first step"
     },

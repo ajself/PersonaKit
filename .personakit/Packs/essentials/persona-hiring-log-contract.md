@@ -40,3 +40,9 @@ Each log entry should include:
 - Keep IDs deterministic and monotonic.
 - Keep claims evidence-backed.
 - Do not log sensitive data unrelated to hiring fit.
+
+## Validation
+
+Run:
+
+- `Scripts/check-persona-hiring-logs.sh`
