@@ -36,10 +36,9 @@ Passed in this environment:
 
 1. `swift build`
 2. `swift test`
-3. `xcodebuild -list -workspace PersonaKit.xcworkspace`
-4. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKit -configuration Debug build`
-5. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKitCLI -configuration Debug build`
-6. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKit -configuration Debug test -destination 'platform=macOS' -only-testing:PersonaKitHostTests`
+3. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
+4. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitCLI --configuration Debug --derived-data-path .sim/DerivedData`
+5. `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
 
 Current caveat:
 

@@ -74,7 +74,7 @@ Objective:
 Actions:
 
 1. Run interactive app smoke in Xcode.
-2. Confirm host test coverage state (latest headless run passed: `xcodebuild ... -only-testing:PersonaKitHostTests`).
+2. Confirm host test coverage state (latest headless run passed: `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`).
 3. Record pass/fail outcomes in the plan doc.
 4. Archive plan after confirmation.
 
