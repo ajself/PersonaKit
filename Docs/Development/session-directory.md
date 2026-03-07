@@ -31,6 +31,7 @@ root `.personakit`.
 ## Partner Sync Workflows
 
 - `samwise-partner-sync` - owner: `samwise`
+- `samwise-persona-hiring` - owner: `samwise`
 - `samwise-daily-closeout` - owner: `samwise`
 
 ## Workspace Session Directories

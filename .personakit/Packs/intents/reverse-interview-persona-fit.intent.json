@@ -1,0 +1,65 @@
+{
+  "id": "reverse-interview-persona-fit",
+  "version": "1.0",
+  "name": "Reverse Interview Persona Fit",
+  "description": "Assess whether a persona candidate is qualified for a target role and identify missing PersonaKit artifacts required for strong execution.",
+  "parameters": [
+    {
+      "name": "personaId",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "roleContext",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "requiredCapabilities",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "riskProfile",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "focusAreas",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "confidenceThreshold",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "outputReportPath",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "persona-hiring-standards",
+    "persona-hiring-research-loop",
+    "persona-hiring-log-contract",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not treat role-fit analysis as approval to modify candidate artifacts.",
+      "Proposed missing artifacts must be explicit, bounded, and prioritized.",
+      "If confidence is low, run research loop before final verdict.",
+      "Persist results to markdown report and JSONL log contract before concluding.",
+      "Pause for AJ approval before applying structural pack/session changes."
+    ]
+  }
+}
