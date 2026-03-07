@@ -1,7 +1,7 @@
 # PersonaKit Xcode Host + Package Integration Plan
 
 Last Updated: 2026-03-07
-Status: Implementation complete in local `main`; pending remote push and final interactive smoke confirmation.
+Status: Implementation complete in local `main`; pending final interactive app smoke confirmation.
 
 ## Goal
 
@@ -39,14 +39,13 @@ Passed in this environment:
 3. `xcodebuild -list -workspace PersonaKit.xcworkspace`
 4. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKit -configuration Debug build`
 5. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKitCLI -configuration Debug build`
+6. `xcodebuild -workspace PersonaKit.xcworkspace -scheme PersonaKit -configuration Debug test -destination 'platform=macOS' -only-testing:PersonaKitHostTests`
 
-Known caveat:
+Current caveat:
 
-1. `xcodebuild ... test` in this headless environment has shown inconclusive post-run hang behavior, so final interactive verification should be performed in a local GUI/Xcode session.
+1. One manual GUI smoke run is still recommended to confirm expected Studio behavior in an interactive desktop session.
 
 ## Remaining Follow-Up
 
-1. Push local `main` commits to origin (`ahead 4` at end-of-day snapshot).
-2. Run interactive app smoke in Xcode and confirm Studio root behavior in normal desktop session.
-3. Run host test targets interactively once to close the headless-test caveat.
-4. After those checks pass, archive or remove this plan doc per `Docs/Plan` temp-convention.
+1. Run interactive app smoke in Xcode and confirm Studio root behavior in normal desktop session.
+2. After that check passes, archive or remove this plan doc per `Docs/Plan` temp-convention.

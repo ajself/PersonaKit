@@ -345,7 +345,12 @@ struct MCPToolService: Sendable {
   /// Executes an MCP tool call and returns a text-only response payload.
   func callTool(name: String, arguments: [String: Value]?) throws -> CallTool.Result {
     guard let tool = MCPToolName(rawValue: name) else {
-      throw MCPError.invalidParams("Unknown tool name: \(name)")
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          "Unknown tool name: \(name)",
+          hint: "Call list_tools and retry using one of the advertised tool names."
+        )
+      )
     }
 
     switch tool {
@@ -383,7 +388,12 @@ struct MCPToolService: Sendable {
     do {
       return try MCPToolArgumentParser.parseSession(arguments)
     } catch let error as MCPToolArgumentError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide personaId and directiveId as non-empty strings, plus optional kits."
+        )
+      )
     }
   }
 
@@ -391,7 +401,12 @@ struct MCPToolService: Sendable {
     do {
       return try MCPToolArgumentParser.parseEntity(arguments)
     } catch let error as MCPToolArgumentError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide entityType and id as strings. Use list_resources to discover ids."
+        )
+      )
     }
   }
 
@@ -399,7 +414,12 @@ struct MCPToolService: Sendable {
     do {
       return try MCPToolArgumentParser.parseCompare(arguments)
     } catch let error as MCPToolArgumentError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide entityType plus leftId/rightId as strings for the same entity type."
+        )
+      )
     }
   }
 
@@ -407,7 +427,12 @@ struct MCPToolService: Sendable {
     do {
       return try MCPToolArgumentParser.parseRecommend(arguments)
     } catch let error as MCPToolArgumentError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide goal as a non-empty string and optional limit between 1 and 20."
+        )
+      )
     }
   }
 
@@ -415,13 +440,23 @@ struct MCPToolService: Sendable {
     do {
       return try MCPToolArgumentParser.parseTrace(arguments)
     } catch let error as MCPToolArgumentError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide sessionId as a non-empty string. Use catalog sessions to discover ids."
+        )
+      )
     }
   }
 
   private func validateTool(arguments: [String: Value]?) throws -> String {
     if let arguments, !arguments.isEmpty {
-      throw MCPError.invalidParams("personakit_validate does not accept arguments.")
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          "personakit_validate does not accept arguments.",
+          hint: "Call personakit_validate with an empty argument object."
+        )
+      )
     }
     let result = try Validator.validate(scopes: scopes)
     let payload = ValidationToolOutput(result: result)
@@ -473,7 +508,7 @@ struct MCPToolService: Sendable {
     switch input.entityType {
     case .persona:
       guard let persona = registry.personasById[input.id] else {
-        throw MCPError.invalidParams("persona not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .persona, id: input.id))
       }
       return try encodeToolJSON(
         ExplainPayload(
@@ -493,7 +528,7 @@ struct MCPToolService: Sendable {
       )
     case .directive:
       guard let directive = registry.directivesById[input.id] else {
-        throw MCPError.invalidParams("directive not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .directive, id: input.id))
       }
       let reviewStepCount = directive.steps.filter { $0.requiresReview == true }.count
       return try encodeToolJSON(
@@ -512,7 +547,7 @@ struct MCPToolService: Sendable {
       )
     case .kit:
       guard let kit = registry.kitsById[input.id] else {
-        throw MCPError.invalidParams("kit not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .kit, id: input.id))
       }
       return try encodeToolJSON(
         ExplainPayload(
@@ -529,7 +564,7 @@ struct MCPToolService: Sendable {
       )
     case .intent:
       guard let intent = registry.intentTemplatesById[input.id] else {
-        throw MCPError.invalidParams("intent not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .intent, id: input.id))
       }
       return try encodeToolJSON(
         ExplainPayload(
@@ -547,7 +582,7 @@ struct MCPToolService: Sendable {
       )
     case .skill:
       guard let skill = registry.skillsById[input.id] else {
-        throw MCPError.invalidParams("skill not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .skill, id: input.id))
       }
       return try encodeToolJSON(
         ExplainPayload(
@@ -585,7 +620,7 @@ struct MCPToolService: Sendable {
     case .essential:
       guard let fileURL = resolveEssentialURL(id: input.id, scopes: scopes, fileManager: .default)
       else {
-        throw MCPError.invalidParams("essential not found: \(input.id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .essential, id: input.id))
       }
       let text: String
       do {
@@ -664,7 +699,12 @@ struct MCPToolService: Sendable {
     let sessions = try listSessions(scopes: scopes, fileManager: .default)
 
     guard !sessions.isEmpty else {
-      throw MCPError.invalidParams("No session files found in active scopes.")
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          "No session files found in active scopes.",
+          hint: "Create at least one Sessions/*.session.json file in the active PersonaKit scope."
+        )
+      )
     }
 
     let goalTerms = tokenSet(input.goal)
@@ -816,7 +856,7 @@ struct MCPToolService: Sendable {
     switch type {
     case .persona:
       guard let persona = registry.personasById[id] else {
-        throw MCPError.invalidParams("persona not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .persona, id: id))
       }
       return EntityComparableSnapshot(
         scalars: [
@@ -835,7 +875,7 @@ struct MCPToolService: Sendable {
       )
     case .directive:
       guard let directive = registry.directivesById[id] else {
-        throw MCPError.invalidParams("directive not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .directive, id: id))
       }
       return EntityComparableSnapshot(
         scalars: [
@@ -852,7 +892,7 @@ struct MCPToolService: Sendable {
       )
     case .kit:
       guard let kit = registry.kitsById[id] else {
-        throw MCPError.invalidParams("kit not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .kit, id: id))
       }
       return EntityComparableSnapshot(
         scalars: [
@@ -881,7 +921,7 @@ struct MCPToolService: Sendable {
       )
     case .intent:
       guard let intent = registry.intentTemplatesById[id] else {
-        throw MCPError.invalidParams("intent not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .intent, id: id))
       }
       return EntityComparableSnapshot(
         scalars: [
@@ -899,7 +939,7 @@ struct MCPToolService: Sendable {
       )
     case .skill:
       guard let skill = registry.skillsById[id] else {
-        throw MCPError.invalidParams("skill not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .skill, id: id))
       }
       return EntityComparableSnapshot(
         scalars: [
@@ -918,7 +958,7 @@ struct MCPToolService: Sendable {
     case .essential:
       guard let fileURL = resolveEssentialURL(id: id, scopes: scopes, fileManager: .default)
       else {
-        throw MCPError.invalidParams("essential not found: \(id)")
+        throw MCPError.invalidParams(missingEntityMessage(entityType: .essential, id: id))
       }
       let content: String
       do {
@@ -950,7 +990,12 @@ struct MCPToolService: Sendable {
     do {
       return try SessionFileLoader.load(scopes: scopes, sessionId: id)
     } catch let error as SessionFileError {
-      throw MCPError.invalidParams(error.localizedDescription)
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Read personakit://catalog/sessions to list valid ids, then retry with one session id."
+        )
+      )
     }
   }
 }
@@ -1231,6 +1276,34 @@ private func formatRegistryError(_ error: RegistryError) -> String {
   }
   parts.append(error.message)
   return "Error: " + parts.joined(separator: " ")
+}
+
+private func withRecoveryHint(_ message: String, hint: String) -> String {
+  return "\(message)\nRecovery: \(hint)"
+}
+
+private func missingEntityMessage(entityType: MCPEntityType, id: String) -> String {
+  let catalogType: String
+  switch entityType {
+  case .persona:
+    catalogType = "personas"
+  case .directive:
+    catalogType = "directives"
+  case .kit:
+    catalogType = "kits"
+  case .session:
+    catalogType = "sessions"
+  case .intent:
+    catalogType = "intents"
+  case .skill:
+    catalogType = "skills"
+  case .essential:
+    catalogType = "essentials"
+  }
+  return withRecoveryHint(
+    "\(entityType.rawValue) not found: \(id)",
+    hint: "Read personakit://catalog/\(catalogType) to list valid ids, then retry."
+  )
 }
 
 private func uniqueSorted(_ ids: [String]) -> [String] {
