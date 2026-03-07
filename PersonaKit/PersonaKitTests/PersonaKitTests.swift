@@ -1,17 +1,29 @@
-//
-//  PersonaKitTests.swift
-//  PersonaKitTests
-//
-//  Created by AJ Self on 3/6/26.
-//
-
 import Testing
 @testable import PersonaKit
 
 struct PersonaKitTests {
+  @Test
+  func autoActivateDefaultsToTrue() {
+    #expect(PersonaKitLaunchConfiguration.shouldAutoActivate(environment: [:], arguments: []) == true)
+  }
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-    }
+  @Test
+  func autoActivateCanBeDisabledViaArgument() {
+    #expect(
+      PersonaKitLaunchConfiguration.shouldAutoActivate(
+        environment: [:],
+        arguments: ["PersonaKit", "--no-auto-activate"]
+      ) == false
+    )
+  }
 
+  @Test
+  func autoActivateCanBeDisabledViaEnvironmentVariable() {
+    #expect(
+      PersonaKitLaunchConfiguration.shouldAutoActivate(
+        environment: ["PERSONAKIT_STUDIO_DISABLE_AUTO_ACTIVATE": "true"],
+        arguments: []
+      ) == false
+    )
+  }
 }
