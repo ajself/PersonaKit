@@ -1,7 +1,7 @@
 # PersonaKit MCP Conversation Plan
 
 Last Updated: 2026-03-07
-Status: Active
+Status: Active (M1 complete, M2 initial implementation complete)
 
 ## Grounding Session
 
@@ -58,6 +58,12 @@ Acceptance criteria:
 2. Relationships are documented and align with runtime behavior.
 3. Catalog output is deterministic across repeated runs on the same root.
 
+Progress:
+
+1. Complete on 2026-03-07 (initial slice).
+2. Delivered canonical domain map and MCP catalog resources (`personakit://catalog/*`).
+3. Added deterministic tests for catalog listing and payload shape.
+
 ### M2: Conversation Primitives + Recommendation Policy
 
 Objective:
@@ -74,6 +80,17 @@ Acceptance criteria:
 
 1. Users can ask “what should I use for X?” and get stable recommendations.
 2. Recommendation outputs cite the exact persona/directive/kit/session used.
+
+Progress:
+
+1. Initial implementation complete on 2026-03-07.
+2. Added MCP tools:
+   - `personakit_explain_entity`
+   - `personakit_compare_entities`
+   - `personakit_recommend_session`
+   - `personakit_trace_session`
+3. Added deterministic recommendation policy and tool tests.
+4. Further iteration may refine ranking heuristics and richer compare output.
 
 ### M3: End-to-End Tests + Error UX + Starter Flows
 
@@ -96,8 +113,10 @@ Acceptance criteria:
 ## Execution Plan (Current)
 
 1. Author and commit this plan doc (complete).
-2. Start M1 with domain map draft and MCP catalog surface inventory.
-3. Implement M1 in small, reviewable increments with tests.
+2. Start M1 with domain map draft and MCP catalog surface inventory (complete).
+3. Implement M1 in small, reviewable increments with tests (complete).
+4. Implement M2 discussion primitives and deterministic recommendation policy (initial complete).
+5. Continue into M3 (E2E + error UX + starter flows).
 
 ## Risks and Mitigations
 

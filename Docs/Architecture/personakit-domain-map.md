@@ -85,23 +85,23 @@ New catalog resources are exposed as virtual MCP resources:
 
 All catalog payloads are deterministic JSON (`schemaVersion: 1`) and include stable ordering.
 
-## Discussion Primitives (Planned in M2)
+## Discussion Primitives (Implemented in M2 Initial Slice)
 
-1. Explain entity
-- Input: `type + id`
-- Output: core fields + dependency edges + resolution source.
+1. Explain entity (`personakit_explain_entity`)
+- Input: `entityType + id`
+- Output: key fields, relationship edges, and deterministic metadata per entity kind.
 
-2. Compare entities
-- Input: two entity refs
-- Output: overlap, differences, and conflict notes.
+2. Compare entities (`personakit_compare_entities`)
+- Input: `entityType + leftId + rightId`
+- Output: scalar/list matches and deterministic differences.
 
-3. Recommend session
-- Input: goal + constraints
-- Output: ranked session/persona/directive combinations with rationale.
+3. Recommend session (`personakit_recommend_session`)
+- Input: `goal` (+ optional `limit`)
+- Output: ranked session/persona/directive combinations with deterministic scoring policy.
 
-4. Trace session
+4. Trace session (`personakit_trace_session`)
 - Input: `sessionId`
-- Output: persona -> kits -> essentials + directive requirements.
+- Output: session resolution graph (persona/directive/kits/intents/skills/essentials) with explicit edge sets.
 
 ## Non-goals
 
