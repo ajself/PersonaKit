@@ -1,0 +1,12 @@
+{
+  "id": "feature-editorial-core",
+  "version": "1.0",
+  "name": "Feature Editorial Core Kit",
+  "summary": "AP-style, people-centered feature editing guardrails with high readability standards.",
+  "essentialIds": [
+    "feature-editorial-style-guide",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}
