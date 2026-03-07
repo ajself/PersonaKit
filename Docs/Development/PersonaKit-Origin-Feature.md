@@ -4,23 +4,23 @@
 
 ## Deck
 
-From a single commit on January 23, 2026 to a local-first, deterministic toolchain by March 6, PersonaKit became a working record of reviewer-led AI development: one human shaping intent and review, one agent accelerating execution and a codebase that kept choosing clarity over convenience.
+From a single commit on Jan. 23, 2026, to a local-first toolchain by March 6, PersonaKit became a working record of reviewer-led AI development: AJ setting intent, an agent accelerating execution and a codebase that kept choosing clarity over convenience.
 
 ## Byline
 
 Date: 2026-03-07  
-Source window: `2026-01-23` to `2026-03-06` (captured for this draft)
+Source window: Jan. 23 to March 6, 2026 (captured for this draft)
 
 ---
 
-There are projects that arrive with a slogan. This one arrived with a question.
+Some projects arrive with a slogan. This one arrived with a question.
 
 Not "Can we ship faster?"  
-The better question: "Can we move fast and still trust what we built yesterday?"
+The question was sharper: "Can we move fast and still trust what we built yesterday?"
 
-PersonaKit starts on **January 23, 2026** with `chore: initial commit` (`aec0ff8`). The early work is modest on paper: persona metadata helpers, parsing tests, filtering, docs cleanup. But the rhythm is already there: code, test, docs, repeat.
+PersonaKit starts on **Jan. 23, 2026**, with `chore: initial commit` (`aec0ff8`). The early work is modest on paper: persona metadata helpers, parsing tests, filtering and docs cleanup. But the rhythm is already there: code, test, docs, repeat.
 
-That rhythm matters. You can hear it before you can diagram it.
+That rhythm matters. You hear it before you can diagram it.
 
 ## Act I: The First Spine (Jan 23 to Jan 24)
 
@@ -43,9 +43,9 @@ In plain terms: this was the first decision to build for tomorrow's debugging se
 
 ## Act II: Rename, Expand, Retreat (Jan 24 to Jan 26)
 
-On January 24, PersonaPad becomes PersonaKit (`150dbbe`, `cd5fafb`). That rename is not branding theater. It marks intent: this is a kit for context, not a single UI shell.
+On Jan. 24, PersonaPad becomes PersonaKit (`150dbbe`, `cd5fafb`). The rename is not branding theater. It marks intent: this is a kit for context, not a single UI shell.
 
-Then the AppOps chapter appears and disappears. It grows quickly, acquires structure, then gets removed (`772d558`).
+Then the AppOps chapter appears and disappears. It grows quickly, acquires structure and gets removed (`772d558`).
 
 That is not failure. That is editing.
 
@@ -67,11 +67,11 @@ The throughline is clear: fewer moving parts, clearer responsibility.
 
 ## Act IV: The Scope Problem Is Born (Feb 1 to Feb 2)
 
-By early February, the repo can discover project and global roots, merge scopes, and accept overrides. Powerful, useful, and slightly dangerous.
+By early February, the repo can discover project and global roots, merge scopes and accept overrides. Powerful, useful and slightly dangerous.
 
-Because the real question is not "can you find context?" It is "which context wins when two are valid?"
+Because the real question is not "Can you find context?" It is "Which context wins when two are valid?"
 
-That tension sits quietly for weeks. Then later it becomes the bug everyone can feel but nobody wants to keep.
+That tension sits quietly for weeks. Later, it becomes the bug everyone can feel but nobody wants to keep.
 
 ## Act V: Studio and the Refactor Marathon (Feb 14 to Feb 17)
 
@@ -106,11 +106,11 @@ After deep structural work, the product starts sounding like people use it:
 - inline help expands
 - guided persona creation lands (`54093b0`)
 
-It is still engineering-heavy work, but now it is human-centered engineering. The software starts to answer not just "does it compile?" but "does it guide me when I'm tired?"
+It is still engineering-heavy work, but now it is human-centered engineering. The software starts to answer not just "Does it compile?" but "Does it guide me when I'm tired?"
 
 ## Act VII: March 6, The Compression Day
 
-Some projects have a season finale. PersonaKit had **March 6, 2026**.
+Some projects have a season finale. PersonaKit had one on **March 6, 2026**.
 
 In one concentrated run, the repo lands:
 
@@ -140,7 +140,7 @@ For this class of tooling, that is the difference between "interesting" and "tru
 
 ## Voices From the Work
 
-If you listen to the commit messages as field interviews, you hear the same concerns repeated in different accents:
+If you read the commit messages like field interviews, you hear the same concerns repeated in different accents:
 
 - "stabilize"
 - "harden"
@@ -153,22 +153,22 @@ That vocabulary is not accidental. It is a team trying to lower surprise.
 
 And this is where the collaboration model becomes the real story.
 
-## The Collaboration Model: Human Editor, Agent Typist
+## The Collaboration Model: AJ and the Agent
 
-The project narrative is unusual and practical at the same time:
+The project narrative is unusual and practical at the same time, and it gained speed as the collaboration became easier and more flexible:
 
-- one human sets scope, constraints, and acceptance criteria
+- AJ sets scope, constraints and acceptance criteria
 - one agent executes bounded edits quickly
-- the human reviews architecture, regressions, and intent fidelity
+- AJ reviews architecture, regressions and intent fidelity
 - tests and docs are updated as part of the same loop
 
-On paper, commit author lines show one name. In practice, the method is editorial: direction and standards from the reviewer, throughput from the agent.
+On paper, commit author lines show one name. In practice, the method is editorial: direction and standards from AJ, throughput from the agent.
 
 Not autopilot. Not magic. A disciplined feedback loop.
 
 ## How We Knew It Was the Right Work
 
-Across 306 commits, the evidence was repetitive in the best way:
+Across the full timeline, the evidence was repetitive in the best way:
 
 1. deterministic output was treated as a feature
 2. boundaries were explicit and enforced
@@ -184,11 +184,11 @@ PersonaKit did not get interesting by stacking features. It got interesting by i
 
 - whose identity is active
 - which scope is authoritative
-- when to stop for human review
+- when to stop for AJ's review
 - how correctness is verified over time
 
 So the headline is not "AI wrote the code."  
-The headline is this: a human review practice turned AI velocity into durable software.
+The headline is this: AJ's review practice turned AI velocity into durable software.
 
 That is a story worth reusing.
 
@@ -218,4 +218,4 @@ That is a story worth reusing.
 4. Figure D: MCP Scope Resolution Flow
    - Local-first single-scope decision tree and failure-path examples.
 5. Figure E: Review Loop Anatomy
-   - Human intent -> agent diff -> review -> verification -> commit.
+   - AJ intent -> agent diff -> review -> verification -> commit.
