@@ -21,7 +21,7 @@
       "requiresReview": true
     },
     {
-      "text": "Apply approved lane updates, commit within lane scope, and refresh partner/handoff/gardening logs."
+      "text": "Apply approved lane updates, commit within lane scope only under AJ-approved authorization mode, and refresh partner/handoff/gardening logs."
     },
     {
       "text": "Execute approved lane-to-main integration in the main worktree, then sync updated main back onto rosies-garden and record residual risks."
@@ -32,6 +32,7 @@
     "Partner and gardening logs capture affected IDs and decisions",
     "Gardening v2 checklist status is recorded before execution",
     "No history-altering lane-to-main integration occurs without AJ review",
+    "Commit authorization mode is explicit for any commit-ready changes",
     "Validation status is recorded after approved updates and sync",
     "Rosie lane is synchronized with latest main baseline for the next pass"
   ],

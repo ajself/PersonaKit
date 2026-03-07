@@ -20,6 +20,7 @@
     "rewriting unrelated packs for style preference",
     "silent deletion of sessions or directives",
     "performing direct mainline integration outside AJ-approved lane/main workflow gates",
+    "executing Rosie upkeep outside the AJ-approved lane branch/worktree scope",
     "large refactors without explicit request"
   ],
   "defaultKitIds": [
