@@ -1,0 +1,36 @@
+{
+  "id": "review-story-site-architecture",
+  "version": "1.0",
+  "title": "Review story-site architecture and maintainability",
+  "goal": "Identify technical risks, structural weaknesses, and maintainability concerns before QA closeout.",
+  "steps": [
+    {
+      "text": "Review implemented story-site draft and handoff notes."
+    },
+    {
+      "text": "Assess structure, dependency boundaries, and responsiveness risks."
+    },
+    {
+      "text": "Classify findings by severity and block on high-risk issues.",
+      "requiresReview": true
+    },
+    {
+      "text": "Provide bounded remediation recommendations."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Architecture findings are explicit and severity-tagged",
+    "High-risk issues are identified before QA sign-off",
+    "Recommendations are scoped and actionable"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm all high-severity architecture findings have clear remediation path"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

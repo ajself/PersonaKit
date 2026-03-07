@@ -1,0 +1,36 @@
+{
+  "id": "vqa-story-site",
+  "version": "1.0",
+  "title": "Run VQA pass for narrative clarity",
+  "goal": "Validate that the story-site draft is emotionally clear, readable, and trustworthy for the target audience.",
+  "steps": [
+    {
+      "text": "Review latest QA output and revised story-site draft."
+    },
+    {
+      "text": "Evaluate tone, readability, and trust signals for a non-technical reader."
+    },
+    {
+      "text": "Record narrative quality findings and required revisions."
+    },
+    {
+      "text": "Approve for customer share only after critical clarity issues are resolved.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "VQA report captures clarity and tone findings",
+    "Critical clarity issues are resolved or explicitly blocked",
+    "Final share recommendation is explicit"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm VQA decision is documented with rationale"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
