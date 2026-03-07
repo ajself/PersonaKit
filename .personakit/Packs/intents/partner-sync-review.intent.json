@@ -33,7 +33,9 @@
     "requiresHumanReview": true,
     "notes": [
       "Do not proceed with broad cross-pack changes without AJ review.",
-      "Record all affected pack/session IDs in partner logs."
+      "Record all affected pack/session IDs in partner logs.",
+      "Default commit mode is explicit AJ per-commit approval.",
+      "Standing commit authority is allowed only when the active worktree is not `main` and AJ has approved auto-commits for that exact worktree."
     ]
   }
 }
