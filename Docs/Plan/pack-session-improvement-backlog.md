@@ -13,6 +13,7 @@ during maintenance passes.
 
 | ID | Priority | Item | Rationale | Target IDs | Status |
 | --- | --- | --- | --- | --- | --- |
-| PSG-001 | High | Add a compact "session directory" doc grouped by workflow stage | Session count is growing; navigation friction will increase without grouping | `Docs/README.md`, `.personakit/Sessions/*` | Open |
+| PSG-001 | High | Add a compact "session directory" doc grouped by workflow stage | Session count is growing; navigation friction will increase without grouping | `Docs/README.md`, `Docs/Development/session-directory.md`, `.personakit/Sessions/*` | Done (2026-03-07) |
 | PSG-002 | Medium | Add lifecycle states for sessions (`active`, `candidate`, `deprecated`) | Prevents stale sessions from appearing production-ready | Session schema/docs convention | Open |
 | PSG-003 | Medium | Add a recurring closeout checklist entry for pack/session maintenance | Keeps maintenance from being skipped at phase transitions | `Docs/Plan/TODO.md`, `pack-gardener-log.md` | Open |
+| PSG-004 | Medium | Add per-session ownership notes in session directory | Speeds handoff decisions and maintenance accountability | `Docs/Development/session-directory.md` | Open |
