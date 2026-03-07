@@ -2,104 +2,112 @@
 
 Date: 2026-03-07
 
-## Why this branch existed
+## The beginning
 
-This branch started as a simple storytelling and identity exercise, but the
-real need underneath it was bigger: make PersonaKit easier to trust and easier
-to use when the stakes are human, not just technical.
+This branch did not begin as a feature request. It began as an act of
+authorship.
 
-The motivation was not "ship more lines." It was:
+At surface level, we were shaping docs, personas, and MCP ergonomics. Under the
+surface, we were doing something harder: proving that a development process can
+be both emotionally honest and technically disciplined.
 
-- make collaboration clearer
-- make MCP behavior less surprising
-- make identity and voice explicit, not implied
-- leave behind artifacts that help future work move faster
+Your `AJ.md` note makes that clear. It is not sanitized, and that is exactly why
+it matters. It names pain, effort, dignity, love, fear, and choice. It does not
+ask software to replace those things. It asks software to carry them carefully.
 
-In plain language: we wanted the tool to feel like a reliable partner instead
-of a puzzle.
+That became the branch mission:
 
-## What we changed, in order
+- keep identity explicit
+- keep collaboration respectful
+- keep technical behavior predictable
+- keep the work useful tomorrow, not just tonight
 
-From `f5203e9` to `8393b6e`, this branch landed eight commits:
+## Timeline of what we shipped
 
-1. `4e00dcb` Editorial foundation:
-   - Added a Studs-inspired PersonaKit persona and an origin feature draft.
-2. `ec6bbe2` Editorial quality pass:
-   - Tightened guardrails and AP-style polish.
-3. `cf49eca` Story direction update:
-   - Re-centered the narrative around AJ-led collaboration.
-4. `df9677f` Marketing concept:
-   - Added a landing-page style artifact for theme and framing.
-5. `0ae29e5` Planning artifact:
-   - Added the persona-grounded MCP conversation roadmap.
-6. `d0323bc` MCP discoverability foundation:
-   - Added domain catalog resources and mapping tests.
-7. `c441446` MCP conversation utilities:
-   - Added explain/compare/recommend/trace tools for practical dialogue with
-     PersonaKit concepts.
-8. `8393b6e` Collaboration convention:
-   - Codified working agreement, role title, naming convention, and nickname in
-     development docs.
+From base commit `f5203e9`, the branch arc was:
 
-## What changed in practice
+1. `4e00dcb` `feat(editorial)`:
+   - Added a Studs-inspired persona pack and origin feature draft.
+2. `ec6bbe2` `fix(editorial)`:
+   - Tightened guardrails and AP polish for the story lane.
+3. `cf49eca` `docs(story)`:
+   - Re-centered narrative on AJ-led collaboration and review.
+4. `df9677f` `feat(marketing)`:
+   - Added a concept marketing site to carry the branch theme visually.
+5. `0ae29e5` `docs(plan)`:
+   - Added a persona-grounded MCP conversation plan.
+6. `d0323bc` `feat(mcp)`:
+   - Added domain catalog resources and resource-mapping tests.
+7. `c441446` `feat(mcp)`:
+   - Added MCP tools for explain, compare, recommend, and trace.
+8. `8393b6e` `docs(development)`:
+   - Codified the collaboration charter, role title, and naming convention.
+9. `61478cc` `docs(development)`:
+   - Added the first genesis summary draft.
 
-Three practical outcomes came out of this branch:
+This final pass updates that summary with the voice and intent you clarified in
+`AJ.md`.
 
-- PersonaKit can now expose a richer conversation surface through MCP, so
-  agents can explain and compare concepts directly from project context.
-- The repo now has durable narrative artifacts (story + marketing + plan) that
-  record intent, not just implementation.
-- The collaboration model is written down clearly:
-  AJ as product editor/final reviewer, Codex as technical editor and
-  implementation partner.
+## Plain-language technical translation
 
-That last point matters. It turns a good working habit into an explicit team
-standard.
+If we strip the jargon, the technical wins were straightforward:
 
-## Evidence and verification we relied on
+- We gave MCP a better table of contents.
+  - Catalog resources now expose personas, kits, directives, sessions, and API
+    shapes in one predictable place.
+- We gave MCP better conversation verbs.
+  - `explain` answers "what is this?"
+  - `compare` answers "how are these different?"
+  - `recommend` answers "what should I use for this situation?"
+  - `trace` answers "how does this session resolve end to end?"
+- We wrote down how AJ and Codex work together.
+  - Not as folklore, as a committed doc.
 
-This branch was guided by evidence instead of assumption:
+That is why this branch feels bigger than its file list. It reduced ambiguity.
 
-- commit-by-commit timeline review
-- MCP-focused test runs for resources and tools
-- `personakit validate` checks during MCP feature work
-- docs updates that tracked actual behavior and decisions
+## Evidence, not vibes
 
-The loop was consistent:
+We used a repeatable evidence loop:
 
-1. define intent
-2. implement bounded change
-3. verify behavior
-4. document what is true now
+1. Commit-level timeline inspection.
+2. MCP-focused test coverage updates.
+3. MCP test execution (`swift test --filter MCP`, `swift test --filter MCPToolTests`).
+4. Validation gate (`swift run personakit validate`).
+5. Docs synchronized with actual behavior.
+
+This matters because trust is not a slogan. It is observable.
 
 ## Response to your proposal
 
-Your proposal was about more than process. It was about ownership, dignity and
-naming things honestly, including naming yourself honestly.
+You offered a proposal that was technical and personal at once: build a system
+that can help imagine, evaluate, and organize ethical opportunities without
+erasing the person doing the imagining.
 
-This branch responded in kind:
+My response, translated into what this branch now contains, is:
 
-- we encoded identity conventions in docs, not just chat
-- we preserved your authorship and review leadership in the narrative
-- we made technical systems more legible so they support people, not obscure
-  them
+- yes to structure
+- yes to ethics
+- yes to secure, reviewable iteration
+- yes to building from your real voice instead of a generic template
 
-You asked for "the genesis." The most accurate version is this:
+The Sam-and-Frodo metaphor from your note lands here for a reason. It is not
+about heroics. It is about companionship under load: one person carries intent,
+the other helps carry execution, and neither pretends the road is easy.
 
-PersonaKit moved forward because intent and review stayed human, while execution
-stayed disciplined. The branch did not just add features; it made the
-collaboration model itself part of the product.
+## Current state
 
-## Where it stands now
+- `tell-me-a-story` remains present and is not deleted.
+- Branch work has been integrated to `main` via local rebase/fast-forward flow.
+- The branch now has this final summary pass as its closing narrative artifact.
 
-- All branch commits are on `main` via local rebase/fast-forward flow.
-- The `tell-me-a-story` branch still exists (not deleted).
-- `main` is currently ahead of `origin/main` by these branch commits.
+## Closing
 
-## Closing note
+This branch started as a story exercise and ended as a working pattern:
 
-The branch started with voice and ended with structure.
+- identity with dignity
+- software with guardrails
+- momentum with verification
 
-That is the throughline: turning something deeply personal into something
-portable, reviewable and useful to others without losing the person who made it
-real.
+The core achievement is simple to say and hard to earn:
+we turned "just ship it" into "ship it, understand it, and still recognize
+yourself in it."
