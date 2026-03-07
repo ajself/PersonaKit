@@ -1,0 +1,49 @@
+{
+  "id": "rosie-worktree-upkeep-review",
+  "version": "1.0",
+  "name": "Rosie Worktree Upkeep Review",
+  "description": "Run the Rosie lane upkeep loop with explicit sync, logging, and review gates.",
+  "parameters": [
+    {
+      "name": "phaseLabel",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "laneBranch",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "integrationBranch",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "focusAreas",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "gardening-log-contract",
+    "gardening-v2-checklist",
+    "non-goals",
+    "pack-gardening-standards",
+    "partner-trust-contract",
+    "rosie-worktree-upkeep-standards",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Pause for AJ review before any history-altering lane-to-main integration.",
+      "Record lane scope, affected IDs, and validation status in partner and gardening logs.",
+      "If lane/main sync conflicts appear, stop and present a bounded resolution plan before applying edits."
+    ]
+  }
+}
