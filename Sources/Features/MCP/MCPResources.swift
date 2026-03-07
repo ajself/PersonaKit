@@ -9,8 +9,10 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
   case unsupportedHost(String)
   case invalidPacksURI(String)
   case invalidEssentialsURI(String)
+  case invalidCatalogURI(String)
   case invalidSegment(String)
   case unknownPacksType(String)
+  case unknownCatalogType(String)
 
   var errorDescription: String? {
     switch self {
@@ -24,10 +26,14 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
       return "Invalid packs URI: \(uri)"
     case .invalidEssentialsURI(let uri):
       return "Invalid essentials URI: \(uri)"
+    case .invalidCatalogURI(let uri):
+      return "Invalid catalog URI: \(uri)"
     case .invalidSegment(let segment):
       return "Invalid URI path segment: \(segment)"
     case .unknownPacksType(let type):
       return "Unknown packs type: \(type)"
+    case .unknownCatalogType(let type):
+      return "Unknown catalog type: \(type)"
     }
   }
 }
@@ -60,10 +66,28 @@ enum MCPPackResourceType: String, CaseIterable, Equatable {
   }
 }
 
+/// Supported MCP catalog resources for API/domain discovery.
+enum MCPCatalogResourceType: String, CaseIterable, Equatable {
+  case index
+  case personas
+  case kits
+  case directives
+  case intents
+  case skills
+  case essentials
+  case sessions
+  case api
+
+  var mimeType: String {
+    return "application/json"
+  }
+}
+
 /// Parsed resource reference describing a pack JSON or essential markdown file.
 enum MCPResourceReference: Equatable {
   case pack(type: MCPPackResourceType, id: String)
   case essential(id: String)
+  case catalog(type: MCPCatalogResourceType)
 
   var uri: String {
     switch self {
@@ -71,6 +95,8 @@ enum MCPResourceReference: Equatable {
       return "personakit://packs/\(type.rawValue)/\(encodeComponent(id))"
     case .essential(let id):
       return "personakit://essentials/\(encodeComponent(id))"
+    case .catalog(let type):
+      return "personakit://catalog/\(encodeComponent(type.rawValue))"
     }
   }
 
@@ -80,6 +106,8 @@ enum MCPResourceReference: Equatable {
       return "Packs/\(type.rawValue)/\(id)\(type.suffix)"
     case .essential(let id):
       return "Packs/essentials/\(id).md"
+    case .catalog(let type):
+      return "catalog/\(type.rawValue)"
     }
   }
 
@@ -89,6 +117,8 @@ enum MCPResourceReference: Equatable {
       return type.mimeType
     case .essential:
       return "text/markdown"
+    case .catalog(let type):
+      return type.mimeType
     }
   }
 
@@ -98,6 +128,8 @@ enum MCPResourceReference: Equatable {
       return id
     case .essential(let id):
       return id
+    case .catalog(let type):
+      return "catalog-\(type.rawValue)"
     }
   }
 
@@ -140,6 +172,18 @@ enum MCPResourceReference: Equatable {
       return .essential(id: idSegment)
     }
 
+    if host == "catalog" {
+      guard segments.count == 1 else {
+        throw MCPResourceURIError.invalidCatalogURI(uri)
+      }
+      let typeSegment = segments[0]
+      try validateSegment(typeSegment)
+      guard let type = MCPCatalogResourceType(rawValue: typeSegment) else {
+        throw MCPResourceURIError.unknownCatalogType(typeSegment)
+      }
+      return .catalog(type: type)
+    }
+
     throw MCPResourceURIError.unsupportedHost(host)
   }
 }
@@ -171,6 +215,10 @@ struct MCPResourceService: Sendable {
   /// Lists available resources with deterministic URI ordering.
   func listResources() throws -> [Resource] {
     var entries: [MCPResourceEntry] = []
+
+    for catalog in MCPCatalogResourceType.allCases {
+      entries.append(entry(for: .catalog(type: catalog)))
+    }
 
     for persona in registry.personas {
       entries.append(entry(for: .pack(type: .personas, id: persona.id)))
@@ -210,6 +258,11 @@ struct MCPResourceService: Sendable {
     } catch let error as MCPResourceURIError {
       throw MCPError.invalidParams(error.localizedDescription)
     }
+    if case .catalog(let type) = reference {
+      let text = try readCatalogResource(type: type)
+      return Resource.Content.text(text, uri: reference.uri, mimeType: reference.mimeType)
+    }
+
     let relativePath = reference.relativePath
     guard let fileURL = resolveFileURL(reference: reference, scopes: scopes, fileManager: .default)
     else {
@@ -235,6 +288,237 @@ struct MCPResourceService: Sendable {
       mimeType: reference.mimeType
     )
   }
+}
+
+private struct MCPCatalogScope: Encodable {
+  let projectRoot: String?
+  let globalRoot: String?
+  let loadOrder: [String]
+  let resolutionOrder: [String]
+}
+
+private struct MCPCatalogIndexEntry: Encodable {
+  let type: String
+  let count: Int
+  let uri: String
+}
+
+private struct MCPCatalogIndexPayload: Encodable {
+  let schemaVersion: Int
+  let scope: MCPCatalogScope
+  let counts: [String: Int]
+  let resources: [MCPCatalogIndexEntry]
+}
+
+private struct MCPCatalogListPayload: Encodable {
+  let schemaVersion: Int
+  let type: String
+  let ids: [String]
+}
+
+private struct MCPCatalogSessionSummary: Encodable {
+  let id: String
+  let personaId: String
+  let directiveId: String
+  let kitOverrides: [String]
+}
+
+private struct MCPCatalogSessionPayload: Encodable {
+  let schemaVersion: Int
+  let type: String
+  let sessions: [MCPCatalogSessionSummary]
+}
+
+private struct MCPCatalogAPIResourceSummary: Encodable {
+  let uri: String
+  let description: String
+}
+
+private struct MCPCatalogAPIPayload: Encodable {
+  let schemaVersion: Int
+  let type: String
+  let resources: [MCPCatalogAPIResourceSummary]
+}
+
+extension MCPResourceService {
+  func readCatalogResource(type: MCPCatalogResourceType) throws -> String {
+    switch type {
+    case .index:
+      return try encodeCatalogJSON(catalogIndexPayload())
+    case .personas:
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: registry.personas.map(\.id)
+        )
+      )
+    case .kits:
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: registry.kits.map(\.id)
+        )
+      )
+    case .directives:
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: registry.directives.map(\.id)
+        )
+      )
+    case .intents:
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: registry.intentTemplates.map(\.id)
+        )
+      )
+    case .skills:
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: registry.skills.map(\.id)
+        )
+      )
+    case .essentials:
+      let ids = try listEssentialIds(scopes: scopes, fileManager: .default)
+      return try encodeCatalogJSON(
+        MCPCatalogListPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          ids: ids
+        )
+      )
+    case .sessions:
+      let sessions = try listSessionSummaries(scopes: scopes, fileManager: .default)
+      return try encodeCatalogJSON(
+        MCPCatalogSessionPayload(
+          schemaVersion: 1,
+          type: type.rawValue,
+          sessions: sessions
+        )
+      )
+    case .api:
+      return try encodeCatalogJSON(catalogAPIPayload())
+    }
+  }
+
+  private func catalogIndexPayload() throws -> MCPCatalogIndexPayload {
+    let essentials = try listEssentialIds(scopes: scopes, fileManager: .default)
+    let sessions = try listSessionSummaries(scopes: scopes, fileManager: .default)
+    let resources = MCPCatalogResourceType.allCases.map { type in
+      MCPCatalogIndexEntry(
+        type: type.rawValue,
+        count: count(for: type, essentialsCount: essentials.count, sessionsCount: sessions.count),
+        uri: MCPResourceReference.catalog(type: type).uri
+      )
+    }
+
+    return MCPCatalogIndexPayload(
+      schemaVersion: 1,
+      scope: MCPCatalogScope(
+        projectRoot: scopes.projectScopeURL?.path,
+        globalRoot: scopes.globalScopeURL?.path,
+        loadOrder: scopes.loadOrder.map(\.path),
+        resolutionOrder: scopes.resolutionOrder.map(\.path)
+      ),
+      counts: [
+        "personas": registry.personas.count,
+        "kits": registry.kits.count,
+        "directives": registry.directives.count,
+        "intents": registry.intentTemplates.count,
+        "skills": registry.skills.count,
+        "essentials": essentials.count,
+        "sessions": sessions.count,
+      ],
+      resources: resources
+    )
+  }
+
+  private func catalogAPIPayload() -> MCPCatalogAPIPayload {
+    let resources = MCPCatalogResourceType.allCases.map { type in
+      MCPCatalogAPIResourceSummary(
+        uri: MCPResourceReference.catalog(type: type).uri,
+        description: catalogDescription(type: type)
+      )
+    }
+
+    return MCPCatalogAPIPayload(
+      schemaVersion: 1,
+      type: "api",
+      resources: resources
+    )
+  }
+
+  private func count(
+    for type: MCPCatalogResourceType,
+    essentialsCount: Int,
+    sessionsCount: Int
+  ) -> Int {
+    switch type {
+    case .index, .api:
+      return 1
+    case .personas:
+      return registry.personas.count
+    case .kits:
+      return registry.kits.count
+    case .directives:
+      return registry.directives.count
+    case .intents:
+      return registry.intentTemplates.count
+    case .skills:
+      return registry.skills.count
+    case .essentials:
+      return essentialsCount
+    case .sessions:
+      return sessionsCount
+    }
+  }
+}
+
+private func catalogDescription(type: MCPCatalogResourceType) -> String {
+  switch type {
+  case .index:
+    return "Top-level catalog index with counts, scope metadata, and type URIs."
+  case .personas:
+    return "List of persona ids available in the active scope set."
+  case .kits:
+    return "List of kit ids available in the active scope set."
+  case .directives:
+    return "List of directive ids available in the active scope set."
+  case .intents:
+    return "List of intent template ids available in the active scope set."
+  case .skills:
+    return "List of skill ids available in the active scope set."
+  case .essentials:
+    return "List of essential markdown ids available in the active scope set."
+  case .sessions:
+    return "Session summaries with persona, directive, and optional kit overrides."
+  case .api:
+    return "Catalog API overview for MCP discovery and navigation."
+  }
+}
+
+private func encodeCatalogJSON<T: Encodable>(_ payload: T) throws -> String {
+  let encoder = JSONEncoder()
+  encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+  let data: Data
+  do {
+    data = try encoder.encode(payload)
+  } catch {
+    throw MCPError.internalError("Failed to encode catalog resource.")
+  }
+
+  guard let text = String(data: data, encoding: .utf8) else {
+    throw MCPError.internalError("Failed to encode catalog resource.")
+  }
+
+  return text
 }
 
 private func encodeComponent(_ value: String) -> String {
@@ -284,6 +568,62 @@ private func listEssentialIds(scopes: ScopeSet, fileManager: FileManager) throws
   }
 
   return ids.sorted()
+}
+
+private func listSessionSummaries(
+  scopes: ScopeSet,
+  fileManager: FileManager
+) throws -> [MCPCatalogSessionSummary] {
+  var sessionsById: [String: MCPCatalogSessionSummary] = [:]
+
+  for root in scopes.resolutionOrder {
+    let sessionsURL = root.appendingPathComponent("Sessions")
+    var isDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
+      isDirectory.boolValue
+    else {
+      continue
+    }
+
+    let files: [URL]
+    do {
+      files = try fileManager.contentsOfDirectory(
+        at: sessionsURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      )
+    } catch {
+      throw MCPError.internalError("Failed to read Sessions directory.")
+    }
+
+    let sessionFiles =
+      files
+      .filter { $0.lastPathComponent.hasSuffix(".session.json") }
+      .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+    for file in sessionFiles {
+      let id = file.deletingPathExtension().deletingPathExtension().lastPathComponent
+      guard sessionsById[id] == nil else {
+        continue
+      }
+
+      let session: SessionFile
+      do {
+        session = try SessionFileLoader.load(root: root, sessionId: id, fileManager: fileManager)
+      } catch {
+        throw MCPError.internalError("Failed to decode session file \(id).session.json.")
+      }
+
+      sessionsById[id] = MCPCatalogSessionSummary(
+        id: session.id,
+        personaId: session.personaId,
+        directiveId: session.directiveId,
+        kitOverrides: session.kitOverrides ?? []
+      )
+    }
+  }
+
+  return sessionsById.keys.sorted().compactMap { sessionsById[$0] }
 }
 
 private func resolveFileURL(

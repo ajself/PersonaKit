@@ -31,6 +31,18 @@ struct MCPResourceMappingTests {
   }
 
   @Test
+  func catalogURIBuildsAndParses() throws {
+    let reference = MCPResourceReference.catalog(type: .index)
+
+    #expect(reference.uri == "personakit://catalog/index")
+
+    let parsed = try MCPResourceReference.parse(uri: reference.uri)
+    #expect(parsed == reference)
+    #expect(parsed.relativePath == "catalog/index")
+    #expect(parsed.mimeType == "application/json")
+  }
+
+  @Test
   func resourceEntriesSortByURI() {
     let entries = [
       MCPResourceEntry(
