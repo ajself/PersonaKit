@@ -1,0 +1,334 @@
+:root {
+  --ink: #171211;
+  --paper: #f4ead4;
+  --paper-deep: #e7d4ab;
+  --accent: #d8572a;
+  --accent-cool: #0f7469;
+  --line: #2a211f;
+  --surface: rgba(244, 234, 212, 0.84);
+  --shadow: 0 20px 50px rgba(23, 18, 17, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 10%, #f8d88c 0%, transparent 38%),
+    radial-gradient(circle at 82% 20%, #b2e1d7 0%, transparent 30%),
+    linear-gradient(180deg, #fef9ee 0%, #f5ecd8 45%, #ead9b6 100%);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image:
+    linear-gradient(transparent 50%, rgba(0, 0, 0, 0.02) 50%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.015) 50%, transparent 50%);
+  background-size: 100% 3px, 4px 100%;
+  z-index: 0;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.3rem;
+  background: rgba(250, 241, 221, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(42, 33, 31, 0.15);
+}
+
+.brand {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.site-header nav a {
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+.site-header nav a:hover {
+  border-color: rgba(42, 33, 31, 0.25);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+main {
+  width: min(1100px, 100% - 2rem);
+  margin: 0 auto;
+  padding: 1.25rem 0 3.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+section {
+  margin: 1.2rem 0;
+  border: 1px solid rgba(42, 33, 31, 0.2);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  padding: clamp(1.5rem, 4vw, 3.6rem);
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-cool);
+  font-weight: 800;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Fraunces", Georgia, serif;
+  line-height: 1.08;
+  margin: 0;
+}
+
+h1 {
+  margin-top: 0.6rem;
+  font-size: clamp(2.1rem, 6vw, 4.6rem);
+}
+
+.hero-copy {
+  max-width: 60ch;
+  margin-top: 1rem;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.65rem 1.05rem;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff8ee;
+  box-shadow: 0 8px 20px rgba(216, 87, 42, 0.35);
+}
+
+.btn-secondary {
+  color: var(--ink);
+  border: 1px solid rgba(42, 33, 31, 0.28);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.2rem;
+  padding: 1.4rem;
+}
+
+.split p {
+  margin: 0.8rem 0 0;
+}
+
+.quote-card {
+  padding: 1rem;
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(15, 116, 105, 0.11), rgba(216, 87, 42, 0.12));
+  border: 1px solid rgba(42, 33, 31, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.quote-card p {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.quote-card span {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.principles,
+.timeline,
+.cta {
+  padding: 1.4rem;
+}
+
+.principles h2,
+.timeline h2,
+.cta h2 {
+  font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+}
+
+.principle-grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.principle-grid article {
+  border: 1px solid rgba(42, 33, 31, 0.2);
+  border-radius: 13px;
+  padding: 0.9rem;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.principle-grid h3 {
+  font-size: 1.15rem;
+}
+
+.timeline ol {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: minmax(96px, 120px) 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.7rem;
+  border: 1px dashed rgba(42, 33, 31, 0.35);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.date {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
+  text-align: center;
+}
+
+.timeline p {
+  margin: 0;
+}
+
+.cta p {
+  margin: 0.85rem 0 1.1rem;
+  max-width: 56ch;
+}
+
+footer {
+  position: relative;
+  z-index: 1;
+  padding: 0.8rem 1rem 1.4rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.timeline li.is-active {
+  border-style: solid;
+  border-color: rgba(216, 87, 42, 0.7);
+  transform: translateX(2px);
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .principle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    width: min(1100px, 100% - 1.1rem);
+  }
+
+  .timeline li {
+    grid-template-columns: 1fr;
+  }
+
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .btn,
+  .timeline li {
+    transition: none;
+  }
+}
