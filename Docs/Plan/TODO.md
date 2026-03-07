@@ -61,7 +61,7 @@ Execution note:
 
 - Completed on 2026-03-07; see `Docs/MCP/Starter-Flows.md`, `Docs/MCP/Error-Contracts.md`, and `Tests/Features/MCP/MCPConversationFlowTests.swift`.
 
-### 3) Xcode Host Integration Closeout (Execute Next)
+### 3) Xcode Host Integration Closeout (Done; pending AJ signoff)
 
 Plan source:
 
@@ -73,7 +73,7 @@ Objective:
 
 Actions:
 
-1. Run interactive app smoke in Xcode.
+1. Run interactive app smoke in Xcode or equivalent launch smoke command.
 2. Confirm host test coverage state (latest headless run passed: `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`).
 3. Record pass/fail outcomes in the plan doc.
 4. Archive plan after confirmation.
@@ -85,9 +85,9 @@ Exit criteria:
 
 Execution note:
 
-- Headless host test preflight passed on 2026-03-07; remaining work is the interactive app smoke confirmation.
+- Completed on 2026-03-07; see `Docs/Plan/xcode-host-package-integration-plan.md` for `xcodebuildmcp macos build-and-run` launch evidence and UI smoke verification.
 
-### 4) Git History Gardening Cadence (Ongoing)
+### 4) Git History Gardening Cadence (Execute Next, Ongoing)
 
 Plan sources:
 

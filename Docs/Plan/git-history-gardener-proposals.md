@@ -12,11 +12,15 @@ altering commands are executed from this report without explicit approval.
 ## Current Analysis Pass
 
 - Session: `git-history-gardener`
-- Commit range: `HEAD~10..HEAD` (`4f10ddb..2de2e4b`)
+- Commit range: `HEAD~12..HEAD` (`b53a9a0..e01e67a`)
 - Mode: analysis only
 - History edits executed: `none`
 
 ## Proposed Changes (Pending Approval)
+
+- None in current analysis pass (`analysis-pass-2`).
+
+## Proposal History
 
 | Proposal ID | Candidate Commit | Proposed Action | Rationale | Risk | Exact Command Plan (Not Executed) | Approval Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -31,6 +35,9 @@ meaningful phase boundaries:
 - `09d4518` workspace extraction boundary
 - `9fa1974` marketing sprint delivery milestone
 - `a290e9f` gardener pack bootstrap milestone
+- `ba6d88a` VentureStudio pilot evidence checkpoint
+- `9dd1a32` MCP M3 completion milestone
+- `e01e67a` XcodeBuildMCP standardization follow-up
 
 ## Approval Rule
 
@@ -43,3 +50,4 @@ Only after explicit approval can the Gardener move proposals from `pending` to
 - `2de2e4b` was folded into the gardening feature commit.
 - `1268d21` was folded into the partner feature commit.
 - No additional commits were created for this execution pass.
+- Analysis pass #2 (`HEAD~12..HEAD`) produced no new pending proposals.
