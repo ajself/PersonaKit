@@ -1,22 +1,30 @@
 .DEFAULT_GOAL := help
 
+XCODEBUILDMCP ?= xcodebuildmcp
+WORKSPACE_PATH ?= PersonaKit.xcworkspace
+RUN_SCHEME ?= PersonaKit
+APP_NAME ?= $(RUN_SCHEME)
+APP_BUILD_SCHEME ?= PersonaKit
+CLI_BUILD_SCHEME ?= PersonaKitCLI
+TEST_SCHEME ?= PersonaKit
+CONFIGURATION ?= Debug
+DERIVED_DATA_PATH ?= .sim/DerivedData
+ZIP_NAME ?= PersonaKit.zip
+
 ROOT ?=
 PERSONA ?= senior-swiftui-engineer
 DIRECTIVE ?= apply-style
 KITS ?=
 OUTPUT ?= /tmp/session.md
+TYPE ?=
 ARGS ?=
-STUDIO_ARGS ?=
-ZIP_NAME ?= PersonaKit_review.zip
 NO_PROJECT ?= 0
 NO_GLOBAL ?= 0
-PREFIX ?= /usr/local
-INSTALL_DIR ?= $(PREFIX)/bin
-FORMAT_PATHS ?= Sources Tests
-SWIFT_FORMAT ?= ./Scripts/swift-format-project.sh
+
 VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
+
 CLOSEOUT_BRANCH ?=
 CLOSEOUT_WORKTREE ?=
 CLOSEOUT_MAIN ?= main
@@ -25,91 +33,134 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help
+.PHONY: help doctor build build-app build-cli run test test-cli cli init validate validate-repo closeout-local export list graph zip
+
 help:
-	@printf "Usage:\n"
-	@printf "  make <target> [VAR=value]\n\n"
-	@printf "Common targets:\n"
-	@printf "  help            Show this help message\n"
-	@printf "  build           Build the CLI\n"
-	@printf "  install         Build release and install to INSTALL_DIR\n"
-	@printf "  test            Run tests\n"
-	@printf "  format          Format Swift source using project config\n"
-	@printf "  format-check    Verify formatting is clean (CI-safe)\n"
-	@printf "  run             Run the CLI with ARGS\n\n"
-	@printf "  studio-build    Build PersonaKitStudio (debug)\n"
-	@printf "  studio-run      Build and run PersonaKitStudio (debug)\n\n"
-	@printf "  docc-preview    Preview DocC tutorials\n\n"
-	@printf "Project workflow:\n"
-	@printf "  init            Initialize a starter kit in ./.personakit\n"
-	@printf "  validate        Validate using scope discovery (or ROOT override)\n"
-	@printf "  validate-repo   Run full deterministic repo validation (parallel-safe temp root)\n"
-	@printf "  closeout-local  Rebase lane branch onto local main, FF merge, verify, cleanup\n"
-	@printf "  export          Export a session prompt to OUTPUT\n"
-	@printf "  list            List entities (TYPE=personas|kits|directives|intents|skills|essentials)\n"
-	@printf "  graph           Print the resolution graph\n"
-	@printf "  zip             Create a review zip (excluding VCS/build/OS files)\n"
-	@printf "\n"
-	@printf "Variables:\n"
-	@printf "  ROOT            Root kit path override (optional)\n"
-	@printf "  PERSONA         Persona id (default: %s)\n" "$(PERSONA)"
-	@printf "  DIRECTIVE       Directive id (default: %s)\n" "$(DIRECTIVE)"
-	@printf "  KITS            Comma-separated kit overrides (optional)\n"
-	@printf "  OUTPUT          Export output path (default: %s)\n" "$(OUTPUT)"
-	@printf "  ARGS            Arguments passed to 'swift run personakit'\n"
-	@printf "  STUDIO_ARGS     Arguments passed to 'swift run PersonaKitStudio'\n"
-	@printf "  NO_PROJECT      Set to 1 to disable project scope discovery\n"
-	@printf "  NO_GLOBAL       Set to 1 to disable global scope discovery\n"
-	@printf "  PREFIX          Install prefix (default: %s)\n" "$(PREFIX)"
-	@printf "  INSTALL_DIR     Install directory (default: %s)\n" "$(INSTALL_DIR)"
-	@printf "  ZIP_NAME        Zip file name (default: %s)\n" "$(ZIP_NAME)"
-	@printf "  VALIDATE_AGENT  Agent/lane id for parallel-safe validation temp paths (default: %s)\n" "$(VALIDATE_AGENT)"
-	@printf "  VALIDATE_TMPDIR Temp root passed as PERSONAKIT_VALIDATE_TMP_ROOT (default: %s)\n" "$(VALIDATE_TMPDIR)"
-	@printf "  CLOSEOUT_BRANCH Feature branch for closeout-local (default: current branch)\n"
-	@printf "  CLOSEOUT_WORKTREE Feature worktree path for closeout-local (default: branch worktree)\n"
-	@printf "  CLOSEOUT_MAIN   Main branch for closeout-local (default: %s)\n" "$(CLOSEOUT_MAIN)"
-	@printf "  CLOSEOUT_NO_CLEANUP Set to 1 to keep branch/worktree after merge\n"
+	@echo "PersonaKit Makefile Commands"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make <target> [VAR=value]"
+	@echo ""
+	@echo "XcodeBuildMCP targets:"
+	@printf "  %-24s %s\n" "doctor" "Check required tools and workspace health."
+	@printf "  %-24s %s\n" "build" "Build macOS app and CLI with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "build-app" "Build macOS app scheme with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "build-cli" "Build CLI scheme with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "run" "Build and run macOS app with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "test" "Run macOS tests with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "test-cli" "Run tests using CLI-oriented test scheme."
+	@printf "  %-24s %s\n" "zip" "Create a project zip archive."
+	@echo ""
+	@echo "PersonaKit workflow targets:"
+	@printf "  %-24s %s\n" "cli" "Run the personakit CLI directly."
+	@printf "  %-24s %s\n" "init" "Initialize a starter kit in ./.personakit."
+	@printf "  %-24s %s\n" "validate" "Validate using scope discovery or ROOT override."
+	@printf "  %-24s %s\n" "validate-repo" "Run deterministic repo validation."
+	@printf "  %-24s %s\n" "closeout-local" "Run local-only closeout workflow."
+	@printf "  %-24s %s\n" "export" "Export a resolved PersonaKit session prompt."
+	@printf "  %-24s %s\n" "list" "List PersonaKit entities (requires TYPE)."
+	@printf "  %-24s %s\n" "graph" "Render session dependency graph."
+	@echo ""
+	@echo "Configurable variables:"
+	@printf "  %-24s %s\n" "WORKSPACE_PATH" "$(WORKSPACE_PATH)"
+	@printf "  %-24s %s\n" "RUN_SCHEME" "$(RUN_SCHEME)"
+	@printf "  %-24s %s\n" "APP_NAME" "$(APP_NAME)"
+	@printf "  %-24s %s\n" "APP_BUILD_SCHEME" "$(APP_BUILD_SCHEME)"
+	@printf "  %-24s %s\n" "CLI_BUILD_SCHEME" "$(CLI_BUILD_SCHEME)"
+	@printf "  %-24s %s\n" "TEST_SCHEME" "$(TEST_SCHEME)"
+	@printf "  %-24s %s\n" "CONFIGURATION" "$(CONFIGURATION)"
+	@printf "  %-24s %s\n" "DERIVED_DATA_PATH" "$(DERIVED_DATA_PATH)"
+	@printf "  %-24s %s\n" "ZIP_NAME" "$(ZIP_NAME)"
+	@printf "  %-24s %s\n" "ROOT" "$(ROOT)"
+	@printf "  %-24s %s\n" "PERSONA" "$(PERSONA)"
+	@printf "  %-24s %s\n" "DIRECTIVE" "$(DIRECTIVE)"
+	@printf "  %-24s %s\n" "KITS" "$(KITS)"
+	@printf "  %-24s %s\n" "OUTPUT" "$(OUTPUT)"
+	@printf "  %-24s %s\n" "TYPE" "$(TYPE)"
+	@printf "  %-24s %s\n" "ARGS" "$(ARGS)"
+	@printf "  %-24s %s\n" "NO_PROJECT" "$(NO_PROJECT)"
+	@printf "  %-24s %s\n" "NO_GLOBAL" "$(NO_GLOBAL)"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make doctor"
+	@echo "  make build [CONFIGURATION=Release]"
+	@echo "  make build-app [APP_BUILD_SCHEME=PersonaKit] [CONFIGURATION=Release]"
+	@echo "  make build-cli [CLI_BUILD_SCHEME=PersonaKitCLI] [CONFIGURATION=Release]"
+	@echo "  make run [RUN_SCHEME=PersonaKit] [APP_NAME=PersonaKit]"
+	@echo "  make test [TEST_SCHEME=PersonaKit]"
+	@echo "  make test-cli [TEST_SCHEME=PersonaKitCLI]"
+	@echo "  make cli [ARGS=\"list personas\"]"
+	@echo "  make validate [ROOT=/Users/me/Code/PersonaKit/.personakit] [NO_GLOBAL=1]"
+	@echo "  make export [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants] [OUTPUT=/tmp/session.md]"
+	@echo "  make list [TYPE=personas] [ROOT=/Users/me/Code/PersonaKit/.personakit]"
+	@echo "  make graph [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants]"
+	@echo "  make zip [ZIP_NAME=PersonaKit-archive.zip]"
 
-.PHONY: build
-build:
-	swift build
+doctor:
+	@if ! command -v xcodebuild >/dev/null 2>&1; then \
+		echo "error: xcodebuild is required. Install Xcode and Command Line Tools."; \
+		echo "hint: xcode-select --install"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(WORKSPACE_PATH)" ]; then \
+		echo "error: workspace not found at $(WORKSPACE_PATH)"; \
+		exit 1; \
+	fi
+	@if ! command -v $(XCODEBUILDMCP) >/dev/null 2>&1; then \
+		echo "xcodebuildmcp not found. Installing via Homebrew..."; \
+		if ! command -v brew >/dev/null 2>&1; then \
+			echo "error: Homebrew is required to install xcodebuildmcp."; \
+			echo "hint: https://brew.sh"; \
+			exit 1; \
+		fi; \
+		brew tap getsentry/tools; \
+		brew install getsentry/tools/xcodebuildmcp; \
+	fi
+	@$(XCODEBUILDMCP) --version
+	@echo "doctor: OK"
 
-.PHONY: install
-install:
-	swift build -c release
-	install -d "$(INSTALL_DIR)"
-	install -m 755 ".build/release/personakit" "$(INSTALL_DIR)/personakit"
+build: build-app build-cli
 
-.PHONY: test
-test:
-	swift test
+build-app: doctor
+	$(XCODEBUILDMCP) macos build \
+		--workspace-path "$(WORKSPACE_PATH)" \
+		--scheme "$(APP_BUILD_SCHEME)" \
+		--configuration "$(CONFIGURATION)" \
+		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-.PHONY: format
-format:
-	$(SWIFT_FORMAT) --in-place --recursive $(FORMAT_PATHS)
+build-cli: doctor
+	$(XCODEBUILDMCP) macos build \
+		--workspace-path "$(WORKSPACE_PATH)" \
+		--scheme "$(CLI_BUILD_SCHEME)" \
+		--configuration "$(CONFIGURATION)" \
+		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-.PHONY: format-check
-format-check:
-	$(SWIFT_FORMAT) --in-place --recursive $(FORMAT_PATHS)
-	git diff --exit-code
+run: doctor
+	@echo "Stopping existing $(APP_NAME) instances via XcodeBuildMCP..."
+	@$(XCODEBUILDMCP) macos stop --app-name "$(APP_NAME)" >/dev/null 2>&1 || true
+	$(XCODEBUILDMCP) macos build-and-run \
+		--workspace-path "$(WORKSPACE_PATH)" \
+		--scheme "$(RUN_SCHEME)" \
+		--configuration "$(CONFIGURATION)" \
+		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-.PHONY: run
-run:
+test: doctor
+	$(XCODEBUILDMCP) macos test \
+		--workspace-path "$(WORKSPACE_PATH)" \
+		--scheme "$(TEST_SCHEME)" \
+		--configuration "$(CONFIGURATION)" \
+		--derived-data-path "$(DERIVED_DATA_PATH)"
+
+test-cli: doctor
+	$(XCODEBUILDMCP) macos test \
+		--workspace-path "$(WORKSPACE_PATH)" \
+		--scheme "$(CLI_BUILD_SCHEME)" \
+		--configuration "$(CONFIGURATION)" \
+		--derived-data-path "$(DERIVED_DATA_PATH)"
+
+cli:
 	personakit $(ARGS)
 
-.PHONY: studio-build
-studio-build:
-	swift build --product PersonaKitStudio
-
-.PHONY: studio-run
-studio-run:
-	swift run PersonaKitStudio $(STUDIO_ARGS)
-
-.PHONY: docc-preview
-docc-preview:
-	xcrun docc preview Docs/PersonaKit.docc --fallback-display-name PersonaKit --fallback-bundle-identifier com.ajself.PersonaKit --fallback-bundle-version 1
-
-.PHONY: init
 init:
 	@dest="$(CURDIR)/.personakit"; \
 	if [ -e "$$dest" ]; then \
@@ -118,15 +169,12 @@ init:
 		personakit init "$$dest"; \
 	fi
 
-.PHONY: validate
 validate:
 	personakit validate $(SCOPE_ARGS)
 
-.PHONY: validate-repo
 validate-repo:
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
-.PHONY: closeout-local
 closeout-local:
 	./Scripts/closeout-local.sh \
 		$(if $(CLOSEOUT_BRANCH),--branch $(CLOSEOUT_BRANCH),) \
@@ -134,11 +182,9 @@ closeout-local:
 		--main $(CLOSEOUT_MAIN) \
 		$(if $(filter 1 true yes,$(CLOSEOUT_NO_CLEANUP)),--no-cleanup,)
 
-.PHONY: export
 export:
 	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
 
-.PHONY: list
 list:
 	@if [ -z "$(TYPE)" ]; then \
 		printf "Missing TYPE. Example: make list TYPE=personas\n"; \
@@ -146,16 +192,16 @@ list:
 	fi
 	personakit list $(SCOPE_ARGS) $(TYPE)
 
-.PHONY: graph
 graph:
 	personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),)
 
-.PHONY: zip
 zip:
 	zip -r $(ZIP_NAME) . \
-	-x "*.git/*" \
-	-x "__MACOSX/*" \
-	-x "*.DS_Store" \
-	-x "*/.DS_Store" \
-	-x "._*" \
-	-x "*.build/*"
+		-x "*.git/*" \
+		-x "__MACOSX/*" \
+		-x "*.DS_Store" \
+		-x "*/.DS_Store" \
+		-x "._*" \
+		-x "*.build/*" \
+		-x "*build/*" \
+		-x "*.sim/*"
