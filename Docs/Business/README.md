@@ -29,10 +29,12 @@ Run commands from the repository root.
 - [Idea-Scorecard.md](./Idea-Scorecard.md)
 - [Opportunity-Backlog.md](./Opportunity-Backlog.md)
 - [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md)
+- [chelsea-narrative-pilot.md](./chelsea-narrative-pilot.md)
+- [story-asset-pipeline.md](./story-asset-pipeline.md)
 
 ## Current Selected Venture
 
-- `VS-006`: PersonaKit agency pilot
+- `VS-006`: Chelsea narrative pilot
 - Working brief: [personakit-venture-cycle-01.md](./personakit-venture-cycle-01.md)
 
 ## Ground Rules

@@ -1,0 +1,13 @@
+{
+  "id": "story-site-team-core",
+  "version": "1.0",
+  "name": "Story Site Team Core Kit",
+  "summary": "Shared standards and guardrails for narrative website team workflows.",
+  "essentialIds": [
+    "story-team-guardrails",
+    "feature-editorial-style-guide",
+    "tools-and-constraints",
+    "non-goals",
+    "environment"
+  ]
+}

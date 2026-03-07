@@ -1,0 +1,37 @@
+{
+  "id": "design-story-experience",
+  "version": "1.0",
+  "title": "Design narrative story-site experience",
+  "goal": "Transform the customer brief into narrative structure, visual direction, and section-level UX flow.",
+  "steps": [
+    {
+      "text": "Review customer brief and confirm narrative goals."
+    },
+    {
+      "text": "Produce message arc and section-level site structure artifacts."
+    },
+    {
+      "text": "Define visual/interaction intent with accessibility and readability constraints."
+    },
+    {
+      "text": "Pause for review before implementation handoff.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Narrative arc is coherent and scoped",
+    "Section structure is implementation-ready",
+    "Visual direction is explicit and audience-appropriate",
+    "Design artifacts are linked for engineering handoff"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm artifacts support plain-language storytelling and mobile readability"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

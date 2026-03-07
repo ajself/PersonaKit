@@ -8,8 +8,8 @@ Cycle Window: 2026-03-08 to 2026-03-21
 
 ## Why this exists
 
-Our first venture is PersonaKit itself. This brief defines a focused 14-day
-cycle to improve product clarity, adoption, and execution confidence.
+Our first venture is PersonaKit itself. This cycle uses a real, close-to-home
+customer narrative pilot to improve product clarity and execution quality.
 
 ## Venture Statement
 
@@ -18,84 +18,87 @@ small teams to ground AI work in clear roles, constraints, and directives.
 
 ## SMART Objective (Cycle 01)
 
-By 2026-03-21, run PersonaKit as a small agency pilot and secure one real
-client engagement (paid pilot or signed LOI), then complete one kickoff cycle
-that produces at least 10 ranked product insights, including at least 3
-macOS-app workflow improvements.
+By 2026-03-21, deliver one high-quality "Why I stayed up" narrative package for
+Chelsea that includes an interactive story-site draft, message artifacts, and a
+ranked requirements list for macOS app team workflows.
 
-- Specific: one real client, one delivered kickoff, one ranked insight list.
-- Measurable: outreach, calls, conversion, and insight counts are tracked.
-- Achievable: uses existing docs/process and a focused 14-day window.
-- Relevant: client problems directly inform PersonaKit product priorities.
-- Time-bound: closes on 2026-03-21.
+- Specific: one narrative package for one defined audience (Chelsea).
+- Measurable: complete 6 artifacts, run 6 role sessions, and capture 12 ranked
+  product requirements (minimum 5 for macOS app).
+- Achievable: built on existing PersonaKit docs, packs, and story materials.
+- Relevant: directly tests whether PersonaKit can coordinate a full creative
+  team workflow without chaos.
+- Time-bound: cycle closes on 2026-03-21.
 
 ## Scope for Cycle 01
 
-1. Define agency offer and ideal first-client profile.
-2. Run outbound and discovery to secure one pilot client.
-3. Deliver one PersonaKit-guided kickoff session.
-4. Translate client pain into ranked product improvements.
-5. Identify which improvements should land in CLI vs MCP vs macOS app.
+1. Translate AJ's intent into a clear customer-facing narrative brief.
+2. Produce a compelling message arc and story-site direction.
+3. Build a first interactive narrative site draft in `Docs/Marketing/`.
+4. Run architecture, QA, and VQA passes through role sessions.
+5. Produce ranked product requirements for macOS app team workflow support.
 
 ## Deliverables
 
-1. One-page agency offer and first-client profile.
-2. Outreach tracker with at least 15 qualified prospects.
-3. Discovery notes from at least 3 real calls.
-4. One paid pilot or signed LOI.
-5. One kickoff summary with 10 ranked product insights:
-   - minimum 3 macOS-app workflow insights
-   - minimum 3 MCP/CLI workflow insights
-6. End-of-cycle review note:
+1. Narrative customer brief for Chelsea.
+2. Message arc and story outline.
+3. Story-site wireframe or section map.
+4. Story-site draft artifact set in `Docs/Marketing/`.
+5. Architecture/QA/VQA review notes.
+6. Ranked requirement list (12 total):
+   - minimum 5 macOS-app workflow requirements
+   - minimum 3 MCP requirements
+7. End-of-cycle review note:
    - wins, misses, and Cycle 02 recommendation.
 
 ## Milestones
 
 ### M1 (Days 1-3): Alignment
 
-- Finalize offer, ICP, and outreach message.
-- Build a list of 15 qualified prospects.
-- Begin outreach and schedule first discovery calls.
+- Lock customer brief and success definition for Chelsea audience.
+- Create story arc and section-level narrative outline.
+- Run product lead and story editor sessions.
 
 ### M2 (Days 4-9): Execution
 
-- Hold at least 3 discovery calls.
-- Close one paid pilot or signed LOI.
-- Prepare pilot kickoff structure and artifacts.
+- Build first story-site draft and primary visuals/copy.
+- Run architecture and QA sessions.
+- Resolve high-severity content/implementation issues.
 
 ### M3 (Days 10-14): Review and reset
 
-- Deliver one kickoff session using PersonaKit workflows.
-- Produce and rank product insight list with owner/proposed lane.
-- Write Cycle 01 review and propose continue/pivot/park for Cycle 02.
+- Run VQA pass focused on emotional clarity and readability.
+- Produce ranked macOS/MCP requirement list and suggested implementation lanes.
+- Write Cycle 01 review and recommend Cycle 02 scope.
 
 ## Success Metrics (Cycle 01)
 
-- 15 qualified outreach attempts completed.
-- 3 discovery calls completed.
-- 1 paid pilot or signed LOI closed.
-- 1 kickoff session delivered.
-- 10 ranked product insights captured.
-- At least 3 insights explicitly scoped to macOS app workflows.
+- 6 required artifacts completed.
+- 6 role sessions executed and documented.
+- 12 ranked product requirements captured.
+- At least 5 requirements explicitly scoped to macOS app workflows.
+- One shareable narrative package delivered and reviewed.
 
 ## Risks and Mitigations
 
-- Risk: no client closes during cycle.
-  - Mitigation: allow paid pilot or LOI, focus on speed of outreach.
-- Risk: weak discovery quality.
-  - Mitigation: use a consistent interview template and record direct quotes.
-- Risk: insights do not translate to product action.
-  - Mitigation: each insight must include severity, target surface, and owner.
+- Risk: story is too technical for audience.
+  - Mitigation: VQA readability pass and plain-language rewrite gate.
+- Risk: quality and schedule conflict.
+  - Mitigation: reduce scope to one polished page before expanding.
+- Risk: team handoffs create drift.
+  - Mitigation: enforce artifact pipeline and role checkpoint sessions.
 
 ## Evidence Log (Initial)
 
 - Branch history shows strong demand for clearer identity and workflow context.
 - MCP additions now support explain/compare/recommend/trace for better guidance.
 - Venture docs now support ethics, scoring, backlog selection, and execution.
+- Story/editorial assets and narrative branch history provide starting material.
 
 ## Next Action
 
-Create the first 15-prospect outreach list and send the first 5 messages.
+Run kickoff sessions:
+`story-product-kickoff` -> `story-design` -> `story-build`.
 
 Related docs:
 
