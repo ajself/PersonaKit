@@ -97,6 +97,32 @@ extension TaskboardPanelView {
       .disabled(selectedLaneID == nil)
 
       Button {
+        focusKeywordSearch()
+      } label: {
+        Label("Search", systemImage: "magnifyingglass")
+      }
+      .help("Focus board search (Command-F)")
+      .keyboardShortcut("f", modifiers: [.command])
+
+      Button {
+        selectAdjacentLane(direction: -1)
+      } label: {
+        Image(systemName: "chevron.left")
+      }
+      .help("Select previous lane (Option-Command-Left Arrow)")
+      .keyboardShortcut(.leftArrow, modifiers: [.option, .command])
+      .disabled(sortedLanes.isEmpty)
+
+      Button {
+        selectAdjacentLane(direction: 1)
+      } label: {
+        Image(systemName: "chevron.right")
+      }
+      .help("Select next lane (Option-Command-Right Arrow)")
+      .keyboardShortcut(.rightArrow, modifiers: [.option, .command])
+      .disabled(sortedLanes.isEmpty)
+
+      Button {
         editSelectedLane()
       } label: {
         Label("Edit Lane", systemImage: "pencil")
@@ -118,9 +144,10 @@ extension TaskboardPanelView {
   var filterBar: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
-        TextField("Filter by keyword", text: $keywordFilterText)
+        TextField("Search tickets and lanes", text: $keywordFilterText)
           .textFieldStyle(.roundedBorder)
           .frame(maxWidth: 260)
+          .focused($focusedField, equals: .keywordSearch)
 
         TextField("Owner", text: $ownerFilterText)
           .textFieldStyle(.roundedBorder)
@@ -158,6 +185,12 @@ extension TaskboardPanelView {
         .disabled(!isFilteringActive)
 
         Spacer(minLength: 0)
+      }
+
+      if let keywordSearchResult {
+        Text("Search matched \(keywordSearchResult.matchingLaneIDs.count) lanes and \(keywordSearchResult.matchingTicketIDs.count) tickets")
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
 
       if isFilteringActive {

@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+enum TaskboardPanelFocusField: Hashable {
+  case keywordSearch
+}
+
 /// Taskboard planning surface with lane templates, lane CRUD, ticket creation, and workspace-local persistence.
 struct TaskboardPanelView: View {
   let workspaceStore: WorkspaceStore
@@ -21,6 +25,7 @@ struct TaskboardPanelView: View {
   @State var keywordFilterText = ""
   @State var persistenceMessage: String?
   @State var persistenceIsError = false
+  @FocusState var focusedField: TaskboardPanelFocusField?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {

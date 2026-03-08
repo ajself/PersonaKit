@@ -30,6 +30,10 @@ let package = Package(
       url: "https://github.com/apple/swift-argument-parser",
       .upToNextMinor(from: "1.7.0")
     ),
+    .package(
+      url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
+      .upToNextMinor(from: "1.17.0")
+    ),
   ],
   targets: [
     .target(
@@ -111,10 +115,12 @@ let package = Package(
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       path: "Tests",
       exclude: [
-        "Fixtures"
+        "Fixtures",
+        "Features/Studio/__Snapshots__",
       ],
       swiftSettings: [
         .enableExperimentalFeature("Testing")

@@ -1,6 +1,6 @@
 # Taskboard V2 Snapshot Lane
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -24,6 +24,18 @@ snapshot evidence instead of subjective memory.
 5. Lane editor sheet open.
 6. Ticket editor sheet open.
 7. Active drag target highlight state.
+
+## Current coverage
+
+1. Implemented and committed:
+   - Empty board state
+   - Default seeded board state
+2. Remaining to add:
+   - Dense board state (multi-lane, high ticket count)
+   - Selected lane state
+   - Lane editor sheet open
+   - Ticket editor sheet open
+   - Active drag target highlight state
 
 ## Fixture policy
 
@@ -54,6 +66,8 @@ Note:
 
 1. Replace `<TaskboardSnapshotSuite>` with concrete test target names when the
    suite lands.
+2. Current local baseline command (SwiftPM target filter):
+   - `swift test --filter TaskboardSnapshotTests`
 
 ## Exit criteria
 

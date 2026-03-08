@@ -20,11 +20,18 @@ extension TaskboardPanelView {
     keywordFilterText = ""
   }
 
+  var keywordSearchResult: TaskboardSearchResult? {
+    TaskboardSearchEngine.search(
+      board: board,
+      query: keywordFilterText
+    )
+  }
+
   func filteredTickets(
     in lane: TaskboardLane
   ) -> [TaskboardTicket] {
     let ownerFilter = ownerFilterText.trimmingCharacters(in: .whitespacesAndNewlines)
-    let keywordFilter = keywordFilterText.trimmingCharacters(in: .whitespacesAndNewlines)
+    let searchResult = keywordSearchResult
 
     return lane.tickets.filter { ticket in
       if let activeLabelFilter,
@@ -46,18 +53,11 @@ extension TaskboardPanelView {
         return false
       }
 
-      if !keywordFilter.isEmpty {
-        let fields = [
-          ticket.title,
-          ticket.owner,
-          ticket.labels.joined(separator: " "),
-          ticket.checklist.map(\.title).joined(separator: " "),
-        ]
-        let haystack = fields.joined(separator: " ")
-
-        if haystack.range(of: keywordFilter, options: .caseInsensitive) == nil {
-          return false
-        }
+      if let searchResult,
+        !searchResult.matchingLaneIDs.contains(lane.id),
+        !searchResult.matchingTicketIDs.contains(ticket.id)
+      {
+        return false
       }
 
       return true

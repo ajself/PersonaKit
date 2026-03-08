@@ -1,6 +1,6 @@
 # Taskboard V2 Initiative Plan
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -270,6 +270,16 @@ Current status:
 
 1. `G3.5` passed on 2026-03-07 via `Docs/Plan/taskboard-v2-feature-lock.md`.
 2. Execution priority is now `P0` -> `P1` -> `P2` -> `P3`.
+3. `W1` contract decisions were locked in
+   `Docs/Plan/taskboard-ai-mutation-contract.md` on 2026-03-07.
+4. Initial mutation engine and deterministic test suite landed in Studio
+   Taskboard module on 2026-03-07.
+5. Initial `TV2-M2B` (`P1`) baseline landed on 2026-03-07:
+   - keyboard speed paths (search focus + lane navigation shortcuts)
+   - deterministic search engine across lanes and tickets with test coverage
+6. Snapshot lane is active with baseline coverage for default and empty board
+   states; remaining required scenarios are tracked in
+   `taskboard-v2-snapshot-lane.md`.
 
 Hard rule:
 

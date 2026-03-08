@@ -1,6 +1,6 @@
 # Taskboard AI Mutation Contract
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -17,6 +17,7 @@ other approved agents) can read and edit board state without ambiguous behavior.
    - `name`
    - `nextLaneSequence`
    - `nextTicketSequence`
+   - `nextChecklistSequence`
    - `lanes[]`
 3. Lane schema contains:
    - `id`
@@ -29,10 +30,17 @@ other approved agents) can read and edit board state without ambiguous behavior.
    - `title`
    - `owner`
    - `priority`
+   - `labels[]`
+   - `dueDateISO8601` (`YYYY-MM-DD` date-only)
+   - `checklist[]`
 
 Code source:
 
-1. `Sources/Features/Studio/UI/TaskboardPanelView.swift`
+1. `Sources/Features/Studio/UI/Taskboard/TaskboardPanelView.swift`
+2. `Sources/Features/Studio/UI/Taskboard/TaskboardModels.swift`
+3. `Sources/Features/Studio/UI/Taskboard/TaskboardDrafts.swift`
+4. `Sources/Features/Studio/UI/Taskboard/TaskboardMutationEngine.swift`
+5. `Sources/Features/Studio/UI/Taskboard/TaskboardSearchEngine.swift`
 
 ## Contract goals
 
@@ -136,13 +144,20 @@ Each error returns:
 5. Normalization:
    - lane reorder always normalizes `order` to contiguous values.
 
-## Open decisions for AJ lock
+## Locked decisions (M2A kickoff)
 
-1. Keep JSON file as canonical store for v2, or introduce SQLite adapter now?
-2. Require `requestId` in all mutation calls from first implementation, or phase
-   it in after initial CLI path?
-3. Should `read_board` include derived analytics fields or remain raw canonical
-   state only?
+1. Canonical store remains workspace-local JSON for v2 (`.personakit/Taskboard/taskboard.json`).
+2. `requestId` is required for all mutation calls from the first implementation.
+3. `read_board` returns canonical normalized state only; derived analytics remain
+   out-of-band and optional for future endpoints.
+
+## Decision log
+
+| Date | Decision | Rationale | Approved By |
+| --- | --- | --- | --- |
+| 2026-03-07 | Keep JSON as canonical store for v2 | Fastest path with lowest migration risk while mutation contract stabilizes | AJ + Samwise |
+| 2026-03-07 | Require `requestId` from v1 | Enables deterministic idempotency and safer AI retries | AJ + Samwise |
+| 2026-03-07 | Keep `read_board` canonical-only | Prevents ambiguity between persisted truth and derived view data | AJ + Samwise |
 
 ## Related docs
 

@@ -15,6 +15,7 @@ Plan source:
 - `Docs/Plan/taskboard-v2-initiative-plan.md`
 - `Docs/Plan/admin-ticket-planning-feature-brief.md`
 - `Docs/Plan/taskboard-parity-polish-pass-2.md`
+- `Docs/Plan/taskboard-v2-snapshot-lane.md`
 
 Objective:
 
@@ -23,25 +24,28 @@ Objective:
 
 Actions:
 
-1. Execute `TV2-M2A` (`P0`) from `Docs/Plan/taskboard-v2-feature-lock.md`:
-   - labels on tickets
-   - due date on tickets
-   - checklist on tickets
-   - board filtering
-2. Resolve and lock the open decisions in
-   `Docs/Plan/taskboard-ai-mutation-contract.md` during `M2A` kickoff.
-3. Implement snapshot test suite + baselines per
-   `Docs/Plan/taskboard-v2-snapshot-lane.md`.
-4. Execute `TV2-M2B` (`P1`) after `M2A`:
-   - keyboard speed-path baseline
-   - search baseline
+1. Expand Taskboard snapshot baselines from `2/7` to `7/7` required scenarios
+   in `Docs/Plan/taskboard-v2-snapshot-lane.md`.
+2. Execute next Taskboard v2 depth slice (`P2`) from feature-lock scope:
+   - richer assignment model beyond free-text owner
+   - markdown description/comments on ticket detail surface
 
 Exit criteria:
 
 1. `G1` and `G2` are approved in plan artifacts.
 2. `G3.5` feature-lock gate is approved in plan artifacts.
 3. Research and visual QA lanes are operational and traceable.
-4. `TV2-M2A` and `TV2-M2B` are complete with no blocker findings.
+4. `TV2-M2A` and `TV2-M2B` baseline implementation are complete with no blocker findings.
+5. Snapshot lane required scenario coverage is complete (`7/7`).
+
+Execution note:
+
+- `P0` Taskboard metadata + filtering and M2A contract lock completed on
+  2026-03-07.
+- Mutation engine + deterministic contract tests landed on 2026-03-07.
+- `TV2-M2B` (`P1`) baseline landed on 2026-03-07:
+  - keyboard speed-path baseline
+  - search baseline across lanes and tickets
 
 ### 2) Gardening Tooling Operations (Ongoing)
 

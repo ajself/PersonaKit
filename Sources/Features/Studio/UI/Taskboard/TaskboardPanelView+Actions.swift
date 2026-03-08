@@ -40,6 +40,20 @@ extension TaskboardPanelView {
     laneEditorDraft = LaneEditorDraft.edit(lane: lane)
   }
 
+  func selectAdjacentLane(
+    direction: Int
+  ) {
+    selectedLaneID = TaskboardLaneNavigation.adjacentLaneID(
+      lanes: sortedLanes,
+      selectedLaneID: selectedLaneID,
+      direction: direction
+    )
+  }
+
+  func focusKeywordSearch() {
+    focusedField = .keywordSearch
+  }
+
   func ticketDragPayload(
     ticketID: String,
     laneID: String
