@@ -21,6 +21,9 @@ Trello-rival Taskboard experience.
    - complete `NS0` evidence/report loop
    - finish snapshot matrix expansion
    - continue `NS1` inline quick-edit and keyboard-speed paths before `NS2`
+4. Staffing and parity charter updates landed:
+   - Taskboard now has dedicated `studio-swiftui-product-engineer` and `taskboard-parity-designer` roles
+   - Samwise delegated commit approval is active only for this initiative scope
 
 ## Branch Strategy
 
@@ -217,7 +220,7 @@ Night Shift Handoff (Samwise)
 3. Produce morning brief with evidence links and blocker notes.
 
 3. Guardrails:
-- No commits unless AJ explicitly approves each commit.
+- Samwise may approve commits only inside the active Taskboard initiative worktree under `samwise-feature-commit-approved`; main-affecting integration still pauses for AJ release approval.
 - No scope expansion beyond NS0/first NS1 ticket.
 - If blocked >15 minutes, stop and log blocker + options.
 

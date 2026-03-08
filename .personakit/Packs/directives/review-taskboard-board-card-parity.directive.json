@@ -1,0 +1,42 @@
+{
+  "id": "review-taskboard-board-card-parity",
+  "version": "1.0",
+  "title": "Review Taskboard board and card parity",
+  "goal": "Assess whether Taskboard board and card flows credibly meet the Trello-like parity bar and return bounded findings.",
+  "steps": [
+    {
+      "text": "Define the in-scope board/card flows and parity references for the review pass."
+    },
+    {
+      "text": "Evaluate the experience against taskboard-board-card-parity-checklist and interaction-quality-rubric."
+    },
+    {
+      "text": "Record findings by severity using the interaction-quality report contract with explicit Trello-reference mapping."
+    },
+    {
+      "text": "Classify result as `go`, `go-with-notes`, or `stop` and state whether parity claims are currently credible."
+    },
+    {
+      "text": "Pause for Samwise or AJ review before major remediation planning.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Findings are evidence-backed and severity-tagged",
+    "Each blocker or major issue has owner and disposition",
+    "Report states whether parity claims are currently credible",
+    "References are explicit instead of implied"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm report includes parity credibility judgment and severity-tagged findings"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "review-taskboard-board-card-parity"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

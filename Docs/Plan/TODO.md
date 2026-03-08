@@ -10,10 +10,11 @@ Keep execution focused. This file lists only actionable, in-order tasks.
 
 ## Action Queue (In Order)
 
-### 1) Taskboard V2 Initiative (Next)
+### 1) Taskboard Trello-Parity Initiative (Next)
 
 Plan source:
 
+- `Docs/Plan/taskboard-trello-parity-execution-charter.md`
 - `Docs/Plan/taskboard-v2-initiative-plan.md`
 - `Docs/Plan/taskboard-v2-feature-lock.md`
 - `Docs/Plan/taskboard-ai-mutation-contract.md`
@@ -27,43 +28,41 @@ Historical baseline:
 
 Objective:
 
-- Evolve Taskboard from parity baseline to a genuinely useful, AI-operable
-  planning surface with rigorous product/UX evidence.
+- Get Taskboard to board-and-card parity that a human user could reasonably
+  mistake for Trello, while keeping the AI-operable contract deterministic and
+  safe.
 
 Actions:
 
-1. Expand Taskboard snapshot baselines from `2/7` to `7/7` required scenarios
-   in `Docs/Plan/taskboard-v2-snapshot-lane.md`.
-2. Complete `NS0` reporting loop in `night-shift-taskboard-rival-plan.md`
-   using the landed telemetry foundation from `9242fcb`.
-3. Continue `NS1` throughput work after `NS0` evidence is green:
-   - inline quick edit for title/assignees/labels
-   - keyboard-first path for triage and movement
-4. Re-run interaction-quality review before starting `NS2` visual polish work.
+1. Complete `P1` research and lock reset:
+   - keep `Board + Card Parity` explicit across active Taskboard planning docs
+   - keep out-of-scope boundaries explicit
+2. Execute `P2` board interaction parity:
+   - finish snapshot expansion from `2/7` to `7/7`
+   - complete `NS0` reporting loop
+   - continue `NS1` throughput work including inline quick edit and keyboard-first triage
+3. Execute `P3` card-detail parity and `P4` visual/accessibility parity.
+4. Execute `P5` AI-operable parity through the approved callable local surface.
+5. Close out active Taskboard work and run the delegated-commit retrospective.
 
 Exit criteria:
 
-1. Snapshot lane required scenario coverage is complete (`7/7`).
-2. `NS0` evidence is recorded and reviewable.
-3. `NS1` core throughput slice reaches a fresh red-pen pass with no blocker findings.
-4. Taskboard remains deterministic and validation-clean.
+1. Trello parity checklist is active and reviewable.
+2. Snapshot lane required scenario coverage is complete (`7/7`).
+3. Final parity review has `0` blockers.
+4. AI-operable contract is callable, deterministic, and safe.
+5. No dangling active Taskboard tasks remain in `Docs/Plan/`.
 
 Execution note:
 
-- `P0` Taskboard metadata + filtering and M2A contract lock completed on
-  2026-03-07.
-- Mutation engine + deterministic contract tests landed on 2026-03-07.
-- `TV2-M2B` (`P1`) baseline landed on 2026-03-07:
-  - keyboard speed-path baseline
-  - search baseline across lanes and tickets
-- `P2` depth baseline landed on 2026-03-07:
-  - richer assignment model (multi-assignee ticket model)
-  - markdown description/comments on ticket detail + cards
-  - lane WIP limit + collapse controls
+- `P0` staffing readiness is complete in the current working tree:
+  - `studio-swiftui-product-engineer` is qualified
+  - `taskboard-parity-designer` is qualified
+  - squad delivery and retrospective sessions validate cleanly
 
 ## Plan Hygiene Rules
 
 1. Keep only active plans in `Docs/Plan/`.
 2. Move completed plans to `Docs/Plan/Archive/`.
-3. Keep ongoing operational records in `Docs/Development/`, not here.
+3. Keep durable operational records in `Docs/Development/`, not here.
 4. Keep this TODO ordered and current after each milestone.

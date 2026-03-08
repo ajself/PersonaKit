@@ -6,302 +6,224 @@ Last Reviewed: 2026-03-08
 
 ## Purpose
 
-Define the next version of Taskboard so it becomes genuinely useful and
-credible as a scaled-down Trello-class planning experience for PersonaKit
-Studio.
+Define the active Taskboard initiative so PersonaKit Studio reaches
+`Board + Card Parity`: a human user should be able to use the board and
+card-detail experience and reasonably think it is Trello.
 
 ## Problem Statement
 
-Taskboard v1 is functional but still shallow:
+Taskboard has strong foundations, but the current experience still falls short
+of the intended Trello impression:
 
-1. Limited ticket depth and board controls.
-2. Low information density and workflow speed.
-3. No AI-first mutation interface for reliable automated upkeep.
-4. No rigorous competitive benchmark loop against Trello product behavior and
-   UX patterns.
-5. No screenshot-based visual quality gate to prevent generic, low-intent UI
-   drift.
+1. Board interactions are still more awkward and click-heavy than they should be.
+2. Card-detail depth and board-to-detail continuity still need polish.
+3. Snapshot and parity review evidence are incomplete.
+4. AI-operable mutation infrastructure exists in part, but the callable upkeep
+   surface is not yet finished.
+5. The initiative needs explicit squad staffing and tighter parity-specific
+   acceptance criteria.
 
-## V2 Outcomes
+## Outcomes
 
-1. Taskboard supports practical daily initiative management.
-2. AI can read and edit board state through a deterministic contract.
-3. Product decisions are informed by source-backed Trello research artifacts.
-4. Visual quality is measured with snapshot baselines and red-pen review gates.
-5. Feature implementation starts only after AJ locks expected Trello-like
-   features from research evidence.
+1. Taskboard reaches credible board-and-card parity for the current scope.
+2. AI can read and edit board state through a deterministic approved contract.
+3. Product and visual decisions remain grounded in source-backed Trello research.
+4. Visual quality is measured with snapshot baselines and parity-focused red-pen
+   review gates.
+5. The initiative can be executed through bounded squads with explicit review,
+   logging, and retrospective loops.
 
 ## Scope
 
 ### In Scope
 
-1. Taskboard v2 product definition and milestone plan.
+1. Taskboard board and card-detail parity for the current initiative.
 2. AI-accessible board-state interface (read + write) with deterministic
    validation.
-3. Market research lane for Trello:
-   - web research
-   - rigorous feature/UX comparison
-   - published reference images (no generative images)
-4. Snapshot-testing lane for Studio Taskboard visual quality.
-5. Persona/session additions for multi-agent execution.
-6. AJ feature-lock checkpoint after research and before implementation.
+3. Trello research and image-backed parity references.
+4. Snapshot-testing and accessibility review for Taskboard board/card states.
+5. Persona and session additions required for the squad execution model.
+6. Initiative-scoped delegated commit approval experiment for Samwise inside the
+   active Taskboard worktree only.
 
-### Out Of Scope (for initial v2 kickoff)
+### Out Of Scope
 
-1. Full Trello parity across every feature.
+1. Full Trello parity across every view and integration.
 2. Multi-user real-time sync.
-3. External integrations shipping in the same first v2 milestone.
+3. Shipping unrelated product surfaces in the same initiative.
+4. Expanding delegated commit approval to other branches before retrospective
+   review.
 
-## Workstreams
+## Core Workstreams
 
-### W1: AI-Editable Taskboard Data Contract (Early Priority)
+### W1: AI-Editable Taskboard Contract
 
 Goal:
 
-- Make Taskboard state safely editable by Samwise/agents using deterministic
-  operations.
-
-Plan:
-
-1. Confirm canonical store strategy:
-   - Option A: workspace-local JSON file (current path)
-   - Option B: SQLite with an adapter
-2. Define mutation contract:
-   - `create_ticket`
-   - `edit_ticket`
-   - `move_ticket`
-   - `delete_ticket`
-   - `create_lane`
-   - `edit_lane`
-   - `reorder_lane`
-   - `delete_lane`
-3. Add validation and conflict behavior:
-   - stable IDs
-   - lane/ticket referential integrity
-   - deterministic ordering
-4. Add an AI-facing execution surface:
-   - CLI contract first
-   - MCP/tooling path follow-up if needed
+- Make Taskboard state safely editable by Samwise and approved agents using
+  deterministic operations.
 
 Deliverables:
 
-1. `Docs/Plan/taskboard-ai-mutation-contract.md`.
-2. Validation rules + failure modes.
-3. Manual and automated tests for mutation operations.
+1. `Docs/Plan/taskboard-ai-mutation-contract.md`
+2. Stable validation and failure modes
+3. Contract tests for supported mutation operations
+4. Callable local surface for read/write upkeep loops
 
-### W2: Trello Research Lane (Web + Published Artifacts)
+### W2: Trello Research And Parity References
 
 Goal:
 
-- Ground v2 decisions in evidence, not memory.
-
-Research requirements:
-
-1. Use web sources heavily.
-2. Capture product behavior and UX patterns with source attribution.
-3. Include published images from public resources (no generated images).
-4. Build a comparison matrix:
-   - feature set
-   - interaction patterns
-   - information architecture
-   - keyboard efficiency
-   - visual hierarchy
-5. Record publication date and retrieval date for referenced sources where
-   available.
-6. Record image-usage and licensing notes in the image catalog.
+- Ground parity claims in evidence instead of memory.
 
 Deliverables:
 
 1. `Docs/Research/taskboard-trello-benchmark.md`
-2. `Docs/Research/taskboard-trello-image-catalog.md` (source URLs, usage
-   notes, licensing notes)
+2. `Docs/Research/taskboard-trello-image-catalog.md`
 3. `Docs/Research/taskboard-trello-gap-matrix.md`
+4. Explicit board-and-card parity checklist used by product and visual QA
 
-### W2.5: AJ Feature-Lock Checkpoint (Required Before Build)
-
-Goal:
-
-- Convert research into an explicit, AJ-approved “expected Trello features”
-  list for Taskboard v2.
-
-Plan:
-
-1. Present research findings and ranked feature candidates.
-2. Capture AJ’s expected feature set (must-have / should-have / later).
-3. Freeze v2 scope using that approved list.
-4. Record deferred features explicitly to prevent scope creep.
-
-Deliverables:
-
-1. `Docs/Plan/taskboard-v2-feature-lock.md`
-2. Updated milestone scope in this plan.
-3. Explicit no-build-before-lock note in TODO and gate model.
-
-### W3: Visual Quality Gate With Snapshot Testing
+### W3: Visual Quality Gate
 
 Goal:
 
-- Give the team “eyes” for repeatable visual regression detection.
-
-Plan:
-
-1. Integrate [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
-   for Taskboard surfaces.
-2. Add baseline snapshots for:
-   - empty board
-   - populated board
-   - dense board
-   - interaction states (selected lane, drag target, editor open)
-3. Define review policy:
-   - snapshot delta review required for Taskboard UI changes
-   - red-pen pass required when major visual shifts occur
+- Give the team deterministic “eyes” for parity and regression review.
 
 Deliverables:
 
-1. Snapshot test target + fixtures.
-2. Baseline image set checked into repo per convention.
-3. `Docs/Plan/taskboard-v2-snapshot-lane.md` and failure triage steps.
+1. Snapshot baselines for all required board/card scenarios
+2. Documented diff-review policy for Taskboard UI changes
+3. Accessibility review evidence for supported board/card workflows
 
-### W4: Taskboard V2 UX/Product Slice
+### W4: Squad Staffing And Delivery Model
 
-Candidate v2 features:
+Goal:
 
-1. Richer ticket metadata in card/detail view:
-   - description
-   - labels
-   - due date
-   - checklist
-2. Filter/search/sort controls.
-3. Faster keyboard flows and reduced click count.
-4. Lane controls:
-   - optional WIP limit
-   - lane collapse
-5. Optional activity trail for ticket updates.
+- Make multi-agent delivery faster than manual micromanagement while staying
+  safe and reviewable.
 
-## Persona + Session Additions
+Deliverables:
 
-### Proposed Persona
-
-- `taskboard-competitive-analyst`
-
-Responsibilities:
-
-1. Run market/competitor research with citation discipline.
-2. Maintain Trello comparison matrix and gap scoring.
-3. Provide recommendation briefs with clear tradeoffs and confidence level.
-
-### Proposed Supporting Session
-
-- `taskboard-competitive-research`
-- `taskboard-visual-qa`
-- `taskboard-ai-operations`
+1. Qualified `studio-swiftui-product-engineer`
+2. Qualified `taskboard-parity-designer`
+3. Worktree squad delivery, oversight, and retrospective loops
+4. Partner-trust policy updated for the initiative-scoped delegated commit
+   experiment
 
 ## Multiagent Execution Model
 
-### Lane Ownership (Default)
+### Squad Ownership
 
-1. `samwise`: orchestration, checkpoints, and cross-lane risk management.
-2. `venture-product-steward`: research synthesis and feature prioritization.
-3. `studio-interaction-quality-lead`: UX benchmark criteria and red-pen quality
-   gates.
-4. `architectural-editor`: AI-editable store contract and mutation safety
-   boundaries.
-5. `studio-reliability-engineer`: mutation integrity, persistence edge cases,
-   and regression-risk checks.
-6. `pack-gardener` (Rosie): planning/log hygiene and decision traceability.
+1. `samwise`: orchestration, gate decisions, commit-package approval within the
+   current initiative scope, and cross-squad continuity
+2. `venture-product-steward`: parity checklist and milestone acceptance framing
+3. `studio-swiftui-product-engineer`: bounded Taskboard board/card implementation
+4. `taskboard-parity-designer`: Trello-like parity review for board/card flows
+5. `studio-interaction-quality-lead`: red-pen UX gates and blocker detection
+6. `architectural-editor`: AI-editable store and contract boundaries
+7. `studio-reliability-engineer`: mutation integrity, persistence, and
+   deterministic regression checks
+8. `pack-gardener` (Rosie): retrospective gardening and continuity hygiene
 
 ### Parallelization Rules
 
-1. Run research lane and AI-contract lane in parallel.
-2. Run snapshot-lane scaffolding in parallel with research synthesis.
-3. Block UI/feature implementation lanes until `W2.5` feature lock is approved.
-4. Keep disjoint write scopes for parallel workers.
+1. Only one coding squad may actively edit the hot Taskboard UI surface at a
+   time.
+2. Sidecar review squads may run in parallel when they do not mutate the same
+   hot files.
+3. UI implementation remains blocked from broad scope expansion until parity and
+   acceptance criteria stay explicit.
 
 ## Milestone Plan
 
-### TV2-M1: Foundations
+### P0: Staffing Readiness
 
-1. Lock v2 scope and acceptance criteria.
-2. Define AI mutation contract and storage decision.
-3. Establish research and snapshot-testing scaffolding.
-4. Complete `W2.5` AJ feature lock from research outputs.
-
-Exit criteria:
-
-1. AI-editable contract is documented and approved.
-2. Research plan + artifact templates are approved.
-3. Snapshot test scaffolding runs in CI/local tests.
-4. AJ expected feature list is approved and frozen in a dedicated lock artifact.
-
-### TV2-M2: Execution
-
-1. Implement AI mutation interface with tests.
-2. Complete Trello research corpus and gap matrix.
-3. Implement first v2 UX slice (metadata + filter/search baseline).
+1. Create missing specialist personas and sessions.
+2. Run reverse-interview loops until each new role is `qualified` at `>= 80`.
+3. Wire the squad delivery model and delegated-commit experiment into active
+   contracts and plan docs.
 
 Exit criteria:
 
-1. AI can update Taskboard deterministically via approved interface.
-2. Research artifacts are complete and source-backed.
-3. v2 slice passes snapshot + interaction-quality review.
+1. Both new personas are qualified.
+2. Squad sessions export cleanly and validate.
+3. Delegated commit experiment is explicitly bounded to the current initiative.
 
-### TV2-M3: Hardening + Pilot
+### P1: Research + Lock Reset
 
-1. Pilot real initiative usage in Taskboard.
-2. Capture friction metrics and revise workflow.
-3. Decide rollout threshold for “useful in practice.”
+1. Replace narrower “scaled-down Trello-class” framing with explicit
+   `Board + Card Parity` acceptance.
+2. Refresh milestone acceptance criteria against the Trello research corpus.
+3. Keep out-of-scope boundaries explicit.
 
 Exit criteria:
 
-1. Pilot evidence shows reduced planning friction.
-2. No blocker-level interaction defects in red-pen review.
-3. Visual regressions are controlled through snapshot gate.
+1. Parity checklist is concrete enough to settle disagreements.
+2. Milestone acceptance criteria derive from the parity bar.
 
-## Gate Model
+### P2: Board Interaction Parity
 
-1. `G1 Product Definition`: v2 scope and acceptance locked.
-2. `G2 AI Contract`: mutation API/store/validation approved.
-3. `G3 Research Corpus`: Trello benchmark artifacts complete.
-4. `G3.5 Feature Lock`: AJ-approved expected Trello feature list frozen.
-5. `G4 Visual QA`: snapshot baselines and policy active.
-6. `G5 Pilot Ready`: TV2-M2 complete with no blocker findings.
+1. Finish the current NS0 evidence/report loop.
+2. Expand snapshots from `2/7` to `7/7`.
+3. Continue NS1 throughput work including inline quick edit and keyboard-first
+   triage/movement.
+4. Lower click depth and improve movement clarity until the board feels fast.
 
-Current status:
+Exit criteria:
 
-1. `G3.5` passed on 2026-03-07 via `Docs/Plan/taskboard-v2-feature-lock.md`.
-2. Execution priority is now `P0` -> `P1` -> `P2` -> `P3`.
-3. `W1` contract decisions were locked in
-   `Docs/Plan/taskboard-ai-mutation-contract.md` on 2026-03-07.
-4. Initial mutation engine and deterministic test suite landed in Studio
-   Taskboard module on 2026-03-07.
-5. Initial `TV2-M2B` (`P1`) baseline landed on 2026-03-07:
-   - keyboard speed paths (search focus + lane navigation shortcuts)
-   - deterministic search engine across lanes and tickets with test coverage
-6. Snapshot lane is active with baseline coverage for default and empty board
-   states; remaining required scenarios are tracked in
-   `taskboard-v2-snapshot-lane.md`.
-7. `P2` depth baseline landed on 2026-03-07:
-   - multi-assignee ticket model and filtering/search integration
-   - markdown description/comments in ticket editor and card summaries
-   - lane WIP limit + collapse controls for board-flow management
+1. Required snapshot coverage is complete.
+2. Board interaction review has `0` blocker findings.
 
-Hard rule:
+### P3: Card Detail Parity
 
-1. No Taskboard feature implementation starts before `G3.5` passes.
+1. Raise card-detail depth and continuity.
+2. Tighten board-to-detail and detail-to-board transitions.
+3. Make metadata and discussion surfaces feel like one coherent product.
 
-## Verification Plan
+Exit criteria:
 
-1. Run PersonaKit validation after pack/session additions.
-2. Run Taskboard snapshot tests and keep baselines current.
-3. Run interaction-quality red-pen pass after each milestone.
-4. Validate research artifact completeness with source-link checks.
+1. Card-detail parity review has `0` blocker findings.
+2. Card workflows no longer feel secondary or bolted on.
+
+### P4: Visual + Accessibility Parity
+
+1. Run parity-focused visual review against Trello references.
+2. Complete keyboard, focus, label, and contrast review.
+3. Remove remaining template-app or AI-scaffolding feel.
+
+Exit criteria:
+
+1. Visual QA says the board/card experience clears the Trello-impression bar.
+2. Accessibility pass is complete for supported flows.
+
+### P5: AI-Operable Parity
+
+1. Finish the approved callable local mutation/read surface.
+2. Enforce deterministic behavior, idempotency, optimistic concurrency, and
+   stable errors.
+3. Make the surface usable in real Samwise-led upkeep loops.
+
+Exit criteria:
+
+1. Samwise can update Taskboard state through the approved local surface.
+2. Outputs are deterministic and auditable.
+
+### P6: Closeout
+
+1. Clear active Taskboard items from `Docs/Plan/TODO.md`.
+2. Archive no-longer-active Taskboard planning artifacts.
+3. Run squad retrospectives and Rosie gardening.
+4. Review the delegated commit experiment.
+
+Exit criteria:
+
+1. No dangling active Taskboard tasks remain.
+2. Retrospective and recommendation artifacts exist for the initiative.
 
 ## Related Docs
 
-1. `Docs/Plan/Archive/admin-ticket-planning-feature-brief.md`
-2. `Docs/Plan/Archive/taskboard-parity-polish-pass-2.md`
-3. `Docs/Plan/TODO.md`
-4. `Docs/Plan/taskboard-ai-mutation-contract.md`
-5. `Docs/Plan/taskboard-v2-snapshot-lane.md`
-6. `Docs/Research/taskboard-trello-benchmark.md`
-7. `Docs/Research/taskboard-trello-gap-matrix.md`
+1. `Docs/Plan/taskboard-trello-parity-execution-charter.md`
+2. `Docs/Plan/taskboard-v2-feature-lock.md`
+3. `Docs/Plan/taskboard-ai-mutation-contract.md`
+4. `Docs/Plan/taskboard-v2-snapshot-lane.md`
+5. `Docs/Plan/night-shift-taskboard-rival-plan.md`

@@ -28,7 +28,7 @@ Reverse-interview output must cite evidence from:
 1. Candidate persona artifact.
 2. Candidate-linked kits and essentials.
 3. Candidate-linked directives, intents, and sessions.
-4. Relevant planning/continuity logs when role history matters.
+4. Relevant planning or continuity logs when role history matters.
 
 ## Reverse-Interview Questions
 

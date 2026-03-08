@@ -1,0 +1,46 @@
+{
+  "id": "implement-taskboard-board-card-parity",
+  "version": "1.0",
+  "title": "Implement Taskboard board and card parity slice",
+  "goal": "Ship a bounded Taskboard board or card SwiftUI slice that moves the product closer to credible Trello-like parity.",
+  "steps": [
+    {
+      "text": "Review the active parity gate, feature scope, acceptance criteria, and declared write scope."
+    },
+    {
+      "text": "Implement only the selected Taskboard board/card slice inside the declared files."
+    },
+    {
+      "text": "Run required verification for the touched behavior and record residual rough edges."
+    },
+    {
+      "text": "Write a short handoff summary listing changed interactions, risks, and next-best follow-up."
+    },
+    {
+      "text": "Pause for Samwise or squad-lead review before any commit-ready package or scope expansion.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Changes stay inside the declared Taskboard board/card write scope",
+    "Verification notes exist for the touched UI behavior",
+    "Residual rough edges are explicit instead of implied",
+    "Handoff summary is concrete and reviewable"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm changed files match declared write scope"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm handoff summary includes changed interactions and residual risks"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "implement-taskboard-board-card-parity"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

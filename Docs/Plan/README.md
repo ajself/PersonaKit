@@ -11,6 +11,7 @@ Provide a compact index of active vs archived plan artifacts.
 ## Active Plan Docs
 
 - `TODO.md` (ordered execution queue)
+- `taskboard-trello-parity-execution-charter.md`
 - `taskboard-v2-initiative-plan.md`
 - `taskboard-v2-feature-lock.md`
 - `taskboard-ai-mutation-contract.md`

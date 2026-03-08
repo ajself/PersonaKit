@@ -32,6 +32,8 @@ Lifecycle legend:
 - `studio-interaction-quality` - owner: `studio-interaction-quality-lead` - state: `active`
 - `studio-reliability` - owner: `studio-reliability-engineer` - state: `candidate`
 - `studio-workflow` - owner: `studio-workflow-operator` - state: `candidate`
+- `taskboard-board-card-build` - owner: `studio-swiftui-product-engineer` - state: `active`
+- `taskboard-parity-design-review` - owner: `taskboard-parity-designer` - state: `active`
 
 ## Pack Maintenance Workflows
 
@@ -47,11 +49,11 @@ Lifecycle legend:
 - `samwise-persona-hiring` - owner: `samwise` - state: `candidate`
 - `samwise-persona-hiring-calibration` - owner: `samwise` - state: `candidate`
 - `samwise-daily-closeout` - owner: `samwise` - state: `active`
-- `samwise-worktree-squad-oversight` - owner: `samwise` - state: `candidate`
+- `samwise-worktree-squad-oversight` - owner: `samwise` - state: `active`
 
-## Worktree Delivery Workflows
+## Worktree Squad Workflows
 
-- `worktree-squad-delivery` - owner: `worktree-squad-lead` - state: `candidate`
+- `worktree-squad-delivery` - owner: `worktree-squad-lead` - state: `active`
 - `worktree-squad-retrospective` - owner: `worktree-squad-lead` - state: `candidate`
 - `worktree-squad-calibration` - owner: `worktree-squad-lead` - state: `candidate`
 
@@ -63,10 +65,6 @@ Lifecycle legend:
 
 ## State Summary
 
-- `active`: 10 sessions
-- `candidate`: 14 sessions
+- `active`: 14 sessions
+- `candidate`: 12 sessions
 - `deprecated`: 0 sessions
-
-## Workspace Session Directories
-
-- [Venture Studio Session Directory](../../Workspaces/VentureStudio/Docs/Development/session-directory.md)
