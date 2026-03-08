@@ -39,6 +39,8 @@ gardening, hiring, partner continuity, and worktree-squad delivery.
 
 ## Contract Rule
 
+### Gardening Logs
+
 When a gardening session writes to a session-specific JSONL file, it should also
 mirror accepted decisions into `gardening-events.jsonl`.
 Health snapshots and recommendation feedback should be updated for each
@@ -47,6 +49,24 @@ Recommendation ranking updates should also be appended to
 `gardening-recommendations.jsonl`.
 Coverage, policy-conflict, and safety-preflight updates should also be appended
 for each non-trivial gardening pass.
+
+### Persona Hiring Logs
+
+Each reverse-interview pass should produce:
+
+1. One human-readable report in `Docs/Development/hiring-reviews/`
+2. One schema-valid entry in `persona-hiring-reviews.jsonl`
+
+### Samwise Continuity Logs
+
+Each closeout checkpoint should append one schema-valid entry to
+`samwise-diary.jsonl` with continuity-ready learning and next-goal fields.
+
+### Worktree Squad Logs
+
+Each delivery loop and retrospective should append schema-valid entries to the
+corresponding `worktree-squad-*.jsonl` stream, including gate evidence and
+report-path references when applicable.
 
 ## Validation
 
