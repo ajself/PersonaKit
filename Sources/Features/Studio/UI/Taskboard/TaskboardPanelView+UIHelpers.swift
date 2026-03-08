@@ -107,6 +107,55 @@ extension TaskboardPanelView {
     return .clear
   }
 
+  func labelChipColor(
+    for label: String
+  ) -> Color {
+    let normalizedLabel = label.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+    if normalizedLabel.contains("blocked")
+      || normalizedLabel.contains("bug")
+      || normalizedLabel.contains("risk")
+    {
+      return Color.red.opacity(0.9)
+    }
+
+    if normalizedLabel.contains("ui")
+      || normalizedLabel.contains("design")
+      || normalizedLabel.contains("quality")
+    {
+      return Color.blue.opacity(0.9)
+    }
+
+    if normalizedLabel.contains("research")
+      || normalizedLabel.contains("planning")
+    {
+      return Color.orange.opacity(0.9)
+    }
+
+    if normalizedLabel.contains("taskboard")
+      || normalizedLabel.contains("ops")
+      || normalizedLabel.contains("studio")
+    {
+      return Color.green.opacity(0.9)
+    }
+
+    let palette: [Color] = [
+      Color.teal.opacity(0.9),
+      Color.indigo.opacity(0.9),
+      Color.mint.opacity(0.9),
+      Color.pink.opacity(0.9),
+      Color.cyan.opacity(0.9),
+    ]
+
+    let paletteIndex =
+      normalizedLabel
+      .unicodeScalars
+      .map(\.value)
+      .reduce(0, +) % UInt32(palette.count)
+
+    return palette[Int(paletteIndex)]
+  }
+
   func clearFilters() {
     activeLabelFilter = nil
     dueDateFilter = .all
@@ -207,6 +256,12 @@ extension TaskboardPanelView {
     }
 
     return "\(ticket.assignees[0].displayName) +\(ticket.assignees.count - 1)"
+  }
+
+  func visibleLabels(
+    for ticket: TaskboardTicket
+  ) -> [String] {
+    Array(ticket.labels.prefix(3))
   }
 
   func laneIsOverWIPLimit(

@@ -379,6 +379,31 @@ extension TaskboardPanelView {
     )
 
     return VStack(alignment: .leading, spacing: 6) {
+      if !ticket.labels.isEmpty {
+        HStack(spacing: 4) {
+          ForEach(visibleLabels(for: ticket), id: \.self) { label in
+            Text(label)
+              .font(.caption2.weight(.semibold))
+              .lineLimit(1)
+              .foregroundStyle(.white)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 3)
+              .background(
+                labelChipColor(for: label),
+                in: Capsule()
+              )
+          }
+
+          if ticket.labels.count > visibleLabels(for: ticket).count {
+            Text("+\(ticket.labels.count - visibleLabels(for: ticket).count)")
+              .font(.caption2.weight(.semibold))
+              .foregroundStyle(.secondary)
+          }
+
+          Spacer(minLength: 0)
+        }
+      }
+
       HStack(alignment: .top, spacing: 8) {
         if isInlineEditorOpen {
           TextField(
@@ -595,12 +620,6 @@ extension TaskboardPanelView {
           }
           .font(.caption)
         }
-      }
-
-      if !ticket.labels.isEmpty {
-        Text(ticket.labels.joined(separator: ", "))
-          .font(.caption2)
-          .foregroundStyle(.secondary)
       }
 
       if !ticket.checklist.isEmpty {

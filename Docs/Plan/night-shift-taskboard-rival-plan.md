@@ -49,6 +49,10 @@ Trello-rival Taskboard experience.
    - the header now keeps only primary board actions visible by default
    - selection, movement, edit-lane, reset, and report controls moved into a
      single overflow actions menu while preserving keyboard shortcuts
+11. Second `P2` polish slice after the keyboard baseline landed:
+   - cards now render deterministic colored label chips before the title
+   - dense lanes scan more like Trello cards instead of stacked plain-text
+     metadata
 
 ## Branch Strategy
 

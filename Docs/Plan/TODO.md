@@ -74,6 +74,10 @@ Execution note:
   - primary board actions stay visible, while selection/movement/report actions moved into one overflow menu
   - keyboard shortcuts remain available even though the default board chrome is calmer
   - remaining `P2` work is now interaction polish plus the open `NS0` evidence loop
+- Card label scanning has been upgraded in the current working tree:
+  - cards now render up to three colored label chips before the title instead of a plain comma-separated label line
+  - dense-board snapshots now read more like a Trello board at a glance while keeping the label mapping deterministic
+  - remaining `P2` work is still interaction polish plus the open `NS0` evidence loop
 
 ## Plan Hygiene Rules
 
