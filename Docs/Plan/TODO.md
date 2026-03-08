@@ -16,6 +16,7 @@ Plan source:
 - `Docs/Plan/admin-ticket-planning-feature-brief.md`
 - `Docs/Plan/taskboard-parity-polish-pass-2.md`
 - `Docs/Plan/taskboard-v2-snapshot-lane.md`
+- `Docs/Plan/night-shift-taskboard-rival-plan.md`
 
 Objective:
 
@@ -26,9 +27,12 @@ Actions:
 
 1. Expand Taskboard snapshot baselines from `2/7` to `7/7` required scenarios
    in `Docs/Plan/taskboard-v2-snapshot-lane.md`.
-2. Execute the next interaction-parity hardening slice for Trello-like workflow speed:
-   - tighten ticket movement ergonomics (in-lane reorder + clearer drop affordances)
-   - reduce click depth for ticket updates (more direct inline actions)
+2. Run `NS0` from `night-shift-taskboard-rival-plan`:
+   - establish orchestrated ticket backlog with explicit acceptance criteria
+   - instrument and report interaction throughput baseline
+3. Execute `NS1` first throughput ticket only after `NS0` exits green:
+   - tighten ticket movement ergonomics
+   - reduce click depth for ticket updates
 
 Exit criteria:
 
