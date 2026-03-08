@@ -10,6 +10,7 @@ implementation layout and validation workflow.
 ## Team operating agreement
 
 - [Collaboration Charter](./Collaboration-Charter.md)
+- [Session Lifecycle States](./session-lifecycle-states.md)
 
 ## Implementation architecture
 

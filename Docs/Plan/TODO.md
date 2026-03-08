@@ -35,32 +35,7 @@ Execution note:
 
 - Analysis pass #3 completed on 2026-03-07 with no new pending proposals.
 
-### 2) Session Lifecycle States (`PSG-002`)
-
-Plan source:
-
-- `Docs/Plan/pack-session-improvement-backlog.md`
-- `Docs/Development/session-directory.md`
-- `.personakit/Sessions/*`
-
-Objective:
-
-- Define and apply lifecycle states for sessions: `active`, `candidate`, `deprecated`.
-
-Actions:
-
-1. Define lifecycle-state convention and usage rules.
-2. Apply states to current session inventory.
-3. Reflect states in session directory and related docs.
-4. Validate PersonaKit packs and session references.
-
-Exit criteria:
-
-1. All sessions have one lifecycle state.
-2. Session directory and conventions agree with assigned states.
-3. `personakit validate` passes.
-
-### 3) Recurring Closeout Checklist (`PSG-003`)
+### 2) Recurring Closeout Checklist (`PSG-003`)
 
 Plan source:
 
@@ -85,7 +60,7 @@ Exit criteria:
 2. Future closeout passes include pack/session maintenance by default.
 3. Docs are updated and internally consistent.
 
-### 4) Samwise Daily Closeout Ritual (Ongoing)
+### 3) Samwise Daily Closeout Ritual (Ongoing)
 
 Plan source:
 
