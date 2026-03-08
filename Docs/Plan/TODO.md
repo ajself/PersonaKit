@@ -26,9 +26,9 @@ Actions:
 
 1. Expand Taskboard snapshot baselines from `2/7` to `7/7` required scenarios
    in `Docs/Plan/taskboard-v2-snapshot-lane.md`.
-2. Execute next Taskboard v2 depth slice (`P2`) from feature-lock scope:
-   - richer assignment model beyond free-text owner
-   - markdown description/comments on ticket detail surface
+2. Execute the next interaction-parity hardening slice for Trello-like workflow speed:
+   - tighten ticket movement ergonomics (in-lane reorder + clearer drop affordances)
+   - reduce click depth for ticket updates (more direct inline actions)
 
 Exit criteria:
 
@@ -46,6 +46,10 @@ Execution note:
 - `TV2-M2B` (`P1`) baseline landed on 2026-03-07:
   - keyboard speed-path baseline
   - search baseline across lanes and tickets
+- `P2` depth baseline landed on 2026-03-07:
+  - richer assignment model (multi-assignee ticket model)
+  - markdown description/comments on ticket detail + cards
+  - lane WIP limit + collapse controls
 
 ### 2) Gardening Tooling Operations (Ongoing)
 

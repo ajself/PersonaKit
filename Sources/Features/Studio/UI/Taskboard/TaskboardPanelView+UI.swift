@@ -149,7 +149,7 @@ extension TaskboardPanelView {
           .frame(maxWidth: 260)
           .focused($focusedField, equals: .keywordSearch)
 
-        TextField("Owner", text: $ownerFilterText)
+        TextField("Assignee", text: $ownerFilterText)
           .textFieldStyle(.roundedBorder)
           .frame(maxWidth: 180)
 
@@ -188,9 +188,11 @@ extension TaskboardPanelView {
       }
 
       if let keywordSearchResult {
-        Text("Search matched \(keywordSearchResult.matchingLaneIDs.count) lanes and \(keywordSearchResult.matchingTicketIDs.count) tickets")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Text(
+          "Search matched \(keywordSearchResult.matchingLaneIDs.count) lanes and \(keywordSearchResult.matchingTicketIDs.count) tickets"
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
 
       if isFilteringActive {
@@ -218,7 +220,9 @@ extension TaskboardPanelView {
 
         Text(ticketCountLabel(for: lane, visibleCount: visibleTickets.count))
           .font(.caption)
-          .foregroundStyle(.secondary)
+          .foregroundStyle(
+            laneIsOverWIPLimit(lane) ? .red : .secondary
+          )
       }
 
       HStack(spacing: 8) {
@@ -233,6 +237,10 @@ extension TaskboardPanelView {
         Menu {
           Button("Edit Lane…") {
             laneEditorDraft = LaneEditorDraft.edit(lane: lane)
+          }
+
+          Button(lane.isCollapsed ? "Expand Lane" : "Collapse Lane") {
+            toggleLaneCollapsed(laneID: lane.id)
           }
 
           Button("Move Left") {
@@ -256,20 +264,27 @@ extension TaskboardPanelView {
         .controlSize(.small)
       }
 
-      ForEach(visibleTickets) { ticket in
-        ticketCard(
-          ticket,
-          lane: lane,
-          laneIndex: laneIndex,
-          laneCount: laneCount
-        )
-      }
-
-      if visibleTickets.isEmpty {
-        Text(isFilteringActive && !lane.tickets.isEmpty ? "No matching tickets" : "No tickets yet")
+      if lane.isCollapsed {
+        Text("Lane collapsed")
           .font(.caption)
           .foregroundStyle(.secondary)
           .padding(.vertical, 8)
+      } else {
+        ForEach(visibleTickets) { ticket in
+          ticketCard(
+            ticket,
+            lane: lane,
+            laneIndex: laneIndex,
+            laneCount: laneCount
+          )
+        }
+
+        if visibleTickets.isEmpty {
+          Text(isFilteringActive && !lane.tickets.isEmpty ? "No matching tickets" : "No tickets yet")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.vertical, 8)
+        }
       }
 
       Spacer(minLength: 0)
@@ -330,6 +345,26 @@ extension TaskboardPanelView {
             )
           }
 
+          Button("Move Up") {
+            moveTicketWithinLane(
+              ticketID: ticket.id,
+              laneID: lane.id,
+              direction: -1
+            )
+          }
+          .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: -1))
+
+          Button("Move Down") {
+            moveTicketWithinLane(
+              ticketID: ticket.id,
+              laneID: lane.id,
+              direction: 1
+            )
+          }
+          .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: 1))
+
+          Divider()
+
           Button("Move Left") {
             moveTicketRelative(
               ticketID: ticket.id,
@@ -374,6 +409,18 @@ extension TaskboardPanelView {
           Image(systemName: "ellipsis.circle")
         }
         .controlSize(.small)
+
+        Button {
+          moveTicketToNextLane(
+            ticketID: ticket.id,
+            fromLaneID: lane.id
+          )
+        } label: {
+          Image(systemName: "arrow.right.circle")
+        }
+        .buttonStyle(.plain)
+        .help("Move to next lane")
+        .disabled(laneIndex >= laneCount - 1 || laneCount <= 1)
       }
 
       HStack(spacing: 6) {
@@ -383,9 +430,15 @@ extension TaskboardPanelView {
           .padding(.vertical, 3)
           .background(.regularMaterial, in: Capsule())
 
-        Text(ticket.owner)
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        if !ticket.assignees.isEmpty {
+          Text(assigneeSummary(for: ticket))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        } else {
+          Text(ticket.owner)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
 
         if let dueDateText = dueDateText(for: ticket.dueDateISO8601) {
           Text(dueDateText)
@@ -407,6 +460,19 @@ extension TaskboardPanelView {
           .font(.caption2)
           .foregroundStyle(.secondary)
       }
+
+      if !ticket.descriptionMarkdown.isEmpty {
+        Text(ticket.descriptionMarkdown)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .lineLimit(2)
+      }
+
+      if !ticket.comments.isEmpty {
+        Text("\(ticket.comments.count) comments")
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+      }
     }
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -419,27 +485,60 @@ extension TaskboardPanelView {
   ) -> some View {
     NavigationStack {
       Form {
-        TextField("Lane title", text: Binding(
-          get: {
-            laneEditorDraft?.title ?? draft.title
-          },
-          set: { newValue in
-            laneEditorDraft?.title = newValue
-          }
-        ))
+        TextField(
+          "Lane title",
+          text: Binding(
+            get: {
+              laneEditorDraft?.title ?? draft.title
+            },
+            set: { newValue in
+              laneEditorDraft?.title = newValue
+            }
+          )
+        )
 
-        Picker("Template", selection: Binding(
-          get: {
-            laneEditorDraft?.templateID ?? draft.templateID
-          },
-          set: { newValue in
-            laneEditorDraft?.templateID = newValue
-          }
-        )) {
+        Picker(
+          "Template",
+          selection: Binding(
+            get: {
+              laneEditorDraft?.templateID ?? draft.templateID
+            },
+            set: { newValue in
+              laneEditorDraft?.templateID = newValue
+            }
+          )
+        ) {
           Text("None").tag(Optional<String>.none)
           ForEach(TaskboardLaneTemplate.defaults) { template in
             Text(template.title).tag(Optional(template.id))
           }
+        }
+
+        Toggle(
+          "Set WIP limit",
+          isOn: Binding(
+            get: {
+              laneEditorDraft?.hasWIPLimit ?? draft.hasWIPLimit
+            },
+            set: { newValue in
+              laneEditorDraft?.hasWIPLimit = newValue
+            }
+          )
+        )
+
+        if laneEditorDraft?.hasWIPLimit ?? draft.hasWIPLimit {
+          Stepper(
+            "WIP limit: \(laneEditorDraft?.wipLimit ?? draft.wipLimit)",
+            value: Binding(
+              get: {
+                max(1, laneEditorDraft?.wipLimit ?? draft.wipLimit)
+              },
+              set: { newValue in
+                laneEditorDraft?.wipLimit = max(1, newValue)
+              }
+            ),
+            in: 1...99
+          )
         }
       }
       .formStyle(.grouped)
@@ -467,56 +566,98 @@ extension TaskboardPanelView {
     NavigationStack {
       Form {
         Section("Details") {
-          TextField("Ticket title", text: Binding(
-            get: {
-              ticketEditorDraft?.title ?? draft.title
-            },
-            set: { newValue in
-              ticketEditorDraft?.title = newValue
-            }
-          ))
+          TextField(
+            "Ticket title",
+            text: Binding(
+              get: {
+                ticketEditorDraft?.title ?? draft.title
+              },
+              set: { newValue in
+                ticketEditorDraft?.title = newValue
+              }
+            )
+          )
 
-          TextField("Owner", text: Binding(
-            get: {
-              ticketEditorDraft?.owner ?? draft.owner
-            },
-            set: { newValue in
-              ticketEditorDraft?.owner = newValue
-            }
-          ))
+          TextField(
+            "Assignees (comma-separated)",
+            text: Binding(
+              get: {
+                ticketEditorDraft?.assigneesText ?? draft.assigneesText
+              },
+              set: { newValue in
+                ticketEditorDraft?.assigneesText = newValue
+              }
+            )
+          )
 
-          TextField("Labels (comma-separated)", text: Binding(
-            get: {
-              ticketEditorDraft?.labelsText ?? draft.labelsText
-            },
-            set: { newValue in
-              ticketEditorDraft?.labelsText = newValue
-            }
-          ))
+          TextField(
+            "Owner fallback",
+            text: Binding(
+              get: {
+                ticketEditorDraft?.owner ?? draft.owner
+              },
+              set: { newValue in
+                ticketEditorDraft?.owner = newValue
+              }
+            )
+          )
 
-          Picker("Priority", selection: Binding(
-            get: {
-              ticketEditorDraft?.priority ?? draft.priority
-            },
-            set: { newValue in
-              ticketEditorDraft?.priority = newValue
-            }
-          )) {
+          TextField(
+            "Labels (comma-separated)",
+            text: Binding(
+              get: {
+                ticketEditorDraft?.labelsText ?? draft.labelsText
+              },
+              set: { newValue in
+                ticketEditorDraft?.labelsText = newValue
+              }
+            )
+          )
+
+          Picker(
+            "Priority",
+            selection: Binding(
+              get: {
+                ticketEditorDraft?.priority ?? draft.priority
+              },
+              set: { newValue in
+                ticketEditorDraft?.priority = newValue
+              }
+            )
+          ) {
             ForEach(TaskboardTicketPriority.allCases) { priority in
               Text(priority.label).tag(priority)
             }
           }
         }
 
+        Section("Description") {
+          TextEditor(
+            text: Binding(
+              get: {
+                ticketEditorDraft?.descriptionMarkdown ?? draft.descriptionMarkdown
+              },
+              set: { newValue in
+                ticketEditorDraft?.descriptionMarkdown = newValue
+              }
+            )
+          )
+          .font(.body)
+          .frame(minHeight: 120)
+        }
+
         Section("Due Date") {
-          Toggle("Has due date", isOn: Binding(
-            get: {
-              ticketEditorDraft?.hasDueDate ?? draft.hasDueDate
-            },
-            set: { newValue in
-              ticketEditorDraft?.hasDueDate = newValue
-            }
-          ))
+          Toggle(
+            "Has due date",
+            isOn: Binding(
+              get: {
+                ticketEditorDraft?.hasDueDate ?? draft.hasDueDate
+              },
+              set: { newValue in
+                ticketEditorDraft?.hasDueDate = newValue
+              }
+            )
+          )
 
           if ticketEditorDraft?.hasDueDate ?? draft.hasDueDate {
             DatePicker(
@@ -541,16 +682,22 @@ extension TaskboardPanelView {
           } else {
             ForEach(Array((ticketEditorDraft?.checklistItems ?? draft.checklistItems).indices), id: \.self) { index in
               HStack(spacing: 8) {
-                Toggle("", isOn: checklistCompletionBinding(
-                  index: index,
-                  fallbackDraft: draft
-                ))
+                Toggle(
+                  "",
+                  isOn: checklistCompletionBinding(
+                    index: index,
+                    fallbackDraft: draft
+                  )
+                )
                 .labelsHidden()
 
-                TextField("Checklist item", text: checklistTitleBinding(
-                  index: index,
-                  fallbackDraft: draft
-                ))
+                TextField(
+                  "Checklist item",
+                  text: checklistTitleBinding(
+                    index: index,
+                    fallbackDraft: draft
+                  )
+                )
 
                 Button(role: .destructive) {
                   removeChecklistItem(at: index)
@@ -563,19 +710,94 @@ extension TaskboardPanelView {
           }
 
           HStack(spacing: 8) {
-            TextField("New checklist item", text: Binding(
-              get: {
-                ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle
-              },
-              set: { newValue in
-                ticketEditorDraft?.pendingChecklistTitle = newValue
-              }
-            ))
+            TextField(
+              "New checklist item",
+              text: Binding(
+                get: {
+                  ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle
+                },
+                set: { newValue in
+                  ticketEditorDraft?.pendingChecklistTitle = newValue
+                }
+              )
+            )
 
             Button("Add") {
               addChecklistItem()
             }
-            .disabled((ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(
+              (ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle).trimmingCharacters(
+                in: .whitespacesAndNewlines
+              ).isEmpty
+            )
+          }
+        }
+
+        Section("Comments") {
+          if (ticketEditorDraft?.comments ?? draft.comments).isEmpty {
+            Text("No comments yet")
+              .foregroundStyle(.secondary)
+          } else {
+            ForEach(Array((ticketEditorDraft?.comments ?? draft.comments).indices), id: \.self) { index in
+              VStack(alignment: .leading, spacing: 4) {
+                Text((ticketEditorDraft?.comments ?? draft.comments)[index].author)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+
+                Text((ticketEditorDraft?.comments ?? draft.comments)[index].bodyMarkdown)
+                  .font(.body)
+
+                HStack {
+                  Spacer()
+
+                  Button(role: .destructive) {
+                    removeCommentFromDraft(at: index)
+                  } label: {
+                    Image(systemName: "trash")
+                  }
+                  .buttonStyle(.plain)
+                }
+              }
+              .padding(.vertical, 4)
+            }
+          }
+
+          TextField(
+            "Comment author",
+            text: Binding(
+              get: {
+                ticketEditorDraft?.pendingCommentAuthor ?? draft.pendingCommentAuthor
+              },
+              set: { newValue in
+                ticketEditorDraft?.pendingCommentAuthor = newValue
+              }
+            )
+          )
+
+          TextEditor(
+            text: Binding(
+              get: {
+                ticketEditorDraft?.pendingCommentBody ?? draft.pendingCommentBody
+              },
+              set: { newValue in
+                ticketEditorDraft?.pendingCommentBody = newValue
+              }
+            )
+          )
+          .font(.body)
+          .frame(minHeight: 90)
+
+          HStack {
+            Spacer()
+
+            Button("Add Comment") {
+              addCommentToDraft()
+            }
+            .disabled(
+              (ticketEditorDraft?.pendingCommentBody ?? draft.pendingCommentBody).trimmingCharacters(
+                in: .whitespacesAndNewlines
+              ).isEmpty
+            )
           }
         }
       }

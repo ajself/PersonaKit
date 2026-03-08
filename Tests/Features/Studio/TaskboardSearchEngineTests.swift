@@ -32,6 +32,12 @@ struct TaskboardSearchEngineTests {
       query: "samwise"
     )
     #expect(ownerResult?.matchingTicketIDs == ["ticket-1"])
+
+    let descriptionResult = TaskboardSearchEngine.search(
+      board: board,
+      query: "workflow speed"
+    )
+    #expect(descriptionResult?.matchingTicketIDs == ["ticket-1"])
   }
 
   @Test

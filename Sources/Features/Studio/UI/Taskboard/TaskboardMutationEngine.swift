@@ -21,12 +21,16 @@ enum TaskboardMutationOperation: Equatable {
 struct CreateLanePayload: Equatable {
   let title: String
   let templateID: String?
+  let wipLimit: Int?
+  let isCollapsed: Bool
 }
 
 struct EditLanePayload: Equatable {
   let laneID: String
   let title: String
   let templateID: String?
+  let wipLimit: Int?
+  let isCollapsed: Bool
 }
 
 struct ReorderLanePayload: Equatable {
@@ -42,10 +46,13 @@ struct CreateTicketPayload: Equatable {
   let laneID: String
   let title: String
   let owner: String
+  let assignees: [TaskboardAssignee]
   let priority: TaskboardTicketPriority
   let labels: [String]
   let dueDateISO8601: String?
   let checklist: [TaskboardChecklistItem]
+  let descriptionMarkdown: String
+  let comments: [TaskboardComment]
 }
 
 struct EditTicketPayload: Equatable {
@@ -53,10 +60,13 @@ struct EditTicketPayload: Equatable {
   let ticketID: String
   let title: String
   let owner: String
+  let assignees: [TaskboardAssignee]
   let priority: TaskboardTicketPriority
   let labels: [String]
   let dueDateISO8601: String?
   let checklist: [TaskboardChecklistItem]
+  let descriptionMarkdown: String
+  let comments: [TaskboardComment]
 }
 
 struct MoveTicketPayload: Equatable {
@@ -158,6 +168,8 @@ enum TaskboardMutationEngine {
         title: uniqueLaneTitle(baseTitle: title, excludingLaneID: nil, in: board),
         templateID: payload.templateID,
         order: nextLaneOrder(in: board),
+        wipLimit: normalizedWIPLimit(payload.wipLimit),
+        isCollapsed: payload.isCollapsed,
         tickets: []
       )
       board.nextLaneSequence += 1
@@ -179,6 +191,8 @@ enum TaskboardMutationEngine {
         in: board
       )
       board.lanes[laneIndex].templateID = payload.templateID
+      board.lanes[laneIndex].wipLimit = normalizedWIPLimit(payload.wipLimit)
+      board.lanes[laneIndex].isCollapsed = payload.isCollapsed
 
     case .reorderLane(let payload):
       var lanes = board.lanes.sorted {
@@ -218,17 +232,25 @@ enum TaskboardMutationEngine {
       }
 
       let owner = payload.owner.trimmingCharacters(in: .whitespacesAndNewlines)
+      let assignees = normalizedAssignees(
+        payload.assignees,
+        fallbackOwner: owner
+      )
       let normalizedDueDate = normalizedDueDate(payload.dueDateISO8601)
       let checklist = normalizedChecklist(payload.checklist, nextChecklistSequence: &board.nextChecklistSequence)
+      let comments = normalizedComments(payload.comments, nextCommentSequence: &board.nextCommentSequence)
 
       let ticket = TaskboardTicket(
         id: "ticket-\(board.nextTicketSequence)",
         title: title,
-        owner: owner.isEmpty ? "Unassigned" : owner,
+        owner: assignees.first?.displayName ?? (owner.isEmpty ? "Unassigned" : owner),
+        assignees: assignees,
         priority: payload.priority,
         labels: normalizedLabels(payload.labels),
         dueDateISO8601: normalizedDueDate,
-        checklist: checklist
+        checklist: checklist,
+        descriptionMarkdown: payload.descriptionMarkdown.trimmingCharacters(in: .whitespacesAndNewlines),
+        comments: comments
       )
       board.nextTicketSequence += 1
       board.lanes[laneIndex].tickets.append(ticket)
@@ -247,15 +269,26 @@ enum TaskboardMutationEngine {
       }
 
       let owner = payload.owner.trimmingCharacters(in: .whitespacesAndNewlines)
+      let assignees = normalizedAssignees(
+        payload.assignees,
+        fallbackOwner: owner
+      )
       let normalizedDueDate = normalizedDueDate(payload.dueDateISO8601)
       let checklist = normalizedChecklist(payload.checklist, nextChecklistSequence: &board.nextChecklistSequence)
+      let comments = normalizedComments(payload.comments, nextCommentSequence: &board.nextCommentSequence)
 
       board.lanes[laneIndex].tickets[ticketIndex].title = title
-      board.lanes[laneIndex].tickets[ticketIndex].owner = owner.isEmpty ? "Unassigned" : owner
+      board.lanes[laneIndex].tickets[ticketIndex].owner =
+        assignees.first?.displayName
+        ?? (owner.isEmpty ? "Unassigned" : owner)
+      board.lanes[laneIndex].tickets[ticketIndex].assignees = assignees
       board.lanes[laneIndex].tickets[ticketIndex].priority = payload.priority
       board.lanes[laneIndex].tickets[ticketIndex].labels = normalizedLabels(payload.labels)
       board.lanes[laneIndex].tickets[ticketIndex].dueDateISO8601 = normalizedDueDate
       board.lanes[laneIndex].tickets[ticketIndex].checklist = checklist
+      board.lanes[laneIndex].tickets[ticketIndex].descriptionMarkdown = payload.descriptionMarkdown
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      board.lanes[laneIndex].tickets[ticketIndex].comments = comments
 
     case .moveTicket(let payload):
       guard let sourceLaneIndex = board.lanes.firstIndex(where: { $0.id == payload.sourceLaneID }) else {
@@ -264,7 +297,8 @@ enum TaskboardMutationEngine {
       guard let destinationLaneIndex = board.lanes.firstIndex(where: { $0.id == payload.destinationLaneID }) else {
         throw laneNotFound(payload.destinationLaneID)
       }
-      guard let ticketIndex = board.lanes[sourceLaneIndex].tickets.firstIndex(where: { $0.id == payload.ticketID }) else {
+      guard let ticketIndex = board.lanes[sourceLaneIndex].tickets.firstIndex(where: { $0.id == payload.ticketID })
+      else {
         throw ticketNotFound(payload.ticketID)
       }
 
@@ -345,6 +379,57 @@ enum TaskboardMutationEngine {
     return value
   }
 
+  private static func normalizedWIPLimit(
+    _ value: Int?
+  ) -> Int? {
+    guard let value else {
+      return nil
+    }
+
+    return value > 0 ? value : nil
+  }
+
+  private static func normalizedAssignees(
+    _ assignees: [TaskboardAssignee],
+    fallbackOwner: String
+  ) -> [TaskboardAssignee] {
+    let normalized =
+      assignees
+      .map { assignee in
+        let displayName = assignee.displayName
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+        return TaskboardAssignee(
+          id: TaskboardMemberCoder.memberID(from: displayName),
+          displayName: displayName
+        )
+      }
+      .filter { !$0.displayName.isEmpty }
+
+    if !normalized.isEmpty {
+      return Array(
+        Dictionary(
+          grouping: normalized,
+          by: \.id
+        )
+        .values
+        .compactMap(\.first)
+      )
+      .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+    }
+
+    let owner = fallbackOwner.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !owner.isEmpty else {
+      return []
+    }
+
+    return [
+      TaskboardAssignee(
+        id: TaskboardMemberCoder.memberID(from: owner),
+        displayName: owner
+      )
+    ]
+  }
+
   private static func normalizedChecklist(
     _ checklist: [TaskboardChecklistItem],
     nextChecklistSequence: inout Int
@@ -362,6 +447,34 @@ enum TaskboardMutationEngine {
         nextChecklistSequence += 1
       }
       return normalizedItem
+    }
+  }
+
+  private static func normalizedComments(
+    _ comments: [TaskboardComment],
+    nextCommentSequence: inout Int
+  ) -> [TaskboardComment] {
+    comments.compactMap { comment in
+      var normalizedComment = comment
+      normalizedComment.author = normalizedComment.author
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      normalizedComment.bodyMarkdown = normalizedComment.bodyMarkdown
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+      guard !normalizedComment.bodyMarkdown.isEmpty else {
+        return nil
+      }
+
+      if normalizedComment.author.isEmpty {
+        normalizedComment.author = "Unassigned"
+      }
+
+      if !normalizedComment.id.hasPrefix("comment-") {
+        normalizedComment.id = "comment-\(nextCommentSequence)"
+        nextCommentSequence += 1
+      }
+
+      return normalizedComment
     }
   }
 

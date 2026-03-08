@@ -5,6 +5,7 @@ struct TaskboardBoard: Codable, Equatable {
   var nextLaneSequence: Int
   var nextTicketSequence: Int
   var nextChecklistSequence: Int
+  var nextCommentSequence: Int
   var lanes: [TaskboardLane]
 
   private enum CodingKeys: String, CodingKey {
@@ -12,6 +13,7 @@ struct TaskboardBoard: Codable, Equatable {
     case nextLaneSequence
     case nextTicketSequence
     case nextChecklistSequence
+    case nextCommentSequence
     case lanes
   }
 
@@ -20,19 +22,44 @@ struct TaskboardBoard: Codable, Equatable {
     nextLaneSequence: 7,
     nextTicketSequence: 4,
     nextChecklistSequence: 3,
+    nextCommentSequence: 2,
     lanes: [
-      TaskboardLane(id: "lane-1", title: "Inbox", templateID: "inbox", order: 1, tickets: []),
-      TaskboardLane(id: "lane-2", title: "Ready", templateID: "ready", order: 2, tickets: []),
+      TaskboardLane(
+        id: "lane-1",
+        title: "Inbox",
+        templateID: "inbox",
+        order: 1,
+        wipLimit: nil,
+        isCollapsed: false,
+        tickets: []
+      ),
+      TaskboardLane(
+        id: "lane-2",
+        title: "Ready",
+        templateID: "ready",
+        order: 2,
+        wipLimit: nil,
+        isCollapsed: false,
+        tickets: []
+      ),
       TaskboardLane(
         id: "lane-3",
         title: "In Progress",
         templateID: "in-progress",
         order: 3,
+        wipLimit: 3,
+        isCollapsed: false,
         tickets: [
           TaskboardTicket(
             id: "ticket-1",
             title: "Implement Taskboard lane CRUD",
             owner: "Samwise",
+            assignees: [
+              TaskboardAssignee(
+                id: "member-samwise",
+                displayName: "Samwise"
+              )
+            ],
             priority: .high,
             labels: ["taskboard", "ui"],
             dueDateISO8601: "2026-03-12",
@@ -47,25 +74,51 @@ struct TaskboardBoard: Codable, Equatable {
                 title: "Validate drag and drop",
                 isComplete: false
               ),
+            ],
+            descriptionMarkdown: "Core lane CRUD and movement interactions for the planning surface.",
+            comments: [
+              TaskboardComment(
+                id: "comment-1",
+                author: "AJ",
+                bodyMarkdown: "M2 baseline is good. Keep pushing toward Trello-level workflow speed."
+              )
             ]
           )
         ]
       ),
-      TaskboardLane(id: "lane-4", title: "Blocked", templateID: "blocked", order: 4, tickets: []),
+      TaskboardLane(
+        id: "lane-4",
+        title: "Blocked",
+        templateID: "blocked",
+        order: 4,
+        wipLimit: nil,
+        isCollapsed: false,
+        tickets: []
+      ),
       TaskboardLane(
         id: "lane-5",
         title: "Review",
         templateID: "review",
         order: 5,
+        wipLimit: 2,
+        isCollapsed: false,
         tickets: [
           TaskboardTicket(
             id: "ticket-2",
             title: "Run red-pen interaction review",
             owner: "studio-interaction-quality-lead",
+            assignees: [
+              TaskboardAssignee(
+                id: "member-studio-interaction-quality-lead",
+                displayName: "studio-interaction-quality-lead"
+              )
+            ],
             priority: .medium,
             labels: ["quality"],
             dueDateISO8601: nil,
-            checklist: []
+            checklist: [],
+            descriptionMarkdown: "Evaluate interaction quality against parity rubric and log findings.",
+            comments: []
           )
         ]
       ),
@@ -74,15 +127,25 @@ struct TaskboardBoard: Codable, Equatable {
         title: "Done",
         templateID: "done",
         order: 6,
+        wipLimit: nil,
+        isCollapsed: false,
         tickets: [
           TaskboardTicket(
             id: "ticket-3",
             title: "Approve Taskboard feature name",
             owner: "AJ",
+            assignees: [
+              TaskboardAssignee(
+                id: "member-aj",
+                displayName: "AJ"
+              )
+            ],
             priority: .low,
             labels: ["planning"],
             dueDateISO8601: nil,
-            checklist: []
+            checklist: [],
+            descriptionMarkdown: "Feature naming checkpoint completed.",
+            comments: []
           )
         ]
       ),
@@ -94,12 +157,14 @@ struct TaskboardBoard: Codable, Equatable {
     nextLaneSequence: Int,
     nextTicketSequence: Int,
     nextChecklistSequence: Int,
+    nextCommentSequence: Int,
     lanes: [TaskboardLane]
   ) {
     self.name = name
     self.nextLaneSequence = nextLaneSequence
     self.nextTicketSequence = nextTicketSequence
     self.nextChecklistSequence = nextChecklistSequence
+    self.nextCommentSequence = nextCommentSequence
     self.lanes = lanes
   }
 
@@ -111,6 +176,7 @@ struct TaskboardBoard: Codable, Equatable {
     nextLaneSequence = try container.decodeIfPresent(Int.self, forKey: .nextLaneSequence) ?? 1
     nextTicketSequence = try container.decodeIfPresent(Int.self, forKey: .nextTicketSequence) ?? 1
     nextChecklistSequence = try container.decodeIfPresent(Int.self, forKey: .nextChecklistSequence) ?? 1
+    nextCommentSequence = try container.decodeIfPresent(Int.self, forKey: .nextCommentSequence) ?? 1
     lanes = try container.decodeIfPresent([TaskboardLane].self, forKey: .lanes) ?? []
   }
 
@@ -128,6 +194,9 @@ struct TaskboardBoard: Codable, Equatable {
       .map { index, lane in
         var normalizedLane = lane
         normalizedLane.order = index + 1
+        if let wipLimit = normalizedLane.wipLimit, wipLimit <= 0 {
+          normalizedLane.wipLimit = nil
+        }
         normalizedLane.tickets = normalizedLane.tickets.map { ticket in
           var normalizedTicket = ticket
           normalizedTicket.labels = Array(
@@ -149,21 +218,72 @@ struct TaskboardBoard: Codable, Equatable {
             return normalizedItem
           }
           .filter { !$0.title.isEmpty }
+
+          normalizedTicket.assignees = normalizedTicket.assignees
+            .map { assignee in
+              var normalizedAssignee = assignee
+              normalizedAssignee.displayName = normalizedAssignee.displayName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+              normalizedAssignee.id = TaskboardMemberCoder.memberID(from: normalizedAssignee.displayName)
+              return normalizedAssignee
+            }
+            .filter { !$0.displayName.isEmpty }
+
+          if normalizedTicket.assignees.isEmpty {
+            let fallbackOwner = normalizedTicket.owner.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !fallbackOwner.isEmpty && fallbackOwner.caseInsensitiveCompare("Unassigned") != .orderedSame {
+              normalizedTicket.assignees = [
+                TaskboardAssignee(
+                  id: TaskboardMemberCoder.memberID(from: fallbackOwner),
+                  displayName: fallbackOwner
+                )
+              ]
+            }
+          }
+
+          normalizedTicket.owner = normalizedTicket.assignees.first?.displayName ?? "Unassigned"
+          normalizedTicket.descriptionMarkdown = normalizedTicket.descriptionMarkdown
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+          normalizedTicket.comments = normalizedTicket.comments
+            .enumerated()
+            .map { commentIndex, comment in
+              var normalizedComment = comment
+              normalizedComment.author = normalizedComment.author
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+              normalizedComment.bodyMarkdown = normalizedComment.bodyMarkdown
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+              if normalizedComment.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                normalizedComment.id = "comment-\(commentIndex + 1)"
+              }
+
+              if normalizedComment.author.isEmpty {
+                normalizedComment.author = "Unassigned"
+              }
+
+              return normalizedComment
+            }
+            .filter { !$0.bodyMarkdown.isEmpty }
+
           return normalizedTicket
         }
+
         return normalizedLane
       }
 
-    let nextLaneSequenceCandidate = normalizedBoard.lanes.compactMap { lane -> Int? in
-      guard lane.id.hasPrefix("lane-") else {
-        return nil
+    let nextLaneSequenceCandidate =
+      normalizedBoard.lanes.compactMap { lane -> Int? in
+        guard lane.id.hasPrefix("lane-") else {
+          return nil
+        }
+
+        return Int(lane.id.replacingOccurrences(of: "lane-", with: ""))
       }
+      .max() ?? 0
 
-      return Int(lane.id.replacingOccurrences(of: "lane-", with: ""))
-    }
-    .max() ?? 0
-
-    let nextTicketSequenceCandidate = normalizedBoard.lanes
+    let nextTicketSequenceCandidate =
+      normalizedBoard.lanes
       .flatMap(\.tickets)
       .compactMap { ticket -> Int? in
         guard ticket.id.hasPrefix("ticket-") else {
@@ -174,7 +294,8 @@ struct TaskboardBoard: Codable, Equatable {
       }
       .max() ?? 0
 
-    let nextChecklistSequenceCandidate = normalizedBoard.lanes
+    let nextChecklistSequenceCandidate =
+      normalizedBoard.lanes
       .flatMap(\.tickets)
       .flatMap(\.checklist)
       .compactMap { item -> Int? in
@@ -186,9 +307,26 @@ struct TaskboardBoard: Codable, Equatable {
       }
       .max() ?? 0
 
+    let nextCommentSequenceCandidate =
+      normalizedBoard.lanes
+      .flatMap(\.tickets)
+      .flatMap(\.comments)
+      .compactMap { comment -> Int? in
+        guard comment.id.hasPrefix("comment-") else {
+          return nil
+        }
+
+        return Int(comment.id.replacingOccurrences(of: "comment-", with: ""))
+      }
+      .max() ?? 0
+
     normalizedBoard.nextLaneSequence = max(normalizedBoard.nextLaneSequence, nextLaneSequenceCandidate + 1)
     normalizedBoard.nextTicketSequence = max(normalizedBoard.nextTicketSequence, nextTicketSequenceCandidate + 1)
-    normalizedBoard.nextChecklistSequence = max(normalizedBoard.nextChecklistSequence, nextChecklistSequenceCandidate + 1)
+    normalizedBoard.nextChecklistSequence = max(
+      normalizedBoard.nextChecklistSequence,
+      nextChecklistSequenceCandidate + 1
+    )
+    normalizedBoard.nextCommentSequence = max(normalizedBoard.nextCommentSequence, nextCommentSequenceCandidate + 1)
     return normalizedBoard
   }
 }
@@ -198,44 +336,99 @@ struct TaskboardLane: Codable, Equatable, Identifiable {
   var title: String
   var templateID: String?
   var order: Int
+  var wipLimit: Int?
+  var isCollapsed: Bool
   var tickets: [TaskboardTicket]
+
+  private enum CodingKeys: String, CodingKey {
+    case id
+    case title
+    case templateID
+    case order
+    case wipLimit
+    case isCollapsed
+    case tickets
+  }
+
+  init(
+    id: String,
+    title: String,
+    templateID: String?,
+    order: Int,
+    wipLimit: Int?,
+    isCollapsed: Bool,
+    tickets: [TaskboardTicket]
+  ) {
+    self.id = id
+    self.title = title
+    self.templateID = templateID
+    self.order = order
+    self.wipLimit = wipLimit
+    self.isCollapsed = isCollapsed
+    self.tickets = tickets
+  }
+
+  init(
+    from decoder: Decoder
+  ) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(String.self, forKey: .id)
+    title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Lane"
+    templateID = try container.decodeIfPresent(String.self, forKey: .templateID)
+    order = try container.decodeIfPresent(Int.self, forKey: .order) ?? 0
+    wipLimit = try container.decodeIfPresent(Int.self, forKey: .wipLimit)
+    isCollapsed = try container.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
+    tickets = try container.decodeIfPresent([TaskboardTicket].self, forKey: .tickets) ?? []
+  }
 }
 
 struct TaskboardTicket: Codable, Equatable, Identifiable {
   let id: String
   var title: String
   var owner: String
+  var assignees: [TaskboardAssignee]
   var priority: TaskboardTicketPriority
   var labels: [String]
   var dueDateISO8601: String?
   var checklist: [TaskboardChecklistItem]
+  var descriptionMarkdown: String
+  var comments: [TaskboardComment]
 
   private enum CodingKeys: String, CodingKey {
     case id
     case title
     case owner
+    case assignees
     case priority
     case labels
     case dueDateISO8601
     case checklist
+    case descriptionMarkdown
+    case comments
   }
 
   init(
     id: String,
     title: String,
     owner: String,
+    assignees: [TaskboardAssignee],
     priority: TaskboardTicketPriority,
     labels: [String],
     dueDateISO8601: String?,
-    checklist: [TaskboardChecklistItem]
+    checklist: [TaskboardChecklistItem],
+    descriptionMarkdown: String,
+    comments: [TaskboardComment]
   ) {
     self.id = id
     self.title = title
     self.owner = owner
+    self.assignees = assignees
     self.priority = priority
     self.labels = labels
     self.dueDateISO8601 = dueDateISO8601
     self.checklist = checklist
+    self.descriptionMarkdown = descriptionMarkdown
+    self.comments = comments
   }
 
   init(
@@ -245,10 +438,13 @@ struct TaskboardTicket: Codable, Equatable, Identifiable {
     id = try container.decode(String.self, forKey: .id)
     title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Untitled"
     owner = try container.decodeIfPresent(String.self, forKey: .owner) ?? "Unassigned"
+    assignees = try container.decodeIfPresent([TaskboardAssignee].self, forKey: .assignees) ?? []
     priority = try container.decodeIfPresent(TaskboardTicketPriority.self, forKey: .priority) ?? .medium
     labels = try container.decodeIfPresent([String].self, forKey: .labels) ?? []
     dueDateISO8601 = try container.decodeIfPresent(String.self, forKey: .dueDateISO8601)
     checklist = try container.decodeIfPresent([TaskboardChecklistItem].self, forKey: .checklist) ?? []
+    descriptionMarkdown = try container.decodeIfPresent(String.self, forKey: .descriptionMarkdown) ?? ""
+    comments = try container.decodeIfPresent([TaskboardComment].self, forKey: .comments) ?? []
   }
 }
 
@@ -256,6 +452,17 @@ struct TaskboardChecklistItem: Codable, Equatable, Identifiable {
   var id: String
   var title: String
   var isComplete: Bool
+}
+
+struct TaskboardAssignee: Codable, Equatable, Identifiable {
+  var id: String
+  var displayName: String
+}
+
+struct TaskboardComment: Codable, Equatable, Identifiable {
+  var id: String
+  var author: String
+  var bodyMarkdown: String
 }
 
 enum TaskboardTicketPriority: String, Codable, CaseIterable, Identifiable {
@@ -308,6 +515,29 @@ enum DueDateFilter: String, CaseIterable, Identifiable {
     case .noDueDate:
       return "No Due Date"
     }
+  }
+}
+
+enum TaskboardMemberCoder {
+  static func memberID(
+    from name: String
+  ) -> String {
+    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+      return "member-unassigned"
+    }
+
+    let collapsed =
+      trimmed
+      .lowercased()
+      .replacingOccurrences(of: "[^a-z0-9]+", with: "-", options: .regularExpression)
+      .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+
+    if collapsed.isEmpty {
+      return "member-unassigned"
+    }
+
+    return "member-\(collapsed)"
   }
 }
 

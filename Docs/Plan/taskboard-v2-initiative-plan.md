@@ -280,6 +280,10 @@ Current status:
 6. Snapshot lane is active with baseline coverage for default and empty board
    states; remaining required scenarios are tracked in
    `taskboard-v2-snapshot-lane.md`.
+7. `P2` depth baseline landed on 2026-03-07:
+   - multi-assignee ticket model and filtering/search integration
+   - markdown description/comments in ticket editor and card summaries
+   - lane WIP limit + collapse controls for board-flow management
 
 Hard rule:
 

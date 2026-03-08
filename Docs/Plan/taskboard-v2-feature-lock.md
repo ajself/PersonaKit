@@ -76,3 +76,4 @@ Decision date: `2026-03-07`
 | 2026-03-07 | Created feature-lock template | Samwise | Pending |
 | 2026-03-07 | Added proposed must/should/later set from research gap matrix | Samwise | Pending AJ decision |
 | 2026-03-07 | Approved feature lock and priority ordering (`P0` through `P3`) | AJ + Samwise | Approved |
+| 2026-03-07 | Landed `P2` depth baseline (multi-assignee model, description/comments, lane WIP/collapse) | Samwise | Implementation completed; AJ review pending |

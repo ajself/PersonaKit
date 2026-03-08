@@ -56,7 +56,8 @@ enum TaskboardSearchEngine {
       lane.templateID ?? "",
     ]
 
-    let haystack = fields
+    let haystack =
+      fields
       .joined(separator: " ")
       .lowercased()
 
@@ -72,12 +73,17 @@ enum TaskboardSearchEngine {
       lane.title,
       ticket.title,
       ticket.owner,
+      ticket.assignees.map(\.displayName).joined(separator: " "),
       ticket.labels.joined(separator: " "),
       ticket.checklist.map(\.title).joined(separator: " "),
+      ticket.descriptionMarkdown,
+      ticket.comments.map(\.author).joined(separator: " "),
+      ticket.comments.map(\.bodyMarkdown).joined(separator: " "),
       ticket.dueDateISO8601 ?? "",
     ]
 
-    let haystack = fields
+    let haystack =
+      fields
       .joined(separator: " ")
       .lowercased()
 

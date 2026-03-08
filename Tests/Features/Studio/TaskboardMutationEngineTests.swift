@@ -24,7 +24,9 @@ struct TaskboardMutationEngineTests {
       operation: .createLane(
         CreateLanePayload(
           title: "Design",
-          templateID: nil
+          templateID: nil,
+          wipLimit: nil,
+          isCollapsed: false
         )
       )
     )
@@ -80,7 +82,9 @@ struct TaskboardMutationEngineTests {
       operation: .createLane(
         CreateLanePayload(
           title: "QA",
-          templateID: nil
+          templateID: nil,
+          wipLimit: nil,
+          isCollapsed: false
         )
       )
     )
@@ -136,7 +140,9 @@ struct TaskboardMutationEngineTests {
         operation: .createLane(
           CreateLanePayload(
             title: "Design",
-            templateID: "ready"
+            templateID: "ready",
+            wipLimit: 3,
+            isCollapsed: false
           )
         )
       ),
@@ -149,6 +155,12 @@ struct TaskboardMutationEngineTests {
             laneID: "lane-2",
             title: "Refine visual hierarchy",
             owner: "Samwise",
+            assignees: [
+              TaskboardAssignee(
+                id: "member-samwise",
+                displayName: "Samwise"
+              )
+            ],
             priority: .high,
             labels: ["ux", "design"],
             dueDateISO8601: "2026-03-18",
@@ -157,6 +169,14 @@ struct TaskboardMutationEngineTests {
                 id: "draft-1",
                 title: "Audit lane spacing",
                 isComplete: false
+              )
+            ],
+            descriptionMarkdown: "First pass for visual hierarchy.",
+            comments: [
+              TaskboardComment(
+                id: "draft-comment-1",
+                author: "AJ",
+                bodyMarkdown: "Please align this with Trello parity expectations."
               )
             ]
           )

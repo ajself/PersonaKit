@@ -15,6 +15,8 @@ extension TaskboardPanelView {
       title: title,
       templateID: template.id,
       order: nextLaneOrder(),
+      wipLimit: nil,
+      isCollapsed: false,
       tickets: []
     )
     board.lanes.append(lane)
@@ -140,7 +142,8 @@ extension TaskboardPanelView {
 
   func resetBoard() {
     board = TaskboardBoard.defaultBoard
-    selectedLaneID = board.lanes
+    selectedLaneID =
+      board.lanes
       .sorted { $0.order < $1.order }
       .first?
       .id
@@ -173,6 +176,16 @@ extension TaskboardPanelView {
     board.lanes = lanes
   }
 
+  func toggleLaneCollapsed(
+    laneID: String
+  ) {
+    guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
+      return
+    }
+
+    board.lanes[laneIndex].isCollapsed.toggle()
+  }
+
   func deleteLane(
     laneID: String
   ) {
@@ -180,7 +193,8 @@ extension TaskboardPanelView {
       $0.id == laneID
     }
     if selectedLaneID == laneID {
-      selectedLaneID = board.lanes
+      selectedLaneID =
+        board.lanes
         .sorted { $0.order < $1.order }
         .first?
         .id
@@ -206,6 +220,8 @@ extension TaskboardPanelView {
         title: uniqueLaneTitle(baseTitle: draft.title, excludingLaneID: nil),
         templateID: draft.templateID,
         order: nextLaneOrder(),
+        wipLimit: draft.hasWIPLimit ? max(1, draft.wipLimit) : nil,
+        isCollapsed: false,
         tickets: []
       )
       board.lanes.append(lane)
@@ -222,6 +238,7 @@ extension TaskboardPanelView {
         excludingLaneID: laneID
       )
       board.lanes[laneIndex].templateID = draft.templateID
+      board.lanes[laneIndex].wipLimit = draft.hasWIPLimit ? max(1, draft.wipLimit) : nil
       selectedLaneID = laneID
     }
 
@@ -235,8 +252,12 @@ extension TaskboardPanelView {
 
     draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
     draft.owner = draft.owner.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.assigneesText = draft.assigneesText.trimmingCharacters(in: .whitespacesAndNewlines)
     draft.labelsText = draft.labelsText.trimmingCharacters(in: .whitespacesAndNewlines)
     draft.pendingChecklistTitle = draft.pendingChecklistTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.descriptionMarkdown = draft.descriptionMarkdown.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.pendingCommentAuthor = draft.pendingCommentAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.pendingCommentBody = draft.pendingCommentBody.trimmingCharacters(in: .whitespacesAndNewlines)
     draft.checklistItems = draft.checklistItems
       .map { item in
         var normalizedItem = item
@@ -244,17 +265,30 @@ extension TaskboardPanelView {
         return normalizedItem
       }
       .filter { !$0.title.isEmpty }
+    draft.comments = draft.comments
+      .map { comment in
+        var normalizedComment = comment
+        normalizedComment.author = normalizedComment.author.trimmingCharacters(in: .whitespacesAndNewlines)
+        normalizedComment.bodyMarkdown = normalizedComment.bodyMarkdown.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalizedComment
+      }
+      .filter { !$0.bodyMarkdown.isEmpty }
 
     guard !draft.title.isEmpty else {
       return
     }
 
-    let owner = draft.owner.isEmpty ? "Unassigned" : draft.owner
+    let assignees = parsedAssignees(from: draft.assigneesText)
+    let owner =
+      assignees.first?.displayName
+      ?? (draft.owner.isEmpty ? "Unassigned" : draft.owner)
     let labels = parsedLabels(from: draft.labelsText)
-    let dueDateISO8601 = draft.hasDueDate
+    let dueDateISO8601 =
+      draft.hasDueDate
       ? encodeISODate(draft.dueDate)
       : nil
     let checklistItems = normalizedChecklistItems(from: draft.checklistItems)
+    let comments = normalizedComments(from: draft.comments)
 
     switch draft.mode {
     case .create(let laneID):
@@ -268,10 +302,13 @@ extension TaskboardPanelView {
           id: nextTicketID(),
           title: draft.title,
           owner: owner,
+          assignees: assignees,
           priority: draft.priority,
           labels: labels,
           dueDateISO8601: dueDateISO8601,
-          checklist: checklistItems
+          checklist: checklistItems,
+          descriptionMarkdown: draft.descriptionMarkdown,
+          comments: comments
         )
       )
 
@@ -286,10 +323,13 @@ extension TaskboardPanelView {
 
       board.lanes[laneIndex].tickets[ticketIndex].title = draft.title
       board.lanes[laneIndex].tickets[ticketIndex].owner = owner
+      board.lanes[laneIndex].tickets[ticketIndex].assignees = assignees
       board.lanes[laneIndex].tickets[ticketIndex].priority = draft.priority
       board.lanes[laneIndex].tickets[ticketIndex].labels = labels
       board.lanes[laneIndex].tickets[ticketIndex].dueDateISO8601 = dueDateISO8601
       board.lanes[laneIndex].tickets[ticketIndex].checklist = checklistItems
+      board.lanes[laneIndex].tickets[ticketIndex].descriptionMarkdown = draft.descriptionMarkdown
+      board.lanes[laneIndex].tickets[ticketIndex].comments = comments
     }
 
     ticketEditorDraft = nil
@@ -309,6 +349,26 @@ extension TaskboardPanelView {
     .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
   }
 
+  func parsedAssignees(
+    from value: String
+  ) -> [TaskboardAssignee] {
+    Array(
+      Set(
+        value
+          .split(separator: ",", omittingEmptySubsequences: true)
+          .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    )
+    .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    .map { displayName in
+      TaskboardAssignee(
+        id: TaskboardMemberCoder.memberID(from: displayName),
+        displayName: displayName
+      )
+    }
+  }
+
   func normalizedChecklistItems(
     from items: [TaskboardChecklistItem]
   ) -> [TaskboardChecklistItem] {
@@ -323,6 +383,71 @@ extension TaskboardPanelView {
       }
       return normalizedItem
     }
+  }
+
+  func normalizedComments(
+    from comments: [TaskboardComment]
+  ) -> [TaskboardComment] {
+    comments.compactMap { comment in
+      var normalizedComment = comment
+      normalizedComment.author = normalizedComment.author
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      normalizedComment.bodyMarkdown = normalizedComment.bodyMarkdown
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+      guard !normalizedComment.bodyMarkdown.isEmpty else {
+        return nil
+      }
+
+      if normalizedComment.author.isEmpty {
+        normalizedComment.author = "Unassigned"
+      }
+
+      if !normalizedComment.id.hasPrefix("comment-") {
+        normalizedComment.id = nextCommentID()
+      }
+
+      return normalizedComment
+    }
+  }
+
+  func addCommentToDraft() {
+    guard var draft = ticketEditorDraft else {
+      return
+    }
+
+    let author = draft.pendingCommentAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
+    let body = draft.pendingCommentBody.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !body.isEmpty else {
+      return
+    }
+
+    draft.comments.append(
+      TaskboardComment(
+        id: "draft-comment-\(draft.comments.count + 1)",
+        author: author.isEmpty ? "Unassigned" : author,
+        bodyMarkdown: body
+      )
+    )
+    draft.pendingCommentAuthor = ""
+    draft.pendingCommentBody = ""
+    ticketEditorDraft = draft
+  }
+
+  func removeCommentFromDraft(
+    at index: Int
+  ) {
+    guard var draft = ticketEditorDraft else {
+      return
+    }
+
+    guard draft.comments.indices.contains(index) else {
+      return
+    }
+
+    draft.comments.remove(at: index)
+    ticketEditorDraft = draft
   }
 
   func laneDestinations(
@@ -357,10 +482,73 @@ extension TaskboardPanelView {
     )
   }
 
+  func moveTicketWithinLane(
+    ticketID: String,
+    laneID: String,
+    direction: Int
+  ) {
+    guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
+      return
+    }
+
+    guard let ticketIndex = board.lanes[laneIndex].tickets.firstIndex(where: { $0.id == ticketID }) else {
+      return
+    }
+
+    let destinationIndex = ticketIndex + direction
+    guard board.lanes[laneIndex].tickets.indices.contains(destinationIndex) else {
+      return
+    }
+
+    let ticket = board.lanes[laneIndex].tickets.remove(at: ticketIndex)
+    board.lanes[laneIndex].tickets.insert(ticket, at: destinationIndex)
+    selectedLaneID = laneID
+  }
+
+  func moveTicketToNextLane(
+    ticketID: String,
+    fromLaneID: String
+  ) {
+    let laneIDs = sortedLanes.map(\.id)
+
+    guard let laneIndex = laneIDs.firstIndex(of: fromLaneID) else {
+      return
+    }
+
+    let nextLaneIndex = laneIndex + 1
+    guard laneIDs.indices.contains(nextLaneIndex) else {
+      return
+    }
+
+    moveTicket(
+      ticketID: ticketID,
+      fromLaneID: fromLaneID,
+      toLaneID: laneIDs[nextLaneIndex]
+    )
+  }
+
+  func canMoveTicketWithinLane(
+    ticketID: String,
+    laneID: String,
+    direction: Int
+  ) -> Bool {
+    guard let lane = board.lanes.first(where: { $0.id == laneID }) else {
+      return false
+    }
+
+    guard let ticketIndex = lane.tickets.firstIndex(where: { $0.id == ticketID }) else {
+      return false
+    }
+
+    let destinationIndex = ticketIndex + direction
+    return lane.tickets.indices.contains(destinationIndex)
+  }
+
   func moveTicket(
     ticketID: String,
     fromLaneID: String,
-    toLaneID: String
+    toLaneID: String,
+    destinationIndex: Int? = nil
   ) {
     guard fromLaneID != toLaneID else {
       return
@@ -375,7 +563,11 @@ extension TaskboardPanelView {
     }
 
     let ticket = board.lanes[sourceLaneIndex].tickets.remove(at: ticketIndex)
-    board.lanes[destinationLaneIndex].tickets.append(ticket)
+    let insertIndex = min(
+      max(destinationIndex ?? board.lanes[destinationLaneIndex].tickets.count, 0),
+      board.lanes[destinationLaneIndex].tickets.count
+    )
+    board.lanes[destinationLaneIndex].tickets.insert(ticket, at: insertIndex)
     selectedLaneID = toLaneID
   }
 
@@ -446,6 +638,12 @@ extension TaskboardPanelView {
   func nextChecklistItemID() -> String {
     let id = "check-\(board.nextChecklistSequence)"
     board.nextChecklistSequence += 1
+    return id
+  }
+
+  func nextCommentID() -> String {
+    let id = "comment-\(board.nextCommentSequence)"
+    board.nextCommentSequence += 1
     return id
   }
 

@@ -9,6 +9,8 @@ struct LaneEditorDraft: Identifiable {
   var mode: Mode
   var title: String
   var templateID: String?
+  var hasWIPLimit: Bool
+  var wipLimit: Int
 
   var id: String {
     switch mode {
@@ -23,7 +25,9 @@ struct LaneEditorDraft: Identifiable {
     LaneEditorDraft(
       mode: .create,
       title: "",
-      templateID: nil
+      templateID: nil,
+      hasWIPLimit: false,
+      wipLimit: 1
     )
   }
 
@@ -33,7 +37,9 @@ struct LaneEditorDraft: Identifiable {
     LaneEditorDraft(
       mode: .edit(laneID: lane.id),
       title: lane.title,
-      templateID: lane.templateID
+      templateID: lane.templateID,
+      hasWIPLimit: lane.wipLimit != nil,
+      wipLimit: max(1, lane.wipLimit ?? 1)
     )
   }
 }
@@ -56,12 +62,17 @@ struct TicketEditorDraft: Identifiable {
   var mode: Mode
   var title: String
   var owner: String
+  var assigneesText: String
   var priority: TaskboardTicketPriority
   var labelsText: String
   var hasDueDate: Bool
   var dueDate: Date
   var checklistItems: [TaskboardChecklistItem]
   var pendingChecklistTitle: String
+  var descriptionMarkdown: String
+  var comments: [TaskboardComment]
+  var pendingCommentAuthor: String
+  var pendingCommentBody: String
 
   var id: String {
     switch mode {
@@ -79,12 +90,17 @@ struct TicketEditorDraft: Identifiable {
       mode: .create(laneID: laneID),
       title: "",
       owner: "",
+      assigneesText: "",
       priority: .medium,
       labelsText: "",
       hasDueDate: false,
       dueDate: Date(),
       checklistItems: [],
-      pendingChecklistTitle: ""
+      pendingChecklistTitle: "",
+      descriptionMarkdown: "",
+      comments: [],
+      pendingCommentAuthor: "",
+      pendingCommentBody: ""
     )
   }
 
@@ -98,12 +114,17 @@ struct TicketEditorDraft: Identifiable {
       mode: .edit(laneID: laneID, ticketID: ticket.id),
       title: ticket.title,
       owner: ticket.owner,
+      assigneesText: ticket.assignees.map(\.displayName).joined(separator: ", "),
       priority: ticket.priority,
       labelsText: ticket.labels.joined(separator: ", "),
       hasDueDate: parsedDueDate != nil,
       dueDate: parsedDueDate ?? Date(),
       checklistItems: ticket.checklist,
-      pendingChecklistTitle: ""
+      pendingChecklistTitle: "",
+      descriptionMarkdown: ticket.descriptionMarkdown,
+      comments: ticket.comments,
+      pendingCommentAuthor: "",
+      pendingCommentBody: ""
     )
   }
 }

@@ -6,11 +6,18 @@ extension TaskboardPanelView {
     for lane: TaskboardLane,
     visibleCount: Int
   ) -> String {
+    let baseCount: String
     if !isFilteringActive {
-      return "\(lane.tickets.count)"
+      baseCount = "\(lane.tickets.count)"
+    } else {
+      baseCount = "\(visibleCount)/\(lane.tickets.count)"
     }
 
-    return "\(visibleCount)/\(lane.tickets.count)"
+    if let wipLimit = lane.wipLimit {
+      return "\(baseCount) · WIP \(wipLimit)"
+    }
+
+    return baseCount
   }
 
   func clearFilters() {
@@ -41,6 +48,12 @@ extension TaskboardPanelView {
       }
 
       if !ownerFilter.isEmpty,
+        !ticket.assignees.contains(where: { assignee in
+          assignee.displayName.range(
+            of: ownerFilter,
+            options: .caseInsensitive
+          ) != nil
+        }),
         ticket.owner.range(
           of: ownerFilter,
           options: .caseInsensitive
@@ -93,6 +106,30 @@ extension TaskboardPanelView {
   ) -> String {
     let completedCount = ticket.checklist.filter(\.isComplete).count
     return "Checklist \(completedCount)/\(ticket.checklist.count)"
+  }
+
+  func assigneeSummary(
+    for ticket: TaskboardTicket
+  ) -> String {
+    if ticket.assignees.isEmpty {
+      return ticket.owner
+    }
+
+    if ticket.assignees.count == 1 {
+      return ticket.assignees[0].displayName
+    }
+
+    return "\(ticket.assignees[0].displayName) +\(ticket.assignees.count - 1)"
+  }
+
+  func laneIsOverWIPLimit(
+    _ lane: TaskboardLane
+  ) -> Bool {
+    guard let wipLimit = lane.wipLimit else {
+      return false
+    }
+
+    return lane.tickets.count > wipLimit
   }
 
   func parseISODate(
