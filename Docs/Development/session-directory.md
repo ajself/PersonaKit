@@ -42,6 +42,7 @@ Lifecycle legend:
 ## Partner Sync Workflows
 
 - `samwise-partner-sync` - owner: `samwise` - state: `active`
+- `samwise-coffee-checkpoint` - owner: `samwise` - state: `active`
 - `samwise-persona-hiring` - owner: `samwise` - state: `candidate`
 - `samwise-persona-hiring-calibration` - owner: `samwise` - state: `candidate`
 - `samwise-daily-closeout` - owner: `samwise` - state: `active`
@@ -54,7 +55,7 @@ Lifecycle legend:
 
 ## State Summary
 
-- `active`: 9 sessions
+- `active`: 10 sessions
 - `candidate`: 8 sessions
 - `deprecated`: 0 sessions
 

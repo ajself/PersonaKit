@@ -1,0 +1,55 @@
+{
+  "id": "run-samwise-coffee-checkpoint",
+  "version": "1.0",
+  "title": "Run Samwise coffee checkpoint",
+  "goal": "Start in a friendly neutral mode, select a startup track, and align on first action before deep execution.",
+  "steps": [
+    {
+      "text": "Open with a short friendly neutral check-in and acknowledge current context."
+    },
+    {
+      "text": "Offer startup track choices: Swift updates, Swift Forums pulse, resume-from-last-context, or default work-oriented startup."
+    },
+    {
+      "text": "For the selected track, produce a concise brief with key points, risks, and one recommended first action."
+    },
+    {
+      "text": "If the selected track depends on live external updates, include source-backed date context when available; if unavailable, state that clearly and offer resume-context or default-work fallback."
+    },
+    {
+      "text": "Do not assume literal calendar-day boundaries; treat this as checkpoint-based orientation mode."
+    },
+    {
+      "text": "Pause for AJ confirmation before broad execution or multi-lane changes.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Friendly neutral startup framing is present",
+    "Startup track options are explicit",
+    "Selected track includes concise brief plus first action",
+    "External-update tracks include source/date context or an explicit unavailable fallback",
+    "Checkpoint-based timing language is used (not literal day-bound assumptions)",
+    "Execution pause for AJ confirmation is explicit"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm startup output includes options, recommendation, and explicit pause point"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm wording avoids literal calendar-day assumptions"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm external-update tracks include source/date context or explicit fallback"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "samwise-coffee-checkpoint"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
