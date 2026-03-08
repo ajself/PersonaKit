@@ -147,6 +147,34 @@
       )
     }
 
+    func testTaskboardInlineQuickEdit() throws {
+      let board = TaskboardBoard.defaultBoard
+      let lane = try XCTUnwrap(board.lanes.first(where: { $0.id == "lane-3" }))
+      let ticket = try XCTUnwrap(lane.tickets.first)
+      let workspaceURL = try makeWorkspaceWithBoard(board)
+
+      let store = WorkspaceStore()
+      store.workspaceURL = workspaceURL
+      let view = makeHostingView(
+        workspaceStore: store,
+        snapshotSeed: TaskboardPanelSnapshotSeed(
+          selectedLaneID: lane.id,
+          inlineTicketEditorDraft: InlineTicketEditorDraft.edit(
+            ticket: ticket,
+            laneID: lane.id
+          )
+        ),
+        width: 1500,
+        height: 920
+      )
+
+      assertSnapshot(
+        of: view,
+        as: .image,
+        named: "taskboard-inline-quick-edit"
+      )
+    }
+
     func testTaskboardActiveDragTargetHighlight() throws {
       let board = TaskboardBoard.defaultBoard
       let lane = try XCTUnwrap(board.lanes.first(where: { $0.id == "lane-5" }))

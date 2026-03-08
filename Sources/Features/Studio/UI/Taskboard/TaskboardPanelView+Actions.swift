@@ -35,7 +35,23 @@ extension TaskboardPanelView {
       return
     }
 
+    inlineTicketEditorDraft = nil
     ticketEditorDraft = TicketEditorDraft.create(laneID: selectedLaneID)
+  }
+
+  func openInlineTicketEditor(
+    ticket: TaskboardTicket,
+    laneID: String
+  ) {
+    ticketEditorDraft = nil
+    inlineTicketEditorDraft = InlineTicketEditorDraft.edit(
+      ticket: ticket,
+      laneID: laneID
+    )
+  }
+
+  func cancelInlineTicketEditor() {
+    inlineTicketEditorDraft = nil
   }
 
   func editSelectedLane() {
@@ -419,6 +435,49 @@ extension TaskboardPanelView {
     }
 
     ticketEditorDraft = nil
+  }
+
+  func applyInlineTicketEditorDraft() {
+    guard var draft = inlineTicketEditorDraft else {
+      return
+    }
+
+    draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.assigneesText = draft.assigneesText.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.labelsText = draft.labelsText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !draft.title.isEmpty else {
+      return
+    }
+
+    let assignees = parsedAssignees(from: draft.assigneesText)
+    let labels = parsedLabels(from: draft.labelsText)
+
+    guard
+      let laneIndex = board.lanes.firstIndex(where: { $0.id == draft.laneID }),
+      let ticketIndex = board.lanes[laneIndex].tickets.firstIndex(where: { $0.id == draft.ticketID })
+    else {
+      inlineTicketEditorDraft = nil
+      return
+    }
+
+    board.lanes[laneIndex].tickets[ticketIndex].title = draft.title
+    board.lanes[laneIndex].tickets[ticketIndex].assignees = assignees
+    board.lanes[laneIndex].tickets[ticketIndex].labels = labels
+
+    board.lanes[laneIndex].tickets[ticketIndex].owner =
+      assignees.first?.displayName ?? "Unassigned"
+
+    recordInteractionEvent(
+      .editTicket,
+      details: [
+        "laneID": draft.laneID,
+        "mode": "inline",
+        "ticketID": draft.ticketID,
+      ]
+    )
+
+    inlineTicketEditorDraft = nil
   }
 
   func parsedLabels(

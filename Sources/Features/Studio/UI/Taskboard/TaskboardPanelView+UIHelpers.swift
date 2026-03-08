@@ -2,6 +2,79 @@ import Foundation
 import SwiftUI
 
 extension TaskboardPanelView {
+  func isInlineEditing(
+    ticketID: String,
+    laneID: String
+  ) -> Bool {
+    inlineTicketEditorDraft?.mode == .edit(laneID: laneID, ticketID: ticketID)
+  }
+
+  func inlineTicketTitleBinding(
+    fallback ticket: TaskboardTicket,
+    laneID: String
+  ) -> Binding<String> {
+    Binding(
+      get: {
+        let fallbackDraft = InlineTicketEditorDraft.edit(
+          ticket: ticket,
+          laneID: laneID
+        )
+        return inlineTicketEditorDraft?.title ?? fallbackDraft.title
+      },
+      set: { newValue in
+        guard var draft = inlineTicketEditorDraft else {
+          return
+        }
+        draft.title = newValue
+        inlineTicketEditorDraft = draft
+      }
+    )
+  }
+
+  func inlineTicketAssigneesBinding(
+    fallback ticket: TaskboardTicket,
+    laneID: String
+  ) -> Binding<String> {
+    Binding(
+      get: {
+        let fallbackDraft = InlineTicketEditorDraft.edit(
+          ticket: ticket,
+          laneID: laneID
+        )
+        return inlineTicketEditorDraft?.assigneesText ?? fallbackDraft.assigneesText
+      },
+      set: { newValue in
+        guard var draft = inlineTicketEditorDraft else {
+          return
+        }
+        draft.assigneesText = newValue
+        inlineTicketEditorDraft = draft
+      }
+    )
+  }
+
+  func inlineTicketLabelsBinding(
+    fallback ticket: TaskboardTicket,
+    laneID: String
+  ) -> Binding<String> {
+    Binding(
+      get: {
+        let fallbackDraft = InlineTicketEditorDraft.edit(
+          ticket: ticket,
+          laneID: laneID
+        )
+        return inlineTicketEditorDraft?.labelsText ?? fallbackDraft.labelsText
+      },
+      set: { newValue in
+        guard var draft = inlineTicketEditorDraft else {
+          return
+        }
+        draft.labelsText = newValue
+        inlineTicketEditorDraft = draft
+      }
+    )
+  }
+
   func ticketCountLabel(
     for lane: TaskboardLane,
     visibleCount: Int

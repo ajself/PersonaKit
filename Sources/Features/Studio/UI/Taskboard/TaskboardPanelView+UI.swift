@@ -333,16 +333,62 @@ extension TaskboardPanelView {
     _ ticket: TaskboardTicket,
     lane: TaskboardLane
   ) -> some View {
-    VStack(alignment: .leading, spacing: 6) {
+    let isInlineEditorOpen = isInlineEditing(
+      ticketID: ticket.id,
+      laneID: lane.id
+    )
+
+    return VStack(alignment: .leading, spacing: 6) {
       HStack(alignment: .top, spacing: 8) {
-        Text(ticket.title)
-          .font(.subheadline)
-          .fontWeight(.medium)
+        if isInlineEditorOpen {
+          TextField(
+            "Ticket title",
+            text: inlineTicketTitleBinding(
+              fallback: ticket,
+              laneID: lane.id
+            )
+          )
+          .textFieldStyle(.roundedBorder)
+          .font(.subheadline.weight(.medium))
+          .onSubmit {
+            applyInlineTicketEditorDraft()
+          }
+        } else {
+          Text(ticket.title)
+            .font(.subheadline)
+            .fontWeight(.medium)
+        }
 
         Spacer(minLength: 4)
 
+        Button {
+          if isInlineEditorOpen {
+            cancelInlineTicketEditor()
+          } else {
+            openInlineTicketEditor(
+              ticket: ticket,
+              laneID: lane.id
+            )
+          }
+        } label: {
+          Image(systemName: isInlineEditorOpen ? "xmark.circle.fill" : "pencil.circle")
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isInlineEditorOpen ? "Cancel quick edit" : "Quick edit ticket")
+        .help(isInlineEditorOpen ? "Cancel inline quick edit" : "Quick edit title, assignees, and labels")
+
         Menu {
+          Button("Quick Edit") {
+            openInlineTicketEditor(
+              ticket: ticket,
+              laneID: lane.id
+            )
+          }
+
+          Divider()
+
           Button("Edit Ticket…") {
+            inlineTicketEditorDraft = nil
             ticketEditorDraft = TicketEditorDraft.edit(
               ticket: ticket,
               laneID: lane.id
@@ -462,6 +508,52 @@ extension TaskboardPanelView {
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(.regularMaterial, in: Capsule())
+        }
+      }
+
+      if isInlineEditorOpen {
+        VStack(alignment: .leading, spacing: 8) {
+          TextField(
+            "Assignees (comma-separated)",
+            text: inlineTicketAssigneesBinding(
+              fallback: ticket,
+              laneID: lane.id
+            )
+          )
+          .textFieldStyle(.roundedBorder)
+          .font(.caption)
+          .onSubmit {
+            applyInlineTicketEditorDraft()
+          }
+
+          TextField(
+            "Labels (comma-separated)",
+            text: inlineTicketLabelsBinding(
+              fallback: ticket,
+              laneID: lane.id
+            )
+          )
+          .textFieldStyle(.roundedBorder)
+          .font(.caption)
+          .onSubmit {
+            applyInlineTicketEditorDraft()
+          }
+
+          HStack(spacing: 8) {
+            Button("Cancel") {
+              cancelInlineTicketEditor()
+            }
+
+            Button("Save") {
+              applyInlineTicketEditorDraft()
+            }
+            .disabled(
+              (inlineTicketEditorDraft?.title ?? ticket.title)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+            )
+          }
+          .font(.caption)
         }
       }
 

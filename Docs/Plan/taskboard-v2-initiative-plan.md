@@ -15,7 +15,8 @@ card-detail experience and reasonably think it is Trello.
 Taskboard has strong foundations, but the current experience still falls short
 of the intended Trello impression:
 
-1. Board interactions are still more awkward and click-heavy than they should be.
+1. Board interactions are improving, but keyboard-first triage and movement are
+   still more awkward and click-heavy than they should be.
 2. Card-detail depth and board-to-detail continuity still need polish.
 3. Snapshot baseline coverage is now complete, but parity review and diff-review
    discipline still need to prove the product clears the Trello bar.

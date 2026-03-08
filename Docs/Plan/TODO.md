@@ -39,7 +39,7 @@ Actions:
    - keep out-of-scope boundaries explicit
 2. Execute `P2` board interaction parity:
    - complete `NS0` reporting loop
-   - continue `NS1` throughput work including inline quick edit and keyboard-first triage
+   - continue `NS1` throughput work with keyboard-first triage and movement
 3. Execute `P3` card-detail parity and `P4` visual/accessibility parity.
 4. Execute `P5` AI-operable parity through the approved callable local surface.
 5. Close out active Taskboard work and run the delegated-commit retrospective.
@@ -62,6 +62,9 @@ Execution note:
   - `7/7` required scenarios are implemented and validated on this branch
   - editor-open snapshots use a board-plus-editor harness because plain macOS
     `NSHostingView` snapshots do not capture `.sheet` content
+- `NS1` inline quick edit is implemented in the current working tree:
+  - cards now support in-place editing for title, assignees, and labels
+  - snapshot coverage includes a dedicated inline quick-edit state
 
 ## Plan Hygiene Rules
 

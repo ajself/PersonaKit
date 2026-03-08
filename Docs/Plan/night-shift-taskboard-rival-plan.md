@@ -19,7 +19,7 @@ Trello-rival Taskboard experience.
    - in-lane drag reorder targeting
 3. Remaining focus:
    - complete `NS0` evidence/report loop
-   - continue `NS1` inline quick-edit and keyboard-speed paths before `NS2`
+   - continue `NS1` keyboard-speed paths before `NS2`
    - use the now-complete snapshot matrix as the visual regression lane during
      parity work
 4. Staffing and parity charter updates landed:
@@ -29,6 +29,9 @@ Trello-rival Taskboard experience.
    - required coverage is now `7/7`
    - editor-open states are covered with a board-plus-editor harness so visual
      evidence includes the editing surface rather than a missing macOS sheet
+6. Second `NS1` throughput slice landed:
+   - cards now support inline quick edit for title, assignees, and labels
+   - snapshot evidence includes a dedicated inline quick-edit state
 
 ## Branch Strategy
 

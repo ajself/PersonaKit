@@ -129,6 +129,50 @@ struct TicketEditorDraft: Identifiable {
   }
 }
 
+struct InlineTicketEditorDraft: Identifiable {
+  enum Mode: Equatable {
+    case edit(laneID: String, ticketID: String)
+  }
+
+  var mode: Mode
+  var title: String
+  var assigneesText: String
+  var labelsText: String
+
+  var id: String {
+    switch mode {
+    case .edit(let laneID, let ticketID):
+      return "\(laneID)::\(ticketID)"
+    }
+  }
+
+  var laneID: String {
+    switch mode {
+    case .edit(let laneID, _):
+      return laneID
+    }
+  }
+
+  var ticketID: String {
+    switch mode {
+    case .edit(_, let ticketID):
+      return ticketID
+    }
+  }
+
+  static func edit(
+    ticket: TaskboardTicket,
+    laneID: String
+  ) -> InlineTicketEditorDraft {
+    return InlineTicketEditorDraft(
+      mode: .edit(laneID: laneID, ticketID: ticket.id),
+      title: ticket.title,
+      assigneesText: ticket.assignees.map(\.displayName).joined(separator: ", "),
+      labelsText: ticket.labels.joined(separator: ", ")
+    )
+  }
+}
+
 struct PendingTicketDeletion: Identifiable {
   let laneID: String
   let ticketID: String

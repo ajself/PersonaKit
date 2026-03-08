@@ -35,6 +35,7 @@ snapshot evidence instead of subjective memory.
    - Lane editor open
    - Ticket editor open
    - Active drag target highlight state
+   - Inline quick edit state (extra parity scenario)
 2. Harness note:
    - Lane-editor and ticket-editor baselines use a board-plus-editor composite
      harness because plain macOS `NSHostingView` image snapshots do not capture

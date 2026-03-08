@@ -9,6 +9,7 @@ struct TaskboardPanelSnapshotSeed {
   var selectedLaneID: String?
   var laneEditorDraft: LaneEditorDraft?
   var ticketEditorDraft: TicketEditorDraft?
+  var inlineTicketEditorDraft: InlineTicketEditorDraft?
   var activeDropLaneID: String?
   var activeDropTicketID: String?
 }
@@ -25,6 +26,7 @@ struct TaskboardPanelView: View {
   @State var selectedLaneID: String?
   @State var laneEditorDraft: LaneEditorDraft?
   @State var ticketEditorDraft: TicketEditorDraft?
+  @State var inlineTicketEditorDraft: InlineTicketEditorDraft?
   @State var pendingLaneDeletion: TaskboardLane?
   @State var pendingTicketDeletion: PendingTicketDeletion?
   @State var activeDropLaneID: String?
@@ -182,6 +184,15 @@ struct TaskboardPanelView: View {
           .id
       }
 
+      if let inlineTicketEditorDraft,
+        !updatedBoard.lanes.contains(where: { lane in
+          lane.id == inlineTicketEditorDraft.laneID
+            && lane.tickets.contains(where: { $0.id == inlineTicketEditorDraft.ticketID })
+        })
+      {
+        self.inlineTicketEditorDraft = nil
+      }
+
       persistBoard()
     }
   }
@@ -194,6 +205,7 @@ struct TaskboardPanelView: View {
     selectedLaneID = snapshotSeed.selectedLaneID
     laneEditorDraft = snapshotSeed.laneEditorDraft
     ticketEditorDraft = snapshotSeed.ticketEditorDraft
+    inlineTicketEditorDraft = snapshotSeed.inlineTicketEditorDraft
     activeDropLaneID = snapshotSeed.activeDropLaneID
     activeDropTicketID = snapshotSeed.activeDropTicketID
     hasAppliedSnapshotSeed = true
