@@ -19,7 +19,7 @@ Trello-rival Taskboard experience.
    - in-lane drag reorder targeting
 3. Remaining focus:
    - complete `NS0` evidence/report loop
-   - continue `NS1` keyboard-driven movement polish before `NS2`
+   - continue interaction polish before `NS2`
    - use the now-complete snapshot matrix as the visual regression lane during
      parity work
 4. Staffing and parity charter updates landed:
@@ -40,6 +40,11 @@ Trello-rival Taskboard experience.
    - the selected ticket can now hand off left/right between adjacent lanes
      from the keyboard
    - snapshot evidence now includes a dedicated selected-ticket state
+9. Fifth `NS1` throughput slice landed:
+   - the selected ticket can now reorder up/down within the active lane from
+     the keyboard
+   - the keyboard-first movement loop now covers selection, quick edit,
+     handoff, and in-lane reordering
 
 ## Branch Strategy
 

@@ -133,6 +133,40 @@ extension TaskboardPanelView {
     )
   }
 
+  func moveSelectedTicketWithinLane(
+    direction: Int
+  ) {
+    guard
+      let selectedLaneID,
+      let selectedTicketID
+    else {
+      return
+    }
+
+    moveTicketWithinLane(
+      ticketID: selectedTicketID,
+      laneID: selectedLaneID,
+      direction: direction
+    )
+  }
+
+  func canMoveSelectedTicketWithinLane(
+    direction: Int
+  ) -> Bool {
+    guard
+      let selectedLaneID,
+      let selectedTicketID
+    else {
+      return false
+    }
+
+    return canMoveTicketWithinLane(
+      ticketID: selectedTicketID,
+      laneID: selectedLaneID,
+      direction: direction
+    )
+  }
+
   func editSelectedLane() {
     guard
       let selectedLaneID,

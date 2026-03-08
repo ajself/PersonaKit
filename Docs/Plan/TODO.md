@@ -39,7 +39,7 @@ Actions:
    - keep out-of-scope boundaries explicit
 2. Execute `P2` board interaction parity:
    - complete `NS0` reporting loop
-   - continue `NS1` throughput work with remaining keyboard-first movement polish
+   - continue `NS1` throughput work with remaining interaction polish
 3. Execute `P3` card-detail parity and `P4` visual/accessibility parity.
 4. Execute `P5` AI-operable parity through the approved callable local surface.
 5. Close out active Taskboard work and run the delegated-commit retrospective.
@@ -65,11 +65,12 @@ Execution note:
 - `NS1` inline quick edit is implemented in the current working tree:
   - cards now support in-place editing for title, assignees, and labels
   - snapshot coverage includes a dedicated inline quick-edit state
-- Keyboard-first ticket selection and handoff are implemented in the current working tree:
+- Keyboard-first ticket movement baseline is implemented in the current working tree:
   - selected-ticket state exists alongside lane selection
   - header shortcuts now navigate selected tickets and open inline quick edit
   - selected tickets can now hand off left/right between lanes from the keyboard
-  - in-lane keyboard reordering is still an open `NS1` step
+  - selected tickets can now reorder up/down within the active lane from the keyboard
+  - remaining `P2` work is now interaction polish plus the open `NS0` evidence loop
 
 ## Plan Hygiene Rules
 

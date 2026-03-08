@@ -150,6 +150,24 @@ extension TaskboardPanelView {
       .disabled(selectedTicketID == nil)
 
       Menu {
+        Button("Move Up") {
+          moveSelectedTicketWithinLane(direction: -1)
+        }
+        .keyboardShortcut(.upArrow, modifiers: [.control, .command])
+        .disabled(!canMoveSelectedTicketWithinLane(direction: -1))
+
+        Button("Move Down") {
+          moveSelectedTicketWithinLane(direction: 1)
+        }
+        .keyboardShortcut(.downArrow, modifiers: [.control, .command])
+        .disabled(!canMoveSelectedTicketWithinLane(direction: 1))
+      } label: {
+        Label("Reorder", systemImage: "arrow.up.arrow.down.circle")
+      }
+      .help("Reorder the selected ticket within its lane with Control-Command up/down.")
+      .disabled(selectedTicketID == nil)
+
+      Menu {
         Button("Move Left") {
           moveSelectedTicketBetweenLanes(direction: -1)
         }
