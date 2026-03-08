@@ -11,6 +11,7 @@ Provide a compact index of active vs archived plan artifacts.
 ## Active Plan Docs
 
 - `TODO.md` (ordered execution queue)
+- `admin-ticket-planning-feature-brief.md`
 - `git-history-gardener-proposals.md`
 - `git-history-gardener-log.md`
 - `pack-gardener-log.md`

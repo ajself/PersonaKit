@@ -1,0 +1,46 @@
+{
+  "id": "run-ticket-board-red-pen-pass",
+  "version": "1.0",
+  "title": "Run ticket board red-pen interaction pass",
+  "goal": "Assess ticket-planning board interaction quality and return prioritized, evidence-backed UX corrections before parity claims.",
+  "steps": [
+    {
+      "text": "Define in-scope ticket-board flows and benchmark references for the review pass."
+    },
+    {
+      "text": "Evaluate lane and ticket flows using interaction-quality-rubric and planning-board-ux-patterns."
+    },
+    {
+      "text": "Record findings by severity using interaction-quality-report-template with deterministic IDs and reproduction notes."
+    },
+    {
+      "text": "Compute quality score and classify result (`go`, `go-with-notes`, `stop`)."
+    },
+    {
+      "text": "Pause for AJ review before implementing any major or blocker remediation.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Review output includes all required report-template sections",
+    "Every blocker or major finding has owner and disposition",
+    "Scorecard includes evidence per rubric dimension",
+    "Recommendation order is prioritized by user impact and risk"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm report includes scorecard, findings list, and stop/go classification"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm blocker findings include reproducible steps and proposed fixes"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "assess-ticket-board-interaction-quality"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

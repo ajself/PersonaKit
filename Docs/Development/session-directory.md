@@ -19,6 +19,7 @@ root `.personakit`.
 - `studio-boundary` - owner: `studio-boundary-guardian`
 - `studio-coverage` - owner: `studio-coverage-architect`
 - `studio-integration` - owner: `studio-integration-coordinator`
+- `studio-interaction-quality` - owner: `studio-interaction-quality-lead`
 - `studio-reliability` - owner: `studio-reliability-engineer`
 - `studio-workflow` - owner: `studio-workflow-operator`
 
