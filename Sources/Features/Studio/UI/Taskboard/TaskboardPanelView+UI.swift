@@ -377,6 +377,7 @@ extension TaskboardPanelView {
       ticketID: ticket.id,
       laneID: lane.id
     )
+    let showsCardActionMenu = selectedTicketID == ticket.id || isInlineEditorOpen
 
     return VStack(alignment: .leading, spacing: 6) {
       if !ticket.labels.isEmpty {
@@ -426,87 +427,89 @@ extension TaskboardPanelView {
 
         Spacer(minLength: 4)
 
-        Menu {
-          Button("Quick Edit") {
-            openInlineTicketEditor(
-              ticket: ticket,
-              laneID: lane.id
-            )
-          }
+        if showsCardActionMenu {
+          Menu {
+            Button("Quick Edit") {
+              openInlineTicketEditor(
+                ticket: ticket,
+                laneID: lane.id
+              )
+            }
 
-          Divider()
+            Divider()
 
-          Button("Edit Ticket…") {
-            openTicketEditor(
-              ticket: ticket,
-              laneID: lane.id
-            )
-          }
+            Button("Edit Ticket…") {
+              openTicketEditor(
+                ticket: ticket,
+                laneID: lane.id
+              )
+            }
 
-          Button("Move Up") {
-            moveTicketWithinLane(
-              ticketID: ticket.id,
-              laneID: lane.id,
-              direction: -1
-            )
-          }
-          .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: -1))
+            Button("Move Up") {
+              moveTicketWithinLane(
+                ticketID: ticket.id,
+                laneID: lane.id,
+                direction: -1
+              )
+            }
+            .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: -1))
 
-          Button("Move Down") {
-            moveTicketWithinLane(
-              ticketID: ticket.id,
-              laneID: lane.id,
-              direction: 1
-            )
-          }
-          .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: 1))
+            Button("Move Down") {
+              moveTicketWithinLane(
+                ticketID: ticket.id,
+                laneID: lane.id,
+                direction: 1
+              )
+            }
+            .disabled(!canMoveTicketWithinLane(ticketID: ticket.id, laneID: lane.id, direction: 1))
 
-          Divider()
+            Divider()
 
-          Button("Move Left") {
-            moveTicketRelative(
-              ticketID: ticket.id,
-              fromLaneID: lane.id,
-              direction: -1
-            )
-          }
-          .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: -1))
+            Button("Move Left") {
+              moveTicketRelative(
+                ticketID: ticket.id,
+                fromLaneID: lane.id,
+                direction: -1
+              )
+            }
+            .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: -1))
 
-          Button("Move Right") {
-            moveTicketRelative(
-              ticketID: ticket.id,
-              fromLaneID: lane.id,
-              direction: 1
-            )
-          }
-          .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: 1))
+            Button("Move Right") {
+              moveTicketRelative(
+                ticketID: ticket.id,
+                fromLaneID: lane.id,
+                direction: 1
+              )
+            }
+            .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: 1))
 
-          Menu("Move To Lane") {
-            ForEach(laneDestinations(excludingLaneID: lane.id)) { destination in
-              Button(destination.title) {
-                moveTicket(
-                  ticketID: ticket.id,
-                  fromLaneID: lane.id,
-                  toLaneID: destination.id
-                )
+            Menu("Move To Lane") {
+              ForEach(laneDestinations(excludingLaneID: lane.id)) { destination in
+                Button(destination.title) {
+                  moveTicket(
+                    ticketID: ticket.id,
+                    fromLaneID: lane.id,
+                    toLaneID: destination.id
+                  )
+                }
               }
             }
-          }
-          .disabled(sortedLanes.count <= 1)
+            .disabled(sortedLanes.count <= 1)
 
-          Divider()
+            Divider()
 
-          Button("Delete Ticket", role: .destructive) {
-            pendingTicketDeletion = PendingTicketDeletion(
-              laneID: lane.id,
-              ticketID: ticket.id,
-              ticketTitle: ticket.title
-            )
+            Button("Delete Ticket", role: .destructive) {
+              pendingTicketDeletion = PendingTicketDeletion(
+                laneID: lane.id,
+                ticketID: ticket.id,
+                ticketTitle: ticket.title
+              )
+            }
+          } label: {
+            Image(systemName: "ellipsis.circle")
           }
-        } label: {
-          Image(systemName: "ellipsis.circle")
+          .controlSize(.small)
         }
-        .controlSize(.small)
       }
 
       HStack(spacing: 6) {

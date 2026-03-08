@@ -58,6 +58,10 @@ Trello-rival Taskboard experience.
      quick-edit and lane-move icon cluster
    - double-click opens the full ticket editor so card detail is a more direct
      interaction
+13. Fourth `P2` polish slice after the keyboard baseline landed:
+   - unselected cards no longer show the overflow action icon by default
+   - the action menu only appears on the selected or inline-edited card, which
+     keeps the default board quieter without removing action access
 
 ## Branch Strategy
 

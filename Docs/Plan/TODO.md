@@ -82,6 +82,10 @@ Execution note:
   - the always-visible quick-edit and lane-move buttons are gone from the card face
   - cards now keep one overflow menu visible while double-click opens the full ticket editor
   - remaining `P2` work is deeper card/detail polish plus the open `NS0` evidence loop
+- Default card action chrome has been reduced again in the current working tree:
+  - unselected cards no longer show even the overflow menu icon by default
+  - selected or inline-edited cards still surface the overflow menu so keyboard and menu-driven actions remain available
+  - remaining `P2` work is deeper card/detail polish plus the open `NS0` evidence loop
 
 ## Plan Hygiene Rules
 
