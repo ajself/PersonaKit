@@ -24,6 +24,12 @@
     "pack-gardening-standards",
     "gardening-v2-checklist",
     "gardening-log-contract",
+    "gardening-health-snapshot-contract",
+    "pack-coverage-auditor-contract",
+    "policy-conflict-detector-contract",
+    "self-gardening-safety-preflight-contract",
+    "gardening-recommendation-scoring-contract",
+    "gardening-recommendation-feedback-contract",
     "non-goals",
     "tools-and-constraints"
   ],
@@ -36,6 +42,9 @@
     "notes": [
       "Do not apply broad pack/session rewrites without explicit approval.",
       "Log affected IDs and validation status for every accepted change.",
+      "Record health snapshot and recommendation feedback updates for each maintenance pass.",
+      "Recommendation ranking must include deterministic score breakdown and why-now explanation.",
+      "Run coverage and policy/safety preflight checks before applying non-trivial self-gardening updates.",
       "Self-gardening updates must use the same review stop points and cannot bypass approval gates."
     ]
   }

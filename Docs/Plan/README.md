@@ -21,6 +21,7 @@ Provide a compact index of active vs archived plan artifacts.
 - `git-history-gardener-log.md`
 - `pack-gardener-log.md`
 - `pack-session-improvement-backlog.md`
+- `gardening-tools-roadmap.md`
 - `partner-context-log.md`
 - `partner-handoff-register.md`
 

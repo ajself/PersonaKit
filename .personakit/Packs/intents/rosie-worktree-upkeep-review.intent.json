@@ -27,6 +27,12 @@
   ],
   "includesEssentialIds": [
     "gardening-log-contract",
+    "gardening-health-snapshot-contract",
+    "gardening-recommendation-scoring-contract",
+    "gardening-recommendation-feedback-contract",
+    "pack-coverage-auditor-contract",
+    "policy-conflict-detector-contract",
+    "self-gardening-safety-preflight-contract",
     "gardening-v2-checklist",
     "non-goals",
     "pack-gardening-standards",
@@ -43,6 +49,7 @@
     "notes": [
       "Pause for AJ review before any history-altering lane-to-main integration.",
       "Record lane scope, affected IDs, and validation status in partner and gardening logs.",
+      "Run coverage, policy-conflict, and safety-preflight checks before lane-to-main integration steps.",
       "If lane/main sync conflicts appear, stop and present a bounded resolution plan before applying edits.",
       "If laneBranch or integrationBranch differ from approved scope, stop and request AJ confirmation before proceeding."
     ]

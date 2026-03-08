@@ -17,6 +17,9 @@
       "text": "Run `gardening-v2-checklist` and capture pass status before recommendations are finalized."
     },
     {
+      "text": "Run coverage auditing, policy-conflict detection, and safety-preflight checks; record outputs before review and integration steps."
+    },
+    {
       "text": "Pause for AJ review before applying non-trivial updates or performing lane-to-main integration in the main worktree.",
       "requiresReview": true
     },
@@ -31,6 +34,7 @@
     "Scope verification is recorded for the active upkeep pass",
     "Partner and gardening logs capture affected IDs and decisions",
     "Gardening v2 checklist status is recorded before execution",
+    "Coverage, policy-conflict, and safety-preflight checks are recorded and passing before lane-to-main integration",
     "No history-altering lane-to-main integration occurs without AJ review",
     "Commit authorization mode is explicit for any commit-ready changes",
     "Validation status is recorded after approved updates and sync",

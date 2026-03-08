@@ -12,6 +12,18 @@ Centralized machine-readable logs for gardening workflows.
 
 - `gardening-events.jsonl`: shared event stream for all gardening sessions.
 - `gardening-events.schema.json`: base schema for shared event entries.
+- `gardening-health-snapshots.jsonl`: deterministic health snapshot stream.
+- `gardening-health-snapshots.schema.json`: schema for health snapshots.
+- `gardening-recommendations.jsonl`: ranked `GREC-*` recommendation stream.
+- `gardening-recommendations.schema.json`: schema for recommendation scoring output.
+- `gardening-recommendation-feedback.jsonl`: recommendation decision/outcome stream.
+- `gardening-recommendation-feedback.schema.json`: schema for recommendation feedback entries.
+- `gardening-pack-coverage.jsonl`: pack graph coverage snapshot stream.
+- `gardening-pack-coverage.schema.json`: schema for coverage snapshots.
+- `gardening-policy-conflicts.jsonl`: policy conflict detector stream.
+- `gardening-policy-conflicts.schema.json`: schema for policy conflict findings.
+- `gardening-safety-preflight.jsonl`: self-gardening safety preflight stream.
+- `gardening-safety-preflight.schema.json`: schema for safety preflight entries.
 - `git-history-gardener.jsonl`: session-specific git-history log profile.
 - `git-history-gardener.schema.json`: session-specific schema extension profile.
 - `persona-hiring-reviews.jsonl`: reverse-interview outcome stream for persona hiring assessments.
@@ -24,6 +36,12 @@ Centralized machine-readable logs for gardening workflows.
 
 When a gardening session writes to a session-specific JSONL file, it should also
 mirror accepted decisions into `gardening-events.jsonl`.
+Health snapshots and recommendation feedback should be updated for each
+maintenance pass.
+Recommendation ranking updates should also be appended to
+`gardening-recommendations.jsonl`.
+Coverage, policy-conflict, and safety-preflight updates should also be appended
+for each non-trivial gardening pass.
 
 ## Validation
 

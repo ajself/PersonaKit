@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/gardening-recommendation-feedback.schema.json",
+  "title": "Gardening Recommendation Feedback JSONL Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "date",
+    "sessionId",
+    "recommendationId",
+    "tool",
+    "summary",
+    "priority",
+    "decision",
+    "outcome",
+    "evidenceRefs",
+    "nextAction",
+    "reviewer"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^GRF-[0-9]{4}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recommendationId": {
+      "type": "string",
+      "pattern": "^GREC-[0-9]{3}$"
+    },
+    "tool": {
+      "type": "string",
+      "enum": [
+        "gardening-health-snapshot",
+        "gardening-recommendation-engine",
+        "recommendation-feedback-log",
+        "pack-coverage-auditor",
+        "policy-conflict-detector",
+        "self-gardening-safety-check"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "deferred",
+        "rejected"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "improved",
+        "no-change",
+        "regressed",
+        "not-measured"
+      ]
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nextAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

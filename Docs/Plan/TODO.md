@@ -8,7 +8,40 @@ Keep execution focused. This file lists only actionable, in-order tasks.
 
 ## Action Queue (In Order)
 
-### 1) Git History Gardening Cadence (Execute Next, Ongoing)
+### 1) Gardening Tooling Operations (Ongoing)
+
+Plan source:
+
+- `Docs/Plan/gardening-tools-roadmap.md`
+- `Docs/Plan/logs/gardening-health-snapshots.jsonl`
+- `Docs/Plan/logs/gardening-recommendations.jsonl`
+- `Docs/Plan/logs/gardening-recommendation-feedback.jsonl`
+- `Docs/Plan/logs/gardening-pack-coverage.jsonl`
+- `Docs/Plan/logs/gardening-policy-conflicts.jsonl`
+- `Docs/Plan/logs/gardening-safety-preflight.jsonl`
+
+Objective:
+
+- Keep Rosie’s full gardening toolchain healthy and current across upkeep passes.
+
+Actions:
+
+1. Keep health snapshots and ranked `GREC-*` recommendations current for each gardening pass.
+2. Keep coverage snapshots, policy-conflict logs, and safety preflight logs updated.
+3. If any detector reports failures, stop and record a bounded remediation plan.
+4. Keep log checks green after each update.
+
+Exit criteria:
+
+1. All phase 1-4 artifacts remain validated and in active use.
+2. Detector outputs remain deterministic and actionable.
+3. Any policy/safety failure is captured before non-trivial edits execute.
+
+Execution note:
+
+- Phase 1-4 tooling landed on 2026-03-07; this queue is now operational upkeep.
+
+### 2) Git History Gardening Cadence (Ongoing)
 
 Plan source:
 
@@ -35,7 +68,7 @@ Execution note:
 
 - Analysis pass #4 completed on 2026-03-07 with no new pending proposals.
 
-### 2) Samwise Daily Closeout Ritual (Ongoing)
+### 3) Samwise Daily Closeout Ritual (Ongoing)
 
 Plan source:
 

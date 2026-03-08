@@ -17,6 +17,18 @@ For each project using this pack, maintain:
 2. `Docs/Plan/pack-session-improvement-backlog.md`
 3. `Docs/Plan/logs/gardening-events.jsonl`
 4. `Docs/Plan/logs/gardening-events.schema.json`
+5. `Docs/Plan/logs/gardening-health-snapshots.jsonl`
+6. `Docs/Plan/logs/gardening-health-snapshots.schema.json`
+7. `Docs/Plan/logs/gardening-recommendation-feedback.jsonl`
+8. `Docs/Plan/logs/gardening-recommendation-feedback.schema.json`
+9. `Docs/Plan/logs/gardening-recommendations.jsonl`
+10. `Docs/Plan/logs/gardening-recommendations.schema.json`
+11. `Docs/Plan/logs/gardening-pack-coverage.jsonl`
+12. `Docs/Plan/logs/gardening-pack-coverage.schema.json`
+13. `Docs/Plan/logs/gardening-policy-conflicts.jsonl`
+14. `Docs/Plan/logs/gardening-policy-conflicts.schema.json`
+15. `Docs/Plan/logs/gardening-safety-preflight.jsonl`
+16. `Docs/Plan/logs/gardening-safety-preflight.schema.json`
 
 ## Maintenance Cadence
 
@@ -42,6 +54,12 @@ Each log entry should include:
 - verification status
 
 Each JSONL entry should follow `gardening-log-contract` required fields.
+Each maintenance pass should also record one health snapshot and any accepted
+or deferred recommendation outcomes.
+Recommendation updates should include ranked `GREC-*` entries with deterministic
+score breakdown and explanation fields.
+Each maintenance pass should record coverage snapshot, policy-conflict detector
+status, and self-gardening safety preflight status.
 
 ## Guardrails
 

@@ -20,6 +20,15 @@
       "text": "Update markdown and JSONL maintenance logs with findings and prioritized recommendations."
     },
     {
+      "text": "Record one health snapshot and update recommendation feedback entries before review pause."
+    },
+    {
+      "text": "Publish ranked `GREC-*` recommendations with score breakdown, why-now rationale, and expected impact."
+    },
+    {
+      "text": "Run policy-conflict detection, self-gardening safety preflight, and pack-coverage auditing checks before review pause."
+    },
+    {
       "text": "Pause for review before applying non-trivial pack/session changes.",
       "requiresReview": true
     },
@@ -30,6 +39,9 @@
   "acceptanceCriteria": [
     "Maintenance log entry is recorded for the active phase",
     "JSONL gardening entry is recorded using the shared contract",
+    "Health snapshot and recommendation feedback logs are updated for the pass",
+    "Ranked recommendation output is recorded with deterministic scoring and explanations",
+    "Coverage and policy/safety preflight checks are recorded and passing before non-trivial updates",
     "Self-gardening passes are explicitly labeled when gardener-owned artifacts are modified",
     "Gardening v2 checklist pass status is recorded",
     "Improvement backlog is updated with prioritized follow-ups",

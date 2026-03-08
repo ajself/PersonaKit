@@ -7,6 +7,12 @@
     "pack-gardening-standards",
     "gardening-v2-checklist",
     "gardening-log-contract",
+    "gardening-health-snapshot-contract",
+    "pack-coverage-auditor-contract",
+    "policy-conflict-detector-contract",
+    "self-gardening-safety-preflight-contract",
+    "gardening-recommendation-scoring-contract",
+    "gardening-recommendation-feedback-contract",
     "environment",
     "non-goals",
     "tools-and-constraints"

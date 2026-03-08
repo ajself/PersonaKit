@@ -21,10 +21,11 @@ lane worktree.
 1. Confirm active lane scope and AJ approval are recorded in partner logs.
 2. Sync lane from latest `main` before starting new gardening changes.
 3. Run approved gardening updates with bounded scope and required logs.
-4. Commit accepted updates on `rosies-garden`.
-5. Rebase or replay lane commits onto `main` in the main worktree.
-6. Sync updated `main` back onto `rosies-garden` for the next pass baseline.
-7. Record validation status and residual risks after each integration cycle.
+4. Run coverage, policy-conflict, and safety-preflight checks before integration.
+5. Commit accepted updates on `rosies-garden`.
+6. Rebase or replay lane commits onto `main` in the main worktree.
+7. Sync updated `main` back onto `rosies-garden` for the next pass baseline.
+8. Record validation status and residual risks after each integration cycle.
 
 ## Required Records
 
@@ -34,6 +35,9 @@ For each upkeep cycle, update:
 2. `Docs/Plan/partner-handoff-register.md`
 3. `Docs/Plan/pack-gardener-log.md`
 4. `Docs/Plan/logs/gardening-events.jsonl`
+5. `Docs/Plan/logs/gardening-pack-coverage.jsonl`
+6. `Docs/Plan/logs/gardening-policy-conflicts.jsonl`
+7. `Docs/Plan/logs/gardening-safety-preflight.jsonl`
 
 ## Guardrails
 
