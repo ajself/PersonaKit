@@ -149,6 +149,24 @@ extension TaskboardPanelView {
       .keyboardShortcut(.return, modifiers: [.command])
       .disabled(selectedTicketID == nil)
 
+      Menu {
+        Button("Move Left") {
+          moveSelectedTicketBetweenLanes(direction: -1)
+        }
+        .keyboardShortcut(.leftArrow, modifiers: [.control, .command])
+        .disabled(!canMoveSelectedTicketBetweenLanes(direction: -1))
+
+        Button("Move Right") {
+          moveSelectedTicketBetweenLanes(direction: 1)
+        }
+        .keyboardShortcut(.rightArrow, modifiers: [.control, .command])
+        .disabled(!canMoveSelectedTicketBetweenLanes(direction: 1))
+      } label: {
+        Label("Handoff", systemImage: "arrow.left.arrow.right.circle")
+      }
+      .help("Handoff the selected ticket left or right with Control-Command arrow shortcuts.")
+      .disabled(selectedTicketID == nil)
+
       Button {
         editSelectedLane()
       } label: {

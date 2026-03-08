@@ -32,6 +32,7 @@ snapshot evidence instead of subjective memory.
    - Default seeded board state
    - Dense board state
    - Selected lane state
+   - Selected ticket state (extra parity scenario)
    - Lane editor open
    - Ticket editor open
    - Active drag target highlight state

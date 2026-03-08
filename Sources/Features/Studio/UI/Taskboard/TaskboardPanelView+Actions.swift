@@ -103,6 +103,36 @@ extension TaskboardPanelView {
     )
   }
 
+  func moveSelectedTicketBetweenLanes(
+    direction: Int
+  ) {
+    guard
+      let selectedLaneID,
+      let selectedTicketID
+    else {
+      return
+    }
+
+    moveTicketRelative(
+      ticketID: selectedTicketID,
+      fromLaneID: selectedLaneID,
+      direction: direction
+    )
+  }
+
+  func canMoveSelectedTicketBetweenLanes(
+    direction: Int
+  ) -> Bool {
+    guard let selectedLaneID, selectedTicketID != nil else {
+      return false
+    }
+
+    return canMoveTicketBetweenLanes(
+      fromLaneID: selectedLaneID,
+      direction: direction
+    )
+  }
+
   func editSelectedLane() {
     guard
       let selectedLaneID,
@@ -738,6 +768,7 @@ extension TaskboardPanelView {
     let ticket = board.lanes[laneIndex].tickets.remove(at: sourceIndex)
     board.lanes[laneIndex].tickets.insert(ticket, at: adjustedDestinationIndex)
     selectedLaneID = laneID
+    selectedTicketID = ticketID
     recordInteractionEvent(
       .reorderTicket,
       details: [

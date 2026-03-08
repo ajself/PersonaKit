@@ -19,7 +19,7 @@ Trello-rival Taskboard experience.
    - in-lane drag reorder targeting
 3. Remaining focus:
    - complete `NS0` evidence/report loop
-   - continue `NS1` keyboard-driven movement and handoff paths before `NS2`
+   - continue `NS1` keyboard-driven movement polish before `NS2`
    - use the now-complete snapshot matrix as the visual regression lane during
      parity work
 4. Staffing and parity charter updates landed:
@@ -36,6 +36,10 @@ Trello-rival Taskboard experience.
    - Taskboard now tracks a selected ticket alongside the selected lane
    - header shortcuts can move selection through tickets and open inline quick
      edit on the selected card
+8. Fourth `NS1` throughput slice landed:
+   - the selected ticket can now hand off left/right between adjacent lanes
+     from the keyboard
+   - snapshot evidence now includes a dedicated selected-ticket state
 
 ## Branch Strategy
 
