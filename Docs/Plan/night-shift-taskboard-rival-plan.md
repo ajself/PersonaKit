@@ -95,9 +95,12 @@ Depends on:
 
 Scope:
 
-1. Add `Taskboard` UX telemetry hooks (event logs for key interactions).
+1. Add `Taskboard` UX telemetry hooks (event logs for key interactions) at:
+   - `.personakit/Taskboard/night-shift/interaction-events.jsonl`
 2. Add explicit ticket workflow states needed for throughput measurement.
-3. Add nightly report template and artifact location.
+3. Add nightly report template and artifact location:
+   - `Docs/Plan/templates/taskboard-night-shift-report-template.md`
+   - `.personakit/Taskboard/night-shift/interaction-report.md`
 
 Verifiable outcomes:
 
@@ -107,7 +110,8 @@ Verifiable outcomes:
    - move ticket (all variants)
    - reorder ticket
    - collapse/expand lane
-2. One deterministic report generated from real interaction data.
+2. One deterministic report generated from real interaction data at
+   `.personakit/Taskboard/night-shift/interaction-report.md`.
 3. `swift test` and `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio` pass.
 
 ## NS1: Interaction Throughput Core
@@ -211,6 +215,35 @@ Night Shift Handoff (Samwise)
 - Validation results
 - Proposed commit message(s) only (no commit unless approved)
 - Next 3 actions for resume
+
+## Night Shift Progress (2026-03-07 Checkpoint)
+
+Completed:
+
+1. `NS0` telemetry/report foundation is implemented:
+   - interaction events JSONL writer/reader + deterministic report builder
+   - Taskboard persistence wiring for events + report
+   - Taskboard header action to generate report
+   - deterministic telemetry tests
+2. First `NS1` throughput ticket is implemented:
+   - one-click ticket lane movement (`previous` + `next`) on card chrome
+   - in-lane drag reorder now supports ticket-level drop targeting
+   - visual insertion targeting via focused drop outlines
+   - lane adjacency helper + unit tests
+3. Validation checkpoints pass:
+   - `swift test`
+   - `swift test --filter TaskboardSnapshotTests`
+   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio`
+4. Squad-leader coordination test contract is defined:
+   - Samwise remains primary orchestrator for agent management and gate decisions
+   - Worktree Squad Lead accelerates implementation/product loops inside bounded lane scope
+   - success requires evidence that both roles collaborated to move a gated objective forward
+
+Open:
+
+1. Generate a real-data night report artifact after interactive board usage:
+   - `.personakit/Taskboard/night-shift/interaction-report.md`
+2. Continue `NS1` with keyboard-first triage/movement flow.
 
 ## Trello Reference Notes
 

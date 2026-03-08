@@ -137,6 +137,13 @@ extension TaskboardPanelView {
         Label("Reset", systemImage: "arrow.clockwise")
       }
       .help("Reset lanes and tickets to defaults for this workspace.")
+
+      Button {
+        generateNightShiftReport()
+      } label: {
+        Label("Night Report", systemImage: "doc.text")
+      }
+      .help("Generate a deterministic night-shift interaction report for this workspace.")
     }
     .padding(.horizontal, 16)
   }
@@ -273,9 +280,7 @@ extension TaskboardPanelView {
         ForEach(visibleTickets) { ticket in
           ticketCard(
             ticket,
-            lane: lane,
-            laneIndex: laneIndex,
-            laneCount: laneCount
+            lane: lane
           )
         }
 
@@ -316,6 +321,7 @@ extension TaskboardPanelView {
       isTargeted: { isTargeted in
         if isTargeted {
           activeDropLaneID = lane.id
+          activeDropTicketID = nil
         } else if activeDropLaneID == lane.id {
           activeDropLaneID = nil
         }
@@ -325,9 +331,7 @@ extension TaskboardPanelView {
 
   func ticketCard(
     _ ticket: TaskboardTicket,
-    lane: TaskboardLane,
-    laneIndex: Int,
-    laneCount: Int
+    lane: TaskboardLane
   ) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(alignment: .top, spacing: 8) {
@@ -372,7 +376,7 @@ extension TaskboardPanelView {
               direction: -1
             )
           }
-          .disabled(laneIndex == 0 || laneCount <= 1)
+          .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: -1))
 
           Button("Move Right") {
             moveTicketRelative(
@@ -381,7 +385,7 @@ extension TaskboardPanelView {
               direction: 1
             )
           }
-          .disabled(laneIndex >= laneCount - 1 || laneCount <= 1)
+          .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: 1))
 
           Menu("Move To Lane") {
             ForEach(laneDestinations(excludingLaneID: lane.id)) { destination in
@@ -394,7 +398,7 @@ extension TaskboardPanelView {
               }
             }
           }
-          .disabled(laneCount <= 1)
+          .disabled(sortedLanes.count <= 1)
 
           Divider()
 
@@ -411,16 +415,28 @@ extension TaskboardPanelView {
         .controlSize(.small)
 
         Button {
+          moveTicketToPreviousLane(
+            ticketID: ticket.id,
+            fromLaneID: lane.id
+          )
+        } label: {
+          Image(systemName: "arrow.left.circle")
+        }
+        .buttonStyle(.plain)
+        .help("Move to previous lane")
+        .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: -1))
+
+        Button {
           moveTicketToNextLane(
             ticketID: ticket.id,
             fromLaneID: lane.id
           )
         } label: {
-          Image(systemName: "arrow.right.circle")
+          Image(systemName: "arrow.right.circle.fill")
         }
         .buttonStyle(.plain)
-        .help("Move to next lane")
-        .disabled(laneIndex >= laneCount - 1 || laneCount <= 1)
+        .help("Advance to next lane")
+        .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: 1))
       }
 
       HStack(spacing: 6) {
@@ -477,7 +493,32 @@ extension TaskboardPanelView {
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10, style: .continuous)
+        .stroke(
+          activeDropTicketID == ticket.id ? Color.accentColor : .clear,
+          lineWidth: 2
+        )
+    )
     .draggable(ticketDragPayload(ticketID: ticket.id, laneID: lane.id))
+    .dropDestination(
+      for: String.self,
+      action: { items, _ in
+        handleTicketDrop(
+          items,
+          destinationLaneID: lane.id,
+          destinationTicketID: ticket.id
+        )
+      },
+      isTargeted: { isTargeted in
+        if isTargeted {
+          activeDropLaneID = lane.id
+          activeDropTicketID = ticket.id
+        } else if activeDropTicketID == ticket.id {
+          activeDropTicketID = nil
+        }
+      }
+    )
   }
 
   func laneEditorSheet(

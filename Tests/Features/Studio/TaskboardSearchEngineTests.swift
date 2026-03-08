@@ -83,4 +83,55 @@ struct TaskboardSearchEngineTests {
     )
     #expect(rightEdge == "lane-6")
   }
+
+  @Test
+  func ticketAdjacentLaneIDReturnsNeighborWithinBounds() {
+    let board = TaskboardBoard.defaultBoard.normalized()
+
+    let previousLaneID = TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: board.lanes,
+      currentLaneID: "lane-3",
+      direction: -1
+    )
+    #expect(previousLaneID == "lane-2")
+
+    let nextLaneID = TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: board.lanes,
+      currentLaneID: "lane-3",
+      direction: 1
+    )
+    #expect(nextLaneID == "lane-4")
+  }
+
+  @Test
+  func ticketAdjacentLaneIDReturnsNilAtBoardEdges() {
+    let board = TaskboardBoard.defaultBoard.normalized()
+
+    let beforeFirst = TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: board.lanes,
+      currentLaneID: "lane-1",
+      direction: -1
+    )
+    #expect(beforeFirst == nil)
+
+    let afterLast = TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: board.lanes,
+      currentLaneID: "lane-6",
+      direction: 1
+    )
+    #expect(afterLast == nil)
+  }
+
+  @Test
+  func ticketAdjacentLaneIDReturnsNilWhenCurrentLaneMissing() {
+    let board = TaskboardBoard.defaultBoard.normalized()
+
+    let destination = TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: board.lanes,
+      currentLaneID: "lane-missing",
+      direction: 1
+    )
+
+    #expect(destination == nil)
+  }
 }

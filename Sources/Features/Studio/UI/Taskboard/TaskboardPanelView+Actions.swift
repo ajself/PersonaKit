@@ -21,6 +21,13 @@ extension TaskboardPanelView {
     )
     board.lanes.append(lane)
     selectedLaneID = lane.id
+    recordInteractionEvent(
+      .createLane,
+      details: [
+        "laneID": lane.id,
+        "templateID": lane.templateID ?? "none",
+      ]
+    )
   }
 
   func openTicketComposerForSelectedLane() {
@@ -83,25 +90,61 @@ extension TaskboardPanelView {
 
   func handleTicketDrop(
     _ payloads: [String],
-    destinationLaneID: String
+    destinationLaneID: String,
+    destinationTicketID: String? = nil
   ) -> Bool {
+    defer {
+      activeDropLaneID = nil
+      activeDropTicketID = nil
+    }
+
     guard let firstPayload = payloads.first,
       let parsed = parseTicketDragPayload(firstPayload)
     else {
       return false
     }
 
-    guard parsed.sourceLaneID != destinationLaneID else {
+    guard
+      let sourceLaneIndex = board.lanes.firstIndex(where: { $0.id == parsed.sourceLaneID }),
+      board.lanes[sourceLaneIndex].tickets.contains(where: { $0.id == parsed.ticketID })
+    else {
       return false
     }
 
-    moveTicket(
-      ticketID: parsed.ticketID,
-      fromLaneID: parsed.sourceLaneID,
-      toLaneID: destinationLaneID
-    )
+    var destinationIndex: Int?
+    if let destinationTicketID {
+      guard
+        let destinationLaneIndex = board.lanes.firstIndex(where: { $0.id == destinationLaneID }),
+        let insertionIndex = board.lanes[destinationLaneIndex].tickets.firstIndex(where: {
+          $0.id == destinationTicketID
+        })
+      else {
+        return false
+      }
+
+      destinationIndex = insertionIndex
+    }
+
+    if parsed.sourceLaneID == destinationLaneID {
+      guard let destinationIndex else {
+        return false
+      }
+
+      moveTicketWithinLane(
+        ticketID: parsed.ticketID,
+        laneID: destinationLaneID,
+        toIndex: destinationIndex
+      )
+    } else {
+      moveTicket(
+        ticketID: parsed.ticketID,
+        fromLaneID: parsed.sourceLaneID,
+        toLaneID: destinationLaneID,
+        destinationIndex: destinationIndex
+      )
+    }
+
     selectedLaneID = destinationLaneID
-    activeDropLaneID = nil
     return true
   }
 
@@ -149,6 +192,7 @@ extension TaskboardPanelView {
       .id
     persistenceMessage = "Taskboard reset to default lanes."
     persistenceIsError = false
+    recordInteractionEvent(.reorderLane, details: ["action": "reset_board"])
   }
 
   func moveLane(
@@ -174,6 +218,13 @@ extension TaskboardPanelView {
     }
 
     board.lanes = lanes
+    recordInteractionEvent(
+      .reorderLane,
+      details: [
+        "laneID": laneID,
+        "direction": "\(direction)",
+      ]
+    )
   }
 
   func toggleLaneCollapsed(
@@ -184,6 +235,10 @@ extension TaskboardPanelView {
     }
 
     board.lanes[laneIndex].isCollapsed.toggle()
+    recordInteractionEvent(
+      board.lanes[laneIndex].isCollapsed ? .collapseLane : .expandLane,
+      details: ["laneID": laneID]
+    )
   }
 
   func deleteLane(
@@ -200,6 +255,7 @@ extension TaskboardPanelView {
         .id
     }
     pendingLaneDeletion = nil
+    recordInteractionEvent(.deleteLane, details: ["laneID": laneID])
   }
 
   func applyLaneEditorDraft() {
@@ -226,6 +282,13 @@ extension TaskboardPanelView {
       )
       board.lanes.append(lane)
       selectedLaneID = lane.id
+      recordInteractionEvent(
+        .createLane,
+        details: [
+          "laneID": lane.id,
+          "wipLimit": lane.wipLimit.map(String.init) ?? "none",
+        ]
+      )
 
     case .edit(let laneID):
       guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
@@ -240,6 +303,13 @@ extension TaskboardPanelView {
       board.lanes[laneIndex].templateID = draft.templateID
       board.lanes[laneIndex].wipLimit = draft.hasWIPLimit ? max(1, draft.wipLimit) : nil
       selectedLaneID = laneID
+      recordInteractionEvent(
+        .editLane,
+        details: [
+          "laneID": laneID,
+          "wipLimit": board.lanes[laneIndex].wipLimit.map(String.init) ?? "none",
+        ]
+      )
     }
 
     laneEditorDraft = nil
@@ -311,6 +381,15 @@ extension TaskboardPanelView {
           comments: comments
         )
       )
+      if let ticketID = board.lanes[laneIndex].tickets.last?.id {
+        recordInteractionEvent(
+          .createTicket,
+          details: [
+            "laneID": laneID,
+            "ticketID": ticketID,
+          ]
+        )
+      }
 
     case .edit(let laneID, let ticketID):
       guard
@@ -330,6 +409,13 @@ extension TaskboardPanelView {
       board.lanes[laneIndex].tickets[ticketIndex].checklist = checklistItems
       board.lanes[laneIndex].tickets[ticketIndex].descriptionMarkdown = draft.descriptionMarkdown
       board.lanes[laneIndex].tickets[ticketIndex].comments = comments
+      recordInteractionEvent(
+        .editTicket,
+        details: [
+          "laneID": laneID,
+          "ticketID": ticketID,
+        ]
+      )
     }
 
     ticketEditorDraft = nil
@@ -463,22 +549,19 @@ extension TaskboardPanelView {
     fromLaneID: String,
     direction: Int
   ) {
-    let laneIDs = sortedLanes.map(\.id)
-
-    guard let laneIndex = laneIDs.firstIndex(of: fromLaneID) else {
-      return
-    }
-
-    let targetIndex = laneIndex + direction
-
-    guard laneIDs.indices.contains(targetIndex) else {
+    guard
+      let targetLaneID = ticketAdjacentLaneID(
+        fromLaneID: fromLaneID,
+        direction: direction
+      )
+    else {
       return
     }
 
     moveTicket(
       ticketID: ticketID,
       fromLaneID: fromLaneID,
-      toLaneID: laneIDs[targetIndex]
+      toLaneID: targetLaneID
     )
   }
 
@@ -500,30 +583,92 @@ extension TaskboardPanelView {
       return
     }
 
-    let ticket = board.lanes[laneIndex].tickets.remove(at: ticketIndex)
-    board.lanes[laneIndex].tickets.insert(ticket, at: destinationIndex)
+    moveTicketWithinLane(
+      ticketID: ticketID,
+      laneID: laneID,
+      toIndex: destinationIndex
+    )
+  }
+
+  func moveTicketWithinLane(
+    ticketID: String,
+    laneID: String,
+    toIndex: Int
+  ) {
+    guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
+      return
+    }
+
+    guard let sourceIndex = board.lanes[laneIndex].tickets.firstIndex(where: { $0.id == ticketID }) else {
+      return
+    }
+
+    guard board.lanes[laneIndex].tickets.indices.contains(toIndex) else {
+      return
+    }
+
+    let adjustedDestinationIndex: Int
+    if sourceIndex < toIndex {
+      adjustedDestinationIndex = toIndex - 1
+    } else {
+      adjustedDestinationIndex = toIndex
+    }
+
+    guard sourceIndex != adjustedDestinationIndex else {
+      return
+    }
+
+    let ticket = board.lanes[laneIndex].tickets.remove(at: sourceIndex)
+    board.lanes[laneIndex].tickets.insert(ticket, at: adjustedDestinationIndex)
     selectedLaneID = laneID
+    recordInteractionEvent(
+      .reorderTicket,
+      details: [
+        "destinationIndex": "\(adjustedDestinationIndex)",
+        "laneID": laneID,
+        "sourceIndex": "\(sourceIndex)",
+        "ticketID": ticketID,
+      ]
+    )
   }
 
   func moveTicketToNextLane(
     ticketID: String,
     fromLaneID: String
   ) {
-    let laneIDs = sortedLanes.map(\.id)
-
-    guard let laneIndex = laneIDs.firstIndex(of: fromLaneID) else {
-      return
-    }
-
-    let nextLaneIndex = laneIndex + 1
-    guard laneIDs.indices.contains(nextLaneIndex) else {
+    guard
+      let nextLaneID = ticketAdjacentLaneID(
+        fromLaneID: fromLaneID,
+        direction: 1
+      )
+    else {
       return
     }
 
     moveTicket(
       ticketID: ticketID,
       fromLaneID: fromLaneID,
-      toLaneID: laneIDs[nextLaneIndex]
+      toLaneID: nextLaneID
+    )
+  }
+
+  func moveTicketToPreviousLane(
+    ticketID: String,
+    fromLaneID: String
+  ) {
+    guard
+      let previousLaneID = ticketAdjacentLaneID(
+        fromLaneID: fromLaneID,
+        direction: -1
+      )
+    else {
+      return
+    }
+
+    moveTicket(
+      ticketID: ticketID,
+      fromLaneID: fromLaneID,
+      toLaneID: previousLaneID
     )
   }
 
@@ -542,6 +687,27 @@ extension TaskboardPanelView {
 
     let destinationIndex = ticketIndex + direction
     return lane.tickets.indices.contains(destinationIndex)
+  }
+
+  func canMoveTicketBetweenLanes(
+    fromLaneID: String,
+    direction: Int
+  ) -> Bool {
+    ticketAdjacentLaneID(
+      fromLaneID: fromLaneID,
+      direction: direction
+    ) != nil
+  }
+
+  func ticketAdjacentLaneID(
+    fromLaneID: String,
+    direction: Int
+  ) -> String? {
+    TaskboardTicketLaneNavigation.adjacentLaneID(
+      lanes: sortedLanes,
+      currentLaneID: fromLaneID,
+      direction: direction
+    )
   }
 
   func moveTicket(
@@ -569,6 +735,14 @@ extension TaskboardPanelView {
     )
     board.lanes[destinationLaneIndex].tickets.insert(ticket, at: insertIndex)
     selectedLaneID = toLaneID
+    recordInteractionEvent(
+      .moveTicket,
+      details: [
+        "ticketID": ticketID,
+        "fromLaneID": fromLaneID,
+        "toLaneID": toLaneID,
+      ]
+    )
   }
 
   func deleteTicket(
@@ -584,6 +758,13 @@ extension TaskboardPanelView {
       $0.id == ticketID
     }
     pendingTicketDeletion = nil
+    recordInteractionEvent(
+      .deleteTicket,
+      details: [
+        "laneID": laneID,
+        "ticketID": ticketID,
+      ]
+    )
   }
 
   func uniqueLaneTitle(

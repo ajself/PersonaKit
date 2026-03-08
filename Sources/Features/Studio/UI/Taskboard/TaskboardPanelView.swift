@@ -19,12 +19,14 @@ struct TaskboardPanelView: View {
   @State var pendingLaneDeletion: TaskboardLane?
   @State var pendingTicketDeletion: PendingTicketDeletion?
   @State var activeDropLaneID: String?
+  @State var activeDropTicketID: String?
   @State var activeLabelFilter: String?
   @State var dueDateFilter: DueDateFilter = .all
   @State var ownerFilterText = ""
   @State var keywordFilterText = ""
   @State var persistenceMessage: String?
   @State var persistenceIsError = false
+  @State var interactionEventSequence = 1
   @FocusState var focusedField: TaskboardPanelFocusField?
 
   var body: some View {
@@ -152,7 +154,8 @@ struct TaskboardPanelView: View {
       if let selectedLaneID,
         !updatedBoard.lanes.contains(where: { $0.id == selectedLaneID })
       {
-        self.selectedLaneID = updatedBoard.lanes
+        self.selectedLaneID =
+          updatedBoard.lanes
           .sorted { $0.order < $1.order }
           .first?
           .id

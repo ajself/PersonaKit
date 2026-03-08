@@ -133,3 +133,31 @@ enum TaskboardLaneNavigation {
     return orderedLanes[targetIndex].id
   }
 }
+
+enum TaskboardTicketLaneNavigation {
+  static func adjacentLaneID(
+    lanes: [TaskboardLane],
+    currentLaneID: String,
+    direction: Int
+  ) -> String? {
+    let orderedLanes = lanes.sorted {
+      if $0.order == $1.order {
+        return $0.id < $1.id
+      }
+
+      return $0.order < $1.order
+    }
+
+    guard let currentIndex = orderedLanes.firstIndex(where: { $0.id == currentLaneID }) else {
+      return nil
+    }
+
+    let destinationIndex = currentIndex + direction
+
+    guard orderedLanes.indices.contains(destinationIndex) else {
+      return nil
+    }
+
+    return orderedLanes[destinationIndex].id
+  }
+}
