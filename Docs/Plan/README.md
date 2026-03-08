@@ -12,6 +12,8 @@ Provide a compact index of active vs archived plan artifacts.
 
 - `TODO.md` (ordered execution queue)
 - `admin-ticket-planning-feature-brief.md`
+- `taskboard-v2-initiative-plan.md`
+- `taskboard-v2-feature-lock.md`
 - `taskboard-atp-m1-red-pen-review.md`
 - `taskboard-atp-m2-red-pen-review.md`
 - `taskboard-atp-m3-red-pen-review.md`
