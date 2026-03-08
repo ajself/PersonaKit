@@ -15,6 +15,10 @@ struct TaskboardPanelView: View {
   @State private var pendingLaneDeletion: TaskboardLane?
   @State private var pendingTicketDeletion: PendingTicketDeletion?
   @State private var activeDropLaneID: String?
+  @State private var activeLabelFilter: String?
+  @State private var dueDateFilter: DueDateFilter = .all
+  @State private var ownerFilterText = ""
+  @State private var keywordFilterText = ""
   @State private var persistenceMessage: String?
   @State private var persistenceIsError = false
 
@@ -28,6 +32,7 @@ struct TaskboardPanelView: View {
       }
 
       headerBar
+      filterBar
 
       if let persistenceMessage {
         Text(persistenceMessage)
@@ -162,6 +167,36 @@ struct TaskboardPanelView: View {
     }
   }
 
+  private var totalTicketCount: Int {
+    board.lanes.reduce(0) { partialResult, lane in
+      partialResult + lane.tickets.count
+    }
+  }
+
+  private var filteredTicketCount: Int {
+    board.lanes.reduce(0) { partialResult, lane in
+      partialResult + filteredTickets(in: lane).count
+    }
+  }
+
+  private var allTicketLabels: [String] {
+    Set(
+      board.lanes
+        .flatMap(\.tickets)
+        .flatMap(\.labels)
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+    )
+    .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+  }
+
+  private var isFilteringActive: Bool {
+    activeLabelFilter != nil
+      || dueDateFilter != .all
+      || !ownerFilterText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      || !keywordFilterText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
   private var headerBar: some View {
     HStack(alignment: .center, spacing: 10) {
       VStack(alignment: .leading, spacing: 2) {
@@ -235,19 +270,75 @@ struct TaskboardPanelView: View {
     .padding(.horizontal, 16)
   }
 
+  private var filterBar: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 8) {
+        TextField("Filter by keyword", text: $keywordFilterText)
+          .textFieldStyle(.roundedBorder)
+          .frame(maxWidth: 260)
+
+        TextField("Owner", text: $ownerFilterText)
+          .textFieldStyle(.roundedBorder)
+          .frame(maxWidth: 180)
+
+        Picker("Due", selection: $dueDateFilter) {
+          ForEach(DueDateFilter.allCases) { option in
+            Text(option.title).tag(option)
+          }
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+
+        Menu {
+          Button("All Labels") {
+            activeLabelFilter = nil
+          }
+
+          if allTicketLabels.isEmpty {
+            Text("No labels yet")
+          } else {
+            ForEach(allTicketLabels, id: \.self) { label in
+              Button(label) {
+                activeLabelFilter = label
+              }
+            }
+          }
+        } label: {
+          Label(activeLabelFilter ?? "All Labels", systemImage: "tag")
+        }
+
+        Button("Clear Filters") {
+          clearFilters()
+        }
+        .disabled(!isFilteringActive)
+
+        Spacer(minLength: 0)
+      }
+
+      if isFilteringActive {
+        Text("Showing \(filteredTicketCount) of \(totalTicketCount) tickets")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .padding(.horizontal, 16)
+  }
+
   private func laneCard(
     _ lane: TaskboardLane,
     laneIndex: Int,
     laneCount: Int
   ) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
+    let visibleTickets = filteredTickets(in: lane)
+
+    return VStack(alignment: .leading, spacing: 10) {
       HStack(alignment: .center, spacing: 8) {
         Text(lane.title)
           .font(.headline)
 
         Spacer(minLength: 4)
 
-        Text("\(lane.tickets.count)")
+        Text(ticketCountLabel(for: lane, visibleCount: visibleTickets.count))
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -287,7 +378,7 @@ struct TaskboardPanelView: View {
         .controlSize(.small)
       }
 
-      ForEach(lane.tickets) { ticket in
+      ForEach(visibleTickets) { ticket in
         ticketCard(
           ticket,
           lane: lane,
@@ -296,8 +387,8 @@ struct TaskboardPanelView: View {
         )
       }
 
-      if lane.tickets.isEmpty {
-        Text("No tickets yet")
+      if visibleTickets.isEmpty {
+        Text(isFilteringActive && !lane.tickets.isEmpty ? "No matching tickets" : "No tickets yet")
           .font(.caption)
           .foregroundStyle(.secondary)
           .padding(.vertical, 8)
@@ -417,6 +508,26 @@ struct TaskboardPanelView: View {
         Text(ticket.owner)
           .font(.caption)
           .foregroundStyle(.secondary)
+
+        if let dueDateText = dueDateText(for: ticket.dueDateISO8601) {
+          Text(dueDateText)
+            .font(.caption2)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(.regularMaterial, in: Capsule())
+        }
+      }
+
+      if !ticket.labels.isEmpty {
+        Text(ticket.labels.joined(separator: ", "))
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+      }
+
+      if !ticket.checklist.isEmpty {
+        Text(checklistSummary(for: ticket))
+          .font(.caption2)
+          .foregroundStyle(.secondary)
       }
     }
     .padding(10)
@@ -477,34 +588,116 @@ struct TaskboardPanelView: View {
   ) -> some View {
     NavigationStack {
       Form {
-        TextField("Ticket title", text: Binding(
-          get: {
-            ticketEditorDraft?.title ?? draft.title
-          },
-          set: { newValue in
-            ticketEditorDraft?.title = newValue
-          }
-        ))
+        Section("Details") {
+          TextField("Ticket title", text: Binding(
+            get: {
+              ticketEditorDraft?.title ?? draft.title
+            },
+            set: { newValue in
+              ticketEditorDraft?.title = newValue
+            }
+          ))
 
-        TextField("Owner", text: Binding(
-          get: {
-            ticketEditorDraft?.owner ?? draft.owner
-          },
-          set: { newValue in
-            ticketEditorDraft?.owner = newValue
-          }
-        ))
+          TextField("Owner", text: Binding(
+            get: {
+              ticketEditorDraft?.owner ?? draft.owner
+            },
+            set: { newValue in
+              ticketEditorDraft?.owner = newValue
+            }
+          ))
 
-        Picker("Priority", selection: Binding(
-          get: {
-            ticketEditorDraft?.priority ?? draft.priority
-          },
-          set: { newValue in
-            ticketEditorDraft?.priority = newValue
+          TextField("Labels (comma-separated)", text: Binding(
+            get: {
+              ticketEditorDraft?.labelsText ?? draft.labelsText
+            },
+            set: { newValue in
+              ticketEditorDraft?.labelsText = newValue
+            }
+          ))
+
+          Picker("Priority", selection: Binding(
+            get: {
+              ticketEditorDraft?.priority ?? draft.priority
+            },
+            set: { newValue in
+              ticketEditorDraft?.priority = newValue
+            }
+          )) {
+            ForEach(TaskboardTicketPriority.allCases) { priority in
+              Text(priority.label).tag(priority)
+            }
           }
-        )) {
-          ForEach(TaskboardTicketPriority.allCases) { priority in
-            Text(priority.label).tag(priority)
+        }
+
+        Section("Due Date") {
+          Toggle("Has due date", isOn: Binding(
+            get: {
+              ticketEditorDraft?.hasDueDate ?? draft.hasDueDate
+            },
+            set: { newValue in
+              ticketEditorDraft?.hasDueDate = newValue
+            }
+          ))
+
+          if ticketEditorDraft?.hasDueDate ?? draft.hasDueDate {
+            DatePicker(
+              "Due",
+              selection: Binding(
+                get: {
+                  ticketEditorDraft?.dueDate ?? draft.dueDate
+                },
+                set: { newValue in
+                  ticketEditorDraft?.dueDate = newValue
+                }
+              ),
+              displayedComponents: .date
+            )
+          }
+        }
+
+        Section("Checklist") {
+          if (ticketEditorDraft?.checklistItems ?? draft.checklistItems).isEmpty {
+            Text("No checklist items yet")
+              .foregroundStyle(.secondary)
+          } else {
+            ForEach(Array((ticketEditorDraft?.checklistItems ?? draft.checklistItems).indices), id: \.self) { index in
+              HStack(spacing: 8) {
+                Toggle("", isOn: checklistCompletionBinding(
+                  index: index,
+                  fallbackDraft: draft
+                ))
+                .labelsHidden()
+
+                TextField("Checklist item", text: checklistTitleBinding(
+                  index: index,
+                  fallbackDraft: draft
+                ))
+
+                Button(role: .destructive) {
+                  removeChecklistItem(at: index)
+                } label: {
+                  Image(systemName: "trash")
+                }
+                .buttonStyle(.plain)
+              }
+            }
+          }
+
+          HStack(spacing: 8) {
+            TextField("New checklist item", text: Binding(
+              get: {
+                ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle
+              },
+              set: { newValue in
+                ticketEditorDraft?.pendingChecklistTitle = newValue
+              }
+            ))
+
+            Button("Add") {
+              addChecklistItem()
+            }
+            .disabled((ticketEditorDraft?.pendingChecklistTitle ?? draft.pendingChecklistTitle).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
           }
         }
       }
@@ -628,6 +821,199 @@ struct TaskboardPanelView: View {
     return .clear
   }
 
+  private func ticketCountLabel(
+    for lane: TaskboardLane,
+    visibleCount: Int
+  ) -> String {
+    if !isFilteringActive {
+      return "\(lane.tickets.count)"
+    }
+
+    return "\(visibleCount)/\(lane.tickets.count)"
+  }
+
+  private func clearFilters() {
+    activeLabelFilter = nil
+    dueDateFilter = .all
+    ownerFilterText = ""
+    keywordFilterText = ""
+  }
+
+  private func filteredTickets(
+    in lane: TaskboardLane
+  ) -> [TaskboardTicket] {
+    let ownerFilter = ownerFilterText.trimmingCharacters(in: .whitespacesAndNewlines)
+    let keywordFilter = keywordFilterText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    return lane.tickets.filter { ticket in
+      if let activeLabelFilter,
+        !ticket.labels.contains(where: { $0.caseInsensitiveCompare(activeLabelFilter) == .orderedSame })
+      {
+        return false
+      }
+
+      if !ownerFilter.isEmpty,
+        ticket.owner.range(
+          of: ownerFilter,
+          options: .caseInsensitive
+        ) == nil
+      {
+        return false
+      }
+
+      if !matchesDueDateFilter(ticket) {
+        return false
+      }
+
+      if !keywordFilter.isEmpty {
+        let fields = [
+          ticket.title,
+          ticket.owner,
+          ticket.labels.joined(separator: " "),
+          ticket.checklist.map(\.title).joined(separator: " "),
+        ]
+        let haystack = fields.joined(separator: " ")
+
+        if haystack.range(of: keywordFilter, options: .caseInsensitive) == nil {
+          return false
+        }
+      }
+
+      return true
+    }
+  }
+
+  private func matchesDueDateFilter(
+    _ ticket: TaskboardTicket
+  ) -> Bool {
+    switch dueDateFilter {
+    case .all:
+      return true
+
+    case .withDueDate:
+      return parseISODate(ticket.dueDateISO8601) != nil
+
+    case .overdue:
+      return TaskboardDateCoder.isOverdue(ticket.dueDateISO8601)
+
+    case .noDueDate:
+      return parseISODate(ticket.dueDateISO8601) == nil
+    }
+  }
+
+  private func dueDateText(
+    for iso8601Date: String?
+  ) -> String? {
+    TaskboardDateCoder.displayText(fromDateOnly: iso8601Date)
+  }
+
+  private func checklistSummary(
+    for ticket: TaskboardTicket
+  ) -> String {
+    let completedCount = ticket.checklist.filter(\.isComplete).count
+    return "Checklist \(completedCount)/\(ticket.checklist.count)"
+  }
+
+  private func parseISODate(
+    _ value: String?
+  ) -> Date? {
+    TaskboardDateCoder.date(fromDateOnly: value)
+  }
+
+  private func encodeISODate(
+    _ date: Date?
+  ) -> String? {
+    TaskboardDateCoder.encodeDateOnly(from: date)
+  }
+
+  private func checklistCompletionBinding(
+    index: Int,
+    fallbackDraft: TicketEditorDraft
+  ) -> Binding<Bool> {
+    Binding(
+      get: {
+        let items = ticketEditorDraft?.checklistItems ?? fallbackDraft.checklistItems
+        guard items.indices.contains(index) else {
+          return false
+        }
+
+        return items[index].isComplete
+      },
+      set: { newValue in
+        guard var draft = ticketEditorDraft else {
+          return
+        }
+        guard draft.checklistItems.indices.contains(index) else {
+          return
+        }
+
+        draft.checklistItems[index].isComplete = newValue
+        ticketEditorDraft = draft
+      }
+    )
+  }
+
+  private func checklistTitleBinding(
+    index: Int,
+    fallbackDraft: TicketEditorDraft
+  ) -> Binding<String> {
+    Binding(
+      get: {
+        let items = ticketEditorDraft?.checklistItems ?? fallbackDraft.checklistItems
+        guard items.indices.contains(index) else {
+          return ""
+        }
+
+        return items[index].title
+      },
+      set: { newValue in
+        guard var draft = ticketEditorDraft else {
+          return
+        }
+        guard draft.checklistItems.indices.contains(index) else {
+          return
+        }
+
+        draft.checklistItems[index].title = newValue
+        ticketEditorDraft = draft
+      }
+    )
+  }
+
+  private func removeChecklistItem(
+    at index: Int
+  ) {
+    guard var draft = ticketEditorDraft else {
+      return
+    }
+
+    if draft.checklistItems.indices.contains(index) {
+      draft.checklistItems.remove(at: index)
+      ticketEditorDraft = draft
+    }
+  }
+
+  private func addChecklistItem() {
+    guard var draft = ticketEditorDraft else {
+      return
+    }
+
+    let trimmedTitle = draft.pendingChecklistTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedTitle.isEmpty else {
+      return
+    }
+
+    draft.checklistItems.append(
+      TaskboardChecklistItem(
+        id: "draft-check-\(draft.checklistItems.count + 1)",
+        title: trimmedTitle,
+        isComplete: false
+      )
+    )
+    draft.pendingChecklistTitle = ""
+    ticketEditorDraft = draft
+  }
+
   private func resetBoard() {
     board = TaskboardBoard.defaultBoard
     selectedLaneID = board.lanes
@@ -725,12 +1111,26 @@ struct TaskboardPanelView: View {
 
     draft.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
     draft.owner = draft.owner.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.labelsText = draft.labelsText.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.pendingChecklistTitle = draft.pendingChecklistTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    draft.checklistItems = draft.checklistItems
+      .map { item in
+        var normalizedItem = item
+        normalizedItem.title = normalizedItem.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalizedItem
+      }
+      .filter { !$0.title.isEmpty }
 
     guard !draft.title.isEmpty else {
       return
     }
 
     let owner = draft.owner.isEmpty ? "Unassigned" : draft.owner
+    let labels = parsedLabels(from: draft.labelsText)
+    let dueDateISO8601 = draft.hasDueDate
+      ? encodeISODate(draft.dueDate)
+      : nil
+    let checklistItems = normalizedChecklistItems(from: draft.checklistItems)
 
     switch draft.mode {
     case .create(let laneID):
@@ -744,7 +1144,10 @@ struct TaskboardPanelView: View {
           id: nextTicketID(),
           title: draft.title,
           owner: owner,
-          priority: draft.priority
+          priority: draft.priority,
+          labels: labels,
+          dueDateISO8601: dueDateISO8601,
+          checklist: checklistItems
         )
       )
 
@@ -760,9 +1163,42 @@ struct TaskboardPanelView: View {
       board.lanes[laneIndex].tickets[ticketIndex].title = draft.title
       board.lanes[laneIndex].tickets[ticketIndex].owner = owner
       board.lanes[laneIndex].tickets[ticketIndex].priority = draft.priority
+      board.lanes[laneIndex].tickets[ticketIndex].labels = labels
+      board.lanes[laneIndex].tickets[ticketIndex].dueDateISO8601 = dueDateISO8601
+      board.lanes[laneIndex].tickets[ticketIndex].checklist = checklistItems
     }
 
     ticketEditorDraft = nil
+  }
+
+  private func parsedLabels(
+    from value: String
+  ) -> [String] {
+    Array(
+      Set(
+        value
+          .split(separator: ",", omittingEmptySubsequences: true)
+          .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    )
+    .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+  }
+
+  private func normalizedChecklistItems(
+    from items: [TaskboardChecklistItem]
+  ) -> [TaskboardChecklistItem] {
+    items.enumerated().map { index, item in
+      var normalizedItem = item
+      if !normalizedItem.id.hasPrefix("check-") {
+        normalizedItem.id = nextChecklistItemID()
+      }
+      normalizedItem.title = normalizedItem.title.trimmingCharacters(in: .whitespacesAndNewlines)
+      if normalizedItem.title.isEmpty {
+        normalizedItem.title = "Checklist Item \(index + 1)"
+      }
+      return normalizedItem
+    }
   }
 
   private func laneDestinations(
@@ -883,6 +1319,12 @@ struct TaskboardPanelView: View {
     return id
   }
 
+  private func nextChecklistItemID() -> String {
+    let id = "check-\(board.nextChecklistSequence)"
+    board.nextChecklistSequence += 1
+    return id
+  }
+
   private func nextLaneOrder() -> Int {
     (board.lanes.map(\.order).max() ?? 0) + 1
   }
@@ -971,252 +1413,5 @@ struct TaskboardPanelView: View {
       persistenceMessage = "Failed to save Taskboard data: \(error.localizedDescription)"
       persistenceIsError = true
     }
-  }
-}
-
-private struct TaskboardBoard: Codable, Equatable {
-  var name: String
-  var nextLaneSequence: Int
-  var nextTicketSequence: Int
-  var lanes: [TaskboardLane]
-
-  static let defaultBoard = TaskboardBoard(
-    name: "Taskboard",
-    nextLaneSequence: 7,
-    nextTicketSequence: 4,
-    lanes: [
-      TaskboardLane(id: "lane-1", title: "Inbox", templateID: "inbox", order: 1, tickets: []),
-      TaskboardLane(id: "lane-2", title: "Ready", templateID: "ready", order: 2, tickets: []),
-      TaskboardLane(
-        id: "lane-3",
-        title: "In Progress",
-        templateID: "in-progress",
-        order: 3,
-        tickets: [
-          TaskboardTicket(
-            id: "ticket-1",
-            title: "Implement Taskboard lane CRUD",
-            owner: "Samwise",
-            priority: .high
-          )
-        ]
-      ),
-      TaskboardLane(id: "lane-4", title: "Blocked", templateID: "blocked", order: 4, tickets: []),
-      TaskboardLane(
-        id: "lane-5",
-        title: "Review",
-        templateID: "review",
-        order: 5,
-        tickets: [
-          TaskboardTicket(
-            id: "ticket-2",
-            title: "Run red-pen interaction review",
-            owner: "studio-interaction-quality-lead",
-            priority: .medium
-          )
-        ]
-      ),
-      TaskboardLane(
-        id: "lane-6",
-        title: "Done",
-        templateID: "done",
-        order: 6,
-        tickets: [
-          TaskboardTicket(
-            id: "ticket-3",
-            title: "Approve Taskboard feature name",
-            owner: "AJ",
-            priority: .low
-          )
-        ]
-      ),
-    ]
-  )
-
-  func normalized() -> TaskboardBoard {
-    var normalizedBoard = self
-    normalizedBoard.lanes = normalizedBoard.lanes
-      .sorted {
-        if $0.order == $1.order {
-          return $0.id < $1.id
-        }
-
-        return $0.order < $1.order
-      }
-      .enumerated()
-      .map { index, lane in
-        var normalizedLane = lane
-        normalizedLane.order = index + 1
-        return normalizedLane
-      }
-
-    let nextLaneSequenceCandidate = normalizedBoard.lanes.compactMap { lane -> Int? in
-      guard lane.id.hasPrefix("lane-") else {
-        return nil
-      }
-
-      return Int(lane.id.replacingOccurrences(of: "lane-", with: ""))
-    }
-    .max() ?? 0
-
-    let nextTicketSequenceCandidate = normalizedBoard.lanes
-      .flatMap(\.tickets)
-      .compactMap { ticket -> Int? in
-        guard ticket.id.hasPrefix("ticket-") else {
-          return nil
-        }
-
-        return Int(ticket.id.replacingOccurrences(of: "ticket-", with: ""))
-      }
-      .max() ?? 0
-
-    normalizedBoard.nextLaneSequence = max(normalizedBoard.nextLaneSequence, nextLaneSequenceCandidate + 1)
-    normalizedBoard.nextTicketSequence = max(normalizedBoard.nextTicketSequence, nextTicketSequenceCandidate + 1)
-    return normalizedBoard
-  }
-}
-
-private struct TaskboardLane: Codable, Equatable, Identifiable {
-  let id: String
-  var title: String
-  var templateID: String?
-  var order: Int
-  var tickets: [TaskboardTicket]
-}
-
-private struct TaskboardTicket: Codable, Equatable, Identifiable {
-  let id: String
-  var title: String
-  var owner: String
-  var priority: TaskboardTicketPriority
-}
-
-private enum TaskboardTicketPriority: String, Codable, CaseIterable, Identifiable {
-  case high
-  case medium
-  case low
-
-  var id: String {
-    rawValue
-  }
-
-  var label: String {
-    rawValue.capitalized
-  }
-}
-
-private struct TaskboardLaneTemplate: Identifiable {
-  let id: String
-  let title: String
-  let detail: String
-
-  static let defaults: [TaskboardLaneTemplate] = [
-    TaskboardLaneTemplate(id: "inbox", title: "Inbox", detail: "Capture new ideas and requests"),
-    TaskboardLaneTemplate(id: "ready", title: "Ready", detail: "Refined and ready to start"),
-    TaskboardLaneTemplate(id: "in-progress", title: "In Progress", detail: "Active implementation work"),
-    TaskboardLaneTemplate(id: "blocked", title: "Blocked", detail: "Waiting on dependency or decision"),
-    TaskboardLaneTemplate(id: "review", title: "Review", detail: "Pending quality and approval pass"),
-    TaskboardLaneTemplate(id: "done", title: "Done", detail: "Completed and accepted"),
-  ]
-}
-
-private struct LaneEditorDraft: Identifiable {
-  enum Mode: Equatable {
-    case create
-    case edit(laneID: String)
-  }
-
-  var mode: Mode
-  var title: String
-  var templateID: String?
-
-  var id: String {
-    switch mode {
-    case .create:
-      return "create-lane"
-    case .edit(let laneID):
-      return "edit-\(laneID)"
-    }
-  }
-
-  static func create() -> LaneEditorDraft {
-    LaneEditorDraft(
-      mode: .create,
-      title: "",
-      templateID: nil
-    )
-  }
-
-  static func edit(
-    lane: TaskboardLane
-  ) -> LaneEditorDraft {
-    LaneEditorDraft(
-      mode: .edit(laneID: lane.id),
-      title: lane.title,
-      templateID: lane.templateID
-    )
-  }
-}
-
-private struct TicketEditorDraft: Identifiable {
-  enum Mode: Equatable {
-    case create(laneID: String)
-    case edit(laneID: String, ticketID: String)
-
-    var isCreate: Bool {
-      switch self {
-      case .create:
-        return true
-      case .edit:
-        return false
-      }
-    }
-  }
-
-  var mode: Mode
-  var title: String
-  var owner: String
-  var priority: TaskboardTicketPriority
-
-  var id: String {
-    switch mode {
-    case .create(let laneID):
-      return "new-ticket-\(laneID)"
-    case .edit(let laneID, let ticketID):
-      return "edit-ticket-\(laneID)-\(ticketID)"
-    }
-  }
-
-  static func create(
-    laneID: String
-  ) -> TicketEditorDraft {
-    TicketEditorDraft(
-      mode: .create(laneID: laneID),
-      title: "",
-      owner: "",
-      priority: .medium
-    )
-  }
-
-  static func edit(
-    ticket: TaskboardTicket,
-    laneID: String
-  ) -> TicketEditorDraft {
-    TicketEditorDraft(
-      mode: .edit(laneID: laneID, ticketID: ticket.id),
-      title: ticket.title,
-      owner: ticket.owner,
-      priority: ticket.priority
-    )
-  }
-}
-
-private struct PendingTicketDeletion: Identifiable {
-  let laneID: String
-  let ticketID: String
-  let ticketTitle: String
-
-  var id: String {
-    "\(laneID)::\(ticketID)"
   }
 }
