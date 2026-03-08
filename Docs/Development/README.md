@@ -11,6 +11,7 @@ implementation layout and validation workflow.
 
 - [Collaboration Charter](./Collaboration-Charter.md)
 - [Session Lifecycle States](./session-lifecycle-states.md)
+- [Closeout Checklist](./closeout-checklist.md)
 
 ## Implementation architecture
 
@@ -63,6 +64,9 @@ When a lane is complete and this repo is being used without remote PR
 coordination, use one command to close out safely:
 
 - `make closeout-local`
+
+Run [Closeout Checklist](./closeout-checklist.md) before closeout so pack/session
+maintenance and logging are not skipped.
 
 Behavior:
 

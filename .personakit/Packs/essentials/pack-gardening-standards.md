@@ -27,6 +27,8 @@ Run a maintenance pass:
 3. At phase closeout.
 
 Run `gardening-v2-checklist` during every maintenance pass.
+At milestone/phase closeout, use the repo closeout checklist if available and
+log the result in maintenance records.
 
 ## Required Log Fields
 

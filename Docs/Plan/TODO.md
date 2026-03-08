@@ -33,34 +33,9 @@ Exit criteria:
 
 Execution note:
 
-- Analysis pass #3 completed on 2026-03-07 with no new pending proposals.
+- Analysis pass #4 completed on 2026-03-07 with no new pending proposals.
 
-### 2) Recurring Closeout Checklist (`PSG-003`)
-
-Plan source:
-
-- `Docs/Plan/pack-session-improvement-backlog.md`
-- `Docs/Plan/pack-gardener-log.md`
-- `Docs/Plan/TODO.md`
-
-Objective:
-
-- Add a recurring closeout checklist entry so pack/session maintenance is not skipped at phase transitions.
-
-Actions:
-
-1. Define checklist trigger (for example, end of milestone or closeout pass).
-2. Add checklist step in the appropriate maintenance docs.
-3. Ensure TODO queue references the recurring check.
-4. Log adoption in pack gardener records.
-
-Exit criteria:
-
-1. Closeout checklist location is documented and reusable.
-2. Future closeout passes include pack/session maintenance by default.
-3. Docs are updated and internally consistent.
-
-### 3) Samwise Daily Closeout Ritual (Ongoing)
+### 2) Samwise Daily Closeout Ritual (Ongoing)
 
 Plan source:
 

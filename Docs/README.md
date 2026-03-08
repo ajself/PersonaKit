@@ -7,6 +7,7 @@ Use this file as the navigation map for project documentation.
 - [Development](./Development/): workflow rules, validation harness, and branch narratives.
 - [Session Directory](./Development/session-directory.md): phase-grouped list of available sessions.
 - [Session Lifecycle States](./Development/session-lifecycle-states.md): lifecycle-state definitions and assignment rules.
+- [Closeout Checklist](./Development/closeout-checklist.md): recurring closeout steps for maintenance, logs, and validation.
 - [MCP](./MCP/): MCP behavior, usage, and troubleshooting.
 - [Plan](./Plan/): short-lived execution plans and TODO state.
 - [Workspaces](../Workspaces/): initiative subprojects with their own docs and `.personakit` roots.
