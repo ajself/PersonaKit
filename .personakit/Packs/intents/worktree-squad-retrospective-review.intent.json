@@ -1,0 +1,41 @@
+{
+  "id": "worktree-squad-retrospective-review",
+  "version": "1.0",
+  "name": "Worktree Squad Retrospective Review",
+  "description": "Run a deterministic retrospective at assignment closeout and emit actionable improvements for the next loop.",
+  "parameters": [
+    {
+      "name": "objective",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "reportPath",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "loopEntryIds",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "worktree-squad-loop-log-contract",
+    "worktree-squad-retrospective-template",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Retrospective findings must be evidence-backed and bounded.",
+      "Do not convert retrospective conclusions into broad implementation without AJ review.",
+      "Action items should include owner and next checkpoint."
+    ]
+  }
+}

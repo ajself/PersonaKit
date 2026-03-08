@@ -1,0 +1,49 @@
+{
+  "id": "run-worktree-squad-calibration-pass",
+  "version": "1.0",
+  "title": "Run worktree squad calibration pass",
+  "goal": "Calibrate squad-leader execution and review quality against benchmark cases and record drift-driven improvements.",
+  "steps": [
+    {
+      "text": "Load `worktree-squad-calibration-benchmarks` and define benchmark cases for this cycle."
+    },
+    {
+      "text": "Evaluate benchmark cases and score verdict/classification outcomes."
+    },
+    {
+      "text": "Compute drift (verdict mismatches, confidence deltas, missing blocker detection) and classify severity."
+    },
+    {
+      "text": "Record calibration findings with concrete artifact update recommendations."
+    },
+    {
+      "text": "Pause for AJ review before changing scoring rules, thresholds, or core workflow contracts.",
+      "requiresReview": true
+    },
+    {
+      "text": "Apply approved updates and schedule next calibration trigger."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Benchmark matrix is complete for strong/mixed/weak cases",
+    "Drift summary is explicit and severity-labeled",
+    "Recommended updates are bounded and actionable",
+    "Core rubric/threshold changes are AJ-approved before implementation"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm benchmark matrix includes expected and actual verdict/confidence"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm drift summary references benchmark evidence"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "worktree-squad-calibration-review"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
