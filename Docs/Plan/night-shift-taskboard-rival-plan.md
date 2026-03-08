@@ -62,6 +62,11 @@ Trello-rival Taskboard experience.
    - unselected cards no longer show the overflow action icon by default
    - the action menu only appears on the selected or inline-edited card, which
      keeps the default board quieter without removing action access
+14. Two live execution truths are now explicit:
+   - `NS0` still requires a real interactive app run with a loaded workspace to
+     generate honest telemetry artifacts
+   - snapshot record mode still crosses a user-only approval boundary in this
+     environment and should be reviewed in the delegated-authority retro
 
 ## Branch Strategy
 
@@ -138,6 +143,9 @@ Rules:
    - `blocked-by-permission` section (if any)
    - exact commands attempted
    - fallback work completed during the block
+6. If a required artifact depends on real GUI interaction that the current
+   agent context cannot perform, log it as an honest blocker and continue with
+   non-blocked parity work.
 
 ## Linked Plan Series
 

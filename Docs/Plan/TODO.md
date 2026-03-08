@@ -44,6 +44,13 @@ Actions:
 4. Execute `P5` AI-operable parity through the approved callable local surface.
 5. Close out active Taskboard work and run the delegated-commit retrospective.
 
+Known blockers:
+
+1. `NS0` cannot honestly close until a real app session opens a workspace, runs
+   Taskboard interactions, and generates `.personakit/Taskboard/night-shift/interaction-report.md`.
+2. Snapshot record mode is still gated by one user-only approval boundary in
+   this environment; include that interruption in the delegated-commit retro.
+
 Exit criteria:
 
 1. Trello parity checklist is active and reviewable.
