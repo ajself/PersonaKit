@@ -17,7 +17,8 @@ of the intended Trello impression:
 
 1. Board interactions are still more awkward and click-heavy than they should be.
 2. Card-detail depth and board-to-detail continuity still need polish.
-3. Snapshot and parity review evidence are incomplete.
+3. Snapshot baseline coverage is now complete, but parity review and diff-review
+   discipline still need to prove the product clears the Trello bar.
 4. AI-operable mutation infrastructure exists in part, but the callable upkeep
    surface is not yet finished.
 5. The initiative needs explicit squad staffing and tighter parity-specific

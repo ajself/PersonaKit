@@ -38,7 +38,6 @@ Actions:
    - keep `Board + Card Parity` explicit across active Taskboard planning docs
    - keep out-of-scope boundaries explicit
 2. Execute `P2` board interaction parity:
-   - finish snapshot expansion from `2/7` to `7/7`
    - complete `NS0` reporting loop
    - continue `NS1` throughput work including inline quick edit and keyboard-first triage
 3. Execute `P3` card-detail parity and `P4` visual/accessibility parity.
@@ -59,6 +58,10 @@ Execution note:
   - `studio-swiftui-product-engineer` is qualified
   - `taskboard-parity-designer` is qualified
   - squad delivery and retrospective sessions validate cleanly
+- Taskboard snapshot lane required coverage is complete in the current working tree:
+  - `7/7` required scenarios are implemented and validated on this branch
+  - editor-open snapshots use a board-plus-editor harness because plain macOS
+    `NSHostingView` snapshots do not capture `.sheet` content
 
 ## Plan Hygiene Rules
 

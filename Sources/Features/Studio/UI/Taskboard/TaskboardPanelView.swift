@@ -5,9 +5,18 @@ enum TaskboardPanelFocusField: Hashable {
   case keywordSearch
 }
 
+struct TaskboardPanelSnapshotSeed {
+  var selectedLaneID: String?
+  var laneEditorDraft: LaneEditorDraft?
+  var ticketEditorDraft: TicketEditorDraft?
+  var activeDropLaneID: String?
+  var activeDropTicketID: String?
+}
+
 /// Taskboard planning surface with lane templates, lane CRUD, ticket creation, and workspace-local persistence.
 struct TaskboardPanelView: View {
   let workspaceStore: WorkspaceStore
+  let snapshotSeed: TaskboardPanelSnapshotSeed?
 
   @SceneStorage(StudioHelpStorageKey.taskboard)
   var isTaskboardHelpExpanded = false
@@ -27,7 +36,16 @@ struct TaskboardPanelView: View {
   @State var persistenceMessage: String?
   @State var persistenceIsError = false
   @State var interactionEventSequence = 1
+  @State private var hasAppliedSnapshotSeed = false
   @FocusState var focusedField: TaskboardPanelFocusField?
+
+  init(
+    workspaceStore: WorkspaceStore,
+    snapshotSeed: TaskboardPanelSnapshotSeed? = nil
+  ) {
+    self.workspaceStore = workspaceStore
+    self.snapshotSeed = snapshotSeed
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -146,9 +164,12 @@ struct TaskboardPanelView: View {
     }
     .onAppear {
       loadBoard()
+      applySnapshotSeedIfNeeded()
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
+      hasAppliedSnapshotSeed = false
       loadBoard()
+      applySnapshotSeedIfNeeded()
     }
     .onChange(of: board) { _, updatedBoard in
       if let selectedLaneID,
@@ -163,5 +184,18 @@ struct TaskboardPanelView: View {
 
       persistBoard()
     }
+  }
+
+  private func applySnapshotSeedIfNeeded() {
+    guard !hasAppliedSnapshotSeed, let snapshotSeed else {
+      return
+    }
+
+    selectedLaneID = snapshotSeed.selectedLaneID
+    laneEditorDraft = snapshotSeed.laneEditorDraft
+    ticketEditorDraft = snapshotSeed.ticketEditorDraft
+    activeDropLaneID = snapshotSeed.activeDropLaneID
+    activeDropTicketID = snapshotSeed.activeDropTicketID
+    hasAppliedSnapshotSeed = true
   }
 }

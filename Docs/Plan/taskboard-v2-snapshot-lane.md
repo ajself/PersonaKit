@@ -27,15 +27,22 @@ snapshot evidence instead of subjective memory.
 
 ## Current coverage
 
-1. Implemented and committed:
+1. Implemented and validated on this branch:
    - Empty board state
    - Default seeded board state
-2. Remaining to add:
-   - Dense board state (multi-lane, high ticket count)
+   - Dense board state
    - Selected lane state
-   - Lane editor sheet open
-   - Ticket editor sheet open
+   - Lane editor open
+   - Ticket editor open
    - Active drag target highlight state
+2. Harness note:
+   - Lane-editor and ticket-editor baselines use a board-plus-editor composite
+     harness because plain macOS `NSHostingView` image snapshots do not capture
+     `.sheet` content reliably
+3. Verification completed:
+   - `swift test --filter TaskboardSnapshotTests`
+   - `swift test`
+   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio`
 
 ## Fixture policy
 

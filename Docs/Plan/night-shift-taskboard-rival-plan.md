@@ -19,11 +19,16 @@ Trello-rival Taskboard experience.
    - in-lane drag reorder targeting
 3. Remaining focus:
    - complete `NS0` evidence/report loop
-   - finish snapshot matrix expansion
    - continue `NS1` inline quick-edit and keyboard-speed paths before `NS2`
+   - use the now-complete snapshot matrix as the visual regression lane during
+     parity work
 4. Staffing and parity charter updates landed:
    - Taskboard now has dedicated `studio-swiftui-product-engineer` and `taskboard-parity-designer` roles
    - Samwise delegated commit approval is active only for this initiative scope
+5. Snapshot lane milestone landed:
+   - required coverage is now `7/7`
+   - editor-open states are covered with a board-plus-editor harness so visual
+     evidence includes the editing surface rather than a missing macOS sheet
 
 ## Branch Strategy
 
