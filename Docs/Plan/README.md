@@ -14,6 +14,7 @@ Provide a compact index of active vs archived plan artifacts.
 - `admin-ticket-planning-feature-brief.md`
 - `taskboard-atp-m1-red-pen-review.md`
 - `taskboard-atp-m2-red-pen-review.md`
+- `taskboard-atp-m3-red-pen-review.md`
 - `git-history-gardener-proposals.md`
 - `git-history-gardener-log.md`
 - `pack-gardener-log.md`

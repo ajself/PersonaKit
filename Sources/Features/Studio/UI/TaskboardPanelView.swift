@@ -12,6 +12,7 @@ struct TaskboardPanelView: View {
   @State private var laneEditorDraft: LaneEditorDraft?
   @State private var ticketEditorDraft: TicketEditorDraft?
   @State private var pendingLaneDeletion: TaskboardLane?
+  @State private var pendingTicketDeletion: PendingTicketDeletion?
   @State private var persistenceMessage: String?
   @State private var persistenceIsError = false
 
@@ -33,20 +34,45 @@ struct TaskboardPanelView: View {
           .padding(.horizontal, 16)
       }
 
-      ScrollView([.horizontal, .vertical]) {
-        HStack(alignment: .top, spacing: 12) {
-          ForEach(Array(sortedLanes.enumerated()), id: \.element.id) { index, lane in
-            laneCard(
-              lane,
-              laneIndex: index,
-              laneCount: sortedLanes.count
-            )
+      if sortedLanes.isEmpty {
+        VStack(alignment: .center, spacing: 10) {
+          Image(systemName: "rectangle.3.group")
+            .font(.system(size: 28, weight: .regular))
+            .foregroundStyle(.secondary)
+          Text("No Lanes Yet")
+            .font(.headline)
+          Text("Start by adding a lane from a template.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+          Button {
+            if let inboxTemplate = TaskboardLaneTemplate.defaults.first {
+              createLane(from: inboxTemplate)
+            } else {
+              laneEditorDraft = LaneEditorDraft.create()
+            }
+          } label: {
+            Label("Add First Lane", systemImage: "plus")
           }
+          .buttonStyle(.borderedProminent)
+          .controlSize(.small)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      } else {
+        ScrollView([.horizontal, .vertical]) {
+          HStack(alignment: .top, spacing: 12) {
+            ForEach(Array(sortedLanes.enumerated()), id: \.element.id) { index, lane in
+              laneCard(
+                lane,
+                laneIndex: index,
+                laneCount: sortedLanes.count
+              )
+            }
+          }
+          .padding(.horizontal, 16)
+          .padding(.bottom, 16)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .sheet(item: $laneEditorDraft) { draft in
@@ -77,6 +103,32 @@ struct TaskboardPanelView: View {
       }
     } message: { lane in
       Text("Delete lane \"\(lane.title)\" and all tickets in it?")
+    }
+    .alert(
+      "Delete Ticket?",
+      isPresented: Binding(
+        get: {
+          pendingTicketDeletion != nil
+        },
+        set: { isPresented in
+          if !isPresented {
+            pendingTicketDeletion = nil
+          }
+        }
+      ),
+      presenting: pendingTicketDeletion
+    ) { pendingDeletion in
+      Button("Delete", role: .destructive) {
+        deleteTicket(
+          ticketID: pendingDeletion.ticketID,
+          laneID: pendingDeletion.laneID
+        )
+      }
+      Button("Cancel", role: .cancel) {
+        pendingTicketDeletion = nil
+      }
+    } message: { pendingDeletion in
+      Text("Delete ticket \"\(pendingDeletion.ticketTitle)\"?")
     }
     .onAppear {
       loadBoard()
@@ -199,26 +251,12 @@ struct TaskboardPanelView: View {
       }
 
       ForEach(lane.tickets) { ticket in
-        VStack(alignment: .leading, spacing: 6) {
-          Text(ticket.title)
-            .font(.subheadline)
-            .fontWeight(.medium)
-
-          HStack(spacing: 6) {
-            Text(ticket.priority.label)
-              .font(.caption2)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 3)
-              .background(.regularMaterial, in: Capsule())
-
-            Text(ticket.owner)
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        ticketCard(
+          ticket,
+          lane: lane,
+          laneIndex: laneIndex,
+          laneCount: laneCount
+        )
       }
 
       if lane.tickets.isEmpty {
@@ -234,6 +272,91 @@ struct TaskboardPanelView: View {
     .frame(width: 280, alignment: .topLeading)
     .frame(minHeight: 260, alignment: .topLeading)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+  }
+
+  private func ticketCard(
+    _ ticket: TaskboardTicket,
+    lane: TaskboardLane,
+    laneIndex: Int,
+    laneCount: Int
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(alignment: .top, spacing: 8) {
+        Text(ticket.title)
+          .font(.subheadline)
+          .fontWeight(.medium)
+
+        Spacer(minLength: 4)
+
+        Menu {
+          Button("Edit Ticket…") {
+            ticketEditorDraft = TicketEditorDraft.edit(
+              ticket: ticket,
+              laneID: lane.id
+            )
+          }
+
+          Button("Move Left") {
+            moveTicketRelative(
+              ticketID: ticket.id,
+              fromLaneID: lane.id,
+              direction: -1
+            )
+          }
+          .disabled(laneIndex == 0 || laneCount <= 1)
+
+          Button("Move Right") {
+            moveTicketRelative(
+              ticketID: ticket.id,
+              fromLaneID: lane.id,
+              direction: 1
+            )
+          }
+          .disabled(laneIndex >= laneCount - 1 || laneCount <= 1)
+
+          Menu("Move To Lane") {
+            ForEach(laneDestinations(excludingLaneID: lane.id)) { destination in
+              Button(destination.title) {
+                moveTicket(
+                  ticketID: ticket.id,
+                  fromLaneID: lane.id,
+                  toLaneID: destination.id
+                )
+              }
+            }
+          }
+          .disabled(laneCount <= 1)
+
+          Divider()
+
+          Button("Delete Ticket", role: .destructive) {
+            pendingTicketDeletion = PendingTicketDeletion(
+              laneID: lane.id,
+              ticketID: ticket.id,
+              ticketTitle: ticket.title
+            )
+          }
+        } label: {
+          Image(systemName: "ellipsis.circle")
+        }
+        .controlSize(.small)
+      }
+
+      HStack(spacing: 6) {
+        Text(ticket.priority.label)
+          .font(.caption2)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 3)
+          .background(.regularMaterial, in: Capsule())
+
+        Text(ticket.owner)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
   }
 
   private func laneEditorSheet(
@@ -320,7 +443,7 @@ struct TaskboardPanelView: View {
         }
       }
       .formStyle(.grouped)
-      .navigationTitle("New Ticket")
+      .navigationTitle(draft.mode.isCreate ? "New Ticket" : "Edit Ticket")
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") {
@@ -448,23 +571,107 @@ struct TaskboardPanelView: View {
       return
     }
 
-    guard let laneIndex = board.lanes.firstIndex(where: { $0.id == draft.laneID }) else {
-      ticketEditorDraft = nil
+    let owner = draft.owner.isEmpty ? "Unassigned" : draft.owner
+
+    switch draft.mode {
+    case .create(let laneID):
+      guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
+        ticketEditorDraft = nil
+        return
+      }
+
+      board.lanes[laneIndex].tickets.append(
+        TaskboardTicket(
+          id: nextTicketID(),
+          title: draft.title,
+          owner: owner,
+          priority: draft.priority
+        )
+      )
+
+    case .edit(let laneID, let ticketID):
+      guard
+        let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }),
+        let ticketIndex = board.lanes[laneIndex].tickets.firstIndex(where: { $0.id == ticketID })
+      else {
+        ticketEditorDraft = nil
+        return
+      }
+
+      board.lanes[laneIndex].tickets[ticketIndex].title = draft.title
+      board.lanes[laneIndex].tickets[ticketIndex].owner = owner
+      board.lanes[laneIndex].tickets[ticketIndex].priority = draft.priority
+    }
+
+    ticketEditorDraft = nil
+  }
+
+  private func laneDestinations(
+    excludingLaneID: String
+  ) -> [TaskboardLane] {
+    sortedLanes.filter {
+      $0.id != excludingLaneID
+    }
+  }
+
+  private func moveTicketRelative(
+    ticketID: String,
+    fromLaneID: String,
+    direction: Int
+  ) {
+    let laneIDs = sortedLanes.map(\.id)
+
+    guard let laneIndex = laneIDs.firstIndex(of: fromLaneID) else {
       return
     }
 
-    let owner = draft.owner.isEmpty ? "Unassigned" : draft.owner
+    let targetIndex = laneIndex + direction
 
-    board.lanes[laneIndex].tickets.append(
-      TaskboardTicket(
-        id: nextTicketID(),
-        title: draft.title,
-        owner: owner,
-        priority: draft.priority
-      )
+    guard laneIDs.indices.contains(targetIndex) else {
+      return
+    }
+
+    moveTicket(
+      ticketID: ticketID,
+      fromLaneID: fromLaneID,
+      toLaneID: laneIDs[targetIndex]
     )
+  }
 
-    ticketEditorDraft = nil
+  private func moveTicket(
+    ticketID: String,
+    fromLaneID: String,
+    toLaneID: String
+  ) {
+    guard fromLaneID != toLaneID else {
+      return
+    }
+
+    guard
+      let sourceLaneIndex = board.lanes.firstIndex(where: { $0.id == fromLaneID }),
+      let ticketIndex = board.lanes[sourceLaneIndex].tickets.firstIndex(where: { $0.id == ticketID }),
+      let destinationLaneIndex = board.lanes.firstIndex(where: { $0.id == toLaneID })
+    else {
+      return
+    }
+
+    let ticket = board.lanes[sourceLaneIndex].tickets.remove(at: ticketIndex)
+    board.lanes[destinationLaneIndex].tickets.append(ticket)
+  }
+
+  private func deleteTicket(
+    ticketID: String,
+    laneID: String
+  ) {
+    guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
+      pendingTicketDeletion = nil
+      return
+    }
+
+    board.lanes[laneIndex].tickets.removeAll {
+      $0.id == ticketID
+    }
+    pendingTicketDeletion = nil
   }
 
   private func uniqueLaneTitle(
@@ -543,7 +750,7 @@ struct TaskboardPanelView: View {
 
     guard fileManager.fileExists(atPath: fileURL.path()) else {
       board = TaskboardBoard.defaultBoard
-      persistenceMessage = "Using default Taskboard lanes for this workspace."
+      persistenceMessage = nil
       persistenceIsError = false
       return
     }
@@ -552,7 +759,7 @@ struct TaskboardPanelView: View {
       let data = try Data(contentsOf: fileURL)
       let decodedBoard = try JSONDecoder().decode(TaskboardBoard.self, from: data)
       board = decodedBoard.normalized()
-      persistenceMessage = "Loaded Taskboard data from workspace."
+      persistenceMessage = nil
       persistenceIsError = false
     } catch {
       board = TaskboardBoard.defaultBoard
@@ -582,7 +789,7 @@ struct TaskboardPanelView: View {
       let data = try encoder.encode(normalizedBoard)
       try data.write(to: fileURL, options: .atomic)
 
-      persistenceMessage = "Taskboard saved to workspace."
+      persistenceMessage = nil
       persistenceIsError = false
     } catch {
       persistenceMessage = "Failed to save Taskboard data: \(error.localizedDescription)"
@@ -776,23 +983,64 @@ private struct LaneEditorDraft: Identifiable {
 }
 
 private struct TicketEditorDraft: Identifiable {
-  let laneID: String
+  enum Mode: Equatable {
+    case create(laneID: String)
+    case edit(laneID: String, ticketID: String)
+
+    var isCreate: Bool {
+      switch self {
+      case .create:
+        return true
+      case .edit:
+        return false
+      }
+    }
+  }
+
+  var mode: Mode
   var title: String
   var owner: String
   var priority: TaskboardTicketPriority
 
   var id: String {
-    "new-ticket-\(laneID)"
+    switch mode {
+    case .create(let laneID):
+      return "new-ticket-\(laneID)"
+    case .edit(let laneID, let ticketID):
+      return "edit-ticket-\(laneID)-\(ticketID)"
+    }
   }
 
   static func create(
     laneID: String
   ) -> TicketEditorDraft {
     TicketEditorDraft(
-      laneID: laneID,
+      mode: .create(laneID: laneID),
       title: "",
       owner: "",
       priority: .medium
     )
+  }
+
+  static func edit(
+    ticket: TaskboardTicket,
+    laneID: String
+  ) -> TicketEditorDraft {
+    TicketEditorDraft(
+      mode: .edit(laneID: laneID, ticketID: ticket.id),
+      title: ticket.title,
+      owner: ticket.owner,
+      priority: ticket.priority
+    )
+  }
+}
+
+private struct PendingTicketDeletion: Identifiable {
+  let laneID: String
+  let ticketID: String
+  let ticketTitle: String
+
+  var id: String {
+    "\(laneID)::\(ticketID)"
   }
 }

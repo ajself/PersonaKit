@@ -122,7 +122,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 
 ## First Next Action
 
-Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `studio-interaction-quality` red-pen pass.
+Use Taskboard as pilot baseline and queue a parity-polish follow-up slice (drag/drop + keyboard acceleration).
 
 ## Milestone Plan (Planning Pass)
 
@@ -158,11 +158,12 @@ Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `st
 - Goal: Deliver ticket CRUD and lane movement.
 - Scope: Ticket create/edit/delete and move between lanes.
 - Owner: AJ + Samwise
-- Status: `not-started`
+- Status: `done`
 - Risks: drag-and-drop edge cases on macOS
 - Dependencies: M2 lane structure
 - Exit Criteria: Tickets can move lanes and persist after restart.
-- Next Checkpoint Date: 2026-03-10
+- Next Checkpoint Date: 2026-03-07
+- Completion Evidence: Ticket edit/delete and lane-to-lane movement are implemented via lane card actions with confirmation on destructive delete.
 
 ### M4
 
@@ -170,11 +171,12 @@ Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `st
 - Goal: Stabilize and prep for rollout.
 - Scope: Empty/error states, quality pass, docs updates.
 - Owner: AJ + Samwise
-- Status: `not-started`
+- Status: `done`
 - Risks: unclear UX copy for lane/ticket lifecycle
 - Dependencies: M1-M3 complete
 - Exit Criteria: Manual QA checklist passes; docs updated; rollout decision recorded.
-- Next Checkpoint Date: 2026-03-11
+- Next Checkpoint Date: 2026-03-07
+- Completion Evidence: Added empty-board state and reduced persistence-message noise; completed ATP-M3 red-pen review and updated plan docs.
 
 ## Quality Gate Result
 
@@ -186,6 +188,8 @@ Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `st
 - Interaction report: `Docs/Plan/taskboard-atp-m1-red-pen-review.md`
 - ATP-M2 interaction gate: `stop` (score `69/100`, major gaps remain)
 - Interaction report: `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
+- ATP-M3 interaction gate: `go-with-notes` (score `77/100`, no blockers)
+- Interaction report: `Docs/Plan/taskboard-atp-m3-red-pen-review.md`
 
 ## Related Docs
 
@@ -193,6 +197,7 @@ Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `st
 - `Docs/Plan/partner-context-log.md`
 - `Docs/Plan/taskboard-atp-m1-red-pen-review.md`
 - `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
+- `Docs/Plan/taskboard-atp-m3-red-pen-review.md`
 - `.personakit/Sessions/venture-product-discovery.session.json`
 - `.personakit/Sessions/venture-product-planning.session.json`
 - `.personakit/Sessions/studio-interaction-quality.session.json`
