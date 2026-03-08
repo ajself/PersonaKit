@@ -426,22 +426,6 @@ extension TaskboardPanelView {
 
         Spacer(minLength: 4)
 
-        Button {
-          if isInlineEditorOpen {
-            cancelInlineTicketEditor()
-          } else {
-            openInlineTicketEditor(
-              ticket: ticket,
-              laneID: lane.id
-            )
-          }
-        } label: {
-          Image(systemName: isInlineEditorOpen ? "xmark.circle.fill" : "pencil.circle")
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isInlineEditorOpen ? "Cancel quick edit" : "Quick edit ticket")
-        .help(isInlineEditorOpen ? "Cancel inline quick edit" : "Quick edit title, assignees, and labels")
-
         Menu {
           Button("Quick Edit") {
             openInlineTicketEditor(
@@ -453,8 +437,7 @@ extension TaskboardPanelView {
           Divider()
 
           Button("Edit Ticket…") {
-            inlineTicketEditorDraft = nil
-            ticketEditorDraft = TicketEditorDraft.edit(
+            openTicketEditor(
               ticket: ticket,
               laneID: lane.id
             )
@@ -524,30 +507,6 @@ extension TaskboardPanelView {
           Image(systemName: "ellipsis.circle")
         }
         .controlSize(.small)
-
-        Button {
-          moveTicketToPreviousLane(
-            ticketID: ticket.id,
-            fromLaneID: lane.id
-          )
-        } label: {
-          Image(systemName: "arrow.left.circle")
-        }
-        .buttonStyle(.plain)
-        .help("Move to previous lane")
-        .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: -1))
-
-        Button {
-          moveTicketToNextLane(
-            ticketID: ticket.id,
-            fromLaneID: lane.id
-          )
-        } label: {
-          Image(systemName: "arrow.right.circle.fill")
-        }
-        .buttonStyle(.plain)
-        .help("Advance to next lane")
-        .disabled(!canMoveTicketBetweenLanes(fromLaneID: lane.id, direction: 1))
       }
 
       HStack(spacing: 6) {
@@ -657,6 +616,12 @@ extension TaskboardPanelView {
     .onTapGesture {
       selectTicket(
         ticketID: ticket.id,
+        laneID: lane.id
+      )
+    }
+    .onTapGesture(count: 2) {
+      openTicketEditor(
+        ticket: ticket,
         laneID: lane.id
       )
     }

@@ -78,6 +78,10 @@ Execution note:
   - cards now render up to three colored label chips before the title instead of a plain comma-separated label line
   - dense-board snapshots now read more like a Trello board at a glance while keeping the label mapping deterministic
   - remaining `P2` work is still interaction polish plus the open `NS0` evidence loop
+- Card chrome has been simplified in the current working tree:
+  - the always-visible quick-edit and lane-move buttons are gone from the card face
+  - cards now keep one overflow menu visible while double-click opens the full ticket editor
+  - remaining `P2` work is deeper card/detail polish plus the open `NS0` evidence loop
 
 ## Plan Hygiene Rules
 

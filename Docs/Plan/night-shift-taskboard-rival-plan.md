@@ -53,6 +53,11 @@ Trello-rival Taskboard experience.
    - cards now render deterministic colored label chips before the title
    - dense lanes scan more like Trello cards instead of stacked plain-text
      metadata
+12. Third `P2` polish slice after the keyboard baseline landed:
+   - cards now keep only one overflow menu visible by default instead of a
+     quick-edit and lane-move icon cluster
+   - double-click opens the full ticket editor so card detail is a more direct
+     interaction
 
 ## Branch Strategy
 

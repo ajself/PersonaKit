@@ -103,6 +103,19 @@ extension TaskboardPanelView {
     )
   }
 
+  func openTicketEditor(
+    ticket: TaskboardTicket,
+    laneID: String
+  ) {
+    selectedLaneID = laneID
+    selectedTicketID = ticket.id
+    inlineTicketEditorDraft = nil
+    ticketEditorDraft = TicketEditorDraft.edit(
+      ticket: ticket,
+      laneID: laneID
+    )
+  }
+
   func moveSelectedTicketBetweenLanes(
     direction: Int
   ) {
