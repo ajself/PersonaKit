@@ -259,6 +259,33 @@ enum StudioHelpCatalog {
         ]
       )
 
+    case .taskboard:
+      return StudioHelpTopic(
+        id: .taskboard,
+        title: "Taskboard Help",
+        shortHint: "Taskboard is the Admin planning board for lane-and-ticket workflows.",
+        purpose:
+          "Use Taskboard to stage planning work with lanes and tickets, then run interaction-quality passes before claiming parity-level UX.",
+        keyFields: [
+          "Lanes represent workflow stages and should remain action-oriented.",
+          "Tickets are the core work unit and should keep concise, clear titles.",
+          "The M1 panel is a placeholder shell with deterministic sample data.",
+        ],
+        commonMistakes: [
+          "Using Taskboard as a replacement for session planning context logs.",
+          "Adding advanced features before lane and ticket core flows are stable.",
+          "Claiming parity-level quality without rubric-backed review output.",
+        ],
+        examples: [
+          "Example flow: open Taskboard, verify lane sequencing, then run `studio-interaction-quality` for a red-pen pass."
+        ],
+        nextStepText: "After each implementation slice, run an interaction-quality pass and prioritize blocker fixes first.",
+        relatedLinks: [
+          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: "studio-interaction-quality"),
+          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
+        ]
+      )
+
     case .validationResults:
       return StudioHelpTopic(
         id: .validationResults,
@@ -300,6 +327,8 @@ extension SidebarItem {
     switch self {
     case .sessions:
       return .sessions
+    case .taskboard:
+      return .taskboard
     case .personas:
       return .personas
     case .directives:
@@ -323,6 +352,8 @@ extension SidebarItem {
     switch self {
     case .sessions:
       return StudioHelpStorageKey.sessions
+    case .taskboard:
+      return StudioHelpStorageKey.taskboard
     case .personas:
       return StudioHelpStorageKey.personas
     case .directives:

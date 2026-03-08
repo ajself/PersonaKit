@@ -14,6 +14,7 @@ struct StudioHelpCatalogTests {
       .essentials,
       .skills,
       .intents,
+      .taskboard,
       .relationshipMap,
       .validationResults,
     ]
@@ -76,6 +77,7 @@ struct StudioHelpCatalogTests {
     #expect(SidebarItem.essentials.helpExpansionStorageKey == "studio.help.essentials.expanded")
     #expect(SidebarItem.skills.helpExpansionStorageKey == "studio.help.skills.expanded")
     #expect(SidebarItem.intents.helpExpansionStorageKey == "studio.help.intents.expanded")
+    #expect(SidebarItem.taskboard.helpExpansionStorageKey == "studio.help.taskboard.expanded")
     #expect(SidebarItem.relationshipMap.helpExpansionStorageKey == "studio.help.relationshipMap.expanded")
     #expect(
       SidebarItem.validationResults.helpExpansionStorageKey == "studio.help.validationResults.expanded"
@@ -92,6 +94,7 @@ struct StudioHelpCatalogTests {
       SidebarItem.essentials.helpExpansionStorageKey,
       SidebarItem.skills.helpExpansionStorageKey,
       SidebarItem.intents.helpExpansionStorageKey,
+      SidebarItem.taskboard.helpExpansionStorageKey,
       SidebarItem.relationshipMap.helpExpansionStorageKey,
       SidebarItem.validationResults.helpExpansionStorageKey,
     ]

@@ -11,6 +11,7 @@ enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case sessionEditor
   case sessions
   case skills
+  case taskboard
   case validationResults
 }
 

@@ -70,6 +70,9 @@ public struct StudioRootView: View {
           }
         )
 
+      case .taskboard:
+        TaskboardPanelView(workspaceStore: workspaceStore)
+
       case .personas,
         .directives,
         .kits,
@@ -131,6 +134,7 @@ public struct StudioRootView: View {
 
 enum SidebarItem: Hashable {
   case sessions
+  case taskboard
   case personas
   case directives
   case kits
@@ -153,6 +157,8 @@ enum SidebarItem: Hashable {
     switch self {
     case .sessions:
       return "Sessions"
+    case .taskboard:
+      return "Taskboard"
     case .personas:
       return "Personas"
     case .directives:
@@ -176,6 +182,8 @@ enum SidebarItem: Hashable {
     switch self {
     case .sessions:
       return "clock.arrow.circlepath"
+    case .taskboard:
+      return "rectangle.3.group.bubble.left"
     case .personas:
       return "person.2"
     case .directives:

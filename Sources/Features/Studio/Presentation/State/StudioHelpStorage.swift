@@ -7,6 +7,7 @@ enum StudioHelpStorageKey {
   static let essentials = "studio.help.essentials.expanded"
   static let skills = "studio.help.skills.expanded"
   static let intents = "studio.help.intents.expanded"
+  static let taskboard = "studio.help.taskboard.expanded"
   static let relationshipMap = "studio.help.relationshipMap.expanded"
   static let validationResults = "studio.help.validationResults.expanded"
 }

@@ -10,6 +10,10 @@ struct StudioSidebarView: View {
         sidebarRow(for: .sessions)
       }
 
+      Section("Admin") {
+        sidebarRow(for: .taskboard)
+      }
+
       Section("Library") {
         ForEach(SidebarItem.libraryItems, id: \.self) { item in
           sidebarRow(for: item)

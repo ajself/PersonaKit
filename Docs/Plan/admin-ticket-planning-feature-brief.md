@@ -1,4 +1,4 @@
-# Admin Ticket Planning Feature Brief
+# Admin Taskboard Feature Brief
 
 Status: Draft  
 Owner: AJ  
@@ -6,7 +6,7 @@ Last Reviewed: 2026-03-07
 
 ## Purpose
 
-Define a bounded v1 feature for PersonaKit Studio: an `Admin` sidebar area that provides Trello/GitHub-Issues-style project and ticket planning using editable lane templates.
+Define a bounded v1 feature for PersonaKit Studio: an `Admin` sidebar area that provides a Trello/GitHub-Issues-style planning surface called `Taskboard` with editable lane templates.
 
 ## Problem Statement
 
@@ -27,7 +27,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 ### In Scope (v1)
 
 1. New sidebar section: `Admin`.
-2. New Admin destination: `Ticket Planning`.
+2. New Admin destination: `Taskboard`.
 3. Lane model with CRUD:
    - create lane from template
    - edit lane metadata
@@ -59,7 +59,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 
 1. Sidebar:
    - Add section `Admin`.
-   - Add row `Ticket Planning` with dedicated icon.
+   - Add row `Taskboard` with dedicated icon.
 2. Main panel:
    - Horizontal lane board.
    - Lane header actions: add ticket, edit lane, delete lane.
@@ -106,7 +106,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 
 ## Acceptance Criteria
 
-1. `Admin` section appears in sidebar and opens `Ticket Planning`.
+1. `Admin` section appears in sidebar and opens `Taskboard`.
 2. User can create/edit/delete lane from template and reorder lanes.
 3. User can create/edit/delete ticket and move tickets across lanes.
 4. Board state persists per workspace and reloads correctly on app restart.
@@ -122,9 +122,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 
 ## First Next Action
 
-Implement a UI shell milestone: add `Admin` + `Ticket Planning` navigation target with placeholder board view and deterministic sample lane template data.
-
-After `ATP-M1`, run `studio-interaction-quality` red-pen pass before moving to `ATP-M2`.
+Execute `ATP-M3` ticket lifecycle completion (edit/delete/move), then re-run `studio-interaction-quality` red-pen pass.
 
 ## Milestone Plan (Planning Pass)
 
@@ -132,13 +130,14 @@ After `ATP-M1`, run `studio-interaction-quality` red-pen pass before moving to `
 
 - Milestone ID: `ATP-M1`
 - Goal: Deliver sidebar/nav and board shell.
-- Scope: Sidebar `Admin` section, `Ticket Planning` destination, placeholder board view.
+- Scope: Sidebar `Admin` section, `Taskboard` destination, placeholder board view.
 - Owner: AJ + Samwise
-- Status: `not-started`
+- Status: `done`
 - Risks: navigation-state regressions
 - Dependencies: sidebar enum/state wiring
 - Exit Criteria: App builds; `Admin` route is reachable; placeholder board renders.
-- Next Checkpoint Date: 2026-03-08
+- Next Checkpoint Date: 2026-03-07
+- Completion Evidence: `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio` succeeded; Taskboard shell route and placeholder panel are implemented in Studio UI.
 
 ### M2
 
@@ -146,11 +145,12 @@ After `ATP-M1`, run `studio-interaction-quality` red-pen pass before moving to `
 - Goal: Deliver lane template and lane CRUD.
 - Scope: Template picker, create/edit/delete/reorder lanes.
 - Owner: AJ + Samwise
-- Status: `not-started`
+- Status: `done`
 - Risks: lane ordering drift in persistence
 - Dependencies: M1 shell + data store shape
 - Exit Criteria: Lane CRUD works and persists in workspace-local file.
-- Next Checkpoint Date: 2026-03-09
+- Next Checkpoint Date: 2026-03-07
+- Completion Evidence: Taskboard panel now supports template-driven lane creation, lane edit/delete/reorder, ticket creation, and workspace-local JSON persistence under `.personakit/Taskboard/taskboard.json`.
 
 ### M3
 
@@ -182,11 +182,17 @@ After `ATP-M1`, run `studio-interaction-quality` red-pen pass before moving to `
 - Notes:
   1. Persistence format versioning policy should be decided before M2 close.
   2. Ticket field set may need one revision after first real usage cycle.
+- ATP-M1 interaction gate: `stop` (score `47/100`, blockers present)
+- Interaction report: `Docs/Plan/taskboard-atp-m1-red-pen-review.md`
+- ATP-M2 interaction gate: `stop` (score `69/100`, major gaps remain)
+- Interaction report: `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
 
 ## Related Docs
 
 - `Docs/Plan/TODO.md`
 - `Docs/Plan/partner-context-log.md`
+- `Docs/Plan/taskboard-atp-m1-red-pen-review.md`
+- `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
 - `.personakit/Sessions/venture-product-discovery.session.json`
 - `.personakit/Sessions/venture-product-planning.session.json`
 - `.personakit/Sessions/studio-interaction-quality.session.json`

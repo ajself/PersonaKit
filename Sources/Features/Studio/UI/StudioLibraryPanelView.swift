@@ -345,6 +345,7 @@ struct StudioLibraryPanelView: View {
     case .intents:
       return $isIntentsHelpExpanded
     case .sessions,
+      .taskboard,
       .relationshipMap,
       .validationResults:
       return .constant(false)
