@@ -15,6 +15,8 @@ Provide a compact index of active vs archived plan artifacts.
 - `taskboard-atp-m1-red-pen-review.md`
 - `taskboard-atp-m2-red-pen-review.md`
 - `taskboard-atp-m3-red-pen-review.md`
+- `taskboard-parity-polish-pass-1.md`
+- `taskboard-parity-polish-pass-2.md`
 - `git-history-gardener-proposals.md`
 - `git-history-gardener-log.md`
 - `pack-gardener-log.md`

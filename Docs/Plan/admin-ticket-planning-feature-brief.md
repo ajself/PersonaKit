@@ -122,7 +122,7 @@ Add an in-app planning workflow that makes project state obvious at a glance and
 
 ## First Next Action
 
-Use Taskboard as pilot baseline and queue a parity-polish follow-up slice (drag/drop + keyboard acceleration).
+Use Taskboard as the parity-ready pilot baseline and collect real usage feedback.
 
 ## Milestone Plan (Planning Pass)
 
@@ -190,6 +190,10 @@ Use Taskboard as pilot baseline and queue a parity-polish follow-up slice (drag/
 - Interaction report: `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
 - ATP-M3 interaction gate: `go-with-notes` (score `77/100`, no blockers)
 - Interaction report: `Docs/Plan/taskboard-atp-m3-red-pen-review.md`
+- Parity polish pass 1 gate: `go-with-notes` (score `84/100`, no blockers)
+- Interaction report: `Docs/Plan/taskboard-parity-polish-pass-1.md`
+- Parity polish pass 2 gate: `go` (score `86/100`, parity-ready)
+- Interaction report: `Docs/Plan/taskboard-parity-polish-pass-2.md`
 
 ## Related Docs
 
@@ -198,6 +202,8 @@ Use Taskboard as pilot baseline and queue a parity-polish follow-up slice (drag/
 - `Docs/Plan/taskboard-atp-m1-red-pen-review.md`
 - `Docs/Plan/taskboard-atp-m2-red-pen-review.md`
 - `Docs/Plan/taskboard-atp-m3-red-pen-review.md`
+- `Docs/Plan/taskboard-parity-polish-pass-1.md`
+- `Docs/Plan/taskboard-parity-polish-pass-2.md`
 - `.personakit/Sessions/venture-product-discovery.session.json`
 - `.personakit/Sessions/venture-product-planning.session.json`
 - `.personakit/Sessions/studio-interaction-quality.session.json`

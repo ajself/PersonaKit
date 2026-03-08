@@ -9,10 +9,12 @@ struct TaskboardPanelView: View {
   private var isTaskboardHelpExpanded = false
 
   @State private var board = TaskboardBoard.defaultBoard
+  @State private var selectedLaneID: String?
   @State private var laneEditorDraft: LaneEditorDraft?
   @State private var ticketEditorDraft: TicketEditorDraft?
   @State private var pendingLaneDeletion: TaskboardLane?
   @State private var pendingTicketDeletion: PendingTicketDeletion?
+  @State private var activeDropLaneID: String?
   @State private var persistenceMessage: String?
   @State private var persistenceIsError = false
 
@@ -136,7 +138,16 @@ struct TaskboardPanelView: View {
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       loadBoard()
     }
-    .onChange(of: board) { _, _ in
+    .onChange(of: board) { _, updatedBoard in
+      if let selectedLaneID,
+        !updatedBoard.lanes.contains(where: { $0.id == selectedLaneID })
+      {
+        self.selectedLaneID = updatedBoard.lanes
+          .sorted { $0.order < $1.order }
+          .first?
+          .id
+      }
+
       persistBoard()
     }
   }
@@ -187,6 +198,32 @@ struct TaskboardPanelView: View {
       } label: {
         Label("Add Lane", systemImage: "plus")
       }
+
+      Button {
+        laneEditorDraft = LaneEditorDraft.create()
+      } label: {
+        Label("New Lane", systemImage: "plus.square")
+      }
+      .help("Quick add lane (Shift-Command-L)")
+      .keyboardShortcut("l", modifiers: [.shift, .command])
+
+      Button {
+        openTicketComposerForSelectedLane()
+      } label: {
+        Label("New Ticket", systemImage: "plus.rectangle.on.rectangle")
+      }
+      .help("Create ticket in selected lane (Shift-Command-T)")
+      .keyboardShortcut("t", modifiers: [.shift, .command])
+      .disabled(selectedLaneID == nil)
+
+      Button {
+        editSelectedLane()
+      } label: {
+        Label("Edit Lane", systemImage: "pencil")
+      }
+      .help("Edit selected lane (Shift-Command-E)")
+      .keyboardShortcut("e", modifiers: [.shift, .command])
+      .disabled(selectedLaneID == nil)
 
       Button {
         resetBoard()
@@ -272,6 +309,34 @@ struct TaskboardPanelView: View {
     .frame(width: 280, alignment: .topLeading)
     .frame(minHeight: 260, alignment: .topLeading)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
+        .stroke(
+          laneOutlineColor(for: lane.id),
+          lineWidth: 2
+        )
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
+        .fill(activeDropLaneID == lane.id ? Color.accentColor.opacity(0.08) : .clear)
+    )
+    .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .onTapGesture {
+      selectedLaneID = lane.id
+    }
+    .dropDestination(
+      for: String.self,
+      action: { items, _ in
+        handleTicketDrop(items, destinationLaneID: lane.id)
+      },
+      isTargeted: { isTargeted in
+        if isTargeted {
+          activeDropLaneID = lane.id
+        } else if activeDropLaneID == lane.id {
+          activeDropLaneID = nil
+        }
+      }
+    )
   }
 
   private func ticketCard(
@@ -357,6 +422,7 @@ struct TaskboardPanelView: View {
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .draggable(ticketDragPayload(ticketID: ticket.id, laneID: lane.id))
   }
 
   private func laneEditorSheet(
@@ -469,19 +535,105 @@ struct TaskboardPanelView: View {
       excludingLaneID: nil
     )
 
-    board.lanes.append(
-      TaskboardLane(
-        id: nextLaneID(),
-        title: title,
-        templateID: template.id,
-        order: nextLaneOrder(),
-        tickets: []
-      )
+    let lane = TaskboardLane(
+      id: nextLaneID(),
+      title: title,
+      templateID: template.id,
+      order: nextLaneOrder(),
+      tickets: []
     )
+    board.lanes.append(lane)
+    selectedLaneID = lane.id
+  }
+
+  private func openTicketComposerForSelectedLane() {
+    guard let selectedLaneID else {
+      return
+    }
+
+    ticketEditorDraft = TicketEditorDraft.create(laneID: selectedLaneID)
+  }
+
+  private func editSelectedLane() {
+    guard
+      let selectedLaneID,
+      let lane = board.lanes.first(where: { $0.id == selectedLaneID })
+    else {
+      return
+    }
+
+    laneEditorDraft = LaneEditorDraft.edit(lane: lane)
+  }
+
+  private func ticketDragPayload(
+    ticketID: String,
+    laneID: String
+  ) -> String {
+    "ticket|\(ticketID)|\(laneID)"
+  }
+
+  private func parseTicketDragPayload(
+    _ payload: String
+  ) -> (ticketID: String, sourceLaneID: String)? {
+    let components = payload.split(separator: "|", omittingEmptySubsequences: false)
+
+    guard
+      components.count == 3,
+      components[0] == "ticket"
+    else {
+      return nil
+    }
+
+    return (
+      ticketID: String(components[1]),
+      sourceLaneID: String(components[2])
+    )
+  }
+
+  private func handleTicketDrop(
+    _ payloads: [String],
+    destinationLaneID: String
+  ) -> Bool {
+    guard let firstPayload = payloads.first,
+      let parsed = parseTicketDragPayload(firstPayload)
+    else {
+      return false
+    }
+
+    guard parsed.sourceLaneID != destinationLaneID else {
+      return false
+    }
+
+    moveTicket(
+      ticketID: parsed.ticketID,
+      fromLaneID: parsed.sourceLaneID,
+      toLaneID: destinationLaneID
+    )
+    selectedLaneID = destinationLaneID
+    activeDropLaneID = nil
+    return true
+  }
+
+  private func laneOutlineColor(
+    for laneID: String
+  ) -> Color {
+    if activeDropLaneID == laneID {
+      return .accentColor
+    }
+
+    if selectedLaneID == laneID {
+      return .accentColor
+    }
+
+    return .clear
   }
 
   private func resetBoard() {
     board = TaskboardBoard.defaultBoard
+    selectedLaneID = board.lanes
+      .sorted { $0.order < $1.order }
+      .first?
+      .id
     persistenceMessage = "Taskboard reset to default lanes."
     persistenceIsError = false
   }
@@ -517,6 +669,12 @@ struct TaskboardPanelView: View {
     board.lanes.removeAll {
       $0.id == laneID
     }
+    if selectedLaneID == laneID {
+      selectedLaneID = board.lanes
+        .sorted { $0.order < $1.order }
+        .first?
+        .id
+    }
     pendingLaneDeletion = nil
   }
 
@@ -533,15 +691,15 @@ struct TaskboardPanelView: View {
 
     switch draft.mode {
     case .create:
-      board.lanes.append(
-        TaskboardLane(
-          id: nextLaneID(),
-          title: uniqueLaneTitle(baseTitle: draft.title, excludingLaneID: nil),
-          templateID: draft.templateID,
-          order: nextLaneOrder(),
-          tickets: []
-        )
+      let lane = TaskboardLane(
+        id: nextLaneID(),
+        title: uniqueLaneTitle(baseTitle: draft.title, excludingLaneID: nil),
+        templateID: draft.templateID,
+        order: nextLaneOrder(),
+        tickets: []
       )
+      board.lanes.append(lane)
+      selectedLaneID = lane.id
 
     case .edit(let laneID):
       guard let laneIndex = board.lanes.firstIndex(where: { $0.id == laneID }) else {
@@ -554,6 +712,7 @@ struct TaskboardPanelView: View {
         excludingLaneID: laneID
       )
       board.lanes[laneIndex].templateID = draft.templateID
+      selectedLaneID = laneID
     }
 
     laneEditorDraft = nil
@@ -657,6 +816,7 @@ struct TaskboardPanelView: View {
 
     let ticket = board.lanes[sourceLaneIndex].tickets.remove(at: ticketIndex)
     board.lanes[destinationLaneIndex].tickets.append(ticket)
+    selectedLaneID = toLaneID
   }
 
   private func deleteTicket(
@@ -740,6 +900,10 @@ struct TaskboardPanelView: View {
   private func loadBoard() {
     guard let workspaceURL = workspaceStore.workspaceURL else {
       board = TaskboardBoard.defaultBoard
+      selectedLaneID = board.lanes
+        .sorted { $0.order < $1.order }
+        .first?
+        .id
       persistenceMessage = nil
       persistenceIsError = false
       return
@@ -750,6 +914,10 @@ struct TaskboardPanelView: View {
 
     guard fileManager.fileExists(atPath: fileURL.path()) else {
       board = TaskboardBoard.defaultBoard
+      selectedLaneID = board.lanes
+        .sorted { $0.order < $1.order }
+        .first?
+        .id
       persistenceMessage = nil
       persistenceIsError = false
       return
@@ -759,10 +927,18 @@ struct TaskboardPanelView: View {
       let data = try Data(contentsOf: fileURL)
       let decodedBoard = try JSONDecoder().decode(TaskboardBoard.self, from: data)
       board = decodedBoard.normalized()
+      selectedLaneID = board.lanes
+        .sorted { $0.order < $1.order }
+        .first?
+        .id
       persistenceMessage = nil
       persistenceIsError = false
     } catch {
       board = TaskboardBoard.defaultBoard
+      selectedLaneID = board.lanes
+        .sorted { $0.order < $1.order }
+        .first?
+        .id
       persistenceMessage = "Failed to load Taskboard data: \(error.localizedDescription)"
       persistenceIsError = true
     }
