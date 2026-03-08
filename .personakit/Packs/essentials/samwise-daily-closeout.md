@@ -1,6 +1,8 @@
 # Samwise Daily Closeout
 
-Use this essential when AJ and Samwise are ending an active workday.
+Use this essential when AJ and Samwise are ending an active checkpoint.
+
+`daily` is a stable workflow label, not a literal calendar-day requirement.
 
 ## Purpose
 
@@ -11,9 +13,9 @@ Use this essential when AJ and Samwise are ending an active workday.
 
 ## Required Closeout Steps
 
-1. Summarize work completed today in plain language.
+1. Summarize work completed in this checkpoint in plain language.
 2. Record learning points and effectiveness gaps.
-3. Write concrete next-day goals with first action to resume quickly.
+3. Write concrete re-entry goals with first action to resume quickly.
 4. Log one diary entry in `Docs/Plan/logs/samwise-diary.jsonl`.
 5. If pack/session updates were made, ensure gardening records are also updated.
 

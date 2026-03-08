@@ -21,7 +21,7 @@
       "text": "Apply approved updates and refresh handoff register and verification notes."
     },
     {
-      "text": "At day close, run `samwise-daily-closeout` and append one diary entry with outcomes, learnings, and next-day goals."
+      "text": "At checkpoint closeout, run `samwise-daily-closeout` and append one diary entry with outcomes, learnings, and re-entry goals."
     },
     {
       "text": "Before any git commit, verify whether current worktree has AJ-approved auto-commit authorization; if not, request and receive AJ approval for that specific commit."
@@ -32,7 +32,7 @@
     "Affected packs/sessions are explicitly identified",
     "Subagent handoff boundaries are clear and reviewable",
     "Validation and residual risks are documented",
-    "A daily closeout diary entry exists when a workday wraps",
+    "A closeout diary entry exists when a checkpoint wraps",
     "Any standing commit authority is limited to a non-main worktree with explicit AJ auto-commit approval recorded in partner logs",
     "No commit is created without AJ authorization (per-commit approval by default or approved non-main worktree auto-commit scope)"
   ],

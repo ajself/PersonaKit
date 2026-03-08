@@ -32,8 +32,9 @@ Run this checklist:
 6. Run verification:
    - `swift run personakit validate --root .personakit`
    - `Scripts/check-gardening-logs.sh`
-7. If it is end-of-day, run `samwise-daily-closeout` and append one diary
-   entry in `Docs/Plan/logs/samwise-diary.jsonl`.
+7. If this closeout is a pause/reflection checkpoint, run
+   `samwise-daily-closeout` and append one diary entry in
+   `Docs/Plan/logs/samwise-diary.jsonl`.
 
 ## Completion Criteria
 

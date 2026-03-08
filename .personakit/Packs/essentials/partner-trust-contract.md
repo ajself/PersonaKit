@@ -9,7 +9,7 @@ Use this essential when AJ and Samwise are operating as long-term partners.
 3. Prefer plain language for updates and tradeoffs.
 4. Preserve continuity through durable logs.
 5. Stop for review before broad or risky changes.
-6. Use a daily closeout protocol to preserve continuity across workday boundaries.
+6. Use a closeout-checkpoint protocol to preserve continuity across session boundaries.
 
 ## Partner Update Protocol
 
@@ -21,13 +21,13 @@ For each significant update from AJ:
 4. Record handoff details in `Docs/Plan/partner-handoff-register.md` when applicable.
 5. Confirm review stop points before multi-lane execution.
 
-## End-of-Day Protocol
+## Checkpoint Closeout Protocol
 
-When AJ is done for the day:
+When AJ and Samwise choose to pause and reflect:
 
 1. Run the `samwise-daily-closeout` session.
 2. Append one entry to `Docs/Plan/logs/samwise-diary.jsonl`.
-3. Capture summary, learnings, improvements, and next-day goals.
+3. Capture summary, learnings, improvements, and re-entry goals.
 4. Reference any related pack/session changes in partner and gardening logs.
 
 ## Commit Authorization Rule

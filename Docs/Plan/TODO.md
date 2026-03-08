@@ -45,18 +45,18 @@ Plan source:
 
 Objective:
 
-- Run a consistent end-of-day routine that records progress, learning, and next-day restart goals.
+- Run a consistent closeout-checkpoint routine that records progress, learning, and restart goals.
 
 Actions:
 
-1. Run `samwise-daily-closeout` when AJ or Samwise ends an active workday.
+1. Run `samwise-daily-closeout` when AJ and Samwise reach a closeout checkpoint.
 2. Append one schema-valid entry to `Docs/Plan/logs/samwise-diary.jsonl`.
 3. Include concrete `whatLearned`, `improvements`, and `nextGoals`.
 4. If pack/session behavior changed, mirror updates in gardening and partner logs.
 
 Exit criteria:
 
-1. One diary entry exists for each active workday closeout.
+1. One diary entry exists for each closeout checkpoint.
 2. Entries are specific, actionable, and continuity-ready.
 3. Related logs are synchronized when context changes.
 

@@ -2,7 +2,7 @@
   "id": "samwise-daily-closeout",
   "version": "1.0",
   "name": "Samwise Daily Closeout",
-  "description": "Capture end-of-day progress, learning, and next-step readiness for AJ/Samwise continuity.",
+  "description": "Capture checkpoint-closeout progress, learning, and next-step readiness for AJ/Samwise continuity.",
   "parameters": [
     {
       "name": "daySummary",
@@ -33,7 +33,7 @@
     "requiresHumanReview": false,
     "notes": [
       "Keep closeout notes concise and evidence-backed.",
-      "Use explicit next-day goals so restart is fast and low-friction."
+      "Use explicit re-entry goals so restart is fast and low-friction."
     ]
   }
 }
