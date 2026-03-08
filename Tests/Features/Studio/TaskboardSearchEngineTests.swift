@@ -134,4 +134,105 @@ struct TaskboardSearchEngineTests {
 
     #expect(destination == nil)
   }
+
+  @Test
+  func adjacentTicketIDDefaultsToFirstOrLastTicketWhenNothingSelected() {
+    let tickets = TaskboardBoard.defaultBoard.normalized().lanes[2].tickets
+
+    let firstTicketID = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: nil,
+      direction: 1
+    )
+    #expect(firstTicketID == tickets.first?.id)
+
+    let lastTicketID = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: nil,
+      direction: -1
+    )
+    #expect(lastTicketID == tickets.last?.id)
+  }
+
+  @Test
+  func adjacentTicketIDMovesWithinBounds() {
+    let tickets = [
+      TaskboardTicket(
+        id: "ticket-1",
+        title: "One",
+        owner: "Samwise",
+        assignees: [],
+        priority: .medium,
+        labels: [],
+        dueDateISO8601: nil,
+        checklist: [],
+        descriptionMarkdown: "",
+        comments: []
+      ),
+      TaskboardTicket(
+        id: "ticket-2",
+        title: "Two",
+        owner: "Samwise",
+        assignees: [],
+        priority: .medium,
+        labels: [],
+        dueDateISO8601: nil,
+        checklist: [],
+        descriptionMarkdown: "",
+        comments: []
+      ),
+      TaskboardTicket(
+        id: "ticket-3",
+        title: "Three",
+        owner: "Samwise",
+        assignees: [],
+        priority: .medium,
+        labels: [],
+        dueDateISO8601: nil,
+        checklist: [],
+        descriptionMarkdown: "",
+        comments: []
+      ),
+    ]
+
+    let nextTicketID = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: "ticket-2",
+      direction: 1
+    )
+    #expect(nextTicketID == "ticket-3")
+
+    let previousTicketID = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: "ticket-2",
+      direction: -1
+    )
+    #expect(previousTicketID == "ticket-1")
+  }
+
+  @Test
+  func adjacentTicketIDClampsAtEdgesAndReturnsNilForEmptyLists() {
+    let tickets = TaskboardBoard.defaultBoard.normalized().lanes[2].tickets
+
+    let beforeFirst = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: tickets.first?.id,
+      direction: -1
+    )
+    #expect(beforeFirst == tickets.first?.id)
+
+    let afterLast = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: tickets.last?.id,
+      direction: 1
+    )
+    #expect(afterLast == tickets.last?.id)
+
+    let emptyResult = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: [],
+      selectedTicketID: nil,
+      direction: 1
+    )
+    #expect(emptyResult == nil)
+  }
 }

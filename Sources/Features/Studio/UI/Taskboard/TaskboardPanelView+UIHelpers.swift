@@ -93,6 +93,20 @@ extension TaskboardPanelView {
     return baseCount
   }
 
+  func ticketOutlineColor(
+    ticketID: String
+  ) -> Color {
+    if activeDropTicketID == ticketID {
+      return Color.accentColor
+    }
+
+    if selectedTicketID == ticketID {
+      return Color.accentColor.opacity(0.7)
+    }
+
+    return .clear
+  }
+
   func clearFilters() {
     activeLabelFilter = nil
     dueDateFilter = .all

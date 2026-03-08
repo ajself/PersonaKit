@@ -7,6 +7,7 @@ enum TaskboardPanelFocusField: Hashable {
 
 struct TaskboardPanelSnapshotSeed {
   var selectedLaneID: String?
+  var selectedTicketID: String?
   var laneEditorDraft: LaneEditorDraft?
   var ticketEditorDraft: TicketEditorDraft?
   var inlineTicketEditorDraft: InlineTicketEditorDraft?
@@ -24,6 +25,7 @@ struct TaskboardPanelView: View {
 
   @State var board = TaskboardBoard.defaultBoard
   @State var selectedLaneID: String?
+  @State var selectedTicketID: String?
   @State var laneEditorDraft: LaneEditorDraft?
   @State var ticketEditorDraft: TicketEditorDraft?
   @State var inlineTicketEditorDraft: InlineTicketEditorDraft?
@@ -184,6 +186,14 @@ struct TaskboardPanelView: View {
           .id
       }
 
+      if let selectedTicketID,
+        !updatedBoard.lanes.contains(where: { lane in
+          lane.tickets.contains(where: { $0.id == selectedTicketID })
+        })
+      {
+        self.selectedTicketID = nil
+      }
+
       if let inlineTicketEditorDraft,
         !updatedBoard.lanes.contains(where: { lane in
           lane.id == inlineTicketEditorDraft.laneID
@@ -203,6 +213,7 @@ struct TaskboardPanelView: View {
     }
 
     selectedLaneID = snapshotSeed.selectedLaneID
+    selectedTicketID = snapshotSeed.selectedTicketID
     laneEditorDraft = snapshotSeed.laneEditorDraft
     ticketEditorDraft = snapshotSeed.ticketEditorDraft
     inlineTicketEditorDraft = snapshotSeed.inlineTicketEditorDraft

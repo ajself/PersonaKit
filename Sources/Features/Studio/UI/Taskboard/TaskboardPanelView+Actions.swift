@@ -35,6 +35,7 @@ extension TaskboardPanelView {
       return
     }
 
+    selectedTicketID = nil
     inlineTicketEditorDraft = nil
     ticketEditorDraft = TicketEditorDraft.create(laneID: selectedLaneID)
   }
@@ -43,6 +44,8 @@ extension TaskboardPanelView {
     ticket: TaskboardTicket,
     laneID: String
   ) {
+    selectedLaneID = laneID
+    selectedTicketID = ticket.id
     ticketEditorDraft = nil
     inlineTicketEditorDraft = InlineTicketEditorDraft.edit(
       ticket: ticket,
@@ -52,6 +55,52 @@ extension TaskboardPanelView {
 
   func cancelInlineTicketEditor() {
     inlineTicketEditorDraft = nil
+  }
+
+  func selectTicket(
+    ticketID: String,
+    laneID: String
+  ) {
+    selectedLaneID = laneID
+    selectedTicketID = ticketID
+  }
+
+  func visibleTicketsInSelectedLane() -> [TaskboardTicket] {
+    guard
+      let selectedLaneID,
+      let lane = sortedLanes.first(where: { $0.id == selectedLaneID })
+    else {
+      return []
+    }
+
+    return filteredTickets(in: lane)
+  }
+
+  func selectAdjacentTicket(
+    direction: Int
+  ) {
+    let tickets = visibleTicketsInSelectedLane()
+    selectedTicketID = TaskboardTicketNavigation.adjacentTicketID(
+      tickets: tickets,
+      selectedTicketID: selectedTicketID,
+      direction: direction
+    )
+  }
+
+  func openInlineQuickEditForSelectedTicket() {
+    guard
+      let selectedLaneID,
+      let selectedTicketID,
+      let lane = sortedLanes.first(where: { $0.id == selectedLaneID }),
+      let ticket = lane.tickets.first(where: { $0.id == selectedTicketID })
+    else {
+      return
+    }
+
+    openInlineTicketEditor(
+      ticket: ticket,
+      laneID: selectedLaneID
+    )
   }
 
   func editSelectedLane() {
@@ -73,6 +122,15 @@ extension TaskboardPanelView {
       selectedLaneID: selectedLaneID,
       direction: direction
     )
+
+    if let selectedLaneID,
+      !board.lanes.contains(where: { lane in
+        lane.id == selectedLaneID
+          && lane.tickets.contains(where: { $0.id == selectedTicketID })
+      })
+    {
+      selectedTicketID = nil
+    }
   }
 
   func focusKeywordSearch() {
@@ -794,6 +852,7 @@ extension TaskboardPanelView {
     )
     board.lanes[destinationLaneIndex].tickets.insert(ticket, at: insertIndex)
     selectedLaneID = toLaneID
+    selectedTicketID = ticketID
     recordInteractionEvent(
       .moveTicket,
       details: [
@@ -815,6 +874,9 @@ extension TaskboardPanelView {
 
     board.lanes[laneIndex].tickets.removeAll {
       $0.id == ticketID
+    }
+    if selectedTicketID == ticketID {
+      selectedTicketID = nil
     }
     pendingTicketDeletion = nil
     recordInteractionEvent(

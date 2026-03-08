@@ -123,6 +123,33 @@ extension TaskboardPanelView {
       .disabled(sortedLanes.isEmpty)
 
       Button {
+        selectAdjacentTicket(direction: -1)
+      } label: {
+        Image(systemName: "chevron.up")
+      }
+      .help("Select previous ticket in lane (Shift-Option-Command-Up Arrow)")
+      .keyboardShortcut(.upArrow, modifiers: [.shift, .option, .command])
+      .disabled(visibleTicketsInSelectedLane().isEmpty)
+
+      Button {
+        selectAdjacentTicket(direction: 1)
+      } label: {
+        Image(systemName: "chevron.down")
+      }
+      .help("Select next ticket in lane (Shift-Option-Command-Down Arrow)")
+      .keyboardShortcut(.downArrow, modifiers: [.shift, .option, .command])
+      .disabled(visibleTicketsInSelectedLane().isEmpty)
+
+      Button {
+        openInlineQuickEditForSelectedTicket()
+      } label: {
+        Label("Quick Edit", systemImage: "pencil.circle")
+      }
+      .help("Open inline quick edit for selected ticket (Command-Return)")
+      .keyboardShortcut(.return, modifiers: [.command])
+      .disabled(selectedTicketID == nil)
+
+      Button {
         editSelectedLane()
       } label: {
         Label("Edit Lane", systemImage: "pencil")
@@ -312,6 +339,9 @@ extension TaskboardPanelView {
     .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     .onTapGesture {
       selectedLaneID = lane.id
+      if !lane.tickets.contains(where: { $0.id == selectedTicketID }) {
+        selectedTicketID = nil
+      }
     }
     .dropDestination(
       for: String.self,
@@ -588,10 +618,19 @@ extension TaskboardPanelView {
     .overlay(
       RoundedRectangle(cornerRadius: 10, style: .continuous)
         .stroke(
-          activeDropTicketID == ticket.id ? Color.accentColor : .clear,
-          lineWidth: 2
+          ticketOutlineColor(
+            ticketID: ticket.id
+          ),
+          lineWidth: selectedTicketID == ticket.id || activeDropTicketID == ticket.id ? 2 : 0
         )
     )
+    .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .onTapGesture {
+      selectTicket(
+        ticketID: ticket.id,
+        laneID: lane.id
+      )
+    }
     .draggable(ticketDragPayload(ticketID: ticket.id, laneID: lane.id))
     .dropDestination(
       for: String.self,

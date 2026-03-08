@@ -161,3 +161,24 @@ enum TaskboardTicketLaneNavigation {
     return orderedLanes[destinationIndex].id
   }
 }
+
+enum TaskboardTicketNavigation {
+  static func adjacentTicketID(
+    tickets: [TaskboardTicket],
+    selectedTicketID: String?,
+    direction: Int
+  ) -> String? {
+    guard !tickets.isEmpty else {
+      return nil
+    }
+
+    guard let selectedTicketID,
+      let currentIndex = tickets.firstIndex(where: { $0.id == selectedTicketID })
+    else {
+      return direction >= 0 ? tickets.first?.id : tickets.last?.id
+    }
+
+    let targetIndex = max(0, min(currentIndex + direction, tickets.count - 1))
+    return tickets[targetIndex].id
+  }
+}
