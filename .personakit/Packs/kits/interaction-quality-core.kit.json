@@ -1,0 +1,14 @@
+{
+  "id": "interaction-quality-core",
+  "version": "1.0",
+  "name": "Interaction Quality Core Kit",
+  "summary": "Standards, patterns, and report contracts for evaluating planning-board interaction quality.",
+  "essentialIds": [
+    "interaction-quality-rubric",
+    "planning-board-ux-patterns",
+    "interaction-quality-report-template",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}
