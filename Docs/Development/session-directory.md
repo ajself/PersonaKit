@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-08
 
 ## Purpose
 
@@ -38,6 +38,7 @@ Lifecycle legend:
 - `pack-gardener-maintenance` - owner: `pack-gardener` - state: `active`
 - `git-history-gardener` - owner: `pack-gardener` - state: `active`
 - `rosie-worktree-upkeep` - owner: `pack-gardener` - state: `active`
+- `rosie-retrospective-garden` - owner: `pack-gardener` - state: `candidate`
 
 ## Partner Sync Workflows
 
@@ -46,6 +47,13 @@ Lifecycle legend:
 - `samwise-persona-hiring` - owner: `samwise` - state: `candidate`
 - `samwise-persona-hiring-calibration` - owner: `samwise` - state: `candidate`
 - `samwise-daily-closeout` - owner: `samwise` - state: `active`
+- `samwise-worktree-squad-oversight` - owner: `samwise` - state: `candidate`
+
+## Worktree Delivery Workflows
+
+- `worktree-squad-delivery` - owner: `worktree-squad-lead` - state: `candidate`
+- `worktree-squad-retrospective` - owner: `worktree-squad-lead` - state: `candidate`
+- `worktree-squad-calibration` - owner: `worktree-squad-lead` - state: `candidate`
 
 ## Venture Product Workflows
 
@@ -56,7 +64,7 @@ Lifecycle legend:
 ## State Summary
 
 - `active`: 10 sessions
-- `candidate`: 8 sessions
+- `candidate`: 14 sessions
 - `deprecated`: 0 sessions
 
 ## Workspace Session Directories

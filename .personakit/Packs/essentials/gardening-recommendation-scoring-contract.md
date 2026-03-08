@@ -11,8 +11,8 @@ rankings for gardening upkeep actions.
 
 ## Canonical Files
 
-1. `Docs/Plan/logs/gardening-recommendations.schema.json`
-2. `Docs/Plan/logs/gardening-recommendations.jsonl`
+1. `Docs/Development/logs/gardening-recommendations.schema.json`
+2. `Docs/Development/logs/gardening-recommendations.jsonl`
 
 ## Score Model
 

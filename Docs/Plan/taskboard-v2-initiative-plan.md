@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-08
 
 ## Purpose
 
@@ -298,8 +298,8 @@ Hard rule:
 
 ## Related Docs
 
-1. `Docs/Plan/admin-ticket-planning-feature-brief.md`
-2. `Docs/Plan/taskboard-parity-polish-pass-2.md`
+1. `Docs/Plan/Archive/admin-ticket-planning-feature-brief.md`
+2. `Docs/Plan/Archive/taskboard-parity-polish-pass-2.md`
 3. `Docs/Plan/TODO.md`
 4. `Docs/Plan/taskboard-ai-mutation-contract.md`
 5. `Docs/Plan/taskboard-v2-snapshot-lane.md`

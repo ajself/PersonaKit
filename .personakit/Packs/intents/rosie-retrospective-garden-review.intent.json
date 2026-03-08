@@ -1,0 +1,40 @@
+{
+  "id": "rosie-retrospective-garden-review",
+  "version": "1.0",
+  "name": "Rosie Retrospective Garden Review",
+  "description": "Garden Samwise diary and squad retrospectives to produce improvement recommendations for the next iteration.",
+  "parameters": [
+    {
+      "name": "phaseLabel",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "focusObjectives",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "rosie-retrospective-gardening-contract",
+    "worktree-squad-loop-log-contract",
+    "samwise-daily-closeout",
+    "gardening-recommendation-scoring-contract",
+    "gardening-recommendation-feedback-contract",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Recommendations are proposal-first and require AJ review before non-trivial changes.",
+      "Do not treat retrospective gardening output as direct authorization to mutate unrelated artifacts.",
+      "Link each recommendation to concrete evidence from diary or retrospective records."
+    ]
+  }
+}

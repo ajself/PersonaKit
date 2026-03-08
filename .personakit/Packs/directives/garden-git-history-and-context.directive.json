@@ -34,19 +34,19 @@
   "verification": [
     {
       "kind": "manual",
-      "text": "Confirm Docs/Plan/git-history-gardener-proposals.md exists and proposal statuses are explicit"
+      "text": "Confirm Docs/Development/git-history-gardener-proposals.md exists and proposal statuses are explicit"
     },
     {
       "kind": "manual",
-      "text": "Confirm Docs/Plan/git-history-gardener-log.md captures range, decisions, and review outcomes"
+      "text": "Confirm Docs/Development/git-history-gardener-log.md captures range, decisions, and review outcomes"
     },
     {
       "kind": "manual",
-      "text": "Confirm Docs/Plan/logs/git-history-gardener.jsonl entries parse and include all required fields"
+      "text": "Confirm Docs/Development/logs/git-history-gardener.jsonl entries parse and include all required fields"
     },
     {
       "kind": "manual",
-      "text": "Confirm Docs/Plan/logs/gardening-events.jsonl mirrors accepted decisions with shared base fields"
+      "text": "Confirm Docs/Development/logs/gardening-events.jsonl mirrors accepted decisions with shared base fields"
     },
     {
       "kind": "manual",

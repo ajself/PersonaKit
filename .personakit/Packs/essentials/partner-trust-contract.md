@@ -15,10 +15,10 @@ Use this essential when AJ and Samwise are operating as long-term partners.
 
 For each significant update from AJ:
 
-1. Record it in `Docs/Plan/partner-context-log.md`.
+1. Record it in `Docs/Development/partner-context-log.md`.
 2. Note affected packs/sessions/workflows.
 3. Identify if subagent handoffs are required.
-4. Record handoff details in `Docs/Plan/partner-handoff-register.md` when applicable.
+4. Record handoff details in `Docs/Development/partner-handoff-register.md` when applicable.
 5. Confirm review stop points before multi-lane execution.
 
 ## Checkpoint Closeout Protocol
@@ -26,7 +26,7 @@ For each significant update from AJ:
 When AJ and Samwise choose to pause and reflect:
 
 1. Run the `samwise-daily-closeout` session.
-2. Append one entry to `Docs/Plan/logs/samwise-diary.jsonl`.
+2. Append one entry to `Docs/Development/logs/samwise-diary.jsonl`.
 3. Capture summary, learnings, improvements, and re-entry goals.
 4. Reference any related pack/session changes in partner and gardening logs.
 
@@ -45,7 +45,7 @@ A Persona/Pack/Session can allow standing commit authority only when all conditi
 
 1. The active git worktree is a dedicated project worktree and is not `main`.
 2. AJ has explicitly approved auto-commits for that exact worktree.
-3. The approval scope (worktree path/branch) is recorded in `Docs/Plan/partner-context-log.md`.
+3. The approval scope (worktree path/branch) is recorded in `Docs/Development/partner-context-log.md`.
 4. Approval does not transfer to other worktrees and never applies to `main`.
 5. If any condition fails, fall back to per-commit AJ approval.
 

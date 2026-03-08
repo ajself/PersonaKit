@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-08
 
 ## Purpose
 
@@ -80,4 +80,4 @@ Note:
 
 1. [Taskboard V2 Initiative Plan](./taskboard-v2-initiative-plan.md)
 2. [Taskboard Trello Image Catalog](../Research/taskboard-trello-image-catalog.md)
-3. [Taskboard ATP M3 Red Pen Review](./taskboard-atp-m3-red-pen-review.md)
+3. [Taskboard ATP M3 Red Pen Review](./Archive/taskboard-atp-m3-red-pen-review.md)

@@ -1,4 +1,34 @@
-# Development Validation Harness
+# Development Guide
+
+Status: Active  
+Owner: AJ  
+Last Reviewed: 2026-03-08
+
+## Purpose
+
+Provide the durable development operating model for this repository: workflow
+agreements, session routing, ongoing logs, and validation commands.
+
+## Team operating agreement
+
+- [Collaboration Charter](./Collaboration-Charter.md)
+- [Worktree Squad Cheat Sheet](./worktree-squad-cheat-sheet.md)
+- [Session Directory](./session-directory.md)
+- [Session Lifecycle States](./session-lifecycle-states.md)
+- [Closeout Checklist](./closeout-checklist.md)
+
+## Operational Records
+
+- [Partner Context Log](./partner-context-log.md)
+- [Partner Handoff Register](./partner-handoff-register.md)
+- [Pack Gardener Log](./pack-gardener-log.md)
+- [Git History Gardener Log](./git-history-gardener-log.md)
+- [Git History Gardener Proposals](./git-history-gardener-proposals.md)
+- [Development Logs](./logs/README.md)
+- [Persona Hiring Reviews](./hiring-reviews/README.md)
+- [Retrospectives](./retrospectives/README.md)
+
+## Validation Harness
 
 PersonaKit is the authoritative context compiler. This repo uses a small,
 deterministic validation harness against the canonical kit in
@@ -6,12 +36,6 @@ deterministic validation harness against the canonical kit in
 
 The FOSA migration is complete; this guide reflects the post-migration
 implementation layout and validation workflow.
-
-## Team operating agreement
-
-- [Collaboration Charter](./Collaboration-Charter.md)
-- [Session Lifecycle States](./session-lifecycle-states.md)
-- [Closeout Checklist](./closeout-checklist.md)
 
 ## Implementation architecture
 

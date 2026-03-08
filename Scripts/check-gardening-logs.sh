@@ -6,14 +6,14 @@ import json
 from pathlib import Path
 
 CHECKS = [
-    (Path('Docs/Plan/logs/gardening-events.schema.json'), Path('Docs/Plan/logs/gardening-events.jsonl'), 'GARDENING_BASE'),
-    (Path('Docs/Plan/logs/gardening-health-snapshots.schema.json'), Path('Docs/Plan/logs/gardening-health-snapshots.jsonl'), 'HEALTH_SNAPSHOT_PROFILE'),
-    (Path('Docs/Plan/logs/gardening-recommendations.schema.json'), Path('Docs/Plan/logs/gardening-recommendations.jsonl'), 'RECOMMENDATION_PROFILE'),
-    (Path('Docs/Plan/logs/gardening-recommendation-feedback.schema.json'), Path('Docs/Plan/logs/gardening-recommendation-feedback.jsonl'), 'RECOMMENDATION_FEEDBACK_PROFILE'),
-    (Path('Docs/Plan/logs/gardening-pack-coverage.schema.json'), Path('Docs/Plan/logs/gardening-pack-coverage.jsonl'), 'PACK_COVERAGE_PROFILE'),
-    (Path('Docs/Plan/logs/gardening-policy-conflicts.schema.json'), Path('Docs/Plan/logs/gardening-policy-conflicts.jsonl'), 'POLICY_CONFLICT_PROFILE'),
-    (Path('Docs/Plan/logs/gardening-safety-preflight.schema.json'), Path('Docs/Plan/logs/gardening-safety-preflight.jsonl'), 'SAFETY_PREFLIGHT_PROFILE'),
-    (Path('Docs/Plan/logs/git-history-gardener.schema.json'), Path('Docs/Plan/logs/git-history-gardener.jsonl'), 'GIT_HISTORY_PROFILE'),
+    (Path('Docs/Development/logs/gardening-events.schema.json'), Path('Docs/Development/logs/gardening-events.jsonl'), 'GARDENING_BASE'),
+    (Path('Docs/Development/logs/gardening-health-snapshots.schema.json'), Path('Docs/Development/logs/gardening-health-snapshots.jsonl'), 'HEALTH_SNAPSHOT_PROFILE'),
+    (Path('Docs/Development/logs/gardening-recommendations.schema.json'), Path('Docs/Development/logs/gardening-recommendations.jsonl'), 'RECOMMENDATION_PROFILE'),
+    (Path('Docs/Development/logs/gardening-recommendation-feedback.schema.json'), Path('Docs/Development/logs/gardening-recommendation-feedback.jsonl'), 'RECOMMENDATION_FEEDBACK_PROFILE'),
+    (Path('Docs/Development/logs/gardening-pack-coverage.schema.json'), Path('Docs/Development/logs/gardening-pack-coverage.jsonl'), 'PACK_COVERAGE_PROFILE'),
+    (Path('Docs/Development/logs/gardening-policy-conflicts.schema.json'), Path('Docs/Development/logs/gardening-policy-conflicts.jsonl'), 'POLICY_CONFLICT_PROFILE'),
+    (Path('Docs/Development/logs/gardening-safety-preflight.schema.json'), Path('Docs/Development/logs/gardening-safety-preflight.jsonl'), 'SAFETY_PREFLIGHT_PROFILE'),
+    (Path('Docs/Development/logs/git-history-gardener.schema.json'), Path('Docs/Development/logs/git-history-gardener.jsonl'), 'GIT_HISTORY_PROFILE'),
 ]
 
 

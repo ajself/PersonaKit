@@ -98,11 +98,11 @@ If confidence is below threshold or unknowns are material:
 Reverse-interview outputs must be stored in both formats:
 
 1. Human report:
-   - `Docs/Plan/hiring-reviews/YYYY-MM-DD-<personaId>.md`
+   - `Docs/Development/hiring-reviews/YYYY-MM-DD-<personaId>.md`
    - or approved override path if explicitly provided
 2. Machine-readable log entry:
-   - append one JSON object to `Docs/Plan/logs/persona-hiring-reviews.jsonl`
-   - validate fields against `Docs/Plan/logs/persona-hiring-reviews.schema.json`
+   - append one JSON object to `Docs/Development/logs/persona-hiring-reviews.jsonl`
+   - validate fields against `Docs/Development/logs/persona-hiring-reviews.schema.json`
 
 ## Guardrails
 

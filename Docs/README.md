@@ -4,7 +4,8 @@ Use this file as the navigation map for project documentation.
 
 - [Style Guide](./STYLEGUIDE.md): conventions for structure, naming, and updates.
 - [Architecture](./Architecture/): ADRs, boundaries, and domain maps.
-- [Development](./Development/): workflow rules, validation harness, and branch narratives.
+- [Development](./Development/): workflow rules, durable operating records, validation harness, and branch narratives.
+- [Worktree Squad Cheat Sheet](./Development/worktree-squad-cheat-sheet.md): visual map of Samwise, squad-leader, and Rosie delivery loops.
 - [Session Directory](./Development/session-directory.md): phase-grouped list of available sessions.
 - [Session Lifecycle States](./Development/session-lifecycle-states.md): lifecycle-state definitions and assignment rules.
 - [Closeout Checklist](./Development/closeout-checklist.md): recurring closeout steps for maintenance, logs, and validation.

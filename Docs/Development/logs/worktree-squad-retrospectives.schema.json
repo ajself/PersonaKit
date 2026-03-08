@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/worktree-squad-retrospectives.schema.json",
+  "title": "Worktree Squad Retrospective Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "date",
+    "sessionId",
+    "entryType",
+    "objective",
+    "whatWentWell",
+    "whatDidNot",
+    "openQuestions",
+    "improvements",
+    "actionItems",
+    "reportPath",
+    "reviewer"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^WSR-[0-9]{4}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "enum": [
+        "rosie-retrospective-garden",
+        "worktree-squad-retrospective"
+      ]
+    },
+    "entryType": {
+      "type": "string",
+      "enum": [
+        "recommendation",
+        "retrospective"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "whatWentWell": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "whatDidNot": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "improvements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actionItems": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reportPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

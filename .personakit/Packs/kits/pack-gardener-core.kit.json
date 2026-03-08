@@ -8,6 +8,8 @@
     "gardening-v2-checklist",
     "gardening-log-contract",
     "gardening-health-snapshot-contract",
+    "rosie-retrospective-gardening-contract",
+    "worktree-squad-loop-log-contract",
     "pack-coverage-auditor-contract",
     "policy-conflict-detector-contract",
     "self-gardening-safety-preflight-contract",

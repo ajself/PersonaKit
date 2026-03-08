@@ -2,13 +2,25 @@
 
 Status: Active  
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-08
 
 ## Purpose
 
 Provide a dependency-linked night-shift execution system so Samwise can
 orchestrate multi-agent delivery in small, verifiable increments toward a
 Trello-rival Taskboard experience.
+
+## Current Execution Snapshot (2026-03-08)
+
+1. `NS0` foundation landed:
+   - telemetry model + JSONL/report builder committed in `9242fcb`
+2. First `NS1` throughput foundations landed:
+   - one-click previous/next lane movement
+   - in-lane drag reorder targeting
+3. Remaining focus:
+   - complete `NS0` evidence/report loop
+   - finish snapshot matrix expansion
+   - continue `NS1` inline quick-edit and keyboard-speed paths before `NS2`
 
 ## Branch Strategy
 
@@ -48,6 +60,11 @@ Cadence per night shift:
 4. Run short implementation loops:
    - build -> test -> snapshot -> product review -> design review -> adjust.
 5. End with a morning brief: shipped, blocked, and next ticket queue.
+6. At assignment closeout, run a retrospective (`what went well`, `what did
+   not`, `open questions`, `improvements`, and `next action items`) and append
+   contract-compliant retrospective logs.
+7. After closeout, run Rosie retrospective gardening to mine diary +
+   retrospective artifacts and propose iteration improvements.
 
 Definition of Done for any ticket:
 

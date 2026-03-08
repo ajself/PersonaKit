@@ -1,0 +1,16 @@
+{
+  "id": "worktree-squad-core",
+  "version": "1.0",
+  "name": "Worktree Squad Core Kit",
+  "summary": "Core contracts for gated worktree delivery loops, retrospectives, and calibration.",
+  "essentialIds": [
+    "worktree-squad-gating-contract",
+    "worktree-squad-loop-log-contract",
+    "worktree-squad-retrospective-template",
+    "worktree-squad-calibration-benchmarks",
+    "interaction-quality-rubric",
+    "environment",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}
