@@ -23,29 +23,25 @@ Objective:
 
 Actions:
 
-1. Run TV2-M1 foundation gate:
-   - lock v2 acceptance criteria
-   - lock AI-editable board-state contract strategy
-   - scaffold research and snapshot-test lanes
-   - complete AJ feature-lock checkpoint from research before build
-2. Start W1 early:
-   - define deterministic Taskboard mutation contract for AI operations
-   - keep W1 design-only before `G3.5` (no feature implementation work)
-3. Start W2:
-   - collect Trello market/product/UX research with web citations and
-     published images
-4. Start W3:
-   - add Taskboard snapshot-testing baseline and review policy
-5. Hold implementation lanes:
-   - do not build/change Taskboard features until AJ approves
-     `Docs/Plan/taskboard-v2-feature-lock.md`
+1. Execute `TV2-M2A` (`P0`) from `Docs/Plan/taskboard-v2-feature-lock.md`:
+   - labels on tickets
+   - due date on tickets
+   - checklist on tickets
+   - board filtering
+2. Resolve and lock the open decisions in
+   `Docs/Plan/taskboard-ai-mutation-contract.md` during `M2A` kickoff.
+3. Implement snapshot test suite + baselines per
+   `Docs/Plan/taskboard-v2-snapshot-lane.md`.
+4. Execute `TV2-M2B` (`P1`) after `M2A`:
+   - keyboard speed-path baseline
+   - search baseline
 
 Exit criteria:
 
 1. `G1` and `G2` are approved in plan artifacts.
 2. `G3.5` feature-lock gate is approved in plan artifacts.
 3. Research and visual QA lanes are operational and traceable.
-4. TV2-M2 is ready to begin without architecture ambiguity.
+4. `TV2-M2A` and `TV2-M2B` are complete with no blocker findings.
 
 ### 2) Gardening Tooling Operations (Ongoing)
 

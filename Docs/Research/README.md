@@ -1,6 +1,6 @@
 # Research Index
 
-Status: Draft  
+Status: Active  
 Owner: AJ  
 Last Reviewed: 2026-03-07
 
@@ -8,11 +8,11 @@ Last Reviewed: 2026-03-07
 
 Track source-backed research artifacts used to define Taskboard v2 decisions.
 
-## Planned Artifacts
+## Active Artifacts
 
-1. `taskboard-trello-benchmark.md`
-2. `taskboard-trello-image-catalog.md`
-3. `taskboard-trello-gap-matrix.md`
+1. [Taskboard Trello Benchmark](./taskboard-trello-benchmark.md)
+2. [Taskboard Trello Image Catalog](./taskboard-trello-image-catalog.md)
+3. [Taskboard Trello Gap Matrix](./taskboard-trello-gap-matrix.md)
 
 ## Source Standards
 
@@ -20,3 +20,4 @@ Track source-backed research artifacts used to define Taskboard v2 decisions.
 2. Include publication date and retrieval date where available.
 3. Use published images only (no generative images).
 4. Record usage/licensing notes for each referenced image.
+5. Prefer primary sources from official product docs when possible.

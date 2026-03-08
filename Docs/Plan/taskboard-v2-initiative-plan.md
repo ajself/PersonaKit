@@ -85,7 +85,7 @@ Plan:
 
 Deliverables:
 
-1. Taskboard mutation schema/contract doc.
+1. `Docs/Plan/taskboard-ai-mutation-contract.md`.
 2. Validation rules + failure modes.
 3. Manual and automated tests for mutation operations.
 
@@ -160,7 +160,7 @@ Deliverables:
 
 1. Snapshot test target + fixtures.
 2. Baseline image set checked into repo per convention.
-3. Visual QA checklist and failure triage steps.
+3. `Docs/Plan/taskboard-v2-snapshot-lane.md` and failure triage steps.
 
 ### W4: Taskboard V2 UX/Product Slice
 
@@ -266,6 +266,11 @@ Exit criteria:
 5. `G4 Visual QA`: snapshot baselines and policy active.
 6. `G5 Pilot Ready`: TV2-M2 complete with no blocker findings.
 
+Current status:
+
+1. `G3.5` passed on 2026-03-07 via `Docs/Plan/taskboard-v2-feature-lock.md`.
+2. Execution priority is now `P0` -> `P1` -> `P2` -> `P3`.
+
 Hard rule:
 
 1. No Taskboard feature implementation starts before `G3.5` passes.
@@ -282,3 +287,7 @@ Hard rule:
 1. `Docs/Plan/admin-ticket-planning-feature-brief.md`
 2. `Docs/Plan/taskboard-parity-polish-pass-2.md`
 3. `Docs/Plan/TODO.md`
+4. `Docs/Plan/taskboard-ai-mutation-contract.md`
+5. `Docs/Plan/taskboard-v2-snapshot-lane.md`
+6. `Docs/Research/taskboard-trello-benchmark.md`
+7. `Docs/Research/taskboard-trello-gap-matrix.md`

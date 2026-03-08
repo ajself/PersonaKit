@@ -14,6 +14,8 @@ Provide a compact index of active vs archived plan artifacts.
 - `admin-ticket-planning-feature-brief.md`
 - `taskboard-v2-initiative-plan.md`
 - `taskboard-v2-feature-lock.md`
+- `taskboard-ai-mutation-contract.md`
+- `taskboard-v2-snapshot-lane.md`
 - `taskboard-atp-m1-red-pen-review.md`
 - `taskboard-atp-m2-red-pen-review.md`
 - `taskboard-atp-m3-red-pen-review.md`
