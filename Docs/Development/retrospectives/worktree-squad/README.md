@@ -12,6 +12,9 @@ Samwise-supervised worktree squad delivery loops.
 ## Files
 
 - [2026-03-08-bootstrap-retrospective.md](./2026-03-08-bootstrap-retrospective.md)
+- [2026-03-08-taskboard-wrap-up-agenda.md](./2026-03-08-taskboard-wrap-up-agenda.md)
+- [2026-03-08-taskboard-wrap-up-retrospectives.md](./2026-03-08-taskboard-wrap-up-retrospectives.md)
+- [2026-03-08-taskboard-wrap-up-minutes.md](./2026-03-08-taskboard-wrap-up-minutes.md)
 - [recommendations/README.md](./recommendations/README.md)
 
 ## Related Docs

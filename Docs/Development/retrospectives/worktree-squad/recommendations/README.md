@@ -11,6 +11,7 @@ Store Rosie-generated recommendation reports here.
 ## File Naming Convention
 
 - `YYYY-MM-DD-rosie-recommendations.md`
+- `YYYY-MM-DD-rosie-taskboard-wrap-up-recommendations.md`
 
 ## Required Sections
 
@@ -24,3 +25,7 @@ Store Rosie-generated recommendation reports here.
 
 - [Worktree Squad Retrospectives](../README.md)
 - [Development Logs](../../../logs/README.md)
+
+## Current Reports
+
+- [2026-03-08-rosie-taskboard-wrap-up-recommendations.md](./2026-03-08-rosie-taskboard-wrap-up-recommendations.md)
