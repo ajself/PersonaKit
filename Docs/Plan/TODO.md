@@ -70,6 +70,9 @@ Execution note:
   - header shortcuts now navigate selected tickets and open inline quick edit
   - selected tickets can now hand off left/right between lanes from the keyboard
   - selected tickets can now reorder up/down within the active lane from the keyboard
+- Header command density has been reduced in the current working tree:
+  - primary board actions stay visible, while selection/movement/report actions moved into one overflow menu
+  - keyboard shortcuts remain available even though the default board chrome is calmer
   - remaining `P2` work is now interaction polish plus the open `NS0` evidence loop
 
 ## Plan Hygiene Rules

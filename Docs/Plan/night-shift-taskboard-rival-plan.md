@@ -45,6 +45,10 @@ Trello-rival Taskboard experience.
      the keyboard
    - the keyboard-first movement loop now covers selection, quick edit,
      handoff, and in-lane reordering
+10. First `P2` polish slice after the keyboard baseline landed:
+   - the header now keeps only primary board actions visible by default
+   - selection, movement, edit-lane, reset, and report controls moved into a
+     single overflow actions menu while preserving keyboard shortcuts
 
 ## Branch Strategy
 

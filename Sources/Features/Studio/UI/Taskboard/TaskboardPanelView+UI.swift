@@ -80,14 +80,6 @@ extension TaskboardPanelView {
       }
 
       Button {
-        laneEditorDraft = LaneEditorDraft.create()
-      } label: {
-        Label("New Lane", systemImage: "plus.square")
-      }
-      .help("Quick add lane (Shift-Command-L)")
-      .keyboardShortcut("l", modifiers: [.shift, .command])
-
-      Button {
         openTicketComposerForSelectedLane()
       } label: {
         Label("New Ticket", systemImage: "plus.rectangle.on.rectangle")
@@ -104,109 +96,91 @@ extension TaskboardPanelView {
       .help("Focus board search (Command-F)")
       .keyboardShortcut("f", modifiers: [.command])
 
-      Button {
-        selectAdjacentLane(direction: -1)
-      } label: {
-        Image(systemName: "chevron.left")
-      }
-      .help("Select previous lane (Option-Command-Left Arrow)")
-      .keyboardShortcut(.leftArrow, modifiers: [.option, .command])
-      .disabled(sortedLanes.isEmpty)
-
-      Button {
-        selectAdjacentLane(direction: 1)
-      } label: {
-        Image(systemName: "chevron.right")
-      }
-      .help("Select next lane (Option-Command-Right Arrow)")
-      .keyboardShortcut(.rightArrow, modifiers: [.option, .command])
-      .disabled(sortedLanes.isEmpty)
-
-      Button {
-        selectAdjacentTicket(direction: -1)
-      } label: {
-        Image(systemName: "chevron.up")
-      }
-      .help("Select previous ticket in lane (Shift-Option-Command-Up Arrow)")
-      .keyboardShortcut(.upArrow, modifiers: [.shift, .option, .command])
-      .disabled(visibleTicketsInSelectedLane().isEmpty)
-
-      Button {
-        selectAdjacentTicket(direction: 1)
-      } label: {
-        Image(systemName: "chevron.down")
-      }
-      .help("Select next ticket in lane (Shift-Option-Command-Down Arrow)")
-      .keyboardShortcut(.downArrow, modifiers: [.shift, .option, .command])
-      .disabled(visibleTicketsInSelectedLane().isEmpty)
-
-      Button {
-        openInlineQuickEditForSelectedTicket()
-      } label: {
-        Label("Quick Edit", systemImage: "pencil.circle")
-      }
-      .help("Open inline quick edit for selected ticket (Command-Return)")
-      .keyboardShortcut(.return, modifiers: [.command])
-      .disabled(selectedTicketID == nil)
-
       Menu {
-        Button("Move Up") {
-          moveSelectedTicketWithinLane(direction: -1)
+        Section("Lane") {
+          Button("Custom Lane…") {
+            laneEditorDraft = LaneEditorDraft.create()
+          }
+          .keyboardShortcut("l", modifiers: [.shift, .command])
+
+          Button("Edit Selected Lane") {
+            editSelectedLane()
+          }
+          .keyboardShortcut("e", modifiers: [.shift, .command])
+          .disabled(selectedLaneID == nil)
+
+          Button("Select Previous Lane") {
+            selectAdjacentLane(direction: -1)
+          }
+          .keyboardShortcut(.leftArrow, modifiers: [.option, .command])
+          .disabled(sortedLanes.isEmpty)
+
+          Button("Select Next Lane") {
+            selectAdjacentLane(direction: 1)
+          }
+          .keyboardShortcut(.rightArrow, modifiers: [.option, .command])
+          .disabled(sortedLanes.isEmpty)
         }
-        .keyboardShortcut(.upArrow, modifiers: [.control, .command])
-        .disabled(!canMoveSelectedTicketWithinLane(direction: -1))
 
-        Button("Move Down") {
-          moveSelectedTicketWithinLane(direction: 1)
+        Section("Selected Ticket") {
+          Button("Select Previous Ticket") {
+            selectAdjacentTicket(direction: -1)
+          }
+          .keyboardShortcut(.upArrow, modifiers: [.shift, .option, .command])
+          .disabled(visibleTicketsInSelectedLane().isEmpty)
+
+          Button("Select Next Ticket") {
+            selectAdjacentTicket(direction: 1)
+          }
+          .keyboardShortcut(.downArrow, modifiers: [.shift, .option, .command])
+          .disabled(visibleTicketsInSelectedLane().isEmpty)
+
+          Button("Quick Edit Selected Ticket") {
+            openInlineQuickEditForSelectedTicket()
+          }
+          .keyboardShortcut(.return, modifiers: [.command])
+          .disabled(selectedTicketID == nil)
+
+          Divider()
+
+          Button("Reorder Up") {
+            moveSelectedTicketWithinLane(direction: -1)
+          }
+          .keyboardShortcut(.upArrow, modifiers: [.control, .command])
+          .disabled(!canMoveSelectedTicketWithinLane(direction: -1))
+
+          Button("Reorder Down") {
+            moveSelectedTicketWithinLane(direction: 1)
+          }
+          .keyboardShortcut(.downArrow, modifiers: [.control, .command])
+          .disabled(!canMoveSelectedTicketWithinLane(direction: 1))
+
+          Button("Handoff Left") {
+            moveSelectedTicketBetweenLanes(direction: -1)
+          }
+          .keyboardShortcut(.leftArrow, modifiers: [.control, .command])
+          .disabled(!canMoveSelectedTicketBetweenLanes(direction: -1))
+
+          Button("Handoff Right") {
+            moveSelectedTicketBetweenLanes(direction: 1)
+          }
+          .keyboardShortcut(.rightArrow, modifiers: [.control, .command])
+          .disabled(!canMoveSelectedTicketBetweenLanes(direction: 1))
         }
-        .keyboardShortcut(.downArrow, modifiers: [.control, .command])
-        .disabled(!canMoveSelectedTicketWithinLane(direction: 1))
-      } label: {
-        Label("Reorder", systemImage: "arrow.up.arrow.down.circle")
-      }
-      .help("Reorder the selected ticket within its lane with Control-Command up/down.")
-      .disabled(selectedTicketID == nil)
 
-      Menu {
-        Button("Move Left") {
-          moveSelectedTicketBetweenLanes(direction: -1)
+        Section("Board") {
+          Button("Reset Board") {
+            resetBoard()
+          }
+
+          Button("Generate Night Report") {
+            generateNightShiftReport()
+          }
         }
-        .keyboardShortcut(.leftArrow, modifiers: [.control, .command])
-        .disabled(!canMoveSelectedTicketBetweenLanes(direction: -1))
-
-        Button("Move Right") {
-          moveSelectedTicketBetweenLanes(direction: 1)
-        }
-        .keyboardShortcut(.rightArrow, modifiers: [.control, .command])
-        .disabled(!canMoveSelectedTicketBetweenLanes(direction: 1))
       } label: {
-        Label("Handoff", systemImage: "arrow.left.arrow.right.circle")
+        Label("Actions", systemImage: "ellipsis.circle")
       }
-      .help("Handoff the selected ticket left or right with Control-Command arrow shortcuts.")
-      .disabled(selectedTicketID == nil)
-
-      Button {
-        editSelectedLane()
-      } label: {
-        Label("Edit Lane", systemImage: "pencil")
-      }
-      .help("Edit selected lane (Shift-Command-E)")
-      .keyboardShortcut("e", modifiers: [.shift, .command])
-      .disabled(selectedLaneID == nil)
-
-      Button {
-        resetBoard()
-      } label: {
-        Label("Reset", systemImage: "arrow.clockwise")
-      }
-      .help("Reset lanes and tickets to defaults for this workspace.")
-
-      Button {
-        generateNightShiftReport()
-      } label: {
-        Label("Night Report", systemImage: "doc.text")
-      }
-      .help("Generate a deterministic night-shift interaction report for this workspace.")
+      .help("Open board actions, selection controls, and keyboard-driven movement shortcuts.")
     }
     .padding(.horizontal, 16)
   }
