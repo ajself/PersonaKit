@@ -21,7 +21,7 @@ The first proving loop should answer one question:
 
 Can AJ use a real macOS Orbit app inside the Orbit workspace, with a small
 persistent AI founding group, and experience enough durable collaboration and
-governed learning to prove that Orbit is more than persona chat?
+governed learning to prove that Orbit works as more than persona chat?
 
 If the answer is yes, the broader platform direction has earned the right to
 expand.
@@ -37,6 +37,33 @@ The first proving loop should be:
 - workspace: Orbit
 - founding group: AJ, Samwise, ProdDoc
 - mode: real use while shaping Orbit itself
+
+## System Boundary
+
+The first proving loop includes the minimum set of system parts required for
+the loop to function coherently:
+
+- macOS Orbit client
+- Orbit backend or coordination services
+- PersonaKit runtime for identity, activation, and directive resolution
+- durable conversation and meeting persistence
+- memory candidate review surface
+
+The proving loop does not require the full future platform, but it does require
+enough real system boundary to show that the app, runtime, and persistence work
+together.
+
+## Why This Loop Matters
+
+If this loop succeeds, Orbit has demonstrated:
+
+- a workspace hosting a persistent AI team
+- discussions producing durable knowledge
+- human-governed learning through memory
+- collaboration between AI roles rather than isolated prompts
+
+That is the minimum threshold where Orbit becomes a functioning system instead
+of an architectural idea.
 
 ## Required Capabilities
 
@@ -54,7 +81,8 @@ Orbit proof.
    AJ can direct a message to one participant or trigger a lightweight
    multi-participant exchange.
 5. Activation trace
-   Persona responses can be tied to a concrete activation/directive context.
+   The user can see which persona responded, which directive was used, and
+   whether memory influenced the response.
 6. Summary generation
    A short exchange can produce a usable summary artifact.
 7. Memory candidate generation
@@ -123,3 +151,5 @@ When AJ or ProdDoc reviews this draft, the most useful feedback is:
 ## Revision Notes
 
 - 2026-03-09: Initial Samwise draft created from meeting `2026-03-09-meeting-001`.
+- 2026-03-09: Revised using ProdDoc feedback to clarify system boundary,
+  activation visibility, and why the loop matters.
