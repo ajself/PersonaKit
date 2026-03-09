@@ -4,6 +4,7 @@ Status: Draft
 Owner: Samwise
 Meeting: `2026-03-09-meeting-002`
 Workspace: Orbit
+Revision: 2
 Last Updated: 2026-03-09
 
 ## Purpose
@@ -19,10 +20,10 @@ This document should answer:
 
 ## Inputs
 
-This plan derives from:
+This plan builds on:
 
-- `Docs/Orbit/Planning/Orbit-Proving-Loop.md`
 - `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
+- the proving-loop direction approved in Meeting 001
 
 These are treated as approved planning inputs for this implementation pass.
 
@@ -95,6 +96,10 @@ Must include:
 
 - ability to address one participant or trigger a lightweight multi-participant
   exchange
+- persisted activation context for each persona response, including:
+  - responding persona
+  - directive used
+  - trigger message or meeting invocation source
 - basic activation trace visibility showing:
   - responding participant
   - directive used
@@ -161,6 +166,14 @@ finish summary and memory phases.
 This is not the full proving success condition, but it may be the right first
 engineering checkpoint.
 
+At that checkpoint, the system should be able to:
+
+- open the Orbit workspace
+- show the founding-group roster
+- persist a conversation thread
+- allow AJ to address one or more participants
+- attribute responses to the correct persona
+
 ## Open Implementation Questions
 
 - Should ProdDoc be modeled as a first-class local participant immediately, or
@@ -183,3 +196,5 @@ For AJ and ProdDoc, the most useful review feedback is:
 ## Revision Notes
 
 - 2026-03-09: Initial Samwise draft created from Meeting 002.
+- 2026-03-09: Integrated ProdDoc review by clarifying Phase 3 activation
+  recording and making the first engineering checkpoint more explicit.
