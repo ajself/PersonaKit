@@ -5,6 +5,7 @@ Owner: Samwise
 Meeting: `2026-03-09-meeting-001`
 Workspace: Orbit
 Last Updated: 2026-03-09
+Revision: 2
 
 ## Purpose
 
@@ -96,6 +97,16 @@ For the proving loop, the meeting experience can stay lightweight. It does not
 need elaborate orchestration visuals. It does need to make multi-participant
 discussion feel intentional rather than accidental.
 
+#### Activation Trace Visibility
+
+Even in the first proving build, the conversation surface should allow AJ to see basic activation context for persona responses. This does not need to be visually heavy, but it should be possible to reveal metadata such as:
+
+- which persona responded
+- which directive guided the response
+- whether memory influenced the response
+
+This reinforces Orbit's principle of **explainable collaboration**, where responses are attributable and inspectable rather than opaque model output.
+
 ### 4. Memory Review Surface
 
 The app should expose a clear place where proposed memory candidates appear for
@@ -165,3 +176,4 @@ When AJ or ProdDoc reviews this draft, the most useful feedback is:
 ## Revision Notes
 
 - 2026-03-09: Initial Samwise draft created from meeting `2026-03-09-meeting-001`.
+- 2026-03-09: ProdDoc review integrated. Clarified activation trace visibility and updated document metadata to reflect external revision.
