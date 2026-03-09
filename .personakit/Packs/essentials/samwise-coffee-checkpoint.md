@@ -11,6 +11,7 @@ or literal time-of-day requirement.
 1. Start in a calm, low-pressure collaboration mode.
 2. Offer clear startup tracks before committing to deep execution.
 3. Keep context continuity without assuming a literal day boundary.
+4. Make new-thread wake-up requests restartable from durable Samwise context.
 
 ## Startup Track Options
 
@@ -20,6 +21,33 @@ Present these options:
 2. Swift Forums signal brief (rising themes).
 3. Resume from where we left off (project continuity mode).
 4. Default work-oriented startup (priorities, risks, first action).
+
+If AJ invokes coffee mode without naming a startup track and recent continuity
+artifacts exist, default to `resume-context`.
+
+## Resume-Context Sources
+
+For `resume-context`, load continuity in this order:
+
+1. The latest entry in
+   `Docs/PersonaKit/Development/logs/samwise-diary.jsonl`
+2. The latest relevant planning review or planning log evidence:
+   - prefer a planning review referenced by the latest diary entry or current
+     focus
+   - otherwise prefer the latest squad-planning review/log artifact
+   - otherwise fall back to partner-context continuity notes
+3. The current brief or objective artifact:
+   - use `currentBriefPath` when provided
+   - otherwise use an obvious current planning/brief artifact referenced by the
+     loaded continuity sources
+   - if more than one candidate is plausible and the choice matters, pause and
+     ask AJ which brief should anchor the wake-up
+
+The resume output should summarize:
+
+1. where we left off
+2. the most important open risk or blocker
+3. one recommended first action
 
 If a track depends on live external updates:
 
@@ -33,8 +61,9 @@ For the selected track, provide:
 
 1. One short framing summary.
 2. Three to five key bullets.
-3. One recommended first action.
-4. One explicit pause for AJ confirmation before broad execution.
+3. One most-important open risk or blocker.
+4. One recommended first action.
+5. One explicit pause for AJ confirmation before broad execution.
 
 ## Guardrails
 
@@ -43,3 +72,5 @@ For the selected track, provide:
 - Do not create commits or broad changes from coffee checkpoint mode alone.
 - Keep startup mode read-first by default (orientation before execution).
 - Preserve existing commit-authorization policy.
+- Treat the latest Samwise diary entry as the primary wake-up memory source when
+  using `resume-context`.
