@@ -45,7 +45,6 @@ Copy this block for each new turn:
 ```md
 ### Turn N
 Speaker: AJ | Samwise | ProdDoc
-Date: YYYY-MM-DD
 
 Message:
 Plain-language note, response, revision suggestion, or question.
