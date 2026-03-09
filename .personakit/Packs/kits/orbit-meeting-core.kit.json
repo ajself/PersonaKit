@@ -1,0 +1,9 @@
+{
+  "id": "orbit-meeting-core",
+  "version": "1.0",
+  "name": "Orbit Meeting Core Kit",
+  "summary": "Shared transcript and turn-discipline rules for Orbit meeting-note collaboration.",
+  "essentialIds": [
+    "orbit-meeting-transcript-protocol"
+  ]
+}
