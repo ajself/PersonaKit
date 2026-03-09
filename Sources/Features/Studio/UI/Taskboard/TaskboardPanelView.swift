@@ -167,6 +167,8 @@ struct TaskboardPanelView: View {
       Text("Delete ticket \"\(pendingDeletion.ticketTitle)\"?")
     }
     .onAppear {
+      nightShiftEvents = []
+      selectedTicketID = nil
       loadBoard()
       applySnapshotSeedIfNeeded()
     }

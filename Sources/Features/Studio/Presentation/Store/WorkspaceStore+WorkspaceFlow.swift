@@ -2,6 +2,32 @@ import ContextCore
 import Foundation
 
 extension WorkspaceStore {
+  private static let launchWorkspacePathEnvironmentKey =
+    "PERSONAKIT_STUDIO_INITIAL_WORKSPACE_PATH"
+
+  /// Loads a workspace passed through the launch environment. This is used by UI tests
+  /// to exercise workspace-backed flows without going through the system open panel.
+  public func loadLaunchWorkspaceIfNeeded(
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) {
+    guard workspaceURL == nil else {
+      return
+    }
+
+    guard
+      let rawPath = environment[Self.launchWorkspacePathEnvironmentKey]?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !rawPath.isEmpty
+    else {
+      return
+    }
+
+    workspaceURL =
+      URL(fileURLWithPath: rawPath, isDirectory: true)
+      .standardizedFileURL
+    loadWorkspace()
+  }
+
   /// Presents the folder picker and loads the selected workspace snapshot.
   public func openWorkspacePicker() {
     guard let selectedURL = systemFeatureModel.pickWorkspaceURL() else {

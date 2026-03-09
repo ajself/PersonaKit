@@ -20,6 +20,9 @@ public struct StudioRootView: View {
     } detail: {
       detailView
     }
+    .task {
+      workspaceStore.loadLaunchWorkspaceIfNeeded()
+    }
   }
 
   @ViewBuilder

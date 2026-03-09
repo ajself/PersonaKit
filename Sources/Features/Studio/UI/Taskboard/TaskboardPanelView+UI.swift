@@ -306,6 +306,7 @@ extension TaskboardPanelView {
           Label("Lane Actions", systemImage: "ellipsis.circle")
         }
         .controlSize(.small)
+        .accessibilityIdentifier("taskboard.laneActions.\(lane.id)")
       }
 
       if lane.isCollapsed {
@@ -353,6 +354,7 @@ extension TaskboardPanelView {
         selectedTicketID = nil
       }
     }
+    .accessibilityIdentifier("taskboard.lane.\(lane.id)")
     .dropDestination(
       for: String.self,
       action: { items, _ in

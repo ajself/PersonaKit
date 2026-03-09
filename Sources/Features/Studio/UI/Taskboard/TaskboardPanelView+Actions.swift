@@ -191,6 +191,14 @@ extension TaskboardPanelView {
     laneEditorDraft = LaneEditorDraft.edit(lane: lane)
   }
 
+  func selectedLane() -> TaskboardLane? {
+    guard let selectedLaneID else {
+      return nil
+    }
+
+    return board.lanes.first(where: { $0.id == selectedLaneID })
+  }
+
   func selectAdjacentLane(
     direction: Int
   ) {
@@ -212,6 +220,80 @@ extension TaskboardPanelView {
 
   func focusKeywordSearch() {
     focusedField = .keywordSearch
+  }
+
+  func selectedTicketSelection() -> (lane: TaskboardLane, ticket: TaskboardTicket)? {
+    guard let selectedTicketID else {
+      return nil
+    }
+
+    for lane in board.lanes {
+      if let ticket = lane.tickets.first(where: { $0.id == selectedTicketID }) {
+        return (lane, ticket)
+      }
+    }
+
+    return nil
+  }
+
+  func moveSelectedTicketWithinLane(
+    direction: Int
+  ) {
+    guard
+      let selection = selectedTicketSelection()
+    else {
+      return
+    }
+
+    moveTicketWithinLane(
+      ticketID: selection.ticket.id,
+      laneID: selection.lane.id,
+      direction: direction
+    )
+  }
+
+  func moveSelectedTicketToNextLane() {
+    guard
+      let selection = selectedTicketSelection()
+    else {
+      return
+    }
+
+    moveTicketToNextLane(
+      ticketID: selection.ticket.id,
+      fromLaneID: selection.lane.id
+    )
+  }
+
+  func canMoveSelectedTicketWithinLane(
+    direction: Int
+  ) -> Bool {
+    guard
+      let selection = selectedTicketSelection()
+    else {
+      return false
+    }
+
+    return canMoveTicketWithinLane(
+      ticketID: selection.ticket.id,
+      laneID: selection.lane.id,
+      direction: direction
+    )
+  }
+
+  func canMoveSelectedTicketToNextLane() -> Bool {
+    guard
+      let selection = selectedTicketSelection()
+    else {
+      return false
+    }
+
+    let laneIDs = sortedLanes.map(\.id)
+    guard let laneIndex = laneIDs.firstIndex(of: selection.lane.id) else {
+      return false
+    }
+
+    return laneIDs.indices.contains(laneIndex + 1)
   }
 
   func ticketDragPayload(
@@ -539,6 +621,16 @@ extension TaskboardPanelView {
             "laneID": laneID,
             "ticketID": ticketID,
           ]
+        )
+      }
+
+      if let ticket = board.lanes[laneIndex].tickets.last {
+        selectedLaneID = board.lanes[laneIndex].id
+        selectedTicketID = ticket.id
+        recordNightShiftEvent(
+          kind: .createTicket,
+          lane: board.lanes[laneIndex],
+          ticket: ticket
         )
       }
 
@@ -923,6 +1015,7 @@ extension TaskboardPanelView {
       return
     }
 
+    let sourceLane = board.lanes[sourceLaneIndex]
     let ticket = board.lanes[sourceLaneIndex].tickets.remove(at: ticketIndex)
     let insertIndex = min(
       max(destinationIndex ?? board.lanes[destinationLaneIndex].tickets.count, 0),
