@@ -1,6 +1,6 @@
 # Orbit Proving Loop
 
-Status: Draft
+Status: Approved (AJ)
 Owner: Samwise
 Meeting: `2026-03-09-meeting-001`
 Workspace: Orbit
