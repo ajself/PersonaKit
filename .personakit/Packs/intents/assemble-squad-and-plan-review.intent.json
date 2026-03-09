@@ -1,0 +1,82 @@
+{
+  "id": "assemble-squad-and-plan-review",
+  "version": "1.0",
+  "name": "Assemble Squad And Plan Review",
+  "description": "Turn an objective into a staffed multiagent plan with explicit role coverage, missing-artifact recommendations, and execution gates.",
+  "parameters": [
+    {
+      "name": "objective",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "workspaceScope",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "currentArtifactPaths",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "knownPersonaIds",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "constraints",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "definitionOfDone",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "confidenceThreshold",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "requiredValidationCommands",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "planningOutputPath",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "multiagent-squad-planning-contract",
+    "squad-planning-report-template",
+    "squad-planning-log-contract",
+    "persona-hiring-standards",
+    "persona-hiring-research-loop",
+    "persona-hiring-log-contract",
+    "partner-trust-contract",
+    "roadmap-milestone-tracking-standard",
+    "venture-product-quality-gate",
+    "worktree-squad-gating-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Do not turn planning recommendations into implementation without AJ review.",
+      "Run reverse-interview analysis when role coverage is uncertain or missing.",
+      "Require explicit owners, definition-of-done, and validation expectations before execution handoff.",
+      "Produce a durable report, a schema-valid JSONL entry, and name the next session before concluding the planning pass.",
+      "Keep new artifact recommendations bounded to the current objective.",
+      "Pause before structural pack/session updates or execution handoff."
+    ]
+  }
+}

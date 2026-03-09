@@ -31,6 +31,8 @@ gardening, hiring, partner continuity, and worktree-squad delivery.
 - `persona-hiring-reviews.schema.json`: schema for persona hiring review entries.
 - `samwise-diary.jsonl`: Samwise end-of-day reflection diary.
 - `samwise-diary.schema.json`: schema for Samwise diary entries.
+- `squad-planning-reviews.jsonl`: durable planning-review stream for Samwise squad formation and handoff passes.
+- `squad-planning-reviews.schema.json`: schema for squad planning review entries.
 - `worktree-squad-loops.jsonl`: squad-loop execution stream for delivery/oversight passes.
 - `worktree-squad-loops.schema.json`: schema for squad-loop entries.
 - `worktree-squad-retrospectives.jsonl`: retrospective/recommendation stream for squad iterations.
@@ -62,6 +64,15 @@ Each reverse-interview pass should produce:
 Each closeout checkpoint should append one schema-valid entry to
 `samwise-diary.jsonl` with continuity-ready learning and next-goal fields.
 
+### Squad Planning Logs
+
+Each `samwise-squad-planning` pass should produce:
+
+1. One human-readable report in `Docs/PersonaKit/Development/planning-reviews/`
+2. One schema-valid entry in `squad-planning-reviews.jsonl`
+3. A named next session that routes missing-role follow-up through hiring or
+   remediation before execution when role coverage is incomplete
+
 ### Worktree Squad Logs
 
 Each delivery loop and retrospective should append schema-valid entries to the
@@ -74,10 +85,12 @@ Run:
 
 - `Scripts/check-gardening-logs.sh`
 - `Scripts/check-persona-hiring-logs.sh`
+- `Scripts/check-squad-planning-logs.sh`
 - `Scripts/check-worktree-squad-logs.sh`
 
 Expected output:
 
 - `GARDENING_LOGS_CHECK:PASS`
 - `PERSONA_HIRING_LOGS_CHECK:PASS`
+- `SQUAD_PLANNING_LOGS_CHECK:PASS`
 - `WORKTREE_SQUAD_LOGS_CHECK:PASS`

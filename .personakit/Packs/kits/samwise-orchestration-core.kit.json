@@ -1,0 +1,22 @@
+{
+  "id": "samwise-orchestration-core",
+  "version": "1.0",
+  "name": "Samwise Orchestration Core Kit",
+  "summary": "Reusable planning, hiring, oversight, validation, and retrospective contracts for Samwise-led multiagent delivery.",
+  "essentialIds": [
+    "multiagent-squad-planning-contract",
+    "squad-planning-report-template",
+    "squad-planning-log-contract",
+    "persona-hiring-standards",
+    "persona-hiring-research-loop",
+    "persona-hiring-log-contract",
+    "persona-hiring-calibration-playbook",
+    "worktree-squad-gating-contract",
+    "worktree-squad-loop-log-contract",
+    "worktree-squad-retrospective-template",
+    "worktree-squad-calibration-benchmarks",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

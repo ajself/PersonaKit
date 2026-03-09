@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/squad-planning-reviews.schema.json",
+  "title": "Squad Planning Review JSONL Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "date",
+    "sessionId",
+    "objective",
+    "workspaceScope",
+    "scopeBoundary",
+    "reportPath",
+    "roleAssignments",
+    "missingArtifacts",
+    "firstCheckpoint",
+    "definitionOfDone",
+    "validationOwner",
+    "validationCommands",
+    "validationStatus",
+    "handoffStatus",
+    "nextSessionId",
+    "reviewer"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^SPR-[0-9]{4}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "const": "samwise-squad-planning"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspaceScope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scopeBoundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reportPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "roleAssignments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "coverageStatus",
+          "ownerRef",
+          "responsibilityBoundaries",
+          "reverseInterviewRequired"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coverageStatus": {
+            "type": "string",
+            "enum": [
+              "covered",
+              "covered-with-gaps",
+              "missing"
+            ]
+          },
+          "ownerRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "responsibilityBoundaries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "shaping",
+                "execution",
+                "review",
+                "approval"
+              ]
+            }
+          },
+          "reverseInterviewRequired": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "missingArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "personas",
+        "essentials",
+        "kits",
+        "intents",
+        "directives",
+        "sessions"
+      ],
+      "properties": {
+        "personas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "essentials": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "intents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "directives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "firstCheckpoint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "definitionOfDone": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "validationOwner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "validationCommands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "validationStatus": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "partial",
+        "fail",
+        "not-run"
+      ]
+    },
+    "handoffStatus": {
+      "type": "string",
+      "enum": [
+        "awaiting-aj-review",
+        "ready-for-remediation",
+        "ready-for-execution",
+        "blocked"
+      ]
+    },
+    "nextSessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relatedHiringReviewIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^PHR-[0-9]{4}$"
+      }
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

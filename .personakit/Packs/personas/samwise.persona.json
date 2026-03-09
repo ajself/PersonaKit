@@ -35,7 +35,8 @@
   ],
   "defaultKitIds": [
     "trusted-partner-core",
-    "persona-hiring-core"
+    "persona-hiring-core",
+    "samwise-orchestration-core"
   ],
   "allowedSkillIds": [
     "codex-cli"

@@ -1,0 +1,96 @@
+{
+  "id": "assemble-squad-and-plan",
+  "version": "1.0",
+  "title": "Assemble squad and plan",
+  "goal": "Let Samwise translate an objective into a staffed multiagent plan, identify missing role coverage, and stop cleanly before execution begins.",
+  "steps": [
+    {
+      "text": "Load the objective, current artifacts, constraints, and any known persona candidates."
+    },
+    {
+      "text": "Define the current objective boundary, first checkpoint definition of done, and required validation evidence."
+    },
+    {
+      "text": "Identify the roles required to shape, review, execute, and approve the work."
+    },
+    {
+      "text": "Map required roles to known personas, assign explicit ownership where possible, and classify each role as covered, covered-with-gaps, or missing."
+    },
+    {
+      "text": "When role fit is uncertain or missing, run the reverse-interview workflow using the current objective as role context and record the result before execution handoff."
+    },
+    {
+      "text": "Recommend the smallest missing artifact set needed to close the top role-coverage gaps."
+    },
+    {
+      "text": "Draft the initial squad roster, role boundaries, milestone or checkpoint plan, dependencies, review gates, validation ownership, handoff status, and named next session."
+    },
+    {
+      "text": "Write or update the planning report using `squad-planning-report-template` at the explicit output path or approved workspace-local fallback."
+    },
+    {
+      "text": "Append one machine-readable planning entry using `squad-planning-log-contract`, including role assignments, missing artifacts, definition of done, validation owner, and next session."
+    },
+    {
+      "text": "Pause for AJ review before applying structural pack updates or handing the plan to execution.",
+      "requiresReview": true
+    },
+    {
+      "text": "Apply only approved follow-up updates and revalidate the affected PersonaKit artifacts plus planning and hiring logs."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Objective scope, constraints, and current artifacts are explicitly summarized",
+    "Definition of done and validation expectations are explicit for the first checkpoint",
+    "Required roles are listed with explicit ownership and coverage classification",
+    "Uncertain or missing roles trigger reverse-interview analysis or an explicit stop-for-guidance before execution handoff",
+    "Execution-critical missing or covered-with-gaps roles route to a named remediation or hiring session before execution",
+    "Missing artifact recommendations are grouped by type and prioritized",
+    "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, and next session",
+    "A durable planning report exists at the declared output path or approved fallback",
+    "A schema-valid machine-readable planning entry exists and names the same next session as the report",
+    "No structural updates or execution handoff occur without AJ review"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm squad plan includes role coverage, missing artifacts, and first next actions"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm reverse-interview output is present for uncertain or missing role coverage"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm planning report includes squad roster, role coverage, definition of done, validation owner, and recommended next session"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm definition of done, validation evidence, and execution stop point are explicit before implementation handoff"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm any execution-critical role gaps route to `samwise-squad-planning-remediation` or another explicit hiring session before execution"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-persona-hiring-logs.sh"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-squad-planning-logs.sh"
+    },
+    {
+      "kind": "command",
+      "text": "swift run personakit validate --root .personakit"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "assemble-squad-and-plan-review",
+    "reverse-interview-persona-fit",
+    "remediate-squad-role-coverage-gaps"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

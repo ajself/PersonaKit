@@ -1,0 +1,64 @@
+{
+  "id": "remediate-squad-role-coverage-gaps",
+  "version": "1.0",
+  "name": "Remediate Squad Role Coverage Gaps",
+  "description": "Convert approved missing-role and role-coverage findings into a bounded hiring or artifact-remediation loop, then return a cleaner handoff to planning.",
+  "parameters": [
+    {
+      "name": "planningReviewEntryId",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "planningReportPath",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "approvedRoleIds",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "approvedGapSummaries",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "targetArtifactPaths",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "definitionOfDone",
+      "type": "string[]",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "multiagent-squad-planning-contract",
+    "squad-planning-report-template",
+    "squad-planning-log-contract",
+    "persona-hiring-standards",
+    "persona-hiring-research-loop",
+    "persona-hiring-log-contract",
+    "persona-hiring-calibration-playbook",
+    "partner-trust-contract",
+    "worktree-squad-gating-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Only remediate role-coverage gaps explicitly approved by AJ.",
+      "Route missing-persona work through reverse-interview and hiring-log discipline before execution handoff.",
+      "Keep artifact changes bounded to the roles and checkpoints approved for this loop.",
+      "Update planning report and planning JSONL state after approved remediation work."
+    ]
+  }
+}
