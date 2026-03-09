@@ -1,155 +1,185 @@
-# Orbit Proving Loop
+# Orbit Proving Loop Implementation Plan
 
-Status: Approved (AJ)
+Status: Draft
 Owner: Samwise
-Meeting: `2026-03-09-meeting-001`
+Meeting: `2026-03-09-meeting-002`
 Workspace: Orbit
 Last Updated: 2026-03-09
 
 ## Purpose
 
-Define the smallest real product loop that should count as the first proof of
-Orbit.
+Translate the approved proving-loop and macOS command-center artifacts into a
+first implementation-facing plan.
 
-This document is intentionally narrower than the full Orbit concept and RFC
-set. It is meant to translate the larger North Star into one implementation
-target for the first serious build.
+This document should answer:
 
-## Samwise Framing
+- what we build first
+- what can wait
+- what sequence keeps the loop small but real
 
-The first proving loop should answer one question:
+## Inputs
 
-Can AJ use a real macOS Orbit app inside the Orbit workspace, with a small
-persistent AI founding group, and experience enough durable collaboration and
-governed learning to prove that Orbit works as more than persona chat?
+This plan derives from:
 
-If the answer is yes, the broader platform direction has earned the right to
-expand.
+- `Docs/Orbit/Planning/Orbit-Proving-Loop.md`
+- `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
 
-If the answer is no, the larger architecture remains interesting but is not yet
-grounded in a working center.
+These are treated as approved planning inputs for this implementation pass.
 
-## Current Recommendation
+## Implementation Goal
 
-The first proving loop should be:
+Build the smallest real Orbit loop inside a macOS command-center surface where:
 
-- client: macOS app
-- workspace: Orbit
-- founding group: AJ, Samwise, ProdDoc
-- mode: real use while shaping Orbit itself
+1. the Orbit workspace is visible
+2. AJ can interact with Samwise and ProdDoc as durable participants
+3. conversation state persists
+4. lightweight multi-participant discussion is possible
+5. summary generation exists
+6. a memory candidate can be reviewed
+7. approved memory can affect a later response
 
-## System Boundary
+## Implementation Strategy
 
-The first proving loop includes the minimum set of system parts required for
-the loop to function coherently:
+The proving loop should be built from center outward.
 
-- macOS Orbit client
-- Orbit backend or coordination services
-- PersonaKit runtime for identity, activation, and directive resolution
-- durable conversation and meeting persistence
-- memory candidate review surface
+That means:
 
-The proving loop does not require the full future platform, but it does require
-enough real system boundary to show that the app, runtime, and persistence work
-together.
+1. establish the minimum durable runtime state
+2. expose it through the macOS command-center surface
+3. add learning/review only after the base loop is coherent
 
-## Why This Loop Matters
+We should not begin with broad platform abstractions if they do not directly
+serve the first loop.
 
-If this loop succeeds, Orbit has demonstrated:
+## Proposed Phases
 
-- a workspace hosting a persistent AI team
-- discussions producing durable knowledge
-- human-governed learning through memory
-- collaboration between AI roles rather than isolated prompts
+### Phase 1: Workspace and Roster Foundation
 
-That is the minimum threshold where Orbit becomes a functioning system instead
-of an architectural idea.
+Goal:
+Make the app visibly Orbit before it behaves like Orbit.
 
-## Required Capabilities
+Must include:
 
-These capabilities must exist together for the first loop to count as a real
-Orbit proof.
+- Orbit workspace context visible in macOS UI
+- founding-group roster visible in workspace
+- durable local model for workspace participants
 
-1. Workspace surface
-   The app opens into the Orbit workspace and clearly shows the active
-   workspace context.
-2. Persistent founding-group roster
-   AJ, Samwise, and ProdDoc appear as durable participants in the workspace.
-3. Durable conversation thread
-   Discussion persists across app restarts with attribution intact.
-4. Persona or meeting invocation
-   AJ can direct a message to one participant or trigger a lightweight
-   multi-participant exchange.
-5. Activation trace
-   The user can see which persona responded, which directive was used, and
-   whether memory influenced the response.
-6. Summary generation
-   A short exchange can produce a usable summary artifact.
-7. Memory candidate generation
-   The system can propose at least one candidate memory from the exchange or
-   summary.
-8. Human review
-   AJ can approve or reject that candidate in the app.
-9. Memory reuse
-   Approved memory affects a later response in a visible and attributable way.
+Success signal:
 
-## Explicitly Deferred
+- AJ can open the app and immediately see Orbit, Samwise, and ProdDoc in one
+  coherent workspace context
 
-These are valid North Star capabilities, but they are not required for the
-first proving loop.
+### Phase 2: Durable Conversation Loop
 
-- multi-client operation
-- complex team or squad management UI
+Goal:
+Make discussion persist and feel attributable.
+
+Must include:
+
+- durable conversation thread
+- visible speaker attribution
+- ability for AJ to start or continue a discussion
+- persistence across restart
+
+Success signal:
+
+- AJ can hold a short discussion, close the app, return, and still see the same
+  thread state
+
+### Phase 3: Lightweight Meeting and Activation Trace
+
+Goal:
+Make multi-participant interaction intentional and explainable.
+
+Must include:
+
+- ability to address one participant or trigger a lightweight multi-participant
+  exchange
+- basic activation trace visibility showing:
+  - responding participant
+  - directive used
+  - whether memory influenced the response
+
+Success signal:
+
+- a short multi-participant exchange can happen without feeling like hidden
+  model routing
+
+### Phase 4: Summary and Memory Review
+
+Goal:
+Turn discussion into governed learning.
+
+Must include:
+
+- summary artifact generated from a discussion or meeting
+- at least one proposed memory candidate
+- review action for approve or reject
+
+Success signal:
+
+- AJ can review a real candidate memory inside the app
+
+### Phase 5: Memory Reuse
+
+Goal:
+Close the loop and prove Orbit learns in a visible way.
+
+Must include:
+
+- approved memory becomes available to later responses
+- later response exposes that memory influence in a lightweight explainable form
+
+Success signal:
+
+- AJ can observe an approved memory affecting a later response
+
+## Deferred From This Plan
+
+Not required for the first implementation loop:
+
+- iPhone or iPad clients
+- deep squad management
+- broad specialist roster generation
 - cross-workspace memory promotion
-- automated gardening or candidate clustering
+- automated gardening
+- analytics-heavy trace inspection
 - elaborate meeting visualization
-- broad roster generation for specialist squads
-- mature analytics or historical inspection tooling
 
-## Success Test
+## Suggested First Build Boundary
 
-The first Orbit proving loop is successful if AJ can:
+If we need to be even stricter, the first serious implementation target should
+stop at:
 
-1. open the Orbit workspace in the macOS app
-2. see AJ, Samwise, and ProdDoc in the workspace context
-3. run a short discussion in that workspace
-4. receive a meeting or discussion summary
-5. review a proposed memory candidate
-6. approve that candidate
-7. observe a later response being influenced by the approved memory
+- Phase 1
+- Phase 2
+- enough of Phase 3 to make multi-participant interaction legible
 
-If that loop works end-to-end in one coherent product surface, Orbit has moved
-from concept into functioning system.
+Then we immediately assess whether the loop still feels like Orbit before we
+finish summary and memory phases.
 
-## Language Note
+This is not the full proving success condition, but it may be the right first
+engineering checkpoint.
 
-For this proving loop, use the following distinction:
+## Open Implementation Questions
 
-- `founding group`: AJ, Samwise, and ProdDoc in the Orbit workspace
-- `squad`: a generated working group for a workspace problem, such as product,
-  design, and engineering personas
+- Should ProdDoc be modeled as a first-class local participant immediately, or
+  introduced through a lighter representation first?
+- What is the smallest durable storage mechanism acceptable for the first loop?
+- Should summary generation happen automatically after a short exchange, or
+  only on demand in the first build?
+- What is the lightest UI for memory candidate review that still feels like
+  governed learning?
 
-This avoids confusing the human-plus-two-AI operating group with a generated
-persona squad.
+## Review Questions
 
-## Open Questions
+For AJ and ProdDoc, the most useful review feedback is:
 
-- What term should replace `founding group` later if a better one emerges?
-- Should ProdDoc be modeled immediately as a persistent workspace participant,
-  or first as an external review counterpart represented inside Orbit?
-- How visible should activation trace be in the first macOS surface?
-
-## Review Guidance
-
-When AJ or ProdDoc reviews this draft, the most useful feedback is:
-
-1. what is missing from the proving loop
-2. what is too ambitious for the first build
-3. what wording would make the success test clearer
-4. whether the founding-group vs squad distinction is clear enough
+1. is the phase order correct
+2. is anything missing from the implementation sequence
+3. is anything here still too broad for the first build
+4. where should the first engineering checkpoint happen
 
 ## Revision Notes
 
-- 2026-03-09: Initial Samwise draft created from meeting `2026-03-09-meeting-001`.
-- 2026-03-09: Revised using ProdDoc feedback to clarify system boundary,
-  activation visibility, and why the loop matters.
+- 2026-03-09: Initial Samwise draft created from Meeting 002.
