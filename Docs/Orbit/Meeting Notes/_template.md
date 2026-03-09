@@ -56,6 +56,31 @@ Requested Next Speaker:
 AJ | Samwise | ProdDoc
 ```
 
+Each turn increments the numerical count by one.
+
+Example:
+- AJ: Turn 1
+- Samwise: Turn 2
+- AJ: Turn 3
+
+If there is an immediate follow-up to a prior message, but does not alter the context or direction of an anticipated follow-up, then the turn can increment in minor points: 3.1
+
+Example:
+- AJ: Turn 1
+  Introduces the major talking point
+- Samwise: Turn 2
+  Responds to the topic at hand
+- AJ: Turn 3
+  Responds to Samwise comment
+- Samwise: Turn 3.1
+  Adjusts the meeting file based on information in Turn 3, but the meeting should continue as relevant going forward.
+- Samwise: Turn 4
+  Responds to AJ's Turn 3
+- AJ: Turn 5
+  Responds to Turn 4
+- AJ: Turn 3.2
+  Responds with a thank you to Samwise for making the change.
+
 ## Agenda
 
 - Define the topic or document under review.
