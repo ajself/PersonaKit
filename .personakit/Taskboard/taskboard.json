@@ -1,0 +1,186 @@
+{
+  "lanes" : [
+    {
+      "id" : "lane-1",
+      "isCollapsed" : false,
+      "order" : 1,
+      "templateID" : "inbox",
+      "tickets" : [
+        {
+          "assignees" : [
+
+          ],
+          "checklist" : [
+
+          ],
+          "comments" : [
+
+          ],
+          "descriptionMarkdown" : "",
+          "id" : "ticket-4",
+          "labels" : [
+
+          ],
+          "owner" : "Unassigned",
+          "priority" : "medium",
+          "title" : "One"
+        },
+        {
+          "assignees" : [
+
+          ],
+          "checklist" : [
+
+          ],
+          "comments" : [
+
+          ],
+          "descriptionMarkdown" : "",
+          "id" : "ticket-5",
+          "labels" : [
+
+          ],
+          "owner" : "Unassigned",
+          "priority" : "medium",
+          "title" : "Two"
+        }
+      ],
+      "title" : "Inbox"
+    },
+    {
+      "id" : "lane-2",
+      "isCollapsed" : false,
+      "order" : 2,
+      "templateID" : "ready",
+      "tickets" : [
+
+      ],
+      "title" : "Ready"
+    },
+    {
+      "id" : "lane-3",
+      "isCollapsed" : false,
+      "order" : 3,
+      "templateID" : "in-progress",
+      "tickets" : [
+        {
+          "assignees" : [
+            {
+              "displayName" : "Samwise",
+              "id" : "member-samwise"
+            }
+          ],
+          "checklist" : [
+            {
+              "id" : "check-1",
+              "isComplete" : true,
+              "title" : "Wire lane actions"
+            },
+            {
+              "id" : "check-2",
+              "isComplete" : false,
+              "title" : "Validate drag and drop"
+            }
+          ],
+          "comments" : [
+            {
+              "author" : "AJ",
+              "bodyMarkdown" : "M2 baseline is good. Keep pushing toward Trello-level workflow speed.",
+              "id" : "comment-1"
+            }
+          ],
+          "descriptionMarkdown" : "Core lane CRUD and movement interactions for the planning surface.",
+          "dueDateISO8601" : "2026-03-12",
+          "id" : "ticket-1",
+          "labels" : [
+            "taskboard",
+            "ui"
+          ],
+          "owner" : "Samwise",
+          "priority" : "high",
+          "title" : "Implement Taskboard lane CRUD"
+        }
+      ],
+      "title" : "In Progress",
+      "wipLimit" : 3
+    },
+    {
+      "id" : "lane-4",
+      "isCollapsed" : false,
+      "order" : 4,
+      "templateID" : "blocked",
+      "tickets" : [
+
+      ],
+      "title" : "Blocked"
+    },
+    {
+      "id" : "lane-5",
+      "isCollapsed" : false,
+      "order" : 5,
+      "templateID" : "review",
+      "tickets" : [
+        {
+          "assignees" : [
+            {
+              "displayName" : "studio-interaction-quality-lead",
+              "id" : "member-studio-interaction-quality-lead"
+            }
+          ],
+          "checklist" : [
+
+          ],
+          "comments" : [
+
+          ],
+          "descriptionMarkdown" : "Evaluate interaction quality against parity rubric and log findings.",
+          "id" : "ticket-2",
+          "labels" : [
+            "quality"
+          ],
+          "owner" : "studio-interaction-quality-lead",
+          "priority" : "medium",
+          "title" : "Run red-pen interaction review"
+        }
+      ],
+      "title" : "Review",
+      "wipLimit" : 2
+    },
+    {
+      "id" : "lane-6",
+      "isCollapsed" : false,
+      "order" : 6,
+      "templateID" : "done",
+      "tickets" : [
+        {
+          "assignees" : [
+            {
+              "displayName" : "AJ",
+              "id" : "member-aj"
+            }
+          ],
+          "checklist" : [
+
+          ],
+          "comments" : [
+
+          ],
+          "descriptionMarkdown" : "Feature naming checkpoint completed.",
+          "id" : "ticket-3",
+          "labels" : [
+            "planning"
+          ],
+          "owner" : "AJ",
+          "priority" : "low",
+          "title" : "Approve Taskboard feature name"
+        }
+      ],
+      "title" : "Done"
+    }
+  ],
+  "name" : "Taskboard",
+  "nextChecklistSequence" : 3,
+  "nextCommentSequence" : 2,
+  "nextLaneSequence" : 7,
+  "nextTicketSequence" : 6
+}

@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-09
 
 ## Purpose
 
@@ -10,7 +10,7 @@ Provide a dependency-linked night-shift execution system so Samwise can
 orchestrate multi-agent delivery in small, verifiable increments toward a
 Trello-rival Taskboard experience.
 
-## Current Execution Snapshot (2026-03-08)
+## Current Execution Snapshot (2026-03-09)
 
 1. `NS0` foundation landed:
    - telemetry model + JSONL/report builder committed in `9242fcb`
@@ -67,6 +67,19 @@ Trello-rival Taskboard experience.
      generate honest telemetry artifacts
    - snapshot record mode still crosses a user-only approval boundary in this
      environment and should be reviewed in the delegated-authority retro
+15. March 9 paired run changed the honest `NS0` status from "write blocked" to
+    "partially captured":
+   - after switching the app target from read-only to read-write
+     user-selected-file access, a real `make run` session wrote
+     `.personakit/Taskboard/taskboard.json`
+   - the same session emitted
+     `.personakit/Taskboard/night-shift/interaction-events.jsonl` with real
+     `createTicket` events for `One` and `Two`
+   - `interaction-report.md` still was not generated, and the launched app UI
+     still showed the older `Actions`-menu header instead of the latest Taskboard
+     chrome, so the next restart step is to verify the live run path/build
+     provenance before resuming the remaining edit, move, collapse, and report
+     loop
 
 ## Branch Strategy
 
@@ -179,6 +192,18 @@ Verifiable outcomes:
 2. One deterministic report generated from real interaction data at
    `.personakit/Taskboard/night-shift/interaction-report.md`.
 3. `swift test` and `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --derived-data-path .build/DerivedData` pass.
+
+Current honest status (2026-03-09):
+
+1. Real interaction capture is partially proven:
+   - `createTicket` events exist on disk for tickets `One` and `Two`
+   - Taskboard persistence writes `taskboard.json` in the repo workspace
+2. `NS0` remains open because:
+   - `editTicket`, move/reorder, and collapse/expand events have not yet been
+     captured in the real paired run
+   - `.personakit/Taskboard/night-shift/interaction-report.md` is still absent
+   - the launched app instance needs run-path verification because its visible
+     header chrome did not match the latest Taskboard build
 
 ## NS1: Interaction Throughput Core
 
