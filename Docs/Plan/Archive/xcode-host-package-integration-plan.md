@@ -36,15 +36,15 @@ Passed in this environment:
 
 1. `swift build`
 2. `swift test`
-3. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
-4. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitCLI --configuration Debug --derived-data-path .sim/DerivedData`
-5. `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
-6. `xcodebuildmcp macos build-and-run --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .sim/DerivedData`
+3. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .build/DerivedData`
+4. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitCLI --configuration Debug --derived-data-path .build/DerivedData`
+5. `xcodebuildmcp macos test --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .build/DerivedData`
+6. `xcodebuildmcp macos build-and-run --workspace-path PersonaKit.xcworkspace --scheme PersonaKit --configuration Debug --derived-data-path .build/DerivedData`
 7. `xcodebuildmcp macos stop --app-name PersonaKit`
 
 Interactive launch evidence:
 
-1. `build-and-run` launched app bundle at `.sim/DerivedData/Build/Products/Debug/PersonaKit.app`.
+1. `build-and-run` launched app bundle at `.build/DerivedData/Build/Products/Debug/PersonaKit.app`.
 2. UI smoke assertion (`PersonaKitUITests.testLaunchShowsStudioEmptyState`) passed within scheme test run.
 
 ## Remaining Follow-Up
