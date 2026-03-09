@@ -2,18 +2,18 @@
 
 Status: Active  
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-09
 
 ## Purpose
 
-This is the fast mental model for how Samwise, Worktree Squad Lead, and Rosie
-work together.
+This is the fast mental model for how Samwise, AJ's Trusted Partner, Worktree
+Squad Lead, and Rosie work together.
 
 ## Core Roles
 
 ```mermaid
 flowchart LR
-    AJ["AJ"] --> SAM["Samwise\norchestrator"]
+    AJ["AJ"] --> SAM["Samwise\nAJ Trusted Partner"]
     SAM --> SQL["Worktree Squad Lead\nbounded execution + staff review"]
     SAM --> ROSIE["Rosie\nretrospective gardener"]
 ```
@@ -22,7 +22,7 @@ flowchart LR
    - approval authority
    - protected `main` owner
 2. `Samwise`
-   - orchestrates agents
+   - AJ's Trusted Partner and orchestration lead
    - defines gates and stop points
    - decides whether work is ready to advance
 3. `Worktree Squad Lead`

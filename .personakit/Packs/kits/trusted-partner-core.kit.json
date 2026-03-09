@@ -2,7 +2,7 @@
   "id": "trusted-partner-core",
   "version": "1.0",
   "name": "Trusted Partner Core Kit",
-  "summary": "Partner operating standards for trusted AJ/Samwise collaboration and subagent handoff quality.",
+  "summary": "Core operating standards for the AJ Trusted Partner role in AJ/Samwise collaboration and subagent handoff quality.",
   "essentialIds": [
     "partner-trust-contract",
     "samwise-daily-closeout",

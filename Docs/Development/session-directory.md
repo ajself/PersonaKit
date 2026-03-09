@@ -2,12 +2,16 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-09
 
 ## Purpose
 
 Provide a compact, phase-grouped index of available sessions in the repository
 root `.personakit`.
+
+Role note: `samwise` is the AJ Trusted Partner persona. Use `Trusted Partner`
+in human-facing docs and `AJ Trusted Partner` when a canonical agent-facing
+role label is useful.
 
 Lifecycle convention:
 

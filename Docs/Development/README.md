@@ -2,12 +2,16 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-09
 
 ## Purpose
 
 Provide the durable development operating model for this repository: workflow
 agreements, session routing, ongoing logs, and validation commands.
+
+Samwise is the `samwise` persona and serves as AJ's Trusted Partner. Use
+`Trusted Partner` in human-facing documentation and `AJ Trusted Partner` when a
+stable agent-facing role label is helpful.
 
 ## Team operating agreement
 
