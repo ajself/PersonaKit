@@ -11,7 +11,7 @@
       "text": "Summarize outcomes, key learnings, and effectiveness gaps in plain language."
     },
     {
-      "text": "Write one new JSONL entry in Docs/Development/logs/samwise-diary.jsonl using the schema contract."
+      "text": "Write one new JSONL entry in Docs/PersonaKit/Development/logs/samwise-diary.jsonl using the schema contract."
     },
     {
       "text": "If pack/session behavior changed, update partner and gardening records for traceability."

@@ -5,17 +5,17 @@ retrospective artifacts.
 
 ## Inputs
 
-1. `Docs/Development/logs/samwise-diary.jsonl`
-2. `Docs/Development/logs/worktree-squad-loops.jsonl`
-3. `Docs/Development/logs/worktree-squad-retrospectives.jsonl`
-4. `Docs/Development/retrospectives/worktree-squad/*.md`
+1. `Docs/PersonaKit/Development/logs/samwise-diary.jsonl`
+2. `Docs/PersonaKit/Development/logs/worktree-squad-loops.jsonl`
+3. `Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.jsonl`
+4. `Docs/PersonaKit/Development/retrospectives/worktree-squad/*.md`
 
 ## Outputs
 
 1. Recommendation report:
-   - `Docs/Development/retrospectives/worktree-squad/recommendations/YYYY-MM-DD-rosie-recommendations.md`
+   - `Docs/PersonaKit/Development/retrospectives/worktree-squad/recommendations/YYYY-MM-DD-rosie-recommendations.md`
 2. Recommendation JSONL entry:
-   - append to `Docs/Development/logs/worktree-squad-retrospectives.jsonl` with
+   - append to `Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.jsonl` with
      `entryType = recommendation`
 
 ## Required Recommendation Sections

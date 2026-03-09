@@ -1,4 +1,15 @@
-# PersonaKit MCP Server (Swift)
+# MCP Docs
+
+Status: Active
+Owner: AJ
+Last Reviewed: 2026-03-09
+
+## Purpose
+
+Provide the current MCP behavior, launch guidance, onboarding flow, and
+troubleshooting docs for PersonaKit's read-only MCP surface.
+
+## Server Overview
 
 The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit context over stdio as read-only MCP resources, prompts, and tools.
 
@@ -62,3 +73,10 @@ From any directory:
 - [Starter Flows](./Starter-Flows.md)
 - [Error Contracts](./Error-Contracts.md)
 - [Troubleshooting](./troubleshooting.md)
+
+## Relationship To The Rest Of `Docs/`
+
+- `Docs/MCP/` is the active MCP documentation lane.
+- `Docs/Archive/MCP/` contains historical MCP planning material.
+- `Docs/PersonaKit/` documents the engine and repository operating model behind
+  the MCP server.

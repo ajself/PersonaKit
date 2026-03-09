@@ -6,8 +6,8 @@ import json
 import re
 from pathlib import Path
 
-SCHEMA_PATH = Path('Docs/Development/logs/persona-hiring-reviews.schema.json')
-JSONL_PATH = Path('Docs/Development/logs/persona-hiring-reviews.jsonl')
+SCHEMA_PATH = Path('Docs/PersonaKit/Development/logs/persona-hiring-reviews.schema.json')
+JSONL_PATH = Path('Docs/PersonaKit/Development/logs/persona-hiring-reviews.jsonl')
 
 
 def parse_jsonl(path: Path):

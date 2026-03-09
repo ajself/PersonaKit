@@ -48,4 +48,4 @@ Related docs:
 - [Venture Studio Docs Index](../README.md)
 - [Venture Studio Session Directory](../Development/session-directory.md)
 - [Repository Documentation Style Guide](../../../../Docs/STYLEGUIDE.md)
-- [Repository Collaboration Charter](../../../../Docs/Development/Collaboration-Charter.md)
+- [Repository Collaboration Charter](../../../../Docs/PersonaKit/Development/Collaboration-Charter.md)

@@ -13,22 +13,22 @@ Use this essential to keep Packs and Sessions accurate as project phases evolve.
 
 For each project using this pack, maintain:
 
-1. `Docs/Development/pack-gardener-log.md`
-2. `Docs/Plan/Archive/pack-session-improvement-backlog.md`
-3. `Docs/Development/logs/gardening-events.jsonl`
-4. `Docs/Development/logs/gardening-events.schema.json`
-5. `Docs/Development/logs/gardening-health-snapshots.jsonl`
-6. `Docs/Development/logs/gardening-health-snapshots.schema.json`
-7. `Docs/Development/logs/gardening-recommendation-feedback.jsonl`
-8. `Docs/Development/logs/gardening-recommendation-feedback.schema.json`
-9. `Docs/Development/logs/gardening-recommendations.jsonl`
-10. `Docs/Development/logs/gardening-recommendations.schema.json`
-11. `Docs/Development/logs/gardening-pack-coverage.jsonl`
-12. `Docs/Development/logs/gardening-pack-coverage.schema.json`
-13. `Docs/Development/logs/gardening-policy-conflicts.jsonl`
-14. `Docs/Development/logs/gardening-policy-conflicts.schema.json`
-15. `Docs/Development/logs/gardening-safety-preflight.jsonl`
-16. `Docs/Development/logs/gardening-safety-preflight.schema.json`
+1. `Docs/PersonaKit/Development/pack-gardener-log.md`
+2. `Docs/Archive/PersonaKit/Plans/Archive/pack-session-improvement-backlog.md`
+3. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
+4. `Docs/PersonaKit/Development/logs/gardening-events.schema.json`
+5. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.jsonl`
+6. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.schema.json`
+7. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.jsonl`
+8. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.schema.json`
+9. `Docs/PersonaKit/Development/logs/gardening-recommendations.jsonl`
+10. `Docs/PersonaKit/Development/logs/gardening-recommendations.schema.json`
+11. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
+12. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.schema.json`
+13. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
+14. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.schema.json`
+15. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
+16. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.schema.json`
 
 ## Maintenance Cadence
 
@@ -68,4 +68,5 @@ status, and self-gardening safety preflight status.
 - No scope expansion beyond pack/session maintenance intent.
 - Revalidate after edits.
 - Keep analysis-only and execution phases explicitly separated.
-- Self-gardening is allowed, but follows the same analysis-only, review, and approved-execution flow as any other gardening pass.
+- Self-gardening is allowed, but follows the same analysis-only, review, and
+  approved-execution flow as any other gardening pass.

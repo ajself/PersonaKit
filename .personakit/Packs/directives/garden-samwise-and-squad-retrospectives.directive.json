@@ -11,7 +11,7 @@
       "text": "Identify recurring wins, recurring misses, and repeated blockers with objective evidence references."
     },
     {
-      "text": "Publish a recommendations report in `Docs/Development/retrospectives/worktree-squad/recommendations/` with prioritized action items."
+      "text": "Publish a recommendations report in `Docs/PersonaKit/Development/retrospectives/worktree-squad/recommendations/` with prioritized action items."
     },
     {
       "text": "Append one `recommendation` entry to `worktree-squad-retrospectives.jsonl` with owner and checkpoint fields."

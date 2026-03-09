@@ -16,7 +16,7 @@ Use this essential when AJ and Samwise are ending an active checkpoint.
 1. Summarize work completed in this checkpoint in plain language.
 2. Record learning points and effectiveness gaps.
 3. Write concrete re-entry goals with first action to resume quickly.
-4. Log one diary entry in `Docs/Development/logs/samwise-diary.jsonl`.
+4. Log one diary entry in `Docs/PersonaKit/Development/logs/samwise-diary.jsonl`.
 5. If pack/session updates were made, ensure gardening records are also updated.
 
 ## Diary Fields

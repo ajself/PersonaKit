@@ -53,7 +53,7 @@ Each gardening pass log entry must include:
 For deterministic tracking and tool reuse, accepted decisions should also be
 mirrored to:
 
-- `Docs/Development/logs/gardening-events.jsonl`
+- `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
 
 using the shared contract in:
 

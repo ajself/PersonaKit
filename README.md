@@ -6,6 +6,24 @@ It helps you work with AI agents the same way you work with people on a strong t
 
 If you’ve ever thought “this agent is smart, but it doesn’t work the way we do”, PersonaKit is for you.
 
+## Current Direction
+
+PersonaKit remains the engine and context system in this repository.
+
+The forward product direction now being explored in-repo is **Orbit**: a
+workspace-centric command center for running persistent AI teams. In that
+direction:
+
+- Orbit is the product/platform surface
+- PersonaKit is the identity, directive, and grounding engine inside Orbit
+
+That means this repository currently contains both:
+
+- stable PersonaKit engine/runtime documentation
+- newer Orbit product, architecture, and planning documents
+
+For the clearest current product direction, start in `Docs/Orbit/`.
+
 ⸻
 
 The mental model (60 seconds)

@@ -11,8 +11,8 @@ intents, and persona boundaries.
 
 ## Canonical Files
 
-1. `Docs/Development/logs/gardening-policy-conflicts.schema.json`
-2. `Docs/Development/logs/gardening-policy-conflicts.jsonl`
+1. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
 
 ## Required Invariants
 

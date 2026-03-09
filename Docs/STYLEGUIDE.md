@@ -37,10 +37,12 @@ Use this three-line metadata block near the top of operational docs:
 
 ## Folder Intent
 
-- `Docs/Architecture/`: durable technical decisions and invariants.
-- `Docs/Development/`: development process, branch closeouts, and working agreements.
+- `Docs/PersonaKit/`: current engine/runtime and repository operating docs.
+- `Docs/PersonaKit/Architecture/`: durable technical decisions and invariants.
+- `Docs/Orbit/`: current forward product direction, planning, architecture, and RFCs.
+- `Docs/Archive/`: historical documentation preserved for reference.
+- `Docs/PersonaKit/Development/`: development process, branch closeouts, and working agreements.
 - `Docs/MCP/`: MCP-specific usage and debugging guidance.
-- `Docs/Plan/`: short-lived plans; remove or close when work is complete.
 - `Workspaces/<name>/`: initiative subprojects with isolated docs and `.personakit` roots.
 
 ## Structure Expectations

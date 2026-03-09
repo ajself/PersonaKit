@@ -6,15 +6,15 @@ Use this essential when recording `worktree-squad-delivery` and
 ## Canonical Paths
 
 1. Loop stream:
-   - `Docs/Development/logs/worktree-squad-loops.jsonl`
+   - `Docs/PersonaKit/Development/logs/worktree-squad-loops.jsonl`
 2. Loop schema:
-   - `Docs/Development/logs/worktree-squad-loops.schema.json`
+   - `Docs/PersonaKit/Development/logs/worktree-squad-loops.schema.json`
 3. Human retrospectives:
-   - `Docs/Development/retrospectives/worktree-squad/`
+   - `Docs/PersonaKit/Development/retrospectives/worktree-squad/`
 4. Retrospective stream:
-   - `Docs/Development/logs/worktree-squad-retrospectives.jsonl`
+   - `Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.jsonl`
 5. Retrospective schema:
-   - `Docs/Development/logs/worktree-squad-retrospectives.schema.json`
+   - `Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.schema.json`
 
 ## Required Loop Fields
 

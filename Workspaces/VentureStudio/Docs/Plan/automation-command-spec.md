@@ -72,7 +72,7 @@ no command implementation is created here.
   - trigger list
   - remediation recommendations
   - unresolved item list
-  - mirrored event entries in `Docs/Development/logs/gardening-events.jsonl` using shared gardening contract
+  - mirrored event entries in `Docs/PersonaKit/Development/logs/gardening-events.jsonl` using shared gardening contract
 
 ### Exit semantics
 

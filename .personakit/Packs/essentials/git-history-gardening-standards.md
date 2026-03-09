@@ -13,10 +13,10 @@ Use this essential when reviewing and pruning commit history quality.
 
 For each git-history gardening pass, maintain both:
 
-1. `Docs/Development/git-history-gardener-log.md`
-2. `Docs/Development/logs/git-history-gardener.jsonl`
-3. `Docs/Development/logs/gardening-events.jsonl` (shared gardening stream)
-4. `Docs/Development/git-history-gardener-proposals.md`
+1. `Docs/PersonaKit/Development/git-history-gardener-log.md`
+2. `Docs/PersonaKit/Development/logs/git-history-gardener.jsonl`
+3. `Docs/PersonaKit/Development/logs/gardening-events.jsonl` (shared gardening stream)
+4. `Docs/PersonaKit/Development/git-history-gardener-proposals.md`
 
 The git-history JSONL entry extends the shared `gardening-log-contract`.
 

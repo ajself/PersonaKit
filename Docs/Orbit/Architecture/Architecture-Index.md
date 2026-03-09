@@ -1,13 +1,14 @@
+# Orbit Architecture Index
+
 Start here:
 
 System Overview
-→ RFC-0001 Persona Activation
-→ RFC-0003 Workspace Model
-→ RFC-0002 Conversation & Memory
-→ RFC-0004 Teams & Squads
-→ RFC-0005 Memory Gardening
-→ RFC-0006 Platform Architecture
-# Orbit Architecture Index
+-> RFC-0001 Persona Activation
+-> RFC-0003 Workspace Model
+-> RFC-0002 Conversation & Memory
+-> RFC-0004 Teams & Squads
+-> RFC-0005 Memory Gardening
+-> RFC-0006 Platform Architecture
 
 This page provides the recommended reading order for understanding the Orbit system architecture.
 

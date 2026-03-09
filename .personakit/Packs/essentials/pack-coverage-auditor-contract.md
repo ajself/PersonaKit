@@ -12,8 +12,8 @@ they become workflow drift.
 
 ## Canonical Files
 
-1. `Docs/Development/logs/gardening-pack-coverage.schema.json`
-2. `Docs/Development/logs/gardening-pack-coverage.jsonl`
+1. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
 
 ## Required Checks
 

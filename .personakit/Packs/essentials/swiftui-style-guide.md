@@ -329,7 +329,7 @@ The following are considered **code smells** and MUST NOT be used casually:
 - `nonisolated(unsafe)`
 - `Task.detached`
 
-Repository policy override (PersonaKit): `@unchecked Sendable` is prohibited in all code and tests unless the repository owner gives explicit approval for the exact change. Approval records MUST be tracked in `Docs/Architecture/unchecked-sendable-approvals.txt`.
+Repository policy override (PersonaKit): `@unchecked Sendable` is prohibited in all code and tests unless the repository owner gives explicit approval for the exact change. Approval records MUST be tracked in `Docs/PersonaKit/Architecture/unchecked-sendable-approvals.txt`.
 
 `nonisolated(unsafe)` and `Task.detached` are allowed ONLY when:
 - Ownership and lifetimes are fully understood

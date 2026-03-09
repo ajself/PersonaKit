@@ -26,10 +26,10 @@
       "text": "Produce a qualification verdict and prioritized gap list with severity and confidence percent."
     },
     {
-      "text": "Write or update a markdown report at `Docs/Development/hiring-reviews/YYYY-MM-DD-<personaId>.md` unless an approved override path is provided."
+      "text": "Write or update a markdown report at `Docs/PersonaKit/Development/hiring-reviews/YYYY-MM-DD-<personaId>.md` unless an approved override path is provided."
     },
     {
-      "text": "Append one machine-readable entry to `Docs/Development/logs/persona-hiring-reviews.jsonl` following the schema contract."
+      "text": "Append one machine-readable entry to `Docs/PersonaKit/Development/logs/persona-hiring-reviews.jsonl` following the schema contract."
     },
     {
       "text": "Recommend missing essentials/kits/intents/directives/sessions and a first implementation step."

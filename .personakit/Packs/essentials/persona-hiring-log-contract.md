@@ -4,9 +4,9 @@ Use this essential when recording reverse-interview outcomes for persona candida
 
 ## Canonical Paths
 
-1. Human report directory: `Docs/Development/hiring-reviews/`
-2. Machine log file: `Docs/Development/logs/persona-hiring-reviews.jsonl`
-3. Machine schema file: `Docs/Development/logs/persona-hiring-reviews.schema.json`
+1. Human report directory: `Docs/PersonaKit/Development/hiring-reviews/`
+2. Machine log file: `Docs/PersonaKit/Development/logs/persona-hiring-reviews.jsonl`
+3. Machine schema file: `Docs/PersonaKit/Development/logs/persona-hiring-reviews.schema.json`
 
 ## Required JSONL Fields
 

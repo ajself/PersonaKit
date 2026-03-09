@@ -11,8 +11,8 @@ non-trivial self-gardening updates.
 
 ## Canonical Files
 
-1. `Docs/Development/logs/gardening-safety-preflight.schema.json`
-2. `Docs/Development/logs/gardening-safety-preflight.jsonl`
+1. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
 
 ## Required Preflight Checks
 

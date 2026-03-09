@@ -11,10 +11,10 @@ improve from accepted/deferred/rejected feedback.
 
 ## Canonical Files
 
-1. `Docs/Development/logs/gardening-recommendation-feedback.schema.json`
-2. `Docs/Development/logs/gardening-recommendation-feedback.jsonl`
-3. `Docs/Development/logs/gardening-recommendations.schema.json`
-4. `Docs/Development/logs/gardening-recommendations.jsonl`
+1. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.jsonl`
+3. `Docs/PersonaKit/Development/logs/gardening-recommendations.schema.json`
+4. `Docs/PersonaKit/Development/logs/gardening-recommendations.jsonl`
 
 ## Required Fields
 

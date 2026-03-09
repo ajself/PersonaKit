@@ -11,8 +11,8 @@ coverage and trend visibility.
 
 ## Canonical Files
 
-1. `Docs/Development/logs/gardening-health-snapshots.schema.json`
-2. `Docs/Development/logs/gardening-health-snapshots.jsonl`
+1. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.jsonl`
 
 ## Required Fields
 

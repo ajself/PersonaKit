@@ -13,20 +13,20 @@ gardening workflows.
 
 For every gardening workflow, maintain:
 
-1. `Docs/Development/logs/gardening-events.jsonl`
-2. `Docs/Development/logs/gardening-events.schema.json`
-3. `Docs/Development/logs/gardening-health-snapshots.jsonl`
-4. `Docs/Development/logs/gardening-health-snapshots.schema.json`
-5. `Docs/Development/logs/gardening-recommendation-feedback.jsonl`
-6. `Docs/Development/logs/gardening-recommendation-feedback.schema.json`
-7. `Docs/Development/logs/gardening-recommendations.jsonl`
-8. `Docs/Development/logs/gardening-recommendations.schema.json`
-9. `Docs/Development/logs/gardening-pack-coverage.jsonl`
-10. `Docs/Development/logs/gardening-pack-coverage.schema.json`
-11. `Docs/Development/logs/gardening-policy-conflicts.jsonl`
-12. `Docs/Development/logs/gardening-policy-conflicts.schema.json`
-13. `Docs/Development/logs/gardening-safety-preflight.jsonl`
-14. `Docs/Development/logs/gardening-safety-preflight.schema.json`
+1. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
+2. `Docs/PersonaKit/Development/logs/gardening-events.schema.json`
+3. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.jsonl`
+4. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.schema.json`
+5. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.jsonl`
+6. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.schema.json`
+7. `Docs/PersonaKit/Development/logs/gardening-recommendations.jsonl`
+8. `Docs/PersonaKit/Development/logs/gardening-recommendations.schema.json`
+9. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
+10. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.schema.json`
+11. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
+12. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.schema.json`
+13. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
+14. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.schema.json`
 
 Session-specific logs may exist (for example git-history), but each accepted
 decision should also be mirrored into `gardening-events.jsonl`.

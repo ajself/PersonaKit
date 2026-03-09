@@ -31,13 +31,13 @@ lane worktree.
 
 For each upkeep cycle, update:
 
-1. `Docs/Development/partner-context-log.md`
-2. `Docs/Development/partner-handoff-register.md`
-3. `Docs/Development/pack-gardener-log.md`
-4. `Docs/Development/logs/gardening-events.jsonl`
-5. `Docs/Development/logs/gardening-pack-coverage.jsonl`
-6. `Docs/Development/logs/gardening-policy-conflicts.jsonl`
-7. `Docs/Development/logs/gardening-safety-preflight.jsonl`
+1. `Docs/PersonaKit/Development/partner-context-log.md`
+2. `Docs/PersonaKit/Development/partner-handoff-register.md`
+3. `Docs/PersonaKit/Development/pack-gardener-log.md`
+4. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
+5. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
+6. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
+7. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
 
 ## Guardrails
 

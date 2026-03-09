@@ -19,9 +19,9 @@ Draft
 - RFC-0003 Workspace and Persona Instance Model
 - RFC-0004 Teams, Squads, and Meeting Coordinator Model
 - RFC-0005 Memory Journaling and Gardening Model
-- Docs/Architecture/PersonaKit-System-Overview.md
-- Docs/Architecture/Meeting-Execution-Flow.md
-- Docs/RFCs/README.md
+- Docs/Orbit/Architecture/PersonaKit-System-Overview.md
+- Docs/Orbit/Architecture/Meeting-Execution-Flow.md
+- Docs/Orbit/RFCs/README.md
 
 ---
 
