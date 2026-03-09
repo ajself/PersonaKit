@@ -14,7 +14,7 @@ Shift Scope:
 ## Validation Evidence
 
 1. `swift test`:
-2. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio`:
+2. `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --derived-data-path .build/DerivedData`:
 3. Snapshot checks:
 
 ## Product + Design QA

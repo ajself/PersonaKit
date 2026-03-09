@@ -26,10 +26,16 @@ Use this contract for `worktree-squad-delivery` loops.
   - verification commands and outcomes
   - residual risks
   - next 3 queued actions
-3. Samwise remains orchestration lead for agent assignment and gate decisions.
-4. Worktree Squad Lead runs implementation/review acceleration inside declared gates.
-5. When an assignment closes, `worktree-squad-retrospective` is required.
-6. Rosie may run retrospective gardening to recommend next-iteration improvements.
+3. Xcode/macOS app and CLI verification in this repo uses
+   `xcodebuildmcp` for app build verification (`PersonaKitStudio`) and CLI
+   build (`PersonaKitCLI`), plus `xcodebuild` with `PersonaKit` and
+   `.build/DerivedData` for app launch/test coverage.
+4. Package, unit, and snapshot verification in this repo uses `swift test`,
+   which also writes into `.build`.
+5. Samwise remains orchestration lead for agent assignment and gate decisions.
+6. Worktree Squad Lead runs implementation/review acceleration inside declared gates.
+7. When an assignment closes, `worktree-squad-retrospective` is required.
+8. Rosie may run retrospective gardening to recommend next-iteration improvements.
 
 ## Gate Evidence
 

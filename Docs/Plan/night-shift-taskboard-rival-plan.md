@@ -131,7 +131,7 @@ Rules:
 1. Run a preflight at shift start:
    - `git status`
    - one fast test target
-   - one build command
+   - one build command rooted at `.build/DerivedData`
 2. If a command requires elevated permission:
    - request escalation once with a clear reason
    - immediately switch to non-blocked queued work while waiting
@@ -178,7 +178,7 @@ Verifiable outcomes:
    - collapse/expand lane
 2. One deterministic report generated from real interaction data at
    `.personakit/Taskboard/night-shift/interaction-report.md`.
-3. `swift test` and `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio` pass.
+3. `swift test` and `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --derived-data-path .build/DerivedData` pass.
 
 ## NS1: Interaction Throughput Core
 
@@ -299,7 +299,7 @@ Completed:
 3. Validation checkpoints pass:
    - `swift test`
    - `swift test --filter TaskboardSnapshotTests`
-   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio`
+   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --derived-data-path .build/DerivedData`
 4. Squad-leader coordination test contract is defined:
    - Samwise remains primary orchestrator for agent management and gate decisions
    - Worktree Squad Lead accelerates implementation/product loops inside bounded lane scope

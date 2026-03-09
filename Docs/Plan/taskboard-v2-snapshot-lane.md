@@ -44,7 +44,7 @@ snapshot evidence instead of subjective memory.
 3. Verification completed:
    - `swift test --filter TaskboardSnapshotTests`
    - `swift test`
-   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio`
+   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --derived-data-path .build/DerivedData`
 
 ## Fixture policy
 
@@ -63,20 +63,19 @@ snapshot evidence instead of subjective memory.
 
 ## Command contracts
 
-Use `xcodebuildmcp` as the standard runner for Xcode project build/test flows in
-this repo.
+Use `swift test` as the standard runner for package and snapshot verification in
+this repo, and use `xcodebuildmcp` for app build verification. All build
+artifacts stay rooted under `.build`.
 
 1. Baseline capture command:
-   - `xcodebuildmcp macos test --scheme PersonaKitTests --only-testing <TaskboardSnapshotSuite>`
+   - `swift test --filter TaskboardSnapshotTests`
 2. Diff verification command:
-   - `xcodebuildmcp macos test --scheme PersonaKitTests --only-testing <TaskboardSnapshotSuite>`
+   - `swift test --filter TaskboardSnapshotTests`
 
 Note:
 
-1. Replace `<TaskboardSnapshotSuite>` with concrete test target names when the
-   suite lands.
-2. Current local baseline command (SwiftPM target filter):
-   - `swift test --filter TaskboardSnapshotTests`
+1. Shared app verification command:
+   - `xcodebuildmcp macos build --workspace-path PersonaKit.xcworkspace --scheme PersonaKitStudio --configuration Debug --derived-data-path .build/DerivedData`
 
 ## Exit criteria
 

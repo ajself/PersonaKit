@@ -3,13 +3,13 @@
 XCODEBUILDMCP ?= xcodebuildmcp
 WORKSPACE_PATH ?= PersonaKit.xcworkspace
 RUN_SCHEME ?= PersonaKit
-APP_NAME ?= $(RUN_SCHEME)
-APP_BUILD_SCHEME ?= PersonaKit
+APP_NAME ?= PersonaKit
+APP_BUILD_SCHEME ?= PersonaKitStudio
 CLI_BUILD_SCHEME ?= PersonaKitCLI
-TEST_SCHEME ?= PersonaKit
 CONFIGURATION ?= Debug
-DERIVED_DATA_PATH ?= .sim/DerivedData
+DERIVED_DATA_PATH ?= .build/DerivedData
 ZIP_NAME ?= PersonaKit.zip
+TEST_FILTER ?=
 
 ROOT ?=
 PERSONA ?= senior-swiftui-engineer
@@ -47,8 +47,8 @@ help:
 	@printf "  %-24s %s\n" "build-app" "Build macOS app scheme with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-cli" "Build CLI scheme with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "run" "Build and run macOS app with XcodeBuildMCP."
-	@printf "  %-24s %s\n" "test" "Run macOS tests with XcodeBuildMCP."
-	@printf "  %-24s %s\n" "test-cli" "Run tests using CLI-oriented test scheme."
+	@printf "  %-24s %s\n" "test" "Run SwiftPM tests and default Xcode host/UI smoke checks."
+	@printf "  %-24s %s\n" "test-cli" "Run CLI-focused SwiftPM tests (defaults to filter \`CLI\`)."
 	@printf "  %-24s %s\n" "zip" "Create a project zip archive."
 	@echo ""
 	@echo "PersonaKit workflow targets:"
@@ -67,10 +67,10 @@ help:
 	@printf "  %-24s %s\n" "APP_NAME" "$(APP_NAME)"
 	@printf "  %-24s %s\n" "APP_BUILD_SCHEME" "$(APP_BUILD_SCHEME)"
 	@printf "  %-24s %s\n" "CLI_BUILD_SCHEME" "$(CLI_BUILD_SCHEME)"
-	@printf "  %-24s %s\n" "TEST_SCHEME" "$(TEST_SCHEME)"
 	@printf "  %-24s %s\n" "CONFIGURATION" "$(CONFIGURATION)"
 	@printf "  %-24s %s\n" "DERIVED_DATA_PATH" "$(DERIVED_DATA_PATH)"
 	@printf "  %-24s %s\n" "ZIP_NAME" "$(ZIP_NAME)"
+	@printf "  %-24s %s\n" "TEST_FILTER" "$(TEST_FILTER)"
 	@printf "  %-24s %s\n" "ROOT" "$(ROOT)"
 	@printf "  %-24s %s\n" "PERSONA" "$(PERSONA)"
 	@printf "  %-24s %s\n" "DIRECTIVE" "$(DIRECTIVE)"
@@ -84,11 +84,11 @@ help:
 	@echo "Examples:"
 	@echo "  make doctor"
 	@echo "  make build [CONFIGURATION=Release]"
-	@echo "  make build-app [APP_BUILD_SCHEME=PersonaKit] [CONFIGURATION=Release]"
+	@echo "  make build-app [APP_BUILD_SCHEME=PersonaKitStudio] [CONFIGURATION=Release]"
 	@echo "  make build-cli [CLI_BUILD_SCHEME=PersonaKitCLI] [CONFIGURATION=Release]"
 	@echo "  make run [RUN_SCHEME=PersonaKit] [APP_NAME=PersonaKit]"
-	@echo "  make test [TEST_SCHEME=PersonaKit]"
-	@echo "  make test-cli [TEST_SCHEME=PersonaKitCLI]"
+	@echo "  make test [TEST_FILTER=TaskboardSnapshotTests]"
+	@echo "  make test-cli [TEST_FILTER=CLISessionTests]"
 	@echo "  make cli [ARGS=\"list personas\"]"
 	@echo "  make validate [ROOT=/Users/me/Code/PersonaKit/.personakit] [NO_GLOBAL=1]"
 	@echo "  make export [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants] [OUTPUT=/tmp/session.md]"
@@ -145,18 +145,19 @@ run: doctor
 		--derived-data-path "$(DERIVED_DATA_PATH)"
 
 test: doctor
-	$(XCODEBUILDMCP) macos test \
-		--workspace-path "$(WORKSPACE_PATH)" \
-		--scheme "$(TEST_SCHEME)" \
-		--configuration "$(CONFIGURATION)" \
-		--derived-data-path "$(DERIVED_DATA_PATH)"
+	swift test $(if $(TEST_FILTER),--filter $(TEST_FILTER),)
+	@if [ -z "$(TEST_FILTER)" ]; then \
+		$(XCODEBUILDMCP) macos stop --app-name "$(APP_NAME)" >/dev/null 2>&1 || true; \
+		xcodebuild \
+			-workspace "$(WORKSPACE_PATH)" \
+			-scheme "PersonaKit" \
+			-configuration "$(CONFIGURATION)" \
+			-derivedDataPath "$(DERIVED_DATA_PATH)" \
+			test; \
+	fi
 
-test-cli: doctor
-	$(XCODEBUILDMCP) macos test \
-		--workspace-path "$(WORKSPACE_PATH)" \
-		--scheme "$(CLI_BUILD_SCHEME)" \
-		--configuration "$(CONFIGURATION)" \
-		--derived-data-path "$(DERIVED_DATA_PATH)"
+test-cli:
+	swift test --filter $(if $(TEST_FILTER),$(TEST_FILTER),CLI)
 
 cli:
 	personakit $(ARGS)
@@ -202,6 +203,5 @@ zip:
 		-x "*.DS_Store" \
 		-x "*/.DS_Store" \
 		-x "._*" \
-		-x "*.build/*" \
-		-x "*build/*" \
-		-x "*.sim/*"
+		-x ".build/*" \
+		-x "*/DerivedData/*"
