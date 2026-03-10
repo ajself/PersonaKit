@@ -4,6 +4,6 @@
   "directiveId": "assemble-squad-and-plan",
   "kitOverrides": [
     "persona-hiring-core",
-    "samwise-orchestration-core"
+    "samwise-planning-core"
   ]
 }

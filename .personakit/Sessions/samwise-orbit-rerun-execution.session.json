@@ -4,6 +4,6 @@
   "directiveId": "run-orbit-rerun-squad-execution",
   "kitOverrides": [
     "orbit-build-rerun-core",
-    "samwise-orchestration-core"
+    "samwise-worktree-oversight-core"
   ]
 }

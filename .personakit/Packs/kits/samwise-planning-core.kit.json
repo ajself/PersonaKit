@@ -1,0 +1,14 @@
+{
+  "id": "samwise-planning-core",
+  "version": "1.0",
+  "name": "Samwise Planning Core Kit",
+  "summary": "Reusable planning contracts for Samwise-led objective shaping, role coverage review, and durable plan handoff before execution.",
+  "essentialIds": [
+    "multiagent-squad-planning-contract",
+    "squad-planning-report-template",
+    "squad-planning-log-contract",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ]
+}

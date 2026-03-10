@@ -3,6 +3,6 @@
   "personaId": "samwise",
   "directiveId": "oversee-worktree-squad-delivery",
   "kitOverrides": [
-    "samwise-orchestration-core"
+    "samwise-worktree-oversight-core"
   ]
 }

@@ -4,6 +4,6 @@
   "directiveId": "close-squad-role-coverage-gap-loop",
   "kitOverrides": [
     "persona-hiring-core",
-    "samwise-orchestration-core"
+    "samwise-planning-core"
   ]
 }
