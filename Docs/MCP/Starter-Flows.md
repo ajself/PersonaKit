@@ -43,6 +43,22 @@ Goal: explain tradeoffs before picking a persona, directive, or kit.
 2. Retry tool call with an id from the catalog.
 3. If startup fails, verify scope root includes `Packs/` and review [Troubleshooting](./troubleshooting.md).
 
+## Flow 5: Review a session by id or path
+
+Goal: normalize a session target, trace it, and prepare a session-stack review.
+
+1. Call tool `personakit_resolve_session_ref` with:
+   - `sessionRef`
+     - canonical session id, or
+     - session-file path
+2. Use `normalizedSessionId`, `personaId`, and `directiveId` from the result.
+3. Call `personakit_trace_session` with `sessionId=<normalizedSessionId>`.
+4. Call `personakit_export` with:
+   - `personaId=<personaId>`
+   - `directiveId=<directiveId>`
+   - `kits=<kitOverrides>` when present
+5. If `personakit_resolve_session_ref` or `personakit_trace_session` fails, treat the review as MCP-blocked and stop instead of freehanding the graph manually.
+
 ## Determinism Notes
 
 - Catalog ids and list outputs are stable and sorted.

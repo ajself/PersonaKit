@@ -148,6 +148,26 @@ struct SessionFileLoaderTests {
     #expect(session.personaId == "global-persona")
     #expect(session.directiveId == "global-directive")
   }
+
+  @Test
+  func loadsSessionDirectlyFromFileURL() throws {
+    let root = try makeTempDirectory()
+    let sessionId = "direct-file"
+
+    try writeSessionFile(
+      root: root,
+      sessionId: sessionId,
+      fileID: sessionId,
+      personaId: "persona",
+      directiveId: "directive"
+    )
+
+    let fileURL = root.appendingPathComponent("Sessions/\(sessionId).session.json")
+    let session = try SessionFileLoader.load(fileURL: fileURL)
+
+    #expect(session.id == sessionId)
+    #expect(session.personaId == "persona")
+  }
 }
 
 private func writeSessionFile(

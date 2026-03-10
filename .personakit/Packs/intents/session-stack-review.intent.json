@@ -10,7 +10,7 @@
       "required": true
     },
     {
-      "name": "targetSessionId",
+      "name": "targetSessionRef",
       "type": "string",
       "required": true
     },
@@ -25,13 +25,14 @@
       "required": false
     },
     {
-      "name": "reviewOutputPath",
+      "name": "reviewArtifactPath",
       "type": "string",
       "required": false
     }
   ],
   "includesEssentialIds": [
     "session-stack-review-rubric",
+    "session-stack-review-log-contract",
     "partner-trust-contract",
     "non-goals",
     "tools-and-constraints"
@@ -43,10 +44,12 @@
     "level": "medium",
     "requiresHumanReview": true,
     "notes": [
-      "Trace the target session through its actual directive, intents, essentials, and exposed docs before scoring confidence.",
+      "Use PersonaKit MCP as the primary source of truth: resolve the session reference first, then trace and explain the stack before scoring confidence.",
+      "Treat `targetSessionRef` as either a canonical session id or a session-file path and normalize it before review output is written.",
       "Prioritize findings over summary language; if the stack is weak, say so plainly.",
-      "Use file-by-file SWOT and confidence scoring instead of one blended overall verdict alone.",
+      "Use file-by-file SWOT and fixed risk-dimension scoring instead of one blended overall verdict alone.",
       "Red-pen recommendations should prefer the smallest contract hardening changes that materially improve reliability.",
+      "If PersonaKit MCP is unavailable or missing required review surfaces, fail closed, write an MCP-gap artifact, and recommend MCP improvement instead of silently falling back to manual freehand review.",
       "Do not silently implement fixes during the review pass unless AJ explicitly requested a follow-up change."
     ]
   }

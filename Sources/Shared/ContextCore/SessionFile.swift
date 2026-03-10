@@ -1,7 +1,7 @@
 import Foundation
 
 /// On-disk session selection file loaded from `Sessions/*.session.json`.
-public struct SessionFile: Codable {
+public struct SessionFile: Codable, Sendable {
   public let id: String
   public let personaId: String
   public let directiveId: String
@@ -26,6 +26,7 @@ public enum SessionFileError: LocalizedError {
   case decodeFailed(String, String)
   case idMismatch(String, String, String)
   case invalidSessionId
+  case invalidSessionPath(String)
 
   /// Human-readable error description for session loading failures.
   public var errorDescription: String? {
@@ -38,6 +39,8 @@ public enum SessionFileError: LocalizedError {
       return "Session id mismatch in \(path). Expected \(sessionId), got \(actualId)."
     case .invalidSessionId:
       return "Session id is required."
+    case .invalidSessionPath(let path):
+      return "Invalid session file path: \(path)"
     }
   }
 }
@@ -110,6 +113,44 @@ public struct SessionFileLoader {
       fileURL: fileURL,
       sessionId: trimmedId,
       relativePath: relativePath
+    )
+  }
+
+  /// Loads a session directly from a file URL and validates the filename-derived id.
+  ///
+  /// - Parameters:
+  ///   - fileURL: Absolute or standardized URL to `*.session.json`.
+  ///   - fileManager: File system interface used for existence checks.
+  /// - Returns: Decoded ``SessionFile``.
+  /// - Throws: ``SessionFileError`` when the file path is invalid, missing, undecodable, or its id mismatches the filename.
+  public static func load(
+    fileURL: URL,
+    fileManager: FileManager = .default
+  ) throws -> SessionFile {
+    let standardized = fileURL.standardizedFileURL
+    let filename = standardized.lastPathComponent
+
+    guard filename.hasSuffix(".session.json") else {
+      throw SessionFileError.invalidSessionPath(standardized.path)
+    }
+
+    let sessionId = standardized
+      .deletingPathExtension()
+      .deletingPathExtension()
+      .lastPathComponent
+
+    guard !sessionId.isEmpty else {
+      throw SessionFileError.invalidSessionPath(standardized.path)
+    }
+
+    guard fileManager.fileExists(atPath: standardized.path) else {
+      throw SessionFileError.notFound(sessionId, standardized.path)
+    }
+
+    return try loadSessionFile(
+      fileURL: standardized,
+      sessionId: sessionId,
+      relativePath: standardized.path
     )
   }
 

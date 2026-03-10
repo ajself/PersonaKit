@@ -42,6 +42,17 @@
 - Symptom: missing/invalid argument errors.
 - Fix: use required argument names and types from tool/prompt schemas; re-run with only supported keys.
 
+## Session path or session-ref failures
+
+- Symptom: `personakit_resolve_session_ref` says the session path is invalid, outside active scopes, or not found.
+- Fix: use a canonical session id from `personakit://catalog/sessions`, or pass a path under `Sessions/*.session.json` in the active PersonaKit scope.
+
+## MCP transport closed
+
+- Symptom: MCP client reports `Transport closed`.
+- Fix: restart `personakit mcp`, verify the active scope root is valid, and retry the MCP-first workflow.
+- Session-review rule: if the transport stays unavailable, treat the review as MCP-blocked and stop instead of reconstructing the session stack manually.
+
 See also:
 
 - [Starter Flows](./Starter-Flows.md)

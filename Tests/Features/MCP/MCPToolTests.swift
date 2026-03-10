@@ -20,6 +20,7 @@ struct MCPToolTests {
         "personakit_export",
         "personakit_graph",
         "personakit_recommend_session",
+        "personakit_resolve_session_ref",
         "personakit_trace_session",
         "personakit_validate",
       ]
@@ -142,6 +143,46 @@ struct MCPToolTests {
     #expect(recommendations.count == 1)
     let first = try #require(recommendations.first)
     #expect(first["sessionId"] as? String == "senior-swiftui-engineer_apply-style")
+  }
+
+  @Test
+  func resolveSessionRefToolNormalizesSessionID() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_session_ref",
+      arguments: [
+        "sessionRef": "senior-swiftui-engineer_apply-style",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+
+    #expect(object["normalizedSessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(object["sourceRefType"] as? String == "id")
+    #expect(object["personaId"] as? String == "senior-swiftui-engineer")
+    #expect(object["directiveId"] as? String == "apply-style")
+  }
+
+  @Test
+  func resolveSessionRefToolNormalizesSessionPath() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_session_ref",
+      arguments: [
+        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+
+    #expect(object["normalizedSessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(object["sourceRefType"] as? String == "path")
   }
 
   @Test

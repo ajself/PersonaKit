@@ -99,7 +99,11 @@ All catalog payloads are deterministic JSON (`schemaVersion: 1`) and include sta
 - Input: `goal` (+ optional `limit`)
 - Output: ranked session/persona/directive combinations with deterministic scoring policy.
 
-4. Trace session (`personakit_trace_session`)
+4. Resolve session ref (`personakit_resolve_session_ref`)
+- Input: `sessionRef`
+- Output: canonical session id plus resolved session metadata for id-or-path callers.
+
+5. Trace session (`personakit_trace_session`)
 - Input: `sessionId`
 - Output: session resolution graph (persona/directive/kits/intents/skills/essentials) with explicit edge sets.
 
