@@ -11,7 +11,7 @@
       "text": "If AJ invokes coffee mode without a startup track and recent continuity artifacts exist, default to `resume-context`; otherwise offer startup track choices: Swift updates, Swift Forums pulse, resume-from-last-context, or default work-oriented startup."
     },
     {
-      "text": "For `resume-context`, read the latest `samwise-diary.jsonl` entry first, then load the latest relevant planning review or planning log entry, then load the current brief or objective artifact when it is explicit or obvious from continuity references."
+      "text": "For `resume-context`, read the latest `samwise-diary.jsonl` entry first, then load `currentBriefPath` when provided or the most obvious current brief/objective artifact from continuity references; if the brief is still unclear, fall back to partner-context continuity notes before recommending a first action."
     },
     {
       "text": "For the selected track, produce a concise brief with key points, the most important open risk, and one recommended first action."
@@ -31,7 +31,7 @@
     "Friendly neutral startup framing is present",
     "Startup track options are explicit",
     "Coffee-without-a-track defaults to resume-context when recent continuity artifacts exist",
-    "Resume-context reads latest diary entry plus relevant planning and brief artifacts before recommending action",
+    "Resume-context reads the latest diary entry plus the current brief/objective artifact before recommending action",
     "Selected track includes concise brief, open risk, and first action",
     "External-update tracks include source/date context or an explicit unavailable fallback",
     "Checkpoint-based timing language is used (not literal day-bound assumptions)",
@@ -48,7 +48,7 @@
     },
     {
       "kind": "manual",
-      "text": "Confirm resume-context uses latest Samwise diary continuity before recommending a first action"
+      "text": "Confirm resume-context uses the latest Samwise diary entry plus the current brief/objective artifact before recommending a first action"
     },
     {
       "kind": "manual",

@@ -32,9 +32,6 @@
   ],
   "includesEssentialIds": [
     "samwise-coffee-checkpoint",
-    "samwise-daily-closeout",
-    "multiagent-squad-planning-contract",
-    "squad-planning-log-contract",
     "partner-trust-contract",
     "non-goals",
     "tools-and-constraints"
@@ -50,7 +47,7 @@
       "Pause for AJ confirmation before broad execution.",
       "Expected startupTrack values: swift-updates, swift-forums-pulse, resume-context, default-work.",
       "If AJ says only a coffee-style wake-up phrase and recent continuity artifacts exist, default to resume-context.",
-      "Resume-context should read the latest Samwise diary entry before choosing supporting planning or brief artifacts."
+      "Resume-context should read the latest Samwise diary entry before choosing the current brief or objective artifact."
     ]
   }
 }

@@ -31,17 +31,18 @@ For `resume-context`, load continuity in this order:
 
 1. The latest entry in
    `Docs/PersonaKit/Development/logs/samwise-diary.jsonl`
-2. The latest relevant planning review or planning log evidence:
-   - prefer a planning review referenced by the latest diary entry or current
-     focus
-   - otherwise prefer the latest squad-planning review/log artifact
-   - otherwise fall back to partner-context continuity notes
-3. The current brief or objective artifact:
+2. The current brief or objective artifact:
    - use `currentBriefPath` when provided
-   - otherwise use an obvious current planning/brief artifact referenced by the
-     loaded continuity sources
+   - otherwise prefer a brief or objective artifact explicitly referenced by the
+     latest diary entry or the provided continuity artifacts
    - if more than one candidate is plausible and the choice matters, pause and
      ask AJ which brief should anchor the wake-up
+3. Partner-context continuity notes only when the current brief or objective is
+   still unclear after the diary-first brief lookup.
+
+The coffee checkpoint should consume durable diary and brief artifacts directly.
+Planning reviews and planning logs may still produce those artifacts upstream,
+but they should not be loaded into coffee mode by default.
 
 The resume output should summarize:
 
@@ -74,3 +75,5 @@ For the selected track, provide:
 - Preserve existing commit-authorization policy.
 - Treat the latest Samwise diary entry as the primary wake-up memory source when
   using `resume-context`.
+- Prefer the current brief or objective artifact as the second wake-up anchor
+  instead of loading planning/logging contracts by default.
