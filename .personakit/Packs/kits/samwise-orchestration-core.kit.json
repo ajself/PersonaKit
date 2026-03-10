@@ -2,7 +2,7 @@
   "id": "samwise-orchestration-core",
   "version": "1.0",
   "name": "Samwise Orchestration Core Kit",
-  "summary": "Reusable planning, hiring, oversight, validation, and retrospective contracts for Samwise-led multiagent delivery.",
+  "summary": "Reusable planning, hiring, oversight, validation, and evidence-led retrospective contracts for Samwise-led multiagent delivery.",
   "essentialIds": [
     "multiagent-squad-planning-contract",
     "squad-planning-report-template",

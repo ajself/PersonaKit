@@ -2,7 +2,7 @@
   "id": "worktree-squad-core",
   "version": "1.0",
   "name": "Worktree Squad Core Kit",
-  "summary": "Core contracts for gated worktree delivery loops, retrospectives, and calibration.",
+  "summary": "Core contracts for gated worktree delivery loops, evidence-led retrospectives, and calibration.",
   "essentialIds": [
     "worktree-squad-gating-contract",
     "worktree-squad-loop-log-contract",

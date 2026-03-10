@@ -36,6 +36,19 @@ That means the next pass has two simultaneous goals:
 2. correctly exercise the collaboration model that this first run only partially
    tested
 
+## Retrospective Default For The Rerun
+
+The retrospective-method comparison is now complete.
+
+For the next Orbit rerun, milestone closeout should default to:
+
+1. `fan-out` first
+2. short `roundtable` second
+3. one canonical `Starfish` synthesis
+
+Do not fall back to a single-method retrospective unless AJ explicitly chooses
+to do so for a smaller checkpoint.
+
 ## Explicit Expectations For The Next Attempt
 
 The following expectations were visible in the planning and discussion leading
@@ -53,6 +66,8 @@ next attempt begins:
    an after-action memo alone.
 6. Milestone closeout must require a multi-pass retrospective process, not a
    single retrospective draft.
+7. The default multi-pass closeout method is now `hybrid`, not an unstructured
+   collection of retrospective notes.
 
 ## Questions To Resolve During Code Review
 
@@ -114,8 +129,8 @@ reviews:
    - confidence in the process model
 5. Orbit docs should state how many AI-assisted retrospective passes must run
    before a canonical report is accepted
-6. Orbit docs should define how roundtable and fan-out retrospective methods
-   are compared before standardizing on one default
+6. Orbit docs should make the hybrid closeout default explicit in active
+   execution notes and rerun expectations
 
 ## Recommended Evidence Requirements For The Next Attempt
 
@@ -130,8 +145,9 @@ collect explicit evidence for:
 6. what each participant contributed to the retrospective
 7. how the multiple retrospective passes were synthesized into one final
    Starfish report
-8. how the roundtable and fan-out methods scored against the comparison
-   metrics
+8. whether the hybrid closeout flow actually ran as required
+9. whether the resulting retrospective still justifies keeping hybrid as the
+   default closeout method
 
 Without those artifacts, it will be too easy to confuse a strong solo run with
 a successful multiagent run again.
@@ -151,8 +167,10 @@ it achieves all of the following:
    - process outcome
 6. The final retrospective is the canonical Starfish synthesis of multiple
    evidence-backed passes rather than a single unchallenged draft.
-7. The rerun produces enough retrospective evidence to compare roundtable and
-   fan-out methods honestly.
+7. The rerun closes with the agreed hybrid retrospective flow unless AJ
+   explicitly narrows the method for that checkpoint.
+8. The rerun produces enough retrospective evidence to confirm or revise the
+   current hybrid default honestly.
 
 ## Immediate Note For Future Samwise Re-entry
 

@@ -49,6 +49,26 @@ both:
 - product quality
 - process quality
 
+## Default Method
+
+The first Orbit retrospective-method comparison is complete.
+
+Default Orbit closeout method:
+
+1. `fan-out` first
+2. short `roundtable` second
+3. one canonical `Starfish` synthesis at the end
+
+Use this hybrid method by default for milestone closeout unless AJ explicitly
+selects a different method.
+
+Reason:
+
+1. `fan-out` preserves the cleanest persona separation and first-pass evidence
+2. `roundtable` sharpens disagreement handling, product language, and final
+   action framing
+3. Orbit needs both
+
 ## AI Pass Count
 
 Because Orbit work often mixes product, code, persona, and process evaluation,
@@ -121,12 +141,14 @@ Use the Starfish buckets this way:
 For Orbit, the retrospective must explicitly separate:
 
 1. feature outcome
-2. process outcome
-3. persona fidelity outcome
+2. product outcome
+3. process outcome
+4. persona fidelity outcome
 
 Without that split, it is too easy to confuse:
 
 - a strong solo build
+- a reviewable but still underdesigned product surface
 - with a successful multiagent or persona-bound execution experiment
 
 ## Suggested Closeout Shape
@@ -142,3 +164,5 @@ The closeout packet for a milestone should ideally include:
 
 - 2026-03-09: Added the first Orbit retrospective policy to require milestone
   closeout retrospectives and define multi-pass Starfish synthesis.
+- 2026-03-09: Recorded the first method-comparison result and adopted `hybrid`
+  as the default Orbit retrospective closeout path.

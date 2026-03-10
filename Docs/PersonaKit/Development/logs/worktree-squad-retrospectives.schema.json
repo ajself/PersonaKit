@@ -14,6 +14,72 @@
     "reportPath",
     "reviewer"
   ],
+  "oneOf": [
+    {
+      "required": [
+        "keepDoing",
+        "lessOf",
+        "moreOf",
+        "stopDoing",
+        "startDoing"
+      ]
+    },
+    {
+      "required": [
+        "whatWentWell",
+        "whatDidNot",
+        "openQuestions",
+        "improvements"
+      ]
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "entryType": {
+            "const": "retrospective"
+          },
+          "sessionId": {
+            "const": "worktree-squad-retrospective"
+          }
+        },
+        "required": [
+          "entryType",
+          "sessionId"
+        ]
+      },
+      "then": {
+        "oneOf": [
+          {
+            "required": [
+              "whatWentWell",
+              "whatDidNot",
+              "openQuestions",
+              "improvements"
+            ]
+          },
+          {
+            "required": [
+              "keepDoing",
+              "lessOf",
+              "moreOf",
+              "stopDoing",
+              "startDoing",
+              "retrospectiveMethod",
+              "declaredRoles",
+              "actualParticipants",
+              "participantEvidencePaths",
+              "subagentCount",
+              "featureConfidence",
+              "productConfidence",
+              "processConfidence"
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "properties": {
     "entryId": {
       "type": "string",
@@ -100,6 +166,63 @@
       "items": {
         "type": "string"
       }
+    },
+    "retrospectiveMethod": {
+      "type": "string",
+      "enum": [
+        "fan-out",
+        "hybrid",
+        "roundtable"
+      ]
+    },
+    "declaredRoles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "actualParticipants": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "participantEvidencePaths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "subagentCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "featureConfidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "productConfidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "processConfidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "low",
+        "medium"
+      ]
     },
     "reportPath": {
       "type": "string",

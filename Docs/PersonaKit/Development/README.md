@@ -92,6 +92,10 @@ Run development validation from a dedicated git worktree.
    - `Scripts/check-worktree-lane.sh`
 6. Validate the lane manifest itself after approval-record edits:
    - `Scripts/check-worktree-lane-approvals.sh`
+7. At milestone closeout, use the retrospective contract rather than an
+   informal wrap-up:
+   - default to the hybrid retrospective flow when persona fidelity, process
+     quality, or product-bearing review is part of the checkpoint
 
 ## Local-only branch closeout
 

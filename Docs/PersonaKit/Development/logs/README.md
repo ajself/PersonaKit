@@ -80,6 +80,20 @@ corresponding `worktree-squad-*.jsonl` stream, including gate evidence and
 report-path references when applicable.
 
 New retrospective entries should use the Starfish shape by default.
+New retrospective entries should also record:
+
+1. `retrospectiveMethod`
+2. `declaredRoles`
+3. `actualParticipants`
+4. `participantEvidencePaths`
+5. `subagentCount`
+6. `featureConfidence`
+7. `productConfidence`
+8. `processConfidence`
+
+This keeps the log honest about who actually participated and what kind of
+confidence was earned.
+
 Legacy retrospective entries remain valid for historical continuity.
 
 ## Validation

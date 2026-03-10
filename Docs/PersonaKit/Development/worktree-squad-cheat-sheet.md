@@ -59,6 +59,27 @@ flowchart TD
 7. A loop log entry is appended.
 8. If the assignment is done, a retrospective is required.
 
+## Retrospective default
+
+When a checkpoint is testing persona fidelity, process quality, or a
+product-bearing milestone closeout, use:
+
+1. `fan-out` first
+   - preserve raw specialist passes without cross-contamination
+2. `roundtable` second
+   - clarify disagreements and sharpen the final language
+3. one canonical `Starfish` synthesis at the end
+
+Rules:
+
+1. Planned roles do not count as active participants.
+2. Retrospectives should record declared roles, actual participants, and
+   participant evidence paths explicitly.
+3. Feature, product, and process confidence should be recorded separately.
+4. Do not describe a run as multiagent unless participant evidence supports it.
+5. Use `roundtable` alone or `fan-out` alone only when the checkpoint is small
+   enough that the hybrid flow would be unnecessary overhead.
+
 ## Evidence Trail
 
 ```mermaid
