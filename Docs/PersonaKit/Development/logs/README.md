@@ -36,7 +36,7 @@ gardening, hiring, partner continuity, and worktree-squad delivery.
 - `worktree-squad-loops.jsonl`: squad-loop execution stream for delivery/oversight passes.
 - `worktree-squad-loops.schema.json`: schema for squad-loop entries.
 - `worktree-squad-retrospectives.jsonl`: retrospective/recommendation stream for squad iterations.
-- `worktree-squad-retrospectives.schema.json`: schema for squad retrospective entries.
+- `worktree-squad-retrospectives.schema.json`: schema for squad retrospective entries, supporting legacy and Starfish-shaped records.
 - `../git-history-gardener-proposals.md`: approval-gated proposed history changes.
 
 ## Contract Rule
@@ -78,6 +78,9 @@ Each `samwise-squad-planning` pass should produce:
 Each delivery loop and retrospective should append schema-valid entries to the
 corresponding `worktree-squad-*.jsonl` stream, including gate evidence and
 report-path references when applicable.
+
+New retrospective entries should use the Starfish shape by default.
+Legacy retrospective entries remain valid for historical continuity.
 
 ## Validation
 

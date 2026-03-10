@@ -43,13 +43,21 @@ Each retrospective/recommendation entry should include:
 3. `sessionId`
 4. `entryType` (`retrospective` or `recommendation`)
 5. `objective`
-6. `whatWentWell` (array)
-7. `whatDidNot` (array)
-8. `openQuestions` (array)
-9. `improvements` (array)
-10. `actionItems` (array)
-11. `reportPath`
-12. `reviewer`
+6. One of these retrospective shapes:
+   - `Starfish`
+     - `keepDoing` (array)
+     - `lessOf` (array)
+     - `moreOf` (array)
+     - `stopDoing` (array)
+     - `startDoing` (array)
+   - `Legacy`
+     - `whatWentWell` (array)
+     - `whatDidNot` (array)
+     - `openQuestions` (array)
+     - `improvements` (array)
+7. `actionItems` (array)
+8. `reportPath`
+9. `reviewer`
 
 ## Guardrails
 
@@ -57,7 +65,10 @@ Each retrospective/recommendation entry should include:
 2. Do not overwrite prior entries; append only.
 3. If `entryType` is `recommendation`, include explicit owner names in
    `actionItems`.
-4. Retrospective reports should map directly to JSONL fields.
+4. New retrospective entries should use the `Starfish` shape by default.
+5. Legacy entries remain valid for historical continuity and should not be
+   rewritten just to satisfy the newer format.
+6. Retrospective reports should map directly to JSONL fields.
 
 ## Validation
 

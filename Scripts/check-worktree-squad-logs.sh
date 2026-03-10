@@ -117,6 +117,25 @@ def check_report_paths(entries: list[dict], label: str):
     return errors
 
 
+def check_retro_shapes(entries: list[dict], label: str):
+    errors = []
+    starfish_keys = {"keepDoing", "lessOf", "moreOf", "stopDoing", "startDoing"}
+    legacy_keys = {"whatWentWell", "whatDidNot", "openQuestions", "improvements"}
+
+    for idx, entry in enumerate(entries, start=1):
+        prefix = f"{label}: line {idx}"
+        has_starfish = starfish_keys.issubset(entry.keys())
+        has_legacy = legacy_keys.issubset(entry.keys())
+
+        if not has_starfish and not has_legacy:
+            errors.append(
+                f"{prefix}: retrospective entry must include either Starfish fields "
+                f"{sorted(starfish_keys)} or legacy fields {sorted(legacy_keys)}"
+            )
+
+    return errors
+
+
 all_errors = []
 for schema_path, jsonl_path, label in CHECKS:
     if not schema_path.exists():
@@ -131,6 +150,8 @@ for schema_path, jsonl_path, label in CHECKS:
     all_errors.extend(validate_schema(schema, entries, label))
     all_errors.extend(check_entry_ids(entries, label))
     all_errors.extend(check_report_paths(entries, label))
+    if label == "WORKTREE_SQUAD_RETRO":
+        all_errors.extend(check_retro_shapes(entries, label))
 
 if all_errors:
     print("WORKTREE_SQUAD_LOGS_CHECK:FAIL")

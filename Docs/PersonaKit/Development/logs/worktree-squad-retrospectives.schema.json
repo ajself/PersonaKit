@@ -10,10 +10,6 @@
     "sessionId",
     "entryType",
     "objective",
-    "whatWentWell",
-    "whatDidNot",
-    "openQuestions",
-    "improvements",
     "actionItems",
     "reportPath",
     "reviewer"
@@ -44,6 +40,36 @@
     "objective": {
       "type": "string",
       "minLength": 1
+    },
+    "keepDoing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lessOf": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moreOf": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stopDoing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "startDoing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "whatWentWell": {
       "type": "array",

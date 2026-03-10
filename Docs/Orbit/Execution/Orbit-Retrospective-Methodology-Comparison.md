@@ -395,6 +395,10 @@ The comparison run should ideally produce:
 4. one comparison note
 5. one canonical decision about default Orbit retrospective method
 
+Suggested packet templates live in:
+
+- `Docs/Orbit/Execution/retrospectives/`
+
 ## Revision Notes
 
 - 2026-03-09: Added the first head-to-head methodology for comparing

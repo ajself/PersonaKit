@@ -43,6 +43,9 @@ now, read:
 - [Execution/Orbit-Retrospective-Methodology-Comparison.md](./Execution/Orbit-Retrospective-Methodology-Comparison.md)
   The head-to-head plan for comparing roundtable and fan-out Orbit
   retrospectives.
+- [Execution/retrospectives/README.md](./Execution/retrospectives/README.md)
+  Runnable Orbit retrospective packet templates for evidence, roundtable,
+  fan-out, and comparison scoring.
 - [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
   Preparation notes for the post-review plan revisions and second execution
   attempt.
