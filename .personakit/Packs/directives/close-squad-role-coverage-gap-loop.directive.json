@@ -21,7 +21,7 @@
       "requiresReview": true
     },
     {
-      "text": "Apply only approved updates and run PersonaKit validation plus hiring-log and squad-planning-log checks."
+      "text": "Apply only approved updates and run PersonaKit validation plus squad-planning-log checks, and run hiring-log checks only when the remediation path updated hiring artifacts."
     },
     {
       "text": "Write remediation status back into the planning report and planning JSONL stream, including updated role coverage, any related hiring review IDs, and the recommended next session."
@@ -35,7 +35,8 @@
     "Each remediated role gap maps to a concrete hiring or artifact update path",
     "New or uncertain persona work produced reverse-interview evidence before execution handoff",
     "Planning report and JSONL entry reflect updated role coverage and next session",
-    "Validation, hiring-log, and squad-planning-log checks pass after approved updates",
+    "Validation and squad-planning-log checks pass after approved updates",
+    "Hiring-log checks pass when the remediation path updated hiring artifacts",
     "Execution handoff does not occur while execution-critical role coverage remains missing or low-confidence"
   ],
   "verification": [
@@ -45,7 +46,7 @@
     },
     {
       "kind": "command",
-      "text": "Scripts/check-persona-hiring-logs.sh"
+      "text": "If the remediation path updated hiring artifacts, run `Scripts/check-persona-hiring-logs.sh` and confirm `PERSONA_HIRING_LOGS_CHECK:PASS`."
     },
     {
       "kind": "command",

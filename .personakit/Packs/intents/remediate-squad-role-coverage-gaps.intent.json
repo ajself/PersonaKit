@@ -37,12 +37,9 @@
   ],
   "includesEssentialIds": [
     "multiagent-squad-planning-contract",
+    "persona-hiring-routing-contract",
     "squad-planning-report-template",
     "squad-planning-log-contract",
-    "persona-hiring-standards",
-    "persona-hiring-research-loop",
-    "persona-hiring-log-contract",
-    "persona-hiring-calibration-playbook",
     "partner-trust-contract",
     "worktree-squad-gating-contract",
     "non-goals",
@@ -57,6 +54,7 @@
     "notes": [
       "Only remediate role-coverage gaps explicitly approved by AJ.",
       "Route missing-persona work through reverse-interview and hiring-log discipline before execution handoff.",
+      "Keep hiring branches explicit by routing them through the hiring workflow and loading hiring context only for that branch.",
       "Keep artifact changes bounded to the roles and checkpoints approved for this loop.",
       "Update planning report and planning JSONL state after approved remediation work."
     ]

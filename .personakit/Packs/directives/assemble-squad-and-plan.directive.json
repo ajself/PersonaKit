@@ -36,7 +36,7 @@
       "requiresReview": true
     },
     {
-      "text": "Apply only approved follow-up updates and revalidate the affected PersonaKit artifacts plus planning and hiring logs."
+      "text": "Apply only approved follow-up updates and revalidate the affected PersonaKit artifacts plus planning logs, and run hiring-log checks only when reverse-interview or hiring-remediation work was part of the pass."
     }
   ],
   "acceptanceCriteria": [
@@ -49,6 +49,7 @@
     "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, and next session",
     "A durable planning report exists at the declared output path or approved fallback",
     "A schema-valid machine-readable planning entry exists and names the same next session as the report",
+    "Hiring-log validation runs only when reverse-interview or hiring-remediation work was part of the pass",
     "No structural updates or execution handoff occur without AJ review"
   ],
   "verification": [
@@ -74,7 +75,7 @@
     },
     {
       "kind": "command",
-      "text": "Scripts/check-persona-hiring-logs.sh"
+      "text": "If reverse-interview or hiring-remediation work was part of the pass, run `Scripts/check-persona-hiring-logs.sh` and confirm `PERSONA_HIRING_LOGS_CHECK:PASS`."
     },
     {
       "kind": "command",

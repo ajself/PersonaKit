@@ -52,11 +52,9 @@
   ],
   "includesEssentialIds": [
     "multiagent-squad-planning-contract",
+    "persona-hiring-routing-contract",
     "squad-planning-report-template",
     "squad-planning-log-contract",
-    "persona-hiring-standards",
-    "persona-hiring-research-loop",
-    "persona-hiring-log-contract",
     "partner-trust-contract",
     "roadmap-milestone-tracking-standard",
     "venture-product-quality-gate",
@@ -73,6 +71,7 @@
     "notes": [
       "Do not turn planning recommendations into implementation without AJ review.",
       "Run reverse-interview analysis when role coverage is uncertain or missing.",
+      "Keep hiring branches explicit by routing them through the hiring workflow and loading hiring context only for that branch.",
       "Require explicit owners, definition-of-done, and validation expectations before execution handoff.",
       "Produce a durable report, a schema-valid JSONL entry, and name the next session before concluding the planning pass.",
       "Keep new artifact recommendations bounded to the current objective.",
