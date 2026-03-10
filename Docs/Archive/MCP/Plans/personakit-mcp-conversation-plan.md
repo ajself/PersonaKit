@@ -48,7 +48,8 @@ Objective:
 
 Deliverables:
 
-1. `Docs/Architecture/personakit-domain-map.md` (canonical model and relationships).
+1. `Docs/PersonaKit/Architecture/personakit-domain-map.md` (canonical model
+   and relationships).
 2. MCP catalog resources for high-signal listing by entity type.
 3. Stable schema for list payloads and local-first scope metadata.
 

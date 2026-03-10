@@ -8,13 +8,13 @@ from pathlib import Path
 
 CHECKS = [
     (
-        Path("Docs/Development/logs/worktree-squad-loops.schema.json"),
-        Path("Docs/Development/logs/worktree-squad-loops.jsonl"),
+        Path("Docs/PersonaKit/Development/logs/worktree-squad-loops.schema.json"),
+        Path("Docs/PersonaKit/Development/logs/worktree-squad-loops.jsonl"),
         "WORKTREE_SQUAD_LOOP",
     ),
     (
-        Path("Docs/Development/logs/worktree-squad-retrospectives.schema.json"),
-        Path("Docs/Development/logs/worktree-squad-retrospectives.jsonl"),
+        Path("Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.schema.json"),
+        Path("Docs/PersonaKit/Development/logs/worktree-squad-retrospectives.jsonl"),
         "WORKTREE_SQUAD_RETRO",
     ),
 ]

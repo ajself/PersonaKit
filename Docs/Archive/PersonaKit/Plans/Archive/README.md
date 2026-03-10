@@ -1,13 +1,13 @@
 # Plan Archive
 
-Status: Active  
+Status: Archived  
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-09
 
 ## Purpose
 
 Retain completed or superseded planning artifacts for historical reference
-without leaving them in the active execution surface.
+within the PersonaKit archive.
 
 ## Rule of Use
 

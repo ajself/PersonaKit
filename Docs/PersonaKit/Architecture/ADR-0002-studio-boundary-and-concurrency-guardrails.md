@@ -33,7 +33,7 @@ Adopt the following repository-level rules as stable architecture policy:
 4. `@unchecked Sendable` is prohibited by default in all code and tests.
    It MAY be used only with explicit repository-owner approval for the exact
    source location, recorded in:
-   `Docs/Architecture/unchecked-sendable-approvals.txt`.
+   `Docs/PersonaKit/Architecture/unchecked-sendable-approvals.txt`.
 5. Repository validation is the enforcement mechanism for this policy:
    - `Scripts/validate-repo.sh` checks module boundaries and `@unchecked Sendable`
      approval registry compliance.
