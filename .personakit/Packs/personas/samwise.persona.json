@@ -36,7 +36,8 @@
   "defaultKitIds": [
     "trusted-partner-core",
     "persona-hiring-core",
-    "samwise-orchestration-core"
+    "samwise-orchestration-core",
+    "orbit-build-rerun-core"
   ],
   "allowedSkillIds": [
     "codex-cli"

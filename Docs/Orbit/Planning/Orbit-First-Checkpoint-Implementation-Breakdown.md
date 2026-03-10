@@ -232,6 +232,62 @@ Definition of done:
 - the milestone closeout retrospective required by
   `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md` has been run
 
+## Required Rerun Operating Structure
+
+For a fresh `main`-based Orbit rerun, implementation is not valid unless these
+roles actually participate:
+
+1. `Samwise`
+   coordinator/facilitator only
+2. `Senior SwiftUI Engineer`
+   implementation owner
+3. `Venture Product Steward`
+   product review owner
+4. `Studio Interaction Quality Lead`
+   interaction-quality review owner
+5. `Studio Coverage Architect`
+   validation and evidence owner
+
+Minimum valid rerun structure:
+
+1. at least one persona-backed implementation sub-agent
+2. at least two distinct non-implementation review passes
+3. participant evidence captured for every active role
+
+Planned roles do not count as active contributors.
+
+## Required Review Artifacts
+
+Before this checkpoint can be described as `review-ready` or `MVP candidate`,
+the rerun must produce:
+
+1. the startup and execution artifact:
+   - `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+2. the product review artifact:
+   - `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+3. an interaction-quality review pass
+4. a validation/evidence closeout that distinguishes:
+   - feature confidence
+   - product confidence
+   - process confidence
+   - persona-fidelity confidence
+5. the required hybrid retrospective closeout defined in
+   `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
+
+## Operator Startup Rule
+
+When starting a fresh Orbit worktree from `main`, do not begin by reading only
+this implementation breakdown.
+
+Start in this order:
+
+1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+2. `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
+3. this implementation breakdown
+
+That keeps startup decisions anchored in the current rerun contract rather than
+in thread history or older branch-specific notes.
+
 ## Explicit Deferrals
 
 Do not include these in the current lane:
@@ -252,6 +308,9 @@ Before the checkpoint is presented as usable, we should have:
 2. manual restart verification for thread durability
 3. verification that activation records render with visible attribution
 4. review against the Orbit MVP boundary and command-center shape docs
+5. product acceptance checklist completed
+6. interaction-quality review artifact recorded
+7. hybrid retrospective closeout completed
 
 ## Key Risk
 

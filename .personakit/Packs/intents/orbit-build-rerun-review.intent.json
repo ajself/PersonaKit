@@ -1,0 +1,52 @@
+{
+  "id": "orbit-build-rerun-review",
+  "version": "1.0",
+  "name": "Orbit Build Rerun Review",
+  "description": "Run the Orbit build exercise from a fresh main-based lane with explicit learning carry-forward, product gates, and hybrid retrospective closeout.",
+  "parameters": [
+    {
+      "name": "objective",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "attemptLabel",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "laneBranch",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "evidencePacketPath",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "orbit-build-rerun-playbook",
+    "orbit-attempt-improvement-loop",
+    "worktree-squad-retrospective-template",
+    "starfish-retrospective-format",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Use the active Orbit execution and planning docs as the source of truth for the rerun.",
+      "Carry forward prior-attempt lessons explicitly; do not restart from vibes or thread memory alone.",
+      "Do not call the branch review-ready or MVP candidate before the product acceptance checklist and interaction-quality review both exist.",
+      "Use hybrid retrospective closeout by default unless AJ explicitly narrows the method for a smaller checkpoint.",
+      "Make actual participants and participant evidence explicit; planned roles are not the same as active contributors.",
+      "Record feature, product, process, and persona-fidelity confidence separately.",
+      "Do not promote process changes or rerun success claims without AJ review."
+    ]
+  }
+}

@@ -60,6 +60,24 @@ Use this flow when AJ is still the one clicking the worktree UI:
 3. `codex/orbit-learning-loop`
    - exploratory Orbit post-MVP lane
 
+## Orbit Attempt Naming Rule
+
+For future fresh-main Orbit reruns, use a simple incrementing integer branch
+name:
+
+1. `codex/orbit-1`
+2. `codex/orbit-2`
+3. `codex/orbit-3`
+
+Rules:
+
+1. increment the integer for each new fresh-main Orbit attempt
+2. do not reuse an older Orbit attempt branch name
+3. keep the integer as the attempt number, not as a milestone label
+
+The original named Orbit lanes remain valid historical branches, but new Orbit
+reruns should follow the integer pattern.
+
 ## Notes
 
 - Lane notes are generated from the manifest so the active worktree has a local,

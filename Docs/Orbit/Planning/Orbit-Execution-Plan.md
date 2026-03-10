@@ -133,6 +133,24 @@ The first implementation tasks should be:
    `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md` before touching summary
    or memory features or calling the milestone closed.
 
+## Comparison-Grade Rerun Contract
+
+The next fresh `main`-based Orbit worktree is not just repeating the build.
+
+It is repeating the full execution exercise at a comparison-grade standard.
+
+That means the next run must be able to prove:
+
+1. the feature slice that was built
+2. the product quality that was reviewed
+3. the process behavior that actually occurred
+4. the persona fidelity that was actually exercised
+
+Do not rely on thread history for these rules.
+
+Treat this document, the implementation breakdown, the rerun checklist, and the
+product acceptance checklist as the active contract.
+
 ## Proposed First Squad
 
 The first execution squad should stay small and role-clear:
@@ -163,6 +181,30 @@ reveals an immediate need:
 - `Taskboard Parity Designer`
   Not needed for the first Orbit proving checkpoint because this milestone is
   about structural clarity, not Trello-like parity work.
+
+## Minimum Valid Rerun Participants
+
+For the next fresh-worktree Orbit rerun, these roles are required:
+
+1. `Samwise`
+   Coordinator and facilitator only.
+   Samwise owns scope, evidence discipline, and closeout synthesis.
+2. `Senior SwiftUI Engineer`
+   Required implementation agent.
+3. `Venture Product Steward`
+   Required product reviewer.
+4. `Studio Interaction Quality Lead`
+   Required interaction-quality reviewer.
+5. `Studio Coverage Architect`
+   Required validation and evidence reviewer.
+
+Minimum valid rerun structure:
+
+1. at least one persona-backed implementation sub-agent
+2. at least two distinct non-implementation review passes
+3. participant evidence captured for every active role used to justify the run
+4. no planned role may be described as active participation unless an artifact
+   exists for that role
 
 ## MVP Boundary
 
@@ -206,6 +248,31 @@ Rules:
 5. Major scope or architecture changes outside this execution plan still pause
    for AJ review.
 
+## Fresh-Main Rerun Branch Naming
+
+The first Orbit exercise used named branches:
+
+- `codex/orbit-foundation`
+- `codex/orbit-learning-loop`
+
+Future fresh-main Orbit reruns should use a simple incrementing integer in the
+branch name:
+
+- `codex/orbit-1`
+- `codex/orbit-2`
+- `codex/orbit-3`
+
+Rules:
+
+1. increment the integer for each new fresh-main Orbit attempt
+2. do not reuse a previous attempt branch name
+3. use the integer as the attempt number, not as a phase label
+4. if a future attempt needs a paired exploratory lane, derive it from the
+   attempt number instead of inventing a new naming pattern
+
+This keeps branch naming simple, comparable, and easy to discuss across
+attempts.
+
 ## Retrospective Requirement
 
 Orbit milestones do not end at implementation or review alone.
@@ -221,6 +288,37 @@ ends, Orbit requires:
 Default cadence and synthesis rules live in:
 
 - `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
+
+Default closeout method:
+
+1. `fan-out` first
+2. short `roundtable` second
+3. one canonical `Starfish` synthesis
+
+Do not use a single-method closeout by default unless AJ explicitly narrows the
+method for a smaller checkpoint.
+
+## Required Review Gates Before MVP-Candidate Language
+
+Do not use `review-ready`, `MVP candidate`, or similar milestone-complete
+language until all of these are true:
+
+1. the product acceptance checklist has been run:
+   - `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+2. the interaction-quality review pass has been recorded
+3. feature, product, process, and persona-fidelity confidence have been scoped
+   separately in the closeout artifacts
+4. the required hybrid retrospective closeout has completed
+
+## Startup Artifacts For The Next Fresh Worktree
+
+The next Orbit rerun should start from:
+
+1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+2. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+
+These are not optional reference docs.
+They are part of the execution contract for a repeatable rerun.
 
 ## RFC Guardrails For This Milestone
 

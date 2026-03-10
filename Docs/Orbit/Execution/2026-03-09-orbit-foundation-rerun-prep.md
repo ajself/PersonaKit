@@ -49,6 +49,14 @@ For the next Orbit rerun, milestone closeout should default to:
 Do not fall back to a single-method retrospective unless AJ explicitly chooses
 to do so for a smaller checkpoint.
 
+Startup for the next fresh worktree should begin from:
+
+- `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+
+Required product review artifact:
+
+- `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+
 ## Explicit Expectations For The Next Attempt
 
 The following expectations were visible in the planning and discussion leading
@@ -68,6 +76,8 @@ next attempt begins:
    single retrospective draft.
 7. The default multi-pass closeout method is now `hybrid`, not an unstructured
    collection of retrospective notes.
+8. Each active owner should red-pen their own deliverable at least three times
+   before the checkpoint is described as done.
 
 ## Questions To Resolve During Code Review
 
@@ -109,6 +119,8 @@ These are the files most likely to need revision once the reviews are complete:
    enforce participant-based retrospectives and required delegation
 6. `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
 7. `Docs/Orbit/Execution/Orbit-Retrospective-Methodology-Comparison.md`
+8. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+9. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
 
 ## Support-File Revisions Likely Needed
 

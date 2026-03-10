@@ -34,9 +34,11 @@ Phase 1, Phase 2, and minimal Phase 3 only.
 ## Startup Checklist
 
 1. Run `Scripts/check-worktree-lane.sh`.
-2. Re-read the plan references listed above.
-3. Confirm the next bounded work item still fits the lane scope boundary.
-4. Run baseline validation before broad implementation changes when code work is
+2. Start with:
+   - `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
+3. Re-read the plan references listed above.
+4. Confirm the next bounded work item still fits the lane scope boundary.
+5. Run baseline validation before broad implementation changes when code work is
    about to begin.
 
 ## Promotion Rule
@@ -50,8 +52,11 @@ When this lane reaches a milestone, checkpoint, or other approved pause point,
 closeout must include:
 
 1. checkpoint review
-2. Orbit retrospective closeout
-3. one canonical Starfish retrospective synthesized according to
+2. product acceptance checklist:
+   - `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+3. interaction-quality review artifact
+4. Orbit retrospective closeout
+5. one canonical Starfish retrospective synthesized according to
    `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
 
 This lane should not claim milestone completion on implementation evidence

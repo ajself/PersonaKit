@@ -1,0 +1,79 @@
+{
+  "id": "run-orbit-build-rerun",
+  "version": "1.0",
+  "title": "Run Orbit build rerun",
+  "goal": "Let Samwise coordinate a fresh main-based Orbit build attempt that inherits prior lessons, enforces product and process gates, and closes with a hybrid retrospective.",
+  "steps": [
+    {
+      "text": "Load the active Orbit execution and planning artifacts, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the latest Orbit rerun-prep note, and the latest canonical retrospective artifacts."
+    },
+    {
+      "text": "Summarize the current attempt contract: first-slice scope, required participants, required evidence, required product gates, and the hybrid retrospective closeout rule."
+    },
+    {
+      "text": "Confirm the approved lane is bootstrapped, run baseline validation, and stop if the rerun prerequisites are not green."
+    },
+    {
+      "text": "Record the active participants for this attempt and the concrete evidence expected from each role before implementation begins."
+    },
+    {
+      "text": "Run the first checkpoint slice without broadening scope beyond the active Orbit MVP boundary."
+    },
+    {
+      "text": "Before any `review-ready` or `MVP candidate` language, require each active owner to red-pen their own deliverable at least three times, then complete the product acceptance checklist, record the interaction-quality review pass, and separate feature, product, process, and persona-fidelity confidence."
+    },
+    {
+      "text": "Run hybrid retrospective closeout: `fan-out` first, short `roundtable` second, then one canonical `Starfish` synthesis."
+    },
+    {
+      "text": "Update the rerun-prep artifact or create a dated successor note so the next attempt inherits approved lessons, rejected lessons, unresolved questions, and startup conditions."
+    },
+    {
+      "text": "Pause for AJ review before claiming rerun success, promoting process changes, or making any promotion decision back toward `main`.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "The rerun starts from the active Orbit checklist and acceptance docs instead of thread memory alone",
+    "Required participants and evidence are explicit before implementation begins",
+    "The first checkpoint slice stays bounded to the active Orbit MVP scope",
+    "Each active owner completes and records at least three red-pen passes on their deliverable before done language is used",
+    "Product acceptance and interaction-quality review are recorded before any MVP-candidate language",
+    "Hybrid retrospective closeout is complete and evidence-backed",
+    "The resulting artifacts distinguish feature, product, process, and persona-fidelity outcomes",
+    "The next attempt inherits an explicit updated prep artifact instead of implicit carry-forward"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm the current attempt contract names the first slice, active participants, evidence expectations, and required review gates"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm each active deliverable owner recorded at least three red-pen passes or an equivalent evidence-backed self-review trail"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm the product acceptance checklist and interaction-quality review artifact both exist before any MVP-candidate claim"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm the rerun-prep artifact was updated or superseded with carry-forward lessons and next attempt conditions"
+    },
+    {
+      "kind": "command",
+      "text": "swift run personakit validate --root .personakit"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-worktree-squad-logs.sh"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "orbit-build-rerun-review",
+    "worktree-squad-retrospective-review"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

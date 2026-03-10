@@ -156,9 +156,16 @@ Without that split, it is too easy to confuse:
 The closeout packet for a milestone should ideally include:
 
 1. checkpoint review
-2. canonical Starfish retrospective
-3. action-item list with owners and checkpoints
-4. any supporting participant notes or pass-specific appendices
+2. completed product acceptance checklist:
+   - `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+3. interaction-quality review artifact
+4. canonical Starfish retrospective
+5. action-item list with owners and checkpoints
+6. any supporting participant notes or pass-specific appendices
+
+For the next fresh worktree, startup should begin from:
+
+- `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 
 ## Revision Notes
 

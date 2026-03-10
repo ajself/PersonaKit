@@ -33,6 +33,11 @@ now, read:
 
 ## Active Execution Docs
 
+- [Execution/Orbit-Build-Rerun-Checklist.md](./Execution/Orbit-Build-Rerun-Checklist.md)
+  The startup and closeout playbook for a fresh `main`-based Orbit rerun.
+- [Execution/Orbit-Product-Acceptance-Checklist.md](./Execution/Orbit-Product-Acceptance-Checklist.md)
+  The required first-checkpoint product bar before Orbit can be called
+  `review-ready` or `MVP candidate`.
 - [Execution/Orbit-Foundation-Lane.md](./Execution/Orbit-Foundation-Lane.md)
   The active MVP lane contract for `codex/orbit-foundation`.
 - [Execution/2026-03-09-orbit-foundation-retrospective.md](./Execution/2026-03-09-orbit-foundation-retrospective.md)
@@ -49,6 +54,12 @@ now, read:
 - [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
   Preparation notes for the post-review plan revisions and second execution
   attempt.
+
+PersonaKit execution session for the rerun:
+
+- `samwise-orbit-build-rerun`
+  The Samwise session that packages the Orbit rerun playbook, learning loop,
+  and hybrid-closeout expectations into one execution surface.
 
 ## Architecture And RFCs
 
