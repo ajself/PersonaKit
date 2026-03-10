@@ -14,9 +14,12 @@ Use this checklist before coding begins.
 This is the operator playbook for rerunning the `Build Orbit` exercise at a
 comparison-grade standard.
 
-If invoking the rerun through PersonaKit, start from:
+If invoking the rerun through PersonaKit, use:
 
 - `samwise-orbit-build-rerun`
+  startup, staging, and execution-handoff only
+- `samwise-orbit-rerun-execution`
+  live lane orchestration with required specialist-session routing
 
 ## Startup Sequence
 

@@ -11,6 +11,19 @@ attempt from `main`.
    multiagent rerun.
 4. Keep product gates, evidence gates, and retrospective gates explicit from
    the start.
+5. Split Orbit reruns into a startup surface and an execution surface so
+   Samwise does not silently collapse into solo implementation.
+
+## Session Split
+
+Use these session surfaces in order:
+
+1. `samwise-orbit-build-rerun`
+   startup, staging, and contract freeze only
+2. `samwise-orbit-rerun-execution`
+   active lane orchestration only
+
+Do not let the startup session stand in for a claimed multiagent rerun.
 
 ## Source Of Truth
 
@@ -41,7 +54,9 @@ Before the first code change in a fresh worktree:
 6. Create and bootstrap the approved Orbit lane.
 7. Run baseline validation before coding.
 8. Record the required active participants and expected evidence artifacts.
-9. Freeze the first slice:
+9. Hand the live lane to `samwise-orbit-rerun-execution` before substantive
+   implementation begins.
+10. Freeze the first slice:
    - Orbit runtime models
    - deterministic persistence
    - Studio Orbit surface shell
@@ -113,8 +128,20 @@ Minimum valid rerun structure:
 1. at least one persona-backed implementation sub-agent
 2. at least two distinct non-implementation review passes
 3. explicit participant evidence for each active role
+4. active implementation routed through `worktree-squad-delivery` or another
+   AJ-approved implementation session
+5. Samwise remains in orchestration scope unless AJ explicitly approves solo
+   fallback
 
 Planned roles do not count as active participants.
+
+## Environment Note
+
+If the active Orbit worktree lives outside the primary repository root,
+bootstrap, build, test, or file-writing commands may trigger approval prompts
+in this desktop environment.
+
+Treat that as an environment-scope warning and surface it early in the run.
 
 ## Guardrails
 

@@ -1,0 +1,58 @@
+{
+  "id": "run-session-stack-red-pen-review",
+  "version": "1.0",
+  "title": "Run session stack red-pen review",
+  "goal": "Let Samwise review a PersonaKit session stack file by file, score its likely deliverable quality, red-pen the highest-leverage weaknesses, and rescore the stack before recommending follow-up action.",
+  "steps": [
+    {
+      "text": "Start from the target session file, then trace the defining stack through its directive, required intents, included essentials, exposed operator docs, and continuity records that materially shape real use."
+    },
+    {
+      "text": "Restate the target session's promised goal, expected deliverables, and real execution surface before making judgments."
+    },
+    {
+      "text": "Produce ordered findings first, with severity and file references, focusing on contradictions, weak enforcement, lifecycle mismatches, operator-surprise risks, and any gap between the stated contract and what the machine-readable stack actually guarantees."
+    },
+    {
+      "text": "For each reviewed artifact, write a SWOT and assign a current deliverable-confidence score using the session-stack review rubric."
+    },
+    {
+      "text": "Run a red-pen pass that proposes the smallest changes most likely to improve reliability, then rescore each artifact under those explicit red-pen assumptions."
+    },
+    {
+      "text": "Summarize the review in one table plus one short paragraph that distinguishes current confidence from projected post-red-pen confidence."
+    },
+    {
+      "text": "Pause for AJ review before implementing any fixes, broadening the review scope, or converting review findings into structural pack/session updates.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "The review starts from the target session and traces every materially relevant defining artifact",
+    "Findings appear before overview text and include file references",
+    "Each reviewed artifact has a SWOT and a current confidence score",
+    "The red-pen pass proposes bounded changes instead of vague aspirations",
+    "Each artifact is rescored after the red-pen assumptions",
+    "The final summary includes both a table and a short narrative conclusion"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm the review traced the session through directive, intents, essentials, docs, and continuity records as needed"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm findings come first and confidence scoring is present before and after the red-pen pass"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm the final output includes one summary table and one short concluding paragraph"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "session-stack-review"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

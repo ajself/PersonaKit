@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -49,6 +49,9 @@ Lifecycle legend:
 ## Partner Sync Workflows
 
 - `samwise-partner-sync` - owner: `samwise` - state: `active`
+- `samwise-orbit-build-rerun` - owner: `samwise` - state: `active`
+- `samwise-orbit-rerun-execution` - owner: `samwise` - state: `active`
+- `samwise-session-stack-review` - owner: `samwise` - state: `active`
 - `samwise-squad-planning` - owner: `samwise` - state: `active`
 - `samwise-squad-planning-remediation` - owner: `samwise` - state: `candidate`
 - `samwise-coffee-checkpoint` - owner: `samwise` - state: `active`
@@ -71,6 +74,6 @@ Lifecycle legend:
 
 ## State Summary
 
-- `active`: 15 sessions
+- `active`: 18 sessions
 - `candidate`: 13 sessions
 - `deprecated`: 0 sessions

@@ -61,8 +61,12 @@ now, read:
 PersonaKit execution session for the rerun:
 
 - `samwise-orbit-build-rerun`
-  The Samwise session that packages the Orbit rerun playbook, learning loop,
-  and hybrid-closeout expectations into one execution surface.
+  The Samwise startup session for loading the rerun contract, validating lane
+  readiness, and freezing the execution handoff.
+- `samwise-orbit-rerun-execution`
+  The Samwise execution session for routing Orbit implementation, product
+  review, interaction review, validation review, and retrospective closeout
+  through distinct specialist sessions once the lane is live.
 
 ## Architecture And RFCs
 

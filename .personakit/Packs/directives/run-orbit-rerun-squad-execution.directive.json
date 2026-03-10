@@ -1,0 +1,79 @@
+{
+  "id": "run-orbit-rerun-squad-execution",
+  "version": "1.0",
+  "title": "Run Orbit rerun squad execution",
+  "goal": "Let Samwise orchestrate an approved Orbit rerun lane through a real multiagent execution loop instead of acting as the implementation owner.",
+  "steps": [
+    {
+      "text": "Load the active Orbit execution and planning artifacts, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit attempt prep path, and the latest canonical retrospective artifacts."
+    },
+    {
+      "text": "Restate the current attempt boundary, explicit evidence paths, exact lane branch, worktree path, and commit authorization mode before any implementation work begins."
+    },
+    {
+      "text": "Declare the active session map for implementation, product review, interaction-quality review, validation review, and retrospective closeout. If any required session route is missing or ambiguous, stop and repair the routing before implementation begins."
+    },
+    {
+      "text": "If the active worktree path is outside the primary repository root, warn AJ that this environment may trigger approval prompts for bootstrap, build, test, or file-writing commands in the isolated worktree."
+    },
+    {
+      "text": "Record the actual participant roster, ownership boundaries, and attempt-specific artifact ownership before the first code slice begins."
+    },
+    {
+      "text": "Delegate the first bounded implementation slice to the implementation session, and keep Samwise in coordination, gatekeeping, and synthesis scope only unless AJ explicitly authorizes solo fallback."
+    },
+    {
+      "text": "Require separate product, interaction-quality, and validation review passes, each with red-pen evidence and recorded outputs at the explicit attempt-specific paths."
+    },
+    {
+      "text": "Run hybrid retrospective closeout through the retrospective session, then update the rerun-prep artifact or a dated successor prep note with carry-forward lessons and next-start conditions."
+    },
+    {
+      "text": "Pause for AJ review before claiming rerun success, describing the lane as `review-ready` or `MVP candidate`, promoting process changes, or making any branch-promotion recommendation.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "The active Orbit lane is restated with explicit branch, worktree, authorization mode, and artifact paths",
+    "Implementation, product review, interaction review, validation review, and retrospective closeout are mapped to explicit session surfaces before coding begins",
+    "Samwise does not perform substantive implementation unless AJ explicitly approved solo fallback for the current checkpoint",
+    "At least one implementation session and at least two distinct non-implementation review sessions contribute evidence to the run",
+    "Participant evidence is explicit for every active role claimed by the rerun",
+    "Product acceptance, interaction-quality review, validation closeout, and retrospective closeout are all recorded at attempt-specific paths",
+    "The rerun-prep artifact is updated with execution lessons, unresolved issues, and next-start conditions"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm the active session map names implementation, product, interaction, validation, and retrospective routes explicitly"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm participant evidence exists for every active role instead of only planned roles"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm Samwise remained coordinator/gatekeeper unless AJ explicitly approved solo fallback"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm product acceptance, interaction-quality review, validation closeout, and retrospective closeout all exist before success language is used"
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-worktree-squad-logs.sh"
+    },
+    {
+      "kind": "command",
+      "text": "swift run personakit validate --root .personakit"
+    }
+  ],
+  "requiresIntentTemplateIds": [
+    "orbit-rerun-squad-execution",
+    "gated-worktree-delivery",
+    "worktree-squad-retrospective-review"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}
