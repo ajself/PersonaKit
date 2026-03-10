@@ -82,6 +82,26 @@ flowchart LR
 4. One bounded work item per loop unless AJ expands scope.
 5. Blockers unresolved by the next checkpoint must escalate to AJ.
 
+## Named Multi-Worktree Mode
+
+When AJ approves a bounded multi-worktree execution strategy, each approved
+non-`main` worktree must have:
+
+- a named milestone or scope boundary
+- explicit commit mode
+- explicit promotion rules back toward `main`
+
+Rules:
+
+1. `main` remains protected and manual-review only.
+2. Standing commit authority applies only inside the explicitly approved
+   non-`main` worktrees.
+3. One worktree may be designated the official milestone branch.
+4. A second worktree may be designated exploratory, but it does not silently
+   redefine the milestone branch.
+5. Scope changes, destructive git actions, or promotion decisions still
+   escalate to AJ.
+
 ## Sessions To Use
 
 1. Samwise oversight:

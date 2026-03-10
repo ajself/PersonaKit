@@ -131,6 +131,79 @@ The first implementation tasks should be:
 7. Run a checkpoint review against the milestone definition of done before
    touching summary or memory features.
 
+## Proposed First Squad
+
+The first execution squad should stay small and role-clear:
+
+1. `Samwise`
+   Own orchestration, scope discipline, review pauses, and handoff quality.
+2. `Venture Product Steward`
+   Own milestone framing, product tradeoffs, and checkpoint acceptance against
+   the command-center surface.
+3. `Senior SwiftUI Engineer`
+   Own the first runtime plus macOS shell implementation pass.
+4. `Architectural Editor`
+   Own review of the runtime model, persistence boundary, and invariant
+   discipline before implementation broadens.
+5. `Studio Coverage Architect`
+   Own deterministic validation for durable thread, speaker attribution, and
+   activation-trace checkpoint behavior.
+
+Keep these roles on deck rather than in the core first squad unless the build
+reveals an immediate need:
+
+- `Studio Reliability Engineer`
+  Bring in when multi-participant coordination starts creating async or
+  cancellation risk.
+- `Studio Interaction Quality Lead`
+  Bring in after the first checkpoint is real and interaction polish becomes a
+  gating concern.
+- `Taskboard Parity Designer`
+  Not needed for the first Orbit proving checkpoint because this milestone is
+  about structural clarity, not Trello-like parity work.
+
+## MVP Boundary
+
+For Orbit execution, `MVP` means the first engineering checkpoint defined in
+this document:
+
+- Phase 1
+- Phase 2
+- minimal Phase 3
+
+This MVP must produce a usable local Orbit command-center loop.
+
+It does not require:
+
+- Phase 4 summary and memory review
+- Phase 5 memory reuse
+
+Those belong to the first post-MVP extension unless AJ explicitly redefines the
+milestone.
+
+## Branch And Worktree Strategy
+
+Use three branches/worktrees for this execution phase:
+
+- `main`
+  Protected. No autonomous commit authority.
+- `codex/orbit-foundation`
+  Approved non-`main` worktree for autonomous delivery of Phase 1, Phase 2,
+  and minimal Phase 3.
+- `codex/orbit-learning-loop`
+  Approved non-`main` worktree branching from `codex/orbit-foundation` for
+  speculative Phase 4 and Phase 5 work after the MVP loop is usable.
+
+Rules:
+
+1. `codex/orbit-foundation` is the official MVP branch.
+2. `codex/orbit-learning-loop` is exploratory until AJ explicitly promotes it.
+3. Worktree approval replaces per-commit approval only inside the named
+   non-`main` worktrees.
+4. `main` remains manual-review only.
+5. Major scope or architecture changes outside this execution plan still pause
+   for AJ review.
+
 ## RFC Guardrails For This Milestone
 
 We do not need a full RFC review right now.
@@ -170,14 +243,22 @@ We do need selective reference checks while building:
 
 ## Recommended Next Artifact
 
-After this document, the next planning artifact should probably be one of:
+The next planning artifact should be:
 
-- a runtime/data model note for the first checkpoint
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+
+After that, the next follow-up artifact should be:
+
 - a first implementation-task breakdown mapped to files/modules
 
-My recommendation is to do the runtime/data model note first.
+That sequence keeps the execution anchor concise while giving the first build a
+clear data-model boundary before UI work expands.
 
 ## Revision Notes
 
 - 2026-03-09: Initial Samwise execution-plan draft created from the approved
   proving-loop and command-center planning artifacts plus Meeting 002 closeout.
+- 2026-03-09: Added proposed first-squad staffing guidance and promoted a
+  dedicated first-checkpoint runtime-model note as the immediate next artifact.
+- 2026-03-09: Defined the Orbit MVP boundary and named the milestone and
+  exploratory worktree strategy for autonomous non-`main` execution.
