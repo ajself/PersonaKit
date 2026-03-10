@@ -32,4 +32,76 @@ struct ListCommandTests {
 
     #expect(output == expected)
   }
+
+  @Test
+  func listSessions() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try PersonaKitInitializer().run(destination: root.path)
+    try writeSession(
+      root: root,
+      session: SessionFile(
+        id: "review-swiftui",
+        personaId: "senior-swiftui-engineer",
+        directiveId: "apply-style",
+        kitOverrides: ["swift-style", "swiftui-style"]
+      )
+    )
+
+    let output = try ListCommand.list(root: root, entityType: .sessions)
+
+    #expect(
+      output
+        == "review-swiftui — senior-swiftui-engineer / apply-style [kits: swift-style, swiftui-style]"
+    )
+  }
+
+  @Test
+  func listSessionsPrefersProjectScopeForDuplicateIDs() throws {
+    let tempRoot = try makeTempDirectory()
+    let projectRoot = tempRoot.appendingPathComponent("Project/.personakit")
+    let globalRoot = tempRoot.appendingPathComponent("Global/.personakit")
+
+    try PersonaKitInitializer().run(destination: projectRoot.path)
+    try PersonaKitInitializer().run(destination: globalRoot.path)
+
+    try writeSession(
+      root: globalRoot,
+      session: SessionFile(
+        id: "shared-review",
+        personaId: "senior-swiftui-engineer",
+        directiveId: "apply-style",
+        kitOverrides: nil
+      )
+    )
+    try writeSession(
+      root: projectRoot,
+      session: SessionFile(
+        id: "shared-review",
+        personaId: "senior-swiftui-engineer",
+        directiveId: "review-implementation-prompts",
+        kitOverrides: nil
+      )
+    )
+
+    let scopes = ScopeSet(
+      projectScopeURL: projectRoot,
+      globalScopeURL: globalRoot
+    )
+
+    let output = try ListCommand.list(scopes: scopes, entityType: .sessions)
+
+    #expect(output == "shared-review — senior-swiftui-engineer / review-implementation-prompts")
+  }
+}
+
+private func writeSession(root: URL, session: SessionFile) throws {
+  let sessionsURL = root.appendingPathComponent("Sessions", isDirectory: true)
+  try FileManager.default.createDirectory(
+    at: sessionsURL,
+    withIntermediateDirectories: true
+  )
+
+  let fileURL = sessionsURL.appendingPathComponent("\(session.id).session.json")
+  let data = try JSONEncoder().encode(session)
+  try data.write(to: fileURL)
 }

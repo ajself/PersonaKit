@@ -1,0 +1,53 @@
+{
+  "id": "session-stack-review",
+  "version": "1.0",
+  "name": "Session Stack Review",
+  "description": "Review a PersonaKit session and its defining artifacts with findings, SWOT, deliverable-confidence scoring, red-pen recommendations, and a rescored summary.",
+  "parameters": [
+    {
+      "name": "objective",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "targetSessionId",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "associatedArtifactPaths",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "expectedDeliverables",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "reviewOutputPath",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "session-stack-review-rubric",
+    "partner-trust-contract",
+    "non-goals",
+    "tools-and-constraints"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Trace the target session through its actual directive, intents, essentials, and exposed docs before scoring confidence.",
+      "Prioritize findings over summary language; if the stack is weak, say so plainly.",
+      "Use file-by-file SWOT and confidence scoring instead of one blended overall verdict alone.",
+      "Red-pen recommendations should prefer the smallest contract hardening changes that materially improve reliability.",
+      "Do not silently implement fixes during the review pass unless AJ explicitly requested a follow-up change."
+    ]
+  }
+}
