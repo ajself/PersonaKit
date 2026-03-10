@@ -93,6 +93,7 @@ These are the files most likely to need revision once the reviews are complete:
 5. Any worktree-squad retrospective or loop contracts that should better
    enforce participant-based retrospectives and required delegation
 6. `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
+7. `Docs/Orbit/Execution/Orbit-Retrospective-Methodology-Comparison.md`
 
 ## Support-File Revisions Likely Needed
 
@@ -113,6 +114,8 @@ reviews:
    - confidence in the process model
 5. Orbit docs should state how many AI-assisted retrospective passes must run
    before a canonical report is accepted
+6. Orbit docs should define how roundtable and fan-out retrospective methods
+   are compared before standardizing on one default
 
 ## Recommended Evidence Requirements For The Next Attempt
 
@@ -127,6 +130,8 @@ collect explicit evidence for:
 6. what each participant contributed to the retrospective
 7. how the multiple retrospective passes were synthesized into one final
    Starfish report
+8. how the roundtable and fan-out methods scored against the comparison
+   metrics
 
 Without those artifacts, it will be too easy to confuse a strong solo run with
 a successful multiagent run again.
@@ -146,6 +151,8 @@ it achieves all of the following:
    - process outcome
 6. The final retrospective is the canonical Starfish synthesis of multiple
    evidence-backed passes rather than a single unchallenged draft.
+7. The rerun produces enough retrospective evidence to compare roundtable and
+   fan-out methods honestly.
 
 ## Immediate Note For Future Samwise Re-entry
 

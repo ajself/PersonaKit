@@ -40,6 +40,9 @@ now, read:
 - [Execution/Orbit-Retrospective-Policy.md](./Execution/Orbit-Retrospective-Policy.md)
   The required Orbit retrospective closeout policy, including Starfish cadence
   and synthesis rules.
+- [Execution/Orbit-Retrospective-Methodology-Comparison.md](./Execution/Orbit-Retrospective-Methodology-Comparison.md)
+  The head-to-head plan for comparing roundtable and fan-out Orbit
+  retrospectives.
 - [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
   Preparation notes for the post-review plan revisions and second execution
   attempt.

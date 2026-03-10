@@ -10,6 +10,10 @@ Define when Orbit retrospectives are required, how many AI-assisted passes
 should run, and how multiple passes should be synthesized into one canonical
 Orbit retrospective.
 
+For a head-to-head comparison of retrospective methods, see:
+
+- `Docs/Orbit/Execution/Orbit-Retrospective-Methodology-Comparison.md`
+
 ## Required Trigger
 
 An Orbit retrospective is required whenever one of these boundaries is reached:
