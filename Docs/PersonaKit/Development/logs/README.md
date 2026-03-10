@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -105,6 +105,22 @@ This keeps the log honest about who actually participated and what kind of
 confidence was earned.
 
 Legacy retrospective entries remain valid for historical continuity.
+
+## Historical Interpretation
+
+Append-only logs may reference retired artifact IDs or file paths after the
+active graph changes.
+
+When that happens:
+
+1. Keep the existing log rows unchanged.
+2. Resolve retired IDs through
+   `Docs/PersonaKit/Development/historical-artifact-tombstones.md`.
+3. Add a new continuity entry if the retirement itself needs durable
+   explanation.
+
+This keeps recorded history stable while preserving a clear translation path to
+the current state.
 
 ## Validation
 

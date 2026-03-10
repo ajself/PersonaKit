@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -27,6 +27,7 @@ stable agent-facing role label is helpful.
 - [Partner Context Log](./partner-context-log.md)
 - [Partner Handoff Register](./partner-handoff-register.md)
 - [Pack Gardener Log](./pack-gardener-log.md)
+- [Historical Artifact Tombstones](./historical-artifact-tombstones.md)
 - [Git History Gardener Log](./git-history-gardener-log.md)
 - [Git History Gardener Proposals](./git-history-gardener-proposals.md)
 - [Development Logs](./logs/README.md)
