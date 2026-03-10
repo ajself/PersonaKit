@@ -1,5 +1,9 @@
 {
   "id": "samwise-squad-planning-remediation",
   "personaId": "samwise",
-  "directiveId": "close-squad-role-coverage-gap-loop"
+  "directiveId": "close-squad-role-coverage-gap-loop",
+  "kitOverrides": [
+    "persona-hiring-core",
+    "samwise-orchestration-core"
+  ]
 }

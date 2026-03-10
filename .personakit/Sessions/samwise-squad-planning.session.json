@@ -1,5 +1,9 @@
 {
   "id": "samwise-squad-planning",
   "personaId": "samwise",
-  "directiveId": "assemble-squad-and-plan"
+  "directiveId": "assemble-squad-and-plan",
+  "kitOverrides": [
+    "persona-hiring-core",
+    "samwise-orchestration-core"
+  ]
 }
