@@ -19,6 +19,8 @@ CHECKS = [
     ),
 ]
 
+STRICT_RETRO_DATE = "2026-03-09"
+
 
 def parse_jsonl(path: Path):
     if not path.exists():
@@ -117,6 +119,101 @@ def check_report_paths(entries: list[dict], label: str):
     return errors
 
 
+def check_path_list(entries: list[dict], key: str, label: str):
+    errors = []
+    for idx, entry in enumerate(entries, start=1):
+        values = entry.get(key)
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if isinstance(value, str) and value and not Path(value).exists():
+                errors.append(
+                    f"{label}: line {idx}: {key} path does not exist: {value}"
+                )
+    return errors
+
+
+def check_retro_shapes(entries: list[dict], label: str):
+    errors = []
+    starfish_keys = {"keepDoing", "lessOf", "moreOf", "stopDoing", "startDoing"}
+    legacy_keys = {"whatWentWell", "whatDidNot", "openQuestions", "improvements"}
+
+    for idx, entry in enumerate(entries, start=1):
+        prefix = f"{label}: line {idx}"
+        has_starfish = starfish_keys.issubset(entry.keys())
+        has_legacy = legacy_keys.issubset(entry.keys())
+
+        if not has_starfish and not has_legacy:
+            errors.append(
+                f"{prefix}: retrospective entry must include either Starfish fields "
+                f"{sorted(starfish_keys)} or legacy fields {sorted(legacy_keys)}"
+            )
+
+    return errors
+
+
+def check_strict_retro_fields(entries: list[dict], label: str):
+    errors = []
+    strict_fields = [
+        "retrospectiveMethod",
+        "declaredRoles",
+        "actualParticipants",
+        "participantEvidencePaths",
+        "subagentCount",
+        "featureConfidence",
+        "productConfidence",
+        "processConfidence",
+    ]
+
+    for idx, entry in enumerate(entries, start=1):
+        prefix = f"{label}: line {idx}"
+
+        if entry.get("entryType") != "retrospective":
+            continue
+        if entry.get("sessionId") != "worktree-squad-retrospective":
+            continue
+
+        date = entry.get("date")
+        if not isinstance(date, str) or date < STRICT_RETRO_DATE:
+            continue
+
+        missing = [field for field in strict_fields if field not in entry]
+        if missing:
+            errors.append(
+                f"{prefix}: post-{STRICT_RETRO_DATE} retrospective missing strict fields {missing}"
+            )
+            continue
+
+        declared_roles = entry.get("declaredRoles")
+        actual_participants = entry.get("actualParticipants")
+        participant_evidence = entry.get("participantEvidencePaths")
+        retrospective_method = entry.get("retrospectiveMethod")
+        subagent_count = entry.get("subagentCount")
+
+        if not isinstance(declared_roles, list) or not declared_roles:
+            errors.append(f"{prefix}: declaredRoles must be a non-empty array")
+        if not isinstance(actual_participants, list) or not actual_participants:
+            errors.append(f"{prefix}: actualParticipants must be a non-empty array")
+        if not isinstance(participant_evidence, list) or not participant_evidence:
+            errors.append(
+                f"{prefix}: participantEvidencePaths must be a non-empty array"
+            )
+        if isinstance(subagent_count, int) and subagent_count < 0:
+            errors.append(f"{prefix}: subagentCount must be >= 0")
+
+        if retrospective_method in {"fan-out", "hybrid"}:
+            participant_count = (
+                len(actual_participants) if isinstance(actual_participants, list) else 0
+            )
+            if participant_count < 2:
+                errors.append(
+                    f"{prefix}: {retrospective_method} retrospectives require at least "
+                    "two actualParticipants"
+                )
+
+    return errors
+
+
 all_errors = []
 for schema_path, jsonl_path, label in CHECKS:
     if not schema_path.exists():
@@ -131,6 +228,10 @@ for schema_path, jsonl_path, label in CHECKS:
     all_errors.extend(validate_schema(schema, entries, label))
     all_errors.extend(check_entry_ids(entries, label))
     all_errors.extend(check_report_paths(entries, label))
+    if label == "WORKTREE_SQUAD_RETRO":
+        all_errors.extend(check_retro_shapes(entries, label))
+        all_errors.extend(check_path_list(entries, "participantEvidencePaths", label))
+        all_errors.extend(check_strict_retro_fields(entries, label))
 
 if all_errors:
     print("WORKTREE_SQUAD_LOGS_CHECK:FAIL")

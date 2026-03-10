@@ -2,6 +2,20 @@
 
 Use this template when a squad assignment or project phase closes.
 
+Default format: `Starfish`
+Default method for persona/process-sensitive milestones: `hybrid`
+
+Method guidance:
+
+1. `fan-out`
+   - use for fast first-pass evidence gathering with clean persona separation
+2. `roundtable`
+   - use for visible clarification, disagreement handling, and sharper final
+     language
+3. `hybrid`
+   - use `fan-out` first, `roundtable` second, then synthesize one canonical
+     Starfish report
+
 ## Header
 
 - Date:
@@ -9,20 +23,32 @@ Use this template when a squad assignment or project phase closes.
 - Scope:
 - Session ID:
 - Reviewer:
+- Retrospective Method:
+- Declared Roles:
+- Actual Participants:
+- Participant Evidence Paths:
+- Subagent Count:
+- Feature Confidence:
+- Product Confidence:
+- Process Confidence:
 
-## What Went Well
+## Keep Doing
 
 1.
 
-## What Did Not Go Well
+## Less Of
 
 1.
 
-## Open Questions
+## More Of
 
 1.
 
-## Suggestions For Improvement
+## Stop Doing
+
+1.
+
+## Start Doing
 
 1.
 
@@ -38,3 +64,10 @@ Use this template when a squad assignment or project phase closes.
 1. Verification command outcomes:
 2. Relevant loop log entry IDs:
 3. Related artifact links:
+4. Participant evidence links:
+
+## Notes
+
+1. Distinguish planned roles from active contributors.
+2. Record feature, product, and process confidence separately.
+3. Do not describe a run as multiagent unless participant evidence supports it.

@@ -10,6 +10,11 @@
       "required": true
     },
     {
+      "name": "retrospectiveMethod",
+      "type": "string",
+      "required": false
+    },
+    {
       "name": "reportPath",
       "type": "string",
       "required": false
@@ -23,6 +28,7 @@
   "includesEssentialIds": [
     "worktree-squad-loop-log-contract",
     "worktree-squad-retrospective-template",
+    "starfish-retrospective-format",
     "non-goals",
     "tools-and-constraints"
   ],
@@ -34,6 +40,10 @@
     "requiresHumanReview": true,
     "notes": [
       "Retrospective findings must be evidence-backed and bounded.",
+      "Use the Starfish format by default unless AJ requests a different retrospective style.",
+      "Use the hybrid method by default when persona fidelity or process quality is under evaluation.",
+      "Make declared roles, actual participants, and participant evidence explicit; planned roles are not the same as active contributors.",
+      "Record feature, product, and process confidence separately.",
       "Do not convert retrospective conclusions into broad implementation without AJ review.",
       "Action items should include owner and next checkpoint."
     ]
