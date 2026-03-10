@@ -486,3 +486,335 @@ The next review should therefore focus on two layers:
 - what should enter `codex/orbit-learning-loop` versus remain out of scope
 - what plan, process, and support-file revisions are required before the next
   execution attempt should be considered a real multiagent exercise
+
+## Self-Review Addendum
+
+This section records a later self-review prompted by AJ after the first
+retrospective draft already existed.
+
+The goal is to capture not just process failures, but the quality judgment Samwise
+made about the code itself and whether that kind of self-reflection should
+become part of a memory-bearing Persona workflow.
+
+### Code I Was Proud Of
+
+Three parts of the Orbit checkpoint stood out as worth preserving:
+
+1. The turn-expansion pipeline in `OrbitWorkspace.appendConversationTurn`.
+   Why it stood out:
+   - one user action fans out into:
+     - user message
+     - optional system event
+     - participant responses
+     - activation records
+   - the behavior is deterministic and easy to reason about
+2. The response-routing layer in `OrbitParticipantResponseBridge`.
+   Why it stood out:
+   - it cleanly expresses the difference between:
+     - direct address
+     - founding-group meeting invocation
+     - general thread reply
+   - it gave the MVP a real Orbit-like interaction mode without overbuilding
+     the execution engine
+3. The product-facing composer and roster behavior in `OrbitPanelView+UI`.
+   Why it stood out:
+   - the "Founding Group" target, changing send button, and participant
+     highlighting did product work, not just rendering work
+   - this helped the panel feel more like a room than a plain chat box
+
+### If The Code Were Revised
+
+When asked what a stronger fresh pass would look like, the judgment was:
+
+1. The code should become more typed.
+   - fewer raw `String` IDs
+   - stronger address-target modeling
+2. The code should become more layered.
+   - durable model state separated from turn orchestration
+   - response planning separated from response text generation
+3. The UI should become more presentation-model driven.
+   - less display policy embedded directly in the view extension
+4. System events should become semantically cleaner.
+   - avoid making room/system events look like Samwise-authored speech
+
+The strongest structural change proposed was:
+
+- move turn fan-out logic out of `OrbitWorkspace` and into a dedicated
+  conversation or turn engine
+
+This would create a cleaner boundary between:
+
+- persistent Orbit state
+- Orbit interaction rules
+- placeholder or future response-generation logic
+
+### Quality Rating
+
+When asked to rate the code quality against what a fresh pass should ideally
+look like, the score given was:
+
+- `6.5 / 10`
+
+Reasoning for that score:
+
+What was good:
+
+- readable
+- bounded
+- test-backed
+- product-shaped enough to review
+- not over-engineered for the checkpoint
+
+What held it back:
+
+- model and orchestration were still too coupled
+- address targets were too stringly typed
+- placeholder response generation was too close to durable Orbit behavior
+- UI architecture was still MVP-thin rather than intentionally layered
+- system-event semantics were muddier than they should be
+
+The final judgment was:
+
+- good checkpoint code
+- not embarrassing
+- not final-form code
+
+### Rigorous Success And Struggle Accounting
+
+This subsection is intentionally stricter than the earlier summary language.
+
+It separates:
+
+- what worked mechanically
+- what actually met the intended Orbit quality bar
+- what was incorrectly credited too generously on first pass
+
+#### Where Samwise Actually Succeeded
+
+These points appear earned based on shipped evidence:
+
+1. Orbit became real as a local, durable Studio surface.
+   Evidence:
+   - dedicated sidebar destination
+   - persistent local workspace state
+   - visible roster
+   - visible conversation
+   - visible activation trace
+2. The implementation stayed bounded enough to reach a reviewable checkpoint.
+   Evidence:
+   - no uncontrolled drift into memory reuse or broader platform work
+   - checkpoint scope stayed within the approved MVP lane
+3. Validation discipline was real.
+   Evidence:
+   - build passed
+   - focused tests passed
+   - snapshot coverage was added
+   - full suite passed before closeout
+4. The code exposed its next refactor seams clearly.
+   Evidence:
+   - orchestration vs model boundary is visible
+   - response bridge vs future engine boundary is visible
+   - UI presentation concerns are identifiable rather than hopelessly tangled
+
+These are meaningful successes, but they are narrower than "the MVP design was
+strong" or "the Orbit interaction model already feels right."
+
+#### Where Samwise Struggled Or Missed The Bar
+
+These points should be counted as real shortcomings, not cosmetic nits:
+
+1. The UI was over-credited for clarity and product feel.
+   AJ's review exposed multiple concrete issues:
+   - Samwise appears highlighted by default because the initial address state is
+     biased toward Samwise
+   - the primary button label changes when addressing the founding group
+   - the panel does not hold a satisfying top-anchored composition
+   - Orbit includes an inline help disclosure when the surface should be
+     self-evident
+   - expanding help breaks the layout rhythm and pushes the screen downward
+2. The roster emphasis model was not semantically clean.
+   The highlighted participant borders were intended to communicate address
+   state and recent activity, but in practice they communicated arbitrary or
+   misleading emphasis.
+3. The action language was unstable.
+   "Send" versus "Invite Group" made the primary action feel conditional and
+   less trustworthy instead of clearer.
+4. Layout stability was not treated as a first-class requirement.
+   The combination of:
+   - an expanding inline help region
+   - stretched roster cards
+   - a greedily expanding conversation section
+   created a screen that was usable but not visually grounded.
+5. The design pass was not rigorous enough to justify positive framing.
+   The screen was functional, but that is not enough to claim meaningful
+   product-design success. The earlier retrospective language gave too much
+   credit to "coherent structure" without enough scrutiny of actual behavior.
+6. The process still favored explanation over embodiment.
+   Orbit relied on help text and copy to explain itself where the product should
+   have communicated more through structure, hierarchy, and stable interaction
+   rules.
+
+#### Judgment Correction
+
+The stricter judgment is:
+
+- Orbit interaction design did not yet succeed at the intended quality bar
+- Orbit layout behavior was not stable enough to be praised as a strong MVP UX
+- the feature deserves credit for becoming real and testable
+- it does not deserve unqualified praise for look, feel, or interaction design
+
+Future reviews should treat this distinction as mandatory.
+
+### Comparison Insight
+
+The self-comparison exercise surfaced a useful distinction:
+
+- "code I am proud of for making the checkpoint real"
+- versus
+- "code I would endorse as the cleaner long-term shape"
+
+That difference matters.
+
+Without naming it explicitly, it is easy to over-credit an MVP implementation
+for structural health it does not yet have.
+
+The comparison also clarified that the code is not bad because it is an MVP.
+It is simply still carrying visible first-pass pressure in places where Orbit
+is likely to grow next:
+
+- type modeling
+- orchestration boundaries
+- response-engine abstraction
+- UI presentation structure
+
+### Is This Kind Of Self-Reflection Useful For A Persona With Memory?
+
+Current judgment: `yes`, with constraints.
+
+Why it is useful:
+
+1. It helps distinguish:
+   - what shipped successfully
+   - what is structurally sound
+   - what is merely acceptable under checkpoint pressure
+2. It creates reusable memory about recurring weaknesses:
+   - low-confidence starts
+   - over-solo execution
+   - MVP code that works but wants stronger layering
+3. It prevents future runs from inheriting false confidence from past delivery
+   wins.
+4. It gives planning and retrospective artifacts sharper material for future
+   revisions.
+
+Why it needs constraints:
+
+1. Self-reflection should not become self-justifying narration.
+2. It should not replace external review.
+3. It should stay evidence-linked:
+   - specific files
+   - specific choices
+   - specific ratings
+4. It should distinguish:
+   - pride
+   - quality
+   - readiness
+   - experiment validity
+
+The best use in a memory-bearing Persona is probably:
+
+- store self-reflection as a bounded retrospective signal
+- compare it against later human review
+- treat mismatch between self-assessment and human assessment as a learning
+  surface
+
+That means this style of reflection is useful if it becomes:
+
+- explicit
+- reviewable
+- falsifiable
+
+and not just a flattering internal monologue.
+
+## Multi-Persona Reliability Judgment
+
+This section records a later review question from AJ about whether one agent can
+reliably take on multiple personas during execution, and whether the Orbit
+shortcomings came from that blending or from poor planning/support artifacts.
+
+### Current Judgment
+
+One agent can reference multiple personas, but should not be treated as
+multiple active personas at the same time if the goal is reliable, auditable
+execution.
+
+The most reliable patterns appear to be:
+
+1. One active execution persona at a time.
+2. Additional personas used as explicit review lenses rather than blended
+   identity.
+3. Multi-persona work done in labeled turns, for example:
+   - Samwise plans
+   - Senior SwiftUI Engineer implements
+   - Venture Product Steward reviews
+   - Studio Coverage Architect validates
+4. Separate agents used when multiple personas need to operate concurrently or
+   with disjoint ownership.
+
+### What Does Not Seem Reliable Enough
+
+The following pattern should not be treated as high-confidence multiagent or
+multi-persona execution:
+
+- one agent "being" Samwise, Product Steward, Architect, and QA all at once
+  without explicit turn boundaries or evidence separation
+
+That pattern risks:
+
+- softened role boundaries
+- self-approval
+- missed stop points
+- overconfidence
+- fuzzy ownership
+- retrospective ambiguity about which role actually contributed what
+
+This kind of failure mode may not look like wild hallucination, but it still
+degrades process quality and makes the squad model harder to evaluate honestly.
+
+### What Happened In This Orbit Run
+
+The shortcomings of this run should not be blamed mainly on "too many personas
+in one brain."
+
+The more accurate causes were:
+
+1. The planning and support documents were not operational enough.
+   They named the squad, but did not force:
+   - minimum active persona count
+   - minimum sub-agent count
+   - explicit role ownership
+   - required review ceremony
+   - evidence per persona
+2. The execution choice was still wrong.
+   Once the lane opened, Samwise optimized for shipping the checkpoint rather
+   than proving the persona/squad model.
+3. Persona use drifted into advisory internal role-play rather than explicit,
+   falsifiable operating behavior.
+
+### Rerun Guidance
+
+For the next Orbit attempt, treat the following as a hard preference:
+
+1. One active persona per agent at a time.
+2. Any additional persona should appear as either:
+   - a separate agent
+   - or a separate labeled review turn
+3. Role transitions should be explicit in notes and execution artifacts.
+4. The retrospective should record which persona contributed which judgment or
+   deliverable.
+
+This would make the next run:
+
+- more reliable
+- easier to audit
+- harder to flatter
+- easier to compare against AJ's expectations

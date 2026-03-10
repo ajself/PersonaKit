@@ -37,6 +37,9 @@ now, read:
   The active MVP lane contract for `codex/orbit-foundation`.
 - [Execution/2026-03-09-orbit-foundation-retrospective.md](./Execution/2026-03-09-orbit-foundation-retrospective.md)
   The first Orbit foundation execution retrospective and process report.
+- [Execution/Orbit-Retrospective-Policy.md](./Execution/Orbit-Retrospective-Policy.md)
+  The required Orbit retrospective closeout policy, including Starfish cadence
+  and synthesis rules.
 - [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
   Preparation notes for the post-review plan revisions and second execution
   attempt.

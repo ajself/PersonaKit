@@ -2,6 +2,8 @@
 
 Use this template when a squad assignment or project phase closes.
 
+Default format: `Starfish`
+
 ## Header
 
 - Date:
@@ -10,19 +12,23 @@ Use this template when a squad assignment or project phase closes.
 - Session ID:
 - Reviewer:
 
-## What Went Well
+## Keep Doing
 
 1.
 
-## What Did Not Go Well
+## Less Of
 
 1.
 
-## Open Questions
+## More Of
 
 1.
 
-## Suggestions For Improvement
+## Stop Doing
+
+1.
+
+## Start Doing
 
 1.
 

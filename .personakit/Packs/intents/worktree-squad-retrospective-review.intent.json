@@ -23,6 +23,7 @@
   "includesEssentialIds": [
     "worktree-squad-loop-log-contract",
     "worktree-squad-retrospective-template",
+    "starfish-retrospective-format",
     "non-goals",
     "tools-and-constraints"
   ],
@@ -34,6 +35,7 @@
     "requiresHumanReview": true,
     "notes": [
       "Retrospective findings must be evidence-backed and bounded.",
+      "Use the Starfish format by default unless AJ requests a different retrospective style.",
       "Do not convert retrospective conclusions into broad implementation without AJ review.",
       "Action items should include owner and next checkpoint."
     ]

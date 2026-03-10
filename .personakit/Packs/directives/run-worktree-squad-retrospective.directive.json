@@ -2,13 +2,13 @@
   "id": "run-worktree-squad-retrospective",
   "version": "1.0",
   "title": "Run worktree squad retrospective",
-  "goal": "Capture what went well, what did not, open questions, and actionable improvements after a squad assignment or phase.",
+  "goal": "Capture a Starfish retrospective with evidence-linked action items after a squad assignment or phase.",
   "steps": [
     {
       "text": "Gather loop logs, verification outputs, and related assignment artifacts."
     },
     {
-      "text": "Draft retrospective using `worktree-squad-retrospective-template` and record evidence-linked findings."
+      "text": "Draft retrospective using `worktree-squad-retrospective-template`, defaulting to the Starfish format, and record evidence-linked findings."
     },
     {
       "text": "Convert improvements into concrete action items with owner and checkpoint."
@@ -25,7 +25,7 @@
     }
   ],
   "acceptanceCriteria": [
-    "Retrospective includes what went well, what did not, open questions, and improvement suggestions",
+    "Retrospective includes the Starfish buckets: Keep Doing, Less Of, More Of, Stop Doing, and Start Doing",
     "Action items include owner and next checkpoint",
     "Retrospective JSONL entry is appended with contract-compliant fields",
     "No non-trivial process change is applied without AJ review"

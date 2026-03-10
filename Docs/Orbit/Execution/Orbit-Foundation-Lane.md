@@ -43,3 +43,16 @@ Phase 1, Phase 2, and minimal Phase 3 only.
 
 This lane does not promote itself. AJ decides when or whether work moves beyond
 this lane or back toward `main`.
+
+## Milestone Closeout Rule
+
+When this lane reaches a milestone, checkpoint, or other approved pause point,
+closeout must include:
+
+1. checkpoint review
+2. Orbit retrospective closeout
+3. one canonical Starfish retrospective synthesized according to
+   `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
+
+This lane should not claim milestone completion on implementation evidence
+alone.

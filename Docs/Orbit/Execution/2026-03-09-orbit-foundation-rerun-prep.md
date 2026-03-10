@@ -51,6 +51,8 @@ next attempt begins:
 4. Start-of-run confidence should be high and justified, not merely hopeful.
 5. The squad leader must run a participant-based retrospective, not just write
    an after-action memo alone.
+6. Milestone closeout must require a multi-pass retrospective process, not a
+   single retrospective draft.
 
 ## Questions To Resolve During Code Review
 
@@ -90,6 +92,7 @@ These are the files most likely to need revision once the reviews are complete:
 4. `Docs/PersonaKit/Development/worktree-squad-cheat-sheet.md`
 5. Any worktree-squad retrospective or loop contracts that should better
    enforce participant-based retrospectives and required delegation
+6. `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
 
 ## Support-File Revisions Likely Needed
 
@@ -108,6 +111,8 @@ reviews:
 4. confidence handling should distinguish:
    - confidence in the product slice
    - confidence in the process model
+5. Orbit docs should state how many AI-assisted retrospective passes must run
+   before a canonical report is accepted
 
 ## Recommended Evidence Requirements For The Next Attempt
 
@@ -120,6 +125,8 @@ collect explicit evidence for:
 4. what design/product review occurred
 5. what validation owner concluded
 6. what each participant contributed to the retrospective
+7. how the multiple retrospective passes were synthesized into one final
+   Starfish report
 
 Without those artifacts, it will be too easy to confuse a strong solo run with
 a successful multiagent run again.
@@ -137,6 +144,8 @@ it achieves all of the following:
 5. The final retrospective distinguishes clearly between:
    - product outcome
    - process outcome
+6. The final retrospective is the canonical Starfish synthesis of multiple
+   evidence-backed passes rather than a single unchallenged draft.
 
 ## Immediate Note For Future Samwise Re-entry
 

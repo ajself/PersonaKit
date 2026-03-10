@@ -128,8 +128,10 @@ The first implementation tasks should be:
    interaction path.
 6. Persist activation context and expose it through a lightweight trace
    affordance in the UI.
-7. Run a checkpoint review against the milestone definition of done before
-   touching summary or memory features.
+7. Run a checkpoint review against the milestone definition of done.
+8. Run the required Orbit retrospective closeout defined in
+   `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md` before touching summary
+   or memory features or calling the milestone closed.
 
 ## Proposed First Squad
 
@@ -204,6 +206,22 @@ Rules:
 5. Major scope or architecture changes outside this execution plan still pause
    for AJ review.
 
+## Retrospective Requirement
+
+Orbit milestones do not end at implementation or review alone.
+
+Whenever a milestone, checkpoint, phase, sprint, or other approved work slice
+ends, Orbit requires:
+
+1. checkpoint review
+2. retrospective closeout
+3. one canonical Starfish retrospective report synthesized from multiple
+   AI-assisted passes
+
+Default cadence and synthesis rules live in:
+
+- `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md`
+
 ## RFC Guardrails For This Milestone
 
 We do not need a full RFC review right now.
@@ -258,6 +276,8 @@ clear data-model boundary before UI work expands.
 
 - 2026-03-09: Initial Samwise execution-plan draft created from the approved
   proving-loop and command-center planning artifacts plus Meeting 002 closeout.
+- 2026-03-09: Added a mandatory retrospective closeout rule for Orbit
+  milestones and linked to the shared Orbit retrospective policy.
 - 2026-03-09: Added proposed first-squad staffing guidance and promoted a
   dedicated first-checkpoint runtime-model note as the immediate next artifact.
 - 2026-03-09: Defined the Orbit MVP boundary and named the milestone and

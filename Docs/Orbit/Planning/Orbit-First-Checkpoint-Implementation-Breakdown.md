@@ -223,11 +223,14 @@ Definition of done:
 
 ### Step 5
 
-Run a checkpoint review before touching summaries or memory candidates.
+Run a checkpoint review and retrospective closeout before touching summaries or
+memory candidates.
 
 Definition of done:
 
 - the app satisfies the MVP boundary in `Orbit-Execution-Plan.md`
+- the milestone closeout retrospective required by
+  `Docs/Orbit/Execution/Orbit-Retrospective-Policy.md` has been run
 
 ## Explicit Deferrals
 
@@ -278,3 +281,5 @@ heavier response-generation bridge.
   runtime models, deterministic `.personakit/Orbit/` persistence, sidebar
   navigation, direct-address and founding-group response bridging, activation
   trace rendering, model tests, and Orbit snapshot baselines.
+- 2026-03-09: Clarified that first-checkpoint closeout requires both review and
+  retrospective before later phases begin.
