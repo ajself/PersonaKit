@@ -31,6 +31,16 @@ now, read:
 - [Planning/Orbit-Execution-Plan.md](./Planning/Orbit-Execution-Plan.md)
   The execution bridge that records what Orbit is actually doing next.
 
+## Active Execution Docs
+
+- [Execution/Orbit-Foundation-Lane.md](./Execution/Orbit-Foundation-Lane.md)
+  The active MVP lane contract for `codex/orbit-foundation`.
+- [Execution/2026-03-09-orbit-foundation-retrospective.md](./Execution/2026-03-09-orbit-foundation-retrospective.md)
+  The first Orbit foundation execution retrospective and process report.
+- [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
+  Preparation notes for the post-review plan revisions and second execution
+  attempt.
+
 ## Architecture And RFCs
 
 - [Architecture/Architecture-Index.md](./Architecture/Architecture-Index.md)
