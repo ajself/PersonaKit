@@ -17,6 +17,7 @@ stable agent-facing role label is helpful.
 
 - [Collaboration Charter](./Collaboration-Charter.md)
 - [Worktree Squad Cheat Sheet](./worktree-squad-cheat-sheet.md)
+- [Worktree Lane Approvals](./worktree-lane-approvals.md)
 - [Session Directory](./session-directory.md)
 - [Session Lifecycle States](./session-lifecycle-states.md)
 - [Closeout Checklist](./closeout-checklist.md)
@@ -85,6 +86,12 @@ Run development validation from a dedicated git worktree.
 2. Run all commands from that worktree root.
 3. For parallel runs, use a unique agent/lane temp root per worktree:
    - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-<agent>`
+4. If AJ has approved a named non-`main` lane, bootstrap it from the repo root:
+   - `Scripts/bootstrap-worktree-lane.sh`
+5. Before relying on standing worktree authority, confirm the lane approval:
+   - `Scripts/check-worktree-lane.sh`
+6. Validate the lane manifest itself after approval-record edits:
+   - `Scripts/check-worktree-lane-approvals.sh`
 
 ## Local-only branch closeout
 

@@ -102,6 +102,19 @@ Rules:
 5. Scope changes, destructive git actions, or promotion decisions still
    escalate to AJ.
 
+## Lane Tools
+
+Use the repo-local approval tools when AJ has already approved named lanes:
+
+1. Manifest and usage notes:
+   - [worktree-lane-approvals.md](/Users/ajself/Code/PersonaKit/Docs/PersonaKit/Development/worktree-lane-approvals.md)
+2. Lane preflight:
+   - `Scripts/check-worktree-lane.sh`
+3. Lane bootstrap:
+   - `Scripts/bootstrap-worktree-lane.sh`
+4. Manifest validation:
+   - `Scripts/check-worktree-lane-approvals.sh`
+
 ## Sessions To Use
 
 1. Samwise oversight:

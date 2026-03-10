@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "approvalSource": "AJ explicit branch/worktree approval recorded in repository docs",
+  "lanes": [
+    {
+      "laneId": "primary-main",
+      "branch": "main",
+      "status": "protected",
+      "authorizationMode": "per-commit-approval",
+      "workspaceScope": "repository-root",
+      "milestone": "protected-main",
+      "scopeBoundary": "Read-only planning, review, and explicit AJ-approved changes only.",
+      "sourceBranch": null,
+      "promotionTarget": null,
+      "laneNotePath": null,
+      "planRefs": [
+        "Docs/PersonaKit/Development/worktree-squad-cheat-sheet.md"
+      ],
+      "stopReasons": [
+        "commits still require explicit AJ approval",
+        "promotion and release decisions remain manual",
+        "destructive git actions still escalate to AJ"
+      ]
+    },
+    {
+      "laneId": "orbit-foundation",
+      "branch": "codex/orbit-foundation",
+      "status": "approved",
+      "authorizationMode": "worktree-auto-commit-approved",
+      "workspaceScope": "Orbit",
+      "milestone": "Orbit MVP",
+      "scopeBoundary": "Phase 1, Phase 2, and minimal Phase 3 only.",
+      "sourceBranch": "main",
+      "promotionTarget": "main",
+      "laneNotePath": "Docs/Orbit/Execution/Orbit-Foundation-Lane.md",
+      "planRefs": [
+        "Docs/Orbit/Planning/Orbit-Execution-Plan.md",
+        "Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md",
+        "Docs/Orbit/Planning/Orbit-macOS-Command-Center.md"
+      ],
+      "stopReasons": [
+        "promotion to main",
+        "scope expansion beyond the MVP boundary",
+        "major architecture change outside the approved Orbit plan",
+        "destructive git actions"
+      ]
+    },
+    {
+      "laneId": "orbit-learning-loop",
+      "branch": "codex/orbit-learning-loop",
+      "status": "exploratory",
+      "authorizationMode": "worktree-auto-commit-approved",
+      "workspaceScope": "Orbit",
+      "milestone": "Orbit post-MVP learning loop",
+      "scopeBoundary": "Phase 4 and Phase 5 exploration after the Orbit MVP loop is usable.",
+      "sourceBranch": "codex/orbit-foundation",
+      "promotionTarget": "main",
+      "laneNotePath": "Docs/Orbit/Execution/Orbit-Learning-Loop-Lane.md",
+      "planRefs": [
+        "Docs/Orbit/Planning/Orbit-Execution-Plan.md",
+        "Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md",
+        "Docs/Orbit/Planning/Orbit-macOS-Command-Center.md"
+      ],
+      "stopReasons": [
+        "promotion to main",
+        "silently redefining the MVP branch",
+        "scope changes outside approved Orbit planning artifacts",
+        "destructive git actions"
+      ]
+    }
+  ]
+}

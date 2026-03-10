@@ -1,0 +1,70 @@
+# Worktree Lane Approvals
+
+Status: Active  
+Owner: AJ + Samwise  
+Last Reviewed: 2026-03-09
+
+## Purpose
+
+Provide the machine-readable approval source for named worktree lanes that AJ
+has already approved.
+
+This exists for the case where:
+
+1. AJ creates a branch/worktree manually in the Codex UI.
+2. Samwise later resumes inside that worktree without AJ present.
+3. The repo needs a deterministic way to answer whether standing authority
+   applies in that exact lane.
+
+## Canonical Files
+
+1. `Docs/PersonaKit/Development/worktree-lane-approvals.json`
+2. `Scripts/check-worktree-lane.sh`
+3. `Scripts/bootstrap-worktree-lane.sh`
+4. `Scripts/check-worktree-lane-approvals.sh`
+
+## Rules
+
+1. The manifest does not create worktrees or branches.
+2. The manifest does not authorize repository `main`.
+3. Approval applies only to the exact named non-`main` lane in the manifest.
+4. If a branch is missing from the manifest, fall back to per-commit AJ
+   approval.
+5. Promotion, destructive git actions, and scope changes outside the approved
+   lane still escalate to AJ.
+
+## Standard Use
+
+1. AJ creates the branch/worktree in the Codex UI.
+2. Samwise runs `Scripts/bootstrap-worktree-lane.sh` inside that worktree.
+3. Samwise runs `Scripts/check-worktree-lane.sh` before relying on standing
+   commit authority.
+4. If either script fails, stop and ask AJ.
+
+## AJ In Codex
+
+Use this flow when AJ is still the one clicking the worktree UI:
+
+1. Create the approved branch/worktree in Codex.
+2. Open the new worktree thread.
+3. Run `Scripts/bootstrap-worktree-lane.sh`.
+4. Run `Scripts/check-worktree-lane.sh`.
+5. Start work only after the standing-authority check passes.
+
+## Current Named Lanes
+
+1. `main`
+   - protected, manual review only
+2. `codex/orbit-foundation`
+   - official Orbit MVP lane
+3. `codex/orbit-learning-loop`
+   - exploratory Orbit post-MVP lane
+
+## Notes
+
+- Lane notes are generated from the manifest so the active worktree has a local,
+  readable scope brief.
+- The generated note is deterministic, includes a manifest digest, and can be
+  recreated from the manifest.
+- `Scripts/check-worktree-lane.sh` treats a missing or stale lane note as a
+  failing preflight for executable lanes.
