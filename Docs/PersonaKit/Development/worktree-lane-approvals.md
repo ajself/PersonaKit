@@ -74,6 +74,8 @@ Rules:
 1. increment the integer for each new fresh-main Orbit attempt
 2. do not reuse an older Orbit attempt branch name
 3. keep the integer as the attempt number, not as a milestone label
+4. recording the next integer in a prep note does not approve or create that
+   lane by itself
 
 The original named Orbit lanes remain valid historical branches, but new Orbit
 reruns should follow the integer pattern.

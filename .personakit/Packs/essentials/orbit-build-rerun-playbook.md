@@ -34,16 +34,20 @@ Before the first code change in a fresh worktree:
    - `codex/orbit-1`
    - `codex/orbit-2`
    - `codex/orbit-3`
-3. Create and bootstrap the approved Orbit lane.
-4. Run baseline validation before coding.
-5. Record the required active participants and expected evidence artifacts.
-6. Freeze the first slice:
+3. Record the selected attempt token in the active rerun-prep note.
+4. If AJ is holding approval, stop after staging the token and do not create or
+   bootstrap the lane yet.
+5. Create and bootstrap the approved Orbit lane.
+6. Run baseline validation before coding.
+7. Record the required active participants and expected evidence artifacts.
+8. Freeze the first slice:
    - Orbit runtime models
    - deterministic persistence
    - Studio Orbit surface shell
 
 Use the integer as the attempt number.
 Do not reuse an older Orbit attempt branch name for a fresh rerun.
+A selected token is not an approved lane by itself.
 
 ## Required Review Gates
 

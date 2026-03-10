@@ -42,6 +42,15 @@ Historical note:
   first Orbit exercise
 - future fresh-main reruns should use the integer pattern instead
 
+Staging rule:
+
+1. record the selected attempt token in the active rerun-prep note before any
+   worktree is created
+2. if AJ is holding approval, stop after staging the token and do not create or
+   bootstrap the lane yet
+3. a selected token is not an approved lane by itself; approval still comes
+   from the lane manifest or explicit AJ direction
+
 ### 1. Verify `main` readiness
 
 Confirm that local `main` already contains:
