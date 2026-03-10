@@ -38,6 +38,27 @@
         ]
       }
     },
+    "parameterConstraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "parameterNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "parameterNames"
+        ]
+      }
+    },
     "includesEssentialIds": {
       "type": "array",
       "items": {

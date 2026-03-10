@@ -615,6 +615,7 @@ struct MCPToolService: Sendable {
           data: IntentExplainData(
             name: intent.name,
             description: intent.description,
+            parameterConstraints: intent.parameterConstraints?.map(parameterConstraintSummary) ?? [],
             includesEssentialIds: uniqueSorted(intent.includesEssentialIds),
             requiresSkillIds: uniqueSorted(intent.requiresSkillIds),
             riskLevel: intent.risk.level,
@@ -1012,6 +1013,9 @@ struct MCPToolService: Sendable {
           "version": intent.version,
         ],
         lists: [
+          "parameterConstraints": uniqueSorted(
+            (intent.parameterConstraints ?? []).map(parameterConstraintSummary)
+          ),
           "includesEssentialIds": uniqueSorted(intent.includesEssentialIds),
           "requiresSkillIds": uniqueSorted(intent.requiresSkillIds),
         ]
@@ -1145,6 +1149,7 @@ private struct KitExplainData: Encodable {
 private struct IntentExplainData: Encodable {
   let name: String
   let description: String
+  let parameterConstraints: [String]
   let includesEssentialIds: [String]
   let requiresSkillIds: [String]
   let riskLevel: String
@@ -1173,6 +1178,10 @@ private struct EssentialExplainData: Encodable {
   let resolvedPath: String
   let lineCount: Int
   let byteCount: Int
+}
+
+private func parameterConstraintSummary(_ constraint: IntentTemplate.ParameterConstraint) -> String {
+  "\(constraint.kind):" + constraint.parameterNames.joined(separator: ",")
 }
 
 private struct EntityComparableSnapshot {

@@ -67,27 +67,39 @@
     {
       "name": "implementationSessionId",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "productReviewSessionId",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "interactionReviewSessionId",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "validationReviewSessionId",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "retrospectiveSessionId",
       "type": "string",
-      "required": false
+      "required": true
+    }
+  ],
+  "parameterConstraints": [
+    {
+      "kind": "allDistinct",
+      "parameterNames": [
+        "implementationSessionId",
+        "productReviewSessionId",
+        "interactionReviewSessionId",
+        "validationReviewSessionId",
+        "retrospectiveSessionId"
+      ]
     }
   ],
   "includesEssentialIds": [

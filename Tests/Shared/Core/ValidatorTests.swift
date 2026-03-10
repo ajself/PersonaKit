@@ -110,4 +110,49 @@ struct ValidatorTests {
     #expect(result.errors.contains { $0.expectedPath == "Packs/personas/senior-swiftui-engineer.persona.json" })
     #expect(result.errors.contains { $0.field == "schema" && $0.message.contains("Missing required property \"id\"") })
   }
+
+  @Test
+  func validateIntentParameterConstraintRequiresMultipleParameters() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try PersonaKitInitializer().run(destination: root.path)
+
+    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
+    let data = try Data(contentsOf: intentURL)
+    let intent = try JSONDecoder().decode(IntentTemplate.self, from: data)
+    let updatedIntent = IntentTemplate(
+      id: intent.id,
+      version: intent.version,
+      name: intent.name,
+      description: intent.description,
+      parameters: intent.parameters,
+      parameterConstraints: [
+        IntentTemplate.ParameterConstraint(
+          kind: "allDistinct",
+          parameterNames: ["targetFiles"]
+        )
+      ],
+      includesEssentialIds: intent.includesEssentialIds,
+      requiresSkillIds: intent.requiresSkillIds,
+      risk: intent.risk
+    )
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    try encoder.encode(updatedIntent).write(to: intentURL)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors == [
+        ValidationError(
+          entityType: .intent,
+          entityId: "swift-refactor-safe",
+          field: "parameterConstraints",
+          missingId: nil,
+          expectedPath: nil,
+          message: "Constraint kind \"allDistinct\" must reference at least two parameter names."
+        )
+      ]
+    )
+  }
 }

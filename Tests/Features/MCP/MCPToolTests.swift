@@ -204,6 +204,55 @@ struct MCPToolTests {
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
   }
+
+  @Test
+  func explainIntentToolIncludesParameterConstraints() throws {
+    let root = try makeTempDirectory().appendingPathComponent("FixtureKit")
+    try copyFixtureKit(to: root)
+
+    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
+    let data = try Data(contentsOf: intentURL)
+    var object = try #require(
+      JSONSerialization.jsonObject(with: data) as? [String: Any]
+    )
+    var parameters = try #require(object["parameters"] as? [[String: Any]])
+    parameters.append(
+      [
+        "name": "secondaryFile",
+        "type": "string",
+        "required": true,
+      ]
+    )
+    object["parameters"] = parameters
+    object["parameterConstraints"] = [
+      [
+        "kind": "allDistinct",
+        "parameterNames": ["targetFiles", "secondaryFile"],
+      ]
+    ]
+    let updatedData = try JSONSerialization.data(
+      withJSONObject: object,
+      options: [.prettyPrinted, .sortedKeys]
+    )
+    try updatedData.write(to: intentURL)
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+    let result = try service.callTool(
+      name: "personakit_explain_entity",
+      arguments: [
+        "entityType": "intent",
+        "id": "swift-refactor-safe",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let response = try #require(jsonObject(output))
+    let payload = try #require(response["data"] as? [String: Any])
+    let constraints = try #require(payload["parameterConstraints"] as? [String])
+
+    #expect(constraints == ["allDistinct:targetFiles,secondaryFile"])
+  }
 }
 
 private func firstText(_ result: CallTool.Result) -> String? {
