@@ -27,13 +27,14 @@ Each attempt should leave behind:
 1. an evidence packet for the attempt
 2. a product acceptance checklist result
 3. an interaction-quality review artifact
-4. scoped confidence for:
+4. participant-evidence artifacts for every active role used to justify the run
+5. scoped confidence for:
    - feature outcome
    - product outcome
    - process outcome
    - persona-fidelity outcome
-5. hybrid retrospective artifacts
-6. an updated rerun-prep note or successor prep note that carries forward:
+6. hybrid retrospective artifacts
+7. an updated rerun-prep note or successor prep note that carries forward:
    - lessons to keep
    - lessons to reject
    - unresolved questions
@@ -50,6 +51,8 @@ Each attempt should leave behind:
    - persona-orchestration improvement
 5. If a later attempt changes the active prep note materially, create a new
    dated successor note instead of erasing the older decision trail.
+6. Create new attempt-specific evidence files instead of rewriting an earlier
+   attempt's packet set.
 
 ## Non-Goals
 

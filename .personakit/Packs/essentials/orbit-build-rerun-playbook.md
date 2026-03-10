@@ -37,10 +37,11 @@ Before the first code change in a fresh worktree:
 3. Record the selected attempt token in the active rerun-prep note.
 4. If AJ is holding approval, stop after staging the token and do not create or
    bootstrap the lane yet.
-5. Create and bootstrap the approved Orbit lane.
-6. Run baseline validation before coding.
-7. Record the required active participants and expected evidence artifacts.
-8. Freeze the first slice:
+5. Ensure the exact integer lane is present in the lane approval manifest.
+6. Create and bootstrap the approved Orbit lane.
+7. Run baseline validation before coding.
+8. Record the required active participants and expected evidence artifacts.
+9. Freeze the first slice:
    - Orbit runtime models
    - deterministic persistence
    - Studio Orbit surface shell
@@ -79,6 +80,18 @@ Before an owner calls a deliverable done, at minimum:
    discipline, and continuity value
 
 Required evidence may be brief, but it must exist.
+
+For the next run, create new attempt-specific `orbit-1` artifacts and preserve
+the `orbit-foundation` packet set as historical evidence.
+
+Use explicit `orbit-1` execution artifact paths for:
+
+1. `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
+2. `Docs/Orbit/Execution/2026-03-10-orbit-1-interaction-quality-review.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-validation-closeout.md`
+4. `Docs/Orbit/Execution/2026-03-10-orbit-1-participant-evidence.md`
+5. `Docs/Orbit/Execution/2026-03-10-orbit-1-red-pen-evidence.md`
+6. `Docs/Orbit/Execution/2026-03-10-orbit-1-retrospective.md`
 
 ## Required Participants
 

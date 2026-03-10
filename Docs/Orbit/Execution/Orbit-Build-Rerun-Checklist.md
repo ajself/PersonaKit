@@ -2,7 +2,7 @@
 
 Status: Draft
 Owner: Samwise
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -48,8 +48,8 @@ Staging rule:
    worktree is created
 2. if AJ is holding approval, stop after staging the token and do not create or
    bootstrap the lane yet
-3. a selected token is not an approved lane by itself; approval still comes
-   from the lane manifest or explicit AJ direction
+3. a selected token is not an approved lane by itself; the exact lane must be
+   recorded in the manifest before startup begins
 
 ### 1. Verify `main` readiness
 
@@ -64,7 +64,7 @@ Do not create the fresh worktree until those prerequisites are present.
 ### 2. Create and bootstrap the approved lane
 
 1. create the approved Orbit worktree from `main`
-   - use the next integer branch name, for example `codex/orbit-2`
+   - use the manifest-approved integer branch name, for example `codex/orbit-1`
 2. enter the new worktree
 3. run:
    - `Scripts/bootstrap-worktree-lane.sh`
@@ -114,6 +114,28 @@ produce:
 5. participant evidence for all active roles
 6. hybrid retrospective artifacts
 7. red-pen evidence for each active owner's deliverable
+
+Attempt-isolation rule:
+
+1. create new attempt-specific artifacts for the current run
+2. do not edit `orbit-foundation` evidence except for explicit historical
+   correction
+3. for the next run, use the naming pattern:
+   - `2026-03-10-orbit-1-<artifact>.md`
+
+Required `orbit-1` output files:
+
+1. `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
+2. `Docs/Orbit/Execution/2026-03-10-orbit-1-interaction-quality-review.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-validation-closeout.md`
+4. `Docs/Orbit/Execution/2026-03-10-orbit-1-participant-evidence.md`
+5. `Docs/Orbit/Execution/2026-03-10-orbit-1-red-pen-evidence.md`
+6. `Docs/Orbit/Execution/2026-03-10-orbit-1-retrospective.md`
+7. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-evidence-packet.md`
+8. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-fan-out.md`
+9. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-roundtable.md`
+10. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-scorecard.md`
+11. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-decision.md`
 
 ### 6. Carry forward the last attempt's lessons explicitly
 
@@ -197,3 +219,4 @@ Orbit is ready for a fresh `main`-based worktree only when all are true:
 5. hybrid retrospective closeout is the stated default
 6. a fresh reader can determine success criteria without consulting thread
    history
+7. the exact integer attempt lane is present in the lane approval manifest

@@ -1,6 +1,6 @@
 # Orbit Foundation Rerun Prep
 
-Status: Draft
+Status: Historical carry-forward context
 Owner: Samwise
 Date: 2026-03-09
 Related Branch: `codex/orbit-foundation`
@@ -8,10 +8,13 @@ Related Retrospective: `2026-03-09-orbit-foundation-retrospective.md`
 
 ## Purpose
 
-Capture the notes that should exist before AJ's code review and product review
-turn into plan revisions and a second attempt at the Orbit execution exercise.
+Preserve the notes that existed before AJ's code review and product review
+turned into plan revisions and a second attempt at the Orbit execution
+exercise.
 
 This note is intentionally preparation-focused.
+It is preserved as first-attempt carry-forward input, not as the active startup
+surface for the next rerun.
 
 It assumes:
 

@@ -2,7 +2,7 @@
 
 Status: Active
 Owner: AJ
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -39,9 +39,12 @@ now, read:
   The required first-checkpoint product bar before Orbit can be called
   `review-ready` or `MVP candidate`.
 - [Execution/Orbit-Foundation-Lane.md](./Execution/Orbit-Foundation-Lane.md)
-  The active MVP lane contract for `codex/orbit-foundation`.
+  The historical first-run MVP lane contract for `codex/orbit-foundation`.
 - [Execution/2026-03-09-orbit-foundation-retrospective.md](./Execution/2026-03-09-orbit-foundation-retrospective.md)
   The first Orbit foundation execution retrospective and process report.
+- [Execution/2026-03-10-orbit-1-rerun-prep.md](./Execution/2026-03-10-orbit-1-rerun-prep.md)
+  The active staged rerun note for the next manifest-approved fresh-main Orbit
+  attempt.
 - [Execution/Orbit-Retrospective-Policy.md](./Execution/Orbit-Retrospective-Policy.md)
   The required Orbit retrospective closeout policy, including Starfish cadence
   and synthesis rules.
@@ -52,8 +55,8 @@ now, read:
   Runnable Orbit retrospective packet templates for evidence, roundtable,
   fan-out, and comparison scoring.
 - [Execution/2026-03-09-orbit-foundation-rerun-prep.md](./Execution/2026-03-09-orbit-foundation-rerun-prep.md)
-  Preparation notes for the post-review plan revisions and second execution
-  attempt.
+  Historical first-attempt carry-forward notes preserved as rerun input, not as
+  the active startup surface.
 
 PersonaKit execution session for the rerun:
 

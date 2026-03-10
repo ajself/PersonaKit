@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -55,10 +55,12 @@ Use this flow when AJ is still the one clicking the worktree UI:
 
 1. `main`
    - protected, manual review only
-2. `codex/orbit-foundation`
-   - official Orbit MVP lane
-3. `codex/orbit-learning-loop`
-   - exploratory Orbit post-MVP lane
+2. `codex/orbit-1`
+   - current manifest-approved fresh-main Orbit rerun lane
+3. `codex/orbit-foundation`
+   - historical first-run Orbit MVP lane
+4. `codex/orbit-learning-loop`
+   - historical exploratory post-MVP lane from the first Orbit exercise
 
 ## Orbit Attempt Naming Rule
 
@@ -79,6 +81,10 @@ Rules:
 
 The original named Orbit lanes remain valid historical branches, but new Orbit
 reruns should follow the integer pattern.
+
+For the current next attempt, use `codex/orbit-1`.
+Orbit rerun startup should begin only after that exact lane is present in the
+manifest and the worktree preflight passes.
 
 ## Notes
 

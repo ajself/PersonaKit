@@ -46,6 +46,29 @@
       ]
     },
     {
+      "laneId": "orbit-attempt-1",
+      "branch": "codex/orbit-1",
+      "status": "approved",
+      "authorizationMode": "worktree-auto-commit-approved",
+      "workspaceScope": "Orbit",
+      "milestone": "Orbit attempt 1",
+      "scopeBoundary": "Phase 1, Phase 2, and minimal Phase 3 only.",
+      "sourceBranch": "main",
+      "promotionTarget": "main",
+      "laneNotePath": "Docs/Orbit/Execution/Orbit-Attempt-1-Lane.md",
+      "planRefs": [
+        "Docs/Orbit/Planning/Orbit-Execution-Plan.md",
+        "Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md",
+        "Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md"
+      ],
+      "stopReasons": [
+        "promotion to main",
+        "scope expansion beyond the MVP boundary",
+        "major architecture change outside the approved Orbit plan",
+        "destructive git actions"
+      ]
+    },
+    {
       "laneId": "orbit-learning-loop",
       "branch": "codex/orbit-learning-loop",
       "status": "exploratory",

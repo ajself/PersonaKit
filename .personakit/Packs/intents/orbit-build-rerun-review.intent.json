@@ -17,12 +17,12 @@
     {
       "name": "laneBranch",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "evidencePacketPath",
       "type": "string",
-      "required": false
+      "required": true
     }
   ],
   "includesEssentialIds": [
@@ -42,9 +42,11 @@
     "notes": [
       "Use the active Orbit execution and planning docs as the source of truth for the rerun.",
       "Carry forward prior-attempt lessons explicitly; do not restart from vibes or thread memory alone.",
+      "Use the exact manifest-approved lane branch for the attempt; do not infer branch identity from the latest historical run.",
       "Do not call the branch review-ready or MVP candidate before the product acceptance checklist and interaction-quality review both exist.",
       "Use hybrid retrospective closeout by default unless AJ explicitly narrows the method for a smaller checkpoint.",
       "Make actual participants and participant evidence explicit; planned roles are not the same as active contributors.",
+      "Use an attempt-specific evidence packet path and preserve earlier attempt artifacts as historical evidence.",
       "Record feature, product, process, and persona-fidelity confidence separately.",
       "Do not promote process changes or rerun success claims without AJ review."
     ]

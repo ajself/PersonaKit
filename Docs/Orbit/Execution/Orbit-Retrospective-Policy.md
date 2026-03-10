@@ -2,7 +2,7 @@
 
 Status: Draft
 Owner: Samwise
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -159,9 +159,47 @@ The closeout packet for a milestone should ideally include:
 2. completed product acceptance checklist:
    - `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
 3. interaction-quality review artifact
-4. canonical Starfish retrospective
-5. action-item list with owners and checkpoints
-6. any supporting participant notes or pass-specific appendices
+4. validation/evidence closeout artifact
+5. participant-evidence manifest
+6. owner red-pen evidence manifest
+7. evidence packet
+8. fan-out retrospective
+9. roundtable retrospective
+10. comparison scorecard and decision note when method-comparison evidence is in
+   scope
+11. canonical Starfish retrospective
+12. action-item list with owners and checkpoints
+13. any supporting participant notes or pass-specific appendices
+
+## Attempt Artifact Isolation
+
+Each Orbit rerun should create a new attempt-specific artifact set.
+
+Rules:
+
+1. create new files for the current attempt instead of editing prior-attempt
+   evidence
+2. preserve `orbit-foundation` artifacts as historical records unless an
+   explicit historical correction is required
+3. use a dated attempt-specific naming pattern for the current run
+
+For the next run, the expected naming pattern is:
+
+- `2026-03-10-orbit-1-<artifact>.md`
+
+The next attempt should create:
+
+1. `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
+2. `Docs/Orbit/Execution/2026-03-10-orbit-1-interaction-quality-review.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-validation-closeout.md`
+4. `Docs/Orbit/Execution/2026-03-10-orbit-1-participant-evidence.md`
+5. `Docs/Orbit/Execution/2026-03-10-orbit-1-red-pen-evidence.md`
+6. `Docs/Orbit/Execution/2026-03-10-orbit-1-retrospective.md`
+7. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-evidence-packet.md`
+8. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-fan-out.md`
+9. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-roundtable.md`
+10. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-scorecard.md`
+11. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-decision.md`
 
 For the next fresh worktree, startup should begin from:
 

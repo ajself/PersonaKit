@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Rerun Prep
 
-Status: Staged, pending AJ approval
+Status: Staged, lane approved, kickoff held pending AJ start approval
 Owner: Samwise
 Date: 2026-03-10
 Intended Branch: `codex/orbit-1`
@@ -22,21 +22,20 @@ The next fresh-main Orbit attempt is staged as:
 
 - `codex/orbit-1`
 
-This token is reserved as the next attempt identifier only.
+This lane is already recorded as the manifest-approved next Orbit rerun lane.
 
-Do not treat this note as branch approval, lane creation, or permission to
-start the rerun.
+Do not treat this note as permission to start the rerun.
+Kickoff is still held until AJ explicitly approves starting the attempt and the
+worktree preflight passes in the actual `codex/orbit-1` worktree.
 
 ## Remaining Startup Work Before Kickoff
 
 The rerun is not ready to start until all of these are true:
 
 1. AJ explicitly approves starting the next Orbit attempt.
-2. The exact lane is approved in the lane manifest or AJ explicitly chooses the
-   per-commit approval path for the run.
-3. The approved worktree is created and bootstrapped.
-4. Baseline validation is green in that worktree.
-5. The active participants and expected evidence artifacts are recorded for the
+2. The approved worktree is created and bootstrapped.
+3. Baseline validation is green in that worktree.
+4. The active participants and expected evidence artifacts are recorded for the
    attempt.
 
 ## First Slice Contract
@@ -114,6 +113,26 @@ Before implementation begins, the run should name the artifacts expected for:
    - product outcome
    - process outcome
    - persona-fidelity outcome
+
+## Attempt 1 Output Files
+
+Create new `orbit-1` artifacts for this attempt.
+Do not edit `orbit-foundation` evidence except for explicit historical
+correction.
+
+Use this output set:
+
+1. `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
+2. `Docs/Orbit/Execution/2026-03-10-orbit-1-interaction-quality-review.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-validation-closeout.md`
+4. `Docs/Orbit/Execution/2026-03-10-orbit-1-participant-evidence.md`
+5. `Docs/Orbit/Execution/2026-03-10-orbit-1-red-pen-evidence.md`
+6. `Docs/Orbit/Execution/2026-03-10-orbit-1-retrospective.md`
+7. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-evidence-packet.md`
+8. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-fan-out.md`
+9. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-roundtable.md`
+10. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-scorecard.md`
+11. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-decision.md`
 
 ## Startup Source List
 

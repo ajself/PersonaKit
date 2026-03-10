@@ -1,5 +1,8 @@
 {
   "id": "samwise-orbit-build-rerun",
   "personaId": "samwise",
-  "directiveId": "run-orbit-build-rerun"
+  "directiveId": "run-orbit-build-rerun",
+  "kitOverrides": [
+    "orbit-build-rerun-core"
+  ]
 }

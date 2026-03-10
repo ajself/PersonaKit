@@ -3,7 +3,7 @@
 Status: Draft
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -162,9 +162,9 @@ The first execution squad should stay small and role-clear:
    the command-center surface.
 3. `Senior SwiftUI Engineer`
    Own the first runtime plus macOS shell implementation pass.
-4. `Architectural Editor`
-   Own review of the runtime model, persistence boundary, and invariant
-   discipline before implementation broadens.
+4. `Studio Interaction Quality Lead`
+   Own the first explicit interaction-quality review before any checkpoint is
+   described as `review-ready` or `MVP candidate`.
 5. `Studio Coverage Architect`
    Own deterministic validation for durable thread, speaker attribution, and
    activation-trace checkpoint behavior.
@@ -172,12 +172,12 @@ The first execution squad should stay small and role-clear:
 Keep these roles on deck rather than in the core first squad unless the build
 reveals an immediate need:
 
+- `Architectural Editor`
+  Bring in when runtime invariants, persistence boundaries, or review language
+  need a dedicated architecture pass before implementation broadens.
 - `Studio Reliability Engineer`
   Bring in when multi-participant coordination starts creating async or
   cancellation risk.
-- `Studio Interaction Quality Lead`
-  Bring in after the first checkpoint is real and interaction polish becomes a
-  gating concern.
 - `Taskboard Parity Designer`
   Not needed for the first Orbit proving checkpoint because this milestone is
   about structural clarity, not Trello-like parity work.
@@ -225,28 +225,34 @@ It does not require:
 Those belong to the first post-MVP extension unless AJ explicitly redefines the
 milestone.
 
-## Branch And Worktree Strategy
+## Historical Branch Context And Current Rerun Strategy
 
-Use three branches/worktrees for this execution phase:
+The first Orbit exercise used named branches:
+
+- `codex/orbit-foundation`
+- `codex/orbit-learning-loop`
+
+Those branches remain historical first-attempt context.
+Do not use them as the startup surface for the next fresh-main rerun.
+
+The current rerun strategy is:
 
 - `main`
   Protected. No autonomous commit authority.
-- `codex/orbit-foundation`
-  Approved non-`main` worktree for autonomous delivery of Phase 1, Phase 2,
-  and minimal Phase 3.
-- `codex/orbit-learning-loop`
-  Approved non-`main` worktree branching from `codex/orbit-foundation` for
-  speculative Phase 4 and Phase 5 work after the MVP loop is usable.
+- `codex/orbit-1`
+  Current manifest-approved fresh-main rerun lane for the next Orbit attempt.
+- future `codex/orbit-<n>` lanes
+  The required naming pattern for later fresh-main Orbit attempts.
 
 Rules:
 
-1. `codex/orbit-foundation` is the official MVP branch.
-2. `codex/orbit-learning-loop` is exploratory until AJ explicitly promotes it.
-3. Worktree approval replaces per-commit approval only inside the named
-   non-`main` worktrees.
-4. `main` remains manual-review only.
-5. Major scope or architecture changes outside this execution plan still pause
-   for AJ review.
+1. the next fresh-main rerun starts from the manifest-approved integer lane,
+   not from the historical named lanes
+2. worktree approval replaces per-commit approval only inside the exact
+   manifest-approved non-`main` lane
+3. `main` remains manual-review only
+4. major scope or architecture changes outside this execution plan still pause
+   for AJ review
 
 ## Fresh-Main Rerun Branch Naming
 
@@ -316,6 +322,7 @@ The next Orbit rerun should start from:
 
 1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 2. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-rerun-prep.md`
 
 These are not optional reference docs.
 They are part of the execution contract for a repeatable rerun.
@@ -382,3 +389,6 @@ clear data-model boundary before UI work expands.
   exploratory worktree strategy for autonomous non-`main` execution.
 - 2026-03-09: Added the first-checkpoint implementation-breakdown artifact as
   the next file/module planning step for `codex/orbit-foundation`.
+- 2026-03-10: Reframed the named Orbit branches as historical first-attempt
+  context and made the integer-token manifest-approved lane the active rerun
+  startup model.

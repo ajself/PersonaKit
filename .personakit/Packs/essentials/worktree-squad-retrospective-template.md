@@ -31,6 +31,7 @@ Method guidance:
 - Feature Confidence:
 - Product Confidence:
 - Process Confidence:
+- Persona-Fidelity Confidence:
 
 ## Keep Doing
 
@@ -69,5 +70,6 @@ Method guidance:
 ## Notes
 
 1. Distinguish planned roles from active contributors.
-2. Record feature, product, and process confidence separately.
+2. Record feature, product, process, and persona-fidelity confidence
+   separately.
 3. Do not describe a run as multiagent unless participant evidence supports it.

@@ -4,8 +4,8 @@ Status: Approved (AJ)
 Owner: Samwise
 Meeting: `2026-03-09-meeting-001`
 Workspace: Orbit
-Last Updated: 2026-03-09
-Revision: 2
+Last Updated: 2026-03-10
+Revision: 3
 
 ## Purpose
 
@@ -25,7 +25,7 @@ must become real enough to use:
 - persistent collaborators are present
 - discussion is durable
 - meetings can happen
-- memory can be reviewed and reused
+- activation context can be inspected
 
 The macOS app should feel like a command center, not a chat window with
 decorations.
@@ -38,8 +38,8 @@ communicate:
 1. where AJ is
 2. who is available in the room
 3. what discussion is active
-4. what the system learned recently
-5. what needs review or action
+4. why a response happened
+5. what needs attention or action now
 
 ## Core Surfaces
 
@@ -107,21 +107,21 @@ Even in the first proving build, the conversation surface should allow AJ to see
 
 This reinforces Orbit's principle of **explainable collaboration**, where responses are attributable and inspectable rather than opaque model output.
 
-### 4. Memory Review Surface
+### 4. Activation Trace Surface
 
-The app should expose a clear place where proposed memory candidates appear for
-AJ review.
+The app should expose a clear place where lightweight activation context can be
+reviewed without leaving the command-center surface.
 
 The user should be able to:
 
-- inspect a candidate
-- understand what discussion or summary it came from
-- approve or reject it
+- inspect which participant responded
+- understand which directive guided the response
+- understand whether memory influenced the response
 
 Why it matters:
 
-Governed learning is one of the main things that makes Orbit different from
-plain chat history.
+Explainable collaboration is one of the main things that makes Orbit different
+from plain chat history.
 
 ## First-Open Experience
 
@@ -132,8 +132,8 @@ The first Orbit macOS command-center experience should feel like this:
 3. AJ can see the founding group roster.
 4. AJ can see the active discussion thread.
 5. AJ can start a message immediately.
-6. The app can later surface a summary and a memory candidate from that
-   discussion.
+6. AJ can inspect lightweight activation context without the product drifting
+   into a generic chat shell.
 
 The app should not require deep setup or hidden navigation before the proving
 loop becomes available.
@@ -145,8 +145,8 @@ The macOS app should feel like Orbit, not persona chat, because:
 - the workspace is the boundary of operation
 - the collaborators are persistent and visible
 - multi-participant exchange is a first-class behavior
-- the system can summarize and propose durable learning
-- memory review is part of the product surface
+- activation context is inspectable and attributable
+- the room metaphor is supported by visible state rather than by copy alone
 
 If one of those pieces is missing, the app may still be useful, but it risks
 feeling like a thinner variation of existing AI chat tools.
@@ -155,6 +155,9 @@ feeling like a thinner variation of existing AI chat tools.
 
 The first command-center draft does not need to define:
 
+- summary generation
+- memory candidate review
+- memory reuse
 - iPhone or iPad surfaces
 - advanced squad management UI
 - complex roster composition controls

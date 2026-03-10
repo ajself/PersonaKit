@@ -3,7 +3,7 @@
 Status: Draft
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -282,8 +282,10 @@ this implementation breakdown.
 Start in this order:
 
 1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
-2. `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
-3. this implementation breakdown
+2. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
+3. `Docs/Orbit/Execution/2026-03-10-orbit-1-rerun-prep.md`
+4. `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
+5. this implementation breakdown
 
 That keeps startup decisions anchored in the current rerun contract rather than
 in thread history or older branch-specific notes.

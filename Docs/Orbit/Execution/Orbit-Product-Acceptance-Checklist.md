@@ -2,7 +2,7 @@
 
 Status: Draft
 Owner: Venture Product Steward + Studio Interaction Quality Lead
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -75,13 +75,27 @@ remain true:
 4. inline help is still required for the panel to make sense on first open
 5. the product still reads more like generic chat than Orbit command center
 
+## Result Artifact Rule
+
+This checklist defines the product bar.
+Each attempt must record its checklist result in a separate attempt-specific
+artifact rather than rewriting an older attempt's acceptance result.
+
+For the next run, record the result in:
+
+- `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
+
+Do not edit the `orbit-foundation` acceptance evidence except for explicit
+historical correction.
+
 ## Review Record
 
 Record these with the checklist result:
 
-1. reviewer names
-2. decision:
+1. result artifact path
+2. reviewer names
+3. decision:
    - `pass`
    - `pass with notes`
    - `fail`
-3. short notes on the strongest product issue still present
+4. short notes on the strongest product issue still present

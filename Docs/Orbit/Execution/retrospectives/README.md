@@ -2,7 +2,7 @@
 
 Status: Draft
 Owner: Samwise
-Last Updated: 2026-03-09
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -31,12 +31,33 @@ These templates support:
 
 ## Usage Order
 
-1. Create the shared evidence packet.
-2. Run either the roundtable or fan-out method.
-3. Record the scorecard.
-4. Write the comparison decision note.
+1. Create a new attempt-specific evidence packet from the template set.
+2. Run `fan-out` first.
+3. Run `roundtable` second.
+4. Record the comparison scorecard.
+5. Write the comparison decision note.
+6. Synthesize one canonical Starfish retrospective.
+
+## Attempt Isolation Rule
+
+Create new attempt-specific packet files for each rerun.
+Do not overwrite the `orbit-foundation` packet set except for explicit
+historical correction.
+
+For the next run, create:
+
+- `2026-03-10-orbit-1-evidence-packet.md`
+- `2026-03-10-orbit-1-fan-out.md`
+- `2026-03-10-orbit-1-roundtable.md`
+- `2026-03-10-orbit-1-comparison-scorecard.md`
+- `2026-03-10-orbit-1-comparison-decision.md`
 
 ## Related Docs
 
+- [../2026-03-10-orbit-1-product-acceptance.md](../2026-03-10-orbit-1-product-acceptance.md)
+- [../2026-03-10-orbit-1-interaction-quality-review.md](../2026-03-10-orbit-1-interaction-quality-review.md)
+- [../2026-03-10-orbit-1-validation-closeout.md](../2026-03-10-orbit-1-validation-closeout.md)
+- [../2026-03-10-orbit-1-participant-evidence.md](../2026-03-10-orbit-1-participant-evidence.md)
+- [../2026-03-10-orbit-1-red-pen-evidence.md](../2026-03-10-orbit-1-red-pen-evidence.md)
 - [Orbit-Retrospective-Policy.md](../Orbit-Retrospective-Policy.md)
 - [Orbit-Retrospective-Methodology-Comparison.md](../Orbit-Retrospective-Methodology-Comparison.md)

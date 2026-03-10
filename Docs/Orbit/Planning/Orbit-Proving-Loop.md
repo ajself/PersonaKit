@@ -4,8 +4,8 @@ Status: Draft
 Owner: Samwise
 Meeting: `2026-03-09-meeting-002`
 Workspace: Orbit
-Revision: 2
-Last Updated: 2026-03-09
+Revision: 3
+Last Updated: 2026-03-10
 
 ## Purpose
 
@@ -35,9 +35,8 @@ Build the smallest real Orbit loop inside a macOS command-center surface where:
 2. AJ can interact with Samwise and ProdDoc as durable participants
 3. conversation state persists
 4. lightweight multi-participant discussion is possible
-5. summary generation exists
-6. a memory candidate can be reviewed
-7. approved memory can affect a later response
+5. activation context is visible enough that responses feel attributable rather
+   than opaque
 
 ## Implementation Strategy
 
@@ -47,7 +46,8 @@ That means:
 
 1. establish the minimum durable runtime state
 2. expose it through the macOS command-center surface
-3. add learning/review only after the base loop is coherent
+3. treat summary and memory work as later-phase follow-on only after the base
+   checkpoint is coherent and re-approved
 
 We should not begin with broad platform abstractions if they do not directly
 serve the first loop.
@@ -112,6 +112,8 @@ Success signal:
 
 ### Phase 4: Summary and Memory Review
 
+This phase is not part of the current first-checkpoint rerun contract.
+
 Goal:
 Turn discussion into governed learning.
 
@@ -126,6 +128,8 @@ Success signal:
 - AJ can review a real candidate memory inside the app
 
 ### Phase 5: Memory Reuse
+
+This phase is not part of the current first-checkpoint rerun contract.
 
 Goal:
 Close the loop and prove Orbit learns in a visible way.
@@ -143,6 +147,9 @@ Success signal:
 
 Not required for the first implementation loop:
 
+- summary generation
+- memory candidate review
+- memory reuse
 - iPhone or iPad clients
 - deep squad management
 - broad specialist roster generation
@@ -160,11 +167,9 @@ stop at:
 - Phase 2
 - enough of Phase 3 to make multi-participant interaction legible
 
-Then we immediately assess whether the loop still feels like Orbit before we
-finish summary and memory phases.
-
-This is not the full proving success condition, but it may be the right first
-engineering checkpoint.
+This is the current proving checkpoint for fresh-main reruns.
+Later summary and memory phases remain explicitly deferred until this checkpoint
+is proven again.
 
 At that checkpoint, the system should be able to:
 
@@ -179,10 +184,8 @@ At that checkpoint, the system should be able to:
 - Should ProdDoc be modeled as a first-class local participant immediately, or
   introduced through a lighter representation first?
 - What is the smallest durable storage mechanism acceptable for the first loop?
-- Should summary generation happen automatically after a short exchange, or
-  only on demand in the first build?
-- What is the lightest UI for memory candidate review that still feels like
-  governed learning?
+- What is the cleanest later-phase seam for summary and memory work once the
+  first checkpoint is re-proven?
 
 ## Review Questions
 
@@ -198,3 +201,6 @@ For AJ and ProdDoc, the most useful review feedback is:
 - 2026-03-09: Initial Samwise draft created from Meeting 002.
 - 2026-03-09: Integrated ProdDoc review by clarifying Phase 3 activation
   recording and making the first engineering checkpoint more explicit.
+- 2026-03-10: Re-scoped the active proving loop so fresh-main reruns stop at
+  Phase 1, Phase 2, and minimal Phase 3; summary and memory work remain later
+  phases only.
