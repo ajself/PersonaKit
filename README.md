@@ -355,7 +355,7 @@ Swift CLI
 personakit init <path>
 personakit validate [--root <path>] [--no-project] [--no-global]
 personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
-personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials
+personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials|sessions
 personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
 personakit mcp [--root <path>] [--no-project] [--no-global]
 

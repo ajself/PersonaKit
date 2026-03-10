@@ -269,7 +269,11 @@ struct MCPCommand: ParsableCommand {
 
 /// Common scope flags shared by multiple CLI commands.
 struct ScopeOptions: ParsableArguments {
-  @Option(name: .customLong("root"), help: "Use a specific PersonaKit root.")
+  @Option(
+    name: .customLong("root"),
+    help: "Use a specific PersonaKit root.",
+    completion: .directory
+  )
   var rootPath: String?
 
   @Flag(name: .customLong("no-project"), help: "Disable project scope discovery.")
@@ -291,13 +295,25 @@ struct ScopeOptions: ParsableArguments {
 
 /// Session selection inputs used by export and graph commands.
 struct SessionSelection: ParsableArguments {
-  @Option(name: .customLong("session"), help: "Session id to load.")
+  @Option(
+    name: .customLong("session"),
+    help: "Session id to load.",
+    completion: .custom(CLICompletions.sessionIDs)
+  )
   var sessionId: String?
 
-  @Option(name: .customLong("persona"), help: "Persona id to export or graph.")
+  @Option(
+    name: .customLong("persona"),
+    help: "Persona id to export or graph.",
+    completion: .custom(CLICompletions.personaIDs)
+  )
   var personaId: String?
 
-  @Option(name: .customLong("directive"), help: "Directive id to export or graph.")
+  @Option(
+    name: .customLong("directive"),
+    help: "Directive id to export or graph.",
+    completion: .custom(CLICompletions.directiveIDs)
+  )
   var directiveId: String?
 
   @Option(name: .customLong("kits"), help: "Comma-separated kit ids.")
@@ -337,6 +353,127 @@ struct SessionSelection: ParsableArguments {
       .split(separator: ",")
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
       .filter { !$0.isEmpty }
+  }
+}
+
+enum CLICompletions {
+  private struct CompletionScopeSelection {
+    var rootPath: String?
+    var noProject = false
+    var noGlobal = false
+
+    var useProjectScope: Bool {
+      !noProject
+    }
+
+    var useGlobalScope: Bool {
+      !noGlobal
+    }
+  }
+
+  static func sessionIDs(arguments: [String], index: Int, prefix: String) -> [String] {
+    return complete(arguments: arguments, index: index, prefix: prefix) { scopes in
+      return try ListCommand.sessionIDs(scopes: scopes)
+    }
+  }
+
+  static func personaIDs(arguments: [String], index: Int, prefix: String) -> [String] {
+    return complete(arguments: arguments, index: index, prefix: prefix) { scopes in
+      let registry = try Registry.load(scopes: scopes)
+      return registry.personas.map(\.id)
+    }
+  }
+
+  static func directiveIDs(arguments: [String], index: Int, prefix: String) -> [String] {
+    return complete(arguments: arguments, index: index, prefix: prefix) { scopes in
+      let registry = try Registry.load(scopes: scopes)
+      return registry.directives.map(\.id)
+    }
+  }
+
+  private static func complete(
+    arguments: [String],
+    index: Int,
+    prefix: String,
+    loader: (ScopeSet) throws -> [String]
+  ) -> [String] {
+    guard let scopes = resolvedScopes(arguments: arguments, index: index),
+      let values = try? loader(scopes)
+    else {
+      return []
+    }
+
+    return values
+      .sorted()
+      .filter { prefix.isEmpty || $0.hasPrefix(prefix) }
+  }
+
+  private static func resolvedScopes(arguments: [String], index: Int) -> ScopeSet? {
+    let options = parsedScopeOptions(arguments: arguments, index: index)
+
+    if let rootPath = normalizedRootPath(options.rootPath) {
+      let rootURL = RootPathResolver().resolve(path: rootPath)
+      return ScopeSet(projectScopeURL: rootURL, globalScopeURL: nil)
+    }
+
+    guard options.useProjectScope || options.useGlobalScope else {
+      return nil
+    }
+
+    guard let discovered = CLIEnvironment.current.scopeRootResolver.locate() else {
+      return nil
+    }
+
+    let filtered = ScopeSet(
+      projectScopeURL: options.useProjectScope ? discovered.projectScopeURL : nil,
+      globalScopeURL: options.useGlobalScope ? discovered.globalScopeURL : nil
+    )
+
+    return filtered.isEmpty ? nil : filtered
+  }
+
+  private static func normalizedRootPath(_ value: String?) -> String? {
+    guard let value else {
+      return nil
+    }
+
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+  }
+
+  private static func parsedScopeOptions(arguments: [String], index: Int) -> CompletionScopeSelection {
+    var options = CompletionScopeSelection()
+    var currentIndex = 0
+
+    while currentIndex < arguments.count {
+      if currentIndex == index {
+        currentIndex += 1
+        continue
+      }
+
+      let word = arguments[currentIndex]
+
+      if word == "--root" {
+        let nextIndex = currentIndex + 1
+        if nextIndex < arguments.count, nextIndex != index {
+          options.rootPath = arguments[nextIndex]
+        }
+        currentIndex += 2
+        continue
+      }
+
+      if word.hasPrefix("--root=") {
+        options.rootPath = String(word.dropFirst("--root=".count))
+      } else if word == "--no-project" {
+        options.noProject = true
+      } else if word == "--no-global" {
+        options.noGlobal = true
+      }
+
+      currentIndex += 1
+    }
+
+    return options
   }
 }
 

@@ -7,8 +7,13 @@ APP_NAME ?= PersonaKit
 APP_BUILD_SCHEME ?= PersonaKitStudio
 CLI_BUILD_SCHEME ?= PersonaKitCLI
 CONFIGURATION ?= Debug
+SWIFT_CONFIGURATION ?= debug
 DERIVED_DATA_PATH ?= .build/DerivedData
 ZIP_NAME ?= PersonaKit.zip
+INSTALL_BIN_DIR ?= /usr/local/bin
+CLI_PRODUCT_NAME ?= personakit
+CLI_COMPLETION_SOURCE ?= $(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)
+ZSH_COMPLETION_DIR ?= $(HOME)/.zsh/completions
 TEST_FILTER ?=
 
 ROOT ?=
@@ -33,7 +38,7 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli run test test-cli cli init validate validate-repo closeout-local export list graph zip
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local export list graph zip
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -46,6 +51,8 @@ help:
 	@printf "  %-24s %s\n" "build" "Build macOS app and CLI with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-app" "Build macOS app scheme with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-cli" "Build CLI scheme with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "install_cli" "Build the Swift CLI and install it into INSTALL_BIN_DIR."
+	@printf "  %-24s %s\n" "install_zsh_completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-24s %s\n" "run" "Build and run macOS app with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "test" "Run SwiftPM tests and default Xcode host/UI smoke checks."
 	@printf "  %-24s %s\n" "test-cli" "Run CLI-focused SwiftPM tests (defaults to filter \`CLI\`)."
@@ -68,8 +75,13 @@ help:
 	@printf "  %-24s %s\n" "APP_BUILD_SCHEME" "$(APP_BUILD_SCHEME)"
 	@printf "  %-24s %s\n" "CLI_BUILD_SCHEME" "$(CLI_BUILD_SCHEME)"
 	@printf "  %-24s %s\n" "CONFIGURATION" "$(CONFIGURATION)"
+	@printf "  %-24s %s\n" "SWIFT_CONFIGURATION" "$(SWIFT_CONFIGURATION)"
 	@printf "  %-24s %s\n" "DERIVED_DATA_PATH" "$(DERIVED_DATA_PATH)"
 	@printf "  %-24s %s\n" "ZIP_NAME" "$(ZIP_NAME)"
+	@printf "  %-24s %s\n" "INSTALL_BIN_DIR" "$(INSTALL_BIN_DIR)"
+	@printf "  %-24s %s\n" "CLI_PRODUCT_NAME" "$(CLI_PRODUCT_NAME)"
+	@printf "  %-24s %s\n" "CLI_COMPLETION_SOURCE" "$(CLI_COMPLETION_SOURCE)"
+	@printf "  %-24s %s\n" "ZSH_COMPLETION_DIR" "$(ZSH_COMPLETION_DIR)"
 	@printf "  %-24s %s\n" "TEST_FILTER" "$(TEST_FILTER)"
 	@printf "  %-24s %s\n" "ROOT" "$(ROOT)"
 	@printf "  %-24s %s\n" "PERSONA" "$(PERSONA)"
@@ -86,6 +98,8 @@ help:
 	@echo "  make build [CONFIGURATION=Release]"
 	@echo "  make build-app [APP_BUILD_SCHEME=PersonaKitStudio] [CONFIGURATION=Release]"
 	@echo "  make build-cli [CLI_BUILD_SCHEME=PersonaKitCLI] [CONFIGURATION=Release]"
+	@echo "  make install_cli [SWIFT_CONFIGURATION=release] [INSTALL_BIN_DIR=/usr/local/bin]"
+	@echo "  make install_zsh_completion [CLI_COMPLETION_SOURCE=/usr/local/bin/personakit]"
 	@echo "  make run [RUN_SCHEME=PersonaKit] [APP_NAME=PersonaKit]"
 	@echo "  make test [TEST_FILTER=TaskboardSnapshotTests]"
 	@echo "  make test-cli [TEST_FILTER=CLISessionTests]"
@@ -134,6 +148,25 @@ build-cli: doctor
 		--scheme "$(CLI_BUILD_SCHEME)" \
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
+
+install_cli:
+	swift build -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
+	install -d "$(INSTALL_BIN_DIR)"
+	install -m 755 ".build/$(SWIFT_CONFIGURATION)/$(CLI_PRODUCT_NAME)" "$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"
+
+install_zsh_completion:
+	@if [ ! -x "$(CLI_COMPLETION_SOURCE)" ]; then \
+		echo "error: completion source not found or not executable: $(CLI_COMPLETION_SOURCE)"; \
+		echo "hint: run 'make install_cli' first or set CLI_COMPLETION_SOURCE=/path/to/personakit"; \
+		exit 1; \
+	fi
+	install -d "$(ZSH_COMPLETION_DIR)"
+	"$(CLI_COMPLETION_SOURCE)" --generate-completion-script zsh > "$(ZSH_COMPLETION_DIR)/_$(CLI_PRODUCT_NAME)"
+	@echo "Installed zsh completion to $(ZSH_COMPLETION_DIR)/_$(CLI_PRODUCT_NAME)"
+	@echo "If needed, add this to ~/.zshrc:"
+	@echo "  fpath=($(ZSH_COMPLETION_DIR) \$$fpath)"
+	@echo "  autoload -Uz compinit"
+	@echo "  compinit"
 
 run: doctor
 	@echo "Stopping existing $(APP_NAME) instances via XcodeBuildMCP..."
