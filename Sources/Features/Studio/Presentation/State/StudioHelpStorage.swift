@@ -1,5 +1,6 @@
 /// Stable SceneStorage keys for panel help expansion state.
 enum StudioHelpStorageKey {
+  static let orbit = "studio.help.orbit.expanded"
   static let sessions = "studio.help.sessions.expanded"
   static let personas = "studio.help.personas.expanded"
   static let directives = "studio.help.directives.expanded"

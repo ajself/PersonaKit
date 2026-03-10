@@ -249,7 +249,7 @@ The next planning artifact should be:
 
 After that, the next follow-up artifact should be:
 
-- a first implementation-task breakdown mapped to files/modules
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
 
 That sequence keeps the execution anchor concise while giving the first build a
 clear data-model boundary before UI work expands.
@@ -262,3 +262,5 @@ clear data-model boundary before UI work expands.
   dedicated first-checkpoint runtime-model note as the immediate next artifact.
 - 2026-03-09: Defined the Orbit MVP boundary and named the milestone and
   exploratory worktree strategy for autonomous non-`main` execution.
+- 2026-03-09: Added the first-checkpoint implementation-breakdown artifact as
+  the next file/module planning step for `codex/orbit-foundation`.

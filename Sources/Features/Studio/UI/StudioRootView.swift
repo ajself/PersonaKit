@@ -55,6 +55,9 @@ public struct StudioRootView: View {
       let activeSelection = selection ?? .sessions
 
       switch activeSelection {
+      case .orbit:
+        OrbitPanelView(workspaceStore: workspaceStore)
+
       case .sessions:
         SessionsPanelView(
           workspaceStore: workspaceStore,
@@ -136,6 +139,7 @@ public struct StudioRootView: View {
 }
 
 enum SidebarItem: Hashable {
+  case orbit
   case sessions
   case taskboard
   case personas
@@ -158,6 +162,8 @@ enum SidebarItem: Hashable {
 
   var title: String {
     switch self {
+    case .orbit:
+      return "Orbit"
     case .sessions:
       return "Sessions"
     case .taskboard:
@@ -183,6 +189,8 @@ enum SidebarItem: Hashable {
 
   var systemImage: String {
     switch self {
+    case .orbit:
+      return "sparkles.rectangle.stack"
     case .sessions:
       return "clock.arrow.circlepath"
     case .taskboard:

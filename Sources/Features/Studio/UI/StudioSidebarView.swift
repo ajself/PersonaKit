@@ -6,7 +6,8 @@ struct StudioSidebarView: View {
 
   var body: some View {
     List(selection: $selection) {
-      Section("Sessions") {
+      Section("Workspace") {
+        sidebarRow(for: .orbit)
         sidebarRow(for: .sessions)
       }
 

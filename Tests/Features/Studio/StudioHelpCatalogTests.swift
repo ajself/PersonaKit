@@ -8,6 +8,7 @@ struct StudioHelpCatalogTests {
   func everySidebarItemMapsToHelpTopic() throws {
     let sidebarItems: [SidebarItem] = [
       .sessions,
+      .orbit,
       .personas,
       .directives,
       .kits,
@@ -71,6 +72,7 @@ struct StudioHelpCatalogTests {
   @Test
   func everySidebarItemMapsToStableHelpExpansionStorageKey() {
     #expect(SidebarItem.sessions.helpExpansionStorageKey == "studio.help.sessions.expanded")
+    #expect(SidebarItem.orbit.helpExpansionStorageKey == "studio.help.orbit.expanded")
     #expect(SidebarItem.personas.helpExpansionStorageKey == "studio.help.personas.expanded")
     #expect(SidebarItem.directives.helpExpansionStorageKey == "studio.help.directives.expanded")
     #expect(SidebarItem.kits.helpExpansionStorageKey == "studio.help.kits.expanded")
@@ -88,6 +90,7 @@ struct StudioHelpCatalogTests {
   func helpExpansionStorageKeysAreUnique() {
     let keys = [
       SidebarItem.sessions.helpExpansionStorageKey,
+      SidebarItem.orbit.helpExpansionStorageKey,
       SidebarItem.personas.helpExpansionStorageKey,
       SidebarItem.directives.helpExpansionStorageKey,
       SidebarItem.kits.helpExpansionStorageKey,

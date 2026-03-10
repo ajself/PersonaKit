@@ -344,7 +344,8 @@ struct StudioLibraryPanelView: View {
       return $isSkillsHelpExpanded
     case .intents:
       return $isIntentsHelpExpanded
-    case .sessions,
+    case .orbit,
+      .sessions,
       .taskboard,
       .relationshipMap,
       .validationResults:

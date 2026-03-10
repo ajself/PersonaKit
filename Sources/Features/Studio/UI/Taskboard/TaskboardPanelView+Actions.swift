@@ -236,22 +236,6 @@ extension TaskboardPanelView {
     return nil
   }
 
-  func moveSelectedTicketWithinLane(
-    direction: Int
-  ) {
-    guard
-      let selection = selectedTicketSelection()
-    else {
-      return
-    }
-
-    moveTicketWithinLane(
-      ticketID: selection.ticket.id,
-      laneID: selection.lane.id,
-      direction: direction
-    )
-  }
-
   func moveSelectedTicketToNextLane() {
     guard
       let selection = selectedTicketSelection()
@@ -262,22 +246,6 @@ extension TaskboardPanelView {
     moveTicketToNextLane(
       ticketID: selection.ticket.id,
       fromLaneID: selection.lane.id
-    )
-  }
-
-  func canMoveSelectedTicketWithinLane(
-    direction: Int
-  ) -> Bool {
-    guard
-      let selection = selectedTicketSelection()
-    else {
-      return false
-    }
-
-    return canMoveTicketWithinLane(
-      ticketID: selection.ticket.id,
-      laneID: selection.lane.id,
-      direction: direction
     )
   }
 
@@ -621,16 +589,6 @@ extension TaskboardPanelView {
             "laneID": laneID,
             "ticketID": ticketID,
           ]
-        )
-      }
-
-      if let ticket = board.lanes[laneIndex].tickets.last {
-        selectedLaneID = board.lanes[laneIndex].id
-        selectedTicketID = ticket.id
-        recordNightShiftEvent(
-          kind: .createTicket,
-          lane: board.lanes[laneIndex],
-          ticket: ticket
         )
       }
 

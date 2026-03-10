@@ -213,7 +213,13 @@ probably too early for the first checkpoint.
 After this note, the next implementation-planning artifact should map the first
 checkpoint into files or modules, using these entities as the boundary.
 
+That follow-on artifact is:
+
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
+
 ## Revision Notes
 
 - 2026-03-09: Initial Samwise runtime-model note created to support the first
   Orbit execution checkpoint defined in `Orbit-Execution-Plan.md`.
+- 2026-03-09: Linked the file/module implementation breakdown that follows this
+  runtime note in the Orbit MVP lane.
