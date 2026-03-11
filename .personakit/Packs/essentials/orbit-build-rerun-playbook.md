@@ -96,17 +96,23 @@ Before an owner calls a deliverable done, at minimum:
 
 Required evidence may be brief, but it must exist.
 
-For the next run, create new attempt-specific `orbit-1` artifacts and preserve
-the `orbit-foundation` packet set as historical evidence.
+For each new run, create new attempt-specific execution artifacts and preserve
+earlier Orbit packet sets as historical evidence.
 
-Use explicit `orbit-1` execution artifact paths for:
+Declare the current attempt's exact artifact paths in the active rerun-prep note
+and hand them forward unchanged into startup and execution.
 
-1. `Docs/Orbit/Execution/2026-03-10-orbit-1-product-acceptance.md`
-2. `Docs/Orbit/Execution/2026-03-10-orbit-1-interaction-quality-review.md`
-3. `Docs/Orbit/Execution/2026-03-10-orbit-1-validation-closeout.md`
-4. `Docs/Orbit/Execution/2026-03-10-orbit-1-participant-evidence.md`
-5. `Docs/Orbit/Execution/2026-03-10-orbit-1-red-pen-evidence.md`
-6. `Docs/Orbit/Execution/2026-03-10-orbit-1-retrospective.md`
+The attempt-specific execution packet should include explicit paths for:
+
+1. product acceptance
+2. interaction-quality review
+3. validation closeout
+4. participant evidence
+5. red-pen evidence
+6. evidence packet
+7. retrospective closeout
+
+Do not freeze one dated `orbit-1` packet set into this reusable playbook.
 
 ## Required Participants
 

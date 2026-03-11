@@ -5,7 +5,7 @@
   "goal": "Let Samwise stage a fresh main-based Orbit build attempt, freeze the execution contract, and hand the live lane to the dedicated Orbit rerun execution session.",
   "steps": [
     {
-      "text": "Load the active Orbit execution artifacts plus the explicit handoff artifacts named by the intent parameters, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the latest Orbit rerun-prep note, and the latest canonical retrospective artifacts."
+      "text": "Load the active Orbit execution artifacts plus the explicit handoff artifacts named by the intent parameters, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit `rerunPrepPath`, and the explicit `retrospectivePath`."
     },
     {
       "text": "Summarize the current attempt contract: first-slice scope, required participants, required evidence, required product gates, and the hybrid retrospective closeout rule."
@@ -20,7 +20,7 @@
       "text": "Hand the active lane to `samwise-orbit-rerun-execution` once startup prerequisites are green, and do not let this startup session stand in for the required multiagent execution loop."
     },
     {
-      "text": "Record the exact attempt-specific artifact paths and review gates that the execution session must satisfy before any `review-ready` or `MVP candidate` language is allowed."
+      "text": "Record the exact attempt-specific product, interaction, validation, participant-evidence, red-pen, evidence-packet, and retrospective artifact paths plus the review gates that the execution session must satisfy before any `review-ready` or `MVP candidate` language is allowed."
     },
     {
       "text": "Update the rerun-prep artifact with startup state, worktree identity, required session map, the exact attempt-specific artifact paths, and the execution-handoff note."
