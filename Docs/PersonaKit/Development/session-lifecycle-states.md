@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-11
 
 ## Purpose
 
@@ -23,12 +23,20 @@ Use exactly one state per session:
 ### `active`
 
 Use when a session is part of current, approved workflows and is expected to be
-run in normal delivery loops.
+run as a supported workflow in current repo operations.
+
+`active` may include validated specialist lanes when they are the approved path
+for a specific trigger or remediation condition; it does not mean the session
+must be part of every day-to-day loop.
 
 ### `candidate`
 
-Use when a session is useful but not part of the default day-to-day loop (for
-example specialized review, calibration, or exploratory flows).
+Use when a session is useful but still provisional, exploratory, or not yet
+explicitly promoted for operator-facing use.
+
+Do not use `candidate` merely because a lane is specialized. If a specialized
+lane is validated and is the intended approved workflow when its trigger
+conditions apply, promote it to `active`.
 
 ### `deprecated`
 

@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-10
+Last Reviewed: 2026-03-11
 
 ## Purpose
 
@@ -19,8 +19,8 @@ Lifecycle convention:
 
 Lifecycle legend:
 
-- `active`: default workflow for current delivery loops
-- `candidate`: specialized or on-deck workflow
+- `active`: approved current workflow, including validated specialist lanes
+- `candidate`: useful but still provisional or on-deck
 - `deprecated`: retained for reference only
 
 ## Architecture Review Workflows
@@ -53,10 +53,10 @@ Lifecycle legend:
 - `samwise-orbit-rerun-execution` - owner: `samwise` - state: `active`
 - `samwise-session-stack-review` - owner: `samwise` - state: `active`
 - `samwise-squad-planning` - owner: `samwise` - state: `active`
-- `samwise-squad-planning-remediation` - owner: `samwise` - state: `candidate`
+- `samwise-squad-planning-remediation` - owner: `samwise` - state: `active`
 - `samwise-coffee-checkpoint` - owner: `samwise` - state: `active`
-- `samwise-persona-hiring` - owner: `samwise` - state: `candidate`
-- `samwise-persona-hiring-calibration` - owner: `samwise` - state: `candidate`
+- `samwise-persona-hiring` - owner: `samwise` - state: `active`
+- `samwise-persona-hiring-calibration` - owner: `samwise` - state: `active`
 - `samwise-daily-closeout` - owner: `samwise` - state: `active`
 - `samwise-worktree-squad-oversight` - owner: `samwise` - state: `active`
 
@@ -74,6 +74,6 @@ Lifecycle legend:
 
 ## State Summary
 
-- `active`: 18 sessions
-- `candidate`: 13 sessions
+- `active`: 21 sessions
+- `candidate`: 10 sessions
 - `deprecated`: 0 sessions
