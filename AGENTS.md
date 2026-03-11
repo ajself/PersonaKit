@@ -52,9 +52,12 @@ Agents must follow these rules at all times:
 	•	Output must be stable across runs
 	•	Sort by id where ordering matters
 	•	Do not add timestamps, UUIDs, or environment-specific data
-	5.	Human review is mandatory at stop points
+	5.	Use Conventional Commits
+	•	When creating a git commit, use Conventional Commit format: `type(scope): summary` when a clear scope exists, otherwise `type: summary`
+	•	Do not invent repo-specific commit formats or rely on memory for commit style
+	6.	Human review is mandatory at stop points
 	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
-	6. MCP usage is read-only
+	7. MCP usage is read-only
 	   • Treat all MCP Resources as immutable context
 	   • Prompts return assembled context only; they do not imply permission to act
 	   • Never attempt to write back to the PersonaKit root via MCP
@@ -87,6 +90,7 @@ Agents should prefer:
 	•	small, reviewable diffs
 	•	explicit explanations of changes
 	•	clear mapping between changes and Directive steps
+	•	Conventional Commit messages for any authorized commit
 
 Agents should avoid:
 	•	rewriting large sections of code
