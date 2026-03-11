@@ -30,6 +30,16 @@ Each loop entry should include:
 12. `residualRisks` (array)
 13. `nextActions` (array)
 
+Recommended when the active session's directive carries workstream metadata:
+
+1. `workstream`
+   - `id`
+   - `phase`
+   - `currentSessionId`
+   - `entrySessionId`
+   - `nextSessionIds`
+   - `requiredCloseoutSessionId`
+
 ## Guardrails
 
 1. Keep IDs deterministic and monotonic.
@@ -37,6 +47,11 @@ Each loop entry should include:
 3. Keep execution-time entries focused on gate evidence, verification outcomes,
    and next actions; retrospective closeout belongs in
    `worktree-squad-retrospective-log-contract`.
+4. Keep directive-owned workstream metadata authoritative; projected
+   `workstream` fields in loop entries are derived visibility, not a competing
+   routing source.
+5. When `workstream` is present, it should agree with the active `sessionId`
+   and any next-session routing implied by the directive's workstream edges.
 
 ## Validation
 

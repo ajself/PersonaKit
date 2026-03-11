@@ -145,6 +145,14 @@ Required sections:
 8. Handoff status (`awaiting-aj-review`, `ready-for-remediation`,
    `ready-for-execution`, or `blocked`).
 9. Delegated grounding status when delegated roles exist.
+10. Workstream routing summary when the active directive carries workstream
+    metadata:
+   - workstream id
+   - phase
+   - current session
+   - entry session
+   - next sessions
+   - required closeout session
 
 ## Persistence Requirements
 
@@ -172,6 +180,7 @@ The report and JSONL entry should agree on:
 5. handoff status
 6. delegated handoff summary when delegated roles exist
 7. static-export provenance and snapshot date when static fallback is used
+8. workstream routing summary when the active directive is workstream-aware
 
 ## Reverse-Interview Rules
 
@@ -216,6 +225,9 @@ Stop and request AJ review before:
 - Require required closeout routing to be explicit when the next session enters
   a workflow family that is not complete until delivery logs, retrospectives,
   or comparable closeout artifacts exist.
+- Require workstream-aware planning passes to project directive-owned routing
+  into the report and log as derived visibility only; those projected fields
+  must not become a competing routing authority.
 - Require a durable planning report, a schema-valid planning log entry, and a
   named next-session handoff before treating the pass as complete.
 - Require delegated roles to carry explicit grounding instructions; do not

@@ -41,6 +41,21 @@ Recommended:
 3. `delegatedRoleNames`
 4. `delegatedHandoffs`
 5. `requiredCloseoutSessionId`
+6. `workstream`
+
+## Workstream Routing Details
+
+When the active planning pass uses a directive that carries workstream metadata,
+record a derived `workstream` object in the JSONL entry.
+
+The object should include:
+
+1. `id`
+2. `phase`
+3. `currentSessionId`
+4. `entrySessionId`
+5. `nextSessionIds`
+6. `requiredCloseoutSessionId`
 
 ## Delegated Handoff Details
 
@@ -76,6 +91,9 @@ Each `delegatedHandoffs` item should include:
 5. When delegated handoffs are present, the report and JSONL entry should agree
    on delegated role names, grounding mode, failure disposition, and
    static-export provenance fields.
+6. When `workstream` is present, it should agree with `nextSessionId` and
+   `requiredCloseoutSessionId` when those compatibility fields are also
+   present.
 
 ## Guardrails
 
@@ -86,6 +104,8 @@ Each `delegatedHandoffs` item should include:
   planning pass.
 - Treat logs as durable evidence, not the only source of required runtime
   authority for planning behavior.
+- Keep directive-owned workstream metadata authoritative; projected `workstream`
+  fields in the log are derived visibility, not an alternate routing contract.
 - Keep execution handoff blocked until review gates, definition-of-done, and
   validation expectations are explicit.
 - Keep delegated work blocked until each spawned-agent role has an explicit

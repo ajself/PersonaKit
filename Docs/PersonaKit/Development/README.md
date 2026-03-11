@@ -19,6 +19,7 @@ stable agent-facing role label is helpful.
 - [Worktree Squad Cheat Sheet](./worktree-squad-cheat-sheet.md)
 - [Worktree Lane Approvals](./worktree-lane-approvals.md)
 - [Session Directory](./session-directory.md)
+- [Workstream Directory](./workstream-directory.md)
 - [Session Lifecycle States](./session-lifecycle-states.md)
 - [Closeout Checklist](./closeout-checklist.md)
 

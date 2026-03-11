@@ -81,6 +81,18 @@ Use `delegated-agent-handoff-template` to fill one packet per delegated role.
    - Expected inputs:
    - Expected outputs:
 
+## Workstream Routing
+
+Include this section when the active directive carries workstream metadata.
+
+1. Workstream:
+   - Id:
+   - Phase:
+   - Current session:
+   - Entry session:
+   - Next sessions:
+   - Required closeout session:
+
 ## Evidence
 
 1. Artifact references:

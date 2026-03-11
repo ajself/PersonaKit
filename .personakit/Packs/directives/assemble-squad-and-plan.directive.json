@@ -23,7 +23,7 @@
       "text": "Recommend the smallest missing artifact set needed to close the top role-coverage gaps."
     },
     {
-      "text": "Draft the initial squad roster, role boundaries, milestone or checkpoint plan, dependencies, review gates, validation ownership, handoff status, named next session, and required closeout session when the routed workflow is not complete until a formal closeout pass runs."
+      "text": "Draft the initial squad roster, role boundaries, milestone or checkpoint plan, dependencies, review gates, validation ownership, handoff status, named next session, required closeout session when the routed workflow is not complete until a formal closeout pass runs, and a derived workstream routing summary when the active directive carries workstream metadata."
     },
     {
       "text": "For any role expected to be staffed by a spawned agent, draft a compact delegated handoff packet that names the persona/session grounding target, live PersonaKit MCP as the preferred grounding path, approved static export fallback only for bounded implementation or review work, write scope, validation expectations, provenance and freshness fields for static exports, stop points, and `grounding-blocked` as the failure disposition when no valid grounding path exists."
@@ -32,7 +32,7 @@
       "text": "Write or update the planning report using `squad-planning-report-template` at the explicit output path or approved workspace-local fallback."
     },
     {
-      "text": "Append one machine-readable planning entry using `squad-planning-log-contract`, including role assignments, missing artifacts, definition of done, validation owner, and next session."
+      "text": "Append one machine-readable planning entry using `squad-planning-log-contract`, including role assignments, missing artifacts, definition of done, validation owner, next session, and derived workstream routing when the active directive is workstream-aware."
     },
     {
       "text": "Pause for AJ review before applying structural pack updates or handing the plan to execution.",
@@ -49,7 +49,7 @@
     "Uncertain or missing roles trigger reverse-interview analysis or an explicit stop-for-guidance before execution handoff",
     "Execution-critical missing or covered-with-gaps roles route to a named remediation or hiring session before execution",
     "Missing artifact recommendations are grouped by type and prioritized",
-    "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, next session, and required closeout session when the routed workflow expects formal closeout",
+    "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, next session, required closeout session when the routed workflow expects formal closeout, and derived workstream routing when the active directive is workstream-aware",
     "Delegated roles expected to use spawned agents include explicit handoff packets with grounding mode, provenance and freshness fields for static exports, write scope, validation expectations, stop points, and a fail-closed path when PersonaKit grounding is unavailable",
     "A durable planning report exists at the declared output path or approved fallback",
     "A schema-valid machine-readable planning entry exists and names the same next session as the report",
@@ -80,6 +80,10 @@
     {
       "kind": "manual",
       "text": "Confirm required closeout session is explicit when the routed workflow family is not complete until delivery logs, retrospectives, or comparable closeout artifacts exist"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm workstream-aware planning passes record workstream id, phase, current session, entry session, next sessions, and required closeout session without treating the report or log as the routing source of truth"
     },
     {
       "kind": "manual",

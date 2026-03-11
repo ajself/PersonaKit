@@ -27,10 +27,10 @@
       "requiresReview": true
     },
     {
-      "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract`, update checkpoint summary, and emit next 3 queued actions for resume."
+      "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract` with derived workstream routing when the active directive is workstream-aware, update checkpoint summary, and emit next 3 queued actions for resume."
     },
     {
-      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review`, produce the retrospective report, and append one retrospective entry using `worktree-squad-retrospective-log-contract`."
+      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review`, produce the retrospective report, and append one retrospective entry using `worktree-squad-retrospective-log-contract` with derived workstream routing when the active directive is workstream-aware."
     }
   ],
   "acceptanceCriteria": [
@@ -39,8 +39,8 @@
     "Verification evidence is captured for required checks",
     "Staff-level code review findings are recorded with blocker/major/minor severity",
     "Samwise orchestration sync is recorded for lane ownership and gate decisions",
-    "One loop entry is appended per completed loop",
-    "Assignment closeout includes a retrospective report and retrospective JSONL entry",
+    "One loop entry is appended per completed loop, including derived workstream routing when the active directive is workstream-aware",
+    "Assignment closeout includes a retrospective report and retrospective JSONL entry with derived workstream routing when the active directive is workstream-aware",
     "Gate status and residual risks are updated in checkpoint notes",
     "No commit occurs without AJ-approved authorization mode for the current scope"
   ],
@@ -60,6 +60,10 @@
     {
       "kind": "manual",
       "text": "Confirm loop entries satisfy `worktree-squad-loop-log-contract` and retrospective closeout satisfies `worktree-squad-retrospective-log-contract`"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm workstream-aware loop and retrospective entries record current session, next sessions, and required closeout routing as derived visibility only"
     },
     {
       "kind": "manual",

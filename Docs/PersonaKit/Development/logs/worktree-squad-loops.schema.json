@@ -92,6 +92,46 @@
       "items": {
         "type": "string"
       }
+    },
+    "workstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phase",
+        "currentSessionId",
+        "entrySessionId",
+        "nextSessionIds"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentSessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entrySessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nextSessionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredCloseoutSessionId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }

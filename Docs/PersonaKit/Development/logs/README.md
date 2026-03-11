@@ -74,6 +74,8 @@ Each `samwise-squad-planning` pass should produce:
 2. One schema-valid entry in `squad-planning-reviews.jsonl`
 3. A named next session that routes missing-role follow-up through hiring or
    remediation before execution when role coverage is incomplete
+4. A derived `workstream` routing summary when the active directive carries
+   workstream metadata
 
 ### Session Stack Review Logs
 
@@ -109,6 +111,20 @@ This keeps the log honest about who actually participated and what kind of
 confidence was earned.
 
 Legacy retrospective entries remain valid for historical continuity.
+
+When the active session's directive carries workstream metadata, new planning,
+loop, and retrospective entries should also record a derived `workstream`
+object with:
+
+1. `id`
+2. `phase`
+3. `currentSessionId`
+4. `entrySessionId`
+5. `nextSessionIds`
+6. `requiredCloseoutSessionId`
+
+This routing object is visibility for humans and validators. It does not
+replace directive-owned workstream metadata as the source of truth.
 
 ## Historical Interpretation
 

@@ -44,7 +44,7 @@ Lifecycle legend:
 - `pack-gardener-maintenance` - owner: `pack-gardener` - state: `active`
 - `git-history-gardener` - owner: `pack-gardener` - state: `active`
 - `rosie-worktree-upkeep` - owner: `pack-gardener` - state: `active`
-- `rosie-retrospective-garden` - owner: `pack-gardener` - state: `candidate`
+- `rosie-retrospective-garden` - owner: `pack-gardener` - state: `candidate` - workstream: `worktree-squad-lifecycle/gardening` - see [workstream-directory.md](./workstream-directory.md)
 
 ## Partner Sync Workflows
 
@@ -52,18 +52,18 @@ Lifecycle legend:
 - `samwise-orbit-rerun-startup` - owner: `samwise` - state: `active`
 - `samwise-orbit-rerun-execution` - owner: `samwise` - state: `active`
 - `samwise-session-stack-review` - owner: `samwise` - state: `active`
-- `samwise-squad-planning` - owner: `samwise` - state: `active`
+- `samwise-squad-planning` - owner: `samwise` - state: `active` - workstream: `worktree-squad-lifecycle/planning` - see [workstream-directory.md](./workstream-directory.md)
 - `samwise-squad-planning-remediation` - owner: `samwise` - state: `active`
 - `samwise-coffee-checkpoint` - owner: `samwise` - state: `active`
 - `samwise-persona-hiring` - owner: `samwise` - state: `active`
 - `samwise-persona-hiring-calibration` - owner: `samwise` - state: `active`
 - `samwise-daily-closeout` - owner: `samwise` - state: `active`
-- `samwise-worktree-squad-oversight` - owner: `samwise` - state: `active`
+- `samwise-worktree-squad-oversight` - owner: `samwise` - state: `active` - workstream: `worktree-squad-lifecycle/oversight` - see [workstream-directory.md](./workstream-directory.md)
 
 ## Worktree Squad Workflows
 
-- `worktree-squad-delivery` - owner: `worktree-squad-lead` - state: `active`
-- `worktree-squad-retrospective` - owner: `worktree-squad-lead` - state: `candidate`
+- `worktree-squad-delivery` - owner: `worktree-squad-lead` - state: `active` - workstream: `worktree-squad-lifecycle/delivery` - see [workstream-directory.md](./workstream-directory.md)
+- `worktree-squad-retrospective` - owner: `worktree-squad-lead` - state: `candidate` - workstream: `worktree-squad-lifecycle/retrospective` - see [workstream-directory.md](./workstream-directory.md)
 - `worktree-squad-calibration` - owner: `worktree-squad-lead` - state: `candidate`
 
 ## Venture Product Workflows

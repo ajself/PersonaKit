@@ -37,6 +37,16 @@ Each retrospective/recommendation entry should include:
 8. `reportPath`
 9. `reviewer`
 
+Recommended when the active session's directive carries workstream metadata:
+
+1. `workstream`
+   - `id`
+   - `phase`
+   - `currentSessionId`
+   - `entrySessionId`
+   - `nextSessionIds`
+   - `requiredCloseoutSessionId`
+
 ## Strict Fields For New Retrospectives
 
 New `worktree-squad-retrospective` entries should also include:
@@ -82,6 +92,10 @@ Use these fields to separate:
 7. Legacy entries remain valid for historical continuity and should not be
    rewritten just to satisfy the newer format.
 8. Retrospective reports should map directly to JSONL fields.
+9. When `workstream` is present, it should agree with the active `sessionId`
+   and any next-session routing implied by the directive's workstream edges.
+10. Projected `workstream` fields are derived visibility only; directive-owned
+    routing metadata remains the source of truth.
 
 ## Example Entry Shape
 
