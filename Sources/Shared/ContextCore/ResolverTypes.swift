@@ -17,20 +17,28 @@ public struct SessionDefinition {
   }
 }
 
+public enum ResolvedEssentialSource: String, Equatable, Sendable {
+  case file
+  case systemBuiltIn
+}
+
 /// Metadata for an essential referenced by a resolved session.
 public struct ResolvedEssential: Equatable, Sendable {
   public let id: String
   public let url: URL
   public let content: String?
+  public let source: ResolvedEssentialSource
 
   public init(
     id: String,
     url: URL,
-    content: String?
+    content: String?,
+    source: ResolvedEssentialSource
   ) {
     self.id = id
     self.url = url
     self.content = content
+    self.source = source
   }
 }
 
@@ -42,6 +50,7 @@ public struct ResolvedSession: Sendable {
   public let essentials: [ResolvedEssential]
   public let intents: [IntentTemplate]
   public let skills: [Skill]
+  public let skillAuthorization: ResolvedSkillAuthorization
 
   public init(
     persona: Persona,
@@ -49,7 +58,8 @@ public struct ResolvedSession: Sendable {
     kits: [Kit],
     essentials: [ResolvedEssential],
     intents: [IntentTemplate],
-    skills: [Skill]
+    skills: [Skill],
+    skillAuthorization: ResolvedSkillAuthorization
   ) {
     self.persona = persona
     self.directive = directive
@@ -57,6 +67,7 @@ public struct ResolvedSession: Sendable {
     self.essentials = essentials
     self.intents = intents
     self.skills = skills
+    self.skillAuthorization = skillAuthorization
   }
 }
 
@@ -95,6 +106,8 @@ public enum ResolverError: Error, Equatable {
   case missingKitId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingIntentId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
+  case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
+  case unauthorizedSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingEssentialFile(
     sourceType: ResolverEntityType,
     sourceId: String,
@@ -116,6 +129,10 @@ public enum ResolverError: Error, Equatable {
       return sourceType
     case .missingSkillId(let sourceType, _, _, _):
       return sourceType
+    case .conflictingPersonaSkillId:
+      return .persona
+    case .unauthorizedSkillId(let sourceType, _, _, _):
+      return sourceType
     case .missingEssentialFile(let sourceType, _, _, _, _):
       return sourceType
     }
@@ -133,6 +150,10 @@ public enum ResolverError: Error, Equatable {
     case .missingIntentId(_, let sourceId, _, _):
       return sourceId
     case .missingSkillId(_, let sourceId, _, _):
+      return sourceId
+    case .conflictingPersonaSkillId(let sourceId, _, _):
+      return sourceId
+    case .unauthorizedSkillId(_, let sourceId, _, _):
       return sourceId
     case .missingEssentialFile(_, let sourceId, _, _, _):
       return sourceId
@@ -152,6 +173,10 @@ public enum ResolverError: Error, Equatable {
       return field
     case .missingSkillId(_, _, let field, _):
       return field
+    case .conflictingPersonaSkillId(_, let field, _):
+      return field
+    case .unauthorizedSkillId(_, _, let field, _):
+      return field
     case .missingEssentialFile(_, _, let field, _, _):
       return field
     }
@@ -169,6 +194,10 @@ public enum ResolverError: Error, Equatable {
     case .missingIntentId(_, _, _, let missingId):
       return missingId
     case .missingSkillId(_, _, _, let missingId):
+      return missingId
+    case .conflictingPersonaSkillId(_, _, let missingId):
+      return missingId
+    case .unauthorizedSkillId(_, _, _, let missingId):
       return missingId
     case .missingEssentialFile(_, _, _, let missingId, _):
       return missingId
@@ -188,6 +217,10 @@ public enum ResolverError: Error, Equatable {
       return "Missing intent template id."
     case .missingSkillId:
       return "Missing skill id."
+    case .conflictingPersonaSkillId:
+      return "Skill id appears in both allowedSkillIds and forbiddenSkillIds."
+    case .unauthorizedSkillId:
+      return "Skill is not authorized by the resolved persona contract."
     case .missingEssentialFile(_, _, _, _, let expectedPath):
       return "Missing essential file at \(expectedPath)."
     }

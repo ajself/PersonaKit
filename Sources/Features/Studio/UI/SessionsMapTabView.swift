@@ -151,6 +151,10 @@ struct SessionsMapTabView: View {
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing intent \"\(missingId)\"."
     case .missingSkillId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing skill \"\(missingId)\"."
+    case .conflictingPersonaSkillId(let sourceId, _, let missingId):
+      return "persona \(sourceId) lists skill \"\(missingId)\" in both allowed and forbidden sets."
+    case .unauthorizedSkillId(let sourceType, let sourceId, let field, let missingId):
+      return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
     }
@@ -167,6 +171,10 @@ struct SessionsMapTabView: View {
     case .missingIntentId(_, _, _, let missingID):
       return "intent:\(missingID)"
     case .missingSkillId(_, _, _, let missingID):
+      return "skill:\(missingID)"
+    case .conflictingPersonaSkillId(let sourceId, _, _):
+      return "persona:\(sourceId)"
+    case .unauthorizedSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"

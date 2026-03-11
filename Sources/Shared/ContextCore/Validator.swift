@@ -127,6 +127,22 @@ public struct Validator {
           )
         }
       }
+
+      for conflictingSkillId in Set(persona.allowedSkillIds).intersection(Set(persona.forbiddenSkillIds))
+        .sorted()
+      {
+        errors.append(
+          ValidationError(
+            entityType: .persona,
+            entityId: persona.id,
+            field: "allowedSkillIds",
+            missingId: conflictingSkillId,
+            expectedPath: nil,
+            message:
+              "Skill id \"\(conflictingSkillId)\" cannot appear in both allowedSkillIds and forbiddenSkillIds."
+          )
+        )
+      }
     }
 
     for kit in registry.kits {
@@ -164,7 +180,7 @@ public struct Validator {
 
       for essentialId in kit.essentialIds {
         let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+        if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
           errors.append(
             ValidationError(
               entityType: .kit,
@@ -237,7 +253,7 @@ public struct Validator {
 
       for essentialId in intent.includesEssentialIds {
         let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+        if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
           errors.append(
             ValidationError(
               entityType: .intent,
@@ -325,6 +341,54 @@ public struct Validator {
       }
     }
 
+    let sessionIds = try SessionFileLoader.discoveredSessionIDs(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+
+    for sessionId in sessionIds {
+      try checkCancellation()
+
+      let session: SessionFile
+
+      do {
+        session = try SessionFileLoader.load(
+          scopes: scopes,
+          sessionId: sessionId,
+          fileManager: fileManager
+        )
+      } catch let error as SessionFileError {
+        errors.append(validationError(for: error, sessionId: sessionId))
+        continue
+      }
+
+      do {
+        let contract = try SessionContractResolver.resolve(
+          definition: SessionContractDefinition(
+            personaId: session.personaId,
+            directiveId: session.directiveId,
+            kitOverrides: session.kitOverrides
+          ),
+          sessionId: session.id,
+          registry: registry,
+          scopes: scopes,
+          fileManager: fileManager
+        )
+
+        errors.append(
+          contentsOf: contract.authorizationErrors.map {
+            validationError(for: $0, sessionId: session.id)
+          }
+        )
+      } catch let error as ResolverResolutionError {
+        errors.append(
+          contentsOf: error.errors.map {
+            validationError(for: $0, sessionId: session.id)
+          }
+        )
+      }
+    }
+
     let counts = ValidationCounts(
       personas: registry.personasById.count,
       kits: registry.kitsById.count,
@@ -380,6 +444,65 @@ public struct Validator {
       throw CancellationError()
     }
   }
+}
+
+private func validationError(
+  for error: ResolverError,
+  sessionId: String
+) -> ValidationError {
+  let expectedPath: String?
+
+  if case .missingEssentialFile(_, _, _, _, let path) = error {
+    expectedPath = path
+  } else {
+    expectedPath = nil
+  }
+
+  return ValidationError(
+    entityType: .session,
+    entityId: sessionId,
+    field: error.field,
+    missingId: error.missingId,
+    expectedPath: expectedPath,
+    message: error.message
+  )
+}
+
+private func validationError(
+  for error: SessionFileError,
+  sessionId: String
+) -> ValidationError {
+  let field: String
+  let missingId: String?
+  let expectedPath: String?
+
+  switch error {
+  case .notFound(_, let path):
+    field = "sessionFile"
+    missingId = sessionId
+    expectedPath = path
+  case .decodeFailed:
+    field = "sessionFile"
+    missingId = sessionId
+    expectedPath = "Sessions/\(sessionId).session.json"
+  case .idMismatch:
+    field = "id"
+    missingId = sessionId
+    expectedPath = "Sessions/\(sessionId).session.json"
+  case .invalidSessionId, .invalidSessionPath:
+    field = "sessionFile"
+    missingId = sessionId
+    expectedPath = "Sessions/\(sessionId).session.json"
+  }
+
+  return ValidationError(
+    entityType: .session,
+    entityId: sessionId,
+    field: field,
+    missingId: missingId,
+    expectedPath: expectedPath,
+    message: error.localizedDescription
+  )
 }
 
 private func validateWorkstream(
@@ -617,25 +740,6 @@ private func isReachable(
   }
 
   return false
-}
-
-/// Resolves an essential id to the first matching file in resolution order.
-private func resolveEssentialURL(
-  _ essentialId: String,
-  scopes: ScopeSet,
-  fileManager: FileManager
-) -> URL? {
-  let expectedPath = "Packs/essentials/\(essentialId).md"
-
-  for root in scopes.resolutionOrder {
-    let fileURL = root.appendingPathComponent(expectedPath)
-
-    if fileManager.fileExists(atPath: fileURL.path) {
-      return fileURL
-    }
-  }
-
-  return nil
 }
 
 /// Lists all unique essential ids found across scope load order.

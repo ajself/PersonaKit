@@ -40,7 +40,7 @@ struct MCPConversationFlowTests {
     let traceResult = try toolService.callTool(
       name: "personakit_trace_session",
       arguments: [
-        "sessionId": .string(firstRecommendation.sessionId),
+        "sessionId": .string(firstRecommendation.sessionId)
       ]
     )
     let traceText = try requireFirstText(traceResult)
@@ -50,6 +50,10 @@ struct MCPConversationFlowTests {
     #expect(tracePayload.resolved.personaId == firstRecommendation.personaId)
     #expect(tracePayload.resolved.directiveId == firstRecommendation.directiveId)
     #expect(tracePayload.resolved.kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+    #expect(tracePayload.resolved.essentialIds.first == "persona-activation-contract")
+    #expect(tracePayload.resolved.essentialIds[1] == "skill-authorization-contract")
+    #expect(tracePayload.resolved.skillAuthorization.isAuthorized)
+    #expect(tracePayload.edges.systemEssentialIds == ["persona-activation-contract", "skill-authorization-contract"])
   }
 
   @Test
@@ -60,7 +64,7 @@ struct MCPConversationFlowTests {
     let resolveResult = try toolService.callTool(
       name: "personakit_resolve_session_ref",
       arguments: [
-        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json",
+        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json"
       ]
     )
     let resolveText = try requireFirstText(resolveResult)
@@ -72,7 +76,7 @@ struct MCPConversationFlowTests {
     let traceResult = try toolService.callTool(
       name: "personakit_trace_session",
       arguments: [
-        "sessionId": .string(resolvePayload.normalizedSessionId),
+        "sessionId": .string(resolvePayload.normalizedSessionId)
       ]
     )
     let traceText = try requireFirstText(traceResult)
@@ -171,6 +175,7 @@ private struct SessionTracePayload: Decodable {
   let schemaVersion: Int
   let session: SessionTraceSession
   let resolved: SessionTraceResolved
+  let edges: SessionTraceEdges
 }
 
 private struct SessionReferenceResolutionPayload: Decodable {
@@ -188,6 +193,16 @@ private struct SessionTraceResolved: Decodable {
   let personaId: String
   let directiveId: String
   let kitIds: [String]
+  let essentialIds: [String]
+  let skillAuthorization: SessionTraceSkillAuthorization
+}
+
+private struct SessionTraceEdges: Decodable {
+  let systemEssentialIds: [String]
+}
+
+private struct SessionTraceSkillAuthorization: Decodable {
+  let isAuthorized: Bool
 }
 
 private enum MCPConversationFlowTestError: Error {

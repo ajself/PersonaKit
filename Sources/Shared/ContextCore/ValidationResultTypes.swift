@@ -2,6 +2,7 @@ import Foundation
 
 /// Entity categories used for deterministic validation reporting.
 public enum ValidationEntityType: String, Sendable {
+  case session
   case persona
   case kit
   case directive
@@ -12,6 +13,8 @@ public enum ValidationEntityType: String, Sendable {
   /// Stable sort priority used when ordering validation errors.
   public var sortOrder: Int {
     switch self {
+    case .session:
+      return 0
     case .persona:
       return 1
     case .kit:

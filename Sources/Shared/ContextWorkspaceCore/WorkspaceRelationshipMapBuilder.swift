@@ -549,6 +549,20 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
   ) -> URL? {
     let expectedPath = "Packs/essentials/\(essentialID).md"
 
+    if essentialID == "persona-activation-contract" {
+      guard let activeRootURL = scopes.projectScopeURL ?? scopes.globalScopeURL else {
+        return nil
+      }
+
+      let overrideURL = activeRootURL.appendingPathComponent(expectedPath)
+
+      if dependencies.fileExists(overrideURL) {
+        return overrideURL
+      }
+
+      return nil
+    }
+
     for root in scopes.resolutionOrder {
       let fileURL = root.appendingPathComponent(expectedPath)
 

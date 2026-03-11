@@ -5,6 +5,7 @@ import MCP
 /// Supported tool names exposed by the PersonaKit MCP server.
 enum MCPToolName: String, CaseIterable {
   case compareEntities = "personakit_compare_entities"
+  case contract = "personakit_resolve_contract"
   case explainEntity = "personakit_explain_entity"
   case export = "personakit_export"
   case graph = "personakit_graph"
@@ -17,6 +18,8 @@ enum MCPToolName: String, CaseIterable {
     switch self {
     case .compareEntities:
       return "Compare two PersonaKit entities of the same type and report deterministic differences."
+    case .contract:
+      return "Resolve the structured PersonaKit operating contract for a session or persona selection."
     case .explainEntity:
       return "Explain a PersonaKit entity with key fields and relationship edges."
     case .export:
@@ -40,6 +43,39 @@ enum MCPToolName: String, CaseIterable {
       return [
         "type": "object",
         "properties": Value.object([:]),
+        "additionalProperties": false,
+      ]
+    case .contract:
+      return [
+        "type": "object",
+        "properties": [
+          "sessionId": [
+            "type": "string",
+            "description": "Optional session id to resolve.",
+          ],
+          "personaId": [
+            "type": "string",
+            "description": "Persona id.",
+          ],
+          "directiveId": [
+            "type": "string",
+            "description": "Optional directive id.",
+          ],
+          "kits": [
+            "type": "array",
+            "description": "Optional kit id overrides when directiveId is provided.",
+            "items": [
+              "type": "string"
+            ],
+          ],
+          "requestedSkillIds": [
+            "type": "array",
+            "description": "Optional skill ids to verify against the resolved contract.",
+            "items": [
+              "type": "string"
+            ],
+          ],
+        ],
         "additionalProperties": false,
       ]
     case .export, .graph:
@@ -193,6 +229,14 @@ struct MCPTraceArguments: Equatable {
   let sessionId: String
 }
 
+struct MCPContractArguments: Equatable {
+  let sessionId: String?
+  let personaId: String?
+  let directiveId: String?
+  let kitOverrides: [String]
+  let requestedSkillIds: [String]
+}
+
 struct MCPResolveSessionArguments: Equatable {
   let sessionRef: String
 }
@@ -263,6 +307,42 @@ enum MCPToolArgumentParser {
     return MCPResolveSessionArguments(sessionRef: try requireString(arguments, name: "sessionRef"))
   }
 
+  static func parseContract(_ arguments: [String: Value]?) throws -> MCPContractArguments {
+    let sessionId = try parseOptionalString(arguments, name: "sessionId")
+    let personaId = try parseOptionalString(arguments, name: "personaId")
+    let directiveId = try parseOptionalString(arguments, name: "directiveId")
+    let kitOverrides = try parseKitOverrides(arguments?["kits"])
+    let requestedSkillIds = try parseRequestedSkillIds(arguments?["requestedSkillIds"])
+
+    if sessionId != nil {
+      if personaId != nil || directiveId != nil || !kitOverrides.isEmpty {
+        throw MCPToolArgumentError.invalidValue(
+          "sessionId",
+          "cannot be combined with personaId, directiveId, or kits"
+        )
+      }
+    } else {
+      guard personaId != nil else {
+        throw MCPToolArgumentError.missing("personaId")
+      }
+
+      if directiveId == nil && !kitOverrides.isEmpty {
+        throw MCPToolArgumentError.invalidValue(
+          "kits",
+          "kits require directiveId when resolving a contract without sessionId"
+        )
+      }
+    }
+
+    return MCPContractArguments(
+      sessionId: sessionId,
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: kitOverrides,
+      requestedSkillIds: requestedSkillIds
+    )
+  }
+
   private static func requireString(_ arguments: [String: Value]?, name: String) throws -> String {
     guard let value = arguments?[name] else {
       throw MCPToolArgumentError.missing(name)
@@ -275,6 +355,20 @@ enum MCPToolArgumentParser {
       throw MCPToolArgumentError.missing(name)
     }
     return trimmed
+  }
+
+  private static func parseOptionalString(_ arguments: [String: Value]?, name: String) throws -> String? {
+    guard let value = arguments?[name] else {
+      return nil
+    }
+
+    guard let stringValue = value.stringValue else {
+      throw MCPToolArgumentError.invalidType(name)
+    }
+
+    let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    return trimmed.isEmpty ? nil : trimmed
   }
 
   private static func parseEntityType(_ arguments: [String: Value]?, name: String) throws -> MCPEntityType {
@@ -348,6 +442,41 @@ enum MCPToolArgumentParser {
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
       .filter { !$0.isEmpty }
   }
+
+  private static func parseRequestedSkillIds(_ value: Value?) throws -> [String] {
+    guard let value else {
+      return []
+    }
+
+    if let stringValue = value.stringValue {
+      return parseKitList(stringValue)
+    }
+
+    guard let arrayValue = value.arrayValue else {
+      throw MCPToolArgumentError.invalidType("requestedSkillIds")
+    }
+
+    var parsed: [String] = []
+    var sawNonString = false
+
+    for item in arrayValue {
+      guard let stringValue = item.stringValue else {
+        sawNonString = true
+        continue
+      }
+
+      let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty {
+        parsed.append(trimmed)
+      }
+    }
+
+    if sawNonString {
+      throw MCPToolArgumentError.invalidType("requestedSkillIds")
+    }
+
+    return parsed
+  }
 }
 
 /// MCP tool handler service for validate, export, graph, and discussion operations.
@@ -382,6 +511,10 @@ struct MCPToolService: Sendable {
     switch tool {
     case .validate:
       let output = try validateTool(arguments: arguments)
+      return CallTool.Result(content: [.text(output)])
+    case .contract:
+      let input = try parseContractArguments(arguments)
+      let output = try contractTool(input: input)
       return CallTool.Result(content: [.text(output)])
     case .export:
       let input = try parseSessionArguments(arguments)
@@ -422,6 +555,20 @@ struct MCPToolService: Sendable {
         withRecoveryHint(
           error.localizedDescription,
           hint: "Provide personaId and directiveId as non-empty strings, plus optional kits."
+        )
+      )
+    }
+  }
+
+  private func parseContractArguments(_ arguments: [String: Value]?) throws -> MCPContractArguments {
+    do {
+      return try MCPToolArgumentParser.parseContract(arguments)
+    } catch let error as MCPToolArgumentError {
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint:
+            "Provide sessionId alone, or personaId with optional directiveId, plus optional requestedSkillIds."
         )
       )
     }
@@ -519,6 +666,33 @@ struct MCPToolService: Sendable {
       return output + "\n"
     } catch let error as ExportError {
       throw MCPError.invalidParams(formatExportError(error))
+    }
+  }
+
+  private func contractTool(input: MCPContractArguments) throws -> String {
+    do {
+      let result: SessionContractResult
+
+      if let sessionId = input.sessionId {
+        let session = try loadSession(id: sessionId)
+        result = try SessionContractResolver.resolve(
+          scopes: scopes,
+          session: session,
+          requestedSkillIds: input.requestedSkillIds
+        )
+      } else {
+        result = try SessionContractResolver.resolve(
+          scopes: scopes,
+          personaId: input.personaId ?? "",
+          directiveId: input.directiveId,
+          kitOverrides: input.directiveId == nil ? [] : input.kitOverrides,
+          requestedSkillIds: input.requestedSkillIds
+        )
+      }
+
+      return try encodeToolJSON(SessionContractResolver.snapshot(from: result))
+    } catch let error as ResolverResolutionError {
+      throw MCPError.invalidParams(formatResolutionErrors(error.errors))
     }
   }
 
@@ -902,6 +1076,9 @@ struct MCPToolService: Sendable {
       .map {
         SessionTraceEdgeMap(sourceId: $0.id, targetIds: uniqueSorted($0.requiresSkillIds))
       }
+    let systemEssentialIds = resolved.essentials
+      .filter { $0.source == .systemBuiltIn }
+      .map(\.id)
 
     return try encodeToolJSON(
       SessionTracePayload(
@@ -915,9 +1092,17 @@ struct MCPToolService: Sendable {
           personaId: resolved.persona.id,
           directiveId: resolved.directive.id,
           kitIds: resolved.kits.map(\.id).sorted(),
-          essentialIds: resolved.essentials.map(\.id).sorted(),
+          essentialIds: resolved.essentials.map(\.id),
           intentIds: resolved.intents.map(\.id).sorted(),
-          skillIds: resolved.skills.map(\.id).sorted()
+          skillIds: resolved.skills.map(\.id).sorted(),
+          skillAuthorization: SessionTraceSkillAuthorization(
+            allowedSkillIds: resolved.skillAuthorization.allowedSkillIds,
+            forbiddenSkillIds: resolved.skillAuthorization.forbiddenSkillIds,
+            authorizedSkillIds: resolved.skillAuthorization.authorizedSkillIds,
+            requiredSkillIds: resolved.skillAuthorization.requiredSkillIds,
+            unauthorizedRequiredSkillIds: resolved.skillAuthorization.unauthorizedRequiredSkillIds,
+            isAuthorized: resolved.skillAuthorization.isAuthorized
+          )
         ),
         edges: SessionTraceEdges(
           personaDefaultKitIds: uniqueSorted(resolved.persona.defaultKitIds),
@@ -928,7 +1113,8 @@ struct MCPToolService: Sendable {
           kitToIntents: kitToIntents,
           kitToSkills: kitToSkills,
           intentToEssentials: intentToEssentials,
-          intentToSkills: intentToSkills
+          intentToSkills: intentToSkills,
+          systemEssentialIds: systemEssentialIds
         ),
         workstream: resolved.directive.workstream.map {
           sessionTraceWorkstream(
@@ -1307,6 +1493,16 @@ private struct SessionTraceResolved: Encodable {
   let essentialIds: [String]
   let intentIds: [String]
   let skillIds: [String]
+  let skillAuthorization: SessionTraceSkillAuthorization
+}
+
+private struct SessionTraceSkillAuthorization: Encodable {
+  let allowedSkillIds: [String]
+  let forbiddenSkillIds: [String]
+  let authorizedSkillIds: [String]
+  let requiredSkillIds: [String]
+  let unauthorizedRequiredSkillIds: [String]
+  let isAuthorized: Bool
 }
 
 private struct SessionTraceEdges: Encodable {
@@ -1319,6 +1515,7 @@ private struct SessionTraceEdges: Encodable {
   let kitToSkills: [SessionTraceEdgeMap]
   let intentToEssentials: [SessionTraceEdgeMap]
   let intentToSkills: [SessionTraceEdgeMap]
+  let systemEssentialIds: [String]
 }
 
 private struct SessionTraceEdgeMap: Encodable {

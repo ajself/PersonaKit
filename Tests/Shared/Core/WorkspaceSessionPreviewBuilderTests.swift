@@ -21,6 +21,9 @@ struct WorkspaceSessionPreviewBuilderTests {
     )
 
     #expect(preview.contains("PersonaKit-Output-Version: 1"))
+    #expect(preview.contains("## persona-activation-contract"))
+    #expect(preview.contains("## skill-authorization-contract"))
+    #expect(preview.contains("# Skill Contract"))
     #expect(preview.contains("# Directive"))
     #expect(preview.contains("Id: apply-style"))
   }

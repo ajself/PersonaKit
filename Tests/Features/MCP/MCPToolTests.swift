@@ -20,6 +20,7 @@ struct MCPToolTests {
         "personakit_export",
         "personakit_graph",
         "personakit_recommend_session",
+        "personakit_resolve_contract",
         "personakit_resolve_session_ref",
         "personakit_trace_session",
         "personakit_validate",
@@ -75,6 +76,35 @@ struct MCPToolTests {
     let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
     #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func contractToolReturnsStructuredAuthorizationPayload() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_contract",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style",
+        "requestedSkillIds": ["codex-cli", "missing-skill"],
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+
+    #expect(object["personaId"] as? String == "senior-swiftui-engineer")
+    #expect(object["directiveId"] as? String == "apply-style")
+    #expect(
+      object["injectedContractIds"] as? [String] == [
+        "persona-activation-contract",
+        "skill-authorization-contract",
+      ]
+    )
+    #expect(object["authorizedSkillIds"] as? [String] == ["codex-cli"])
+    #expect(object["undeclaredRequestedSkillIds"] as? [String] == ["missing-skill"])
+    #expect(object["isAuthorized"] as? Bool == false)
   }
 
   @Test
@@ -203,6 +233,27 @@ struct MCPToolTests {
     let resolved = try #require(object["resolved"] as? [String: Any])
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+    let essentialIds = try #require(resolved["essentialIds"] as? [String])
+    #expect(
+      essentialIds == [
+        "persona-activation-contract",
+        "skill-authorization-contract",
+        "environment",
+        "non-goals",
+        "swift-style-guide",
+        "swiftui-style-guide",
+        "tools-and-constraints",
+      ]
+    )
+    let edges = try #require(object["edges"] as? [String: Any])
+    let systemEssentialIds = try #require(edges["systemEssentialIds"] as? [String])
+    #expect(systemEssentialIds == ["persona-activation-contract", "skill-authorization-contract"])
+    let skillAuthorization = try #require(resolved["skillAuthorization"] as? [String: Any])
+    #expect(skillAuthorization["allowedSkillIds"] as? [String] == ["codex-cli"])
+    #expect(skillAuthorization["authorizedSkillIds"] as? [String] == ["codex-cli"])
+    #expect(skillAuthorization["requiredSkillIds"] as? [String] == ["codex-cli"])
+    #expect(skillAuthorization["unauthorizedRequiredSkillIds"] as? [String] == [])
+    #expect(skillAuthorization["isAuthorized"] as? Bool == true)
   }
 
   @Test

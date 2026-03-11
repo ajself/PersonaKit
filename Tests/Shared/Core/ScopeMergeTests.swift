@@ -74,13 +74,15 @@ struct ScopeMergeTests {
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
     let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
-    let resolvedEssential = try #require(resolved.essentials.first)
+    let resolvedEssential = try #require(
+      resolved.essentials.first(where: { $0.id == "shared-essential" })
+    )
     let expectedPath =
       globalScope
       .appendingPathComponent("Packs/essentials/shared-essential.md")
       .standardizedFileURL.path
 
-    #expect(resolved.essentials.count == 1)
+    #expect(resolved.essentials.count == 3)
     #expect(resolvedEssential.url.standardizedFileURL.path == expectedPath)
   }
 
@@ -101,13 +103,15 @@ struct ScopeMergeTests {
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
     let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
-    let resolvedEssential = try #require(resolved.essentials.first)
+    let resolvedEssential = try #require(
+      resolved.essentials.first(where: { $0.id == "shared-essential" })
+    )
     let expectedPath =
       projectScope
       .appendingPathComponent("Packs/essentials/shared-essential.md")
       .standardizedFileURL.path
 
-    #expect(resolved.essentials.count == 1)
+    #expect(resolved.essentials.count == 3)
     #expect(resolvedEssential.url.standardizedFileURL.path == expectedPath)
   }
 
@@ -134,7 +138,9 @@ struct ScopeMergeTests {
     let scopes = ScopeSet(projectScopeURL: projectScope, globalScopeURL: globalScope)
     let registry = try Registry.load(scopes: scopes)
     let resolved = try resolveBasicScopeMergeSession(registry: registry, scopes: scopes)
-    let resolvedEssential = try #require(resolved.essentials.first)
+    let resolvedEssential = try #require(
+      resolved.essentials.first(where: { $0.id == "shared-essential" })
+    )
     let expectedProjectEssentialPath =
       projectScope
       .appendingPathComponent("Packs/essentials/shared-essential.md")
@@ -144,7 +150,7 @@ struct ScopeMergeTests {
       .appendingPathComponent("Packs/essentials/shared-essential.md")
       .standardizedFileURL.path
 
-    #expect(resolved.essentials.count == 1)
+    #expect(resolved.essentials.count == 3)
     #expect(resolvedEssential.url.standardizedFileURL.path == expectedProjectEssentialPath)
     #expect(resolvedEssential.url.standardizedFileURL.path != unexpectedGlobalEssentialPath)
   }
@@ -195,7 +201,6 @@ private func writeBasicScopeMergeFixture(
     goal: "Goal",
     root: projectScope
   )
-
   if let projectEssentialContent {
     try writeEssential(
       id: "shared-essential",
