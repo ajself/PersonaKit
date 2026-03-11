@@ -22,6 +22,11 @@ CHECKS = [
         Path("Docs/PersonaKit/Development/logs/git-history-gardener-proposals.jsonl"),
         "GIT_HISTORY_PROPOSALS",
     ),
+    (
+        Path("Docs/PersonaKit/Development/logs/samwise-diary.schema.json"),
+        Path("Docs/PersonaKit/Development/logs/samwise-diary.jsonl"),
+        "SAMWISE_DIARY",
+    ),
 ]
 
 

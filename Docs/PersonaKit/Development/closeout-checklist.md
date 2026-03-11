@@ -40,6 +40,8 @@ Run this checklist:
    - `Scripts/check-gardening-logs.sh`
 7. If this closeout is a pause/reflection checkpoint, run `samwise-daily-closeout` and append one
    diary entry in `Docs/PersonaKit/Development/logs/samwise-diary.jsonl`.
+   - Use `./Scripts/samwise-closeout.sh` when you want the partner-context entry, diary entry,
+     projection refresh, and verification checks to land as one bounded command.
 
 ## Completion Criteria
 

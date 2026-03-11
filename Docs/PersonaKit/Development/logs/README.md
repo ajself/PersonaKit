@@ -105,6 +105,8 @@ Each reverse-interview pass should produce:
 
 Each closeout checkpoint should append one schema-valid entry to
 `samwise-diary.jsonl` with continuity-ready learning and next-goal fields.
+`./Scripts/samwise-closeout.sh` is the wrapped append-and-verify path for
+checkpoint closeouts that also need a matching partner-context event.
 
 ### Partner Continuity Logs
 
