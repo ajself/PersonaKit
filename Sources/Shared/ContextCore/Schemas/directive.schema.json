@@ -68,6 +68,75 @@
       "items": {
         "type": "string"
       }
+    },
+    "workstream": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "entrySessionId": {
+          "type": "string"
+        },
+        "requiredCloseoutSessionId": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sessionId": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sessionId",
+              "phase"
+            ]
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fromSessionId": {
+                "type": "string"
+              },
+              "toSessionId": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "required-next",
+                  "required-closeout",
+                  "optional-follow-up"
+                ]
+              }
+            },
+            "required": [
+              "fromSessionId",
+              "toSessionId",
+              "kind"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "phase",
+        "entrySessionId",
+        "nodes",
+        "edges"
+      ]
     }
   },
   "required": [

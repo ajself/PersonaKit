@@ -127,7 +127,7 @@ enum MCPToolName: String, CaseIterable {
           "sessionRef": [
             "type": "string",
             "description": "Session id or session-file path",
-          ],
+          ]
         ],
         "required": ["sessionRef"],
         "additionalProperties": false,
@@ -139,7 +139,7 @@ enum MCPToolName: String, CaseIterable {
           "sessionId": [
             "type": "string",
             "description": "Session id",
-          ],
+          ]
         ],
         "required": ["sessionId"],
         "additionalProperties": false,
@@ -280,7 +280,10 @@ enum MCPToolArgumentParser {
   private static func parseEntityType(_ arguments: [String: Value]?, name: String) throws -> MCPEntityType {
     let value = try requireString(arguments, name: name)
     guard let entityType = MCPEntityType(rawValue: value) else {
-      throw MCPToolArgumentError.invalidValue(name, "expected one of: \(MCPEntityType.allCases.map(\.rawValue).joined(separator: ", "))")
+      throw MCPToolArgumentError.invalidValue(
+        name,
+        "expected one of: \(MCPEntityType.allCases.map(\.rawValue).joined(separator: ", "))"
+      )
     }
     return entityType
   }
@@ -583,7 +586,8 @@ struct MCPToolService: Sendable {
             requiredIntentIds: uniqueSorted(directive.requiresIntentTemplateIds),
             requiredSkillIds: uniqueSorted(directive.requiresSkillIds),
             stepsCount: directive.steps.count,
-            reviewStepCount: reviewStepCount
+            reviewStepCount: reviewStepCount,
+            workstream: directive.workstream.map(directiveExplainWorkstreamData)
           )
         )
       )
@@ -798,12 +802,12 @@ struct MCPToolService: Sendable {
         )
       )
     }
-      .sorted {
-        if $0.score != $1.score {
-          return $0.score > $1.score
-        }
-        return $0.sessionId < $1.sessionId
+    .sorted {
+      if $0.score != $1.score {
+        return $0.score > $1.score
       }
+      return $0.sessionId < $1.sessionId
+    }
 
     let selected = Array(recommendations.prefix(input.limit))
 
@@ -829,14 +833,16 @@ struct MCPToolService: Sendable {
       throw MCPError.invalidParams(
         withRecoveryHint(
           error.localizedDescription,
-          hint: "Use a valid session id from personakit://catalog/sessions or a path under Sessions/*.session.json in the active PersonaKit scope."
+          hint:
+            "Use a valid session id from personakit://catalog/sessions or a path under Sessions/*.session.json in the active PersonaKit scope."
         )
       )
     } catch let error as SessionFileError {
       throw MCPError.invalidParams(
         withRecoveryHint(
           error.localizedDescription,
-          hint: "Use a valid session id from personakit://catalog/sessions or a session-file path under the active PersonaKit scope."
+          hint:
+            "Use a valid session id from personakit://catalog/sessions or a session-file path under the active PersonaKit scope."
         )
       )
     }
@@ -923,7 +929,13 @@ struct MCPToolService: Sendable {
           kitToSkills: kitToSkills,
           intentToEssentials: intentToEssentials,
           intentToSkills: intentToSkills
-        )
+        ),
+        workstream: resolved.directive.workstream.map {
+          sessionTraceWorkstream(
+            $0,
+            activeSessionId: session.id
+          )
+        }
       )
     )
   }
@@ -996,7 +1008,7 @@ struct MCPToolService: Sendable {
           "directiveId": session.directiveId,
         ],
         lists: [
-          "kitOverrides": uniqueSorted(session.kitOverrides ?? []),
+          "kitOverrides": uniqueSorted(session.kitOverrides ?? [])
         ]
       )
     case .intent:
@@ -1136,6 +1148,16 @@ private struct DirectiveExplainData: Encodable {
   let requiredSkillIds: [String]
   let stepsCount: Int
   let reviewStepCount: Int
+  let workstream: DirectiveExplainWorkstreamData?
+}
+
+private struct DirectiveExplainWorkstreamData: Encodable {
+  let id: String
+  let phase: String
+  let entrySessionId: String
+  let requiredCloseoutSessionId: String?
+  let nodeCount: Int
+  let edgeCount: Int
 }
 
 private struct KitExplainData: Encodable {
@@ -1268,6 +1290,7 @@ private struct SessionTracePayload: Encodable {
   let session: SessionTraceSession
   let resolved: SessionTraceResolved
   let edges: SessionTraceEdges
+  let workstream: SessionTraceWorkstream?
 }
 
 private struct SessionTraceSession: Encodable {
@@ -1301,6 +1324,70 @@ private struct SessionTraceEdges: Encodable {
 private struct SessionTraceEdgeMap: Encodable {
   let sourceId: String
   let targetIds: [String]
+}
+
+private struct SessionTraceWorkstream: Encodable {
+  let id: String
+  let phase: String
+  let currentSessionId: String?
+  let entrySessionId: String
+  let requiredCloseoutSessionId: String?
+  let nextSessionIds: [String]
+  let nodes: [SessionTraceWorkstreamNode]
+  let edges: [SessionTraceWorkstreamEdge]
+}
+
+private struct SessionTraceWorkstreamNode: Encodable {
+  let sessionId: String
+  let phase: String
+}
+
+private struct SessionTraceWorkstreamEdge: Encodable {
+  let fromSessionId: String
+  let toSessionId: String
+  let kind: String
+}
+
+private func directiveExplainWorkstreamData(
+  _ workstream: Directive.Workstream
+) -> DirectiveExplainWorkstreamData {
+  DirectiveExplainWorkstreamData(
+    id: workstream.id,
+    phase: workstream.phase,
+    entrySessionId: workstream.entrySessionId,
+    requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+    nodeCount: workstream.nodes.count,
+    edgeCount: workstream.edges.count
+  )
+}
+
+private func sessionTraceWorkstream(
+  _ workstream: Directive.Workstream,
+  activeSessionId: String
+) -> SessionTraceWorkstream {
+  let currentNode = workstream.node(forSessionId: activeSessionId)
+
+  return SessionTraceWorkstream(
+    id: workstream.id,
+    phase: workstream.phase,
+    currentSessionId: currentNode?.sessionId,
+    entrySessionId: workstream.entrySessionId,
+    requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+    nextSessionIds: workstream.nextSessionIds(fromSessionId: activeSessionId),
+    nodes: workstream.orderedNodes.map {
+      SessionTraceWorkstreamNode(
+        sessionId: $0.sessionId,
+        phase: $0.phase
+      )
+    },
+    edges: workstream.orderedEdges.map {
+      SessionTraceWorkstreamEdge(
+        fromSessionId: $0.fromSessionId,
+        toSessionId: $0.toSessionId,
+        kind: $0.kind
+      )
+    }
+  )
 }
 
 private func encodeToolJSON<T: Encodable>(_ payload: T) throws -> String {
@@ -1429,48 +1516,11 @@ private func lineCount(_ text: String) -> Int {
 }
 
 private func listSessions(scopes: ScopeSet, fileManager: FileManager) throws -> [SessionFile] {
-  var sessionsById: [String: SessionFile] = [:]
-
-  for root in scopes.resolutionOrder {
-    let sessionsURL = root.appendingPathComponent("Sessions")
-    var isDirectory: ObjCBool = false
-    guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
-      isDirectory.boolValue
-    else {
-      continue
-    }
-
-    let files: [URL]
-    do {
-      files = try fileManager.contentsOfDirectory(
-        at: sessionsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
-    } catch {
-      throw MCPError.internalError("Failed to read Sessions directory.")
-    }
-
-    let sessionFiles =
-      files
-      .filter { $0.lastPathComponent.hasSuffix(".session.json") }
-      .sorted { $0.lastPathComponent < $1.lastPathComponent }
-
-    for file in sessionFiles {
-      let id = file.deletingPathExtension().deletingPathExtension().lastPathComponent
-      guard sessionsById[id] == nil else {
-        continue
-      }
-
-      do {
-        sessionsById[id] = try SessionFileLoader.load(root: root, sessionId: id, fileManager: fileManager)
-      } catch {
-        throw MCPError.internalError("Failed to decode session file \(id).session.json.")
-      }
-    }
+  do {
+    return try SessionFileLoader.list(scopes: scopes, fileManager: fileManager)
+  } catch {
+    throw MCPError.internalError("Failed to load session files.")
   }
-
-  return sessionsById.keys.sorted().compactMap { sessionsById[$0] }
 }
 
 private func tokenSet(_ text: String) -> [String] {

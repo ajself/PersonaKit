@@ -155,4 +155,309 @@ struct ValidatorTests {
       ]
     )
   }
+
+  @Test
+  func validateDirectiveWorkstreamPassesWhenSessionsAndRoutingAreValid() throws {
+    let root = try makeWorkstreamFixtureRoot()
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.errors.isEmpty)
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenPhaseDoesNotMatchNode() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    var workstream = makeValidFixtureWorkstream()
+    workstream = Directive.Workstream(
+      id: workstream.id,
+      phase: "missing-phase",
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: workstream.edges
+    )
+    try writeApplyStyleDirective(root: root, workstream: workstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(hasDirectiveWorkstreamError(result, field: "workstream.phase", text: "must match exactly one node phase"))
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenEntrySessionIsMissingFromNodes() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    var workstream = makeValidFixtureWorkstream()
+    workstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: "missing-entry",
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: workstream.edges
+    )
+    try writeApplyStyleDirective(root: root, workstream: workstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.entrySessionId",
+        text: "must be declared in workstream nodes"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenRequiredCloseoutSessionIsMissingFromNodes() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    var workstream = makeValidFixtureWorkstream()
+    workstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: "missing-closeout",
+      nodes: workstream.nodes,
+      edges: workstream.edges
+    )
+    try writeApplyStyleDirective(root: root, workstream: workstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.requiredCloseoutSessionId",
+        text: "must be declared in workstream nodes"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenNodeSessionFileIsMissing() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    try removeSessionFile(id: "style-followup", root: root)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.nodes.sessionId",
+        text: "Missing session file for workstream node id \"style-followup\"."
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenEdgeTargetsUndeclaredNode() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: workstream.edges + [
+        .init(
+          fromSessionId: "style-followup",
+          toSessionId: "missing-node",
+          kind: "optional-follow-up"
+        )
+      ]
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.edges.toSessionId",
+        text: "must be declared in workstream nodes"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenNodePhaseIsDuplicated() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes + [
+        .init(
+          sessionId: "style-extra",
+          phase: "followup"
+        )
+      ],
+      edges: workstream.edges
+    )
+    try writeSessionFile(
+      SessionFile(
+        id: "style-extra",
+        personaId: "senior-swiftui-engineer",
+        directiveId: "apply-style",
+        kitOverrides: []
+      ),
+      root: root
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.nodes.phase",
+        text: "Duplicate workstream node phase"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenNodeSessionIDIsDuplicated() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes + [
+        .init(
+          sessionId: "style-followup",
+          phase: "review"
+        )
+      ],
+      edges: workstream.edges
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.nodes.sessionId",
+        text: "Duplicate workstream node session id"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenEdgeIsDuplicated() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: workstream.edges + [workstream.edges[0]]
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(hasDirectiveWorkstreamError(result, field: "workstream.edges", text: "Duplicate workstream edge"))
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenRequiredCloseoutIsUnreachable() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: [
+        .init(
+          fromSessionId: "senior-swiftui-engineer_apply-style",
+          toSessionId: "style-followup",
+          kind: "required-next"
+        )
+      ]
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.requiredCloseoutSessionId",
+        text: "is not reachable from entry session id"
+      )
+    )
+  }
+
+  @Test
+  func validateDirectiveWorkstreamIgnoresMalformedUnrelatedSessionFiles() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let malformedSessionURL = root.appendingPathComponent("Sessions/broken.session.json")
+    try """
+    {
+      "id": "broken",
+      "personaId": 42
+    }
+    """.write(
+      to: malformedSessionURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.errors.isEmpty)
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenNodeSessionFileIdDoesNotMatchFilename() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let mismatchedSessionURL = root.appendingPathComponent("Sessions/style-followup.session.json")
+    try """
+    {
+      "directiveId": "apply-style",
+      "id": "style-closeout",
+      "kitOverrides": [],
+      "personaId": "senior-swiftui-engineer"
+    }
+    """.write(
+      to: mismatchedSessionURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      hasDirectiveWorkstreamError(
+        result,
+        field: "workstream.nodes.sessionId",
+        text: "failed to resolve"
+      )
+    )
+  }
+}
+
+private func hasDirectiveWorkstreamError(
+  _ result: ValidationResult,
+  field: String,
+  text: String
+) -> Bool {
+  result.errors.contains { error in
+    error.entityType == .directive
+      && error.entityId == "apply-style"
+      && error.field == field
+      && error.message.contains(text)
+  }
 }

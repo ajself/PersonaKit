@@ -42,6 +42,7 @@ public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, S
     return try previewBuilder.build(
       projectScopeURL: projectScopeURL,
       globalScopeURL: globalScopeURL,
+      sessionId: session.id,
       personaId: draft.personaId,
       directiveId: draft.directiveId,
       kitOverrides: draft.kitOverrides

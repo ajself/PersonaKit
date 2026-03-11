@@ -66,6 +66,13 @@ public struct GraphPrinter {
     appendSection("## Kits \u{2192} Skills", body: kitsToSkillLines, to: &lines)
     appendSection("## Directive \u{2192} Intent templates", body: directiveIntentLines, to: &lines)
     appendSection("## Directive \u{2192} Skills", body: directiveSkillLines, to: &lines)
+    if directive.workstream != nil {
+      appendSection(
+        "## Workstream",
+        body: workstreamLines(for: directive),
+        to: &lines
+      )
+    }
 
     finalLines.append(contentsOf: resolvedEssentialLines)
     finalLines.append("Intents:")
@@ -94,6 +101,33 @@ public struct GraphPrinter {
     lines.append(heading)
     lines.append(contentsOf: body)
   }
+}
+
+private func workstreamLines(for directive: Directive) -> [String] {
+  guard let workstream = directive.workstream else {
+    return []
+  }
+
+  var lines: [String] = [
+    "Id: \(workstream.id)",
+    "Phase: \(workstream.phase)",
+    "Entry Session: \(workstream.entrySessionId)",
+  ]
+
+  if let requiredCloseoutSessionId = workstream.requiredCloseoutSessionId {
+    lines.append("Required Closeout Session: \(requiredCloseoutSessionId)")
+  }
+
+  lines.append("Nodes:")
+  lines.append(contentsOf: workstream.orderedNodes.map { "  - \($0.phase): \($0.sessionId)" })
+  lines.append("Edges:")
+  lines.append(
+    contentsOf: workstream.orderedEdges.map {
+      "  - \($0.fromSessionId) -> \($0.toSessionId) [\($0.kind)]"
+    }
+  )
+
+  return lines
 }
 
 /// De-duplicates and sorts ids to keep graph output stable across runs.

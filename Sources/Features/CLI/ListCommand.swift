@@ -73,9 +73,7 @@ struct ListCommand {
     scopes: ScopeSet,
     fileManager: FileManager = .default
   ) throws -> [String] {
-    return try sessionsByID(scopes: scopes, fileManager: fileManager)
-      .keys
-      .sorted()
+    try SessionFileLoader.list(scopes: scopes, fileManager: fileManager).map(\.id)
   }
 
   /// Formats an identifier and optional display name for human-readable output.
@@ -114,65 +112,7 @@ struct ListCommand {
 
   /// Discovers session files from the resolved scopes and renders stable summaries.
   private static func listSessions(scopes: ScopeSet, fileManager: FileManager) throws -> [String] {
-    let sessionsByID = try sessionsByID(scopes: scopes, fileManager: fileManager)
-
-    return sessionsByID
-      .keys
-      .sorted()
-      .compactMap { id in
-        guard let session = sessionsByID[id] else {
-          return nil
-        }
-        return formatSessionLine(session)
-      }
-  }
-
-  private static func sessionsByID(
-    scopes: ScopeSet,
-    fileManager: FileManager
-  ) throws -> [String: SessionFile] {
-    var sessionsByID: [String: SessionFile] = [:]
-
-    for root in scopes.resolutionOrder {
-      let sessionsURL = root.appendingPathComponent("Sessions")
-      var isDirectory: ObjCBool = false
-      guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
-        continue
-      }
-
-      let files = try fileManager.contentsOfDirectory(
-        at: sessionsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
-
-      let sessionFiles =
-        files
-        .filter { $0.lastPathComponent.hasSuffix(".session.json") }
-        .sorted { $0.lastPathComponent < $1.lastPathComponent }
-
-      for file in sessionFiles {
-        let sessionID = file
-          .deletingPathExtension()
-          .deletingPathExtension()
-          .lastPathComponent
-
-        guard sessionsByID[sessionID] == nil else {
-          continue
-        }
-
-        let session = try SessionFileLoader.load(
-          root: root,
-          sessionId: sessionID,
-          fileManager: fileManager
-        )
-        sessionsByID[session.id] = session
-      }
-    }
-
-    return sessionsByID
+    try SessionFileLoader.list(scopes: scopes, fileManager: fileManager).map(formatSessionLine)
   }
 
   private static func formatSessionLine(_ session: SessionFile) -> String {

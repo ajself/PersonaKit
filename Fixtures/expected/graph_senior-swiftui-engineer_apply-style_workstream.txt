@@ -1,0 +1,71 @@
+PersonaKit-Graph-Version: 1
+
+# Graph
+Persona: senior-swiftui-engineer — Senior SwiftUI Engineer
+Directive: apply-style — Apply Swift + SwiftUI style guides
+Kit overrides: none
+
+## Persona default kits
+- repo-constraints — Repository Constraints Kit
+- swift-style — Swift Style Kit
+- swiftui-style — SwiftUI Style Kit
+
+## Applied kits (after overrides)
+- repo-constraints — Repository Constraints Kit
+- swift-style — Swift Style Kit
+- swiftui-style — SwiftUI Style Kit
+
+## Kits → Essentials
+repo-constraints
+  - essential:environment
+  - essential:non-goals
+  - essential:tools-and-constraints
+swift-style
+  - essential:non-goals
+  - essential:swift-style-guide
+  - essential:tools-and-constraints
+swiftui-style
+  - essential:non-goals
+  - essential:swiftui-style-guide
+  - essential:tools-and-constraints
+
+## Kits → Intent templates
+repo-constraints
+swift-style
+swiftui-style
+
+## Kits → Skills
+repo-constraints
+swift-style
+swiftui-style
+
+## Directive → Intent templates
+- intent:swift-refactor-safe
+
+## Directive → Skills
+- skill:codex-cli
+
+## Workstream
+Id: style-workstream
+Phase: planning
+Entry Session: senior-swiftui-engineer_apply-style
+Required Closeout Session: style-closeout
+Nodes:
+  - planning: senior-swiftui-engineer_apply-style
+  - followup: style-followup
+  - closeout: style-closeout
+Edges:
+  - senior-swiftui-engineer_apply-style -> style-followup [required-next]
+  - style-followup -> style-closeout [required-closeout]
+
+## Final resolved sets
+Essentials:
+- environment
+- non-goals
+- swift-style-guide
+- swiftui-style-guide
+- tools-and-constraints
+Intents:
+- swift-refactor-safe
+Skills:
+- codex-cli

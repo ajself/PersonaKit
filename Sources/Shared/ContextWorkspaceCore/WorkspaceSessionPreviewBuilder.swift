@@ -6,6 +6,7 @@ public protocol WorkspaceSessionPreviewBuilding: Sendable {
   func build(
     projectScopeURL: URL,
     globalScopeURL: URL?,
+    sessionId: String?,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
@@ -21,6 +22,7 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
   /// - Parameters:
   ///   - projectScopeURL: Required project scope root (`.personakit`) for the active workspace.
   ///   - globalScopeURL: Optional global scope root (`~/.personakit`).
+  ///   - sessionId: Optional source session id when previewing a saved session file.
   ///   - personaId: Session persona id.
   ///   - directiveId: Session directive id.
   ///   - kitOverrides: Session kit override ids.
@@ -29,6 +31,7 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
   public func build(
     projectScopeURL: URL,
     globalScopeURL: URL?,
+    sessionId: String?,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
@@ -43,7 +46,8 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
         scopes: scopes,
         personaId: personaId,
         directiveId: directiveId,
-        kitOverrides: kitOverrides
+        kitOverrides: kitOverrides,
+        sessionId: sessionId
       )
     } catch let error as ExportError {
       throw WorkspaceSnapshotBuildError(

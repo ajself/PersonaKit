@@ -178,7 +178,9 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
           id: entity.id,
           displayName: entity.workspaceDisplayName,
           fileURL: fileURL.standardizedFileURL,
-          sourceScope: sourceScope
+          sourceScope: sourceScope,
+          workstreamId: entity.workspaceWorkstreamId,
+          workstreamPhase: entity.workspaceWorkstreamPhase
         )
       }
     }
@@ -316,6 +318,18 @@ private protocol WorkspaceEntityDocument: Decodable {
 
   var id: String { get }
   var workspaceDisplayName: String { get }
+  var workspaceWorkstreamId: String? { get }
+  var workspaceWorkstreamPhase: String? { get }
+}
+
+extension WorkspaceEntityDocument {
+  fileprivate var workspaceWorkstreamId: String? {
+    nil
+  }
+
+  fileprivate var workspaceWorkstreamPhase: String? {
+    nil
+  }
 }
 
 extension Persona: WorkspaceEntityDocument {
@@ -333,6 +347,14 @@ extension Directive: WorkspaceEntityDocument {
 
   var workspaceDisplayName: String {
     title
+  }
+
+  var workspaceWorkstreamId: String? {
+    workstream?.id
+  }
+
+  var workspaceWorkstreamPhase: String? {
+    workstream?.phase
   }
 }
 
