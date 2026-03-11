@@ -22,6 +22,12 @@ Method guidance:
 - Objective:
 - Scope:
 - Session ID:
+- Workstream ID:
+- Workstream Phase:
+- Workstream Current Session:
+- Workstream Entry Session:
+- Workstream Next Sessions:
+- Workstream Required Closeout Session:
 - Reviewer:
 - Retrospective Method:
 - Declared Roles:

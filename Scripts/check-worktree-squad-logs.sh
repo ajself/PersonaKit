@@ -20,6 +20,10 @@ CHECKS = [
 ]
 
 STRICT_RETRO_DATE = "2026-03-09"
+SESSIONS_DIR = Path(".personakit/Sessions")
+DIRECTIVES_DIR = Path(".personakit/Packs/directives")
+STRICT_LOOP_WORKSTREAM_ENTRY_FLOOR = 2
+STRICT_RETRO_WORKSTREAM_ENTRY_FLOOR = 4
 
 
 def parse_jsonl(path: Path):
@@ -214,6 +218,150 @@ def check_strict_retro_fields(entries: list[dict], label: str):
     return errors
 
 
+def entry_suffix(entry_id: str):
+    suffix = entry_id.rsplit("-", maxsplit=1)[-1]
+    if suffix.isdigit():
+        return int(suffix)
+    return None
+
+
+def load_session(session_id: str):
+    session_path = SESSIONS_DIR / f"{session_id}.session.json"
+    if not session_path.exists():
+        return None, [f"session file does not exist: {session_path}"]
+
+    try:
+        session = json.loads(session_path.read_text())
+    except Exception as exc:
+        return None, [f"failed to parse session file {session_path}: {exc}"]
+
+    if not isinstance(session, dict):
+        return None, [f"session file is not an object: {session_path}"]
+
+    return session, []
+
+
+def load_directive_workstream(session_id: str):
+    session, errors = load_session(session_id)
+    if errors:
+        return None, errors
+
+    directive_id = session.get("directiveId")
+    if not isinstance(directive_id, str) or not directive_id:
+        return None, [f"session {session_id} missing directiveId"]
+
+    directive_path = DIRECTIVES_DIR / f"{directive_id}.directive.json"
+    if not directive_path.exists():
+        return None, [f"directive file does not exist: {directive_path}"]
+
+    try:
+        directive = json.loads(directive_path.read_text())
+    except Exception as exc:
+        return None, [f"failed to parse directive file {directive_path}: {exc}"]
+
+    if not isinstance(directive, dict):
+        return None, [f"directive file is not an object: {directive_path}"]
+
+    workstream = directive.get("workstream")
+    if workstream is None:
+        return None, []
+    if not isinstance(workstream, dict):
+        return None, [f"directive {directive_id} has non-object workstream metadata"]
+
+    return workstream, []
+
+
+def derive_next_session_ids(workstream: dict, current_session_id: str):
+    edges = workstream.get("edges", [])
+    if not isinstance(edges, list):
+        return []
+
+    next_ids = []
+    for edge in edges:
+        if not isinstance(edge, dict):
+            continue
+        if edge.get("fromSessionId") == current_session_id:
+            to_session_id = edge.get("toSessionId")
+            if isinstance(to_session_id, str):
+                next_ids.append(to_session_id)
+    return next_ids
+
+
+def check_workstream(entries: list[dict], label: str):
+    errors = []
+    floor = (
+        STRICT_LOOP_WORKSTREAM_ENTRY_FLOOR
+        if label == "WORKTREE_SQUAD_LOOP"
+        else STRICT_RETRO_WORKSTREAM_ENTRY_FLOOR
+    )
+
+    for idx, entry in enumerate(entries, start=1):
+        prefix = f"{label}: line {idx}"
+        entry_id = entry.get("entryId")
+        session_id = entry.get("sessionId")
+
+        if not isinstance(entry_id, str) or not isinstance(session_id, str):
+            continue
+
+        directive_workstream, load_errors = load_directive_workstream(session_id)
+        for error in load_errors:
+            errors.append(f"{prefix}: {error}")
+        if load_errors:
+            continue
+
+        workstream = entry.get("workstream")
+        suffix = entry_suffix(entry_id)
+        requires_workstream = (
+            suffix is not None
+            and suffix >= floor
+            and directive_workstream is not None
+        )
+
+        if requires_workstream and workstream is None:
+            errors.append(
+                f"{prefix}: workstream is required for workstream-aware entries at or beyond {entry_id[:3]}-{floor:04d}"
+            )
+            continue
+
+        if workstream is None:
+            continue
+        if not isinstance(workstream, dict):
+            errors.append(f"{prefix}: workstream must be an object when present")
+            continue
+        if directive_workstream is None:
+            errors.append(
+                f"{prefix}: workstream is present but session {session_id} does not resolve directive workstream metadata"
+            )
+            continue
+
+        expected_next_session_ids = derive_next_session_ids(directive_workstream, session_id)
+        actual_next_session_ids = workstream.get("nextSessionIds", [])
+
+        if workstream.get("id") != directive_workstream.get("id"):
+            errors.append(f"{prefix}: workstream.id does not match directive workstream id")
+        if workstream.get("phase") != directive_workstream.get("phase"):
+            errors.append(f"{prefix}: workstream.phase does not match directive workstream phase")
+        if workstream.get("currentSessionId") != session_id:
+            errors.append(f"{prefix}: workstream.currentSessionId must match sessionId")
+        if workstream.get("entrySessionId") != directive_workstream.get("entrySessionId"):
+            errors.append(
+                f"{prefix}: workstream.entrySessionId does not match directive workstream entrySessionId"
+            )
+        if actual_next_session_ids != expected_next_session_ids:
+            errors.append(
+                f"{prefix}: workstream.nextSessionIds does not match directive-derived next sessions {expected_next_session_ids}"
+            )
+
+        expected_closeout = directive_workstream.get("requiredCloseoutSessionId")
+        actual_closeout = workstream.get("requiredCloseoutSessionId")
+        if actual_closeout != expected_closeout:
+            errors.append(
+                f"{prefix}: workstream.requiredCloseoutSessionId does not match directive workstream requiredCloseoutSessionId"
+            )
+
+    return errors
+
+
 all_errors = []
 for schema_path, jsonl_path, label in CHECKS:
     if not schema_path.exists():
@@ -228,6 +376,7 @@ for schema_path, jsonl_path, label in CHECKS:
     all_errors.extend(validate_schema(schema, entries, label))
     all_errors.extend(check_entry_ids(entries, label))
     all_errors.extend(check_report_paths(entries, label))
+    all_errors.extend(check_workstream(entries, label))
     if label == "WORKTREE_SQUAD_RETRO":
         all_errors.extend(check_retro_shapes(entries, label))
         all_errors.extend(check_path_list(entries, "participantEvidencePaths", label))
