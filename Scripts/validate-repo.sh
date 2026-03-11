@@ -51,8 +51,20 @@ fi
 
 unchecked_matches_file="$work_dir/unchecked-sendable-matches.txt"
 unauthorized_matches_file="$work_dir/unchecked-sendable-unapproved.txt"
+unchecked_search_roots=()
 
-rg -n --no-heading "@unchecked[[:space:]]+Sendable" App Sources Tests >"$unchecked_matches_file" || true
+for search_root in App Sources Tests; do
+  if [[ -d "$search_root" ]]; then
+    unchecked_search_roots+=("$search_root")
+  fi
+done
+
+if [[ ${#unchecked_search_roots[@]} -eq 0 ]]; then
+  echo "No source directories available for @unchecked Sendable scanning."
+  exit 1
+fi
+
+rg -n --no-heading "@unchecked[[:space:]]+Sendable" "${unchecked_search_roots[@]}" >"$unchecked_matches_file" || true
 : >"$unauthorized_matches_file"
 
 while IFS= read -r match; do
