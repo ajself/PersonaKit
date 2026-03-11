@@ -1,20 +1,14 @@
 # Workstream Directory
 
-Status: Active  
-Owner: AJ  
-Last Reviewed: 2026-03-11
+> Generated file. Do not edit manually.
+> Source of truth: directive-owned workstream metadata in `.personakit/Packs/directives/`.
 
-## Purpose
-
-Provide a compact index of workstream-aware session families without changing
-session-file semantics.
-
-Directive-owned workstream metadata remains authoritative. This directory is a
-human-facing projection for orientation and planning.
+This directory is a committed projection over directive workstream metadata.
+Regenerate it with `swift run personakit workstream-docs --root .personakit --write`.
 
 ## Active Workstreams
 
-### `worktree-squad-lifecycle`
+### worktree-squad-lifecycle
 
 - Entry session: `samwise-squad-planning`
 - Required closeout session: `worktree-squad-retrospective`

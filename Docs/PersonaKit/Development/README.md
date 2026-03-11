@@ -130,13 +130,14 @@ Run these steps from the repo root:
 
 1. `make format-check`
 2. `swift test`
-3. `swift run personakit validate --root Fixtures/kit-root`
-4. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-1.md`
-5. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-2.md`
-6. `cmp -s /tmp/personakit-validate/export-1.md /tmp/personakit-validate/export-2.md`
-7. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-1.txt`
-8. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-2.txt`
-9. `cmp -s /tmp/personakit-validate/graph-1.txt /tmp/personakit-validate/graph-2.txt`
+3. `swift run personakit workstream-docs --root .personakit --check`
+4. `swift run personakit validate --root Fixtures/kit-root`
+5. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-1.md`
+6. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-2.md`
+7. `cmp -s /tmp/personakit-validate/export-1.md /tmp/personakit-validate/export-2.md`
+8. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-1.txt`
+9. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-2.txt`
+10. `cmp -s /tmp/personakit-validate/graph-1.txt /tmp/personakit-validate/graph-2.txt`
 
 If either `cmp` fails, the output is not deterministic and should be
 investigated before proceeding.
@@ -144,11 +145,13 @@ investigated before proceeding.
 ## Scripted workflow
 
 `Scripts/validate-repo.sh` runs the same steps and handles output comparison.
-It uses `"$PERSONAKIT_VALIDATE_TMP_ROOT/personakit-validate"` for outputs when
-that variable is set. Otherwise it falls back to `"$TMPDIR/personakit-validate"`
-and then `/tmp/personakit-validate`. Set a unique temp root per lane or agent
-to avoid collisions in parallel execution. Output remains deterministic (no
-timestamps).
+It also enforces that the committed workstream operator docs are in sync with
+directive-owned workstream metadata. It uses
+`"$PERSONAKIT_VALIDATE_TMP_ROOT/personakit-validate"` for outputs when that
+variable is set. Otherwise it falls back to
+`"$TMPDIR/personakit-validate"` and then `/tmp/personakit-validate`. Set a
+unique temp root per lane or agent to avoid collisions in parallel execution.
+Output remains deterministic (no timestamps).
 
 Run it from the repo root:
 
