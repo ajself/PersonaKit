@@ -20,6 +20,9 @@ rewritten.
 - [2026-03-08-taskboard-wrap-up-agenda.md](./2026-03-08-taskboard-wrap-up-agenda.md)
 - [2026-03-08-taskboard-wrap-up-retrospectives.md](./2026-03-08-taskboard-wrap-up-retrospectives.md)
 - [2026-03-08-taskboard-wrap-up-minutes.md](./2026-03-08-taskboard-wrap-up-minutes.md)
+- [2026-03-11-generated-workstream-docs-retrospective.md](./2026-03-11-generated-workstream-docs-retrospective.md)
+- [2026-03-11-subagent-grounding-handoff-retrospective.md](./2026-03-11-subagent-grounding-handoff-retrospective.md)
+- [2026-03-11-squad-pattern-evaluation-decision.md](./2026-03-11-squad-pattern-evaluation-decision.md)
 - [recommendations/README.md](./recommendations/README.md)
 
 ## Related Docs
