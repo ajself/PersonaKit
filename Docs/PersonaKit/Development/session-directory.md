@@ -49,7 +49,7 @@ Lifecycle legend:
 ## Partner Sync Workflows
 
 - `samwise-partner-sync` - owner: `samwise` - state: `active`
-- `samwise-orbit-build-rerun` - owner: `samwise` - state: `active`
+- `samwise-orbit-rerun-startup` - owner: `samwise` - state: `active`
 - `samwise-orbit-rerun-execution` - owner: `samwise` - state: `active`
 - `samwise-session-stack-review` - owner: `samwise` - state: `active`
 - `samwise-squad-planning` - owner: `samwise` - state: `active`

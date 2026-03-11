@@ -58,7 +58,7 @@ Current-state translation:
    translate to `persona-hiring-core` plus `samwise-planning-core`.
 3. Historical live-delivery oversight references translate to
    `samwise-worktree-oversight-core`.
-4. Historical Orbit execution references translate to `orbit-build-rerun-core`
+4. Historical Orbit execution references translate to `orbit-rerun-core`
    plus `samwise-worktree-oversight-core`.
 5. Historical retrospective references translate to
    `samwise-retrospective-core` only when retrospective context is explicitly in
@@ -81,3 +81,136 @@ Interpretation note:
 Historical docs and logs may still mention `samwise-orchestration-core` by ID or
 file path. Treat those references as describing the retired umbrella boundary,
 then translate them through the workflow-specific successors above.
+
+### `samwise-orbit-build-rerun`
+
+- Entity type: `session`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: Orbit startup, staging, contract freeze, and execution handoff
+
+Current-state translation:
+
+1. Use `samwise-orbit-rerun-startup` for the active startup surface.
+2. Keep `samwise-orbit-rerun-execution` as the live multiagent execution surface.
+
+Successor IDs:
+
+- `samwise-orbit-rerun-startup`
+
+Interpretation note:
+
+This rename clarifies startup versus execution naming only. Workflow behavior
+stayed the same.
+
+### `run-orbit-build-rerun`
+
+- Entity type: `directive`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: Orbit startup directive for staging, contract freeze, and handoff
+
+Successor IDs:
+
+- `run-orbit-rerun-startup`
+
+Interpretation note:
+
+The directive role stayed the same; the active ID now names the startup phase
+explicitly.
+
+### `orbit-build-rerun-review`
+
+- Entity type: `intent`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: Orbit startup handoff contract
+
+Successor IDs:
+
+- `orbit-rerun-startup-contract`
+
+Interpretation note:
+
+The active successor keeps the same startup-only role while clarifying that this
+surface defines the handoff contract.
+
+### `orbit-build-rerun-core`
+
+- Entity type: `kit`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: Orbit-specific core kit for rerun startup and execution
+
+Successor IDs:
+
+- `orbit-rerun-core`
+
+Interpretation note:
+
+The role stayed the same; the active ID now matches the startup/execution
+pairing instead of carrying older build-heavy wording.
+
+### `orbit-build-rerun-playbook`
+
+- Entity type: `essential`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: reusable Orbit rerun playbook for startup and execution
+
+Successor IDs:
+
+- `orbit-rerun-playbook`
+
+Interpretation note:
+
+The role stayed the same; the active essential now uses the shorter rerun
+family name.
+
+### `run-orbit-rerun-squad-execution`
+
+- Entity type: `directive`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: live Orbit multiagent execution directive
+
+Successor IDs:
+
+- `run-orbit-rerun-execution`
+
+Interpretation note:
+
+The active successor keeps the same execution role while removing extra wording
+from the machine ID.
+
+### `orbit-rerun-squad-execution`
+
+- Entity type: `intent`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: live Orbit multiagent execution contract
+
+Successor IDs:
+
+- `orbit-rerun-execution-contract`
+
+Interpretation note:
+
+The active successor keeps the same execution role while making the contract
+phase clearer.
+
+### `orbit-rerun-squad-execution-map`
+
+- Entity type: `essential`
+- Lifecycle: `retired`
+- Retired on: `2026-03-11`
+- Historical role: live Orbit execution routing map
+
+Successor IDs:
+
+- `orbit-rerun-execution-map`
+
+Interpretation note:
+
+The active successor keeps the same routing role while aligning the ID with the
+renamed execution contract and directive.

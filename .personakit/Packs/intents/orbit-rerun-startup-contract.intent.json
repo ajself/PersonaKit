@@ -1,8 +1,8 @@
 {
-  "id": "orbit-build-rerun-review",
+  "id": "orbit-rerun-startup-contract",
   "version": "1.0",
-  "name": "Orbit Build Rerun Review",
-  "description": "Run the Orbit build exercise from a fresh main-based lane with explicit learning carry-forward, product gates, and hybrid retrospective closeout.",
+  "name": "Orbit Rerun Startup Contract",
+  "description": "Stage the Orbit rerun from a fresh main-based lane with explicit learning carry-forward, product gates, and a deterministic handoff into the live execution surface.",
   "parameters": [
     {
       "name": "objective",
@@ -61,7 +61,7 @@
     }
   ],
   "includesEssentialIds": [
-    "orbit-build-rerun-playbook",
+    "orbit-rerun-playbook",
     "orbit-attempt-improvement-loop",
     "non-goals",
     "tools-and-constraints"

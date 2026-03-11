@@ -1,4 +1,4 @@
-# Orbit Rerun Squad Execution Map
+# Orbit Rerun Execution Map
 
 Use this essential when Samwise is running an approved Orbit rerun lane as a
 real multiagent delivery loop instead of as a startup-only pass.
@@ -17,7 +17,7 @@ real multiagent delivery loop instead of as a startup-only pass.
 
 Use the Orbit sessions in this order:
 
-1. `samwise-orbit-build-rerun`
+1. `samwise-orbit-rerun-startup`
    startup and staging only
 2. `samwise-orbit-rerun-execution`
    active lane orchestration only

@@ -1,6 +1,6 @@
-# Orbit Build Rerun Playbook
+# Orbit Rerun Playbook
 
-Use this essential when Samwise is starting or resuming a fresh Orbit build
+Use this essential when Samwise is starting or resuming a fresh Orbit
 attempt from `main`.
 
 ## Purpose
@@ -18,7 +18,7 @@ attempt from `main`.
 
 Use these session surfaces in order:
 
-1. `samwise-orbit-build-rerun`
+1. `samwise-orbit-rerun-startup`
    startup, staging, and contract freeze only
 2. `samwise-orbit-rerun-execution`
    active lane orchestration only

@@ -1,0 +1,10 @@
+{
+  "id": "orbit-rerun-core",
+  "version": "1.0",
+  "name": "Orbit Rerun Core Kit",
+  "summary": "Orbit-specific rerun playbook and attempt-improvement loop for Samwise-led startup and execution surfaces.",
+  "essentialIds": [
+    "orbit-rerun-playbook",
+    "orbit-attempt-improvement-loop"
+  ]
+}

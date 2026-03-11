@@ -16,7 +16,7 @@ comparison-grade standard.
 
 If invoking the rerun through PersonaKit, use:
 
-- `samwise-orbit-build-rerun`
+- `samwise-orbit-rerun-startup`
   startup, staging, and execution-handoff only
 - `samwise-orbit-rerun-execution`
   live lane orchestration with required specialist-session routing

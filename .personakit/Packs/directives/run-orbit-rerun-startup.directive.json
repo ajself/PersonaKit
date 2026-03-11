@@ -1,7 +1,7 @@
 {
-  "id": "run-orbit-build-rerun",
+  "id": "run-orbit-rerun-startup",
   "version": "1.0",
-  "title": "Run Orbit build rerun",
+  "title": "Run Orbit rerun startup",
   "goal": "Let Samwise stage a fresh main-based Orbit build attempt, freeze the execution contract, and hand the live lane to the dedicated Orbit rerun execution session.",
   "steps": [
     {
@@ -68,7 +68,7 @@
     }
   ],
   "requiresIntentTemplateIds": [
-    "orbit-build-rerun-review"
+    "orbit-rerun-startup-contract"
   ],
   "requiresSkillIds": [
     "codex-cli"

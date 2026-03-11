@@ -1,7 +1,7 @@
 {
-  "id": "orbit-rerun-squad-execution",
+  "id": "orbit-rerun-execution-contract",
   "version": "1.0",
-  "name": "Orbit Rerun Squad Execution",
+  "name": "Orbit Rerun Execution Contract",
   "description": "Run an approved Orbit rerun lane through a real multiagent execution loop with explicit session routing, isolated evidence, and separate review ownership.",
   "parameters": [
     {
@@ -103,8 +103,8 @@
     }
   ],
   "includesEssentialIds": [
-    "orbit-rerun-squad-execution-map",
-    "orbit-build-rerun-playbook",
+    "orbit-rerun-execution-map",
+    "orbit-rerun-playbook",
     "orbit-attempt-improvement-loop",
     "worktree-squad-gating-contract",
     "worktree-squad-loop-log-contract",

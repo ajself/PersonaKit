@@ -1,7 +1,7 @@
 {
-  "id": "run-orbit-rerun-squad-execution",
+  "id": "run-orbit-rerun-execution",
   "version": "1.0",
-  "title": "Run Orbit rerun squad execution",
+  "title": "Run Orbit rerun execution",
   "goal": "Let Samwise orchestrate an approved Orbit rerun lane through a real multiagent execution loop instead of acting as the implementation owner.",
   "steps": [
     {
@@ -69,7 +69,7 @@
     }
   ],
   "requiresIntentTemplateIds": [
-    "orbit-rerun-squad-execution",
+    "orbit-rerun-execution-contract",
     "gated-worktree-delivery"
   ],
   "requiresSkillIds": [
