@@ -153,7 +153,7 @@ struct MCPToolTests {
     let result = try service.callTool(
       name: "personakit_resolve_session_ref",
       arguments: [
-        "sessionRef": "senior-swiftui-engineer_apply-style",
+        "sessionRef": "senior-swiftui-engineer_apply-style"
       ]
     )
 
@@ -174,7 +174,7 @@ struct MCPToolTests {
     let result = try service.callTool(
       name: "personakit_resolve_session_ref",
       arguments: [
-        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json",
+        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json"
       ]
     )
 
@@ -193,7 +193,7 @@ struct MCPToolTests {
     let result = try service.callTool(
       name: "personakit_trace_session",
       arguments: [
-        "sessionId": "senior-swiftui-engineer_apply-style",
+        "sessionId": "senior-swiftui-engineer_apply-style"
       ]
     )
 
@@ -203,6 +203,61 @@ struct MCPToolTests {
     let resolved = try #require(object["resolved"] as? [String: Any])
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+  }
+
+  @Test
+  func explainDirectiveToolIncludesWorkstreamSummary() throws {
+    let scopes = ScopeSet(projectScopeURL: try makeWorkstreamFixtureRoot(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_explain_entity",
+      arguments: [
+        "entityType": "directive",
+        "id": "apply-style",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let data = try #require(object["data"] as? [String: Any])
+    let workstream = try #require(data["workstream"] as? [String: Any])
+
+    #expect(workstream["id"] as? String == "style-workstream")
+    #expect(workstream["phase"] as? String == "planning")
+    #expect(workstream["entrySessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(workstream["requiredCloseoutSessionId"] as? String == "style-closeout")
+    #expect(workstream["nodeCount"] as? Int == 3)
+    #expect(workstream["edgeCount"] as? Int == 2)
+  }
+
+  @Test
+  func traceSessionToolIncludesWorkstreamRoutingPayload() throws {
+    let scopes = ScopeSet(projectScopeURL: try makeWorkstreamFixtureRoot(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_trace_session",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let workstream = try #require(object["workstream"] as? [String: Any])
+
+    #expect(workstream["id"] as? String == "style-workstream")
+    #expect(workstream["phase"] as? String == "planning")
+    #expect(workstream["currentSessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(workstream["requiredCloseoutSessionId"] as? String == "style-closeout")
+    #expect(workstream["nextSessionIds"] as? [String] == ["style-followup"])
+
+    let nodes = try #require(workstream["nodes"] as? [[String: Any]])
+    #expect(nodes.count == 3)
+
+    let edges = try #require(workstream["edges"] as? [[String: Any]])
+    #expect(edges.count == 2)
   }
 
   @Test

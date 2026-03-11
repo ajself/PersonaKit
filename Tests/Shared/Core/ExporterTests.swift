@@ -12,7 +12,8 @@ struct ExporterTests {
       root: root,
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
-      kitOverrides: []
+      kitOverrides: [],
+      sessionId: "senior-swiftui-engineer_apply-style"
     )
 
     let fixtureURL = fixturesRootURL()
@@ -66,5 +67,24 @@ struct ExporterTests {
       }
       #expect(Bool(false))
     }
+  }
+
+  @Test
+  func exportIncludesWorkstreamSectionWhenDirectiveDeclaresRouting() throws {
+    let root = try makeWorkstreamFixtureRoot()
+
+    let output = try SessionExporter.export(
+      root: root,
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: [],
+      sessionId: "senior-swiftui-engineer_apply-style"
+    )
+
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style_workstream.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
   }
 }

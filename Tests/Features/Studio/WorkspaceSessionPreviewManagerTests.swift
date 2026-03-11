@@ -29,10 +29,17 @@ struct WorkspaceSessionPreviewManagerTests {
           )
         }
       ),
-      previewBuilder: StubPreviewBuilder { projectScopeURL, globalScopeURL, personaId, directiveId, kitOverrides in
+      previewBuilder: StubPreviewBuilder {
+        projectScopeURL,
+        globalScopeURL,
+        sessionId,
+        personaId,
+        directiveId,
+        kitOverrides in
         [
           projectScopeURL.path(),
           globalScopeURL?.path() ?? "nil",
+          sessionId ?? "nil",
           personaId,
           directiveId,
           kitOverrides.joined(separator: ","),
@@ -58,7 +65,7 @@ struct WorkspaceSessionPreviewManagerTests {
 
     #expect(
       preview
-        == "/Workspace/.personakit|/Users/test/.personakit|persona-a|directive-a|kit-b,kit-a"
+        == "/Workspace/.personakit|/Users/test/.personakit|session-a|persona-a|directive-a|kit-b,kit-a"
     )
   }
 
@@ -84,7 +91,7 @@ struct WorkspaceSessionPreviewManagerTests {
           )
         }
       ),
-      previewBuilder: StubPreviewBuilder { _, _, _, _, _ in
+      previewBuilder: StubPreviewBuilder { _, _, _, _, _, _ in
         "unused"
       },
       dependencies: WorkspaceSessionPreviewManagerDependencies(
@@ -126,7 +133,7 @@ struct WorkspaceSessionPreviewManagerTests {
           )
         }
       ),
-      previewBuilder: StubPreviewBuilder { _, _, _, _, _ in
+      previewBuilder: StubPreviewBuilder { _, _, _, _, _, _ in
         previewText
       },
       dependencies: WorkspaceSessionPreviewManagerDependencies(
@@ -171,7 +178,7 @@ struct WorkspaceSessionPreviewManagerTests {
           )
         }
       ),
-      previewBuilder: StubPreviewBuilder { _, _, _, _, _ in
+      previewBuilder: StubPreviewBuilder { _, _, _, _, _, _ in
         "unused"
       },
       dependencies: WorkspaceSessionPreviewManagerDependencies(
@@ -222,11 +229,12 @@ private struct StubPreviewSessionManager: WorkspaceSessionManaging, Sendable {
 }
 
 private struct StubPreviewBuilder: WorkspaceSessionPreviewBuilding, Sendable {
-  let buildHandler: @Sendable (URL, URL?, String, String, [String]) throws -> String
+  let buildHandler: @Sendable (URL, URL?, String?, String, String, [String]) throws -> String
 
   func build(
     projectScopeURL: URL,
     globalScopeURL: URL?,
+    sessionId: String?,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
@@ -234,6 +242,7 @@ private struct StubPreviewBuilder: WorkspaceSessionPreviewBuilding, Sendable {
     try buildHandler(
       projectScopeURL,
       globalScopeURL,
+      sessionId,
       personaId,
       directiveId,
       kitOverrides

@@ -105,6 +105,17 @@ struct StudioHelpCatalogTests {
     #expect(Set(keys).count == keys.count)
   }
 
+  @Test
+  func sessionsAndDirectivesHelpExplainWorkstreamAsRoutingMetadata() throws {
+    let directives = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.directives))
+    let sessions = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions))
+    let sessionEditor = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.sessionEditor))
+
+    #expect(directives.keyFields.contains { $0.contains("routing context only") })
+    #expect(sessions.keyFields.contains { $0.contains("workstream routing") })
+    #expect(sessionEditor.keyFields.contains { $0.contains("read-only context") })
+  }
+
   private func trimmed(
     _ value: String
   ) -> String {

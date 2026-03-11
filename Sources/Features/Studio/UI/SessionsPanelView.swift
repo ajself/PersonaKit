@@ -358,6 +358,22 @@ struct SessionsPanelView: View {
             )
             .lineLimit(1)
             .truncationMode(.tail)
+
+            if let directive = selectedDirective(
+              for: selectedSession.directiveId
+            ),
+              let workstreamID = directive.workstreamId,
+              let phase = directive.workstreamPhase
+            {
+              Text(
+                SessionsPanelLayoutState.workstreamMetadataLine(
+                  workstreamID: workstreamID,
+                  phase: phase
+                )
+              )
+              .lineLimit(1)
+              .truncationMode(.tail)
+            }
           }
           .font(.subheadline)
           .foregroundStyle(.secondary)
@@ -553,6 +569,12 @@ struct SessionsPanelView: View {
     }
 
     return items.first { $0.id == selectedSessionID }
+  }
+
+  private func selectedDirective(
+    for directiveID: String
+  ) -> WorkspaceListItem? {
+    workspaceStore.snapshot.directives.first { $0.id == directiveID }
   }
 
   private func openEditorForSelectedSession(

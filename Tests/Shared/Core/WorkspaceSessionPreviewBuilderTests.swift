@@ -14,6 +14,7 @@ struct WorkspaceSessionPreviewBuilderTests {
     let preview = try builder.build(
       projectScopeURL: projectScopeURL,
       globalScopeURL: nil,
+      sessionId: "senior-swiftui-engineer_apply-style",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []
@@ -35,6 +36,7 @@ struct WorkspaceSessionPreviewBuilderTests {
       _ = try builder.build(
         projectScopeURL: projectScopeURL,
         globalScopeURL: nil,
+        sessionId: "missing-session",
         personaId: "missing-persona",
         directiveId: "apply-style",
         kitOverrides: []

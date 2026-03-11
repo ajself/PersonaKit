@@ -29,6 +29,7 @@ public struct SessionExporter {
     personaId: String,
     directiveId: String,
     kitOverrides: [String],
+    sessionId: String? = nil,
     fileManager: FileManager = .default
   ) throws -> String {
     try export(
@@ -36,6 +37,7 @@ public struct SessionExporter {
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: kitOverrides,
+      sessionId: sessionId,
       fileManager: fileManager
     )
   }
@@ -55,6 +57,7 @@ public struct SessionExporter {
     personaId: String,
     directiveId: String,
     kitOverrides: [String],
+    sessionId: String? = nil,
     fileManager: FileManager = .default
   ) throws -> String {
     let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
@@ -90,7 +93,8 @@ public struct SessionExporter {
       kits: session.kits.sorted { $0.id < $1.id },
       intents: session.intents.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
-      essentials: essentials
+      essentials: essentials,
+      sessionId: sessionId
     )
   }
 
@@ -129,7 +133,8 @@ public struct SessionExporter {
     kits: [Kit],
     intents: [IntentTemplate],
     skills: [Skill],
-    essentials: [ResolvedEssential]
+    essentials: [ResolvedEssential],
+    sessionId: String?
   ) -> String {
     var output = ""
 
@@ -234,6 +239,31 @@ public struct SessionExporter {
       items: stopPoints,
       appendLine: appendLine
     )
+
+    if let workstream = directive.workstream {
+      appendLine()
+      appendLine("# Workstream")
+      appendLine("Id: \(workstream.id)")
+      appendLine("Phase: \(workstream.phase)")
+      appendLine("Entry Session: \(workstream.entrySessionId)")
+
+      if let requiredCloseoutSessionId = workstream.requiredCloseoutSessionId {
+        appendLine("Required Closeout Session: \(requiredCloseoutSessionId)")
+      }
+
+      let nextSessionIds = workstream.nextSessionIds(fromSessionId: sessionId)
+      appendListSection(
+        title: "Next Sessions",
+        items: nextSessionIds,
+        appendLine: appendLine
+      )
+
+      appendLine()
+      appendLine("Session Map:")
+      for node in workstream.orderedNodes {
+        appendLine("- \(node.phase): \(node.sessionId)")
+      }
+    }
 
     appendLine()
     appendLine("# Intent Templates")

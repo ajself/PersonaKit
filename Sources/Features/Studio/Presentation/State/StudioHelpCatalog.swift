@@ -15,14 +15,17 @@ enum StudioHelpCatalog {
           "Use the id as a stable reference from sessions.",
           "Keep steps concrete and ordered.",
           "Write acceptance criteria that are testable.",
+          "Workstream metadata is routing context only, not runtime automation.",
         ],
         commonMistakes: [
           "Using vague goals without concrete completion criteria.",
           "Mixing multiple unrelated tasks into one directive.",
           "Forgetting to include explicit stop/review points.",
+          "Treating workstream metadata like an executable workflow engine.",
         ],
         examples: [
-          "Example directive: \"Refactor session preview caching without changing export behavior.\""
+          "Example directive: \"Refactor session preview caching without changing export behavior.\"",
+          "Example routing note: a directive can declare a workstream id and phase so the next session is visible without executing anything.",
         ],
         nextStepText: "Link this directive from a session, then inspect session preview and map before saving.",
         relatedLinks: [
@@ -209,6 +212,7 @@ enum StudioHelpCatalog {
           "Persona selects who performs the work.",
           "Directive selects what work is done.",
           "Kit overrides refine or extend how the work should be done.",
+          "Directive-selected workstream routing is read-only context, not a runnable workflow.",
         ],
         commonMistakes: [
           "Using invalid session ids or ids that change frequently.",
@@ -240,11 +244,13 @@ enum StudioHelpCatalog {
           "List view shows id, persona, directive, and scope.",
           "Preview mode shows the exact context text you provide to an AI assistant.",
           "Map mode shows dependency resolution and missing reference issues.",
+          "If a directive carries workstream routing, the session shows where that directive phase sits in the larger stream.",
         ],
         commonMistakes: [
           "Treating sessions like executable workflows instead of context definitions.",
           "Ignoring map resolution issues before exporting.",
           "Editing global-scope sessions instead of copying to project scope.",
+          "Assuming workstream visibility means PersonaKit will auto-switch sessions for you.",
         ],
         examples: [
           "Example usage: export markdown from one session and paste it into a fresh AI chat as starting context."

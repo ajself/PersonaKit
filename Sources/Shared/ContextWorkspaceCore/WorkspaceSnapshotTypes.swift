@@ -27,17 +27,23 @@ public struct WorkspaceListItem: Equatable, Sendable {
   public let displayName: String
   public let fileURL: URL
   public let sourceScope: WorkspaceSourceScope
+  public let workstreamId: String?
+  public let workstreamPhase: String?
 
   public init(
     id: String,
     displayName: String,
     fileURL: URL,
-    sourceScope: WorkspaceSourceScope
+    sourceScope: WorkspaceSourceScope,
+    workstreamId: String? = nil,
+    workstreamPhase: String? = nil
   ) {
     self.id = id
     self.displayName = displayName
     self.fileURL = fileURL
     self.sourceScope = sourceScope
+    self.workstreamId = workstreamId
+    self.workstreamPhase = workstreamPhase
   }
 }
 

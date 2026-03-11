@@ -139,6 +139,65 @@ struct WorkspaceSnapshotBuilderTests {
     }
   }
 
+  @Test
+  func snapshotLoadsDirectiveWorkstreamMetadata() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let directiveURL = projectScopeURL.appendingPathComponent("Packs/directives/apply-style.directive.json")
+
+    let directive = Directive(
+      id: "apply-style",
+      version: "1.0",
+      title: "Apply Style",
+      goal: "Keep style consistent.",
+      steps: [],
+      acceptanceCriteria: [],
+      verification: [],
+      requiresIntentTemplateIds: [],
+      requiresSkillIds: [],
+      workstream: Directive.Workstream(
+        id: "style-workstream",
+        phase: "planning",
+        entrySessionId: "style-session",
+        requiredCloseoutSessionId: "style-closeout",
+        nodes: [
+          .init(sessionId: "style-session", phase: "planning"),
+          .init(sessionId: "style-closeout", phase: "closeout"),
+        ],
+        edges: [
+          .init(
+            fromSessionId: "style-session",
+            toSessionId: "style-closeout",
+            kind: "required-closeout"
+          )
+        ]
+      )
+    )
+
+    let dependencies = try makeDependencies(
+      directories: [
+        PersonaKitDirectory.packsURL(root: projectScopeURL),
+        projectScopeURL.appendingPathComponent("Packs/directives"),
+      ],
+      directoryContents: [
+        projectScopeURL.appendingPathComponent("Packs/directives"): [directiveURL]
+      ],
+      fileData: [
+        directiveURL: try encode(directive)
+      ]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    let snapshot = try builder.build(workspaceURL: workspaceURL)
+    let directiveItem = try #require(snapshot.directives.first)
+
+    #expect(directiveItem.workstreamId == "style-workstream")
+    #expect(directiveItem.workstreamPhase == "planning")
+  }
+
   private func makeDependencies(
     directories: [URL],
     directoryContents: [URL: [URL]],

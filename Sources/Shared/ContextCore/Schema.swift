@@ -69,6 +69,92 @@ public struct Kit: Codable, Sendable {
 
 /// Directive definition loaded from `Packs/directives/*.directive.json`.
 public struct Directive: Codable, Sendable {
+  /// Session-routing metadata for a directive phase within a larger workstream.
+  public struct Workstream: Codable, Sendable {
+    /// Session node participating in the workstream graph.
+    public struct Node: Codable, Sendable {
+      public let sessionId: String
+      public let phase: String
+
+      public init(
+        sessionId: String,
+        phase: String
+      ) {
+        self.sessionId = sessionId
+        self.phase = phase
+      }
+    }
+
+    /// Directed edge between two session nodes in the workstream graph.
+    public struct Edge: Codable, Sendable {
+      public let fromSessionId: String
+      public let toSessionId: String
+      public let kind: String
+
+      public init(
+        fromSessionId: String,
+        toSessionId: String,
+        kind: String
+      ) {
+        self.fromSessionId = fromSessionId
+        self.toSessionId = toSessionId
+        self.kind = kind
+      }
+    }
+
+    public let id: String
+    public let phase: String
+    public let entrySessionId: String
+    public let requiredCloseoutSessionId: String?
+    public let nodes: [Node]
+    public let edges: [Edge]
+
+    public init(
+      id: String,
+      phase: String,
+      entrySessionId: String,
+      requiredCloseoutSessionId: String?,
+      nodes: [Node],
+      edges: [Edge]
+    ) {
+      self.id = id
+      self.phase = phase
+      self.entrySessionId = entrySessionId
+      self.requiredCloseoutSessionId = requiredCloseoutSessionId
+      self.nodes = nodes
+      self.edges = edges
+    }
+
+    public func node(forSessionId sessionId: String?) -> Node? {
+      guard let sessionId else {
+        return nil
+      }
+
+      return nodes.first { $0.sessionId == sessionId }
+    }
+
+    public func nextSessionIds(
+      fromSessionId sessionId: String?
+    ) -> [String] {
+      guard let node = node(forSessionId: sessionId) else {
+        return []
+      }
+
+      return
+        edges
+        .filter { $0.fromSessionId == node.sessionId }
+        .map(\.toSessionId)
+    }
+
+    public var orderedNodes: [Node] {
+      nodes
+    }
+
+    public var orderedEdges: [Edge] {
+      edges
+    }
+  }
+
   /// Ordered directive step with optional human review gate.
   public struct Step: Codable, Sendable {
     public let text: String
@@ -106,6 +192,7 @@ public struct Directive: Codable, Sendable {
   public let verification: [VerificationItem]
   public let requiresIntentTemplateIds: [String]
   public let requiresSkillIds: [String]
+  public let workstream: Workstream?
 
   public init(
     id: String,
@@ -116,7 +203,8 @@ public struct Directive: Codable, Sendable {
     acceptanceCriteria: [String],
     verification: [VerificationItem],
     requiresIntentTemplateIds: [String],
-    requiresSkillIds: [String]
+    requiresSkillIds: [String],
+    workstream: Workstream? = nil
   ) {
     self.id = id
     self.version = version
@@ -127,6 +215,7 @@ public struct Directive: Codable, Sendable {
     self.verification = verification
     self.requiresIntentTemplateIds = requiresIntentTemplateIds
     self.requiresSkillIds = requiresSkillIds
+    self.workstream = workstream
   }
 }
 

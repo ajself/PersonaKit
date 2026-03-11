@@ -574,56 +574,18 @@ private func listSessionSummaries(
   scopes: ScopeSet,
   fileManager: FileManager
 ) throws -> [MCPCatalogSessionSummary] {
-  var sessionsById: [String: MCPCatalogSessionSummary] = [:]
-
-  for root in scopes.resolutionOrder {
-    let sessionsURL = root.appendingPathComponent("Sessions")
-    var isDirectory: ObjCBool = false
-    guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
-      isDirectory.boolValue
-    else {
-      continue
-    }
-
-    let files: [URL]
-    do {
-      files = try fileManager.contentsOfDirectory(
-        at: sessionsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
-    } catch {
-      throw MCPError.internalError("Failed to read Sessions directory.")
-    }
-
-    let sessionFiles =
-      files
-      .filter { $0.lastPathComponent.hasSuffix(".session.json") }
-      .sorted { $0.lastPathComponent < $1.lastPathComponent }
-
-    for file in sessionFiles {
-      let id = file.deletingPathExtension().deletingPathExtension().lastPathComponent
-      guard sessionsById[id] == nil else {
-        continue
-      }
-
-      let session: SessionFile
-      do {
-        session = try SessionFileLoader.load(root: root, sessionId: id, fileManager: fileManager)
-      } catch {
-        throw MCPError.internalError("Failed to decode session file \(id).session.json.")
-      }
-
-      sessionsById[id] = MCPCatalogSessionSummary(
+  do {
+    return try SessionFileLoader.list(scopes: scopes, fileManager: fileManager).map { session in
+      MCPCatalogSessionSummary(
         id: session.id,
         personaId: session.personaId,
         directiveId: session.directiveId,
         kitOverrides: session.kitOverrides ?? []
       )
     }
+  } catch {
+    throw MCPError.internalError("Failed to load session files.")
   }
-
-  return sessionsById.keys.sorted().compactMap { sessionsById[$0] }
 }
 
 private func resolveFileURL(

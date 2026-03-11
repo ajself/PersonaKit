@@ -44,6 +44,56 @@
       "text": "Scripts/check-gardening-logs.sh"
     }
   ],
+  "workstream": {
+    "id": "worktree-squad-lifecycle",
+    "phase": "gardening",
+    "entrySessionId": "samwise-squad-planning",
+    "requiredCloseoutSessionId": "worktree-squad-retrospective",
+    "nodes": [
+      {
+        "sessionId": "samwise-squad-planning",
+        "phase": "planning"
+      },
+      {
+        "sessionId": "samwise-worktree-squad-oversight",
+        "phase": "oversight"
+      },
+      {
+        "sessionId": "worktree-squad-delivery",
+        "phase": "delivery"
+      },
+      {
+        "sessionId": "worktree-squad-retrospective",
+        "phase": "retrospective"
+      },
+      {
+        "sessionId": "rosie-retrospective-garden",
+        "phase": "gardening"
+      }
+    ],
+    "edges": [
+      {
+        "fromSessionId": "samwise-squad-planning",
+        "toSessionId": "samwise-worktree-squad-oversight",
+        "kind": "required-next"
+      },
+      {
+        "fromSessionId": "samwise-worktree-squad-oversight",
+        "toSessionId": "worktree-squad-delivery",
+        "kind": "required-next"
+      },
+      {
+        "fromSessionId": "worktree-squad-delivery",
+        "toSessionId": "worktree-squad-retrospective",
+        "kind": "required-closeout"
+      },
+      {
+        "fromSessionId": "worktree-squad-retrospective",
+        "toSessionId": "rosie-retrospective-garden",
+        "kind": "optional-follow-up"
+      }
+    ]
+  },
   "requiresIntentTemplateIds": [
     "rosie-retrospective-garden-review"
   ],

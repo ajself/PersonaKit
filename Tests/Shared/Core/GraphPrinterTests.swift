@@ -89,4 +89,25 @@ struct GraphPrinterTests {
     #expect(output.contains("Kit overrides: extra-kit"))
     #expect(output.contains("- extra-kit — Extra Kit"))
   }
+
+  @Test
+  func graphIncludesWorkstreamSectionWhenDirectiveDeclaresRouting() throws {
+    let root = try makeWorkstreamFixtureRoot()
+
+    let registry = try Registry.load(root: root)
+    let definition = SessionDefinition(
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: []
+    )
+    let resolved = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
+
+    let output = GraphPrinter.render(resolvedSession: resolved, kitOverrides: [])
+
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style_workstream.txt")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
 }

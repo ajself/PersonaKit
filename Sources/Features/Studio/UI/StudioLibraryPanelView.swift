@@ -94,6 +94,16 @@ struct StudioLibraryPanelView: View {
           .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
       }
 
+      if selection == .directives,
+        let selectedItem,
+        let workstreamId = selectedItem.workstreamId,
+        let workstreamPhase = selectedItem.workstreamPhase
+      {
+        Text("Workstream: \(workstreamId) · Phase: \(workstreamPhase)")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+
       StudioLibraryItemListView(
         visibleItems: visibleItems,
         selectedLibraryItemID: $selectedLibraryItemID

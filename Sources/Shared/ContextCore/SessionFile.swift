@@ -47,6 +47,108 @@ public enum SessionFileError: LocalizedError {
 
 /// Loads session files from project/global scope roots.
 public struct SessionFileLoader {
+  /// Discovers session ids from merged scopes using resolution-order precedence.
+  ///
+  /// This is filename-based and does not decode session contents.
+  public static func discoveredSessionIDs(
+    scopes: ScopeSet,
+    fileManager: FileManager = .default
+  ) throws -> [String] {
+    try discoveredSessionFileURLsByID(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+    .keys
+    .sorted()
+  }
+
+  /// Discovers session files from merged scopes using resolution-order precedence.
+  ///
+  /// Project scope wins over global scope when ids collide.
+  public static func list(
+    scopes: ScopeSet,
+    fileManager: FileManager = .default
+  ) throws -> [SessionFile] {
+    let sessionsByID = try sessionsByID(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+
+    return sessionsByID.keys.sorted().compactMap { id in
+      sessionsByID[id]
+    }
+  }
+
+  /// Discovers session files keyed by id from merged scopes using resolution-order precedence.
+  public static func sessionsByID(
+    scopes: ScopeSet,
+    fileManager: FileManager = .default
+  ) throws -> [String: SessionFile] {
+    let sessionFileURLsByID = try discoveredSessionFileURLsByID(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+    var sessionsByID: [String: SessionFile] = [:]
+
+    for sessionID in sessionFileURLsByID.keys.sorted() {
+      guard let fileURL = sessionFileURLsByID[sessionID] else {
+        continue
+      }
+
+      let session = try load(
+        fileURL: fileURL,
+        fileManager: fileManager
+      )
+      sessionsByID[session.id] = session
+    }
+
+    return sessionsByID
+  }
+
+  private static func discoveredSessionFileURLsByID(
+    scopes: ScopeSet,
+    fileManager: FileManager
+  ) throws -> [String: URL] {
+    var fileURLsByID: [String: URL] = [:]
+
+    for root in scopes.resolutionOrder {
+      let sessionsURL = root.appendingPathComponent("Sessions")
+      var isDirectory: ObjCBool = false
+      guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
+        isDirectory.boolValue
+      else {
+        continue
+      }
+
+      let files = try fileManager.contentsOfDirectory(
+        at: sessionsURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      )
+
+      let sessionFiles =
+        files
+        .filter { $0.lastPathComponent.hasSuffix(".session.json") }
+        .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+      for fileURL in sessionFiles {
+        let sessionID =
+          fileURL
+          .deletingPathExtension()
+          .deletingPathExtension()
+          .lastPathComponent
+
+        guard fileURLsByID[sessionID] == nil else {
+          continue
+        }
+
+        fileURLsByID[sessionID] = fileURL.standardizedFileURL
+      }
+    }
+
+    return fileURLsByID
+  }
+
   /// Loads a session by id from the first matching root in resolution order.
   ///
   /// - Parameters:
@@ -134,7 +236,8 @@ public struct SessionFileLoader {
       throw SessionFileError.invalidSessionPath(standardized.path)
     }
 
-    let sessionId = standardized
+    let sessionId =
+      standardized
       .deletingPathExtension()
       .deletingPathExtension()
       .lastPathComponent

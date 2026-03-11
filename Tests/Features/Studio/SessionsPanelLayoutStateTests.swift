@@ -139,6 +139,16 @@ struct SessionsPanelLayoutStateTests {
   }
 
   @Test
+  func workstreamMetadataLineFormatsWorkstreamSummary() {
+    let metadataLine = SessionsPanelLayoutState.workstreamMetadataLine(
+      workstreamID: "worktree-squad-lifecycle",
+      phase: "planning"
+    )
+
+    #expect(metadataLine == "workstream: worktree-squad-lifecycle · phase: planning")
+  }
+
+  @Test
   func mapHealthTextReturnsRefreshingWhileLoading() {
     let healthText = SessionsPanelLayoutState.mapHealthText(
       isLoading: true,

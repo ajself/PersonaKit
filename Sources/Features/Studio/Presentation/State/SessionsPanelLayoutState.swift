@@ -109,6 +109,13 @@ enum SessionsPanelLayoutState {
     "directive: \(directiveID)"
   }
 
+  static func workstreamMetadataLine(
+    workstreamID: String,
+    phase: String
+  ) -> String {
+    "workstream: \(workstreamID) · phase: \(phase)"
+  }
+
   static func mapHealthText(
     isLoading: Bool,
     mapIsFullyResolved: Bool?,
