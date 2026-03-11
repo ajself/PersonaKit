@@ -5,7 +5,7 @@
   "goal": "Let Samwise orchestrate an approved Orbit rerun lane through a real multiagent execution loop instead of acting as the implementation owner.",
   "steps": [
     {
-      "text": "Load the active Orbit execution artifacts plus the declared handoff artifacts for this attempt, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit attempt prep path as the primary planning-derived handoff artifact, and the latest canonical retrospective artifacts."
+      "text": "Load the active Orbit execution artifacts plus the declared handoff artifacts for this attempt, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit attempt prep path as the primary planning-derived handoff artifact, and the explicit `retrospectivePath` named by the intent parameters."
     },
     {
       "text": "Restate the current attempt boundary, explicit evidence paths, exact lane branch, worktree path, and commit authorization mode before any implementation work begins."
@@ -70,8 +70,7 @@
   ],
   "requiresIntentTemplateIds": [
     "orbit-rerun-squad-execution",
-    "gated-worktree-delivery",
-    "worktree-squad-retrospective-review"
+    "gated-worktree-delivery"
   ],
   "requiresSkillIds": [
     "codex-cli"

@@ -5,6 +5,7 @@
   "summary": "Reusable retrospective and calibration contracts for Samwise-led multiagent closeout and learning loops.",
   "essentialIds": [
     "starfish-retrospective-format",
+    "worktree-squad-retrospective-log-contract",
     "worktree-squad-retrospective-template",
     "worktree-squad-calibration-benchmarks",
     "partner-trust-contract",

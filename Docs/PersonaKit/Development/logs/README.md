@@ -89,6 +89,10 @@ Each delivery loop and retrospective should append schema-valid entries to the
 corresponding `worktree-squad-*.jsonl` stream, including gate evidence and
 report-path references when applicable.
 
+Use `worktree-squad-loop-log-contract` for active loop entries and
+`worktree-squad-retrospective-log-contract` for closeout retrospectives and
+recommendation entries.
+
 New retrospective entries should use the Starfish shape by default.
 New retrospective entries should also record:
 

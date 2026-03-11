@@ -153,9 +153,13 @@ Use the repo-local approval tools when AJ has already approved named lanes:
 
 1. Gating and authorization:
    - [worktree-squad-gating-contract.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/worktree-squad-gating-contract.md)
-2. Loop and retrospective logging:
+2. Loop logging:
    - [worktree-squad-loop-log-contract.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/worktree-squad-loop-log-contract.md)
-3. Rosie recommendation mining:
+3. Retrospective logging and format:
+   - [worktree-squad-retrospective-log-contract.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/worktree-squad-retrospective-log-contract.md)
+   - [worktree-squad-retrospective-template.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/worktree-squad-retrospective-template.md)
+   - [starfish-retrospective-format.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/starfish-retrospective-format.md)
+4. Rosie recommendation mining:
    - [rosie-retrospective-gardening-contract.md](/Users/ajself/Code/PersonaKit/.personakit/Packs/essentials/rosie-retrospective-gardening-contract.md)
 
 ## Validation

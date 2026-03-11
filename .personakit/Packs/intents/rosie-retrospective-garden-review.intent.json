@@ -18,6 +18,7 @@
   "includesEssentialIds": [
     "rosie-retrospective-gardening-contract",
     "worktree-squad-loop-log-contract",
+    "worktree-squad-retrospective-log-contract",
     "samwise-daily-closeout",
     "gardening-recommendation-scoring-contract",
     "gardening-recommendation-feedback-contract",

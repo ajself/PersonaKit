@@ -30,7 +30,7 @@
       "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract`, update checkpoint summary, and emit next 3 queued actions for resume."
     },
     {
-      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review` and append one retrospective entry."
+      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review`, produce the retrospective report, and append one retrospective entry using `worktree-squad-retrospective-log-contract`."
     }
   ],
   "acceptanceCriteria": [
@@ -59,7 +59,7 @@
     },
     {
       "kind": "manual",
-      "text": "Confirm loop and retrospective entries satisfy worktree-squad log contract fields"
+      "text": "Confirm loop entries satisfy `worktree-squad-loop-log-contract` and retrospective closeout satisfies `worktree-squad-retrospective-log-contract`"
     },
     {
       "kind": "manual",

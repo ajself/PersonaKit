@@ -21,14 +21,14 @@
       "requiresReview": true
     },
     {
-      "text": "Apply approved next action, ensure loop/retrospective log entries are appended per contract, update checkpoint summary, and queue next 3 actions."
+      "text": "Apply approved next action, ensure active loop log entries are appended per contract, queue retrospective closeout when assignment scope completes, update checkpoint summary, and queue next 3 actions."
     }
   ],
   "acceptanceCriteria": [
     "Samwise and Worktree Squad Lead responsibilities are explicitly separated and recorded",
     "One bounded work item is completed with verification evidence and review triage",
     "Protected main policy and authorization mode are recorded for the active loop",
-    "Loop and retrospective entries are recorded for continuity and learning",
+    "Loop entries are recorded for continuity, and retrospective closeout is explicit when assignment scope completes",
     "No commit occurs without AJ-approved authorization for the current scope",
     "Checkpoint notes include shipped, blocked, and next actions"
   ],
@@ -43,7 +43,7 @@
     },
     {
       "kind": "manual",
-      "text": "Confirm loop and retrospective entries satisfy worktree-squad log contract"
+      "text": "Confirm active loop entries satisfy the worktree-squad loop log contract and retrospective closeout is explicit when assignment scope completes"
     },
     {
       "kind": "manual",
