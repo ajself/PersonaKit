@@ -54,6 +54,8 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "kit:swift-style" }))
     #expect(map.nodes.contains(where: { $0.key == "intent:swift-refactor-safe" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:codex-cli" }))
+    #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
+    #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:swift-style-guide" }))
 
     #expect(
@@ -62,6 +64,24 @@ struct WorkspaceSessionMapBuilderTests {
           fromKey: "persona:senior-swiftui-engineer",
           toKey: "kit:swift-style",
           reason: "persona.defaultKitIds"
+        )
+      )
+    )
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "session:active-session",
+          toKey: "essential:persona-activation-contract",
+          reason: "session.resolvedEssentials"
+        )
+      )
+    )
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "session:active-session",
+          toKey: "essential:skill-authorization-contract",
+          reason: "session.resolvedEssentials"
         )
       )
     )

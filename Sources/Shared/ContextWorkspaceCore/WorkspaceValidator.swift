@@ -64,6 +64,8 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
 
   private func map(_ entityType: ValidationEntityType) -> WorkspaceValidationEntityType {
     switch entityType {
+    case .session:
+      return .session
     case .persona:
       return .persona
     case .kit:

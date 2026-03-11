@@ -60,6 +60,7 @@ struct PersonaKitCommand: ParsableCommand {
       WorkstreamDocsCommand.self,
       MigrateLogRecordsCommand.self,
       LogDocsCommand.self,
+      ContractCommand.self,
       ExportCommand.self,
       ListCLICommand.self,
       GraphCommand.self,
@@ -338,6 +339,74 @@ struct LogDocsCommand: ParsableCommand {
   }
 }
 
+/// Resolves and prints the structured PersonaKit operating contract.
+struct ContractCommand: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "contract",
+    abstract: "Resolve the structured PersonaKit operating contract."
+  )
+
+  @OptionGroup
+  var scope: ScopeOptions
+
+  @OptionGroup
+  var session: SessionSelection
+
+  @Option(name: .customLong("check-skills"), help: "Comma-separated skill ids to verify.")
+  var checkSkills: String?
+
+  mutating func validate() throws {
+    try session.validate(mode: .contract)
+  }
+
+  func run() throws {
+    let scopes = try CLIHelpers.resolveScopes(options: scope)
+    let requestedSkillIds = SessionSelection.parseCSV(checkSkills)
+    let result: SessionContractResult
+
+    do {
+      if let sessionId = session.sessionId {
+        let sessionFile = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
+        result = try SessionContractResolver.resolve(
+          scopes: scopes,
+          session: sessionFile,
+          requestedSkillIds: requestedSkillIds
+        )
+      } else {
+        result = try SessionContractResolver.resolve(
+          scopes: scopes,
+          personaId: session.personaId ?? "",
+          directiveId: session.directiveId,
+          kitOverrides: session.directiveId == nil ? [] : session.kitIds,
+          requestedSkillIds: requestedSkillIds
+        )
+      }
+    } catch let error as ResolverResolutionError {
+      var stderrStream = StandardError()
+      for resolutionError in error.errors {
+        stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+      }
+      throw ExitCode.failure
+    } catch let error as RegistryLoadError {
+      var stderrStream = StandardError()
+      for registryError in error.errors {
+        stderrStream.write(CLIHelpers.formatRegistryError(registryError) + "\n")
+      }
+      throw ExitCode.failure
+    }
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let data = try encoder.encode(SessionContractResolver.snapshot(from: result))
+
+    guard let output = String(data: data, encoding: .utf8) else {
+      throw CLIError.failure("Failed to encode contract output.")
+    }
+
+    print(output)
+  }
+}
+
 /// Exports a resolved PersonaKit session as text.
 struct ExportCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
@@ -566,7 +635,7 @@ struct SessionSelection: ParsableArguments {
 
   /// Parsed kit IDs from `--kits`.
   var kitIds: [String] {
-    Self.parseKitIds(kits)
+    Self.parseCSV(kits)
   }
 
   /// Validates flag combinations for the target command mode.
@@ -583,13 +652,25 @@ struct SessionSelection: ParsableArguments {
     guard personaId != nil else {
       throw ArgumentParser.ValidationError("\(mode.commandName) requires --persona <id>.")
     }
+
+    if mode == .contract,
+      directiveId == nil
+    {
+      guard kitIds.isEmpty else {
+        throw ArgumentParser.ValidationError(
+          "contract allows --kits only when --directive is also provided."
+        )
+      }
+      return
+    }
+
     guard directiveId != nil else {
       throw ArgumentParser.ValidationError("\(mode.commandName) requires --directive <id>.")
     }
   }
 
   /// Parses comma-separated kit IDs into a normalized list.
-  private static func parseKitIds(_ input: String?) -> [String] {
+  static func parseCSV(_ input: String?) -> [String] {
     guard let input else {
       return []
     }
@@ -725,12 +806,15 @@ enum CLICompletions {
 
 /// Command mode used for session selection validation messaging.
 enum SessionMode {
+  case contract
   case export
   case graph
 
   /// Command name string used in validation errors.
   var commandName: String {
     switch self {
+    case .contract:
+      return "contract"
     case .export:
       return "export"
     case .graph:

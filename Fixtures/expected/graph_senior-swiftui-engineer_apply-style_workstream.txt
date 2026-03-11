@@ -45,6 +45,18 @@ swiftui-style
 ## Directive → Skills
 - skill:codex-cli
 
+## Skill Contract
+Allowed Skills:
+  - codex-cli
+Forbidden Skills:
+  - autonomous-agent-loop
+Authorized Skills:
+  - codex-cli
+Required Skills:
+  - codex-cli
+Unauthorized Required Skills:
+Authorized: true
+
 ## Workstream
 Id: style-workstream
 Phase: planning
@@ -60,6 +72,8 @@ Edges:
 
 ## Final resolved sets
 Essentials:
+- persona-activation-contract
+- skill-authorization-contract
 - environment
 - non-goals
 - swift-style-guide

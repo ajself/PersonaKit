@@ -65,9 +65,10 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     )
 
     var resolutionErrors: [ResolverError] = []
+    var resolvedSession: ResolvedSession?
 
     do {
-      _ = try Resolver.resolve(
+      resolvedSession = try Resolver.resolve(
         definition: definition,
         registry: registry,
         scopes: scopes
@@ -79,7 +80,8 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     let graph = buildGraph(
       definition: definition,
       registry: registry,
-      scopes: scopes
+      scopes: scopes,
+      resolvedSession: resolvedSession
     )
 
     return WorkspaceSessionMap(
@@ -108,10 +110,12 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
   private func buildGraph(
     definition: SessionDefinition,
     registry: Registry,
-    scopes: ScopeSet
+    scopes: ScopeSet,
+    resolvedSession: ResolvedSession?
   ) -> WorkspaceSessionMapGraph {
     var nodeStateByKey: [String: MutableMapNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
+    var authoredEssentialIDs: Set<String> = []
 
     let sessionNodeKey = makeNodeKey(kind: .session, id: "active-session")
     upsertNode(
@@ -251,6 +255,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
       }
 
       for essentialID in uniqueSorted(kit.essentialIds) {
+        authoredEssentialIDs.insert(essentialID)
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
         let essentialExists = resolveEssentialURL(essentialID, scopes: scopes) != nil
 
@@ -348,6 +353,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
       }
 
       for essentialID in uniqueSorted(intent.includesEssentialIds) {
+        authoredEssentialIDs.insert(essentialID)
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
         let essentialExists = resolveEssentialURL(essentialID, scopes: scopes) != nil
 
@@ -364,6 +370,29 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
             fromKey: intentNodeKey,
             toKey: essentialNodeKey,
             reason: "intent.includesEssentialIds"
+          )
+        )
+      }
+    }
+
+    if let resolvedSession {
+      for essential in resolvedSession.essentials
+      where !authoredEssentialIDs.contains(essential.id) {
+        let essentialNodeKey = makeNodeKey(kind: .essential, id: essential.id)
+
+        upsertNode(
+          in: &nodeStateByKey,
+          kind: .essential,
+          id: essential.id,
+          displayName: essential.id,
+          isMissing: false,
+          badge: essential.source == .systemBuiltIn ? "runtime" : nil
+        )
+        edgeKeys.insert(
+          WorkspaceSessionMapEdgeKey(
+            fromKey: sessionNodeKey,
+            toKey: essentialNodeKey,
+            reason: "session.resolvedEssentials"
           )
         )
       }
@@ -440,6 +469,20 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     scopes: ScopeSet
   ) -> URL? {
     let expectedPath = "Packs/essentials/\(essentialID).md"
+
+    if essentialID == "persona-activation-contract" {
+      guard let activeRootURL = scopes.projectScopeURL ?? scopes.globalScopeURL else {
+        return nil
+      }
+
+      let overrideURL = activeRootURL.appendingPathComponent(expectedPath)
+
+      if dependencies.fileExists(overrideURL) {
+        return overrideURL
+      }
+
+      return overrideURL
+    }
 
     for root in scopes.resolutionOrder {
       let fileURL = root.appendingPathComponent(expectedPath)

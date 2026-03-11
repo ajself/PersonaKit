@@ -94,6 +94,7 @@ public struct SessionExporter {
       intents: session.intents.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
       essentials: essentials,
+      skillAuthorization: session.skillAuthorization,
       sessionId: sessionId
     )
   }
@@ -105,7 +106,20 @@ public struct SessionExporter {
     _ essentials: [ResolvedEssential],
     fileManager: FileManager
   ) throws -> [ResolvedEssential] {
-    return try essentials.sorted { $0.id < $1.id }.map { essential in
+    return try SystemEssentials.sortResolvedEssentialsForResolvedOutput(essentials).map { essential in
+      if var content = essential.content {
+        if !content.hasSuffix("\n") {
+          content.append("\n")
+        }
+
+        return ResolvedEssential(
+          id: essential.id,
+          url: essential.url,
+          content: content,
+          source: essential.source
+        )
+      }
+
       let data: Data
 
       do {
@@ -122,7 +136,12 @@ public struct SessionExporter {
         content.append("\n")
       }
 
-      return ResolvedEssential(id: essential.id, url: essential.url, content: content)
+      return ResolvedEssential(
+        id: essential.id,
+        url: essential.url,
+        content: content,
+        source: essential.source
+      )
     }
   }
 
@@ -134,6 +153,7 @@ public struct SessionExporter {
     intents: [IntentTemplate],
     skills: [Skill],
     essentials: [ResolvedEssential],
+    skillAuthorization: ResolvedSkillAuthorization,
     sessionId: String?
   ) -> String {
     var output = ""
@@ -184,6 +204,49 @@ public struct SessionExporter {
     )
 
     appendLine()
+    appendLine("# Skill Contract")
+    appendListSection(
+      title: "Allowed Skills",
+      items: skillAuthorization.allowedSkillIds,
+      appendLine: appendLine
+    )
+    appendListSection(
+      title: "Forbidden Skills",
+      items: skillAuthorization.forbiddenSkillIds,
+      appendLine: appendLine
+    )
+    appendListSection(
+      title: "Authorized Skills",
+      items: skillAuthorization.authorizedSkillIds,
+      appendLine: appendLine
+    )
+    appendListSection(
+      title: "Required Skills",
+      items: skillAuthorization.requiredSkillIds,
+      appendLine: appendLine
+    )
+    appendListSection(
+      title: "Unauthorized Required Skills",
+      items: skillAuthorization.unauthorizedRequiredSkillIds,
+      appendLine: appendLine
+    )
+
+    appendLine()
+    appendLine("Authorized: \(skillAuthorization.isAuthorized)")
+
+    if !skillAuthorization.failureReasons.isEmpty {
+      appendListSection(
+        title: "Failure Reasons",
+        items: skillAuthorization.failureReasons,
+        appendLine: appendLine
+      )
+      appendLine()
+      appendLine(
+        "Hard Stop: Stop and re-ground before using any skill outside the resolved PersonaKit contract."
+      )
+    }
+
+    appendLine()
     appendLine("# Applied Kits")
 
     for kit in kits {
@@ -193,10 +256,12 @@ public struct SessionExporter {
     appendLine()
     appendLine("# Essentials")
 
-    for (index, essential) in essentials.enumerated() {
+    let orderedEssentials = SystemEssentials.sortResolvedEssentialsForResolvedOutput(essentials)
+
+    for (index, essential) in orderedEssentials.enumerated() {
       appendLine("## \(essential.id)")
       output.append(essential.content ?? "")
-      if index < essentials.count - 1 {
+      if index < orderedEssentials.count - 1 {
         appendLine()
       }
     }

@@ -17,198 +17,38 @@ public struct Resolver {
     scopes: ScopeSet,
     fileManager: FileManager = .default
   ) throws -> ResolvedSession {
-    var errors: [ResolverError] = []
+    let contract = try SessionContractResolver.resolve(
+      definition: SessionContractDefinition(
+        personaId: definition.personaId,
+        directiveId: definition.directiveId,
+        kitOverrides: definition.kitOverrides
+      ),
+      sessionId: nil,
+      registry: registry,
+      scopes: scopes,
+      fileManager: fileManager
+    )
 
-    let persona = registry.personasById[definition.personaId]
-    if persona == nil {
-      errors.append(.missingPersona(field: "personaId", id: definition.personaId))
+    if !contract.authorizationErrors.isEmpty {
+      throw ResolverResolutionError(errors: contract.authorizationErrors)
     }
 
-    let directive = registry.directivesById[definition.directiveId]
-    if directive == nil {
-      errors.append(.missingDirective(field: "directiveId", id: definition.directiveId))
-    }
-
-    if !errors.isEmpty {
-      throw ResolverResolutionError(errors: errors)
-    }
-
-    guard let resolvedPersona = persona, let resolvedDirective = directive else {
-      throw ResolverResolutionError(errors: errors)
-    }
-
-    let overrideIds = definition.kitOverrides ?? []
-    for kitId in resolvedPersona.defaultKitIds {
-      if registry.kitsById[kitId] == nil {
-        errors.append(
-          .missingKitId(
-            sourceType: .persona,
-            sourceId: resolvedPersona.id,
-            field: "defaultKitIds",
-            missingId: kitId
-          )
-        )
-      }
-    }
-
-    for kitId in overrideIds {
-      if registry.kitsById[kitId] == nil {
-        errors.append(
-          .missingKitId(
-            sourceType: .sessionDefinition,
-            sourceId: "session",
-            field: "kitOverrides",
-            missingId: kitId
-          )
-        )
-      }
-    }
-
-    let kitIds = uniqueSorted(resolvedPersona.defaultKitIds + overrideIds)
-    let resolvedKits = kitIds.compactMap { registry.kitsById[$0] }
-
-    var intentIds: [String] = []
-    for kit in resolvedKits {
-      for intentId in kit.intentTemplateIds ?? [] {
-        if registry.intentTemplatesById[intentId] == nil {
-          errors.append(
-            .missingIntentId(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "intentTemplateIds",
-              missingId: intentId
-            )
-          )
-        }
-        intentIds.append(intentId)
-      }
-    }
-
-    for intentId in resolvedDirective.requiresIntentTemplateIds {
-      if registry.intentTemplatesById[intentId] == nil {
-        errors.append(
-          .missingIntentId(
-            sourceType: .directive,
-            sourceId: resolvedDirective.id,
-            field: "requiresIntentTemplateIds",
-            missingId: intentId
-          )
-        )
-      }
-
-      intentIds.append(intentId)
-    }
-
-    let uniqueIntentIds = uniqueSorted(intentIds)
-    let resolvedIntents = uniqueIntentIds.compactMap { registry.intentTemplatesById[$0] }
-
-    var skillIds: [String] = []
-    for kit in resolvedKits {
-      for skillId in kit.skillIds ?? [] {
-        if registry.skillsById[skillId] == nil {
-          errors.append(
-            .missingSkillId(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "skillIds",
-              missingId: skillId
-            )
-          )
-        }
-        skillIds.append(skillId)
-      }
-    }
-
-    for skillId in resolvedDirective.requiresSkillIds {
-      if registry.skillsById[skillId] == nil {
-        errors.append(
-          .missingSkillId(
-            sourceType: .directive,
-            sourceId: resolvedDirective.id,
-            field: "requiresSkillIds",
-            missingId: skillId
-          )
-        )
-      }
-      skillIds.append(skillId)
-    }
-
-    for intent in resolvedIntents {
-      for skillId in intent.requiresSkillIds {
-        if registry.skillsById[skillId] == nil {
-          errors.append(
-            .missingSkillId(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "requiresSkillIds",
-              missingId: skillId
-            )
-          )
-        }
-        skillIds.append(skillId)
-      }
-    }
-
-    let uniqueSkillIds = uniqueSorted(skillIds)
-    let resolvedSkills = uniqueSkillIds.compactMap { registry.skillsById[$0] }
-
-    var essentialIds: [String] = []
-    for kit in resolvedKits {
-      for essentialId in kit.essentialIds {
-        let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-          errors.append(
-            .missingEssentialFile(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "essentialIds",
-              missingId: essentialId,
-              expectedPath: expectedPath
-            )
-          )
-        }
-        essentialIds.append(essentialId)
-      }
-    }
-
-    for intent in resolvedIntents {
-      for essentialId in intent.includesEssentialIds {
-        let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-          errors.append(
-            .missingEssentialFile(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "includesEssentialIds",
-              missingId: essentialId,
-              expectedPath: expectedPath
-            )
-          )
-        }
-        essentialIds.append(essentialId)
-      }
-    }
-
-    if !errors.isEmpty {
-      throw ResolverResolutionError(errors: errors)
-    }
-
-    let uniqueEssentialIds = uniqueSorted(essentialIds)
-    let resolvedEssentials = uniqueEssentialIds.compactMap { essentialId -> ResolvedEssential? in
-      guard let fileURL = resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager)
-      else {
-        return nil
-      }
-      return ResolvedEssential(id: essentialId, url: fileURL, content: nil)
+    guard let resolvedDirective = contract.directive else {
+      throw ResolverResolutionError(
+        errors: [
+          .missingDirective(field: "directiveId", id: definition.directiveId)
+        ]
+      )
     }
 
     return ResolvedSession(
-      persona: resolvedPersona,
+      persona: contract.persona,
       directive: resolvedDirective,
-      kits: resolvedKits.sorted { $0.id < $1.id },
-      essentials: resolvedEssentials.sorted { $0.id < $1.id },
-      intents: resolvedIntents.sorted { $0.id < $1.id },
-      skills: resolvedSkills.sorted { $0.id < $1.id }
+      kits: contract.kits,
+      essentials: contract.essentials,
+      intents: contract.intents,
+      skills: contract.skills,
+      skillAuthorization: contract.skillAuthorization
     )
   }
 
@@ -241,23 +81,4 @@ public struct Resolver {
 /// De-duplicates and sorts ids to keep resolver output deterministic.
 private func uniqueSorted(_ ids: [String]) -> [String] {
   return Set(ids).sorted()
-}
-
-/// Resolves an essential id to the first existing file in scope resolution order.
-private func resolveEssentialURL(
-  _ essentialId: String,
-  scopes: ScopeSet,
-  fileManager: FileManager
-) -> URL? {
-  let expectedPath = "Packs/essentials/\(essentialId).md"
-
-  for root in scopes.resolutionOrder {
-    let fileURL = root.appendingPathComponent(expectedPath)
-
-    if fileManager.fileExists(atPath: fileURL.path) {
-      return fileURL
-    }
-  }
-
-  return nil
 }

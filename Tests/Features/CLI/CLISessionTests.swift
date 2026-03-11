@@ -52,6 +52,36 @@ struct CLISessionTests {
   }
 
   @Test
+  func contractViaSessionReturnsStructuredJSON() throws {
+    let root = fixtureKitRootURL()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "contract",
+        "--root",
+        root.path,
+        "--session",
+        "senior-swiftui-engineer_apply-style",
+        "--check-skills",
+        "codex-cli,missing-skill",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    #expect(object["personaId"] as? String == "senior-swiftui-engineer")
+    #expect(object["directiveId"] as? String == "apply-style")
+    #expect(object["authorizedSkillIds"] as? [String] == ["codex-cli"])
+    #expect(object["undeclaredRequestedSkillIds"] as? [String] == ["missing-skill"])
+    #expect(object["isAuthorized"] as? Bool == false)
+  }
+
+  @Test
   func exportRequiresDirectiveWhenPersonaProvided() {
     var status: Int32 = 0
     let stderrOutput = captureStderr {

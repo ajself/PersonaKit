@@ -46,7 +46,10 @@ public struct GraphPrinter {
       lines.append(contentsOf: skills.map { "  - skill:\($0)" })
       return lines
     }
-    let resolvedEssentialLines = resolvedSession.essentials.map { $0.id }.sorted().map { "- \($0)" }
+    let resolvedEssentialLines =
+      SystemEssentials
+      .sortEssentialIdsForResolvedOutput(resolvedSession.essentials.map(\.id))
+      .map { "- \($0)" }
     let resolvedIntentLines = resolvedSession.intents.map { $0.id }.sorted().map { "- \($0)" }
     let resolvedSkillLines = resolvedSession.skills.map { $0.id }.sorted().map { "- \($0)" }
     var lines = [String]()
@@ -66,6 +69,11 @@ public struct GraphPrinter {
     appendSection("## Kits \u{2192} Skills", body: kitsToSkillLines, to: &lines)
     appendSection("## Directive \u{2192} Intent templates", body: directiveIntentLines, to: &lines)
     appendSection("## Directive \u{2192} Skills", body: directiveSkillLines, to: &lines)
+    appendSection(
+      "## Skill Contract",
+      body: skillContractLines(for: resolvedSession.skillAuthorization),
+      to: &lines
+    )
     if directive.workstream != nil {
       appendSection(
         "## Workstream",
@@ -101,6 +109,30 @@ public struct GraphPrinter {
     lines.append(heading)
     lines.append(contentsOf: body)
   }
+}
+
+private func skillContractLines(for contract: ResolvedSkillAuthorization) -> [String] {
+  var lines = [
+    "Allowed Skills:"
+  ]
+
+  lines.append(contentsOf: contract.allowedSkillIds.map { "  - \($0)" })
+  lines.append("Forbidden Skills:")
+  lines.append(contentsOf: contract.forbiddenSkillIds.map { "  - \($0)" })
+  lines.append("Authorized Skills:")
+  lines.append(contentsOf: contract.authorizedSkillIds.map { "  - \($0)" })
+  lines.append("Required Skills:")
+  lines.append(contentsOf: contract.requiredSkillIds.map { "  - \($0)" })
+  lines.append("Unauthorized Required Skills:")
+  lines.append(contentsOf: contract.unauthorizedRequiredSkillIds.map { "  - \($0)" })
+  lines.append("Authorized: \(contract.isAuthorized)")
+
+  if !contract.failureReasons.isEmpty {
+    lines.append("Failure Reasons:")
+    lines.append(contentsOf: contract.failureReasons.map { "  - \($0)" })
+  }
+
+  return lines
 }
 
 private func workstreamLines(for directive: Directive) -> [String] {

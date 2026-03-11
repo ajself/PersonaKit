@@ -417,7 +417,19 @@ struct ValidatorTests {
 
     let result = try Validator.validate(root: root)
 
-    #expect(result.errors.isEmpty)
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .session,
+          entityId: "broken",
+          field: "sessionFile",
+          missingId: "broken",
+          expectedPath: "Sessions/broken.session.json",
+          message:
+            "Failed to decode session file for broken: The data couldn’t be read because it isn’t in the correct format."
+        )
+      )
+    )
   }
 
   @Test
@@ -439,6 +451,19 @@ struct ValidatorTests {
 
     let result = try Validator.validate(root: root)
 
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .session,
+          entityId: "style-followup",
+          field: "id",
+          missingId: "style-followup",
+          expectedPath: "Sessions/style-followup.session.json",
+          message:
+            "Session id mismatch in Sessions/style-followup.session.json. Expected style-followup, got style-closeout."
+        )
+      )
+    )
     #expect(
       hasDirectiveWorkstreamError(
         result,
