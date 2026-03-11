@@ -5,7 +5,7 @@
   "goal": "Deliver the highest-priority bounded objective through deterministic gates in a dedicated non-main worktree with explicit approval control.",
   "steps": [
     {
-      "text": "Review objective, constraints, active plan gates, and `worktree-squad-gating-contract` for this loop."
+      "text": "Review objective, constraints, approved gate boundary, and `worktree-squad-gating-contract` for this loop."
     },
     {
       "text": "Verify branch/worktree scope is dedicated and non-main; record commit authorization mode before editing."
@@ -27,7 +27,7 @@
       "requiresReview": true
     },
     {
-      "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract`, update milestone status, and emit next 3 queued actions for resume."
+      "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract`, update checkpoint summary, and emit next 3 queued actions for resume."
     },
     {
       "text": "When assignment scope is complete, run `worktree-squad-retrospective-review` and append one retrospective entry."

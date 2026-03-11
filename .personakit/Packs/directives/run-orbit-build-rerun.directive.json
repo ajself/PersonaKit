@@ -5,7 +5,7 @@
   "goal": "Let Samwise stage a fresh main-based Orbit build attempt, freeze the execution contract, and hand the live lane to the dedicated Orbit rerun execution session.",
   "steps": [
     {
-      "text": "Load the active Orbit execution and planning artifacts, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the latest Orbit rerun-prep note, and the latest canonical retrospective artifacts."
+      "text": "Load the active Orbit execution artifacts plus the explicit handoff artifacts named by the intent parameters, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the latest Orbit rerun-prep note, and the latest canonical retrospective artifacts."
     },
     {
       "text": "Summarize the current attempt contract: first-slice scope, required participants, required evidence, required product gates, and the hybrid retrospective closeout rule."

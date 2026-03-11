@@ -5,7 +5,7 @@
   "goal": "Let Samwise orchestrate a gated worktree delivery loop by supervising Worktree Squad Lead execution, evidence quality, and gate decisions.",
   "steps": [
     {
-      "text": "Review AJ objective, active plan gate, scope constraints, and commit authorization mode."
+      "text": "Review AJ objective, approved checkpoint gate, scope constraints, and commit authorization mode."
     },
     {
       "text": "Confirm protected branch policy and isolated worktree scope before delegating implementation loops."

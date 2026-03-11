@@ -68,7 +68,7 @@
     "level": "high",
     "requiresHumanReview": true,
     "notes": [
-      "Use the active Orbit execution and planning docs as the source of truth for the rerun.",
+      "Use the Orbit execution checklists, rerun-prep artifact, explicit attempt artifact paths, and declared execution session routing as the source of truth for the rerun.",
       "Carry forward prior-attempt lessons explicitly; do not restart from vibes or thread memory alone.",
       "Use the exact manifest-approved lane branch for the attempt; do not infer branch identity from the latest historical run.",
       "Treat this intent as a startup-only contract and hand the live lane to the named execution session before substantive implementation begins.",
