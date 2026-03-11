@@ -182,6 +182,46 @@ Then ask for the work you want done.
 
 At this point, the agent is fully grounded. You can now ask for work—reviews, refactors, explanations—without restating roles, rules, or constraints.
 
+### Persona Activation And Delegation
+
+Personas are operating contracts, not tone presets.
+
+When PersonaKit resolves a session for runtime grounding, it includes the
+source-backed universal `persona-activation-contract` essential by default. A
+project-local `Packs/essentials/persona-activation-contract.md` file may
+override that default when explicitly present. That means:
+
+- one active persona per agent at a time
+- persona reassignment requires fresh grounding
+- orchestrator work should stay pinned to one active persona while coordinating
+- multi-persona work should happen through explicit turn changes or separate agents
+- delegated lanes should receive one authoritative operating persona, with any
+  review personas named separately
+
+This rule applies to resolved-session surfaces such as CLI export, graph, MCP
+session prompts, and session-trace style runtime views. Raw catalog/entity/file
+reads still reflect only the underlying authored pack data rather than injected
+runtime contracts.
+
+### Skill Authorization
+
+PersonaKit grounding also comes before skill selection.
+
+Resolved runtime surfaces include the source-backed universal
+`skill-authorization-contract` by default, with an optional project-local
+override at `Packs/essentials/skill-authorization-contract.md`. In practice,
+that means:
+
+- only PersonaKit-declared skills are eligible for authorization
+- the resolved persona contract sets the skill ceiling
+- undeclared host-local or external skills are unauthorized by default
+- if a required or requested skill falls outside the resolved contract, stop and
+  re-ground instead of improvising
+
+As with persona activation, this contract belongs to resolved runtime views.
+Raw catalog/entity/file reads remain authored-only unless an override file is
+actually present on disk.
+
 ⸻
 
 What PersonaKit is
@@ -241,6 +281,8 @@ A Persona defines:
 	•	default Kits it brings to the job
 
 PersonaKit requires a persona for any session. There is no omniscient “do everything” agent.
+PersonaKit also assumes one active persona per agent at a time for reliable,
+auditable execution.
 
 ⸻
 

@@ -76,7 +76,7 @@ Use `delegated-agent-handoff-template` as the default packet shape.
 
 Each delegated handoff packet should name:
 
-1. Role and owner persona ID.
+1. Role and one authoritative operating persona ID.
 2. Required session ID or directive ID.
 3. Grounding requirement:
    - live PersonaKit MCP first
@@ -95,6 +95,7 @@ Each delegated handoff packet should name:
    - `grounding-blocked`
 10. Grounding source path or export source reference.
 11. Snapshot date when the grounding mode is `static-export`.
+12. Optional review personas, if any, recorded separately from the operating persona.
 
 Guardrails:
 
@@ -106,6 +107,8 @@ Guardrails:
    delegated lane stops as `grounding-blocked`.
 4. Static export fallback should record provenance and freshness so delegated
    lanes can distinguish the intended snapshot from stale cache data.
+5. Delegated execution identity must not blend multiple active personas inside
+   one lane.
 
 ## Output Contract
 

@@ -50,6 +50,16 @@ Define a canonical, implementation-aligned model for PersonaKit entities and the
 3. Kit expansion
 - A `kit` expands to `essentialIds`.
 
+3a. Runtime contract injection
+- Resolved-session surfaces also inject required system essentials that are not
+  declared by kits.
+- In this repository, `persona-activation-contract` is a built-in required
+  runtime essential.
+- A project-local `Packs/essentials/persona-activation-contract.md` file may
+  override the built-in default for the active root.
+- This injection applies only to resolved-session outputs and traces, not to raw
+  kit metadata or catalog/entity reads.
+
 4. Directive dependencies
 - A `directive` may require intent templates and skills.
 

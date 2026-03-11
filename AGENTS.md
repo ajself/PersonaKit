@@ -52,12 +52,21 @@ Agents must follow these rules at all times:
 	•	Output must be stable across runs
 	•	Sort by id where ordering matters
 	•	Do not add timestamps, UUIDs, or environment-specific data
-	5.	Use Conventional Commits
+	5.	Persona activation is explicit
+	•	Do not operate as multiple active personas at the same time
+	•	When persona assignment changes, reload PersonaKit grounding before continuing
+	•	PersonaKit grounding must happen before external skill selection
+	•	Only skills authorized by the resolved PersonaKit contract may be used
+	•	Undeclared host-local or external skills are unauthorized by default
+	•	On skill mismatch, stop and re-ground rather than improvising
+	•	Delegated agents must receive one authoritative persona assignment for their lane
+	•	Review personas are not the same thing as active execution identity
+	6.	Use Conventional Commits
 	•	When creating a git commit, use Conventional Commit format: `type(scope): summary` when a clear scope exists, otherwise `type: summary`
 	•	Do not invent repo-specific commit formats or rely on memory for commit style
-	6.	Human review is mandatory at stop points
+	7.	Human review is mandatory at stop points
 	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
-	7. MCP usage is read-only
+	8. MCP usage is read-only
 	   • Treat all MCP Resources as immutable context
 	   • Prompts return assembled context only; they do not imply permission to act
 	   • Never attempt to write back to the PersonaKit root via MCP
@@ -73,7 +82,10 @@ When working on this repo, agents should:
 	2.	Identify the active Kit(s)
 	3.	Identify the active Directive
 	4.	Use only the skills allowed by the Persona
-	5.	Follow all constraints and non-goals verbatim
+	5.	Treat the resolved persona as the single active operating contract until explicitly reassigned
+	•	Runtime grounding includes PersonaKit’s built-in persona-activation contract even when no authored override file exists
+	•	Runtime grounding also includes PersonaKit’s built-in `skill-authorization-contract` unless a project-local override replaces it
+	6.	Follow all constraints and non-goals verbatim
 
 When using the MCP server specifically:
 • Prefer reading [Resources](./README.md#mcp-server-read-only) for raw context (personas, kits, directives, essentials)
@@ -90,6 +102,7 @@ Agents should prefer:
 	•	small, reviewable diffs
 	•	explicit explanations of changes
 	•	clear mapping between changes and Directive steps
+	•	explicit persona reassignment rather than blended multi-persona behavior
 	•	Conventional Commit messages for any authorized commit
 
 Agents should avoid:

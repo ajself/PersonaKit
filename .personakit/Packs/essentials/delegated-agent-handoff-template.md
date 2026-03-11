@@ -42,7 +42,7 @@ Those lanes should use live PersonaKit MCP or stop as `grounding-blocked`.
 Each handoff packet should include:
 
 1. Role name.
-2. Owner persona ID.
+2. Authoritative operating persona ID.
 3. Required session ID or directive ID.
 4. Grounding mode:
    - `live-mcp`
@@ -64,6 +64,7 @@ Each handoff packet should include:
 15. Grounding source path or export source reference.
 16. Snapshot date when `groundingMode = static-export`.
 17. Snapshot revision marker when one exists.
+18. Optional review personas kept separate from execution identity.
 
 ## Static Export Guardrails
 
@@ -82,7 +83,8 @@ When `groundingMode = static-export`:
 ## Delegated Agent Handoff Packet
 
 - Role:
-- Owner persona ID:
+- Operating persona ID:
+- Review personas:
 - Required session ID:
 - Required directive ID:
 - Grounding mode: `live-mcp` | `static-export`
@@ -99,6 +101,7 @@ When `groundingMode = static-export`:
 ### PersonaKit Context
 
 - Persona ID:
+- Operating persona confirmation:
 - Directive ID:
 - Kit IDs:
 - Essential IDs:
@@ -118,4 +121,5 @@ When `groundingMode = static-export`:
 - Snapshot revision marker:
 - Snapshot limitations:
 - Do-not-improvise note:
+- Execution identity note:
 ```
