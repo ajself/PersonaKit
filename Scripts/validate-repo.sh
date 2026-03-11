@@ -81,6 +81,12 @@ swift test
 echo "Checking generated workstream docs..."
 swift run personakit workstream-docs --root .personakit --check
 
+echo "Checking generated operational record docs..."
+swift run personakit log-docs --root .personakit --check
+
+echo "Checking operational record schemas..."
+./Scripts/check-operational-records.sh
+
 echo "Validating kit..."
 swift run personakit validate --root "$kit_root"
 
