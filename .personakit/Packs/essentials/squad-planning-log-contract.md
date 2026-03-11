@@ -38,6 +38,28 @@ Recommended:
 
 1. `relatedHiringReviewIds`
 2. `details`
+3. `delegatedRoleNames`
+4. `delegatedHandoffs`
+
+## Delegated Handoff Details
+
+When a planning pass expects a role to be staffed by a spawned agent, record
+that role in `delegatedRoleNames` and include a matching machine-readable
+handoff object in `delegatedHandoffs`.
+
+Each `delegatedHandoffs` item should include:
+
+1. `role`
+2. `ownerRef`
+3. `requiredSessionId` or `requiredDirectiveId`
+4. `groundingMode`
+5. `fallbackArtifactPaths`
+6. `writeScope`
+7. `validationCommands`
+8. `failureDisposition`
+9. `groundingSourcePath`
+10. `snapshotDate` when `groundingMode = static-export`
+11. `snapshotRevision` when one exists
 
 ## Review Status Rule
 
@@ -47,6 +69,9 @@ Recommended:
    route the next session to a hiring or remediation loop before execution.
 3. The human-readable report and JSONL entry should agree on the named next
    session, first checkpoint, and validation owner.
+4. When delegated handoffs are present, the report and JSONL entry should agree
+   on delegated role names, grounding mode, failure disposition, and
+   static-export provenance fields.
 
 ## Guardrails
 
@@ -57,6 +82,10 @@ Recommended:
   planning pass.
 - Keep execution handoff blocked until review gates, definition-of-done, and
   validation expectations are explicit.
+- Keep delegated work blocked until each spawned-agent role has an explicit
+  grounding path or a recorded `grounding-blocked` disposition.
+- When delegated roles are declared, machine-readable delegated handoff records
+  are required; do not rely on prose-only reports.
 
 ## Validation
 

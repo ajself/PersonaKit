@@ -4,6 +4,7 @@
   "name": "Samwise Planning Core Kit",
   "summary": "Reusable planning contracts for Samwise-led objective shaping, role coverage review, and durable plan handoff before execution.",
   "essentialIds": [
+    "delegated-agent-handoff-template",
     "multiagent-squad-planning-contract",
     "squad-planning-report-template",
     "squad-planning-log-contract",

@@ -26,6 +26,9 @@
       "text": "Draft the initial squad roster, role boundaries, milestone or checkpoint plan, dependencies, review gates, validation ownership, handoff status, and named next session."
     },
     {
+      "text": "For any role expected to be staffed by a spawned agent, draft a compact delegated handoff packet that names the persona/session grounding target, live PersonaKit MCP as the preferred grounding path, approved static export fallback only for bounded implementation or review work, write scope, validation expectations, provenance and freshness fields for static exports, stop points, and `grounding-blocked` as the failure disposition when no valid grounding path exists."
+    },
+    {
       "text": "Write or update the planning report using `squad-planning-report-template` at the explicit output path or approved workspace-local fallback."
     },
     {
@@ -47,6 +50,7 @@
     "Execution-critical missing or covered-with-gaps roles route to a named remediation or hiring session before execution",
     "Missing artifact recommendations are grouped by type and prioritized",
     "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, and next session",
+    "Delegated roles expected to use spawned agents include explicit handoff packets with grounding mode, provenance and freshness fields for static exports, write scope, validation expectations, stop points, and a fail-closed path when PersonaKit grounding is unavailable",
     "A durable planning report exists at the declared output path or approved fallback",
     "A schema-valid machine-readable planning entry exists and names the same next session as the report",
     "Hiring-log validation runs only when reverse-interview or hiring-remediation work was part of the pass",
@@ -68,6 +72,10 @@
     {
       "kind": "manual",
       "text": "Confirm definition of done, validation evidence, and execution stop point are explicit before implementation handoff"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm delegated handoff packets exist for spawned-agent roles and name the grounding path, fallback rule, provenance and freshness fields for static exports, write scope, validation expectations, and `grounding-blocked` failure disposition"
     },
     {
       "kind": "manual",

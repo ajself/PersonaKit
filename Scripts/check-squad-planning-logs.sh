@@ -134,6 +134,77 @@ def check_cross_refs(entries: list[dict], hiring_ids: set[str]):
     return errors
 
 
+def check_delegated_handoffs(entries: list[dict]):
+    errors = []
+    for idx, entry in enumerate(entries, start=1):
+        delegated_role_names = entry.get("delegatedRoleNames", [])
+        delegated_handoffs = entry.get("delegatedHandoffs", [])
+
+        if delegated_role_names and not isinstance(delegated_role_names, list):
+            errors.append(f"line {idx}: delegatedRoleNames must be an array when present")
+            continue
+
+        if delegated_handoffs and not isinstance(delegated_handoffs, list):
+            errors.append(f"line {idx}: delegatedHandoffs must be an array when present")
+            continue
+
+        if delegated_role_names:
+            if not delegated_handoffs:
+                errors.append(
+                    f"line {idx}: delegatedRoleNames are present but delegatedHandoffs is missing"
+                )
+                continue
+
+            handoff_roles = set()
+            for handoff_idx, handoff in enumerate(delegated_handoffs, start=1):
+                prefix = f"line {idx}: delegatedHandoffs[{handoff_idx}]"
+                if not isinstance(handoff, dict):
+                    errors.append(f"{prefix} is not an object")
+                    continue
+
+                role = handoff.get("role")
+                if not isinstance(role, str) or not role:
+                    errors.append(f"{prefix}: missing non-empty role")
+                else:
+                    handoff_roles.add(role)
+
+                required_session = handoff.get("requiredSessionId")
+                required_directive = handoff.get("requiredDirectiveId")
+                if not required_session and not required_directive:
+                    errors.append(
+                        f"{prefix}: either requiredSessionId or requiredDirectiveId is required"
+                    )
+
+                grounding_mode = handoff.get("groundingMode")
+                if grounding_mode == "static-export":
+                    fallback_paths = handoff.get("fallbackArtifactPaths", [])
+                    if not isinstance(fallback_paths, list) or not fallback_paths:
+                        errors.append(
+                            f"{prefix}: static-export handoffs require fallbackArtifactPaths"
+                        )
+                    snapshot_date = handoff.get("snapshotDate")
+                    if not isinstance(snapshot_date, str) or not re.match(
+                        r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                        snapshot_date,
+                    ):
+                        errors.append(
+                            f"{prefix}: static-export handoffs require snapshotDate in YYYY-MM-DD format"
+                        )
+
+            missing_roles = sorted(set(delegated_role_names) - handoff_roles)
+            if missing_roles:
+                errors.append(
+                    f"line {idx}: delegatedHandoffs missing roles declared in delegatedRoleNames {missing_roles}"
+                )
+
+        elif delegated_handoffs:
+            errors.append(
+                f"line {idx}: delegatedHandoffs present without delegatedRoleNames declaration"
+            )
+
+    return errors
+
+
 all_errors = []
 
 if not SCHEMA_PATH.exists():
@@ -148,6 +219,7 @@ else:
         all_errors.extend(validate_schema(schema, entries))
         all_errors.extend(check_entry_ids(entries))
         all_errors.extend(check_cross_refs(entries, hiring_ids))
+        all_errors.extend(check_delegated_handoffs(entries))
 
 if all_errors:
     print("SQUAD_PLANNING_LOGS_CHECK:FAIL")

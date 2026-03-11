@@ -28,6 +28,9 @@ Optional but recommended:
 3. Confidence threshold for role-fit checks (defaults to `80` if omitted).
 4. Definition of done for the first execution checkpoint.
 5. Required validation expectations or commands.
+6. Roles expected to be delegated to spawned agents.
+7. Known grounding artifact paths if a static PersonaKit export fallback is
+   already available.
 
 ## Required Role-Coverage Review
 
@@ -51,6 +54,47 @@ For each new objective, the planning pass must:
    - a candidate role fit is uncertain
    - the role introduces a new domain, delivery mode, or risk profile
 
+## Delegated Handoff Requirements
+
+When a role is expected to be staffed by a spawned agent, the planning pass
+must produce a compact delegated handoff packet for that role before execution
+handoff is considered ready.
+
+Use `delegated-agent-handoff-template` as the default packet shape.
+
+Each delegated handoff packet should name:
+
+1. Role and owner persona ID.
+2. Required session ID or directive ID.
+3. Grounding requirement:
+   - live PersonaKit MCP first
+   - approved static PersonaKit export second for bounded implementation or
+     review work
+4. PersonaKit context load target:
+   - persona
+   - directive
+   - associated kits
+   - associated essentials
+5. Objective boundary and write scope.
+6. Acceptance criteria.
+7. Validation commands or evidence expectations.
+8. Stop points and return conditions.
+9. Failure disposition when grounding is unavailable:
+   - `grounding-blocked`
+10. Grounding source path or export source reference.
+11. Snapshot date when the grounding mode is `static-export`.
+
+Guardrails:
+
+1. Planning, hiring, remediation, and open-ended discovery work must not
+   silently degrade to cached PersonaKit context.
+2. Static export fallback is acceptable only for bounded implementation or
+   review work.
+3. If neither live MCP nor an approved static export is available, the
+   delegated lane stops as `grounding-blocked`.
+4. Static export fallback should record provenance and freshness so delegated
+   lanes can distinguish the intended snapshot from stale cache data.
+
 ## Output Contract
 
 Each squad-planning pass should produce:
@@ -73,6 +117,8 @@ Each squad-planning pass should produce:
    - review gates
    - validation expectations
    - next actions
+6. Delegated handoff packets for any roles expected to be staffed by spawned
+   agents.
 
 Required sections:
 
@@ -84,6 +130,7 @@ Required sections:
 6. Recommended next session for execution or remediation.
 7. Handoff status (`awaiting-aj-review`, `ready-for-remediation`,
    `ready-for-execution`, or `blocked`).
+8. Delegated grounding status when delegated roles exist.
 
 ## Persistence Requirements
 
@@ -108,6 +155,8 @@ The report and JSONL entry should agree on:
 2. first checkpoint
 3. validation owner
 4. handoff status
+5. delegated handoff summary when delegated roles exist
+6. static-export provenance and snapshot date when static fallback is used
 
 ## Reverse-Interview Rules
 
@@ -137,6 +186,8 @@ Stop and request AJ review before:
    disposition.
 6. Concluding the pass without a durable report, JSONL entry, validation owner,
    and named next session.
+7. Handing delegated work to execution without an explicit handoff packet and
+   grounding path.
 
 ## Guardrails
 
@@ -149,4 +200,6 @@ Stop and request AJ review before:
   handoff.
 - Require a durable planning report, a schema-valid planning log entry, and a
   named next-session handoff before treating the pass as complete.
+- Require delegated roles to carry explicit grounding instructions; do not
+  assume spawned agents will infer PersonaKit context from slim prompts.
 - Respect active commit authorization policy and stop points.

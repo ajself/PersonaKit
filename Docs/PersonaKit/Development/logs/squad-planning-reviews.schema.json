@@ -195,6 +195,87 @@
       "type": "string",
       "minLength": 1
     },
+    "delegatedRoleNames": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "delegatedHandoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "ownerRef",
+          "groundingMode",
+          "writeScope",
+          "validationCommands",
+          "failureDisposition",
+          "groundingSourcePath"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredSessionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredDirectiveId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "groundingMode": {
+            "type": "string",
+            "enum": [
+              "live-mcp",
+              "static-export"
+            ]
+          },
+          "fallbackArtifactPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "writeScope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "validationCommands": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "failureDisposition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "groundingSourcePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "snapshotDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "snapshotRevision": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "relatedHiringReviewIds": {
       "type": "array",
       "items": {

@@ -51,6 +51,24 @@ staffed plan before execution.
    - Validation owner:
    - Validation commands or evidence:
 
+## Delegated Agent Handoff Packets
+
+Use `delegated-agent-handoff-template` to fill one packet per delegated role.
+
+1. Role:
+   - Owner persona ID:
+   - Required session or directive:
+   - Grounding mode:
+   - Static export path (if any):
+   - Grounding source path:
+   - Snapshot date (if static export):
+   - Snapshot revision marker (if any):
+   - Write scope:
+   - Acceptance criteria:
+   - Validation commands or evidence:
+   - Stop points:
+   - Failure disposition:
+
 ## Unknowns And Risks
 
 1.

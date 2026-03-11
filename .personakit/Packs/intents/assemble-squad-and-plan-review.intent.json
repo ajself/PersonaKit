@@ -45,12 +45,23 @@
       "required": false
     },
     {
+      "name": "delegatedRoleNames",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "groundingArtifactPaths",
+      "type": "string[]",
+      "required": false
+    },
+    {
       "name": "planningOutputPath",
       "type": "string",
       "required": false
     }
   ],
   "includesEssentialIds": [
+    "delegated-agent-handoff-template",
     "multiagent-squad-planning-contract",
     "persona-hiring-routing-contract",
     "squad-planning-report-template",
@@ -73,6 +84,9 @@
       "Run reverse-interview analysis when role coverage is uncertain or missing.",
       "Keep hiring branches explicit by routing them through the hiring workflow and loading hiring context only for that branch.",
       "Require explicit owners, definition-of-done, and validation expectations before execution handoff.",
+      "If delegated lanes will be staffed by spawned agents, require compact handoff packets with PersonaKit MCP grounding instructions, write scope, validation, and stop points before execution handoff.",
+      "Slim prompts are insufficient for PersonaKit-backed delegated lanes; planning-heavy work must not silently degrade to cached context.",
+      "If live PersonaKit MCP is unavailable, static export fallback is allowed only for bounded implementation or review work; otherwise stop as `grounding-blocked`.",
       "Produce a durable report, a schema-valid JSONL entry, and name the next session before concluding the planning pass.",
       "Keep new artifact recommendations bounded to the current objective.",
       "Pause before structural pack/session updates or execution handoff."
