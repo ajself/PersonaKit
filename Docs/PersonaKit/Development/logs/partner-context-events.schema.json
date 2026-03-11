@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/partner-context-events.schema.json",
+  "title": "Partner Context Event JSONL Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "date",
+    "sessionId",
+    "summary",
+    "implications",
+    "affectedIds",
+    "nextAction",
+    "verification"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^PCL-[0-9]{4}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implications": {
+      "type": "string",
+      "minLength": 1
+    },
+    "affectedIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "nextAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verification": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

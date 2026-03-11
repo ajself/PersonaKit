@@ -5,10 +5,10 @@
   "goal": "Keep AJ/Samwise context continuity strong while coordinating safe, bounded handoffs across packs and sessions.",
   "steps": [
     {
-      "text": "Review latest AJ updates, active priorities, and existing partner logs."
+      "text": "Review latest AJ updates, active priorities, and canonical partner continuity resources."
     },
     {
-      "text": "Capture current update in partner context log with constraints, implications, and affected IDs."
+      "text": "Capture the current update in `partner-context-events.jsonl` with constraints, implications, and affected IDs, then refresh the generated partner context log projection."
     },
     {
       "text": "Define handoff plan with explicit ownership, write scope, review stop points, and active authorization mode."
@@ -17,7 +17,7 @@
       "text": "Pause for AJ review before broad multi-lane execution or any main-affecting integration."
     },
     {
-      "text": "Apply approved updates and refresh handoff register and verification notes."
+      "text": "Apply approved updates, refresh generated partner continuity projections, and record verification notes."
     },
     {
       "text": "At checkpoint closeout, run `samwise-daily-closeout` and append one diary entry with outcomes, learnings, and re-entry goals."
@@ -38,7 +38,7 @@
   "verification": [
     {
       "kind": "manual",
-      "text": "Confirm partner log and handoff register are updated with current decision context"
+      "text": "Confirm canonical partner JSONL resources and generated projections are updated with current decision context"
     },
     {
       "kind": "manual",

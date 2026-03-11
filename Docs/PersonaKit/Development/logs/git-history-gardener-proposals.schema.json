@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personakit.local/schemas/git-history-gardener-proposals.schema.json",
+  "title": "Git History Gardener Proposal JSONL Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entryId",
+    "proposalId",
+    "date",
+    "sessionId",
+    "analysisPassId",
+    "candidateCommit",
+    "proposedAction",
+    "rationale",
+    "risk",
+    "commandPlan",
+    "approvalStatus",
+    "eventType"
+  ],
+  "properties": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^GHL-[0-9]{4}$"
+    },
+    "proposalId": {
+      "type": "string",
+      "pattern": "^GHP-[0-9]{3}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "const": "git-history-gardener"
+    },
+    "analysisPassId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateCommit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposedAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commandPlan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approvalStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

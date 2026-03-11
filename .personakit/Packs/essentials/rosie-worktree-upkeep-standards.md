@@ -32,12 +32,17 @@ lane worktree.
 For each upkeep cycle, update:
 
 1. `Docs/PersonaKit/Development/partner-context-log.md`
-2. `Docs/PersonaKit/Development/partner-handoff-register.md`
-3. `Docs/PersonaKit/Development/pack-gardener-log.md`
-4. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
-5. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
-6. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
-7. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
+2. `Docs/PersonaKit/Development/logs/partner-context-events.jsonl`
+3. `Docs/PersonaKit/Development/partner-handoff-register.md`
+4. `Docs/PersonaKit/Development/logs/partner-handoffs.jsonl`
+5. `Docs/PersonaKit/Development/pack-gardener-log.md`
+6. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
+7. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
+8. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
+9. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
+
+The markdown partner and gardener logs are generated projections over canonical
+JSONL resources.
 
 ## Guardrails
 

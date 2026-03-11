@@ -27,8 +27,14 @@ gardening, hiring, partner continuity, and worktree-squad delivery.
 - `gardening-safety-preflight.schema.json`: schema for safety preflight entries.
 - `git-history-gardener.jsonl`: session-specific git-history log profile.
 - `git-history-gardener.schema.json`: session-specific schema extension profile.
+- `git-history-gardener-proposals.jsonl`: canonical append-only proposal stream for git-history gardening recommendations.
+- `git-history-gardener-proposals.schema.json`: schema for git-history proposal entries.
 - `persona-hiring-reviews.jsonl`: reverse-interview outcome stream for persona hiring assessments.
 - `persona-hiring-reviews.schema.json`: schema for persona hiring review entries.
+- `partner-context-events.jsonl`: canonical partner-continuity event stream.
+- `partner-context-events.schema.json`: schema for partner continuity entries.
+- `partner-handoffs.jsonl`: canonical partner handoff event stream.
+- `partner-handoffs.schema.json`: schema for partner handoff entries.
 - `samwise-diary.jsonl`: Samwise end-of-day reflection diary.
 - `samwise-diary.schema.json`: schema for Samwise diary entries.
 - `squad-planning-reviews.jsonl`: durable planning-review stream for Samwise squad formation and handoff passes.
@@ -39,7 +45,41 @@ gardening, hiring, partner continuity, and worktree-squad delivery.
 - `worktree-squad-loops.schema.json`: schema for squad-loop entries.
 - `worktree-squad-retrospectives.jsonl`: retrospective/recommendation stream for squad iterations.
 - `worktree-squad-retrospectives.schema.json`: schema for squad retrospective entries, supporting legacy and Starfish-shaped records.
-- `../git-history-gardener-proposals.md`: approval-gated proposed history changes.
+- `../partner-context-log.md`: generated partner-context projection over `partner-context-events.jsonl`.
+- `../partner-handoff-register.md`: generated handoff projection over `partner-handoffs.jsonl`.
+- `../pack-gardener-log.md`: generated maintenance projection over `gardening-events.jsonl`.
+- `../git-history-gardener-log.md`: generated git-history projection over `git-history-gardener.jsonl`.
+- `../git-history-gardener-proposals.md`: generated proposal projection over `git-history-gardener-proposals.jsonl`.
+
+## Resource Catalog
+
+Operational ledgers should be reasoned about as logical resources first, with
+the current backend noted explicitly:
+
+- `partner-context`
+  - backend: `jsonl`
+  - canonical path: `partner-context-events.jsonl`
+  - projection path: `../partner-context-log.md`
+- `partner-handoffs`
+  - backend: `jsonl`
+  - canonical path: `partner-handoffs.jsonl`
+  - projection path: `../partner-handoff-register.md`
+- `gardening-events`
+  - backend: `jsonl`
+  - canonical path: `gardening-events.jsonl`
+  - projection path: `../pack-gardener-log.md`
+- `git-history-gardener`
+  - backend: `jsonl`
+  - canonical path: `git-history-gardener.jsonl`
+  - projection path: `../git-history-gardener-log.md`
+- `git-history-proposals`
+  - backend: `jsonl`
+  - canonical path: `git-history-gardener-proposals.jsonl`
+  - projection path: `../git-history-gardener-proposals.md`
+
+This resource vocabulary is the database seam for future migration: resource
+IDs, business keys, and schema meaning should stay stable even when storage
+moves beyond flat files.
 
 ## Contract Rule
 
@@ -65,6 +105,16 @@ Each reverse-interview pass should produce:
 
 Each closeout checkpoint should append one schema-valid entry to
 `samwise-diary.jsonl` with continuity-ready learning and next-goal fields.
+
+### Partner Continuity Logs
+
+Partner continuity and handoffs should use canonical JSONL resources:
+
+1. `partner-context-events.jsonl`
+2. `partner-handoffs.jsonl`
+
+The markdown partner log and handoff register are generated projections and
+must not be treated as the authoritative store.
 
 ### Squad Planning Logs
 
@@ -146,6 +196,8 @@ the current state.
 
 Run:
 
+- `swift run personakit log-docs --root .personakit --check`
+- `Scripts/check-operational-records.sh`
 - `Scripts/check-gardening-logs.sh`
 - `Scripts/check-persona-hiring-logs.sh`
 - `Scripts/check-squad-planning-logs.sh`
@@ -154,8 +206,16 @@ Run:
 
 Expected output:
 
+- no drift from `log-docs --check`
+- `OPERATIONAL_RECORDS_CHECK:PASS`
 - `GARDENING_LOGS_CHECK:PASS`
 - `PERSONA_HIRING_LOGS_CHECK:PASS`
 - `SQUAD_PLANNING_LOGS_CHECK:PASS`
 - `SESSION_STACK_REVIEW_LOGS_CHECK:PASS`
 - `WORKTREE_SQUAD_LOGS_CHECK:PASS`
+
+## Bootstrap
+
+Use `swift run personakit migrate-log-records --root .personakit --write` only for
+one-time import from legacy hand-authored markdown ledgers. It is not part of
+steady-state validation once the canonical JSONL streams are established.

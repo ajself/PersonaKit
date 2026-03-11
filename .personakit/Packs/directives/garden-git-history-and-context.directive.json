@@ -14,7 +14,7 @@
       "text": "Produce a proposal report with candidate commits, rationale, risk, and exact command plan marked pending approval."
     },
     {
-      "text": "Record each decision and proposed action in markdown, session-specific JSONL, and shared gardening JSONL logs using required fields."
+      "text": "Record each decision and proposed action in canonical proposal/session/shared JSONL logs using required fields, then refresh generated markdown projections."
     },
     {
       "text": "Pause for review and approval before any history-altering action.",
@@ -34,11 +34,11 @@
   "verification": [
     {
       "kind": "manual",
-      "text": "Confirm Docs/PersonaKit/Development/git-history-gardener-proposals.md exists and proposal statuses are explicit"
+      "text": "Confirm Docs/PersonaKit/Development/logs/git-history-gardener-proposals.jsonl exists, canonical proposal events are explicit, and the generated markdown projection is current"
     },
     {
       "kind": "manual",
-      "text": "Confirm Docs/PersonaKit/Development/git-history-gardener-log.md captures range, decisions, and review outcomes"
+      "text": "Confirm Docs/PersonaKit/Development/logs/git-history-gardener.jsonl captures range, decisions, and review outcomes, and the generated markdown projection is current"
     },
     {
       "kind": "manual",

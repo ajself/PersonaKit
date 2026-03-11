@@ -38,7 +38,7 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local export list graph zip
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local export list graph zip format-check
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -134,6 +134,9 @@ doctor:
 	@echo "doctor: OK"
 
 build: build-app build-cli
+
+format-check:
+	swift format lint -r Sources Tests
 
 build-app: doctor
 	$(XCODEBUILDMCP) macos build \

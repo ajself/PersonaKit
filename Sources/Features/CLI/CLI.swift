@@ -58,6 +58,8 @@ struct PersonaKitCommand: ParsableCommand {
       InitCommand.self,
       ValidateCommand.self,
       WorkstreamDocsCommand.self,
+      MigrateLogRecordsCommand.self,
+      LogDocsCommand.self,
       ExportCommand.self,
       ListCLICommand.self,
       GraphCommand.self,
@@ -205,6 +207,134 @@ struct WorkstreamDocsCommand: ParsableCommand {
         to: sessionDirectoryURL
       )
     }
+  }
+}
+
+/// Imports legacy markdown operational records into canonical JSONL streams.
+struct MigrateLogRecordsCommand: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "migrate-log-records",
+    abstract: "Bootstrap canonical operational-record JSONL files from legacy markdown ledgers."
+  )
+
+  @OptionGroup
+  var root: ExplicitProjectRootOptions
+
+  @Flag(name: .customLong("write"), help: "Write imported canonical JSONL bootstrap output.")
+  var shouldWrite = false
+
+  @Flag(name: .customLong("check"), help: "Check legacy bootstrap output against committed canonical JSONL files.")
+  var shouldCheck = false
+
+  func run() throws {
+    guard shouldWrite != shouldCheck else {
+      throw CLIError.failure(
+        "migrate-log-records requires exactly one of --write or --check."
+      )
+    }
+
+    let rootURL = try CLIHelpers.resolveExplicitProjectRoot(path: root.rootPath)
+    let projectRootURL = rootURL.deletingLastPathComponent()
+    let validation = try Validator.validate(root: rootURL)
+    if !validation.errors.isEmpty {
+      print(validation.summary)
+      for error in validation.errors {
+        print(error.lineDescription())
+      }
+      throw ExitCode.failure
+    }
+
+    let output = try OperationalRecordBuilder.buildMigrationOutput(root: rootURL)
+    let currentFiles = try loadCurrentFiles(
+      relativePaths: output.files.keys.sorted(),
+      projectRootURL: projectRootURL
+    )
+
+    if shouldCheck {
+      let driftedPaths = output.files.keys.sorted().filter { relativePath in
+        currentFiles[relativePath] != output.files[relativePath]
+      }
+
+      if !driftedPaths.isEmpty {
+        var stderrStream = StandardError()
+        for path in driftedPaths {
+          stderrStream.write("Drift detected: \(path)\n")
+        }
+        throw ExitCode.failure
+      }
+
+      return
+    }
+
+    try writeChangedFiles(
+      output.files,
+      currentFiles: currentFiles,
+      projectRootURL: projectRootURL
+    )
+  }
+}
+
+/// Generates or checks markdown companion docs for canonical operational records.
+struct LogDocsCommand: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "log-docs",
+    abstract: "Generate or check operational-record markdown companion docs."
+  )
+
+  @OptionGroup
+  var root: ExplicitProjectRootOptions
+
+  @Flag(name: .customLong("write"), help: "Regenerate operational-record companion docs.")
+  var shouldWrite = false
+
+  @Flag(name: .customLong("check"), help: "Fail when operational-record companion docs drift.")
+  var shouldCheck = false
+
+  func run() throws {
+    guard shouldWrite != shouldCheck else {
+      throw CLIError.failure(
+        "log-docs requires exactly one of --write or --check."
+      )
+    }
+
+    let rootURL = try CLIHelpers.resolveExplicitProjectRoot(path: root.rootPath)
+    let projectRootURL = rootURL.deletingLastPathComponent()
+    let validation = try Validator.validate(root: rootURL)
+    if !validation.errors.isEmpty {
+      print(validation.summary)
+      for error in validation.errors {
+        print(error.lineDescription())
+      }
+      throw ExitCode.failure
+    }
+
+    let output = try OperationalRecordBuilder.buildDocsOutput(root: rootURL)
+    let currentFiles = try loadCurrentFiles(
+      relativePaths: output.files.keys.sorted(),
+      projectRootURL: projectRootURL
+    )
+
+    if shouldCheck {
+      let driftedPaths = output.files.keys.sorted().filter { relativePath in
+        currentFiles[relativePath] != output.files[relativePath]
+      }
+
+      if !driftedPaths.isEmpty {
+        var stderrStream = StandardError()
+        for path in driftedPaths {
+          stderrStream.write("Drift detected: \(path)\n")
+        }
+        throw ExitCode.failure
+      }
+
+      return
+    }
+
+    try writeChangedFiles(
+      output.files,
+      currentFiles: currentFiles,
+      projectRootURL: projectRootURL
+    )
   }
 }
 
@@ -947,5 +1077,42 @@ struct AtomicFileWriter {
       withIntermediateDirectories: true
     )
     try data.write(to: url, options: .atomic)
+  }
+}
+
+private func loadCurrentFiles(
+  relativePaths: [String],
+  projectRootURL: URL
+) throws -> [String: String] {
+  var currentFiles: [String: String] = [:]
+
+  for relativePath in relativePaths {
+    let url = projectRootURL.appendingPathComponent(relativePath)
+    if FileManager.default.fileExists(atPath: url.path) {
+      currentFiles[relativePath] = try String(contentsOf: url, encoding: .utf8)
+    } else {
+      currentFiles[relativePath] = nil
+    }
+  }
+
+  return currentFiles
+}
+
+private func writeChangedFiles(
+  _ files: [String: String],
+  currentFiles: [String: String],
+  projectRootURL: URL
+) throws {
+  for relativePath in files.keys.sorted() {
+    guard let contents = files[relativePath] else {
+      continue
+    }
+
+    if currentFiles[relativePath] != contents {
+      try AtomicFileWriter().write(
+        contents: contents,
+        to: projectRootURL.appendingPathComponent(relativePath)
+      )
+    }
   }
 }

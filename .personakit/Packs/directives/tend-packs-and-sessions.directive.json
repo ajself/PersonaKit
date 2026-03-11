@@ -17,7 +17,7 @@
       "text": "Run `gardening-v2-checklist` and capture pass status before recommendations are finalized."
     },
     {
-      "text": "Update markdown and JSONL maintenance logs with findings and prioritized recommendations."
+      "text": "Update canonical JSONL maintenance logs with findings and prioritized recommendations, then refresh generated markdown projections that mirror those logs."
     },
     {
       "text": "Record one health snapshot and update recommendation feedback entries before review pause."

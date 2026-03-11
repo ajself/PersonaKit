@@ -25,15 +25,19 @@ stable agent-facing role label is helpful.
 
 ## Operational Records
 
-- [Partner Context Log](./partner-context-log.md)
-- [Partner Handoff Register](./partner-handoff-register.md)
-- [Pack Gardener Log](./pack-gardener-log.md)
+- [Partner Context Log](./partner-context-log.md) (generated from canonical JSONL)
+- [Partner Handoff Register](./partner-handoff-register.md) (generated from canonical JSONL)
+- [Pack Gardener Log](./pack-gardener-log.md) (generated from canonical JSONL)
 - [Historical Artifact Tombstones](./historical-artifact-tombstones.md)
-- [Git History Gardener Log](./git-history-gardener-log.md)
-- [Git History Gardener Proposals](./git-history-gardener-proposals.md)
+- [Git History Gardener Log](./git-history-gardener-log.md) (generated from canonical JSONL)
+- [Git History Gardener Proposals](./git-history-gardener-proposals.md) (generated from canonical JSONL)
 - [Development Logs](./logs/README.md)
 - [Persona Hiring Reviews](./hiring-reviews/README.md)
 - [Retrospectives](./retrospectives/README.md)
+
+Canonical operational ledgers live under [Development Logs](./logs/README.md).
+The markdown pages above are operator-readable projections, not the source of
+truth.
 
 ## Validation Harness
 
@@ -131,13 +135,15 @@ Run these steps from the repo root:
 1. `make format-check`
 2. `swift test`
 3. `swift run personakit workstream-docs --root .personakit --check`
-4. `swift run personakit validate --root Fixtures/kit-root`
-5. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-1.md`
-6. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-2.md`
-7. `cmp -s /tmp/personakit-validate/export-1.md /tmp/personakit-validate/export-2.md`
-8. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-1.txt`
-9. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-2.txt`
-10. `cmp -s /tmp/personakit-validate/graph-1.txt /tmp/personakit-validate/graph-2.txt`
+4. `swift run personakit log-docs --root .personakit --check`
+5. `Scripts/check-operational-records.sh`
+6. `swift run personakit validate --root Fixtures/kit-root`
+7. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-1.md`
+8. `swift run personakit export --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/export-2.md`
+9. `cmp -s /tmp/personakit-validate/export-1.md /tmp/personakit-validate/export-2.md`
+10. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-1.txt`
+11. `swift run personakit graph --root Fixtures/kit-root --persona senior-swiftui-engineer --directive apply-style > /tmp/personakit-validate/graph-2.txt`
+12. `cmp -s /tmp/personakit-validate/graph-1.txt /tmp/personakit-validate/graph-2.txt`
 
 If either `cmp` fails, the output is not deterministic and should be
 investigated before proceeding.

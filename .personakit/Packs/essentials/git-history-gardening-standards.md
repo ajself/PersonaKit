@@ -16,7 +16,12 @@ For each git-history gardening pass, maintain both:
 1. `Docs/PersonaKit/Development/git-history-gardener-log.md`
 2. `Docs/PersonaKit/Development/logs/git-history-gardener.jsonl`
 3. `Docs/PersonaKit/Development/logs/gardening-events.jsonl` (shared gardening stream)
-4. `Docs/PersonaKit/Development/git-history-gardener-proposals.md`
+4. `Docs/PersonaKit/Development/logs/git-history-gardener-proposals.jsonl`
+5. `Docs/PersonaKit/Development/git-history-gardener-proposals.md`
+
+The markdown git-history log and proposal report are generated projections over
+their canonical JSONL resources.
+Update canonical JSONL first, then refresh the markdown projections.
 
 The git-history JSONL entry extends the shared `gardening-log-contract`.
 
@@ -57,6 +62,8 @@ Each proposal report entry must include:
 - `approvalStatus` (`pending`, `approved`, `rejected`)
 
 Hard rule: history-altering commands require `approvalStatus=approved` first.
+Current proposal state should be materialized from the latest event per
+`proposalId`; never rewrite prior proposal events in place.
 
 ## Determinism Rules
 

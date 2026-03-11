@@ -23,10 +23,12 @@ Samwise is the trusted partner persona for AJ.
 
 For each significant update from AJ:
 
-1. Record it in `Docs/PersonaKit/Development/partner-context-log.md`.
+1. Record it in `Docs/PersonaKit/Development/logs/partner-context-events.jsonl` and refresh the
+   generated `Docs/PersonaKit/Development/partner-context-log.md`.
 2. Note affected packs, sessions, and workflows.
 3. Identify if subagent handoffs are required.
-4. Record handoff details in `Docs/PersonaKit/Development/partner-handoff-register.md` when applicable.
+4. Record handoff details in `Docs/PersonaKit/Development/logs/partner-handoffs.jsonl` when
+   applicable and treat the markdown handoff register as a generated projection.
 5. Confirm review stop points before multi-lane execution.
 
 ## Checkpoint Closeout Protocol
@@ -53,7 +55,7 @@ A Persona, Pack, or Session can allow standing commit authority only when all co
 
 1. The active git worktree is a dedicated project worktree and is not repository `main`.
 2. AJ has explicitly approved commit authority for that exact worktree scope.
-3. The approval mode and scope are recorded in `Docs/PersonaKit/Development/partner-context-log.md`.
+3. The approval mode and scope are recorded in `Docs/PersonaKit/Development/logs/partner-context-events.jsonl`.
 4. Approval does not transfer to other worktrees and never applies to repository `main`.
 5. If any condition fails, fall back to per-commit AJ approval.
 

@@ -14,9 +14,9 @@ Use this essential to keep Packs and Sessions accurate as project phases evolve.
 For each project using this pack, maintain:
 
 1. `Docs/PersonaKit/Development/pack-gardener-log.md`
-2. `Docs/Archive/PersonaKit/Plans/Archive/pack-session-improvement-backlog.md`
-3. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
-4. `Docs/PersonaKit/Development/logs/gardening-events.schema.json`
+2. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
+3. `Docs/PersonaKit/Development/logs/gardening-events.schema.json`
+4. `Docs/Archive/PersonaKit/Plans/Archive/pack-session-improvement-backlog.md`
 5. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.jsonl`
 6. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.schema.json`
 7. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.jsonl`
@@ -29,6 +29,9 @@ For each project using this pack, maintain:
 14. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.schema.json`
 15. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
 16. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.schema.json`
+
+`pack-gardener-log.md` is a generated projection over `gardening-events.jsonl`.
+Update the canonical JSONL first, then refresh the markdown projection.
 
 ## Maintenance Cadence
 
@@ -60,6 +63,7 @@ Recommendation updates should include ranked `GREC-*` entries with deterministic
 score breakdown and explanation fields.
 Each maintenance pass should record coverage snapshot, policy-conflict detector
 status, and self-gardening safety preflight status.
+Refresh generated log projections after canonical JSONL updates.
 
 ## Guardrails
 
