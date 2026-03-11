@@ -224,6 +224,12 @@ public struct Validator {
       }
     }
 
+    errors.append(
+      contentsOf: WorkstreamDocsBuilder.consistencyErrors(
+        directives: registry.directives
+      )
+    )
+
     for intent in registry.intentTemplates {
       try checkCancellation()
 

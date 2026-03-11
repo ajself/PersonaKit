@@ -72,7 +72,7 @@ public struct Directive: Codable, Sendable {
   /// Session-routing metadata for a directive phase within a larger workstream.
   public struct Workstream: Codable, Sendable {
     /// Session node participating in the workstream graph.
-    public struct Node: Codable, Sendable {
+    public struct Node: Codable, Equatable, Sendable {
       public let sessionId: String
       public let phase: String
 
@@ -86,7 +86,7 @@ public struct Directive: Codable, Sendable {
     }
 
     /// Directed edge between two session nodes in the workstream graph.
-    public struct Edge: Codable, Sendable {
+    public struct Edge: Codable, Equatable, Sendable {
       public let fromSessionId: String
       public let toSessionId: String
       public let kind: String

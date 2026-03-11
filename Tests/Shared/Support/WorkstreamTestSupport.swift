@@ -72,23 +72,38 @@ func writeApplyStyleDirective(
   root: URL,
   workstream: Directive.Workstream?
 ) throws {
-  let directiveURL = root.appendingPathComponent("Packs/directives/apply-style.directive.json")
-  let data = try Data(contentsOf: directiveURL)
-  let directive = try JSONDecoder().decode(Directive.self, from: data)
-  let updatedDirective = Directive(
-    id: directive.id,
-    version: directive.version,
-    title: directive.title,
-    goal: directive.goal,
-    steps: directive.steps,
-    acceptanceCriteria: directive.acceptanceCriteria,
-    verification: directive.verification,
-    requiresIntentTemplateIds: directive.requiresIntentTemplateIds,
-    requiresSkillIds: directive.requiresSkillIds,
+  try writeDirective(
+    id: "apply-style",
+    root: root,
     workstream: workstream
   )
+}
+
+func writeDirective(
+  id: String,
+  title: String? = nil,
+  root: URL,
+  workstream: Directive.Workstream?
+) throws {
+  let directiveURL = root.appendingPathComponent("Packs/directives/apply-style.directive.json")
+  let data = try Data(contentsOf: directiveURL)
+  let templateDirective = try JSONDecoder().decode(Directive.self, from: data)
+  let updatedDirective = Directive(
+    id: id,
+    version: templateDirective.version,
+    title: title ?? templateDirective.title,
+    goal: templateDirective.goal,
+    steps: templateDirective.steps,
+    acceptanceCriteria: templateDirective.acceptanceCriteria,
+    verification: templateDirective.verification,
+    requiresIntentTemplateIds: templateDirective.requiresIntentTemplateIds,
+    requiresSkillIds: templateDirective.requiresSkillIds,
+    workstream: workstream
+  )
+
+  let targetURL = root.appendingPathComponent("Packs/directives/\(id).directive.json")
   try encodeSortedJSON(updatedDirective).write(
-    to: directiveURL,
+    to: targetURL,
     options: .atomic
   )
 }

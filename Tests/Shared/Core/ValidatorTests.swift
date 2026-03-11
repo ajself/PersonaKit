@@ -447,6 +447,37 @@ struct ValidatorTests {
       )
     )
   }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenSharedWorkstreamEntrySessionDiffers() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let conflictingWorkstream = Directive.Workstream(
+      id: "style-workstream",
+      phase: "followup",
+      entrySessionId: "style-followup",
+      requiredCloseoutSessionId: "style-closeout",
+      nodes: makeValidFixtureWorkstream().nodes,
+      edges: makeValidFixtureWorkstream().edges
+    )
+    try writeDirective(
+      id: "style-followup",
+      title: "Style followup",
+      root: root,
+      workstream: conflictingWorkstream
+    )
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains { error in
+        error.entityType == .directive
+          && error.field == "workstream.entrySessionId"
+          && error.message.contains("style-workstream")
+          && error.message.contains("apply-style")
+          && error.message.contains("style-followup")
+      }
+    )
+  }
 }
 
 private func hasDirectiveWorkstreamError(
