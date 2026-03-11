@@ -41,8 +41,7 @@
     "partner-trust-contract",
     "tools-and-constraints",
     "worktree-squad-gating-contract",
-    "worktree-squad-loop-log-contract",
-    "worktree-squad-retrospective-template"
+    "worktree-squad-loop-log-contract"
   ],
   "requiresSkillIds": [
     "codex-cli"
