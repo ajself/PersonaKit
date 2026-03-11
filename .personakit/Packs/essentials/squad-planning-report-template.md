@@ -77,6 +77,7 @@ Use `delegated-agent-handoff-template` to fill one packet per delegated role.
 
 1. Session ID:
    - Why next:
+   - Required closeout session (if any):
    - Expected inputs:
    - Expected outputs:
 
@@ -85,4 +86,4 @@ Use `delegated-agent-handoff-template` to fill one packet per delegated role.
 1. Artifact references:
 2. Relevant hiring review IDs:
 3. Related planning review ID:
-4. Related logs or continuity notes:
+4. Historical evidence or continuity notes (optional; not active authority):

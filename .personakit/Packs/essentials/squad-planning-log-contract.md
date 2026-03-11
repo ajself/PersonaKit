@@ -40,6 +40,7 @@ Recommended:
 2. `details`
 3. `delegatedRoleNames`
 4. `delegatedHandoffs`
+5. `requiredCloseoutSessionId`
 
 ## Delegated Handoff Details
 
@@ -67,9 +68,12 @@ Each `delegatedHandoffs` item should include:
    rows.
 2. If a planning pass identifies execution-critical role gaps, the entry should
    route the next session to a hiring or remediation loop before execution.
-3. The human-readable report and JSONL entry should agree on the named next
+3. When a planning pass hands work into a workflow family with formal closeout,
+   the report and JSONL entry should name the required closeout session
+   explicitly when schema support is available.
+4. The human-readable report and JSONL entry should agree on the named next
    session, first checkpoint, and validation owner.
-4. When delegated handoffs are present, the report and JSONL entry should agree
+5. When delegated handoffs are present, the report and JSONL entry should agree
    on delegated role names, grounding mode, failure disposition, and
    static-export provenance fields.
 
@@ -80,6 +84,8 @@ Each `delegatedHandoffs` item should include:
   log.
 - Use `relatedHiringReviewIds` whenever reverse-interview output informed the
   planning pass.
+- Treat logs as durable evidence, not the only source of required runtime
+  authority for planning behavior.
 - Keep execution handoff blocked until review gates, definition-of-done, and
   validation expectations are explicit.
 - Keep delegated work blocked until each spawned-agent role has an explicit

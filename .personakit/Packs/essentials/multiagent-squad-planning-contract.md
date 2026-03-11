@@ -14,6 +14,18 @@ multiagent plan before execution begins.
 4. Keep staffing, planning, and pack-expansion recommendations reviewable and
    workspace-agnostic.
 
+## Active Authority Rule
+
+The planning stack should distinguish active operating contract from historical
+continuity evidence.
+
+1. Sessions, directives, intents, kits, and essentials carry the active
+   operating rules for `samwise-squad-planning`.
+2. Planning reports may cite logs or continuity notes as supporting evidence,
+   but logs must not be the only place a required operating rule is stated.
+3. If an operator would behave incorrectly without reading a continuity log, the
+   missing rule should be promoted into an active artifact instead.
+
 ## Required Inputs
 
 1. Objective summary.
@@ -128,9 +140,11 @@ Required sections:
 4. Recommended first planning or hiring step.
 5. Validation plan with owner and command or evidence expectations.
 6. Recommended next session for execution or remediation.
-7. Handoff status (`awaiting-aj-review`, `ready-for-remediation`,
+7. Required closeout session when the routed workflow expects a formal closeout
+   before the assignment can be treated as complete.
+8. Handoff status (`awaiting-aj-review`, `ready-for-remediation`,
    `ready-for-execution`, or `blocked`).
-8. Delegated grounding status when delegated roles exist.
+9. Delegated grounding status when delegated roles exist.
 
 ## Persistence Requirements
 
@@ -152,11 +166,12 @@ shared template plus one machine-readable log entry:
 The report and JSONL entry should agree on:
 
 1. named next session
-2. first checkpoint
-3. validation owner
-4. handoff status
-5. delegated handoff summary when delegated roles exist
-6. static-export provenance and snapshot date when static fallback is used
+2. required closeout session when one is declared
+3. first checkpoint
+4. validation owner
+5. handoff status
+6. delegated handoff summary when delegated roles exist
+7. static-export provenance and snapshot date when static fallback is used
 
 ## Reverse-Interview Rules
 
@@ -198,6 +213,9 @@ Stop and request AJ review before:
 - Do not collapse planning, hiring, and execution into one uninterrupted pass.
 - Require explicit definition-of-done and validation evidence before execution
   handoff.
+- Require required closeout routing to be explicit when the next session enters
+  a workflow family that is not complete until delivery logs, retrospectives,
+  or comparable closeout artifacts exist.
 - Require a durable planning report, a schema-valid planning log entry, and a
   named next-session handoff before treating the pass as complete.
 - Require delegated roles to carry explicit grounding instructions; do not
