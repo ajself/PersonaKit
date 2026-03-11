@@ -1,0 +1,65 @@
+{
+  "id": "gated-worktree-delivery",
+  "version": "1.0",
+  "name": "Gated Worktree Delivery",
+  "description": "Execute one bounded checkpoint-scoped work item in a dedicated non-main worktree using delivery gates, explicit evidence, and approval control.",
+  "parameters": [
+    {
+      "name": "objective",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "worktreeBranch",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "commitAuthorizationMode",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "gateIDs",
+      "type": "string[]",
+      "required": false
+    },
+    {
+      "name": "milestonePlanPath",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "orchestratorPersonaId",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "includesEssentialIds": [
+    "interaction-quality-rubric",
+    "non-goals",
+    "partner-trust-contract",
+    "tools-and-constraints",
+    "worktree-squad-gating-contract",
+    "worktree-squad-loop-log-contract",
+    "worktree-squad-retrospective-template"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "The primary repository `main` branch is always protected; never write to it without explicit AJ permission.",
+      "If a dedicated isolated worktree is in scope (including a worktree branch named `main`), commits are allowed only when AJ explicitly approved auto-commit for that exact worktree scope.",
+      "Treat commit authorization as denied by default unless AJ explicitly approved per commit or for this exact isolated worktree.",
+      "If `milestonePlanPath` is provided, treat it as read-only upstream handoff context for the approved checkpoint boundary rather than as a status artifact this loop owns.",
+      "Squad lead acts as a staff-level reviewer and must record a code-review pass plus verification evidence before advancing a gate.",
+      "Do not cross an approved checkpoint gate without recorded evidence and review outcome.",
+      "Do not turn this delivery loop into milestone tracking or planning-gate evaluation work.",
+      "If a blocker remains unresolved by the next checkpoint, escalate to AJ with bounded options before continuing.",
+      "If a required verification command is blocked, log the blocker and continue with non-blocked queued work."
+    ]
+  }
+}

@@ -53,6 +53,37 @@ struct MCPConversationFlowTests {
   }
 
   @Test
+  func resolveTraceFlowNormalizesPathAndFeedsTrace() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let toolService = MCPToolService(scopes: scopes)
+
+    let resolveResult = try toolService.callTool(
+      name: "personakit_resolve_session_ref",
+      arguments: [
+        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json",
+      ]
+    )
+    let resolveText = try requireFirstText(resolveResult)
+    let resolvePayload: SessionReferenceResolutionPayload = try decodeJSON(text: resolveText)
+
+    #expect(resolvePayload.sourceRefType == "path")
+    #expect(resolvePayload.normalizedSessionId == "senior-swiftui-engineer_apply-style")
+
+    let traceResult = try toolService.callTool(
+      name: "personakit_trace_session",
+      arguments: [
+        "sessionId": .string(resolvePayload.normalizedSessionId),
+      ]
+    )
+    let traceText = try requireFirstText(traceResult)
+    let tracePayload: SessionTracePayload = try decodeJSON(text: traceText)
+
+    #expect(tracePayload.session.id == resolvePayload.normalizedSessionId)
+    #expect(tracePayload.resolved.personaId == resolvePayload.personaId)
+    #expect(tracePayload.resolved.directiveId == resolvePayload.directiveId)
+  }
+
+  @Test
   func recommendSessionOutputIsDeterministicAcrossRepeatedCalls() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let toolService = MCPToolService(scopes: scopes)
@@ -140,6 +171,13 @@ private struct SessionTracePayload: Decodable {
   let schemaVersion: Int
   let session: SessionTraceSession
   let resolved: SessionTraceResolved
+}
+
+private struct SessionReferenceResolutionPayload: Decodable {
+  let sourceRefType: String
+  let normalizedSessionId: String
+  let personaId: String
+  let directiveId: String
 }
 
 private struct SessionTraceSession: Decodable {

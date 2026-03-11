@@ -216,6 +216,8 @@ public struct Validator {
     for intent in registry.intentTemplates {
       try checkCancellation()
 
+      let knownParameterNames = Set(intent.parameters.map(\.name))
+
       for essentialId in intent.includesEssentialIds {
         let expectedPath = "Packs/essentials/\(essentialId).md"
         if resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager) == nil {
@@ -244,6 +246,64 @@ public struct Validator {
               message: "Missing skill id \"\(skillId)\"."
             )
           )
+        }
+      }
+
+      for constraint in intent.parameterConstraints ?? [] {
+        switch constraint.kind {
+        case "allDistinct":
+          if constraint.parameterNames.count < 2 {
+            errors.append(
+              ValidationError(
+                entityType: .intent,
+                entityId: intent.id,
+                field: "parameterConstraints",
+                missingId: nil,
+                expectedPath: nil,
+                message: "Constraint kind \"allDistinct\" must reference at least two parameter names."
+              )
+            )
+          }
+
+          let uniqueParameterNames = Set(constraint.parameterNames)
+          if uniqueParameterNames.count != constraint.parameterNames.count {
+            errors.append(
+              ValidationError(
+                entityType: .intent,
+                entityId: intent.id,
+                field: "parameterConstraints",
+                missingId: nil,
+                expectedPath: nil,
+                message: "Constraint kind \"allDistinct\" contains duplicate parameter names."
+              )
+            )
+          }
+        default:
+          errors.append(
+            ValidationError(
+              entityType: .intent,
+              entityId: intent.id,
+              field: "parameterConstraints",
+              missingId: nil,
+              expectedPath: nil,
+              message: "Unsupported parameter constraint kind \"\(constraint.kind)\"."
+            )
+          )
+        }
+
+        for parameterName in constraint.parameterNames {
+          if !knownParameterNames.contains(parameterName) {
+            errors.append(
+              ValidationError(
+                entityType: .intent,
+                entityId: intent.id,
+                field: "parameterConstraints",
+                missingId: parameterName,
+                expectedPath: nil,
+                message: "Constraint references missing parameter name \"\(parameterName)\"."
+              )
+            )
+          }
         }
       }
     }

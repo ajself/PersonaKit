@@ -25,6 +25,7 @@ Recovery: Read personakit://catalog/personas to list valid ids, then retry.
 | Missing entity id | `<entityType> not found: <id>` | `Read personakit://catalog/<type> to list valid ids, then retry.` |
 | Missing sessions for recommendation | `No session files found in active scopes.` | `Create at least one Sessions/*.session.json file in the active PersonaKit scope.` |
 | Invalid session id for trace/export/graph | Session loader failure message | `Read personakit://catalog/sessions to list valid ids, then retry with one session id.` |
+| Invalid session ref for resolution | Session-reference failure message | `Use a valid session id from personakit://catalog/sessions or a path under Sessions/*.session.json in the active PersonaKit scope.` |
 | validate called with args | `personakit_validate does not accept arguments.` | `Call personakit_validate with an empty argument object.` |
 
 ## Scope Startup Contracts

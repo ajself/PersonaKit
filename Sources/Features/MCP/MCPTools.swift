@@ -9,6 +9,7 @@ enum MCPToolName: String, CaseIterable {
   case export = "personakit_export"
   case graph = "personakit_graph"
   case recommendSession = "personakit_recommend_session"
+  case resolveSessionRef = "personakit_resolve_session_ref"
   case traceSession = "personakit_trace_session"
   case validate = "personakit_validate"
 
@@ -24,6 +25,8 @@ enum MCPToolName: String, CaseIterable {
       return "Print a readable dependency graph for a session."
     case .recommendSession:
       return "Recommend sessions for a goal using deterministic ranking."
+    case .resolveSessionRef:
+      return "Resolve a session reference supplied as either a session id or a session-file path."
     case .traceSession:
       return "Trace a session into persona/directive/kits/intents/skills/essentials edges."
     case .validate:
@@ -117,6 +120,18 @@ enum MCPToolName: String, CaseIterable {
         "required": ["goal"],
         "additionalProperties": false,
       ]
+    case .resolveSessionRef:
+      return [
+        "type": "object",
+        "properties": [
+          "sessionRef": [
+            "type": "string",
+            "description": "Session id or session-file path",
+          ],
+        ],
+        "required": ["sessionRef"],
+        "additionalProperties": false,
+      ]
     case .traceSession:
       return [
         "type": "object",
@@ -176,6 +191,10 @@ struct MCPRecommendArguments: Equatable {
 
 struct MCPTraceArguments: Equatable {
   let sessionId: String
+}
+
+struct MCPResolveSessionArguments: Equatable {
+  let sessionRef: String
 }
 
 /// Tool argument parsing failures returned as MCP invalid-params errors.
@@ -238,6 +257,10 @@ enum MCPToolArgumentParser {
 
   static func parseTrace(_ arguments: [String: Value]?) throws -> MCPTraceArguments {
     return MCPTraceArguments(sessionId: try requireString(arguments, name: "sessionId"))
+  }
+
+  static func parseResolveSession(_ arguments: [String: Value]?) throws -> MCPResolveSessionArguments {
+    return MCPResolveSessionArguments(sessionRef: try requireString(arguments, name: "sessionRef"))
   }
 
   private static func requireString(_ arguments: [String: Value]?, name: String) throws -> String {
@@ -377,6 +400,10 @@ struct MCPToolService: Sendable {
       let input = try parseRecommendArguments(arguments)
       let output = try recommendSessionTool(input: input)
       return CallTool.Result(content: [.text(output)])
+    case .resolveSessionRef:
+      let input = try parseResolveSessionArguments(arguments)
+      let output = try resolveSessionRefTool(input: input)
+      return CallTool.Result(content: [.text(output)])
     case .traceSession:
       let input = try parseTraceArguments(arguments)
       let output = try traceSessionTool(input: input)
@@ -444,6 +471,21 @@ struct MCPToolService: Sendable {
         withRecoveryHint(
           error.localizedDescription,
           hint: "Provide sessionId as a non-empty string. Use catalog sessions to discover ids."
+        )
+      )
+    }
+  }
+
+  private func parseResolveSessionArguments(
+    _ arguments: [String: Value]?
+  ) throws -> MCPResolveSessionArguments {
+    do {
+      return try MCPToolArgumentParser.parseResolveSession(arguments)
+    } catch let error as MCPToolArgumentError {
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Provide sessionRef as a non-empty session id or session-file path."
         )
       )
     }
@@ -573,6 +615,7 @@ struct MCPToolService: Sendable {
           data: IntentExplainData(
             name: intent.name,
             description: intent.description,
+            parameterConstraints: intent.parameterConstraints?.map(parameterConstraintSummary) ?? [],
             includesEssentialIds: uniqueSorted(intent.includesEssentialIds),
             requiresSkillIds: uniqueSorted(intent.requiresSkillIds),
             riskLevel: intent.risk.level,
@@ -775,6 +818,43 @@ struct MCPToolService: Sendable {
     )
   }
 
+  private func resolveSessionRefTool(input: MCPResolveSessionArguments) throws -> String {
+    let resolved: ResolvedSessionReference
+    do {
+      resolved = try SessionReferenceResolver.resolve(
+        scopes: scopes,
+        sessionRef: input.sessionRef
+      )
+    } catch let error as SessionReferenceError {
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Use a valid session id from personakit://catalog/sessions or a path under Sessions/*.session.json in the active PersonaKit scope."
+        )
+      )
+    } catch let error as SessionFileError {
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          error.localizedDescription,
+          hint: "Use a valid session id from personakit://catalog/sessions or a session-file path under the active PersonaKit scope."
+        )
+      )
+    }
+
+    return try encodeToolJSON(
+      SessionReferenceResolutionPayload(
+        inputRef: input.sessionRef,
+        sourceRefType: resolved.sourceRefType.rawValue,
+        normalizedSessionId: resolved.sessionId,
+        resolvedPath: resolved.resolvedPath,
+        scopeRootPath: resolved.scopeRootPath,
+        personaId: resolved.session.personaId,
+        directiveId: resolved.session.directiveId,
+        kitOverrides: uniqueSorted(resolved.session.kitOverrides ?? [])
+      )
+    )
+  }
+
   private func traceSessionTool(input: MCPTraceArguments) throws -> String {
     let session = try loadSession(id: input.sessionId)
     let registry = try loadRegistry()
@@ -933,6 +1013,9 @@ struct MCPToolService: Sendable {
           "version": intent.version,
         ],
         lists: [
+          "parameterConstraints": uniqueSorted(
+            (intent.parameterConstraints ?? []).map(parameterConstraintSummary)
+          ),
           "includesEssentialIds": uniqueSorted(intent.includesEssentialIds),
           "requiresSkillIds": uniqueSorted(intent.requiresSkillIds),
         ]
@@ -1066,6 +1149,7 @@ private struct KitExplainData: Encodable {
 private struct IntentExplainData: Encodable {
   let name: String
   let description: String
+  let parameterConstraints: [String]
   let includesEssentialIds: [String]
   let requiresSkillIds: [String]
   let riskLevel: String
@@ -1094,6 +1178,10 @@ private struct EssentialExplainData: Encodable {
   let resolvedPath: String
   let lineCount: Int
   let byteCount: Int
+}
+
+private func parameterConstraintSummary(_ constraint: IntentTemplate.ParameterConstraint) -> String {
+  "\(constraint.kind):" + constraint.parameterNames.joined(separator: ",")
 }
 
 private struct EntityComparableSnapshot {
@@ -1161,6 +1249,18 @@ private struct SessionRecommendationPayload: Encodable {
   let consideredSessions: [String]
   let policy: SessionRecommendationPolicy
   let recommendations: [SessionRecommendation]
+}
+
+private struct SessionReferenceResolutionPayload: Encodable {
+  let schemaVersion: Int = 1
+  let inputRef: String
+  let sourceRefType: String
+  let normalizedSessionId: String
+  let resolvedPath: String
+  let scopeRootPath: String
+  let personaId: String
+  let directiveId: String
+  let kitOverrides: [String]
 }
 
 private struct SessionTracePayload: Encodable {

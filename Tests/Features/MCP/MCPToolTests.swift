@@ -20,6 +20,7 @@ struct MCPToolTests {
         "personakit_export",
         "personakit_graph",
         "personakit_recommend_session",
+        "personakit_resolve_session_ref",
         "personakit_trace_session",
         "personakit_validate",
       ]
@@ -145,6 +146,46 @@ struct MCPToolTests {
   }
 
   @Test
+  func resolveSessionRefToolNormalizesSessionID() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_session_ref",
+      arguments: [
+        "sessionRef": "senior-swiftui-engineer_apply-style",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+
+    #expect(object["normalizedSessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(object["sourceRefType"] as? String == "id")
+    #expect(object["personaId"] as? String == "senior-swiftui-engineer")
+    #expect(object["directiveId"] as? String == "apply-style")
+  }
+
+  @Test
+  func resolveSessionRefToolNormalizesSessionPath() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_session_ref",
+      arguments: [
+        "sessionRef": "Sessions/senior-swiftui-engineer_apply-style.session.json",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+
+    #expect(object["normalizedSessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(object["sourceRefType"] as? String == "path")
+  }
+
+  @Test
   func traceSessionToolResolvesDependencySets() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
@@ -162,6 +203,55 @@ struct MCPToolTests {
     let resolved = try #require(object["resolved"] as? [String: Any])
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+  }
+
+  @Test
+  func explainIntentToolIncludesParameterConstraints() throws {
+    let root = try makeTempDirectory().appendingPathComponent("FixtureKit")
+    try copyFixtureKit(to: root)
+
+    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
+    let data = try Data(contentsOf: intentURL)
+    var object = try #require(
+      JSONSerialization.jsonObject(with: data) as? [String: Any]
+    )
+    var parameters = try #require(object["parameters"] as? [[String: Any]])
+    parameters.append(
+      [
+        "name": "secondaryFile",
+        "type": "string",
+        "required": true,
+      ]
+    )
+    object["parameters"] = parameters
+    object["parameterConstraints"] = [
+      [
+        "kind": "allDistinct",
+        "parameterNames": ["targetFiles", "secondaryFile"],
+      ]
+    ]
+    let updatedData = try JSONSerialization.data(
+      withJSONObject: object,
+      options: [.prettyPrinted, .sortedKeys]
+    )
+    try updatedData.write(to: intentURL)
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+    let result = try service.callTool(
+      name: "personakit_explain_entity",
+      arguments: [
+        "entityType": "intent",
+        "id": "swift-refactor-safe",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let response = try #require(jsonObject(output))
+    let payload = try #require(response["data"] as? [String: Any])
+    let constraints = try #require(payload["parameterConstraints"] as? [String])
+
+    #expect(constraints == ["allDistinct:targetFiles,secondaryFile"])
   }
 }
 

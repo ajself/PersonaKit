@@ -149,6 +149,20 @@ public struct IntentTemplate: Codable, Sendable {
     }
   }
 
+  /// Machine-readable relationship rules applied across multiple parameters.
+  public struct ParameterConstraint: Codable, Sendable {
+    public let kind: String
+    public let parameterNames: [String]
+
+    public init(
+      kind: String,
+      parameterNames: [String]
+    ) {
+      self.kind = kind
+      self.parameterNames = parameterNames
+    }
+  }
+
   /// Risk metadata attached to an intent template.
   public struct Risk: Codable, Sendable {
     public let level: String
@@ -171,6 +185,7 @@ public struct IntentTemplate: Codable, Sendable {
   public let name: String
   public let description: String
   public let parameters: [Parameter]
+  public let parameterConstraints: [ParameterConstraint]?
   public let includesEssentialIds: [String]
   public let requiresSkillIds: [String]
   public let risk: Risk
@@ -181,6 +196,7 @@ public struct IntentTemplate: Codable, Sendable {
     name: String,
     description: String,
     parameters: [Parameter],
+    parameterConstraints: [ParameterConstraint]? = nil,
     includesEssentialIds: [String],
     requiresSkillIds: [String],
     risk: Risk
@@ -190,6 +206,7 @@ public struct IntentTemplate: Codable, Sendable {
     self.name = name
     self.description = description
     self.parameters = parameters
+    self.parameterConstraints = parameterConstraints
     self.includesEssentialIds = includesEssentialIds
     self.requiresSkillIds = requiresSkillIds
     self.risk = risk

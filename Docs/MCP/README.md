@@ -2,7 +2,7 @@
 
 Status: Active
 Owner: AJ
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-10
 
 ## Purpose
 
@@ -22,7 +22,7 @@ Important:
 
 - Resources: read-only access to Personas, Kits, Directives, Intent Templates, Skills, Essentials, and catalog endpoints.
 - Prompts: session export and session graph.
-- Tools: validate/export/graph plus discussion primitives (`explain`, `compare`, `recommend`, `trace`).
+- Tools: validate/export/graph plus discussion primitives (`explain`, `compare`, `recommend`, `resolve session refs`, `trace`).
 
 All MCP capabilities are read-only. The server never writes pack files and never executes shell commands.
 
