@@ -17,10 +17,16 @@ PersonaKit is the engine inside Orbit.
 If you want the fastest understanding of what Orbit is and what we are doing
 now, read:
 
-1. [Vision/Orbit-Concept.md](./Vision/Orbit-Concept.md)
+1. [Vision/orbit-platform-vision-and-system-design.md](./Vision/orbit-platform-vision-and-system-design.md)
 2. [Planning/Orbit-Proving-Loop.md](./Planning/Orbit-Proving-Loop.md)
 3. [Planning/Orbit-macOS-Command-Center.md](./Planning/Orbit-macOS-Command-Center.md)
 4. [Planning/Orbit-Execution-Plan.md](./Planning/Orbit-Execution-Plan.md)
+
+## Vision Docs
+
+- [Vision/orbit-platform-vision-and-system-design.md](./Vision/orbit-platform-vision-and-system-design.md)
+  The richest single-document Orbit pitch, role model, use-case map, and system
+  design synthesis.
 
 ## Active Planning Docs
 
