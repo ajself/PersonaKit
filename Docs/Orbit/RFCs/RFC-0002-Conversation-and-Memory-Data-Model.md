@@ -1,4 +1,4 @@
-# RFC-0002: Conversation and Memory Data Model
+# RFC-0002: Collaboration Runtime and Memory Data Model
 
 ## Status
 Draft
@@ -11,84 +11,106 @@ Draft
 2026-03-08
 
 ## Last Updated
-2026-03-08
+2026-03-17
 
 ## Related
-- RFC-0001: Persona Activation and Default Directive Model
-- AGENTS.md
-- README.md
-- Docs/RFCs/README.md
+- RFC-0001: Workspace Persona Contract Resolution and Activation Model
+- RFC-0003: Workspace and Persona Instance Model
+- RFC-0004: Teams, Squads, and Meeting Coordinator Model
+- RFC-0005: Memory Journaling and Gardening Model
+- RFC-0006: Multi-Client Platform Architecture
+- Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md
+- Docs/Orbit/RFCs/README.md
 
 ---
 
 ## 1. Summary
 
-This RFC proposes the **core data model** for PersonaKit’s conversation, meeting, journaling, and memory systems.
+This RFC defines the conceptual data model for Orbit's collaboration runtime,
+journaling, and memory systems.
 
-The purpose of this model is to support PersonaKit’s evolution into a **workspace-centric command center for AI teams**, where:
+Orbit is not modeled as a generic chat log. It is modeled as a collaboration
+runtime built from:
 
-- one human interacts with many personas
-- personas operate within workspaces, teams, and squads
-- conversations are durable and replayable
-- memory is proposed, reviewed, approved, and retrieved
-- persona identity and grounding remain explicit and attributable
+- workspaces and channels
+- workspace persona instances, teams, and squads
+- durable posts
+- threads attached to posts
+- messages within threads
+- linked meeting posts and workstream posts
+- attached structured objects such as notes, decisions, references, and
+  artifacts
+- journals, memory candidates, and approved memory
 
-This RFC defines the conceptual entities, relationships, scopes, and lifecycle rules needed to make that system implementable.
+PersonaKit remains the source of authored contract truth. Orbit owns the durable
+runtime records that show where collaboration happened, what it produced, and
+what should later be remembered.
 
-It does **not** lock the final database schema or API. It proposes the data shape that future implementation should follow.
+This RFC does not define the final SQL schema or final API. It defines the
+runtime shape that implementation should follow.
+
+Terminology note:
+
+- `user` initiates interactions in Orbit
+- `operator` governs review, approval, and control
+- in v1, the same person often plays both roles, but the distinction remains
+  useful in the model
 
 ---
 
 ## 2. Motivation
 
-PersonaKit is moving beyond local prompt grounding into a system for:
+Orbit is a collaboration product for persistent AI teams, not just a prompt
+shell.
 
-- persistent team chat
-- meeting-style collaboration
-- persona memory
-- cross-workspace learning
-- realtime multi-device interaction
-- long-term organizational knowledge
+That means the runtime must support much more than a linear message history. It
+must support:
 
-The current local/file-centric model is well suited to authored definitions, but it is not a sufficient model for:
+- channels that organize collaboration
+- message posts that anchor discussion
+- message threads that accumulate replies
+- promoted meeting posts with explicit participant state
+- linked workstream posts with execution state
+- attached notes, decisions, references, and artifacts
+- activation and run trace records linked to collaboration context
+- journaling and reviewed memory growth
+- replayable state across macOS, iPhone, and iPad clients
 
-- storing message history
-- querying prior discussions
-- reconstructing meeting flows
-- attributing agent runs
-- reviewing memory candidates
-- promoting durable knowledge
-- analyzing patterns across time
+The authored-definition model is appropriate for personas, directives, kits,
+and contract rules, but it is not sufficient for runtime collaboration state.
 
-If PersonaKit is going to become the command center for an incubator of AI teams, it needs a **durable interaction model** and a **memory model** that are explicit from the start.
+Without a clear runtime data model, Orbit risks:
 
-This RFC exists to define that foundation before implementation sprawls.
+- fragmented post and thread history
+- weak traceability between collaboration and activation
+- ambiguous meeting and workstream state
+- noisy or unsafe memory growth
+- inconsistent behavior across clients and services
+
+This RFC exists to define the durable runtime model before implementation
+spreads across clients and backend services.
 
 ---
 
 ## 3. Problem Statement
 
-PersonaKit needs a data model that can answer all of the following reliably:
+Orbit needs a data model that can answer all of the following questions
+reliably:
 
-- What conversations happened in a workspace?
-- Who participated in a given meeting or thread?
-- Which persona said a given thing, under which directive?
-- Which memories influenced that response?
-- Which journal entries were created from that interaction?
-- Which memory candidates were proposed?
-- Which candidate memories were approved, rejected, archived, or superseded?
-- Which durable memories belong to a workspace, a persona instance, or a global persona memory profile?
-- How can future activations retrieve the right memory without cross-workspace contamination?
-
-At present, PersonaKit has strong authored identity and grounding concepts, but no agreed system-wide model for:
-
-- conversations
-- events
-- journaling
-- candidate memory
-- approved memory
-- memory linkage
-- attribution and replay
+- What posts exist in a workspace and channel?
+- Which thread belongs to a given post?
+- Which messages belong to that thread?
+- Which participants were involved in that post, thread, meeting, or
+  workstream?
+- Which workspace persona instance said a given thing, under which activation?
+- Which linked posts were created as follow-up, dependency, or promotion?
+- Which notes, decisions, references, and artifacts were attached to a post?
+- Which journals were created from that post or thread activity?
+- Which memory candidates and approved memories derived from that work?
+- Which durable memories belong to a workspace, a workspace persona instance, a
+  persona global profile, or the organization?
+- How can future activations retrieve the right knowledge without
+  cross-workspace contamination?
 
 The system needs a model that is:
 
@@ -96,151 +118,207 @@ The system needs a model that is:
 - inspectable
 - evolvable
 - safe for memory growth
-- compatible with realtime UX
+- compatible with realtime clients
 - compatible with later analytics and search
 
 ---
 
 ## 4. Goals
 
-This RFC aims to establish a data model that:
+This RFC aims to establish a conceptual data model that:
 
-- supports durable, replayable conversations
-- treats messages and system events as distinct artifacts
-- supports meetings, teams, and squads as first-class concepts
-- records persona activation and run attribution explicitly
+- supports durable, replayable collaboration runtime state
+- treats posts, threads, messages, and system events as distinct artifacts
+- supports channels, teams, squads, and workspace persona instances as
+  first-class runtime concepts
+- models meeting posts and workstream posts as post-based collaboration objects
+- records activation and run linkage explicitly without re-owning activation
+  semantics already defined by RFC-0001
+- supports attached structured objects for notes, decisions, references, and
+  artifacts
 - supports journaling as a first-class reflection layer
 - supports memory candidates and approved memory as distinct stages
-- enables scoped memory retrieval:
+- enables scoped retrieval for:
   - workspace
   - workspace persona
-  - global persona profile
+  - persona global memory
   - organization
-- supports explicit traversal and lineage between memories
-- supports future analytics, summaries, and search
-- preserves PersonaKit’s principles:
+- supports lineage and traversal between durable memories
+- supports future analytics, summaries, search, and trace inspection
+- preserves Orbit and PersonaKit principles:
   - explicit over inferred
   - structure over autonomy
-  - humans in control
+  - operators remain in control
 
 ---
 
 ## 5. Non-Goals
 
-This RFC does **not** attempt to define:
+This RFC does not define:
 
-- the exact SQL schema or migration files
+- the final SQL schema or migrations
 - the final API endpoints
 - the final client sync protocol
 - the final authentication model
-- the final search or vector indexing implementation
-- the exact UI for chat, memory review, or meetings
-- provider-specific run payloads for Codex/OpenAI/GitHub
-- cost optimization or sharding strategy
+- the final vector indexing or search ranking implementation
+- the exact UI for channels, posts, threads, meetings, or workstreams
+- full activation semantics or contract resolution precedence
+- final prompt assembly or provider payloads
 
-Those should be addressed in later RFCs or implementation docs.
+Activation semantics and contract resolution belong primarily to RFC-0001.
+Workspace and persona-instance semantics belong primarily to RFC-0003.
 
 ---
 
 ## 6. Proposal
 
-This RFC proposes that PersonaKit’s runtime data be modeled around **five major domains**:
+Orbit's runtime data should be modeled around five major domains:
 
-1. **Workspace Structure**
-2. **Conversation and Meeting State**
-3. **Persona Activation and Runs**
-4. **Journaling**
-5. **Memory**
+1. Workspace structure
+2. Collaboration runtime
+3. Activation and execution records
+4. Journaling
+5. Memory
 
-These domains should be represented separately but linked through stable identifiers.
-
-### High-level proposal
-
-- Authored definitions remain file-backed in PersonaKit definitions.
-- Runtime collaboration and memory are stored durably in a database.
-- Messages, events, journals, memory candidates, and memory entries are separate records.
-- Memory is never just “more chat history.”
-- Memory requires:
-  - staging
-  - review
-  - attribution
-  - scope
-  - lineage
+These domains should remain separate but linked through stable identifiers.
 
 ### Core design law
 
-> Files define who the team is.  
-> Database records what the team has done and what it should remember.
+> PersonaKit defines who may act and under what rules.
+> Orbit records where collaboration happened, what it produced, and what it
+> should remember.
+
+### Important shift
+
+This RFC replaces a conversation-first model with a post-first model.
+
+The primary durable collaboration object in Orbit is the `post`, not the generic
+`conversation`.
+
+In v1, posts come in three core types:
+
+- `message`
+- `meeting`
+- `workstream`
+
+Each post owns a thread. Messages live inside threads. Meeting and workstream
+state attach to posts rather than existing as disconnected parallel roots.
 
 ---
 
-## 7. Architecture / System Design
+## 7. Authored Truth Vs Runtime Truth
 
-### 7.1 Runtime domains
+Orbit runtime records only make sense when separated from PersonaKit authored
+truth.
+
+### 7.1 PersonaKit authored truth
+
+PersonaKit remains the source of:
+
+- personas
+- directives
+- kits
+- sessions
+- skill authorization
+- operating constraints
+
+### 7.2 Orbit runtime truth
+
+Orbit stores the runtime collaboration state in which those contracts operate:
+
+- workspaces
+- channels
+- teams and squads
+- workspace persona instances
+- posts
+- threads
+- messages
+- post participants
+- post events
+- post links
+- attached structured objects
+- activation and run records
+- journals
+- memory candidates and memory entries
+
+### 7.3 Important boundary
+
+RFC-0001 defines how activation resolves and what must be traceable.
+RFC-0002 defines the runtime records and relationships that activation attaches
+to.
+
+---
+
+## 8. Runtime Domains
 
 ```text
 Workspace
-  ├── Teams / Squads
-  ├── Conversations
-  │    ├── Messages
-  │    ├── Events
-  │    └── Participants
-  ├── Meetings
-  ├── Persona Activations
-  ├── Agent Runs
-  ├── Journals
-  ├── Memory Candidates
-  └── Memory Entries
+  -> Channels
+  -> Teams / Squads
+  -> Workspace Persona Instances
+  -> Posts
+       -> Threads
+            -> Messages
+       -> Post Participants
+       -> Post Events
+       -> Post Links
+       -> Attached Structured Objects
+            -> Notes
+            -> Decisions
+            -> References
+            -> Artifacts
+       -> Type-Specific State
+            -> Meeting State
+            -> Workstream State
+  -> Journals
+  -> Memory Candidates
+  -> Memory Entries
+  -> Activation / Run Records
 ```
 
-### 7.2 Sequence model
+### 8.1 Sequence model
 
 ```text
-User sends message
-  ↓
-ConversationMessage persisted
-  ↓
-ConversationEvent emitted
-  ↓
-Meeting Coordinator selects participants
-  ↓
-PersonaActivation records created
-  ↓
-AgentRun records created
-  ↓
-Persona responses persisted as ConversationMessages
-  ↓
-Journal entries optionally generated
-  ↓
-Memory candidates proposed
-  ↓
-Human review
-  ↓
-Approved MemoryEntry created
+User creates a message post or replies in an existing thread
+  -> Post, thread, and message are persisted
+  -> Post event is emitted
+  -> Target expansion and activation run per RFC-0001
+  -> Responses persist into the thread
+  -> Orbit may promote the discussion into a linked meeting post
+  -> Orbit may create a linked workstream post
+  -> Notes, decisions, references, and artifacts attach to posts
+  -> Journals are created from post and thread activity
+  -> Memory candidates are proposed
+  -> Operator review produces approved memory entries
 ```
 
-### 7.3 Important separation
+### 8.2 Important separation
 
 This RFC makes a hard distinction between:
 
-- **Message** — conversational content visible in chat
-- **Event** — system state transition or operational fact
-- **Journal** — reflective compression of activity
-- **Memory Candidate** — proposed durable learning
-- **Memory Entry** — approved durable memory
+- **Post** - durable collaboration object visible in Orbit surfaces
+- **Thread** - ordered conversation attached to a post
+- **Message** - individual authored entry in a thread
+- **Post Event** - operational fact or state change
+- **Structured Object** - attached note, decision, reference, or artifact
+- **Journal** - reflective compression of post activity
+- **Memory Candidate** - proposed durable learning
+- **Memory Entry** - approved durable memory
 
-That separation is essential.
+That separation is essential for explainability and a legible UI.
 
 ---
 
-## 8. Data Model
+## 9. Data Model
 
-This section defines the proposed entities and relationships.
+This section defines the conceptual runtime entities and relationships.
 
-### 8.1 Workspace Structure
+### 9.1 Workspace Structure
 
 #### `workspace`
-Top-level container for a venture, product, research stream, or internal initiative.
+
+Top-level container for a venture, product, research stream, or internal
+initiative.
 
 Fields:
 - `id`
@@ -251,15 +329,42 @@ Fields:
 - `archived_at` nullable
 
 Purpose:
-- scopes conversations
+- scopes channels
 - scopes teams and squads
 - scopes local memory
 - scopes workspace persona instances
 
 ---
 
+#### `channel`
+
+Organizational surface for collections of posts inside a workspace.
+
+Examples:
+- general
+- product
+- engineering
+- launch-readiness
+
+Fields:
+- `id`
+- `workspace_id`
+- `slug`
+- `name`
+- `purpose`
+- `status`
+- `created_at`
+- `archived_at` nullable
+
+Purpose:
+- groups posts for navigation and visibility
+- provides workspace-local structure without becoming a second source of truth
+
+---
+
 #### `team`
-Durable group of personas in a workspace.
+
+Durable group of workspace personas in a workspace.
 
 Examples:
 - product-core-team
@@ -277,6 +382,7 @@ Fields:
 ---
 
 #### `squad`
+
 Focused working group within a workspace.
 
 Examples:
@@ -294,13 +400,18 @@ Fields:
 - `created_at`
 
 Purpose:
-- supports “wear the Bar product team”
-- enables coordinator-based participant expansion
+- supports coordinator-based participant expansion
+- enables smaller collaboration groups within or across teams
 
 ---
 
 #### `workspace_persona`
-Instance of a global persona inside a workspace.
+
+Conceptual runtime entity representing the workspace persona instance described
+in RFC-0001.
+
+In this RFC, `workspace_persona` is schema shorthand for the `workspace persona
+instance` term used in RFC-0001.
 
 Fields:
 - `id`
@@ -314,13 +425,14 @@ Fields:
 
 Purpose:
 - local identity and memory anchor
-- participant in meetings and conversations
+- participant in posts, meetings, and workstreams
 - carrier of workspace-local expertise
 
 ---
 
 #### `workspace_persona_membership`
-Links workspace personas to teams and squads.
+
+Links workspace persona instances to teams and squads.
 
 Fields:
 - `id`
@@ -332,243 +444,397 @@ Fields:
 
 ---
 
-### 8.2 Conversation and Meeting State
+### 9.2 Posts, Threads, Messages, And Links
 
-#### `conversation`
-A durable discussion thread.
+#### `post`
+
+Primary durable collaboration object in Orbit.
 
 Fields:
 - `id`
 - `workspace_id`
+- `channel_id`
+- `post_type`
+  - `message`
+  - `meeting`
+  - `workstream`
+- `created_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `created_by_participant_id`
 - `title` nullable
-- `conversation_type`
-  - direct
-  - team
-  - squad
-  - meeting
-  - research
 - `status`
-  - open
-  - paused
-  - completed
-  - archived
-- `created_by_user_id`
+  - `active`
+  - `paused`
+  - `completed`
+  - `archived`
+- `created_at`
+- `archived_at` nullable
+
+Purpose:
+- top-level collaboration object visible in channels and command-center views
+- anchor for a thread, structured objects, and linked follow-up work
+
+Notes:
+- `post_type = message` means a message post, which owns a thread
+- `message` records are the individual entries inside that post's thread
+- `post.status` is a coarse cross-type state for presentation and retrieval;
+  detailed lifecycle remains in subtype records such as `meeting_state` and
+  `workstream_state`
+
+---
+
+#### `thread`
+
+Ordered conversation attached to a single post.
+
+In v1, each post owns one primary thread.
+
+Fields:
+- `id`
+- `post_id`
+- `status`
+  - `open`
+  - `closed`
+  - `archived`
+- `last_activity_at`
 - `created_at`
 - `closed_at` nullable
 
 Purpose:
-- top-level container for chat history
-- basis for summaries and memory extraction
+- stores ordered conversation without turning the workspace into one flat log
+- provides replayable reply context for a post
 
 ---
 
-#### `conversation_participant`
-Roster membership in a conversation.
+#### `message`
+
+Individual authored entry within a thread.
 
 Fields:
 - `id`
-- `conversation_id`
-- `participant_type`
-  - user
-  - workspace_persona
-  - system
-- `participant_id`
-- `joined_at`
-- `left_at` nullable
-- `participation_mode`
-  - active
-  - observing
-  - invited
-  - coordinator-managed
-
-Purpose:
-- determines who is in the room
-- allows explicit presence and absence
-
----
-
-#### `conversation_message`
-Visible chat artifact.
-
-Fields:
-- `id`
-- `conversation_id`
+- `post_id`
+- `thread_id`
 - `author_type`
-  - user
-  - workspace_persona
-  - system
+  - `user`
+  - `workspace_persona`
+  - `system`
 - `author_id`
 - `reply_to_message_id` nullable
 - `body`
 - `message_format`
-  - plain_text
-  - markdown
-  - structured
+  - `plain_text`
+  - `markdown`
+  - `structured`
 - `state`
-  - drafted
-  - persisted
-  - routed
-  - in_progress
-  - completed
-  - failed
-  - superseded
-- `visible_to_user`
+  - `drafted`
+  - `persisted`
+  - `in_progress`
+  - `completed`
+  - `failed`
+  - `superseded`
 - `created_at`
 - `updated_at`
 
 Purpose:
-- everything the user sees as “chat bubbles”
-- durable user and persona utterances
+- durable authored utterance
+- replayable contribution from a user, collaborator, or system
 
 ---
 
-#### `conversation_event`
-Operational system event.
+#### `post_participant`
+
+Participant roster attached to a post and its thread.
 
 Fields:
 - `id`
-- `conversation_id`
+- `post_id`
+- `participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `participant_id`
+- `joined_at`
+- `left_at` nullable
+- `participation_mode`
+  - `active`
+  - `observing`
+  - `invited`
+  - `coordinator_managed`
+
+Purpose:
+- explicit roster for posts, especially meeting and workstream posts
+- visibility into presence, invitation, and participation mode
+- base participant layer extended by `meeting_member` and
+  `workstream_assignment`
+
+---
+
+#### `post_event`
+
+Operational system event attached to a post.
+
+Fields:
+- `id`
+- `post_id`
+- `thread_id` nullable
 - `event_type`
 - `payload`
 - `created_at`
 
 Examples:
-- coordinator.selected_participants
-- persona.run_started
-- persona.run_failed
-- summary.created
-- memory.candidate_created
-- memory.approved
+- `post.created`
+- `participant.invited`
+- `activation.resolved`
+- `meeting.promoted`
+- `workstream.started`
+- `workstream.failed`
+- `artifact.attached`
+- `memory.candidate_created`
+- `memory.approved`
 
 Purpose:
-- system trace
+- runtime trace
 - UI status reconstruction
 - debugging and analytics
 
 ---
 
-#### `meeting`
-Structured conversation event with coordination semantics.
+#### `post_link`
+
+Relational link between posts.
 
 Fields:
 - `id`
-- `workspace_id`
-- `conversation_id`
+- `from_post_id`
+- `to_post_id`
+- `link_type`
+  - `origin`
+  - `follow_up`
+  - `dependency`
+  - `promotion`
+  - `related`
+- `created_at`
+
+Purpose:
+- links message posts, meeting posts, and workstream posts without forcing a
+  rigid tree
+- preserves continuity across promotion and follow-on work
+
+---
+
+### 9.3 Type-Specific Post State
+
+#### `meeting_state`
+
+Meeting-specific lifecycle attached to a meeting post.
+
+Fields:
+- `post_id`
 - `meeting_type`
-  - ad_hoc
-  - squad
-  - team
-  - review
-  - planning
-  - retrospective
-- `started_by_user_id`
+  - `ad_hoc`
+  - `squad`
+  - `team`
+  - `review`
+  - `planning`
+  - `retrospective`
 - `status`
-  - created
-  - active
-  - summarizing
-  - completed
-  - failed
+  - `created`
+  - `active`
+  - `summarizing`
+  - `completed`
+  - `failed`
+- `started_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `started_by_participant_id`
 - `started_at`
 - `completed_at` nullable
 
 Purpose:
-- support “team chat as meeting”
-- attach summaries and journals cleanly
+- supports structured deliberation without breaking post continuity
 
 ---
 
 #### `meeting_member`
-Explicit participant record for a meeting.
+
+Explicit participant record for a meeting post.
 
 Fields:
 - `id`
-- `meeting_id`
-- `workspace_persona_id`
+- `meeting_post_id`
+- `post_participant_id`
 - `participation_role`
-  - facilitator
-  - contributor
-  - observer
-  - summarizer
+  - `facilitator`
+  - `contributor`
+  - `observer`
+  - `summarizer`
 - `selected_reason`
 - `joined_at`
 - `completed_at` nullable
 
+Purpose:
+- meeting-specific role and selection metadata layered on top of the base post
+  roster
+
 ---
 
-### 8.3 Persona Activation and Runs
+#### `workstream_state`
 
-#### `persona_activation`
-Durable record of a persona entering a conversation.
+Execution-oriented lifecycle attached to a workstream post.
+
+Fields:
+- `post_id`
+- `workstream_type`
+  - `research`
+  - `design`
+  - `implementation`
+  - `review`
+  - `release`
+  - `documentation`
+- `requested_outcome`
+- `status`
+  - `draft`
+  - `pending`
+  - `idle`
+  - `in_progress`
+  - `blocked`
+  - `completed`
+  - `failed`
+  - `cancelled`
+- `requested_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `requested_by_participant_id`
+- `started_by_participant_type` nullable
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `started_by_participant_id` nullable
+- `requested_at`
+- `started_at` nullable
+- `completed_at` nullable
+- `failure_reason` nullable
+
+Purpose:
+- supports linked execution work with visible state transitions
+
+---
+
+#### `workstream_assignment`
+
+Assignment record for participants attached to a workstream post.
 
 Fields:
 - `id`
+- `workstream_post_id`
+- `post_participant_id`
+- `assignment_role`
+  - `owner`
+  - `contributor`
+  - `reviewer`
+  - `executor`
+- `created_at`
+- `completed_at` nullable
+
+Purpose:
+- workstream-specific role assignment layered on top of the base post roster
+
+---
+
+### 9.4 Activation And Runs
+
+This section models runtime linkage to activation and execution records.
+Authoritative activation semantics, trace requirements, and contract resolution
+rules belong to RFC-0001.
+
+RFC-0002 intentionally models activation linkage and runtime relationships only.
+It does not redefine contract semantics, precedence rules, or trace policy.
+
+#### `persona_activation`
+
+Runtime linkage record for an activation resolved under RFC-0001.
+
+Fields:
+- `id`
+- `initiated_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `initiated_by_participant_id`
 - `workspace_id`
-- `conversation_id`
-- `meeting_id` nullable
-- `workspace_persona_id`
-- `directive_id`
-- `activation_reason`
+- `channel_id` nullable
+- `origin_post_id`
+- `origin_thread_id`
 - `trigger_message_id`
-- `template_version`
+- `addressed_target_kind`
+  - `collaborator`
+  - `team`
+  - `squad`
+- `addressed_target_reference_id`
+- `resolved_workspace_persona_instance_id`
+- `response_mode`
 - `created_at`
 
 Purpose:
-- explain why a persona responded
-- capture the exact grounding entry point
+- ties contract-resolution output to concrete runtime collaboration context
 
 ---
 
 #### `agent_run`
-One invocation of a model/provider for a persona activation.
+
+Execution run linked to one activation.
 
 Fields:
 - `id`
 - `persona_activation_id`
-- `provider`
-- `model_name`
+- `runner_kind`
 - `status`
-  - queued
-  - running
-  - completed
-  - failed
-  - cancelled
+  - `queued`
+  - `running`
+  - `completed`
+  - `failed`
+  - `cancelled`
 - `started_at`
 - `completed_at` nullable
 - `failure_reason` nullable
 
 Purpose:
-- stable attribution boundary between PersonaKit and provider calls
+- boundary between resolved activation and execution runtime
 
 ---
 
 #### `agent_run_step`
-Optional trace step within a run.
+
+Optional low-level trace step within a run.
 
 Fields:
 - `id`
 - `agent_run_id`
 - `step_type`
-  - grounding
-  - retrieval
-  - provider_call
-  - tool_use
-  - postprocess
-  - summary
+  - `contract_resolution_snapshot`
+  - `memory_retrieval`
+  - `runner_call`
+  - `tool_use`
+  - `postprocess`
 - `payload`
 - `created_at`
 
 Purpose:
-- structured traceability
-- later debugging and analytics
+- structured debugging and deep traceability
 
 ---
 
-#### `agent_run_memory_source`
-Join table recording which memory influenced a run.
+#### `activation_memory_source`
+
+Join record describing which approved memory influenced an activation.
 
 Fields:
 - `id`
-- `agent_run_id`
+- `persona_activation_id`
 - `memory_entry_id`
 - `source_order`
 - `retrieval_reason`
@@ -579,46 +845,51 @@ Purpose:
 
 ---
 
-### 8.4 Journaling
+### 9.5 Journaling
 
 #### `journal_entry`
-Reflective artifact produced from lived activity.
+
+Reflective artifact produced from lived post and thread activity.
 
 Fields:
 - `id`
 - `workspace_id`
-- `workspace_persona_id`
-- `conversation_id` nullable
-- `meeting_id` nullable
+- `workspace_persona_id` nullable
+- `source_post_id` nullable
+- `source_thread_id` nullable
 - `entry_type`
-  - daily
-  - meeting
-  - milestone
-  - design_rationale
-  - technical_notes
-  - manual
+  - `daily`
+  - `meeting`
+  - `milestone`
+  - `design_rationale`
+  - `technical_notes`
+  - `manual`
 - `time_window_start`
 - `time_window_end`
 - `body`
 - `created_at`
 
 Purpose:
-- compression layer between raw conversation and durable memory
-- supports Rosie / gardening workflows
+- compression layer between raw post activity and durable memory
 
 ---
 
 #### `journal_source`
-Optional lineage from journal to source artifacts.
+
+Lineage from journal to source artifacts.
 
 Fields:
 - `id`
 - `journal_entry_id`
 - `source_type`
-  - message
-  - event
-  - run
-  - summary
+  - `post`
+  - `thread`
+  - `message`
+  - `post_event`
+  - `run`
+  - `note`
+  - `decision`
+  - `manual`
 - `source_id`
 
 Purpose:
@@ -626,10 +897,11 @@ Purpose:
 
 ---
 
-### 8.5 Memory
+### 9.6 Memory
 
 #### `memory_candidate`
-Proposed memory derived from journals, meetings, or analysis.
+
+Proposed memory derived from journals or runtime artifacts.
 
 Fields:
 - `id`
@@ -637,50 +909,58 @@ Fields:
 - `workspace_persona_id` nullable
 - `persona_template_id` nullable
 - `source_type`
-  - journal
-  - meeting
-  - conversation
-  - run
-  - manual
+  - `journal`
+  - `post`
+  - `thread`
+  - `message`
+  - `run`
+  - `note`
+  - `decision`
+  - `manual`
 - `source_id`
 - `proposed_scope`
-  - workspace
-  - workspace_persona
-  - persona_global
-  - team
-  - organization
+  - `workspace`
+  - `workspace_persona`
+  - `persona_global`
+  - `organization`
 - `title`
 - `body`
 - `confidence`
 - `status`
-  - candidate
-  - approved
-  - rejected
-  - archived
+  - `candidate`
+  - `approved`
+  - `rejected`
+  - `archived`
 - `created_at`
 - `reviewed_at` nullable
 
 Purpose:
 - explicit staging area between reflection and durable memory
 
+Note:
+- v1 does not establish team-scoped memory as a first-class scope
+- if team-level relevance matters, it should be represented through tagged or
+  linked workspace memory rather than a separate scope
+
 ---
 
 #### `memory_review`
-Review action taken by the human or steward process.
+
+Review action taken by the operator or steward process.
 
 Fields:
 - `id`
 - `memory_candidate_id`
 - `reviewer_type`
-  - user
-  - steward
-  - system
+  - `operator`
+  - `steward`
+  - `system`
 - `reviewer_id`
 - `decision`
-  - approve
-  - reject
-  - archive
-  - defer
+  - `approve`
+  - `reject`
+  - `archive`
+  - `defer`
 - `notes` nullable
 - `created_at`
 
@@ -690,37 +970,37 @@ Purpose:
 ---
 
 #### `memory_entry`
+
 Approved durable memory.
 
 Fields:
 - `id`
 - `scope`
-  - workspace
-  - workspace_persona
-  - persona_global
-  - team
-  - organization
+  - `workspace`
+  - `workspace_persona`
+  - `persona_global`
+  - `organization`
 - `workspace_id` nullable
 - `workspace_persona_id` nullable
 - `persona_template_id` nullable
-- `team_id` nullable
 - `title`
 - `body`
 - `status`
-  - active
-  - archived
-  - superseded
+  - `active`
+  - `archived`
+  - `superseded`
 - `valid_from`
 - `valid_to` nullable
 - `source_memory_candidate_id` nullable
 - `created_at`
 
 Purpose:
-- memory that can actually be retrieved during activation
+- durable memory eligible for future activation retrieval
 
 ---
 
 #### `memory_link`
+
 Traversal and lineage relationship between memory entries.
 
 Fields:
@@ -728,23 +1008,23 @@ Fields:
 - `from_memory_entry_id`
 - `to_memory_entry_id`
 - `link_type`
-  - derived_from
-  - reinforces
-  - contradicts
-  - supersedes
-  - related_workspace
-  - same_pattern_as
-  - topic_link
-  - triggered_by
+  - `derived_from`
+  - `reinforces`
+  - `contradicts`
+  - `supersedes`
+  - `related_workspace`
+  - `same_pattern_as`
+  - `topic_link`
+  - `triggered_by`
 - `created_at`
 
 Purpose:
-- supports “I remember something related from Foo workspace around Bar time”
 - enables graph-like traversal while staying relational
 
 ---
 
 #### `persona_global_memory_profile`
+
 Profile of durable cross-workspace learning for a persona template.
 
 Fields:
@@ -759,66 +1039,160 @@ Purpose:
 
 ---
 
-### 8.6 Summaries
+### 9.7 Attached Structured Objects
 
-#### `conversation_summary`
-Summary artifact for a conversation or meeting.
+Attached structured objects remain post-linked by default rather than becoming
+first-class post types in v1.
+
+#### `note`
+
+Structured note attached to a post.
 
 Fields:
 - `id`
-- `workspace_id`
-- `conversation_id`
-- `meeting_id` nullable
-- `summary_type`
-  - brief
-  - detailed
-  - decision_log
-  - retrospective
+- `post_id`
+- `note_type`
+  - `brief`
+  - `detailed`
+  - `meeting_summary`
+  - `retrospective`
+  - `workstream_closeout`
+  - `manual`
 - `body`
+- `created_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `created_by_participant_id`
 - `created_at`
 
 Purpose:
-- direct user utility
-- source material for journals and memory candidates
+- captures summaries, reflective notes, and other durable text artifacts tied to
+  a post
 
 ---
 
-## 9. UX / Product Implications
+#### `decision`
+
+Structured decision record attached to a post.
+
+Fields:
+- `id`
+- `post_id`
+- `title`
+- `body`
+- `decision_state`
+  - `proposed`
+  - `adopted`
+  - `rejected`
+  - `superseded`
+- `rationale_note_id` nullable
+- `created_at`
+
+Purpose:
+- captures committed or rejected choices with rationale and status
+
+---
+
+#### `reference`
+
+Structured external or internal reference attached to a post.
+
+Fields:
+- `id`
+- `post_id`
+- `reference_type`
+  - `url`
+  - `doc`
+  - `file`
+  - `issue`
+  - `commit`
+  - `external_note`
+- `target`
+- `title` nullable
+- `created_at`
+
+Purpose:
+- keeps supporting context linked to collaboration without hiding it in message
+  bodies
+
+---
+
+#### `artifact`
+
+Structured artifact record attached to a post.
+
+Fields:
+- `id`
+- `post_id`
+- `artifact_type`
+  - `file`
+  - `image`
+  - `code_output`
+  - `report`
+  - `bundle`
+  - `other`
+- `storage_ref`
+- `title` nullable
+- `created_at`
+
+Purpose:
+- tracks durable outputs produced by meeting or workstream activity
+
+---
+
+## 10. UX / Product Implications
 
 This data model implies several product truths.
 
-### 9.1 Chat is not “just messages”
-The UI should distinguish:
-- visible messages
-- system events
-- journals
-- memory review actions
+### 10.1 Channels surface posts, not just messages
 
-A simple bubble stream is not enough for all surfaces.
+The main list view should be able to show:
 
-### 9.2 Meetings are first-class
-The app should be able to show:
-- who was invited
-- why they were invited
-- who responded
-- who failed to respond
-- what summary and memory candidates resulted
+- message posts
+- meeting posts
+- workstream posts
+- post status and type
+- linked follow-up work
 
-### 9.3 Memory must be visible and governable
-The user should be able to:
+### 10.2 Threads are attached to posts
+
+The UI should make it obvious that replies belong to a post's thread, not to a
+global room-wide log.
+
+### 10.3 Meeting and workstream posts are first-class
+
+Orbit should be able to show:
+
+- why a discussion was promoted into a meeting post
+- which workstream post was launched from which origin post
+- status, participants, and outputs for those linked posts
+
+### 10.4 Structured objects should be inspectable
+
+The UI should support attached:
+
+- notes
+- decisions
+- references
+- artifacts
+
+without forcing all of that meaning into thread messages.
+
+### 10.5 Memory must be visible and governable
+
+The operator should be able to:
+
 - inspect candidate memory
 - approve or reject it
 - view memory lineage
-- inspect which memories influenced a response
+- inspect which memories influenced an activation
 
-### 9.4 Journals are important UX artifacts
-Journals are not just backend artifacts. They may become:
-- timeline views
-- weekly persona reflections
-- project learning summaries
+### 10.6 Multi-client consistency matters
 
-### 9.5 Multi-device consistency matters
-Because macOS, iPhone, and iPad clients will all read this system, the model must support:
+Because macOS, iPhone, and iPad clients will all read this system, the model
+must support:
+
 - realtime updates
 - replay
 - offline reconciliation later
@@ -826,482 +1200,307 @@ Because macOS, iPhone, and iPad clients will all read this system, the model mus
 
 ---
 
-## 10. Edge Cases and Failure Modes
+## 11. Edge Cases And Failure Modes
 
-### 10.1 Database write fails for a user message
+### 11.1 Database write fails for a message post or reply
+
 - No coordination should begin
 - No activation should be created
 - Client should keep local draft if possible
 - Error must be surfaced clearly
 
-### 10.2 Coordinator fails after message persistence
+### 11.2 Post event persistence fails after message persistence
+
 - Message remains durable
-- Conversation event records failure
-- User may retry routing
+- Orbit should retry event persistence where possible
+- Trace views may show temporary incompleteness
 
-### 10.3 One persona fails while others complete
-- Successful responses still render
-- Failure is visible as an event/state
-- Meeting may still summarize partial results
+### 11.3 Meeting promotion fails after thread activity persists
 
-### 10.4 Memory candidate conflicts with approved memory
+- The originating post and thread remain durable
+- Promotion failure is recorded as a post event
+- The operator may retry promotion
+
+### 11.4 Workstream post creation partially succeeds
+
+- The origin post remains durable
+- Partial creation must not produce an unlinked orphan post silently
+- Failure or partial linkage must be visible
+
+### 11.5 One collaborator fails while others complete
+
+- Successful responses still render in the thread
+- Failure is visible as a post event or run status
+- Meeting or workstream posts may still summarize partial results
+
+### 11.6 Structured object attachment fails
+
+- The post remains valid without the object
+- Failure is recorded explicitly
+- The operator may retry attachment or creation
+
+### 11.7 Memory candidate conflicts with approved memory
+
 - Candidate should not auto-promote
 - Review should surface contradiction
-- Linkage should allow `contradicts` or `supersedes`
+- Memory linkage should support `contradicts` or `supersedes`
 
-### 10.5 Persona template changes mid-conversation
-- Activation should record template version used
-- Existing messages remain attributable to the prior version
-- Later activations may use the newer version
+### 11.8 Template or directive changes mid-thread
 
-### 10.6 Same lesson appears in many workspaces
-- Memory candidates may be separate at first
-- Rosie/gardening or human review may promote a cross-workspace memory
-- Memory links should preserve source lineage
+- Activation should record the version references used
+- Existing messages remain attributable to prior activation context
+- Later activations may use newer definitions
 
-### 10.7 Offline mobile client
-- Draft messages may queue locally
-- Server-side ordering remains source of truth once synced
+### 11.9 Offline mobile client
+
+- Draft posts or messages may queue locally
+- Server-side ordering remains the source of truth once synced
 - Client should not fabricate activations locally
 
-### 10.8 Stale or archived memory in retrieval
+### 11.10 Archived or stale memory in retrieval
+
 - Retrieval should ignore archived or expired memory
-- Run trace should record omission where relevant
+- Activation trace should record omission where relevant
 - No silent fallback to untrusted memory blobs
 
+### 11.11 Broken or missing post link
+
+- Post and thread history remain durable even if a linked post is missing
+- UI should surface broken continuity rather than pretending linkage is intact
+
 ---
 
-## 11. Alternatives Considered
+## 12. Alternatives Considered
 
-### Alternative A: Store everything as chat history only
-Rejected because:
-- chat history is too noisy for memory
-- hard to govern
-- poor attribution
-- poor analytics value
+### Alternative A: Store everything as message history only
 
-### Alternative B: Treat summaries as memory
 Rejected because:
-- summaries are useful but not automatically durable knowledge
-- they still need review and scope
 
-### Alternative C: Directly mutate persona definitions as they learn
-Rejected because:
-- destroys authored identity clarity
-- makes behavior opaque
-- causes uncontrolled drift
+- message history is too noisy to carry meetings, workstreams, and memory
+- structured objects become hard to govern
+- traceability becomes weak
 
-### Alternative D: Workspace-local memory only
-Rejected because:
-- prevents durable cross-workspace expertise
-- blocks the incubator-scale vision
+### Alternative B: Keep `conversation` as the primary root object
 
-### Alternative E: Global memory only
-Rejected because:
-- causes contamination
-- makes local project context unsafe
-- weakens explainability
+Rejected because Orbit's product model is now post-first, not conversation-first.
+
+### Alternative C: Make meetings and workstreams separate root entities
+
+Rejected because that would weaken continuity with the message post and thread
+that produced them.
+
+### Alternative D: Treat summaries as the only structured attachment
+
+Rejected because Orbit needs multiple attached object types, not a single summary
+bucket.
+
+### Alternative E: Introduce team-scoped memory in v1
+
+Rejected for now because the current product vision does not require a separate
+first-class team memory scope. Tagged or linked workspace memory is sufficient
+initially.
 
 ### Alternative F: Pure graph database from day one
-Rejected for now because:
-- relational model is sufficient and simpler initially
-- graph-like traversal can be modeled with `memory_link`
-- premature complexity adds risk
+
+Rejected for now because a relational model is sufficient initially, while
+`memory_link` and `post_link` can provide graph-like traversal where needed.
+
+### Alternative G: Directly mutate persona definitions as they learn
+
+Rejected because it destroys authored identity clarity and weakens explainable
+contract resolution.
 
 ---
 
-## 12. Risks and Tradeoffs
+## 13. Risks And Tradeoffs
 
 ### Risk: Model complexity
-This RFC introduces many entities. That is real complexity.
+
+This RFC introduces many entities.
 
 Tradeoff:
-- the product vision itself is structurally complex
+- the product itself is structurally complex
 - collapsing entities would make the system less legible, not more
 
+### Risk: Structured object sprawl
+
+Notes, decisions, references, and artifacts may proliferate if created without
+discipline.
+
+Tradeoff:
+- explicit object types make governance and UI presentation easier than hiding
+  everything in messages
+
 ### Risk: Memory sprawl
-If journals and memory candidates are generated too aggressively, the system will accumulate noise.
+
+If journals and memory candidates are generated too aggressively, the system will
+accumulate noise.
 
 Tradeoff:
 - the staged candidate/review/approved model is intended to control this
 
-### Risk: Over-modeling too early
-There is a chance some entities will not be needed immediately.
-
-Tradeoff:
-- defining them now avoids accidental coupling and gives the roadmap a coherent shape
-
 ### Risk: Query complexity
-Scoped retrieval across workspace, persona instance, and persona global memory adds complexity.
+
+Post links, activation links, and scoped memory retrieval all increase query
+complexity.
 
 Tradeoff:
-- this is preferable to unsafe global retrieval or duplicated persona models
+- this is preferable to a flatter model that loses traceability and context
 
-### Risk: User-facing UX overload
-If the app exposes all artifacts equally, users may feel overwhelmed.
+### Risk: User-facing overload
+
+If Orbit exposes all artifacts equally, users may feel overwhelmed.
 
 Tradeoff:
-- the data model should support rich inspection even if the initial UI stays simpler
+- the data model should support rich inspection even if the initial UI presents a
+  simpler slice of it
 
 ---
 
-## 13. Open Questions
+## 14. Open Questions
 
-- Should `journal_entry` be generated synchronously after meetings, or by background jobs only?
-- Should memory candidates ever be auto-approved in narrow categories?
-- Should team-scoped memory exist separately from workspace-scoped memory, or can it be modeled as tagged workspace memory initially?
-- How much run-step trace detail is worth storing long-term?
-- Should summaries be mutable, versioned, or append-only?
-- Should conversation events use a strict typed enum model or a more flexible payload model first?
-- Should mobile clients cache journals and memory locally, or only conversations?
+- Should `channel_id` remain required on every post in v1, or should some post
+  types support channel-null contexts later?
+- Should `meeting_member` and `workstream_assignment` eventually share a common
+  extension model over `post_participant`?
+- Should notes, decisions, references, and artifacts eventually share a common
+  typed base record?
+- How much `agent_run_step` detail is worth storing long-term?
+- Should notes or decisions ever be promotable into first-class post types in a
+  later version?
+- Should organization-scoped memory exist in all deployments, or remain optional
+  in smaller self-hosted setups?
 
 ---
 
-## 14. Recommendation
+## 15. Recommendation
 
-Adopt this RFC as the **conceptual data model direction** for PersonaKit’s conversation and memory system.
+Adopt this RFC as the conceptual runtime model direction for Orbit's
+collaboration runtime and memory system.
 
 Specifically:
 
-- Keep authored definitions file-backed
-- Store runtime collaboration state in a relational database
-- Treat messages, events, journals, memory candidates, and memory entries as distinct artifacts
-- Preserve memory scope and lineage explicitly
-- Support both workspace-local learning and persona-global learning
-- Defer exact SQL schema and API details to implementation design
+- keep authored definitions file-backed in PersonaKit
+- store runtime collaboration state in a relational database
+- treat posts, threads, messages, structured objects, journals, memory
+  candidates, and memory entries as distinct artifacts
+- model meetings and workstreams as post-based runtime objects
+- preserve memory scope and lineage explicitly
+- defer exact SQL schema and API details to implementation design
 
-This is the strongest foundation for the product direction you’ve described:
+This is the strongest foundation for Orbit's current product direction:
+
 - workspaces
-- teams
-- squads
-- meetings
+- channels
+- teams and squads
+- posts and threads
+- meeting and workstream promotion
 - durable memory
-- incubator-scale growth
+- multi-client self-hosted operation
 
 ---
 
-## 15. Rollout / Adoption Plan
+## 16. Rollout / Adoption Plan
 
 ### Phase 1
-Introduce the minimum viable runtime entities:
+
+Introduce the minimum viable collaboration runtime:
+
 - workspace
-- conversation
-- conversation_message
-- conversation_event
+- channel
 - workspace_persona
+- post
+- thread
+- message
+- post_participant
+- post_event
+- post_link
 - persona_activation
 - agent_run
 
 Goal:
-- durable multi-client chat with persona attribution
+- durable multi-client post/thread collaboration with activation attribution
 
 ### Phase 2
-Add structured meeting support:
-- meeting
+
+Add meeting and workstream runtime state:
+
+- meeting_state
 - meeting_member
-- conversation_summary
+- workstream_state
+- workstream_assignment
 
 Goal:
-- team and squad collaboration with summaries
+- promoted meetings and linked execution work with visible lifecycle state
 
 ### Phase 3
+
+Add attached structured objects:
+
+- note
+- decision
+- reference
+- artifact
+
+Goal:
+- durable non-message collaboration outputs attached to posts
+
+### Phase 4
+
 Add journals and candidate memory:
+
 - journal_entry
+- journal_source
 - memory_candidate
 - memory_review
 
 Goal:
 - reflective compression and reviewed memory growth
 
-### Phase 4
-Add durable memory and traversal:
+### Phase 5
+
+Add approved memory and deeper retrieval:
+
 - memory_entry
 - memory_link
 - persona_global_memory_profile
+- activation_memory_source
 
 Goal:
-- long-term persona expertise and cross-workspace learning
-
-### Phase 5
-Add analytics and advanced retrieval
-Goal:
-- search, trend analysis, memory quality scoring, and deeper operational insights
+- long-term collaborator expertise, lineage, and explainable retrieval
 
 ---
 
-## 16. Self-Review
+## 17. Self-Review
 
-- Does this model preserve human authority over durable memory?  
+- Does this model preserve operator authority over durable memory?
   Yes.
 
-- Does it distinguish authored identity from learned memory?  
+- Does it distinguish authored contract truth from runtime collaboration state?
   Yes.
 
-- Does it support workspace-local and cross-workspace learning without flattening them together?  
+- Does it match Orbit's post/thread/meeting/workstream model?
   Yes.
 
-- Does it give future implementations enough structure without prematurely locking the final schema?  
+- Does it give implementation enough structure without prematurely locking the
+  final schema?
   Yes.
 
-- Are failure modes and lifecycle stages explicit enough to keep the product legible?  
-  Mostly yes; meeting lifecycle and mobile sync may need deeper follow-up RFCs.
-
-- Does it preserve PersonaKit’s core values of explicitness, determinism, and human control?  
+- Does it keep activation semantics primarily owned by RFC-0001?
   Yes.
 
----
-
-## 17. Decision Log
-
-- 2026-03-08 — Initial draft created as RFC proposal
-- 2026-03-08 — Positioned as companion to RFC-0001 activation model
+- Are failure modes and lifecycle stages explicit enough to keep the product
+  legible?
+  Mostly yes; channel semantics and some structured-object details may need
+  follow-up refinement.
 
 ---
 
-If you want, the next best move is to draft **RFC-0003: Workspace and Persona Instance Model**, because that will lock the top-level identity and tenancy model that everything else hangs off. That aligns with the RFC roadmap you already captured in Sources. fileciteturn14file0
-# RFC-0002: Conversation and Memory Data Model
-
-## Status
-Draft
-
-## Authors
-- AJ Self
-- ChatGPT / ProdDoc
-
-## Created
-2026-03-08
-
-## Last Updated
-2026-03-08
-
-## Related
-- RFC-0001 – Persona Activation and Default Directive Model
-- RFC-0003 – Workspace and Persona Instance Model
-- RFC-0004 – Teams, Squads, and Meeting Coordinator Model
-- RFC-0005 – Memory Journaling and Gardening Model
-
----
-
-## 1. Summary
-
-This RFC defines the conceptual data model for Orbit’s conversation, meeting, journaling, and memory systems.
-
-Orbit is designed as a workspace-centric platform where:
-
-- a human operates multiple workspaces
-- personas collaborate through conversations and meetings
-- conversations are durable and replayable
-- memory is proposed, reviewed, approved, and retrieved
-- every response remains attributable and inspectable
-
-This RFC does **not** define the final SQL schema or API surface. It defines the conceptual structure that future implementation should follow.
-
----
-
-## 2. Motivation
-
-Orbit is not just a chat application. It is a platform for running persistent AI teams.
-
-That means the system must support much more than transient message exchange. It must support:
-
-- durable conversations
-- meeting participation and coordination
-- persona activation and run attribution
-- reflective journaling
-- reviewed memory growth
-- cross-workspace learning without contamination
-
-The authored-definition model is appropriate for persona templates, directives, and other static definitions, but it is not sufficient for runtime collaboration state.
-
-Without a clear data model, Orbit risks:
-
-- fragmented conversation history
-- weak traceability
-- ambiguous meeting state
-- noisy or unsafe memory growth
-- inconsistent client behavior across macOS, iPhone, and iPad
-
-This RFC exists to define the durable runtime model before implementation spreads across clients and services.
-
----
-
-## 3. Problem Statement
-
-Orbit needs a data model that can answer all of the following questions reliably:
-
-- What conversations happened in a workspace?
-- Who participated in a given conversation or meeting?
-- Which persona said a given thing, under which directive?
-- Which memories influenced that response?
-- Which journals were created from that activity?
-- Which memory candidates were proposed?
-- Which candidates were approved, rejected, archived, or superseded?
-- Which durable memories belong to a workspace, a workspace persona, or a persona global memory profile?
-- How can future activations retrieve the right knowledge without cross-workspace contamination?
-
-The system needs a model that is:
-
-- relational
-- inspectable
-- evolvable
-- safe for memory growth
-- compatible with realtime clients
-- compatible with later analytics and search
-
----
-
-## 4. Goals
-
-This RFC aims to establish a conceptual data model that:
-
-- supports durable, replayable conversations
-- treats messages and system events as distinct artifacts
-- supports meetings, teams, and squads as first-class concepts
-- records persona activation and run attribution explicitly
-- supports journaling as a first-class reflection layer
-- supports memory candidates and approved memory as distinct stages
-- enables scoped retrieval for:
-  - workspace
-  - workspace persona
-  - persona global memory
-  - team
-  - organization
-- supports lineage and traversal between durable memories
-- supports future analytics, summaries, and search
-
----
-
-## 5. Non-Goals
-
-This RFC does **not** define:
-
-- the final SQL schema or migrations
-- the final API endpoints
-- the final client sync protocol
-- the final authentication model
-- the final vector indexing or search ranking implementation
-- the exact UI for chat, memory review, or meetings
-
----
-
-## 6. Proposal
-
-Orbit’s runtime data should be modeled around five major domains:
-
-1. Workspace structure
-2. Conversation and meeting state
-3. Persona activation and runs
-4. Journaling
-5. Memory
-
-These domains should remain separate but linked through stable identifiers.
-
-### Core Design Law
-
-> Files define who the team is.  
-> The database records what the team has done and what it should remember.
-
----
-
-## 7. Runtime Domains
-
-```text
-Workspace
-  ├── Teams / Squads
-  ├── Conversations
-  │    ├── Messages
-  │    ├── Events
-  │    └── Participants
-  ├── Meetings
-  ├── Persona Activations
-  ├── Agent Runs
-  ├── Journals
-  ├── Memory Candidates
-  └── Memory Entries
-```
-
----
-
-## 8. Data Model
-
-### workspace
-Top-level container for a venture or project.
-
-### team
-Durable group of personas in a workspace.
-
-### squad
-Focused working group within a workspace.
-
-### workspace_persona
-Instance of a persona template inside a workspace.
-
-### conversation
-A durable discussion thread.
-
-### conversation_message
-Visible chat artifact authored by a user or persona.
-
-### conversation_event
-Operational system event for coordination and tracing.
-
-### meeting
-Structured collaborative interaction attached to a conversation.
-
-### meeting_member
-Participant record for a meeting.
-
-### persona_activation
-Record of a persona entering a conversation.
-
-### agent_run
-Execution of a model provider for a persona activation.
-
-### journal_entry
-Reflective artifact summarizing activity over time.
-
-### memory_candidate
-Proposed durable learning derived from journals or meetings.
-
-### memory_review
-Governance action approving or rejecting a memory candidate.
-
-### memory_entry
-Approved durable memory that can influence future activations.
-
-### memory_link
-Relationship between memory entries for traversal and lineage.
-
-### persona_global_memory_profile
-Accumulated cross-workspace expertise for a persona template.
-
----
-
-## 9. UX Implications
-
-This model implies several product truths:
-
-- chat is not just messages
-- meetings are first-class collaborative objects
-- memory must be visible and governable
-- journals represent reflective learning
-
----
-
-## 10. Recommendation
-
-Adopt this RFC as the conceptual data model direction for Orbit’s conversation and memory system.
-
-This structure provides the foundation for:
-
-- workspace collaboration
-- multi-persona meetings
-- durable knowledge
-- explainable AI reasoning
-
----
-
-## 11. Decision Log
-
-- 2026-03-08 — Initial draft created
-- 2026-03-08 — Revised to align with Orbit platform terminology
+## 18. Decision Log
+
+- 2026-03-08 - Initial draft created as RFC proposal
+- 2026-03-17 - Rewritten to align with Orbit's post/thread runtime model,
+  RFC-0001 contract-resolution ownership, post-linked meeting and workstream
+  state, attached structured objects, and reviewed-memory scope rules
+- 2026-03-17 - Removed duplicate appended draft and consolidated the RFC into a
+  single canonical document

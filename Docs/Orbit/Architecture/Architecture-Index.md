@@ -3,7 +3,7 @@
 Start here:
 
 System Overview
--> RFC-0001 Persona Activation
+-> RFC-0001 Contract Resolution
 -> RFC-0003 Workspace Model
 -> RFC-0002 Conversation & Memory
 -> RFC-0004 Teams & Squads
@@ -32,15 +32,15 @@ This document explains the major layers of the system:
 
 ---
 
-## 2. Persona Activation Model
+## 2. Contract Resolution Model
 
-**RFC‑0001 – Persona Activation and Default Directive Model**
+**RFC‑0001 – Workspace Persona Contract Resolution and Activation Model**
 
-Explains how a persona is activated in a conversation, including:
+Explains how a workspace persona contract is resolved in runtime context, including:
 
 - persona templates
 - workspace persona instances
-- directive resolution
+- contract resolution
 - activation context
 - attribution and traceability
 
@@ -62,17 +62,19 @@ Covers:
 
 ---
 
-## 4. Conversation and Memory Model
+## 4. Collaboration Runtime and Memory Model
 
-**RFC‑0002 – Conversation and Memory Data Model**
+**RFC‑0002 – Collaboration Runtime and Memory Data Model**
 
 Defines the durable runtime data model.
 
 Includes:
 
-- conversations
+- channels
+- posts
+- threads
 - messages
-- meetings
+- meeting and workstream state
 - activations
 - agent runs
 - journals

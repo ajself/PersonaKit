@@ -74,11 +74,11 @@ The goal is not to predict every implementation detail, but to clearly explain t
 
 The initial RFCs establish the architectural foundation for Orbit.
 
-1. **RFC‑0001 – Persona Activation and Default Directive Model**  
-   Defines how personas are activated, grounded, and attributed during interactions.
+1. **RFC‑0001 – Workspace Persona Contract Resolution and Activation Model**  
+   Defines how workspace persona contracts are resolved, activated, and traced during interactions.
 
-2. **RFC‑0002 – Conversation and Memory Data Model**  
-   Defines the durable data model for conversations, meetings, journals, and memory.
+2. **RFC‑0002 – Collaboration Runtime and Memory Data Model**  
+   Defines the durable runtime model for channels, posts, threads, structured objects, journals, and memory.
 
 3. **RFC‑0003 – Workspace and Persona Instance Model**  
    Defines how workspaces organize ventures and how persona templates become workspace persona instances.
@@ -98,9 +98,9 @@ The initial RFCs establish the architectural foundation for Orbit.
 
 If you are new to the Orbit architecture, the recommended reading order is:
 
-1. RFC‑0001 – Persona Activation  
+1. RFC‑0001 – Workspace Persona Contract Resolution  
 2. RFC‑0003 – Workspace & Persona Model  
-3. RFC‑0002 – Conversation & Memory Model  
+3. RFC‑0002 – Collaboration Runtime & Memory Model  
 4. RFC‑0004 – Teams, Squads, Coordinator  
 5. RFC‑0005 – Memory System  
 6. RFC‑0006 – Platform Architecture
@@ -116,8 +116,8 @@ Orbit is the **platform for running AI teams**.
 PersonaKit is the **engine within Orbit** responsible for:
 
 - persona templates  
-- persona activation  
-- directive resolution  
+- workspace persona contract resolution  
+- skill authorization and operating constraints  
 - memory grounding
 
 These RFCs primarily describe how the Orbit platform and PersonaKit engine work together.
@@ -128,7 +128,7 @@ These RFCs primarily describe how the Orbit platform and PersonaKit engine work 
 
 Orbit follows several guiding principles:
 
-- **Human‑centered control** — the user remains the authority.  
+- **Operator-centered control** — the user remains the authority.  
 - **Deterministic activation** — persona behavior is grounded explicitly.  
 - **Structured collaboration** — teams and squads organize work.  
 - **Durable learning** — knowledge evolves through journals and reviewed memory.  

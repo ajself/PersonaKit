@@ -458,7 +458,7 @@ The user remains the final authority over durable memory.
 This document ties together several RFCs.
 
 - Persona Activation Model
-- Conversation and Memory Data Model
+- Collaboration Runtime and Memory Data Model
 - Workspace and Persona Instance Model
 - Teams, Squads, and Meeting Coordinator Model
 - Memory Journaling and Gardening Model

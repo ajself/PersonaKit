@@ -11,11 +11,11 @@ Draft
 2026-03-08
 
 ## Last Updated
-2026-03-08
+2026-03-17
 
 ## Related
-- RFC-0001 Persona Activation and Default Directive Model
-- RFC-0002 Conversation and Memory Data Model
+- RFC-0001 Workspace Persona Contract Resolution and Activation Model
+- RFC-0002 Collaboration Runtime and Memory Data Model
 - RFC-0003 Workspace and Persona Instance Model
 - Docs/RFCs/README.md
 
@@ -719,8 +719,8 @@ Draft
 2026-03-08
 
 ## Related
-- RFC-0001 Persona Activation and Default Directive Model
-- RFC-0002 Conversation and Memory Data Model
+- RFC-0001 Workspace Persona Contract Resolution and Activation Model
+- RFC-0002 Collaboration Runtime and Memory Data Model
 - RFC-0003 Workspace and Persona Instance Model
 - Docs/RFCs/README.md
 
