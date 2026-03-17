@@ -2,13 +2,13 @@
 
 Start here:
 
-System Overview
+Platform Overview
+-> RFC-0006 Orbit Platform Architecture
 -> RFC-0001 Contract Resolution
 -> RFC-0003 Workspace Model
--> RFC-0002 Conversation & Memory
+-> RFC-0002 Collaboration Runtime
 -> RFC-0004 Teams & Squads
 -> RFC-0005 Memory Gardening
--> RFC-0006 Platform Architecture
 
 This page provides the recommended reading order for understanding the Orbit system architecture.
 
@@ -16,18 +16,18 @@ The documents below build on each other. Reading them in order will give you a c
 
 ---
 
-## 1. System Overview
+## 1. Platform Overview
 
-Start with the high‑level architecture of the Orbit platform.
+Start with the high-level architecture in `RFC-0006`.
 
-This document explains the major layers of the system:
+It explains the major layers of the system:
 
 - clients
-- gateway
-- coordination
-- persona runtime
-- memory system
-- persistence
+- gateway and realtime
+- collaboration services
+- PersonaKit resolver
+- execution runners
+- persistence and artifact storage
 - infrastructure
 
 ---
@@ -116,9 +116,9 @@ Covers:
 
 ## 7. Multi‑Client Platform Architecture
 
-**RFC‑0006 – Multi‑Client Platform Architecture**
+**RFC‑0006 – Orbit Multi‑Client Platform Architecture**
 
-Describes how Orbit operates across devices.
+Describes how Orbit Server and native clients operate together across devices.
 
 Includes:
 
@@ -126,7 +126,7 @@ Includes:
 - iPhone quick interaction client
 - iPad collaboration surface
 - gateway and realtime layers
-- backend services
+- Orbit Server logical service domains
 - infrastructure and deployment
 
 ---
@@ -135,7 +135,7 @@ Includes:
 
 If you are new to the system:
 
-1. Read the **System Overview** first.
+1. Read **RFC-0006** first for the highest-level platform view.
 2. Continue through the RFCs in the order above.
 3. Refer back to earlier sections as needed.
 

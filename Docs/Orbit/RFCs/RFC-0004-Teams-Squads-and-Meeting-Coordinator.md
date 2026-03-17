@@ -18,7 +18,7 @@ Draft
 - RFC-0002: Collaboration Runtime and Memory Data Model
 - RFC-0003: Workspace, Group, and Workspace Persona Instance Model
 - RFC-0005: Memory Journaling and Gardening Model
-- RFC-0006: Multi-Client Platform Architecture
+- RFC-0006: Orbit Multi-Client Platform Architecture
 - Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md
 - Docs/Orbit/RFCs/README.md
 

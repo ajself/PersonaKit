@@ -1048,10 +1048,8 @@ Verify it by asking:
 ## Related Docs
 
 - [Orbit Docs Index](../README.md)
-- [Orbit Platform Architecture Overview](../Architecture/PersonaKit-System-Overview.md)
-- [Meeting Execution Flow](../Architecture/Meeting-Execution-Flow.md)
 - [RFC-0002: Collaboration Runtime and Memory Data Model](../RFCs/RFC-0002-Conversation-and-Memory-Data-Model.md)
 - [RFC-0003: Workspace, Group, and Workspace Persona Instance Model](../RFCs/RFC-0003-Workspace-and-Persona-Instance-Model.md)
 - [RFC-0004: Teams, Squads, and Meeting Coordinator Model](../RFCs/RFC-0004-Teams-Squads-and-Meeting-Coordinator.md)
-- [RFC-0006: Multi-Client Platform Architecture](../RFCs/RFC-0006-Multi-Client-Platform-Architecture.md)
+- [RFC-0006: Orbit Multi-Client Platform Architecture](../RFCs/RFC-0006-Multi-Client-Platform-Architecture.md)
 - [Orbit macOS Command Center](../Planning/Orbit-macOS-Command-Center.md)

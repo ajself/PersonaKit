@@ -89,8 +89,8 @@ The initial RFCs establish the architectural foundation for Orbit.
 5. **RFC‑0005 – Memory Journaling and Gardening Model**  
    Defines the lifecycle from activity → journals → memory candidates → approved memory.
 
-6. **RFC‑0006 – Multi‑Client Platform Architecture**  
-   Defines how Orbit operates across macOS, iPhone, and iPad clients with a unified backend platform.
+6. **RFC‑0006 – Orbit Multi‑Client Platform Architecture**  
+   Defines how Orbit Server, native clients, realtime state, and deployment topology fit together.
 
 ---
 
@@ -103,7 +103,7 @@ If you are new to the Orbit architecture, the recommended reading order is:
 3. RFC‑0002 – Collaboration Runtime & Memory Model  
 4. RFC‑0004 – Teams, Squads, Coordinator  
 5. RFC‑0005 – Memory System  
-6. RFC‑0006 – Platform Architecture
+6. RFC‑0006 – Orbit Platform Architecture
 
 Together these RFCs define the core behavior of the Orbit system.
 

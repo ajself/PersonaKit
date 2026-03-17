@@ -1,4 +1,4 @@
-# RFC-0006: Multi-Client Platform Architecture
+# RFC-0006: Orbit Multi-Client Platform Architecture
 
 ## Status
 Draft
@@ -14,62 +14,69 @@ Draft
 2026-03-17
 
 ## Related
-- RFC-0001 Workspace Persona Contract Resolution and Activation Model
-- RFC-0002 Collaboration Runtime and Memory Data Model
-- RFC-0003 Workspace, Group, and Workspace Persona Instance Model
-- RFC-0004 Teams, Squads, and Meeting Coordinator Model
-- RFC-0005 Memory Journaling and Gardening Model
-- Docs/Orbit/Architecture/PersonaKit-System-Overview.md
-- Docs/Orbit/Architecture/Meeting-Execution-Flow.md
+- RFC-0001: Workspace Persona Contract Resolution and Activation Model
+- RFC-0002: Collaboration Runtime and Memory Data Model
+- RFC-0003: Workspace, Group, and Workspace Persona Instance Model
+- RFC-0004: Teams, Squads, and Meeting Coordinator Model
+- RFC-0005: Memory Journaling and Gardening Model
+- Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md
 - Docs/Orbit/RFCs/README.md
 
 ---
 
 ## 1. Summary
 
-This RFC proposes the **multi-client platform architecture** for PersonaKit.
+This RFC defines Orbit's multi-client platform architecture.
 
-PersonaKit is no longer just a local grounding tool. It is becoming a **workspace-centric command center** for persistent AI teams, with conversations, meetings, memory, journaling, and cross-workspace learning. That direction implies a platform architecture where:
+Orbit is the collaboration platform. PersonaKit is the authored-contract engine
+inside it. Orbit needs one canonical backend system that can serve multiple
+specialized native clients without allowing those clients to invent different
+runtime rules or competing sources of truth.
 
-- multiple client apps connect to one canonical backend
-- conversations and meetings are durable and replayable
-- realtime updates keep all clients in sync
-- identity, activation, coordination, memory, and storage are centralized
-- hardware topology is intentional, not accidental
+This RFC proposes a platform architecture where:
 
-This RFC defines the platform shape across:
+- one canonical `Orbit Server` owns runtime truth
+- macOS, iPhone, and iPad are purpose-specific client surfaces over that shared
+  truth
+- realtime updates project persisted state across devices
+- contract resolution, coordination, execution, journaling, and memory
+  governance remain server-side
+- transactional state and artifact storage are separated
+- the default deployment model is self-hosted and private
 
-- macOS
-- iPhone
-- iPad
-- gateway and realtime layers
-- runtime and coordination services
-- storage and artifact infrastructure
-- local/private-cloud deployment model
-
-This is a proposal, not a locked implementation.
+This RFC treats a `Mac mini + Synology NAS` topology as the recommended
+reference deployment, not a hard requirement. It also assumes a monolith-first
+backend deployment with logical service boundaries inside one Orbit Server.
 
 ---
 
 ## 2. Motivation
 
-The previous RFCs define PersonaKit’s core behavior:
+The previous RFCs define Orbit's core behavior and structure:
 
-- personas activate through workspace instances and directives
-- conversations, meetings, journals, and memory are durable runtime artifacts
-- teams and squads provide collaboration structure
-- memory grows through journaling, review, and gardening rather than uncontrolled accumulation fileciteturn18file1 fileciteturn18file2 fileciteturn18file3 fileciteturn18file6 fileciteturn18file7
+- RFC-0001 defines workspace persona contract resolution and activation
+- RFC-0002 defines the collaboration runtime and memory data model
+- RFC-0003 defines workspace, group, and workspace persona instance structure
+- RFC-0004 defines group orchestration through the Meeting Coordinator
+- RFC-0005 defines memory journaling, review, and approved-memory governance
 
-But none of that matters if the platform does not support the way you actually want to use it:
+But none of that matters if the platform does not support how Orbit is actually
+meant to be used:
 
-- command-center style work on macOS
-- quick interaction and approvals on iPhone
-- meeting-first collaboration on iPad
-- durable cloud-style coordination
-- private infrastructure under your control
+- command-center work on macOS
+- quick interaction, approvals, and alerts on iPhone
+- meeting and roster-heavy collaboration on iPad
+- durable multi-device coordination over one shared backend
+- private infrastructure under operator control
 - one system image that all devices and future services agree on
 
-Without a platform RFC, the risk is that each client grows its own assumptions, sync behavior becomes fuzzy, and the “one human at the center of AI teams” vision fragments into disconnected surfaces.
+Without a platform RFC, the risk is that:
+
+- each client grows its own assumptions
+- sync behavior becomes fuzzy
+- runtime logic drifts across clients
+- memory and coordination state diverge
+- Orbit fragments into disconnected apps instead of one system
 
 This RFC exists to define the platform shape before implementation drifts.
 
@@ -77,22 +84,26 @@ This RFC exists to define the platform shape before implementation drifts.
 
 ## 3. Problem Statement
 
-PersonaKit needs a platform architecture that can answer:
+Orbit needs a platform architecture that can answer the following clearly:
 
 - Which system components are authoritative?
-- Which responsibilities belong on clients vs backend services?
-- How do macOS, iPhone, and iPad differ in purpose without diverging in behavior?
-- How should realtime updates work?
-- How does the system behave when clients are offline or stale?
+- Which responsibilities belong on clients versus Orbit Server?
+- How do macOS, iPhone, and iPad differ in purpose without diverging in
+  behavior?
+- How should realtime updates work across all clients?
+- How does the system behave when a client is offline, stale, or partially
+  connected?
 - How are heavy runtime tasks separated from artifact storage?
-- How does the hardware topology support privacy, durability, and low cost?
-- How does the system preserve one coherent source of truth across all devices?
+- How should self-hosted hardware topology support privacy, durability, and low
+  cost?
+- How does the platform preserve one coherent source of truth across all
+  devices?
 
-Without explicit answers, PersonaKit risks:
+Without explicit answers, Orbit risks:
 
 - duplicated logic across apps
-- inconsistent meeting behavior
-- divergent memory state
+- inconsistent coordination behavior
+- divergent post, thread, and memory state
 - brittle sync
 - weak operational clarity
 - accidental architecture by implementation
@@ -104,17 +115,20 @@ Without explicit answers, PersonaKit risks:
 This RFC aims to establish a platform architecture that:
 
 - supports macOS, iPhone, and iPad as first-class clients
-- centralizes canonical runtime state in backend services
+- centralizes canonical runtime state in Orbit Server
 - provides realtime synchronization across devices
-- keeps persona activation, coordination, and memory policies server-side
-- supports local/private-cloud deployment with strong durability
-- separates compute from long-term artifact storage
-- supports offline and reconnect behavior cleanly
+- keeps contract resolution, coordination, and memory governance server-side
+- supports self-hosted/private-cloud deployment with strong durability
+- uses a monolith-first deployment shape with clear logical service boundaries
+- separates transactional state from long-term artifact storage
+- uses an object-style artifact storage abstraction from day one
+- supports offline intent queueing and reconnect behavior cleanly
 - preserves a single source of truth for:
-  - conversations
-  - meetings
-  - memory
-  - persona runtime state
+  - workspaces and groups
+  - channels, posts, threads, and messages
+  - meeting and workstream state
+  - journaling and memory state
+  - activation and run traces
 - supports future external connectors without making them authoritative
 
 ---
@@ -126,10 +140,12 @@ This RFC does not define:
 - the final SwiftUI navigation structure for any app
 - the exact authentication provider or token format
 - the exact network protocol details for every endpoint
-- the final push notification strategy
+- the exact transport used for every realtime stream
+- the final push-notification strategy
 - the final database schema details
 - the final containerization or deployment manifests
 - public SaaS multi-tenant hosting
+- immediate service decomposition from day one
 - App Store release strategy
 
 Those should follow in later implementation specs or narrower RFCs.
@@ -138,594 +154,811 @@ Those should follow in later implementation specs or narrower RFCs.
 
 ## 6. Proposal
 
-PersonaKit should be modeled as a **central platform with specialized clients**.
+Orbit should be modeled as a central platform with specialized clients.
 
 The core proposal is:
 
-- one canonical backend platform owns runtime truth
-- client apps are purpose-specific interfaces to that shared truth
-- backend services own coordination, activation, memory, journaling, and persistence
+- one canonical `Orbit Server` owns runtime truth
+- client apps are purpose-specific surfaces over that shared truth
+- Orbit Server contains clear logical domains for:
+  - gateway and realtime
+  - collaboration orchestration
+  - PersonaKit contract resolution
+  - execution runners
+  - journaling and memory governance
+  - persistence and storage adapters
 - artifact storage is separated from transactional state
-- the deployment model is private-cloud / self-hosted by default
+- the default deployment model is self-hosted and private
 
 ### Core design law
 
-> Clients present the system.  
-> The platform owns the system.
+> Clients present the system.
+> Orbit Server owns the system.
 
 This means:
-- no client should own canonical meeting state
-- no client should own memory promotion truth
-- no client should resolve persona activation independently
+
+- no client should own canonical meeting or workstream state
+- no client should own memory-promotion truth
+- no client should resolve workspace persona contracts independently
 - no client should become a second backend by accident
 
 ---
 
-## 7. Architectural Overview
+## 7. Ownership Boundary
 
-The architecture should be understood as six layers:
+RFC-0006 owns:
 
-```text
-Human
-  ↓
-Client Apps
-  ↓
-Gateway + Realtime
-  ↓
-Coordination + Runtime Services
-  ↓
-Persistence + Artifact Storage
-  ↓
-Hardware / Infrastructure
-```
+- client roles and client/backend responsibility split
+- canonical-source-of-truth rules
+- realtime and sync semantics
+- deployment topology and hosting guidance
+- external capability boundary rules
 
-This matches the system overview already established, while making the client and hosting responsibilities explicit. fileciteturn18file4
+RFC-0006 does not own:
+
+- runtime entity schema (`RFC-0002`)
+- activation semantics (`RFC-0001`)
+- workspace/group structure semantics (`RFC-0003`)
+- memory lifecycle semantics (`RFC-0005`)
 
 ---
 
-## 8. Client Model
+## 8. Architectural Overview
 
-PersonaKit should support three primary client classes.
+The architecture should be understood as layered around one Orbit Server.
 
-### 8.1 macOS App
+```text
+Operator
+  -> Orbit Client Apps
+  -> Orbit Gateway / Realtime
+  -> Orbit Collaboration Services
+  -> PersonaKit Resolver
+  -> Execution Runners
+  -> Persistence + Artifact Storage
+  -> Hardware / Infrastructure
+```
 
-The macOS app is the **command center**.
+### 8.1 Monolith-first shape
 
-This is the richest operational surface and should be the place where the user can:
+Orbit should begin with one deployable Orbit Server rather than a set of
+separately deployed microservices.
 
-- manage workspaces
-- manage persona templates and workspace personas
-- inspect conversations and meetings
-- inspect coordinator behavior
-- review and manage memory
-- inspect journals
-- inspect traces and failures
+Inside that server, the platform should still preserve logical service
+boundaries so later decomposition remains possible if growth demands it.
+
+This gives Orbit:
+
+- operational simplicity for self-hosted deployment
+- one canonical backend boundary
+- lower infrastructure burden for early development and adoption
+- cleaner future service extraction if needed later
+
+---
+
+## 9. Client Model
+
+Orbit should support three primary client classes.
+
+### 9.1 macOS app
+
+The macOS app is the command center.
+
+This is the richest operational surface and should be the best place to:
+
+- manage workspaces and channels
+- inspect posts, threads, meeting posts, and workstream posts
+- inspect coordinator behavior and runtime traces
+- review journals and memory
+- inspect failures and lineage
 - manage team and squad composition
-- review summaries and artifacts
+- review notes, decisions, references, and artifacts
 
 The macOS app should be the best place for:
-- editing
+
 - administration
 - diagnosis
+- editing
 - high-fidelity inspection
 
-### 8.2 iPhone App
+### 9.2 iPhone app
 
-The iPhone app is the **fast interaction and approval surface**.
+The iPhone app is the fast interaction and approval surface.
 
 This app should prioritize:
-- quick chat
-- notifications
+
+- quick interaction
+- alerts and notifications
 - reading responses on the go
 - approving or rejecting memory
-- seeing meeting completion
+- seeing meeting or workstream completion
 - reading summaries
 - lightweight workspace switching
 
-The iPhone app should not try to be a full operations console.
-It should be optimized for:
+The iPhone app should not try to become a full operations console.
+It should optimize for:
+
 - speed
 - clarity
 - interruption-friendly workflows
 
-### 8.3 iPad App
+### 9.3 iPad app
 
-The iPad app is the **meeting and collaboration surface**.
+The iPad app is the meeting and collaboration surface.
 
 This app should be optimized for:
-- side-by-side persona responses
+
+- side-by-side collaborator responses
 - roster inspection
-- team and squad conversations
+- meeting-post and workstream-post review
 - summary panels
-- memory review panels
+- comparison views
 - timeline or event inspection
 - multi-column workspace views
 
 The iPad should feel like:
+
 - a meeting table
 - a planning surface
 - a live collaboration board
 
-### 8.4 Shared client principle
+### 9.4 Shared client principle
 
 All clients should consume the same canonical platform state.
-Differences should be:
+
+Differences between clients should be:
+
 - surface area
 - density
 - workflow emphasis
 
 Not:
+
 - different rules
 - different runtime logic
 - different memory truth
 
 ---
 
-## 9. Gateway and Realtime Layer
+## 10. Gateway and Realtime Layer
 
-PersonaKit needs a Gateway layer that acts as the front door for all clients.
+Orbit Server needs a gateway layer that acts as the front door for all clients.
 
 Responsibilities should include:
 
 - authentication and request validation
-- message ingestion
-- conversation CRUD surfaces
-- workspace and roster APIs
-- memory review APIs
-- journal and summary retrieval
+- post, thread, and message ingestion
+- workspace and group APIs
+- artifact access and upload coordination
+- journal and memory-review APIs
 - realtime subscription management
+- snapshot and replay entry points for reconnect behavior
 
-### 9.1 Realtime requirements
+### 10.1 Realtime requirements
 
-Because conversations, meetings, and memory reviews span multiple devices, the platform needs a realtime model.
+Because posts, meeting state, workstream state, and memory review span multiple
+devices, the platform needs a realtime model.
 
 Minimum event categories should include:
 
-- message.created
-- message.updated
-- response.started
-- response.completed
-- meeting.created
-- meeting.completed
-- participant.joined
-- participant.failed
-- summary.created
-- journal.created
-- memory.candidate.created
-- memory.reviewed
-- memory.approved
+- `post.created`
+- `post.status.changed`
+- `message.created`
+- `thread.activity.updated`
+- `meeting.started`
+- `meeting.completed`
+- `participant.joined`
+- `participant.failed`
+- `journal.created`
+- `memory.candidate.created`
+- `memory.reviewed`
+- `memory.approved`
+- `workstream.started`
+- `artifact.attached`
 
-### 9.2 Design law
+### 10.2 Transport flexibility
+
+Realtime semantics should be authoritative, but transport should remain
+flexible.
+
+Acceptable implementations may include:
+
+- `WebSocket`
+- `SSE`
+- future push layers or transport adapters
+
+### 10.3 Design law
 
 > Realtime is a projection of durable state, not a second source of truth.
 
 That means:
+
 - events should reflect persisted transitions
 - clients should be able to reconstruct state from stored records
-- reconnect should recover by replay or snapshot, not guesswork
+- reconnect should recover by snapshot and replay, not guesswork
 
 ---
 
-## 10. Coordination and Runtime Services
+## 11. Collaboration and Runtime Services
 
-The platform backend should separate client access from behavior.
+Orbit Server should separate client access from behavior through logical service
+domains.
 
-### 10.1 Coordination services
+### 11.1 Collaboration services
 
-These services own:
-- meeting creation
+These domains own:
+
+- meeting creation and promotion
 - participant selection
-- squad/team expansion
+- team and squad expansion
 - meeting lifecycle
 - completion decisions
-- summary triggers
-- journaling triggers
-- memory candidate trigger decisions
+- summary and follow-up triggers
+- workstream handoff triggers
 
-This is the territory of the Meeting Coordinator model already proposed. fileciteturn18file6
+This is the territory of the Meeting Coordinator model defined in RFC-0004.
 
-### 10.2 Persona runtime services
+### 11.2 PersonaKit resolver
 
-These services own:
-- persona activation
+This domain owns:
+
+- workspace persona contract resolution
 - directive resolution
-- memory retrieval
-- context assembly
+- kit resolution
+- authorized skill resolution
+- stop point and review-gate resolution
+- memory eligibility inputs for activation
+
+This aligns with RFC-0001.
+
+### 11.3 Execution runners
+
+These domains own:
+
 - provider execution
 - trace capture
 - response persistence
+- run status reporting
 
-This aligns with the activation and conversation/memory RFCs already drafted. fileciteturn18file1 fileciteturn18file2
+This execution layer remains separate from the authored contract layer.
 
-### 10.3 Memory services
+### 11.4 Memory services
 
-These services own:
+These domains own:
+
 - journal generation
 - memory candidate generation
-- stewardship workflows
 - memory review orchestration
-- retrieval indexing and lineage
+- stewardship workflows
+- lineage and indexing support
 
-This aligns with RFC-0005’s journaling and gardening model. fileciteturn18file7
+This aligns with RFC-0005.
 
 ---
 
-## 11. Persistence Model
+## 12. Persistence and Artifact Storage
 
-The platform should distinguish between **transactional truth** and **artifact storage**.
+The platform should distinguish between transactional truth and artifact storage.
 
-### 11.1 Transactional state
+### 12.1 Transactional state
 
 Transactional state belongs in the relational database.
 
 Examples:
+
 - workspaces
+- channels
 - teams
 - squads
-- conversations
+- workspace personas
+- workspace persona memberships
+- posts
+- threads
 - messages
-- meetings
-- activations
-- runs
-- journals
+- post events
+- post links
+- notes
+- decisions
+- references
+- meeting state
+- meeting members
+- workstream state
+- persona activations
+- agent runs
+- journal entries
 - memory candidates
+- memory reviews
 - memory entries
-- summaries
 
-This model is already established in RFC-0002. fileciteturn18file2
+This aligns with RFC-0002 and companion RFCs.
 
-### 11.2 Artifact storage
+### 12.2 Artifact storage
 
 Large and durable file-like artifacts belong in artifact storage.
 
 Examples:
+
 - exported docs
 - research files
-- long-form summaries
-- generated reports
+- long-form reports
+- generated outputs
 - snapshots
 - pack archives
-- attachments later
+- attachments
 
-### 11.3 Design law
+### 12.3 Object-style storage abstraction
 
-> Database for runtime truth.  
-> Artifact storage for large durable files.
+Orbit should code against an object-style storage abstraction from day one, even
+if the first implementation is backed by a local filesystem or NAS.
+
+This keeps the system portable across:
+
+- local disk
+- NAS-backed storage
+- later object-store backends
+
+### 12.4 Design law
+
+> Database for runtime truth.
+> Object-style artifact storage for large durable files.
 
 ---
 
-## 12. Offline and Sync Model
+## 13. Offline and Sync Model
 
-Because clients include mobile devices, offline handling matters.
+Because Orbit includes mobile clients, offline handling matters.
 
-### 12.1 Canonical principle
+### 13.1 Canonical principle
 
-The server remains the canonical source of truth.
+Orbit Server remains the canonical source of truth.
 
 Clients may have:
+
 - local caches
 - pending drafts
+- queued intents
 - optimistic UI states
 
 But they must not invent:
-- persona activations
-- meeting completions
-- approved memory
-- canonical coordinator outcomes
 
-### 12.2 Offline behavior
+- persona activations
+- coordinator outcomes
+- approved memory
+- canonical post, meeting, or workstream state
+
+### 13.2 Offline behavior
 
 Suggested rules:
 
-#### If client is offline when composing a user message
-- preserve draft locally
+#### If a client is offline while composing a post or reply
+
+- preserve the draft locally
 - allow queued send
 - sync when connectivity resumes
 
-#### If message send succeeds but updates are stale
-- client should refresh from canonical state after reconnect
+#### If a send succeeds but the client is stale
+
+- refresh from canonical state after reconnect
+- reconcile through snapshot plus event replay where needed
 
 #### If approvals are made offline
-- queue action locally
+
+- queue the action locally
 - reconcile on reconnect
 - handle conflict visibly if memory state changed in the meantime
 
-### 12.3 Design law
+#### If replay has gaps or local cache is stale
 
-> Clients may queue intent.  
-> Only the platform may finalize truth.
+- fetch a fresh snapshot
+- replay from a trusted checkpoint
+- do not guess missing state locally
+
+### 13.3 Design law
+
+> Clients may queue intent.
+> Only Orbit Server may finalize truth.
 
 ---
 
-## 13. Hardware and Deployment Model
+## 14. Hardware and Deployment Model
 
 This RFC assumes a private, self-hosted deployment model as the default.
 
-### 13.1 Compute node
+### 14.1 Reference topology
+
+The recommended reference topology is:
+
+- `Mac mini` class compute host
+- `Synology NAS` or equivalent storage host
+
+This is a recommended topology, not a hard requirement.
+
+### 14.2 Compute host
 
 Recommended primary compute host:
-- Mac mini
+
+- `Mac mini`
 
 Responsibilities:
-- gateway/API
-- realtime service
-- coordination services
-- persona runtime
+
+- Orbit Server
+- gateway and realtime
+- collaboration services
+- PersonaKit resolver
+- execution runners
 - memory services
-- Postgres
+- relational database
 - background jobs
 
-### 13.2 Storage node
+### 14.3 Storage host
 
 Recommended artifact and backup host:
-- Synology NAS
+
+- `Synology NAS`
 
 Responsibilities:
-- artifact storage
+
+- artifact storage backend
 - backups
 - snapshots
 - archives
 - pack and document vault
 
-### 13.3 Why this split
+### 14.4 Why this split
 
-The system overview already established the Mac mini as the “brain” and the Synology as the “vault.” fileciteturn18file4 This RFC formalizes that split:
+The `Mac mini` acts as the brain.
+The NAS acts as the vault.
 
-- compute, coordination, and database live on the Mac mini
-- large durable storage and backup live on the NAS
+This split keeps:
 
-### 13.4 Network posture
+- compute, coordination, and database work on the compute host
+- large durable storage and backup on the storage host
+
+Smaller self-hosted deployments may colocate these concerns temporarily, but the
+reference topology remains a strong default.
+
+### 14.5 Network posture
 
 The system should be designed for:
+
 - local/private network first
 - remote access second
 - public internet exposure only when intentionally designed
 
 This keeps:
+
 - cost low
 - privacy high
 - operational complexity manageable
 
 ---
 
-## 14. External Capability Surfaces
+## 15. External Capability Surfaces
 
-The platform may integrate external capability providers, but they should remain non-authoritative.
+Orbit may integrate external capability providers, but they should remain
+non-authoritative.
 
 Examples:
-- OpenAI Codex API
-- GitHub API
-- GitHub MCP server
+
+- model APIs
+- GitHub APIs
+- MCP servers
 - future research or analysis tools
 
-### 14.1 Design law
+### 15.1 Design law
 
-> External systems provide capability, not identity or memory authority.
+> External systems provide capability, not authority.
 
 That means:
-- persona identity comes from PersonaKit
-- activation comes from PersonaKit
-- memory policy comes from PersonaKit
-- external systems do not become the source of truth
+
+- PersonaKit provides authored contract truth
+- Orbit Server resolves runtime state and enforces platform behavior
+- external systems do not become the source of truth for identity, memory, or
+  coordination state
 
 ---
 
-## 15. UX / Product Implications
+## 16. UX / Product Implications
 
 This RFC implies several product truths.
 
-### 15.1 macOS is not “the app”; it is “the console”
-That distinction matters.
-The macOS app is the richest client, not the canonical platform.
+### 16.1 macOS is not the platform
 
-### 15.2 iPhone is not a lesser copy of macOS
-It should be optimized around:
+The macOS app is the richest client, not the canonical system.
+
+### 16.2 iPhone is not a lesser copy of macOS
+
+It should optimize around:
+
 - fast interaction
 - approvals
 - alerts
 - summaries
 
-### 15.3 iPad should differentiate through meeting ergonomics
+### 16.3 iPad should differentiate through meeting ergonomics
+
 It should be the best place for:
-- team chat
+
+- roster review
 - live meeting observation
-- persona comparison
+- collaborator comparison
 - review and synthesis
 
-### 15.4 Platform language matters
+### 16.4 Platform language matters
+
 The product should feel like:
+
 - one system across devices
-not
+
+not:
+
 - three different apps with similar branding
 
 ---
 
-## 16. Failure Modes and Edge Cases
+## 17. Failure Modes and Edge Cases
 
-### 16.1 Realtime connection drops
+### 17.1 Realtime connection drops
+
 - client should reconnect
-- recover via snapshot + event replay
+- recover via snapshot and event replay
 - avoid assuming local state is complete
 
-### 16.2 One client is stale while another is current
-- stale client must reconcile from server truth
-- no local override of canonical meeting or memory state
+### 17.2 One client is stale while another is current
 
-### 16.3 Gateway unavailable
+- stale client must reconcile from server truth
+- no local override of canonical meeting, workstream, or memory state
+
+### 17.3 Gateway unavailable
+
 - clients may still preserve drafts locally
 - no durable write occurs until service recovers
 
-### 16.4 Runtime service unavailable
-- message persistence may still succeed
-- coordinator failure must remain visible
+### 17.4 Collaboration service unavailable
+
+- post persistence may still succeed
+- coordination failure must remain visible
 - retries should be possible
 
-### 16.5 Artifact storage unavailable
+### 17.5 Artifact storage unavailable
+
 - transactional state should still function where possible
 - artifact-heavy operations may degrade separately
 
-### 16.6 Database unavailable
+### 17.6 Database unavailable
+
 - no canonical state change should be finalized
 - clients should not fake durable success
 
-### 16.7 Device-specific UX divergence
+### 17.7 Device-specific UX divergence
+
 - different clients may surface different workflows
-- but they must not implement different underlying rules
+- they must not implement different underlying rules
+
+### 17.8 Offline approval conflict
+
+- queued approval must reconcile against current server truth
+- visible conflict resolution is required when state changed in the meantime
 
 ---
 
-## 17. Alternatives Considered
+## 18. Alternatives Considered
 
 ### Alternative A: Local-first apps with optional backend sync
+
 Rejected because:
-- PersonaKit’s direction now centers around durable coordinated runtime state
-- memory, meetings, and multi-device behavior need a canonical backend
+
+- Orbit's direction centers on durable coordinated runtime state
+- multi-device collaboration needs a canonical backend
 
 ### Alternative B: macOS as the only serious client
+
 Rejected because:
-- iPhone and iPad meaningfully expand how you run an incubator-style system
-- approvals, summaries, and meetings deserve tailored surfaces
+
+- iPhone and iPad meaningfully expand how an operator runs the system
+- approvals, summaries, and collaboration deserve tailored surfaces
 
 ### Alternative C: Clients own more runtime logic
-Rejected because:
-- leads to behavior drift
-- makes the system harder to reason about
-- weakens trust and explainability
 
-### Alternative D: NAS as primary compute host
 Rejected because:
-- storage appliance is the wrong home for runtime coordination and database-heavy compute
-- better used as the vault, not the brain
 
-### Alternative E: Public SaaS-first multi-tenant design
+- behavior drift follows quickly
+- the system becomes harder to reason about
+- trust and explainability weaken
+
+### Alternative D: Service-first decomposition from day one
+
+Rejected because:
+
+- it adds operational burden too early
+- a monolith-first deployment is better suited to self-hosted adoption
+- logical service boundaries can still be preserved inside Orbit Server
+
+### Alternative E: NAS as primary compute host
+
+Rejected because:
+
+- a storage appliance is the wrong home for coordination and database-heavy
+  compute
+- it is better used as the vault, not the brain
+
+### Alternative F: Public SaaS-first multi-tenant design
+
 Rejected for now because:
-- current product direction is private, founder-centered, and self-hosted
+
+- current product direction is private, operator-led, and self-hosted
 - multi-tenant SaaS concerns would distort early architecture
 
 ---
 
-## 18. Risks and Tradeoffs
+## 19. Risks and Tradeoffs
 
 ### Risk: More backend complexity earlier
+
 This architecture centralizes a lot.
 
 Tradeoff:
+
 - the product vision requires central truth and coordination
 - avoiding that complexity would only defer it into worse places
 
 ### Risk: Multi-client product surface may grow too broad
-Three apps can create design and implementation overhead.
+
+Three apps create design and implementation overhead.
 
 Tradeoff:
+
 - each client has a distinct strategic role
 - platform centralization reduces behavioral divergence
 
-### Risk: Private-cloud deployment may still have operational burden
+### Risk: Private-cloud deployment still has operational burden
+
 Tradeoff:
+
 - cost and privacy advantages remain strong
 - separation of compute and storage reduces strain
 
 ### Risk: Realtime architecture adds complexity
+
 Tradeoff:
+
 - meeting and multi-device collaboration feel broken without it
 - durable-state-first design contains the complexity
 
+### Risk: Monolith-first architecture may blur service boundaries
+
+Tradeoff:
+
+- one deployable Orbit Server simplifies operations early
+- logical service separation should still be preserved so later decomposition
+  remains possible
+
 ---
 
-## 19. Open Questions
+## 20. Open Questions
 
 - Should the first mobile client be iPhone or iPad?
-- Should notifications be gateway-managed or delegated to a dedicated service later?
-- Should artifact storage start as filesystem-backed on the NAS, or use an object-style abstraction from day one?
+- Should notifications be gateway-managed or delegated to a dedicated service
+  later?
 - How much local caching should each client perform?
-- Should macOS retain any additional admin-only surfaces not exposed on mobile?
-- Should there be a web client eventually, or remain native-app-first?
+- Should macOS retain admin-only surfaces not exposed on mobile?
+- Should there be a web client eventually, or remain native-first?
+- When should Orbit Server be decomposed beyond a monolith-first deployment?
 
 ---
 
-## 20. Recommendation
+## 21. Recommendation
 
-Adopt the multi-client platform model as PersonaKit’s platform architecture.
+Adopt the multi-client platform model as Orbit's platform architecture.
 
 Specifically:
 
-- treat the backend platform as the canonical source of truth
+- treat Orbit Server as the canonical source of truth
 - keep client apps surface-specific, not behavior-specific
-- centralize coordination, runtime, memory, and persistence server-side
-- use the Mac mini as the primary compute host
-- use the Synology NAS as artifact vault and backup target
-- support realtime synchronization across all clients
+- centralize coordination, contract resolution, execution, memory, and
+  persistence server-side
+- use the `Mac mini + Synology NAS` split as the recommended reference topology
+- support realtime synchronization across all clients while keeping transport
+  flexible
+- use an object-style artifact storage abstraction from day one
 - keep external providers as capability surfaces only
 
-This is the strongest platform architecture for the workspace-centric, memory-bearing, incubator-scale direction PersonaKit is taking.
+This is the strongest platform architecture for Orbit's operator-led,
+multi-client, self-hosted direction.
 
 ---
 
-## 21. Rollout / Adoption Plan
+## 22. Rollout / Adoption Plan
 
 ### Phase 1
+
 Introduce:
-- canonical backend APIs
-- macOS client as first rich client
-- durable conversations and meetings
+
+- Orbit Server as the canonical backend
+- macOS client as the first rich client
+- durable post and thread runtime
 - realtime event stream
-- basic artifact storage
+- basic artifact-storage abstraction
 
 Goal:
+
 - one authoritative system with one rich control surface
 
 ### Phase 2
+
 Introduce:
+
 - iPhone client
 - notifications
-- lightweight approvals and summaries
-- reconnect and local draft queue model
+- local draft queue and offline intent handling
+- approval reconciliation on reconnect
 
 Goal:
+
 - on-the-go interaction and governance
 
 ### Phase 3
+
 Introduce:
+
 - iPad client
 - meeting-first layouts
-- squad and roster views
-- memory review panels
-- richer live collaboration surfaces
+- roster and comparison surfaces
+- richer collaboration panels
 
 Goal:
-- multi-pane team collaboration experience
+
+- multi-pane collaboration experience over one shared backend
 
 ### Phase 4
+
 Introduce:
+
 - deeper operational tooling
-- stronger artifact workflows
-- richer analytics and historical inspection
-- more mature private-cloud operations
+- richer storage backends
+- historical inspection and analytics
+- optional service decomposition later if justified
 
 Goal:
-- mature platform rather than single-app product
+
+- mature platform architecture rather than a collection of apps
 
 ---
 
-## 22. Self-Review
+## 23. Self-Review
 
-- Does this architecture preserve one source of truth across devices?  
+- Does this architecture preserve one source of truth across devices?
   Yes.
 
-- Does it keep client responsibilities distinct without making them inconsistent?  
+- Does it keep client responsibilities distinct without making them
+  inconsistent?
   Yes.
 
-- Does it align with the prior RFCs and the system overview?  
+- Does it keep Orbit as the platform and PersonaKit as the contract engine?
   Yes.
 
-- Does it support private, low-cost, high-control deployment?  
+- Does it support a monolith-first deployment while preserving logical service
+  boundaries?
   Yes.
 
-- Does it leave room for growth without locking every implementation detail?  
+- Does it treat the `Mac mini + Synology NAS` split as a recommended topology
+  rather than a hard requirement?
+  Yes.
+
+- Does it leave realtime transport flexible while keeping semantics durable and
+  authoritative?
   Yes.
 
 ---
 
-## 23. Decision Log
+## 24. Decision Log
 
-- 2026-03-08 — Initial draft created
+- 2026-03-08 - Initial draft created
+- 2026-03-17 - Reframed RFC around Orbit as the platform and PersonaKit as the
+  authored-contract engine
+- 2026-03-17 - Adopted Orbit Server as the monolith-first canonical backend with
+  logical service boundaries
+- 2026-03-17 - Treated `Mac mini + Synology NAS` as the recommended reference
+  topology rather than a strict requirement
+- 2026-03-17 - Kept realtime semantics authoritative while leaving transport
+  flexible
+- 2026-03-17 - Adopted an object-style artifact storage abstraction from day one
