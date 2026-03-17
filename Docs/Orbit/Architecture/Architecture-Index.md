@@ -48,7 +48,7 @@ Explains how a workspace persona contract is resolved in runtime context, includ
 
 ## 3. Workspace and Persona Model
 
-**RFC‑0003 – Workspace and Persona Instance Model**
+**RFC‑0003 – Workspace, Group, and Workspace Persona Instance Model**
 
 Defines how Orbit organizes work across multiple ventures and projects.
 

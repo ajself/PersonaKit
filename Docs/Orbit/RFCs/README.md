@@ -80,8 +80,8 @@ The initial RFCs establish the architectural foundation for Orbit.
 2. **RFC‑0002 – Collaboration Runtime and Memory Data Model**  
    Defines the durable runtime model for channels, posts, threads, structured objects, journals, and memory.
 
-3. **RFC‑0003 – Workspace and Persona Instance Model**  
-   Defines how workspaces organize ventures and how persona templates become workspace persona instances.
+3. **RFC‑0003 – Workspace, Group, and Workspace Persona Instance Model**  
+   Defines workspace boundaries, persistent groups, and how persona templates become workspace persona instances.
 
 4. **RFC‑0004 – Teams, Squads, and Meeting Coordinator Model**  
    Defines structured collaboration groups and the orchestration role of the Meeting Coordinator.
@@ -99,7 +99,7 @@ The initial RFCs establish the architectural foundation for Orbit.
 If you are new to the Orbit architecture, the recommended reading order is:
 
 1. RFC‑0001 – Workspace Persona Contract Resolution  
-2. RFC‑0003 – Workspace & Persona Model  
+2. RFC‑0003 – Workspace, Groups, & Persona Model  
 3. RFC‑0002 – Collaboration Runtime & Memory Model  
 4. RFC‑0004 – Teams, Squads, Coordinator  
 5. RFC‑0005 – Memory System  

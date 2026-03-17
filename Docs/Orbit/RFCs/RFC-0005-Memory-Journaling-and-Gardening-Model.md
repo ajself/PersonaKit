@@ -16,7 +16,7 @@ Draft
 ## Related
 - RFC-0001 Workspace Persona Contract Resolution and Activation Model
 - RFC-0002 Collaboration Runtime and Memory Data Model
-- RFC-0003 Workspace and Persona Instance Model
+- RFC-0003 Workspace, Group, and Workspace Persona Instance Model
 - RFC-0004 Teams, Squads, and Meeting Coordinator Model
 - Docs/RFCs/README.md
 
@@ -876,7 +876,7 @@ Draft
 ## Related
 - RFC-0001 – Workspace Persona Contract Resolution and Activation Model
 - RFC-0002 – Collaboration Runtime and Memory Data Model
-- RFC-0003 – Workspace and Persona Instance Model
+- RFC-0003 – Workspace, Group, and Workspace Persona Instance Model
 - RFC-0004 – Teams, Squads, and Meeting Coordinator Model
 - Docs/RFCs/README.md
 

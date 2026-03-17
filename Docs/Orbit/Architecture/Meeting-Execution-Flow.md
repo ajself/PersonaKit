@@ -459,7 +459,7 @@ This document ties together several RFCs.
 
 - Persona Activation Model
 - Collaboration Runtime and Memory Data Model
-- Workspace and Persona Instance Model
+- Workspace, Group, and Workspace Persona Instance Model
 - Teams, Squads, and Meeting Coordinator Model
 - Memory Journaling and Gardening Model
 
