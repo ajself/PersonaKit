@@ -255,7 +255,7 @@ Activation always resolves to workspace persona instances, not templates.
 ### 8.3 Collaborator
 
 A collaborator is the user-facing AI teammate surfaced by Orbit when execution
-runtime operates under a workspace persona contract.
+runtime operates under a workspace persona instance and resolved contract.
 
 Important note:
 

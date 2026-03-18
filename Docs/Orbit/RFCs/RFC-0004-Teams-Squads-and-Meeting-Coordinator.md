@@ -225,7 +225,7 @@ a dedicated meeting post.
 The orchestration service responsible for turning a group target into a visible,
 explainable collaboration flow.
 
-The Meeting Coordinator is broader than formal meeting-post orchestration. It is
+The Meeting Coordinator is broader than formal meeting post orchestration. It is
 responsible for group interaction in general.
 
 ---
@@ -347,6 +347,13 @@ The Meeting Coordinator should be explicitly responsible for:
   allows
 - follow-up handoff into linked workstream posts when appropriate
 
+Important handoff:
+
+- RFC-0004 owns roster expansion, participation rationale, and the proposed
+  response form
+- RFC-0001 owns per-participant contract resolution and activation tracing once
+  those inputs are fixed
+
 ### Important distinction
 
 The Meeting Coordinator is not the same as the responding collaborators.
@@ -370,7 +377,8 @@ Coordinator should:
 7. persist or emit visible coordination metadata
 
 For each selected workspace persona instance, Orbit later resolves a separate
-`persona_activation` under RFC-0001.
+`persona_activation` under RFC-0001 using the coordinator's fixed roster and
+proposed response form as inputs.
 
 ### Inclusion reasons may include
 
@@ -742,7 +750,7 @@ Rejected because:
 - explainability weakens
 - operator trust and debugging suffer
 
-### Alternative E: Immediate meeting-post creation for every group target
+### Alternative E: Immediate meeting post creation for every group target
 
 Rejected because:
 

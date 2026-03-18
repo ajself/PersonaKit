@@ -270,7 +270,7 @@ Activation always resolves to workspace persona instances, not templates.
 ### 8.3 Collaborator
 
 A collaborator is the user-facing AI teammate produced when execution runtime
-operates under a workspace persona contract.
+operates under a workspace persona instance and resolved contract.
 
 This distinction matters because Orbit surfaces collaborators, while PersonaKit
 resolves the authored contract behind them.
@@ -287,6 +287,7 @@ The resolver may receive inputs from:
 
 - explicit collaborator mentions
 - explicit team or squad addressing
+- explicit ad hoc roster selection
 - active workspace and channel context
 - the origin post, thread, and message
 - linked post relationships
@@ -312,14 +313,20 @@ Activation targets may be:
 - a specific collaborator
 - a team
 - a squad
+- an ad hoc roster
 
-If the target is a team or squad, Orbit expands that target into concrete
-participants before activation continues.
+If the target is a team, squad, or ad hoc roster, Orbit expands that target
+into concrete participants before activation continues.
+
+RFC-0004 owns the orchestration rules for group expansion and the proposed
+response form. Once those concrete participants are selected, RFC-0001 owns the
+per-participant contract resolution and trace requirements.
 
 Expansion results must be recorded so the operator can inspect why a given
 workspace persona instance was included.
 
-Team or squad expansion yields one `persona_activation` record per resolved
+Team, squad, or ad hoc expansion yields one `persona_activation` record per
+resolved
 workspace persona instance.
 
 ### 9.4 Workspace persona instance resolution
@@ -400,8 +407,8 @@ Candidate memory is not automatically part of activation input.
 ```text
 User creates a message post or replies in an existing post thread
   -> Orbit resolves workspace, channel, post, thread, and trigger message
-  -> Orbit resolves target kind (collaborator, team, or squad)
-  -> Team or squad expansion produces concrete participants when needed
+  -> Orbit resolves target kind (collaborator, team, squad, or ad hoc roster)
+  -> RFC-0004 expands groups or ad hoc rosters into concrete participants when needed
   -> Orbit resolves workspace persona instances
   -> PersonaKit resolves directive, kits, skill authorization, and constraints
   -> Memory retrieval runs against approved scopes
@@ -434,7 +441,7 @@ the final SQL schema.
 
 Represents one resolved activation of a workspace persona instance.
 
-When a team or squad target expands into multiple concrete recipients, Orbit
+When a team, squad, or ad hoc target expands into multiple concrete recipients, Orbit
 creates one `persona_activation` record per resolved workspace persona instance.
 
 Conceptual fields:
@@ -446,7 +453,7 @@ Conceptual fields:
 - `origin_post_id`
 - `origin_thread_id`
 - `trigger_message_id`
-- `addressed_target_kind` (`collaborator`, `team`, `squad`)
+- `addressed_target_kind` (`collaborator`, `team`, `squad`, `ad_hoc`)
 - `addressed_target_reference_id`
 - `resolved_workspace_persona_instance_id`
 - `response_mode`

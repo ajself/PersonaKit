@@ -313,6 +313,10 @@ That separation is essential for explainability and a legible UI.
 
 This section defines the conceptual runtime entities and relationships.
 
+Where this section describes `workspace`, `channel`, `team`, `squad`,
+`workspace_persona`, and `workspace_persona_membership`, RFC-0002 is mirroring
+runtime record shapes that semantically belong to RFC-0003.
+
 ### 9.1 Workspace Structure
 
 #### `workspace`
@@ -931,6 +935,7 @@ Fields:
   - `approved`
   - `rejected`
   - `archived`
+  - `deferred`
 - `created_at`
 - `reviewed_at` nullable
 
@@ -941,6 +946,9 @@ Note:
 - v1 does not establish team-scoped memory as a first-class scope
 - if team-level relevance matters, it should be represented through tagged or
   linked workspace memory rather than a separate scope
+- raw source types such as `post`, `thread`, `message`, and `run` exist to
+  support explicit policy-governed or operator-directed exceptions; journals and
+  structured artifacts remain the normal candidate sources
 
 ---
 
@@ -989,6 +997,7 @@ Fields:
   - `active`
   - `archived`
   - `superseded`
+  - `expired`
 - `valid_from`
 - `valid_to` nullable
 - `source_memory_candidate_id` nullable

@@ -128,7 +128,7 @@ These RFCs primarily describe how the Orbit platform and PersonaKit engine work 
 
 Orbit follows several guiding principles:
 
-- **Operator-centered control** — the user remains the authority.  
+- **Operator-centered control** — the operator remains the authority.  
 - **Deterministic activation** — persona behavior is grounded explicitly.  
 - **Structured collaboration** — teams and squads organize work.  
 - **Durable learning** — knowledge evolves through journals and reviewed memory.  

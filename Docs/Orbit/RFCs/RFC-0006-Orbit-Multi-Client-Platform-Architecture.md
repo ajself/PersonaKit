@@ -58,7 +58,7 @@ The previous RFCs define Orbit's core behavior and structure:
 - RFC-0002 defines the collaboration runtime and memory data model
 - RFC-0003 defines workspace, group, and workspace persona instance structure
 - RFC-0004 defines group orchestration through the Meeting Coordinator
-- RFC-0005 defines memory journaling, review, and approved-memory governance
+- RFC-0005 defines memory journaling, review, and approved memory governance
 
 But none of that matters if the platform does not support how Orbit is actually
 meant to be used:
@@ -289,7 +289,7 @@ This app should be optimized for:
 
 - side-by-side collaborator responses
 - roster inspection
-- meeting-post and workstream-post review
+- meeting post and workstream post review
 - summary panels
 - comparison views
 - timeline or event inspection

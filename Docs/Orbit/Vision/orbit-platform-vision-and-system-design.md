@@ -18,8 +18,8 @@ Orbit is a native collaboration system for running AI teams.
 One operator should be able to run multiple ventures,
 products, and research initiatives using persistent AI collaborators.
 
-PersonaKit gives each workspace persona the governing contract that defines
-identity, directives, kits, guardrails, and stop points.
+PersonaKit provides the governing contract for each workspace persona instance,
+defining identity, directives, kits, guardrails, and stop points.
 
 Orbit gives those collaborators a room: workspaces, channels, durable posts,
 message threads, attached notes, decisions, references, artifacts, and durable
@@ -130,11 +130,17 @@ projects.
 
 Orbit should use a small, stable vocabulary.
 
+- `operator`: the primary human authority in Orbit
+- `user`: a generic human interaction actor; in v1 this is usually the operator
 - `collaborator`: the default user-facing AI teammate in Orbit, produced when
-  an agent runtime operates under a workspace persona contract
-- `workspace persona`: the contract that defines a collaborator's identity,
-  directives, kits, guardrails, and memory scope within one workspace
-- `agent`: the execution runtime operating under a workspace persona contract
+  an agent runtime operates under a workspace persona instance and resolved
+  contract
+- `workspace persona instance`: the local runtime identity anchored in one
+  workspace
+- `workspace persona contract`: the resolved contract that governs a workspace
+  persona instance within one workspace
+- `agent`: the execution runtime operating under a workspace persona instance
+  and resolved contract
 - `participant`: a user or collaborator included in a post thread or meeting
 - `post`: the primary durable collaboration object in Orbit
 - `thread`: the ordered message conversation attached to a post
@@ -176,12 +182,13 @@ Responsibilities:
 - approve or reject consequential changes
 - remain the final source of truth
 
-#### Workspace Persona
+#### Workspace Persona Instance
 
 A persistent collaborator operating inside a workspace.
 
-Workspace personas are not ephemeral prompts. They maintain identity, context,
-and evolving expertise within a workspace.
+Workspace persona instances are not ephemeral prompts. They maintain identity,
+context, and evolving expertise within a workspace, and they are surfaced to the
+operator as collaborators.
 
 Over time they should build a deeper understanding of the operator's
 preferences, the workspace's history, and the decisions that shaped the work.
@@ -272,7 +279,7 @@ Responsibilities:
 
 ### 1. Daily Command Center
 
-The user opens Orbit on macOS and sees the active workspace, the collaborator roster,
+The operator opens Orbit on macOS and sees the active workspace, the collaborator roster,
 the most important open posts, and what needs attention now.
 
 Outcome:
@@ -281,7 +288,7 @@ Outcome:
 
 ### 2. Ask A Team, Not A Prompt
 
-The user asks the Product Team to review a feature direction. Orbit expands the team
+The operator asks the Product Team to review a feature direction. Orbit expands the team
 into actual participants, records why they were selected, and shows attributed
 responses in one post thread.
 
@@ -318,12 +325,12 @@ channel post list, and streams progress back into the originating post thread.
 
 Outcome:
 
-- execution can fan out without collapsing the conversation model.
+- execution can fan out without collapsing the collaboration model.
 
 ### 6. Turn Activity Into Memory Carefully
 
 After a meaningful meeting, Orbit proposes journal entries and memory candidates.
-The user reviews them before anything becomes part of durable workspace knowledge.
+The operator reviews them before anything becomes part of durable workspace knowledge.
 
 Outcome:
 
@@ -358,8 +365,8 @@ participants, post context, and active workstreams should never disappear.
 
 ### Explainable collaboration
 
-Every meaningful response should be attributable to a workspace persona and a
-resolved PersonaKit contract.
+Every meaningful response should be attributable to a workspace persona instance
+and a resolved PersonaKit contract.
 
 ### Posts are the durable unit of collaboration
 
@@ -392,7 +399,7 @@ Orbit should make operator control concrete, not rhetorical.
 For any meaningful response, meeting, or workstream, the operator should be able
 to inspect:
 
-- which workspace persona responded
+- which workspace persona instance responded
 - which PersonaKit directive and kits were active
 - which memory sources influenced the response
 - which skills or tools were authorized
@@ -716,7 +723,7 @@ This is the surface that makes Orbit feel like Orbit.
 
 Teams and squads should be first-class addressing targets.
 
-When the user says "ask the Engineering Team," Orbit should:
+When the operator says "ask the Engineering Team," Orbit should:
 
 1. resolve the team roster
 2. decide whether the exchange is a simple post-thread response or a meeting
@@ -796,7 +803,7 @@ Orbit should make the most important post transitions obvious.
 
 #### Message Post -> Threaded Discussion
 
-A user creates a message post in a channel. Replies accumulate in the post's
+An operator creates a message post in a channel. Replies accumulate in the post's
 thread while the post remains visible in channel lists and command-center views.
 
 #### Message Post -> Meeting Post
@@ -818,7 +825,7 @@ in channel post lists.
 The main Orbit loop should look like this:
 
 ```text
-The user creates a message post or replies in an existing post thread
+The operator creates a message post or replies in an existing post thread
   -> Post service persists the post, thread update, or message
   -> Meeting Coordinator decides the response mode
   -> PersonaKit resolves active persona contracts
@@ -827,7 +834,7 @@ The user creates a message post or replies in an existing post thread
   -> Notes / decisions / artifacts are attached to the post
   -> Optional linked meeting post or workstream post is created for deeper work
   -> Journal and memory candidates are proposed
-  -> The user reviews what becomes durable memory
+  -> The operator reviews what becomes durable memory
 ```
 
 That single loop ties together the product experience.
@@ -1002,7 +1009,7 @@ entire platform.
 
 The MVP should prove four things decisively.
 
-1. A user can ask a team for input and inspect why each participant responded.
+1. An operator can ask a team for input and inspect why each participant responded.
 2. A message post thread can enter meeting mode and, when needed, promote into a
    dedicated meeting post without losing continuity.
 3. A post can launch a workstream and receive durable progress, artifacts, and
@@ -1048,8 +1055,8 @@ Verify it by asking:
 ## Related Docs
 
 - [Orbit Docs Index](../README.md)
-- [RFC-0002: Collaboration Runtime and Memory Data Model](../RFCs/RFC-0002-Conversation-and-Memory-Data-Model.md)
-- [RFC-0003: Workspace, Group, and Workspace Persona Instance Model](../RFCs/RFC-0003-Workspace-and-Persona-Instance-Model.md)
+- [RFC-0002: Collaboration Runtime and Memory Data Model](../RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md)
+- [RFC-0003: Workspace, Group, and Workspace Persona Instance Model](../RFCs/RFC-0003-Workspace-Group-and-Workspace-Persona-Instance-Model.md)
 - [RFC-0004: Teams, Squads, and Meeting Coordinator Model](../RFCs/RFC-0004-Teams-Squads-and-Meeting-Coordinator.md)
-- [RFC-0006: Orbit Multi-Client Platform Architecture](../RFCs/RFC-0006-Multi-Client-Platform-Architecture.md)
+- [RFC-0006: Orbit Multi-Client Platform Architecture](../RFCs/RFC-0006-Orbit-Multi-Client-Platform-Architecture.md)
 - [Orbit macOS Command Center](../Planning/Orbit-macOS-Command-Center.md)
