@@ -4,7 +4,7 @@ Status: Approved (AJ)
 Owner: Samwise
 Meeting: `2026-03-09-meeting-001`
 Workspace: Orbit
-Last Updated: 2026-03-10
+Last Updated: 2026-03-18
 Revision: 3
 
 ## Purpose
@@ -13,6 +13,22 @@ Describe the macOS product surface that should support the Orbit proving loop.
 
 This document is product-facing. It should answer what the first usable Orbit
 app feels like before we break the work down into implementation tasks.
+
+## Current Role In The Planning Stack
+
+This document remains the product source for the first Orbit room experience.
+
+Use it to judge whether the first checkpoint feels like Orbit.
+
+Do not use it by itself to infer:
+
+- long-term Orbit Server architecture
+- memory governance scope
+- mobile-client scope
+- later team, squad, or workstream milestones
+
+Those are now sequenced by
+`Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`.
 
 ## Product Role
 
@@ -67,6 +83,10 @@ participants:
 - AJ
 - Samwise
 - ProdDoc
+
+For planning purposes, keep this roster language until `M0` resolves whether
+`ProdDoc` remains the product-facing collaborator name, becomes a formal
+PersonaKit persona, or is renamed.
 
 The roster should communicate:
 
@@ -180,3 +200,6 @@ When AJ or ProdDoc reviews this draft, the most useful feedback is:
 
 - 2026-03-09: Initial Samwise draft created from meeting `2026-03-09-meeting-001`.
 - 2026-03-09: ProdDoc review integrated. Clarified activation trace visibility and updated document metadata to reflect external revision.
+- 2026-03-18: Clarified that this file is the product source for the first
+  command-center checkpoint only, with broader Orbit sequencing now owned by the
+  roadmap.

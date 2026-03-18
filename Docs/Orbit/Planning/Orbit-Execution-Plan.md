@@ -3,7 +3,7 @@
 Status: Draft
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-10
+Last Updated: 2026-03-18
 
 ## Purpose
 
@@ -27,23 +27,59 @@ It should answer:
 
 This execution plan builds on:
 
+- `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
 - `Docs/Orbit/Planning/Orbit-Proving-Loop.md`
 - `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
 - Meeting 002 closeout decisions
 
+## Current Role In The Planning Stack
+
+This document is no longer the top-level Orbit roadmap.
+
+Its current role is narrower and more useful:
+
+- translate the roadmap into the active first-checkpoint execution contract
+- keep the first local Orbit proving loop bounded
+- define what the next fresh-main rerun must prove before Orbit broadens
+
+This file should own the active rerun contract, not duplicate the full phase
+rationale that already lives in `Docs/Orbit/Planning/Orbit-Proving-Loop.md`.
+
+Use this document together with:
+
+- `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
+
+For packet-level execution detail, use the matching dossiers under:
+
+- `Docs/Orbit/Planning/Milestones/`
+
 ## Current Decision
 
-Orbit should move forward through execution planning, not another broad RFC
-review pass.
+Orbit now has a milestone roadmap.
+
+The current planning need is not another broad direction reset.
+
+The current planning need is to keep the first checkpoint execution contract
+clear while `M0`, `M1`, and `M2` are prepared and replayed deliberately.
 
 The RFCs are still important, but they should now act as guardrails for the
-first build rather than the main work queue.
+first execution cut rather than the main work queue.
 
 ## First Milestone
 
-The first execution milestone is:
+Within the broader roadmap, this document governs the first execution cut:
+
+- `M1` Identity And Activation Foundation
+- `M2` Single-Workspace macOS Command-Center Proving Loop
+
+The first product checkpoint inside that cut is still:
 
 **Phase 1 + Phase 2 + minimal Phase 3**
+
+Phase semantics and why those phases are ordered this way live in
+`Docs/Orbit/Planning/Orbit-Proving-Loop.md`.
 
 In practical terms, that means:
 
@@ -148,8 +184,9 @@ That means the next run must be able to prove:
 
 Do not rely on thread history for these rules.
 
-Treat this document, the implementation breakdown, the rerun checklist, and the
-product acceptance checklist as the active contract.
+Treat the roadmap, this document, the runtime model, the implementation
+breakdown, the rerun checklist, and the product acceptance checklist as the
+active contract stack for the next first-checkpoint rerun.
 
 ## Proposed First Squad
 
@@ -208,16 +245,13 @@ Minimum valid rerun structure:
 
 ## MVP Boundary
 
-For Orbit execution, `MVP` means the first engineering checkpoint defined in
-this document:
+For Orbit execution, `MVP` means the first engineering checkpoint already
+defined above.
 
-- Phase 1
-- Phase 2
-- minimal Phase 3
+Use `MVP` only for the usable local Orbit command-center loop governed by this
+document.
 
-This MVP must produce a usable local Orbit command-center loop.
-
-It does not require:
+It does not extend to:
 
 - Phase 4 summary and memory review
 - Phase 5 memory reuse
@@ -323,6 +357,9 @@ The next Orbit rerun should start from:
 1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 2. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
 3. `Docs/Orbit/Execution/2026-03-10-orbit-1-rerun-prep.md`
+4. `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
+5. `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+6. `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
 
 These are not optional reference docs.
 They are part of the execution contract for a repeatable rerun.
@@ -339,6 +376,9 @@ We do need selective reference checks while building:
   Use for activation expectations and persisted activation context.
 - `RFC-0002`
   Use for workspace, conversation, meeting, and runtime-state boundaries.
+- `RFC-0003`
+  Use now for workspace persona instance, collaborator identity, and local
+  identity-boundary discipline.
 
 ### Review When Phase 4 Begins
 
@@ -348,14 +388,12 @@ We do need selective reference checks while building:
 
 ### Review Later
 
-- `RFC-0003`
-  Useful when workspace persona identity deepens beyond the first checkpoint.
 - `RFC-0004`
   Useful when teams, squads, or richer meeting coordination move beyond the
   lightweight proving-loop model.
 - `RFC-0006`
-  Useful when multi-client and backend platform questions become active rather
-  than speculative.
+  Useful when the plan crosses from the local proving loop into the canonical
+  Orbit Server and multi-client platform milestones.
 
 ## Execution Risks To Watch
 
@@ -364,18 +402,20 @@ We do need selective reference checks while building:
 - treating activation trace as optional instead of foundational
 - jumping into memory work before the workspace and conversation loop feel solid
 
-## Recommended Next Artifact
+## Current Next Planning Move
 
-The next planning artifact should be:
+Before another fresh-main Orbit rerun begins, planning should do all of these in
+order:
 
-- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+1. complete the `M0` planning closeout in
+   `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
+2. resolve the `ProdDoc` collaborator identity question and any required missing
+   personas for later delegated milestones
+3. keep this execution plan, the runtime model, and the implementation
+   breakdown aligned as the shared `M1` and `M2` execution packet
 
-After that, the next follow-up artifact should be:
-
-- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
-
-That sequence keeps the execution anchor concise while giving the first build a
-clear data-model boundary before UI work expands.
+If planning drifts beyond the first checkpoint, stop and return to the roadmap
+instead of broadening this document.
 
 ## Revision Notes
 
@@ -392,3 +432,6 @@ clear data-model boundary before UI work expands.
 - 2026-03-10: Reframed the named Orbit branches as historical first-attempt
   context and made the integer-token manifest-approved lane the active rerun
   startup model.
+- 2026-03-18: Repositioned this file under the new agentic milestone roadmap,
+  promoted RFC-0003 into the active first-checkpoint guardrails, and replaced
+  outdated next-artifact language with the current `M0`/`M1`/`M2` planning move.

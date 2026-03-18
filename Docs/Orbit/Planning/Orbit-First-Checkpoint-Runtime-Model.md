@@ -3,7 +3,7 @@
 Status: Draft
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-09
+Last Updated: 2026-03-18
 
 ## Purpose
 
@@ -17,10 +17,26 @@ This note exists so the first build can stay aligned on:
 - where activation trace begins
 - what should not enter the first checkpoint yet
 
+## Current Role In The Planning Stack
+
+This document defines the minimum local runtime boundary for the first Orbit
+checkpoint.
+
+It is intentionally narrower than the long-term Orbit platform model.
+
+Use it for `M1` and `M2` planning only:
+
+- `M1` identity and activation foundation
+- `M2` single-workspace macOS proving loop
+
+When `M3` begins, do not stretch this note into the canonical server model.
+Use RFC-0002 and RFC-0006 to design the server-backed runtime instead.
+
 ## Checkpoint Scope
 
 This runtime note covers only the first execution checkpoint defined in
-`Orbit-Execution-Plan.md`:
+`Orbit-Execution-Plan.md` and sequenced by
+`Orbit-Agentic-Milestone-Roadmap.md`:
 
 1. workspace and roster foundation
 2. durable conversation loop
@@ -207,13 +223,17 @@ probably too early for the first checkpoint.
   activation records can express the behavior.
 - Do not treat activation trace as optional metadata.
 - Do not optimize for multi-client sync before the local loop is real.
+- Do not treat this local proving model as the final Orbit Server schema.
 
 ## Immediate Follow-On
 
-After this note, the next implementation-planning artifact should map the first
-checkpoint into files or modules, using these entities as the boundary.
+This note now works as a paired artifact with the first-checkpoint
+implementation breakdown.
 
-That follow-on artifact is:
+Use the implementation breakdown to map these entities into files, modules,
+tests, and verification steps.
+
+That paired artifact is:
 
 - `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
 
@@ -223,3 +243,5 @@ That follow-on artifact is:
   Orbit execution checkpoint defined in `Orbit-Execution-Plan.md`.
 - 2026-03-09: Linked the file/module implementation breakdown that follows this
   runtime note in the Orbit MVP lane.
+- 2026-03-18: Clarified that this file is the local first-checkpoint boundary
+  for `M1` and `M2`, not the canonical long-term Orbit Server runtime model.

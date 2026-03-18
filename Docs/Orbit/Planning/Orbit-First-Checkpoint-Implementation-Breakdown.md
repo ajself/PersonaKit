@@ -3,7 +3,7 @@
 Status: Draft
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-10
+Last Updated: 2026-03-18
 
 ## Purpose
 
@@ -17,6 +17,17 @@ This breakdown is intentionally practical:
 - reuse existing workspace-loading seams where possible
 - keep new Orbit runtime state local and deterministic
 - avoid Phase 4 and Phase 5 work in this lane
+
+## Current Role In The Planning Stack
+
+This file is the codebase-facing implementation map for the first checkpoint.
+
+It should be used when planning or replaying `M2` work in a fresh-main Orbit
+lane.
+
+It should not be treated as the long-term Orbit platform architecture plan.
+That broader shift begins at `M3` in
+`Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`.
 
 ## Current Codebase Anchors
 
@@ -35,11 +46,29 @@ The best existing seams for the Orbit MVP are:
 6. Existing session-preview bridge into PersonaKit resolution/export:
    - `Sources/Features/Studio/Foundation/WorkspaceSessionPreviewManager.swift`
 
+Current first-checkpoint Orbit files already present in the repo:
+
+- `Sources/Features/Studio/UI/Orbit/OrbitModels.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitSampleData.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitPanelView.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitPanelView+UI.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitPanelView+Persistence.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitParticipantResponseBridge.swift`
+
+Current first-checkpoint validation artifacts already present in the repo:
+
+- `Tests/Features/Studio/OrbitWorkspaceTests.swift`
+- `Tests/Features/Studio/OrbitSnapshotTests.swift`
+
 ## Build Direction
 
 For the first checkpoint, Orbit should be implemented as a new Studio feature
 surface inside the existing macOS app, not as a second app shell and not as a
 rewrite of the current PersonaKit workspace model.
+
+That remains true even though a first implementation pass now exists in the
+repo. Fresh-main reruns should treat the existing Orbit files as comparison
+evidence and refinement targets, not as permission to broaden scope.
 
 That means:
 
@@ -52,7 +81,7 @@ That means:
 
 ### 1. Orbit Runtime Models
 
-Recommended new files:
+Current or target files:
 
 - `Sources/Features/Studio/UI/Orbit/OrbitModels.swift`
 - `Sources/Features/Studio/UI/Orbit/OrbitSampleData.swift`
@@ -75,7 +104,7 @@ Why here:
 
 ### 2. Orbit Persistence
 
-Recommended new file:
+Current or target file:
 
 - `Sources/Features/Studio/UI/Orbit/OrbitPanelView+Persistence.swift`
 
@@ -99,7 +128,7 @@ The default should stay one file until size or complexity forces a split.
 
 ### 3. Orbit Panel UI
 
-Recommended new files:
+Current or target files:
 
 - `Sources/Features/Studio/UI/Orbit/OrbitPanelView.swift`
 - `Sources/Features/Studio/UI/Orbit/OrbitPanelView+UI.swift`
@@ -179,11 +208,11 @@ Recommended first implementation approach:
 This is the one area where a small spike may be required before the full
 checkpoint can be declared implementation-ready.
 
-## First Build Sequence
+## First Build Or Rerun Sequence
 
 ### Step 1
 
-Create Orbit runtime models plus deterministic persistence.
+Create or re-prove Orbit runtime models plus deterministic persistence.
 
 Definition of done:
 
@@ -192,7 +221,7 @@ Definition of done:
 
 ### Step 2
 
-Add the Orbit panel to Studio navigation and render:
+Add or re-prove the Orbit panel in Studio navigation and render:
 
 - workspace header
 - founding-group roster
@@ -204,7 +233,7 @@ Definition of done:
 
 ### Step 3
 
-Implement durable thread and message editing/submission behavior.
+Implement or re-prove durable thread and message editing/submission behavior.
 
 Definition of done:
 
@@ -213,7 +242,8 @@ Definition of done:
 
 ### Step 4
 
-Implement participant addressing and the minimal activation-record write path.
+Implement or re-prove participant addressing and the minimal activation-record
+write path.
 
 Definition of done:
 
@@ -284,8 +314,10 @@ Start in this order:
 1. `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 2. `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`
 3. `Docs/Orbit/Execution/2026-03-10-orbit-1-rerun-prep.md`
-4. `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
-5. this implementation breakdown
+4. `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
+5. `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
+6. `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+7. this implementation breakdown
 
 That keeps startup decisions anchored in the current rerun contract rather than
 in thread history or older branch-specific notes.
@@ -325,14 +357,16 @@ the local command-center loop is proven.
 
 ## Recommended Immediate Coding Start
 
-The first code slice should be:
+If starting a fresh-main rerun tomorrow, the first coding slice should be:
 
 1. add Orbit runtime models
 2. add deterministic persistence under `.personakit/Orbit/`
 3. add an Orbit panel placeholder to the Studio sidebar
 
-That slice gives us visible product progress without committing yet to the
-heavier response-generation bridge.
+If working from the current repo instead of a fresh-main rerun, start by
+red-penning and re-verifying the existing Orbit model, persistence, panel, and
+response-bridge files against the current rerun contract before broadening the
+surface.
 
 ## Revision Notes
 
@@ -344,3 +378,7 @@ heavier response-generation bridge.
   trace rendering, model tests, and Orbit snapshot baselines.
 - 2026-03-09: Clarified that first-checkpoint closeout requires both review and
   retrospective before later phases begin.
+- 2026-03-18: Updated this file to reflect that first-checkpoint Orbit files and
+  tests already exist in the repo, clarified its role as the `M2` codebase map,
+  and aligned fresh-main startup order with the roadmap, execution plan, and
+  runtime-model note.

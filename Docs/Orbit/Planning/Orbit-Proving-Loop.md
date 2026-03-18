@@ -5,7 +5,7 @@ Owner: Samwise
 Meeting: `2026-03-09-meeting-002`
 Workspace: Orbit
 Revision: 3
-Last Updated: 2026-03-10
+Last Updated: 2026-03-18
 
 ## Purpose
 
@@ -22,10 +22,27 @@ This document should answer:
 
 This plan builds on:
 
+- `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
 - `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
 - the proving-loop direction approved in Meeting 001
 
 These are treated as approved planning inputs for this implementation pass.
+
+## Current Role In The Planning Stack
+
+This document is the phase model for the first Orbit proving loop.
+
+It remains useful because it explains the shape and sequencing of the first
+product proof, but it is no longer the top-level planning authority.
+
+Use it this way:
+
+- roadmap decides the milestone order
+- execution plan decides the active first-checkpoint contract
+- this file explains the phase shape behind that contract
+
+For startup order, review gates, and completion language, defer to
+`Docs/Orbit/Planning/Orbit-Execution-Plan.md`.
 
 ## Implementation Goal
 
@@ -143,13 +160,28 @@ Success signal:
 
 - AJ can observe an approved memory affecting a later response
 
-## Deferred From This Plan
+## Roadmap Mapping
 
-Not required for the first implementation loop:
+The broader roadmap now makes the later follow-on clearer:
 
-- summary generation
-- memory candidate review
-- memory reuse
+- Phase 1 + Phase 2 + minimal Phase 3 map to `M2`
+- workspace persona and activation discipline that make Phase 3 trustworthy map
+  to `M1`
+- richer team, squad, and meeting coordination move into `M4` and `M5`
+- summary, journaling, and memory candidate review move into `M8`
+- approved memory reuse moves into `M9`
+- canonical Orbit Server and multi-client work move into `M3`, `M11`, `M12`,
+  and `M13`
+
+## Deferred Beyond The Current Checkpoint
+
+This file keeps the later phases visible, but they are not part of the active
+first-checkpoint rerun contract.
+
+Still deferred:
+
+- Phase 4 summary and memory review work
+- Phase 5 memory reuse
 - iPhone or iPad clients
 - deep squad management
 - broad specialist roster generation
@@ -158,26 +190,27 @@ Not required for the first implementation loop:
 - analytics-heavy trace inspection
 - elaborate meeting visualization
 
-## Suggested First Build Boundary
+When one of those areas becomes active, return to the roadmap instead of
+expanding this proving-loop note into a broader platform plan.
 
-If we need to be even stricter, the first serious implementation target should
-stop at:
+## Current Checkpoint Freeze
 
-- Phase 1
-- Phase 2
-- enough of Phase 3 to make multi-participant interaction legible
+The exact active rerun contract lives in
+`Docs/Orbit/Planning/Orbit-Execution-Plan.md`.
 
-This is the current proving checkpoint for fresh-main reruns.
-Later summary and memory phases remain explicitly deferred until this checkpoint
-is proven again.
+This file only freezes the phase interpretation:
 
-At that checkpoint, the system should be able to:
+- build through Phase 1 and Phase 2
+- include only enough of Phase 3 to make multi-participant interaction and
+  activation trace legible
+- stop before Phase 4 and Phase 5
 
-- open the Orbit workspace
-- show the founding-group roster
-- persist a conversation thread
-- allow AJ to address one or more participants
-- attribute responses to the correct persona
+Use the execution plan for:
+
+- milestone definition of done
+- startup artifact order
+- rerun review gates
+- comparison-grade evidence expectations
 
 ## Open Implementation Questions
 
@@ -204,3 +237,8 @@ For AJ and ProdDoc, the most useful review feedback is:
 - 2026-03-10: Re-scoped the active proving loop so fresh-main reruns stop at
   Phase 1, Phase 2, and minimal Phase 3; summary and memory work remain later
   phases only.
+- 2026-03-18: Repositioned this file as the phase-shape reference beneath the
+  roadmap and execution plan, and mapped the deferred phases to later roadmap
+  milestones.
+- 2026-03-18: Reduced overlap with the execution plan by keeping this file on
+  phase shape and deferring active rerun contract details to the execution plan.
