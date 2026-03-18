@@ -90,7 +90,7 @@ For `M3`, the backend posture is not open-ended.
 - implementation language: `Swift`
 - server framework: `Vapor`
 - canonical transactional runtime store: `Postgres`
-- deployment posture: self-hosted and private by default
+- deployment posture: self-hosted and private
 - preferred reference topology: `Mac mini + Synology`
 - realtime posture: leaning `WebSocket`, `SSE` acceptable where it better serves
   the same semantics
@@ -99,7 +99,7 @@ For `M3`, the backend posture is not open-ended.
 
 `M3` should also preserve these negative boundaries:
 
-- no paid managed services in the baseline platform path
+- no paid managed services in `M3`
 - no extra infrastructure tiers such as `Redis`, `Kafka`, `NATS`, separate queue
   systems, or separate cache tiers unless AJ explicitly approves them later
 - no Kubernetes, service mesh, or Docker-first deployment requirement

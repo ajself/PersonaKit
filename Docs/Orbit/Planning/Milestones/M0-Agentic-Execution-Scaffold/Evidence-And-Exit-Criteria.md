@@ -116,6 +116,8 @@ Fails if:
 - the `ProdDoc` question is closed or declared a hard blocker for downstream
   identity-sensitive work
 - the handoff packet template is ready to reuse
+- the current construction window is explicit: implementation proceeds through
+  `M3` and pauses afterward until AJ restarts it
 - AJ reviews and accepts the role map and unresolved-decision posture
 
 ## Not Enough To Exit

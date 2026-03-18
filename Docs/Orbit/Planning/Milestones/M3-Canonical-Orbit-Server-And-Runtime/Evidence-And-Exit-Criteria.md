@@ -59,6 +59,8 @@ If that sequence is weak, confusing, or under-evidenced, `M3` is not done.
 - reliability review passes
 - product continuity review passes
 - coverage and closeout review pass
+- the implementation stop line is honored: construction pauses after `M3` until
+  AJ explicitly restarts it
 
 ## Residual Open Dependencies
 
@@ -96,3 +98,6 @@ containing:
 - the migration continuity summary for the macOS room
 
 If that packet does not feel sharp, `M3` should remain open.
+
+If that packet is accepted, `M3` may close and construction should pause rather
+than rolling directly into `M4` or later milestones.

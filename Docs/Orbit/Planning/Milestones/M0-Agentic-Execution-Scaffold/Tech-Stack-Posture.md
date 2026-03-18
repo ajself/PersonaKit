@@ -41,6 +41,15 @@ explicitly supersedes it in a separate architecture decision.
 Later milestone dossiers may add narrower constraints, but they must not reopen
 or replace the choices frozen here.
 
+## Current Construction Window
+
+This planning set authorizes active construction work through `M3` only.
+
+After `M3` closes, implementation should pause.
+
+`M4` and later milestones remain planning material until AJ explicitly restarts
+construction beyond `M3`.
+
 ## Fixed Choices
 
 ### Client direction for `M1` and `M2`
@@ -92,7 +101,7 @@ milestones:
 - private infrastructure only
 - preferred reference topology: `Mac mini + Synology`
 - the preferred topology is not a hard requirement
-- no managed cloud platform as the default path
+- no managed cloud platform in `M0` through `M3`
 
 ### Architecture posture
 
@@ -134,8 +143,8 @@ milestones:
 
 ## Disallowed For `M0` Through `M3`
 
-- cloud-managed services as a baseline
-- paid services as a baseline
+- cloud-managed services
+- paid services
 - extra infrastructure components such as `Redis`, `Kafka`, `NATS`, a separate
   queue system, a separate cache tier, or a vector or search database in the
   baseline `M3` runtime milestone

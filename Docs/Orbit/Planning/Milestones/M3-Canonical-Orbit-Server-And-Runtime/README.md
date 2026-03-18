@@ -78,7 +78,7 @@ Out of scope:
 - server framework: `Vapor`
 - canonical transactional runtime store: `Postgres`
 - deployment posture: self-hosted, private infrastructure, no managed cloud
-  baseline
+  platform
 - architecture posture: monolith-first, same-process PersonaKit resolver, no
   extra infrastructure tiers unless AJ explicitly approves them
 - realtime posture: leaning `WebSocket`, `SSE` acceptable if it better preserves
@@ -259,7 +259,12 @@ Avoid:
 Exit when Orbit has one authoritative backend and the macOS client is a surface
 over that truth.
 
-Handoff forward to:
+After `M3` closes, implementation pauses.
+
+Do not begin `M4` or later construction until AJ explicitly restarts work beyond
+`M3`.
+
+Planned next milestones remain:
 
 - `M4` and `M5` for richer collaboration behaviors
 - `M11` and `M12` only after canonical runtime reliability is accepted

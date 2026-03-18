@@ -19,12 +19,12 @@ The following are no longer open for `M3` unless AJ explicitly reopens them:
 - Orbit Server should be implemented in `Swift`
 - Orbit Server should use `Vapor`
 - canonical transactional runtime storage should use `Postgres`
-- deployment should remain self-hosted and private by default
+- deployment should remain self-hosted and private
 - the preferred reference topology is `Mac mini + Synology`, but it is not a
   hard requirement
 - `M3` stays monolith-first
 - PersonaKit contract resolution stays in the same server process for `M3`
-- managed cloud services are out of scope for the baseline platform path
+- managed cloud services are out of scope for `M3`
 - extra infrastructure such as `Redis`, `Kafka`, `NATS`, separate queue systems,
   separate cache tiers, and vector or search databases are out of scope for the
   baseline canonical-runtime milestone
