@@ -13,6 +13,9 @@ from.
 The template is intentionally strict.
 Its job is to reduce drift, not to feel conversational.
 
+It should also prevent a lane from treating implementation work as permission to
+redefine approved product or stack direction.
+
 ## Use Standard
 
 - one packet per bounded lane
@@ -54,6 +57,7 @@ Its job is to reduce drift, not to feel conversational.
 
 - PersonaKit session, directive, or export to load
 - required planning docs
+- required stack-posture docs
 - required RFCs or runtime notes
 - whether live grounding is mandatory or static export is acceptable
 
@@ -76,6 +80,12 @@ Exclude:
 - exact directories or files the lane may change
 - exact artifacts it may create
 - explicit no-write areas when relevant
+
+If the lane is executing in a dedicated non-main worktree, the write scope may
+be repo-wide when the active milestone genuinely requires it.
+
+If repo-wide write freedom is granted, the packet should still say why the
+milestone needs that breadth and what legacy surfaces are considered replaceable.
 
 If the write scope is unclear, the packet is not ready.
 
@@ -134,6 +144,7 @@ That means it must:
 - force explicit quality criteria
 - force explicit evidence
 - force explicit stop points
+- force explicit fidelity to already-approved stack and product posture
 - prevent lanes from claiming success on thin output alone
 
 ## Anti-Patterns

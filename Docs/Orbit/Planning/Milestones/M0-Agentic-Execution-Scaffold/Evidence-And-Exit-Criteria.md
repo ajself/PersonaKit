@@ -18,6 +18,7 @@ Define the artifacts and review tests required to close `M0` honestly.
 3. a milestone-to-persona coverage matrix
 4. a decision register covering `ProdDoc` and missing-persona questions
 5. a quality bar that explains why thin completion is not enough
+6. a frozen tech-stack posture for `M0` through `M3`
 
 ## Artifact Quality Tests
 
@@ -78,6 +79,19 @@ Fails if:
 
 - it can be satisfied by checking boxes with low-confidence content
 
+### Tech-stack posture
+
+Passes only if:
+
+- client and server direction for `M0` through `M3` are explicit
+- fixed choices are clearly separated from constrained choices
+- AI decision boundaries are explicit enough to prevent stack drift
+
+Fails if:
+
+- core stack choices still look open to agent preference
+- infrastructure and deployment posture can still be widened by implication
+
 ## Review Questions
 
 `M0` should be reviewed against these questions:
@@ -86,7 +100,9 @@ Fails if:
 2. Would later milestones know when to stop for AJ review?
 3. Are any persona gaps being hidden behind optimistic wording?
 4. Is the `ProdDoc` issue precise enough that `M1` and `M2` can act on it?
-5. Would poor delegation now be easier or harder because of this scaffold?
+5. Are fixed stack choices explicit enough that `M1`, `M2`, and `M3` cannot
+   improvise them?
+6. Would poor delegation now be easier or harder because of this scaffold?
 
 ## Exit Rule
 
@@ -96,6 +112,7 @@ Fails if:
 - every roadmap milestone has a visible review ring
 - missing personas are either approved for creation or explicitly staged as hard
   prerequisites
+- the approved stack posture for `M0` through `M3` exists and is reviewable
 - the `ProdDoc` question is closed or declared a hard blocker for downstream
   identity-sensitive work
 - the handoff packet template is ready to reuse
@@ -109,5 +126,6 @@ These are not sufficient:
 - "most milestones have an owner"
 - "we can decide the missing personas later"
 - "the handoff packet can be improvised when we need it"
+- "the implementation lane can pick the server stack later"
 
 If the scaffold still depends on good luck or strong memory, `M0` is not done.

@@ -18,6 +18,9 @@ agents without hidden drift, fuzzy ownership, or missing persona coverage.
 can start from the dossier set and make high-quality decisions without relying
 on thread memory, vague role assumptions, or improvised stop points.
 
+For foundational product and stack choices, `M0` should make the AI lane's role
+clear: build the approved direction, do not redefine it.
+
 Bare-minimum paperwork is not a milestone win.
 
 ## File Map
@@ -34,6 +37,8 @@ Bare-minimum paperwork is not a milestone win.
   unresolved `M0` decisions, resolution criteria, and recommended defaults
 - `Evidence-And-Exit-Criteria.md`
   required artifacts, review tests, and milestone-close rules
+- `Tech-Stack-Posture.md`
+  frozen stack posture and AI decision boundary for `M0` through `M3`
 
 ## Preconditions
 
@@ -49,6 +54,8 @@ In scope:
 - milestone dossier format
 - delegated handoff packet format
 - persona coverage map for all roadmap milestones
+- approved tech-stack posture for `M0` through `M3`
+- approved worktree execution boundary for Orbit-first milestone delivery
 - `ProdDoc` identity decision
 - missing-persona staging for later milestones
 
@@ -66,6 +73,7 @@ Out of scope:
 - `Docs/Orbit/RFCs/RFC-0004-Teams-Squads-and-Meeting-Coordinator.md`
 - `Docs/Orbit/RFCs/RFC-0005-Memory-Journaling-and-Gardening-Model.md`
 - current PersonaKit persona inventory under `.personakit/Packs/personas/`
+- current agreed stack posture for Orbit client and server work
 
 ## Execution Packets
 
@@ -104,7 +112,27 @@ Done when:
 
 - any later milestone can be delegated with one standard handoff packet
 
-### Packet 3. Resolve Persona Coverage
+### Packet 3. Freeze Tech-Stack Posture
+
+Outcome:
+
+- later milestones stop treating foundational stack choices as agent freedom
+
+Work:
+
+- freeze the approved client posture for `M1` and `M2`
+- freeze the approved server posture for `M3`
+- freeze the AI decision boundary for what may and may not be chosen
+- freeze the early no-cost and self-hosted posture
+- freeze the non-main worktree execution rule and Orbit-first permission to
+  restructure repo surfaces when the active milestone genuinely requires it
+
+Done when:
+
+- later milestone docs can point to one stack-posture artifact instead of
+  re-deciding core technology choices
+
+### Packet 4. Resolve Persona Coverage
 
 Outcome:
 
@@ -121,7 +149,7 @@ Done when:
 
 - no milestone is left with an unnamed or blended execution identity
 
-### Packet 4. Resolve The `ProdDoc` Question
+### Packet 5. Resolve The `ProdDoc` Question
 
 Outcome:
 
@@ -137,7 +165,7 @@ Done when:
 
 - M1 and M2 can rely on one explicit collaborator naming decision
 
-### Packet 5. Stage Missing Personas
+### Packet 6. Stage Missing Personas
 
 Outcome:
 
@@ -173,18 +201,23 @@ Avoid:
 - milestone dossier standard
 - delegated handoff template
 - milestone-to-persona coverage map
+- stack posture note for `M0` through `M3`
+- worktree execution rule for Orbit implementation lanes
 - `ProdDoc` decision note
 - missing-persona decision list
 
 ## Stop Points
 
 - stop before later milestones rely on unresolved collaborator identity
+- stop before later milestones rely on unapproved stack freedom
+- stop before milestone execution begins on the main worktree or `main`
 - stop before new persona creation unless AJ approves the additions
 - stop if any milestone still needs more than one active execution persona
 
 ## Exit And Handoff
 
-Exit only when AJ approves the role map and missing-persona decisions.
+Exit only when AJ approves the role map, stack posture, and missing-persona
+decisions.
 
 Handoff forward to:
 

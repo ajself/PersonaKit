@@ -10,6 +10,12 @@ Last Updated: 2026-03-18
 List the high-impact decisions that must be resolved or explicitly staged before
 later milestones can delegate confidently.
 
+Already-frozen stack choices for `M0` through `M3` live in
+`Tech-Stack-Posture.md`.
+
+This register is for the remaining high-impact decisions that should not be left
+implicit.
+
 ## Decision 1. `ProdDoc` Identity
 
 Question:

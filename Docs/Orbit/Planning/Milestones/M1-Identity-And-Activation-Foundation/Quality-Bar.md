@@ -126,6 +126,8 @@ Any of these mean `M1` is not complete:
   used
 - the contract is split across so many informal notes that reviewers cannot tell
   what is authoritative
+- the milestone drifts into server-stack, deployment, or alternate client-stack
+  choices that belong outside `M1`
 
 ## What "Impressive" Looks Like
 

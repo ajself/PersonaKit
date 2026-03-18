@@ -32,11 +32,12 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 5. validation and review matrix
 6. product acceptance result
 7. interaction-quality review artifact
-8. validation closeout artifact
-9. participant-evidence artifact
-10. red-pen evidence artifact
-11. retrospective closeout artifacts
-12. operator-visible proof that trace inspection is available from the room
+8. snapshot-based visual proof for the room surface
+9. validation closeout artifact
+10. participant-evidence artifact
+11. red-pen evidence artifact
+12. retrospective closeout artifacts
+13. operator-visible proof that trace inspection is available from the room
 
 ## Exit Checklist
 
@@ -50,6 +51,8 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 - direct addressing works in a reviewable way
 - lightweight multi-participant behavior is understandable enough to defend
 - activation trace is discoverable, useful, and lightweight
+- snapshot-based visual review exists for first-open, seeded or empty, and trace
+  states that matter to Orbit identity
 - the room feels structurally different from generic chat
 - the product acceptance review passes, or passes with notes that do not weaken
   Orbit's command-center identity

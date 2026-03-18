@@ -58,6 +58,7 @@ Out of scope:
 - broad UI design work beyond inspectability needs
 - teams and squads
 - server migration
+- server framework or deployment changes
 - memory candidate review or memory reuse
 
 ## Required Inputs
@@ -65,8 +66,23 @@ Out of scope:
 - `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
 - `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
 - `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
+- `Docs/Orbit/Planning/Milestones/M0-Agentic-Execution-Scaffold/Tech-Stack-Posture.md`
 - `Docs/Orbit/RFCs/RFC-0001-Workspace-Persona-Contract-Resolution-and-Activation-Model.md`
 - `Docs/Orbit/RFCs/RFC-0003-Workspace-Group-and-Workspace-Persona-Instance-Model.md`
+
+## Implementation Posture
+
+- start from the current macOS app surfaces, but do not treat them as protected
+  end-state structure
+- use `Swift` and `SwiftUI` for any client-facing first-checkpoint work
+- use the `senior-swiftui-engineer` persona with the `repo-constraints`,
+  `swift-style`, and `swiftui-style` kits when client-surface changes or reviews
+  are needed
+- AI lanes in `M1` should build inside the approved client posture, not redefine
+  it
+- in a dedicated non-main worktree, AI lanes may refactor or replace current app
+  surfaces if that materially improves Orbit's identity and activation foundation
+- do not reopen server stack, deployment, or backend framework decisions in `M1`
 
 ## Execution Packets
 

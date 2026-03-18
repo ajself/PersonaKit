@@ -74,7 +74,26 @@ Out of scope:
 - `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
 - `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
 - `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
+- `Docs/Orbit/Planning/Milestones/M0-Agentic-Execution-Scaffold/Tech-Stack-Posture.md`
 - existing Orbit Studio files under `Sources/Features/Studio/UI/Orbit/`
+
+## Implementation Posture
+
+- start from the current macOS app surfaces, but do not treat them as protected
+  end-state structure
+- use `Swift` and `SwiftUI` for the proving-loop client surface
+- use the `senior-swiftui-engineer` persona with the `repo-constraints`,
+  `swift-style`, and `swiftui-style` kits when building or reviewing the room
+- treat snapshot testing as part of the visual and product-proof toolset,
+  including `pointfreeco/swift-snapshot-testing` where it materially improves
+  reviewability
+- AI lanes in `M2` should strengthen the approved room concept, not reinterpret
+  the client stack or product form
+- in a dedicated non-main worktree, AI lanes may refactor, replace, or remove
+  current PersonaKit macOS app surfaces if that materially improves the Orbit
+  room and remains justified by the active milestone
+- do not reopen server-stack, deployment, or backend framework decisions while
+  proving the local command-center checkpoint
 
 ## Execution Packets
 
