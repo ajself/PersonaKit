@@ -43,6 +43,9 @@ satisfied.
 - `Operator-Trace-Walkthrough.md`
   review artifact describing what AJ must be able to inspect in successful and
   blocked activation paths
+- `Review-Packet.md`
+  compact AJ review packet for the current `M1` proof set and remaining honest
+  gaps
 - `Failure-Matrix.md`
   fail-closed behavior for ambiguity, authorization, and persistence problems
 - `Validation-And-Review-Matrix.md`
@@ -205,6 +208,7 @@ Avoid:
   `Workspace-Persona-And-Collaborator-Model.md`
 - activation trace example
 - operator trace walkthrough
+- review packet
 - failure matrix
 - validation and review matrix for activation semantics
 
