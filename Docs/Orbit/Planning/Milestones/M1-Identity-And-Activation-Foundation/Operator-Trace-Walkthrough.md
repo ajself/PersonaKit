@@ -43,6 +43,9 @@ Scenario:
 - the same blocked-state pattern should also hold when the required skill posture
   is not authorized
 - Orbit blocks before publishing a collaborator response
+- if contract grounding cannot reach a readable PersonaKit scope, Orbit should
+  show an explicit contract-unavailable error outside the thread and leave the
+  durable thread untouched
 - if durable write itself fails, Orbit should leave the prior durable thread
   untouched and show an explicit persistence-blocked error outside the thread
 
@@ -64,6 +67,7 @@ Minimum review readout:
 - AJ can tell the block did not silently degrade into a fake collaborator reply
 - AJ can tell when the failure happened before any new durable thread state was
   committed
+- AJ can distinguish contract-grounding failure from pure write failure
 
 ## Review Standard
 

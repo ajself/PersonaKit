@@ -31,9 +31,10 @@ If that hero proof is weak or incomplete, `M1` is not done.
 4. golden trace example
 5. failure matrix
 6. validation and review matrix
-7. deterministic test evidence for happy path and failure path behavior
-8. operator-visible trace walkthrough or equivalent review artifact
-9. compact review packet that AJ can evaluate without reconstructing thread
+7. validation results readout tied to the current deterministic suite
+8. deterministic test evidence for happy path and failure path behavior
+9. operator-visible trace walkthrough or equivalent review artifact
+10. compact review packet that AJ can evaluate without reconstructing thread
    memory
 
 ## Exit Checklist
@@ -58,6 +59,8 @@ If that hero proof is weak or incomplete, `M1` is not done.
   responded
 - the compact review packet is strong enough that AJ can judge `M1` without
   re-reading the full dossier set
+- the validation results readout matches the actual deterministic suite being
+  relied on for review
 - architecture review passes
 - deterministic coverage review passes
 
@@ -89,6 +92,7 @@ able to review a small, convincing packet containing:
 - the contract summary
 - the golden example
 - the failure matrix
+- the validation results readout
 - the validation results
 - the operator-visible trace walkthrough
 - the compact review packet

@@ -50,6 +50,8 @@ satisfied.
   fail-closed behavior for ambiguity, authorization, and persistence problems
 - `Validation-And-Review-Matrix.md`
   deterministic validation plan and owner-specific review matrix
+- `Validation-Results.md`
+  current deterministic validation readout for the local `M1` proof set
 - `Evidence-And-Exit-Criteria.md`
   milestone-close rules and proof requirements
 
@@ -211,6 +213,7 @@ Avoid:
 - review packet
 - failure matrix
 - validation and review matrix for activation semantics
+- validation results readout
 
 ## Stop Points
 
