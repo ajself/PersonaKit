@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OrbitPanelView: View {
   let workspaceStore: WorkspaceStore
+  let serverBackedRoomClient: OrbitServerBackedRoomClient?
 
   @SceneStorage(StudioHelpStorageKey.orbit)
   private var isOrbitHelpExpanded = false
@@ -10,14 +11,17 @@ struct OrbitPanelView: View {
   @State var draftMessageBody = ""
   @State var addressedParticipantID: String?
   @State var expandedTraceMessageIDs: Set<String>
+  @State var serverBackedRoomCoordinator = OrbitServerBackedRoomCoordinator()
   @State var persistenceMessage: String?
   @State var persistenceIsError = false
 
   init(
     workspaceStore: WorkspaceStore,
+    serverBackedRoomClient: OrbitServerBackedRoomClient? = nil,
     initialExpandedTraceMessageIDs: Set<String> = []
   ) {
     self.workspaceStore = workspaceStore
+    self.serverBackedRoomClient = serverBackedRoomClient
     _expandedTraceMessageIDs = State(initialValue: initialExpandedTraceMessageIDs)
   }
 
@@ -45,13 +49,15 @@ struct OrbitPanelView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .onAppear {
-      loadOrbitWorkspace()
+      loadConfiguredOrbitRoom()
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
-      loadOrbitWorkspace()
+      loadConfiguredOrbitRoom()
     }
     .onChange(of: orbitWorkspace) { _, _ in
-      persistOrbitWorkspace()
+      if serverBackedRoomClient == nil {
+        persistOrbitWorkspace()
+      }
     }
   }
 }

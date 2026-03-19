@@ -37,7 +37,8 @@ Record the first concrete Packet 2 persistence slice for the canonical runtime.
   provides raw-SQL repository behavior for:
   - room bootstrap inside an explicit transaction across the phase-1 canonical
     runtime set
-  - message append plus thread-activity touch inside an explicit transaction
+  - message append plus durable realtime-event write and thread-activity touch
+    inside an explicit transaction
   - room snapshot query shape
   - participant roster query shape
   - post-event query shape
@@ -62,7 +63,8 @@ Current proof covers:
 - ordered migration execution
 - transaction-wrapped room bootstrap
 - rollback on failed bootstrap write
-- transaction-wrapped message append and thread activity update
+- transaction-wrapped message append, realtime-event write, and thread activity
+  update
 - canonical snapshot query shape
 - participant roster replay ordering
 - post-event replay ordering

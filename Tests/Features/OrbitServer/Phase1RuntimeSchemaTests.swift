@@ -26,6 +26,7 @@ struct Phase1RuntimeSchemaTests {
         "post",
         "thread",
         "message",
+        "realtime_event",
         "post_participant",
         "post_event",
         "post_link",

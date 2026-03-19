@@ -11,18 +11,7 @@ struct OrbitPostgresRealtimeLoaderTests {
 
   @Test
   func loaderBuildsDeterministicallyOrderedEventsFromRoomSnapshot() {
-    let loader = OrbitPostgresRealtimeLoader(
-      runtimeStore: OrbitPostgresRuntimeStore(
-        configuration: OrbitPostgresConfiguration(
-          host: "localhost",
-          username: "orbit",
-          password: "secret",
-          database: "orbit_runtime"
-        )
-      )
-    )
-
-    let events = loader.realtimeEvents(for: sampleRoomSnapshot())
+    let events = sampleRealtimeEvents()
 
     #expect(events.map(\.category) == [
       .postCreated,
@@ -38,17 +27,7 @@ struct OrbitPostgresRealtimeLoaderTests {
   @Test
   func loaderFeedServiceBootstrapAndReplayUseSharedProjectionRules() async throws {
     let snapshot = sampleRealtimeSnapshot()
-    let loader = OrbitPostgresRealtimeLoader(
-      runtimeStore: OrbitPostgresRuntimeStore(
-        configuration: OrbitPostgresConfiguration(
-          host: "localhost",
-          username: "orbit",
-          password: "secret",
-          database: "orbit_runtime"
-        )
-      )
-    )
-    let events = loader.realtimeEvents(for: snapshot.room)
+    let events = sampleRealtimeEvents()
     let latestCursor = OrbitPhase1RealtimeContract.makeReplayCursor(
       workspaceID: workspaceID,
       from: events
@@ -173,16 +152,7 @@ struct OrbitPostgresRealtimeLoaderTests {
 
   private func sampleRealtimeSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let room = sampleRoomSnapshot()
-    let events = OrbitPostgresRealtimeLoader(
-      runtimeStore: OrbitPostgresRuntimeStore(
-        configuration: OrbitPostgresConfiguration(
-          host: "localhost",
-          username: "orbit",
-          password: "secret",
-          database: "orbit_runtime"
-        )
-      )
-    ).realtimeEvents(for: room)
+    let events = sampleRealtimeEvents()
 
     return OrbitPhase1RealtimeSnapshot(
       room: room,
@@ -191,5 +161,64 @@ struct OrbitPostgresRealtimeLoaderTests {
         from: events
       )
     )
+  }
+
+  private func sampleRealtimeEvents() -> [OrbitPhase1RealtimeEventEnvelope] {
+    [
+      OrbitPhase1RealtimeEventEnvelope(
+        id: postID,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .postCreated,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400),
+        payloadJSON: "{\"post_id\":\"\(postID.uuidString)\"}"
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "99999999-9999-9999-9999-999999999999")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .participantJoined,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_405),
+        payloadJSON: "{\"participant_id\":\"workspace-persona-orbit-samwise\",\"mode\":\"active\"}"
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "55555555-5555-5555-5555-555555555555")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .messageCreated,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_410),
+        payloadJSON: "{\"message_id\":\"55555555-5555-5555-5555-555555555555\",\"author_id\":\"aj\"}"
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .messageCreated,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_420),
+        payloadJSON: "{\"message_id\":\"66666666-6666-6666-6666-666666666666\",\"author_id\":\"workspace-persona-orbit-samwise\"}"
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: threadID,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .threadActivityUpdated,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_460),
+        payloadJSON: "{\"thread_id\":\"\(threadID.uuidString)\"}"
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .activationResolved,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_470),
+        payloadJSON: "{\"response_mode\":\"direct-address\"}"
+      ),
+    ]
   }
 }

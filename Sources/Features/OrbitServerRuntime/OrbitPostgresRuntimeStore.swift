@@ -111,13 +111,41 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   }
 
   public func appendMessage(
+    workspaceID: UUID,
     _ message: OrbitMessageRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord] = [],
     threadLastActivityAt: Date,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws {
     try await withClient { client in
       try await repository.appendMessage(
+        workspaceID: workspaceID,
         message,
+        realtimeEvents: realtimeEvents,
+        threadLastActivityAt: threadLastActivityAt,
+        using: OrbitPostgresClientExecutor(client: client)
+      )
+    }
+  }
+
+  public func appendCollaboratorResponse(
+    workspaceID: UUID,
+    _ message: OrbitMessageRecord,
+    activation: OrbitPersonaActivationRecord,
+    agentRun: OrbitAgentRunRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadLastActivityAt: Date,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      try await repository.appendCollaboratorResponse(
+        workspaceID: workspaceID,
+        message,
+        activation: activation,
+        agentRun: agentRun,
+        postEvent: postEvent,
+        realtimeEvents: realtimeEvents,
         threadLastActivityAt: threadLastActivityAt,
         using: OrbitPostgresClientExecutor(client: client)
       )
@@ -215,6 +243,28 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         personaActivations: personaActivationsByID.values.sorted { $0.createdAt < $1.createdAt },
         agentRuns: agentRunsByID.values.sorted { $0.startedAt < $1.startedAt }
       )
+    }
+  }
+
+  public func loadRealtimeEvents(
+    workspaceID: UUID,
+    after cursor: OrbitPhase1ReplayCursor?,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> [OrbitPhase1RealtimeEventEnvelope] {
+    try await withClient { client in
+      let rows = try await client.query(
+        repository.selectRealtimeEventsQuery(
+          workspaceID: workspaceID,
+          after: cursor
+        )
+      )
+
+      var events = [OrbitPhase1RealtimeEventEnvelope]()
+      for try await row in rows {
+        events.append(try decodeRealtimeEvent(from: row.makeRandomAccess()))
+      }
+
+      return events
     }
   }
 
@@ -411,6 +461,33 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       eventType: row["event_type"].decode(String.self),
       payloadJSON: payloadJSONString,
       createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeRealtimeEvent(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitPhase1RealtimeEventEnvelope {
+    let payloadData = row[data: "payload"]
+    var payloadBuffer = payloadData.value
+    if payloadData.type == .jsonb {
+      payloadBuffer?.moveReaderIndex(forwardBy: 1)
+    }
+    let payloadJSONString = payloadBuffer.map { buffer in
+      String(decoding: buffer.readableBytesView, as: UTF8.self)
+    } ?? "null"
+
+    return try OrbitPhase1RealtimeEventEnvelope(
+      id: row["id"].decode(UUID.self),
+      workspaceID: row["workspace_id"].decode(UUID.self),
+      postID: row["post_id"].decode(Optional<UUID>.self),
+      threadID: row["thread_id"].decode(Optional<UUID>.self),
+      category: decodeEnum(
+        OrbitPhase1RealtimeEventCategory.self,
+        from: row["category"],
+        columnName: "category"
+      ),
+      createdAt: row["created_at"].decode(Date.self),
+      payloadJSON: payloadJSONString
     )
   }
 

@@ -8,6 +8,10 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     _ room: OrbitPhase1RoomBootstrap,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
+    let realtimeEvents = try room.realtimeEvents.isEmpty
+      ? OrbitPhase1RealtimeEventProjector.bootstrapEvents(for: room)
+      : room.realtimeEvents
+
     do {
       try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
       try await executor.execute(query: upsertWorkspaceQuery(room.workspace))
@@ -19,6 +23,10 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
 
       try await executor.execute(query: insertPostQuery(room.post))
       try await executor.execute(query: insertThreadQuery(room.thread))
+
+      for realtimeEvent in realtimeEvents {
+        try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
 
       for postParticipant in room.postParticipants {
         try await executor.execute(query: insertPostParticipantQuery(postParticipant))
@@ -48,13 +56,58 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
   }
 
   public func appendMessage(
+    workspaceID: UUID,
     _ message: OrbitMessageRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadLastActivityAt: Date,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    let effectiveRealtimeEvents = try realtimeEvents.isEmpty
+      ? OrbitPhase1RealtimeEventProjector.appendEvents(
+          workspaceID: workspaceID,
+          message: message,
+          threadLastActivityAt: threadLastActivityAt
+        )
+      : realtimeEvents
+
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await executor.execute(query: insertMessageQuery(message))
+      for realtimeEvent in effectiveRealtimeEvents {
+        try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      try await executor.execute(
+        query: updateThreadActivityQuery(
+          threadID: message.threadID,
+          lastActivityAt: threadLastActivityAt
+        )
+      )
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
+
+  public func appendCollaboratorResponse(
+    workspaceID: UUID,
+    _ message: OrbitMessageRecord,
+    activation: OrbitPersonaActivationRecord,
+    agentRun: OrbitAgentRunRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
     threadLastActivityAt: Date,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
     do {
       try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
       try await executor.execute(query: insertMessageQuery(message))
+      try await executor.execute(query: insertPersonaActivationQuery(activation))
+      try await executor.execute(query: insertAgentRunQuery(agentRun))
+      try await executor.execute(query: insertPostEventQuery(postEvent))
+      for realtimeEvent in realtimeEvents {
+        try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
       try await executor.execute(
         query: updateThreadActivityQuery(
           threadID: message.threadID,
@@ -200,6 +253,25 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       \(message.state.rawValue),
       \(message.createdAt),
       \(message.updatedAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func insertRealtimeEventQuery(
+    _ event: OrbitRealtimeEventRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO realtime_event (
+      id, workspace_id, post_id, thread_id, category, payload, created_at
+    ) VALUES (
+      \(event.id),
+      \(event.workspaceID),
+      \(event.postID),
+      \(event.threadID),
+      \(event.category.rawValue),
+      \(event.payloadJSON)::jsonb,
+      \(event.createdAt)
     )
     ON CONFLICT (id) DO NOTHING
     """
@@ -373,6 +445,48 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       created_at,
       archived_at
     FROM workspace_persona
+    WHERE workspace_id = \(workspaceID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectRealtimeEventsQuery(
+    workspaceID: UUID,
+    after cursor: OrbitPhase1ReplayCursor?
+  ) -> PostgresQuery {
+    if let cursor,
+      let lastEventCreatedAt = cursor.lastEventCreatedAt,
+      let lastEventID = cursor.lastEventID
+    {
+      return """
+      SELECT
+        id,
+        workspace_id,
+        post_id,
+        thread_id,
+        category,
+        payload,
+        created_at
+      FROM realtime_event
+      WHERE workspace_id = \(workspaceID)
+        AND (
+          created_at > \(lastEventCreatedAt)
+          OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
+        )
+      ORDER BY created_at ASC, id ASC
+      """
+    }
+
+    return """
+    SELECT
+      id,
+      workspace_id,
+      post_id,
+      thread_id,
+      category,
+      payload,
+      created_at
+    FROM realtime_event
     WHERE workspace_id = \(workspaceID)
     ORDER BY created_at ASC, id ASC
     """

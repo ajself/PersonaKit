@@ -1,4 +1,5 @@
 import Foundation
+import OrbitServerRuntime
 
 enum OrbitWorkspacePersistenceError: LocalizedError {
   case noWorkspaceSelected
@@ -12,8 +13,26 @@ enum OrbitWorkspacePersistenceError: LocalizedError {
 }
 
 extension OrbitPanelView {
+  var serverBackedRoomScope: OrbitPhase1RealtimeSubscriptionScope {
+    OrbitPhase1RealtimeSubscriptionScope(
+      workspaceSlug: "orbit",
+      channelSlug: "command-center"
+    )
+  }
+
   var orbitPersistence: OrbitWorkspacePersistence {
     OrbitWorkspacePersistence()
+  }
+
+  func loadConfiguredOrbitRoom() {
+    guard let serverBackedRoomClient else {
+      loadOrbitWorkspace()
+      return
+    }
+
+    Task {
+      await loadServerBackedOrbitRoom(using: serverBackedRoomClient)
+    }
   }
 
   func persistOrbitWorkspace(
@@ -61,6 +80,25 @@ extension OrbitPanelView {
     } catch {
       orbitWorkspace = .defaultWorkspace
       persistenceMessage = "Failed to load Orbit workspace data: \(error.localizedDescription)"
+      persistenceIsError = true
+    }
+  }
+
+  @MainActor
+  func loadServerBackedOrbitRoom(
+    using client: OrbitServerBackedRoomClient
+  ) async {
+    do {
+      var coordinator = serverBackedRoomCoordinator
+      try await coordinator.connect(scope: serverBackedRoomScope, client: client)
+      serverBackedRoomCoordinator = coordinator
+      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
+        orbitWorkspace = projectedWorkspace
+      }
+      persistenceMessage = "Loaded Orbit room from canonical server runtime."
+      persistenceIsError = false
+    } catch {
+      persistenceMessage = "Failed to load server-backed Orbit room: \(error.localizedDescription)"
       persistenceIsError = true
     }
   }

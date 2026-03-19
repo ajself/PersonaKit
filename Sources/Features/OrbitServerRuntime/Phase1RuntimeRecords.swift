@@ -325,6 +325,34 @@ public struct OrbitPostEventRecord: Equatable, Sendable {
   }
 }
 
+public struct OrbitRealtimeEventRecord: Equatable, Sendable {
+  public let id: UUID
+  public let workspaceID: UUID
+  public let postID: UUID?
+  public let threadID: UUID?
+  public let category: OrbitPhase1RealtimeEventCategory
+  public let payloadJSON: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    workspaceID: UUID,
+    postID: UUID? = nil,
+    threadID: UUID? = nil,
+    category: OrbitPhase1RealtimeEventCategory,
+    payloadJSON: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.workspaceID = workspaceID
+    self.postID = postID
+    self.threadID = threadID
+    self.category = category
+    self.payloadJSON = payloadJSON
+    self.createdAt = createdAt
+  }
+}
+
 public struct OrbitPersonaActivationRecord: Equatable, Sendable {
   public let id: UUID
   public let initiatedByParticipantType: OrbitParticipantAuthorType
@@ -406,6 +434,7 @@ public struct OrbitPhase1RoomBootstrap: Equatable, Sendable {
   public let post: OrbitPostRecord
   public let thread: OrbitThreadRecord
   public let seedMessages: [OrbitMessageRecord]
+  public let realtimeEvents: [OrbitRealtimeEventRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
   public let postEvents: [OrbitPostEventRecord]
   public let personaActivations: [OrbitPersonaActivationRecord]
@@ -418,6 +447,7 @@ public struct OrbitPhase1RoomBootstrap: Equatable, Sendable {
     post: OrbitPostRecord,
     thread: OrbitThreadRecord,
     seedMessages: [OrbitMessageRecord],
+    realtimeEvents: [OrbitRealtimeEventRecord] = [],
     postParticipants: [OrbitPostParticipantRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
     personaActivations: [OrbitPersonaActivationRecord] = [],
@@ -429,6 +459,7 @@ public struct OrbitPhase1RoomBootstrap: Equatable, Sendable {
     self.post = post
     self.thread = thread
     self.seedMessages = seedMessages
+    self.realtimeEvents = realtimeEvents
     self.postParticipants = postParticipants
     self.postEvents = postEvents
     self.personaActivations = personaActivations

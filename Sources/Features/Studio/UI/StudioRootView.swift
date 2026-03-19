@@ -56,7 +56,10 @@ public struct StudioRootView: View {
 
       switch activeSelection {
       case .orbit:
-        OrbitPanelView(workspaceStore: workspaceStore)
+        OrbitPanelView(
+          workspaceStore: workspaceStore,
+          serverBackedRoomClient: OrbitServerBackedRoomClientFactory.makeIfConfigured()
+        )
 
       case .sessions:
         SessionsPanelView(

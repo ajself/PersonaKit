@@ -30,26 +30,30 @@ If that sequence is weak, confusing, or under-evidenced, `M3` is not done.
 3. canonical runtime boundary audit note
 4. schema and event model note
 5. phase-1 persistence bootstrap note
-6. realtime projection contract note
-7. realtime feed and replay service note
-8. database-backed replay loader note
-9. polling session recovery note
-10. transport adapter contract note
-11. artifact storage boundary note
-12. macOS cutover projection note
-13. migration cut plan
-14. golden canonical flow
-15. failure and recovery matrix
-16. validation and review matrix
-17. decision register
-18. stack-conformance review artifact
-19. architecture review artifact
-20. reliability review artifact
-21. product continuity review artifact
-22. migration or cutover validation artifact
-23. current migration validation artifact
-24. current review packet for AJ
-25. canonical closeout packet showing runtime, replay, and product continuity
+6. canonical write path note
+7. canonical collaborator response path note
+8. realtime projection contract note
+9. realtime feed and replay service note
+10. database-backed replay loader note
+11. polling session recovery note
+12. transport adapter contract note
+13. Vapor gateway contract note
+14. artifact storage boundary note
+15. macOS cutover projection note
+16. migration cut plan
+17. golden canonical flow
+18. failure and recovery matrix
+19. validation and review matrix
+20. decision register
+21. stack-conformance review artifact
+22. architecture review artifact
+23. reliability review artifact
+24. product continuity review artifact
+25. migration or cutover validation artifact
+26. current migration validation artifact
+27. live Postgres integration harness note
+28. current review packet for AJ
+29. canonical closeout packet showing runtime, replay, and product continuity
 
 ## Exit Checklist
 

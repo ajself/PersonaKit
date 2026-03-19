@@ -7,6 +7,7 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case post
   case thread
   case message
+  case realtimeEvent = "realtime_event"
   case postParticipant = "post_participant"
   case postEvent = "post_event"
   case postLink = "post_link"
@@ -136,6 +137,20 @@ public enum OrbitPhase1RuntimeSchema {
           state TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL,
           updated_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .realtimeEvent,
+      sql: """
+        CREATE TABLE IF NOT EXISTS realtime_event (
+          id UUID PRIMARY KEY,
+          workspace_id UUID NOT NULL REFERENCES workspace(id),
+          post_id UUID REFERENCES post(id),
+          thread_id UUID REFERENCES thread(id),
+          category TEXT NOT NULL,
+          payload JSONB NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
         )
         """
     ),

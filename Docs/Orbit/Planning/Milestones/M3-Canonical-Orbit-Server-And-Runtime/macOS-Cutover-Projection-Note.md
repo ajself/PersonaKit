@@ -14,13 +14,42 @@ into the Orbit macOS room model.
 ## What Exists Now
 
 - `OrbitServerRoomProjection.workspace(from:)`
+- `OrbitServerBackedRoomState`
+- `OrbitServerBackedRoomCoordinator`
+- `OrbitServerBackedRoomClient`
+- `OrbitServerBackedRoomClientFactory`
+- `OrbitServerBackedRoomClient`
+- `OrbitServerBackedRoomClientFactory`
 
-This now exists in `Sources/Features/Studio/UI/Orbit/OrbitServerRoomProjection.swift`.
+These now exist in the Orbit Studio feature under:
+
+- `OrbitServerRoomProjection.swift`
+- `OrbitServerBackedRoomState.swift`
+- `OrbitServerBackedRoomCoordinator.swift`
+- `OrbitServerBackedRoomClient.swift`
+- `OrbitServerBackedRoomClientFactory.swift`
+- `OrbitServerBackedRoomClient.swift`
+- `OrbitServerBackedRoomClientFactory.swift`
 
 ## Current Responsibility
 
 The projection layer now proves that a canonical server-backed room snapshot can
 be translated into the same Orbit room model the macOS command center expects.
+
+The latest cutover slice also includes a server-backed room state reducer in
+Studio that can apply replay events over the projected snapshot instead of
+depending only on one-shot projection.
+
+The latest coordinator slice now adds a client-side read path that can connect,
+poll, and update the projected Orbit room from the transport contract.
+
+The latest factory slice now lets `StudioRootView` provide a server-backed room
+client to `OrbitPanelView` whenever the canonical runtime environment is
+configured.
+
+The latest factory slice now lets `StudioRootView` opt the Orbit panel into the
+server-backed client path whenever the required environment-backed runtime
+configuration exists.
 
 Current preserved semantics:
 
@@ -30,6 +59,14 @@ Current preserved semantics:
 - direct user and participant response message meaning
 - lightweight-meeting interaction mode when multiple workspace personas are
   present in the room
+- replayed server events can now update the projected macOS room state without
+  inventing a second local truth model
+- the client now has a transport-facing coordinator seam rather than only a raw
+  projection helper
+- the Orbit panel can now switch to a server-backed room client when the
+  canonical runtime is configured
+- the Orbit room can now be switched onto the server-backed client path by
+  configuration rather than only by manual test setup
 
 ## Why This Matters
 
@@ -46,6 +83,10 @@ Current proof covers:
 
 - believable Orbit workspace projection from canonical room truth
 - speaker and message-kind continuity across canonical authors
+- replayed canonical events updating the projected room state
+- server-backed connect and poll behavior updating the projected Orbit room state
+- environment-gated factory construction for the server-backed room client
+- configuration-based server-backed client enablement in Studio
 
 ## Honest Limit
 

@@ -49,6 +49,12 @@ They should not treat runtime complexity as permission to revisit the core stack
 - `Phase-1-Persistence-Bootstrap-Note.md`
   early Packet 2 artifact for the raw-SQL schema migrator and first canonical
   repository layer
+- `Canonical-Write-Path-Note.md`
+  Packet 2/5 artifact for the first canonical server-side message write path and
+  gateway write seam
+- `Canonical-Collaborator-Response-Path-Note.md`
+  Packet 2/5 artifact for the first server-driven collaborator response path with
+  activation and run linkage
 - `Realtime-Projection-Contract-Note.md`
   early Packet 3 artifact freezing the event envelope, replay cursor, and
   ordering semantics before transport work begins
@@ -63,6 +69,9 @@ They should not treat runtime complexity as permission to revisit the core stack
 - `Transport-Adapter-Contract-Note.md`
   Packet 3 artifact for the thin transport-facing request/response layer over the
   polling/session service
+- `Vapor-Gateway-Contract-Note.md`
+  Packet 3 artifact for the first live `Vapor` gateway endpoints over the
+  transport adapter
 - `Artifact-Storage-Boundary-Note.md`
   Packet 4 artifact for the object-style storage abstraction and replaceable
   filesystem backend
@@ -90,6 +99,9 @@ They should not treat runtime complexity as permission to revisit the core stack
   current product continuity readout for the server-backed room model
 - `Migration-Validation-Artifact.md`
   deterministic validation readout for the current `M3` slice
+- `Live-Postgres-Integration-Harness-Note.md`
+  Packet 6 readiness artifact defining the live database proof harness for the
+  canonical runtime store
 - `Review-Packet.md`
   compact AJ review packet for the current canonical-runtime backbone progress
 
@@ -288,11 +300,14 @@ Avoid:
 - schema and event model note
 - canonical runtime boundary audit note
 - phase-1 persistence bootstrap note
+- canonical write path note
+- canonical collaborator response path note
 - realtime projection contract note
 - realtime feed and replay service note
 - database-backed replay loader note
 - polling session recovery note
 - transport adapter contract note
+- Vapor gateway contract note
 - artifact storage boundary note
 - macOS cutover projection note
 - replay and reconnect test results
@@ -301,6 +316,7 @@ Avoid:
 - reliability review artifact
 - product continuity review artifact
 - migration validation artifact
+- live Postgres integration harness note
 - review packet
 
 ## Stop Points

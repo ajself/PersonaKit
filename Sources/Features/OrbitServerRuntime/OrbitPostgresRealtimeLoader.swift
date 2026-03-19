@@ -20,7 +20,10 @@ public struct OrbitPostgresRealtimeLoader: Sendable {
       return nil
     }
 
-    let events = realtimeEvents(for: room)
+    let events = try await runtimeStore.loadRealtimeEvents(
+      workspaceID: room.workspace.id,
+      after: nil
+    )
     let cursor = OrbitPhase1RealtimeContract.makeReplayCursor(
       workspaceID: room.workspace.id,
       from: events
@@ -36,15 +39,17 @@ public struct OrbitPostgresRealtimeLoader: Sendable {
     scope: OrbitPhase1RealtimeSubscriptionScope,
     cursor: OrbitPhase1ReplayCursor
   ) async throws -> OrbitPhase1RealtimeReplayBatch {
-    guard let room = try await runtimeStore.loadRoomSnapshot(
+    guard try await runtimeStore.loadRoomSnapshot(
       workspaceSlug: scope.workspaceSlug,
       channelSlug: scope.channelSlug
-    ) else {
+    ) != nil else {
       return OrbitPhase1RealtimeReplayBatch(events: [], hasGap: false)
     }
 
-    let events = realtimeEvents(for: room)
-    let replayEvents = OrbitPhase1RealtimeContract.events(since: cursor, in: events)
+    let replayEvents = try await runtimeStore.loadRealtimeEvents(
+      workspaceID: cursor.workspaceID,
+      after: cursor
+    )
 
     return OrbitPhase1RealtimeReplayBatch(events: replayEvents)
   }
@@ -60,84 +65,4 @@ public struct OrbitPostgresRealtimeLoader: Sendable {
     )
   }
 
-  public func realtimeEvents(
-    for room: OrbitPhase1RoomSnapshot
-  ) -> [OrbitPhase1RealtimeEventEnvelope] {
-    var events = [OrbitPhase1RealtimeEventEnvelope]()
-
-    events.append(
-      OrbitPhase1RealtimeEventEnvelope(
-        id: room.post.id,
-        workspaceID: room.workspace.id,
-        postID: room.post.id,
-        threadID: room.thread.id,
-        category: .postCreated,
-        createdAt: room.post.createdAt,
-        payloadJSON: "{\"post_id\":\"\(room.post.id.uuidString)\"}"
-      )
-    )
-
-    for participant in room.postParticipants {
-      events.append(
-        OrbitPhase1RealtimeEventEnvelope(
-          id: participant.id,
-          workspaceID: room.workspace.id,
-          postID: room.post.id,
-          threadID: room.thread.id,
-          category: .participantJoined,
-          createdAt: participant.joinedAt,
-          payloadJSON: "{\"participant_id\":\"\(participant.participantID)\",\"mode\":\"\(participant.participationMode.rawValue)\"}"
-        )
-      )
-    }
-
-    for message in room.messages {
-      events.append(
-        OrbitPhase1RealtimeEventEnvelope(
-          id: message.id,
-          workspaceID: room.workspace.id,
-          postID: room.post.id,
-          threadID: room.thread.id,
-          category: .messageCreated,
-          createdAt: message.createdAt,
-          payloadJSON: "{\"message_id\":\"\(message.id.uuidString)\",\"author_id\":\"\(message.authorID)\"}"
-        )
-      )
-    }
-
-    events.append(
-      OrbitPhase1RealtimeEventEnvelope(
-        id: room.thread.id,
-        workspaceID: room.workspace.id,
-        postID: room.post.id,
-        threadID: room.thread.id,
-        category: .threadActivityUpdated,
-        createdAt: room.thread.lastActivityAt,
-        payloadJSON: "{\"thread_id\":\"\(room.thread.id.uuidString)\"}"
-      )
-    )
-
-    for event in room.postEvents {
-      if let category = OrbitPhase1RealtimeEventCategory(rawValue: event.eventType) {
-        events.append(
-          OrbitPhase1RealtimeEventEnvelope(
-            id: event.id,
-            workspaceID: room.workspace.id,
-            postID: event.postID,
-            threadID: event.threadID,
-            category: category,
-            createdAt: event.createdAt,
-            payloadJSON: event.payloadJSON
-          )
-        )
-      }
-    }
-
-    return events.sorted { lhs, rhs in
-      if lhs.createdAt == rhs.createdAt {
-        return lhs.id.uuidString < rhs.id.uuidString
-      }
-      return lhs.createdAt < rhs.createdAt
-    }
-  }
 }

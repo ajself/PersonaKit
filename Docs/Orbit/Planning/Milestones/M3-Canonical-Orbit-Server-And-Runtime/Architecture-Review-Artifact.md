@@ -31,10 +31,12 @@ Last Updated: 2026-03-18
 
 - pass: the first raw-SQL schema, repository, loader, replay, and transport
   adapter stack is coherent
+- pass: the first live `Vapor` gateway seam now stays thin over the same replay
+  and session services
 - pass: replay semantics are layered under the transport seam instead of being
   reimplemented at the edge
-- note: a durable event-store table is still deferred; replay is currently
-  projected from canonical room state
+- note: a durable realtime-event table now exists, but write coverage is still
+  not complete enough to treat the event log as fully closeout-ready
 
 ### Storage boundary
 
@@ -50,10 +52,10 @@ Last Updated: 2026-03-18
 
 ## Strongest Remaining Architecture Notes
 
-1. The first network transport is still absent, so the transport adapter remains
-   request/response rather than a live channel.
-2. The current replay model still projects from canonical room state rather than
-   a dedicated durable event log.
+1. The first gateway now exists, but persistent transport is still absent, so the
+   transport seam remains request/response rather than a live channel.
+2. The durable realtime-event table exists, but not all runtime writes are yet
+   proven through it.
 
 ## Judgment
 

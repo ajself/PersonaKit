@@ -29,20 +29,24 @@ Last Updated: 2026-03-18
 ### Failure visibility
 
 - pass: replay-gap and stale-client behavior now has explicit resync outcomes
-- note: network transport failure behavior is still represented through the thin
-  adapter contract rather than a live `WebSocket` or `SSE` implementation
+- pass: the first live `Vapor` gateway now stays subordinate to the replay and
+  session stack instead of inventing new recovery semantics
+- note: persistent transport failure behavior is still not proven through a live
+  `WebSocket` or `SSE` implementation
 
 ## Strongest Reliability Wins
 
 1. Replay and reconnect semantics are now code-backed, not only promised.
 2. Recovery no longer depends on local guesswork in the service layer.
 3. Transaction boundaries exist where bootstrap and append semantics need them.
+4. The live runtime-store harness now passes against a running local `Postgres`
+   instance.
 
 ## Strongest Remaining Reliability Notes
 
-1. No live database integration test exists yet against a running `Postgres`
-   instance.
-2. No live transport soak or disconnect/reconnect test exists yet.
+1. No live persistent transport soak or disconnect/reconnect test exists yet.
+2. The current live database proof is local-run evidence, not CI-backed or
+   operations-backed proof.
 
 ## Judgment
 

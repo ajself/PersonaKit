@@ -621,6 +621,13 @@ extension OrbitPanelView {
   }
 
   func sendMessage() {
+    if let serverBackedRoomClient {
+      Task {
+        await sendMessageThroughServer(using: serverBackedRoomClient)
+      }
+      return
+    }
+
     let messageBody = draftMessageBody
     var stagedWorkspace = orbitWorkspace
 
@@ -651,6 +658,38 @@ extension OrbitPanelView {
     } catch {
       persistenceMessage =
         "Orbit blocked the send because workspace data could not be written durably: \(error.localizedDescription)"
+      persistenceIsError = true
+    }
+  }
+
+  @MainActor
+  func sendMessageThroughServer(
+    using client: OrbitServerBackedRoomClient
+  ) async {
+    let messageBody = draftMessageBody.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !messageBody.isEmpty else {
+      return
+    }
+
+    do {
+      var coordinator = serverBackedRoomCoordinator
+      try await coordinator.appendUserMessage(
+        scope: serverBackedRoomScope,
+        authorID: OrbitParticipantID.aj.rawValue,
+        body: messageBody,
+        client: client
+      )
+      serverBackedRoomCoordinator = coordinator
+      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
+        orbitWorkspace = projectedWorkspace
+      }
+      draftMessageBody = ""
+      persistenceMessage = nil
+      persistenceIsError = false
+    } catch {
+      persistenceMessage =
+        "Orbit blocked the send because the canonical server write path failed: \(error.localizedDescription)"
       persistenceIsError = true
     }
   }

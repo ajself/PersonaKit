@@ -1,5 +1,15 @@
 import Foundation
 
+public protocol OrbitPhase1RealtimeTransportServing: Sendable {
+  func connect(
+    request: OrbitPhase1RealtimeConnectRequest
+  ) async throws -> OrbitPhase1RealtimeTransportResponse
+
+  func poll(
+    request: OrbitPhase1RealtimePollRequest
+  ) async throws -> OrbitPhase1RealtimeTransportResponse
+}
+
 public struct OrbitPhase1RealtimeConnectRequest: Equatable, Sendable {
   public let scope: OrbitPhase1RealtimeSubscriptionScope
   public let cursor: OrbitPhase1ReplayCursor?
@@ -74,3 +84,5 @@ public struct OrbitPhase1RealtimeTransportAdapter: Sendable {
     }
   }
 }
+
+extension OrbitPhase1RealtimeTransportAdapter: OrbitPhase1RealtimeTransportServing {}

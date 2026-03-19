@@ -26,6 +26,8 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
+    .package(url: "https://github.com/vapor/async-kit.git", exact: "1.22.0"),
+    .package(url: "https://github.com/vapor/vapor.git", from: "4.121.3"),
     .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
     .package(
       url: "https://github.com/apple/swift-argument-parser",
@@ -77,6 +79,15 @@ let package = Package(
       path: "Sources/Features/OrbitServerRuntime"
     ),
     .target(
+      name: "OrbitServerGateway",
+      dependencies: [
+        "OrbitServerRuntime",
+        .product(name: "AsyncKit", package: "async-kit"),
+        .product(name: "Vapor", package: "vapor"),
+      ],
+      path: "Sources/Features/OrbitServerGateway"
+    ),
+    .target(
       name: "StudioFoundation",
       dependencies: [
         "ContextCore",
@@ -89,6 +100,7 @@ let package = Package(
       dependencies: [
         "ContextCore",
         "ContextWorkspaceCore",
+        "OrbitServerGateway",
         "OrbitServerRuntime",
         "StudioFoundation",
       ],
@@ -121,11 +133,13 @@ let package = Package(
         "ContextMCP",
         "ContextCore",
         "ContextWorkspaceCore",
+        "OrbitServerGateway",
         "OrbitServerRuntime",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+        .product(name: "XCTVapor", package: "vapor"),
       ],
       path: "Tests",
       exclude: [

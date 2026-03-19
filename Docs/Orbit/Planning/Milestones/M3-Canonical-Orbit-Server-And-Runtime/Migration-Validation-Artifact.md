@@ -1,4 +1,4 @@
-# Migration Validation Artifact
+  # Migration Validation Artifact
 
 Status: Accepted
 Milestone: `M3`
@@ -16,6 +16,8 @@ Last Updated: 2026-03-18
 
 - `swift test --filter Phase1RuntimeSchemaTests`
 - `swift test --filter Phase1RuntimeRepositoryTests`
+- `swift test --filter Phase1CollaboratorResponseServiceTests`
+- `swift test --filter Phase1RoomWriteServiceTests`
 - `swift test --filter Phase1RealtimeContractTests`
 - `swift test --filter Phase1RealtimeFeedServiceTests`
 - `swift test --filter OrbitPostgresRealtimeLoaderTests`
@@ -23,7 +25,12 @@ Last Updated: 2026-03-18
 - `swift test --filter Phase1RealtimePollingSessionTests`
 - `swift test --filter Phase1RealtimeTransportAdapterTests`
 - `swift test --filter OrbitArtifactStorageTests`
+- `swift test --filter OrbitServerGatewayTests`
+- `swift test --filter OrbitPostgresRuntimeStoreIntegrationTests`
 - `swift test --filter OrbitServerRoomProjectionTests`
+- `swift test --filter OrbitServerBackedRoomCoordinatorTests`
+- `swift test --filter OrbitServerBackedRoomClientFactoryTests`
+- `swift test --filter OrbitServerBackedRoomStateTests`
 - `swift test --filter OrbitWorkspaceTests`
 - `git diff --check`
 
@@ -32,13 +39,25 @@ Last Updated: 2026-03-18
 - canonical schema and repository contract are locked in code
 - bootstrap, append, replay, resync, and thin transport semantics are all
   deterministic
+- a live `Vapor` gateway seam now exists and stays thin over the replay/session
+  services
+- the first server-side room write path now exists through the runtime service
+  and gateway edge
+- the first server-driven collaborator response path now exists through the same
+  canonical runtime and gateway seam
+- the live runtime-store harness has now passed against a temporary local
+  `Postgres` instance
 - artifact storage is replaceable and filesystem-backed
 - a canonical room snapshot can be projected into the Orbit macOS room shape
+- replayed server events can be reduced into the projected macOS room state
+- the macOS client now has a transport-facing coordinator seam for server-backed
+  connect and poll behavior
+- the Studio root can now enable the server-backed Orbit client path through
+  explicit runtime configuration
 
 ### What this does not prove yet
 
-- live `Postgres` integration against a running database
-- live `WebSocket` or `SSE` transport
+- live persistent `WebSocket` or `SSE` transport
 - full end-to-end macOS cutover over a server-backed write/read path
 
 ## Judgment

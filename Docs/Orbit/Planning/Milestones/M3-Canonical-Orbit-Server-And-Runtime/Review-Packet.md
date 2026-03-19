@@ -16,12 +16,20 @@ progress without reconstructing every packet from scratch.
 - the phase-1 canonical runtime schema and repository layer exist in code
 - the Postgres runtime store has real bootstrap, append, and snapshot-loading
   entry points
+- the first server-side room write path now exists through the runtime service
+  and gateway edge
+- the first server-driven collaborator response path now exists with activation
+  and agent-run linkage
 - replay, stale-client recovery, and transport-facing semantics exist in layered
   services and tests
+- a live `Vapor` gateway seam now exists and remains thin over the replay/session
+  services
 - artifact storage now has a replaceable object-style abstraction with a
   filesystem backend
-- the macOS room now has a client-side projection seam from canonical server
-  truth back into the accepted Orbit room model
+- the macOS room now has a client-side projection and replay-reduction seam from
+  canonical server truth back into the accepted Orbit room model
+- the Studio root can now enable the server-backed Orbit room path through
+  explicit runtime configuration
 
 ## Core Evidence
 
@@ -29,13 +37,16 @@ progress without reconstructing every packet from scratch.
 2. `Stack-Conformance-Review-Note.md`
 3. `Schema-And-Event-Model-Note.md`
 4. `Phase-1-Persistence-Bootstrap-Note.md`
-5. `Realtime-Projection-Contract-Note.md`
-6. `Realtime-Feed-And-Replay-Service-Note.md`
-7. `Database-Backed-Replay-Loader-Note.md`
-8. `Polling-Session-Recovery-Note.md`
-9. `Transport-Adapter-Contract-Note.md`
-10. `Artifact-Storage-Boundary-Note.md`
-11. `macOS-Cutover-Projection-Note.md`
+5. `Canonical-Write-Path-Note.md`
+6. `Canonical-Collaborator-Response-Path-Note.md`
+7. `Realtime-Projection-Contract-Note.md`
+8. `Realtime-Feed-And-Replay-Service-Note.md`
+9. `Database-Backed-Replay-Loader-Note.md`
+10. `Polling-Session-Recovery-Note.md`
+11. `Transport-Adapter-Contract-Note.md`
+12. `Vapor-Gateway-Contract-Note.md`
+13. `Artifact-Storage-Boundary-Note.md`
+14. `macOS-Cutover-Projection-Note.md`
 
 ## Review Artifacts
 
@@ -46,11 +57,13 @@ progress without reconstructing every packet from scratch.
 
 ## Honest Remaining Gaps
 
-1. no live `Vapor` gateway or network transport exists yet
-2. no live `Postgres` integration test exists against a running database
-3. the macOS client is not fully cut over to server-backed writes and reads yet
-4. replay is still projected from current canonical room state rather than a
-   dedicated durable event-store table
+1. the macOS client is not fully cut over to server-backed writes and reads yet
+2. the durable realtime-event table exists, but event coverage is still not
+   complete enough to treat replay as fully closeout-ready across all runtime
+   mutation types
+3. no live persistent `WebSocket` or `SSE` transport exists yet
+4. the current live database proof is local-run evidence rather than CI-backed or
+   operations-backed proof
 
 ## Judgment Frame
 

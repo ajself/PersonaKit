@@ -62,6 +62,7 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.contains(where: { $0.contains("INSERT INTO workspace_persona") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO post") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO thread") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO realtime_event") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO post_participant") }))
     #expect(queries.filter { $0.contains("INSERT INTO message") }.count == 2)
     #expect(queries.contains(where: { $0.contains("INSERT INTO post_event") }))
@@ -120,6 +121,10 @@ struct Phase1RuntimeRepositoryTests {
     let participantQuery = repository.selectPostParticipantsQuery(postID: UUID())
     let eventQuery = repository.selectPostEventsQuery(postID: UUID())
     let workspacePersonaQuery = repository.selectWorkspacePersonasQuery(workspaceID: UUID())
+    let realtimeEventQuery = repository.selectRealtimeEventsQuery(
+      workspaceID: UUID(),
+      after: nil
+    )
 
     #expect(workspacePersonaQuery.sql.contains("FROM workspace_persona"))
     #expect(workspacePersonaQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
@@ -132,6 +137,10 @@ struct Phase1RuntimeRepositoryTests {
     #expect(eventQuery.sql.contains("FROM post_event"))
     #expect(eventQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
     #expect(eventQuery.binds.count == 1)
+
+    #expect(realtimeEventQuery.sql.contains("FROM realtime_event"))
+    #expect(realtimeEventQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(realtimeEventQuery.binds.count == 1)
   }
 
   @Test
@@ -150,7 +159,19 @@ struct Phase1RuntimeRepositoryTests {
     let message = sampleRoomBootstrap().seedMessages[1]
 
     try await repository.appendMessage(
+      workspaceID: sampleRoomBootstrap().workspace.id,
       message,
+      realtimeEvents: [
+        OrbitRealtimeEventRecord(
+          id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+          workspaceID: sampleRoomBootstrap().workspace.id,
+          postID: sampleRoomBootstrap().post.id,
+          threadID: sampleRoomBootstrap().thread.id,
+          category: .messageCreated,
+          payloadJSON: "{\"message_id\":\"\(message.id.uuidString)\"}",
+          createdAt: referenceDate.addingTimeInterval(120)
+        )
+      ],
       threadLastActivityAt: referenceDate.addingTimeInterval(120),
       using: executor
     )
@@ -160,6 +181,7 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.first == "BEGIN")
     #expect(queries.last == "COMMIT")
     #expect(queries.contains(where: { $0.contains("INSERT INTO message") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO realtime_event") }))
     #expect(queries.contains(where: { $0.contains("UPDATE thread") }))
   }
 
