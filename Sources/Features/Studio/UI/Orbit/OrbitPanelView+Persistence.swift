@@ -103,6 +103,50 @@ extension OrbitPanelView {
     }
   }
 
+  @MainActor
+  func pollServerBackedOrbitRoomLoop(
+    using client: OrbitServerBackedRoomClient
+  ) async {
+    guard workspaceStore.workspaceURL != nil else {
+      return
+    }
+
+    while !Task.isCancelled {
+      do {
+        try await Task.sleep(for: .seconds(2))
+      } catch {
+        return
+      }
+
+      guard !Task.isCancelled else {
+        return
+      }
+
+      await pollServerBackedOrbitRoom(using: client)
+    }
+  }
+
+  @MainActor
+  func pollServerBackedOrbitRoom(
+    using client: OrbitServerBackedRoomClient
+  ) async {
+    do {
+      var coordinator = serverBackedRoomCoordinator
+      try await coordinator.poll(client: client)
+      serverBackedRoomCoordinator = coordinator
+      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
+        orbitWorkspace = projectedWorkspace
+      }
+      if persistenceIsError {
+        persistenceMessage = nil
+        persistenceIsError = false
+      }
+    } catch {
+      persistenceMessage = "Failed to refresh server-backed Orbit room: \(error.localizedDescription)"
+      persistenceIsError = true
+    }
+  }
+
   func persistOrbitWorkspace() {
     guard workspaceStore.workspaceURL != nil else {
       return

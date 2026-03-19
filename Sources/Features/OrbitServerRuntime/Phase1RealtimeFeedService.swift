@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OrbitPhase1RealtimeSubscriptionScope: Equatable, Sendable {
+public struct OrbitPhase1RealtimeSubscriptionScope: Codable, Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
 
@@ -26,7 +26,7 @@ public struct OrbitPhase1RealtimeReplayBatch: Equatable, Sendable {
   }
 }
 
-public enum OrbitPhase1RealtimeResyncReason: String, Equatable, Sendable {
+public enum OrbitPhase1RealtimeResyncReason: String, Codable, Equatable, Sendable {
   case gapDetected = "gap-detected"
   case staleClient = "stale-client"
   case workspaceMismatch = "workspace-mismatch"

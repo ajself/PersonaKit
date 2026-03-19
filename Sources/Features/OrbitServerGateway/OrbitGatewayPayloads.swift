@@ -115,6 +115,7 @@ public struct OrbitGatewaySessionPayload: Content, Equatable {
 }
 
 public struct OrbitGatewayTransportResponse: Content, Equatable {
+  public let response: OrbitPhase1RealtimeTransportResponse
   public let kind: String
   public let session: OrbitGatewaySessionPayload
   public let snapshot: OrbitGatewaySnapshotPayload?
@@ -124,6 +125,7 @@ public struct OrbitGatewayTransportResponse: Content, Equatable {
   public init(
     response: OrbitPhase1RealtimeTransportResponse
   ) {
+    self.response = response
     switch response {
     case .bootstrap(let session, let snapshot):
       self.kind = "bootstrap"
@@ -242,6 +244,7 @@ public struct OrbitGatewayAppendMessageRequest: Content, Equatable {
 }
 
 public struct OrbitGatewayAppendMessageResponse: Content, Equatable {
+  public let result: OrbitPhase1AppendUserMessageResult
   public let workspaceSlug: String
   public let channelSlug: String
   public let messageID: UUID
@@ -251,6 +254,7 @@ public struct OrbitGatewayAppendMessageResponse: Content, Equatable {
   public init(
     result: OrbitPhase1AppendUserMessageResult
   ) {
+    self.result = result
     self.workspaceSlug = result.snapshot.workspace.slug
     self.channelSlug = result.snapshot.channel.slug
     self.messageID = result.message.id
@@ -288,6 +292,7 @@ public struct OrbitGatewayAppendSystemMessageRequest: Content, Equatable {
 }
 
 public struct OrbitGatewayAppendSystemMessageResponse: Content, Equatable {
+  public let result: OrbitPhase1AppendSystemMessageResult
   public let workspaceSlug: String
   public let channelSlug: String
   public let messageID: UUID
@@ -297,6 +302,7 @@ public struct OrbitGatewayAppendSystemMessageResponse: Content, Equatable {
   public init(
     result: OrbitPhase1AppendSystemMessageResult
   ) {
+    self.result = result
     self.workspaceSlug = result.snapshot.workspace.slug
     self.channelSlug = result.snapshot.channel.slug
     self.messageID = result.message.id
@@ -315,6 +321,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
   public let addressedTargetReferenceID: String
   public let responseMode: String
   public let body: String
+  public let contract: OrbitPhase1ResolvedContractPayload?
   public let runnerKind: String
 
   public init(
@@ -327,6 +334,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
     addressedTargetReferenceID: String,
     responseMode: String,
     body: String,
+    contract: OrbitPhase1ResolvedContractPayload? = nil,
     runnerKind: String = "local-bridge"
   ) {
     self.workspaceSlug = workspaceSlug
@@ -338,6 +346,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
     self.addressedTargetReferenceID = addressedTargetReferenceID
     self.responseMode = responseMode
     self.body = body
+    self.contract = contract
     self.runnerKind = runnerKind
   }
 
@@ -359,12 +368,14 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
       addressedTargetReferenceID: addressedTargetReferenceID,
       responseMode: responseMode,
       body: body,
+      contract: contract,
       runnerKind: runnerKind
     )
   }
 }
 
 public struct OrbitGatewayAppendCollaboratorResponse: Content, Equatable {
+  public let result: OrbitPhase1AppendCollaboratorResponseResult
   public let workspaceSlug: String
   public let channelSlug: String
   public let messageID: UUID
@@ -375,6 +386,7 @@ public struct OrbitGatewayAppendCollaboratorResponse: Content, Equatable {
   public init(
     result: OrbitPhase1AppendCollaboratorResponseResult
   ) {
+    self.result = result
     self.workspaceSlug = result.snapshot.workspace.slug
     self.channelSlug = result.snapshot.channel.slug
     self.messageID = result.message.id
@@ -417,6 +429,7 @@ public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
 }
 
 public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
+  public let result: OrbitPhase1AppendActivationFailureResult
   public let workspaceSlug: String
   public let channelSlug: String
   public let systemMessageID: UUID
@@ -427,6 +440,7 @@ public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
   public init(
     result: OrbitPhase1AppendActivationFailureResult
   ) {
+    self.result = result
     self.workspaceSlug = result.snapshot.workspace.slug
     self.channelSlug = result.snapshot.channel.slug
     self.systemMessageID = result.systemMessage.id

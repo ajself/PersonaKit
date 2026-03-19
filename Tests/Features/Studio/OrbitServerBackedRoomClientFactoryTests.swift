@@ -13,11 +13,10 @@ struct OrbitServerBackedRoomClientFactoryTests {
   }
 
   @Test
-  func factoryReturnsNilWhenDatabaseConfigIsIncomplete() {
+  func factoryReturnsNilWhenGatewayConfigIsMissing() {
     let client = OrbitServerBackedRoomClientFactory.makeIfConfigured(
       environment: [
         "ORBIT_SERVER_BACKED_ROOM": "1",
-        "ORBIT_PG_HOST": "localhost",
       ]
     )
 
@@ -25,15 +24,11 @@ struct OrbitServerBackedRoomClientFactoryTests {
   }
 
   @Test
-  func factoryBuildsClientWhenDatabaseConfigIsPresent() {
+  func factoryBuildsClientWhenGatewayConfigIsPresent() {
     let client = OrbitServerBackedRoomClientFactory.makeIfConfigured(
       environment: [
         "ORBIT_SERVER_BACKED_ROOM": "1",
-        "ORBIT_PG_HOST": "localhost",
-        "ORBIT_PG_PORT": "5432",
-        "ORBIT_PG_USER": "orbit",
-        "ORBIT_PG_PASSWORD": "secret",
-        "ORBIT_PG_DATABASE": "orbit_runtime",
+        "ORBIT_SERVER_GATEWAY_BASE_URL": "http://localhost:8080",
       ]
     )
 

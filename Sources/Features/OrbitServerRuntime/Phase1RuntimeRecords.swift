@@ -1,60 +1,60 @@
 import Foundation
 
-public enum OrbitWorkspaceStatus: String, Equatable, Sendable {
+public enum OrbitWorkspaceStatus: String, Codable, Equatable, Sendable {
   case active
   case paused
   case archived
 }
 
-public enum OrbitChannelStatus: String, Equatable, Sendable {
+public enum OrbitChannelStatus: String, Codable, Equatable, Sendable {
   case active
   case archived
 }
 
-public enum OrbitWorkspacePersonaStatus: String, Equatable, Sendable {
+public enum OrbitWorkspacePersonaStatus: String, Codable, Equatable, Sendable {
   case active
   case archived
 }
 
-public enum OrbitPostType: String, Equatable, Sendable {
+public enum OrbitPostType: String, Codable, Equatable, Sendable {
   case message
   case meeting
   case workstream
 }
 
-public enum OrbitPostStatus: String, Equatable, Sendable {
+public enum OrbitPostStatus: String, Codable, Equatable, Sendable {
   case active
   case paused
   case completed
   case archived
 }
 
-public enum OrbitParticipantAuthorType: String, Equatable, Sendable {
+public enum OrbitParticipantAuthorType: String, Codable, Equatable, Sendable {
   case user
   case workspacePersona = "workspace_persona"
   case system
 }
 
-public enum OrbitParticipationMode: String, Equatable, Sendable {
+public enum OrbitParticipationMode: String, Codable, Equatable, Sendable {
   case active
   case observing
   case invited
   case coordinatorManaged = "coordinator_managed"
 }
 
-public enum OrbitThreadStatus: String, Equatable, Sendable {
+public enum OrbitThreadStatus: String, Codable, Equatable, Sendable {
   case open
   case closed
   case archived
 }
 
-public enum OrbitMessageFormat: String, Equatable, Sendable {
+public enum OrbitMessageFormat: String, Codable, Equatable, Sendable {
   case plainText = "plain_text"
   case markdown
   case structured
 }
 
-public enum OrbitMessageState: String, Equatable, Sendable {
+public enum OrbitMessageState: String, Codable, Equatable, Sendable {
   case drafted
   case persisted
   case inProgress = "in_progress"
@@ -63,19 +63,19 @@ public enum OrbitMessageState: String, Equatable, Sendable {
   case superseded
 }
 
-public enum OrbitAddressedTargetKind: String, Equatable, Sendable {
+public enum OrbitAddressedTargetKind: String, Codable, Equatable, Sendable {
   case collaborator
   case team
   case squad
 }
 
-public enum OrbitCanonicalResponseMode: String, Equatable, Sendable {
+public enum OrbitCanonicalResponseMode: String, Codable, Equatable, Sendable {
   case currentThread = "current-thread"
   case directAddress = "direct-address"
   case lightweightMeeting = "lightweight-meeting"
 }
 
-public enum OrbitAgentRunStatus: String, Equatable, Sendable {
+public enum OrbitAgentRunStatus: String, Codable, Equatable, Sendable {
   case queued
   case running
   case completed
@@ -83,7 +83,7 @@ public enum OrbitAgentRunStatus: String, Equatable, Sendable {
   case cancelled
 }
 
-public struct OrbitWorkspaceRecord: Equatable, Sendable {
+public struct OrbitWorkspaceRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let slug: String
   public let name: String
@@ -108,7 +108,7 @@ public struct OrbitWorkspaceRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitChannelRecord: Equatable, Sendable {
+public struct OrbitChannelRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
   public let slug: String
@@ -139,7 +139,7 @@ public struct OrbitChannelRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitWorkspacePersonaRecord: Equatable, Sendable {
+public struct OrbitWorkspacePersonaRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
   public let personaTemplateID: String
@@ -170,7 +170,7 @@ public struct OrbitWorkspacePersonaRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitPostRecord: Equatable, Sendable {
+public struct OrbitPostRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
   public let channelID: UUID
@@ -207,7 +207,7 @@ public struct OrbitPostRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitThreadRecord: Equatable, Sendable {
+public struct OrbitThreadRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
   public let status: OrbitThreadStatus
@@ -232,7 +232,7 @@ public struct OrbitThreadRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitMessageRecord: Equatable, Sendable {
+public struct OrbitMessageRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
   public let threadID: UUID
@@ -272,7 +272,7 @@ public struct OrbitMessageRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitPostParticipantRecord: Equatable, Sendable {
+public struct OrbitPostParticipantRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
   public let participantType: OrbitParticipantAuthorType
@@ -300,7 +300,7 @@ public struct OrbitPostParticipantRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitPostEventRecord: Equatable, Sendable {
+public struct OrbitPostEventRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
   public let threadID: UUID?
@@ -325,7 +325,7 @@ public struct OrbitPostEventRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitRealtimeEventRecord: Equatable, Sendable {
+public struct OrbitRealtimeEventRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
   public let postID: UUID?
@@ -353,7 +353,7 @@ public struct OrbitRealtimeEventRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitPersonaActivationRecord: Equatable, Sendable {
+public struct OrbitPersonaActivationRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let initiatedByParticipantType: OrbitParticipantAuthorType
   public let initiatedByParticipantID: String
@@ -399,7 +399,7 @@ public struct OrbitPersonaActivationRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitAgentRunRecord: Equatable, Sendable {
+public struct OrbitAgentRunRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let personaActivationID: UUID
   public let runnerKind: String
@@ -427,7 +427,7 @@ public struct OrbitAgentRunRecord: Equatable, Sendable {
   }
 }
 
-public struct OrbitPhase1RoomBootstrap: Equatable, Sendable {
+public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let workspace: OrbitWorkspaceRecord
   public let channel: OrbitChannelRecord
   public let workspacePersonas: [OrbitWorkspacePersonaRecord]
@@ -467,7 +467,7 @@ public struct OrbitPhase1RoomBootstrap: Equatable, Sendable {
   }
 }
 
-public struct OrbitPhase1RoomSnapshot: Equatable, Sendable {
+public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let workspace: OrbitWorkspaceRecord
   public let channel: OrbitChannelRecord
   public let workspacePersonas: [OrbitWorkspacePersonaRecord]

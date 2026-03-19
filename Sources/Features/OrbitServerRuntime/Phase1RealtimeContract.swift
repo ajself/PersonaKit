@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OrbitPhase1ReplayCursor: Equatable, Sendable {
+public struct OrbitPhase1ReplayCursor: Codable, Equatable, Sendable {
   public let workspaceID: UUID
   public let lastEventID: UUID?
   public let lastEventCreatedAt: Date?
@@ -16,7 +16,7 @@ public struct OrbitPhase1ReplayCursor: Equatable, Sendable {
   }
 }
 
-public enum OrbitPhase1RealtimeEventCategory: String, CaseIterable, Sendable {
+public enum OrbitPhase1RealtimeEventCategory: String, CaseIterable, Codable, Sendable {
   case postCreated = "post.created"
   case messageCreated = "message.created"
   case threadActivityUpdated = "thread.activity.updated"
@@ -26,7 +26,7 @@ public enum OrbitPhase1RealtimeEventCategory: String, CaseIterable, Sendable {
   case activationFailed = "activation.failed"
 }
 
-public struct OrbitPhase1RealtimeEventEnvelope: Equatable, Sendable {
+public struct OrbitPhase1RealtimeEventEnvelope: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
   public let postID: UUID?
@@ -54,7 +54,7 @@ public struct OrbitPhase1RealtimeEventEnvelope: Equatable, Sendable {
   }
 }
 
-public struct OrbitPhase1RealtimeSnapshot: Equatable, Sendable {
+public struct OrbitPhase1RealtimeSnapshot: Codable, Equatable, Sendable {
   public let room: OrbitPhase1RoomSnapshot
   public let replayCursor: OrbitPhase1ReplayCursor
 

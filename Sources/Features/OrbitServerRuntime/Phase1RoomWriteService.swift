@@ -19,7 +19,7 @@ public struct OrbitPhase1AppendUserMessageRequest: Equatable, Sendable {
   }
 }
 
-public struct OrbitPhase1AppendUserMessageResult: Equatable, Sendable {
+public struct OrbitPhase1AppendUserMessageResult: Codable, Equatable, Sendable {
   public let snapshot: OrbitPhase1RoomSnapshot
   public let message: OrbitMessageRecord
 

@@ -1,5 +1,4 @@
 import Foundation
-import OrbitServerGateway
 import OrbitServerRuntime
 
 enum OrbitServerBackedRoomClientFactory {
@@ -11,39 +10,39 @@ enum OrbitServerBackedRoomClientFactory {
     }
 
     guard
-      let host = environment["ORBIT_PG_HOST"],
-      let username = environment["ORBIT_PG_USER"],
-      let password = environment["ORBIT_PG_PASSWORD"],
-      let database = environment["ORBIT_PG_DATABASE"]
+      let baseURLString =
+        environment["ORBIT_SERVER_GATEWAY_BASE_URL"]
+        ?? environment["ORBIT_SERVER_BASE_URL"],
+      let baseURL = URL(string: baseURLString)
     else {
       return nil
     }
 
-    let port = environment["ORBIT_PG_PORT"].flatMap(Int.init) ?? 5432
-    let configuration = OrbitPostgresConfiguration(
-      host: host,
-      port: port,
-      username: username,
-      password: password,
-      database: database
-    )
-    let runtimeStore = OrbitPostgresRuntimeStore(configuration: configuration)
-    let realtimeLoader = OrbitPostgresRealtimeLoader(runtimeStore: runtimeStore)
-    let feedService = realtimeLoader.makeFeedService()
-    let subscriptionAdapter = OrbitPhase1RealtimeSubscriptionAdapter(feedService: feedService)
-    let pollingService = OrbitPhase1RealtimePollingSessionService(adapter: subscriptionAdapter)
-    let transport = OrbitPhase1RealtimeTransportAdapter(pollingService: pollingService)
-    let roomWriter = OrbitPhase1RoomWriteService(runtimeStore: runtimeStore)
-    let systemWriter = OrbitPhase1SystemMessageService(runtimeStore: runtimeStore)
-    let failureWriter = OrbitPhase1ActivationFailureService(runtimeStore: runtimeStore)
-    let collaboratorWriter = OrbitPhase1CollaboratorResponseService(runtimeStore: runtimeStore)
+    let gatewayClient = OrbitGatewayNetworkClient(baseURL: baseURL)
 
     return OrbitServerBackedRoomClient(
-      transport: transport,
-      roomWriter: roomWriter,
-      systemWriter: systemWriter,
-      failureWriter: failureWriter,
-      collaboratorWriter: collaboratorWriter
+      connectHandler: { scope in
+        try await gatewayClient.connect(
+          request: OrbitPhase1RealtimeConnectRequest(scope: scope)
+        )
+      },
+      pollHandler: { session in
+        try await gatewayClient.poll(
+          request: OrbitPhase1RealtimePollRequest(session: session)
+        )
+      },
+      appendHandler: { request in
+        try await gatewayClient.appendUserMessage(request)
+      },
+      appendSystemHandler: { request in
+        try await gatewayClient.appendSystemMessage(request)
+      },
+      appendCollaboratorHandler: { request in
+        try await gatewayClient.appendCollaboratorResponse(request)
+      },
+      appendFailureHandler: { request in
+        try await gatewayClient.appendActivationFailure(request)
+      }
     )
   }
 }

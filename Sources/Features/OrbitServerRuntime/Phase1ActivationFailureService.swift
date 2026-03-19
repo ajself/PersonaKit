@@ -22,7 +22,7 @@ public struct OrbitPhase1AppendActivationFailureRequest: Equatable, Sendable {
   }
 }
 
-public struct OrbitPhase1AppendActivationFailureResult: Equatable, Sendable {
+public struct OrbitPhase1AppendActivationFailureResult: Codable, Equatable, Sendable {
   public let snapshot: OrbitPhase1RoomSnapshot
   public let systemMessage: OrbitMessageRecord
   public let postEvent: OrbitPostEventRecord

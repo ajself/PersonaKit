@@ -33,7 +33,7 @@ public struct OrbitPhase1RealtimePollRequest: Equatable, Sendable {
   }
 }
 
-public enum OrbitPhase1RealtimeTransportResponse: Equatable, Sendable {
+public enum OrbitPhase1RealtimeTransportResponse: Codable, Equatable, Sendable {
   case bootstrap(OrbitPhase1RealtimeSession, OrbitPhase1RealtimeSnapshot)
   case replay(OrbitPhase1RealtimeSession, [OrbitPhase1RealtimeEventEnvelope])
   case noChange(OrbitPhase1RealtimeSession)

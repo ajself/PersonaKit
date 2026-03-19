@@ -9,6 +9,22 @@ struct OrbitServerBackedRoomClient: Sendable {
   let appendCollaboratorHandler: @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult
   let appendFailureHandler: @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
 
+  init(
+    connectHandler: @escaping @Sendable (OrbitPhase1RealtimeSubscriptionScope) async throws -> OrbitPhase1RealtimeTransportResponse,
+    pollHandler: @escaping @Sendable (OrbitPhase1RealtimeSession) async throws -> OrbitPhase1RealtimeTransportResponse,
+    appendHandler: @escaping @Sendable (OrbitPhase1AppendUserMessageRequest) async throws -> OrbitPhase1AppendUserMessageResult,
+    appendSystemHandler: @escaping @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult,
+    appendCollaboratorHandler: @escaping @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult,
+    appendFailureHandler: @escaping @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
+  ) {
+    self.connectHandler = connectHandler
+    self.pollHandler = pollHandler
+    self.appendHandler = appendHandler
+    self.appendSystemHandler = appendSystemHandler
+    self.appendCollaboratorHandler = appendCollaboratorHandler
+    self.appendFailureHandler = appendFailureHandler
+  }
+
   init<
     Transport: OrbitPhase1RealtimeTransportServing,
     Writer: OrbitPhase1RoomWriteServing,
@@ -22,28 +38,30 @@ struct OrbitServerBackedRoomClient: Sendable {
     failureWriter: FailureWriter,
     collaboratorWriter: CollaboratorWriter
   ) {
-    self.connectHandler = { scope in
-      try await transport.connect(
-        request: OrbitPhase1RealtimeConnectRequest(scope: scope)
-      )
-    }
-    self.pollHandler = { session in
-      try await transport.poll(
-        request: OrbitPhase1RealtimePollRequest(session: session)
-      )
-    }
-    self.appendHandler = { request in
-      try await roomWriter.appendUserMessage(request)
-    }
-    self.appendSystemHandler = { request in
-      try await systemWriter.appendSystemMessage(request)
-    }
-    self.appendCollaboratorHandler = { request in
-      try await collaboratorWriter.appendCollaboratorResponse(request)
-    }
-    self.appendFailureHandler = { request in
-      try await failureWriter.appendActivationFailure(request)
-    }
+    self.init(
+      connectHandler: { scope in
+        try await transport.connect(
+          request: OrbitPhase1RealtimeConnectRequest(scope: scope)
+        )
+      },
+      pollHandler: { session in
+        try await transport.poll(
+          request: OrbitPhase1RealtimePollRequest(session: session)
+        )
+      },
+      appendHandler: { request in
+        try await roomWriter.appendUserMessage(request)
+      },
+      appendSystemHandler: { request in
+        try await systemWriter.appendSystemMessage(request)
+      },
+      appendCollaboratorHandler: { request in
+        try await collaboratorWriter.appendCollaboratorResponse(request)
+      },
+      appendFailureHandler: { request in
+        try await failureWriter.appendActivationFailure(request)
+      }
+    )
   }
 
   func connect(

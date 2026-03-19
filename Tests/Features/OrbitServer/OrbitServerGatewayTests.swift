@@ -8,6 +8,76 @@ import XCTVapor
 
 struct OrbitServerGatewayTests {
   @Test
+  func transportResponseEncodingPreservesLegacySummaryFields() throws {
+    let snapshot = sampleSnapshot(cursorEventID: UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!)
+    let payload = OrbitGatewayTransportResponse(
+      response: .bootstrap(
+        OrbitPhase1RealtimeSession(
+          scope: OrbitPhase1RealtimeSubscriptionScope(
+            workspaceSlug: "orbit",
+            channelSlug: "command-center"
+          ),
+          replayCursor: snapshot.replayCursor,
+          connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
+          lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_400)
+        ),
+        snapshot
+      )
+    )
+    let encoded = try JSONEncoder().encode(payload)
+    let json = try #require(
+      JSONSerialization.jsonObject(with: encoded) as? [String: Any]
+    )
+
+    #expect(json["kind"] as? String == "bootstrap")
+    #expect(json["session"] as? [String: Any] != nil)
+    #expect(json["snapshot"] as? [String: Any] != nil)
+    #expect(json["response"] as? [String: Any] != nil)
+  }
+
+  @Test
+  func appendMessageResponseEncodingPreservesLegacySummaryFields() throws {
+    let snapshot = sampleSnapshot(cursorEventID: UUID())
+    let message = OrbitMessageRecord(
+      id: UUID(uuidString: "12121212-1212-1212-1212-121212121212")!,
+      postID: snapshot.room.post.id,
+      threadID: snapshot.room.thread.id,
+      authorType: .user,
+      authorID: "aj",
+      body: "Canonical write path",
+      messageFormat: .plainText,
+      state: .persisted,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_500),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_500)
+    )
+    let result = OrbitPhase1AppendUserMessageResult(
+      snapshot: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        post: snapshot.room.post,
+        thread: snapshot.room.thread,
+        messages: snapshot.room.messages + [message],
+        postParticipants: snapshot.room.postParticipants,
+        postEvents: snapshot.room.postEvents,
+        personaActivations: snapshot.room.personaActivations,
+        agentRuns: snapshot.room.agentRuns
+      ),
+      message: message
+    )
+    let encoded = try JSONEncoder().encode(
+      OrbitGatewayAppendMessageResponse(result: result)
+    )
+    let json = try #require(
+      JSONSerialization.jsonObject(with: encoded) as? [String: Any]
+    )
+
+    #expect(json["workspaceSlug"] as? String == "orbit")
+    #expect(json["messageCount"] as? Int == 1)
+    #expect(json["result"] as? [String: Any] != nil)
+  }
+
+  @Test
   func connectRouteReturnsBootstrapPayload() throws {
     let snapshot = sampleSnapshot(cursorEventID: UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!)
     let app = Application(.testing)
@@ -202,6 +272,8 @@ struct OrbitServerGatewayTests {
         #expect(request.workspaceSlug == "orbit")
         #expect(request.channelSlug == "command-center")
         #expect(request.body == "Canonical collaborator response")
+        #expect(request.contract?.authorizedSkillIDs == ["codex-cli"])
+        #expect(request.contract?.reviewGateIDs == ["intent:partner-sync-review"])
 
         let snapshot = sampleSnapshot(cursorEventID: UUID())
         let message = OrbitMessageRecord(
@@ -262,7 +334,17 @@ struct OrbitServerGatewayTests {
             addressedTargetKind: OrbitAddressedTargetKind.collaborator.rawValue,
             addressedTargetReferenceID: "workspace-persona-orbit-samwise",
             responseMode: OrbitCanonicalResponseMode.directAddress.rawValue,
-            body: "Canonical collaborator response"
+            body: "Canonical collaborator response",
+            contract: OrbitPhase1ResolvedContractPayload(
+              directiveID: "maintain-partner-sync-and-handoffs",
+              directiveSource: "participantDefault",
+              kitIDs: ["trusted-partner-core"],
+              authorizedSkillIDs: ["codex-cli"],
+              requiredSkillIDs: ["codex-cli"],
+              stopPointIDs: [],
+              reviewGateIDs: ["intent:partner-sync-review"],
+              memoryScopeIDs: []
+            )
           )
         )
       }, afterResponse: { response in

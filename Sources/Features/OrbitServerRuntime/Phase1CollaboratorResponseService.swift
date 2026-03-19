@@ -40,7 +40,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
   }
 }
 
-public struct OrbitPhase1AppendCollaboratorResponseResult: Equatable, Sendable {
+public struct OrbitPhase1AppendCollaboratorResponseResult: Codable, Equatable, Sendable {
   public let snapshot: OrbitPhase1RoomSnapshot
   public let message: OrbitMessageRecord
   public let activation: OrbitPersonaActivationRecord

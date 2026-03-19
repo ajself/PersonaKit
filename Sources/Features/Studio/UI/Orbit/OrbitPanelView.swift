@@ -51,6 +51,13 @@ struct OrbitPanelView: View {
     .onAppear {
       loadConfiguredOrbitRoom()
     }
+    .task(id: workspaceStore.workspaceURL) {
+      guard let serverBackedRoomClient else {
+        return
+      }
+
+      await pollServerBackedOrbitRoomLoop(using: serverBackedRoomClient)
+    }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       loadConfiguredOrbitRoom()
     }

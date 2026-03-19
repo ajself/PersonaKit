@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OrbitPhase1RealtimeSession: Equatable, Sendable {
+public struct OrbitPhase1RealtimeSession: Codable, Equatable, Sendable {
   public let scope: OrbitPhase1RealtimeSubscriptionScope
   public let replayCursor: OrbitPhase1ReplayCursor
   public let connectedAt: Date
