@@ -7,6 +7,8 @@ public enum OrbitGatewayRoutes {
     on app: Application,
     transport: some OrbitRealtimeTransportHandling,
     roomWriter: (any OrbitPhase1RoomWriteServing)? = nil,
+    systemWriter: (any OrbitSystemMessageHandling)? = nil,
+    failureWriter: (any OrbitActivationFailureHandling)? = nil,
     collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil
   ) {
     let realtime = app.grouped("api", "orbit", "realtime")
@@ -66,6 +68,22 @@ public enum OrbitGatewayRoutes {
         let body = try request.content.decode(OrbitGatewayAppendMessageRequest.self)
         let result = try await roomWriter.appendUserMessage(body.runtimeRequest)
         return OrbitGatewayAppendMessageResponse(result: result)
+      }
+    }
+
+    if let systemWriter {
+      room.post("system-messages") { request async throws -> OrbitGatewayAppendSystemMessageResponse in
+        let body = try request.content.decode(OrbitGatewayAppendSystemMessageRequest.self)
+        let result = try await systemWriter.appendSystemMessage(body.runtimeRequest)
+        return OrbitGatewayAppendSystemMessageResponse(result: result)
+      }
+    }
+
+    if let failureWriter {
+      room.post("activation-failures") { request async throws -> OrbitGatewayAppendActivationFailureResponse in
+        let body = try request.content.decode(OrbitGatewayAppendActivationFailureRequest.self)
+        let result = try await failureWriter.appendActivationFailure(body.runtimeRequest)
+        return OrbitGatewayAppendActivationFailureResponse(result: result)
       }
     }
 

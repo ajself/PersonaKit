@@ -259,6 +259,52 @@ public struct OrbitGatewayAppendMessageResponse: Content, Equatable {
   }
 }
 
+public struct OrbitGatewayAppendSystemMessageRequest: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let body: String
+  public let replyToMessageID: UUID?
+
+  public init(
+    workspaceSlug: String,
+    channelSlug: String,
+    body: String,
+    replyToMessageID: UUID? = nil
+  ) {
+    self.workspaceSlug = workspaceSlug
+    self.channelSlug = channelSlug
+    self.body = body
+    self.replyToMessageID = replyToMessageID
+  }
+
+  var runtimeRequest: OrbitPhase1AppendSystemMessageRequest {
+    OrbitPhase1AppendSystemMessageRequest(
+      workspaceSlug: workspaceSlug,
+      channelSlug: channelSlug,
+      body: body,
+      replyToMessageID: replyToMessageID
+    )
+  }
+}
+
+public struct OrbitGatewayAppendSystemMessageResponse: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let messageID: UUID
+  public let messageCount: Int
+  public let threadID: UUID
+
+  public init(
+    result: OrbitPhase1AppendSystemMessageResult
+  ) {
+    self.workspaceSlug = result.snapshot.workspace.slug
+    self.channelSlug = result.snapshot.channel.slug
+    self.messageID = result.message.id
+    self.messageCount = result.snapshot.messages.count
+    self.threadID = result.snapshot.thread.id
+  }
+}
+
 public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
@@ -338,7 +384,59 @@ public struct OrbitGatewayAppendCollaboratorResponse: Content, Equatable {
   }
 }
 
-public struct OrbitGatewayWebSocketConnectQuery: Equatable {
+public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let initiatedByParticipantID: String
+  public let triggerMessageID: UUID
+  public let failure: OrbitPhase1ActivationFailurePayload
+
+  public init(
+    workspaceSlug: String,
+    channelSlug: String,
+    initiatedByParticipantID: String,
+    triggerMessageID: UUID,
+    failure: OrbitPhase1ActivationFailurePayload
+  ) {
+    self.workspaceSlug = workspaceSlug
+    self.channelSlug = channelSlug
+    self.initiatedByParticipantID = initiatedByParticipantID
+    self.triggerMessageID = triggerMessageID
+    self.failure = failure
+  }
+
+  var runtimeRequest: OrbitPhase1AppendActivationFailureRequest {
+    OrbitPhase1AppendActivationFailureRequest(
+      workspaceSlug: workspaceSlug,
+      channelSlug: channelSlug,
+      initiatedByParticipantID: initiatedByParticipantID,
+      triggerMessageID: triggerMessageID,
+      failure: failure
+    )
+  }
+}
+
+public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let systemMessageID: UUID
+  public let postEventID: UUID
+  public let messageCount: Int
+  public let threadID: UUID
+
+  public init(
+    result: OrbitPhase1AppendActivationFailureResult
+  ) {
+    self.workspaceSlug = result.snapshot.workspace.slug
+    self.channelSlug = result.snapshot.channel.slug
+    self.systemMessageID = result.systemMessage.id
+    self.postEventID = result.postEvent.id
+    self.messageCount = result.snapshot.messages.count
+    self.threadID = result.snapshot.thread.id
+  }
+}
+
+public struct OrbitGatewayWebSocketConnectQuery: Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
   public let cursorWorkspaceID: UUID?

@@ -118,6 +118,74 @@ struct OrbitServerGatewayTests {
   }
 
   @Test
+  func appendSystemMessageRouteReturnsCanonicalSystemMessagePayload() throws {
+    let app = Application(.testing)
+    defer { app.shutdown() }
+    let replyToMessageID = UUID(uuidString: "17171717-1717-1717-1717-171717171717")!
+
+    OrbitGatewayRoutes.register(
+      on: app,
+      transport: StubTransport(
+        connectHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) },
+        pollHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) }
+      ),
+      systemWriter: StubSystemWriter { request in
+        #expect(request.workspaceSlug == "orbit")
+        #expect(request.channelSlug == "command-center")
+        #expect(request.body == "AJ invited Samwise and ProdDoc into the active lightweight meeting.")
+        #expect(request.replyToMessageID == replyToMessageID)
+
+        let snapshot = sampleSnapshot(cursorEventID: UUID())
+        let message = OrbitMessageRecord(
+          id: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!,
+          postID: snapshot.room.post.id,
+          threadID: snapshot.room.thread.id,
+          authorType: .system,
+          authorID: "orbit-system",
+          replyToMessageID: request.replyToMessageID,
+          body: request.body,
+          messageFormat: .plainText,
+          state: .completed,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_501),
+          updatedAt: Date(timeIntervalSince1970: 1_742_342_501)
+        )
+        let updatedSnapshot = OrbitPhase1RoomSnapshot(
+          workspace: snapshot.room.workspace,
+          channel: snapshot.room.channel,
+          post: snapshot.room.post,
+          thread: snapshot.room.thread,
+          messages: snapshot.room.messages + [message]
+        )
+
+        return OrbitPhase1AppendSystemMessageResult(
+          snapshot: updatedSnapshot,
+          message: message
+        )
+      }
+    )
+
+    try XCTVaporContext.$emitWarningIfCurrentTestInfoIsAvailable.withValue(false) {
+      try app.test(.POST, "/api/orbit/room/system-messages", beforeRequest: { request in
+        try request.content.encode(
+          OrbitGatewayAppendSystemMessageRequest(
+            workspaceSlug: "orbit",
+            channelSlug: "command-center",
+            body: "AJ invited Samwise and ProdDoc into the active lightweight meeting.",
+            replyToMessageID: replyToMessageID
+          )
+        )
+      }, afterResponse: { response in
+        #expect(response.status == .ok)
+        let payload = try response.content.decode(OrbitGatewayAppendSystemMessageResponse.self)
+        #expect(payload.workspaceSlug == "orbit")
+        #expect(payload.channelSlug == "command-center")
+        #expect(payload.messageID == UUID(uuidString: "18181818-1818-1818-1818-181818181818"))
+        #expect(payload.messageCount == 1)
+      })
+    }
+  }
+
+  @Test
   func appendCollaboratorResponseRouteReturnsCanonicalResponsePayload() throws {
     let app = Application(.testing)
     defer { app.shutdown() }
@@ -202,6 +270,114 @@ struct OrbitServerGatewayTests {
         let payload = try response.content.decode(OrbitGatewayAppendCollaboratorResponse.self)
         #expect(payload.activationID == activationID)
         #expect(payload.agentRunID == agentRunID)
+      })
+    }
+  }
+
+  @Test
+  func appendActivationFailureRouteReturnsCanonicalFailurePayload() throws {
+    let app = Application(.testing)
+    defer { app.shutdown() }
+    let triggerMessageID = UUID(uuidString: "19191919-1919-1919-1919-191919191919")!
+    let systemMessageID = UUID(uuidString: "20202020-2020-2020-2020-202020202020")!
+    let postEventID = UUID(uuidString: "21212121-2121-2121-2121-212121212121")!
+
+    OrbitGatewayRoutes.register(
+      on: app,
+      transport: StubTransport(
+        connectHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) },
+        pollHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) }
+      ),
+      failureWriter: StubFailureWriter { request in
+        #expect(request.workspaceSlug == "orbit")
+        #expect(request.channelSlug == "command-center")
+        #expect(request.initiatedByParticipantID == "aj")
+        #expect(request.triggerMessageID == triggerMessageID)
+        #expect(request.failure.failureReason == "missingDirective")
+        #expect(request.failure.systemEventMessageID == systemMessageID)
+
+        let snapshot = sampleSnapshot(cursorEventID: UUID())
+        let triggerMessage = OrbitMessageRecord(
+          id: triggerMessageID,
+          postID: snapshot.room.post.id,
+          threadID: snapshot.room.thread.id,
+          authorType: .user,
+          authorID: "aj",
+          body: "ProdDoc, pressure-test the checkpoint.",
+          messageFormat: .plainText,
+          state: .persisted,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_500),
+          updatedAt: Date(timeIntervalSince1970: 1_742_342_500)
+        )
+        let systemMessage = OrbitMessageRecord(
+          id: systemMessageID,
+          postID: snapshot.room.post.id,
+          threadID: snapshot.room.thread.id,
+          authorType: .system,
+          authorID: "orbit-system",
+          replyToMessageID: triggerMessageID,
+          body: request.failure.systemEventBody,
+          messageFormat: .plainText,
+          state: .completed,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_501),
+          updatedAt: Date(timeIntervalSince1970: 1_742_342_501)
+        )
+        let postEvent = OrbitPostEventRecord(
+          id: postEventID,
+          postID: snapshot.room.post.id,
+          threadID: snapshot.room.thread.id,
+          eventType: OrbitPhase1RealtimeEventCategory.activationFailed.rawValue,
+          payloadJSON: "{}",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_501)
+        )
+        let updatedSnapshot = OrbitPhase1RoomSnapshot(
+          workspace: snapshot.room.workspace,
+          channel: snapshot.room.channel,
+          post: snapshot.room.post,
+          thread: snapshot.room.thread,
+          messages: [triggerMessage, systemMessage],
+          postEvents: [postEvent]
+        )
+
+        return OrbitPhase1AppendActivationFailureResult(
+          snapshot: updatedSnapshot,
+          systemMessage: systemMessage,
+          postEvent: postEvent
+        )
+      }
+    )
+
+    try XCTVaporContext.$emitWarningIfCurrentTestInfoIsAvailable.withValue(false) {
+      try app.test(.POST, "/api/orbit/room/activation-failures", beforeRequest: { request in
+        try request.content.encode(
+          OrbitGatewayAppendActivationFailureRequest(
+            workspaceSlug: "orbit",
+            channelSlug: "command-center",
+            initiatedByParticipantID: "aj",
+            triggerMessageID: triggerMessageID,
+            failure: OrbitPhase1ActivationFailurePayload(
+              addressedTargetID: "prod-doc",
+              participantID: "prod-doc",
+              workspacePersonaID: UUID(uuidString: "22222222-2222-2222-2222-222222222220")!.uuidString,
+              personaTemplateID: "venture-product-steward",
+              directiveID: nil,
+              triggerSource: "directAddress",
+              systemEventMessageID: systemMessageID,
+              requiredSkillIDs: ["codex-cli"],
+              authorizedSkillIDs: ["codex-cli"],
+              failureReason: "missingDirective",
+              systemEventBody: "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
+            )
+          )
+        )
+      }, afterResponse: { response in
+        #expect(response.status == .ok)
+        let payload = try response.content.decode(OrbitGatewayAppendActivationFailureResponse.self)
+        #expect(payload.workspaceSlug == "orbit")
+        #expect(payload.channelSlug == "command-center")
+        #expect(payload.systemMessageID == systemMessageID)
+        #expect(payload.postEventID == postEventID)
+        #expect(payload.messageCount == 2)
       })
     }
   }
@@ -339,6 +515,38 @@ private struct StubCollaboratorWriter: OrbitCollaboratorResponseHandling {
   func appendCollaboratorResponse(
     _ request: OrbitPhase1AppendCollaboratorResponseRequest
   ) async throws -> OrbitPhase1AppendCollaboratorResponseResult {
+    try await appendHandler(request)
+  }
+}
+
+private struct StubSystemWriter: OrbitSystemMessageHandling {
+  let appendHandler: @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult
+
+  init(
+    _ appendHandler: @escaping @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult
+  ) {
+    self.appendHandler = appendHandler
+  }
+
+  func appendSystemMessage(
+    _ request: OrbitPhase1AppendSystemMessageRequest
+  ) async throws -> OrbitPhase1AppendSystemMessageResult {
+    try await appendHandler(request)
+  }
+}
+
+private struct StubFailureWriter: OrbitActivationFailureHandling {
+  let appendHandler: @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
+
+  init(
+    _ appendHandler: @escaping @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
+  ) {
+    self.appendHandler = appendHandler
+  }
+
+  func appendActivationFailure(
+    _ request: OrbitPhase1AppendActivationFailureRequest
+  ) async throws -> OrbitPhase1AppendActivationFailureResult {
     try await appendHandler(request)
   }
 }
