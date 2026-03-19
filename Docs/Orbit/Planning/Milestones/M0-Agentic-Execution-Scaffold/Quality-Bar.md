@@ -1,6 +1,6 @@
 # M0 Quality Bar
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Primary Owner: `samwise`
 Last Updated: 2026-03-18
@@ -59,7 +59,7 @@ Failure signs:
 
 - forcing an existing persona into a role it does not actually cover
 - creating placeholder labels with no approval path
-- pretending `ProdDoc` is settled when it is not
+- using `ProdDoc` without an explicit alias mapping or formal persona decision
 
 Evidence:
 
@@ -165,8 +165,8 @@ Any of these mean `M0` is not complete:
 
 - later milestones still require blended or unnamed execution identities
 - delegated lanes still need thread memory to know what to do
-- the `ProdDoc` question is left ambiguous while `M1` and `M2` proceed as if it
-  were settled
+- `M1` and `M2` use `ProdDoc` without the frozen
+  `venture-product-steward` alias or a formal persona
 - missing personas are neither approved for creation nor explicitly staged as
   prerequisites
 - stop points are absent from the handoff standard

@@ -1,6 +1,6 @@
 # Orbit macOS Command Center
 
-Status: Approved (AJ)
+Status: Accepted
 Owner: Samwise
 Meeting: `2026-03-09-meeting-001`
 Workspace: Orbit
@@ -13,6 +13,10 @@ Describe the macOS product surface that should support the Orbit proving loop.
 
 This document is product-facing. It should answer what the first usable Orbit
 app feels like before we break the work down into implementation tasks.
+
+Accepted here means this document is the approved product target for the first
+Orbit command-center checkpoint. It does not mean the surface is already
+implemented or milestone-complete.
 
 ## Current Role In The Planning Stack
 
@@ -84,9 +88,8 @@ participants:
 - Samwise
 - ProdDoc
 
-For planning purposes, keep this roster language until `M0` resolves whether
-`ProdDoc` remains the product-facing collaborator name, becomes a formal
-PersonaKit persona, or is renamed.
+For the first checkpoint, `ProdDoc` remains the product-facing collaborator
+name and maps explicitly to `venture-product-steward`.
 
 The roster should communicate:
 
@@ -189,7 +192,7 @@ Those can follow after the first proving loop is real.
 
 ## Review Questions
 
-When AJ or ProdDoc reviews this draft, the most useful feedback is:
+When AJ or ProdDoc reviews this document, the most useful feedback is:
 
 1. what feels missing from the first macOS surface
 2. what feels too heavy for the first build

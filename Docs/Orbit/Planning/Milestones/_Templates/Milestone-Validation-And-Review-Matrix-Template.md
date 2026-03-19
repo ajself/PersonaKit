@@ -1,6 +1,6 @@
 # <Milestone Id> Validation And Review Matrix
 
-Status: Draft
+Status: <Draft | Ready For Planning Closeout | In Review | Accepted>
 Milestone: `<milestone-id>`
 Owner: `<review-owner>`
 Primary Execution Persona: `<primary-persona-id>`

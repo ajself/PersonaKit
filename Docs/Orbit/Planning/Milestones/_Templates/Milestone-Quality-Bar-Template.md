@@ -1,6 +1,6 @@
 # <Milestone Id> Quality Bar
 
-Status: Draft
+Status: <Draft | Ready For Planning Closeout | In Review | Accepted>
 Milestone: `<milestone-id>`
 Primary Owner: `<primary-persona-id>`
 Last Updated: <YYYY-MM-DD>

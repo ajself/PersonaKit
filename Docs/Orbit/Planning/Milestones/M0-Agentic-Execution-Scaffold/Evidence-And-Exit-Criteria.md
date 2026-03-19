@@ -1,6 +1,6 @@
 # M0 Evidence And Exit Criteria
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -13,12 +13,15 @@ Define the artifacts and review tests required to close `M0` honestly.
 
 `M0` should not close without all of these artifacts existing and being usable:
 
-1. a frozen milestone dossier standard
-2. a delegated handoff packet template
-3. a milestone-to-persona coverage matrix
-4. a decision register covering `ProdDoc` and missing-persona questions
-5. a quality bar that explains why thin completion is not enough
-6. a frozen tech-stack posture for `M0` through `M3`
+1. a frozen milestone dossier standard in `Docs/Orbit/Planning/Milestones/README.md`
+2. a reusable template library in `Docs/Orbit/Planning/Milestones/_Templates/`
+3. a delegated handoff packet template in `M0-Agentic-Execution-Scaffold/Delegated-Handoff-Packet-Template.md`
+4. a milestone-to-persona coverage matrix
+5. a decision register covering `ProdDoc` and missing-persona questions
+6. a quality bar that explains why thin completion is not enough
+7. a frozen tech-stack posture for `M0` through `M3`
+8. a planning closeout packet that surfaces the final approval asks cleanly and
+   records the approval outcome
 
 ## Artifact Quality Tests
 
@@ -28,11 +31,27 @@ Passes only if:
 
 - later milestone dossiers all share a common structure
 - the structure makes packet order, evidence, and stop points explicit
+- the structure defines the difference between roadmap, dossier, execution
+  packet, and lane execution notes
 
 Fails if:
 
 - the structure is mostly decorative
 - later lanes would still need to invent the real planning logic
+
+### Template library
+
+Passes only if:
+
+- the templates encode the frozen dossier standard instead of a parallel shape
+- the templates are specific enough that later milestones can start from them
+  without guessing which sections matter
+
+Fails if:
+
+- the templates drift from the dossier standard
+- later milestone authors would still need to invent the packet shape from
+  scratch
 
 ### Delegated handoff template
 
@@ -92,6 +111,18 @@ Fails if:
 - core stack choices still look open to agent preference
 - infrastructure and deployment posture can still be widened by implication
 
+### Planning closeout packet
+
+Passes only if:
+
+- AJ can review the remaining approval asks without reconstructing thread memory
+- the packet distinguishes closed decisions from staged prerequisites
+
+Fails if:
+
+- the final approval asks are scattered across too many notes
+- blocked later-milestone persona gaps are easy to miss during review
+
 ## Review Questions
 
 `M0` should be reviewed against these questions:
@@ -116,9 +147,16 @@ Fails if:
 - the `ProdDoc` question is closed or declared a hard blocker for downstream
   identity-sensitive work
 - the handoff packet template is ready to reuse
+- the dossier standard and template library agree on section meanings
+- the planning closeout packet cleanly presents the remaining AJ approvals
 - the current construction window is explicit: implementation proceeds through
   `M3` and pauses afterward until AJ restarts it
-- AJ reviews and accepts the role map and unresolved-decision posture
+- AJ reviews and accepts the role map and staged-decision posture
+
+Current disposition:
+
+- satisfied through the recorded AJ approval outcome in
+  `Planning-Closeout-Packet.md`
 
 ## Not Enough To Exit
 

@@ -1,6 +1,6 @@
 # Golden Checkpoint Walkthrough
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Owners: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
 Last Updated: 2026-03-18
@@ -16,7 +16,8 @@ interaction, and validation review.
 ## Preconditions
 
 - `M1` is accepted as the identity and activation foundation
-- the founding roster naming is frozen for the checkpoint
+- the founding roster keeps the frozen `ProdDoc` -> `venture-product-steward`
+  alias explicit
 - the local runtime and persistence boundary are already aligned with the
   runtime-model note
 

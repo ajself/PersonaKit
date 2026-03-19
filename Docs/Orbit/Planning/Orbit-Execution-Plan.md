@@ -1,6 +1,6 @@
 # Orbit Execution Plan
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Workspace: Orbit
 Last Updated: 2026-03-18
@@ -22,6 +22,10 @@ It should answer:
 - what is explicitly out of scope
 - what the first implementation tasks should be
 - which RFCs matter now versus later
+
+Accepted here means this file is the approved execution-contract baseline for
+the first checkpoint. It does not mean `M1` or `M2` are already implemented or
+closed.
 
 ## Inputs
 
@@ -62,7 +66,8 @@ Orbit now has a milestone roadmap.
 The current planning need is not another broad direction reset.
 
 The current planning need is to keep the first checkpoint execution contract
-clear while `M0`, `M1`, and `M2` are prepared and replayed deliberately.
+clear while the accepted `M0` scaffold is used to prepare and replay `M1` and
+`M2` deliberately.
 
 The RFCs are still important, but they should now act as guardrails for the
 first execution cut rather than the main work queue.
@@ -407,10 +412,11 @@ We do need selective reference checks while building:
 Before another fresh-main Orbit rerun begins, planning should do all of these in
 order:
 
-1. complete the `M0` planning closeout in
-   `Docs/Orbit/Planning/Orbit-Agentic-Milestone-Roadmap.md`
-2. resolve the `ProdDoc` collaborator identity question and any required missing
-   personas for later delegated milestones
+1. use the accepted `M0` scaffold in
+   `Docs/Orbit/Planning/Milestones/M0-Agentic-Execution-Scaffold/`
+   as the planning contract source
+2. keep the frozen `ProdDoc` -> `venture-product-steward` alias and any required
+   missing-persona staging visible in downstream milestone packets
 3. keep this execution plan, the runtime model, and the implementation
    breakdown aligned as the shared `M1` and `M2` execution packet
 

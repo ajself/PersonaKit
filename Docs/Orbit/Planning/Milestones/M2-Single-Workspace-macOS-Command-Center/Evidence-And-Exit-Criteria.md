@@ -1,6 +1,6 @@
 # M2 Evidence And Exit Criteria
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Owner: `senior-swiftui-engineer`
 Last Updated: 2026-03-18
@@ -66,8 +66,8 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 
 - `M2` still depends on `M1` being a trustworthy identity and activation
   baseline
-- `M2` still depends on `M0` having resolved or explicitly staged the founding
-  roster naming decision
+- `M2` still depends on `M0` having frozen the `ProdDoc` ->
+  `venture-product-steward` founding-roster alias for the first checkpoint
 
 Those are real dependencies and should stay visible.
 

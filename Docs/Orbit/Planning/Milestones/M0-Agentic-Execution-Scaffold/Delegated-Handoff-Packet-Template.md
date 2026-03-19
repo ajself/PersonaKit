@@ -1,6 +1,6 @@
 # Delegated Handoff Packet Template
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -21,6 +21,7 @@ redefine approved product or stack direction.
 - one packet per bounded lane
 - one active execution persona per lane
 - one explicit write scope per lane
+- one explicit commit authority posture per lane
 - one explicit review ring per lane
 - no implicit permission beyond what the packet states
 
@@ -32,6 +33,8 @@ redefine approved product or stack direction.
 - packet id
 - execution owner persona id
 - review personas
+- worktree or branch context
+- commit authority posture: `manual-review-only` or `worktree-approved`
 - operator or reviewer required
 - status: `ready`, `blocked`, `needs-review`, or `grounding-blocked`
 
@@ -88,6 +91,8 @@ If repo-wide write freedom is granted, the packet should still say why the
 milestone needs that breadth and what legacy surfaces are considered replaceable.
 
 If the write scope is unclear, the packet is not ready.
+
+If commit authority is unclear, the packet is not ready.
 
 ### 8. Ordered Work Packets
 
@@ -153,6 +158,7 @@ Do not hand off work with:
 
 - generic goals like "implement this milestone"
 - missing write scope
+- missing commit authority posture
 - no review ring
 - no failure disposition
 - no distinction between acceptable output and impressive quality
@@ -166,6 +172,8 @@ Milestone: M1
 Packet: M1-P1 boundary-audit
 Execution owner: architectural-editor
 Review personas: senior-swiftui-engineer, studio-coverage-architect
+Worktree: codex/orbit-1
+Commit posture: manual-review-only
 Status: ready
 
 Objective:
@@ -201,6 +209,6 @@ Validation and evidence:
 - coverage review of audit completeness
 
 Stop points:
-- unresolved ProdDoc mapping
+- frozen ProdDoc alias missing from the collaborator model
 - authored/runtime ownership conflict
 ```

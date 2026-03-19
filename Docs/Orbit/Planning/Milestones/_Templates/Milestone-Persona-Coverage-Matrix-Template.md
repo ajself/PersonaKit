@@ -1,6 +1,6 @@
 # <Milestone Or Program> Persona Coverage Matrix
 
-Status: Draft
+Status: <Draft | Ready For Planning Closeout | In Review | Accepted>
 Owner: `<primary-persona-id>`
 Last Updated: <YYYY-MM-DD>
 

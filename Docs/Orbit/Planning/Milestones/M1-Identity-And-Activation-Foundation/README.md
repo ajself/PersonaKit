@@ -1,6 +1,6 @@
 # M1 Identity And Activation Foundation
 
-Status: Planned
+Status: Accepted
 Primary Owner: `architectural-editor`
 Supporting Personas: `senior-swiftui-engineer`, `studio-coverage-architect`
 Last Updated: 2026-03-18
@@ -20,16 +20,29 @@ The bare minimum is not a milestone win.
 If the response path is brittle, blurry, or under-tested, `M1` has not been
 reached.
 
+Accepted here means this dossier is the approved planning baseline for `M1`.
+The milestone still closes only when its exit criteria and review gate are
+satisfied.
+
 ## File Map
 
 - `README.md`
   milestone overview, packet order, and top-level guardrails
+- `Boundary-Audit-Note.md`
+  authored-versus-runtime ownership audit against RFC-0001, RFC-0003, and the
+  current Orbit first-checkpoint code seams
+- `Workspace-Persona-And-Collaborator-Model.md`
+  first-checkpoint identity model for participant classes, workspace persona
+  anchors, and collaborator mapping
 - `Quality-Bar.md`
   definition of impressive `M1` quality and disqualifying shortcuts
 - `Identity-And-Activation-Contract.md`
   first-checkpoint contract for identity ownership and activation sequencing
 - `Activation-Trace-Golden-Example.md`
   one deterministic example of a correct first-checkpoint response trace
+- `Operator-Trace-Walkthrough.md`
+  review artifact describing what AJ must be able to inspect in successful and
+  blocked activation paths
 - `Failure-Matrix.md`
   fail-closed behavior for ambiguity, authorization, and persistence problems
 - `Validation-And-Review-Matrix.md`
@@ -39,8 +52,9 @@ reached.
 
 ## Preconditions
 
-- `M0` is closed or explicitly waived for this milestone
-- the `ProdDoc` naming decision is frozen for the first checkpoint
+- the `M0` scaffold is accepted or explicitly waived for this milestone
+- the `ProdDoc` naming decision is frozen as the first-checkpoint alias for
+  `venture-product-steward`
 - the planning stack for `M1` and `M2` is aligned
 
 ## Scope Freeze
@@ -186,16 +200,19 @@ Avoid:
 
 ## Evidence Package
 
-- boundary audit note
-- first-checkpoint identity model note
+- boundary audit note in `Boundary-Audit-Note.md`
+- first-checkpoint identity model note in
+  `Workspace-Persona-And-Collaborator-Model.md`
 - activation trace example
+- operator trace walkthrough
 - failure matrix
-- validation checklist for activation semantics
+- validation and review matrix for activation semantics
 
 ## Stop Points
 
 - stop if authored/runtime ownership becomes blurry
-- stop if collaborator identity depends on unresolved `ProdDoc` naming
+- stop if collaborator identity drifts from the frozen `ProdDoc` ->
+  `venture-product-steward` mapping
 - stop if activation inspectability is being treated as optional metadata
 
 ## Exit And Handoff

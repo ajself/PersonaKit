@@ -1,6 +1,6 @@
 # M3 Quality Bar
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Primary Owner: `studio-integration-coordinator`
 Last Updated: 2026-03-18

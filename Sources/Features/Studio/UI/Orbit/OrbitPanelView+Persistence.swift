@@ -1,6 +1,39 @@
 import Foundation
 
+enum OrbitWorkspacePersistenceError: LocalizedError {
+  case noWorkspaceSelected
+
+  var errorDescription: String? {
+    switch self {
+    case .noWorkspaceSelected:
+      return "Open a workspace before sending Orbit messages."
+    }
+  }
+}
+
 extension OrbitPanelView {
+  func persistOrbitWorkspace(
+    _ workspace: OrbitWorkspace
+  ) throws {
+    guard let workspaceURL = workspaceStore.workspaceURL else {
+      throw OrbitWorkspacePersistenceError.noWorkspaceSelected
+    }
+
+    let directoryURL = orbitDirectoryURL(for: workspaceURL)
+    let fileURL = orbitWorkspaceFileURL(for: workspaceURL)
+    let fileManager = FileManager.default
+
+    try fileManager.createDirectory(
+      at: directoryURL,
+      withIntermediateDirectories: true
+    )
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let data = try encoder.encode(workspace)
+    try data.write(to: fileURL, options: [.atomic])
+  }
+
   func orbitDirectoryURL(
     for workspaceURL: URL
   ) -> URL {
@@ -50,24 +83,12 @@ extension OrbitPanelView {
   }
 
   func persistOrbitWorkspace() {
-    guard let workspaceURL = workspaceStore.workspaceURL else {
+    guard workspaceStore.workspaceURL != nil else {
       return
     }
 
-    let directoryURL = orbitDirectoryURL(for: workspaceURL)
-    let fileURL = orbitWorkspaceFileURL(for: workspaceURL)
-    let fileManager = FileManager.default
-
     do {
-      try fileManager.createDirectory(
-        at: directoryURL,
-        withIntermediateDirectories: true
-      )
-
-      let encoder = JSONEncoder()
-      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-      let data = try encoder.encode(orbitWorkspace)
-      try data.write(to: fileURL, options: [.atomic])
+      try persistOrbitWorkspace(orbitWorkspace)
 
       if persistenceIsError {
         persistenceMessage = nil

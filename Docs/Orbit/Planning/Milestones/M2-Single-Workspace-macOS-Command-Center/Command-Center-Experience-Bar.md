@@ -1,6 +1,6 @@
 # Command-Center Experience Bar
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Owners: `venture-product-steward`, `studio-interaction-quality-lead`
 Last Updated: 2026-03-18

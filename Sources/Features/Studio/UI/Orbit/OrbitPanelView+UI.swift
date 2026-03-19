@@ -142,6 +142,10 @@ extension OrbitPanelView {
   ) -> some View {
     let speaker = orbitWorkspace.participant(id: message.speakerParticipantID)
     let activation = orbitWorkspace.activationRecord(for: message.id)
+    let contractSnapshot = activation.flatMap {
+      orbitWorkspace.activationContractSnapshot(for: $0.id)
+    }
+    let activationFailure = orbitWorkspace.activationFailureRecordForSystemEvent(message.id)
 
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
@@ -172,11 +176,25 @@ extension OrbitPanelView {
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
 
-          Text(
-            "persona: \(activation.personaID ?? "-") | directive: \(activation.directiveID ?? "-") | memory: \(activation.memoryInfluenced ? "yes" : "no")"
-          )
-          .font(.caption.monospaced())
-          .foregroundStyle(.secondary)
+          ForEach(activation.traceSummaryLines(contractSnapshot: contractSnapshot), id: \.self) { line in
+            Text(line)
+              .font(.caption.monospaced())
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
+
+      if let activationFailure {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Blocked Activation")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+
+          ForEach(activationFailure.traceSummaryLines, id: \.self) { line in
+            Text(line)
+              .font(.caption.monospaced())
+              .foregroundStyle(.secondary)
+          }
         }
       }
     }
@@ -293,10 +311,23 @@ extension OrbitPanelView {
   }
 
   func sendMessage() {
-    orbitWorkspace.appendConversationTurn(
-      body: draftMessageBody,
-      addressedParticipantID: addressedParticipantID
-    )
-    draftMessageBody = ""
+    let messageBody = draftMessageBody
+    var stagedWorkspace = orbitWorkspace
+
+    do {
+      _ = try stagedWorkspace.appendConversationTurnIfPersisted(
+        body: messageBody,
+        addressedParticipantID: addressedParticipantID,
+        persist: persistOrbitWorkspace
+      )
+      orbitWorkspace = stagedWorkspace
+      draftMessageBody = ""
+      persistenceMessage = nil
+      persistenceIsError = false
+    } catch {
+      persistenceMessage =
+        "Orbit blocked the send because workspace data could not be written durably: \(error.localizedDescription)"
+      persistenceIsError = true
+    }
   }
 }

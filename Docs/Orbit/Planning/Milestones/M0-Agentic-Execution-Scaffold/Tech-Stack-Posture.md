@@ -1,6 +1,6 @@
 # Tech Stack Posture
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -227,8 +227,12 @@ This permission does not authorize:
 
 ## Git And Lane Rule
 
-AI lanes may create commits when appropriate, but they must not commit to `main`
-on the main worktree.
+AI lanes may create commits only when AJ has authorized commits for the exact
+active non-main worktree scope.
+
+If that approval is missing or unclear, the lane must stop before committing.
+
+AI lanes must not commit to `main` on the main worktree.
 
 The main worktree remains protected.
 

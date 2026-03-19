@@ -1,6 +1,6 @@
 # Identity And Activation Contract
 
-Status: Draft
+Status: Accepted
 Milestone: `M1`
 Primary Owner: `architectural-editor`
 Last Updated: 2026-03-18
@@ -20,7 +20,7 @@ its identity and explainability model remains untrustworthy.
 
 PersonaKit remains the authority for:
 
-- persona identity
+- persona template identity
 - directive identity
 - kit selection and authorization
 - skill authorization
@@ -46,8 +46,9 @@ map to one stable identity anchor for the current checkpoint.
 
 That anchor may be:
 
-- a formal PersonaKit persona id
+- a formal PersonaKit persona-template id
 - an approved product-facing alias with explicit mapping to a PersonaKit persona
+  template
 
 It may not be:
 
@@ -73,6 +74,7 @@ surface the problem instead of fabricating a smooth answer.
 
 - one local workspace: `Orbit`
 - one founding roster for the checkpoint: AJ, Samwise, ProdDoc
+- `ProdDoc` is the approved product-facing alias for `venture-product-steward`
 
 ### Participants
 
@@ -81,14 +83,16 @@ Checkpoint participant classes:
 - human participant
   example: AJ
 - AI-backed collaborator
-  examples: Samwise, ProdDoc once identity mapping is frozen
+  examples: Samwise, ProdDoc as the approved product-facing alias for
+    `venture-product-steward`
 
 Required participant fields:
 
 - stable participant id
 - display name
 - participant class
-- linked persona id when AI-backed
+- workspace persona id when AI-backed
+- linked persona template id when AI-backed
 - availability or active-state hint
 
 ### Workspace Persona Instance
@@ -106,13 +110,14 @@ Minimum expectations:
 
 | Concern | Owned by | Runtime expectation |
 | --- | --- | --- |
-| Persona id | PersonaKit | resolved and snapshotted for activation |
+| Persona template id | PersonaKit | resolved and snapshotted for activation |
 | Directive id | PersonaKit | resolved and snapshotted for activation |
 | Kit ids | PersonaKit | inspectable in the activation snapshot |
 | Allowed skills | PersonaKit | inspectable in the activation snapshot |
 | Stop-point posture | PersonaKit | inspectable in the activation snapshot or derived review state |
 | Workspace id | Orbit runtime | stable and durable |
 | Participant id | Orbit runtime | stable and durable |
+| Workspace persona id | Orbit runtime | stable and mapped to one visible AI-backed collaborator |
 | Thread id | Orbit runtime | stable and durable |
 | Message id | Orbit runtime | stable and ordered |
 | Activation id | Orbit runtime | stable and linked to the response |
@@ -150,7 +155,7 @@ Orbit resolves the PersonaKit contract for the targeted collaborator.
 
 Required outputs:
 
-- persona id
+- persona template id
 - directive id
 - kit ids if applicable
 - allowed skill posture
@@ -181,7 +186,8 @@ Minimum data:
 - workspace id
 - response message id
 - participant id
-- persona id
+- workspace persona id
+- persona template id
 - directive id
 - trigger source
 - trigger message id when applicable
@@ -193,7 +199,13 @@ Required inspectable snapshot data for `M1`:
 - kit ids or a linked snapshot that contains them
 - allowed skill posture or a linked snapshot that contains it
 - stop-point posture or a linked snapshot that contains it
+- review-gate posture or a linked snapshot that contains it
+- memory-scope posture or a linked snapshot that contains it
 - explicit memory-source reference set, even if empty
+
+If the response path requires skills outside the authorized skill posture, the
+activation must fail closed before publication and leave explicit blocked-state
+evidence.
 
 ### Step 6. Response Publication
 
@@ -208,7 +220,8 @@ a completed, attributable collaborator answer.
 The operator must be able to inspect:
 
 - responding participant
-- persona identity
+- workspace persona identity
+- persona template identity
 - directive identity
 - memory-influenced posture
 - enough contract context to explain why the response was allowed
@@ -223,6 +236,13 @@ The system must stop or surface a blocked state when any of these are true:
 - the directive cannot be resolved
 - the required authorization posture is not valid
 - durable activation state cannot be written
+
+For the local first checkpoint, a blocked activation should persist a durable
+activation-failure record and surface an explicit blocked system event instead of
+publishing a collaborator response.
+
+For persistence failure specifically, the first checkpoint should fail before the
+new turn is committed into the durable workspace state at all.
 
 ## Disallowed Shortcuts
 

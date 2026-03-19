@@ -3,6 +3,10 @@ import Testing
 
 @testable import StudioFeatures
 
+private enum OrbitWorkspaceTestPersistenceError: Error {
+  case writeFailed
+}
+
 struct OrbitWorkspaceTests {
   @Test
   func workspaceRoundTripPreservesMessagesAndActivationTrace() throws {
@@ -20,6 +24,98 @@ struct OrbitWorkspaceTests {
     #expect(decoded == workspace)
     #expect(decoded.activeThread?.messages.count == workspace.activeThread?.messages.count)
     #expect(decoded.activationRecords.count == workspace.activationRecords.count)
+    #expect(decoded.activationContractSnapshots.count == workspace.activationContractSnapshots.count)
+    #expect(decoded.activationFailureRecords.count == workspace.activationFailureRecords.count)
+  }
+
+  @Test
+  func legacyWorkspacePayloadMigratesIdentityAndContractSnapshotFields() throws {
+    let legacyJSON = #"""
+    {
+      "schemaVersion": 1,
+      "id": "orbit",
+      "displayName": "Orbit",
+      "purpose": "Command center for persistent AI collaborators working with AJ.",
+      "participants": [
+        {
+          "id": "aj",
+          "workspacePersonaID": null,
+          "displayName": "AJ",
+          "roleLabel": "Founder",
+          "participantType": "human",
+          "personaID": null,
+          "defaultDirectiveID": null,
+          "availability": "active",
+          "sortOrder": 1
+        },
+        {
+          "id": "samwise",
+          "workspacePersonaID": "workspace-persona-orbit-samwise",
+          "displayName": "Samwise",
+          "roleLabel": "Trusted Partner",
+          "participantType": "ai",
+          "personaID": "samwise",
+          "defaultDirectiveID": "maintain-partner-sync-and-handoffs",
+          "availability": "available",
+          "sortOrder": 2
+        }
+      ],
+      "activeThreadID": "thread-0001",
+      "threads": [
+        {
+          "id": "thread-0001",
+          "title": "Orbit MVP Checkpoint",
+          "interactionMode": "lightweightMeeting",
+          "createdSequence": 1,
+          "updatedSequence": 1,
+          "messages": [
+            {
+              "id": "msg-0001",
+              "speakerParticipantID": "samwise",
+              "addressedParticipantID": null,
+              "body": "Orbit is ready for the first checkpoint.",
+              "order": 1,
+              "kind": "participantResponse"
+            }
+          ]
+        }
+      ],
+      "activationRecords": [
+        {
+          "id": "act-0001",
+          "responseMessageID": "msg-0001",
+          "participantID": "samwise",
+          "personaID": "samwise",
+          "directiveID": "maintain-partner-sync-and-handoffs",
+          "triggerSource": "generalThreadReply",
+          "triggerMessageID": null,
+          "memoryInfluenced": false
+        }
+      ],
+      "nextMessageSequence": 2,
+      "nextActivationSequence": 2
+    }
+    """#
+
+    let workspace = try JSONDecoder().decode(OrbitWorkspace.self, from: Data(legacyJSON.utf8))
+    let activation = try #require(workspace.activationRecord(for: "msg-0001"))
+    let contractSnapshot = try #require(workspace.activationContractSnapshot(for: activation.id))
+    let samwise = try #require(
+      workspace.participants.first { $0.id == OrbitParticipantID.samwise.rawValue }
+    )
+
+    #expect(workspace.schemaVersion == OrbitWorkspace.currentSchemaVersion)
+    #expect(samwise.personaTemplateID == "samwise")
+    #expect(samwise.requiredSkillIDs == [])
+    #expect(samwise.authorizedSkillIDs == [])
+    #expect(activation.workspaceID == "orbit")
+    #expect(activation.workspacePersonaID == "workspace-persona-orbit-samwise")
+    #expect(activation.personaTemplateID == "samwise")
+    #expect(activation.responseMode == .lightweightMeeting)
+    #expect(activation.memorySourceRefs == [])
+    #expect(contractSnapshot.id == "act-0001-contract")
+    #expect(contractSnapshot.directiveSource == .participantDefault)
+    #expect(workspace.activationFailureRecords == [])
   }
 
   @Test
@@ -36,17 +132,56 @@ struct OrbitWorkspaceTests {
     let userMessage = try #require(createdMessages.first)
     let responseMessage = try #require(createdMessages.last)
     let activation = try #require(workspace.activationRecord(for: responseMessage.id))
+    let contractSnapshot = try #require(workspace.activationContractSnapshot(for: activation.id))
+    let traceLines = activation.traceSummaryLines(contractSnapshot: contractSnapshot)
 
     #expect(userMessage.kind == .user)
     #expect(responseMessage.kind == .participantResponse)
     #expect(responseMessage.speakerParticipantID == OrbitParticipantID.samwise.rawValue)
     #expect(responseMessage.addressedParticipantID == OrbitParticipantID.aj.rawValue)
     #expect(activation.participantID == OrbitParticipantID.samwise.rawValue)
-    #expect(activation.personaID == "samwise")
+    #expect(activation.workspaceID == "orbit")
+    #expect(activation.workspacePersonaID == "workspace-persona-orbit-samwise")
+    #expect(activation.personaTemplateID == "samwise")
     #expect(activation.directiveID == "maintain-partner-sync-and-handoffs")
+    #expect(activation.responseMode == .directMessage)
     #expect(activation.triggerSource == .directAddress)
     #expect(activation.triggerMessageID == userMessage.id)
+    #expect(activation.memorySourceRefs == [])
+    #expect(contractSnapshot.id == "\(activation.id)-contract")
+    #expect(contractSnapshot.directiveSource == .participantDefault)
+    #expect(contractSnapshot.kitIDs == [])
+    #expect(contractSnapshot.authorizedSkillIDs == [])
+    #expect(contractSnapshot.stopPointIDs == [])
+    #expect(contractSnapshot.reviewGateIDs == [])
+    #expect(contractSnapshot.memoryScopeIDs == [])
+    #expect(traceLines.count == 3)
+    #expect(traceLines[0].contains("workspace persona: workspace-persona-orbit-samwise"))
+    #expect(traceLines[1].contains("directive: maintain-partner-sync-and-handoffs"))
+    #expect(traceLines[2].contains("contract: kits none | skills none"))
+    #expect(workspace.activationFailureRecords == [])
     #expect(workspace.activeThread?.interactionMode == .directMessage)
+  }
+
+  @Test
+  func persistenceFailureDoesNotPublishConversationTurn() throws {
+    let originalWorkspace = OrbitWorkspace.defaultWorkspace
+    var workspace = originalWorkspace
+
+    do {
+      _ = try workspace.appendConversationTurnIfPersisted(
+        body: "Samwise, checkpoint this write path.",
+        addressedParticipantID: OrbitParticipantID.samwise.rawValue,
+        persist: { _ in throw OrbitWorkspaceTestPersistenceError.writeFailed }
+      )
+      Issue.record("Expected persistence failure")
+    } catch OrbitWorkspaceTestPersistenceError.writeFailed {
+      #expect(workspace == originalWorkspace)
+      #expect(workspace.threads == originalWorkspace.threads)
+      #expect(workspace.activationRecords == originalWorkspace.activationRecords)
+      #expect(workspace.activationContractSnapshots == originalWorkspace.activationContractSnapshots)
+      #expect(workspace.activationFailureRecords == originalWorkspace.activationFailureRecords)
+    }
   }
 
   @Test
@@ -67,6 +202,9 @@ struct OrbitWorkspaceTests {
     let activationRecords = workspace.activationRecords.filter {
       responseMessages.map(\.id).contains($0.responseMessageID)
     }
+    let contractSnapshots = activationRecords.compactMap {
+      workspace.activationContractSnapshot(for: $0.id)
+    }
 
     #expect(systemEvent.body.contains("lightweight meeting"))
     #expect(responseMessages.count == 2)
@@ -78,6 +216,204 @@ struct OrbitWorkspaceTests {
     )
     #expect(activationRecords.count == 2)
     #expect(activationRecords.allSatisfy { $0.triggerSource == .meetingInvocation })
+    #expect(activationRecords.allSatisfy { $0.workspaceID == "orbit" })
+    #expect(activationRecords.allSatisfy { $0.responseMode == .lightweightMeeting })
+    #expect(activationRecords.allSatisfy { $0.memorySourceRefs == [] })
+    #expect(contractSnapshots.count == 2)
+    #expect(contractSnapshots.allSatisfy { $0.directiveSource == .participantDefault })
+    #expect(contractSnapshots.allSatisfy { $0.kitIDs == [] })
+    #expect(contractSnapshots.allSatisfy { $0.authorizedSkillIDs == [] })
+    #expect(contractSnapshots.allSatisfy { $0.stopPointIDs == [] })
+    #expect(contractSnapshots.allSatisfy { $0.reviewGateIDs == [] })
+    #expect(contractSnapshots.allSatisfy { $0.memoryScopeIDs == [] })
+    #expect(workspace.activationFailureRecords == [])
     #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
+  }
+
+  @Test
+  func unknownCollaboratorTargetBlocksActivationAndPersistsFailure() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Ghost, weigh in on the Orbit checkpoint.",
+      addressedParticipantID: "ghost"
+    )
+
+    #expect(createdMessages.count == 2)
+
+    let userMessage = try #require(createdMessages.first)
+    let blockedEvent = try #require(createdMessages.last)
+    let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
+    let failureByEvent = try #require(
+      workspace.activationFailureRecordForSystemEvent(blockedEvent.id)
+    )
+
+    #expect(blockedEvent.kind == .systemEvent)
+    #expect(blockedEvent.body.contains("blocked the activation"))
+    #expect(workspace.activationRecords.count == 1)
+    #expect(workspace.activationContractSnapshots.count == 1)
+    #expect(failure.failureReason == .unknownCollaboratorTarget)
+    #expect(failure.addressedTargetID == "ghost")
+    #expect(failure.triggerMessageID == userMessage.id)
+    #expect(failure.systemEventMessageID == blockedEvent.id)
+    #expect(failure.participantID == nil)
+    #expect(failure.traceSummaryLines[0].contains("unknown collaborator target"))
+    #expect(failure.traceSummaryLines[1].contains("target: ghost"))
+    #expect(failureByEvent == failure)
+    #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
+  }
+
+  @Test
+  func missingDirectiveBlocksActivationAndPersistsFailure() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants = workspace.participants.map { participant in
+      guard participant.id == OrbitParticipantID.prodDoc.rawValue else {
+        return participant
+      }
+
+      return OrbitParticipant(
+        id: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        displayName: participant.displayName,
+        roleLabel: participant.roleLabel,
+        participantType: participant.participantType,
+        personaTemplateID: participant.personaTemplateID,
+        defaultDirectiveID: nil,
+        requiredSkillIDs: participant.requiredSkillIDs,
+        authorizedSkillIDs: participant.authorizedSkillIDs,
+        availability: participant.availability,
+        sortOrder: participant.sortOrder
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "ProdDoc, pressure-test the checkpoint.",
+      addressedParticipantID: OrbitParticipantID.prodDoc.rawValue
+    )
+
+    #expect(createdMessages.count == 2)
+
+    let userMessage = try #require(createdMessages.first)
+    let blockedEvent = try #require(createdMessages.last)
+    let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
+
+    #expect(blockedEvent.kind == .systemEvent)
+    #expect(blockedEvent.body.contains("no resolved directive"))
+    #expect(workspace.activationRecords.count == 1)
+    #expect(workspace.activationContractSnapshots.count == 1)
+    #expect(failure.failureReason == .missingDirective)
+    #expect(failure.participantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(failure.workspacePersonaID == "workspace-persona-orbit-proddoc")
+    #expect(failure.personaTemplateID == "venture-product-steward")
+    #expect(failure.systemEventMessageID == blockedEvent.id)
+  }
+
+  @Test
+  func frozenProdDocAliasContradictionBlocksActivation() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants = workspace.participants.map { participant in
+      guard participant.id == OrbitParticipantID.prodDoc.rawValue else {
+        return participant
+      }
+
+      return OrbitParticipant(
+        id: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        displayName: participant.displayName,
+        roleLabel: participant.roleLabel,
+        participantType: participant.participantType,
+        personaTemplateID: "samwise",
+        defaultDirectiveID: participant.defaultDirectiveID,
+        requiredSkillIDs: participant.requiredSkillIDs,
+        authorizedSkillIDs: participant.authorizedSkillIDs,
+        availability: participant.availability,
+        sortOrder: participant.sortOrder
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "ProdDoc, review the room model.",
+      addressedParticipantID: OrbitParticipantID.prodDoc.rawValue
+    )
+
+    #expect(createdMessages.count == 2)
+
+    let userMessage = try #require(createdMessages.first)
+    let blockedEvent = try #require(createdMessages.last)
+    let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
+
+    #expect(blockedEvent.kind == .systemEvent)
+    #expect(blockedEvent.body.contains("ProdDoc identity mapping"))
+    #expect(workspace.activationRecords.count == 1)
+    #expect(workspace.activationContractSnapshots.count == 1)
+    #expect(failure.failureReason == .frozenProdDocAliasContradiction)
+    #expect(failure.participantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(failure.personaTemplateID == "samwise")
+    #expect(failure.systemEventMessageID == blockedEvent.id)
+  }
+
+  @Test
+  func unauthorizedSkillPostureBlocksActivationAndPersistsSkillDetail() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants = workspace.participants.map { participant in
+      guard participant.id == OrbitParticipantID.samwise.rawValue else {
+        return participant
+      }
+
+      return OrbitParticipant(
+        id: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        displayName: participant.displayName,
+        roleLabel: participant.roleLabel,
+        participantType: participant.participantType,
+        personaTemplateID: participant.personaTemplateID,
+        defaultDirectiveID: participant.defaultDirectiveID,
+        requiredSkillIDs: ["codex-cli"],
+        authorizedSkillIDs: [],
+        availability: participant.availability,
+        sortOrder: participant.sortOrder
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Samwise, use the tool lane for this checkpoint.",
+      addressedParticipantID: OrbitParticipantID.samwise.rawValue
+    )
+
+    #expect(createdMessages.count == 2)
+
+    let userMessage = try #require(createdMessages.first)
+    let blockedEvent = try #require(createdMessages.last)
+    let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
+
+    #expect(blockedEvent.kind == .systemEvent)
+    #expect(blockedEvent.body.contains("required skill posture is not authorized"))
+    #expect(workspace.activationRecords.count == 1)
+    #expect(workspace.activationContractSnapshots.count == 1)
+    #expect(failure.failureReason == .unauthorizedSkillPosture)
+    #expect(failure.participantID == OrbitParticipantID.samwise.rawValue)
+    #expect(failure.requiredSkillIDs == ["codex-cli"])
+    #expect(failure.authorizedSkillIDs == [])
+    #expect(failure.systemEventMessageID == blockedEvent.id)
+    #expect(failure.traceSummaryLines.last?.contains("required codex-cli | authorized none") == true)
+  }
+
+  @Test
+  func aiCollaboratorsKeepStableWorkspacePersonaAndTemplateAnchors() {
+    let workspace = OrbitWorkspace.defaultWorkspace
+
+    let aiParticipants = workspace.participants.filter { $0.participantType == .ai }
+
+    #expect(aiParticipants.count == 2)
+    #expect(aiParticipants.allSatisfy { $0.workspacePersonaID != nil })
+    #expect(aiParticipants.allSatisfy { $0.personaTemplateID != nil })
+    #expect(aiParticipants.allSatisfy { $0.requiredSkillIDs == [] })
+    #expect(aiParticipants.allSatisfy { $0.authorizedSkillIDs == [] })
+
+    let prodDoc = aiParticipants.first { $0.id == OrbitParticipantID.prodDoc.rawValue }
+
+    #expect(prodDoc?.displayName == "ProdDoc")
+    #expect(prodDoc?.workspacePersonaID == "workspace-persona-orbit-proddoc")
+    #expect(prodDoc?.personaTemplateID == "venture-product-steward")
   }
 }

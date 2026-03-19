@@ -1,6 +1,6 @@
 # M3 Validation And Review Matrix
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Owner: `studio-coverage-architect`
 Primary Execution Persona: `studio-integration-coordinator`

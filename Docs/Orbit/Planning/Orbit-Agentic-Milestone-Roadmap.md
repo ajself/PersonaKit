@@ -1,6 +1,6 @@
 # Orbit Agentic Milestone Roadmap
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Workspace: Orbit
 Last Updated: 2026-03-18
@@ -20,6 +20,10 @@ needed. What matters is that each milestone has:
 - named execution and review owners
 - deterministic exit criteria
 - stop points before the next milestone begins
+
+Accepted here means this roadmap is the approved milestone-sequencing baseline
+for Orbit planning. It does not mean every milestone listed here is already
+implemented or closed.
 
 ## Source Of Truth
 
@@ -151,10 +155,10 @@ These existing personas are already good fits for early Orbit delivery:
   `worktree-squad-lead` and domain implementation personas for early milestones,
   but a dedicated Orbit-native execution identity may become necessary once
   workstreams become first-class product behavior
-- `ProdDoc` collaborator identity - the current planning artifacts treat
-  `ProdDoc` as a durable collaborator, but PersonaKit currently has
-  `venture-product-steward` rather than a formal `ProdDoc` persona; this should
-  be resolved before the roster is treated as canonical product truth
+- `ProdDoc` collaborator identity - the first checkpoint now treats `ProdDoc` as
+  the product-facing collaborator label mapped to `venture-product-steward`;
+  create a formal persona later only if a milestone needs a distinct authored
+  identity
 
 ### Likely Missing And Worth Creating Before Later Milestones
 
@@ -179,6 +183,11 @@ Goal:
 Create the operating scaffold that lets later milestones run through AI agents
 without hidden drift.
 
+Current state:
+
+- accepted through the recorded AJ approval outcome in
+  `Docs/Orbit/Planning/Milestones/M0-Agentic-Execution-Scaffold/Planning-Closeout-Packet.md`
+
 Primary owner:
 `samwise`
 
@@ -192,7 +201,8 @@ Scope:
 - freeze the milestone dossier format used for later Orbit work
 - define the standard delegated handoff packet for spawned lanes
 - map each major Orbit role to an existing persona, gap, or explicit stop point
-- resolve the `ProdDoc` identity question
+- freeze the `ProdDoc` -> `venture-product-steward` identity decision for the
+  first checkpoint
 - decide whether `orbit-meeting-coordinator`, `orbit-memory-gardener`, and
   `orbit-platform-operator` should be created now or queued as explicit
   prerequisite work for later milestones
@@ -214,6 +224,8 @@ Review gate:
 
 - AJ approves the role map and any new persona creation before later milestones
   depend on them
+- AJ approved the `M0` role map, stack posture, and staged missing-persona
+  plan for `M1` through `M3`
 
 References:
 
@@ -330,6 +342,7 @@ Supporting personas:
 
 - `architectural-editor`
 - `senior-swiftui-engineer`
+- `venture-product-steward`
 - `studio-reliability-engineer`
 - `studio-coverage-architect`
 
@@ -902,7 +915,7 @@ into the detailed dossier for `M1` and `M2`.
 
 That gives the next AI delivery lane a bounded sequence:
 
-1. resolve persona coverage and `ProdDoc` naming
+1. apply the frozen role map and `ProdDoc` alias
 2. freeze the activation and identity foundation
 3. execute the macOS command-center proving loop already described in the Orbit
    planning docs

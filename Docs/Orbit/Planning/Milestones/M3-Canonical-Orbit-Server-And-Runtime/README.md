@@ -1,6 +1,6 @@
 # M3 Canonical Orbit Server And Runtime Backbone
 
-Status: Planned
+Status: Accepted
 Primary Owner: `studio-integration-coordinator`
 Supporting Personas: `architectural-editor`, `senior-swiftui-engineer`, `venture-product-steward`, `studio-reliability-engineer`, `studio-coverage-architect`
 Last Updated: 2026-03-18
@@ -20,6 +20,10 @@ The bare minimum is not a milestone win.
 If the system gains backend complexity but still leaves room for dual truth,
 trace drift, replay ambiguity, or client-owned runtime rules, `M3` has not been
 reached.
+
+Accepted here means this dossier is the approved planning baseline for `M3`.
+The milestone still closes only when its exit criteria and review gate are
+satisfied.
 
 For `M3`, AI lanes should implement the approved server direction.
 They should not treat runtime complexity as permission to revisit the core stack.
@@ -49,10 +53,11 @@ They should not treat runtime complexity as permission to revisit the core stack
 
 ## Preconditions
 
-- `M1` identity and activation rules are stable
-- `M2` has produced a believable local command-center loop
+- `M1` is accepted as the identity and activation baseline for server migration
+- `M2` is accepted as the local command-center baseline to preserve through
+  migration
 - the approved `M0` stack posture is accepted as binding for `M3`
-- the platform team agrees that server migration is now worth the added
+- AJ and the `M3` review ring agree that server migration is now worth the added
   complexity
 
 ## Scope Freeze

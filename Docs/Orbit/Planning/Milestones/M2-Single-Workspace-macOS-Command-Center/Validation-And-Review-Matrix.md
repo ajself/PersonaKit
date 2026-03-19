@@ -1,6 +1,6 @@
 # M2 Validation And Review Matrix
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Owner: `studio-coverage-architect`
 Primary Execution Persona: `senior-swiftui-engineer`

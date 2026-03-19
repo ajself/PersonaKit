@@ -1,6 +1,6 @@
 # M1 Quality Bar
 
-Status: Draft
+Status: Accepted
 Milestone: `M1`
 Primary Owner: `architectural-editor`
 Last Updated: 2026-03-18
@@ -48,7 +48,7 @@ Failure signs:
 High bar:
 
 - the response can be traced to a workspace persona instance
-- the active directive, relevant kits, authorized skills, and stop-point posture
+- the active persona-template identity, directive, relevant kits, authorized skills, and stop-point posture
   are inspectable
 - trigger source and trigger message lineage are preserved
 
@@ -119,7 +119,8 @@ Failure signs:
 Any of these mean `M1` is not complete:
 
 - the system can respond without a durable activation trace
-- collaborator identity still depends on unresolved `ProdDoc` ambiguity
+- collaborator identity for `ProdDoc` is not implemented as the frozen alias to
+  `venture-product-steward`
 - unauthorized or unresolved activation attempts silently fall back to generic
   response behavior
 - tests prove only that something happened, not that the right identity path was

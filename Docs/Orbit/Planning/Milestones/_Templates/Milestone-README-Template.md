@@ -1,6 +1,6 @@
 # <Milestone Title>
 
-Status: <Planned | Ready For Planning Closeout | In Review>
+Status: <Planned | Ready For Planning Closeout | In Review | Accepted>
 Primary Owner: `<primary-persona-id>`
 Supporting Personas: `<persona-a>`, `<persona-b>`, `<persona-c>`
 Last Updated: <YYYY-MM-DD>

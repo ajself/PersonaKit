@@ -1,6 +1,6 @@
 # M0 Decision Register
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -34,11 +34,13 @@ Resolution criteria:
 - the answer can be used in runtime records and activation traces without
   ambiguity
 
-Recommended default:
+Resolution:
 
-- keep `ProdDoc` as a product-facing collaborator label only if AJ explicitly
-  accepts the alias relationship to `venture-product-steward`; otherwise create
-  or rename to a formal persona before `M1` and `M2` claim identity precision
+- AJ approved keeping `ProdDoc` as the product-facing collaborator label mapped
+  explicitly to `venture-product-steward` for the first checkpoint
+- no formal `ProdDoc` persona is required during `M0`
+- revisit formal persona creation only if a later milestone needs a distinct
+  authored identity rather than a presentation alias
 
 Delay cost:
 
@@ -61,10 +63,11 @@ Resolution criteria:
 - the persona can explain participant inclusion and meeting transitions
 - the persona's allowed behavior stays reviewable and bounded
 
-Recommended default:
+Resolution:
 
-- stage as a required prerequisite before `M4`, and create during `M0` only if
-  AJ wants the persona inventory settled early
+- AJ approved staging `orbit-meeting-coordinator` as a hard prerequisite before
+  delegating `M4`, `M5`, or coordinator-dependent `M12` work
+- do not create the persona during `M0`
 
 Delay cost:
 
@@ -87,10 +90,11 @@ Resolution criteria:
 - the persona can own candidate review and scope discipline
 - the persona does not blur into generic product or engineering roles
 
-Recommended default:
+Resolution:
 
-- stage as a required prerequisite before `M8`, and create earlier only if AJ
-  wants the full later-milestone stack pre-approved now
+- AJ approved staging `orbit-memory-gardener` as a hard prerequisite before
+  delegating `M8`, `M9`, or `M10`
+- do not create the persona during `M0`
 
 Delay cost:
 
@@ -112,10 +116,12 @@ Resolution criteria:
 - the name matches the actual long-term product and deployment posture
 - the role does not collapse into generic backend engineering
 
-Recommended default:
+Resolution:
 
-- defer final naming until `M13` is closer, but freeze the requirement that one
-  dedicated operations persona must exist before delegation
+- AJ approved deferring final naming until `M13` is closer
+- freeze now that one dedicated operations persona must exist before `M13`
+  delegation begins
+- do not create either persona during `M0`
 
 Delay cost:
 
@@ -140,9 +146,10 @@ Resolution criteria:
 - whether workstreams gain product-visible identity and orchestration semantics
 - whether current personas become overstretched or misleading
 
-Recommended default:
+Resolution:
 
-- keep `worktree-squad-lead` for the first cut, then reassess before `M7`
+- AJ approved keeping `worktree-squad-lead` for the first cut of `M7`
+- reassess whether `orbit-workstream-runner` is needed before `M7`
   implementation begins in earnest
 
 Delay cost:
@@ -166,10 +173,13 @@ Resolution criteria:
 - dossiers define quality, packet order, evidence, stop points, and handoff
 - later milestones can use the structure without inventing new planning norms
 
-Recommended default:
+Resolution:
 
-- freeze now for core sections, then allow only additive refinements that do not
-  change the meaning of existing sections
+- AJ approved freezing the dossier standard through
+  `Docs/Orbit/Planning/Milestones/README.md` plus
+  `Docs/Orbit/Planning/Milestones/_Templates/`
+- later changes may refine additively, but must not change the meaning of the
+  frozen sections
 
 Delay cost:
 

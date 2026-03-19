@@ -1,6 +1,6 @@
 # M1 Evidence And Exit Criteria
 
-Status: Draft
+Status: Accepted
 Milestone: `M1`
 Owner: `architectural-editor`
 Last Updated: 2026-03-18
@@ -25,23 +25,29 @@ If that hero proof is weak or incomplete, `M1` is not done.
 
 ## Required Artifacts
 
-1. identity and activation contract
-2. golden trace example
-3. failure matrix
-4. validation and review matrix
-5. deterministic test evidence for happy path and failure path behavior
-6. operator-visible trace walkthrough or equivalent review artifact
+1. boundary audit note
+2. workspace persona and collaborator model note
+3. identity and activation contract
+4. golden trace example
+5. failure matrix
+6. validation and review matrix
+7. deterministic test evidence for happy path and failure path behavior
+8. operator-visible trace walkthrough or equivalent review artifact
 
 ## Exit Checklist
 
 `M1` exits only when all of these are true:
 
 - one response can be traced to a workspace persona instance
+- the boundary audit note matches the implemented ownership split
+- the identity model note matches the implemented participant and collaborator mapping
 - the directive context is inspectable
 - kits or equivalent contract snapshot context are inspectable when applicable
 - allowed skill posture is inspectable
 - stop-point posture is inspectable or explicitly represented in the activation
   contract review path
+- blocked activation paths leave explicit operator-visible evidence instead of
+  silently disappearing
 - ambiguity cases fail closed
 - unauthorized cases fail closed
 - persistence failure prevents a completed attributable response from being shown
@@ -53,8 +59,9 @@ If that hero proof is weak or incomplete, `M1` is not done.
 
 ## Residual Open Dependency
 
-`M1` should still be treated as blocked if the `ProdDoc` identity decision from
-`M0` remains unresolved for the first checkpoint.
+`M1` should still be treated as blocked if the frozen `ProdDoc` ->
+`venture-product-steward` alias from `M0` is omitted or contradicted in the
+first-checkpoint identity model.
 
 That is not a defect in this dossier set.
 It is a real dependency that should remain visible.

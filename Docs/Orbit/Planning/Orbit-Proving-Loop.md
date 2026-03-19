@@ -1,6 +1,6 @@
 # Orbit Proving Loop Implementation Plan
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Meeting: `2026-03-09-meeting-002`
 Workspace: Orbit
@@ -18,6 +18,10 @@ This document should answer:
 - what can wait
 - what sequence keeps the loop small but real
 
+Accepted here means this file is the approved phase-shape reference for the
+first checkpoint. It does not mean later phases are now active implementation
+scope.
+
 ## Inputs
 
 This plan builds on:
@@ -26,7 +30,7 @@ This plan builds on:
 - `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
 - the proving-loop direction approved in Meeting 001
 
-These are treated as approved planning inputs for this implementation pass.
+These are treated as accepted planning inputs for this implementation pass.
 
 ## Current Role In The Planning Stack
 
@@ -214,8 +218,9 @@ Use the execution plan for:
 
 ## Open Implementation Questions
 
-- Should ProdDoc be modeled as a first-class local participant immediately, or
-  introduced through a lighter representation first?
+- With `ProdDoc` frozen as the product-facing alias for
+  `venture-product-steward`, what is the lightest first-checkpoint
+  representation that still preserves durable participant identity?
 - What is the smallest durable storage mechanism acceptable for the first loop?
 - What is the cleanest later-phase seam for summary and memory work once the
   first checkpoint is re-proven?

@@ -1,6 +1,6 @@
 # Orbit First Checkpoint Implementation Breakdown
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Workspace: Orbit
 Last Updated: 2026-03-18
@@ -17,6 +17,10 @@ This breakdown is intentionally practical:
 - reuse existing workspace-loading seams where possible
 - keep new Orbit runtime state local and deterministic
 - avoid Phase 4 and Phase 5 work in this lane
+
+Accepted here means this file is the approved codebase-facing map for first-
+checkpoint reruns and implementation planning. It does not mean every listed
+file or proof obligation is already in an acceptable finished state.
 
 ## Current Role In The Planning Stack
 
@@ -193,7 +197,8 @@ Primary existing seam:
 
 Primary question:
 
-- how do Samwise and ProdDoc produce first-checkpoint responses without
+- how do Samwise and ProdDoc as visible collaborators, with `ProdDoc` mapped to
+  `venture-product-steward`, produce first-checkpoint responses without
   inventing a full execution engine?
 
 Recommended first implementation approach:
@@ -201,7 +206,8 @@ Recommended first implementation approach:
 1. persist participant records with stable PersonaKit identity references
 2. keep response generation as a narrow bridge layer inside the Orbit feature
 3. reuse existing session-preview/export plumbing where it helps expose:
-   - persona identity
+   - persona-template identity
+   - workspace persona identity anchor
    - directive identity
    - activation trace context
 
@@ -243,12 +249,18 @@ Definition of done:
 ### Step 4
 
 Implement or re-prove participant addressing and the minimal activation-record
-write path.
+write path plus contract-snapshot persistence.
 
 Definition of done:
 
 - a response event can create an activation record with persona/directive
   attribution
+- the same response path persists an inspectable contract snapshot, even when the
+  first-checkpoint answer is an explicit empty set
+- blocked identity or directive cases persist an activation-failure record plus a
+  visible blocked system event instead of a fake collaborator reply
+- persistence failure blocks the whole turn before new durable thread state is
+  committed
 - the UI can reveal lightweight trace data for a response
 
 ### Step 5
@@ -350,7 +362,8 @@ Before the checkpoint is presented as usable, we should have:
 
 The biggest implementation risk is not persistence or UI wiring.
 
-It is the first response-generation seam for Samwise and ProdDoc.
+It is the first response-generation seam for Samwise and ProdDoc, with
+`ProdDoc` acting as the product-facing alias for `venture-product-steward`.
 
 If that seam grows too large, Orbit can drift into execution-engine work before
 the local command-center loop is proven.

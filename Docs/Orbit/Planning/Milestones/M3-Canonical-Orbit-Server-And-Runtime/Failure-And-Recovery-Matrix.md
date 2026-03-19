@@ -1,6 +1,6 @@
 # Failure And Recovery Matrix
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Owner: `studio-reliability-engineer`
 Last Updated: 2026-03-18

@@ -1,6 +1,6 @@
 # M2 Single-Workspace macOS Command-Center Proving Loop
 
-Status: Planned
+Status: Accepted
 Primary Owner: `senior-swiftui-engineer`
 Supporting Personas: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
 Last Updated: 2026-03-18
@@ -21,6 +21,10 @@ evidence strong enough to justify the next milestone.
 The bare minimum is not a milestone win.
 If the result still reads like generic persona chat with extra labels, `M2` has
 not been reached.
+
+Accepted here means this dossier is the approved planning baseline for `M2`.
+The milestone still closes only when its exit criteria and review gate are
+satisfied.
 
 ## File Map
 
@@ -43,9 +47,11 @@ not been reached.
 
 ## Preconditions
 
-- `M1` identity and activation rules are frozen enough to build on
+- `M1` is accepted as the identity and activation baseline for this milestone
 - the first-checkpoint runtime model is accepted as the local boundary
 - the implementation breakdown is aligned with the current rerun contract
+- the founding roster keeps the frozen `ProdDoc` -> `venture-product-steward`
+  alias explicit
 
 ## Scope Freeze
 

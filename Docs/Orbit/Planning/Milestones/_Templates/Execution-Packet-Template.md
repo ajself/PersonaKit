@@ -1,6 +1,6 @@
 # Execution Packet Template
 
-Status: Draft
+Status: <Draft | Ready For Planning Closeout | In Review | Accepted>
 Packet Id: `<milestone-id>-P<packet-number>`
 Milestone: `<milestone-id>`
 Execution Owner: `<primary-persona-id>`

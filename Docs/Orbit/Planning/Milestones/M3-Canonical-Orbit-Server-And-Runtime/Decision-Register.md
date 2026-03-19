@@ -1,6 +1,6 @@
 # M3 Decision Register
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Owner: `studio-integration-coordinator`
 Last Updated: 2026-03-18

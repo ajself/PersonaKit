@@ -1,6 +1,6 @@
 # Activation Trace Golden Example
 
-Status: Draft
+Status: Accepted
 Milestone: `M1`
 Owner: `architectural-editor`
 Last Updated: 2026-03-18
@@ -43,7 +43,8 @@ Example user turn:
   "participantId": "participant-samwise",
   "displayName": "Samwise",
   "participantClass": "ai-collaborator",
-  "personaId": "samwise"
+  "workspacePersonaId": "workspace-persona-orbit-samwise",
+  "personaTemplateId": "samwise"
 }
 ```
 
@@ -66,8 +67,10 @@ Example user turn:
   "workspaceId": "orbit",
   "responseMessageId": "message-0002",
   "participantId": "participant-samwise",
-  "personaId": "samwise",
+  "workspacePersonaId": "workspace-persona-orbit-samwise",
+  "personaTemplateId": "samwise",
   "directiveId": "<resolved-directive-id>",
+  "responseMode": "direct-message",
   "triggerSource": "direct-address",
   "triggerMessageId": "message-0001",
   "memoryInfluenced": false,
@@ -77,13 +80,30 @@ Example user turn:
 
 ### Contract snapshot expectation
 
+Example contract snapshot:
+
+```json
+{
+  "contractSnapshotId": "activation-0001-contract",
+  "activationId": "activation-0001",
+  "directiveSource": "participant-default",
+  "kitIds": [],
+  "authorizedSkillIds": [],
+  "stopPointIds": [],
+  "reviewGateIds": [],
+  "memoryScopeIds": []
+}
+```
+
 Whether this is embedded or linked, reviewers must be able to inspect:
 
 - stable contract snapshot id or reference
 - resolved directive id
 - resolved kit ids when present
-- allowed skill posture
+- allowed skill posture, including the explicit no-skill case
 - stop-point posture relevant to the activation
+- review-gate posture relevant to the activation
+- memory-scope posture relevant to the activation
 
 ## Expected Operator-Visible Trace
 
@@ -114,7 +134,7 @@ This example proves all of the following in one small slice:
 This example fails if:
 
 - the response appears without a durable activation record
-- the participant label and persona identity do not match
+- the participant label, workspace persona identity, and persona-template identity do not match
 - the directive is not inspectable
 - the system cannot distinguish "no memory used" from "unknown whether memory was
   used"

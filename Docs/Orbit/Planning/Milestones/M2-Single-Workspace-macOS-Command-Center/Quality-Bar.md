@@ -1,6 +1,6 @@
 # M2 Quality Bar
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Primary Owner: `senior-swiftui-engineer`
 Last Updated: 2026-03-18

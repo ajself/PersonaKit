@@ -1,6 +1,6 @@
 # Persona Coverage Matrix
 
-Status: Draft
+Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -16,8 +16,8 @@ personas, and any unresolved persona gaps that must be handled before delegation
 | --- | --- | --- | --- | --- |
 | `M0` | `samwise` | `venture-product-steward`, `architectural-editor` | covered | Planning and scaffolding lane |
 | `M1` | `architectural-editor` | `senior-swiftui-engineer`, `studio-coverage-architect` | covered | Execution owner and review ring are clear |
-| `M2` | `senior-swiftui-engineer` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | covered with collaborator dependency | Depends on frozen `ProdDoc` decision for founding roster language |
-| `M3` | `studio-integration-coordinator` | `architectural-editor`, `senior-swiftui-engineer`, `studio-reliability-engineer`, `studio-coverage-architect` | covered | Good fit for canonical runtime migration |
+| `M2` | `senior-swiftui-engineer` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | covered | Founding roster uses the approved `ProdDoc` -> `venture-product-steward` alias |
+| `M3` | `studio-integration-coordinator` | `architectural-editor`, `senior-swiftui-engineer`, `venture-product-steward`, `studio-reliability-engineer`, `studio-coverage-architect` | covered | Product continuity review stays explicit during canonical runtime migration |
 | `M4` | `orbit-meeting-coordinator` | `samwise`, `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Do not delegate until persona exists or AJ approves substitute |
 | `M5` | `orbit-meeting-coordinator` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Same gap as `M4`, but more consequential |
 | `M6` | `venture-product-steward` | `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor` | covered | Product-heavy milestone with architecture review |
@@ -29,20 +29,21 @@ personas, and any unresolved persona gaps that must be handled before delegation
 | `M12` | `senior-swiftui-engineer` | `studio-interaction-quality-lead`, `orbit-meeting-coordinator`, `venture-product-steward` | blocked on missing persona | Can plan early, cannot delegate fully without coordinator persona |
 | `M13` | `orbit-platform-operator` or `orbit-server-steward` | `studio-integration-coordinator`, `studio-reliability-engineer`, `studio-coverage-architect`, `architectural-editor` | blocked on missing persona | Need one approved platform operations identity |
 
-## Cross-Cutting Gaps
+## Cross-Cutting Coverage Notes
 
-### `ProdDoc` collaborator identity
+### `ProdDoc` collaborator identity (resolved for first checkpoint)
 
 Current state:
 
 - the product and first-checkpoint docs treat `ProdDoc` as a durable founding
   collaborator
-- PersonaKit currently has `venture-product-steward`, not a formal `ProdDoc`
-  persona
+- PersonaKit maps that collaborator label explicitly to
+  `venture-product-steward` for the first checkpoint
 
 Impact:
 
-- `M1` and `M2` cannot claim identity precision while this remains ambiguous
+- `M1` and `M2` can use `ProdDoc` as stable product language without inventing a
+  new persona during `M0`
 
 ### `orbit-meeting-coordinator`
 

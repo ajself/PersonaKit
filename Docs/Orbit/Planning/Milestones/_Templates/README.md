@@ -1,6 +1,6 @@
 # Milestone Templates
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Last Updated: 2026-03-18
 
@@ -19,6 +19,14 @@ reviewable, and quality-aware.
 - delete sections that are truly irrelevant only if the omission is explicit and
   justified
 - do not leave generic boilerplate in a live dossier
+
+When you copy a template into a live milestone artifact, set its status using the
+planning lifecycle defined in `Docs/Orbit/Planning/Milestones/README.md`.
+
+- milestone READMEs normally move through `Planned` -> `Ready For Planning Closeout`
+  -> `In Review` -> `Accepted`
+- supporting artifacts normally move through `Draft` -> `Ready For Planning Closeout`
+  -> `In Review` -> `Accepted`
 
 ## Quality Rule
 

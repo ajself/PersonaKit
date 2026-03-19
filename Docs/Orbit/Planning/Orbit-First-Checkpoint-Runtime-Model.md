@@ -1,6 +1,6 @@
 # Orbit First Checkpoint Runtime Model
 
-Status: Draft
+Status: Accepted
 Owner: Samwise
 Workspace: Orbit
 Last Updated: 2026-03-18
@@ -16,6 +16,10 @@ This note exists so the first build can stay aligned on:
 - what can remain lightweight or derived
 - where activation trace begins
 - what should not enter the first checkpoint yet
+
+Accepted here means this note is the approved local runtime boundary for `M1`
+and `M2` planning and implementation. It does not claim that the full runtime
+slice is already implemented.
 
 ## Current Role In The Planning Stack
 
@@ -56,6 +60,8 @@ For the first checkpoint, Orbit should assume:
 
 1. one local workspace: `Orbit`
 2. one founding roster: AJ, Samwise, ProdDoc
+   - `ProdDoc` is the product-facing collaborator label for
+     `venture-product-steward` in the first checkpoint
 3. one durable conversation thread is enough to prove the loop
 4. meeting behavior can be represented as a lightweight interaction mode over
    the same underlying thread model
@@ -90,13 +96,16 @@ Must include:
 - stable participant identifier
 - display name
 - participant type or role label
-- linked persona ID when the participant is AI-backed
+- workspace persona identifier when the participant is AI-backed
+- linked persona-template identifier when the participant is AI-backed
 - availability or active-state hint suitable for UI display
 
 For the first checkpoint:
 
 - AJ may be represented as a human participant record
 - Samwise and ProdDoc should be represented as durable AI-backed participants
+- the `ProdDoc` participant should link to `venture-product-steward` while
+  preserving `ProdDoc` as the visible product-facing label
 
 ### Conversation Thread
 
@@ -143,10 +152,14 @@ Represents why a participant response happened.
 Must include:
 
 - stable activation identifier
+- workspace identifier
 - response message identifier
 - participant identifier
-- persona identifier
+- workspace persona identifier
+- persona-template identifier
 - directive identifier
+- contract snapshot identifier or linked contract snapshot reference
+- response mode
 - trigger source:
   - direct address
   - meeting invocation
@@ -155,6 +168,26 @@ Must include:
 - memory-influenced flag
 
 This entity is the minimum explainability boundary for the first checkpoint.
+
+### Activation Failure Record
+
+Represents a blocked activation attempt that failed before a collaborator
+response could be published.
+
+Must include:
+
+- stable failure identifier
+- workspace identifier
+- addressed target identifier when applicable
+- participant identifier when resolution reached a concrete collaborator
+- workspace persona identifier when known
+- persona-template identifier when known
+- failure reason
+- trigger source
+- trigger message identifier when applicable
+
+The first checkpoint should keep these records lightweight, but it should not
+silently drop identity-sensitive activation failures.
 
 ## Persistence Boundary
 

@@ -1,6 +1,6 @@
 # Rerun Execution Contract
 
-Status: Draft
+Status: Accepted
 Milestone: `M2`
 Owner: `samwise`
 Execution Owner: `senior-swiftui-engineer`

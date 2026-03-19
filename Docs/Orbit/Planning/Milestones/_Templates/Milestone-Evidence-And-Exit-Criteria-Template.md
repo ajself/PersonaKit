@@ -1,6 +1,6 @@
 # <Milestone Id> Evidence And Exit Criteria
 
-Status: Draft
+Status: <Draft | Ready For Planning Closeout | In Review | Accepted>
 Milestone: `<milestone-id>`
 Owner: `<primary-persona-id>`
 Last Updated: <YYYY-MM-DD>

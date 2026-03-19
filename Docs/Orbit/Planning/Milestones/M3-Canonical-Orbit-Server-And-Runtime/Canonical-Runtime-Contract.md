@@ -1,6 +1,6 @@
 # Canonical Runtime Contract
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Primary Owner: `architectural-editor`
 Last Updated: 2026-03-18

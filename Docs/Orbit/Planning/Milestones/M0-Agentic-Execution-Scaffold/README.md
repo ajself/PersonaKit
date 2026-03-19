@@ -1,6 +1,6 @@
 # M0 Agentic Execution Scaffold And Persona Coverage
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Primary Owner: `samwise`
 Supporting Personas: `venture-product-steward`, `architectural-editor`
 Last Updated: 2026-03-18
@@ -27,6 +27,11 @@ Bare-minimum paperwork is not a milestone win.
 
 - `README.md`
   milestone overview, packet order, and top-level guardrails
+- `../README.md`
+  frozen milestone dossier standard, shared definitions, and minimum dossier
+  sections for later milestones
+- `../_Templates/`
+  reusable dossier and execution-packet templates derived from `M0`
 - `Quality-Bar.md`
   definition of impressive `M0` quality and disqualifying shortcuts
 - `Delegated-Handoff-Packet-Template.md`
@@ -34,9 +39,12 @@ Bare-minimum paperwork is not a milestone win.
 - `Persona-Coverage-Matrix.md`
   milestone-by-milestone owner, review, and gap map
 - `Decision-Register.md`
-  unresolved `M0` decisions, resolution criteria, and recommended defaults
+  final `M0` decisions, resolution criteria, and staged prerequisites
 - `Evidence-And-Exit-Criteria.md`
   required artifacts, review tests, and milestone-close rules
+- `Planning-Closeout-Packet.md`
+  compact AJ review packet covering the final `M0` approvals and staged
+  prerequisites
 - `Tech-Stack-Posture.md`
   frozen stack posture and AI decision boundary for `M0` through `M3`
 - `Sprint-Plan.md`
@@ -103,6 +111,7 @@ Work:
 Done when:
 
 - later milestone dirs can be filled without inventing new plan structure
+- the dossier standard defines roadmap vs dossier vs lane-note boundaries
 
 ### Packet 2. Freeze The Delegated Handoff Contract
 
@@ -167,13 +176,15 @@ Outcome:
 
 Work:
 
-- decide whether `ProdDoc` remains a product-facing collaborator label
-- decide whether a formal PersonaKit persona must be created now
+- freeze `ProdDoc` as the product-facing collaborator label for
+  `venture-product-steward` in the first checkpoint
+- decide whether a formal PersonaKit persona must be created later
 - update future milestone assumptions based on that decision
 
 Done when:
 
-- M1 and M2 can rely on one explicit collaborator naming decision
+- `M1` and `M2` can rely on one explicit collaborator naming decision and alias
+  mapping
 
 ### Packet 6. Stage Missing Personas
 
@@ -208,13 +219,15 @@ Avoid:
 
 ## Evidence Package
 
-- milestone dossier standard
+- milestone dossier standard under `Docs/Orbit/Planning/Milestones/README.md`
+- milestone template library under `Docs/Orbit/Planning/Milestones/_Templates/`
 - delegated handoff template
 - milestone-to-persona coverage map
 - stack posture note for `M0` through `M3`
 - worktree execution rule for Orbit implementation lanes
 - `ProdDoc` decision note
 - missing-persona decision list
+- planning closeout packet with the recorded AJ approval outcome
 
 ## Stop Points
 
@@ -229,7 +242,12 @@ Avoid:
 Exit only when AJ approves the role map, stack posture, and missing-persona
 decisions.
 
+Current disposition:
+
+- accepted through the AJ approval outcome recorded in
+  `Planning-Closeout-Packet.md`
+
 Handoff forward to:
 
 - `M1` with an approved identity contract lane
-- `M2` with an approved founding-roster naming decision
+- `M2` with the approved `ProdDoc` -> `venture-product-steward` roster mapping

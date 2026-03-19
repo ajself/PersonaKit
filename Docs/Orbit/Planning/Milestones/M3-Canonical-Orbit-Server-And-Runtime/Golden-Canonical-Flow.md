@@ -1,6 +1,6 @@
 # Golden Canonical Flow
 
-Status: Draft
+Status: Accepted
 Milestone: `M3`
 Owners: `studio-integration-coordinator`, `senior-swiftui-engineer`, `studio-reliability-engineer`, `studio-coverage-architect`
 Last Updated: 2026-03-18
