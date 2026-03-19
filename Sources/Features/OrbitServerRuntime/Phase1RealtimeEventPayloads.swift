@@ -26,10 +26,157 @@ public struct OrbitPhase1ThreadActivityUpdatedPayload: Codable, Equatable, Senda
   public let lastActivityAt: Date
 }
 
+public struct OrbitPhase1ResolvedContractPayload: Codable, Equatable, Sendable {
+  public let directiveID: String?
+  public let directiveSource: String?
+  public let kitIDs: [String]
+  public let authorizedSkillIDs: [String]
+  public let requiredSkillIDs: [String]
+  public let stopPointIDs: [String]
+  public let reviewGateIDs: [String]
+  public let memoryScopeIDs: [String]
+
+  public init(
+    directiveID: String? = nil,
+    directiveSource: String? = nil,
+    kitIDs: [String] = [],
+    authorizedSkillIDs: [String] = [],
+    requiredSkillIDs: [String] = [],
+    stopPointIDs: [String] = [],
+    reviewGateIDs: [String] = [],
+    memoryScopeIDs: [String] = []
+  ) {
+    self.directiveID = directiveID
+    self.directiveSource = directiveSource
+    self.kitIDs = kitIDs
+    self.authorizedSkillIDs = authorizedSkillIDs
+    self.requiredSkillIDs = requiredSkillIDs
+    self.stopPointIDs = stopPointIDs
+    self.reviewGateIDs = reviewGateIDs
+    self.memoryScopeIDs = memoryScopeIDs
+  }
+}
+
+public struct OrbitPhase1ActivationFailurePayload: Codable, Equatable, Sendable {
+  public let addressedTargetID: String?
+  public let participantID: String?
+  public let workspacePersonaID: String?
+  public let personaTemplateID: String?
+  public let directiveID: String?
+  public let triggerSource: String
+  public let systemEventMessageID: UUID
+  public let requiredSkillIDs: [String]
+  public let authorizedSkillIDs: [String]
+  public let failureReason: String
+  public let systemEventBody: String
+
+  public init(
+    addressedTargetID: String? = nil,
+    participantID: String? = nil,
+    workspacePersonaID: String? = nil,
+    personaTemplateID: String? = nil,
+    directiveID: String? = nil,
+    triggerSource: String,
+    systemEventMessageID: UUID,
+    requiredSkillIDs: [String] = [],
+    authorizedSkillIDs: [String] = [],
+    failureReason: String,
+    systemEventBody: String
+  ) {
+    self.addressedTargetID = addressedTargetID
+    self.participantID = participantID
+    self.workspacePersonaID = workspacePersonaID
+    self.personaTemplateID = personaTemplateID
+    self.directiveID = directiveID
+    self.triggerSource = triggerSource
+    self.systemEventMessageID = systemEventMessageID
+    self.requiredSkillIDs = requiredSkillIDs
+    self.authorizedSkillIDs = authorizedSkillIDs
+    self.failureReason = failureReason
+    self.systemEventBody = systemEventBody
+  }
+}
+
 public struct OrbitPhase1ActivationEventPayload: Codable, Equatable, Sendable {
   public let activationID: UUID?
+  public let initiatedByParticipantType: String?
+  public let initiatedByParticipantID: String?
+  public let triggerMessageID: UUID?
+  public let addressedTargetKind: String?
+  public let addressedTargetReferenceID: String?
+  public let resolvedWorkspacePersonaInstanceID: UUID?
   public let responseMode: String?
+  public let agentRunID: UUID?
+  public let runnerKind: String?
+  public let agentRunStatus: String?
+  public let agentRunStartedAt: Date?
+  public let agentRunCompletedAt: Date?
+  public let contract: OrbitPhase1ResolvedContractPayload?
+  public let failure: OrbitPhase1ActivationFailurePayload?
   public let reason: String?
+
+  public init(
+    activationID: UUID?,
+    initiatedByParticipantType: String? = nil,
+    initiatedByParticipantID: String? = nil,
+    triggerMessageID: UUID? = nil,
+    addressedTargetKind: String? = nil,
+    addressedTargetReferenceID: String? = nil,
+    resolvedWorkspacePersonaInstanceID: UUID? = nil,
+    responseMode: String? = nil,
+    agentRunID: UUID? = nil,
+    runnerKind: String? = nil,
+    agentRunStatus: String? = nil,
+    agentRunStartedAt: Date? = nil,
+    agentRunCompletedAt: Date? = nil,
+    contract: OrbitPhase1ResolvedContractPayload? = nil,
+    failure: OrbitPhase1ActivationFailurePayload? = nil,
+    reason: String? = nil
+  ) {
+    self.activationID = activationID
+    self.initiatedByParticipantType = initiatedByParticipantType
+    self.initiatedByParticipantID = initiatedByParticipantID
+    self.triggerMessageID = triggerMessageID
+    self.addressedTargetKind = addressedTargetKind
+    self.addressedTargetReferenceID = addressedTargetReferenceID
+    self.resolvedWorkspacePersonaInstanceID = resolvedWorkspacePersonaInstanceID
+    self.responseMode = responseMode
+    self.agentRunID = agentRunID
+    self.runnerKind = runnerKind
+    self.agentRunStatus = agentRunStatus
+    self.agentRunStartedAt = agentRunStartedAt
+    self.agentRunCompletedAt = agentRunCompletedAt
+    self.contract = contract
+    self.failure = failure
+    self.reason = reason
+  }
+}
+
+public extension OrbitPhase1ActivationEventPayload {
+  init(
+    activation: OrbitPersonaActivationRecord,
+    agentRun: OrbitAgentRunRecord? = nil,
+    contract: OrbitPhase1ResolvedContractPayload? = nil,
+    reason: String? = nil
+  ) {
+    self.init(
+      activationID: activation.id,
+      initiatedByParticipantType: activation.initiatedByParticipantType.rawValue,
+      initiatedByParticipantID: activation.initiatedByParticipantID,
+      triggerMessageID: activation.triggerMessageID,
+      addressedTargetKind: activation.addressedTargetKind.rawValue,
+      addressedTargetReferenceID: activation.addressedTargetReferenceID,
+      resolvedWorkspacePersonaInstanceID: activation.resolvedWorkspacePersonaInstanceID,
+      responseMode: activation.responseMode.rawValue,
+      agentRunID: agentRun?.id,
+      runnerKind: agentRun?.runnerKind,
+      agentRunStatus: agentRun?.status.rawValue,
+      agentRunStartedAt: agentRun?.startedAt,
+      agentRunCompletedAt: agentRun?.completedAt,
+      contract: contract,
+      reason: reason
+    )
+  }
 }
 
 public enum OrbitPhase1RealtimeEventPayloadCodec {

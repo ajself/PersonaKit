@@ -152,6 +152,26 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func appendActivationFailure(
+    workspaceID: UUID,
+    _ systemMessage: OrbitMessageRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadLastActivityAt: Date,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      try await repository.appendActivationFailure(
+        workspaceID: workspaceID,
+        systemMessage,
+        postEvent: postEvent,
+        realtimeEvents: realtimeEvents,
+        threadLastActivityAt: threadLastActivityAt,
+        using: OrbitPostgresClientExecutor(client: client)
+      )
+    }
+  }
+
   public func loadRoomSnapshot(
     workspaceSlug: String,
     channelSlug: String,

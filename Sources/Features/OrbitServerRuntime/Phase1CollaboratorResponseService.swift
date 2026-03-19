@@ -10,6 +10,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
   public let addressedTargetReferenceID: String
   public let responseMode: OrbitCanonicalResponseMode
   public let body: String
+  public let contract: OrbitPhase1ResolvedContractPayload?
   public let runnerKind: String
 
   public init(
@@ -22,6 +23,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
     addressedTargetReferenceID: String,
     responseMode: OrbitCanonicalResponseMode,
     body: String,
+    contract: OrbitPhase1ResolvedContractPayload? = nil,
     runnerKind: String = "local-bridge"
   ) {
     self.workspaceSlug = workspaceSlug
@@ -33,6 +35,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
     self.addressedTargetReferenceID = addressedTargetReferenceID
     self.responseMode = responseMode
     self.body = body
+    self.contract = contract
     self.runnerKind = runnerKind
   }
 }
@@ -151,9 +154,9 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       eventType: OrbitPhase1RealtimeEventCategory.activationResolved.rawValue,
       payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
         OrbitPhase1ActivationEventPayload(
-          activationID: activation.id,
-          responseMode: activation.responseMode.rawValue,
-          reason: nil
+          activation: activation,
+          agentRun: agentRun,
+          contract: request.contract
         )
       ),
       createdAt: timestamp
@@ -162,6 +165,8 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       workspaceID: snapshot.workspace.id,
       message: message,
       activation: activation,
+      agentRun: agentRun,
+      contract: request.contract,
       threadLastActivityAt: timestamp
     )
 

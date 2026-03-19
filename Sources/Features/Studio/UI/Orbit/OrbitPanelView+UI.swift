@@ -673,11 +673,22 @@ extension OrbitPanelView {
     }
 
     do {
+      guard let workspaceURL = workspaceStore.workspaceURL else {
+        throw OrbitWorkspacePersistenceError.noWorkspaceSelected
+      }
+
       var coordinator = serverBackedRoomCoordinator
-      try await coordinator.appendUserMessage(
+      try await coordinator.appendConversationTurn(
         scope: serverBackedRoomScope,
         authorID: OrbitParticipantID.aj.rawValue,
         body: messageBody,
+        addressedParticipantID: addressedParticipantID,
+        resolveContract: { participant in
+          try OrbitContractResolver.resolve(
+            participant: participant,
+            workspaceURL: workspaceURL
+          )
+        },
         client: client
       )
       serverBackedRoomCoordinator = coordinator
@@ -687,6 +698,10 @@ extension OrbitPanelView {
       draftMessageBody = ""
       persistenceMessage = nil
       persistenceIsError = false
+    } catch let error as OrbitContractResolutionError {
+      persistenceMessage =
+        "Orbit blocked the send because the collaborator contract could not be resolved: \(error.localizedDescription)"
+      persistenceIsError = true
     } catch {
       persistenceMessage =
         "Orbit blocked the send because the canonical server write path failed: \(error.localizedDescription)"

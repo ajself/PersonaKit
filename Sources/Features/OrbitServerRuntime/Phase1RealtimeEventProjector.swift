@@ -162,6 +162,8 @@ public enum OrbitPhase1RealtimeEventProjector {
     workspaceID: UUID,
     message: OrbitMessageRecord,
     activation: OrbitPersonaActivationRecord,
+    agentRun: OrbitAgentRunRecord,
+    contract: OrbitPhase1ResolvedContractPayload?,
     threadLastActivityAt: Date
   ) throws -> [OrbitRealtimeEventRecord] {
     var events = try appendEvents(
@@ -179,12 +181,47 @@ public enum OrbitPhase1RealtimeEventProjector {
         category: .activationResolved,
         payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
           OrbitPhase1ActivationEventPayload(
-            activationID: activation.id,
-            responseMode: activation.responseMode.rawValue,
-            reason: nil
+            activation: activation,
+            agentRun: agentRun,
+            contract: contract
           )
         ),
         createdAt: activation.createdAt
+      )
+    )
+
+    return events.sorted { lhs, rhs in
+      if lhs.createdAt == rhs.createdAt {
+        return lhs.id.uuidString < rhs.id.uuidString
+      }
+      return lhs.createdAt < rhs.createdAt
+    }
+  }
+
+  public static func activationFailureEvents(
+    workspaceID: UUID,
+    systemMessage: OrbitMessageRecord,
+    postID: UUID,
+    threadID: UUID,
+    eventID: UUID,
+    payloadJSON: String,
+    threadLastActivityAt: Date
+  ) throws -> [OrbitRealtimeEventRecord] {
+    var events = try appendEvents(
+      workspaceID: workspaceID,
+      message: systemMessage,
+      threadLastActivityAt: threadLastActivityAt
+    )
+
+    events.append(
+      OrbitRealtimeEventRecord(
+        id: eventID,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .activationFailed,
+        payloadJSON: payloadJSON,
+        createdAt: systemMessage.createdAt
       )
     )
 

@@ -121,6 +121,34 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     }
   }
 
+  public func appendActivationFailure(
+    workspaceID: UUID,
+    _ systemMessage: OrbitMessageRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadLastActivityAt: Date,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await executor.execute(query: insertMessageQuery(systemMessage))
+      try await executor.execute(query: insertPostEventQuery(postEvent))
+      for realtimeEvent in realtimeEvents {
+        try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      try await executor.execute(
+        query: updateThreadActivityQuery(
+          threadID: systemMessage.threadID,
+          lastActivityAt: threadLastActivityAt
+        )
+      )
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
+
   public func upsertWorkspaceQuery(
     _ workspace: OrbitWorkspaceRecord
   ) -> PostgresQuery {

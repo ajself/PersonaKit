@@ -130,7 +130,48 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           personaActivations: room.personaActivations,
           agentRuns: room.agentRuns
         )
-      case .activationResolved, .activationFailed:
+      case .activationResolved:
+        let payload = try OrbitPhase1RealtimeEventPayloadCodec.decode(
+          OrbitPhase1ActivationEventPayload.self,
+          from: event.payloadJSON
+        )
+
+        let postEvents = room.postEvents.contains(where: { $0.id == event.id })
+          ? room.postEvents
+          : room.postEvents + [
+              OrbitPostEventRecord(
+                id: event.id,
+                postID: event.postID ?? room.post.id,
+                threadID: event.threadID,
+                eventType: event.category.rawValue,
+                payloadJSON: event.payloadJSON,
+                createdAt: event.createdAt
+              )
+            ]
+        let personaActivations = try mergedPersonaActivations(
+          room.personaActivations,
+          payload: payload,
+          event: event,
+          room: room
+        )
+        let agentRuns = try mergedAgentRuns(
+          room.agentRuns,
+          payload: payload
+        )
+
+        room = OrbitPhase1RoomSnapshot(
+          workspace: room.workspace,
+          channel: room.channel,
+          workspacePersonas: room.workspacePersonas,
+          post: room.post,
+          thread: room.thread,
+          messages: room.messages,
+          postParticipants: room.postParticipants,
+          postEvents: postEvents,
+          personaActivations: personaActivations,
+          agentRuns: agentRuns
+        )
+      case .activationFailed:
         if !room.postEvents.contains(where: { $0.id == event.id }) {
           room = OrbitPhase1RoomSnapshot(
             workspace: room.workspace,
@@ -185,5 +226,88 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
     }
 
     return value
+  }
+
+  private static func mergedPersonaActivations(
+    _ current: [OrbitPersonaActivationRecord],
+    payload: OrbitPhase1ActivationEventPayload,
+    event: OrbitPhase1RealtimeEventEnvelope,
+    room: OrbitPhase1RoomSnapshot
+  ) throws -> [OrbitPersonaActivationRecord] {
+    guard
+      let activationID = payload.activationID,
+      !current.contains(where: { $0.id == activationID }),
+      let initiatedByParticipantTypeRawValue = payload.initiatedByParticipantType,
+      let initiatedByParticipantID = payload.initiatedByParticipantID,
+      let triggerMessageID = payload.triggerMessageID,
+      let addressedTargetKindRawValue = payload.addressedTargetKind,
+      let addressedTargetReferenceID = payload.addressedTargetReferenceID,
+      let resolvedWorkspacePersonaInstanceID = payload.resolvedWorkspacePersonaInstanceID,
+      let responseModeRawValue = payload.responseMode
+    else {
+      return current
+    }
+
+    return current + [
+      OrbitPersonaActivationRecord(
+        id: activationID,
+        initiatedByParticipantType: try decodeEnum(
+          OrbitParticipantAuthorType.self,
+          from: initiatedByParticipantTypeRawValue,
+          columnName: "initiatedByParticipantType"
+        ),
+        initiatedByParticipantID: initiatedByParticipantID,
+        workspaceID: event.workspaceID,
+        channelID: room.channel.id,
+        originPostID: event.postID ?? room.post.id,
+        originThreadID: event.threadID ?? room.thread.id,
+        triggerMessageID: triggerMessageID,
+        addressedTargetKind: try decodeEnum(
+          OrbitAddressedTargetKind.self,
+          from: addressedTargetKindRawValue,
+          columnName: "addressedTargetKind"
+        ),
+        addressedTargetReferenceID: addressedTargetReferenceID,
+        resolvedWorkspacePersonaInstanceID: resolvedWorkspacePersonaInstanceID,
+        responseMode: try decodeEnum(
+          OrbitCanonicalResponseMode.self,
+          from: responseModeRawValue,
+          columnName: "responseMode"
+        ),
+        createdAt: event.createdAt
+      )
+    ]
+  }
+
+  private static func mergedAgentRuns(
+    _ current: [OrbitAgentRunRecord],
+    payload: OrbitPhase1ActivationEventPayload
+  ) throws -> [OrbitAgentRunRecord] {
+    guard
+      let agentRunID = payload.agentRunID,
+      !current.contains(where: { $0.id == agentRunID }),
+      let activationID = payload.activationID,
+      let runnerKind = payload.runnerKind,
+      let agentRunStatusRawValue = payload.agentRunStatus,
+      let agentRunStartedAt = payload.agentRunStartedAt
+    else {
+      return current
+    }
+
+    return current + [
+      OrbitAgentRunRecord(
+        id: agentRunID,
+        personaActivationID: activationID,
+        runnerKind: runnerKind,
+        status: try decodeEnum(
+          OrbitAgentRunStatus.self,
+          from: agentRunStatusRawValue,
+          columnName: "agentRunStatus"
+        ),
+        startedAt: agentRunStartedAt,
+        completedAt: payload.agentRunCompletedAt,
+        failureReason: payload.reason
+      )
+    ]
   }
 }

@@ -34,10 +34,16 @@ enum OrbitServerBackedRoomClientFactory {
     let pollingService = OrbitPhase1RealtimePollingSessionService(adapter: subscriptionAdapter)
     let transport = OrbitPhase1RealtimeTransportAdapter(pollingService: pollingService)
     let roomWriter = OrbitPhase1RoomWriteService(runtimeStore: runtimeStore)
+    let systemWriter = OrbitPhase1SystemMessageService(runtimeStore: runtimeStore)
+    let failureWriter = OrbitPhase1ActivationFailureService(runtimeStore: runtimeStore)
+    let collaboratorWriter = OrbitPhase1CollaboratorResponseService(runtimeStore: runtimeStore)
 
     return OrbitServerBackedRoomClient(
       transport: transport,
-      roomWriter: roomWriter
+      roomWriter: roomWriter,
+      systemWriter: systemWriter,
+      failureWriter: failureWriter,
+      collaboratorWriter: collaboratorWriter
     )
   }
 }

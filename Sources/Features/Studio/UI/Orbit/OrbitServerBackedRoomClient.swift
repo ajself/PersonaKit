@@ -5,10 +5,22 @@ struct OrbitServerBackedRoomClient: Sendable {
   let connectHandler: @Sendable (OrbitPhase1RealtimeSubscriptionScope) async throws -> OrbitPhase1RealtimeTransportResponse
   let pollHandler: @Sendable (OrbitPhase1RealtimeSession) async throws -> OrbitPhase1RealtimeTransportResponse
   let appendHandler: @Sendable (OrbitPhase1AppendUserMessageRequest) async throws -> OrbitPhase1AppendUserMessageResult
+  let appendSystemHandler: @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult
+  let appendCollaboratorHandler: @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult
+  let appendFailureHandler: @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
 
-  init<Transport: OrbitPhase1RealtimeTransportServing, Writer: OrbitPhase1RoomWriteServing>(
+  init<
+    Transport: OrbitPhase1RealtimeTransportServing,
+    Writer: OrbitPhase1RoomWriteServing,
+    SystemWriter: OrbitPhase1SystemMessageServing,
+    FailureWriter: OrbitPhase1ActivationFailureServing,
+    CollaboratorWriter: OrbitPhase1CollaboratorResponseServing
+  >(
     transport: Transport,
-    roomWriter: Writer
+    roomWriter: Writer,
+    systemWriter: SystemWriter,
+    failureWriter: FailureWriter,
+    collaboratorWriter: CollaboratorWriter
   ) {
     self.connectHandler = { scope in
       try await transport.connect(
@@ -22,6 +34,15 @@ struct OrbitServerBackedRoomClient: Sendable {
     }
     self.appendHandler = { request in
       try await roomWriter.appendUserMessage(request)
+    }
+    self.appendSystemHandler = { request in
+      try await systemWriter.appendSystemMessage(request)
+    }
+    self.appendCollaboratorHandler = { request in
+      try await collaboratorWriter.appendCollaboratorResponse(request)
+    }
+    self.appendFailureHandler = { request in
+      try await failureWriter.appendActivationFailure(request)
     }
   }
 
@@ -41,5 +62,23 @@ struct OrbitServerBackedRoomClient: Sendable {
     _ request: OrbitPhase1AppendUserMessageRequest
   ) async throws -> OrbitPhase1AppendUserMessageResult {
     try await appendHandler(request)
+  }
+
+  func appendSystemMessage(
+    _ request: OrbitPhase1AppendSystemMessageRequest
+  ) async throws -> OrbitPhase1AppendSystemMessageResult {
+    try await appendSystemHandler(request)
+  }
+
+  func appendCollaboratorResponse(
+    _ request: OrbitPhase1AppendCollaboratorResponseRequest
+  ) async throws -> OrbitPhase1AppendCollaboratorResponseResult {
+    try await appendCollaboratorHandler(request)
+  }
+
+  func appendActivationFailure(
+    _ request: OrbitPhase1AppendActivationFailureRequest
+  ) async throws -> OrbitPhase1AppendActivationFailureResult {
+    try await appendFailureHandler(request)
   }
 }

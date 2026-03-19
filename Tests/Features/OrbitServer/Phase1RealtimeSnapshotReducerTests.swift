@@ -110,6 +110,53 @@ struct Phase1RealtimeSnapshotReducerTests {
     #expect(reduced.room.postEvents.last?.eventType == OrbitPhase1RealtimeEventCategory.activationFailed.rawValue)
   }
 
+  @Test
+  func reducerRestoresActivationAndAgentRunFromResolvedActivationEvent() throws {
+    let initial = sampleSnapshot()
+    let activationID = UUID(uuidString: "99999999-9999-9999-9999-999999999999")!
+    let agentRunID = UUID(uuidString: "abababab-abab-abab-abab-abababababab")!
+    let workspacePersonaID = UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!
+    let triggerMessageID = UUID(uuidString: "12121212-1212-1212-1212-121212121212")!
+    let activationDate = Date(timeIntervalSince1970: 1_742_342_520)
+    let event = OrbitPhase1RealtimeEventEnvelope(
+      id: activationID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .activationResolved,
+      createdAt: activationDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ActivationEventPayload(
+          activationID: activationID,
+          initiatedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: triggerMessageID,
+          addressedTargetKind: OrbitAddressedTargetKind.collaborator.rawValue,
+          addressedTargetReferenceID: workspacePersonaID.uuidString,
+          resolvedWorkspacePersonaInstanceID: workspacePersonaID,
+          responseMode: OrbitCanonicalResponseMode.directAddress.rawValue,
+          agentRunID: agentRunID,
+          runnerKind: "local-bridge",
+          agentRunStatus: OrbitAgentRunStatus.completed.rawValue,
+          agentRunStartedAt: activationDate,
+          agentRunCompletedAt: activationDate
+        )
+      )
+    )
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(
+      events: [event],
+      to: initial
+    )
+
+    #expect(reduced.room.personaActivations.count == 1)
+    #expect(reduced.room.personaActivations.first?.id == activationID)
+    #expect(reduced.room.personaActivations.first?.resolvedWorkspacePersonaInstanceID == workspacePersonaID)
+    #expect(reduced.room.agentRuns.count == 1)
+    #expect(reduced.room.agentRuns.first?.id == agentRunID)
+    #expect(reduced.room.postEvents.last?.id == activationID)
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let room = OrbitPhase1RoomSnapshot(
       workspace: OrbitWorkspaceRecord(
@@ -128,6 +175,16 @@ struct Phase1RealtimeSnapshotReducerTests {
         status: .active,
         createdAt: Date(timeIntervalSince1970: 1_742_342_400)
       ),
+      workspacePersonas: [
+        OrbitWorkspacePersonaRecord(
+          id: UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!,
+          workspaceID: workspaceID,
+          personaTemplateID: "samwise",
+          displayName: "Samwise",
+          status: .active,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_405)
+        )
+      ],
       post: OrbitPostRecord(
         id: postID,
         workspaceID: workspaceID,

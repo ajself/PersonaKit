@@ -44,7 +44,15 @@ struct Phase1CollaboratorResponseServiceTests {
         addressedTargetKind: .collaborator,
         addressedTargetReferenceID: workspacePersonaID.uuidString,
         responseMode: .directAddress,
-        body: "Canonical collaborator response"
+        body: "Canonical collaborator response",
+        contract: OrbitPhase1ResolvedContractPayload(
+          directiveID: "maintain-partner-sync-and-handoffs",
+          directiveSource: "participantDefault",
+          kitIDs: ["trusted-partner-core"],
+          authorizedSkillIDs: ["codex-cli"],
+          requiredSkillIDs: ["codex-cli"],
+          reviewGateIDs: ["intent:partner-sync-review"]
+        )
       )
     )
 
@@ -58,6 +66,10 @@ struct Phase1CollaboratorResponseServiceTests {
     #expect(eventCategories.contains(.messageCreated))
     #expect(eventCategories.contains(.threadActivityUpdated))
     #expect(eventCategories.contains(.activationResolved))
+    let payload = try #require(await recorder.postEventPayload)
+    #expect(payload.contract?.directiveID == "maintain-partner-sync-and-handoffs")
+    #expect(payload.contract?.kitIDs == ["trusted-partner-core"])
+    #expect(payload.contract?.reviewGateIDs == ["intent:partner-sync-review"])
     #expect(result.snapshot.messages.count == 2)
     #expect(result.snapshot.personaActivations.count == 1)
     #expect(result.snapshot.agentRuns.count == 1)
@@ -199,6 +211,7 @@ private actor CollaboratorAppendRecorder {
   var agentRun: OrbitAgentRunRecord?
   var postEvent: OrbitPostEventRecord?
   var realtimeEvents = [OrbitRealtimeEventRecord]()
+  var postEventPayload: OrbitPhase1ActivationEventPayload?
 
   func record(
     workspaceID: UUID,
@@ -214,5 +227,9 @@ private actor CollaboratorAppendRecorder {
     self.agentRun = agentRun
     self.postEvent = postEvent
     self.realtimeEvents = realtimeEvents
+    self.postEventPayload = try? OrbitPhase1RealtimeEventPayloadCodec.decode(
+      OrbitPhase1ActivationEventPayload.self,
+      from: postEvent.payloadJSON
+    )
   }
 }
