@@ -37,6 +37,38 @@ They should not treat runtime complexity as permission to revisit the core stack
 - `Canonical-Runtime-Contract.md`
   ownership boundary, minimum server-owned records, and client/server rules for
   canonical runtime truth
+- `Canonical-Runtime-Boundary-Audit-Note.md`
+  Packet 1 architecture review artifact comparing the accepted canonical contract
+  to the current local Orbit runtime
+- `Stack-Conformance-Review-Note.md`
+  Packet 1 stack-fidelity artifact confirming the repo is still aligned to the
+  approved `Swift + Vapor + Postgres` posture
+- `Schema-And-Event-Model-Note.md`
+  Packet 1 mapping note for the minimum runtime schema and initial durable event
+  categories
+- `Phase-1-Persistence-Bootstrap-Note.md`
+  early Packet 2 artifact for the raw-SQL schema migrator and first canonical
+  repository layer
+- `Realtime-Projection-Contract-Note.md`
+  early Packet 3 artifact freezing the event envelope, replay cursor, and
+  ordering semantics before transport work begins
+- `Realtime-Feed-And-Replay-Service-Note.md`
+  early Packet 3 artifact for the transport-agnostic feed service that decides
+  bootstrap, replay, no-change, and resync behavior
+- `Database-Backed-Replay-Loader-Note.md`
+  Packet 3 artifact for the database-backed event projection and transport-
+  neutral subscription handshake layer
+- `Polling-Session-Recovery-Note.md`
+  Packet 3 artifact for stale-client recovery and polling/session semantics
+- `Transport-Adapter-Contract-Note.md`
+  Packet 3 artifact for the thin transport-facing request/response layer over the
+  polling/session service
+- `Artifact-Storage-Boundary-Note.md`
+  Packet 4 artifact for the object-style storage abstraction and replaceable
+  filesystem backend
+- `macOS-Cutover-Projection-Note.md`
+  early Packet 5 artifact for the client-side projection seam from canonical room
+  truth into the Orbit macOS room model
 - `Migration-Cut-Plan.md`
   ordered migration sequence from local proving loop to server-backed runtime
 - `Golden-Canonical-Flow.md`
@@ -50,6 +82,16 @@ They should not treat runtime complexity as permission to revisit the core stack
   should not be answered implicitly in implementation
 - `Evidence-And-Exit-Criteria.md`
   milestone-close rules and proof requirements
+- `Architecture-Review-Artifact.md`
+  current architecture readout for the canonical-runtime backbone
+- `Reliability-Review-Artifact.md`
+  current replay, recovery, and write-discipline review readout
+- `Product-Continuity-Review-Artifact.md`
+  current product continuity readout for the server-backed room model
+- `Migration-Validation-Artifact.md`
+  deterministic validation readout for the current `M3` slice
+- `Review-Packet.md`
+  compact AJ review packet for the current canonical-runtime backbone progress
 
 ## Preconditions
 
@@ -244,11 +286,22 @@ Avoid:
 - canonical runtime contract note
 - stack-conformance review artifact
 - schema and event model note
+- canonical runtime boundary audit note
+- phase-1 persistence bootstrap note
+- realtime projection contract note
+- realtime feed and replay service note
+- database-backed replay loader note
+- polling session recovery note
+- transport adapter contract note
+- artifact storage boundary note
+- macOS cutover projection note
 - replay and reconnect test results
 - migration checklist for the macOS client
 - architecture review artifact
 - reliability review artifact
 - product continuity review artifact
+- migration validation artifact
+- review packet
 
 ## Stop Points
 

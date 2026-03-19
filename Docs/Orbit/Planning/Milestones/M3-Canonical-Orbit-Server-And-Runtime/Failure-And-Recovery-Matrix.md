@@ -43,3 +43,6 @@ Recovery should never favor:
 - guessed local truth
 - hidden silent fallback to client-owned state
 - pretending success where durability is not proven
+
+Current Packet 3 proof now covers explicit stale-client session recovery and
+database-backed snapshot/replay semantics before transport code is introduced.

@@ -26,6 +26,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
+    .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
     .package(
       url: "https://github.com/apple/swift-argument-parser",
       .upToNextMinor(from: "1.7.0")
@@ -69,6 +70,13 @@ let package = Package(
       path: "Sources/Features/MCP"
     ),
     .target(
+      name: "OrbitServerRuntime",
+      dependencies: [
+        .product(name: "PostgresNIO", package: "postgres-nio"),
+      ],
+      path: "Sources/Features/OrbitServerRuntime"
+    ),
+    .target(
       name: "StudioFoundation",
       dependencies: [
         "ContextCore",
@@ -81,6 +89,7 @@ let package = Package(
       dependencies: [
         "ContextCore",
         "ContextWorkspaceCore",
+        "OrbitServerRuntime",
         "StudioFoundation",
       ],
       path: "Sources/Features/Studio",
@@ -112,6 +121,7 @@ let package = Package(
         "ContextMCP",
         "ContextCore",
         "ContextWorkspaceCore",
+        "OrbitServerRuntime",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),

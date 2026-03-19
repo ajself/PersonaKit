@@ -27,17 +27,29 @@ If that sequence is weak, confusing, or under-evidenced, `M3` is not done.
 
 1. quality bar for canonical runtime migration
 2. canonical runtime contract
-3. migration cut plan
-4. golden canonical flow
-5. failure and recovery matrix
-6. validation and review matrix
-7. decision register
-8. stack-conformance review artifact
-9. architecture review artifact
-10. reliability review artifact
-11. product continuity review artifact
-12. migration or cutover validation artifact
-13. canonical closeout packet showing runtime, replay, and product continuity
+3. canonical runtime boundary audit note
+4. schema and event model note
+5. phase-1 persistence bootstrap note
+6. realtime projection contract note
+7. realtime feed and replay service note
+8. database-backed replay loader note
+9. polling session recovery note
+10. transport adapter contract note
+11. artifact storage boundary note
+12. macOS cutover projection note
+13. migration cut plan
+14. golden canonical flow
+15. failure and recovery matrix
+16. validation and review matrix
+17. decision register
+18. stack-conformance review artifact
+19. architecture review artifact
+20. reliability review artifact
+21. product continuity review artifact
+22. migration or cutover validation artifact
+23. current migration validation artifact
+24. current review packet for AJ
+25. canonical closeout packet showing runtime, replay, and product continuity
 
 ## Exit Checklist
 
@@ -98,6 +110,14 @@ containing:
 - the migration continuity summary for the macOS room
 
 If that packet does not feel sharp, `M3` should remain open.
+
+Before full closeout, AJ may also review an in-progress packet containing:
+
+- the current architecture review artifact
+- the current reliability review artifact
+- the current product continuity review artifact
+- the current migration validation artifact
+- the current `Review-Packet.md`
 
 If that packet is accepted, `M3` may close and construction should pause rather
 than rolling directly into `M4` or later milestones.

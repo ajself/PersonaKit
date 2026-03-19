@@ -55,6 +55,13 @@ Recommended default:
 - choose the simplest `Postgres`-backed relational shape that preserves
   reconstructibility and traceability for the phase-1 runtime slice
 
+Current Packet 2 direction:
+
+- AJ approved a raw-SQL-first `Postgres` persistence approach for the initial
+  phase-1 runtime slice
+- avoid introducing an ORM layer before the canonical record and migration shape
+  are fully frozen
+
 Decision owner:
 
 - `architectural-editor` and `studio-integration-coordinator`, with AJ review
@@ -213,6 +220,13 @@ Recommended default:
 
 - start from a self-hosted filesystem backend with a NAS-friendly direction and
   keep the abstraction honest and replaceable
+
+Current Packet 4 direction:
+
+- keep the storage boundary object-style from the start
+- use a replaceable filesystem-backed implementation first
+- treat NAS-backed storage as the intended operational posture for the first
+  self-hosted deployment shape
 
 Decision owner:
 
