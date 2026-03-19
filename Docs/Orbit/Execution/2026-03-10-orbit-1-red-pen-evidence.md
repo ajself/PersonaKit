@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Red-Pen Evidence
 
-Status: Draft
+Status: Accepted
 Owner: `samwise`
 Grounding: `samwise` + `apply-style`
 Date: 2026-03-18
@@ -56,3 +56,7 @@ Record the required red-pen passes for the active `M2` owners.
 
 The minimum red-pen requirement is met for the active owners used in this
 checkpoint closeout packet.
+
+Current disposition:
+
+- this red-pen evidence manifest is part of the accepted `M2` closeout packet

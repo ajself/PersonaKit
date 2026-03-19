@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Participant Evidence
 
-Status: Draft
+Status: Accepted
 Owner: `samwise`
 Grounding: `samwise` + `apply-style`
 Date: 2026-03-18
@@ -52,3 +52,7 @@ checkpoint closeout packet.
 
 The current checkpoint should be treated as having actual role-backed evidence,
 not only one blended implementation narrative.
+
+Current disposition:
+
+- this participant manifest is part of the accepted `M2` closeout packet

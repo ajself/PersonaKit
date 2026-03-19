@@ -1,6 +1,6 @@
 # Durable Conversation Re-Proof Note
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M2`
 Owner: `senior-swiftui-engineer`
 Review Ring: `studio-coverage-architect`

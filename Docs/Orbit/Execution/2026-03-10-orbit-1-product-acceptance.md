@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Product Acceptance
 
-Status: Draft
+Status: Accepted
 Owner: `venture-product-steward`
 Grounding: `venture-product-steward` + `apply-style`
 Date: 2026-03-18
@@ -79,3 +79,8 @@ Current Lane: `codex/orbit-m0`
 It should move to AJ review with notes, not because the room still reads like
 chat, but because the long-term Orbit collaboration model remains intentionally
 narrow at this checkpoint.
+
+Current disposition:
+
+- this product acceptance readout supported AJ approval of `M2` with explicit
+  accepted notes

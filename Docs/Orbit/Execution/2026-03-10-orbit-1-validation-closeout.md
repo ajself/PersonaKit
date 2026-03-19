@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Validation Closeout
 
-Status: Draft
+Status: Accepted
 Owner: `studio-coverage-architect`
 Grounding: `studio-coverage-architect` + `apply-style`
 Date: 2026-03-18
@@ -69,3 +69,8 @@ Commands run for the current checkpoint slice:
 The checkpoint is validation-ready for AJ review.
 
 The remaining risk is product judgment, not unexercised deterministic behavior.
+
+Current disposition:
+
+- this validation closeout supported AJ approval of `M2` as the local baseline
+  for `M3`

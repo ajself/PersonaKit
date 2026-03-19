@@ -1,6 +1,6 @@
 # Runtime Slice Re-Verification Note
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M2`
 Owner: `senior-swiftui-engineer`
 Review Ring: `studio-coverage-architect`

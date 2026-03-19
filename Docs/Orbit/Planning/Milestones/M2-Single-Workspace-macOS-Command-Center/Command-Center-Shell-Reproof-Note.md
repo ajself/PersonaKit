@@ -1,6 +1,6 @@
 # Command-Center Shell Re-Proof Note
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M2`
 Owner: `senior-swiftui-engineer`
 Review Ring: `venture-product-steward`, `studio-interaction-quality-lead`

@@ -1,6 +1,6 @@
 # Orbit Attempt 1 Retrospective
 
-Status: Draft
+Status: Accepted
 Owner: `samwise`
 Date: 2026-03-18
 Artifact Pattern: `2026-03-10-orbit-1`
@@ -68,3 +68,7 @@ Current Lane: `codex/orbit-m0`
 This attempt is materially healthier than the original Orbit foundation run.
 
 The room is now defended by real proof, not just a functional demo surface.
+
+Current disposition:
+
+- this retrospective is part of the accepted `M2` closeout packet

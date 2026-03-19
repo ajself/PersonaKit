@@ -261,6 +261,11 @@ Avoid:
 
 Exit when the local Orbit room is believable, attributable, and reviewed.
 
+Current disposition:
+
+- AJ approved `M2` as the local command-center baseline for `M3`
+- the accepted review packet is recorded in `Review-Packet.md`
+
 Handoff forward to:
 
 - `M3` with a stable local baseline to migrate

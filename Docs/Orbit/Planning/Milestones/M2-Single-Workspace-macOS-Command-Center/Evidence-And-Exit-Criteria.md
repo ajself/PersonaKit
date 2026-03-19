@@ -73,6 +73,11 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 - the compact review packet is strong enough that AJ can review `M2` without
   reconstructing all packet work from scratch
 
+Current disposition:
+
+- satisfied for the first-checkpoint review gate through AJ approval of `M2` as
+  the local command-center baseline for `M3`
+
 ## Residual Open Dependencies
 
 - `M2` still depends on `M1` being a trustworthy identity and activation
