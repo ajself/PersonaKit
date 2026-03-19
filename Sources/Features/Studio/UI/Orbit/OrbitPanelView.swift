@@ -8,9 +8,18 @@ struct OrbitPanelView: View {
 
   @State var orbitWorkspace = OrbitWorkspace.defaultWorkspace
   @State var draftMessageBody = ""
-  @State var addressedParticipantID = OrbitParticipantID.samwise.rawValue
+  @State var addressedParticipantID: String?
+  @State var expandedTraceMessageIDs: Set<String>
   @State var persistenceMessage: String?
   @State var persistenceIsError = false
+
+  init(
+    workspaceStore: WorkspaceStore,
+    initialExpandedTraceMessageIDs: Set<String> = []
+  ) {
+    self.workspaceStore = workspaceStore
+    _expandedTraceMessageIDs = State(initialValue: initialExpandedTraceMessageIDs)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {

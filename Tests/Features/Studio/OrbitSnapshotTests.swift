@@ -37,6 +37,94 @@
       )
     }
 
+    func testOrbitEmptyWorkspace() throws {
+      var workspace = OrbitWorkspace.defaultWorkspace
+      workspace.threads = workspace.threads.map { thread in
+        OrbitConversationThread(
+          id: thread.id,
+          title: thread.title,
+          interactionMode: thread.interactionMode,
+          createdSequence: thread.createdSequence,
+          updatedSequence: thread.updatedSequence,
+          messages: []
+        )
+      }
+      workspace.activationRecords = []
+      workspace.activationContractSnapshots = []
+      workspace.activationFailureRecords = []
+      workspace.nextMessageSequence = 1
+      workspace.nextActivationSequence = 1
+      workspace.nextActivationFailureSequence = 1
+
+      let workspaceURL = try makeWorkspace(with: workspace)
+
+      let store = WorkspaceStore()
+      store.workspaceURL = workspaceURL
+      let view = makeHostingView(
+        workspaceStore: store,
+        width: 1500,
+        height: 920
+      )
+
+      assertSnapshot(
+        of: view,
+        as: .image,
+        named: "orbit-empty-workspace"
+      )
+    }
+
+    func testOrbitDirectAddressConversation() throws {
+      var workspace = OrbitWorkspace.defaultWorkspace
+      workspace.appendConversationTurn(
+        body: "Samwise, anchor the next Orbit checkpoint step.",
+        addressedParticipantID: OrbitParticipantID.samwise.rawValue
+      )
+
+      let workspaceURL = try makeWorkspace(with: workspace)
+
+      let store = WorkspaceStore()
+      store.workspaceURL = workspaceURL
+      let view = makeHostingView(
+        workspaceStore: store,
+        width: 1500,
+        height: 920
+      )
+
+      assertSnapshot(
+        of: view,
+        as: .image,
+        named: "orbit-direct-address-conversation"
+      )
+    }
+
+    func testOrbitDirectAddressTraceExpanded() throws {
+      var workspace = OrbitWorkspace.defaultWorkspace
+      let createdMessages = workspace.appendConversationTurn(
+        body: "Samwise, explain why this response happened.",
+        addressedParticipantID: OrbitParticipantID.samwise.rawValue
+      )
+      let responseMessageID = try XCTUnwrap(
+        createdMessages.last(where: { $0.kind == .participantResponse })?.id
+      )
+
+      let workspaceURL = try makeWorkspace(with: workspace)
+
+      let store = WorkspaceStore()
+      store.workspaceURL = workspaceURL
+      let view = makeHostingView(
+        workspaceStore: store,
+        width: 1500,
+        height: 920,
+        initialExpandedTraceMessageIDs: [responseMessageID]
+      )
+
+      assertSnapshot(
+        of: view,
+        as: .image,
+        named: "orbit-direct-address-trace-expanded"
+      )
+    }
+
     func testOrbitMeetingConversation() throws {
       var workspace = OrbitWorkspace.defaultWorkspace
       workspace.appendConversationTurn(
@@ -67,22 +155,9 @@
       let fileManager = FileManager.default
       let workspaceURL = fileManager.temporaryDirectory
         .appendingPathComponent("orbit-snapshot-\(UUID().uuidString)", isDirectory: true)
-      let orbitDirectory =
-        workspaceURL
-        .appendingPathComponent(".personakit", isDirectory: true)
-        .appendingPathComponent("Orbit", isDirectory: true)
-      let orbitFileURL =
-        orbitDirectory.appendingPathComponent("orbit-workspace.json", isDirectory: false)
 
-      try fileManager.createDirectory(
-        at: orbitDirectory,
-        withIntermediateDirectories: true
-      )
-
-      let encoder = JSONEncoder()
-      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-      let data = try encoder.encode(orbitWorkspace)
-      try data.write(to: orbitFileURL, options: .atomic)
+      try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+      try OrbitWorkspacePersistence().persist(orbitWorkspace, to: workspaceURL)
 
       return workspaceURL.standardizedFileURL
     }
@@ -90,9 +165,13 @@
     private func makeHostingView(
       workspaceStore: WorkspaceStore,
       width: CGFloat,
-      height: CGFloat
+      height: CGFloat,
+      initialExpandedTraceMessageIDs: Set<String> = []
     ) -> NSView {
-      let rootView = OrbitPanelView(workspaceStore: workspaceStore)
+      let rootView = OrbitPanelView(
+        workspaceStore: workspaceStore,
+        initialExpandedTraceMessageIDs: initialExpandedTraceMessageIDs
+      )
         .frame(width: width, height: height)
       let hostingView = NSHostingView(rootView: rootView)
       hostingView.frame = CGRect(x: 0, y: 0, width: width, height: height)

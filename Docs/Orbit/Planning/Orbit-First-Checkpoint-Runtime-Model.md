@@ -198,6 +198,8 @@ The first checkpoint should persist:
 3. conversation thread record
 4. messages
 5. activation records
+6. activation contract snapshots
+7. activation failure records
 
 The first checkpoint may keep these derived at runtime:
 
@@ -229,6 +231,12 @@ A reasonable first choice is one small local store that can write and reload:
 - threads
 - messages
 - activation records
+- activation contract snapshots
+- activation failure records
+
+Current local proving-loop path:
+
+- `.personakit/Orbit/orbit-workspace.json`
 
 The specific storage technology should be chosen for implementation simplicity,
 not long-term platform ambition.

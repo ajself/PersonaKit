@@ -33,11 +33,15 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 6. product acceptance result
 7. interaction-quality review artifact
 8. snapshot-based visual proof for the room surface
-9. validation closeout artifact
-10. participant-evidence artifact
-11. red-pen evidence artifact
-12. retrospective closeout artifacts
-13. operator-visible proof that trace inspection is available from the room
+9. durable conversation re-proof note tied to restart behavior
+10. addressing and lightweight exchange re-proof note
+11. activation trace visibility re-proof note
+12. validation closeout artifact
+13. participant-evidence artifact
+14. red-pen evidence artifact
+15. retrospective closeout artifacts
+16. operator-visible proof that trace inspection is available from the room
+17. compact review packet that AJ can use to judge the checkpoint quickly
 
 ## Exit Checklist
 
@@ -48,9 +52,14 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 - AJ can start or continue a thread
 - the thread survives restart
 - speaker attribution remains intact after reload
+- the durable conversation re-proof note matches the current restart validation
 - direct addressing works in a reviewable way
 - lightweight multi-participant behavior is understandable enough to defend
+- the addressing and lightweight exchange re-proof note matches the current room
+  behavior and snapshot proof
 - activation trace is discoverable, useful, and lightweight
+- the activation trace visibility re-proof note matches the current room surface,
+  durable records, and snapshot proof
 - snapshot-based visual review exists for first-open, seeded or empty, and trace
   states that matter to Orbit identity
 - the room feels structurally different from generic chat
@@ -61,6 +70,8 @@ If that sequence is weak, confusing, or under-evidenced, `M2` is not done.
 - deterministic validation review passes
 - red-pen evidence exists for all active owners
 - retrospective closeout is complete
+- the compact review packet is strong enough that AJ can review `M2` without
+  reconstructing all packet work from scratch
 
 ## Residual Open Dependencies
 

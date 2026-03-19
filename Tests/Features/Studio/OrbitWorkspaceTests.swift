@@ -179,6 +179,34 @@ struct OrbitWorkspaceTests {
   }
 
   @Test
+  func currentThreadReplyUsesSingleVisibleStewardPath() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+
+    let createdMessages = try workspace.appendConversationTurnIfPersisted(
+      body: "Keep the active Orbit thread moving.",
+      addressedParticipantID: nil,
+      resolveContract: { participant in
+        try OrbitContractResolver.resolve(
+          participant: participant,
+          workspaceURL: orbitRepositoryRootURL()
+        )
+      },
+      persist: { _ in }
+    )
+
+    #expect(createdMessages.count == 2)
+
+    let responseMessage = try #require(createdMessages.last)
+    let activation = try #require(workspace.activationRecord(for: responseMessage.id))
+
+    #expect(responseMessage.kind == .participantResponse)
+    #expect(responseMessage.speakerParticipantID == OrbitParticipantID.samwise.rawValue)
+    #expect(activation.triggerSource == .generalThreadReply)
+    #expect(activation.responseMode == .directMessage)
+    #expect(workspace.activeThread?.messages.contains { $0.kind == .systemEvent } == false)
+  }
+
+  @Test
   func persistenceFailureDoesNotPublishConversationTurn() throws {
     let originalWorkspace = OrbitWorkspace.defaultWorkspace
     var workspace = originalWorkspace

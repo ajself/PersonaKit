@@ -70,6 +70,7 @@ Expected state:
 - AJ can inspect lightweight trace information for the response
 - the trace shows enough to answer why the response happened
 - the trace does not dominate the screen or require leaving the command center
+- the trace affordance is visible even when the detailed trace is collapsed
 
 At minimum the trace should reveal:
 

@@ -28,7 +28,11 @@ extension OrbitPanelView {
       )
     }
 
-    return [addressedParticipantID]
+    guard let addressedParticipantID else {
+      return []
+    }
+
+    return Set([addressedParticipantID])
   }
 
   var activeThread: OrbitConversationThread? {
@@ -37,38 +41,92 @@ extension OrbitPanelView {
 
   var workspaceHeaderCard: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(orbitWorkspace.displayName)
-        .font(.system(size: 28, weight: .semibold))
+      Text("Orbit Command Center")
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+        .textCase(.uppercase)
+
+      HStack(alignment: .firstTextBaseline, spacing: 12) {
+        Text(orbitWorkspace.displayName)
+          .font(.system(size: 30, weight: .semibold))
+
+        Text("Workspace boundary")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 4)
+          .background(Color.accentColor.opacity(0.12), in: Capsule())
+      }
 
       Text(orbitWorkspace.purpose)
         .font(.body)
         .foregroundStyle(.secondary)
+
+      HStack(spacing: 8) {
+        shellSummaryPill(
+          icon: "person.3.fill",
+          title: "Roster",
+          value: "\(sortedParticipants.count) collaborators"
+        )
+
+        shellSummaryPill(
+          icon: "bubble.left.and.bubble.right.fill",
+          title: "Discussion",
+          value: activeThread?.interactionMode.displayText ?? "No active thread"
+        )
+
+        shellSummaryPill(
+          icon: "scope",
+          title: "Trace",
+          value: "Inspectable"
+        )
+      }
 
       if let activeThread {
         HStack(spacing: 10) {
           Label(activeThread.title, systemImage: "bubble.left.and.bubble.right")
             .font(.subheadline.weight(.medium))
 
-          Text(activeThread.interactionMode.displayText)
+          Text("\(activeThread.messages.count) turns")
             .font(.caption.weight(.medium))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(Color.secondary.opacity(0.12), in: Capsule())
+            .background(Color.secondary.opacity(0.10), in: Capsule())
         }
       }
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
+    .background(
+      LinearGradient(
+        colors: [
+          Color.accentColor.opacity(0.10),
+          Color(nsColor: .controlBackgroundColor),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      ),
+      in: RoundedRectangle(cornerRadius: 18)
+    )
+    .overlay {
+      RoundedRectangle(cornerRadius: 18)
+        .stroke(Color.accentColor.opacity(0.18), lineWidth: 1)
+    }
     .padding(.horizontal, 16)
     .padding(.top, 12)
   }
 
   var rosterCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("Founding Group")
-        .font(.headline)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Founding Roster")
+          .font(.headline)
+
+        Text("Persistent collaborators in the Orbit workspace.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
 
       HStack(alignment: .top, spacing: 12) {
         ForEach(sortedParticipants) { participant in
@@ -80,15 +138,37 @@ extension OrbitPanelView {
 
               Text(participant.displayName)
                 .font(.subheadline.weight(.semibold))
+
+              Spacer(minLength: 0)
+
+              if activeParticipantIDs.contains(participant.id) {
+                shellStatusBadge(
+                  title: "Recent",
+                  tint: color(for: participant).opacity(0.18),
+                  foreground: color(for: participant)
+                )
+              }
             }
 
             Text(participant.roleLabel)
               .font(.caption)
               .foregroundStyle(.secondary)
 
-            Text(participant.availability.displayText)
-              .font(.caption.weight(.medium))
-              .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+              shellStatusBadge(
+                title: participant.availability.displayText,
+                tint: Color.secondary.opacity(0.10),
+                foreground: .secondary
+              )
+
+              if addressedParticipantIDs.contains(participant.id) {
+                shellStatusBadge(
+                  title: "Addressed",
+                  tint: Color.accentColor.opacity(0.14),
+                  foreground: .accentColor
+                )
+              }
+            }
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(12)
@@ -111,14 +191,44 @@ extension OrbitPanelView {
 
   var conversationCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("Conversation")
-        .font(.headline)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Active Discussion")
+          .font(.headline)
+
+        Text("One durable room thread with visible speaker attribution and lightweight trace context.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
 
       if let activeThread {
-        ScrollView {
-          LazyVStack(alignment: .leading, spacing: 12) {
-            ForEach(activeThread.messages.sorted { $0.order < $1.order }) { message in
-              messageCard(message)
+        if activeThread.messages.isEmpty {
+          emptyConversationState(activeThread: activeThread)
+        } else {
+          HStack(spacing: 8) {
+            shellStatusBadge(
+              title: activeThread.title,
+              tint: Color.accentColor.opacity(0.12),
+              foreground: .accentColor
+            )
+
+            shellStatusBadge(
+              title: "\(activeThread.messages.count) turns",
+              tint: Color.secondary.opacity(0.10),
+              foreground: .secondary
+            )
+
+            shellStatusBadge(
+              title: activeThread.interactionMode.displayText,
+              tint: Color.secondary.opacity(0.10),
+              foreground: .secondary
+            )
+          }
+
+          ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+              ForEach(activeThread.messages.sorted { $0.order < $1.order }) { message in
+                messageCard(message)
+              }
             }
           }
         }
@@ -146,6 +256,7 @@ extension OrbitPanelView {
       orbitWorkspace.activationContractSnapshot(for: $0.id)
     }
     let activationFailure = orbitWorkspace.activationFailureRecordForSystemEvent(message.id)
+    let accentColor = messageAccentColor(for: speaker, kind: message.kind)
 
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
@@ -160,9 +271,17 @@ extension OrbitPanelView {
           .background(Color.secondary.opacity(0.12), in: Capsule())
 
         if let addressLabel = addressLabel(for: message.addressedParticipantID) {
-          Text("to \(addressLabel)")
+          Text(message.kind == .participantResponse ? "for \(addressLabel)" : "to \(addressLabel)")
             .font(.caption)
             .foregroundStyle(.secondary)
+        }
+
+        if let activation {
+          shellStatusBadge(
+            title: activation.triggerSource.displayText,
+            tint: Color.secondary.opacity(0.10),
+            foreground: .secondary
+          )
         }
       }
 
@@ -171,58 +290,91 @@ extension OrbitPanelView {
         .textSelection(.enabled)
 
       if let activation {
-        VStack(alignment: .leading, spacing: 4) {
-          Text("Activation Trace")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-
-          ForEach(activation.traceSummaryLines(contractSnapshot: contractSnapshot), id: \.self) { line in
-            Text(line)
-              .font(.caption.monospaced())
-              .foregroundStyle(.secondary)
+        DisclosureGroup(
+          isExpanded: traceDisclosureBinding(for: message.id)
+        ) {
+          VStack(alignment: .leading, spacing: 4) {
+            ForEach(activation.traceSummaryLines(contractSnapshot: contractSnapshot), id: \.self) { line in
+              Text(line)
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+            }
           }
+          .padding(.top, 4)
+        } label: {
+          traceDisclosureLabel(
+            title: "Why this response?",
+            subtitle: activation.triggerSource.displayText
+          )
         }
       }
 
       if let activationFailure {
-        VStack(alignment: .leading, spacing: 4) {
-          Text("Blocked Activation")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-
-          ForEach(activationFailure.traceSummaryLines, id: \.self) { line in
-            Text(line)
-              .font(.caption.monospaced())
-              .foregroundStyle(.secondary)
+        DisclosureGroup(
+          isExpanded: traceDisclosureBinding(for: message.id)
+        ) {
+          VStack(alignment: .leading, spacing: 4) {
+            ForEach(activationFailure.traceSummaryLines, id: \.self) { line in
+              Text(line)
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+            }
           }
+          .padding(.top, 4)
+        } label: {
+          traceDisclosureLabel(
+            title: "Why blocked?",
+            subtitle: activationFailure.failureReason.displayText
+          )
         }
       }
     }
     .padding(12)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    .overlay(alignment: .leading) {
+      RoundedRectangle(cornerRadius: 12)
+        .fill(accentColor)
+        .frame(width: 4)
+        .padding(.vertical, 6)
+    }
   }
 
   var composerCard: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("New Message")
-        .font(.headline)
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Send Into Orbit")
+          .font(.headline)
+
+        Text("Choose the current thread, one collaborator, or the founding group.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
 
       Picker(
         "Address",
         selection: $addressedParticipantID
       ) {
+        Text("Current Thread")
+          .tag(nil as String?)
+
         Text(OrbitAddressTargetID.foundingGroup.displayText)
-          .tag(OrbitAddressTargetID.foundingGroup.rawValue)
+          .tag(OrbitAddressTargetID.foundingGroup.rawValue as String?)
 
         ForEach(
           sortedParticipants.filter { $0.id != OrbitParticipantID.aj.rawValue }
         ) { participant in
           Text(participant.displayName)
-            .tag(participant.id)
+            .tag(participant.id as String?)
         }
       }
       .pickerStyle(.segmented)
+
+      Text(deliveryTargetSummary)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+
+      interactionRoutingCard
 
       TextField(
         "Message AJ wants to send into Orbit",
@@ -238,7 +390,7 @@ extension OrbitPanelView {
         Button {
           sendMessage()
         } label: {
-          Label(sendButtonTitle, systemImage: sendButtonSystemImage)
+          Label("Send Into Orbit", systemImage: "paperplane.fill")
         }
         .buttonStyle(.borderedProminent)
         .disabled(draftMessageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -294,20 +446,178 @@ extension OrbitPanelView {
     return orbitWorkspace.participant(id: addressedParticipantID)?.displayName
   }
 
-  var sendButtonTitle: String {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return "Invite Group"
+  var deliveryTargetSummary: String {
+    if addressedParticipantID == nil {
+      return "Delivery target: current thread"
     }
 
-    return "Send"
+    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
+      return "Delivery target: founding group"
+    }
+
+    return "Delivery target: \(addressLabel(for: addressedParticipantID) ?? "selected collaborator")"
   }
 
-  var sendButtonSystemImage: String {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return "person.3.sequence.fill"
+  @ViewBuilder
+  var interactionRoutingCard: some View {
+    switch addressedParticipantID {
+    case nil:
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Current thread routing")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+        Text("Orbit keeps the turn in the active room and routes the next response through the current thread steward so the exchange stays visible and reviewable.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+      .padding(10)
+      .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    case OrbitAddressTargetID.foundingGroup.rawValue:
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Lightweight exchange")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+        Text("Orbit records one meeting system event and then invites both visible AI collaborators into the same room thread.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+      .padding(10)
+      .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    default:
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Direct collaborator routing")
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(.secondary)
+        Text("Orbit sends this turn only to \(addressLabel(for: addressedParticipantID) ?? "the selected collaborator") and records the activation as a direct address.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+      .padding(10)
+      .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
     }
+  }
 
-    return "arrow.up.circle.fill"
+  func shellSummaryPill(
+    icon: String,
+    title: String,
+    value: String
+  ) -> some View {
+    Label {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.caption2.weight(.semibold))
+          .foregroundStyle(.secondary)
+        Text(value)
+          .font(.caption.weight(.medium))
+      }
+    } icon: {
+      Image(systemName: icon)
+        .font(.caption.weight(.semibold))
+    }
+    .padding(.horizontal, 10)
+    .padding(.vertical, 8)
+    .background(Color(nsColor: .windowBackgroundColor).opacity(0.92), in: RoundedRectangle(cornerRadius: 12))
+  }
+
+  func shellStatusBadge(
+    title: String,
+    tint: Color,
+    foreground: Color
+  ) -> some View {
+    Text(title)
+      .font(.caption.weight(.medium))
+      .foregroundStyle(foreground)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 4)
+      .background(tint, in: Capsule())
+  }
+
+  @ViewBuilder
+  func emptyConversationState(
+    activeThread: OrbitConversationThread
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Orbit is ready for the first room discussion.")
+        .font(.headline)
+
+      Text("Use the current thread for an open room turn, address one collaborator directly, or invite the founding group into a lightweight exchange.")
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+
+      HStack(spacing: 8) {
+        shellStatusBadge(
+          title: activeThread.title,
+          tint: Color.accentColor.opacity(0.12),
+          foreground: .accentColor
+        )
+
+        shellStatusBadge(
+          title: "Current thread ready",
+          tint: Color.secondary.opacity(0.10),
+          foreground: .secondary
+        )
+
+        shellStatusBadge(
+          title: OrbitAddressTargetID.foundingGroup.displayText,
+          tint: Color.secondary.opacity(0.10),
+          foreground: .secondary
+        )
+      }
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
+  }
+
+  func messageAccentColor(
+    for participant: OrbitParticipant?,
+    kind: OrbitMessageKind
+  ) -> Color {
+    switch kind {
+    case .user:
+      return Color.orange.opacity(0.75)
+    case .participantResponse:
+      if let participant {
+        return color(for: participant).opacity(0.85)
+      }
+      return Color.accentColor.opacity(0.75)
+    case .systemEvent:
+      return Color.secondary.opacity(0.55)
+    }
+  }
+
+  func traceDisclosureBinding(
+    for messageID: String
+  ) -> Binding<Bool> {
+    Binding(
+      get: {
+        expandedTraceMessageIDs.contains(messageID)
+      },
+      set: { isExpanded in
+        if isExpanded {
+          expandedTraceMessageIDs.insert(messageID)
+        } else {
+          expandedTraceMessageIDs.remove(messageID)
+        }
+      }
+    )
+  }
+
+  func traceDisclosureLabel(
+    title: String,
+    subtitle: String
+  ) -> some View {
+    HStack(spacing: 8) {
+      Text(title)
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+
+      shellStatusBadge(
+        title: subtitle,
+        tint: Color.secondary.opacity(0.10),
+        foreground: .secondary
+      )
+    }
   }
 
   func sendMessage() {

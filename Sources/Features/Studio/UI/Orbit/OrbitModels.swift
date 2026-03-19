@@ -802,6 +802,17 @@ enum OrbitActivationTriggerSource: String, Codable, Equatable {
   case directAddress
   case meetingInvocation
   case generalThreadReply
+
+  var displayText: String {
+    switch self {
+    case .directAddress:
+      return "Direct Address"
+    case .meetingInvocation:
+      return "Lightweight Meeting"
+    case .generalThreadReply:
+      return "Current Thread"
+    }
+  }
 }
 
 extension OrbitWorkspace {

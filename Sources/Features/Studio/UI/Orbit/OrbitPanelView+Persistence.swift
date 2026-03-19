@@ -12,6 +12,10 @@ enum OrbitWorkspacePersistenceError: LocalizedError {
 }
 
 extension OrbitPanelView {
+  var orbitPersistence: OrbitWorkspacePersistence {
+    OrbitWorkspacePersistence()
+  }
+
   func persistOrbitWorkspace(
     _ workspace: OrbitWorkspace
   ) throws {
@@ -19,35 +23,19 @@ extension OrbitPanelView {
       throw OrbitWorkspacePersistenceError.noWorkspaceSelected
     }
 
-    let directoryURL = orbitDirectoryURL(for: workspaceURL)
-    let fileURL = orbitWorkspaceFileURL(for: workspaceURL)
-    let fileManager = FileManager.default
-
-    try fileManager.createDirectory(
-      at: directoryURL,
-      withIntermediateDirectories: true
-    )
-
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let data = try encoder.encode(workspace)
-    try data.write(to: fileURL, options: [.atomic])
+    try orbitPersistence.persist(workspace, to: workspaceURL)
   }
 
   func orbitDirectoryURL(
     for workspaceURL: URL
   ) -> URL {
-    workspaceURL
-      .standardizedFileURL
-      .appendingPathComponent(".personakit", isDirectory: true)
-      .appendingPathComponent("Orbit", isDirectory: true)
+    orbitPersistence.directoryURL(for: workspaceURL)
   }
 
   func orbitWorkspaceFileURL(
     for workspaceURL: URL
   ) -> URL {
-    orbitDirectoryURL(for: workspaceURL)
-      .appendingPathComponent("orbit-workspace.json", isDirectory: false)
+    orbitPersistence.fileURL(for: workspaceURL)
   }
 
   func loadOrbitWorkspace() {
@@ -58,20 +46,15 @@ extension OrbitPanelView {
       return
     }
 
-    let fileURL = orbitWorkspaceFileURL(for: workspaceURL)
-    let fileManager = FileManager.default
-
-    guard fileManager.fileExists(atPath: fileURL.path()) else {
-      orbitWorkspace = .defaultWorkspace
-      persistOrbitWorkspace()
-      persistenceMessage = "Created default Orbit workspace data."
-      persistenceIsError = false
-      return
-    }
-
     do {
-      let data = try Data(contentsOf: fileURL)
-      let decodedWorkspace = try JSONDecoder().decode(OrbitWorkspace.self, from: data)
+      guard let decodedWorkspace = try orbitPersistence.loadWorkspace(from: workspaceURL) else {
+        orbitWorkspace = .defaultWorkspace
+        persistOrbitWorkspace()
+        persistenceMessage = "Created default Orbit workspace data."
+        persistenceIsError = false
+        return
+      }
+
       orbitWorkspace = decodedWorkspace
       persistenceMessage = nil
       persistenceIsError = false

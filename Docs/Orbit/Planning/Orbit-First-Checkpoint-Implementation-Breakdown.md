@@ -111,6 +111,7 @@ Why here:
 Current or target file:
 
 - `Sources/Features/Studio/UI/Orbit/OrbitPanelView+Persistence.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitWorkspacePersistence.swift`
 
 Responsibility:
 

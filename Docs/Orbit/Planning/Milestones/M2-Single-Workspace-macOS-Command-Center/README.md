@@ -35,6 +35,21 @@ satisfied.
 - `Command-Center-Experience-Bar.md`
   bespoke product and interaction quality bar for what must make the app feel
   like Orbit instead of chat
+- `Command-Center-Shell-Reproof-Note.md`
+  Packet 2 proof that first-open workspace, roster, discussion, and composer
+  shell still read as Orbit
+- `Addressing-And-Lightweight-Exchange-Reproof-Note.md`
+  Packet 4 proof that direct address and lightweight exchange remain visible,
+  narrow, and reviewable
+- `Activation-Trace-Visibility-Reproof-Note.md`
+  Packet 5 proof that trace inspection is discoverable from the room surface and
+  still lightweight enough for the checkpoint
+- `Durable-Conversation-Reproof-Note.md`
+  Packet 3 proof that the room survives reload with visible attribution in
+  seeded, empty, direct-address, and lightweight meeting conditions
+- `Runtime-Slice-Reverification-Note.md`
+  Packet 1 proof that the local runtime shape, persistence path, and default
+  workspace data still fit the accepted checkpoint
 - `Rerun-Execution-Contract.md`
   packet order, required participants, artifact outputs, and stop conditions for
   a serious `M2` attempt
@@ -42,6 +57,9 @@ satisfied.
   deterministic product walkthrough of a convincing first-checkpoint Orbit run
 - `Validation-And-Review-Matrix.md`
   feature, product, interaction, and evidence review matrix
+- `Review-Packet.md`
+  compact AJ review packet covering the current `M2` proof set and closeout
+  artifacts
 - `Evidence-And-Exit-Criteria.md`
   milestone-close rules and proof requirements
 
@@ -219,6 +237,11 @@ Avoid:
 
 ## Evidence Package
 
+- runtime slice re-verification note
+- command-center shell re-proof note
+- durable conversation re-proof note
+- addressing and lightweight exchange re-proof note
+- activation trace visibility re-proof note
 - deterministic persistence checks
 - restart verification notes
 - snapshot coverage
@@ -226,6 +249,7 @@ Avoid:
 - interaction-quality review artifact
 - validation closeout artifact
 - retrospective closeout artifact
+- review packet
 
 ## Stop Points
 
