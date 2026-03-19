@@ -86,14 +86,16 @@ Orbit must not mutate or redefine authored contract truth ad hoc.
   scopes in the no-memory local scaffold case
 - local runtime now persists blocked activation attempts as explicit failure
   records instead of dropping identity-sensitive failures silently
+- workspace-backed send flows now resolve live PersonaKit contract state before
+  publication instead of relying only on local checkpoint defaults
 
 These are safe to add now because they sharpen runtime attribution without
 forcing final contract-resolution or server schema choices.
 
 ## Current Drift Still To Resolve In Later `M1` Packets
 
-- the local contract snapshot is still scaffolded from checkpoint defaults rather
-  than live PersonaKit contract resolution
+- sample/default scaffolds still use checkpoint defaults when no workspace-backed
+  PersonaKit contract resolution is available
 - the current response bridge is deterministic local scaffolding, not live
   PersonaKit contract resolution
 - blocked activation records are now present, but the local scaffold still lacks

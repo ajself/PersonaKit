@@ -21,6 +21,8 @@ foundation without reconstructing the whole milestone thread.
   closed instead of degrading into fake collaborator replies
 - durable write failure blocks the turn before new attributable thread state is
   committed
+- workspace-backed send flows resolve live PersonaKit contract state before a
+  successful response is published
 - the Orbit UI exposes enough trace detail to review why a response was allowed
   or blocked in the local checkpoint
 
@@ -65,10 +67,10 @@ foundation without reconstructing the whole milestone thread.
 
 ## Honest Remaining Gaps
 
-- contract snapshots are still scaffolded from local checkpoint defaults instead
-  of live PersonaKit resolution
-- kits, stop points, review gates, and memory scopes are structurally present,
-  but currently represented as explicit empty sets in the local scaffold path
+- sample/default scaffolds still fall back to checkpoint defaults when no
+  workspace-backed PersonaKit contract resolution is available
+- memory scopes remain empty in the first checkpoint because the local Orbit slice
+  still does not reuse approved memory inputs
 - the current trace UI is sufficient for `M1` review, not the richer long-term
   Orbit inspection workflow
 

@@ -7,6 +7,14 @@ private enum OrbitWorkspaceTestPersistenceError: Error {
   case writeFailed
 }
 
+private func orbitRepositoryRootURL() -> URL {
+  URL(fileURLWithPath: #filePath)
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+}
+
 struct OrbitWorkspaceTests {
   @Test
   func workspaceRoundTripPreservesMessagesAndActivationTrace() throws {
@@ -122,9 +130,16 @@ struct OrbitWorkspaceTests {
   func directAddressCreatesParticipantResponseAndActivationTrace() throws {
     var workspace = OrbitWorkspace.defaultWorkspace
 
-    let createdMessages = workspace.appendConversationTurn(
+    let createdMessages = try workspace.appendConversationTurnIfPersisted(
       body: "Samwise, line up the next checkpoint step.",
-      addressedParticipantID: OrbitParticipantID.samwise.rawValue
+      addressedParticipantID: OrbitParticipantID.samwise.rawValue,
+      resolveContract: { participant in
+        try OrbitContractResolver.resolve(
+          participant: participant,
+          workspaceURL: orbitRepositoryRootURL()
+        )
+      },
+      persist: { _ in }
     )
 
     #expect(createdMessages.count == 2)
@@ -150,15 +165,15 @@ struct OrbitWorkspaceTests {
     #expect(activation.memorySourceRefs == [])
     #expect(contractSnapshot.id == "\(activation.id)-contract")
     #expect(contractSnapshot.directiveSource == .participantDefault)
-    #expect(contractSnapshot.kitIDs == [])
-    #expect(contractSnapshot.authorizedSkillIDs == [])
+    #expect(contractSnapshot.kitIDs == ["trusted-partner-core"])
+    #expect(contractSnapshot.authorizedSkillIDs == ["codex-cli"])
     #expect(contractSnapshot.stopPointIDs == [])
-    #expect(contractSnapshot.reviewGateIDs == [])
+    #expect(contractSnapshot.reviewGateIDs == ["intent:partner-sync-review"])
     #expect(contractSnapshot.memoryScopeIDs == [])
     #expect(traceLines.count == 3)
     #expect(traceLines[0].contains("workspace persona: workspace-persona-orbit-samwise"))
     #expect(traceLines[1].contains("directive: maintain-partner-sync-and-handoffs"))
-    #expect(traceLines[2].contains("contract: kits none | skills none"))
+    #expect(traceLines[2].contains("contract: kits trusted-partner-core | skills codex-cli"))
     #expect(workspace.activationFailureRecords == [])
     #expect(workspace.activeThread?.interactionMode == .directMessage)
   }
@@ -188,9 +203,16 @@ struct OrbitWorkspaceTests {
   func foundingGroupInvitationCreatesMeetingEventAndMultipleResponses() throws {
     var workspace = OrbitWorkspace.defaultWorkspace
 
-    let createdMessages = workspace.appendConversationTurn(
+    let createdMessages = try workspace.appendConversationTurnIfPersisted(
       body: "Founding group, align on the next Orbit checkpoint.",
-      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue,
+      resolveContract: { participant in
+        try OrbitContractResolver.resolve(
+          participant: participant,
+          workspaceURL: orbitRepositoryRootURL()
+        )
+      },
+      persist: { _ in }
     )
 
     #expect(createdMessages.count == 4)
@@ -221,11 +243,27 @@ struct OrbitWorkspaceTests {
     #expect(activationRecords.allSatisfy { $0.memorySourceRefs == [] })
     #expect(contractSnapshots.count == 2)
     #expect(contractSnapshots.allSatisfy { $0.directiveSource == .participantDefault })
-    #expect(contractSnapshots.allSatisfy { $0.kitIDs == [] })
-    #expect(contractSnapshots.allSatisfy { $0.authorizedSkillIDs == [] })
-    #expect(contractSnapshots.allSatisfy { $0.stopPointIDs == [] })
-    #expect(contractSnapshots.allSatisfy { $0.reviewGateIDs == [] })
+    #expect(contractSnapshots.allSatisfy { $0.authorizedSkillIDs == ["codex-cli"] })
     #expect(contractSnapshots.allSatisfy { $0.memoryScopeIDs == [] })
+
+    let snapshotsByActivationID = Dictionary(uniqueKeysWithValues: contractSnapshots.map { ($0.activationID, $0) })
+
+    for activation in activationRecords {
+      let contractSnapshot = try #require(snapshotsByActivationID[activation.id])
+
+      if activation.participantID == OrbitParticipantID.samwise.rawValue {
+        #expect(contractSnapshot.kitIDs == ["trusted-partner-core"])
+        #expect(contractSnapshot.stopPointIDs == [])
+        #expect(contractSnapshot.reviewGateIDs == ["intent:partner-sync-review"])
+      }
+
+      if activation.participantID == OrbitParticipantID.prodDoc.rawValue {
+        #expect(contractSnapshot.kitIDs == ["venture-product-core"])
+        #expect(contractSnapshot.stopPointIDs == ["Pause for AJ review before execution handoff."])
+        #expect(contractSnapshot.reviewGateIDs == ["intent:plan-macos-feature-delivery"])
+      }
+    }
+
     #expect(workspace.activationFailureRecords == [])
     #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
   }
@@ -407,13 +445,77 @@ struct OrbitWorkspaceTests {
     #expect(aiParticipants.count == 2)
     #expect(aiParticipants.allSatisfy { $0.workspacePersonaID != nil })
     #expect(aiParticipants.allSatisfy { $0.personaTemplateID != nil })
-    #expect(aiParticipants.allSatisfy { $0.requiredSkillIDs == [] })
-    #expect(aiParticipants.allSatisfy { $0.authorizedSkillIDs == [] })
+    #expect(aiParticipants.allSatisfy { $0.requiredSkillIDs == ["codex-cli"] })
+    #expect(aiParticipants.allSatisfy { $0.authorizedSkillIDs == ["codex-cli"] })
 
     let prodDoc = aiParticipants.first { $0.id == OrbitParticipantID.prodDoc.rawValue }
 
     #expect(prodDoc?.displayName == "ProdDoc")
     #expect(prodDoc?.workspacePersonaID == "workspace-persona-orbit-proddoc")
     #expect(prodDoc?.personaTemplateID == "venture-product-steward")
+  }
+
+  @Test
+  func contractResolverUsesLivePersonakitContractForSamwise() throws {
+    let participant = try #require(
+      OrbitWorkspace.defaultWorkspace.participants.first { $0.id == OrbitParticipantID.samwise.rawValue }
+    )
+
+    let contract = try OrbitContractResolver.resolve(
+      participant: participant,
+      workspaceURL: orbitRepositoryRootURL()
+    )
+
+    #expect(contract.directiveID == "maintain-partner-sync-and-handoffs")
+    #expect(contract.kitIDs == ["trusted-partner-core"])
+    #expect(contract.authorizedSkillIDs == ["codex-cli"])
+    #expect(contract.requiredSkillIDs == ["codex-cli"])
+    #expect(contract.reviewGateIDs == ["intent:partner-sync-review"])
+    #expect(contract.stopPointIDs == [])
+    #expect(contract.memoryScopeIDs == [])
+    #expect(contract.failureReasons == [])
+  }
+
+  @Test
+  func contractResolverUsesLivePersonakitContractForProdDocAlias() throws {
+    let participant = try #require(
+      OrbitWorkspace.defaultWorkspace.participants.first { $0.id == OrbitParticipantID.prodDoc.rawValue }
+    )
+
+    let contract = try OrbitContractResolver.resolve(
+      participant: participant,
+      workspaceURL: orbitRepositoryRootURL()
+    )
+
+    #expect(contract.directiveID == "run-venture-product-planning")
+    #expect(contract.kitIDs == ["venture-product-core"])
+    #expect(contract.authorizedSkillIDs == ["codex-cli"])
+    #expect(contract.requiredSkillIDs == ["codex-cli"])
+    #expect(contract.stopPointIDs == ["Pause for AJ review before execution handoff."])
+    #expect(contract.reviewGateIDs == ["intent:plan-macos-feature-delivery"])
+    #expect(contract.memoryScopeIDs == [])
+    #expect(contract.failureReasons == [])
+  }
+
+  @Test
+  func contractResolverFailsCleanlyWhenProjectScopeIsMissing() {
+    let participant = OrbitWorkspace.defaultWorkspace.participants[1]
+
+    let tempWorkspaceURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+      "orbit-m1-missing-scope",
+      isDirectory: true
+    )
+
+    do {
+      _ = try OrbitContractResolver.resolve(
+        participant: participant,
+        workspaceURL: tempWorkspaceURL
+      )
+      Issue.record("Expected missing project scope error")
+    } catch let error as OrbitContractResolutionError {
+      #expect(error == .missingProjectScope)
+    } catch {
+      Issue.record("Unexpected error: \(error)")
+    }
   }
 }

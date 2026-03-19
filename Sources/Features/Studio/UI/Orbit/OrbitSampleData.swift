@@ -27,8 +27,8 @@ extension OrbitWorkspace {
         participantType: .ai,
         personaTemplateID: "samwise",
         defaultDirectiveID: "maintain-partner-sync-and-handoffs",
-        requiredSkillIDs: [],
-        authorizedSkillIDs: [],
+        requiredSkillIDs: ["codex-cli"],
+        authorizedSkillIDs: ["codex-cli"],
         availability: .available,
         sortOrder: 2
       ),
@@ -40,8 +40,8 @@ extension OrbitWorkspace {
         participantType: .ai,
         personaTemplateID: "venture-product-steward",
         defaultDirectiveID: "run-venture-product-planning",
-        requiredSkillIDs: [],
-        authorizedSkillIDs: [],
+        requiredSkillIDs: ["codex-cli"],
+        authorizedSkillIDs: ["codex-cli"],
         availability: .available,
         sortOrder: 3
       ),
@@ -88,10 +88,10 @@ extension OrbitWorkspace {
         id: "act-0001-contract",
         activationID: "act-0001",
         directiveSource: .participantDefault,
-        kitIDs: [],
-        authorizedSkillIDs: [],
+        kitIDs: ["trusted-partner-core"],
+        authorizedSkillIDs: ["codex-cli"],
         stopPointIDs: [],
-        reviewGateIDs: [],
+        reviewGateIDs: ["intent:partner-sync-review"],
         memoryScopeIDs: []
       )
     ],

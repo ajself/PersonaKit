@@ -56,6 +56,27 @@ struct OrbitWorkspace: Codable, Equatable {
     body: String,
     addressedParticipantID: String?
   ) -> [OrbitMessage] {
+    let addressedParticipants = OrbitParticipantResponseBridge.addressedParticipants(
+      in: self,
+      addressedParticipantID: addressedParticipantID
+    )
+    let resolvedContractsByParticipantID = Dictionary(uniqueKeysWithValues: addressedParticipants.map {
+      ($0.id, Self.scaffoldedActivationContract(for: $0))
+    })
+
+    return appendConversationTurn(
+      body: body,
+      addressedParticipantID: addressedParticipantID,
+      resolvedContractsByParticipantID: resolvedContractsByParticipantID
+    )
+  }
+
+  @discardableResult
+  private mutating func appendConversationTurn(
+    body: String,
+    addressedParticipantID: String?,
+    resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract]
+  ) -> [OrbitMessage] {
     guard
       let threadIndex = threads.firstIndex(where: { $0.id == activeThreadID }),
       let triggerMessage = appendUserMessage(
@@ -79,6 +100,7 @@ struct OrbitWorkspace: Codable, Equatable {
     if let activationFailure = evaluateActivationFailure(
       addressedParticipantID: addressedParticipantID,
       addressedParticipants: addressedParticipants,
+      resolvedContractsByParticipantID: resolvedContractsByParticipantID,
       triggerSource: triggerSource,
       triggerMessageID: triggerMessage.id
     ) {
@@ -120,9 +142,14 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     for participant in addressedParticipants {
+      let resolvedContract =
+        resolvedContractsByParticipantID[participant.id]
+        ?? Self.scaffoldedActivationContract(for: participant)
+
       guard
         let responseMessage = appendParticipantResponse(
           participant,
+          resolvedContract: resolvedContract,
           triggerMessage: triggerMessage,
           triggerSource: triggerSource
         )
@@ -139,12 +166,18 @@ struct OrbitWorkspace: Codable, Equatable {
   mutating func appendConversationTurnIfPersisted(
     body: String,
     addressedParticipantID: String?,
+    resolveContract: ((OrbitParticipant) throws -> OrbitResolvedActivationContract)? = nil,
     persist: (OrbitWorkspace) throws -> Void
   ) throws -> [OrbitMessage] {
     var stagedWorkspace = self
+    let resolvedContractsByParticipantID = try stagedWorkspace.resolveActivationContracts(
+      addressedParticipantID: addressedParticipantID,
+      resolveContract: resolveContract
+    )
     let createdMessages = stagedWorkspace.appendConversationTurn(
       body: body,
-      addressedParticipantID: addressedParticipantID
+      addressedParticipantID: addressedParticipantID,
+      resolvedContractsByParticipantID: resolvedContractsByParticipantID
     )
 
     try persist(stagedWorkspace)
@@ -206,6 +239,7 @@ struct OrbitWorkspace: Codable, Equatable {
   private func evaluateActivationFailure(
     addressedParticipantID: String?,
     addressedParticipants: [OrbitParticipant],
+    resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract],
     triggerSource: OrbitActivationTriggerSource,
     triggerMessageID: String
   ) -> OrbitActivationFailureRecord? {
@@ -232,6 +266,10 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     for participant in addressedParticipants {
+      let resolvedContract =
+        resolvedContractsByParticipantID[participant.id]
+        ?? Self.scaffoldedActivationContract(for: participant)
+
       if participant.id == OrbitParticipantID.prodDoc.rawValue,
         participant.personaTemplateID != "venture-product-steward"
       {
@@ -242,12 +280,12 @@ struct OrbitWorkspace: Codable, Equatable {
           participantID: participant.id,
           workspacePersonaID: participant.workspacePersonaID,
           personaTemplateID: participant.personaTemplateID,
-          directiveID: participant.defaultDirectiveID,
+          directiveID: resolvedContract.directiveID,
           triggerSource: triggerSource,
           triggerMessageID: triggerMessageID,
           systemEventMessageID: nil,
-          requiredSkillIDs: [],
-          authorizedSkillIDs: [],
+          requiredSkillIDs: resolvedContract.requiredSkillIDs,
+          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .frozenProdDocAliasContradiction,
           systemEventBody: "Orbit blocked the activation because the frozen ProdDoc identity mapping does not match venture-product-steward."
         )
@@ -261,12 +299,12 @@ struct OrbitWorkspace: Codable, Equatable {
           participantID: participant.id,
           workspacePersonaID: nil,
           personaTemplateID: participant.personaTemplateID,
-          directiveID: participant.defaultDirectiveID,
+          directiveID: resolvedContract.directiveID,
           triggerSource: triggerSource,
           triggerMessageID: triggerMessageID,
           systemEventMessageID: nil,
-          requiredSkillIDs: [],
-          authorizedSkillIDs: participant.authorizedSkillIDs,
+          requiredSkillIDs: resolvedContract.requiredSkillIDs,
+          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingWorkspacePersona,
           systemEventBody: "Orbit blocked the activation because the collaborator is missing a stable workspace persona anchor."
         )
@@ -280,18 +318,18 @@ struct OrbitWorkspace: Codable, Equatable {
           participantID: participant.id,
           workspacePersonaID: participant.workspacePersonaID,
           personaTemplateID: nil,
-          directiveID: participant.defaultDirectiveID,
+          directiveID: resolvedContract.directiveID,
           triggerSource: triggerSource,
           triggerMessageID: triggerMessageID,
           systemEventMessageID: nil,
-          requiredSkillIDs: participant.requiredSkillIDs,
-          authorizedSkillIDs: participant.authorizedSkillIDs,
+          requiredSkillIDs: resolvedContract.requiredSkillIDs,
+          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingPersonaTemplate,
           systemEventBody: "Orbit blocked the activation because the collaborator is missing a PersonaKit persona-template mapping."
         )
       }
 
-      if participant.defaultDirectiveID == nil {
+      if resolvedContract.directiveID == nil {
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -303,18 +341,18 @@ struct OrbitWorkspace: Codable, Equatable {
           triggerSource: triggerSource,
           triggerMessageID: triggerMessageID,
           systemEventMessageID: nil,
-          requiredSkillIDs: participant.requiredSkillIDs,
-          authorizedSkillIDs: participant.authorizedSkillIDs,
+          requiredSkillIDs: resolvedContract.requiredSkillIDs,
+          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingDirective,
           systemEventBody: "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
         )
       }
 
-      let unauthorizedRequiredSkills = participant.requiredSkillIDs.filter {
-        !participant.authorizedSkillIDs.contains($0)
-      }
+      let unauthorizedRequiredSkills = resolvedContract.unauthorizedRequiredSkillIDs
 
-      if !unauthorizedRequiredSkills.isEmpty {
+      if !unauthorizedRequiredSkills.isEmpty || !resolvedContract.failureReasons.isEmpty {
+        let failureDetail = resolvedContract.failureReasons.first
+          ?? "the required skill posture is not authorized for this collaborator"
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -322,14 +360,14 @@ struct OrbitWorkspace: Codable, Equatable {
           participantID: participant.id,
           workspacePersonaID: participant.workspacePersonaID,
           personaTemplateID: participant.personaTemplateID,
-          directiveID: participant.defaultDirectiveID,
+          directiveID: resolvedContract.directiveID,
           triggerSource: triggerSource,
           triggerMessageID: triggerMessageID,
           systemEventMessageID: nil,
-          requiredSkillIDs: participant.requiredSkillIDs,
-          authorizedSkillIDs: participant.authorizedSkillIDs,
+          requiredSkillIDs: resolvedContract.requiredSkillIDs,
+          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .unauthorizedSkillPosture,
-          systemEventBody: "Orbit blocked the activation because the required skill posture is not authorized for this collaborator."
+          systemEventBody: "Orbit blocked the activation because \(failureDetail)."
         )
       }
     }
@@ -339,6 +377,7 @@ struct OrbitWorkspace: Codable, Equatable {
 
   private mutating func appendParticipantResponse(
     _ participant: OrbitParticipant,
+    resolvedContract: OrbitResolvedActivationContract,
     triggerMessage: OrbitMessage,
     triggerSource: OrbitActivationTriggerSource
   ) -> OrbitMessage? {
@@ -366,7 +405,7 @@ struct OrbitWorkspace: Codable, Equatable {
       participantID: participant.id,
       workspacePersonaID: participant.workspacePersonaID,
       personaTemplateID: participant.personaTemplateID,
-      directiveID: participant.defaultDirectiveID,
+      directiveID: resolvedContract.directiveID,
       responseMode: threads[threadIndex].interactionMode,
       triggerSource: triggerSource,
       triggerMessageID: triggerMessage.id,
@@ -379,12 +418,12 @@ struct OrbitWorkspace: Codable, Equatable {
       OrbitActivationContractSnapshot(
         id: Self.activationContractSnapshotID(for: activationID),
         activationID: activationID,
-        directiveSource: .participantDefault,
-        kitIDs: [],
-        authorizedSkillIDs: participant.authorizedSkillIDs,
-        stopPointIDs: [],
-        reviewGateIDs: [],
-        memoryScopeIDs: []
+        directiveSource: resolvedContract.directiveSource,
+        kitIDs: resolvedContract.kitIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        stopPointIDs: resolvedContract.stopPointIDs,
+        reviewGateIDs: resolvedContract.reviewGateIDs,
+        memoryScopeIDs: resolvedContract.memoryScopeIDs
       )
     )
     nextActivationSequence += 1
@@ -405,6 +444,42 @@ struct OrbitWorkspace: Codable, Equatable {
       addressedParticipantID: nil,
       body: body,
       kind: .systemEvent
+    )
+  }
+
+  private func resolveActivationContracts(
+    addressedParticipantID: String?,
+    resolveContract: ((OrbitParticipant) throws -> OrbitResolvedActivationContract)?
+  ) throws -> [String: OrbitResolvedActivationContract] {
+    let addressedParticipants = OrbitParticipantResponseBridge.addressedParticipants(
+      in: self,
+      addressedParticipantID: addressedParticipantID
+    )
+
+    if let resolveContract {
+      return try Dictionary(uniqueKeysWithValues: addressedParticipants.map { participant in
+        (participant.id, try resolveContract(participant))
+      })
+    }
+
+    return Dictionary(uniqueKeysWithValues: addressedParticipants.map { participant in
+      (participant.id, Self.scaffoldedActivationContract(for: participant))
+    })
+  }
+
+  private static func scaffoldedActivationContract(
+    for participant: OrbitParticipant
+  ) -> OrbitResolvedActivationContract {
+    OrbitResolvedActivationContract(
+      directiveID: participant.defaultDirectiveID,
+      directiveSource: .participantDefault,
+      kitIDs: [],
+      authorizedSkillIDs: participant.authorizedSkillIDs,
+      requiredSkillIDs: participant.requiredSkillIDs,
+      stopPointIDs: [],
+      reviewGateIDs: [],
+      memoryScopeIDs: [],
+      failureReasons: []
     )
   }
 
@@ -447,6 +522,22 @@ struct OrbitParticipant: Codable, Equatable, Identifiable {
   let authorizedSkillIDs: [String]
   let availability: OrbitParticipantAvailability
   let sortOrder: Int
+}
+
+struct OrbitResolvedActivationContract: Equatable {
+  let directiveID: String?
+  let directiveSource: OrbitDirectiveSource
+  let kitIDs: [String]
+  let authorizedSkillIDs: [String]
+  let requiredSkillIDs: [String]
+  let stopPointIDs: [String]
+  let reviewGateIDs: [String]
+  let memoryScopeIDs: [String]
+  let failureReasons: [String]
+
+  var unauthorizedRequiredSkillIDs: [String] {
+    requiredSkillIDs.filter { !authorizedSkillIDs.contains($0) }
+  }
 }
 
 enum OrbitParticipantType: String, Codable, Equatable {

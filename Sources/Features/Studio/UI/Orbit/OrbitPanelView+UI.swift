@@ -315,15 +315,29 @@ extension OrbitPanelView {
     var stagedWorkspace = orbitWorkspace
 
     do {
+      guard let workspaceURL = workspaceStore.workspaceURL else {
+        throw OrbitWorkspacePersistenceError.noWorkspaceSelected
+      }
+
       _ = try stagedWorkspace.appendConversationTurnIfPersisted(
         body: messageBody,
         addressedParticipantID: addressedParticipantID,
+        resolveContract: { participant in
+          try OrbitContractResolver.resolve(
+            participant: participant,
+            workspaceURL: workspaceURL
+          )
+        },
         persist: persistOrbitWorkspace
       )
       orbitWorkspace = stagedWorkspace
       draftMessageBody = ""
       persistenceMessage = nil
       persistenceIsError = false
+    } catch let error as OrbitContractResolutionError {
+      persistenceMessage =
+        "Orbit blocked the send because the collaborator contract could not be resolved: \(error.localizedDescription)"
+      persistenceIsError = true
     } catch {
       persistenceMessage =
         "Orbit blocked the send because workspace data could not be written durably: \(error.localizedDescription)"
