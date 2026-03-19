@@ -64,6 +64,11 @@ If that hero proof is weak or incomplete, `M1` is not done.
 - architecture review passes
 - deterministic coverage review passes
 
+Current disposition:
+
+- satisfied for the first-checkpoint review gate through AJ approval of `M1` as
+  the local identity-and-activation baseline for `M2`
+
 ## Residual Open Dependency
 
 `M1` should still be treated as blocked if the frozen `ProdDoc` ->
@@ -93,7 +98,6 @@ able to review a small, convincing packet containing:
 - the golden example
 - the failure matrix
 - the validation results readout
-- the validation results
 - the operator-visible trace walkthrough
 - the compact review packet
 

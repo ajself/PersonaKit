@@ -1,6 +1,6 @@
 # Validation Results
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M1`
 Owner: `studio-coverage-architect`
 Last Updated: 2026-03-18
@@ -73,3 +73,8 @@ AJ should read this file alongside:
 
 If any listed proof no longer matches the implementation, this file should be
 updated before `M1` is treated as review-ready.
+
+Current disposition:
+
+- this validation readout supported AJ approval of `M1` as the local
+  identity-and-activation baseline for `M2`

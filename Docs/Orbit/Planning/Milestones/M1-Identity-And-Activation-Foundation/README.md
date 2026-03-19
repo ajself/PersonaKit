@@ -227,6 +227,11 @@ Avoid:
 Exit when one response can be traced end to end and the coverage owner signs off
 on the required validation set.
 
+Current disposition:
+
+- AJ approved `M1` as the local identity-and-activation baseline for `M2`
+- the accepted review packet is recorded in `Review-Packet.md`
+
 Handoff forward to:
 
 - `M2` for the command-center proving loop

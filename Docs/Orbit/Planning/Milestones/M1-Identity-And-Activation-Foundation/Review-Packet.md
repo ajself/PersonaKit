@@ -1,6 +1,6 @@
 # M1 Review Packet
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M1`
 Owner: `architectural-editor`
 Last Updated: 2026-03-18
@@ -80,6 +80,13 @@ foundation without reconstructing the whole milestone thread.
 AJ should review whether `M1` is now strong enough to treat as a trustworthy
 local identity-and-activation baseline for `M2`, or whether another `M1` hardening
 pass is required before widening scope.
+
+## AJ Review Outcome
+
+- AJ approved `M1` as the trustworthy local identity-and-activation baseline for
+  `M2`
+- the remaining gaps are accepted as explicit checkpoint limits, not hidden
+  blockers for the next milestone
 
 ## Recommended Judgment Frame
 
