@@ -1,6 +1,6 @@
 # M3 Review Packet
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M3`
 Owner: `samwise`
 Last Updated: 2026-03-18
@@ -63,3 +63,9 @@ It is not yet a closeout packet for full `M3` acceptance.
 AJ should review whether the current backbone is strong enough to continue into
 gateway and live cutover work without reopening the core architecture, replay,
 or storage boundaries.
+
+## AJ Review Outcome
+
+- AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
+- `M3` remains open for full closeout until the live gateway, live database
+  proof, and macOS cutover work are complete

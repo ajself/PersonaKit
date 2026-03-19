@@ -1,6 +1,6 @@
 # Migration Validation Artifact
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M3`
 Owner: `senior-swiftui-engineer`
 Grounding: `senior-swiftui-engineer` + `apply-style`
@@ -45,3 +45,8 @@ Last Updated: 2026-03-18
 
 The current `M3` slice is validation-reviewable and materially stronger than a
 pure planning baseline, with explicit notes on what is still missing.
+
+Current disposition:
+
+- this migration validation readout supported AJ approval of the current `M3`
+  checkpoint

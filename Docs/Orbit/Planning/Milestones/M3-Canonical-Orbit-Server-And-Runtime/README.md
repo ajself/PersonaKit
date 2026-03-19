@@ -317,6 +317,13 @@ Avoid:
 Exit when Orbit has one authoritative backend and the macOS client is a surface
 over that truth.
 
+Current disposition:
+
+- AJ approved the current `M3` checkpoint as a trustworthy runtime-backbone
+  review pass
+- `M3` remains open until live gateway, live database proof, and macOS cutover
+  work satisfy the full exit checklist
+
 After `M3` closes, implementation pauses.
 
 Do not begin `M4` or later construction until AJ explicitly restarts work beyond

@@ -1,6 +1,6 @@
 # Architecture Review Artifact
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M3`
 Owner: `architectural-editor`
 Grounding: `architectural-editor` + `apply-style`
@@ -59,3 +59,7 @@ Last Updated: 2026-03-18
 
 The current `M3` implementation is architecture-reviewable and remains inside the
 approved `Swift + Vapor + Postgres`, monolith-first direction.
+
+Current disposition:
+
+- this architecture readout supported AJ approval of the current `M3` checkpoint

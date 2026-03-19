@@ -121,3 +121,9 @@ Before full closeout, AJ may also review an in-progress packet containing:
 
 If that packet is accepted, `M3` may close and construction should pause rather
 than rolling directly into `M4` or later milestones.
+
+Current disposition:
+
+- AJ approved the current `M3` checkpoint packet
+- the milestone remains open because the full exit checklist still requires live
+  gateway, live database proof, and macOS cutover completion

@@ -1,6 +1,6 @@
 # Reliability Review Artifact
 
-Status: Ready For Planning Closeout
+Status: Accepted
 Milestone: `M3`
 Owner: `studio-reliability-engineer`
 Grounding: `studio-reliability-engineer` + `apply-style`
@@ -48,3 +48,7 @@ Last Updated: 2026-03-18
 
 The current `M3` slice is reliability-reviewable and credibly addresses replay,
 stale-client recovery, and transactional write discipline with notes.
+
+Current disposition:
+
+- this reliability readout supported AJ approval of the current `M3` checkpoint
