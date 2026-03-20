@@ -17,8 +17,9 @@ Last Updated: 2026-03-20
 - pass: the canonical runtime boundary is explicit and frozen in the Packet 1
   contract and boundary audit
 - pass: runtime records now live in a dedicated `OrbitServerRuntime` module
-- note: the macOS client has a projection seam, but full cutover is not yet
-  complete
+- pass: the macOS client now activates the server-backed room path directly from
+  canonical gateway configuration instead of depending on a separate feature
+  gate
 
 ### Authored versus runtime truth
 
@@ -57,8 +58,9 @@ Last Updated: 2026-03-20
 1. The live gateway now includes persistent transport, but the current channel
    still carries bootstrap-plus-poll semantics rather than a fully push-driven
    subscription model.
-2. The macOS cutover path remains env-gated, so the architectural migration is
-   not yet a full default cutover.
+2. The macOS cutover still depends on canonical gateway configuration being
+   present, so architecture review should not confuse configured cutover with
+   automatic environment provisioning.
 
 ## Judgment
 

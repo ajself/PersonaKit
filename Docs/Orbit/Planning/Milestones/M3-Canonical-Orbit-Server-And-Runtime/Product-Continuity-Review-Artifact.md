@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `venture-product-steward`
 Grounding: `venture-product-steward` + `apply-style`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-20
 
 ## Decision
 
@@ -18,8 +18,8 @@ Last Updated: 2026-03-18
   room shape rather than redefining the product model from scratch
 - pass: AJ, Samwise, and ProdDoc still survive as visible room participants in
   the current projection seam
-- note: the live macOS client is not fully cut over yet, so this is continuity
-  proof through the projection contract rather than a fully migrated room
+- pass: the live macOS client now enters the server-backed room path directly
+  from canonical gateway configuration rather than a separate room-mode toggle
 
 ### Semantic continuity
 
@@ -35,7 +35,8 @@ Last Updated: 2026-03-18
 
 ## Strongest Remaining Product Notes
 
-1. Full product continuity still depends on finishing the live macOS cutover.
+1. Full product continuity still depends on a sharper end-to-end server-backed
+   UI walkthrough, not only projection and coordinator tests.
 2. Activation trace continuity is protected architecturally, but not yet shown in
    a full server-backed UI walkthrough.
 

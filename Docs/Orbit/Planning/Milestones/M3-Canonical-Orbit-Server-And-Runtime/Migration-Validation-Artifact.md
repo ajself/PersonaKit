@@ -68,15 +68,15 @@ Last Updated: 2026-03-20
 - replay of the currently supported runtime mutation types is now covered on the
   server-backed macOS path, including system-message, collaborator-response,
   and activation-failure recovery
-- the Studio root can now enable the server-backed Orbit client path through
-  explicit runtime configuration
+- the Studio root now activates the server-backed Orbit client path whenever
+  canonical gateway configuration is present
 
 ### What this does not prove yet
 
 - operations-grade persistent transport soak or disconnect/reconnect proof
 - CI-backed or operations-backed live database proof beyond the repeated local
   temp-`Postgres` harness runs
-- full end-to-end macOS closeout proof over the env-gated server-backed
+- full end-to-end macOS closeout proof over the configured server-backed
   write/read path
 
 ## Judgment

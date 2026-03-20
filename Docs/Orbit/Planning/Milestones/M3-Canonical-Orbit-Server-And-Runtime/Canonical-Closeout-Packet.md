@@ -43,8 +43,8 @@ spine:
 
 - Orbit Server remains the authoritative runtime source for the current `M3`
   slice
-- the macOS room can use the server-backed client path through explicit
-  environment-backed configuration
+- the macOS room now activates the server-backed client path directly from
+  canonical gateway configuration without a separate feature gate
 - replay for the currently supported runtime mutation ring is covered on the
   server-backed macOS path across user, system, collaborator-response, and
   activation-failure behavior
@@ -68,7 +68,8 @@ spine:
 
 ## Honest Limits
 
-- the live macOS cutover is still env-gated through `ORBIT_SERVER_BACKED_ROOM=1`
+- the live macOS cutover still depends on canonical gateway configuration being
+  present in the Studio environment
 - the current transport confidence now includes a repeatable local soak lane,
   but it is still not operations-grade evidence
 - the current live database proof is repeated local temp-`Postgres` evidence

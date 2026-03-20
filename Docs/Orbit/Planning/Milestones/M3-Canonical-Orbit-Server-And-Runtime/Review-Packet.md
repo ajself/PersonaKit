@@ -28,8 +28,8 @@ progress without reconstructing every packet from scratch.
   filesystem backend
 - the macOS room now has a client-side projection and replay-reduction seam from
   canonical server truth back into the accepted Orbit room model
-- the Studio root can now enable the server-backed Orbit room path through
-  explicit runtime configuration
+- the Studio root now activates the server-backed Orbit room path whenever
+  canonical gateway configuration is present
 - the macOS room can now keep canonical transport traffic on one persistent
   gateway `WebSocket` connection and reconnect from its last replay cursor after
   transport loss or post-write recovery

@@ -5,10 +5,6 @@ enum OrbitServerBackedRoomClientFactory {
   static func makeIfConfigured(
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) -> OrbitServerBackedRoomClient? {
-    guard environment["ORBIT_SERVER_BACKED_ROOM"] == "1" else {
-      return nil
-    }
-
     guard
       let baseURLString =
         environment["ORBIT_SERVER_GATEWAY_BASE_URL"]

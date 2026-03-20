@@ -69,10 +69,10 @@ Current preserved semantics:
   projection helper
 - the client can now reconnect from its last canonical replay cursor instead of
   always restarting from a cold snapshot load
-- the Orbit panel can now switch to a server-backed room client when the
-  canonical runtime is configured
+- the Orbit panel now switches to a server-backed room client whenever the
+  canonical gateway runtime is configured
 - the Orbit room can now be switched onto the server-backed client path by
-  configuration rather than only by manual test setup
+  canonical gateway configuration rather than only by manual test setup
 
 ## Why This Matters
 
@@ -101,13 +101,13 @@ Current proof covers:
   `make orbit-transport-proof`
 - the bounded local transport proof passed three consecutive local runs through
   that one-command lane
-- environment-gated factory construction for the server-backed room client
-- configuration-based server-backed client enablement in Studio
+- gateway-configured factory construction for the server-backed room client
+- gateway-configuration-based server-backed client enablement in Studio
 
 ## Honest Limit
 
 The live macOS UI can now run on the canonical server path for the `M3` room
-slice when the explicit server-backed room mode is enabled, but the current
+slice whenever canonical gateway configuration is present, but the current
 persistent transport still uses the existing bootstrap-plus-poll contract rather
 than a fully push-driven subscription model.
 
