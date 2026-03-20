@@ -62,14 +62,15 @@ spine:
 - `OrbitGatewayNetworkClientTests`
 - `OrbitPostgresRuntimeStoreIntegrationTests`
 - `make orbit-transport-proof`
+- `make orbit-transport-soak-local`
 - `make orbit-live-db-proof-local`
 - `make orbit-m3-proof-local`
 
 ## Honest Limits
 
 - the live macOS cutover is still env-gated through `ORBIT_SERVER_BACKED_ROOM=1`
-- the current transport confidence is bounded local proof rather than
-  operations-grade soak evidence
+- the current transport confidence now includes a repeatable local soak lane,
+  but it is still not operations-grade evidence
 - the current live database proof is repeated local temp-`Postgres` evidence
   rather than CI-backed or operations-backed proof
 - AJ closeout review should still treat this packet as the current closeout

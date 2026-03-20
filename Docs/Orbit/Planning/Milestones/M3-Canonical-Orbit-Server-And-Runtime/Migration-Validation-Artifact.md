@@ -63,6 +63,8 @@ Last Updated: 2026-03-20
   failure
 - the bounded local transport confidence ring can now be rerun on demand, and
   it passed three consecutive local proof runs
+- the same transport ring now has a longer local soak lane, and it passed ten
+  consecutive local runs
 - replay of the currently supported runtime mutation types is now covered on the
   server-backed macOS path, including system-message, collaborator-response,
   and activation-failure recovery
@@ -71,8 +73,7 @@ Last Updated: 2026-03-20
 
 ### What this does not prove yet
 
-- long-running persistent transport soak or operations-grade
-  disconnect/reconnect proof
+- operations-grade persistent transport soak or disconnect/reconnect proof
 - CI-backed or operations-backed live database proof beyond the repeated local
   temp-`Postgres` harness runs
 - full end-to-end macOS closeout proof over the env-gated server-backed

@@ -43,6 +43,8 @@ Last Updated: 2026-03-20
   first socket failure
 - pass: the focused persistent-transport confidence ring can now be rerun with
   one command through `make orbit-transport-proof`
+- pass: a longer local transport soak can now be rerun with
+  `make orbit-transport-soak-local`
 
 ## Strongest Reliability Wins
 
@@ -56,11 +58,13 @@ Last Updated: 2026-03-20
 6. The bounded local transport proof can now be rerun on demand instead of
    living only in ad hoc test history, and it passed three consecutive runs via
    `make orbit-transport-proof`.
+7. The same transport ring now has a dedicated local soak lane and passed ten
+   consecutive local runs via `make orbit-transport-soak-local`.
 
 ## Strongest Remaining Reliability Notes
 
-1. No long-running persistent transport soak or operations-grade
-   disconnect/reconnect proof exists yet.
+1. No operations-grade disconnect/reconnect proof exists yet, even though the
+   focused transport ring now also has a repeatable local soak lane.
 2. The current live database proof is repeated local temp-`Postgres` evidence,
    not CI-backed or operations-backed proof.
 

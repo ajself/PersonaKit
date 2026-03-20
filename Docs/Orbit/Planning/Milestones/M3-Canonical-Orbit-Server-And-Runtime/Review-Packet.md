@@ -41,6 +41,9 @@ progress without reconstructing every packet from scratch.
   `make orbit-transport-proof`
 - that bounded local transport confidence ring now has three consecutive
   successful local proof runs
+- the same transport ring now has a dedicated local soak lane through
+  `make orbit-transport-soak-local`
+- that local soak lane has now passed ten consecutive local runs
 - the current local M3 proof lanes can now be executed together with
   `make orbit-m3-proof-local`
 - the required canonical closeout packet now exists as
@@ -76,9 +79,10 @@ progress without reconstructing every packet from scratch.
 
 ## Honest Remaining Gaps
 
-1. no long-running persistent transport soak or operations-grade
-   disconnect/reconnect evidence exists yet, even though bounded local
-   reconnect/fallback/retry proof now exists and can be rerun on demand
+1. no operations-grade persistent transport soak or disconnect/reconnect
+   evidence exists yet, even though bounded local reconnect/fallback/retry
+   proof now exists, can be rerun on demand, and now has a repeatable local
+   soak lane
 2. the current live database proof is repeated local temp-`Postgres` evidence
    rather than CI-backed or operations-backed proof
 
