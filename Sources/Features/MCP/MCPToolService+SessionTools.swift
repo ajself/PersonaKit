@@ -5,28 +5,27 @@ extension MCPToolService {
   func validateTool(arguments: [String: Value]?) throws -> String {
     if let arguments, !arguments.isEmpty {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           "personakit_validate does not accept arguments.",
           hint: "Call personakit_validate with an empty argument object."
         )
       )
     }
     let result = try Validator.validate(scopes: scopes)
-    let payload = ValidationToolOutput(result: result)
-    return try mcpEncodeToolJSON(payload)
+    let payload = MCPToolPayloads.ValidationToolOutput(result: result)
+    return try MCPInternalSupport.encodeToolJSON(payload)
   }
 
   func exportTool(input: MCPToolArguments) throws -> String {
     do {
-      let output = try SessionExporter.export(
+      return try MCPInternalSupport.exportOutput(
         scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
         kitOverrides: input.kitOverrides
       )
-      return output + "\n"
     } catch let error as ExportError {
-      throw MCPError.invalidParams(mcpFormatExportError(error))
+      throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))
     }
   }
 
@@ -51,34 +50,24 @@ extension MCPToolService {
         )
       }
 
-      return try mcpEncodeToolJSON(SessionContractResolver.snapshot(from: result))
+      return try MCPInternalSupport.encodeToolJSON(SessionContractResolver.snapshot(from: result))
     } catch let error as ResolverResolutionError {
-      throw MCPError.invalidParams(mcpFormatResolutionErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(error.errors))
     }
   }
 
   func graphTool(input: MCPToolArguments) throws -> String {
     do {
-      let registry = try Registry.load(scopes: scopes)
-      let definition = SessionDefinition(
+      return try MCPInternalSupport.graphOutput(
+        scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides.isEmpty ? nil : input.kitOverrides
-      )
-      let resolved = try Resolver.resolve(
-        definition: definition,
-        registry: registry,
-        scopes: scopes
-      )
-      let output = GraphPrinter.render(
-        resolvedSession: resolved,
         kitOverrides: input.kitOverrides
       )
-      return output + "\n"
     } catch let error as RegistryLoadError {
-      throw MCPError.invalidParams(mcpFormatRegistryErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatRegistryErrors(error.errors))
     } catch let error as ResolverResolutionError {
-      throw MCPError.invalidParams(mcpFormatResolutionErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(error.errors))
     }
   }
 
@@ -91,7 +80,7 @@ extension MCPToolService {
       )
     } catch let error as SessionReferenceError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint:
             "Use a valid session id from personakit://catalog/sessions or a path under Sessions/*.session.json in the active PersonaKit scope."
@@ -99,7 +88,7 @@ extension MCPToolService {
       )
     } catch let error as SessionFileError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint:
             "Use a valid session id from personakit://catalog/sessions or a session-file path under the active PersonaKit scope."
@@ -107,8 +96,8 @@ extension MCPToolService {
       )
     }
 
-    return try mcpEncodeToolJSON(
-      SessionReferenceResolutionPayload(
+    return try MCPInternalSupport.encodeToolJSON(
+      MCPToolPayloads.SessionReferenceResolutionPayload(
         inputRef: input.sessionRef,
         sourceRefType: resolved.sourceRefType.rawValue,
         normalizedSessionId: resolved.sessionId,
@@ -116,7 +105,7 @@ extension MCPToolService {
         scopeRootPath: resolved.scopeRootPath,
         personaId: resolved.session.personaId,
         directiveId: resolved.session.directiveId,
-        kitOverrides: mcpUniqueSorted(resolved.session.kitOverrides ?? [])
+        kitOverrides: MCPInternalSupport.uniqueSorted(resolved.session.kitOverrides ?? [])
       )
     )
   }
@@ -139,49 +128,64 @@ extension MCPToolService {
         scopes: scopes
       )
     } catch let error as ResolverResolutionError {
-      throw MCPError.invalidParams(mcpFormatResolutionErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(error.errors))
     }
 
     let appliedKits = resolved.kits.sorted { $0.id < $1.id }
     let kitToEssentials = appliedKits.map {
-      SessionTraceEdgeMap(sourceId: $0.id, targetIds: mcpUniqueSorted($0.essentialIds))
+      MCPToolPayloads.SessionTraceEdgeMap(
+        sourceId: $0.id,
+        targetIds: MCPInternalSupport.uniqueSorted($0.essentialIds)
+      )
     }
     let kitToIntents = appliedKits.map {
-      SessionTraceEdgeMap(sourceId: $0.id, targetIds: mcpUniqueSorted($0.intentTemplateIds ?? []))
+      MCPToolPayloads.SessionTraceEdgeMap(
+        sourceId: $0.id,
+        targetIds: MCPInternalSupport.uniqueSorted($0.intentTemplateIds ?? [])
+      )
     }
     let kitToSkills = appliedKits.map {
-      SessionTraceEdgeMap(sourceId: $0.id, targetIds: mcpUniqueSorted($0.skillIds ?? []))
+      MCPToolPayloads.SessionTraceEdgeMap(
+        sourceId: $0.id,
+        targetIds: MCPInternalSupport.uniqueSorted($0.skillIds ?? [])
+      )
     }
     let intentToEssentials = resolved.intents
       .sorted { $0.id < $1.id }
       .map {
-        SessionTraceEdgeMap(sourceId: $0.id, targetIds: mcpUniqueSorted($0.includesEssentialIds))
+        MCPToolPayloads.SessionTraceEdgeMap(
+          sourceId: $0.id,
+          targetIds: MCPInternalSupport.uniqueSorted($0.includesEssentialIds)
+        )
       }
     let intentToSkills = resolved.intents
       .sorted { $0.id < $1.id }
       .map {
-        SessionTraceEdgeMap(sourceId: $0.id, targetIds: mcpUniqueSorted($0.requiresSkillIds))
+        MCPToolPayloads.SessionTraceEdgeMap(
+          sourceId: $0.id,
+          targetIds: MCPInternalSupport.uniqueSorted($0.requiresSkillIds)
+        )
       }
     let systemEssentialIds = resolved.essentials
       .filter { $0.source == .systemBuiltIn }
       .map(\.id)
 
-    return try mcpEncodeToolJSON(
-      SessionTracePayload(
-        session: SessionTraceSession(
+    return try MCPInternalSupport.encodeToolJSON(
+      MCPToolPayloads.SessionTracePayload(
+        session: MCPToolPayloads.SessionTraceSession(
           id: session.id,
           personaId: session.personaId,
           directiveId: session.directiveId,
-          kitOverrides: mcpUniqueSorted(session.kitOverrides ?? [])
+          kitOverrides: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? [])
         ),
-        resolved: SessionTraceResolved(
+        resolved: MCPToolPayloads.SessionTraceResolved(
           personaId: resolved.persona.id,
           directiveId: resolved.directive.id,
           kitIds: resolved.kits.map(\.id).sorted(),
           essentialIds: resolved.essentials.map(\.id),
           intentIds: resolved.intents.map(\.id).sorted(),
           skillIds: resolved.skills.map(\.id).sorted(),
-          skillAuthorization: SessionTraceSkillAuthorization(
+          skillAuthorization: MCPToolPayloads.SessionTraceSkillAuthorization(
             allowedSkillIds: resolved.skillAuthorization.allowedSkillIds,
             forbiddenSkillIds: resolved.skillAuthorization.forbiddenSkillIds,
             authorizedSkillIds: resolved.skillAuthorization.authorizedSkillIds,
@@ -190,11 +194,11 @@ extension MCPToolService {
             isAuthorized: resolved.skillAuthorization.isAuthorized
           )
         ),
-        edges: SessionTraceEdges(
-          personaDefaultKitIds: mcpUniqueSorted(resolved.persona.defaultKitIds),
-          sessionKitOverrideIds: mcpUniqueSorted(session.kitOverrides ?? []),
-          directiveIntentIds: mcpUniqueSorted(resolved.directive.requiresIntentTemplateIds),
-          directiveSkillIds: mcpUniqueSorted(resolved.directive.requiresSkillIds),
+        edges: MCPToolPayloads.SessionTraceEdges(
+          personaDefaultKitIds: MCPInternalSupport.uniqueSorted(resolved.persona.defaultKitIds),
+          sessionKitOverrideIds: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
+          directiveIntentIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresIntentTemplateIds),
+          directiveSkillIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresSkillIds),
           kitToEssentials: kitToEssentials,
           kitToIntents: kitToIntents,
           kitToSkills: kitToSkills,
@@ -203,7 +207,7 @@ extension MCPToolService {
           systemEssentialIds: systemEssentialIds
         ),
         workstream: resolved.directive.workstream.map {
-          mcpSessionTraceWorkstream(
+          MCPInternalSupport.sessionTraceWorkstream(
             $0,
             activeSessionId: session.id
           )

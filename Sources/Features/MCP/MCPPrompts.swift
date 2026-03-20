@@ -147,109 +147,29 @@ struct MCPPromptService: Sendable {
 
   private func exportPrompt(input: MCPPromptArguments) throws -> String {
     do {
-      let output = try SessionExporter.export(
+      return try MCPInternalSupport.exportOutput(
         scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
         kitOverrides: input.kitOverrides
       )
-
-      return output + "\n"
     } catch let error as ExportError {
-      throw MCPError.invalidParams(formatExportError(error))
+      throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))
     }
   }
 
   private func graphPrompt(input: MCPPromptArguments) throws -> String {
     do {
-      let registry = try Registry.load(scopes: scopes)
-      let definition = SessionDefinition(
+      return try MCPInternalSupport.graphOutput(
+        scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides.isEmpty ? nil : input.kitOverrides
-      )
-      let resolved = try Resolver.resolve(
-        definition: definition,
-        registry: registry,
-        scopes: scopes
-      )
-      let output = GraphPrinter.render(
-        resolvedSession: resolved,
         kitOverrides: input.kitOverrides
       )
-
-      return output + "\n"
     } catch let error as RegistryLoadError {
-      throw MCPError.invalidParams(formatRegistryErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatRegistryErrors(error.errors))
     } catch let error as ResolverResolutionError {
-      throw MCPError.invalidParams(formatResolutionErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(error.errors))
     }
   }
-}
-
-private func formatExportError(_ error: ExportError) -> String {
-  switch error {
-  case .validationFailed(let result):
-    var lines: [String] = [result.summary]
-
-    lines.append(contentsOf: result.errors.map { $0.lineDescription() })
-
-    return lines.joined(separator: "\n")
-  case .resolutionFailed(let resolutionError):
-    return formatResolutionErrors(resolutionError.errors)
-  case .readFailed(let message):
-    return "Error: \(message)"
-  }
-}
-
-private func formatResolutionErrors(_ errors: [ResolverError]) -> String {
-  return errors.map { formatResolutionError($0) }.joined(separator: "\n")
-}
-
-private func formatResolutionError(_ error: ResolverError) -> String {
-  var parts: [String] = [
-    error.sourceType.rawValue,
-    error.sourceId,
-    error.field + ":",
-    error.message,
-  ]
-
-  if case .missingEssentialFile(_, _, _, let missingId, let expectedPath) = error {
-    parts.append("missingId=\(missingId)")
-    parts.append("expectedPath=\(expectedPath)")
-  } else if case .missingKitId(_, _, _, let missingId) = error {
-    parts.append("missingId=\(missingId)")
-  } else if case .missingIntentId(_, _, _, let missingId) = error {
-    parts.append("missingId=\(missingId)")
-  } else if case .missingSkillId(_, _, _, let missingId) = error {
-    parts.append("missingId=\(missingId)")
-  } else if case .missingPersona(_, let missingId) = error {
-    parts.append("missingId=\(missingId)")
-  } else if case .missingDirective(_, let missingId) = error {
-    parts.append("missingId=\(missingId)")
-  }
-
-  return parts.joined(separator: " ")
-}
-
-private func formatRegistryErrors(_ errors: [RegistryError]) -> String {
-  return errors.map { formatRegistryError($0) }.joined(separator: "\n")
-}
-
-private func formatRegistryError(_ error: RegistryError) -> String {
-  var parts: [String] = []
-
-  parts.append(error.entityType.rawValue)
-
-  if let id = error.id {
-    parts.append(id)
-  }
-
-  if let relativePath = error.relativePath {
-    parts.append(relativePath)
-  }
-
-  parts.append(error.message)
-
-  return "Error: " + parts.joined(separator: " ")
 }

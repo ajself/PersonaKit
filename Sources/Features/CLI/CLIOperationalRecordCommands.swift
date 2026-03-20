@@ -141,7 +141,7 @@ struct MigrateLogRecordsCommand: ParsableCommand {
     }
 
     let output = try OperationalRecordBuilder.buildMigrationOutput(root: rootURL)
-    let currentFiles = try loadCurrentFiles(
+    let currentFiles = try CLIFileIO.loadCurrentFiles(
       relativePaths: output.files.keys.sorted(),
       projectRootURL: projectRootURL
     )
@@ -162,7 +162,7 @@ struct MigrateLogRecordsCommand: ParsableCommand {
       return
     }
 
-    try writeChangedFiles(
+    try CLIFileIO.writeChangedFiles(
       output.files,
       currentFiles: currentFiles,
       projectRootURL: projectRootURL
@@ -205,7 +205,7 @@ struct LogDocsCommand: ParsableCommand {
     }
 
     let output = try OperationalRecordBuilder.buildDocsOutput(root: rootURL)
-    let currentFiles = try loadCurrentFiles(
+    let currentFiles = try CLIFileIO.loadCurrentFiles(
       relativePaths: output.files.keys.sorted(),
       projectRootURL: projectRootURL
     )
@@ -226,7 +226,7 @@ struct LogDocsCommand: ParsableCommand {
       return
     }
 
-    try writeChangedFiles(
+    try CLIFileIO.writeChangedFiles(
       output.files,
       currentFiles: currentFiles,
       projectRootURL: projectRootURL
