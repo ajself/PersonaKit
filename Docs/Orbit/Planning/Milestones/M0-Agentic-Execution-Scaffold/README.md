@@ -39,6 +39,16 @@ Bare-minimum paperwork is not a milestone win.
   required artifacts, review tests, and milestone-close rules
 - `Tech-Stack-Posture.md`
   frozen stack posture and AI decision boundary for `M0` through `M3`
+- `Sprint-Plan.md`
+  completion-based sprint sequence for closing `M0`
+- `Sprint-01-Scaffold-And-Handoff.md`
+  first execution sprint for freezing dossier and handoff discipline
+- `Sprint-02-Tech-Posture-And-Worktree-Freeze.md`
+  sprint for hard-freezing stack posture and worktree execution boundaries
+- `Sprint-03-Persona-Coverage-And-Identity-Closure.md`
+  sprint for persona coverage, `ProdDoc`, and missing-persona staging
+- `Sprint-04-AJ-Closeout-And-Release-Gate.md`
+  sprint for AJ closeout, release gating, and handoff into `M1` and `M2`
 
 ## Preconditions
 
