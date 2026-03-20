@@ -41,6 +41,8 @@ progress without reconstructing every packet from scratch.
   `make orbit-transport-proof`
 - that bounded local transport confidence ring now has three consecutive
   successful local proof runs
+- the current local M3 proof lanes can now be executed together with
+  `make orbit-m3-proof-local`
 
 ## Core Evidence
 
