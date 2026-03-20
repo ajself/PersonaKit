@@ -84,6 +84,259 @@ struct OrbitServerBackedRoomCoordinatorTests {
   }
 
   @Test
+  func pollReplaysSystemMessageMutationIntoProjectedWorkspace() async throws {
+    let snapshot = sampleSnapshot()
+    let systemMessageID = UUID(uuidString: "56565656-5656-5656-5656-565656565656")!
+    let systemMessageDate = Date(timeIntervalSince1970: 1_742_342_500)
+    let threadDate = Date(timeIntervalSince1970: 1_742_342_501)
+    let messageEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: systemMessageID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: systemMessageDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: systemMessageID,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.system.rawValue,
+          authorID: "orbit-system",
+          body: "Orbit marked the room as resynced after the transient gateway drop.",
+          messageFormat: OrbitMessageFormat.plainText.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: systemMessageDate,
+          updatedAt: systemMessageDate,
+          replyToMessageID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
+        )
+      )
+    )
+    let threadEvent = threadActivityEvent(
+      id: UUID(uuidString: "57575757-5757-5757-5757-575757575757")!,
+      createdAt: threadDate,
+      lastActivityAt: threadDate
+    )
+    let updatedSession = replaySession(
+      lastEventID: threadEvent.id,
+      lastEventCreatedAt: threadEvent.createdAt
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator(
+      roomState: OrbitServerBackedRoomState(
+        snapshot: snapshot,
+        session: sampleSession(),
+        projectedWorkspace: OrbitServerRoomProjection.workspace(from: snapshot)
+      )
+    )
+
+    try await coordinator.poll(
+      transport: StubTransport(
+        connectResponse: .bootstrap(sampleSession(), snapshot),
+        pollResponse: .replay(updatedSession, [messageEvent, threadEvent])
+      )
+    )
+
+    let replayedMessage = try #require(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.last
+    )
+    #expect(replayedMessage.body == "Orbit marked the room as resynced after the transient gateway drop.")
+    #expect(replayedMessage.kind == .systemEvent)
+    #expect(coordinator.roomState.session?.replayCursor.lastEventID == threadEvent.id)
+  }
+
+  @Test
+  func pollReplaysCollaboratorResponseMutationWithActivationTrace() async throws {
+    let snapshot = sampleSnapshot()
+    let workspacePersonaID = UUID(uuidString: "66666666-6666-6666-6666-666666666666")!
+    let responseMessageID = UUID(uuidString: "58585858-5858-5858-5858-585858585858")!
+    let activationID = UUID(uuidString: "59595959-5959-5959-5959-595959595959")!
+    let agentRunID = UUID(uuidString: "5a5a5a5a-5a5a-5a5a-5a5a-5a5a5a5a5a5a")!
+    let postEventID = UUID(uuidString: "5b5b5b5b-5b5b-5b5b-5b5b-5b5b5b5b5b5b")!
+    let responseDate = Date(timeIntervalSince1970: 1_742_342_520)
+    let threadDate = Date(timeIntervalSince1970: 1_742_342_521)
+    let activationDate = Date(timeIntervalSince1970: 1_742_342_522)
+    let messageEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: responseMessageID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: responseDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: responseMessageID,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.workspacePersona.rawValue,
+          authorID: workspacePersonaID.uuidString,
+          body: "Canonical replay restored the collaborator response without losing its contract trace.",
+          messageFormat: OrbitMessageFormat.markdown.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: responseDate,
+          updatedAt: responseDate,
+          replyToMessageID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
+        )
+      )
+    )
+    let threadEvent = threadActivityEvent(
+      id: UUID(uuidString: "5c5c5c5c-5c5c-5c5c-5c5c-5c5c5c5c5c5c")!,
+      createdAt: threadDate,
+      lastActivityAt: threadDate
+    )
+    let activationEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: postEventID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .activationResolved,
+      createdAt: activationDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ActivationEventPayload(
+          activationID: activationID,
+          initiatedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+          addressedTargetKind: OrbitAddressedTargetKind.collaborator.rawValue,
+          addressedTargetReferenceID: workspacePersonaID.uuidString,
+          resolvedWorkspacePersonaInstanceID: workspacePersonaID,
+          responseMode: OrbitCanonicalResponseMode.directAddress.rawValue,
+          agentRunID: agentRunID,
+          runnerKind: "local-bridge",
+          agentRunStatus: OrbitAgentRunStatus.completed.rawValue,
+          agentRunStartedAt: activationDate,
+          agentRunCompletedAt: activationDate,
+          contract: OrbitPhase1ResolvedContractPayload(
+            directiveID: "maintain-partner-sync-and-handoffs",
+            directiveSource: OrbitDirectiveSource.participantDefault.rawValue,
+            kitIDs: ["trusted-partner-core"],
+            authorizedSkillIDs: ["codex-cli"],
+            requiredSkillIDs: ["codex-cli"],
+            reviewGateIDs: ["intent:partner-sync-review"]
+          )
+        )
+      )
+    )
+    let updatedSession = replaySession(
+      lastEventID: activationEvent.id,
+      lastEventCreatedAt: activationEvent.createdAt
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator(
+      roomState: OrbitServerBackedRoomState(
+        snapshot: snapshot,
+        session: sampleSession(),
+        projectedWorkspace: OrbitServerRoomProjection.workspace(from: snapshot)
+      )
+    )
+
+    try await coordinator.poll(
+      transport: StubTransport(
+        connectResponse: .bootstrap(sampleSession(), snapshot),
+        pollResponse: .replay(updatedSession, [messageEvent, threadEvent, activationEvent])
+      )
+    )
+
+    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == "Canonical replay restored the collaborator response without losing its contract trace.")
+    #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
+    #expect(coordinator.roomState.projectedWorkspace?.activationContractSnapshots.count == 1)
+    #expect(coordinator.roomState.snapshot?.room.postEvents.last?.id == postEventID)
+    #expect(coordinator.roomState.snapshot?.room.personaActivations.first?.id == activationID)
+    #expect(coordinator.roomState.snapshot?.room.agentRuns.first?.id == agentRunID)
+  }
+
+  @Test
+  func pollReplaysActivationFailureMutationIntoFailureRecords() async throws {
+    let snapshot = sampleSnapshot()
+    let systemMessageID = UUID(uuidString: "5d5d5d5d-5d5d-5d5d-5d5d-5d5d5d5d5d5d")!
+    let failureEventID = UUID(uuidString: "5e5e5e5e-5e5e-5e5e-5e5e-5e5e5e5e5e5e")!
+    let failureDate = Date(timeIntervalSince1970: 1_742_342_530)
+    let threadDate = Date(timeIntervalSince1970: 1_742_342_531)
+    let messageEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: systemMessageID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: failureDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: systemMessageID,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.system.rawValue,
+          authorID: "orbit-system",
+          body: "Orbit blocked the collaborator activation because no directive resolved for the request.",
+          messageFormat: OrbitMessageFormat.plainText.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: failureDate,
+          updatedAt: failureDate,
+          replyToMessageID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
+        )
+      )
+    )
+    let threadEvent = threadActivityEvent(
+      id: UUID(uuidString: "5f5f5f5f-5f5f-5f5f-5f5f-5f5f5f5f5f5f")!,
+      createdAt: threadDate,
+      lastActivityAt: threadDate
+    )
+    let failureEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: failureEventID,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .activationFailed,
+      createdAt: failureDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ActivationEventPayload(
+          activationID: nil,
+          initiatedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+          failure: OrbitPhase1ActivationFailurePayload(
+            addressedTargetID: OrbitParticipantID.samwise.rawValue,
+            participantID: OrbitParticipantID.samwise.rawValue,
+            workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
+            personaTemplateID: "samwise",
+            directiveID: nil,
+            triggerSource: OrbitActivationTriggerSource.directAddress.rawValue,
+            systemEventMessageID: systemMessageID,
+            requiredSkillIDs: ["codex-cli"],
+            authorizedSkillIDs: ["codex-cli"],
+            failureReason: OrbitActivationFailureReason.missingDirective.rawValue,
+            systemEventBody: "Orbit blocked the collaborator activation because no directive resolved for the request."
+          ),
+          reason: OrbitActivationFailureReason.missingDirective.rawValue
+        )
+      )
+    )
+    let updatedSession = replaySession(
+      lastEventID: threadEvent.id,
+      lastEventCreatedAt: threadEvent.createdAt
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator(
+      roomState: OrbitServerBackedRoomState(
+        snapshot: snapshot,
+        session: sampleSession(),
+        projectedWorkspace: OrbitServerRoomProjection.workspace(from: snapshot)
+      )
+    )
+
+    try await coordinator.poll(
+      transport: StubTransport(
+        connectResponse: .bootstrap(sampleSession(), snapshot),
+        pollResponse: .replay(updatedSession, [messageEvent, failureEvent, threadEvent])
+      )
+    )
+
+    let activationFailure = try #require(
+      coordinator.roomState.projectedWorkspace?.activationFailureRecords.last
+    )
+    #expect(activationFailure.failureReason == .missingDirective)
+    #expect(activationFailure.systemEventMessageID == systemMessageID.uuidString)
+    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.kind == .systemEvent)
+    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body.contains("blocked the collaborator activation") == true)
+  }
+
+  @Test
   func pollDoesNothingWhenNoSessionExists() async throws {
     var coordinator = OrbitServerBackedRoomCoordinator()
 
@@ -741,6 +994,43 @@ struct OrbitServerBackedRoomCoordinatorTests {
       replayCursor: snapshot.replayCursor,
       connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
       lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_400)
+    )
+  }
+
+  private func replaySession(
+    lastEventID: UUID,
+    lastEventCreatedAt: Date
+  ) -> OrbitPhase1RealtimeSession {
+    OrbitPhase1RealtimeSession(
+      scope: OrbitPhase1RealtimeSubscriptionScope(workspaceSlug: "orbit", channelSlug: "command-center"),
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: lastEventID,
+        lastEventCreatedAt: lastEventCreatedAt
+      ),
+      connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
+      lastInteractionAt: lastEventCreatedAt
+    )
+  }
+
+  private func threadActivityEvent(
+    id: UUID,
+    createdAt: Date,
+    lastActivityAt: Date
+  ) -> OrbitPhase1RealtimeEventEnvelope {
+    OrbitPhase1RealtimeEventEnvelope(
+      id: id,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .threadActivityUpdated,
+      createdAt: createdAt,
+      payloadJSON: try! OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ThreadActivityUpdatedPayload(
+          threadID: threadID,
+          lastActivityAt: lastActivityAt
+        )
+      )
     )
   }
 

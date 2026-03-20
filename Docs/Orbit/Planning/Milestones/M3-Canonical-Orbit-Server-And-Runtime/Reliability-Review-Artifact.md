@@ -17,6 +17,9 @@ Last Updated: 2026-03-19
 - pass: replay cursor ordering is deterministic
 - pass: replay no-change, replay events, gap-detected resync, stale-client
   resync, and workspace mismatch are all explicit in code and tests
+- pass: replay of the currently supported runtime mutation types is now covered
+  through user, system, collaborator-response, and activation-failure replay
+  tests on the macOS server-backed room path
 - pass: transport-facing responses inherit recovery semantics from the lower
   replay/session layers instead of inventing them
 - pass: persistent transport reconnect now resumes from the last canonical
@@ -50,8 +53,6 @@ Last Updated: 2026-03-19
    disconnect/reconnect proof exists yet.
 2. The current live database proof is local-run evidence, not CI-backed or
    operations-backed proof.
-3. Replay coverage is still not complete enough across all supported runtime
-   mutation types to treat the closeout packet as finished.
 
 ## Judgment
 

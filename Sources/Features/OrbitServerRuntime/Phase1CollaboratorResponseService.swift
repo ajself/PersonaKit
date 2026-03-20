@@ -164,9 +164,9 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
     let realtimeEvents = try OrbitPhase1RealtimeEventProjector.collaboratorResponseEvents(
       workspaceID: snapshot.workspace.id,
       message: message,
-      activation: activation,
-      agentRun: agentRun,
-      contract: request.contract,
+      eventID: postEvent.id,
+      payloadJSON: postEvent.payloadJSON,
+      eventCreatedAt: postEvent.createdAt,
       threadLastActivityAt: timestamp
     )
 

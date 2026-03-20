@@ -337,8 +337,9 @@ Current disposition:
 
 - AJ approved the current `M3` checkpoint as a trustworthy runtime-backbone
   review pass
-- `M3` remains open until replay coverage, repeatable live database proof, and
-  refreshed macOS closeout evidence satisfy the full exit checklist
+- `M3` remains open until persistent-transport confidence, repeatable live
+  database proof, and refreshed macOS closeout evidence satisfy the full exit
+  checklist
 
 After `M3` closes, implementation pauses.
 

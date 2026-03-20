@@ -161,9 +161,9 @@ public enum OrbitPhase1RealtimeEventProjector {
   public static func collaboratorResponseEvents(
     workspaceID: UUID,
     message: OrbitMessageRecord,
-    activation: OrbitPersonaActivationRecord,
-    agentRun: OrbitAgentRunRecord,
-    contract: OrbitPhase1ResolvedContractPayload?,
+    eventID: UUID,
+    payloadJSON: String,
+    eventCreatedAt: Date,
     threadLastActivityAt: Date
   ) throws -> [OrbitRealtimeEventRecord] {
     var events = try appendEvents(
@@ -174,19 +174,13 @@ public enum OrbitPhase1RealtimeEventProjector {
 
     events.append(
       OrbitRealtimeEventRecord(
-        id: activation.id,
+        id: eventID,
         workspaceID: workspaceID,
-        postID: activation.originPostID,
-        threadID: activation.originThreadID,
+        postID: message.postID,
+        threadID: message.threadID,
         category: .activationResolved,
-        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
-          OrbitPhase1ActivationEventPayload(
-            activation: activation,
-            agentRun: agentRun,
-            contract: contract
-          )
-        ),
-        createdAt: activation.createdAt
+        payloadJSON: payloadJSON,
+        createdAt: eventCreatedAt
       )
     )
 

@@ -58,13 +58,17 @@ Last Updated: 2026-03-19
 - the macOS client can now keep canonical transport traffic on one persistent
   gateway `WebSocket` connection, reconnect from its last replay cursor, and
   fall back to the existing HTTP poll path when persistent transport fails
+- replay of the currently supported runtime mutation types is now covered on the
+  server-backed macOS path, including system-message, collaborator-response,
+  and activation-failure recovery
 - the Studio root can now enable the server-backed Orbit client path through
   explicit runtime configuration
 
 ### What this does not prove yet
 
-- full durable replay coverage across all currently supported runtime mutation
-  types
+- long-running persistent transport soak or operations-grade
+  disconnect/reconnect proof
+- repeatable live database proof beyond one successful local harness run
 - full end-to-end macOS closeout proof over the env-gated server-backed
   write/read path
 

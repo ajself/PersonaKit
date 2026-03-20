@@ -60,13 +60,13 @@ progress without reconstructing every packet from scratch.
 
 ## Honest Remaining Gaps
 
-1. the durable realtime-event table exists, but event coverage is still not
-   complete enough to treat replay as fully closeout-ready across all runtime
-   mutation types
+1. no long-running persistent transport soak or operations-grade
+   disconnect/reconnect evidence exists yet
 2. the current live database proof is local-run evidence rather than CI-backed or
    operations-backed proof
 3. the closeout packet and hero-proof evidence still need a refreshed readout
-   now that persistent transport is in place
+   now that replay coverage for the currently supported runtime mutation types
+   is in place
 
 ## Judgment Frame
 
@@ -77,11 +77,13 @@ It is not yet a closeout packet for full `M3` acceptance.
 ## Review Ask
 
 AJ should review whether the current backbone is strong enough to continue into
-replay-completion, repeatable live-database proof, and final closeout evidence
-work without reopening the core architecture, replay, or storage boundaries.
+persistent-transport confidence, repeatable live-database proof, and final
+closeout evidence work without reopening the core architecture, replay, or
+storage boundaries.
 
 ## AJ Review Outcome
 
 - AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
-- `M3` remains open for full closeout until replay coverage, repeatable live
-  database proof, and refreshed macOS closeout evidence are complete
+- `M3` remains open for full closeout until persistent-transport confidence,
+  repeatable live database proof, and refreshed macOS closeout evidence are
+  complete
