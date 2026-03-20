@@ -612,30 +612,45 @@ struct OrbitServerBackedRoomCoordinatorTests {
       createdAt: Date(timeIntervalSince1970: 1_742_342_520),
       updatedAt: Date(timeIntervalSince1970: 1_742_342_520)
     )
-    let resyncedSnapshot = OrbitPhase1RealtimeSnapshot(
-      room: OrbitPhase1RoomSnapshot(
-        workspace: initialSnapshot.room.workspace,
-        channel: initialSnapshot.room.channel,
-        workspacePersonas: initialSnapshot.room.workspacePersonas,
-        post: initialSnapshot.room.post,
-        thread: initialSnapshot.room.thread,
-        messages: initialSnapshot.room.messages + [updatedMessage],
-        postParticipants: initialSnapshot.room.postParticipants,
-        postEvents: initialSnapshot.room.postEvents,
-        personaActivations: initialSnapshot.room.personaActivations,
-        agentRuns: initialSnapshot.room.agentRuns
-      ),
-      replayCursor: OrbitPhase1ReplayCursor(
-        workspaceID: workspaceID,
-        lastEventID: updatedMessage.id,
-        lastEventCreatedAt: updatedMessage.createdAt
+    let replayEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: updatedMessage.id,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: updatedMessage.createdAt,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: updatedMessage.id,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.user.rawValue,
+          authorID: "aj",
+          body: updatedMessage.body,
+          messageFormat: OrbitMessageFormat.plainText.rawValue,
+          state: OrbitMessageState.persisted.rawValue,
+          createdAt: updatedMessage.createdAt,
+          updatedAt: updatedMessage.updatedAt,
+          replyToMessageID: nil
+        )
       )
     )
-    let client = OrbitServerBackedRoomClient(
-      transport: StubClientTransport(
-        connectResponse: .bootstrap(resyncedSnapshot.replayCursorSession, resyncedSnapshot),
-        pollResponse: .noChange(resyncedSnapshot.replayCursorSession)
+    let replayedSession = OrbitPhase1RealtimeSession(
+      scope: sampleSession(snapshot: initialSnapshot).scope,
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: replayEvent.id,
+        lastEventCreatedAt: replayEvent.createdAt
       ),
+      connectedAt: sampleSession(snapshot: initialSnapshot).connectedAt,
+      lastInteractionAt: replayEvent.createdAt
+    )
+    let transport = StubClientTransport(
+      connectResponse: .replay(replayedSession, [replayEvent]),
+      pollResponse: .noChange(replayedSession)
+    )
+    let client = OrbitServerBackedRoomClient(
+      transport: transport,
       roomWriter: StubClientRoomWriter(
         result: OrbitPhase1AppendUserMessageResult(
           snapshot: initialSnapshot.room,
@@ -662,7 +677,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
       ),
       collaboratorWriter: StubClientCollaboratorWriter(
         result: collaboratorResult(
-          snapshot: resyncedSnapshot.room,
+          snapshot: initialSnapshot.room,
           message: collaboratorResponseMessage(
             id: UUID(uuidString: "42424242-4242-4242-4242-424242424242")!,
             authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
@@ -710,6 +725,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
     } catch TestFailure.simulatedFailure {
       #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == "Server-backed append")
       #expect(coordinator.roomState.session?.replayCursor.lastEventID == updatedMessage.id)
+      #expect(await transport.connectRequests.first?.cursor == initialSnapshot.replayCursor)
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
@@ -1034,6 +1050,7 @@ private struct StubTransport: OrbitPhase1RealtimeTransportServing {
 private actor StubClientTransport: OrbitPhase1RealtimeTransportServing {
   let connectResponse: OrbitPhase1RealtimeTransportResponse
   let pollResponse: OrbitPhase1RealtimeTransportResponse
+  var connectRequests = [OrbitPhase1RealtimeConnectRequest]()
 
   init(
     connectResponse: OrbitPhase1RealtimeTransportResponse,
@@ -1046,13 +1063,14 @@ private actor StubClientTransport: OrbitPhase1RealtimeTransportServing {
   func connect(
     request: OrbitPhase1RealtimeConnectRequest
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
-    connectResponse
+    connectRequests.append(request)
+    return connectResponse
   }
 
   func poll(
     request: OrbitPhase1RealtimePollRequest
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
-    pollResponse
+    return pollResponse
   }
 }
 

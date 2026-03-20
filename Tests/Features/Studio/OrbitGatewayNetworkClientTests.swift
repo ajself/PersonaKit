@@ -9,15 +9,7 @@ struct OrbitGatewayNetworkClientTests {
   @Test
   func connectDecodesBootstrapTransportFromGateway() async throws {
     let snapshot = sampleSnapshot()
-    let session = OrbitPhase1RealtimeSession(
-      scope: OrbitPhase1RealtimeSubscriptionScope(
-        workspaceSlug: "orbit",
-        channelSlug: "command-center"
-      ),
-      replayCursor: snapshot.replayCursor,
-      connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
-      lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_400)
-    )
+    let session = sampleSession(snapshot: snapshot)
     let client = makeClient { request in
       #expect(request.url?.path == "/api/orbit/realtime/connect")
       let body = try JSONDecoder().decode(
@@ -46,6 +38,184 @@ struct OrbitGatewayNetworkClientTests {
     )
 
     #expect(response == .bootstrap(session, snapshot))
+  }
+
+  @Test
+  func persistentTransportResponsesSendBootstrapThenPollOverTheSameSocket() async throws {
+    let snapshot = sampleSnapshot()
+    let bootstrapSession = sampleSession(snapshot: snapshot)
+    let handshakeURL = CapturedURLBox()
+    let polledSession = OrbitPhase1RealtimeSession(
+      scope: bootstrapSession.scope,
+      replayCursor: bootstrapSession.replayCursor,
+      connectedAt: bootstrapSession.connectedAt,
+      lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_430)
+    )
+    let socket = StubSocket(
+      receivedTexts: [
+        try makeSocketPayload(
+          OrbitGatewayTransportResponse(
+            response: .bootstrap(bootstrapSession, snapshot)
+          )
+        ),
+        try makeSocketPayload(
+          OrbitGatewayTransportResponse(
+            response: .noChange(polledSession)
+          )
+        ),
+      ]
+    )
+    let sleep = StubSleep(maxSleepsBeforeCancellation: 1)
+    let client = OrbitGatewayNetworkClient(
+      baseURL: URL(string: "http://orbit.example")!,
+      session: URLSession(configuration: .ephemeral),
+      socketFactory: { _, url in
+        handshakeURL.set(url)
+        return socket
+      },
+      sleep: { duration in
+        try await sleep.pause(for: duration)
+      }
+    )
+
+    let responses = try await client.persistentTransportResponses(
+      request: OrbitPhase1RealtimeConnectRequest(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center"
+        )
+      ),
+      pollInterval: Duration.seconds(2)
+    )
+    var iterator = responses.makeAsyncIterator()
+    let bootstrapResponse = try await iterator.next()
+    let pollResponse = try await iterator.next()
+
+    #expect(bootstrapResponse == .bootstrap(bootstrapSession, snapshot))
+    #expect(pollResponse == .noChange(polledSession))
+
+    let sentMessages = await socket.sentTexts
+    let bootstrapMessage = try JSONDecoder().decode(
+      OrbitGatewayWebSocketClientMessage.self,
+      from: Data(try #require(sentMessages.first).utf8)
+    )
+    let pollMessage = try JSONDecoder().decode(
+      OrbitGatewayWebSocketClientMessage.self,
+      from: Data(try #require(sentMessages.last).utf8)
+    )
+
+    #expect(bootstrapMessage.kind == .bootstrap)
+    #expect(bootstrapMessage.session == nil)
+    #expect(pollMessage.kind == .poll)
+    #expect(pollMessage.session?.workspaceSlug == "orbit")
+    #expect(pollMessage.session?.cursorEventID == snapshot.replayCursor.lastEventID)
+    #expect(await socket.cancelCallCount == 1)
+    let queryItems = URLComponents(
+      url: try #require(handshakeURL.current),
+      resolvingAgainstBaseURL: false
+    )?.queryItems
+    #expect(queryItems?.contains(URLQueryItem(name: "workspaceSlug", value: "orbit")) == true)
+    #expect(queryItems?.contains(URLQueryItem(name: "channelSlug", value: "command-center")) == true)
+  }
+
+  @Test
+  func persistentTransportResponsesEncodesReplayCursorTimestampAsEpochSeconds() async throws {
+    let snapshot = sampleSnapshot()
+    let handshakeURL = CapturedURLBox()
+    let socket = StubSocket(
+      receivedTexts: [
+        try makeSocketPayload(
+          OrbitGatewayTransportResponse(
+            response: .bootstrap(sampleSession(snapshot: snapshot), snapshot)
+          )
+        ),
+      ]
+    )
+    let sleep = StubSleep(maxSleepsBeforeCancellation: 0)
+    let cursorDate = Date(timeIntervalSince1970: 1_742_342_460)
+    let client = OrbitGatewayNetworkClient(
+      baseURL: URL(string: "http://orbit.example")!,
+      session: URLSession(configuration: .ephemeral),
+      socketFactory: { _, url in
+        handshakeURL.set(url)
+        return socket
+      },
+      sleep: { duration in
+        try await sleep.pause(for: duration)
+      }
+    )
+
+    let responses = try await client.persistentTransportResponses(
+      request: OrbitPhase1RealtimeConnectRequest(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center"
+        ),
+        cursor: OrbitPhase1ReplayCursor(
+          workspaceID: snapshot.replayCursor.workspaceID,
+          lastEventID: snapshot.replayCursor.lastEventID,
+          lastEventCreatedAt: cursorDate
+        )
+      )
+    )
+    var iterator = responses.makeAsyncIterator()
+
+    _ = try await iterator.next()
+
+    let handshakeURLValue = try #require(handshakeURL.current)
+    let queryItems = try #require(
+      URLComponents(
+        url: handshakeURLValue,
+        resolvingAgainstBaseURL: false
+      )?.queryItems
+    )
+    #expect(
+      queryItems.contains(
+        URLQueryItem(
+          name: "cursorEventCreatedAt",
+          value: String(cursorDate.timeIntervalSince1970)
+        )
+      )
+    )
+  }
+
+  @Test
+  func persistentTransportResponsesSurfaceGatewaySocketRejection() async throws {
+    let socket = StubSocket(
+      receivedTexts: ["{\"kind\":\"error\"}"]
+    )
+    let client = OrbitGatewayNetworkClient(
+      baseURL: URL(string: "http://orbit.example")!,
+      session: URLSession(configuration: .ephemeral),
+      socketFactory: { _, _ in socket },
+      sleep: { _ in
+        try await Task.sleep(for: .zero)
+      }
+    )
+    let responses = try await client.persistentTransportResponses(
+      request: OrbitPhase1RealtimeConnectRequest(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center"
+        )
+      )
+    )
+    var iterator = responses.makeAsyncIterator()
+
+    do {
+      _ = try await iterator.next()
+      Issue.record("Expected socket rejection")
+    } catch let error as OrbitGatewayNetworkClientError {
+      switch error {
+      case .socketRejectedRequest:
+        break
+      case .invalidHTTPResponse,
+        .unexpectedStatusCode,
+        .invalidSocketURL,
+        .invalidSocketMessage:
+        Issue.record("Expected socket rejection, got \(error)")
+      }
+    }
   }
 
   @Test
@@ -122,6 +292,10 @@ struct OrbitGatewayNetworkClientTests {
         #expect(body == "gateway offline")
       case .invalidHTTPResponse:
         Issue.record("Expected HTTP status failure, not invalid response")
+      case .invalidSocketURL,
+        .invalidSocketMessage,
+        .socketRejectedRequest:
+        Issue.record("Expected HTTP status failure, got \(error)")
       }
     }
   }
@@ -170,6 +344,26 @@ struct OrbitGatewayNetworkClientTests {
         headerFields: ["Content-Type": "text/plain"]
       )!,
       body
+    )
+  }
+
+  private func makeSocketPayload(
+    _ payload: OrbitGatewayTransportResponse
+  ) throws -> String {
+    String(decoding: try JSONEncoder().encode(payload), as: UTF8.self)
+  }
+
+  private func sampleSession(
+    snapshot: OrbitPhase1RealtimeSnapshot
+  ) -> OrbitPhase1RealtimeSession {
+    OrbitPhase1RealtimeSession(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      replayCursor: snapshot.replayCursor,
+      connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
+      lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_400)
     )
   }
 
@@ -328,6 +522,76 @@ struct OrbitGatewayNetworkClientTests {
     }
 
     return data
+  }
+}
+
+private actor StubSocket: OrbitGatewaySocketHandling {
+  private(set) var sentTexts = [String]()
+  private var receivedTexts: [String]
+  private(set) var cancelCallCount = 0
+
+  init(
+    receivedTexts: [String]
+  ) {
+    self.receivedTexts = receivedTexts
+  }
+
+  func send(
+    text: String
+  ) async throws {
+    sentTexts.append(text)
+  }
+
+  func receiveText() async throws -> String {
+    guard !receivedTexts.isEmpty else {
+      throw URLError(.cannotParseResponse)
+    }
+
+    return receivedTexts.removeFirst()
+  }
+
+  func cancel() async {
+    cancelCallCount += 1
+  }
+}
+
+private actor StubSleep {
+  private let maxSleepsBeforeCancellation: Int
+  private var sleepCount = 0
+
+  init(
+    maxSleepsBeforeCancellation: Int
+  ) {
+    self.maxSleepsBeforeCancellation = maxSleepsBeforeCancellation
+  }
+
+  func pause(
+    for _: Duration
+  ) async throws {
+    sleepCount += 1
+
+    if sleepCount > maxSleepsBeforeCancellation {
+      throw CancellationError()
+    }
+  }
+}
+
+private final class CapturedURLBox: @unchecked Sendable {
+  private let lock = NSLock()
+  private var storage: URL?
+
+  var current: URL? {
+    lock.lock()
+    defer { lock.unlock() }
+    return storage
+  }
+
+  func set(
+    _ url: URL
+  ) {
+    lock.lock()
+    storage = url
+    lock.unlock()
   }
 }
 

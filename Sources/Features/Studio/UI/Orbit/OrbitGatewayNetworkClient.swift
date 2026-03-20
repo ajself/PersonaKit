@@ -5,6 +5,9 @@ import OrbitServerRuntime
 enum OrbitGatewayNetworkClientError: LocalizedError {
   case invalidHTTPResponse
   case unexpectedStatusCode(Int, String)
+  case invalidSocketURL(String)
+  case invalidSocketMessage
+  case socketRejectedRequest
 
   var errorDescription: String? {
     switch self {
@@ -18,20 +21,78 @@ enum OrbitGatewayNetworkClientError: LocalizedError {
       }
 
       return "Orbit gateway returned HTTP \(statusCode): \(trimmedBody)"
+    case .invalidSocketURL(let urlString):
+      return "Orbit could not open a persistent gateway socket from \(urlString)."
+    case .invalidSocketMessage:
+      return "Orbit gateway returned an unreadable persistent transport payload."
+    case .socketRejectedRequest:
+      return "Orbit gateway rejected the persistent transport request."
     }
   }
+}
+
+protocol OrbitGatewaySocketHandling: Sendable {
+  func send(text: String) async throws
+  func receiveText() async throws -> String
+  func cancel() async
+}
+
+actor OrbitGatewayURLSessionSocket: OrbitGatewaySocketHandling {
+  private let task: URLSessionWebSocketTask
+
+  init(
+    task: URLSessionWebSocketTask
+  ) {
+    self.task = task
+    task.resume()
+  }
+
+  func send(
+    text: String
+  ) async throws {
+    try await task.send(.string(text))
+  }
+
+  func receiveText() async throws -> String {
+    switch try await task.receive() {
+    case .string(let text):
+      return text
+    case .data(let data):
+      return String(decoding: data, as: UTF8.self)
+    @unknown default:
+      throw OrbitGatewayNetworkClientError.invalidSocketMessage
+    }
+  }
+
+  func cancel() async {
+    task.cancel(with: .goingAway, reason: nil)
+  }
+}
+
+struct OrbitGatewaySocketErrorPayload: Decodable {
+  let kind: String
 }
 
 actor OrbitGatewayNetworkClient {
   private let baseURL: URL
   private let session: URLSession
+  private let socketFactory: @Sendable (URLSession, URL) -> any OrbitGatewaySocketHandling
+  private let sleep: @Sendable (Duration) async throws -> Void
 
   init(
     baseURL: URL,
-    session: URLSession = .shared
+    session: URLSession = .shared,
+    socketFactory: @escaping @Sendable (URLSession, URL) -> any OrbitGatewaySocketHandling = { session, url in
+      OrbitGatewayURLSessionSocket(task: session.webSocketTask(with: url))
+    },
+    sleep: @escaping @Sendable (Duration) async throws -> Void = { duration in
+      try await Task.sleep(for: duration)
+    }
   ) {
     self.baseURL = baseURL
     self.session = session
+    self.socketFactory = socketFactory
+    self.sleep = sleep
   }
 
   func connect(
@@ -144,6 +205,76 @@ actor OrbitGatewayNetworkClient {
     return response.result
   }
 
+  func persistentTransportResponses(
+    request: OrbitPhase1RealtimeConnectRequest,
+    pollInterval: Duration = .seconds(2)
+  ) throws -> OrbitServerBackedRoomResponseStream {
+    let socketURL = try makeSocketURL(for: request)
+    let session = self.session
+    let socketFactory = self.socketFactory
+    let sleep = self.sleep
+
+    return AsyncThrowingStream { continuation in
+      let socketTask = Task {
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        let socket = socketFactory(session, socketURL)
+
+        do {
+          let bootstrapResponse = try await Self.exchange(
+            OrbitGatewayWebSocketClientMessage(kind: .bootstrap),
+            over: socket,
+            encoder: encoder,
+            decoder: decoder
+          )
+          continuation.yield(bootstrapResponse)
+
+          var currentSession = Self.session(from: bootstrapResponse)
+
+          while !Task.isCancelled {
+            try await sleep(pollInterval)
+
+            guard !Task.isCancelled else {
+              break
+            }
+
+            let pollResponse = try await Self.exchange(
+              OrbitGatewayWebSocketClientMessage(
+                kind: .poll,
+                session: OrbitGatewaySessionPayload(
+                  workspaceSlug: currentSession.scope.workspaceSlug,
+                  channelSlug: currentSession.scope.channelSlug,
+                  workspaceID: currentSession.replayCursor.workspaceID,
+                  cursorEventID: currentSession.replayCursor.lastEventID,
+                  cursorEventCreatedAt: currentSession.replayCursor.lastEventCreatedAt,
+                  connectedAt: currentSession.connectedAt,
+                  lastInteractionAt: currentSession.lastInteractionAt
+                )
+              ),
+              over: socket,
+              encoder: encoder,
+              decoder: decoder
+            )
+            continuation.yield(pollResponse)
+            currentSession = Self.session(from: pollResponse)
+          }
+
+          continuation.finish()
+        } catch is CancellationError {
+          continuation.finish()
+        } catch {
+          continuation.finish(throwing: error)
+        }
+
+        await socket.cancel()
+      }
+
+      continuation.onTermination = { @Sendable _ in
+        socketTask.cancel()
+      }
+    }
+  }
+
   private func post<RequestBody: Encodable, ResponseBody: Decodable>(
     _ path: String,
     body: RequestBody
@@ -168,5 +299,106 @@ actor OrbitGatewayNetworkClient {
     }
 
     return try JSONDecoder().decode(ResponseBody.self, from: data)
+  }
+
+  private func makeSocketURL(
+    for request: OrbitPhase1RealtimeConnectRequest
+  ) throws -> URL {
+    guard
+      var components = URLComponents(
+        url: baseURL.appending(path: "api/orbit/realtime/socket"),
+        resolvingAgainstBaseURL: false
+      )
+    else {
+      throw OrbitGatewayNetworkClientError.invalidSocketURL(baseURL.absoluteString)
+    }
+
+    switch components.scheme {
+    case "http":
+      components.scheme = "ws"
+    case "https":
+      components.scheme = "wss"
+    case "ws", "wss":
+      break
+    default:
+      throw OrbitGatewayNetworkClientError.invalidSocketURL(baseURL.absoluteString)
+    }
+
+    var queryItems = [
+      URLQueryItem(name: "workspaceSlug", value: request.scope.workspaceSlug),
+      URLQueryItem(name: "channelSlug", value: request.scope.channelSlug),
+    ]
+
+    if let cursor = request.cursor {
+      queryItems.append(
+        URLQueryItem(
+          name: "cursorWorkspaceID",
+          value: cursor.workspaceID.uuidString
+        )
+      )
+      queryItems.append(
+        URLQueryItem(
+          name: "cursorEventID",
+          value: cursor.lastEventID?.uuidString
+        )
+      )
+      queryItems.append(
+        URLQueryItem(
+          name: "cursorEventCreatedAt",
+          value: cursor.lastEventCreatedAt.map { String($0.timeIntervalSince1970) }
+        )
+      )
+    }
+
+    components.queryItems = queryItems
+
+    guard let socketURL = components.url else {
+      throw OrbitGatewayNetworkClientError.invalidSocketURL(baseURL.absoluteString)
+    }
+
+    return socketURL
+  }
+
+  private static func exchange(
+    _ message: OrbitGatewayWebSocketClientMessage,
+    over socket: any OrbitGatewaySocketHandling,
+    encoder: JSONEncoder,
+    decoder: JSONDecoder
+  ) async throws -> OrbitPhase1RealtimeTransportResponse {
+    let payload = try encoder.encode(message)
+    try await socket.send(text: String(decoding: payload, as: UTF8.self))
+
+    let text = try await socket.receiveText()
+    let data = Data(text.utf8)
+
+    if
+      let errorPayload = try? decoder.decode(OrbitGatewaySocketErrorPayload.self, from: data),
+      errorPayload.kind == "error"
+    {
+      throw OrbitGatewayNetworkClientError.socketRejectedRequest
+    }
+
+    guard
+      let response = try? decoder.decode(
+        OrbitGatewayTransportResponse.self,
+        from: data
+      )
+    else {
+      throw OrbitGatewayNetworkClientError.invalidSocketMessage
+    }
+
+    return response.response
+  }
+
+  private static func session(
+    from response: OrbitPhase1RealtimeTransportResponse
+  ) -> OrbitPhase1RealtimeSession {
+    switch response {
+    case .bootstrap(let session, _),
+      .replay(let session, _),
+      .noChange(let session),
+      .resync(let session, _, _):
+      return session
+    }
   }
 }

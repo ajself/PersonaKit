@@ -4,7 +4,7 @@ Status: Ready For Planning Closeout
 Milestone: `M3`
 Owner: `senior-swiftui-engineer`
 Review Ring: `venture-product-steward`, `studio-coverage-architect`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Purpose
 
@@ -43,6 +43,10 @@ depending only on one-shot projection.
 The latest coordinator slice now adds a client-side read path that can connect,
 poll, and update the projected Orbit room from the transport contract.
 
+The latest transport slice now lets the macOS client prefer a persistent
+gateway `WebSocket` loop while preserving the same canonical bootstrap and poll
+contract.
+
 The latest factory slice now lets `StudioRootView` provide a server-backed room
 client to `OrbitPanelView` whenever the canonical runtime environment is
 configured.
@@ -63,6 +67,8 @@ Current preserved semantics:
   inventing a second local truth model
 - the client now has a transport-facing coordinator seam rather than only a raw
   projection helper
+- the client can now reconnect from its last canonical replay cursor instead of
+  always restarting from a cold snapshot load
 - the Orbit panel can now switch to a server-backed room client when the
   canonical runtime is configured
 - the Orbit room can now be switched onto the server-backed client path by
@@ -85,15 +91,22 @@ Current proof covers:
 - speaker and message-kind continuity across canonical authors
 - replayed canonical events updating the projected room state
 - server-backed connect and poll behavior updating the projected Orbit room state
+- persistent gateway socket behavior carrying bootstrap and poll traffic over
+  one long-lived client connection
+- reconnect-after-failure behavior resuming from the last canonical replay
+  cursor
 - environment-gated factory construction for the server-backed room client
 - configuration-based server-backed client enablement in Studio
 
 ## Honest Limit
 
-The live macOS UI is not yet fully switched over to the canonical server path.
+The live macOS UI can now run on the canonical server path for the `M3` room
+slice when the explicit server-backed room mode is enabled, but the current
+persistent transport still uses the existing bootstrap-plus-poll contract rather
+than a fully push-driven subscription model.
 
-This slice proves the projection contract needed for that cutover without
-pretending the whole migration is already complete.
+This slice proves the cutover transport and reconnect path needed for `M3`
+without pretending the full milestone closeout packet is already complete.
 
 ## Packet 5 Judgment
 

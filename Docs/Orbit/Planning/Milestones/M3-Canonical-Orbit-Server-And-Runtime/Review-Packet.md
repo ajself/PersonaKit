@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M3`
 Owner: `samwise`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Purpose
 
@@ -30,6 +30,9 @@ progress without reconstructing every packet from scratch.
   canonical server truth back into the accepted Orbit room model
 - the Studio root can now enable the server-backed Orbit room path through
   explicit runtime configuration
+- the macOS room can now keep canonical transport traffic on one persistent
+  gateway `WebSocket` connection and reconnect from its last replay cursor after
+  transport loss or post-write recovery
 
 ## Core Evidence
 
@@ -57,13 +60,13 @@ progress without reconstructing every packet from scratch.
 
 ## Honest Remaining Gaps
 
-1. the macOS client is not fully cut over to server-backed writes and reads yet
-2. the durable realtime-event table exists, but event coverage is still not
+1. the durable realtime-event table exists, but event coverage is still not
    complete enough to treat replay as fully closeout-ready across all runtime
    mutation types
-3. no live persistent `WebSocket` or `SSE` transport exists yet
-4. the current live database proof is local-run evidence rather than CI-backed or
+2. the current live database proof is local-run evidence rather than CI-backed or
    operations-backed proof
+3. the closeout packet and hero-proof evidence still need a refreshed readout
+   now that persistent transport is in place
 
 ## Judgment Frame
 

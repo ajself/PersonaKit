@@ -21,14 +21,18 @@ enum OrbitServerBackedRoomClientFactory {
     let gatewayClient = OrbitGatewayNetworkClient(baseURL: baseURL)
 
     return OrbitServerBackedRoomClient(
-      connectHandler: { scope in
-        try await gatewayClient.connect(
-          request: OrbitPhase1RealtimeConnectRequest(scope: scope)
-        )
+      connectHandler: { request in
+        try await gatewayClient.connect(request: request)
       },
       pollHandler: { session in
         try await gatewayClient.poll(
           request: OrbitPhase1RealtimePollRequest(session: session)
+        )
+      },
+      responseStreamHandler: { request, pollInterval in
+        try? await gatewayClient.persistentTransportResponses(
+          request: request,
+          pollInterval: pollInterval
         )
       },
       appendHandler: { request in

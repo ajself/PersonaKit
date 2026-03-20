@@ -1,17 +1,24 @@
 import Foundation
 import OrbitServerRuntime
 
+typealias OrbitServerBackedRoomResponseStream = AsyncThrowingStream<
+  OrbitPhase1RealtimeTransportResponse,
+  Error
+>
+
 struct OrbitServerBackedRoomClient: Sendable {
-  let connectHandler: @Sendable (OrbitPhase1RealtimeSubscriptionScope) async throws -> OrbitPhase1RealtimeTransportResponse
+  let connectHandler: @Sendable (OrbitPhase1RealtimeConnectRequest) async throws -> OrbitPhase1RealtimeTransportResponse
   let pollHandler: @Sendable (OrbitPhase1RealtimeSession) async throws -> OrbitPhase1RealtimeTransportResponse
+  let responseStreamHandler: (@Sendable (OrbitPhase1RealtimeConnectRequest, Duration) async -> OrbitServerBackedRoomResponseStream?)?
   let appendHandler: @Sendable (OrbitPhase1AppendUserMessageRequest) async throws -> OrbitPhase1AppendUserMessageResult
   let appendSystemHandler: @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult
   let appendCollaboratorHandler: @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult
   let appendFailureHandler: @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
 
   init(
-    connectHandler: @escaping @Sendable (OrbitPhase1RealtimeSubscriptionScope) async throws -> OrbitPhase1RealtimeTransportResponse,
+    connectHandler: @escaping @Sendable (OrbitPhase1RealtimeConnectRequest) async throws -> OrbitPhase1RealtimeTransportResponse,
     pollHandler: @escaping @Sendable (OrbitPhase1RealtimeSession) async throws -> OrbitPhase1RealtimeTransportResponse,
+    responseStreamHandler: (@Sendable (OrbitPhase1RealtimeConnectRequest, Duration) async -> OrbitServerBackedRoomResponseStream?)? = nil,
     appendHandler: @escaping @Sendable (OrbitPhase1AppendUserMessageRequest) async throws -> OrbitPhase1AppendUserMessageResult,
     appendSystemHandler: @escaping @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult,
     appendCollaboratorHandler: @escaping @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult,
@@ -19,6 +26,7 @@ struct OrbitServerBackedRoomClient: Sendable {
   ) {
     self.connectHandler = connectHandler
     self.pollHandler = pollHandler
+    self.responseStreamHandler = responseStreamHandler
     self.appendHandler = appendHandler
     self.appendSystemHandler = appendSystemHandler
     self.appendCollaboratorHandler = appendCollaboratorHandler
@@ -39,10 +47,8 @@ struct OrbitServerBackedRoomClient: Sendable {
     collaboratorWriter: CollaboratorWriter
   ) {
     self.init(
-      connectHandler: { scope in
-        try await transport.connect(
-          request: OrbitPhase1RealtimeConnectRequest(scope: scope)
-        )
+      connectHandler: { request in
+        try await transport.connect(request: request)
       },
       pollHandler: { session in
         try await transport.poll(
@@ -65,15 +71,39 @@ struct OrbitServerBackedRoomClient: Sendable {
   }
 
   func connect(
-    scope: OrbitPhase1RealtimeSubscriptionScope
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    cursor: OrbitPhase1ReplayCursor? = nil
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
-    try await connectHandler(scope)
+    try await connectHandler(
+      OrbitPhase1RealtimeConnectRequest(
+        scope: scope,
+        cursor: cursor
+      )
+    )
   }
 
   func poll(
     session: OrbitPhase1RealtimeSession
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
     try await pollHandler(session)
+  }
+
+  func persistentTransportResponses(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    cursor: OrbitPhase1ReplayCursor? = nil,
+    pollInterval: Duration = .seconds(2)
+  ) async -> OrbitServerBackedRoomResponseStream? {
+    guard let responseStreamHandler else {
+      return nil
+    }
+
+    return await responseStreamHandler(
+      OrbitPhase1RealtimeConnectRequest(
+        scope: scope,
+        cursor: cursor
+      ),
+      pollInterval
+    )
   }
 
   func appendUserMessage(

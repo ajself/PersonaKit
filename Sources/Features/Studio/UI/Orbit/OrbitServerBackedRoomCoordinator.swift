@@ -39,12 +39,22 @@ private struct OrbitServerBackedPreflightConversationTurn {
 struct OrbitServerBackedRoomCoordinator {
   private(set) var roomState = OrbitServerBackedRoomState()
 
+  mutating func apply(
+    _ response: OrbitPhase1RealtimeTransportResponse
+  ) throws {
+    try roomState.apply(response)
+  }
+
   mutating func connect(
     scope: OrbitPhase1RealtimeSubscriptionScope,
+    cursor: OrbitPhase1ReplayCursor? = nil,
     transport: some OrbitPhase1RealtimeTransportServing
   ) async throws {
     let response = try await transport.connect(
-      request: OrbitPhase1RealtimeConnectRequest(scope: scope)
+      request: OrbitPhase1RealtimeConnectRequest(
+        scope: scope,
+        cursor: cursor
+      )
     )
 
     try roomState.apply(response)
@@ -52,9 +62,13 @@ struct OrbitServerBackedRoomCoordinator {
 
   mutating func connect(
     scope: OrbitPhase1RealtimeSubscriptionScope,
+    cursor: OrbitPhase1ReplayCursor? = nil,
     client: OrbitServerBackedRoomClient
   ) async throws {
-    let response = try await client.connect(scope: scope)
+    let response = try await client.connect(
+      scope: scope,
+      cursor: cursor
+    )
     try roomState.apply(response)
   }
 
@@ -98,7 +112,7 @@ struct OrbitServerBackedRoomCoordinator {
       )
     )
 
-    try await connect(scope: scope, client: client)
+    try await reconnect(scope: scope, client: client)
   }
 
   @MainActor
@@ -208,11 +222,22 @@ struct OrbitServerBackedRoomCoordinator {
         }
       }
 
-      try await connect(scope: scope, client: client)
+      try await reconnect(scope: scope, client: client)
     } catch {
-      try? await connect(scope: scope, client: client)
+      try? await reconnect(scope: scope, client: client)
       throw error
     }
+  }
+
+  mutating func reconnect(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    client: OrbitServerBackedRoomClient
+  ) async throws {
+    try await connect(
+      scope: scope,
+      cursor: roomState.session?.replayCursor,
+      client: client
+    )
   }
 
   private func responseMode(

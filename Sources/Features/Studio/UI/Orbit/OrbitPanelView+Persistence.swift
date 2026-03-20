@@ -1,6 +1,20 @@
 import Foundation
 import OrbitServerRuntime
 
+enum OrbitServerBackedRoomTransportPolicy {
+  static func shouldFallBackToPolling(
+    after error: Error
+  ) -> Bool {
+    !(error is CancellationError)
+  }
+
+  static func fallbackMessage(
+    after error: Error
+  ) -> String {
+    "Persistent Orbit transport disconnected; falling back to HTTP polling: \(error.localizedDescription)"
+  }
+}
+
 enum OrbitWorkspacePersistenceError: LocalizedError {
   case noWorkspaceSelected
 
@@ -22,6 +36,10 @@ extension OrbitPanelView {
 
   var orbitPersistence: OrbitWorkspacePersistence {
     OrbitWorkspacePersistence()
+  }
+
+  var serverBackedRoomPollInterval: Duration {
+    .seconds(2)
   }
 
   func loadConfiguredOrbitRoom() {
@@ -91,10 +109,7 @@ extension OrbitPanelView {
     do {
       var coordinator = serverBackedRoomCoordinator
       try await coordinator.connect(scope: serverBackedRoomScope, client: client)
-      serverBackedRoomCoordinator = coordinator
-      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
-        orbitWorkspace = projectedWorkspace
-      }
+      try applyServerBackedOrbitRoom(coordinator)
       persistenceMessage = "Loaded Orbit room from canonical server runtime."
       persistenceIsError = false
     } catch {
@@ -111,9 +126,13 @@ extension OrbitPanelView {
       return
     }
 
+    if await maintainPersistentServerBackedOrbitRoomLoop(using: client) {
+      return
+    }
+
     while !Task.isCancelled {
       do {
-        try await Task.sleep(for: .seconds(2))
+        try await Task.sleep(for: serverBackedRoomPollInterval)
       } catch {
         return
       }
@@ -127,23 +146,90 @@ extension OrbitPanelView {
   }
 
   @MainActor
+  func maintainPersistentServerBackedOrbitRoomLoop(
+    using client: OrbitServerBackedRoomClient
+  ) async -> Bool {
+    var attemptedPersistentTransport = false
+
+    while !Task.isCancelled {
+      let cursor = serverBackedRoomCoordinator.roomState.session?.replayCursor
+
+      guard
+        let responses = await client.persistentTransportResponses(
+          scope: serverBackedRoomScope,
+          cursor: cursor,
+          pollInterval: serverBackedRoomPollInterval
+        )
+      else {
+        return attemptedPersistentTransport
+      }
+
+      attemptedPersistentTransport = true
+
+      do {
+        for try await response in responses {
+          try applyServerBackedOrbitRoom(response)
+        }
+      } catch {
+        if OrbitServerBackedRoomTransportPolicy.shouldFallBackToPolling(after: error) {
+          persistenceMessage = OrbitServerBackedRoomTransportPolicy.fallbackMessage(
+            after: error
+          )
+          persistenceIsError = true
+          return false
+        }
+      }
+
+      guard !Task.isCancelled else {
+        return true
+      }
+
+      do {
+        try await Task.sleep(for: serverBackedRoomPollInterval)
+      } catch {
+        return true
+      }
+    }
+
+    return attemptedPersistentTransport
+  }
+
+  @MainActor
   func pollServerBackedOrbitRoom(
     using client: OrbitServerBackedRoomClient
   ) async {
     do {
       var coordinator = serverBackedRoomCoordinator
       try await coordinator.poll(client: client)
-      serverBackedRoomCoordinator = coordinator
-      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
-        orbitWorkspace = projectedWorkspace
-      }
-      if persistenceIsError {
-        persistenceMessage = nil
-        persistenceIsError = false
-      }
+      try applyServerBackedOrbitRoom(coordinator)
     } catch {
       persistenceMessage = "Failed to refresh server-backed Orbit room: \(error.localizedDescription)"
       persistenceIsError = true
+    }
+  }
+
+  @MainActor
+  func applyServerBackedOrbitRoom(
+    _ response: OrbitPhase1RealtimeTransportResponse
+  ) throws {
+    var coordinator = serverBackedRoomCoordinator
+    try coordinator.apply(response)
+    try applyServerBackedOrbitRoom(coordinator)
+  }
+
+  @MainActor
+  func applyServerBackedOrbitRoom(
+    _ coordinator: OrbitServerBackedRoomCoordinator
+  ) throws {
+    serverBackedRoomCoordinator = coordinator
+
+    if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
+      orbitWorkspace = projectedWorkspace
+    }
+
+    if persistenceIsError {
+      persistenceMessage = nil
+      persistenceIsError = false
     }
   }
 

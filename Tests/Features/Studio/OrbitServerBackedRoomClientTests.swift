@@ -179,7 +179,14 @@ struct OrbitServerBackedRoomClientTests {
     #expect(collaboratorResponse == collaboratorResult)
     #expect(systemResponse == systemResult)
     #expect(failureResponse == failureResult)
-    #expect(await transport.connectCalls == [scope])
+    #expect(
+      await transport.connectCalls == [
+        OrbitPhase1RealtimeConnectRequest(
+          scope: scope,
+          cursor: nil
+        )
+      ]
+    )
     #expect(await transport.pollCalls.count == 1)
     #expect(await roomWriter.requests.first?.body == "server-backed")
     #expect(await systemWriter.requests.first?.body == "Meeting system event")
@@ -244,7 +251,7 @@ struct OrbitServerBackedRoomClientTests {
 private actor StubClientTransport: OrbitPhase1RealtimeTransportServing {
   let connectResponse: OrbitPhase1RealtimeTransportResponse
   let pollResponse: OrbitPhase1RealtimeTransportResponse
-  var connectCalls = [OrbitPhase1RealtimeSubscriptionScope]()
+  var connectCalls = [OrbitPhase1RealtimeConnectRequest]()
   var pollCalls = [OrbitPhase1RealtimeSession]()
 
   init(
@@ -258,7 +265,7 @@ private actor StubClientTransport: OrbitPhase1RealtimeTransportServing {
   func connect(
     request: OrbitPhase1RealtimeConnectRequest
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
-    connectCalls.append(request.scope)
+    connectCalls.append(request)
     return connectResponse
   }
 
