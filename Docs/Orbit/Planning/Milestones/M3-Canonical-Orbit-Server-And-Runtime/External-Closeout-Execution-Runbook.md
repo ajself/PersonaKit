@@ -33,6 +33,15 @@ For the env-backed proof lane, provide:
 The same environment should also be able to run the focused macOS transport
 tests used by the transport soak lane.
 
+For a local-only rehearsal on one Mac before external capture, the same
+`ORBIT_PG_*` environment can now run:
+
+1. `make orbit-server-local`
+2. Studio with `ORBIT_SERVER_GATEWAY_BASE_URL=http://127.0.0.1:8080`
+
+That local server path is useful for hero-proof walkthroughs, but it does not
+replace the env-backed `make orbit-m3-proof` requirement below.
+
 ## Canonical Execution Commands
 
 Use these commands in order:

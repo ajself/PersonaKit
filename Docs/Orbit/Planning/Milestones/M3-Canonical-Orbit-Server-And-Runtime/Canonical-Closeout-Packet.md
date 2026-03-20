@@ -61,12 +61,31 @@ spine:
 - `OrbitServerBackedRoomCoordinatorTests`
 - `OrbitServerBackedRoomTransportPolicyTests`
 - `OrbitGatewayNetworkClientTests`
+- `OrbitCanonicalCommandCenterBootstrapTests`
+- `OrbitServerApplicationTests`
+- `OrbitServerConfigurationTests`
 - `OrbitPostgresRuntimeStoreIntegrationTests`
 - `make orbit-transport-proof`
 - `make orbit-transport-soak-local`
 - `make orbit-m3-proof`
 - `make orbit-live-db-proof-local`
 - `make orbit-m3-proof-local`
+
+## Local Server Hero Path
+
+For a local-only `M3` rehearsal on one machine:
+
+1. start a real local `Postgres` instance and export `ORBIT_PG_*`
+2. run `make orbit-server-local`
+3. launch Studio with `ORBIT_SERVER_GATEWAY_BASE_URL=http://127.0.0.1:8080`
+4. exercise the Orbit panel over the live local gateway-backed room
+
+This path is local evidence only, but it now uses the same gateway and runtime
+stack that the `M3` closeout packet is reviewing.
+The local server intentionally seeds the same command-center baseline language
+used by `OrbitWorkspace.defaultWorkspace`, including `Orbit MVP Checkpoint`, so
+the macOS projection stays aligned even though some older server-only fixtures
+still use `Primary Orbit room` / `Orbit room` wording.
 
 ## Honest Limits
 

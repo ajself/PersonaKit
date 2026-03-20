@@ -23,6 +23,10 @@ let package = Package(
       name: "PersonaKitStudio",
       targets: ["PersonaKitStudio"]
     ),
+    .executable(
+      name: "OrbitServer",
+      targets: ["OrbitServer"]
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
@@ -126,6 +130,15 @@ let package = Package(
         "README.md"
       ]
     ),
+    .executableTarget(
+      name: "OrbitServer",
+      dependencies: [
+        "OrbitServerGateway",
+        "OrbitServerRuntime",
+        .product(name: "Vapor", package: "vapor"),
+      ],
+      path: "Sources/App/OrbitServer"
+    ),
     .testTarget(
       name: "PersonaKitTests",
       dependencies: [
@@ -135,6 +148,7 @@ let package = Package(
         "ContextWorkspaceCore",
         "OrbitServerGateway",
         "OrbitServerRuntime",
+        "OrbitServer",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
