@@ -64,10 +64,10 @@ Last Updated: 2026-03-20
    `make orbit-m3-proof` on 2026-03-20 against a configured `ORBIT_PG_*`
    environment on one Mac.
 
-## Strongest Remaining Reliability Notes
+## Post-M3 Reliability Notes
 
 1. No operations-grade disconnect/reconnect proof exists yet, even though the
-   focused transport ring now also has a repeatable local soak lane.
+   accepted local-only `M3` proof bar now also has a repeatable local soak lane.
 2. The current live database proof is repeated local temp-`Postgres` evidence
    plus one local env-backed `make orbit-m3-proof` capture on a single Mac,
    not CI-backed or operations-backed proof.

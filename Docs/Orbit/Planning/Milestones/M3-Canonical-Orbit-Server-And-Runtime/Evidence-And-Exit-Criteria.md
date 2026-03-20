@@ -75,6 +75,11 @@ If that sequence is weak, confusing, or under-evidenced, `M3` is not done.
 - reliability review passes
 - product continuity review passes
 - coverage and closeout review pass
+- the accepted proof package is captured either in external infrastructure or,
+  when that infrastructure is unavailable, as one-machine self-hosted proof on
+  one Mac using the approved `Swift + Vapor + Postgres` posture
+- the repository local-only closeout workflow completes through
+  `make closeout-local`
 - the implementation stop line is honored: construction pauses after `M3` until
   AJ explicitly restarts it
 
@@ -132,6 +137,11 @@ Current disposition:
 - AJ approved the current `M3` checkpoint packet
 - the canonical closeout packet now exists as the current review container for
   runtime, replay, and product continuity evidence
-- the milestone remains open because the full exit checklist still requires
-  operations-grade persistent-transport confidence and CI-backed or
-  operations-backed live database proof
+- the accepted `M3` exit bar is now local self-hosted proof on one Mac using
+  the current `Vapor + Postgres` runtime stack because CI-backed and
+  operations-backed infrastructure is unavailable
+- the remaining repo-side closeout step is to run `make closeout-local` once
+  the main worktree is clean enough to satisfy the ancestor-verifying workflow
+- post-`M3` hardening can still pursue operations-grade persistent-transport
+  confidence and longer-lived external runtime proof without reopening the
+  milestone

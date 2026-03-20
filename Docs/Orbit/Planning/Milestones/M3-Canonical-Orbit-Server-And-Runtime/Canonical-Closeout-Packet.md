@@ -74,6 +74,19 @@ spine:
 - `make orbit-live-db-proof-local`
 - `make orbit-m3-proof-local`
 
+## Recorded Local Closeout Proof
+
+The current accepted `M3` local closeout proof was captured on:
+
+- commit `09fa445`
+- date `2026-03-20`
+- machine `MacBook Pro` (`MacBookPro18,2`, `Apple M1 Max`, `32 GB`)
+- topology: one-machine self-hosted `Postgres` configured through `ORBIT_PG_*`
+  plus the local `OrbitServer` gateway on `127.0.0.1:8080`
+
+The final repository closeout step for this proof bar is `make closeout-local`
+once the main worktree is clean enough for the ancestor-verifying workflow.
+
 ## Local Server Hero Path
 
 For a local-only `M3` rehearsal on one machine:
@@ -98,12 +111,15 @@ or HTTP date-format mismatch.
 
 - the live macOS cutover still depends on canonical gateway configuration being
   present in the Studio environment
+- the accepted `M3` exit bar is now local self-hosted proof on one Mac rather
+  than CI-backed or operations-backed infrastructure proof
 - the current transport confidence now includes a repeatable local soak lane,
-  but it is still not operations-grade evidence
+  but stronger operations-grade evidence remains a post-`M3` hardening follow-up
 - the current closeout bundle can now be executed in a pre-wired
   `ORBIT_PG_*` environment through `make orbit-m3-proof`, and that execution
-  has now been captured locally on one Mac, but not yet as CI-backed or
-  operations-backed proof
+  has now been captured locally on one Mac as the accepted milestone proof bar
+- the repository still needs to complete `make closeout-local` before the
+  branch-local proof packet becomes a finished repo-side closeout
 - AJ closeout review should still treat this packet as the current closeout
   container, not as automatic proof that `M3` is already complete
 
@@ -111,8 +127,8 @@ or HTTP date-format mismatch.
 
 - this artifact now fills the canonical closeout-packet slot required by
   `Evidence-And-Exit-Criteria.md`
-- `External-Closeout-Execution-Runbook.md` now defines the exact remaining
-  execution path for the env-backed proof lane
-- the remaining `M3` blockers are now concentrated in external confidence work:
-  operations-grade persistent-transport evidence and CI-backed or
-  operations-backed live database proof
+- this packet now treats the local self-hosted proof bar as sufficient for `M3`
+  closeout on one Mac
+- the final repository closeout step remains `make closeout-local`
+- `External-Closeout-Execution-Runbook.md` now defines post-`M3` hardening work
+  rather than a remaining exit blocker

@@ -103,8 +103,8 @@ They should not treat runtime complexity as permission to revisit the core stack
   Packet 6 readiness artifact defining the live database proof harness and
   local rerun entry points for the canonical runtime store
 - `External-Closeout-Execution-Runbook.md`
-  exact execution path for the remaining CI-backed or operations-backed `M3`
-  proof work
+  exact execution path for post-`M3` external hardening once that
+  infrastructure exists
 - `Review-Packet.md`
   compact AJ review packet for the current canonical-runtime backbone progress
 - `Canonical-Closeout-Packet.md`
@@ -348,9 +348,10 @@ Current disposition:
   closeout artifact
 - one local env-backed `make orbit-m3-proof` pass was captured on
   2026-03-20 against a configured `ORBIT_PG_*` environment on one Mac
-- `M3` remains open until operations-grade persistent-transport confidence and
-  CI-backed or operations-backed live database proof satisfy the full exit
-  checklist
+- the accepted `M3` finish line is now local self-hosted proof on one Mac plus
+  the repository local-closeout workflow
+- stronger operations-grade transport evidence and external runtime proof are
+  now post-`M3` hardening work, not milestone blockers
 
 After `M3` closes, implementation pauses.
 

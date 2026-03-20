@@ -73,7 +73,7 @@ Last Updated: 2026-03-20
 - the Studio root now activates the server-backed Orbit client path whenever
   canonical gateway configuration is present
 
-### What this does not prove yet
+### Post-M3 hardening this does not prove yet
 
 - operations-grade persistent transport soak or disconnect/reconnect proof
 - CI-backed or operations-backed live database proof beyond the repeated local
@@ -91,3 +91,6 @@ Current disposition:
 
 - this migration validation readout supported AJ approval of the current `M3`
   checkpoint
+- under the local-only exit policy, this validation set is sufficient for `M3`
+  closeout and the remaining external confidence work becomes post-`M3`
+  hardening

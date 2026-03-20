@@ -81,7 +81,8 @@ lane also passed locally on one Mac against a configured `ORBIT_PG_*`
 environment.
 
 What it still does not provide is repeatable CI-backed or long-lived operations
-environment proof.
+environment proof, but that is now a post-`M3` hardening concern rather than a
+blocking exit requirement.
 
 ## Packet 6 Judgment
 

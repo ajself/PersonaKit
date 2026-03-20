@@ -185,12 +185,17 @@ High bar:
 - reviewers can separate runtime correctness from product continuity and process
   quality
 - milestone closeout depends on artifacts, not backend optimism
+- when remote infrastructure is unavailable, a one-machine self-hosted proof on
+  one Mac is acceptable so long as it uses the same approved `Swift + Vapor +
+  Postgres` stack and a sharp closeout packet
 
 Failure signs:
 
 - server work is considered done because the code compiles
 - replay and reconnect claims rely on implementer explanation rather than proof
 - the branch is described as ready before the full review packet exists
+- milestone closeout is blocked on unavailable CI or operations infrastructure
+  even after the local self-hosted proof bar has been satisfied
 
 Evidence:
 

@@ -7,17 +7,17 @@ Last Updated: 2026-03-20
 
 ## Purpose
 
-Define the exact execution path for the remaining external `M3` blockers once a
-real CI lane or operations-backed environment is available.
+Define the exact execution path for post-`M3` hardening once a real CI lane or
+operations-backed environment is available.
 
-## Remaining External Blockers
+## Post-M3 Hardening Follow-Ups
 
-`M3` still needs:
+After local-only `M3` closeout, the next optional confidence upgrades are:
 
 1. operations-grade persistent-transport evidence
 2. CI-backed or operations-backed live database proof
 
-The repo should not invent new implementation scope for those blockers before
+The repo should not invent new implementation scope for those follow-ups before
 running the proof lanes that already exist.
 
 ## Required Environment
@@ -39,12 +39,22 @@ For a local-only rehearsal on one Mac before external capture, the same
 1. `make orbit-server-local`
 2. Studio with `ORBIT_SERVER_GATEWAY_BASE_URL=http://127.0.0.1:8080`
 
-That local server path is useful for hero-proof walkthroughs, but it does not
-replace the env-backed `make orbit-m3-proof` requirement below.
+That local server path is useful for hero-proof walkthroughs and now counts
+toward the accepted local-only `M3` closeout packet when paired with the
+env-backed `make orbit-m3-proof` lane on the same machine.
 
-## Canonical Execution Commands
+## Local-Only Closeout Commands
 
-Use these commands in order:
+Use these commands for the accepted local-only `M3` closeout path:
+
+1. `make orbit-m3-proof`
+2. `make orbit-server-local`
+3. Studio with `ORBIT_SERVER_GATEWAY_BASE_URL=http://127.0.0.1:8080`
+4. `make closeout-local`
+
+## External Hardening Commands
+
+If stronger external proof is available later, use these commands in order:
 
 1. `make orbit-m3-proof`
 2. if a local branch-local sanity pass is also needed, `make orbit-m3-proof-local`
@@ -63,15 +73,15 @@ The execution should show all of the following:
   environment
 - the combined bundle finishes without changing code or hand-editing commands
 
-## Closeout Update Rule
+## Hardening Update Rule
 
-If `make orbit-m3-proof` passes in CI or an operations-backed environment, the
-result should be reflected back into:
+If `make orbit-m3-proof` later passes in CI or an operations-backed
+environment, the stronger result should be reflected back into:
 
 - `Canonical-Closeout-Packet.md`
 - `Review-Packet.md`
 - `Live-Postgres-Integration-Harness-Note.md`
 - `Reliability-Review-Artifact.md`
 
-Until that happens, the current packet should continue to describe those
-blockers as open.
+Until that happens, the current packet should continue to describe that work as
+post-`M3` hardening rather than as an exit blocker.

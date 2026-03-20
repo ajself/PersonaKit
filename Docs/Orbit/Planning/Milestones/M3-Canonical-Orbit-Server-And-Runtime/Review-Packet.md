@@ -82,31 +82,29 @@ progress without reconstructing every packet from scratch.
 - `Canonical-Closeout-Packet.md`
 - `External-Closeout-Execution-Runbook.md`
 
-## Honest Remaining Gaps
+## Post-M3 Hardening Notes
 
 1. no operations-grade persistent transport soak or disconnect/reconnect
-   evidence exists yet, even though bounded local reconnect/fallback/retry
-   proof now exists, can be rerun on demand, and now has a repeatable local
-   soak lane
-2. the current live database proof is repeated local temp-`Postgres` evidence
-   plus one local env-backed `make orbit-m3-proof` capture on a single Mac,
-   rather than CI-backed or operations-backed proof
+   evidence exists yet, even though the accepted local-only `M3` proof bar now
+   has bounded reconnect/fallback/retry coverage plus a repeatable local soak lane
+2. the current live database proof is local self-hosted evidence on one Mac,
+   not CI-backed or operations-backed proof
 
 ## Judgment Frame
 
-This packet is ready for AJ review as a serious `M3` progress checkpoint.
-
-It is not yet a closeout packet for full `M3` acceptance.
+This packet is now strong enough to support full `M3` closeout under the local
+self-hosted proof bar.
+The remaining repo-side action is the ancestor-verifying `make closeout-local`
+workflow.
 
 ## Review Ask
 
 AJ should review whether the current backbone and closeout packet are now strong
-enough to carry the last two external-confidence blockers without reopening the
-core architecture, replay, or storage boundaries.
+enough to close `M3` locally without reopening the core architecture, replay,
+or storage boundaries.
 
 ## AJ Review Outcome
 
 - AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
-- `M3` remains open for full closeout until operations-grade
-  persistent-transport confidence and CI-backed or operations-backed live
-  database proof are complete
+- under the local-only closeout policy, `M3` may now close on the current proof
+  packet and repository closeout workflow
