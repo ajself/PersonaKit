@@ -38,6 +38,9 @@ Last Updated: 2026-03-20
   session stack instead of inventing new recovery semantics
 - pass: the persistent transport path now has focused proof for reconnect and
   fallback to the existing HTTP polling path when socket transport fails
+- pass: the macOS transport loop now retries back into persistent transport
+  after a bounded polling cooldown instead of degrading permanently after the
+  first socket failure
 
 ## Strongest Reliability Wins
 
@@ -46,13 +49,15 @@ Last Updated: 2026-03-20
 3. Transaction boundaries exist where bootstrap and append semantics need them.
 4. The live runtime-store harness now has a one-command local temp-`Postgres`
    proof path, and that path passed three consecutive mutation-ring runs.
+5. Repeated local reconnect now has bounded proof across cursor carry-forward,
+   degraded polling fallback, and retry back into persistent transport.
 
 ## Strongest Remaining Reliability Notes
 
 1. No long-running persistent transport soak or operations-grade
    disconnect/reconnect proof exists yet.
-2. The current live database proof is local-run evidence, not CI-backed or
-   operations-backed proof.
+2. The current live database proof is repeated local temp-`Postgres` evidence,
+   not CI-backed or operations-backed proof.
 
 ## Judgment
 

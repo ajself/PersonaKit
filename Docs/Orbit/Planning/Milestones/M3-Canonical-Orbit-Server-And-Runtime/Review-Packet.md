@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M3`
 Owner: `samwise`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -33,6 +33,10 @@ progress without reconstructing every packet from scratch.
 - the macOS room can now keep canonical transport traffic on one persistent
   gateway `WebSocket` connection and reconnect from its last replay cursor after
   transport loss or post-write recovery
+- the live runtime-store harness now has a one-command local temp-`Postgres`
+  proof path, and that path passed three consecutive mutation-ring runs
+- the macOS room now has bounded repeated reconnect proof across cursor-based
+  replay, degraded polling fallback, and retry back into persistent transport
 
 ## Core Evidence
 
@@ -61,9 +65,10 @@ progress without reconstructing every packet from scratch.
 ## Honest Remaining Gaps
 
 1. no long-running persistent transport soak or operations-grade
-   disconnect/reconnect evidence exists yet
-2. the current live database proof is local-run evidence rather than CI-backed or
-   operations-backed proof
+   disconnect/reconnect evidence exists yet, even though bounded local
+   reconnect/fallback/retry proof now exists
+2. the current live database proof is repeated local temp-`Postgres` evidence
+   rather than CI-backed or operations-backed proof
 3. the closeout packet and hero-proof evidence still need a refreshed readout
    now that replay coverage for the currently supported runtime mutation types
    is in place
@@ -77,13 +82,13 @@ It is not yet a closeout packet for full `M3` acceptance.
 ## Review Ask
 
 AJ should review whether the current backbone is strong enough to continue into
-persistent-transport confidence, repeatable live-database proof, and final
-closeout evidence work without reopening the core architecture, replay, or
-storage boundaries.
+operations-grade persistent-transport confidence, CI-backed or
+operations-backed live-database proof, and final closeout evidence work
+without reopening the core architecture, replay, or storage boundaries.
 
 ## AJ Review Outcome
 
 - AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
-- `M3` remains open for full closeout until persistent-transport confidence,
-  repeatable live database proof, and refreshed macOS closeout evidence are
-  complete
+- `M3` remains open for full closeout until operations-grade
+  persistent-transport confidence, CI-backed or operations-backed live
+  database proof, and refreshed macOS closeout evidence are complete

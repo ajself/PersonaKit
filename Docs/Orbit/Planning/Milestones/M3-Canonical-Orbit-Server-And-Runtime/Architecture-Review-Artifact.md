@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `architectural-editor`
 Grounding: `architectural-editor` + `apply-style`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Decision
 
@@ -37,8 +37,8 @@ Last Updated: 2026-03-19
   reimplemented at the edge
 - pass: the macOS transport path can now stay on one persistent gateway
   `WebSocket` connection and reconnect from its last canonical replay cursor
-- note: a durable realtime-event table now exists, but write coverage is still
-  not complete enough to treat the event log as fully closeout-ready
+- pass: the currently supported runtime mutation types now replay through the
+  durable event model on the macOS server-backed path
 
 ### Storage boundary
 
@@ -57,8 +57,8 @@ Last Updated: 2026-03-19
 1. The live gateway now includes persistent transport, but the current channel
    still carries bootstrap-plus-poll semantics rather than a fully push-driven
    subscription model.
-2. The durable realtime-event table exists, but not all runtime writes are yet
-   proven through it.
+2. The macOS cutover path remains env-gated, so the architectural migration is
+   not yet a full default cutover.
 
 ## Judgment
 

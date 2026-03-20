@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M3`
 Owner: `studio-reliability-engineer`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -45,5 +45,7 @@ Recovery should never favor:
 - pretending success where durability is not proven
 
 Current packet proof now covers explicit stale-client session recovery,
-database-backed snapshot/replay semantics, and persistent-transport reconnect
-recovery on the macOS client path.
+database-backed snapshot/replay semantics, bounded repeated
+persistent-transport reconnect recovery on the macOS client path, and degraded
+fallback from socket transport into polling with retry back into the persistent
+path.

@@ -58,6 +58,9 @@ Last Updated: 2026-03-20
 - the macOS client can now keep canonical transport traffic on one persistent
   gateway `WebSocket` connection, reconnect from its last replay cursor, and
   fall back to the existing HTTP poll path when persistent transport fails
+- the macOS client now retries back into persistent transport after a bounded
+  polling cooldown instead of degrading permanently after the first socket
+  failure
 - replay of the currently supported runtime mutation types is now covered on the
   server-backed macOS path, including system-message, collaborator-response,
   and activation-failure recovery

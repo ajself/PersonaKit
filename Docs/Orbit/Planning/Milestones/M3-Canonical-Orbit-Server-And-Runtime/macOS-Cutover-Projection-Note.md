@@ -4,7 +4,7 @@ Status: Ready For Planning Closeout
 Milestone: `M3`
 Owner: `senior-swiftui-engineer`
 Review Ring: `venture-product-steward`, `studio-coverage-architect`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -95,6 +95,8 @@ Current proof covers:
   one long-lived client connection
 - reconnect-after-failure behavior resuming from the last canonical replay
   cursor
+- degraded socket transport falling back to HTTP polling and then retrying back
+  into persistent transport after a bounded cooldown
 - environment-gated factory construction for the server-backed room client
 - configuration-based server-backed client enablement in Studio
 

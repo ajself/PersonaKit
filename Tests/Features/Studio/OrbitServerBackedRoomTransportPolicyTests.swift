@@ -25,4 +25,37 @@ struct OrbitServerBackedRoomTransportPolicyTests {
       ) == false
     )
   }
+
+  @Test
+  func degradedTransportRetriesPersistentPathAfterPollingCooldown() {
+    var state = OrbitServerBackedRoomTransportRetryState()
+
+    #expect(state.shouldAttemptPersistentTransport == true)
+
+    state.recordPersistentTransportResult(.degradedToPolling)
+
+    #expect(state.shouldAttemptPersistentTransport == false)
+
+    for _ in 0 ..< OrbitServerBackedRoomTransportPolicy.pollsBeforePersistentRetry - 1 {
+      state.recordPollingCycle()
+      #expect(state.shouldAttemptPersistentTransport == false)
+    }
+
+    state.recordPollingCycle()
+
+    #expect(state.shouldAttemptPersistentTransport == true)
+  }
+
+  @Test
+  func unavailableTransportStopsPersistentRetries() {
+    var state = OrbitServerBackedRoomTransportRetryState()
+
+    state.recordPersistentTransportResult(.unavailable)
+
+    for _ in 0 ..< 10 {
+      state.recordPollingCycle()
+    }
+
+    #expect(state.shouldAttemptPersistentTransport == false)
+  }
 }

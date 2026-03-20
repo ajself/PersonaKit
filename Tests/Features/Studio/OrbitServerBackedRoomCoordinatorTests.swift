@@ -337,6 +337,265 @@ struct OrbitServerBackedRoomCoordinatorTests {
   }
 
   @Test
+  func reconnectCarriesForwardReplayCursorAcrossRepeatedRecoveryCycles() async throws {
+    let initialSnapshot = sampleSnapshot()
+    let firstRecoveryMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "60606060-6060-6060-6060-606060606060")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .user,
+      authorID: "aj",
+      body: "Persistent transport replay restored the missed user turn after the first drop.",
+      messageFormat: .plainText,
+      state: .persisted,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_540),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_540)
+    )
+    let firstRecoveryMessageEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: firstRecoveryMessage.id,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: firstRecoveryMessage.createdAt,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: firstRecoveryMessage.id,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.user.rawValue,
+          authorID: "aj",
+          body: firstRecoveryMessage.body,
+          messageFormat: OrbitMessageFormat.plainText.rawValue,
+          state: OrbitMessageState.persisted.rawValue,
+          createdAt: firstRecoveryMessage.createdAt,
+          updatedAt: firstRecoveryMessage.updatedAt,
+          replyToMessageID: nil
+        )
+      )
+    )
+    let firstRecoveryThreadEvent = threadActivityEvent(
+      id: UUID(uuidString: "61616161-6161-6161-6161-616161616161")!,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_541),
+      lastActivityAt: Date(timeIntervalSince1970: 1_742_342_541)
+    )
+    let firstRecoverySession = replaySession(
+      lastEventID: firstRecoveryThreadEvent.id,
+      lastEventCreatedAt: firstRecoveryThreadEvent.createdAt
+    )
+
+    let secondRecoveryMessage = collaboratorResponseMessage(
+      id: UUID(uuidString: "62626262-6262-6262-6262-626262626262")!,
+      authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
+      replyToMessageID: firstRecoveryMessage.id,
+      body: "Persistent transport reconnected again and kept the collaborator trace attached to the same canonical turn.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_542)
+    )
+    let secondRecoveryMessageEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: secondRecoveryMessage.id,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: secondRecoveryMessage.createdAt,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: secondRecoveryMessage.id,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.workspacePersona.rawValue,
+          authorID: secondRecoveryMessage.authorID,
+          body: secondRecoveryMessage.body,
+          messageFormat: OrbitMessageFormat.markdown.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: secondRecoveryMessage.createdAt,
+          updatedAt: secondRecoveryMessage.updatedAt,
+          replyToMessageID: firstRecoveryMessage.id
+        )
+      )
+    )
+    let secondRecoveryThreadEvent = threadActivityEvent(
+      id: UUID(uuidString: "63636363-6363-6363-6363-636363636363")!,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_543),
+      lastActivityAt: Date(timeIntervalSince1970: 1_742_342_543)
+    )
+    let secondRecoveryActivation = collaboratorActivation(
+      id: UUID(uuidString: "64646464-6464-6464-6464-646464646464")!,
+      workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+      triggerMessageID: firstRecoveryMessage.id
+    )
+    let secondRecoveryRun = collaboratorRun(
+      id: UUID(uuidString: "65656565-6565-6565-6565-656565656565")!,
+      activationID: secondRecoveryActivation.id,
+      startedAt: secondRecoveryMessage.createdAt
+    )
+    let secondRecoveryActivationEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "66666660-6666-6666-6666-666666666660")!,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .activationResolved,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_544),
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ActivationEventPayload(
+          activation: secondRecoveryActivation,
+          agentRun: secondRecoveryRun,
+          contract: OrbitPhase1ResolvedContractPayload(
+            directiveID: "maintain-partner-sync-and-handoffs",
+            directiveSource: OrbitDirectiveSource.participantDefault.rawValue,
+            kitIDs: ["trusted-partner-core"],
+            authorizedSkillIDs: ["codex-cli"],
+            requiredSkillIDs: ["codex-cli"],
+            reviewGateIDs: ["intent:partner-sync-review"]
+          )
+        )
+      )
+    )
+    let secondRecoverySession = replaySession(
+      lastEventID: secondRecoveryActivationEvent.id,
+      lastEventCreatedAt: secondRecoveryActivationEvent.createdAt
+    )
+    let resyncedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: initialSnapshot.room.workspace,
+        channel: initialSnapshot.room.channel,
+        workspacePersonas: initialSnapshot.room.workspacePersonas,
+        post: initialSnapshot.room.post,
+        thread: OrbitThreadRecord(
+          id: initialSnapshot.room.thread.id,
+          postID: initialSnapshot.room.thread.postID,
+          status: initialSnapshot.room.thread.status,
+          lastActivityAt: secondRecoveryActivationEvent.createdAt,
+          createdAt: initialSnapshot.room.thread.createdAt,
+          closedAt: initialSnapshot.room.thread.closedAt
+        ),
+        messages: initialSnapshot.room.messages + [firstRecoveryMessage, secondRecoveryMessage],
+        postParticipants: initialSnapshot.room.postParticipants,
+        postEvents: [
+          OrbitPostEventRecord(
+            id: secondRecoveryActivationEvent.id,
+            postID: postID,
+            threadID: threadID,
+            eventType: OrbitPhase1RealtimeEventCategory.activationResolved.rawValue,
+            payloadJSON: secondRecoveryActivationEvent.payloadJSON,
+            createdAt: secondRecoveryActivationEvent.createdAt
+          )
+        ],
+        personaActivations: [secondRecoveryActivation],
+        agentRuns: [secondRecoveryRun]
+      ),
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: secondRecoveryActivationEvent.id,
+        lastEventCreatedAt: secondRecoveryActivationEvent.createdAt
+      )
+    )
+    let transport = SequencedClientTransport(
+      connectResponses: [
+        .bootstrap(sampleSession(snapshot: initialSnapshot), initialSnapshot),
+        .replay(firstRecoverySession, [firstRecoveryMessageEvent, firstRecoveryThreadEvent]),
+        .replay(
+          secondRecoverySession,
+          [secondRecoveryMessageEvent, secondRecoveryThreadEvent, secondRecoveryActivationEvent]
+        ),
+        .resync(
+          sampleSession(snapshot: resyncedSnapshot),
+          resyncedSnapshot,
+          .staleClient
+        ),
+      ],
+      pollResponse: .noChange(sampleSession(snapshot: resyncedSnapshot))
+    )
+    let client = OrbitServerBackedRoomClient(
+      transport: transport,
+      roomWriter: StubClientRoomWriter(
+        result: OrbitPhase1AppendUserMessageResult(
+          snapshot: initialSnapshot.room,
+          message: firstRecoveryMessage
+        )
+      ),
+      systemWriter: StubClientSystemWriter(
+        result: OrbitPhase1AppendSystemMessageResult(
+          snapshot: initialSnapshot.room,
+          message: OrbitMessageRecord(
+            id: UUID(uuidString: "67676767-6767-6767-6767-676767676767")!,
+            postID: postID,
+            threadID: threadID,
+            authorType: .system,
+            authorID: "orbit-system",
+            body: "unused",
+            messageFormat: .plainText,
+            state: .completed,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_545),
+            updatedAt: Date(timeIntervalSince1970: 1_742_342_545)
+          )
+        )
+      ),
+      failureWriter: StubClientFailureWriter(
+        result: activationFailureResult(
+          snapshot: initialSnapshot.room,
+          systemMessageBody: "unused"
+        )
+      ),
+      collaboratorWriter: StubClientCollaboratorWriter(
+        result: collaboratorResult(
+          snapshot: initialSnapshot.room,
+          message: secondRecoveryMessage,
+          activationID: secondRecoveryActivation.id,
+          workspacePersonaID: secondRecoveryActivation.resolvedWorkspacePersonaInstanceID,
+          triggerMessageID: firstRecoveryMessage.id
+        )
+      )
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator()
+
+    try await coordinator.connect(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      client: client
+    )
+    try await coordinator.reconnect(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      client: client
+    )
+    try await coordinator.reconnect(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      client: client
+    )
+    try await coordinator.reconnect(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      client: client
+    )
+
+    let connectRequests = await transport.connectRequests
+
+    #expect(connectRequests.count == 4)
+    #expect(connectRequests[0].cursor == nil)
+    #expect(connectRequests[1].cursor == initialSnapshot.replayCursor)
+    #expect(connectRequests[2].cursor == firstRecoverySession.replayCursor)
+    #expect(connectRequests[3].cursor == secondRecoverySession.replayCursor)
+    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.map(\.body) == [
+      "Orbit room bootstrapped.",
+      firstRecoveryMessage.body,
+      secondRecoveryMessage.body,
+    ])
+    #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
+    #expect(coordinator.roomState.projectedWorkspace?.activationContractSnapshots.count == 1)
+    #expect(coordinator.roomState.session?.replayCursor == resyncedSnapshot.replayCursor)
+  }
+
+  @Test
   func pollDoesNothingWhenNoSessionExists() async throws {
     var coordinator = OrbitServerBackedRoomCoordinator()
 
@@ -1355,6 +1614,38 @@ private actor StubClientTransport: OrbitPhase1RealtimeTransportServing {
   ) async throws -> OrbitPhase1RealtimeTransportResponse {
     connectRequests.append(request)
     return connectResponse
+  }
+
+  func poll(
+    request: OrbitPhase1RealtimePollRequest
+  ) async throws -> OrbitPhase1RealtimeTransportResponse {
+    return pollResponse
+  }
+}
+
+private actor SequencedClientTransport: OrbitPhase1RealtimeTransportServing {
+  private var remainingConnectResponses: [OrbitPhase1RealtimeTransportResponse]
+  let pollResponse: OrbitPhase1RealtimeTransportResponse
+  var connectRequests = [OrbitPhase1RealtimeConnectRequest]()
+
+  init(
+    connectResponses: [OrbitPhase1RealtimeTransportResponse],
+    pollResponse: OrbitPhase1RealtimeTransportResponse
+  ) {
+    self.remainingConnectResponses = connectResponses
+    self.pollResponse = pollResponse
+  }
+
+  func connect(
+    request: OrbitPhase1RealtimeConnectRequest
+  ) async throws -> OrbitPhase1RealtimeTransportResponse {
+    connectRequests.append(request)
+
+    guard !remainingConnectResponses.isEmpty else {
+      throw TestFailure.simulatedFailure
+    }
+
+    return remainingConnectResponses.removeFirst()
   }
 
   func poll(

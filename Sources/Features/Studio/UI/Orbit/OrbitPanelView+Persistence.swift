@@ -1,7 +1,58 @@
 import Foundation
 import OrbitServerRuntime
 
+enum OrbitServerBackedRoomPersistentTransportResult: Equatable {
+  case unavailable
+  case degradedToPolling
+  case finished
+}
+
+struct OrbitServerBackedRoomTransportRetryState: Equatable {
+  private(set) var persistentTransportAvailable = true
+  private(set) var pollsSincePersistentTransportFallback =
+    OrbitServerBackedRoomTransportPolicy.pollsBeforePersistentRetry
+
+  var shouldAttemptPersistentTransport: Bool {
+    persistentTransportAvailable
+      && pollsSincePersistentTransportFallback
+        >= OrbitServerBackedRoomTransportPolicy.pollsBeforePersistentRetry
+  }
+
+  mutating func recordPersistentTransportResult(
+    _ result: OrbitServerBackedRoomPersistentTransportResult
+  ) {
+    switch result {
+    case .unavailable:
+      persistentTransportAvailable = false
+    case .degradedToPolling:
+      pollsSincePersistentTransportFallback = 0
+    case .finished:
+      pollsSincePersistentTransportFallback =
+        OrbitServerBackedRoomTransportPolicy.pollsBeforePersistentRetry
+    }
+  }
+
+  mutating func recordPollingCycle() {
+    guard persistentTransportAvailable else {
+      return
+    }
+
+    guard
+      pollsSincePersistentTransportFallback
+        < OrbitServerBackedRoomTransportPolicy.pollsBeforePersistentRetry
+    else {
+      return
+    }
+
+    pollsSincePersistentTransportFallback += 1
+  }
+}
+
 enum OrbitServerBackedRoomTransportPolicy {
+  static var pollsBeforePersistentRetry: Int {
+    3
+  }
+
   static func shouldFallBackToPolling(
     after error: Error
   ) -> Bool {
@@ -126,11 +177,18 @@ extension OrbitPanelView {
       return
     }
 
-    if await maintainPersistentServerBackedOrbitRoomLoop(using: client) {
-      return
-    }
+    var retryState = OrbitServerBackedRoomTransportRetryState()
 
     while !Task.isCancelled {
+      if retryState.shouldAttemptPersistentTransport {
+        let result = await maintainPersistentServerBackedOrbitRoomLoop(using: client)
+        retryState.recordPersistentTransportResult(result)
+
+        if result == .finished {
+          return
+        }
+      }
+
       do {
         try await Task.sleep(for: serverBackedRoomPollInterval)
       } catch {
@@ -142,14 +200,14 @@ extension OrbitPanelView {
       }
 
       await pollServerBackedOrbitRoom(using: client)
+      retryState.recordPollingCycle()
     }
   }
 
   @MainActor
   func maintainPersistentServerBackedOrbitRoomLoop(
     using client: OrbitServerBackedRoomClient
-  ) async -> Bool {
-    var attemptedPersistentTransport = false
+  ) async -> OrbitServerBackedRoomPersistentTransportResult {
 
     while !Task.isCancelled {
       let cursor = serverBackedRoomCoordinator.roomState.session?.replayCursor
@@ -161,37 +219,37 @@ extension OrbitPanelView {
           pollInterval: serverBackedRoomPollInterval
         )
       else {
-        return attemptedPersistentTransport
+        return .unavailable
       }
-
-      attemptedPersistentTransport = true
 
       do {
         for try await response in responses {
           try applyServerBackedOrbitRoom(response)
         }
+      } catch is CancellationError {
+        return .finished
       } catch {
         if OrbitServerBackedRoomTransportPolicy.shouldFallBackToPolling(after: error) {
           persistenceMessage = OrbitServerBackedRoomTransportPolicy.fallbackMessage(
             after: error
           )
           persistenceIsError = true
-          return false
+          return .degradedToPolling
         }
       }
 
       guard !Task.isCancelled else {
-        return true
+        return .finished
       }
 
       do {
         try await Task.sleep(for: serverBackedRoomPollInterval)
       } catch {
-        return true
+        return .finished
       }
     }
 
-    return attemptedPersistentTransport
+    return .finished
   }
 
   @MainActor

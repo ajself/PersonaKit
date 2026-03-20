@@ -4,7 +4,7 @@ Status: Ready For Planning Closeout
 Milestone: `M3`
 Owner: `studio-integration-coordinator`
 Review Ring: `architectural-editor`, `studio-reliability-engineer`, `studio-coverage-architect`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -53,6 +53,8 @@ Current proof covers:
   persistent `WebSocket` connection
 - the macOS room coordinator reconnects from the last canonical replay cursor
   after a post-write failure instead of cold-bootstrapping blindly
+- the macOS transport loop can fall back to HTTP polling after socket failure
+  and retry back into the persistent gateway path after a bounded cooldown
 
 ## Honest Limit
 
