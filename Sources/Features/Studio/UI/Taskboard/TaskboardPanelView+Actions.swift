@@ -973,7 +973,6 @@ extension TaskboardPanelView {
       return
     }
 
-    let sourceLane = board.lanes[sourceLaneIndex]
     let ticket = board.lanes[sourceLaneIndex].tickets.remove(at: ticketIndex)
     let insertIndex = min(
       max(destinationIndex ?? board.lanes[destinationLaneIndex].tickets.count, 0),
