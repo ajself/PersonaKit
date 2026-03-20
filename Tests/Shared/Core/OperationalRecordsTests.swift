@@ -189,6 +189,52 @@ struct OperationalRecordsTests {
   }
 
   @Test
+  func buildDocsOutputReportsInvalidJSONLWithLineNumber() throws {
+    let fixture = try makeOperationalRecordsProjectFixture()
+    let partnerContextURL = fixture.projectRoot.appendingPathComponent(
+      OperationalRecordBuilder.partnerContextEventsRelativePath
+    )
+    try "{\"entryId\":true}\n".write(
+      to: partnerContextURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    do {
+      _ = try OperationalRecordBuilder.buildDocsOutput(
+        root: fixture.personaKitRoot
+      )
+      Issue.record("Expected invalid JSONL failure.")
+    } catch let error as OperationalRecordError {
+      switch error {
+      case .invalidJSONL(let message):
+        #expect(message.contains(OperationalRecordBuilder.partnerContextEventsRelativePath))
+        #expect(message.contains("line 1"))
+      default:
+        Issue.record("Unexpected error: \(error)")
+      }
+    } catch {
+      Issue.record("Unexpected error: \(error)")
+    }
+  }
+
+  @Test
+  func migrationOutputIsStableAcrossRepeatedCalls() throws {
+    let fixture = try makeOperationalRecordsProjectFixture(
+      seedCanonicalRecords: false
+    )
+
+    let first = try OperationalRecordBuilder.buildMigrationOutput(
+      root: fixture.personaKitRoot
+    )
+    let second = try OperationalRecordBuilder.buildMigrationOutput(
+      root: fixture.personaKitRoot
+    )
+
+    #expect(first == second)
+  }
+
+  @Test
   func migrationRejectsGeneratedProjectionDocs() throws {
     let fixture = try makeOperationalRecordsProjectFixture()
     let docsOutput = try OperationalRecordBuilder.buildDocsOutput(

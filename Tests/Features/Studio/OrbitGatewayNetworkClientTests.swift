@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 
 @testable import OrbitServerGateway
@@ -158,7 +159,7 @@ struct OrbitGatewayNetworkClientTests {
           OrbitGatewayTransportResponse(
             response: .bootstrap(sampleSession(snapshot: snapshot), snapshot)
           )
-        ),
+        )
       ]
     )
     let sleep = StubSleep(maxSleepsBeforeCancellation: 0)
@@ -618,48 +619,42 @@ private actor StubSleep {
   }
 }
 
-private final class CapturedURLBox: @unchecked Sendable {
-  private let lock = NSLock()
-  private var storage: URL?
+private final class CapturedURLBox: Sendable {
+  private let storage = Mutex<URL?>(nil)
 
   var current: URL? {
-    lock.lock()
-    defer { lock.unlock() }
-    return storage
+    storage.withLock { $0 }
   }
 
   func set(
     _ url: URL
   ) {
-    lock.lock()
-    storage = url
-    lock.unlock()
+    storage.withLock { value in
+      value = url
+    }
   }
 }
 
-private final class TestURLProtocolHandlerBox: @unchecked Sendable {
-  private let lock = NSLock()
-  private var handlers = [String: @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)]()
+private final class TestURLProtocolHandlerBox: Sendable {
+  private let handlers = Mutex<[String: @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)]>([:])
 
   func set(
     _ handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data),
     forHost host: String
   ) {
-    lock.lock()
-    handlers[host] = handler
-    lock.unlock()
+    handlers.withLock { currentHandlers in
+      currentHandlers[host] = handler
+    }
   }
 
   func current(
     forHost host: String
   ) -> (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))? {
-    lock.lock()
-    defer { lock.unlock() }
-    return handlers[host]
+    handlers.withLock { $0[host] }
   }
 }
 
-private final class TestURLProtocol: URLProtocol, @unchecked Sendable {
+private final class TestURLProtocol: URLProtocol {
   static let handlerBox = TestURLProtocolHandlerBox()
 
   override class func canInit(with request: URLRequest) -> Bool {
