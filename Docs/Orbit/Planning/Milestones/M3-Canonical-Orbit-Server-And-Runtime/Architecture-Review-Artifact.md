@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `architectural-editor`
 Grounding: `architectural-editor` + `apply-style`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Decision
 
@@ -35,6 +35,8 @@ Last Updated: 2026-03-18
   and session services
 - pass: replay semantics are layered under the transport seam instead of being
   reimplemented at the edge
+- pass: the macOS transport path can now stay on one persistent gateway
+  `WebSocket` connection and reconnect from its last canonical replay cursor
 - note: a durable realtime-event table now exists, but write coverage is still
   not complete enough to treat the event log as fully closeout-ready
 
@@ -52,8 +54,9 @@ Last Updated: 2026-03-18
 
 ## Strongest Remaining Architecture Notes
 
-1. The first gateway now exists, but persistent transport is still absent, so the
-   transport seam remains request/response rather than a live channel.
+1. The live gateway now includes persistent transport, but the current channel
+   still carries bootstrap-plus-poll semantics rather than a fully push-driven
+   subscription model.
 2. The durable realtime-event table exists, but not all runtime writes are yet
    proven through it.
 

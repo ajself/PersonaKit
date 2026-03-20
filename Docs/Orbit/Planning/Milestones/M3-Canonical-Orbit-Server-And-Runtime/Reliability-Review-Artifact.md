@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `studio-reliability-engineer`
 Grounding: `studio-reliability-engineer` + `apply-style`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Decision
 
@@ -19,6 +19,8 @@ Last Updated: 2026-03-18
   resync, and workspace mismatch are all explicit in code and tests
 - pass: transport-facing responses inherit recovery semantics from the lower
   replay/session layers instead of inventing them
+- pass: persistent transport reconnect now resumes from the last canonical
+  replay cursor instead of restarting from guessed local truth
 
 ### Write and bootstrap reliability
 
@@ -31,8 +33,8 @@ Last Updated: 2026-03-18
 - pass: replay-gap and stale-client behavior now has explicit resync outcomes
 - pass: the first live `Vapor` gateway now stays subordinate to the replay and
   session stack instead of inventing new recovery semantics
-- note: persistent transport failure behavior is still not proven through a live
-  `WebSocket` or `SSE` implementation
+- pass: the persistent transport path now has focused proof for reconnect and
+  fallback to the existing HTTP polling path when socket transport fails
 
 ## Strongest Reliability Wins
 
@@ -44,9 +46,12 @@ Last Updated: 2026-03-18
 
 ## Strongest Remaining Reliability Notes
 
-1. No live persistent transport soak or disconnect/reconnect test exists yet.
+1. No long-running persistent transport soak or operations-grade
+   disconnect/reconnect proof exists yet.
 2. The current live database proof is local-run evidence, not CI-backed or
    operations-backed proof.
+3. Replay coverage is still not complete enough across all supported runtime
+   mutation types to treat the closeout packet as finished.
 
 ## Judgment
 

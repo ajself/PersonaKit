@@ -77,11 +77,11 @@ It is not yet a closeout packet for full `M3` acceptance.
 ## Review Ask
 
 AJ should review whether the current backbone is strong enough to continue into
-gateway and live cutover work without reopening the core architecture, replay,
-or storage boundaries.
+replay-completion, repeatable live-database proof, and final closeout evidence
+work without reopening the core architecture, replay, or storage boundaries.
 
 ## AJ Review Outcome
 
 - AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
-- `M3` remains open for full closeout until the live gateway, live database
-  proof, and macOS cutover work are complete
+- `M3` remains open for full closeout until replay coverage, repeatable live
+  database proof, and refreshed macOS closeout evidence are complete

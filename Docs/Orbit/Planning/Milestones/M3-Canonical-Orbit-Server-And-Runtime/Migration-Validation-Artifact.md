@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `senior-swiftui-engineer`
 Grounding: `senior-swiftui-engineer` + `apply-style`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Decision
 
@@ -26,10 +26,13 @@ Last Updated: 2026-03-18
 - `swift test --filter Phase1RealtimeTransportAdapterTests`
 - `swift test --filter OrbitArtifactStorageTests`
 - `swift test --filter OrbitServerGatewayTests`
+- `swift test --filter OrbitGatewayNetworkClientTests`
 - `swift test --filter OrbitPostgresRuntimeStoreIntegrationTests`
 - `swift test --filter OrbitServerRoomProjectionTests`
+- `swift test --filter OrbitServerBackedRoomClientTests`
 - `swift test --filter OrbitServerBackedRoomCoordinatorTests`
 - `swift test --filter OrbitServerBackedRoomClientFactoryTests`
+- `swift test --filter OrbitServerBackedRoomTransportPolicyTests`
 - `swift test --filter OrbitServerBackedRoomStateTests`
 - `swift test --filter OrbitWorkspaceTests`
 - `git diff --check`
@@ -52,13 +55,18 @@ Last Updated: 2026-03-18
 - replayed server events can be reduced into the projected macOS room state
 - the macOS client now has a transport-facing coordinator seam for server-backed
   connect and poll behavior
+- the macOS client can now keep canonical transport traffic on one persistent
+  gateway `WebSocket` connection, reconnect from its last replay cursor, and
+  fall back to the existing HTTP poll path when persistent transport fails
 - the Studio root can now enable the server-backed Orbit client path through
   explicit runtime configuration
 
 ### What this does not prove yet
 
-- live persistent `WebSocket` or `SSE` transport
-- full end-to-end macOS cutover over a server-backed write/read path
+- full durable replay coverage across all currently supported runtime mutation
+  types
+- full end-to-end macOS closeout proof over the env-gated server-backed
+  write/read path
 
 ## Judgment
 

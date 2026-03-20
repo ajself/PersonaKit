@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M3`
 Owner: `studio-integration-coordinator`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Purpose
 
@@ -129,5 +129,6 @@ than rolling directly into `M4` or later milestones.
 Current disposition:
 
 - AJ approved the current `M3` checkpoint packet
-- the milestone remains open because the full exit checklist still requires live
-  gateway, live database proof, and macOS cutover completion
+- the milestone remains open because the full exit checklist still requires
+  stronger replay coverage, repeatable live database proof, and a refreshed
+  macOS closeout packet

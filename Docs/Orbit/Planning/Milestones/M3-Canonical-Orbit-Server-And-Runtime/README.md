@@ -3,7 +3,7 @@
 Status: Accepted
 Primary Owner: `studio-integration-coordinator`
 Supporting Personas: `architectural-editor`, `senior-swiftui-engineer`, `venture-product-steward`, `studio-reliability-engineer`, `studio-coverage-architect`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-19
 
 ## Purpose
 
@@ -337,8 +337,8 @@ Current disposition:
 
 - AJ approved the current `M3` checkpoint as a trustworthy runtime-backbone
   review pass
-- `M3` remains open until live gateway, live database proof, and macOS cutover
-  work satisfy the full exit checklist
+- `M3` remains open until replay coverage, repeatable live database proof, and
+  refreshed macOS closeout evidence satisfy the full exit checklist
 
 After `M3` closes, implementation pauses.
 
