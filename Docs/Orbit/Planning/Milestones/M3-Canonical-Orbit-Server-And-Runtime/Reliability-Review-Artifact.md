@@ -41,6 +41,8 @@ Last Updated: 2026-03-20
 - pass: the macOS transport loop now retries back into persistent transport
   after a bounded polling cooldown instead of degrading permanently after the
   first socket failure
+- pass: the focused persistent-transport confidence ring can now be rerun with
+  one command through `make orbit-transport-proof`
 
 ## Strongest Reliability Wins
 
@@ -51,6 +53,9 @@ Last Updated: 2026-03-20
    proof path, and that path passed three consecutive mutation-ring runs.
 5. Repeated local reconnect now has bounded proof across cursor carry-forward,
    degraded polling fallback, and retry back into persistent transport.
+6. The bounded local transport proof can now be rerun on demand instead of
+   living only in ad hoc test history, and it passed three consecutive runs via
+   `make orbit-transport-proof`.
 
 ## Strongest Remaining Reliability Notes
 

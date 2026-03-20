@@ -97,6 +97,10 @@ Current proof covers:
   cursor
 - degraded socket transport falling back to HTTP polling and then retrying back
   into persistent transport after a bounded cooldown
+- the bounded local transport proof can now be rerun with
+  `make orbit-transport-proof`
+- the bounded local transport proof passed three consecutive local runs through
+  that one-command lane
 - environment-gated factory construction for the server-backed room client
 - configuration-based server-backed client enablement in Studio
 

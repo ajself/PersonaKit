@@ -38,7 +38,7 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-live-db-proof orbit-live-db-proof-local export list graph zip format-check
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof export list graph zip format-check
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -66,6 +66,7 @@ help:
 	@printf "  %-24s %s\n" "closeout-local" "Run local-only closeout workflow."
 	@printf "  %-24s %s\n" "orbit-live-db-proof" "Repeat the Orbit live Postgres proof harness using ORBIT_PG_*."
 	@printf "  %-24s %s\n" "orbit-live-db-proof-local" "Boot a temp local Postgres instance and run the Orbit live proof harness."
+	@printf "  %-24s %s\n" "orbit-transport-proof" "Repeat the Orbit persistent-transport confidence ring."
 	@printf "  %-24s %s\n" "export" "Export a resolved PersonaKit session prompt."
 	@printf "  %-24s %s\n" "list" "List PersonaKit entities (requires TYPE)."
 	@printf "  %-24s %s\n" "graph" "Render session dependency graph."
@@ -226,6 +227,9 @@ orbit-live-db-proof:
 
 orbit-live-db-proof-local:
 	./Scripts/run-orbit-live-db-proof.sh --local-temp-postgres
+
+orbit-transport-proof:
+	./Scripts/run-orbit-transport-proof.sh
 
 export:
 	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)

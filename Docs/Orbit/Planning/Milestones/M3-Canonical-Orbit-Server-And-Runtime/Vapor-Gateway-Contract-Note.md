@@ -55,6 +55,10 @@ Current proof covers:
   after a post-write failure instead of cold-bootstrapping blindly
 - the macOS transport loop can fall back to HTTP polling after socket failure
   and retry back into the persistent gateway path after a bounded cooldown
+- that bounded local transport proof can now be rerun with
+  `make orbit-transport-proof`
+- the bounded local transport proof passed three consecutive local runs through
+  that one-command lane
 
 ## Honest Limit
 

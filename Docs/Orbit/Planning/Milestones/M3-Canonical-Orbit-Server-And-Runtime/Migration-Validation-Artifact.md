@@ -61,6 +61,8 @@ Last Updated: 2026-03-20
 - the macOS client now retries back into persistent transport after a bounded
   polling cooldown instead of degrading permanently after the first socket
   failure
+- the bounded local transport confidence ring can now be rerun on demand, and
+  it passed three consecutive local proof runs
 - replay of the currently supported runtime mutation types is now covered on the
   server-backed macOS path, including system-message, collaborator-response,
   and activation-failure recovery

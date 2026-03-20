@@ -37,6 +37,10 @@ progress without reconstructing every packet from scratch.
   proof path, and that path passed three consecutive mutation-ring runs
 - the macOS room now has bounded repeated reconnect proof across cursor-based
   replay, degraded polling fallback, and retry back into persistent transport
+- the bounded local transport confidence ring can now be rerun on demand with
+  `make orbit-transport-proof`
+- that bounded local transport confidence ring now has three consecutive
+  successful local proof runs
 
 ## Core Evidence
 
@@ -66,7 +70,7 @@ progress without reconstructing every packet from scratch.
 
 1. no long-running persistent transport soak or operations-grade
    disconnect/reconnect evidence exists yet, even though bounded local
-   reconnect/fallback/retry proof now exists
+   reconnect/fallback/retry proof now exists and can be rerun on demand
 2. the current live database proof is repeated local temp-`Postgres` evidence
    rather than CI-backed or operations-backed proof
 3. the closeout packet and hero-proof evidence still need a refreshed readout
