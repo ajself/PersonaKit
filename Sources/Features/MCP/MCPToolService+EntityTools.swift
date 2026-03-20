@@ -9,18 +9,20 @@ extension MCPToolService {
     switch input.entityType {
     case .persona:
       guard let persona = registry.personasById[input.id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .persona, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .persona, id: input.id)
+        )
       }
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: PersonaExplainData(
+          data: MCPToolPayloads.PersonaExplainData(
             name: persona.name,
             summary: persona.summary,
-            defaultKitIds: mcpUniqueSorted(persona.defaultKitIds),
-            allowedSkillIds: mcpUniqueSorted(persona.allowedSkillIds),
-            forbiddenSkillIds: mcpUniqueSorted(persona.forbiddenSkillIds),
+            defaultKitIds: MCPInternalSupport.uniqueSorted(persona.defaultKitIds),
+            allowedSkillIds: MCPInternalSupport.uniqueSorted(persona.allowedSkillIds),
+            forbiddenSkillIds: MCPInternalSupport.uniqueSorted(persona.forbiddenSkillIds),
             responsibilitiesCount: persona.responsibilities.count,
             valuesCount: persona.values.count,
             nonGoalsCount: persona.nonGoals.count
@@ -29,55 +31,61 @@ extension MCPToolService {
       )
     case .directive:
       guard let directive = registry.directivesById[input.id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .directive, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .directive, id: input.id)
+        )
       }
       let reviewStepCount = directive.steps.filter { $0.requiresReview == true }.count
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: DirectiveExplainData(
+          data: MCPToolPayloads.DirectiveExplainData(
             title: directive.title,
             goal: directive.goal,
-            requiredIntentIds: mcpUniqueSorted(directive.requiresIntentTemplateIds),
-            requiredSkillIds: mcpUniqueSorted(directive.requiresSkillIds),
+            requiredIntentIds: MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+            requiredSkillIds: MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
             stepsCount: directive.steps.count,
             reviewStepCount: reviewStepCount,
-            workstream: directive.workstream.map(mcpDirectiveExplainWorkstreamData)
+            workstream: directive.workstream.map(MCPInternalSupport.directiveExplainWorkstreamData)
           )
         )
       )
     case .kit:
       guard let kit = registry.kitsById[input.id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .kit, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .kit, id: input.id)
+        )
       }
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: KitExplainData(
+          data: MCPToolPayloads.KitExplainData(
             name: kit.name,
             summary: kit.summary,
-            essentialIds: mcpUniqueSorted(kit.essentialIds),
-            intentTemplateIds: mcpUniqueSorted(kit.intentTemplateIds ?? []),
-            skillIds: mcpUniqueSorted(kit.skillIds ?? [])
+            essentialIds: MCPInternalSupport.uniqueSorted(kit.essentialIds),
+            intentTemplateIds: MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
+            skillIds: MCPInternalSupport.uniqueSorted(kit.skillIds ?? [])
           )
         )
       )
     case .intent:
       guard let intent = registry.intentTemplatesById[input.id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .intent, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .intent, id: input.id)
+        )
       }
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: IntentExplainData(
+          data: MCPToolPayloads.IntentExplainData(
             name: intent.name,
             description: intent.description,
-            parameterConstraints: intent.parameterConstraints?.map(mcpParameterConstraintSummary) ?? [],
-            includesEssentialIds: mcpUniqueSorted(intent.includesEssentialIds),
-            requiresSkillIds: mcpUniqueSorted(intent.requiresSkillIds),
+            parameterConstraints: intent.parameterConstraints?.map(MCPInternalSupport.parameterConstraintSummary) ?? [],
+            includesEssentialIds: MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
+            requiresSkillIds: MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
             riskLevel: intent.risk.level,
             requiresHumanReview: intent.risk.requiresHumanReview
           )
@@ -85,16 +93,18 @@ extension MCPToolService {
       )
     case .skill:
       guard let skill = registry.skillsById[input.id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .skill, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .skill, id: input.id)
+        )
       }
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: SkillExplainData(
+          data: MCPToolPayloads.SkillExplainData(
             name: skill.name,
             description: skill.description,
-            providedBy: mcpUniqueSorted(skill.providedBy),
+            providedBy: MCPInternalSupport.uniqueSorted(skill.providedBy),
             riskLevel: skill.risk.level,
             requiresHumanReview: skill.risk.requiresHumanReview,
             notesCount: skill.notes.count
@@ -105,15 +115,17 @@ extension MCPToolService {
       let session = try loadSession(id: input.id)
       let personaExists = registry.personasById[session.personaId] != nil
       let directiveExists = registry.directivesById[session.directiveId] != nil
-      let missingKits = mcpUniqueSorted((session.kitOverrides ?? []).filter { registry.kitsById[$0] == nil })
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      let missingKits = MCPInternalSupport.uniqueSorted(
+        (session.kitOverrides ?? []).filter { registry.kitsById[$0] == nil }
+      )
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: SessionExplainData(
+          data: MCPToolPayloads.SessionExplainData(
             personaId: session.personaId,
             directiveId: session.directiveId,
-            kitOverrides: mcpUniqueSorted(session.kitOverrides ?? []),
+            kitOverrides: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
             personaExists: personaExists,
             directiveExists: directiveExists,
             missingKitOverrides: missingKits
@@ -121,9 +133,15 @@ extension MCPToolService {
         )
       )
     case .essential:
-      guard let fileURL = mcpResolveEssentialURL(id: input.id, scopes: scopes, fileManager: .default)
+      guard let fileURL = MCPInternalSupport.resolveEssentialURL(
+        id: input.id,
+        scopes: scopes,
+        fileManager: .default
+      )
       else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .essential, id: input.id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .essential, id: input.id)
+        )
       }
       let text: String
       do {
@@ -131,13 +149,13 @@ extension MCPToolService {
       } catch {
         throw MCPError.internalError("Failed to read essential \(input.id).")
       }
-      return try mcpEncodeToolJSON(
-        ExplainPayload(
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
-          data: EssentialExplainData(
+          data: MCPToolPayloads.EssentialExplainData(
             resolvedPath: fileURL.path,
-            lineCount: mcpLineCount(text),
+            lineCount: MCPInternalSupport.lineCount(text),
             byteCount: text.utf8.count
           )
         )
@@ -152,18 +170,18 @@ extension MCPToolService {
 
     let scalarKeys = Set(left.scalars.keys).union(right.scalars.keys).sorted()
     let scalarMatches = scalarKeys.filter { left.scalars[$0] == right.scalars[$0] }
-    let scalarDifferences = scalarKeys.compactMap { key -> CompareScalarDifference? in
+    let scalarDifferences = scalarKeys.compactMap { key -> MCPToolPayloads.CompareScalarDifference? in
       let leftValue = left.scalars[key] ?? ""
       let rightValue = right.scalars[key] ?? ""
       guard leftValue != rightValue else {
         return nil
       }
-      return CompareScalarDifference(field: key, left: leftValue, right: rightValue)
+      return MCPToolPayloads.CompareScalarDifference(field: key, left: leftValue, right: rightValue)
     }
 
     let listKeys = Set(left.lists.keys).union(right.lists.keys).sorted()
     let listMatches = listKeys.filter { left.lists[$0] == right.lists[$0] }
-    let listDifferences = listKeys.compactMap { key -> CompareListDifference? in
+    let listDifferences = listKeys.compactMap { key -> MCPToolPayloads.CompareListDifference? in
       let leftValues = left.lists[key] ?? []
       let rightValues = right.lists[key] ?? []
       guard leftValues != rightValues else {
@@ -176,7 +194,7 @@ extension MCPToolService {
       let onlyLeft = leftSet.subtracting(rightSet).sorted()
       let onlyRight = rightSet.subtracting(leftSet).sorted()
 
-      return CompareListDifference(
+      return MCPToolPayloads.CompareListDifference(
         field: key,
         shared: shared,
         onlyLeft: onlyLeft,
@@ -184,8 +202,8 @@ extension MCPToolService {
       )
     }
 
-    return try mcpEncodeToolJSON(
-      ComparePayload(
+    return try MCPInternalSupport.encodeToolJSON(
+      MCPToolPayloads.ComparePayload(
         entityType: input.entityType.rawValue,
         leftId: input.leftId,
         rightId: input.rightId,
@@ -199,26 +217,26 @@ extension MCPToolService {
 
   func recommendSessionTool(input: MCPRecommendArguments) throws -> String {
     let registry = try loadRegistry()
-    let sessions = try mcpListSessions(scopes: scopes, fileManager: .default)
+    let sessions = try MCPInternalSupport.listSessions(scopes: scopes, fileManager: .default)
 
     guard !sessions.isEmpty else {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           "No session files found in active scopes.",
           hint: "Create at least one Sessions/*.session.json file in the active PersonaKit scope."
         )
       )
     }
 
-    let goalTerms = mcpTokenSet(input.goal)
-    let recommendations = sessions.compactMap { session -> SessionRecommendation? in
+    let goalTerms = MCPInternalSupport.tokenSet(input.goal)
+    let recommendations = sessions.compactMap { session -> MCPToolPayloads.SessionRecommendation? in
       guard let persona = registry.personasById[session.personaId],
         let directive = registry.directivesById[session.directiveId]
       else {
         return nil
       }
 
-      let personaTerms = mcpMatchedTerms(
+      let personaTerms = MCPInternalSupport.matchedTerms(
         goalTerms: goalTerms,
         text: [
           persona.id,
@@ -229,7 +247,7 @@ extension MCPToolService {
         ].joined(separator: " ")
       )
 
-      let directiveTerms = mcpMatchedTerms(
+      let directiveTerms = MCPInternalSupport.matchedTerms(
         goalTerms: goalTerms,
         text: [
           directive.id,
@@ -240,18 +258,18 @@ extension MCPToolService {
         ].joined(separator: " ")
       )
 
-      let sessionTerms = mcpMatchedTerms(goalTerms: goalTerms, text: session.id)
+      let sessionTerms = MCPInternalSupport.matchedTerms(goalTerms: goalTerms, text: session.id)
 
       let score = personaTerms.count * 3 + directiveTerms.count * 2 + sessionTerms.count
 
-      return SessionRecommendation(
+      return MCPToolPayloads.SessionRecommendation(
         sessionId: session.id,
         personaId: session.personaId,
         directiveId: session.directiveId,
-        kitOverrides: mcpUniqueSorted(session.kitOverrides ?? []),
+        kitOverrides: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
         score: score,
-        matchedGoalTerms: mcpUniqueSorted(personaTerms + directiveTerms + sessionTerms),
-        termMatches: SessionRecommendationTermMatches(
+        matchedGoalTerms: MCPInternalSupport.uniqueSorted(personaTerms + directiveTerms + sessionTerms),
+        termMatches: MCPToolPayloads.SessionRecommendationTermMatches(
           persona: personaTerms,
           directive: directiveTerms,
           session: sessionTerms
@@ -267,12 +285,12 @@ extension MCPToolService {
 
     let selected = Array(recommendations.prefix(input.limit))
 
-    return try mcpEncodeToolJSON(
-      SessionRecommendationPayload(
+    return try MCPInternalSupport.encodeToolJSON(
+      MCPToolPayloads.SessionRecommendationPayload(
         goal: input.goal,
         goalTerms: goalTerms,
         consideredSessions: sessions.map(\.id).sorted(),
-        policy: SessionRecommendationPolicy(),
+        policy: MCPToolPayloads.SessionRecommendationPolicy(),
         recommendations: selected
       )
     )
@@ -282,13 +300,15 @@ extension MCPToolService {
     type: MCPEntityType,
     id: String,
     registry: Registry
-  ) throws -> EntityComparableSnapshot {
+  ) throws -> MCPToolPayloads.EntityComparableSnapshot {
     switch type {
     case .persona:
       guard let persona = registry.personasById[id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .persona, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .persona, id: id)
+        )
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": persona.id,
           "name": persona.name,
@@ -296,18 +316,20 @@ extension MCPToolService {
           "version": persona.version,
         ],
         lists: [
-          "defaultKitIds": mcpUniqueSorted(persona.defaultKitIds),
-          "allowedSkillIds": mcpUniqueSorted(persona.allowedSkillIds),
-          "forbiddenSkillIds": mcpUniqueSorted(persona.forbiddenSkillIds),
-          "values": mcpUniqueSorted(persona.values),
-          "nonGoals": mcpUniqueSorted(persona.nonGoals),
+          "defaultKitIds": MCPInternalSupport.uniqueSorted(persona.defaultKitIds),
+          "allowedSkillIds": MCPInternalSupport.uniqueSorted(persona.allowedSkillIds),
+          "forbiddenSkillIds": MCPInternalSupport.uniqueSorted(persona.forbiddenSkillIds),
+          "values": MCPInternalSupport.uniqueSorted(persona.values),
+          "nonGoals": MCPInternalSupport.uniqueSorted(persona.nonGoals),
         ]
       )
     case .directive:
       guard let directive = registry.directivesById[id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .directive, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .directive, id: id)
+        )
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": directive.id,
           "title": directive.title,
@@ -315,16 +337,18 @@ extension MCPToolService {
           "version": directive.version,
         ],
         lists: [
-          "requiresIntentTemplateIds": mcpUniqueSorted(directive.requiresIntentTemplateIds),
-          "requiresSkillIds": mcpUniqueSorted(directive.requiresSkillIds),
-          "acceptanceCriteria": mcpUniqueSorted(directive.acceptanceCriteria),
+          "requiresIntentTemplateIds": MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+          "requiresSkillIds": MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
+          "acceptanceCriteria": MCPInternalSupport.uniqueSorted(directive.acceptanceCriteria),
         ]
       )
     case .kit:
       guard let kit = registry.kitsById[id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .kit, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .kit, id: id)
+        )
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": kit.id,
           "name": kit.name,
@@ -332,28 +356,30 @@ extension MCPToolService {
           "version": kit.version,
         ],
         lists: [
-          "essentialIds": mcpUniqueSorted(kit.essentialIds),
-          "intentTemplateIds": mcpUniqueSorted(kit.intentTemplateIds ?? []),
-          "skillIds": mcpUniqueSorted(kit.skillIds ?? []),
+          "essentialIds": MCPInternalSupport.uniqueSorted(kit.essentialIds),
+          "intentTemplateIds": MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
+          "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? []),
         ]
       )
     case .session:
       let session = try loadSession(id: id)
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": session.id,
           "personaId": session.personaId,
           "directiveId": session.directiveId,
         ],
         lists: [
-          "kitOverrides": mcpUniqueSorted(session.kitOverrides ?? [])
+          "kitOverrides": MCPInternalSupport.uniqueSorted(session.kitOverrides ?? [])
         ]
       )
     case .intent:
       guard let intent = registry.intentTemplatesById[id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .intent, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .intent, id: id)
+        )
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": intent.id,
           "name": intent.name,
@@ -363,18 +389,20 @@ extension MCPToolService {
           "version": intent.version,
         ],
         lists: [
-          "parameterConstraints": mcpUniqueSorted(
-            (intent.parameterConstraints ?? []).map(mcpParameterConstraintSummary)
+          "parameterConstraints": MCPInternalSupport.uniqueSorted(
+            (intent.parameterConstraints ?? []).map(MCPInternalSupport.parameterConstraintSummary)
           ),
-          "includesEssentialIds": mcpUniqueSorted(intent.includesEssentialIds),
-          "requiresSkillIds": mcpUniqueSorted(intent.requiresSkillIds),
+          "includesEssentialIds": MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
+          "requiresSkillIds": MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
         ]
       )
     case .skill:
       guard let skill = registry.skillsById[id] else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .skill, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .skill, id: id)
+        )
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": skill.id,
           "name": skill.name,
@@ -384,14 +412,20 @@ extension MCPToolService {
           "version": skill.version,
         ],
         lists: [
-          "providedBy": mcpUniqueSorted(skill.providedBy),
-          "notes": mcpUniqueSorted(skill.notes),
+          "providedBy": MCPInternalSupport.uniqueSorted(skill.providedBy),
+          "notes": MCPInternalSupport.uniqueSorted(skill.notes),
         ]
       )
     case .essential:
-      guard let fileURL = mcpResolveEssentialURL(id: id, scopes: scopes, fileManager: .default)
+      guard let fileURL = MCPInternalSupport.resolveEssentialURL(
+        id: id,
+        scopes: scopes,
+        fileManager: .default
+      )
       else {
-        throw MCPError.invalidParams(mcpMissingEntityMessage(entityType: .essential, id: id))
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .essential, id: id)
+        )
       }
       let content: String
       do {
@@ -399,11 +433,11 @@ extension MCPToolService {
       } catch {
         throw MCPError.internalError("Failed to read essential \(id).")
       }
-      return EntityComparableSnapshot(
+      return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": id,
           "resolvedPath": fileURL.path,
-          "lineCount": String(mcpLineCount(content)),
+          "lineCount": String(MCPInternalSupport.lineCount(content)),
           "byteCount": String(content.utf8.count),
         ],
         lists: [:]

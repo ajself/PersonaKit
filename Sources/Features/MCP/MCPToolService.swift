@@ -23,7 +23,7 @@ struct MCPToolService: Sendable {
   func callTool(name: String, arguments: [String: Value]?) throws -> CallTool.Result {
     guard let tool = MCPToolName(rawValue: name) else {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           "Unknown tool name: \(name)",
           hint: "Call list_tools and retry using one of the advertised tool names."
         )
@@ -74,7 +74,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseSession(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide personaId and directiveId as non-empty strings, plus optional kits."
         )
@@ -87,7 +87,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseContract(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint:
             "Provide sessionId alone, or personaId with optional directiveId, plus optional requestedSkillIds."
@@ -101,7 +101,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseEntity(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide entityType and id as strings. Use list_resources to discover ids."
         )
@@ -114,7 +114,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseCompare(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide entityType plus leftId/rightId as strings for the same entity type."
         )
@@ -127,7 +127,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseRecommend(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide goal as a non-empty string and optional limit between 1 and 20."
         )
@@ -140,7 +140,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseTrace(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide sessionId as a non-empty string. Use catalog sessions to discover ids."
         )
@@ -155,7 +155,7 @@ struct MCPToolService: Sendable {
       return try MCPToolArgumentParser.parseResolveSession(arguments)
     } catch let error as MCPToolArgumentError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Provide sessionRef as a non-empty session id or session-file path."
         )
@@ -167,7 +167,7 @@ struct MCPToolService: Sendable {
     do {
       return try Registry.load(scopes: scopes)
     } catch let error as RegistryLoadError {
-      throw MCPError.invalidParams(mcpFormatRegistryErrors(error.errors))
+      throw MCPError.invalidParams(MCPInternalSupport.formatRegistryErrors(error.errors))
     }
   }
 
@@ -176,7 +176,7 @@ struct MCPToolService: Sendable {
       return try SessionFileLoader.load(scopes: scopes, sessionId: id)
     } catch let error as SessionFileError {
       throw MCPError.invalidParams(
-        mcpWithRecoveryHint(
+        MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
           hint: "Read personakit://catalog/sessions to list valid ids, then retry with one session id."
         )

@@ -65,39 +65,41 @@ struct AtomicFileWriter {
   }
 }
 
-func loadCurrentFiles(
-  relativePaths: [String],
-  projectRootURL: URL
-) throws -> [String: String] {
-  var currentFiles: [String: String] = [:]
+enum CLIFileIO {
+  static func loadCurrentFiles(
+    relativePaths: [String],
+    projectRootURL: URL
+  ) throws -> [String: String] {
+    var currentFiles: [String: String] = [:]
 
-  for relativePath in relativePaths {
-    let url = projectRootURL.appendingPathComponent(relativePath)
-    if FileManager.default.fileExists(atPath: url.path) {
-      currentFiles[relativePath] = try String(contentsOf: url, encoding: .utf8)
-    } else {
-      currentFiles[relativePath] = nil
+    for relativePath in relativePaths {
+      let url = projectRootURL.appendingPathComponent(relativePath)
+      if FileManager.default.fileExists(atPath: url.path) {
+        currentFiles[relativePath] = try String(contentsOf: url, encoding: .utf8)
+      } else {
+        currentFiles[relativePath] = nil
+      }
     }
+
+    return currentFiles
   }
 
-  return currentFiles
-}
+  static func writeChangedFiles(
+    _ files: [String: String],
+    currentFiles: [String: String],
+    projectRootURL: URL
+  ) throws {
+    for relativePath in files.keys.sorted() {
+      guard let contents = files[relativePath] else {
+        continue
+      }
 
-func writeChangedFiles(
-  _ files: [String: String],
-  currentFiles: [String: String],
-  projectRootURL: URL
-) throws {
-  for relativePath in files.keys.sorted() {
-    guard let contents = files[relativePath] else {
-      continue
-    }
-
-    if currentFiles[relativePath] != contents {
-      try AtomicFileWriter().write(
-        contents: contents,
-        to: projectRootURL.appendingPathComponent(relativePath)
-      )
+      if currentFiles[relativePath] != contents {
+        try AtomicFileWriter().write(
+          contents: contents,
+          to: projectRootURL.appendingPathComponent(relativePath)
+        )
+      }
     }
   }
 }
