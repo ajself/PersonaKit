@@ -41,6 +41,36 @@ struct OrbitGatewayNetworkClientTests {
   }
 
   @Test
+  func pollEncodesSessionDatesAsISO8601ForGatewayHTTPRoutes() async throws {
+    let snapshot = sampleSnapshot()
+    let session = sampleSession(snapshot: snapshot)
+    let client = makeClient { request in
+      #expect(request.url?.path == "/api/orbit/realtime/poll")
+      let body = try httpDecoder.decode(
+        OrbitGatewayPollRequest.self,
+        from: try requestBody(for: request)
+      )
+      #expect(body.session.workspaceSlug == "orbit")
+      #expect(body.session.channelSlug == "command-center")
+      #expect(body.session.cursorEventCreatedAt == snapshot.replayCursor.lastEventCreatedAt)
+      #expect(body.session.connectedAt == session.connectedAt)
+      #expect(body.session.lastInteractionAt == session.lastInteractionAt)
+
+      return try makeResponse(
+        statusCode: 200,
+        body: OrbitGatewayTransportResponse(response: .noChange(session)),
+        url: try #require(request.url)
+      )
+    }
+
+    let response = try await client.poll(
+      request: OrbitPhase1RealtimePollRequest(session: session)
+    )
+
+    #expect(response == .noChange(session))
+  }
+
+  @Test
   func persistentTransportResponsesSendBootstrapThenPollOverTheSameSocket() async throws {
     let snapshot = sampleSnapshot()
     let bootstrapSession = sampleSession(snapshot: snapshot)
@@ -327,7 +357,7 @@ struct OrbitGatewayNetworkClientTests {
         httpVersion: nil,
         headerFields: ["Content-Type": "application/json"]
       )!,
-      try JSONEncoder().encode(body)
+      try httpEncoder.encode(body)
     )
   }
 
@@ -345,6 +375,18 @@ struct OrbitGatewayNetworkClientTests {
       )!,
       body
     )
+  }
+
+  private var httpEncoder: JSONEncoder {
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    return encoder
+  }
+
+  private var httpDecoder: JSONDecoder {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    return decoder
   }
 
   private func makeSocketPayload(

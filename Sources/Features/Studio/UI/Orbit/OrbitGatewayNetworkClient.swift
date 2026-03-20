@@ -283,7 +283,7 @@ actor OrbitGatewayNetworkClient {
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
-    request.httpBody = try JSONEncoder().encode(body)
+    request.httpBody = try Self.httpEncoder.encode(body)
 
     let (data, urlResponse) = try await session.data(for: request)
 
@@ -298,7 +298,7 @@ actor OrbitGatewayNetworkClient {
       )
     }
 
-    return try JSONDecoder().decode(ResponseBody.self, from: data)
+    return try Self.httpDecoder.decode(ResponseBody.self, from: data)
   }
 
   private func makeSocketURL(
@@ -401,4 +401,16 @@ actor OrbitGatewayNetworkClient {
       return session
     }
   }
+
+  private static let httpEncoder: JSONEncoder = {
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    return encoder
+  }()
+
+  private static let httpDecoder: JSONDecoder = {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    return decoder
+  }()
 }

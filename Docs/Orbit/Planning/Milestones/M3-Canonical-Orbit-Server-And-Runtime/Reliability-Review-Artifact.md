@@ -60,12 +60,16 @@ Last Updated: 2026-03-20
    `make orbit-transport-proof`.
 7. The same transport ring now has a dedicated local soak lane and passed ten
    consecutive local runs via `make orbit-transport-soak-local`.
+8. The combined env-backed closeout lane now has one captured local run via
+   `make orbit-m3-proof` on 2026-03-20 against a configured `ORBIT_PG_*`
+   environment on one Mac.
 
 ## Strongest Remaining Reliability Notes
 
 1. No operations-grade disconnect/reconnect proof exists yet, even though the
    focused transport ring now also has a repeatable local soak lane.
-2. The current live database proof is repeated local temp-`Postgres` evidence,
+2. The current live database proof is repeated local temp-`Postgres` evidence
+   plus one local env-backed `make orbit-m3-proof` capture on a single Mac,
    not CI-backed or operations-backed proof.
 
 ## Judgment

@@ -46,6 +46,8 @@ progress without reconstructing every packet from scratch.
 - that local soak lane has now passed ten consecutive local runs
 - the current closeout bundle can now be executed in a pre-wired
   `ORBIT_PG_*` environment through `make orbit-m3-proof`
+- on 2026-03-20, that env-backed `make orbit-m3-proof` lane passed locally on
+  one Mac against a configured `ORBIT_PG_*` environment
 - the current local M3 proof lanes can now be executed together with
   `make orbit-m3-proof-local`
 - the required canonical closeout packet now exists as
@@ -87,6 +89,7 @@ progress without reconstructing every packet from scratch.
    proof now exists, can be rerun on demand, and now has a repeatable local
    soak lane
 2. the current live database proof is repeated local temp-`Postgres` evidence
+   plus one local env-backed `make orbit-m3-proof` capture on a single Mac,
    rather than CI-backed or operations-backed proof
 
 ## Judgment Frame

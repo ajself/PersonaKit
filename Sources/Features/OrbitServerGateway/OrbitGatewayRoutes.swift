@@ -27,38 +27,43 @@ public enum OrbitGatewayRoutes {
     }
 
     realtime.webSocket("socket") { request, socket in
-      Task {
+      let connectQuery: OrbitGatewayWebSocketConnectQuery
+
+      do {
+        connectQuery = try makeSocketConnectQuery(from: request)
+      } catch {
+        socket.send("{\"kind\":\"error\"}")
+        socket.close(promise: nil)
+        return
+      }
+
+      socket.onText { _, text in
         do {
-          let connectQuery = try makeSocketConnectQuery(from: request)
-          let encoder = JSONEncoder()
+          let clientMessage = try JSONDecoder().decode(
+            OrbitGatewayWebSocketClientMessage.self,
+            from: Data(text.utf8)
+          )
 
-          socket.onText { _, text in
-            Task {
-              do {
-                let clientMessage = try JSONDecoder().decode(OrbitGatewayWebSocketClientMessage.self, from: Data(text.utf8))
-
-                let transportResponse: OrbitPhase1RealtimeTransportResponse
-                switch clientMessage.kind {
-                case .bootstrap:
-                  transportResponse = try await transport.connect(request: connectQuery.connectRequest)
-                case .poll:
-                  guard let pollRequest = clientMessage.transportRequest else {
-                    throw Abort(.badRequest)
-                  }
-                  transportResponse = try await transport.poll(request: pollRequest)
-                }
-
-                let payload = try encoder.encode(OrbitGatewayTransportResponse(response: transportResponse))
-                try await socket.send(String(decoding: payload, as: UTF8.self))
-              } catch {
-                try? await socket.send("{\"kind\":\"error\"}")
-                socket.close(promise: nil)
-              }
+          let transportResponse: OrbitPhase1RealtimeTransportResponse
+          switch clientMessage.kind {
+          case .bootstrap:
+            transportResponse = try await transport.connect(
+              request: connectQuery.connectRequest
+            )
+          case .poll:
+            guard let pollRequest = clientMessage.transportRequest else {
+              throw Abort(.badRequest)
             }
+            transportResponse = try await transport.poll(request: pollRequest)
           }
+
+          let payload = try JSONEncoder().encode(
+            OrbitGatewayTransportResponse(response: transportResponse)
+          )
+          try await socket.send(String(decoding: payload, as: UTF8.self))
         } catch {
           try? await socket.send("{\"kind\":\"error\"}")
-          socket.close(promise: nil)
+          try? await socket.close()
         }
       }
     }

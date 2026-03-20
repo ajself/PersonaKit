@@ -33,7 +33,7 @@ When the following environment variables are available:
 - `ORBIT_PG_HOST`
 - `ORBIT_PG_PORT` (optional, default `5432`)
 - `ORBIT_PG_USER`
-- `ORBIT_PG_PASSWORD`
+- `ORBIT_PG_PASSWORD` (may be intentionally empty for trust-auth local `Postgres`)
 - `ORBIT_PG_DATABASE`
 
 the harness can prove:
@@ -73,9 +73,12 @@ the local temp-`Postgres` live-db harness together.
 
 ## Honest Limit
 
-This harness now has a one-command repeatable local proof path against a
-temporary local `Postgres` instance, and that path has passed three consecutive
-runs for the full currently supported mutation ring.
+This harness now has both a one-command repeatable local temp-`Postgres` proof
+path and a local env-backed proof path through `make orbit-m3-proof`.
+The temp-`Postgres` path passed three consecutive runs for the full currently
+supported mutation ring, and on 2026-03-20 the env-backed `make orbit-m3-proof`
+lane also passed locally on one Mac against a configured `ORBIT_PG_*`
+environment.
 
 What it still does not provide is repeatable CI-backed or long-lived operations
 environment proof.
@@ -89,3 +92,5 @@ Current disposition:
 
 - `make orbit-live-db-proof-local` passed locally during this `M3` run against
   a temporary local `Postgres` instance across three consecutive proof runs
+- `make orbit-m3-proof` passed locally on 2026-03-20 against a configured
+  local `ORBIT_PG_*` environment while still remaining local-only evidence

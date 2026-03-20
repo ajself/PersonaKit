@@ -346,6 +346,8 @@ Current disposition:
   review pass
 - the canonical closeout packet now exists as the current branch-local
   closeout artifact
+- one local env-backed `make orbit-m3-proof` pass was captured on
+  2026-03-20 against a configured `ORBIT_PG_*` environment on one Mac
 - `M3` remains open until operations-grade persistent-transport confidence and
   CI-backed or operations-backed live database proof satisfy the full exit
   checklist

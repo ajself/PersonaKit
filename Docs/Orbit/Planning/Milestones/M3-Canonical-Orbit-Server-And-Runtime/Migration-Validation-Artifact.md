@@ -50,6 +50,8 @@ Last Updated: 2026-03-20
   canonical runtime and gateway seam
 - the live runtime-store harness now has a one-command local temp-`Postgres`
   proof path, and that path passed three consecutive mutation-ring runs
+- the env-backed `make orbit-m3-proof` lane now has one captured local pass on
+  2026-03-20 against a configured `ORBIT_PG_*` environment on one Mac
 - artifact storage is replaceable and filesystem-backed
 - a canonical room snapshot can be projected into the Orbit macOS room shape
 - replayed server events can be reduced into the projected macOS room state
@@ -75,7 +77,8 @@ Last Updated: 2026-03-20
 
 - operations-grade persistent transport soak or disconnect/reconnect proof
 - CI-backed or operations-backed live database proof beyond the repeated local
-  temp-`Postgres` harness runs
+  temp-`Postgres` harness runs and the single local env-backed `make orbit-m3-proof`
+  capture
 - full end-to-end macOS closeout proof over the configured server-backed
   write/read path
 

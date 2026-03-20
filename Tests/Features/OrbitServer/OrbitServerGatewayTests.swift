@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import Vapor
+import WebSocketKit
 import XCTVapor
 
 @testable import OrbitServerGateway
@@ -553,6 +554,81 @@ struct OrbitServerGatewayTests {
         #expect(payload.snapshot?.workspaceSlug == "orbit")
       })
     }
+  }
+
+  @Test
+  func socketRouteReturnsBootstrapPayload() async throws {
+    let snapshot = sampleSnapshot(
+      cursorEventID: UUID(uuidString: "ffffffff-ffff-ffff-ffff-ffffffffffff")!
+    )
+    let app = try await Application.make(.testing)
+
+    do {
+      app.http.server.configuration.port = 0
+      app.environment.arguments = ["serve"]
+
+      OrbitGatewayRoutes.register(
+        on: app,
+        transport: StubTransport(
+          connectHandler: { request in
+            #expect(request.scope.workspaceSlug == "orbit")
+            #expect(request.scope.channelSlug == "command-center")
+
+            return .bootstrap(
+              OrbitPhase1RealtimeSession(
+                scope: request.scope,
+                replayCursor: snapshot.replayCursor,
+                connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
+                lastInteractionAt: Date(timeIntervalSince1970: 1_742_342_400)
+              ),
+              snapshot
+            )
+          },
+          pollHandler: { _ in
+            Issue.record("Poll should not be called")
+            return .noChange(snapshot.replayCursorSession)
+          }
+        )
+      )
+
+      try await app.startup()
+
+      let port = try #require(app.http.server.shared.localAddress?.port)
+      let responsePromise = app.eventLoopGroup.next().makePromise(
+        of: OrbitGatewayTransportResponse.self
+      )
+
+      try await WebSocket.connect(
+        to: "ws://127.0.0.1:\(port)/api/orbit/realtime/socket?workspaceSlug=orbit&channelSlug=command-center",
+        on: app.eventLoopGroup
+      ) { socket in
+        socket.onText { socket, text in
+          do {
+            let payload = try JSONDecoder().decode(
+              OrbitGatewayTransportResponse.self,
+              from: Data(text.utf8)
+            )
+            responsePromise.succeed(payload)
+          } catch {
+            responsePromise.fail(error)
+          }
+
+          try? await socket.close()
+        }
+
+        try? await socket.send("{\"kind\":\"bootstrap\"}")
+      }
+
+      let payload = try await responsePromise.futureResult.get()
+      #expect(payload.kind == "bootstrap")
+      #expect(payload.snapshot?.workspaceSlug == "orbit")
+      #expect(payload.snapshot?.messageCount == 0)
+    } catch {
+      try? await app.asyncShutdown()
+      throw error
+    }
+
+    try await app.asyncShutdown()
   }
 }
 

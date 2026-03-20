@@ -53,6 +53,9 @@ spine:
   cursor, fall back to polling when socket transport fails, and retry back into
   persistent transport after a bounded cooldown
 - the live runtime-store proof now has a repeatable local temp-`Postgres` lane
+- the env-backed `make orbit-m3-proof` lane has now passed locally on one Mac
+  against a configured `ORBIT_PG_*` environment, including the bounded
+  transport soak and three consecutive live mutation-ring runs
 - the current bounded local proof lanes can be rerun together with
   `make orbit-m3-proof-local`
 
@@ -86,6 +89,10 @@ The local server intentionally seeds the same command-center baseline language
 used by `OrbitWorkspace.defaultWorkspace`, including `Orbit MVP Checkpoint`, so
 the macOS projection stays aligned even though some older server-only fixtures
 still use `Primary Orbit room` / `Orbit room` wording.
+On 2026-03-20, this local path was exercised far enough to confirm
+`make orbit-server-local` serves `GET /healthz` and that Studio can reopen the
+gateway-backed realtime path without the earlier websocket registration crash
+or HTTP date-format mismatch.
 
 ## Honest Limits
 
@@ -94,8 +101,9 @@ still use `Primary Orbit room` / `Orbit room` wording.
 - the current transport confidence now includes a repeatable local soak lane,
   but it is still not operations-grade evidence
 - the current closeout bundle can now be executed in a pre-wired
-  `ORBIT_PG_*` environment through `make orbit-m3-proof`, but that execution
-  has not yet been captured as CI-backed or operations-backed proof
+  `ORBIT_PG_*` environment through `make orbit-m3-proof`, and that execution
+  has now been captured locally on one Mac, but not yet as CI-backed or
+  operations-backed proof
 - AJ closeout review should still treat this packet as the current closeout
   container, not as automatic proof that `M3` is already complete
 

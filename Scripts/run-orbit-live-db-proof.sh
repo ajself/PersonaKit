@@ -121,7 +121,6 @@ require_runtime_store_env() {
   local required_env_vars=(
     ORBIT_PG_HOST
     ORBIT_PG_USER
-    ORBIT_PG_PASSWORD
     ORBIT_PG_DATABASE
   )
 
@@ -129,6 +128,8 @@ require_runtime_store_env() {
   for env_var in "${required_env_vars[@]}"; do
     [[ -n "${!env_var:-}" ]] || die "Missing required environment variable: $env_var"
   done
+
+  [[ "${ORBIT_PG_PASSWORD+x}" == "x" ]] || die "Missing required environment variable: ORBIT_PG_PASSWORD"
 }
 
 if [[ "$use_local_temp_postgres" == "1" ]]; then
