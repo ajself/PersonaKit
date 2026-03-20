@@ -112,6 +112,58 @@ struct ValidatorTests {
   }
 
   @Test
+  func validateSchemaErrorsSuppressReferenceCascadeNoise() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try PersonaKitInitializer().run(destination: root.path)
+
+    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
+    let data = try Data(contentsOf: intentURL)
+    var object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    object?["parameterConstraints"] = NSNull()
+    object?["requiresSkillIds"] = ["missing-skill"]
+
+    let updatedData = try JSONSerialization.data(
+      withJSONObject: object ?? [:],
+      options: [.prettyPrinted, .sortedKeys]
+    )
+    try updatedData.write(to: intentURL)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.errors.count == 1)
+    #expect(result.errors.first?.entityType == .intent)
+    #expect(result.errors.first?.field == "schema")
+    #expect(result.errors.first?.expectedPath == "Packs/intents/swift-refactor-safe.intent.json")
+    #expect(result.errors.first?.message.contains("Schema intentTemplate.schema.json") == true)
+    #expect(result.errors.contains { $0.field == "requiresSkillIds" } == false)
+  }
+
+  @Test
+  func validateMissingPacksDirectoryProducesDeterministicRegistryLoadError() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try FileManager.default.createDirectory(
+      at: root,
+      withIntermediateDirectories: true
+    )
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.counts == .zero)
+    #expect(
+      result.errors == [
+        ValidationError(
+          entityType: .essentials,
+          entityId: nil,
+          field: "file",
+          missingId: nil,
+          expectedPath: "Packs",
+          message: "Missing Packs directory."
+        )
+      ]
+    )
+  }
+
+  @Test
   func validateIntentParameterConstraintRequiresMultipleParameters() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
