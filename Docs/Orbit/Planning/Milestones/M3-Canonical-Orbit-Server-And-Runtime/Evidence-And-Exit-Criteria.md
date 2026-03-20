@@ -122,6 +122,7 @@ Before full closeout, AJ may also review an in-progress packet containing:
 - the current product continuity review artifact
 - the current migration validation artifact
 - the current `Review-Packet.md`
+- the current `Canonical-Closeout-Packet.md`
 
 If that packet is accepted, `M3` may close and construction should pause rather
 than rolling directly into `M4` or later milestones.
@@ -129,6 +130,8 @@ than rolling directly into `M4` or later milestones.
 Current disposition:
 
 - AJ approved the current `M3` checkpoint packet
+- the canonical closeout packet now exists as the current review container for
+  runtime, replay, and product continuity evidence
 - the milestone remains open because the full exit checklist still requires
-  operations-grade persistent-transport confidence, CI-backed or
-  operations-backed live database proof, and a refreshed macOS closeout packet
+  operations-grade persistent-transport confidence and CI-backed or
+  operations-backed live database proof

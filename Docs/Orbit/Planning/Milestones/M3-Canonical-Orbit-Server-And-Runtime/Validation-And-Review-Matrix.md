@@ -24,7 +24,7 @@ honestly.
 | macOS client cutover quality | `senior-swiftui-engineer` and `venture-product-steward` | migration walkthrough and product review | the room remains believable after server cutover | migration weakens room semantics or product clarity |
 | Trace continuity | `studio-coverage-architect` | golden flow review plus tests | response trace semantics survive the server migration unchanged in meaning | trace becomes weaker, blurrier, or debug-only |
 | Artifact storage abstraction discipline | `architectural-editor` | storage-boundary review | runtime truth and large artifact storage remain cleanly separated | first backend choice distorts the architecture |
-| Evidence completeness | `samwise` | closeout packet audit | architecture, reliability, validation, and migration artifacts all exist | milestone is called ready on backend confidence alone |
+| Evidence completeness | `samwise` | closeout packet audit | architecture, reliability, validation, migration, and closeout artifacts all exist | milestone is called ready on backend confidence alone |
 
 ## Review Sequence
 

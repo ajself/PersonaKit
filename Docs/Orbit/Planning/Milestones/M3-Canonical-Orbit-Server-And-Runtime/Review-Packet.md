@@ -43,6 +43,8 @@ progress without reconstructing every packet from scratch.
   successful local proof runs
 - the current local M3 proof lanes can now be executed together with
   `make orbit-m3-proof-local`
+- the required canonical closeout packet now exists as
+  `Canonical-Closeout-Packet.md`
 
 ## Core Evidence
 
@@ -68,6 +70,10 @@ progress without reconstructing every packet from scratch.
 3. `Product-Continuity-Review-Artifact.md`
 4. `Migration-Validation-Artifact.md`
 
+## Closeout Artifact
+
+- `Canonical-Closeout-Packet.md`
+
 ## Honest Remaining Gaps
 
 1. no long-running persistent transport soak or operations-grade
@@ -75,9 +81,6 @@ progress without reconstructing every packet from scratch.
    reconnect/fallback/retry proof now exists and can be rerun on demand
 2. the current live database proof is repeated local temp-`Postgres` evidence
    rather than CI-backed or operations-backed proof
-3. the closeout packet and hero-proof evidence still need a refreshed readout
-   now that replay coverage for the currently supported runtime mutation types
-   is in place
 
 ## Judgment Frame
 
@@ -87,14 +90,13 @@ It is not yet a closeout packet for full `M3` acceptance.
 
 ## Review Ask
 
-AJ should review whether the current backbone is strong enough to continue into
-operations-grade persistent-transport confidence, CI-backed or
-operations-backed live-database proof, and final closeout evidence work
-without reopening the core architecture, replay, or storage boundaries.
+AJ should review whether the current backbone and closeout packet are now strong
+enough to carry the last two external-confidence blockers without reopening the
+core architecture, replay, or storage boundaries.
 
 ## AJ Review Outcome
 
 - AJ approved this `M3` checkpoint as a trustworthy runtime-backbone review pass
 - `M3` remains open for full closeout until operations-grade
-  persistent-transport confidence, CI-backed or operations-backed live
-  database proof, and refreshed macOS closeout evidence are complete
+  persistent-transport confidence and CI-backed or operations-backed live
+  database proof are complete

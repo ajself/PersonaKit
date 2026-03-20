@@ -3,7 +3,7 @@
 Status: Accepted
 Primary Owner: `studio-integration-coordinator`
 Supporting Personas: `architectural-editor`, `senior-swiftui-engineer`, `venture-product-steward`, `studio-reliability-engineer`, `studio-coverage-architect`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -104,6 +104,9 @@ They should not treat runtime complexity as permission to revisit the core stack
   local rerun entry points for the canonical runtime store
 - `Review-Packet.md`
   compact AJ review packet for the current canonical-runtime backbone progress
+- `Canonical-Closeout-Packet.md`
+  closeout-facing packet tying runtime, replay, and product continuity evidence
+  into one current review container
 
 ## Preconditions
 
@@ -318,6 +321,7 @@ Avoid:
 - migration validation artifact
 - live Postgres integration harness note
 - review packet
+- canonical closeout packet
 
 ## Stop Points
 
@@ -337,9 +341,11 @@ Current disposition:
 
 - AJ approved the current `M3` checkpoint as a trustworthy runtime-backbone
   review pass
-- `M3` remains open until operations-grade persistent-transport confidence,
-  CI-backed or operations-backed live database proof, and refreshed macOS
-  closeout evidence satisfy the full exit checklist
+- the canonical closeout packet now exists as the current branch-local
+  closeout artifact
+- `M3` remains open until operations-grade persistent-transport confidence and
+  CI-backed or operations-backed live database proof satisfy the full exit
+  checklist
 
 After `M3` closes, implementation pauses.
 
