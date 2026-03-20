@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `studio-reliability-engineer`
 Grounding: `studio-reliability-engineer` + `apply-style`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Decision
 
@@ -44,8 +44,8 @@ Last Updated: 2026-03-19
 1. Replay and reconnect semantics are now code-backed, not only promised.
 2. Recovery no longer depends on local guesswork in the service layer.
 3. Transaction boundaries exist where bootstrap and append semantics need them.
-4. The live runtime-store harness now passes against a running local `Postgres`
-   instance.
+4. The live runtime-store harness now has a one-command local temp-`Postgres`
+   proof path, and that path passed three consecutive mutation-ring runs.
 
 ## Strongest Remaining Reliability Notes
 

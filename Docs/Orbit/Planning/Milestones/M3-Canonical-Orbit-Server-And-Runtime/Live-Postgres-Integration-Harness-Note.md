@@ -4,7 +4,7 @@ Status: Ready For Planning Closeout
 Milestone: `M3`
 Owner: `studio-coverage-architect`
 Review Ring: `studio-reliability-engineer`, `architectural-editor`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -13,8 +13,16 @@ Record the first live-database proof harness for the canonical runtime store.
 ## What Exists Now
 
 - `OrbitPostgresRuntimeStoreIntegrationTests.liveRuntimeStoreRoundTripWhenDatabaseEnvironmentIsAvailable`
+- `OrbitPostgresRuntimeStoreIntegrationTests.liveRuntimeStoreSupportsCurrentOrbitMutationRingWhenDatabaseEnvironmentIsAvailable`
+- `Scripts/run-orbit-live-db-proof.sh`
+- `make orbit-live-db-proof`
+- `make orbit-live-db-proof-local`
 
-This now exists in `Tests/Features/OrbitServer/OrbitPostgresRuntimeStoreIntegrationTests.swift`.
+These now exist in:
+
+- `Tests/Features/OrbitServer/OrbitPostgresRuntimeStoreIntegrationTests.swift`
+- `Scripts/run-orbit-live-db-proof.sh`
+- `Makefile`
 
 ## Current Harness Scope
 
@@ -31,8 +39,20 @@ the harness can prove:
 1. phase-1 schema application against a live `Postgres` instance
 2. room bootstrap through the real runtime store
 3. canonical append through the real runtime store
-4. realtime-event load through the real runtime store
-5. room snapshot round-trip after the live append path
+4. live system-message persistence through the real runtime store
+5. live collaborator-response persistence including activation, agent-run, and
+   durable activation-event linkage
+6. live activation-failure persistence including durable failure-event linkage
+7. realtime-event load through the real runtime store
+8. room snapshot round-trip after the live mutation ring
+
+When the same environment is available, `make orbit-live-db-proof` can rerun
+that harness repeatedly without changing the test code or hand-assembling the
+command line each time.
+
+When no external database environment is pre-wired, `make orbit-live-db-proof-local`
+can boot a temporary local `Postgres` cluster in `/tmp`, wire `ORBIT_PG_*`
+automatically, and run the same proof harness against that local instance.
 
 ## Why This Matters
 
@@ -43,8 +63,9 @@ the harness can prove:
 
 ## Honest Limit
 
-This harness now has one successful local proof run against a temporary local
-`Postgres` instance.
+This harness now has a one-command repeatable local proof path against a
+temporary local `Postgres` instance, and that path has passed three consecutive
+runs for the full currently supported mutation ring.
 
 What it still does not provide is repeatable CI-backed or long-lived operations
 environment proof.
@@ -56,5 +77,5 @@ rather than a vague future intention.
 
 Current disposition:
 
-- the harness passed locally during this `M3` run against a temporary local
-  `Postgres` instance
+- `make orbit-live-db-proof-local` passed locally during this `M3` run against
+  a temporary local `Postgres` instance across three consecutive proof runs

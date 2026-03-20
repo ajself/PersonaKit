@@ -100,8 +100,8 @@ They should not treat runtime complexity as permission to revisit the core stack
 - `Migration-Validation-Artifact.md`
   deterministic validation readout for the current `M3` slice
 - `Live-Postgres-Integration-Harness-Note.md`
-  Packet 6 readiness artifact defining the live database proof harness for the
-  canonical runtime store
+  Packet 6 readiness artifact defining the live database proof harness and
+  local rerun entry points for the canonical runtime store
 - `Review-Packet.md`
   compact AJ review packet for the current canonical-runtime backbone progress
 

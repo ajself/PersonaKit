@@ -4,7 +4,7 @@ Status: Accepted
 Milestone: `M3`
 Owner: `senior-swiftui-engineer`
 Grounding: `senior-swiftui-engineer` + `apply-style`
-Last Updated: 2026-03-19
+Last Updated: 2026-03-20
 
 ## Decision
 
@@ -48,8 +48,8 @@ Last Updated: 2026-03-19
   and gateway edge
 - the first server-driven collaborator response path now exists through the same
   canonical runtime and gateway seam
-- the live runtime-store harness has now passed against a temporary local
-  `Postgres` instance
+- the live runtime-store harness now has a one-command local temp-`Postgres`
+  proof path, and that path passed three consecutive mutation-ring runs
 - artifact storage is replaceable and filesystem-backed
 - a canonical room snapshot can be projected into the Orbit macOS room shape
 - replayed server events can be reduced into the projected macOS room state
@@ -68,7 +68,8 @@ Last Updated: 2026-03-19
 
 - long-running persistent transport soak or operations-grade
   disconnect/reconnect proof
-- repeatable live database proof beyond one successful local harness run
+- CI-backed or operations-backed live database proof beyond the repeated local
+  temp-`Postgres` harness runs
 - full end-to-end macOS closeout proof over the env-gated server-backed
   write/read path
 

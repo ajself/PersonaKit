@@ -38,7 +38,7 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local export list graph zip format-check
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-live-db-proof orbit-live-db-proof-local export list graph zip format-check
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -64,6 +64,8 @@ help:
 	@printf "  %-24s %s\n" "validate" "Validate using scope discovery or ROOT override."
 	@printf "  %-24s %s\n" "validate-repo" "Run deterministic repo validation."
 	@printf "  %-24s %s\n" "closeout-local" "Run local-only closeout workflow."
+	@printf "  %-24s %s\n" "orbit-live-db-proof" "Repeat the Orbit live Postgres proof harness using ORBIT_PG_*."
+	@printf "  %-24s %s\n" "orbit-live-db-proof-local" "Boot a temp local Postgres instance and run the Orbit live proof harness."
 	@printf "  %-24s %s\n" "export" "Export a resolved PersonaKit session prompt."
 	@printf "  %-24s %s\n" "list" "List PersonaKit entities (requires TYPE)."
 	@printf "  %-24s %s\n" "graph" "Render session dependency graph."
@@ -218,6 +220,12 @@ closeout-local:
 		$(if $(CLOSEOUT_WORKTREE),--worktree $(CLOSEOUT_WORKTREE),) \
 		--main $(CLOSEOUT_MAIN) \
 		$(if $(filter 1 true yes,$(CLOSEOUT_NO_CLEANUP)),--no-cleanup,)
+
+orbit-live-db-proof:
+	./Scripts/run-orbit-live-db-proof.sh
+
+orbit-live-db-proof-local:
+	./Scripts/run-orbit-live-db-proof.sh --local-temp-postgres
 
 export:
 	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
