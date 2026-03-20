@@ -17,6 +17,7 @@ Record the first live-database proof harness for the canonical runtime store.
 - `Scripts/run-orbit-live-db-proof.sh`
 - `make orbit-live-db-proof`
 - `make orbit-live-db-proof-local`
+- `make orbit-m3-proof`
 - `make orbit-m3-proof-local`
 
 These now exist in:
@@ -50,6 +51,10 @@ the harness can prove:
 When the same environment is available, `make orbit-live-db-proof` can rerun
 that harness repeatedly without changing the test code or hand-assembling the
 command line each time.
+
+When the same environment is available and the transport soak lane should be
+executed in the same pass, `make orbit-m3-proof` can run both the transport
+soak and the live-db proof harness together.
 
 When no external database environment is pre-wired, `make orbit-live-db-proof-local`
 can boot a temporary local `Postgres` cluster in `/tmp`, wire `ORBIT_PG_*`

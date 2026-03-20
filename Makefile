@@ -38,7 +38,7 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof orbit-transport-soak-local orbit-m3-proof-local export list graph zip format-check
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof orbit-transport-soak-local orbit-m3-proof orbit-m3-proof-local export list graph zip format-check
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -68,6 +68,7 @@ help:
 	@printf "  %-24s %s\n" "orbit-live-db-proof-local" "Boot a temp local Postgres instance and run the Orbit live proof harness."
 	@printf "  %-24s %s\n" "orbit-transport-proof" "Repeat the Orbit persistent-transport confidence ring."
 	@printf "  %-24s %s\n" "orbit-transport-soak-local" "Run a longer local Orbit transport soak over the focused confidence ring."
+	@printf "  %-24s %s\n" "orbit-m3-proof" "Run the Orbit M3 proof bundle using configured ORBIT_PG_* environment."
 	@printf "  %-24s %s\n" "orbit-m3-proof-local" "Run the local Orbit M3 proof bundle (transport + temp Postgres live-db)."
 	@printf "  %-24s %s\n" "export" "Export a resolved PersonaKit session prompt."
 	@printf "  %-24s %s\n" "list" "List PersonaKit entities (requires TYPE)."
@@ -235,6 +236,9 @@ orbit-transport-proof:
 
 orbit-transport-soak-local:
 	./Scripts/run-orbit-transport-soak-local.sh
+
+orbit-m3-proof:
+	./Scripts/run-orbit-m3-proof.sh
 
 orbit-m3-proof-local:
 	./Scripts/run-orbit-m3-proof-local.sh

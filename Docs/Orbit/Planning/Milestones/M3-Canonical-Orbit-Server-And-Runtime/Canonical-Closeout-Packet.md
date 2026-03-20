@@ -37,6 +37,7 @@ spine:
 - `Product-Continuity-Review-Artifact.md`
 - `Migration-Validation-Artifact.md`
 - `Live-Postgres-Integration-Harness-Note.md`
+- `External-Closeout-Execution-Runbook.md`
 - `Review-Packet.md`
 
 ## What Is Proven Now
@@ -63,6 +64,7 @@ spine:
 - `OrbitPostgresRuntimeStoreIntegrationTests`
 - `make orbit-transport-proof`
 - `make orbit-transport-soak-local`
+- `make orbit-m3-proof`
 - `make orbit-live-db-proof-local`
 - `make orbit-m3-proof-local`
 
@@ -72,8 +74,9 @@ spine:
   present in the Studio environment
 - the current transport confidence now includes a repeatable local soak lane,
   but it is still not operations-grade evidence
-- the current live database proof is repeated local temp-`Postgres` evidence
-  rather than CI-backed or operations-backed proof
+- the current closeout bundle can now be executed in a pre-wired
+  `ORBIT_PG_*` environment through `make orbit-m3-proof`, but that execution
+  has not yet been captured as CI-backed or operations-backed proof
 - AJ closeout review should still treat this packet as the current closeout
   container, not as automatic proof that `M3` is already complete
 
@@ -81,6 +84,8 @@ spine:
 
 - this artifact now fills the canonical closeout-packet slot required by
   `Evidence-And-Exit-Criteria.md`
+- `External-Closeout-Execution-Runbook.md` now defines the exact remaining
+  execution path for the env-backed proof lane
 - the remaining `M3` blockers are now concentrated in external confidence work:
   operations-grade persistent-transport evidence and CI-backed or
   operations-backed live database proof

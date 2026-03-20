@@ -102,6 +102,9 @@ They should not treat runtime complexity as permission to revisit the core stack
 - `Live-Postgres-Integration-Harness-Note.md`
   Packet 6 readiness artifact defining the live database proof harness and
   local rerun entry points for the canonical runtime store
+- `External-Closeout-Execution-Runbook.md`
+  exact execution path for the remaining CI-backed or operations-backed `M3`
+  proof work
 - `Review-Packet.md`
   compact AJ review packet for the current canonical-runtime backbone progress
 - `Canonical-Closeout-Packet.md`

@@ -44,6 +44,8 @@ progress without reconstructing every packet from scratch.
 - the same transport ring now has a dedicated local soak lane through
   `make orbit-transport-soak-local`
 - that local soak lane has now passed ten consecutive local runs
+- the current closeout bundle can now be executed in a pre-wired
+  `ORBIT_PG_*` environment through `make orbit-m3-proof`
 - the current local M3 proof lanes can now be executed together with
   `make orbit-m3-proof-local`
 - the required canonical closeout packet now exists as
@@ -76,6 +78,7 @@ progress without reconstructing every packet from scratch.
 ## Closeout Artifact
 
 - `Canonical-Closeout-Packet.md`
+- `External-Closeout-Execution-Runbook.md`
 
 ## Honest Remaining Gaps
 
