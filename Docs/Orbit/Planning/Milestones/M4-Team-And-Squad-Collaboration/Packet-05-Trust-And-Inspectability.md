@@ -5,7 +5,7 @@ Packet Id: `M4-P5`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
 Review Personas: `samwise`, `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Header
 
@@ -79,6 +79,43 @@ Exclude:
 - one named interaction review path
 - one named validation review path
 - dossier audit confirming the packet set agrees on scope and stop points
+
+Runtime evidence currently aligned to these tests:
+
+- `OrbitWorkspaceTests.swift`: team and squad deterministic expansion; excluded
+  participant reasons; blocked/empty stops; complete/partial/failed inline
+  exchange outcomes with visible `contributor` and `reviewer` states
+- `OrbitServerBackedRoomCoordinatorTests.swift`: projection-level persistence of
+  meeting system messages, team and direct-target expansion status lines,
+  activation failures, and review-gated interaction traces
+- `OrbitWorkspacePersistenceTests.swift`: persisted thread replay retaining exchange
+  state (`completed`), activation contracts, and empty-thread no-invented-discussion
+  behavior
+- `OrbitServerRoomProjectionTests.swift`: projection from canonical runtime room
+  into workspace model with memberships, roles, and exchange history preserved
+- `Phase1RuntimeRepositoryTests.swift`: duplicate-membership guards and malformed
+  membership upsert coverage that supports deterministic one-activation-per
+  participant behavior
+
+### Packet 5 Review Evidence
+
+- `M4-P1` claim:
+  workspace-model membership traces are present in `OrbitWorkspaceTests.swift` and
+  `OrbitServerRoomProjectionTests.swift`.
+- `M4-P2` claim:
+  included and excluded participant reasons are explicit in
+  `OrbitWorkspaceTests.swift` and failure/blocked outputs are in runtime-facing
+  tests.
+- `M4-P3` claim:
+  inline routing-summary plus attributed replies without meeting-promotion is
+  visible in both `OrbitWorkspaceTests.swift` and `OrbitWorkspacePersistenceTests.swift`.
+- `M4-P4` claim:
+  completed/partial/failed exchange-state coverage and state lines are in
+  `OrbitWorkspaceTests.swift` and `OrbitServerBackedRoomCoordinatorTests.swift`.
+- `M4` milestone claim:
+  deterministic duplicate-membership handling and malformed-row handling are
+  covered by `OrbitWorkspaceTests.swift` and `Phase1RuntimeRepositoryTests.swift`,
+  with persistence/reload behavior in `OrbitWorkspacePersistenceTests.swift`.
 
 ## Packet 5 Proposed Closure
 
