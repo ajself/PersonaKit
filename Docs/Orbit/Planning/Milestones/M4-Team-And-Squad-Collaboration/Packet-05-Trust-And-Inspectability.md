@@ -1,6 +1,6 @@
 # M4 Packet 5: Trust And Inspectability
 
-Status: Ready For Planning Closeout
+Status: Done - AJ Closed Out
 Packet Id: `M4-P5`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
@@ -9,7 +9,7 @@ Last Updated: 2026-03-21
 
 ## Header
 
-- status: `needs-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -185,6 +185,12 @@ Runtime evidence currently aligned to these tests:
   substitute for the evidence package
 - if any packet claim lacks evidence, the milestone remains `needs-review` or
   `blocked`, not `ready enough`
+
+## AJ Closeout Decision
+
+- Packet 5 is now considered closed for `M4` with explicit trust-ready status.
+- Runtime handoff from this packet is permitted to proceed under current runtime
+  delivery assumptions.
 
 ### Open Risks And Review Decisions Needed
 
