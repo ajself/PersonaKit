@@ -84,6 +84,9 @@ Use this flow when AJ is still the one clicking the worktree UI:
 5. `codex/m4-preflight`
    - approved per-commit Orbit preflight lane for the `M4` dossier and
      milestone-execution handoff gate
+6. `codex/m4`
+   - approved per-commit Orbit milestone execution lane for ordered `M4`
+     packet work inside one worktree
 
 ## Orbit Attempt Naming Rule
 

@@ -27,8 +27,12 @@ The following are no longer open for `M4` unless AJ explicitly reopens them:
   unless AJ explicitly approves extra isolation
 - the coordinator sessions remain candidate-state until runtime evidence exists
 
-The decisions below are the remaining milestone-shaping questions inside that
-posture.
+The decisions below are the milestone-shaping questions that must either close
+or remain explicitly staged inside that posture.
+
+`M4-P1` now proposes working closures for Decisions 1 and 2, but they still
+require AJ review before later runtime-facing packets rely on them as accepted
+milestone law.
 
 ## Decision 1. First-Pass Team And Squad Meaning
 
@@ -49,11 +53,31 @@ Resolution criteria:
 - avoids reopening broader organization design beyond the first collaboration
   slice
 
+Resolution:
+
+- Proposed `M4-P1` closure pending AJ review:
+  `team` means a durable workspace-defined coordination group with a stable
+  remit and explicit membership over workspace persona instances
+- Proposed `M4-P1` closure pending AJ review:
+  `squad` means a focused initiative-bound coordination group with explicit
+  workspace persona membership and a narrower, more temporary objective than a
+  team
+- Proposed `M4-P1` closure pending AJ review:
+  both group types expand only through the persisted workspace model from
+  `RFC-0003`, specifically `team`, `squad`, `workspace_persona`, and
+  `workspace_persona_membership`; those records are the source of truth rather
+  than the `RFC-0002` runtime collaboration store or a separate
+  coordinator-local group surface, and runtime participation under `RFC-0004`
+  is derived from them rather than mutating them
+- Proposed `M4-P1` closure pending AJ review:
+  the existing `Founding Group` remains the seeded first team example in the
+  current Orbit surface
+
 Recommended default:
 
 - treat `team` as the more durable organizational grouping and `squad` as the
-  more focused initiative grouping, with both expanded only through explicit
-  coordinator-owned membership data
+  more focused initiative grouping, with both expanded only through persisted
+  workspace-model membership data defined by `RFC-0003`
 
 Decision owner:
 
@@ -90,6 +114,25 @@ Resolution criteria:
 - the supported forms are explicit and small
 - the inspection surface is visible enough for trust review
 - the first slice avoids speculative roster or target syntax complexity
+
+Resolution:
+
+- Proposed `M4-P1` closure pending AJ review:
+  the first slice supports explicit direct collaborator targets plus explicit
+  team and squad targets resolved from Orbit-owned group records
+- Proposed `M4-P1` closure pending AJ review:
+  the current seeded team target is `Founding Group`, which stays visible in
+  the existing composer and expands only through its explicit persisted
+  membership record; the initial seeded membership contains AI workspace
+  personas only, not the human operator, and later visible collaborators do not
+  join by roster drift
+- Proposed `M4-P1` closure pending AJ review:
+  membership inspection begins from the visible workspace roster and named
+  group-target surface, while expansion outcomes and reasons stay in the same
+  conversation path through routing summaries and activation trace surfaces
+- Proposed `M4-P1` closure pending AJ review:
+  freeform natural-language group parsing, ad hoc roster builders, hidden
+  coordinator-only roster surfaces, and richer meeting controls remain deferred
 
 Recommended default:
 

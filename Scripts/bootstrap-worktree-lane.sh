@@ -47,6 +47,8 @@ from pathlib import Path
 def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     status = lane.get("status")
     mode = lane.get("authorizationMode")
+    owner = lane.get("owner", "Samwise")
+    owner_session_id = lane.get("ownerSessionId")
     scope_boundary = lane.get("scopeBoundary")
     milestone = lane.get("milestone")
     workspace_scope = lane.get("workspaceScope")
@@ -60,24 +62,27 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     plan_lines = "\n".join(f"- `{ref}`" for ref in plan_refs)
     stop_lines = "\n".join(f"- {reason}" for reason in stop_reasons)
     start_point_line = f"Start Point: `{start_point}`\n" if start_point else ""
+    owner_session_line = (
+        f"Owner Session: `{owner_session_id}`\n" if owner_session_id else ""
+    )
     if mode == "worktree-auto-commit-approved":
         purpose = (
-            "Keep the approved lane scope visible inside the worktree so Samwise can resume\n"
+            f"Keep the approved lane scope visible inside the worktree so {owner} can resume\n"
             "execution without re-asking whether standing authority applies here."
         )
         startup_step_1 = "1. Run `Scripts/check-worktree-lane.sh`."
     else:
         purpose = (
             "Keep the approved lane scope and approval mode visible inside the worktree so\n"
-            "Samwise can resume execution without re-asking what contract applies here."
+            f"{owner} can resume execution without re-asking what contract applies here."
         )
         startup_step_1 = "1. Run `Scripts/check-worktree-lane.sh --mode contract`."
 
     return f"""# {milestone} Lane
 
 Status: {status_label}
-Owner: Samwise
-Branch: `{branch}`
+Owner: {owner}
+{owner_session_line}Branch: `{branch}`
 Authorization Mode: `{mode}`
 Workspace Scope: {workspace_scope}
 {start_point_line}Source Branch: `{source_branch or '-'}`

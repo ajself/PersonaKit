@@ -78,6 +78,78 @@ Exclude:
 - at least one team-target example and one squad-target example
 - explicit note describing what remains deferred to later packets
 
+## Packet 1 Proposed Closure
+
+### First-Pass Meaning
+
+- `team`
+  a durable workspace-defined coordination group with a stable remit and
+  explicit membership over workspace persona instances
+- `squad`
+  a focused initiative-bound coordination group with explicit workspace persona
+  membership and a narrower, more temporary objective than a team
+- persistent group membership belongs to the persisted workspace model defined
+  by `RFC-0003`, specifically the `team`, `squad`, `workspace_persona`, and
+  `workspace_persona_membership` records keyed to workspace persona instances;
+  it does not live in the `RFC-0002` runtime collaboration store or in a
+  separate coordinator-local group-record surface
+- runtime participation under `RFC-0004` is derived from those persisted
+  workspace-model records instead of mutating them
+- `Founding Group` remains the seeded first team example in the current Orbit
+  surface
+
+### First-Slice Supported Target Forms
+
+- direct collaborator target
+- explicit team target selected from persisted workspace-model group records
+  defined by `RFC-0003`
+- explicit squad target selected from persisted workspace-model group records
+  defined by `RFC-0003`
+- current-thread continuation remains the no-expansion baseline
+
+### Operator Inspection Surface
+
+- membership inspection starts from the visible workspace roster and the named
+  group-target surface in Orbit, not from a hidden coordinator-only roster
+- team and squad targets must resolve from persisted workspace-model group
+  records defined by `RFC-0003`, not from provider heuristics, ad hoc prompt
+  parsing, or a coordinator-local group surface
+- expansion outcomes and reason visibility remain in the same conversation path
+  through routing summaries and activation-trace surfaces in later packets
+- the seeded first-slice team target may remain `Founding Group`, but it must
+  resolve through an explicit persisted workspace-model membership record whose
+  seeded members are AI workspace personas only, never the human operator
+
+### Packet 1 Examples
+
+- team target example:
+  `Founding Group` as a durable team target backed by an explicit persisted
+  team record whose seeded membership is the initial AI workspace persona set;
+  newly added visible collaborators do not join until that membership record is
+  intentionally changed
+- squad target example:
+  `Command Center Feedback Squad` as a focused initiative group that selects the
+  workspace personas responsible for product and execution feedback on the
+  current Orbit surface
+
+### Explicitly Deferred
+
+- ad hoc roster builder UX
+- freeform natural-language group parsing or alias matching
+- nested or cross-workspace group expansion
+- full team and squad management UI
+- meeting promotion, continuity, or workstream handoff behavior
+
+### Open Risks And Review Decisions Needed
+
+- AJ still needs to approve whether `Founding Group` is sufficient as the
+  seeded first team target for the `M4` slice, even with explicit persisted
+  membership and no roster-by-visibility drift
+- `M4-P2` must name the concrete explanation fields for inclusion and exclusion
+  reasons without reopening the group-meaning contract
+- later packets must keep the inspection path visible without turning the roster
+  surface into hidden coordinator state
+
 ## Failure Dispositions
 
 - `blocked`

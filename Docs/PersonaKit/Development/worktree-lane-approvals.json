@@ -93,6 +93,32 @@
       ]
     },
     {
+      "laneId": "orbit-m4",
+      "branch": "codex/m4",
+      "owner": "orbit-meeting-coordinator",
+      "ownerSessionId": "orbit-meeting-coordinator-delivery",
+      "status": "approved",
+      "authorizationMode": "per-commit-approval",
+      "workspaceScope": "Orbit",
+      "milestone": "Orbit M4",
+      "scopeBoundary": "M4 milestone execution only. Work packets `M4-P1` through `M4-P5` in order inside this single lane/worktree, stop at packet review gates, and do not expand into M5 meeting promotion or M7 workstream behavior.",
+      "sourceBranch": "main",
+      "promotionTarget": "main",
+      "laneNotePath": "Docs/Orbit/Execution/Orbit-M4-Lane.md",
+      "planRefs": [
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/README.md",
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Decision-Register.md",
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Quality-Bar.md",
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Validation-And-Review-Matrix.md"
+      ],
+      "stopReasons": [
+        "promotion to main",
+        "scope expansion beyond M4 or out-of-order packet execution without AJ approval",
+        "runtime behavior that depends on M5 meeting promotion or M7 workstream semantics",
+        "destructive git actions"
+      ]
+    },
+    {
       "laneId": "orbit-learning-loop",
       "branch": "codex/orbit-learning-loop",
       "status": "exploratory",
