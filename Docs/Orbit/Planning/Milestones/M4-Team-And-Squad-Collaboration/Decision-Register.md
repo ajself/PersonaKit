@@ -30,7 +30,10 @@ The following are no longer open for `M4` unless AJ explicitly reopens them:
 The decisions below are the milestone-shaping questions that must either close
 or remain explicitly staged inside that posture.
 
-`M4-P1` now proposes working closures for Decisions 1 and 2, but they still
+`M4-P1` now proposes working closures for Decisions 1 and 2, `M4-P2` now
+proposes a working closure for Decision 5, `M4-P3` now proposes a working
+closure for Decision 3, `M4-P4` now proposes a working closure for Decision 4,
+and `M4-P5` now proposes a working closure for Decision 6, but they still
 require AJ review before later runtime-facing packets rely on them as accepted
 milestone law.
 
@@ -119,7 +122,8 @@ Resolution:
 
 - Proposed `M4-P1` closure pending AJ review:
   the first slice supports explicit direct collaborator targets plus explicit
-  team and squad targets resolved from Orbit-owned group records
+  team and squad targets resolved from persisted workspace-model group records
+  defined by `RFC-0003`
 - Proposed `M4-P1` closure pending AJ review:
   the current seeded team target is `Founding Group`, which stays visible in
   the existing composer and expands only through its explicit persisted
@@ -177,6 +181,25 @@ Resolution criteria:
 - preserves a clean handoff to `M5`
 - avoids requiring continuity payloads that belong to later milestones
 
+Resolution:
+
+- Proposed `M4-P3` closure pending AJ review:
+  successful group-targeted interaction remains in the origin post thread for
+  the first `M4` slice and does not create a linked meeting post or leave the
+  current discussion surface
+- Proposed `M4-P3` closure pending AJ review:
+  the coordinator may use `lightweightMeeting` as the response-form label for a
+  group-targeted inline exchange, but in this slice that means thread-scoped
+  coordination metadata only rather than a separate meeting root, continuity
+  package, or dedicated participant surface
+- Proposed `M4-P3` closure pending AJ review:
+  one visible inline routing or expansion summary should appear before or with
+  participant replies, and each participant reply remains an attributed
+  workspace persona message in the same thread
+- Proposed `M4-P3` closure pending AJ review:
+  promoted meeting posts, meeting continuity artifacts, post links, and durable
+  meeting summaries remain explicitly deferred to `M5`
+
 Recommended default:
 
 - keep collaboration inline by default and capture only enough visible state to
@@ -221,11 +244,37 @@ Resolution criteria:
 - completion states support partial failure visibly
 - the vocabulary is small enough to keep the first slice legible
 
+Resolution:
+
+- Proposed `M4-P4` closure pending AJ review:
+  the first-slice visible role vocabulary is `contributor` plus `reviewer`
+  only; deferred RFC roles such as `observer`, `summarizer`, and `facilitator`
+  remain out of scope until Orbit can surface them without importing meeting
+  governance into the inline path
+- Proposed `M4-P4` closure pending AJ review:
+  `reviewer` names review-oriented participation intent rather than guaranteed
+  reply order; sequencing remains independent unless a later packet closes a
+  stricter ordering policy
+- Proposed `M4-P4` closure pending AJ review:
+  first-slice participant-level visible states are `pending`, `replied`, and
+  `failed`
+- Proposed `M4-P4` closure pending AJ review:
+  first-slice exchange-level visible states are `active`, `completed`,
+  `partial`, and `failed`
+- Proposed `M4-P4` closure pending AJ review:
+  Packet 2 routing outcomes such as `blocked` and `empty` remain pre-exchange
+  expansion results rather than becoming completion states in the group reply
+  model
+- Proposed `M4-P4` closure pending AJ review:
+  a partial exchange stays visibly `partial` whenever at least one
+  reply-expected participant succeeds and at least one reply-expected
+  participant fails
+
 Recommended default:
 
-- keep one minimal role vocabulary and one minimal completion vocabulary that
-  cover active, complete, partial, and failed paths without importing full
-  meeting governance
+- keep one minimal visible role vocabulary and one minimal visible state
+  vocabulary that cover pending, replied, active, completed, partial, and
+  failed paths without importing full meeting governance
 
 Decision owner:
 
@@ -264,11 +313,39 @@ Resolution criteria:
 - exclusions are visible when they materially affect trust
 - the explanation shape supports validation examples
 
+Resolution:
+
+- Proposed `M4-P2` closure pending AJ review:
+  target expansion emits one visible `resolved target` summary, one explicit
+  `status` of `resolved`, `blocked`, or `empty`, one deterministic `included
+  participants` list, and a trust-relevant `excluded participants` list when
+  persisted members were materially skipped or unresolved
+- Proposed `M4-P2` closure pending AJ review:
+  an expansion that includes some members and excludes or cannot resolve others
+  still remains `resolved`; exclusions explain degraded membership resolution
+  rather than introducing a second `partial` routing state
+- Proposed `M4-P2` closure pending AJ review:
+  the first-slice deterministic ordering key is `workspace_persona.id` for both
+  included and excluded participant lists until a later packet explicitly names
+  a separate presentation order
+- Proposed `M4-P2` closure pending AJ review:
+  every participant-level reason uses the same structured fields:
+  `reasonCategory`, `sourceTargetKind`, `sourceTargetReferenceID`, and a short
+  operator-visible explanation derived from those fields
+- Proposed `M4-P2` closure pending AJ review:
+  first-slice inclusion categories are `direct_target`, `team_membership`, and
+  `squad_membership`; first-slice exclusion categories are
+  `persona_unavailable` and `membership_unresolved`
+- Proposed `M4-P2` closure pending AJ review:
+  `missing_or_ambiguous_target` and `empty_group` are expansion-status outcomes
+  with visible routing-failure notes, not synthetic participant exclusions
+
 Recommended default:
 
-- record a compact reason model that ties each participant to the target source,
-  role, or membership basis, and show explicit exclusion notes only when they are
-  needed to explain the expansion outcome
+- record a compact reason model that ties each participant to the target source
+  and membership basis, keep the participant ordering deterministic, and show
+  explicit exclusion notes only when they are needed to explain the expansion
+  outcome
 
 Decision owner:
 
@@ -305,11 +382,32 @@ Resolution criteria:
 - validation owners are explicit
 - AJ can review the packet set without reconstructing missing expectations
 
+Resolution:
+
+- Proposed `M4-P5` closure pending AJ review:
+  runtime-facing `M4` work requires one packet-complete dossier set, one
+  target-expansion example set, one inline interaction example set, one
+  role-and-state evidence set, and one named review artifact set
+- Proposed `M4-P5` closure pending AJ review:
+  the named review passes before runtime handoff are scope and owner review,
+  product and interaction review, validation review, and AJ closeout review
+- Proposed `M4-P5` closure pending AJ review:
+  the evidence package must include at least one explicit exclusion case, one
+  blocked-or-empty case, one completed inline exchange, one partial-failure
+  inline exchange, and one fully failed inline exchange
+- Proposed `M4-P5` closure pending AJ review:
+  implementer explanation, debugger-only proof, or one happy-path demo is not
+  sufficient evidence for runtime trust claims
+- Proposed `M4-P5` closure pending AJ review:
+  if any packet claim lacks named evidence, the milestone remains
+  `needs-review` or `blocked` rather than `ready enough`
+
 Recommended default:
 
-- require packet-specific examples, one validation and review matrix, and at
-  least one explicit exclusion case plus one partial-failure case before runtime
-  handoff is considered ready
+- require packet-specific examples, one named review artifact per required pass,
+  and at least one explicit exclusion case, one blocked-or-empty case, one
+  partial-failure case, and one failed-exchange case before runtime handoff is
+  considered ready
 
 Decision owner:
 

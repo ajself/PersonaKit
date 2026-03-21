@@ -79,6 +79,82 @@ Exclude:
 - explicit note describing what stays deferred to `M5`
 - interaction review questions aligned with the validation matrix
 
+## Packet 3 Proposed Closure
+
+### Inline Reply Contract
+
+- successful team and squad targets remain in the origin post thread for the
+  first `M4` slice; they do not create a linked meeting post or leave the
+  current discussion surface
+- the coordinator may label the response form as `lightweightMeeting` when a
+  group target expands, but in this slice that label means inline
+  thread-scoped coordination metadata only, not a separate meeting root,
+  separate participant surface, or continuity package
+- the inline path should emit one visible routing or expansion summary in the
+  same thread before or with participant replies so the operator can tell who
+  was asked and why
+- participant replies remain normal attributed workspace persona messages in the
+  same thread, each tied back to the triggering user message and its resolved
+  target context
+- the coordinator may add thread-local post events or equivalent coordination
+  metadata to preserve rationale and state, but it must not collapse the
+  exchange into one merged coordinator-authored answer
+
+### Boundary From `M5`
+
+- `M4` inline collaboration does not create a dedicated meeting identity,
+  linked meeting post, continuity package, meeting summary artifact, or
+  post-link handoff
+- `M4` inline collaboration may show lightweight coordination cues in the
+  current thread, but participant lifecycle, promotion, and durable meeting
+  continuity remain deferred to `M5`
+- completion can be hinted through inline coordination traces in this packet,
+  but the explicit role and completion vocabulary still closes in `M4-P4`
+- any interaction that only makes sense with a separate meeting surface,
+  durable meeting summary, or promoted follow-up artifact is out of scope here
+
+### Packet 3 Examples
+
+- inline team example:
+  AJ targets `Founding Group`, Orbit shows one inline routing summary for the
+  `founding-group` expansion, then `samwise` and `proddoc` reply as separate
+  attributed thread messages in the same discussion
+- inline squad example:
+  AJ targets `Command Center Feedback Squad`, Orbit keeps the exchange in the
+  same thread, shows the resolved squad rationale, and the selected workspace
+  personas reply independently without a separate meeting post
+- partial-arrival example:
+  the expansion summary appears first, one participant replies immediately, and
+  another remains pending; the thread still reads as one bounded inline group
+  exchange rather than a silently promoted meeting
+- out-of-scope example:
+  if the operator needs a dedicated participant list, durable meeting summary,
+  or a separately resumable coordination artifact, the interaction belongs to
+  `M5` promotion rather than this inline packet
+
+### Product And Interaction Review Expectations
+
+- a reviewer should be able to identify the triggering user message, the
+  resolved group target, and each participant reply without reconstructing hidden
+  coordinator state
+- the inline exchange should still read like the current thread became
+  multi-participant, not like the product secretly jumped to another mode
+- the coordinator rationale should remain visible enough to build trust without
+  taking over the conversation as a synthetic narrator
+- participant replies should stay attributable even when arrival order differs
+  from the expansion ordering
+
+### Open Risks And Review Decisions Needed
+
+- AJ still needs to approve whether one inline routing summary is sufficient for
+  first-slice trust or whether a second explicit coordinator note is needed once
+  replies begin arriving
+- `M4-P4` must define how inline pending, complete, partial, and failed states
+  are shown without reopening the `M4` versus `M5` boundary
+- later packets may add richer sequencing or facilitator behavior only through
+  explicit reviewable policies, not by turning the inline path into implicit
+  meeting governance
+
 ## Failure Dispositions
 
 - `blocked`

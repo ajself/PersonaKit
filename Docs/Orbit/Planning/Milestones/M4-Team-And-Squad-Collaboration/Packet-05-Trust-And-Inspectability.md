@@ -80,6 +80,86 @@ Exclude:
 - one named validation review path
 - dossier audit confirming the packet set agrees on scope and stop points
 
+## Packet 5 Proposed Closure
+
+### Minimum Evidence Package
+
+- one packet-complete dossier set:
+  `README.md`, `Quality-Bar.md`, `Validation-And-Review-Matrix.md`,
+  `Decision-Register.md`, and `Packet-01` through `Packet-05`
+- one target-expansion example set:
+  happy-path team expansion, happy-path squad expansion, one explicit exclusion
+  case, and one blocked-or-empty case
+- one inline interaction example set:
+  one completed inline group exchange, one partial-failure inline group
+  exchange, and one fully failed inline group exchange using the `M4-P3` and
+  `M4-P4` contracts
+- one role-and-state evidence set:
+  visible role labels, participant states, and exchange states shown in the
+  same interaction path as the group exchange
+- one review artifact set:
+  scope and owner review note, product and interaction review note, validation
+  review note, and AJ closeout note
+
+### Required Review Passes Before Runtime Handoff
+
+1. Scope and owner review:
+   confirm the packet set still belongs to `orbit-meeting-coordinator`, stays
+   bounded to `M4`, and does not smuggle in `M5` or `M7`
+2. Product and interaction review:
+   confirm the operator can understand who was asked, why they were asked, and
+   whether the exchange is active, partial, complete, or failed
+3. Validation review:
+   confirm the example set proves deterministic expansion, visible exclusions,
+   and honest partial-failure plus full-failure handling
+4. AJ closeout review:
+   confirm the milestone is strong enough to authorize runtime-facing packet
+   work without improvising the contract
+
+### Evidence Requirements By Packet Claim
+
+- `M4-P1` claim:
+  at least one team example and one squad example tied to persisted
+  workspace-model membership semantics
+- `M4-P2` claim:
+  included and excluded participant examples with visible reason fields and one
+  blocked-or-empty result
+- `M4-P3` claim:
+  one inline routing-summary example plus attributed participant replies in the
+  same thread, with no promoted meeting surface
+- `M4-P4` claim:
+  one completed exchange, one partial exchange, and one failed exchange showing
+  visible roles and states
+- `M4` milestone claim:
+  one cross-packet review note confirming the packet set still tells one bounded
+  story instead of five disconnected ideas
+
+### Runtime Handoff Bar
+
+- no runtime-facing `M4` packet may claim trust readiness until every required
+  review pass has a named artifact and the example set exists in reviewable form
+- implementer explanation, debugger-only proof, or one happy-path demo is not a
+  substitute for the evidence package
+- if any packet claim lacks evidence, the milestone remains `needs-review` or
+  `blocked`, not `ready enough`
+
+### Open Risks And Review Decisions Needed
+
+- AJ still needs to approve whether the review artifact set should live entirely
+  inside the M4 dossier or whether a separate runtime-handoff note is required
+- AJ still needs to approve whether one completed exchange, one partial
+  exchange, and one failed exchange are sufficient first-slice trust evidence
+  before runtime-facing work
+- runtime-facing M4 work must still stop if the evidence bar is weaker than the
+  claims being made
+
+### Final Stop Point Returned By Packet 5
+
+- do not authorize runtime-facing `M4` work until the example set, review notes,
+  and dossier audit all exist as explicit artifacts
+- do not let the milestone advance on blended confidence such as "group replies
+  looked fine"
+
 ## Failure Dispositions
 
 - `blocked`

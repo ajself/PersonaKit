@@ -77,6 +77,102 @@ Exclude:
 - one complete-path example and one partial-failure example
 - validation questions aligned with the `M4` review matrix
 
+## Packet 4 Proposed Closure
+
+### First-Slice Role Vocabulary
+
+| Role | Meaning | Expected visible behavior |
+| --- | --- | --- |
+| `contributor` | A selected participant expected to provide a direct substantive reply in the active thread. | The participant should produce an attributed inline reply unless the run fails. |
+| `reviewer` | A selected participant expected to evaluate, refine, or challenge the active thread objective or the emerging group exchange. | The participant should produce an attributed inline reply that reads as review-oriented feedback, regardless of whether it arrives before or after other replies. |
+
+- the first slice keeps the role model intentionally small: `contributor` and
+  `reviewer` are enough to explain expected participation without importing full
+  meeting governance
+- `observer`, `summarizer`, and `facilitator` remain valid RFC concepts, but
+  they are deferred from `M4` until Orbit can surface them without turning the
+  inline path into implicit meeting management
+- role vocabulary is operator-visible expectation, not a substitute for
+  low-level runtime fields such as `post_participant.participationMode`
+- `reviewer` names the expected function of the reply, not a guaranteed turn
+  order or sequencing rule
+
+### Participant And Exchange State Vocabulary
+
+- participant-level visible states for the first slice:
+  `pending`, `replied`, `failed`
+- exchange-level visible states for the first slice:
+  `active`, `completed`, `partial`, `failed`
+- Packet 2 expansion outcomes such as `blocked` and `empty` remain pre-exchange
+  routing results; they do not become in-exchange completion states here
+
+### State Meanings
+
+- `pending`
+  the participant was selected and is still expected to reply, but no visible
+  inline reply has arrived yet
+- `replied`
+  the participant produced a visible attributed inline reply in the current
+  thread
+- `failed`
+  the participant was selected but could not produce a visible reply, and that
+  failure remains visible to the operator
+- `active`
+  the exchange is underway because at least one reply-expected participant is
+  still `pending`
+- `completed`
+  all reply-expected participants reached `replied`, with no visible participant
+  failures
+- `partial`
+  at least one reply-expected participant reached `replied` and at least one
+  reply-expected participant reached `failed`
+- `failed`
+  the exchange began, but no reply-expected participant produced a visible reply
+  before the interaction terminated
+
+### Partial-Failure Behavior
+
+- partial failure must preserve both truths at once:
+  some participants replied successfully, and some did not
+- the operator should not have to infer failure from a missing voice
+- a partial exchange may still be useful and may still close as `partial`
+  without being mislabeled `completed`
+- later packets may add richer coordinator explanation, but the first slice only
+  needs visibly separate participant states plus one honest exchange state
+
+### Packet 4 Examples
+
+- complete-path example:
+  `Founding Group` expands inline, `samwise` is shown as `contributor`,
+  `proddoc` is shown as `reviewer`, both post attributed inline replies, and
+  the exchange closes as `completed`
+- partial-failure example:
+  `samwise` replies successfully as `contributor`, `proddoc` remains selected as
+  `reviewer` but fails visibly before replying, and the exchange closes as
+  `partial` rather than silently `completed`
+- failed-path example:
+  the target expands successfully, but every reply-expected participant reaches
+  `failed`; the interaction closes as `failed` without pretending that expansion
+  alone was sufficient
+
+### Validation Questions Returned To `M4-P5`
+
+- can a reviewer tell what Orbit expected from each selected participant without
+  guessing from message tone alone?
+- can a reviewer distinguish `partial` from `completed` without reading hidden
+  logs or debugger output?
+- does the state model remain legible when replies arrive in normal arrival
+  order rather than a fixed sequence?
+
+### Open Risks And Review Decisions Needed
+
+- AJ still needs to approve whether `reviewer` is necessary in the first slice
+  or whether the initial runtime should collapse everything to `contributor`
+- `M4-P5` must test whether the first-slice state model is visible enough
+  without a dedicated meeting roster or secondary status surface
+- later packets may add deferred roles only if the product can explain them
+  without reopening the `M4` versus `M5` boundary
+
 ## Failure Dispositions
 
 - `blocked`

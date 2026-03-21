@@ -156,7 +156,7 @@ An impressive `M4` result means a reviewer can say:
 
 - Orbit can explain who was asked and why
 - inline group replies still feel attributable and bounded
-- the operator can see when a group exchange is active, partial, or done
+- the operator can see when a group exchange is active, partial, failed, or done
 - the dossier is strong enough that the first runtime packet does not need to
   invent its own rules
 
