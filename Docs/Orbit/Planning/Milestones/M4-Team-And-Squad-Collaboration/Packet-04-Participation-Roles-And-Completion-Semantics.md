@@ -5,7 +5,7 @@ Packet Id: `M4-P4`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
 Review Personas: `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Header
 
@@ -76,6 +76,20 @@ Exclude:
 - one role table for the first slice
 - one complete-path example and one partial-failure example
 - validation questions aligned with the `M4` review matrix
+
+Runtime evidence currently aligned to these tests:
+
+- `OrbitWorkspaceTests`: contributor/reviewer roles and participant states in inline exchange system events (`pending`, `replied`, `failed`) and exchange states (`active`, `completed`, `partial`, `failed`)
+- `OrbitServerBackedRoomCoordinatorTests`: complete exchange-state emission and role/state lines in post-system events
+- `OrbitWorkspacePersistenceTests`: persistence and reload visibility for active/completed exchange-state system events
+- `Phase1RuntimeRepositoryTests`: malformed and duplicate-membership checks that support deterministic single-activation assumptions for group targets
+
+### Packet 4 Review Evidence
+
+- role vocabulary confirmed for this slice: `contributor`, `reviewer`
+- participant states confirmed for this slice: `pending`, `replied`, `failed`
+- exchange states confirmed for this slice: `active`, `completed`, `partial`, `failed`
+- `reviewer` remains in implementation for first-slice role semantics
 
 ## Packet 4 Proposed Closure
 
@@ -166,8 +180,7 @@ Exclude:
 
 ### Open Risks And Review Decisions Needed
 
-- AJ still needs to approve whether `reviewer` is necessary in the first slice
-  or whether the initial runtime should collapse everything to `contributor`
+- `reviewer` is retained in the runtime role model for this slice; AJ needs to confirm whether to keep it or collapse to a single `contributor` role
 - `M4-P5` must test whether the first-slice state model is visible enough
   without a dedicated meeting roster or secondary status surface
 - later packets may add deferred roles only if the product can explain them
