@@ -54,6 +54,18 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     plan_lines = "\n".join(f"- `{ref}`" for ref in plan_refs)
     stop_lines = "\n".join(f"- {reason}" for reason in stop_reasons)
     start_point_line = f"Start Point: `{start_point}`\n" if start_point else ""
+    if mode == "worktree-auto-commit-approved":
+        purpose = (
+            "Keep the approved lane scope visible inside the worktree so Samwise can resume\n"
+            "execution without re-asking whether standing authority applies here."
+        )
+        startup_step_1 = "1. Run `Scripts/check-worktree-lane.sh`."
+    else:
+        purpose = (
+            "Keep the approved lane scope and approval mode visible inside the worktree so\n"
+            "Samwise can resume execution without re-asking what contract applies here."
+        )
+        startup_step_1 = "1. Run `Scripts/check-worktree-lane.sh --mode contract`."
 
     return f"""# {milestone} Lane
 
@@ -68,8 +80,7 @@ Manifest Digest: `{manifest_digest}`
 
 ## Purpose
 
-Keep the approved lane scope visible inside the worktree so Samwise can resume
-execution without re-asking whether standing authority applies here.
+{purpose}
 
 ## Scope Boundary
 
@@ -85,7 +96,7 @@ execution without re-asking whether standing authority applies here.
 
 ## Startup Checklist
 
-1. Run `Scripts/check-worktree-lane.sh`.
+{startup_step_1}
 2. Re-read the plan references listed above.
 3. Confirm the next bounded work item still fits the lane scope boundary.
 4. Run baseline validation before broad implementation changes when code work is

@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-20
 
 ## Purpose
 
@@ -18,15 +18,15 @@ personas, and any unresolved persona gaps that must be handled before delegation
 | `M1` | `architectural-editor` | `senior-swiftui-engineer`, `studio-coverage-architect` | covered | Execution owner and review ring are clear |
 | `M2` | `senior-swiftui-engineer` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | covered | Founding roster uses the approved `ProdDoc` -> `venture-product-steward` alias |
 | `M3` | `studio-integration-coordinator` | `architectural-editor`, `senior-swiftui-engineer`, `venture-product-steward`, `studio-reliability-engineer`, `studio-coverage-architect` | covered | Product continuity review stays explicit during canonical runtime migration |
-| `M4` | `orbit-meeting-coordinator` | `samwise`, `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Do not delegate until persona exists or AJ approves substitute |
-| `M5` | `orbit-meeting-coordinator` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Same gap as `M4`, but more consequential |
+| `M4` | `orbit-meeting-coordinator` | `samwise`, `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | covered | `PHR-0009` clears the owner gap for `M4`; keep delivery packetized one loop at a time |
+| `M5` | `orbit-meeting-coordinator` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | conditionally covered | Persona coverage is now in place, but meeting promotion still waits on `M4` evidence |
 | `M6` | `venture-product-steward` | `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor` | covered | Product-heavy milestone with architecture review |
 | `M7` | `worktree-squad-lead` | `samwise`, `venture-product-steward`, `studio-integration-coordinator`, `studio-coverage-architect` | conditionally covered | Reassess whether `orbit-workstream-runner` is needed before delegation scale increases |
 | `M8` | `orbit-memory-gardener` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Required before journaling and memory review are delegated |
 | `M9` | `orbit-memory-gardener` | `architectural-editor`, `studio-coverage-architect`, `venture-product-steward` | blocked on missing persona | Same missing persona as `M8` |
 | `M10` | `orbit-memory-gardener` | `samwise`, `venture-product-steward`, `studio-coverage-architect` | blocked on missing persona | Same missing persona as `M8` and `M9` |
 | `M11` | `senior-swiftui-engineer` | `studio-reliability-engineer`, `venture-product-steward`, `studio-coverage-architect` | covered | Depends on `M3` being truly stable |
-| `M12` | `senior-swiftui-engineer` | `studio-interaction-quality-lead`, `orbit-meeting-coordinator`, `venture-product-steward` | blocked on missing persona | Can plan early, cannot delegate fully without coordinator persona |
+| `M12` | `senior-swiftui-engineer` | `studio-interaction-quality-lead`, `orbit-meeting-coordinator`, `venture-product-steward` | conditionally covered | Coordinator support is now available, but earlier Orbit meeting work still gates this milestone |
 | `M13` | `orbit-platform-operator` or `orbit-server-steward` | `studio-integration-coordinator`, `studio-reliability-engineer`, `studio-coverage-architect`, `architectural-editor` | blocked on missing persona | Need one approved platform operations identity |
 
 ## Cross-Cutting Coverage Notes
@@ -57,6 +57,12 @@ Why this matters:
 
 - group-target expansion and meeting promotion are both high-risk for routing
   opacity and require a trustworthy, visible orchestration identity
+
+Current state:
+
+- qualified in hiring review `PHR-0009`
+- initial review and delivery sessions exist; keep them packetized and review-led
+- this closes the missing-owner gap only; later milestone gates still apply
 
 ### `orbit-memory-gardener`
 

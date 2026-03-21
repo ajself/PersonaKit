@@ -127,10 +127,6 @@ for idx, lane in enumerate(lanes, start=1):
             errors.append(f"{prefix} branch 'main' must not define startPoint")
 
     if status in {"approved", "exploratory"}:
-        if mode != "worktree-auto-commit-approved":
-            errors.append(
-                f"{prefix} status {status!r} must use worktree-auto-commit-approved"
-            )
         if not isinstance(lane_note_path, str) or not lane_note_path:
             errors.append(f"{prefix} must define laneNotePath for executable lanes")
         if source_branch is None and start_point is None:

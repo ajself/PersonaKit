@@ -37,6 +37,8 @@ This exists for the case where:
    materialize the same base even if `main` moves later.
 7. Promotion, destructive git actions, and scope changes outside the approved
    lane still escalate to AJ.
+8. A named non-`main` lane may still use `per-commit-approval` when AJ approves
+   the lane scope but does not grant standing auto-commit authority for it.
 
 ## Standard Use
 
@@ -73,6 +75,9 @@ Use this flow when AJ is still the one clicking the worktree UI:
    - historical first-run Orbit MVP lane
 4. `codex/orbit-learning-loop`
    - historical exploratory post-MVP lane from the first Orbit exercise
+5. `codex/m4-preflight`
+   - approved per-commit Orbit preflight lane for the `M4` dossier and packet
+     kickoff gate
 
 ## Orbit Attempt Naming Rule
 

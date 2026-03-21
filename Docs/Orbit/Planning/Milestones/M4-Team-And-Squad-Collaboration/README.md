@@ -1,20 +1,56 @@
 # M4 Team And Squad Collaboration With Visible Coordinator Expansion
 
-Status: Planned
-Primary Owner: `orbit-meeting-coordinator` or blocked until that persona exists
+Status: Ready For Planning Closeout
+Primary Owner: `orbit-meeting-coordinator`
 Supporting Personas: `samwise`, `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-20
 
 ## Purpose
 
 Let the operator ask a group for input and inspect why each participant was
 included.
 
+## Quality Standard
+
+`M4` is not successful because multiple participants can technically reply.
+
+`M4` is successful only when group collaboration remains:
+
+- deterministic about who was asked and why
+- inspectable without debugger-only reasoning
+- attributable inside the existing conversation surface
+- bounded away from `M5` meeting promotion and `M7` workstream execution
+
+The bare minimum is not a milestone win.
+
+## File Map
+
+- `README.md`
+  milestone overview, packet order, and top-level guardrails
+- `Quality-Bar.md`
+  milestone-specific definition of trustworthy, review-worthy group
+  collaboration
+- `Validation-And-Review-Matrix.md`
+  named validation owners, review passes, and disqualifiers
+- `Decision-Register.md`
+  high-impact coordinator decisions that must close or remain explicitly staged
+- `Packet-01-Group-Structure-Assumptions.md`
+  preflight packet contract for freezing first-pass team and squad semantics
+- `Packet-02-Target-Expansion.md`
+  preflight packet contract for deterministic participant expansion and reason
+  visibility
+- `Packet-03-Inline-Group-Reply-Flow.md`
+  preflight packet contract for bounded inline multi-participant replies
+- `Packet-04-Participation-Roles-And-Completion-Semantics.md`
+  preflight packet contract for visible role and state semantics
+- `Packet-05-Trust-And-Inspectability.md`
+  preflight packet contract for the evidence needed before `M4` can be treated
+  as trustworthy
+
 ## Preconditions
 
 - `M3` canonical runtime is stable enough to support group participation records
-- `orbit-meeting-coordinator` exists as an approved persona or AJ approves a
-  temporary substitute
+- `orbit-meeting-coordinator` is approved and available
 - operator-visible activation and participation traces are already trusted
 
 ## Scope Freeze
@@ -136,13 +172,14 @@ Avoid:
 - hiding coordinator behavior behind generic system events
 - parallel feature expansion into promoted meetings before inline group behavior
   is trusted
+- starting runtime-facing packet work from dossier hardening alone
 
 ## Evidence Package
 
-- group structure note
-- target expansion examples
-- participant reasoning examples
-- partial-failure behavior examples
+- packet-level planning notes with explicit scope, grounding, and stop points
+- target expansion examples and participant reasoning examples
+- participation-role and partial-failure examples
+- validation and review matrix results
 - trust and interaction review artifacts
 
 ## Stop Points
@@ -150,6 +187,8 @@ Avoid:
 - stop if `orbit-meeting-coordinator` is not approved
 - stop if inclusion reasoning cannot be shown clearly
 - stop if group routing starts feeling provider-owned instead of Orbit-owned
+- stop if packet docs begin authorizing runtime work before AJ reviews the
+  dossier
 
 ## Exit And Handoff
 

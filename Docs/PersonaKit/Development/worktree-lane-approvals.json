@@ -70,6 +70,29 @@
       ]
     },
     {
+      "laneId": "orbit-m4-preflight",
+      "branch": "codex/m4-preflight",
+      "status": "approved",
+      "authorizationMode": "per-commit-approval",
+      "workspaceScope": "Orbit",
+      "milestone": "Orbit M4 preflight",
+      "scopeBoundary": "M4 dossier hardening, preflight review, and bounded packet-kickoff preparation only. No runtime-facing implementation, M5 meeting promotion, or M7 workstream behavior.",
+      "sourceBranch": "main",
+      "promotionTarget": "main",
+      "laneNotePath": "Docs/Orbit/Execution/Orbit-M4-Preflight-Lane.md",
+      "planRefs": [
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/README.md",
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Decision-Register.md",
+        "Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Validation-And-Review-Matrix.md"
+      ],
+      "stopReasons": [
+        "promotion to main",
+        "runtime-facing M4 packet work before AJ explicitly authorizes the packet",
+        "scope expansion into M5 meeting promotion or M7 workstream behavior",
+        "destructive git actions"
+      ]
+    },
+    {
       "laneId": "orbit-learning-loop",
       "branch": "codex/orbit-learning-loop",
       "status": "exploratory",
