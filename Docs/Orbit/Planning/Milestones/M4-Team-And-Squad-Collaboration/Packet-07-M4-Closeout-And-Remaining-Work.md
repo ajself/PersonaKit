@@ -1,6 +1,6 @@
 # M4 Packet 7: M4 Closeout and Remaining Work Planning
 
-Status: Done - Ready for Main
+Status: Closed for M4 Closeout
 Packet Id: `M4-P7`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
@@ -68,6 +68,8 @@ Exclude:
 ### Remaining work before milestone handoff
 
 - Packet 5 trust closeout is recorded in this packet and in the packet log trail.
+- Named review artifacts now exist in the M4 dossier for scope and owner,
+  product and interaction, validation, and AJ closeout review.
 - Packet 6 handoff-readiness remains optional transition context for the next cycle.
 - No additional M4 closure blockers remain in this loop.
 

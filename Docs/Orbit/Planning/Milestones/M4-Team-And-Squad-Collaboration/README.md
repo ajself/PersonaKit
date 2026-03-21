@@ -1,6 +1,6 @@
 # M4 Team And Squad Collaboration With Visible Coordinator Expansion
 
-Status: Closed for Closeout
+Status: Closed for M4 Closeout
 Primary Owner: `orbit-meeting-coordinator`
 Supporting Personas: `samwise`, `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
 Last Updated: 2026-03-21
@@ -46,6 +46,17 @@ The bare minimum is not a milestone win.
 - `Packet-05-Trust-And-Inspectability.md`
   preflight packet contract for the evidence needed before `M4` can be treated
   as trustworthy
+- `Scope-And-Owner-Review-Artifact.md`
+  explicit owner, scope-boundary, and stop-point review note for the closed M4
+  packet set
+- `Product-And-Interaction-Review-Artifact.md`
+  product-trust and inline-legibility review note for the first-slice group
+  collaboration behavior
+- `Validation-Review-Artifact.md`
+  validation review note tying the closed dossier claims to concrete runtime
+  tests and failure-path coverage
+- `AJ-Closeout-Review-Artifact.md`
+  AJ-facing milestone closeout note confirming the accepted M4 handoff posture
 
 ## Preconditions
 
@@ -188,6 +199,8 @@ Avoid:
 - participation-role and partial-failure examples
 - validation and review matrix results
 - trust and interaction review artifacts
+- explicit review artifacts for scope and owner, product and interaction,
+  validation, and AJ closeout
 
 ## Stop Points
 

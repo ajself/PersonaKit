@@ -120,6 +120,11 @@ Runtime evidence currently aligned to these tests:
 ### AJ Review Decisions
 
 - review artifact location: keep the full review artifact trail in the M4 dossier.
+- review artifact files:
+  `Scope-And-Owner-Review-Artifact.md`,
+  `Product-And-Interaction-Review-Artifact.md`,
+  `Validation-Review-Artifact.md`,
+  `AJ-Closeout-Review-Artifact.md`
 - evidence sufficiency: the completed/partial/failed exchange set in existing tests
   is sufficient for first-slice trust of M4 runtime-facing behavior.
 

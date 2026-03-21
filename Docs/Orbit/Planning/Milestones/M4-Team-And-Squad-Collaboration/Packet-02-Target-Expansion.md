@@ -1,15 +1,15 @@
 # M4 Packet 2: Target Expansion
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Packet Id: `M4-P2`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
 Review Personas: `venture-product-steward`, `studio-coverage-architect`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Header
 
-- status: `needs-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -156,11 +156,12 @@ Exclude:
 
 ### Open Risks And Review Decisions Needed
 
-- AJ still needs to approve whether `workspace_persona.id` is sufficient as the
-  deterministic ordering key for this slice or whether another explicit
-  structural order should be named before runtime work begins
-- AJ still needs to approve whether `persona_unavailable` and
-  `membership_unresolved` are enough exclusion categories for the first slice
+- AJ closeout accepted `workspace_persona.id` as the deterministic ordering key
+  for the closed first slice; any richer presentation order should be introduced
+  as an explicit later-milestone policy rather than implied here
+- AJ closeout accepted `persona_unavailable` and `membership_unresolved` as the
+  minimum first-slice exclusion categories; any broader exclusion taxonomy
+  should be added only through an explicit future packet
 - `M4-P3` must decide how the expansion summary appears relative to inline
   replies without reopening the target-expansion contract
 - later packets may introduce richer narrowing or ranking policy only through
@@ -171,7 +172,8 @@ Exclude:
 - `blocked`
   `M4-P1` decisions are still unresolved
 - `needs-review`
-  AJ needs to review the reason model before runtime work begins
+  used before AJ closeout when the reason model had not yet been accepted for
+  runtime-facing work
 - `grounding-blocked`
   required coordinator grounding is unavailable
 - `failed`

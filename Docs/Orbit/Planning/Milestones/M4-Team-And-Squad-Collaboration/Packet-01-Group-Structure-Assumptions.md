@@ -1,15 +1,15 @@
 # M4 Packet 1: Group Structure Assumptions
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Packet Id: `M4-P1`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
 Review Personas: `samwise`, `venture-product-steward`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Header
 
-- status: `needs-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -142,9 +142,9 @@ Exclude:
 
 ### Open Risks And Review Decisions Needed
 
-- AJ still needs to approve whether `Founding Group` is sufficient as the
-  seeded first team target for the `M4` slice, even with explicit persisted
-  membership and no roster-by-visibility drift
+- AJ closeout accepted `Founding Group` as the seeded first team target for the
+  closed `M4` slice; any broader seeded-target change should reopen the packet
+  explicitly instead of piggybacking on `M5`
 - `M4-P2` must name the concrete explanation fields for inclusion and exclusion
   reasons without reopening the group-meaning contract
 - later packets must keep the inspection path visible without turning the roster
@@ -155,7 +155,8 @@ Exclude:
 - `blocked`
   required upstream structure or runtime assumptions remain unclear
 - `needs-review`
-  AJ needs to approve the first-pass group meaning before runtime-facing work
+  used before AJ closeout when the first-pass group meaning had not yet been
+  accepted for runtime-facing work
 - `grounding-blocked`
   required coordinator grounding is unavailable
 - `failed`

@@ -7,6 +7,9 @@ enum OrbitServerRoomProjection {
   ) -> OrbitWorkspace {
     let room = snapshot.room
     let participants = projectedParticipants(from: room)
+    let activationFailurePayloadsByTriggerMessageID = activationFailurePayloadsByTriggerMessageID(
+      from: room
+    )
     let resolvedActivationPayloadsByID = resolvedActivationPayloads(from: room)
     let activationContractSnapshots = projectedActivationContractSnapshots(
       from: room,
@@ -18,10 +21,14 @@ enum OrbitServerRoomProjection {
       participants: participants,
       activationPayloadsByID: resolvedActivationPayloadsByID
     )
-    let interactionMode = projectedInteractionMode(from: room)
+    let interactionMode = projectedInteractionMode(
+      from: room,
+      activationFailurePayloadsByTriggerMessageID: activationFailurePayloadsByTriggerMessageID
+    )
     let messages = projectedMessages(
       from: room,
-      participants: participants
+      participants: participants,
+      activationFailurePayloadsByTriggerMessageID: activationFailurePayloadsByTriggerMessageID
     )
     let threadID = room.thread.id.uuidString
 
@@ -172,8 +179,22 @@ enum OrbitServerRoomProjection {
   }
 
   private static func projectedInteractionMode(
-    from room: OrbitPhase1RoomSnapshot
+    from room: OrbitPhase1RoomSnapshot,
+    activationFailurePayloadsByTriggerMessageID: [UUID: OrbitPhase1ActivationFailurePayload]
   ) -> OrbitInteractionMode {
+    if let latestUserMessage = room.messages
+      .filter({ $0.authorType == .user })
+      .sorted(by: messageSort)
+      .last,
+      let turnMode = projectedInteractionMode(
+        forTriggerMessageID: latestUserMessage.id,
+        in: room,
+        activationFailurePayloadsByTriggerMessageID: activationFailurePayloadsByTriggerMessageID
+      )
+    {
+      return turnMode
+    }
+
     if let latestActivation = room.personaActivations.sorted(by: activationSort).last {
       return projectedInteractionMode(for: latestActivation.responseMode)
     }
@@ -187,7 +208,8 @@ enum OrbitServerRoomProjection {
 
   private static func projectedMessages(
     from room: OrbitPhase1RoomSnapshot,
-    participants: [OrbitParticipant]
+    participants: [OrbitParticipant],
+    activationFailurePayloadsByTriggerMessageID: [UUID: OrbitPhase1ActivationFailurePayload]
   ) -> [OrbitMessage] {
     let participantsByWorkspacePersonaID = Dictionary(
       uniqueKeysWithValues: participants.compactMap { participant -> (UUID, OrbitParticipant)? in
@@ -219,7 +241,8 @@ enum OrbitServerRoomProjection {
             for: message,
             room: room,
             participantsByWorkspacePersonaID: participantsByWorkspacePersonaID,
-            workspacePersonasByID: workspacePersonasByID
+            workspacePersonasByID: workspacePersonasByID,
+            activationFailurePayloadsByTriggerMessageID: activationFailurePayloadsByTriggerMessageID
           ),
           body: message.body,
           order: index + 1,
@@ -427,7 +450,8 @@ enum OrbitServerRoomProjection {
     for message: OrbitMessageRecord,
     room: OrbitPhase1RoomSnapshot,
     participantsByWorkspacePersonaID: [UUID: OrbitParticipant],
-    workspacePersonasByID: [UUID: OrbitWorkspacePersonaRecord]
+    workspacePersonasByID: [UUID: OrbitWorkspacePersonaRecord],
+    activationFailurePayloadsByTriggerMessageID: [UUID: OrbitPhase1ActivationFailurePayload]
   ) -> String? {
     switch message.authorType {
     case .user:
@@ -436,7 +460,7 @@ enum OrbitServerRoomProjection {
         .sorted(by: activationSort)
 
       guard let firstActivation = matchingActivations.first else {
-        return nil
+        return activationFailurePayloadsByTriggerMessageID[message.id]?.addressedTargetID
       }
 
       switch firstActivation.responseMode {
@@ -539,6 +563,35 @@ enum OrbitServerRoomProjection {
     responseMode == .lightweightMeeting ? .lightweightMeeting : .directMessage
   }
 
+  private static func projectedInteractionMode(
+    for triggerSource: OrbitActivationTriggerSource
+  ) -> OrbitInteractionMode {
+    triggerSource == .meetingInvocation ? .lightweightMeeting : .directMessage
+  }
+
+  private static func projectedInteractionMode(
+    forTriggerMessageID triggerMessageID: UUID,
+    in room: OrbitPhase1RoomSnapshot,
+    activationFailurePayloadsByTriggerMessageID: [UUID: OrbitPhase1ActivationFailurePayload]
+  ) -> OrbitInteractionMode? {
+    if let activation = room.personaActivations
+      .filter({ $0.triggerMessageID == triggerMessageID })
+      .sorted(by: activationSort)
+      .first
+    {
+      return projectedInteractionMode(for: activation.responseMode)
+    }
+
+    guard
+      let failure = activationFailurePayloadsByTriggerMessageID[triggerMessageID],
+      let triggerSource = OrbitActivationTriggerSource(rawValue: failure.triggerSource)
+    else {
+      return nil
+    }
+
+    return projectedInteractionMode(for: triggerSource)
+  }
+
   private static func projectedTriggerSource(
     for responseMode: OrbitCanonicalResponseMode
   ) -> OrbitActivationTriggerSource {
@@ -573,6 +626,32 @@ enum OrbitServerRoomProjection {
         }
 
         payloadsByID[activationID] = payload
+      }
+  }
+
+  private static func activationFailurePayloadsByTriggerMessageID(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [UUID: OrbitPhase1ActivationFailurePayload] {
+    room.postEvents
+      .sorted(by: postEventSort)
+      .reduce(into: [UUID: OrbitPhase1ActivationFailurePayload]()) { payloadsByTriggerMessageID, postEvent in
+        guard postEvent.eventType == OrbitPhase1RealtimeEventCategory.activationFailed.rawValue else {
+          return
+        }
+
+        guard
+          let payload = try? OrbitPhase1RealtimeEventPayloadCodec.decode(
+            OrbitPhase1ActivationEventPayload.self,
+            from: postEvent.payloadJSON
+          ),
+          let triggerMessageID = payload.triggerMessageID,
+          let failure = payload.failure,
+          payloadsByTriggerMessageID[triggerMessageID] == nil
+        else {
+          return
+        }
+
+        payloadsByTriggerMessageID[triggerMessageID] = failure
       }
   }
 

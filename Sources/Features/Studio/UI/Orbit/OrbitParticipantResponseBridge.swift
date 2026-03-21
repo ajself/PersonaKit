@@ -513,10 +513,6 @@ enum OrbitParticipantResponseBridge {
       return .contributor
     }
 
-    if participant.personaTemplateID == "venture-product-steward" {
-      return .reviewer
-    }
-
     guard let workspacePersonaID = participant.workspacePersonaID else {
       return .contributor
     }
@@ -544,11 +540,9 @@ enum OrbitParticipantResponseBridge {
       }
       .first
 
-    if matchingMembership?.roleInGroup == OrbitGroupParticipantRole.reviewer.rawValue {
-      return .reviewer
-    }
-
-    return .contributor
+    return visibleGroupParticipantRole(
+      from: matchingMembership?.roleInGroup
+    )
   }
 
   private static func exchangeState(
@@ -590,6 +584,27 @@ enum OrbitParticipantResponseBridge {
 
     return orderedMemberships.filter { membership in
       seenWorkspacePersonaIDs.insert(membership.workspacePersonaID).inserted
+    }
+  }
+
+  private static func visibleGroupParticipantRole(
+    from persistedRole: String?
+  ) -> OrbitGroupParticipantRole {
+    guard let persistedRole else {
+      return .contributor
+    }
+
+    let normalizedRole = persistedRole
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+      .replacingOccurrences(of: "_", with: "-")
+      .replacingOccurrences(of: " ", with: "-")
+
+    switch normalizedRole {
+    case OrbitGroupParticipantRole.reviewer.rawValue, "product-steward":
+      return .reviewer
+    default:
+      return .contributor
     }
   }
 }

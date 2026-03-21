@@ -1,9 +1,9 @@
 # M4 Quality Bar
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Milestone: `M4`
 Primary Owner: `orbit-meeting-coordinator`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Purpose
 

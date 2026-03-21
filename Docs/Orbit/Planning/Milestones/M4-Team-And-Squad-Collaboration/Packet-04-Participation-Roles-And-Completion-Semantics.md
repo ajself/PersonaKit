@@ -1,6 +1,6 @@
 # M4 Packet 4: Participation Roles And Completion Semantics
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Packet Id: `M4-P4`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
@@ -9,7 +9,7 @@ Last Updated: 2026-03-21
 
 ## Header
 
-- status: `needs-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -180,7 +180,9 @@ Runtime evidence currently aligned to these tests:
 
 ### Open Risks And Review Decisions Needed
 
-- `reviewer` is retained in the runtime role model for this slice; AJ needs to confirm whether to keep it or collapse to a single `contributor` role
+- `reviewer` is retained in the runtime role model for the closed `M4` slice;
+  collapsing to a single `contributor` role is now a future product decision
+  rather than an open M4 blocker
 - `M4-P5` must test whether the first-slice state model is visible enough
   without a dedicated meeting roster or secondary status surface
 - later packets may add deferred roles only if the product can explain them
@@ -191,7 +193,8 @@ Runtime evidence currently aligned to these tests:
 - `blocked`
   earlier packet contracts are still too vague to define visible state honestly
 - `needs-review`
-  AJ needs to approve the role and state vocabulary before runtime work begins
+  used before AJ closeout when the role and state vocabulary had not yet been
+  accepted for runtime-facing work
 - `grounding-blocked`
   required coordinator grounding is unavailable
 - `failed`

@@ -1,6 +1,6 @@
 # M4 Packet 3: Inline Group Reply Flow
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Packet Id: `M4-P3`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
@@ -9,7 +9,7 @@ Last Updated: 2026-03-21
 
 ## Header
 
-- status: `needs-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -160,9 +160,9 @@ Exclude:
 
 ### Open Risks And Review Decisions Needed
 
-- AJ still needs to approve whether one inline routing summary is sufficient for
-  first-slice trust or whether a second explicit coordinator note is needed once
-  replies begin arriving
+- AJ closeout accepted one inline routing summary plus the visible exchange-state
+  follow-up as sufficient first-slice trust surface for `M4`; richer
+  coordinator narration remains optional later work rather than an open blocker
 - `M4-P4` must define how inline pending, complete, partial, and failed states
   are shown without reopening the `M4` versus `M5` boundary
 - later packets may add richer sequencing or facilitator behavior only through
@@ -175,7 +175,8 @@ Exclude:
   expansion behavior is still unclear enough that inline replies would be
   misleading
 - `needs-review`
-  AJ needs to approve the inline boundary before any runtime-facing reply work
+  used before AJ closeout when the inline boundary had not yet been accepted for
+  runtime-facing reply work
 - `grounding-blocked`
   required coordinator grounding is unavailable
 - `failed`

@@ -75,6 +75,19 @@ struct OrbitServerRoomProjectionTests {
     #expect(workspace.activeThread?.messages.last?.kind == .systemEvent)
   }
 
+  @Test
+  func projectionRestoresLatestFailedTurnTargetAndModeFromFailurePayload() {
+    let snapshot = sampleLatestDirectFailureSnapshot()
+
+    let workspace = OrbitServerRoomProjection.workspace(from: snapshot)
+    let messages = workspace.activeThread?.messages ?? []
+    let latestUserMessage = messages.last(where: { $0.kind == .user })
+
+    #expect(workspace.activeThread?.interactionMode == .directMessage)
+    #expect(latestUserMessage?.addressedParticipantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(workspace.activationFailureRecords.last?.triggerSource == .directAddress)
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let workspaceID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
     let channelID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
@@ -425,6 +438,87 @@ struct OrbitServerRoomProjectionTests {
       post: snapshot.room.post,
       thread: snapshot.room.thread,
       messages: snapshot.room.messages + [blockedSystemMessage],
+      postParticipants: snapshot.room.postParticipants,
+      postEvents: snapshot.room.postEvents + [failurePostEvent],
+      personaActivations: snapshot.room.personaActivations,
+      agentRuns: snapshot.room.agentRuns
+    )
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: room,
+      replayCursor: snapshot.replayCursor
+    )
+  }
+
+  private func sampleLatestDirectFailureSnapshot() -> OrbitPhase1RealtimeSnapshot {
+    let snapshot = sampleSnapshot()
+    let t1 = Date(timeIntervalSince1970: 1_742_342_520)
+    let postID = snapshot.room.post.id
+    let threadID = snapshot.room.thread.id
+    let failedUserMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "30303030-3030-3030-3030-303030303030")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .user,
+      authorID: "aj",
+      body: "ProdDoc, pressure-test the checkpoint.",
+      messageFormat: .plainText,
+      state: .persisted,
+      createdAt: t1,
+      updatedAt: t1
+    )
+    let blockedSystemMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "31313131-3131-3131-3131-313131313131")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: failedUserMessage.id,
+      body: "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint.",
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: t1.addingTimeInterval(1),
+      updatedAt: t1.addingTimeInterval(1)
+    )
+    let failurePostEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "32323232-3232-3232-3232-323232323232")!,
+      postID: postID,
+      threadID: threadID,
+      eventType: OrbitPhase1RealtimeEventCategory.activationFailed.rawValue,
+      payloadJSON: try! OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1ActivationEventPayload(
+          activationID: nil,
+          initiatedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: failedUserMessage.id,
+          failure: OrbitPhase1ActivationFailurePayload(
+            addressedTargetID: OrbitParticipantID.prodDoc.rawValue,
+            participantID: OrbitParticipantID.prodDoc.rawValue,
+            workspacePersonaID: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!.uuidString,
+            personaTemplateID: "venture-product-steward",
+            directiveID: nil,
+            triggerSource: OrbitActivationTriggerSource.directAddress.rawValue,
+            systemEventMessageID: blockedSystemMessage.id,
+            requiredSkillIDs: ["codex-cli"],
+            authorizedSkillIDs: ["codex-cli"],
+            failureReason: OrbitActivationFailureReason.missingDirective.rawValue,
+            systemEventBody: blockedSystemMessage.body
+          ),
+          reason: OrbitActivationFailureReason.missingDirective.rawValue
+        )
+      ),
+      createdAt: t1.addingTimeInterval(1)
+    )
+    let room = OrbitPhase1RoomSnapshot(
+      workspace: snapshot.room.workspace,
+      channel: snapshot.room.channel,
+      workspacePersonas: snapshot.room.workspacePersonas,
+      teams: snapshot.room.teams,
+      squads: snapshot.room.squads,
+      workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+      post: snapshot.room.post,
+      thread: snapshot.room.thread,
+      messages: snapshot.room.messages + [failedUserMessage, blockedSystemMessage],
       postParticipants: snapshot.room.postParticipants,
       postEvents: snapshot.room.postEvents + [failurePostEvent],
       personaActivations: snapshot.room.personaActivations,

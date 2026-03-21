@@ -543,6 +543,38 @@ struct OrbitWorkspaceTests {
   }
 
   @Test
+  func foundingGroupRoleRenderingUsesPersistedMembershipSemantics() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.workspacePersonaMemberships = workspace.workspacePersonaMemberships.map { membership in
+      guard membership.workspacePersonaID == "workspace-persona-orbit-proddoc",
+        membership.teamID == "team-founding-group"
+      else {
+        return membership
+      }
+
+      return OrbitWorkspacePersonaMembership(
+        id: membership.id,
+        workspacePersonaID: membership.workspacePersonaID,
+        teamID: membership.teamID,
+        squadID: membership.squadID,
+        roleInGroup: "trusted-partner",
+        createdAt: membership.createdAt
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Founding group, prove visible roles come from membership data.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
+
+    #expect(systemEvent.body.contains("ProdDoc | role=contributor | state=pending"))
+    #expect(systemEvent.body.contains("ProdDoc | role=reviewer | state=pending") == false)
+  }
+
+  @Test
   func duplicateSquadMembershipRowsResolveAndActivateOnce() throws {
     var workspace = OrbitWorkspace.defaultWorkspace
     workspace.workspacePersonaMemberships.append(

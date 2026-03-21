@@ -1,9 +1,9 @@
 # M4 Decision Register
 
-Status: Ready For Planning Closeout
+Status: Closed for M4 Closeout
 Milestone: `M4`
 Owner: `orbit-meeting-coordinator`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Purpose
 
@@ -58,21 +58,21 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   `team` means a durable workspace-defined coordination group with a stable
   remit and explicit membership over workspace persona instances
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   `squad` means a focused initiative-bound coordination group with explicit
   workspace persona membership and a narrower, more temporary objective than a
   team
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   both group types expand only through the persisted workspace model from
   `RFC-0003`, specifically `team`, `squad`, `workspace_persona`, and
   `workspace_persona_membership`; those records are the source of truth rather
   than the `RFC-0002` runtime collaboration store or a separate
   coordinator-local group surface, and runtime participation under `RFC-0004`
   is derived from them rather than mutating them
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   the existing `Founding Group` remains the seeded first team example in the
   current Orbit surface
 
@@ -120,21 +120,21 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   the first slice supports explicit direct collaborator targets plus explicit
   team and squad targets resolved from persisted workspace-model group records
   defined by `RFC-0003`
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   the current seeded team target is `Founding Group`, which stays visible in
   the existing composer and expands only through its explicit persisted
   membership record; the initial seeded membership contains AI workspace
   personas only, not the human operator, and later visible collaborators do not
   join by roster drift
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   membership inspection begins from the visible workspace roster and named
   group-target surface, while expansion outcomes and reasons stay in the same
   conversation path through routing summaries and activation trace surfaces
-- Proposed `M4-P1` closure pending AJ review:
+- AJ-closed `M4-P1` resolution:
   freeform natural-language group parsing, ad hoc roster builders, hidden
   coordinator-only roster surfaces, and richer meeting controls remain deferred
 
@@ -183,20 +183,20 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P3` closure pending AJ review:
+- AJ-closed `M4-P3` resolution:
   successful group-targeted interaction remains in the origin post thread for
   the first `M4` slice and does not create a linked meeting post or leave the
   current discussion surface
-- Proposed `M4-P3` closure pending AJ review:
+- AJ-closed `M4-P3` resolution:
   the coordinator may use `lightweightMeeting` as the response-form label for a
   group-targeted inline exchange, but in this slice that means thread-scoped
   coordination metadata only rather than a separate meeting root, continuity
   package, or dedicated participant surface
-- Proposed `M4-P3` closure pending AJ review:
+- AJ-closed `M4-P3` resolution:
   one visible inline routing or expansion summary should appear before or with
   participant replies, and each participant reply remains an attributed
   workspace persona message in the same thread
-- Proposed `M4-P3` closure pending AJ review:
+- AJ-closed `M4-P3` resolution:
   promoted meeting posts, meeting continuity artifacts, post links, and durable
   meeting summaries remain explicitly deferred to `M5`
 
@@ -246,26 +246,26 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   the first-slice visible role vocabulary is `contributor` plus `reviewer`
   only; deferred RFC roles such as `observer`, `summarizer`, and `facilitator`
   remain out of scope until Orbit can surface them without importing meeting
   governance into the inline path
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   `reviewer` names review-oriented participation intent rather than guaranteed
   reply order; sequencing remains independent unless a later packet closes a
   stricter ordering policy
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   first-slice participant-level visible states are `pending`, `replied`, and
   `failed`
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   first-slice exchange-level visible states are `active`, `completed`,
   `partial`, and `failed`
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   Packet 2 routing outcomes such as `blocked` and `empty` remain pre-exchange
   expansion results rather than becoming completion states in the group reply
   model
-- Proposed `M4-P4` closure pending AJ review:
+- AJ-closed `M4-P4` resolution:
   a partial exchange stays visibly `partial` whenever at least one
   reply-expected participant succeeds and at least one reply-expected
   participant fails
@@ -315,28 +315,28 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   target expansion emits one visible `resolved target` summary, one explicit
   `status` of `resolved`, `blocked`, or `empty`, one deterministic `included
   participants` list, and a trust-relevant `excluded participants` list when
   persisted members were materially skipped or unresolved
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   an expansion that includes some members and excludes or cannot resolve others
   still remains `resolved`; exclusions explain degraded membership resolution
   rather than introducing a second `partial` routing state
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   the first-slice deterministic ordering key is `workspace_persona.id` for both
   included and excluded participant lists until a later packet explicitly names
   a separate presentation order
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   every participant-level reason uses the same structured fields:
   `reasonCategory`, `sourceTargetKind`, `sourceTargetReferenceID`, and a short
   operator-visible explanation derived from those fields
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   first-slice inclusion categories are `direct_target`, `team_membership`, and
   `squad_membership`; first-slice exclusion categories are
   `persona_unavailable` and `membership_unresolved`
-- Proposed `M4-P2` closure pending AJ review:
+- AJ-closed `M4-P2` resolution:
   `missing_or_ambiguous_target` and `empty_group` are expansion-status outcomes
   with visible routing-failure notes, not synthetic participant exclusions
 
@@ -384,21 +384,21 @@ Resolution criteria:
 
 Resolution:
 
-- Proposed `M4-P5` closure pending AJ review:
+- AJ-closed `M4-P5` resolution:
   runtime-facing `M4` work requires one packet-complete dossier set, one
   target-expansion example set, one inline interaction example set, one
   role-and-state evidence set, and one named review artifact set
-- Proposed `M4-P5` closure pending AJ review:
+- AJ-closed `M4-P5` resolution:
   the named review passes before runtime handoff are scope and owner review,
   product and interaction review, validation review, and AJ closeout review
-- Proposed `M4-P5` closure pending AJ review:
+- AJ-closed `M4-P5` resolution:
   the evidence package must include at least one explicit exclusion case, one
   blocked-or-empty case, one completed inline exchange, one partial-failure
   inline exchange, and one fully failed inline exchange
-- Proposed `M4-P5` closure pending AJ review:
+- AJ-closed `M4-P5` resolution:
   implementer explanation, debugger-only proof, or one happy-path demo is not
   sufficient evidence for runtime trust claims
-- Proposed `M4-P5` closure pending AJ review:
+- AJ-closed `M4-P5` resolution:
   if any packet claim lacks named evidence, the milestone remains
   `needs-review` or `blocked` rather than `ready enough`
 
