@@ -103,6 +103,7 @@ if len(matches) > 1:
 lane = matches[0]
 lane_id = lane.get("laneId")
 status = lane.get("status")
+authorization_mode = lane.get("authorizationMode")
 if status == "protected":
     print("MATERIALIZE_WORKTREE_LANE:FAIL")
     print(f"branch {branch!r} is protected and must not be materialized as an execution lane")
@@ -111,6 +112,19 @@ if status == "protected":
 source_branch = lane.get("sourceBranch")
 start_point = lane.get("startPoint")
 lane_note_path = lane.get("laneNotePath")
+
+if authorization_mode == "worktree-auto-commit-approved":
+    preflight_cmd = ["bash", "Scripts/check-worktree-lane.sh"]
+    preflight_state = "standing-authority"
+elif authorization_mode == "per-commit-approval":
+    preflight_cmd = ["bash", "Scripts/check-worktree-lane.sh", "--mode", "contract"]
+    preflight_state = "contract-only"
+else:
+    print("MATERIALIZE_WORKTREE_LANE:FAIL")
+    print(
+        f"lane {lane_id!r} uses unsupported authorizationMode {authorization_mode!r}"
+    )
+    raise SystemExit(1)
 
 local_branch_ref = f"refs/heads/{branch}"
 remote_branch_ref = f"refs/remotes/origin/{branch}"
@@ -152,6 +166,7 @@ if dry_run:
     print(f"branch={branch}")
     print(f"laneId={lane_id}")
     print(f"status={status}")
+    print(f"authorizationMode={authorization_mode}")
     print(f"targetPath={worktree_path}")
     print(f"creationAction={creation_action}")
     print(f"creationSource={creation_source}")
@@ -161,6 +176,8 @@ if dry_run:
         print(
             f"bootstrapCommand={' '.join(shlex.quote(part) for part in bootstrap_cmd)}"
         )
+    print(f"preflightState={preflight_state}")
+    print(f"preflightCommand={' '.join(shlex.quote(part) for part in preflight_cmd)}")
     raise SystemExit(0)
 
 subprocess.run(create_cmd, check=True)
@@ -168,17 +185,19 @@ subprocess.run(create_cmd, check=True)
 if bootstrap_cmd is not None:
     subprocess.run(bootstrap_cmd, check=True)
 
-subprocess.run(["bash", "Scripts/check-worktree-lane.sh"], check=True, cwd=worktree_path)
+subprocess.run(preflight_cmd, check=True, cwd=worktree_path)
 
 print("MATERIALIZE_WORKTREE_LANE:PASS")
 print("mode=execute")
 print(f"branch={branch}")
 print(f"laneId={lane_id}")
 print(f"status={status}")
+print(f"authorizationMode={authorization_mode}")
 print(f"targetPath={worktree_path}")
 print(f"creationAction={creation_action}")
 print(f"creationSource={creation_source}")
 if bootstrap_target is not None:
     print(f"bootstrapTarget={bootstrap_target}")
-print("authorityPreflight=passed")
+print(f"preflightState={preflight_state}")
+print(f"preflightCommand={' '.join(shlex.quote(part) for part in preflight_cmd)}")
 PY
