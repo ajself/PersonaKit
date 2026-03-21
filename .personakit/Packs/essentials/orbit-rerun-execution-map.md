@@ -48,28 +48,33 @@ stop and repair the routing before implementation begins.
 Only hand Orbit from startup into live execution when all are true:
 
 1. the exact lane branch is manifest-approved
-2. the worktree exists
-3. `Scripts/bootstrap-worktree-lane.sh` passed
-4. `Scripts/check-worktree-lane.sh` passed
-5. baseline validation passed
-6. participant ownership is explicit
-7. attempt-specific evidence paths are explicit
+2. the startup contract, participant expectations, and attempt-specific
+   evidence paths are explicit
+3. if the worktree is not materialized yet, live execution owns that kickoff
+   step instead of treating startup as failed
+4. once the worktree exists, `Scripts/bootstrap-worktree-lane.sh` passed
+5. once the worktree exists, `Scripts/check-worktree-lane.sh` passed
+6. once the worktree exists, baseline validation passed
+7. participant ownership is explicit
 
 ## Execution Rules
 
 Once `samwise-orbit-rerun-execution` begins:
 
 1. Samwise remains coordinator, gatekeeper, and synthesis owner.
-2. Samwise must activate the implementation session before any substantive code
+2. If the worktree is not materialized yet, Samwise must materialize and
+   preflight it from the approved lane contract before any implementation
+   session begins.
+3. Samwise must activate the implementation session before any substantive code
    work is treated as valid rerun execution.
-3. Samwise must not do substantive implementation solo unless AJ explicitly
+4. Samwise must not do substantive implementation solo unless AJ explicitly
    approves solo fallback for the current checkpoint.
-4. Planned roles do not count as active participants.
-5. A valid rerun must include:
+5. Planned roles do not count as active participants.
+6. A valid rerun must include:
    - at least one persona-backed implementation session
    - at least two distinct non-implementation review sessions
    - participant evidence for every active role
-6. Product acceptance, interaction-quality review, validation closeout, and
+7. Product acceptance, interaction-quality review, validation closeout, and
    retrospective closeout are required evidence, not optional polish.
 
 ## External Worktree Approval Note

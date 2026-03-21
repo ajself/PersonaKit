@@ -201,7 +201,7 @@ The next attempt should create:
 10. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-scorecard.md`
 11. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-decision.md`
 
-For the next fresh worktree, startup should begin from:
+For the next fresh lane kickoff, startup should begin from:
 
 - `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 

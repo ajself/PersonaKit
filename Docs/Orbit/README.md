@@ -40,7 +40,7 @@ now, read:
 ## Active Execution Docs
 
 - [Execution/Orbit-Build-Rerun-Checklist.md](./Execution/Orbit-Build-Rerun-Checklist.md)
-  The startup and closeout playbook for a fresh `main`-based Orbit rerun.
+  The startup and closeout playbook for a fresh `main`-based Orbit lane rerun.
 - [Execution/Orbit-Product-Acceptance-Checklist.md](./Execution/Orbit-Product-Acceptance-Checklist.md)
   The required first-checkpoint product bar before Orbit can be called
   `review-ready` or `MVP candidate`.
@@ -51,6 +51,8 @@ now, read:
 - [Execution/2026-03-10-orbit-1-rerun-prep.md](./Execution/2026-03-10-orbit-1-rerun-prep.md)
   The active staged rerun note for the next manifest-approved fresh-main Orbit
   attempt.
+- [Execution/Orbit-Attempt-1-Lane.md](./Execution/Orbit-Attempt-1-Lane.md)
+  The generated lane contract for the current `codex/orbit-1` execution lane.
 - [Execution/Orbit-Retrospective-Policy.md](./Execution/Orbit-Retrospective-Policy.md)
   The required Orbit retrospective closeout policy, including Starfish cadence
   and synthesis rules.
@@ -67,12 +69,14 @@ now, read:
 PersonaKit execution session for the rerun:
 
 - `samwise-orbit-rerun-startup`
-  The Samwise startup session for staging the rerun, validating lane readiness,
-  and freezing the execution handoff before the live lane begins.
+  The Samwise startup session for staging the rerun, validating the lane
+  contract from the repo root, and freezing the execution handoff before the
+  live lane begins.
 - `samwise-orbit-rerun-execution`
-  The Samwise execution session for routing Orbit implementation, product
-  review, interaction review, validation review, and retrospective closeout
-  through distinct specialist sessions once the lane is live.
+  The Samwise execution session for materializing the lane worktree if needed,
+  then routing Orbit implementation, product review, interaction review,
+  validation review, and retrospective closeout through distinct specialist
+  sessions once the lane is live.
 
 ## Architecture And RFCs
 

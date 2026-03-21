@@ -6,14 +6,15 @@ Last Reviewed: 2026-03-10
 
 ## Purpose
 
-Provide the machine-readable approval source for named worktree lanes that AJ
-has already approved.
+Provide the machine-readable approval source for named lanes that AJ has
+already approved.
 
 This exists for the case where:
 
-1. AJ creates a branch/worktree manually in the Codex UI.
-2. Samwise later resumes inside that worktree without AJ present.
-3. The repo needs a deterministic way to answer whether standing authority
+1. AJ stages or approves a lane before a local execution worktree exists.
+2. Samwise later verifies the lane contract from the repo root.
+3. Live execution materializes a dedicated worktree only when kickoff begins.
+4. The repo needs a deterministic way to answer whether standing authority
    applies in that exact lane.
 
 ## Canonical Files
@@ -25,30 +26,41 @@ This exists for the case where:
 
 ## Rules
 
-1. The manifest does not create worktrees or branches.
-2. The manifest does not authorize repository `main`.
-3. Approval applies only to the exact named non-`main` lane in the manifest.
-4. If a branch is missing from the manifest, fall back to per-commit AJ
+1. The manifest defines lane identity; it does not make a local worktree the
+   source of truth.
+2. The manifest does not create worktrees or branches by itself.
+3. The manifest does not authorize repository `main`.
+4. Approval applies only to the exact named non-`main` lane in the manifest.
+5. If a branch is missing from the manifest, fall back to per-commit AJ
    approval.
-5. Promotion, destructive git actions, and scope changes outside the approved
+6. An executable lane may optionally pin `startPoint` so startup and execution
+   materialize the same base even if `main` moves later.
+7. Promotion, destructive git actions, and scope changes outside the approved
    lane still escalate to AJ.
 
 ## Standard Use
 
-1. AJ creates the branch/worktree in the Codex UI.
-2. Samwise runs `Scripts/bootstrap-worktree-lane.sh` inside that worktree.
-3. Samwise runs `Scripts/check-worktree-lane.sh` before relying on standing
-   commit authority.
-4. If either script fails, stop and ask AJ.
+1. AJ records or approves the lane in the manifest and any attempt-specific
+   prep artifact.
+2. Samwise verifies the lane contract from the repo root:
+   - `Scripts/check-worktree-lane.sh --mode contract --branch <branch>`
+3. When live execution is approved, materialize the lane into a dedicated
+   worktree:
+   - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
+4. Inside the materialized worktree, run `Scripts/check-worktree-lane.sh`
+   before relying on standing commit authority.
+5. If any step fails, stop and ask AJ.
 
 ## AJ In Codex
 
 Use this flow when AJ is still the one clicking the worktree UI:
 
-1. Create the approved branch/worktree in Codex.
-2. Open the new worktree thread.
-3. Run `Scripts/bootstrap-worktree-lane.sh`.
-4. Run `Scripts/check-worktree-lane.sh`.
+1. Confirm the approved lane from the repo root:
+   - `Scripts/check-worktree-lane.sh --mode contract --branch <branch>`
+2. Materialize the approved lane into the new worktree:
+   - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
+3. Open the new worktree thread.
+4. Re-run `Scripts/check-worktree-lane.sh` if needed.
 5. Start work only after the standing-authority check passes.
 
 ## Current Named Lanes
@@ -83,14 +95,17 @@ The original named Orbit lanes remain valid historical branches, but new Orbit
 reruns should follow the integer pattern.
 
 For the current next attempt, use `codex/orbit-1`.
-Orbit rerun startup should begin only after that exact lane is present in the
-manifest and the worktree preflight passes.
+Orbit rerun startup may verify that lane contract from the repo root before a
+worktree exists; live execution begins only after the lane is materialized and
+the worktree preflight passes.
 
 ## Notes
 
-- Lane notes are generated from the manifest so the active worktree has a local,
-  readable scope brief.
+- Lane notes are generated from the manifest so a materialized execution
+  worktree has a local, readable scope brief.
 - The generated note is deterministic, includes a manifest digest, and can be
   recreated from the manifest.
-- `Scripts/check-worktree-lane.sh` treats a missing or stale lane note as a
-  failing preflight for executable lanes.
+- `Scripts/check-worktree-lane.sh --mode contract` allows repo-root startup to
+  verify the lane without requiring a materialized worktree.
+- `Scripts/check-worktree-lane.sh` in default authority mode still treats a
+  missing or stale lane note as a failing preflight for executable lanes.

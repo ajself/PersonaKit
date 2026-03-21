@@ -51,7 +51,8 @@ flowchart TD
 ## What Happens In A Delivery Loop
 
 1. Samwise assigns one bounded work item.
-2. Worktree Squad Lead confirms branch/worktree scope and commit mode.
+2. Worktree Squad Lead confirms the approved lane contract, the materialized
+   worktree scope, and the commit mode.
 3. Worktree Squad Lead executes the work item.
 4. Verification evidence is recorded.
 5. Staff-level review findings are recorded.
@@ -96,12 +97,13 @@ flowchart LR
 
 1. Primary repository `main` is protected and never changed without explicit AJ
    permission.
-2. Isolated worktrees are valid execution scopes.
-3. Commit mode must always be explicit:
+2. The manifest-approved branch contract is the durable lane identity.
+3. Isolated worktrees are valid execution scopes for that lane.
+4. Commit mode must always be explicit:
    - `per-commit-approval`
    - `worktree-auto-commit-approved`
-4. One bounded work item per loop unless AJ expands scope.
-5. Blockers unresolved by the next checkpoint must escalate to AJ.
+5. One bounded work item per loop unless AJ expands scope.
+6. Blockers unresolved by the next checkpoint must escalate to AJ.
 
 ## Named Multi-Worktree Mode
 
@@ -131,9 +133,11 @@ Use the repo-local approval tools when AJ has already approved named lanes:
    - [worktree-lane-approvals.md](/Users/ajself/Code/PersonaKit/Docs/PersonaKit/Development/worktree-lane-approvals.md)
 2. Lane preflight:
    - `Scripts/check-worktree-lane.sh`
-3. Lane bootstrap:
+3. Lane materialization:
+   - `Scripts/materialize-worktree-lane.sh`
+4. Lane bootstrap:
    - `Scripts/bootstrap-worktree-lane.sh`
-4. Manifest validation:
+5. Manifest validation:
    - `Scripts/check-worktree-lane-approvals.sh`
 
 ## Sessions To Use

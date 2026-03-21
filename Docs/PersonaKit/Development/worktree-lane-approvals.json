@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "approvalSource": "AJ explicit branch/worktree approval recorded in repository docs",
+  "approvalSource": "AJ explicit lane approval recorded in repository docs",
   "lanes": [
     {
       "laneId": "primary-main",
@@ -53,6 +53,7 @@
       "workspaceScope": "Orbit",
       "milestone": "Orbit attempt 1",
       "scopeBoundary": "Phase 1, Phase 2, and minimal Phase 3 only.",
+      "startPoint": "126dfde55b4f80ccb4872d58181203ff9f8c0f68",
       "sourceBranch": "main",
       "promotionTarget": "main",
       "laneNotePath": "Docs/Orbit/Execution/Orbit-Attempt-1-Lane.md",

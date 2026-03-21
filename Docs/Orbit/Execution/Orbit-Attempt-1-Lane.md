@@ -1,10 +1,11 @@
-# Orbit MVP Lane
+# Orbit attempt 1 Lane
 
 Status: Active
 Owner: Samwise
-Branch: `codex/orbit-foundation`
+Branch: `codex/orbit-1`
 Authorization Mode: `worktree-auto-commit-approved`
 Workspace Scope: Orbit
+Start Point: `126dfde55b4f80ccb4872d58181203ff9f8c0f68`
 Source Branch: `main`
 Promotion Target: `main`
 Manifest Digest: `d88f722d4543`
@@ -21,8 +22,8 @@ Phase 1, Phase 2, and minimal Phase 3 only.
 ## Plan References
 
 - `Docs/Orbit/Planning/Orbit-Execution-Plan.md`
-- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Runtime-Model.md`
-- `Docs/Orbit/Planning/Orbit-macOS-Command-Center.md`
+- `Docs/Orbit/Planning/Orbit-First-Checkpoint-Implementation-Breakdown.md`
+- `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`
 
 ## Stop And Ask AJ When
 

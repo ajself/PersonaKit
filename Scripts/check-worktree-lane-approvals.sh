@@ -63,6 +63,7 @@ for idx, lane in enumerate(lanes, start=1):
     workspace_scope = lane.get("workspaceScope")
     milestone = lane.get("milestone")
     scope_boundary = lane.get("scopeBoundary")
+    start_point = lane.get("startPoint")
     source_branch = lane.get("sourceBranch")
     promotion_target = lane.get("promotionTarget")
     lane_note_path = lane.get("laneNotePath")
@@ -122,6 +123,8 @@ for idx, lane in enumerate(lanes, start=1):
             errors.append(f"{prefix} branch 'main' must use per-commit-approval")
         if lane_note_path is not None:
             errors.append(f"{prefix} branch 'main' must not define laneNotePath")
+        if start_point is not None:
+            errors.append(f"{prefix} branch 'main' must not define startPoint")
 
     if status in {"approved", "exploratory"}:
         if mode != "worktree-auto-commit-approved":
@@ -130,12 +133,19 @@ for idx, lane in enumerate(lanes, start=1):
             )
         if not isinstance(lane_note_path, str) or not lane_note_path:
             errors.append(f"{prefix} must define laneNotePath for executable lanes")
+        if source_branch is None and start_point is None:
+            errors.append(
+                f"{prefix} executable lanes must define sourceBranch or startPoint"
+            )
 
     if status == "protected" and source_branch is not None:
         errors.append(f"{prefix} protected lanes should not define sourceBranch")
 
     if source_branch is not None and not isinstance(source_branch, str):
         errors.append(f"{prefix} sourceBranch must be null or string")
+
+    if start_point is not None and (not isinstance(start_point, str) or not start_point):
+        errors.append(f"{prefix} startPoint must be null or non-empty string")
 
     if promotion_target is not None and not isinstance(promotion_target, str):
         errors.append(f"{prefix} promotionTarget must be null or string")

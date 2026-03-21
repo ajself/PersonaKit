@@ -84,22 +84,31 @@ Data flow is:
 5. Resolver assembles the resolved session from Persona + Directive + Kits.
 6. Export/Graph rendering emits deterministic output.
 
-## Worktree-first execution model
+## Lane-first execution model
 
-Run development validation from a dedicated git worktree.
+Treat the approved lane contract as the durable identity of the work, then
+materialize a dedicated worktree only when live execution begins.
 
-1. Keep one active lane or task per worktree.
-2. Run all commands from that worktree root.
-3. For parallel runs, use a unique agent/lane temp root per worktree:
+1. The manifest-approved branch name is the lane identity.
+2. A worktree is the local execution surface for that lane, not the lane
+   itself.
+3. Startup and contract-freeze work may happen read-only from the repo root.
+4. Before live execution begins, verify the lane contract from the repo root:
+   - `Scripts/check-worktree-lane.sh --mode contract --branch <branch>`
+5. When kickoff is approved, materialize the execution worktree from the lane
+   contract:
+   - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
+6. Keep one active lane or task per worktree.
+7. Run execution commands from that worktree root once the lane is materialized.
+8. For parallel runs, use a unique agent/lane temp root per worktree:
    - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-<agent>`
-4. If AJ has approved a named non-`main` lane, bootstrap it from the repo root:
-   - `Scripts/bootstrap-worktree-lane.sh`
-5. Before relying on standing worktree authority, confirm the lane approval:
+9. Before relying on standing worktree authority inside the materialized lane,
+   confirm the lane preflight:
    - `Scripts/check-worktree-lane.sh`
-6. Validate the lane manifest itself after approval-record edits:
+10. Validate the lane manifest itself after approval-record edits:
    - `Scripts/check-worktree-lane-approvals.sh`
-7. At milestone closeout, use the retrospective contract rather than an
-   informal wrap-up:
+11. At milestone closeout, use the retrospective contract rather than an
+    informal wrap-up:
    - default to the hybrid retrospective flow when persona fidelity, process
      quality, or product-bearing review is part of the checkpoint
 

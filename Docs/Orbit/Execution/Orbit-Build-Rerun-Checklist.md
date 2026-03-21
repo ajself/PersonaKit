@@ -7,7 +7,7 @@ Last Updated: 2026-03-10
 ## Purpose
 
 Provide the startup and closeout checklist for a fresh `main`-based Orbit
-worktree rerun.
+lane rerun.
 
 Use this checklist before coding begins.
 
@@ -64,16 +64,28 @@ Confirm that local `main` already contains:
 
 Do not create the fresh worktree until those prerequisites are present.
 
-### 2. Create and bootstrap the approved lane
+### 2. Freeze the approved lane contract from the repo root
 
-1. create the approved Orbit worktree from `main`
-   - use the manifest-approved integer branch name, for example `codex/orbit-1`
-2. enter the new worktree
-3. run:
-   - `Scripts/bootstrap-worktree-lane.sh`
+1. confirm the exact integer lane is present in the lane approval manifest
+2. if startup and execution are split in time, record the pinned start point
+   for the lane in the manifest and the active rerun-prep note
+3. run the contract-only lane check from the repo root:
+   - `Scripts/check-worktree-lane.sh --mode contract --branch codex/orbit-1`
+4. do not treat a missing worktree as a startup failure when the lane contract
+   itself is green
+
+### 3. Materialize and bootstrap the approved lane at execution kickoff
+
+1. when AJ approves live execution, materialize the approved Orbit worktree
+   from the lane contract
+   - for example:
+     `Scripts/materialize-worktree-lane.sh --branch codex/orbit-1 --path /absolute/path/to/PersonaKit-orbit-1`
+2. enter the new worktree if the materialization command did not already switch
+   context for you
+3. if needed, rerun:
    - `Scripts/check-worktree-lane.sh`
 
-### 3. Run baseline validation before coding
+### 4. Run baseline validation before coding
 
 Run:
 
@@ -82,7 +94,7 @@ Run:
 
 If baseline validation is not green, do not start the rerun.
 
-### 4. Confirm the required active participants
+### 5. Confirm the required active participants
 
 Record the expected active roles for the rerun:
 
@@ -105,7 +117,7 @@ Minimum valid rerun structure:
 
 Planned roles do not count as active participation.
 
-### 5. Freeze evidence expectations before implementation
+### 6. Freeze evidence expectations before implementation
 
 Before the first code slice begins, record what artifacts the rerun must
 produce:
@@ -140,7 +152,7 @@ Required `orbit-1` output files:
 10. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-scorecard.md`
 11. `Docs/Orbit/Execution/retrospectives/2026-03-10-orbit-1-comparison-decision.md`
 
-### 6. Carry forward the last attempt's lessons explicitly
+### 7. Carry forward the last attempt's lessons explicitly
 
 Before the first code slice begins, load:
 
@@ -209,9 +221,9 @@ milestone closeout artifacts exist:
    - process outcome
    - persona-fidelity outcome
 
-## Ready To Start From `main`
+## Ready To Start A Fresh Lane
 
-Orbit is ready for a fresh `main`-based worktree only when all are true:
+Orbit is ready for a fresh `main`-based lane kickoff only when all are true:
 
 1. `main` contains the lane tooling and retrospective contract changes from
    this branch
@@ -223,3 +235,6 @@ Orbit is ready for a fresh `main`-based worktree only when all are true:
 6. a fresh reader can determine success criteria without consulting thread
    history
 7. the exact integer attempt lane is present in the lane approval manifest
+8. if startup and execution are separated in time, the lane contract can point
+   to the intended start point explicitly instead of relying on whatever `main`
+   becomes later

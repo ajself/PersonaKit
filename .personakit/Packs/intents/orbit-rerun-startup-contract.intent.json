@@ -2,7 +2,7 @@
   "id": "orbit-rerun-startup-contract",
   "version": "1.0",
   "name": "Orbit Rerun Startup Contract",
-  "description": "Stage the Orbit rerun from a fresh main-based lane with explicit learning carry-forward, product gates, and a deterministic handoff into the live execution surface.",
+  "description": "Stage the Orbit rerun from a fresh main-based lane with explicit learning carry-forward, product gates, and a deterministic handoff into the live execution surface, while allowing startup to stay read-only until execution kickoff.",
   "parameters": [
     {
       "name": "objective",
@@ -76,7 +76,8 @@
       "Use the Orbit execution checklists, rerun-prep artifact, explicit attempt artifact paths, explicit retrospective path, and declared execution session routing as the source of truth for the rerun.",
       "Carry forward prior-attempt lessons explicitly; do not restart from vibes or thread memory alone.",
       "Use the exact manifest-approved lane branch for the attempt; do not infer branch identity from the latest historical run.",
-      "Treat this intent as a startup-only contract and hand the live lane to the named execution session before substantive implementation begins.",
+      "Treat this intent as a startup-only contract and hand the lane contract to the named execution session before substantive implementation begins.",
+      "Startup may verify the lane contract from the repo root before any worktree exists; live execution must materialize and preflight the worktree before implementation starts.",
       "Record the rerun-prep path plus the attempt-specific product, interaction, validation, participant-evidence, and retrospective paths explicitly before handoff.",
       "Do not call the branch review-ready or MVP candidate before the product acceptance checklist and interaction-quality review both exist.",
       "Make actual participants and participant evidence explicit; planned roles are not the same as active contributors.",

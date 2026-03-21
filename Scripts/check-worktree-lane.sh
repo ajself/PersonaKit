@@ -3,6 +3,7 @@ set -euo pipefail
 
 manifest_path="Docs/PersonaKit/Development/worktree-lane-approvals.json"
 branch_override=""
+check_mode="authority"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -14,8 +15,12 @@ while [[ $# -gt 0 ]]; do
       branch_override="$2"
       shift 2
       ;;
+    --mode)
+      check_mode="$2"
+      shift 2
+      ;;
     *)
-      echo "Usage: $0 [--manifest path] [--branch branch]" >&2
+      echo "Usage: $0 [--manifest path] [--branch branch] [--mode authority|contract]" >&2
       exit 64
       ;;
   esac
@@ -23,6 +28,7 @@ done
 
 export WORKTREE_LANE_MANIFEST="$manifest_path"
 export WORKTREE_LANE_BRANCH="$branch_override"
+export WORKTREE_LANE_MODE="$check_mode"
 
 python3 - <<'PY'
 import hashlib
@@ -38,6 +44,7 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     scope_boundary = lane.get("scopeBoundary")
     milestone = lane.get("milestone")
     workspace_scope = lane.get("workspaceScope")
+    start_point = lane.get("startPoint")
     source_branch = lane.get("sourceBranch")
     promotion_target = lane.get("promotionTarget")
     plan_refs = lane.get("planRefs", [])
@@ -46,6 +53,7 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     status_label = "Exploratory" if status == "exploratory" else "Active"
     plan_lines = "\n".join(f"- `{ref}`" for ref in plan_refs)
     stop_lines = "\n".join(f"- {reason}" for reason in stop_reasons)
+    start_point_line = f"Start Point: `{start_point}`\n" if start_point else ""
 
     return f"""# {milestone} Lane
 
@@ -54,7 +62,7 @@ Owner: Samwise
 Branch: `{branch}`
 Authorization Mode: `{mode}`
 Workspace Scope: {workspace_scope}
-Source Branch: `{source_branch or '-'}`
+{start_point_line}Source Branch: `{source_branch or '-'}`
 Promotion Target: `{promotion_target or '-'}`
 Manifest Digest: `{manifest_digest}`
 
@@ -92,6 +100,12 @@ this lane or back toward `main`.
 
 manifest_path = Path(os.environ["WORKTREE_LANE_MANIFEST"])
 branch_override = os.environ.get("WORKTREE_LANE_BRANCH", "").strip()
+check_mode = os.environ.get("WORKTREE_LANE_MODE", "authority").strip() or "authority"
+
+if check_mode not in {"authority", "contract"}:
+    print("WORKTREE_LANE_CHECK:FAIL")
+    print(f"unsupported mode {check_mode!r}; expected 'authority' or 'contract'")
+    raise SystemExit(1)
 
 if not manifest_path.exists():
     print("WORKTREE_LANE_CHECK:FAIL")
@@ -106,14 +120,22 @@ if not isinstance(lanes, list):
     print("manifest field 'lanes' must be a list")
     raise SystemExit(1)
 
-branch = branch_override
-if not branch:
-    branch = subprocess.run(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+current_branch = subprocess.run(
+    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+    check=True,
+    capture_output=True,
+    text=True,
+).stdout.strip()
+
+branch = branch_override or current_branch
+
+if check_mode == "authority" and branch_override and current_branch != branch:
+    print("WORKTREE_LANE_CHECK:FAIL")
+    print(
+        "authority mode requires the active branch to match the requested lane "
+        f"(current={current_branch!r}, requested={branch!r})"
+    )
+    raise SystemExit(1)
 
 matches = [lane for lane in lanes if isinstance(lane, dict) and lane.get("branch") == branch]
 
@@ -139,6 +161,7 @@ lane_id = lane.get("laneId")
 workspace_scope = lane.get("workspaceScope")
 milestone = lane.get("milestone")
 scope_boundary = lane.get("scopeBoundary")
+start_point = lane.get("startPoint")
 source_branch = lane.get("sourceBranch")
 promotion_target = lane.get("promotionTarget")
 lane_note_path = lane.get("laneNotePath")
@@ -182,6 +205,14 @@ if not isinstance(milestone, str) or not milestone:
 if not isinstance(scope_boundary, str) or not scope_boundary:
     errors.append(f"lane {lane_id!r} must define scopeBoundary")
 
+if start_point is not None and (not isinstance(start_point, str) or not start_point):
+    errors.append(f"lane {lane_id!r} has invalid startPoint {start_point!r}")
+
+if status in {"approved", "exploratory"} and start_point is None and source_branch is None:
+    errors.append(
+        f"lane {lane_id!r} must define sourceBranch or startPoint for materialization"
+    )
+
 note_status = "n/a"
 if isinstance(lane_note_path, str) and lane_note_path:
     note_path = Path(lane_note_path)
@@ -190,15 +221,17 @@ if isinstance(lane_note_path, str) and lane_note_path:
         actual_note = note_path.read_text()
         note_status = "present"
         if actual_note != expected_note:
-            errors.append(
-                f"lane {lane_id!r} note {lane_note_path!r} is stale; rerun bootstrap-worktree-lane.sh"
-            )
             note_status = "stale"
+            if check_mode == "authority":
+                errors.append(
+                    f"lane {lane_id!r} note {lane_note_path!r} is stale; rerun bootstrap-worktree-lane.sh"
+                )
     else:
-        errors.append(
-            f"lane {lane_id!r} note {lane_note_path!r} is missing; run bootstrap-worktree-lane.sh"
-        )
         note_status = "missing"
+        if check_mode == "authority":
+            errors.append(
+                f"lane {lane_id!r} note {lane_note_path!r} is missing; run bootstrap-worktree-lane.sh"
+            )
 
 if errors:
     print("WORKTREE_LANE_CHECK:FAIL")
@@ -207,8 +240,9 @@ if errors:
     raise SystemExit(1)
 
 standing_authority_allowed = mode == "worktree-auto-commit-approved"
-if not standing_authority_allowed:
+if check_mode == "authority" and not standing_authority_allowed:
     print("WORKTREE_LANE_CHECK:FAIL")
+    print(f"mode={check_mode}")
     print(f"branch={branch}")
     print(f"laneId={lane_id}")
     print(f"status={status}")
@@ -219,6 +253,7 @@ if not standing_authority_allowed:
     raise SystemExit(1)
 
 print("WORKTREE_LANE_CHECK:PASS")
+print(f"mode={check_mode}")
 print(f"branch={branch}")
 print(f"laneId={lane_id}")
 print(f"status={status}")
@@ -226,6 +261,7 @@ print(f"authorizationMode={mode}")
 print(f"workspaceScope={workspace_scope}")
 print(f"milestone={milestone}")
 print(f"scopeBoundary={scope_boundary}")
+print(f"startPoint={start_point or '-'}")
 print(f"sourceBranch={source_branch or '-'}")
 print(f"promotionTarget={promotion_target or '-'}")
 print(f"manifestDigest={manifest_digest}")
@@ -233,4 +269,8 @@ print(f"laneNotePath={lane_note_path or '-'}")
 print(f"laneNoteStatus={note_status}")
 print(f"planRefCount={len(plan_refs)}")
 print(f"stopReasonCount={len(stop_reasons)}")
+if check_mode == "contract":
+    print("authorizationState=contract-only")
+else:
+    print("authorizationState=standing-authority-active")
 PY

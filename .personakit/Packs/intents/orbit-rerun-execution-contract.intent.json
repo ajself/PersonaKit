@@ -120,6 +120,7 @@
     "requiresHumanReview": true,
     "notes": [
       "Do not let Samwise perform substantive implementation before the implementation session route is active.",
+      "If the worktree is not materialized yet, materialize and preflight it from the approved lane contract before implementation begins.",
       "Planned roles do not count as actual participants; every claimed role needs participant evidence.",
       "Use explicit attempt-specific artifact paths for product acceptance, interaction review, validation closeout, red-pen evidence, and retrospective closeout.",
       "If the worktree path is outside the primary repository root, warn AJ that environment approval prompts may occur for bootstrap, build, and test commands.",

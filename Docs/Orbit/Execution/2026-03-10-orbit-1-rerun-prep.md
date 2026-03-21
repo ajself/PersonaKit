@@ -1,9 +1,10 @@
 # Orbit Attempt 1 Rerun Prep
 
-Status: Staged, lane approved, kickoff held pending AJ start approval
+Status: Staged, lane approved, repo-root startup allowed, execution kickoff held pending AJ start approval
 Owner: Samwise
 Date: 2026-03-10
 Intended Branch: `codex/orbit-1`
+Pinned Start Point: `126dfde55b4f80ccb4872d58181203ff9f8c0f68`
 Prior Attempt Branch: `codex/orbit-foundation`
 Prior Retrospective: `2026-03-09-orbit-foundation-retrospective.md`
 
@@ -24,19 +25,32 @@ The next fresh-main Orbit attempt is staged as:
 
 This lane is already recorded as the manifest-approved next Orbit rerun lane.
 
-Do not treat this note as permission to start the rerun.
-Kickoff is still held until AJ explicitly approves starting the attempt and the
-worktree preflight passes in the actual `codex/orbit-1` worktree.
+Startup may verify the source-of-truth artifacts and the lane contract from the
+repository root.
+
+Do not treat this note as permission to start live execution.
+Execution kickoff is still held until AJ explicitly approves starting the
+attempt and the lane is materialized, bootstrapped, and preflighted in the
+actual `codex/orbit-1` worktree.
 
 ## Remaining Startup Work Before Kickoff
 
 The rerun is not ready to start until all of these are true:
 
 1. AJ explicitly approves starting the next Orbit attempt.
-2. The approved worktree is created and bootstrapped.
-3. Baseline validation is green in that worktree.
-4. The active participants and expected evidence artifacts are recorded for the
+2. The source-of-truth startup artifacts and lane contract are confirmed from
+   the repo root.
+3. The approved worktree is materialized and bootstrapped at execution kickoff.
+4. Baseline validation is green in that worktree.
+5. The active participants and expected evidence artifacts are recorded for the
    attempt.
+
+## Execution Kickoff Materialization
+
+When AJ approves live execution, materialize the lane with one explicit local
+path, for example:
+
+`Scripts/materialize-worktree-lane.sh --branch codex/orbit-1 --path /absolute/path/to/PersonaKit-orbit-1`
 
 ## First Slice Contract
 

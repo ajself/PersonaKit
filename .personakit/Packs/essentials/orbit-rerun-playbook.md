@@ -39,7 +39,7 @@ Do not reconstruct the rerun from thread memory alone.
 
 ## Required Startup Discipline
 
-Before the first code change in a fresh worktree:
+Before the first code change in a fresh main-based Orbit lane:
 
 1. Confirm `main` already contains the lane-tooling and retrospective-contract
    changes required by the rerun checklist.
@@ -51,15 +51,21 @@ Before the first code change in a fresh worktree:
 4. If AJ is holding approval, stop after staging the token and do not create or
    bootstrap the lane yet.
 5. Ensure the exact integer lane is present in the lane approval manifest.
-6. Create and bootstrap the approved Orbit lane.
-7. Run baseline validation before coding.
-8. Record the required active participants and expected evidence artifacts.
-9. Hand the live lane to `samwise-orbit-rerun-execution` before substantive
+6. Verify the approved lane contract from the repo root.
+7. When live execution is approved, materialize and bootstrap the approved
+   Orbit lane.
+8. Run baseline validation before coding.
+9. Record the required active participants and expected evidence artifacts.
+10. Hand the lane contract, and if already materialized the live lane, to
+   `samwise-orbit-rerun-execution` before substantive
    implementation begins.
-10. Freeze the first slice:
+11. Freeze the first slice:
    - Orbit runtime models
    - deterministic persistence
    - Studio Orbit surface shell
+
+The lane contract is the durable rerun identity.
+The worktree is the execution surface created when live implementation begins.
 
 Use the integer as the attempt number.
 Do not reuse an older Orbit attempt branch name for a fresh rerun.

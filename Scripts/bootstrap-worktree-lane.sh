@@ -50,6 +50,7 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     scope_boundary = lane.get("scopeBoundary")
     milestone = lane.get("milestone")
     workspace_scope = lane.get("workspaceScope")
+    start_point = lane.get("startPoint")
     source_branch = lane.get("sourceBranch")
     promotion_target = lane.get("promotionTarget")
     plan_refs = lane.get("planRefs", [])
@@ -58,6 +59,7 @@ def render_lane_note(lane: dict, branch: str, manifest_digest: str) -> str:
     status_label = "Exploratory" if status == "exploratory" else "Active"
     plan_lines = "\n".join(f"- `{ref}`" for ref in plan_refs)
     stop_lines = "\n".join(f"- {reason}" for reason in stop_reasons)
+    start_point_line = f"Start Point: `{start_point}`\n" if start_point else ""
 
     return f"""# {milestone} Lane
 
@@ -66,7 +68,7 @@ Owner: Samwise
 Branch: `{branch}`
 Authorization Mode: `{mode}`
 Workspace Scope: {workspace_scope}
-Source Branch: `{source_branch or '-'}`
+{start_point_line}Source Branch: `{source_branch or '-'}`
 Promotion Target: `{promotion_target or '-'}`
 Manifest Digest: `{manifest_digest}`
 

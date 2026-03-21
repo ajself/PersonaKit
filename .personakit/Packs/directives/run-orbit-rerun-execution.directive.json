@@ -8,7 +8,7 @@
       "text": "Load the active Orbit execution artifacts plus the declared handoff artifacts for this attempt, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit attempt prep path as the primary planning-derived handoff artifact, and the explicit `retrospectivePath` named by the intent parameters."
     },
     {
-      "text": "Restate the current attempt boundary, explicit evidence paths, exact lane branch, worktree path, and commit authorization mode before any implementation work begins."
+      "text": "Restate the current attempt boundary, explicit evidence paths, exact lane branch, declared worktree path, and commit authorization mode before any implementation work begins. If the worktree is not materialized yet, materialize/bootstrap/preflight it before the first implementation handoff."
     },
     {
       "text": "Declare the active session map for implementation, product review, interaction-quality review, validation review, and retrospective closeout. If any required session route is missing or ambiguous, stop and repair the routing before implementation begins."
@@ -34,7 +34,7 @@
     }
   ],
   "acceptanceCriteria": [
-    "The active Orbit lane is restated with explicit branch, worktree, authorization mode, and artifact paths",
+    "The active Orbit lane is restated with explicit branch, declared worktree path, authorization mode, and artifact paths",
     "Implementation, product review, interaction review, validation review, and retrospective closeout are mapped to explicit session surfaces before coding begins",
     "Samwise does not perform substantive implementation unless AJ explicitly approved solo fallback for the current checkpoint",
     "At least one implementation session and at least two distinct non-implementation review sessions contribute evidence to the run",
