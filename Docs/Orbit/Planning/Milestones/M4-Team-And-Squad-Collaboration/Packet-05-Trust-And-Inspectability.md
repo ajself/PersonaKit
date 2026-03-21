@@ -117,6 +117,12 @@ Runtime evidence currently aligned to these tests:
   covered by `OrbitWorkspaceTests.swift` and `Phase1RuntimeRepositoryTests.swift`,
   with persistence/reload behavior in `OrbitWorkspacePersistenceTests.swift`.
 
+### AJ Review Decisions
+
+- review artifact location: keep the full review artifact trail in the M4 dossier.
+- evidence sufficiency: the completed/partial/failed exchange set in existing tests
+  is sufficient for first-slice trust of M4 runtime-facing behavior.
+
 ## Packet 5 Proposed Closure
 
 ### Minimum Evidence Package
@@ -182,11 +188,6 @@ Runtime evidence currently aligned to these tests:
 
 ### Open Risks And Review Decisions Needed
 
-- AJ still needs to approve whether the review artifact set should live entirely
-  inside the M4 dossier or whether a separate runtime-handoff note is required
-- AJ still needs to approve whether one completed exchange, one partial
-  exchange, and one failed exchange are sufficient first-slice trust evidence
-  before runtime-facing work
 - runtime-facing M4 work must still stop if the evidence bar is weaker than the
   claims being made
 
