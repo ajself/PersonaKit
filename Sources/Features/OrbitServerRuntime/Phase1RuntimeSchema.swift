@@ -4,6 +4,9 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case workspace
   case channel
   case workspacePersona = "workspace_persona"
+  case team
+  case squad
+  case workspacePersonaMembership = "workspace_persona_membership"
   case post
   case thread
   case message
@@ -89,6 +92,52 @@ public enum OrbitPhase1RuntimeSchema {
           status TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL,
           archived_at TIMESTAMPTZ
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .team,
+      sql: """
+        CREATE TABLE IF NOT EXISTS team (
+          id UUID PRIMARY KEY,
+          workspace_id UUID NOT NULL REFERENCES workspace(id),
+          slug TEXT NOT NULL,
+          name TEXT NOT NULL,
+          purpose TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL,
+          UNIQUE(workspace_id, slug)
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .squad,
+      sql: """
+        CREATE TABLE IF NOT EXISTS squad (
+          id UUID PRIMARY KEY,
+          workspace_id UUID NOT NULL REFERENCES workspace(id),
+          team_id UUID REFERENCES team(id),
+          slug TEXT NOT NULL,
+          name TEXT NOT NULL,
+          purpose TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL,
+          UNIQUE(workspace_id, slug)
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .workspacePersonaMembership,
+      sql: """
+        CREATE TABLE IF NOT EXISTS workspace_persona_membership (
+          id UUID PRIMARY KEY,
+          workspace_persona_id UUID NOT NULL REFERENCES workspace_persona(id),
+          team_id UUID REFERENCES team(id),
+          squad_id UUID REFERENCES squad(id),
+          role_in_group TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL,
+          CHECK (
+            (team_id IS NOT NULL AND squad_id IS NULL)
+            OR (team_id IS NULL AND squad_id IS NOT NULL)
+          )
         )
         """
     ),

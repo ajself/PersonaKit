@@ -46,6 +46,53 @@ extension OrbitWorkspace {
         sortOrder: 3
       ),
     ],
+    teams: [
+      OrbitTeam(
+        id: "team-founding-group",
+        workspaceID: "orbit",
+        slug: OrbitAddressTargetID.foundingGroup.rawValue,
+        name: OrbitAddressTargetID.foundingGroup.displayText,
+        purpose: "Seeded first team target for the Orbit command center.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      )
+    ],
+    squads: [
+      OrbitSquad(
+        id: "squad-command-center-feedback",
+        workspaceID: "orbit",
+        teamID: "team-founding-group",
+        slug: "command-center-feedback-squad",
+        name: "Command Center Feedback Squad",
+        purpose: "Focused feedback lane for the current Orbit surface.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_401)
+      )
+    ],
+    workspacePersonaMemberships: [
+      OrbitWorkspacePersonaMembership(
+        id: "membership-samwise-founding-group",
+        workspacePersonaID: "workspace-persona-orbit-samwise",
+        teamID: "team-founding-group",
+        squadID: nil,
+        roleInGroup: "trusted-partner",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_402)
+      ),
+      OrbitWorkspacePersonaMembership(
+        id: "membership-proddoc-founding-group",
+        workspacePersonaID: "workspace-persona-orbit-proddoc",
+        teamID: "team-founding-group",
+        squadID: nil,
+        roleInGroup: "product-steward",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_403)
+      ),
+      OrbitWorkspacePersonaMembership(
+        id: "membership-proddoc-feedback-squad",
+        workspacePersonaID: "workspace-persona-orbit-proddoc",
+        teamID: nil,
+        squadID: "squad-command-center-feedback",
+        roleInGroup: "reviewer",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_404)
+      ),
+    ],
     activeThreadID: "thread-0001",
     threads: [
       OrbitConversationThread(

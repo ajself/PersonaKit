@@ -21,6 +21,18 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
         try await executor.execute(query: upsertWorkspacePersonaQuery(workspacePersona))
       }
 
+      for team in room.teams {
+        try await executor.execute(query: upsertTeamQuery(team))
+      }
+
+      for squad in room.squads {
+        try await executor.execute(query: upsertSquadQuery(squad))
+      }
+
+      for membership in room.workspacePersonaMemberships {
+        try await executor.execute(query: upsertWorkspacePersonaMembershipQuery(membership))
+      }
+
       try await executor.execute(query: insertPostQuery(room.post))
       try await executor.execute(query: insertThreadQuery(room.thread))
 
@@ -218,6 +230,72 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       default_directive_override_id = EXCLUDED.default_directive_override_id,
       status = EXCLUDED.status,
       archived_at = EXCLUDED.archived_at
+    """
+  }
+
+  public func upsertTeamQuery(
+    _ team: OrbitTeamRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO team (
+      id, workspace_id, slug, name, purpose, created_at
+    ) VALUES (
+      \(team.id),
+      \(team.workspaceID),
+      \(team.slug),
+      \(team.name),
+      \(team.purpose),
+      \(team.createdAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      slug = EXCLUDED.slug,
+      name = EXCLUDED.name,
+      purpose = EXCLUDED.purpose
+    """
+  }
+
+  public func upsertSquadQuery(
+    _ squad: OrbitSquadRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO squad (
+      id, workspace_id, team_id, slug, name, purpose, created_at
+    ) VALUES (
+      \(squad.id),
+      \(squad.workspaceID),
+      \(squad.teamID),
+      \(squad.slug),
+      \(squad.name),
+      \(squad.purpose),
+      \(squad.createdAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      team_id = EXCLUDED.team_id,
+      slug = EXCLUDED.slug,
+      name = EXCLUDED.name,
+      purpose = EXCLUDED.purpose
+    """
+  }
+
+  public func upsertWorkspacePersonaMembershipQuery(
+    _ membership: OrbitWorkspacePersonaMembershipRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO workspace_persona_membership (
+      id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
+    ) VALUES (
+      \(membership.id),
+      \(membership.workspacePersonaID),
+      \(membership.teamID),
+      \(membership.squadID),
+      \(membership.roleInGroup),
+      \(membership.createdAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      workspace_persona_id = EXCLUDED.workspace_persona_id,
+      team_id = EXCLUDED.team_id,
+      squad_id = EXCLUDED.squad_id,
+      role_in_group = EXCLUDED.role_in_group
     """
   }
 
@@ -475,6 +553,60 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     FROM workspace_persona
     WHERE workspace_id = \(workspaceID)
     ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectTeamsQuery(
+    workspaceID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      workspace_id,
+      slug,
+      name,
+      purpose,
+      created_at
+    FROM team
+    WHERE workspace_id = \(workspaceID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectSquadsQuery(
+    workspaceID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      workspace_id,
+      team_id,
+      slug,
+      name,
+      purpose,
+      created_at
+    FROM squad
+    WHERE workspace_id = \(workspaceID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectWorkspacePersonaMembershipsQuery(
+    workspaceID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      workspace_persona_membership.id,
+      workspace_persona_membership.workspace_persona_id,
+      workspace_persona_membership.team_id,
+      workspace_persona_membership.squad_id,
+      workspace_persona_membership.role_in_group,
+      workspace_persona_membership.created_at
+    FROM workspace_persona_membership
+    JOIN workspace_persona
+      ON workspace_persona.id = workspace_persona_membership.workspace_persona_id
+    WHERE workspace_persona.workspace_id = \(workspaceID)
+    ORDER BY workspace_persona_membership.created_at ASC, workspace_persona_membership.id ASC
     """
   }
 

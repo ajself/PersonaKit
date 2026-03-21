@@ -29,6 +29,7 @@ enum OrbitServerBackedRoomCoordinatorError: LocalizedError, Equatable {
 
 private struct OrbitServerBackedPreflightConversationTurn {
   let workspace: OrbitWorkspace
+  let targetResolution: OrbitTargetResolution?
   let resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract]
   let userMessage: OrbitMessage
   let systemEventMessage: OrbitMessage?
@@ -202,14 +203,14 @@ struct OrbitServerBackedRoomCoordinator {
               initiatedByParticipantID: authorID,
               triggerMessageID: appendResult.message.id,
               addressedTargetKind: addressedTargetKind(
-                for: addressedParticipantID
+                for: preflight.targetResolution
               ),
               addressedTargetReferenceID: addressedTargetReferenceID(
                 for: participant,
-                addressedParticipantID: addressedParticipantID
+                targetResolution: preflight.targetResolution
               ),
               responseMode: responseMode(
-                for: addressedParticipantID
+                for: preflight.targetResolution
               ),
               body: responseMessage.body,
               contract: contractPayload(
@@ -241,35 +242,28 @@ struct OrbitServerBackedRoomCoordinator {
   }
 
   private func responseMode(
-    for addressedParticipantID: String?
+    for targetResolution: OrbitTargetResolution?
   ) -> OrbitCanonicalResponseMode {
-    switch addressedParticipantID {
-    case nil:
+    guard let targetResolution else {
       return .currentThread
-    case OrbitAddressTargetID.foundingGroup.rawValue:
-      return .lightweightMeeting
-    default:
-      return .directAddress
     }
+
+    return targetResolution.targetKind == .collaborator
+      ? .directAddress
+      : .lightweightMeeting
   }
 
   private func addressedTargetKind(
-    for addressedParticipantID: String?
+    for targetResolution: OrbitTargetResolution?
   ) -> OrbitAddressedTargetKind {
-    addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue
-      ? .team
-      : .collaborator
+    targetResolution?.targetKind ?? .collaborator
   }
 
   private func addressedTargetReferenceID(
     for participant: OrbitParticipant,
-    addressedParticipantID: String?
+    targetResolution: OrbitTargetResolution?
   ) -> String {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return OrbitAddressTargetID.foundingGroup.rawValue
-    }
-
-    return participant.workspacePersonaID ?? participant.id
+    targetResolution?.targetReferenceID ?? participant.workspacePersonaID ?? participant.id
   }
 
   private func preflightConversationTurn(
@@ -280,6 +274,12 @@ struct OrbitServerBackedRoomCoordinator {
   ) throws -> OrbitServerBackedPreflightConversationTurn {
     var stagedWorkspace = projectedWorkspace
     var resolvedContractsByParticipantID = [String: OrbitResolvedActivationContract]()
+    let targetResolution = addressedParticipantID.flatMap { addressedParticipantID in
+      OrbitParticipantResponseBridge.targetResolution(
+        in: projectedWorkspace,
+        addressedParticipantID: addressedParticipantID
+      )
+    }
 
     let createdMessages = try stagedWorkspace.appendConversationTurnIfPersisted(
       body: body,
@@ -300,6 +300,7 @@ struct OrbitServerBackedRoomCoordinator {
 
     return OrbitServerBackedPreflightConversationTurn(
       workspace: stagedWorkspace,
+      targetResolution: targetResolution,
       resolvedContractsByParticipantID: resolvedContractsByParticipantID,
       userMessage: userMessage,
       systemEventMessage: createdMessages.first(where: { $0.kind == .systemEvent }),

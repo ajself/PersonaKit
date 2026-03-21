@@ -18,6 +18,9 @@ struct OrbitCanonicalCommandCenterBootstrapTests {
       workspace.purpose == "Command center for persistent AI collaborators working with AJ."
     )
     #expect(workspace.participants.map(\.id).sorted() == ["aj", "proddoc", "samwise"])
+    #expect(workspace.teams.map(\.slug) == ["founding-group"])
+    #expect(workspace.squads.map(\.slug) == ["command-center-feedback-squad"])
+    #expect(workspace.workspacePersonaMemberships.count == 3)
     #expect(workspace.activeThread?.title == "Orbit MVP Checkpoint")
     #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
     #expect(workspace.activeThread?.messages.count == 2)
@@ -96,6 +99,9 @@ struct OrbitCanonicalCommandCenterBootstrapTests {
       workspace: bootstrap.workspace,
       channel: bootstrap.channel,
       workspacePersonas: bootstrap.workspacePersonas,
+      teams: bootstrap.teams,
+      squads: bootstrap.squads,
+      workspacePersonaMemberships: bootstrap.workspacePersonaMemberships,
       post: bootstrap.post,
       thread: bootstrap.thread,
       messages: bootstrap.seedMessages,

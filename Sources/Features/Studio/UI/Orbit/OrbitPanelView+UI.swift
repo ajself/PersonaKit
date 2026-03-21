@@ -20,19 +20,16 @@ extension OrbitPanelView {
   }
 
   var addressedParticipantIDs: Set<String> {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return Set(
-        sortedParticipants
-          .filter { $0.participantType == .ai }
-          .map(\.id)
-      )
-    }
-
     guard let addressedParticipantID else {
       return []
     }
 
-    return Set([addressedParticipantID])
+    return Set(
+      OrbitParticipantResponseBridge.addressedParticipants(
+        in: orbitWorkspace,
+        addressedParticipantID: addressedParticipantID
+      ).map(\.id)
+    )
   }
 
   var activeThread: OrbitConversationThread? {
@@ -439,11 +436,7 @@ extension OrbitPanelView {
       return nil
     }
 
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return OrbitAddressTargetID.foundingGroup.displayText
-    }
-
-    return orbitWorkspace.participant(id: addressedParticipantID)?.displayName
+    return orbitWorkspace.displayName(forAddressedTargetID: addressedParticipantID)
   }
 
   var deliveryTargetSummary: String {
@@ -451,8 +444,12 @@ extension OrbitPanelView {
       return "Delivery target: current thread"
     }
 
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return "Delivery target: founding group"
+    if let addressedParticipantID {
+      let targetResolution = OrbitParticipantResponseBridge.targetResolution(
+        in: orbitWorkspace,
+        addressedParticipantID: addressedParticipantID
+      )
+      return "Delivery target: \(targetResolution.targetDisplayName.lowercased())"
     }
 
     return "Delivery target: \(addressLabel(for: addressedParticipantID) ?? "selected collaborator")"
@@ -460,7 +457,14 @@ extension OrbitPanelView {
 
   @ViewBuilder
   var interactionRoutingCard: some View {
-    switch addressedParticipantID {
+    let targetResolution = addressedParticipantID.map { addressedParticipantID in
+      OrbitParticipantResponseBridge.targetResolution(
+        in: orbitWorkspace,
+        addressedParticipantID: addressedParticipantID
+      )
+    }
+
+    switch targetResolution?.targetKind {
     case nil:
       VStack(alignment: .leading, spacing: 6) {
         Text("Current thread routing")
@@ -472,18 +476,18 @@ extension OrbitPanelView {
       }
       .padding(10)
       .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-    case OrbitAddressTargetID.foundingGroup.rawValue:
+    case .some(.team), .some(.squad):
       VStack(alignment: .leading, spacing: 6) {
         Text("Lightweight exchange")
           .font(.caption.weight(.semibold))
           .foregroundStyle(.secondary)
-        Text("Orbit records one meeting system event and then invites both visible AI collaborators into the same room thread.")
+        Text("Orbit resolves this target from persisted workspace membership, records a visible target-expansion summary, and then invites the included participants into the same room thread.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
       .padding(10)
       .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-    default:
+    case .some(.collaborator):
       VStack(alignment: .leading, spacing: 6) {
         Text("Direct collaborator routing")
           .font(.caption.weight(.semibold))

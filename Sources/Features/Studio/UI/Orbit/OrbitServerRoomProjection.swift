@@ -31,6 +31,9 @@ enum OrbitServerRoomProjection {
       displayName: room.workspace.name,
       purpose: room.channel.purpose,
       participants: participants,
+      teams: projectedTeams(from: room),
+      squads: projectedSquads(from: room),
+      workspacePersonaMemberships: projectedWorkspacePersonaMemberships(from: room),
       activeThreadID: threadID,
       threads: [
         OrbitConversationThread(
@@ -99,6 +102,73 @@ enum OrbitServerRoomProjection {
     )
 
     return participants
+  }
+
+  private static func projectedTeams(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitTeam] {
+    room.teams
+      .sorted { lhs, rhs in
+        if lhs.createdAt == rhs.createdAt {
+          return lhs.id.uuidString < rhs.id.uuidString
+        }
+        return lhs.createdAt < rhs.createdAt
+      }
+      .map { team in
+        OrbitTeam(
+          id: team.id.uuidString,
+          workspaceID: team.workspaceID.uuidString,
+          slug: team.slug,
+          name: team.name,
+          purpose: team.purpose,
+          createdAt: team.createdAt
+        )
+      }
+  }
+
+  private static func projectedSquads(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitSquad] {
+    room.squads
+      .sorted { lhs, rhs in
+        if lhs.createdAt == rhs.createdAt {
+          return lhs.id.uuidString < rhs.id.uuidString
+        }
+        return lhs.createdAt < rhs.createdAt
+      }
+      .map { squad in
+        OrbitSquad(
+          id: squad.id.uuidString,
+          workspaceID: squad.workspaceID.uuidString,
+          teamID: squad.teamID?.uuidString,
+          slug: squad.slug,
+          name: squad.name,
+          purpose: squad.purpose,
+          createdAt: squad.createdAt
+        )
+      }
+  }
+
+  private static func projectedWorkspacePersonaMemberships(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitWorkspacePersonaMembership] {
+    room.workspacePersonaMemberships
+      .sorted { lhs, rhs in
+        if lhs.createdAt == rhs.createdAt {
+          return lhs.id.uuidString < rhs.id.uuidString
+        }
+        return lhs.createdAt < rhs.createdAt
+      }
+      .map { membership in
+        OrbitWorkspacePersonaMembership(
+          id: membership.id.uuidString,
+          workspacePersonaID: membership.workspacePersonaID.uuidString,
+          teamID: membership.teamID?.uuidString,
+          squadID: membership.squadID?.uuidString,
+          roleInGroup: membership.roleInGroup,
+          createdAt: membership.createdAt
+        )
+      }
   }
 
   private static func projectedInteractionMode(
@@ -368,9 +438,18 @@ enum OrbitServerRoomProjection {
       case .currentThread:
         return nil
       case .directAddress:
-        return participantsByWorkspacePersonaID[firstActivation.resolvedWorkspacePersonaInstanceID]?.id
+        if firstActivation.addressedTargetKind == .collaborator {
+          if let uuid = UUID(uuidString: firstActivation.addressedTargetReferenceID) {
+            return participantsByWorkspacePersonaID[uuid]?.id
+              ?? firstActivation.addressedTargetReferenceID
+          }
+
+          return firstActivation.addressedTargetReferenceID
+        }
+
+        return firstActivation.addressedTargetReferenceID
       case .lightweightMeeting:
-        return OrbitAddressTargetID.foundingGroup.rawValue
+        return firstActivation.addressedTargetReferenceID
       }
     case .workspacePersona:
       return OrbitParticipantID.aj.rawValue

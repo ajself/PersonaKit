@@ -34,6 +34,11 @@ public enum OrbitCanonicalCommandCenterBootstrap {
     let channelID = UUID(uuidString: "c7b4c0c2-9f8f-40db-95aa-54bd5dd092d5")!
     let samwiseWorkspacePersonaID = UUID(uuidString: "32e76314-c0d0-4cd3-b0d7-b855ff7c46e0")!
     let prodDocWorkspacePersonaID = UUID(uuidString: "8caa5050-4ce8-456a-b9d4-bf1bf59c285c")!
+    let foundingGroupTeamID = UUID(uuidString: "9a2f6e3c-3822-44fe-a53d-b84726c96d02")!
+    let feedbackSquadID = UUID(uuidString: "1ad4749b-aeb8-48ed-95c9-bd9443fc83c1")!
+    let samwiseFoundingGroupMembershipID = UUID(uuidString: "594f57f8-c3ac-4bcb-b042-f42c1805dc72")!
+    let prodDocFoundingGroupMembershipID = UUID(uuidString: "74d0938f-342d-4527-9fc7-83d1f6bc430d")!
+    let prodDocFeedbackSquadMembershipID = UUID(uuidString: "d4cfeb4f-75d2-4608-8e22-ac4ed6f6f71f")!
     let postID = UUID(uuidString: "24b4ee9b-1fc6-4a34-bfdb-4a4b2a50214c")!
     let threadID = UUID(uuidString: "4d7102ed-353d-4f83-b84f-28b44e707840")!
     let kickoffMessageID = UUID(uuidString: "7e7f5cb7-92d3-4644-96cc-bd76cdd2f27c")!
@@ -83,6 +88,50 @@ public enum OrbitCanonicalCommandCenterBootstrap {
         defaultDirectiveOverrideID: "run-venture-product-planning",
         status: .active,
         createdAt: createdAt.addingTimeInterval(1)
+      ),
+    ]
+    let teams = [
+      OrbitTeamRecord(
+        id: foundingGroupTeamID,
+        workspaceID: workspaceID,
+        slug: "founding-group",
+        name: "Founding Group",
+        purpose: "Seeded team target for the first Orbit coordination slice.",
+        createdAt: createdAt
+      )
+    ]
+    let squads = [
+      OrbitSquadRecord(
+        id: feedbackSquadID,
+        workspaceID: workspaceID,
+        teamID: foundingGroupTeamID,
+        slug: "command-center-feedback-squad",
+        name: "Command Center Feedback Squad",
+        purpose: "Focused feedback lane for the command-center collaboration surface.",
+        createdAt: createdAt.addingTimeInterval(2)
+      )
+    ]
+    let workspacePersonaMemberships = [
+      OrbitWorkspacePersonaMembershipRecord(
+        id: samwiseFoundingGroupMembershipID,
+        workspacePersonaID: samwiseWorkspacePersonaID,
+        teamID: foundingGroupTeamID,
+        roleInGroup: "trusted-partner",
+        createdAt: createdAt.addingTimeInterval(3)
+      ),
+      OrbitWorkspacePersonaMembershipRecord(
+        id: prodDocFoundingGroupMembershipID,
+        workspacePersonaID: prodDocWorkspacePersonaID,
+        teamID: foundingGroupTeamID,
+        roleInGroup: "product-steward",
+        createdAt: createdAt.addingTimeInterval(4)
+      ),
+      OrbitWorkspacePersonaMembershipRecord(
+        id: prodDocFeedbackSquadMembershipID,
+        workspacePersonaID: prodDocWorkspacePersonaID,
+        squadID: feedbackSquadID,
+        roleInGroup: "reviewer",
+        createdAt: createdAt.addingTimeInterval(5)
       ),
     ]
     let post = OrbitPostRecord(
@@ -167,6 +216,9 @@ public enum OrbitCanonicalCommandCenterBootstrap {
       workspace: workspace,
       channel: channel,
       workspacePersonas: workspacePersonas,
+      teams: teams,
+      squads: squads,
+      workspacePersonaMemberships: workspacePersonaMemberships,
       post: post,
       thread: thread,
       seedMessages: [

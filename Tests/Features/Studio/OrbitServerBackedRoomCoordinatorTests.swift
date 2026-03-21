@@ -794,7 +794,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
     #expect(await collaboratorWriter.requests.first?.responseMode == .directAddress)
     #expect(await collaboratorWriter.requests.first?.body.contains("Server-backed append") == true)
     #expect(await collaboratorWriter.requests.first?.contract?.reviewGateIDs == ["intent:partner-sync-review"])
-    #expect(await systemWriter.requests.isEmpty)
+    #expect(await systemWriter.requests.first?.body.contains("resolved target: kind=collaborator") == true)
+    #expect(await systemWriter.requests.first?.body.contains("reasonCategory=direct_target") == true)
     #expect(await failureWriter.requests.isEmpty)
     #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == responseMessage.body)
     #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
@@ -825,7 +826,13 @@ struct OrbitServerBackedRoomCoordinatorTests {
       authorType: .system,
       authorID: "orbit-system",
       replyToMessageID: updatedMessage.id,
-      body: "AJ invited Samwise and ProdDoc into the active lightweight meeting.",
+      body: """
+        Orbit target expansion
+        resolved target: kind=team reference=founding-group workspace=orbit status=resolved
+        included participants:
+        - ProdDoc | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included ProdDoc through persisted team membership for Founding Group.
+        - Samwise | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included Samwise through persisted team membership for Founding Group.
+        """,
       messageFormat: .plainText,
       state: .completed,
       createdAt: Date(timeIntervalSince1970: 1_742_342_521),
@@ -850,6 +857,9 @@ struct OrbitServerBackedRoomCoordinatorTests {
         workspace: initialSnapshot.room.workspace,
         channel: initialSnapshot.room.channel,
         workspacePersonas: initialSnapshot.room.workspacePersonas,
+        teams: initialSnapshot.room.teams,
+        squads: initialSnapshot.room.squads,
+        workspacePersonaMemberships: initialSnapshot.room.workspacePersonaMemberships,
         post: initialSnapshot.room.post,
         thread: initialSnapshot.room.thread,
         messages: initialSnapshot.room.messages + [updatedMessage, systemMessage, samwiseResponse, prodDocResponse],
@@ -952,8 +962,14 @@ struct OrbitServerBackedRoomCoordinatorTests {
 
     #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.count == 5)
     #expect(await collaboratorWriter.requests.count == 2)
-    #expect(await systemWriter.requests.first?.body.contains("lightweight meeting") == true)
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.contains(where: { $0.kind == .systemEvent && $0.body.contains("lightweight meeting") }) == true)
+    #expect(await systemWriter.requests.first?.body.contains("resolved target: kind=team reference=founding-group") == true)
+    #expect(await systemWriter.requests.first?.body.contains("reasonCategory=team_membership") == true)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.contains(where: {
+        $0.kind == .systemEvent
+          && $0.body.contains("resolved target: kind=team reference=founding-group")
+      }) == true
+    )
   }
 
   @Test
@@ -1411,6 +1427,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
   }
 
   private func meetingSampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
+    let foundingGroupTeamID = UUID(uuidString: "11111111-2222-3333-4444-555555555555")!
     let room = OrbitPhase1RoomSnapshot(
       workspace: sampleSnapshot().room.workspace,
       channel: sampleSnapshot().room.channel,
@@ -1431,6 +1448,32 @@ struct OrbitServerBackedRoomCoordinatorTests {
           status: .active,
           createdAt: Date(timeIntervalSince1970: 1_742_342_401)
         )
+      ],
+      teams: [
+        OrbitTeamRecord(
+          id: foundingGroupTeamID,
+          workspaceID: workspaceID,
+          slug: OrbitAddressTargetID.foundingGroup.rawValue,
+          name: OrbitAddressTargetID.foundingGroup.displayText,
+          purpose: "Seeded first team target.",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+        )
+      ],
+      workspacePersonaMemberships: [
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "12121212-3434-5656-7878-909090909090")!,
+          workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+          teamID: foundingGroupTeamID,
+          roleInGroup: "trusted-partner",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_402)
+        ),
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "23232323-4545-6767-8989-010101010101")!,
+          workspacePersonaID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+          teamID: foundingGroupTeamID,
+          roleInGroup: "product-steward",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_403)
+        ),
       ],
       post: sampleSnapshot().room.post,
       thread: sampleSnapshot().room.thread,

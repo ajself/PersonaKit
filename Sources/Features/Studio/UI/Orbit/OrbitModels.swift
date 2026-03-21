@@ -1,13 +1,17 @@
 import Foundation
+import OrbitServerRuntime
 
 struct OrbitWorkspace: Codable, Equatable {
-  static let currentSchemaVersion = 4
+  static let currentSchemaVersion = 5
 
   var schemaVersion = OrbitWorkspace.currentSchemaVersion
   var id: String
   var displayName: String
   var purpose: String
   var participants: [OrbitParticipant]
+  var teams: [OrbitTeam] = []
+  var squads: [OrbitSquad] = []
+  var workspacePersonaMemberships: [OrbitWorkspacePersonaMembership] = []
   var activeThreadID: String
   var threads: [OrbitConversationThread]
   var activationRecords: [OrbitActivationRecord]
@@ -25,6 +29,38 @@ struct OrbitWorkspace: Codable, Equatable {
     id: String
   ) -> OrbitParticipant? {
     participants.first { $0.id == id }
+  }
+
+  func participant(
+    workspacePersonaID: String
+  ) -> OrbitParticipant? {
+    participants.first { $0.workspacePersonaID == workspacePersonaID }
+  }
+
+  func team(
+    slug: String
+  ) -> OrbitTeam? {
+    teams.first { $0.slug == slug }
+  }
+
+  func squad(
+    slug: String
+  ) -> OrbitSquad? {
+    squads.first { $0.slug == slug }
+  }
+
+  func displayName(
+    forAddressedTargetID addressedTargetID: String
+  ) -> String? {
+    if let team = team(slug: addressedTargetID) {
+      return team.name
+    }
+
+    if let squad = squad(slug: addressedTargetID) {
+      return squad.name
+    }
+
+    return participant(id: addressedTargetID)?.displayName
   }
 
   func activationRecord(
@@ -87,18 +123,28 @@ struct OrbitWorkspace: Codable, Equatable {
       return []
     }
 
-    let addressedParticipants = OrbitParticipantResponseBridge.addressedParticipants(
+    let targetResolution = addressedParticipantID.flatMap { addressedParticipantID in
+      OrbitParticipantResponseBridge.targetResolution(
+        in: self,
+        addressedParticipantID: addressedParticipantID
+      )
+    }
+    let addressedParticipants =
+      targetResolution?.includedParticipants
+      ?? OrbitParticipantResponseBridge.addressedParticipants(
+        in: self,
+        addressedParticipantID: addressedParticipantID
+      )
+    let triggerSource = OrbitParticipantResponseBridge.triggerSource(
       in: self,
       addressedParticipantID: addressedParticipantID
-    )
-    let triggerSource = OrbitParticipantResponseBridge.triggerSource(
-      for: addressedParticipantID
     )
 
     var createdMessages = [triggerMessage]
 
     if let activationFailure = evaluateActivationFailure(
       addressedParticipantID: addressedParticipantID,
+      targetResolution: targetResolution,
       addressedParticipants: addressedParticipants,
       resolvedContractsByParticipantID: resolvedContractsByParticipantID,
       triggerSource: triggerSource,
@@ -132,11 +178,13 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     threads[threadIndex].interactionMode =
-      OrbitParticipantResponseBridge.interactionMode(for: addressedParticipantID)
+      OrbitParticipantResponseBridge.interactionMode(
+        in: self,
+        addressedParticipantID: addressedParticipantID
+      )
 
     if let systemEventBody = OrbitParticipantResponseBridge.systemEventBody(
-      for: addressedParticipants,
-      triggerSource: triggerSource
+      for: targetResolution
     ), let systemEventMessage = appendSystemEvent(body: systemEventBody) {
       createdMessages.append(systemEventMessage)
     }
@@ -238,15 +286,58 @@ struct OrbitWorkspace: Codable, Equatable {
 
   private func evaluateActivationFailure(
     addressedParticipantID: String?,
+    targetResolution: OrbitTargetResolution?,
     addressedParticipants: [OrbitParticipant],
     resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract],
     triggerSource: OrbitActivationTriggerSource,
     triggerMessageID: String
   ) -> OrbitActivationFailureRecord? {
-    if let addressedParticipantID,
-      addressedParticipantID != OrbitAddressTargetID.foundingGroup.rawValue,
-      addressedParticipants.isEmpty
-    {
+    if let targetResolution {
+      switch targetResolution.status {
+      case .blocked:
+        return OrbitActivationFailureRecord(
+          id: Self.activationFailureID(for: nextActivationFailureSequence),
+          workspaceID: id,
+          addressedTargetID: targetResolution.targetReferenceID,
+          participantID: nil,
+          workspacePersonaID: nil,
+          personaTemplateID: nil,
+          directiveID: nil,
+          triggerSource: triggerSource,
+          triggerMessageID: triggerMessageID,
+          systemEventMessageID: nil,
+          requiredSkillIDs: [],
+          authorizedSkillIDs: [],
+          failureReason: .missingOrAmbiguousTarget,
+          systemEventBody:
+            OrbitParticipantResponseBridge.systemEventBody(for: targetResolution)
+            ?? targetResolution.outcomeExplanation
+            ?? "Orbit blocked the activation because the addressed target could not be resolved in this workspace."
+        )
+      case .empty:
+        return OrbitActivationFailureRecord(
+          id: Self.activationFailureID(for: nextActivationFailureSequence),
+          workspaceID: id,
+          addressedTargetID: targetResolution.targetReferenceID,
+          participantID: nil,
+          workspacePersonaID: nil,
+          personaTemplateID: nil,
+          directiveID: nil,
+          triggerSource: triggerSource,
+          triggerMessageID: triggerMessageID,
+          systemEventMessageID: nil,
+          requiredSkillIDs: [],
+          authorizedSkillIDs: [],
+          failureReason: .emptyGroup,
+          systemEventBody:
+            OrbitParticipantResponseBridge.systemEventBody(for: targetResolution)
+            ?? targetResolution.outcomeExplanation
+            ?? "Orbit found no eligible workspace persona members for the addressed target."
+        )
+      case .resolved:
+        break
+      }
+    } else if let addressedParticipantID, addressedParticipants.isEmpty {
       return OrbitActivationFailureRecord(
         id: Self.activationFailureID(for: nextActivationFailureSequence),
         workspaceID: id,
@@ -273,6 +364,8 @@ struct OrbitWorkspace: Codable, Equatable {
       if participant.id == OrbitParticipantID.prodDoc.rawValue,
         participant.personaTemplateID != "venture-product-steward"
       {
+        let detail =
+          "Orbit blocked the activation because the frozen ProdDoc identity mapping does not match venture-product-steward."
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -287,11 +380,16 @@ struct OrbitWorkspace: Codable, Equatable {
           requiredSkillIDs: resolvedContract.requiredSkillIDs,
           authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .frozenProdDocAliasContradiction,
-          systemEventBody: "Orbit blocked the activation because the frozen ProdDoc identity mapping does not match venture-product-steward."
+          systemEventBody: failureSystemEventBody(
+            targetResolution: targetResolution,
+            detail: detail
+          )
         )
       }
 
       if participant.workspacePersonaID == nil {
+        let detail =
+          "Orbit blocked the activation because the collaborator is missing a stable workspace persona anchor."
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -306,11 +404,16 @@ struct OrbitWorkspace: Codable, Equatable {
           requiredSkillIDs: resolvedContract.requiredSkillIDs,
           authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingWorkspacePersona,
-          systemEventBody: "Orbit blocked the activation because the collaborator is missing a stable workspace persona anchor."
+          systemEventBody: failureSystemEventBody(
+            targetResolution: targetResolution,
+            detail: detail
+          )
         )
       }
 
       if participant.personaTemplateID == nil {
+        let detail =
+          "Orbit blocked the activation because the collaborator is missing a PersonaKit persona-template mapping."
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -325,11 +428,16 @@ struct OrbitWorkspace: Codable, Equatable {
           requiredSkillIDs: resolvedContract.requiredSkillIDs,
           authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingPersonaTemplate,
-          systemEventBody: "Orbit blocked the activation because the collaborator is missing a PersonaKit persona-template mapping."
+          systemEventBody: failureSystemEventBody(
+            targetResolution: targetResolution,
+            detail: detail
+          )
         )
       }
 
       if resolvedContract.directiveID == nil {
+        let detail =
+          "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -344,7 +452,10 @@ struct OrbitWorkspace: Codable, Equatable {
           requiredSkillIDs: resolvedContract.requiredSkillIDs,
           authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .missingDirective,
-          systemEventBody: "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
+          systemEventBody: failureSystemEventBody(
+            targetResolution: targetResolution,
+            detail: detail
+          )
         )
       }
 
@@ -353,6 +464,7 @@ struct OrbitWorkspace: Codable, Equatable {
       if !unauthorizedRequiredSkills.isEmpty || !resolvedContract.failureReasons.isEmpty {
         let failureDetail = resolvedContract.failureReasons.first
           ?? "the required skill posture is not authorized for this collaborator"
+        let detail = "Orbit blocked the activation because \(failureDetail)."
         return OrbitActivationFailureRecord(
           id: Self.activationFailureID(for: nextActivationFailureSequence),
           workspaceID: id,
@@ -367,7 +479,10 @@ struct OrbitWorkspace: Codable, Equatable {
           requiredSkillIDs: resolvedContract.requiredSkillIDs,
           authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
           failureReason: .unauthorizedSkillPosture,
-          systemEventBody: "Orbit blocked the activation because \(failureDetail)."
+          systemEventBody: failureSystemEventBody(
+            targetResolution: targetResolution,
+            detail: detail
+          )
         )
       }
     }
@@ -483,6 +598,17 @@ struct OrbitWorkspace: Codable, Equatable {
     )
   }
 
+  private func failureSystemEventBody(
+    targetResolution: OrbitTargetResolution?,
+    detail: String
+  ) -> String {
+    guard let summary = OrbitParticipantResponseBridge.systemEventBody(for: targetResolution) else {
+      return detail
+    }
+
+    return [summary, detail].joined(separator: "\n")
+  }
+
   private mutating func appendMessage(
     threadIndex: Int,
     speakerParticipantID: String,
@@ -524,6 +650,34 @@ struct OrbitParticipant: Codable, Equatable, Identifiable {
   let sortOrder: Int
 }
 
+struct OrbitTeam: Codable, Equatable, Identifiable {
+  let id: String
+  let workspaceID: String
+  let slug: String
+  let name: String
+  let purpose: String
+  let createdAt: Date
+}
+
+struct OrbitSquad: Codable, Equatable, Identifiable {
+  let id: String
+  let workspaceID: String
+  let teamID: String?
+  let slug: String
+  let name: String
+  let purpose: String
+  let createdAt: Date
+}
+
+struct OrbitWorkspacePersonaMembership: Codable, Equatable, Identifiable {
+  let id: String
+  let workspacePersonaID: String
+  let teamID: String?
+  let squadID: String?
+  let roleInGroup: String
+  let createdAt: Date
+}
+
 struct OrbitResolvedActivationContract: Equatable {
   let directiveID: String?
   let directiveSource: OrbitDirectiveSource
@@ -538,6 +692,45 @@ struct OrbitResolvedActivationContract: Equatable {
   var unauthorizedRequiredSkillIDs: [String] {
     requiredSkillIDs.filter { !authorizedSkillIDs.contains($0) }
   }
+}
+
+struct OrbitTargetResolution: Equatable {
+  let status: OrbitTargetResolutionStatus
+  let targetKind: OrbitAddressedTargetKind
+  let targetReferenceID: String
+  let targetDisplayName: String
+  let workspaceID: String
+  let includedParticipants: [OrbitParticipant]
+  let includedParticipantReasons: [OrbitTargetParticipantReason]
+  let excludedParticipantReasons: [OrbitTargetParticipantReason]
+  let outcomeReasonCategory: OrbitTargetReasonCategory?
+  let outcomeExplanation: String?
+}
+
+struct OrbitTargetParticipantReason: Equatable {
+  let participantID: String?
+  let workspacePersonaID: String?
+  let displayName: String
+  let reasonCategory: OrbitTargetReasonCategory
+  let sourceTargetKind: OrbitAddressedTargetKind
+  let sourceTargetReferenceID: String
+  let explanation: String
+}
+
+enum OrbitTargetResolutionStatus: String, Equatable {
+  case resolved
+  case blocked
+  case empty
+}
+
+enum OrbitTargetReasonCategory: String, Equatable {
+  case directTarget = "direct_target"
+  case teamMembership = "team_membership"
+  case squadMembership = "squad_membership"
+  case personaUnavailable = "persona_unavailable"
+  case membershipUnresolved = "membership_unresolved"
+  case missingOrAmbiguousTarget = "missing_or_ambiguous_target"
+  case emptyGroup = "empty_group"
 }
 
 enum OrbitParticipantType: String, Codable, Equatable {
@@ -774,6 +967,8 @@ enum OrbitDirectiveSource: String, Codable, Equatable {
 
 enum OrbitActivationFailureReason: String, Codable, Equatable {
   case unknownCollaboratorTarget
+  case missingOrAmbiguousTarget
+  case emptyGroup
   case missingWorkspacePersona
   case missingPersonaTemplate
   case frozenProdDocAliasContradiction
@@ -784,6 +979,10 @@ enum OrbitActivationFailureReason: String, Codable, Equatable {
     switch self {
     case .unknownCollaboratorTarget:
       return "unknown collaborator target"
+    case .missingOrAmbiguousTarget:
+      return "missing or ambiguous target"
+    case .emptyGroup:
+      return "empty group"
     case .missingWorkspacePersona:
       return "missing workspace persona"
     case .missingPersonaTemplate:
@@ -822,6 +1021,9 @@ extension OrbitWorkspace {
     case displayName
     case purpose
     case participants
+    case teams
+    case squads
+    case workspacePersonaMemberships
     case activeThreadID
     case threads
     case activationRecords
@@ -842,6 +1044,13 @@ extension OrbitWorkspace {
     displayName = try container.decode(String.self, forKey: .displayName)
     purpose = try container.decode(String.self, forKey: .purpose)
     participants = try container.decode([OrbitParticipant].self, forKey: .participants)
+    teams = try container.decodeIfPresent([OrbitTeam].self, forKey: .teams) ?? []
+    squads = try container.decodeIfPresent([OrbitSquad].self, forKey: .squads) ?? []
+    workspacePersonaMemberships =
+      try container.decodeIfPresent(
+        [OrbitWorkspacePersonaMembership].self,
+        forKey: .workspacePersonaMemberships
+      ) ?? []
     activeThreadID = try container.decode(String.self, forKey: .activeThreadID)
     let decodedThreads = try container.decode([OrbitConversationThread].self, forKey: .threads)
     threads = decodedThreads
@@ -888,6 +1097,9 @@ extension OrbitWorkspace {
     try container.encode(displayName, forKey: .displayName)
     try container.encode(purpose, forKey: .purpose)
     try container.encode(participants, forKey: .participants)
+    try container.encode(teams, forKey: .teams)
+    try container.encode(squads, forKey: .squads)
+    try container.encode(workspacePersonaMemberships, forKey: .workspacePersonaMemberships)
     try container.encode(activeThreadID, forKey: .activeThreadID)
     try container.encode(threads, forKey: .threads)
     try container.encode(activationRecords, forKey: .activationRecords)

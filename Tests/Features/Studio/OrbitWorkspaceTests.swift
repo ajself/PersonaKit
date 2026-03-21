@@ -142,15 +142,20 @@ struct OrbitWorkspaceTests {
       persist: { _ in }
     )
 
-    #expect(createdMessages.count == 2)
+    #expect(createdMessages.count == 3)
 
     let userMessage = try #require(createdMessages.first)
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
     let responseMessage = try #require(createdMessages.last)
     let activation = try #require(workspace.activationRecord(for: responseMessage.id))
     let contractSnapshot = try #require(workspace.activationContractSnapshot(for: activation.id))
     let traceLines = activation.traceSummaryLines(contractSnapshot: contractSnapshot)
 
     #expect(userMessage.kind == .user)
+    #expect(systemEvent.body.contains("resolved target: kind=collaborator"))
+    #expect(systemEvent.body.contains("reasonCategory=direct_target"))
     #expect(responseMessage.kind == .participantResponse)
     #expect(responseMessage.speakerParticipantID == OrbitParticipantID.samwise.rawValue)
     #expect(responseMessage.addressedParticipantID == OrbitParticipantID.aj.rawValue)
@@ -256,7 +261,8 @@ struct OrbitWorkspaceTests {
       workspace.activationContractSnapshot(for: $0.id)
     }
 
-    #expect(systemEvent.body.contains("lightweight meeting"))
+    #expect(systemEvent.body.contains("resolved target: kind=team reference=founding-group"))
+    #expect(systemEvent.body.contains("reasonCategory=team_membership"))
     #expect(responseMessages.count == 2)
     #expect(
       Set(responseMessages.map(\.speakerParticipantID)) == [
@@ -297,6 +303,132 @@ struct OrbitWorkspaceTests {
   }
 
   @Test
+  func foundingGroupUsesPersistedMembershipInsteadOfVisibleAIRoster() {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants.append(
+      OrbitParticipant(
+        id: "architect",
+        workspacePersonaID: "workspace-persona-orbit-architect",
+        displayName: "Architect",
+        roleLabel: "Architecture",
+        participantType: .ai,
+        personaTemplateID: "swift-architect",
+        defaultDirectiveID: "review-runtime-boundaries",
+        requiredSkillIDs: ["codex-cli"],
+        authorizedSkillIDs: ["codex-cli"],
+        availability: .available,
+        sortOrder: 4
+      )
+    )
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Founding group, stay inside the seeded membership lane.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+
+    #expect(responseMessages.count == 2)
+    #expect(Set(responseMessages.map(\.speakerParticipantID)) == [
+      OrbitParticipantID.samwise.rawValue,
+      OrbitParticipantID.prodDoc.rawValue,
+    ])
+    #expect(responseMessages.contains { $0.speakerParticipantID == "architect" } == false)
+  }
+
+  @Test
+  func foundingGroupSurfacesTrustRelevantUnavailableExclusions() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants.append(
+      OrbitParticipant(
+        id: "archivist",
+        workspacePersonaID: "workspace-persona-orbit-archivist",
+        displayName: "Archivist",
+        roleLabel: "Archive",
+        participantType: .ai,
+        personaTemplateID: "archive-steward",
+        defaultDirectiveID: "review-archive-state",
+        requiredSkillIDs: ["codex-cli"],
+        authorizedSkillIDs: ["codex-cli"],
+        availability: .idle,
+        sortOrder: 4
+      )
+    )
+    workspace.workspacePersonaMemberships.append(
+      OrbitWorkspacePersonaMembership(
+        id: "membership-archivist-founding-group",
+        workspacePersonaID: "workspace-persona-orbit-archivist",
+        teamID: "team-founding-group",
+        squadID: nil,
+        roleInGroup: "observer",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_405)
+      )
+    )
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Founding group, show who was skipped and why.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
+
+    #expect(systemEvent.body.contains("excluded participants:"))
+    #expect(systemEvent.body.contains("Archivist"))
+    #expect(systemEvent.body.contains("reasonCategory=persona_unavailable"))
+  }
+
+  @Test
+  func feedbackSquadExpandsFromPersistedMembership() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+
+    let createdMessages = try workspace.appendConversationTurnIfPersisted(
+      body: "Feedback squad, pressure-test the command-center surface.",
+      addressedParticipantID: "command-center-feedback-squad",
+      resolveContract: { participant in
+        try OrbitContractResolver.resolve(
+          participant: participant,
+          workspaceURL: orbitRepositoryRootURL()
+        )
+      },
+      persist: { _ in }
+    )
+
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+
+    #expect(createdMessages.count == 3)
+    #expect(systemEvent.body.contains("resolved target: kind=squad reference=command-center-feedback-squad"))
+    #expect(systemEvent.body.contains("reasonCategory=squad_membership"))
+    #expect(responseMessages.count == 1)
+    #expect(responseMessages.first?.speakerParticipantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(workspace.activationRecords.last?.triggerSource == .meetingInvocation)
+    #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
+  }
+
+  @Test
+  func emptySquadStopsBeforeParticipantActivation() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.workspacePersonaMemberships.removeAll { $0.squadID == "squad-command-center-feedback" }
+
+    let initialActivationCount = workspace.activationRecords.count
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Feedback squad, respond only if someone is eligible.",
+      addressedParticipantID: "command-center-feedback-squad"
+    )
+    let userMessage = try #require(createdMessages.first)
+    let blockedEvent = try #require(createdMessages.last)
+    let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
+
+    #expect(createdMessages.count == 2)
+    #expect(blockedEvent.body.contains("status=empty"))
+    #expect(blockedEvent.body.contains("reasonCategory=empty_group"))
+    #expect(workspace.activationRecords.count == initialActivationCount)
+    #expect(failure.failureReason == .emptyGroup)
+  }
+
+  @Test
   func unknownCollaboratorTargetBlocksActivationAndPersistsFailure() throws {
     var workspace = OrbitWorkspace.defaultWorkspace
 
@@ -315,15 +447,16 @@ struct OrbitWorkspaceTests {
     )
 
     #expect(blockedEvent.kind == .systemEvent)
-    #expect(blockedEvent.body.contains("blocked the activation"))
+    #expect(blockedEvent.body.contains("status=blocked"))
+    #expect(blockedEvent.body.contains("reasonCategory=missing_or_ambiguous_target"))
     #expect(workspace.activationRecords.count == 1)
     #expect(workspace.activationContractSnapshots.count == 1)
-    #expect(failure.failureReason == .unknownCollaboratorTarget)
+    #expect(failure.failureReason == .missingOrAmbiguousTarget)
     #expect(failure.addressedTargetID == "ghost")
     #expect(failure.triggerMessageID == userMessage.id)
     #expect(failure.systemEventMessageID == blockedEvent.id)
     #expect(failure.participantID == nil)
-    #expect(failure.traceSummaryLines[0].contains("unknown collaborator target"))
+    #expect(failure.traceSummaryLines[0].contains("missing or ambiguous target"))
     #expect(failure.traceSummaryLines[1].contains("target: ghost"))
     #expect(failureByEvent == failure)
     #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)

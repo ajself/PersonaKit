@@ -128,6 +128,9 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
       workspace: snapshot.workspace,
       channel: snapshot.channel,
       workspacePersonas: snapshot.workspacePersonas,
+      teams: snapshot.teams,
+      squads: snapshot.squads,
+      workspacePersonaMemberships: snapshot.workspacePersonaMemberships,
       post: snapshot.post,
       thread: OrbitThreadRecord(
         id: snapshot.thread.id,

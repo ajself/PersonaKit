@@ -1,6 +1,98 @@
 import Foundation
+import OrbitServerRuntime
 
 enum OrbitParticipantResponseBridge {
+  static func targetResolution(
+    in workspace: OrbitWorkspace,
+    addressedParticipantID: String
+  ) -> OrbitTargetResolution {
+    let matchingTeam = workspace.team(slug: addressedParticipantID)
+    let matchingSquad = workspace.squad(slug: addressedParticipantID)
+
+    if matchingTeam != nil && matchingSquad != nil {
+      return OrbitTargetResolution(
+        status: .blocked,
+        targetKind: .team,
+        targetReferenceID: addressedParticipantID,
+        targetDisplayName: addressedParticipantID,
+        workspaceID: workspace.id,
+        includedParticipants: [],
+        includedParticipantReasons: [],
+        excludedParticipantReasons: [],
+        outcomeReasonCategory: .missingOrAmbiguousTarget,
+        outcomeExplanation:
+          "Orbit could not resolve a single target for \(addressedParticipantID) in workspace \(workspace.id)."
+      )
+    }
+
+    if let team = matchingTeam {
+      return groupTargetResolution(
+        in: workspace,
+        targetKind: .team,
+        targetReferenceID: team.slug,
+        targetDisplayName: team.name,
+        memberships: workspace.workspacePersonaMemberships.filter { $0.teamID == team.id },
+        includedReasonCategory: .teamMembership
+      )
+    }
+
+    if let squad = matchingSquad {
+      return groupTargetResolution(
+        in: workspace,
+        targetKind: .squad,
+        targetReferenceID: squad.slug,
+        targetDisplayName: squad.name,
+        memberships: workspace.workspacePersonaMemberships.filter { $0.squadID == squad.id },
+        includedReasonCategory: .squadMembership
+      )
+    }
+
+    guard
+      let participant = workspace.participant(id: addressedParticipantID),
+      participant.participantType == .ai
+    else {
+      return OrbitTargetResolution(
+        status: .blocked,
+        targetKind: .collaborator,
+        targetReferenceID: addressedParticipantID,
+        targetDisplayName: addressedParticipantID,
+        workspaceID: workspace.id,
+        includedParticipants: [],
+        includedParticipantReasons: [],
+        excludedParticipantReasons: [],
+        outcomeReasonCategory: .missingOrAmbiguousTarget,
+        outcomeExplanation:
+          "Orbit could not resolve collaborator \(addressedParticipantID) in workspace \(workspace.id)."
+      )
+    }
+
+    let targetReferenceID = participant.workspacePersonaID ?? participant.id
+
+    return OrbitTargetResolution(
+      status: .resolved,
+      targetKind: .collaborator,
+      targetReferenceID: targetReferenceID,
+      targetDisplayName: participant.displayName,
+      workspaceID: workspace.id,
+      includedParticipants: [participant],
+      includedParticipantReasons: [
+        OrbitTargetParticipantReason(
+          participantID: participant.id,
+          workspacePersonaID: participant.workspacePersonaID,
+          displayName: participant.displayName,
+          reasonCategory: .directTarget,
+          sourceTargetKind: .collaborator,
+          sourceTargetReferenceID: targetReferenceID,
+          explanation:
+            "Orbit resolved the direct collaborator target to \(participant.displayName) in the active workspace."
+        )
+      ],
+      excludedParticipantReasons: [],
+      outcomeReasonCategory: nil,
+      outcomeExplanation: nil
+    )
+  }
+
   static func addressedParticipants(
     in workspace: OrbitWorkspace,
     addressedParticipantID: String?
@@ -13,54 +105,79 @@ enum OrbitParticipantResponseBridge {
       return aiParticipants.first.map { [$0] } ?? []
     }
 
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return aiParticipants
-    }
-
-    guard
-      let participant = workspace.participant(id: addressedParticipantID),
-      participant.participantType == .ai
-    else {
-      return []
-    }
-
-    return [participant]
+    return targetResolution(
+      in: workspace,
+      addressedParticipantID: addressedParticipantID
+    ).includedParticipants
   }
 
   static func interactionMode(
-    for addressedParticipantID: String?
+    in workspace: OrbitWorkspace,
+    addressedParticipantID: String?
   ) -> OrbitInteractionMode {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return .lightweightMeeting
+    guard let addressedParticipantID else {
+      return .directMessage
     }
 
-    return .directMessage
+    let targetKind = targetResolution(
+      in: workspace,
+      addressedParticipantID: addressedParticipantID
+    ).targetKind
+
+    return targetKind == .collaborator ? .directMessage : .lightweightMeeting
   }
 
   static func triggerSource(
-    for addressedParticipantID: String?
+    in workspace: OrbitWorkspace,
+    addressedParticipantID: String?
   ) -> OrbitActivationTriggerSource {
-    if addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue {
-      return .meetingInvocation
-    }
-
-    if addressedParticipantID == nil {
+    guard let addressedParticipantID else {
       return .generalThreadReply
     }
 
-    return .directAddress
+    let targetKind = targetResolution(
+      in: workspace,
+      addressedParticipantID: addressedParticipantID
+    ).targetKind
+
+    return targetKind == .collaborator ? .directAddress : .meetingInvocation
   }
 
   static func systemEventBody(
-    for participants: [OrbitParticipant],
-    triggerSource: OrbitActivationTriggerSource
+    for targetResolution: OrbitTargetResolution?
   ) -> String? {
-    guard triggerSource == .meetingInvocation else {
+    guard let targetResolution else {
       return nil
     }
 
-    let participantNames = participants.map(\.displayName).joined(separator: " and ")
-    return "AJ invited \(participantNames) into the active lightweight meeting."
+    var summaryLines = [
+      "Orbit target expansion",
+      "resolved target: kind=\(targetResolution.targetKind.rawValue) reference=\(targetResolution.targetReferenceID) workspace=\(targetResolution.workspaceID) status=\(targetResolution.status.rawValue)",
+    ]
+
+    if let outcomeReasonCategory = targetResolution.outcomeReasonCategory {
+      summaryLines.append(
+        "outcome: reasonCategory=\(outcomeReasonCategory.rawValue) | \(targetResolution.outcomeExplanation ?? "-")"
+      )
+    }
+
+    summaryLines.append(
+      participantLines(
+        title: "included participants",
+        reasons: targetResolution.includedParticipantReasons
+      )
+    )
+
+    if !targetResolution.excludedParticipantReasons.isEmpty {
+      summaryLines.append(
+        participantLines(
+          title: "excluded participants",
+          reasons: targetResolution.excludedParticipantReasons
+        )
+      )
+    }
+
+    return summaryLines.joined(separator: "\n")
   }
 
   static func responseBody(
@@ -136,5 +253,168 @@ enum OrbitParticipantResponseBridge {
 
     let cutoffIndex = normalized.index(normalized.startIndex, offsetBy: 96)
     return normalized[..<cutoffIndex].trimmingCharacters(in: .whitespacesAndNewlines) + "..."
+  }
+
+  private static func groupTargetResolution(
+    in workspace: OrbitWorkspace,
+    targetKind: OrbitAddressedTargetKind,
+    targetReferenceID: String,
+    targetDisplayName: String,
+    memberships: [OrbitWorkspacePersonaMembership],
+    includedReasonCategory: OrbitTargetReasonCategory
+  ) -> OrbitTargetResolution {
+    let orderedMemberships = memberships.sorted { lhs, rhs in
+      if lhs.workspacePersonaID == rhs.workspacePersonaID {
+        return lhs.id < rhs.id
+      }
+      return lhs.workspacePersonaID < rhs.workspacePersonaID
+    }
+
+    guard !orderedMemberships.isEmpty else {
+      return OrbitTargetResolution(
+        status: .empty,
+        targetKind: targetKind,
+        targetReferenceID: targetReferenceID,
+        targetDisplayName: targetDisplayName,
+        workspaceID: workspace.id,
+        includedParticipants: [],
+        includedParticipantReasons: [],
+        excludedParticipantReasons: [],
+        outcomeReasonCategory: .emptyGroup,
+        outcomeExplanation:
+          "\(targetDisplayName) has no persisted workspace persona members in workspace \(workspace.id)."
+      )
+    }
+
+    var includedParticipants = [OrbitParticipant]()
+    var includedParticipantReasons = [OrbitTargetParticipantReason]()
+    var excludedParticipantReasons = [OrbitTargetParticipantReason]()
+
+    for membership in orderedMemberships {
+      guard let participant = workspace.participant(workspacePersonaID: membership.workspacePersonaID) else {
+        excludedParticipantReasons.append(
+          excludedReason(
+            displayName: membership.workspacePersonaID,
+            workspacePersonaID: membership.workspacePersonaID,
+            reasonCategory: .membershipUnresolved,
+            targetKind: targetKind,
+            targetReferenceID: targetReferenceID,
+            explanation:
+              "Orbit could not map persisted membership \(membership.id) to a visible workspace persona in the active workspace."
+          )
+        )
+        continue
+      }
+
+      guard participant.participantType == .ai else {
+        excludedParticipantReasons.append(
+          excludedReason(
+            displayName: participant.displayName,
+            participantID: participant.id,
+            workspacePersonaID: participant.workspacePersonaID,
+            reasonCategory: .membershipUnresolved,
+            targetKind: targetKind,
+            targetReferenceID: targetReferenceID,
+            explanation:
+              "Orbit skipped \(participant.displayName) because group expansion only targets AI workspace personas in the first M4 slice."
+          )
+        )
+        continue
+      }
+
+      guard participant.availability != .idle else {
+        excludedParticipantReasons.append(
+          excludedReason(
+            displayName: participant.displayName,
+            participantID: participant.id,
+            workspacePersonaID: participant.workspacePersonaID,
+            reasonCategory: .personaUnavailable,
+            targetKind: targetKind,
+            targetReferenceID: targetReferenceID,
+            explanation:
+              "Orbit skipped \(participant.displayName) because the persisted workspace persona is not currently available for expansion."
+          )
+        )
+        continue
+      }
+
+      includedParticipants.append(participant)
+      includedParticipantReasons.append(
+        OrbitTargetParticipantReason(
+          participantID: participant.id,
+          workspacePersonaID: participant.workspacePersonaID,
+          displayName: participant.displayName,
+          reasonCategory: includedReasonCategory,
+          sourceTargetKind: targetKind,
+          sourceTargetReferenceID: targetReferenceID,
+          explanation:
+            "Orbit included \(participant.displayName) through persisted \(targetKind.rawValue) membership for \(targetDisplayName)."
+        )
+      )
+    }
+
+    if includedParticipants.isEmpty {
+      return OrbitTargetResolution(
+        status: .empty,
+        targetKind: targetKind,
+        targetReferenceID: targetReferenceID,
+        targetDisplayName: targetDisplayName,
+        workspaceID: workspace.id,
+        includedParticipants: [],
+        includedParticipantReasons: [],
+        excludedParticipantReasons: excludedParticipantReasons,
+        outcomeReasonCategory: .emptyGroup,
+        outcomeExplanation:
+          "\(targetDisplayName) has no eligible workspace persona members in workspace \(workspace.id)."
+      )
+    }
+
+    return OrbitTargetResolution(
+      status: .resolved,
+      targetKind: targetKind,
+      targetReferenceID: targetReferenceID,
+      targetDisplayName: targetDisplayName,
+      workspaceID: workspace.id,
+      includedParticipants: includedParticipants,
+      includedParticipantReasons: includedParticipantReasons,
+      excludedParticipantReasons: excludedParticipantReasons,
+      outcomeReasonCategory: nil,
+      outcomeExplanation: nil
+    )
+  }
+
+  private static func excludedReason(
+    displayName: String,
+    participantID: String? = nil,
+    workspacePersonaID: String? = nil,
+    reasonCategory: OrbitTargetReasonCategory,
+    targetKind: OrbitAddressedTargetKind,
+    targetReferenceID: String,
+    explanation: String
+  ) -> OrbitTargetParticipantReason {
+    OrbitTargetParticipantReason(
+      participantID: participantID,
+      workspacePersonaID: workspacePersonaID,
+      displayName: displayName,
+      reasonCategory: reasonCategory,
+      sourceTargetKind: targetKind,
+      sourceTargetReferenceID: targetReferenceID,
+      explanation: explanation
+    )
+  }
+
+  private static func participantLines(
+    title: String,
+    reasons: [OrbitTargetParticipantReason]
+  ) -> String {
+    guard !reasons.isEmpty else {
+      return "\(title): none"
+    }
+
+    let entries = reasons.map { reason in
+      "- \(reason.displayName) | reasonCategory=\(reason.reasonCategory.rawValue) | sourceTargetKind=\(reason.sourceTargetKind.rawValue) | sourceTargetReferenceID=\(reason.sourceTargetReferenceID) | \(reason.explanation)"
+    }
+
+    return ([ "\(title):" ] + entries).joined(separator: "\n")
   }
 }

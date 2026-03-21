@@ -60,6 +60,9 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.contains(where: { $0.contains("INSERT INTO workspace") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO channel") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO workspace_persona") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO team") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO squad") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO workspace_persona_membership") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO post") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO thread") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO realtime_event") }))
@@ -121,6 +124,9 @@ struct Phase1RuntimeRepositoryTests {
     let participantQuery = repository.selectPostParticipantsQuery(postID: UUID())
     let eventQuery = repository.selectPostEventsQuery(postID: UUID())
     let workspacePersonaQuery = repository.selectWorkspacePersonasQuery(workspaceID: UUID())
+    let teamQuery = repository.selectTeamsQuery(workspaceID: UUID())
+    let squadQuery = repository.selectSquadsQuery(workspaceID: UUID())
+    let membershipQuery = repository.selectWorkspacePersonaMembershipsQuery(workspaceID: UUID())
     let realtimeEventQuery = repository.selectRealtimeEventsQuery(
       workspaceID: UUID(),
       after: nil
@@ -129,6 +135,19 @@ struct Phase1RuntimeRepositoryTests {
     #expect(workspacePersonaQuery.sql.contains("FROM workspace_persona"))
     #expect(workspacePersonaQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
     #expect(workspacePersonaQuery.binds.count == 1)
+
+    #expect(teamQuery.sql.contains("FROM team"))
+    #expect(teamQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(teamQuery.binds.count == 1)
+
+    #expect(squadQuery.sql.contains("FROM squad"))
+    #expect(squadQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(squadQuery.binds.count == 1)
+
+    #expect(membershipQuery.sql.contains("FROM workspace_persona_membership"))
+    #expect(membershipQuery.sql.contains("JOIN workspace_persona"))
+    #expect(membershipQuery.sql.contains("ORDER BY workspace_persona_membership.created_at ASC, workspace_persona_membership.id ASC"))
+    #expect(membershipQuery.binds.count == 1)
 
     #expect(participantQuery.sql.contains("FROM post_participant"))
     #expect(participantQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
@@ -192,6 +211,8 @@ struct Phase1RuntimeRepositoryTests {
     let threadID = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
     let samwiseWorkspacePersonaID = UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
     let prodDocWorkspacePersonaID = UUID(uuidString: "88888888-8888-8888-8888-888888888888")!
+    let foundingGroupTeamID = UUID(uuidString: "12121212-1212-1212-1212-121212121212")!
+    let feedbackSquadID = UUID(uuidString: "13131313-1313-1313-1313-131313131313")!
     let activationID = UUID(uuidString: "99999999-9999-9999-9999-999999999999")!
     let runID = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
 
@@ -228,6 +249,43 @@ struct Phase1RuntimeRepositoryTests {
           displayName: "ProdDoc",
           status: .active,
           createdAt: referenceDate
+        ),
+      ],
+      teams: [
+        OrbitTeamRecord(
+          id: foundingGroupTeamID,
+          workspaceID: workspaceID,
+          slug: "founding-group",
+          name: "Founding Group",
+          purpose: "Seeded first team target.",
+          createdAt: referenceDate
+        )
+      ],
+      squads: [
+        OrbitSquadRecord(
+          id: feedbackSquadID,
+          workspaceID: workspaceID,
+          teamID: foundingGroupTeamID,
+          slug: "command-center-feedback-squad",
+          name: "Command Center Feedback Squad",
+          purpose: "Focused feedback lane.",
+          createdAt: referenceDate.addingTimeInterval(1)
+        )
+      ],
+      workspacePersonaMemberships: [
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "14141414-1414-1414-1414-141414141414")!,
+          workspacePersonaID: samwiseWorkspacePersonaID,
+          teamID: foundingGroupTeamID,
+          roleInGroup: "trusted-partner",
+          createdAt: referenceDate.addingTimeInterval(2)
+        ),
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "15151515-1515-1515-1515-151515151515")!,
+          workspacePersonaID: prodDocWorkspacePersonaID,
+          squadID: feedbackSquadID,
+          roleInGroup: "reviewer",
+          createdAt: referenceDate.addingTimeInterval(3)
         ),
       ],
       post: OrbitPostRecord(

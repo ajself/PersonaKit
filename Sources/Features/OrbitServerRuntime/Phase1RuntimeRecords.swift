@@ -170,6 +170,84 @@ public struct OrbitWorkspacePersonaRecord: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitTeamRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let workspaceID: UUID
+  public let slug: String
+  public let name: String
+  public let purpose: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    workspaceID: UUID,
+    slug: String,
+    name: String,
+    purpose: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.workspaceID = workspaceID
+    self.slug = slug
+    self.name = name
+    self.purpose = purpose
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitSquadRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let workspaceID: UUID
+  public let teamID: UUID?
+  public let slug: String
+  public let name: String
+  public let purpose: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    workspaceID: UUID,
+    teamID: UUID? = nil,
+    slug: String,
+    name: String,
+    purpose: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.workspaceID = workspaceID
+    self.teamID = teamID
+    self.slug = slug
+    self.name = name
+    self.purpose = purpose
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitWorkspacePersonaMembershipRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let workspacePersonaID: UUID
+  public let teamID: UUID?
+  public let squadID: UUID?
+  public let roleInGroup: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    workspacePersonaID: UUID,
+    teamID: UUID? = nil,
+    squadID: UUID? = nil,
+    roleInGroup: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.workspacePersonaID = workspacePersonaID
+    self.teamID = teamID
+    self.squadID = squadID
+    self.roleInGroup = roleInGroup
+    self.createdAt = createdAt
+  }
+}
+
 public struct OrbitPostRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID
@@ -431,6 +509,9 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let workspace: OrbitWorkspaceRecord
   public let channel: OrbitChannelRecord
   public let workspacePersonas: [OrbitWorkspacePersonaRecord]
+  public let teams: [OrbitTeamRecord]
+  public let squads: [OrbitSquadRecord]
+  public let workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord]
   public let post: OrbitPostRecord
   public let thread: OrbitThreadRecord
   public let seedMessages: [OrbitMessageRecord]
@@ -444,6 +525,9 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     workspace: OrbitWorkspaceRecord,
     channel: OrbitChannelRecord,
     workspacePersonas: [OrbitWorkspacePersonaRecord] = [],
+    teams: [OrbitTeamRecord] = [],
+    squads: [OrbitSquadRecord] = [],
+    workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord] = [],
     post: OrbitPostRecord,
     thread: OrbitThreadRecord,
     seedMessages: [OrbitMessageRecord],
@@ -456,6 +540,9 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     self.workspace = workspace
     self.channel = channel
     self.workspacePersonas = workspacePersonas
+    self.teams = teams
+    self.squads = squads
+    self.workspacePersonaMemberships = workspacePersonaMemberships
     self.post = post
     self.thread = thread
     self.seedMessages = seedMessages
@@ -471,6 +558,9 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let workspace: OrbitWorkspaceRecord
   public let channel: OrbitChannelRecord
   public let workspacePersonas: [OrbitWorkspacePersonaRecord]
+  public let teams: [OrbitTeamRecord]
+  public let squads: [OrbitSquadRecord]
+  public let workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord]
   public let post: OrbitPostRecord
   public let thread: OrbitThreadRecord
   public let messages: [OrbitMessageRecord]
@@ -483,6 +573,9 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     workspace: OrbitWorkspaceRecord,
     channel: OrbitChannelRecord,
     workspacePersonas: [OrbitWorkspacePersonaRecord] = [],
+    teams: [OrbitTeamRecord] = [],
+    squads: [OrbitSquadRecord] = [],
+    workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord] = [],
     post: OrbitPostRecord,
     thread: OrbitThreadRecord,
     messages: [OrbitMessageRecord],
@@ -494,6 +587,9 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     self.workspace = workspace
     self.channel = channel
     self.workspacePersonas = workspacePersonas
+    self.teams = teams
+    self.squads = squads
+    self.workspacePersonaMemberships = workspacePersonaMemberships
     self.post = post
     self.thread = thread
     self.messages = messages

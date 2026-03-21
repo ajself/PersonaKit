@@ -206,6 +206,37 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         )
       }
 
+      let teamRows = try await client.query(
+        repository.selectTeamsQuery(workspaceID: workspace.id)
+      )
+
+      var teams = [OrbitTeamRecord]()
+      for try await teamRow in teamRows {
+        teams.append(try decodeTeam(from: teamRow.makeRandomAccess()))
+      }
+
+      let squadRows = try await client.query(
+        repository.selectSquadsQuery(workspaceID: workspace.id)
+      )
+
+      var squads = [OrbitSquadRecord]()
+      for try await squadRow in squadRows {
+        squads.append(try decodeSquad(from: squadRow.makeRandomAccess()))
+      }
+
+      let workspacePersonaMembershipRows = try await client.query(
+        repository.selectWorkspacePersonaMembershipsQuery(workspaceID: workspace.id)
+      )
+
+      var workspacePersonaMemberships = [OrbitWorkspacePersonaMembershipRecord]()
+      for try await workspacePersonaMembershipRow in workspacePersonaMembershipRows {
+        workspacePersonaMemberships.append(
+          try decodeWorkspacePersonaMembership(
+            from: workspacePersonaMembershipRow.makeRandomAccess()
+          )
+        )
+      }
+
       let participantRows = try await client.query(
         repository.selectPostParticipantsQuery(postID: post.id)
       )
@@ -255,6 +286,9 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         workspace: workspace,
         channel: channel,
         workspacePersonas: workspacePersonas,
+        teams: teams,
+        squads: squads,
+        workspacePersonaMemberships: workspacePersonaMemberships,
         post: post,
         thread: thread,
         messages: messages,
@@ -390,6 +424,46 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       ),
       createdAt: row["created_at"].decode(Date.self),
       archivedAt: row["archived_at"].decode(Optional<Date>.self)
+    )
+  }
+
+  private func decodeTeam(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitTeamRecord {
+    try OrbitTeamRecord(
+      id: row["id"].decode(UUID.self),
+      workspaceID: row["workspace_id"].decode(UUID.self),
+      slug: row["slug"].decode(String.self),
+      name: row["name"].decode(String.self),
+      purpose: row["purpose"].decode(String.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeSquad(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitSquadRecord {
+    try OrbitSquadRecord(
+      id: row["id"].decode(UUID.self),
+      workspaceID: row["workspace_id"].decode(UUID.self),
+      teamID: row["team_id"].decode(Optional<UUID>.self),
+      slug: row["slug"].decode(String.self),
+      name: row["name"].decode(String.self),
+      purpose: row["purpose"].decode(String.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeWorkspacePersonaMembership(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitWorkspacePersonaMembershipRecord {
+    try OrbitWorkspacePersonaMembershipRecord(
+      id: row["id"].decode(UUID.self),
+      workspacePersonaID: row["workspace_persona_id"].decode(UUID.self),
+      teamID: row["team_id"].decode(Optional<UUID>.self),
+      squadID: row["squad_id"].decode(Optional<UUID>.self),
+      roleInGroup: row["role_in_group"].decode(String.self),
+      createdAt: row["created_at"].decode(Date.self)
     )
   }
 

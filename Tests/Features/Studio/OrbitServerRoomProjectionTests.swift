@@ -52,6 +52,17 @@ struct OrbitServerRoomProjectionTests {
   }
 
   @Test
+  func projectionCarriesPersistedGroupsIntoWorkspaceModel() {
+    let snapshot = sampleSnapshot()
+
+    let workspace = OrbitServerRoomProjection.workspace(from: snapshot)
+
+    #expect(workspace.teams.map(\.slug) == ["founding-group"])
+    #expect(workspace.squads.map(\.slug) == ["command-center-feedback-squad"])
+    #expect(workspace.workspacePersonaMemberships.count == 3)
+  }
+
+  @Test
   func projectionRestoresActivationFailureEvidenceFromCanonicalPostEvents() {
     let snapshot = sampleFailureSnapshot()
 
@@ -68,6 +79,8 @@ struct OrbitServerRoomProjectionTests {
     let channelID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
     let postID = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
     let threadID = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
+    let foundingGroupTeamID = UUID(uuidString: "55555555-5555-5555-5555-555555555555")!
+    let feedbackSquadID = UUID(uuidString: "66666666-6666-6666-6666-666666666666")!
     let t0 = Date(timeIntervalSince1970: 1_742_342_400)
 
     let room = OrbitPhase1RoomSnapshot(
@@ -103,6 +116,50 @@ struct OrbitServerRoomProjectionTests {
           displayName: "ProdDoc",
           status: .active,
           createdAt: t0.addingTimeInterval(1)
+        ),
+      ],
+      teams: [
+        OrbitTeamRecord(
+          id: foundingGroupTeamID,
+          workspaceID: workspaceID,
+          slug: "founding-group",
+          name: "Founding Group",
+          purpose: "Seeded first team target.",
+          createdAt: t0
+        )
+      ],
+      squads: [
+        OrbitSquadRecord(
+          id: feedbackSquadID,
+          workspaceID: workspaceID,
+          teamID: foundingGroupTeamID,
+          slug: "command-center-feedback-squad",
+          name: "Command Center Feedback Squad",
+          purpose: "Focused feedback lane.",
+          createdAt: t0.addingTimeInterval(2)
+        )
+      ],
+      workspacePersonaMemberships: [
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+          workspacePersonaID: UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+          teamID: foundingGroupTeamID,
+          roleInGroup: "trusted-partner",
+          createdAt: t0.addingTimeInterval(3)
+        ),
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "88888888-8888-8888-8888-888888888888")!,
+          workspacePersonaID: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!,
+          teamID: foundingGroupTeamID,
+          roleInGroup: "product-steward",
+          createdAt: t0.addingTimeInterval(4)
+        ),
+        OrbitWorkspacePersonaMembershipRecord(
+          id: UUID(uuidString: "99999999-9999-9999-9999-999999999999")!,
+          workspacePersonaID: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!,
+          squadID: feedbackSquadID,
+          roleInGroup: "reviewer",
+          createdAt: t0.addingTimeInterval(5)
         ),
       ],
       post: OrbitPostRecord(
@@ -361,6 +418,9 @@ struct OrbitServerRoomProjectionTests {
       workspace: snapshot.room.workspace,
       channel: snapshot.room.channel,
       workspacePersonas: snapshot.room.workspacePersonas,
+      teams: snapshot.room.teams,
+      squads: snapshot.room.squads,
+      workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
       post: snapshot.room.post,
       thread: snapshot.room.thread,
       messages: snapshot.room.messages + [blockedSystemMessage],
