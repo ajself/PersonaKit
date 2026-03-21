@@ -89,4 +89,4 @@ Exclude:
 
 - Packet outcome: `shipped` for planning-closeout scope.
 - Packet 5 closeout now authorizes runtime handoff for `M4` review progression under current contracts.
-- Next required closeout step: route this loop to `worktree-squad-retrospective` and mark handoff complete.
+- Closeout handoff complete: the `worktree-squad-retrospective` trail now records this loop and `M5-P1` is the next bounded planning packet.

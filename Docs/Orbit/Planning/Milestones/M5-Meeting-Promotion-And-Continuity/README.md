@@ -3,12 +3,35 @@
 Status: Planned
 Primary Owner: `orbit-meeting-coordinator`
 Supporting Personas: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-21
 
 ## Purpose
 
 Let a message-thread discussion move into meeting mode or a promoted meeting post
 without losing continuity.
+
+## Quality Standard
+
+`M5` is not successful because a thread can technically create a meeting post.
+
+`M5` is successful only when meeting transitions remain:
+
+- explicit about why a discussion stayed inline, entered meeting mode, or
+  promoted
+- continuous enough that origin thread and meeting history can be inspected
+  together
+- attributable and reviewable without hidden coordinator-only policy
+- bounded away from `M6` structured object depth and `M7` workstream execution
+
+The bare minimum is not a milestone win.
+
+## File Map
+
+- `README.md`
+  milestone overview, packet order, and top-level guardrails
+- `Packet-01-Freeze-Meeting-Trigger-Rules.md`
+  preflight packet contract for inline versus meeting versus promoted-post
+  trigger rules
 
 ## Preconditions
 
@@ -38,6 +61,7 @@ Out of scope:
 - `Docs/Orbit/RFCs/RFC-0004-Teams-Squads-and-Meeting-Coordinator.md`
 - `Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md`
 - `M4` target-expansion and group-collaboration evidence
+- `Docs/Orbit/Planning/Milestones/M4-Team-And-Squad-Collaboration/Packet-07-M4-Closeout-And-Remaining-Work.md`
 
 ## Execution Packets
 
@@ -139,6 +163,7 @@ Avoid:
 
 ## Evidence Package
 
+- `Packet-01-Freeze-Meeting-Trigger-Rules.md`
 - meeting trigger note
 - meeting-state examples
 - continuity-link examples
