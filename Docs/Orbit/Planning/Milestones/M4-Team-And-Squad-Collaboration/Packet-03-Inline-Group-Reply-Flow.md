@@ -5,7 +5,7 @@ Packet Id: `M4-P3`
 Milestone: `M4`
 Execution Owner: `orbit-meeting-coordinator`
 Review Personas: `venture-product-steward`, `studio-interaction-quality-lead`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-21
 
 ## Header
 
@@ -78,6 +78,20 @@ Exclude:
 - inline group reply walkthrough examples
 - explicit note describing what stays deferred to `M5`
 - interaction review questions aligned with the validation matrix
+- runtime checks now include:
+  - `Tests/Features/Studio/OrbitWorkspaceTests.swift`
+  - `Tests/Features/Studio/OrbitServerBackedRoomCoordinatorTests.swift`
+  - `Tests/Features/Studio/OrbitServerRoomProjectionTests.swift`
+  - `Tests/Features/Studio/OrbitWorkspacePersistenceTests.swift`
+
+### Packet 3 Review Evidence
+
+- inline group reply attribution now emits two system event slices per expansion:
+  - expanded participant expectations
+  - exchange state (`active`, `completed`, `partial`, `failed`)
+- duplicate membership rows for the same workspace persona are handled deterministically
+  once-per-participant for both team and squad targets.
+- packet scope remains inline: no meeting promotion is introduced in this slice.
 
 ## Packet 3 Proposed Closure
 

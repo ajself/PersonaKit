@@ -163,6 +163,53 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func teamMembershipUpsertGuardsAgainstDuplicateNaturalKeys() {
+    let membership = sampleRoomBootstrap().workspacePersonaMemberships[0]
+    let query = repository.upsertWorkspacePersonaMembershipQuery(membership)
+
+    #expect(query.sql.contains("WHERE NOT EXISTS"))
+    #expect(query.sql.contains("SELECT 1"))
+    #expect(query.sql.contains("FROM workspace_persona_membership"))
+    #expect(query.sql.contains("id <>"))
+    #expect(query.sql.contains("workspace_persona_id ="))
+    #expect(query.sql.contains("team_id ="))
+    #expect(query.sql.contains("ON CONFLICT (id) DO UPDATE"))
+  }
+
+  @Test
+  func squadMembershipUpsertGuardsAgainstDuplicateNaturalKeys() {
+    let membership = sampleRoomBootstrap().workspacePersonaMemberships[1]
+    let query = repository.upsertWorkspacePersonaMembershipQuery(membership)
+
+    #expect(query.sql.contains("WHERE NOT EXISTS"))
+    #expect(query.sql.contains("SELECT 1"))
+    #expect(query.sql.contains("FROM workspace_persona_membership"))
+    #expect(query.sql.contains("id <>"))
+    #expect(query.sql.contains("workspace_persona_id ="))
+    #expect(query.sql.contains("squad_id ="))
+    #expect(query.sql.contains("ON CONFLICT (id) DO UPDATE"))
+  }
+
+  @Test
+  func malformedMembershipUpsertUsesDirectInsertPathToPreserveDatabaseValidation() {
+    let membership = OrbitWorkspacePersonaMembershipRecord(
+      id: UUID(uuidString: "16161616-1616-1616-1616-161616161616")!,
+      workspacePersonaID: sampleRoomBootstrap().workspacePersonaMemberships[0].workspacePersonaID,
+      teamID: nil,
+      squadID: nil,
+      roleInGroup: "reviewer",
+      createdAt: referenceDate
+    )
+    let query = repository.upsertWorkspacePersonaMembershipQuery(membership)
+
+    #expect(query.sql.contains("INSERT INTO workspace_persona_membership"))
+    #expect(query.sql.contains("VALUES ("))
+    #expect(query.sql.contains("ON CONFLICT (id) DO UPDATE"))
+    #expect(query.sql.contains("WHERE NOT EXISTS") == false)
+    #expect(query.sql.contains("WHERE 1 = 0") == false)
+  }
+
+  @Test
   func activationAndRunQueryLinksActivationTraceToExecutionState() {
     let query = repository.selectPostActivationsAndRunsQuery(originPostID: UUID())
 

@@ -157,13 +157,22 @@ struct OrbitWorkspacePersistenceTests {
     let reloadedWorkspace = try #require(loadedWorkspace)
     let activeThread = try #require(reloadedWorkspace.activeThread)
     let meetingResponses = activeThread.messages.filter { $0.kind == .participantResponse }.suffix(2)
+    let systemEvents = activeThread.messages.filter { $0.kind == .systemEvent }
 
     #expect(activeThread.interactionMode == .lightweightMeeting)
     #expect(meetingResponses.count == 2)
+    #expect(systemEvents.count == 2)
     #expect(Set(meetingResponses.map(\.speakerParticipantID)) == [
       OrbitParticipantID.samwise.rawValue,
       OrbitParticipantID.prodDoc.rawValue,
     ])
+    #expect(
+      meetingResponses.allSatisfy {
+        $0.addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue
+      }
+    )
+    #expect(systemEvents.first?.body.contains("exchange state: active") == true)
+    #expect(systemEvents.last?.body.contains("state=completed") == true)
     #expect(reloadedWorkspace.activationRecords.suffix(2).allSatisfy { $0.triggerSource == .meetingInvocation })
     #expect(reloadedWorkspace.activationFailureRecords == [])
   }

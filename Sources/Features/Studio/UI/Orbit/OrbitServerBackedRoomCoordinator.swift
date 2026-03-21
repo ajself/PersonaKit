@@ -31,10 +31,8 @@ private struct OrbitServerBackedPreflightConversationTurn {
   let workspace: OrbitWorkspace
   let targetResolution: OrbitTargetResolution?
   let resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract]
+  let createdMessages: [OrbitMessage]
   let userMessage: OrbitMessage
-  let systemEventMessage: OrbitMessage?
-  let responseMessages: [OrbitMessage]
-  let activationFailure: OrbitActivationFailureRecord?
 }
 
 struct OrbitServerBackedRoomCoordinator {
@@ -145,36 +143,39 @@ struct OrbitServerBackedRoomCoordinator {
     )
 
     do {
-      if let activationFailure = preflight.activationFailure {
-        let systemEventMessageID = UUID()
+      for message in preflight.createdMessages where message.id != preflight.userMessage.id {
+        switch message.kind {
+        case .user:
+          continue
+        case .systemEvent:
+          if let activationFailure = preflight.workspace.activationFailureRecordForSystemEvent(message.id) {
+            let systemEventMessageID = UUID()
 
-        _ = try await client.appendActivationFailure(
-          OrbitPhase1AppendActivationFailureRequest(
-            workspaceSlug: scope.workspaceSlug,
-            channelSlug: scope.channelSlug,
-            initiatedByParticipantID: authorID,
-            triggerMessageID: appendResult.message.id,
-            failure: failurePayload(
-              from: activationFailure,
-              systemEventMessageID: systemEventMessageID
+            _ = try await client.appendActivationFailure(
+              OrbitPhase1AppendActivationFailureRequest(
+                workspaceSlug: scope.workspaceSlug,
+                channelSlug: scope.channelSlug,
+                initiatedByParticipantID: authorID,
+                triggerMessageID: appendResult.message.id,
+                failure: failurePayload(
+                  from: activationFailure,
+                  systemEventMessageID: systemEventMessageID
+                )
+              )
             )
-          )
-        )
-      } else {
-        if let systemEventMessage = preflight.systemEventMessage {
-          _ = try await client.appendSystemMessage(
-            OrbitPhase1AppendSystemMessageRequest(
-              workspaceSlug: scope.workspaceSlug,
-              channelSlug: scope.channelSlug,
-              body: systemEventMessage.body,
-              replyToMessageID: appendResult.message.id
+          } else {
+            _ = try await client.appendSystemMessage(
+              OrbitPhase1AppendSystemMessageRequest(
+                workspaceSlug: scope.workspaceSlug,
+                channelSlug: scope.channelSlug,
+                body: message.body,
+                replyToMessageID: appendResult.message.id
+              )
             )
-          )
-        }
-
-        for responseMessage in preflight.responseMessages {
+          }
+        case .participantResponse:
           let activation = try activationRecord(
-            for: responseMessage,
+            for: message,
             in: preflight.workspace
           )
           let contractSnapshot = try contractSnapshot(
@@ -212,7 +213,7 @@ struct OrbitServerBackedRoomCoordinator {
               responseMode: responseMode(
                 for: preflight.targetResolution
               ),
-              body: responseMessage.body,
+              body: message.body,
               contract: contractPayload(
                 activation: activation,
                 contractSnapshot: contractSnapshot,
@@ -302,10 +303,8 @@ struct OrbitServerBackedRoomCoordinator {
       workspace: stagedWorkspace,
       targetResolution: targetResolution,
       resolvedContractsByParticipantID: resolvedContractsByParticipantID,
-      userMessage: userMessage,
-      systemEventMessage: createdMessages.first(where: { $0.kind == .systemEvent }),
-      responseMessages: createdMessages.filter { $0.kind == .participantResponse },
-      activationFailure: stagedWorkspace.activationFailureRecord(for: userMessage.id)
+      createdMessages: createdMessages,
+      userMessage: userMessage
     )
   }
 

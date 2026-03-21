@@ -81,6 +81,12 @@ struct OrbitWorkspace: Codable, Equatable {
     activationFailureRecords.first { $0.triggerMessageID == triggerMessageID }
   }
 
+  func activationFailureRecords(
+    for triggerMessageID: String
+  ) -> [OrbitActivationFailureRecord] {
+    activationFailureRecords.filter { $0.triggerMessageID == triggerMessageID }
+  }
+
   func activationFailureRecordForSystemEvent(
     _ messageID: String
   ) -> OrbitActivationFailureRecord? {
@@ -142,37 +148,16 @@ struct OrbitWorkspace: Codable, Equatable {
 
     var createdMessages = [triggerMessage]
 
-    if let activationFailure = evaluateActivationFailure(
+    if let activationFailure = preExchangeActivationFailure(
       addressedParticipantID: addressedParticipantID,
       targetResolution: targetResolution,
       addressedParticipants: addressedParticipants,
-      resolvedContractsByParticipantID: resolvedContractsByParticipantID,
       triggerSource: triggerSource,
       triggerMessageID: triggerMessage.id
     ) {
-      if let systemEventMessage = appendSystemEvent(body: activationFailure.systemEventBody) {
-        activationFailureRecords.append(
-          OrbitActivationFailureRecord(
-            id: activationFailure.id,
-            workspaceID: activationFailure.workspaceID,
-            addressedTargetID: activationFailure.addressedTargetID,
-            participantID: activationFailure.participantID,
-            workspacePersonaID: activationFailure.workspacePersonaID,
-            personaTemplateID: activationFailure.personaTemplateID,
-            directiveID: activationFailure.directiveID,
-            triggerSource: activationFailure.triggerSource,
-            triggerMessageID: activationFailure.triggerMessageID,
-            systemEventMessageID: systemEventMessage.id,
-            requiredSkillIDs: activationFailure.requiredSkillIDs,
-            authorizedSkillIDs: activationFailure.authorizedSkillIDs,
-            failureReason: activationFailure.failureReason,
-            systemEventBody: activationFailure.systemEventBody
-          )
-        )
+      if let systemEventMessage = appendActivationFailure(activationFailure) {
         createdMessages.append(systemEventMessage)
       }
-
-      nextActivationFailureSequence += 1
 
       return createdMessages
     }
@@ -184,15 +169,36 @@ struct OrbitWorkspace: Codable, Equatable {
       )
 
     if let systemEventBody = OrbitParticipantResponseBridge.systemEventBody(
-      for: targetResolution
+      for: targetResolution,
+      in: self
     ), let systemEventMessage = appendSystemEvent(body: systemEventBody) {
       createdMessages.append(systemEventMessage)
     }
+
+    var repliedParticipantIDs = Set<String>()
+    var failedParticipantIDs = Set<String>()
 
     for participant in addressedParticipants {
       let resolvedContract =
         resolvedContractsByParticipantID[participant.id]
         ?? Self.scaffoldedActivationContract(for: participant)
+
+      if let activationFailure = participantActivationFailure(
+        participant: participant,
+        addressedParticipantID: addressedParticipantID,
+        targetResolution: targetResolution,
+        resolvedContract: resolvedContract,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessage.id
+      ) {
+        failedParticipantIDs.insert(participant.id)
+
+        if let systemEventMessage = appendActivationFailure(activationFailure) {
+          createdMessages.append(systemEventMessage)
+        }
+
+        continue
+      }
 
       guard
         let responseMessage = appendParticipantResponse(
@@ -205,7 +211,17 @@ struct OrbitWorkspace: Codable, Equatable {
         continue
       }
 
+      repliedParticipantIDs.insert(participant.id)
       createdMessages.append(responseMessage)
+    }
+
+    if let exchangeStateBody = OrbitParticipantResponseBridge.exchangeStateSystemEventBody(
+      for: targetResolution,
+      in: self,
+      repliedParticipantIDs: repliedParticipantIDs,
+      failedParticipantIDs: failedParticipantIDs
+    ), let systemEventMessage = appendSystemEvent(body: exchangeStateBody) {
+      createdMessages.append(systemEventMessage)
     }
 
     return createdMessages
@@ -284,11 +300,10 @@ struct OrbitWorkspace: Codable, Equatable {
     String(format: "afail-%04d", sequence)
   }
 
-  private func evaluateActivationFailure(
+  private func preExchangeActivationFailure(
     addressedParticipantID: String?,
     targetResolution: OrbitTargetResolution?,
     addressedParticipants: [OrbitParticipant],
-    resolvedContractsByParticipantID: [String: OrbitResolvedActivationContract],
     triggerSource: OrbitActivationTriggerSource,
     triggerMessageID: String
   ) -> OrbitActivationFailureRecord? {
@@ -356,135 +371,140 @@ struct OrbitWorkspace: Codable, Equatable {
       )
     }
 
-    for participant in addressedParticipants {
-      let resolvedContract =
-        resolvedContractsByParticipantID[participant.id]
-        ?? Self.scaffoldedActivationContract(for: participant)
+    return nil
+  }
 
-      if participant.id == OrbitParticipantID.prodDoc.rawValue,
-        participant.personaTemplateID != "venture-product-steward"
-      {
-        let detail =
-          "Orbit blocked the activation because the frozen ProdDoc identity mapping does not match venture-product-steward."
-        return OrbitActivationFailureRecord(
-          id: Self.activationFailureID(for: nextActivationFailureSequence),
-          workspaceID: id,
-          addressedTargetID: addressedParticipantID,
-          participantID: participant.id,
-          workspacePersonaID: participant.workspacePersonaID,
-          personaTemplateID: participant.personaTemplateID,
-          directiveID: resolvedContract.directiveID,
-          triggerSource: triggerSource,
-          triggerMessageID: triggerMessageID,
-          systemEventMessageID: nil,
-          requiredSkillIDs: resolvedContract.requiredSkillIDs,
-          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
-          failureReason: .frozenProdDocAliasContradiction,
-          systemEventBody: failureSystemEventBody(
-            targetResolution: targetResolution,
-            detail: detail
-          )
+  private func participantActivationFailure(
+    participant: OrbitParticipant,
+    addressedParticipantID: String?,
+    targetResolution: OrbitTargetResolution?,
+    resolvedContract: OrbitResolvedActivationContract,
+    triggerSource: OrbitActivationTriggerSource,
+    triggerMessageID: String
+  ) -> OrbitActivationFailureRecord? {
+    if participant.id == OrbitParticipantID.prodDoc.rawValue,
+      participant.personaTemplateID != "venture-product-steward"
+    {
+      let detail =
+        "Orbit blocked the activation because the frozen ProdDoc identity mapping does not match venture-product-steward."
+      return OrbitActivationFailureRecord(
+        id: Self.activationFailureID(for: nextActivationFailureSequence),
+        workspaceID: id,
+        addressedTargetID: addressedParticipantID,
+        participantID: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        personaTemplateID: participant.personaTemplateID,
+        directiveID: resolvedContract.directiveID,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessageID,
+        systemEventMessageID: nil,
+        requiredSkillIDs: resolvedContract.requiredSkillIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        failureReason: .frozenProdDocAliasContradiction,
+        systemEventBody: failureSystemEventBody(
+          targetResolution: targetResolution,
+          detail: detail
         )
-      }
+      )
+    }
 
-      if participant.workspacePersonaID == nil {
-        let detail =
-          "Orbit blocked the activation because the collaborator is missing a stable workspace persona anchor."
-        return OrbitActivationFailureRecord(
-          id: Self.activationFailureID(for: nextActivationFailureSequence),
-          workspaceID: id,
-          addressedTargetID: addressedParticipantID,
-          participantID: participant.id,
-          workspacePersonaID: nil,
-          personaTemplateID: participant.personaTemplateID,
-          directiveID: resolvedContract.directiveID,
-          triggerSource: triggerSource,
-          triggerMessageID: triggerMessageID,
-          systemEventMessageID: nil,
-          requiredSkillIDs: resolvedContract.requiredSkillIDs,
-          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
-          failureReason: .missingWorkspacePersona,
-          systemEventBody: failureSystemEventBody(
-            targetResolution: targetResolution,
-            detail: detail
-          )
+    if participant.workspacePersonaID == nil {
+      let detail =
+        "Orbit blocked the activation because the collaborator is missing a stable workspace persona anchor."
+      return OrbitActivationFailureRecord(
+        id: Self.activationFailureID(for: nextActivationFailureSequence),
+        workspaceID: id,
+        addressedTargetID: addressedParticipantID,
+        participantID: participant.id,
+        workspacePersonaID: nil,
+        personaTemplateID: participant.personaTemplateID,
+        directiveID: resolvedContract.directiveID,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessageID,
+        systemEventMessageID: nil,
+        requiredSkillIDs: resolvedContract.requiredSkillIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        failureReason: .missingWorkspacePersona,
+        systemEventBody: failureSystemEventBody(
+          targetResolution: targetResolution,
+          detail: detail
         )
-      }
+      )
+    }
 
-      if participant.personaTemplateID == nil {
-        let detail =
-          "Orbit blocked the activation because the collaborator is missing a PersonaKit persona-template mapping."
-        return OrbitActivationFailureRecord(
-          id: Self.activationFailureID(for: nextActivationFailureSequence),
-          workspaceID: id,
-          addressedTargetID: addressedParticipantID,
-          participantID: participant.id,
-          workspacePersonaID: participant.workspacePersonaID,
-          personaTemplateID: nil,
-          directiveID: resolvedContract.directiveID,
-          triggerSource: triggerSource,
-          triggerMessageID: triggerMessageID,
-          systemEventMessageID: nil,
-          requiredSkillIDs: resolvedContract.requiredSkillIDs,
-          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
-          failureReason: .missingPersonaTemplate,
-          systemEventBody: failureSystemEventBody(
-            targetResolution: targetResolution,
-            detail: detail
-          )
+    if participant.personaTemplateID == nil {
+      let detail =
+        "Orbit blocked the activation because the collaborator is missing a PersonaKit persona-template mapping."
+      return OrbitActivationFailureRecord(
+        id: Self.activationFailureID(for: nextActivationFailureSequence),
+        workspaceID: id,
+        addressedTargetID: addressedParticipantID,
+        participantID: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        personaTemplateID: nil,
+        directiveID: resolvedContract.directiveID,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessageID,
+        systemEventMessageID: nil,
+        requiredSkillIDs: resolvedContract.requiredSkillIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        failureReason: .missingPersonaTemplate,
+        systemEventBody: failureSystemEventBody(
+          targetResolution: targetResolution,
+          detail: detail
         )
-      }
+      )
+    }
 
-      if resolvedContract.directiveID == nil {
-        let detail =
-          "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
-        return OrbitActivationFailureRecord(
-          id: Self.activationFailureID(for: nextActivationFailureSequence),
-          workspaceID: id,
-          addressedTargetID: addressedParticipantID,
-          participantID: participant.id,
-          workspacePersonaID: participant.workspacePersonaID,
-          personaTemplateID: participant.personaTemplateID,
-          directiveID: nil,
-          triggerSource: triggerSource,
-          triggerMessageID: triggerMessageID,
-          systemEventMessageID: nil,
-          requiredSkillIDs: resolvedContract.requiredSkillIDs,
-          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
-          failureReason: .missingDirective,
-          systemEventBody: failureSystemEventBody(
-            targetResolution: targetResolution,
-            detail: detail
-          )
+    if resolvedContract.directiveID == nil {
+      let detail =
+        "Orbit blocked the activation because the collaborator has no resolved directive for this checkpoint."
+      return OrbitActivationFailureRecord(
+        id: Self.activationFailureID(for: nextActivationFailureSequence),
+        workspaceID: id,
+        addressedTargetID: addressedParticipantID,
+        participantID: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        personaTemplateID: participant.personaTemplateID,
+        directiveID: nil,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessageID,
+        systemEventMessageID: nil,
+        requiredSkillIDs: resolvedContract.requiredSkillIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        failureReason: .missingDirective,
+        systemEventBody: failureSystemEventBody(
+          targetResolution: targetResolution,
+          detail: detail
         )
-      }
+      )
+    }
 
-      let unauthorizedRequiredSkills = resolvedContract.unauthorizedRequiredSkillIDs
+    let unauthorizedRequiredSkills = resolvedContract.unauthorizedRequiredSkillIDs
 
-      if !unauthorizedRequiredSkills.isEmpty || !resolvedContract.failureReasons.isEmpty {
-        let failureDetail = resolvedContract.failureReasons.first
-          ?? "the required skill posture is not authorized for this collaborator"
-        let detail = "Orbit blocked the activation because \(failureDetail)."
-        return OrbitActivationFailureRecord(
-          id: Self.activationFailureID(for: nextActivationFailureSequence),
-          workspaceID: id,
-          addressedTargetID: addressedParticipantID,
-          participantID: participant.id,
-          workspacePersonaID: participant.workspacePersonaID,
-          personaTemplateID: participant.personaTemplateID,
-          directiveID: resolvedContract.directiveID,
-          triggerSource: triggerSource,
-          triggerMessageID: triggerMessageID,
-          systemEventMessageID: nil,
-          requiredSkillIDs: resolvedContract.requiredSkillIDs,
-          authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
-          failureReason: .unauthorizedSkillPosture,
-          systemEventBody: failureSystemEventBody(
-            targetResolution: targetResolution,
-            detail: detail
-          )
+    if !unauthorizedRequiredSkills.isEmpty || !resolvedContract.failureReasons.isEmpty {
+      let failureDetail = resolvedContract.failureReasons.first
+        ?? "the required skill posture is not authorized for this collaborator"
+      let detail = "Orbit blocked the activation because \(failureDetail)."
+      return OrbitActivationFailureRecord(
+        id: Self.activationFailureID(for: nextActivationFailureSequence),
+        workspaceID: id,
+        addressedTargetID: addressedParticipantID,
+        participantID: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        personaTemplateID: participant.personaTemplateID,
+        directiveID: resolvedContract.directiveID,
+        triggerSource: triggerSource,
+        triggerMessageID: triggerMessageID,
+        systemEventMessageID: nil,
+        requiredSkillIDs: resolvedContract.requiredSkillIDs,
+        authorizedSkillIDs: resolvedContract.authorizedSkillIDs,
+        failureReason: .unauthorizedSkillPosture,
+        systemEventBody: failureSystemEventBody(
+          targetResolution: targetResolution,
+          detail: detail
         )
-      }
+      )
     }
 
     return nil
@@ -500,10 +520,15 @@ struct OrbitWorkspace: Codable, Equatable {
       return nil
     }
 
+    let responseAddressedParticipantID =
+      triggerSource == .meetingInvocation
+      ? (triggerMessage.addressedParticipantID ?? OrbitParticipantID.aj.rawValue)
+      : OrbitParticipantID.aj.rawValue
+
     let responseMessage = appendMessage(
       threadIndex: threadIndex,
       speakerParticipantID: participant.id,
-      addressedParticipantID: OrbitParticipantID.aj.rawValue,
+      addressedParticipantID: responseAddressedParticipantID,
       body: OrbitParticipantResponseBridge.responseBody(
         for: participant,
         triggerMessage: triggerMessage,
@@ -607,6 +632,37 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     return [summary, detail].joined(separator: "\n")
+  }
+
+  @discardableResult
+  private mutating func appendActivationFailure(
+    _ activationFailure: OrbitActivationFailureRecord
+  ) -> OrbitMessage? {
+    guard let systemEventMessage = appendSystemEvent(body: activationFailure.systemEventBody) else {
+      return nil
+    }
+
+    activationFailureRecords.append(
+      OrbitActivationFailureRecord(
+        id: activationFailure.id,
+        workspaceID: activationFailure.workspaceID,
+        addressedTargetID: activationFailure.addressedTargetID,
+        participantID: activationFailure.participantID,
+        workspacePersonaID: activationFailure.workspacePersonaID,
+        personaTemplateID: activationFailure.personaTemplateID,
+        directiveID: activationFailure.directiveID,
+        triggerSource: activationFailure.triggerSource,
+        triggerMessageID: activationFailure.triggerMessageID,
+        systemEventMessageID: systemEventMessage.id,
+        requiredSkillIDs: activationFailure.requiredSkillIDs,
+        authorizedSkillIDs: activationFailure.authorizedSkillIDs,
+        failureReason: activationFailure.failureReason,
+        systemEventBody: activationFailure.systemEventBody
+      )
+    )
+    nextActivationFailureSequence += 1
+
+    return systemEventMessage
   }
 
   private mutating func appendMessage(
@@ -731,6 +787,24 @@ enum OrbitTargetReasonCategory: String, Equatable {
   case membershipUnresolved = "membership_unresolved"
   case missingOrAmbiguousTarget = "missing_or_ambiguous_target"
   case emptyGroup = "empty_group"
+}
+
+enum OrbitGroupParticipantRole: String, Equatable {
+  case contributor
+  case reviewer
+}
+
+enum OrbitGroupParticipantState: String, Equatable {
+  case pending
+  case replied
+  case failed
+}
+
+enum OrbitGroupExchangeState: String, Equatable {
+  case active
+  case completed
+  case partial
+  case failed
 }
 
 enum OrbitParticipantType: String, Codable, Equatable {

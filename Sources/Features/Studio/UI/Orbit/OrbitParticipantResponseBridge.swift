@@ -144,7 +144,8 @@ enum OrbitParticipantResponseBridge {
   }
 
   static func systemEventBody(
-    for targetResolution: OrbitTargetResolution?
+    for targetResolution: OrbitTargetResolution?,
+    in workspace: OrbitWorkspace? = nil
   ) -> String? {
     guard let targetResolution else {
       return nil
@@ -175,6 +176,69 @@ enum OrbitParticipantResponseBridge {
           reasons: targetResolution.excludedParticipantReasons
         )
       )
+    }
+
+    if let workspace,
+      let expectationLines = participantStateLines(
+        in: workspace,
+        targetResolution: targetResolution,
+        stateByParticipantID: Dictionary(
+          uniqueKeysWithValues: targetResolution.includedParticipants.map { ($0.id, .pending) }
+        )
+      )
+    {
+      summaryLines.append(expectationLines)
+      summaryLines.append("exchange state: \(OrbitGroupExchangeState.active.rawValue)")
+    }
+
+    return summaryLines.joined(separator: "\n")
+  }
+
+  static func exchangeStateSystemEventBody(
+    for targetResolution: OrbitTargetResolution?,
+    in workspace: OrbitWorkspace,
+    repliedParticipantIDs: Set<String>,
+    failedParticipantIDs: Set<String>
+  ) -> String? {
+    guard
+      let targetResolution,
+      targetResolution.status == .resolved,
+      targetResolution.targetKind != .collaborator
+    else {
+      return nil
+    }
+
+    let stateByParticipantID = Dictionary(
+      uniqueKeysWithValues: targetResolution.includedParticipants.map { participant in
+        let state: OrbitGroupParticipantState
+
+        if failedParticipantIDs.contains(participant.id) {
+          state = .failed
+        } else if repliedParticipantIDs.contains(participant.id) {
+          state = .replied
+        } else {
+          state = .pending
+        }
+
+        return (participant.id, state)
+      }
+    )
+    let exchangeState = exchangeState(
+      for: targetResolution,
+      stateByParticipantID: stateByParticipantID
+    )
+
+    var summaryLines = [
+      "Orbit exchange state",
+      "resolved target: kind=\(targetResolution.targetKind.rawValue) reference=\(targetResolution.targetReferenceID) workspace=\(targetResolution.workspaceID) state=\(exchangeState.rawValue)",
+    ]
+
+    if let participantLines = participantStateLines(
+      in: workspace,
+      targetResolution: targetResolution,
+      stateByParticipantID: stateByParticipantID
+    ) {
+      summaryLines.append(participantLines)
     }
 
     return summaryLines.joined(separator: "\n")
@@ -263,12 +327,7 @@ enum OrbitParticipantResponseBridge {
     memberships: [OrbitWorkspacePersonaMembership],
     includedReasonCategory: OrbitTargetReasonCategory
   ) -> OrbitTargetResolution {
-    let orderedMemberships = memberships.sorted { lhs, rhs in
-      if lhs.workspacePersonaID == rhs.workspacePersonaID {
-        return lhs.id < rhs.id
-      }
-      return lhs.workspacePersonaID < rhs.workspacePersonaID
-    }
+    let orderedMemberships = orderedUniqueMemberships(from: memberships)
 
     guard !orderedMemberships.isEmpty else {
       return OrbitTargetResolution(
@@ -416,5 +475,121 @@ enum OrbitParticipantResponseBridge {
     }
 
     return ([ "\(title):" ] + entries).joined(separator: "\n")
+  }
+
+  private static func participantStateLines(
+    in workspace: OrbitWorkspace,
+    targetResolution: OrbitTargetResolution,
+    stateByParticipantID: [String: OrbitGroupParticipantState]
+  ) -> String? {
+    guard
+      targetResolution.status == .resolved,
+      targetResolution.targetKind != .collaborator,
+      !targetResolution.includedParticipants.isEmpty
+    else {
+      return nil
+    }
+
+    let entries = targetResolution.includedParticipants.map { participant in
+      let state = stateByParticipantID[participant.id] ?? .pending
+      let role = groupParticipantRole(
+        for: participant,
+        in: workspace,
+        targetResolution: targetResolution
+      )
+
+      return "- \(participant.displayName) | role=\(role.rawValue) | state=\(state.rawValue)"
+    }
+
+    return ([ "participant states:" ] + entries).joined(separator: "\n")
+  }
+
+  private static func groupParticipantRole(
+    for participant: OrbitParticipant,
+    in workspace: OrbitWorkspace,
+    targetResolution: OrbitTargetResolution
+  ) -> OrbitGroupParticipantRole {
+    guard targetResolution.targetKind != .collaborator else {
+      return .contributor
+    }
+
+    if participant.personaTemplateID == "venture-product-steward" {
+      return .reviewer
+    }
+
+    guard let workspacePersonaID = participant.workspacePersonaID else {
+      return .contributor
+    }
+
+    let matchingMembership = workspace.workspacePersonaMemberships
+      .filter { membership in
+        guard membership.workspacePersonaID == workspacePersonaID else {
+          return false
+        }
+
+        switch targetResolution.targetKind {
+        case .team:
+          return membership.teamID == workspace.team(slug: targetResolution.targetReferenceID)?.id
+        case .squad:
+          return membership.squadID == workspace.squad(slug: targetResolution.targetReferenceID)?.id
+        case .collaborator:
+          return false
+        }
+      }
+      .sorted { lhs, rhs in
+        if lhs.workspacePersonaID == rhs.workspacePersonaID {
+          return lhs.id < rhs.id
+        }
+        return lhs.workspacePersonaID < rhs.workspacePersonaID
+      }
+      .first
+
+    if matchingMembership?.roleInGroup == OrbitGroupParticipantRole.reviewer.rawValue {
+      return .reviewer
+    }
+
+    return .contributor
+  }
+
+  private static func exchangeState(
+    for targetResolution: OrbitTargetResolution,
+    stateByParticipantID: [String: OrbitGroupParticipantState]
+  ) -> OrbitGroupExchangeState {
+    let participantStates = targetResolution.includedParticipants.map {
+      stateByParticipantID[$0.id] ?? .pending
+    }
+
+    if participantStates.contains(.pending) {
+      return .active
+    }
+
+    let repliedCount = participantStates.filter { $0 == .replied }.count
+    let failedCount = participantStates.filter { $0 == .failed }.count
+
+    if repliedCount == participantStates.count {
+      return .completed
+    }
+
+    if repliedCount > 0 && failedCount > 0 {
+      return .partial
+    }
+
+    return .failed
+  }
+
+  private static func orderedUniqueMemberships(
+    from memberships: [OrbitWorkspacePersonaMembership]
+  ) -> [OrbitWorkspacePersonaMembership] {
+    let orderedMemberships = memberships.sorted { lhs, rhs in
+      if lhs.workspacePersonaID == rhs.workspacePersonaID {
+        return lhs.id < rhs.id
+      }
+      return lhs.workspacePersonaID < rhs.workspacePersonaID
+    }
+    var seenWorkspacePersonaIDs = Set<String>()
+
+    return orderedMemberships.filter { membership in
+      seenWorkspacePersonaIDs.insert(membership.workspacePersonaID).inserted
+    }
   }
 }

@@ -15,6 +15,22 @@ private func orbitRepositoryRootURL() -> URL {
     .deletingLastPathComponent()
 }
 
+private func duplicateMembershipResolvedContract(
+  for participant: OrbitParticipant
+) -> OrbitResolvedActivationContract {
+  OrbitResolvedActivationContract(
+    directiveID: participant.defaultDirectiveID,
+    directiveSource: .participantDefault,
+    kitIDs: [],
+    authorizedSkillIDs: participant.authorizedSkillIDs,
+    requiredSkillIDs: participant.requiredSkillIDs,
+    stopPointIDs: [],
+    reviewGateIDs: [],
+    memoryScopeIDs: [],
+    failureReasons: []
+  )
+}
+
 struct OrbitWorkspaceTests {
   @Test
   func workspaceRoundTripPreservesMessagesAndActivationTrace() throws {
@@ -248,11 +264,11 @@ struct OrbitWorkspaceTests {
       persist: { _ in }
     )
 
-    #expect(createdMessages.count == 4)
+    #expect(createdMessages.count == 5)
 
-    let systemEvent = try #require(
-      createdMessages.first(where: { $0.kind == .systemEvent })
-    )
+    let systemEvents = createdMessages.filter { $0.kind == .systemEvent }
+    let systemEvent = try #require(systemEvents.first)
+    let exchangeStateEvent = try #require(systemEvents.last)
     let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
     let activationRecords = workspace.activationRecords.filter {
       responseMessages.map(\.id).contains($0.responseMessageID)
@@ -263,7 +279,19 @@ struct OrbitWorkspaceTests {
 
     #expect(systemEvent.body.contains("resolved target: kind=team reference=founding-group"))
     #expect(systemEvent.body.contains("reasonCategory=team_membership"))
+    #expect(systemEvent.body.contains("Samwise | role=contributor | state=pending"))
+    #expect(systemEvent.body.contains("ProdDoc | role=reviewer | state=pending"))
+    #expect(systemEvent.body.contains("exchange state: active"))
+    #expect(exchangeStateEvent.body.contains("Orbit exchange state"))
+    #expect(exchangeStateEvent.body.contains("state=completed"))
+    #expect(exchangeStateEvent.body.contains("Samwise | role=contributor | state=replied"))
+    #expect(exchangeStateEvent.body.contains("ProdDoc | role=reviewer | state=replied"))
     #expect(responseMessages.count == 2)
+    #expect(
+      responseMessages.allSatisfy {
+        $0.addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue
+      }
+    )
     #expect(
       Set(responseMessages.map(\.speakerParticipantID)) == [
         OrbitParticipantID.samwise.rawValue,
@@ -303,6 +331,94 @@ struct OrbitWorkspaceTests {
   }
 
   @Test
+  func foundingGroupMarksPartialExchangeWhenOneParticipantFails() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants = workspace.participants.map { participant in
+      guard participant.id == OrbitParticipantID.prodDoc.rawValue else {
+        return participant
+      }
+
+      return OrbitParticipant(
+        id: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        displayName: participant.displayName,
+        roleLabel: participant.roleLabel,
+        participantType: participant.participantType,
+        personaTemplateID: participant.personaTemplateID,
+        defaultDirectiveID: nil,
+        requiredSkillIDs: participant.requiredSkillIDs,
+        authorizedSkillIDs: participant.authorizedSkillIDs,
+        availability: participant.availability,
+        sortOrder: participant.sortOrder
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Founding group, show partial completion honestly.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let userMessage = try #require(createdMessages.first)
+    let systemEvents = createdMessages.filter { $0.kind == .systemEvent }
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+    let failures = workspace.activationFailureRecords(for: userMessage.id)
+
+    #expect(createdMessages.count == 5)
+    #expect(responseMessages.count == 1)
+    #expect(responseMessages.first?.speakerParticipantID == OrbitParticipantID.samwise.rawValue)
+    #expect(failures.count == 1)
+    #expect(failures.first?.participantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(systemEvents.first?.body.contains("exchange state: active") == true)
+    #expect(systemEvents.last?.body.contains("state=partial") == true)
+    #expect(systemEvents.last?.body.contains("Samwise | role=contributor | state=replied") == true)
+    #expect(systemEvents.last?.body.contains("ProdDoc | role=reviewer | state=failed") == true)
+  }
+
+  @Test
+  func foundingGroupMarksFailedExchangeWhenEveryParticipantFails() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.participants = workspace.participants.map { participant in
+      guard participant.participantType == .ai else {
+        return participant
+      }
+
+      return OrbitParticipant(
+        id: participant.id,
+        workspacePersonaID: participant.workspacePersonaID,
+        displayName: participant.displayName,
+        roleLabel: participant.roleLabel,
+        participantType: participant.participantType,
+        personaTemplateID: participant.personaTemplateID,
+        defaultDirectiveID: nil,
+        requiredSkillIDs: participant.requiredSkillIDs,
+        authorizedSkillIDs: participant.authorizedSkillIDs,
+        availability: participant.availability,
+        sortOrder: participant.sortOrder
+      )
+    }
+
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Founding group, fail visibly when no one can activate.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let userMessage = try #require(createdMessages.first)
+    let systemEvents = createdMessages.filter { $0.kind == .systemEvent }
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+    let failures = workspace.activationFailureRecords(for: userMessage.id)
+
+    #expect(createdMessages.count == 5)
+    #expect(responseMessages.isEmpty)
+    #expect(failures.count == 2)
+    #expect(Set(failures.compactMap(\.participantID)) == [
+      OrbitParticipantID.samwise.rawValue,
+      OrbitParticipantID.prodDoc.rawValue,
+    ])
+    #expect(systemEvents.first?.body.contains("exchange state: active") == true)
+    #expect(systemEvents.last?.body.contains("state=failed") == true)
+    #expect(systemEvents.last?.body.contains("Samwise | role=contributor | state=failed") == true)
+    #expect(systemEvents.last?.body.contains("ProdDoc | role=reviewer | state=failed") == true)
+  }
+
+  @Test
   func foundingGroupUsesPersistedMembershipInsteadOfVisibleAIRoster() {
     var workspace = OrbitWorkspace.defaultWorkspace
     workspace.participants.append(
@@ -333,6 +449,55 @@ struct OrbitWorkspaceTests {
       OrbitParticipantID.prodDoc.rawValue,
     ])
     #expect(responseMessages.contains { $0.speakerParticipantID == "architect" } == false)
+  }
+
+  @Test
+  func duplicateTeamMembershipRowsResolveAndActivateEachParticipantOnce() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.workspacePersonaMemberships.append(
+      OrbitWorkspacePersonaMembership(
+        id: "membership-proddoc-founding-group-duplicate",
+        workspacePersonaID: "workspace-persona-orbit-proddoc",
+        teamID: "team-founding-group",
+        squadID: nil,
+        roleInGroup: "product-steward",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_450)
+      )
+    )
+
+    let targetResolution = OrbitParticipantResponseBridge.targetResolution(
+      in: workspace,
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue
+    )
+    let createdMessages = try workspace.appendConversationTurnIfPersisted(
+      body: "Founding group, keep duplicate memberships from duplicating the room.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue,
+      resolveContract: duplicateMembershipResolvedContract(for:),
+      persist: { _ in }
+    )
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+    let includedLines = systemEvent.body.split(separator: "\n").filter { line in
+      line.contains("reasonCategory=team_membership")
+    }
+
+    #expect(targetResolution.status == .resolved)
+    #expect(targetResolution.includedParticipants.map(\.id) == [
+      OrbitParticipantID.prodDoc.rawValue,
+      OrbitParticipantID.samwise.rawValue,
+    ])
+    #expect(targetResolution.includedParticipantReasons.count == 2)
+    #expect(targetResolution.excludedParticipantReasons == [])
+    #expect(responseMessages.count == 2)
+    #expect(Set(responseMessages.map(\.speakerParticipantID)) == [
+      OrbitParticipantID.samwise.rawValue,
+      OrbitParticipantID.prodDoc.rawValue,
+    ])
+    #expect(includedLines.count == 2)
+    #expect(includedLines.filter { $0.contains("ProdDoc") }.count == 1)
+    #expect(includedLines.filter { $0.contains("Samwise") }.count == 1)
   }
 
   @Test
@@ -378,6 +543,51 @@ struct OrbitWorkspaceTests {
   }
 
   @Test
+  func duplicateSquadMembershipRowsResolveAndActivateOnce() throws {
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.workspacePersonaMemberships.append(
+      OrbitWorkspacePersonaMembership(
+        id: "membership-proddoc-feedback-squad-duplicate",
+        workspacePersonaID: "workspace-persona-orbit-proddoc",
+        teamID: nil,
+        squadID: "squad-command-center-feedback",
+        roleInGroup: "reviewer",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_451)
+      )
+    )
+
+    let targetResolution = OrbitParticipantResponseBridge.targetResolution(
+      in: workspace,
+      addressedParticipantID: "command-center-feedback-squad"
+    )
+    let createdMessages = workspace.appendConversationTurn(
+      body: "Feedback squad, keep duplicate membership rows deterministic.",
+      addressedParticipantID: "command-center-feedback-squad"
+    )
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
+    let exchangeStateEvent = try #require(
+      createdMessages.last(where: { $0.kind == .systemEvent })
+    )
+    let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
+    let includedLines = systemEvent.body.split(separator: "\n").filter { line in
+      line.contains("reasonCategory=squad_membership")
+    }
+
+    #expect(targetResolution.status == .resolved)
+    #expect(targetResolution.includedParticipants.map(\.id) == [OrbitParticipantID.prodDoc.rawValue])
+    #expect(targetResolution.includedParticipantReasons.count == 1)
+    #expect(targetResolution.excludedParticipantReasons == [])
+    #expect(createdMessages.count == 4)
+    #expect(responseMessages.map(\.speakerParticipantID) == [OrbitParticipantID.prodDoc.rawValue])
+    #expect(includedLines.count == 1)
+    #expect(includedLines.filter { $0.contains("ProdDoc") }.count == 1)
+    #expect(exchangeStateEvent.body.contains("state=completed"))
+    #expect(exchangeStateEvent.body.contains("ProdDoc | role=reviewer | state=replied"))
+  }
+
+  @Test
   func feedbackSquadExpandsFromPersistedMembership() throws {
     var workspace = OrbitWorkspace.defaultWorkspace
 
@@ -396,13 +606,20 @@ struct OrbitWorkspaceTests {
     let systemEvent = try #require(
       createdMessages.first(where: { $0.kind == .systemEvent })
     )
+    let exchangeStateEvent = try #require(
+      createdMessages.last(where: { $0.kind == .systemEvent })
+    )
     let responseMessages = createdMessages.filter { $0.kind == .participantResponse }
 
-    #expect(createdMessages.count == 3)
+    #expect(createdMessages.count == 4)
     #expect(systemEvent.body.contains("resolved target: kind=squad reference=command-center-feedback-squad"))
     #expect(systemEvent.body.contains("reasonCategory=squad_membership"))
+    #expect(systemEvent.body.contains("ProdDoc | role=reviewer | state=pending"))
     #expect(responseMessages.count == 1)
     #expect(responseMessages.first?.speakerParticipantID == OrbitParticipantID.prodDoc.rawValue)
+    #expect(responseMessages.first?.addressedParticipantID == "command-center-feedback-squad")
+    #expect(exchangeStateEvent.body.contains("state=completed"))
+    #expect(exchangeStateEvent.body.contains("ProdDoc | role=reviewer | state=replied"))
     #expect(workspace.activationRecords.last?.triggerSource == .meetingInvocation)
     #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
   }
@@ -490,12 +707,17 @@ struct OrbitWorkspaceTests {
       addressedParticipantID: OrbitParticipantID.prodDoc.rawValue
     )
 
-    #expect(createdMessages.count == 2)
+    #expect(createdMessages.count == 3)
 
     let userMessage = try #require(createdMessages.first)
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
     let blockedEvent = try #require(createdMessages.last)
     let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
 
+    #expect(systemEvent.body.contains("resolved target: kind=collaborator"))
+    #expect(systemEvent.body.contains("reasonCategory=direct_target"))
     #expect(blockedEvent.kind == .systemEvent)
     #expect(blockedEvent.body.contains("no resolved directive"))
     #expect(workspace.activationRecords.count == 1)
@@ -535,12 +757,17 @@ struct OrbitWorkspaceTests {
       addressedParticipantID: OrbitParticipantID.prodDoc.rawValue
     )
 
-    #expect(createdMessages.count == 2)
+    #expect(createdMessages.count == 3)
 
     let userMessage = try #require(createdMessages.first)
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
     let blockedEvent = try #require(createdMessages.last)
     let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
 
+    #expect(systemEvent.body.contains("resolved target: kind=collaborator"))
+    #expect(systemEvent.body.contains("reasonCategory=direct_target"))
     #expect(blockedEvent.kind == .systemEvent)
     #expect(blockedEvent.body.contains("ProdDoc identity mapping"))
     #expect(workspace.activationRecords.count == 1)
@@ -579,12 +806,17 @@ struct OrbitWorkspaceTests {
       addressedParticipantID: OrbitParticipantID.samwise.rawValue
     )
 
-    #expect(createdMessages.count == 2)
+    #expect(createdMessages.count == 3)
 
     let userMessage = try #require(createdMessages.first)
+    let systemEvent = try #require(
+      createdMessages.first(where: { $0.kind == .systemEvent })
+    )
     let blockedEvent = try #require(createdMessages.last)
     let failure = try #require(workspace.activationFailureRecord(for: userMessage.id))
 
+    #expect(systemEvent.body.contains("resolved target: kind=collaborator"))
+    #expect(systemEvent.body.contains("reasonCategory=direct_target"))
     #expect(blockedEvent.kind == .systemEvent)
     #expect(blockedEvent.body.contains("required skill posture is not authorized"))
     #expect(workspace.activationRecords.count == 1)

@@ -44,7 +44,8 @@ struct OrbitServerRoomProjectionTests {
     let messages = workspace.activeThread?.messages ?? []
 
     #expect(messages[0].addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue)
-    #expect(messages[1].addressedParticipantID == OrbitParticipantID.aj.rawValue)
+    #expect(messages[1].addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue)
+    #expect(messages[2].addressedParticipantID == OrbitAddressTargetID.foundingGroup.rawValue)
     #expect(workspace.activationRecords.map(\.participantID).sorted() == [OrbitParticipantID.prodDoc.rawValue, OrbitParticipantID.samwise.rawValue])
     #expect(workspace.activationRecords.allSatisfy { $0.triggerSource == .meetingInvocation })
     #expect(workspace.activationContractSnapshots.count == 2)

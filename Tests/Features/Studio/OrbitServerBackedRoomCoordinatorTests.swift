@@ -832,6 +832,10 @@ struct OrbitServerBackedRoomCoordinatorTests {
         included participants:
         - ProdDoc | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included ProdDoc through persisted team membership for Founding Group.
         - Samwise | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included Samwise through persisted team membership for Founding Group.
+        participant states:
+        - ProdDoc | role=reviewer | state=pending
+        - Samwise | role=contributor | state=pending
+        exchange state: active
         """,
       messageFormat: .plainText,
       state: .completed,
@@ -852,6 +856,25 @@ struct OrbitServerBackedRoomCoordinatorTests {
       body: "Product lens: \"Founding group, align on the next Orbit checkpoint.\" should make the command-center surface feel more intentional than chat while staying light enough for the first checkpoint.",
       createdAt: Date(timeIntervalSince1970: 1_742_342_523)
     )
+    let exchangeStateMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "24242420-2424-2424-2424-242424242420")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: updatedMessage.id,
+      body: """
+        Orbit exchange state
+        resolved target: kind=team reference=founding-group workspace=orbit state=completed
+        participant states:
+        - ProdDoc | role=reviewer | state=replied
+        - Samwise | role=contributor | state=replied
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_524),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_524)
+    )
     let updatedSnapshot = OrbitPhase1RealtimeSnapshot(
       room: OrbitPhase1RoomSnapshot(
         workspace: initialSnapshot.room.workspace,
@@ -862,7 +885,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
         workspacePersonaMemberships: initialSnapshot.room.workspacePersonaMemberships,
         post: initialSnapshot.room.post,
         thread: initialSnapshot.room.thread,
-        messages: initialSnapshot.room.messages + [updatedMessage, systemMessage, samwiseResponse, prodDocResponse],
+        messages: initialSnapshot.room.messages + [updatedMessage, systemMessage, samwiseResponse, prodDocResponse, exchangeStateMessage],
         postParticipants: initialSnapshot.room.postParticipants,
         postEvents: initialSnapshot.room.postEvents,
         personaActivations: initialSnapshot.room.personaActivations,
@@ -870,8 +893,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
       ),
       replayCursor: OrbitPhase1ReplayCursor(
         workspaceID: workspaceID,
-        lastEventID: prodDocResponse.id,
-        lastEventCreatedAt: prodDocResponse.createdAt
+        lastEventID: exchangeStateMessage.id,
+        lastEventCreatedAt: exchangeStateMessage.createdAt
       )
     )
     let systemWriter = StubClientSystemWriter(
@@ -960,10 +983,14 @@ struct OrbitServerBackedRoomCoordinatorTests {
       client: client
     )
 
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.count == 5)
+    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.count == 6)
     #expect(await collaboratorWriter.requests.count == 2)
+    #expect(await systemWriter.requests.count == 2)
     #expect(await systemWriter.requests.first?.body.contains("resolved target: kind=team reference=founding-group") == true)
     #expect(await systemWriter.requests.first?.body.contains("reasonCategory=team_membership") == true)
+    #expect(await systemWriter.requests.first?.body.contains("ProdDoc | role=reviewer | state=pending") == true)
+    #expect(await systemWriter.requests.last?.body.contains("Orbit exchange state") == true)
+    #expect(await systemWriter.requests.last?.body.contains("state=completed") == true)
     #expect(
       coordinator.roomState.projectedWorkspace?.activeThread?.messages.contains(where: {
         $0.kind == .systemEvent

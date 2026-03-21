@@ -280,10 +280,65 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
   public func upsertWorkspacePersonaMembershipQuery(
     _ membership: OrbitWorkspacePersonaMembershipRecord
   ) -> PostgresQuery {
-    """
+    if let teamID = membership.teamID {
+      return """
+      INSERT INTO workspace_persona_membership (
+        id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
+      )
+      SELECT
+        \(membership.id),
+        \(membership.workspacePersonaID),
+        \(membership.teamID),
+        \(membership.squadID),
+        \(membership.roleInGroup),
+        \(membership.createdAt)
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM workspace_persona_membership
+        WHERE id <> \(membership.id)
+          AND workspace_persona_id = \(membership.workspacePersonaID)
+          AND team_id = \(teamID)
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        workspace_persona_id = EXCLUDED.workspace_persona_id,
+        team_id = EXCLUDED.team_id,
+        squad_id = EXCLUDED.squad_id,
+        role_in_group = EXCLUDED.role_in_group
+      """
+    }
+
+    if let squadID = membership.squadID {
+      return """
+      INSERT INTO workspace_persona_membership (
+        id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
+      )
+      SELECT
+        \(membership.id),
+        \(membership.workspacePersonaID),
+        \(membership.teamID),
+        \(membership.squadID),
+        \(membership.roleInGroup),
+        \(membership.createdAt)
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM workspace_persona_membership
+        WHERE id <> \(membership.id)
+          AND workspace_persona_id = \(membership.workspacePersonaID)
+          AND squad_id = \(squadID)
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        workspace_persona_id = EXCLUDED.workspace_persona_id,
+        team_id = EXCLUDED.team_id,
+        squad_id = EXCLUDED.squad_id,
+        role_in_group = EXCLUDED.role_in_group
+      """
+    }
+
+    return """
     INSERT INTO workspace_persona_membership (
       id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
-    ) VALUES (
+    )
+    VALUES (
       \(membership.id),
       \(membership.workspacePersonaID),
       \(membership.teamID),

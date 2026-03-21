@@ -201,6 +201,9 @@ enum OrbitServerRoomProjection {
         return (uuid, participant)
       }
     )
+    let workspacePersonasByID = Dictionary(
+      uniqueKeysWithValues: room.workspacePersonas.map { ($0.id, $0) }
+    )
 
     return room.messages
       .sorted(by: messageSort)
@@ -215,7 +218,8 @@ enum OrbitServerRoomProjection {
           addressedParticipantID: projectedAddressedParticipantID(
             for: message,
             room: room,
-            participantsByWorkspacePersonaID: participantsByWorkspacePersonaID
+            participantsByWorkspacePersonaID: participantsByWorkspacePersonaID,
+            workspacePersonasByID: workspacePersonasByID
           ),
           body: message.body,
           order: index + 1,
@@ -422,7 +426,8 @@ enum OrbitServerRoomProjection {
   private static func projectedAddressedParticipantID(
     for message: OrbitMessageRecord,
     room: OrbitPhase1RoomSnapshot,
-    participantsByWorkspacePersonaID: [UUID: OrbitParticipant]
+    participantsByWorkspacePersonaID: [UUID: OrbitParticipant],
+    workspacePersonasByID: [UUID: OrbitWorkspacePersonaRecord]
   ) -> String? {
     switch message.authorType {
     case .user:
@@ -452,10 +457,38 @@ enum OrbitServerRoomProjection {
         return firstActivation.addressedTargetReferenceID
       }
     case .workspacePersona:
-      return OrbitParticipantID.aj.rawValue
+      guard let activation = activation(
+        forResponseMessage: message,
+        in: room,
+        workspacePersonasByID: workspacePersonasByID
+      ) else {
+        return OrbitParticipantID.aj.rawValue
+      }
+
+      return activation.responseMode == .lightweightMeeting
+        ? activation.addressedTargetReferenceID
+        : OrbitParticipantID.aj.rawValue
     case .system:
       return nil
     }
+  }
+
+  private static func activation(
+    forResponseMessage message: OrbitMessageRecord,
+    in room: OrbitPhase1RoomSnapshot,
+    workspacePersonasByID: [UUID: OrbitWorkspacePersonaRecord]
+  ) -> OrbitPersonaActivationRecord? {
+    room.personaActivations
+      .filter { activation in
+        activation.triggerMessageID == message.replyToMessageID
+          && messageMatchesResolvedWorkspacePersona(
+            message,
+            activation: activation,
+            workspacePersona: workspacePersonasByID[activation.resolvedWorkspacePersonaInstanceID]
+          )
+      }
+      .sorted(by: activationSort)
+      .first
   }
 
   private static func responseMessageID(
