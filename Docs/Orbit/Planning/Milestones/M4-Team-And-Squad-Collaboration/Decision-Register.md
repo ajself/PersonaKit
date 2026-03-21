@@ -22,6 +22,9 @@ The following are no longer open for `M4` unless AJ explicitly reopens them:
   expansion
 - `M5` meeting promotion and continuity remain out of scope here
 - `M7` workstream handoff behavior remains out of scope here
+- `M4-P1` through `M4-P5` are packetized scope checkpoints inside one `M4`
+  lane/worktree by default; they do not imply separate branches or worktrees
+  unless AJ explicitly approves extra isolation
 - the coordinator sessions remain candidate-state until runtime evidence exists
 
 The decisions below are the remaining milestone-shaping questions inside that

@@ -124,6 +124,9 @@ Rules:
    redefine the milestone branch.
 5. Scope changes, destructive git actions, or promotion decisions still
    escalate to AJ.
+6. Do not split sequential milestone packets, tasks, or stories into separate
+   worktrees unless AJ explicitly approves another lane for parallel or
+   isolation work.
 
 ## Lane Tools
 
@@ -133,6 +136,7 @@ Use the repo-local approval tools when AJ has already approved named lanes:
    - [worktree-lane-approvals.md](/Users/ajself/Code/PersonaKit/Docs/PersonaKit/Development/worktree-lane-approvals.md)
 2. Lane preflight:
    - `Scripts/check-worktree-lane.sh`
+   - `Scripts/check-worktree-lane.sh --mode contract`
 3. Lane materialization:
    - `Scripts/materialize-worktree-lane.sh`
 4. Lane bootstrap:

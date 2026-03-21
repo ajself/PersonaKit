@@ -48,11 +48,15 @@ Agents must follow these rules at all times:
 	3.	No scope expansion
 	•	Do not refactor unrelated code
 	•	Do not introduce new abstractions unless explicitly requested
-	4.	Determinism is required
+	4.	One approved lane/worktree per milestone by default
+	•	Default to one approved execution lane and one worktree per milestone or explicitly approved slice
+	•	Do not create packet-, task-, or story-specific branches or worktrees unless AJ explicitly approves extra isolation
+	•	Treat packets, tasks, and stories as scope tracked in docs and commits, not as branch or worktree requests by default
+	5.	Determinism is required
 	•	Output must be stable across runs
 	•	Sort by id where ordering matters
 	•	Do not add timestamps, UUIDs, or environment-specific data
-	5.	Persona activation is explicit
+	6.	Persona activation is explicit
 	•	Do not operate as multiple active personas at the same time
 	•	When persona assignment changes, reload PersonaKit grounding before continuing
 	•	PersonaKit grounding must happen before external skill selection
@@ -61,12 +65,12 @@ Agents must follow these rules at all times:
 	•	On skill mismatch, stop and re-ground rather than improvising
 	•	Delegated agents must receive one authoritative persona assignment for their lane
 	•	Review personas are not the same thing as active execution identity
-	6.	Use Conventional Commits
+	7.	Use Conventional Commits
 	•	When creating a git commit, use Conventional Commit format: `type(scope): summary` when a clear scope exists, otherwise `type: summary`
 	•	Do not invent repo-specific commit formats or rely on memory for commit style
-	7.	Human review is mandatory at stop points
+	8.	Human review is mandatory at stop points
 	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
-	8. MCP usage is read-only
+	9. MCP usage is read-only
 	   • Treat all MCP Resources as immutable context
 	   • Prompts return assembled context only; they do not imply permission to act
 	   • Never attempt to write back to the PersonaKit root via MCP

@@ -98,13 +98,15 @@ materialize a dedicated worktree only when live execution begins.
 5. When kickoff is approved, materialize the execution worktree from the lane
    contract:
    - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
-6. Keep one active lane or task per worktree.
+6. Keep one approved lane per worktree; tasks, packets, and stories stay
+   within that lane by default.
 7. Run execution commands from that worktree root once the lane is materialized.
 8. For parallel runs, use a unique agent/lane temp root per worktree:
    - `PERSONAKIT_VALIDATE_TMP_ROOT=/tmp/personakit-$USER-<agent>`
-9. Before relying on standing worktree authority inside the materialized lane,
-   confirm the lane preflight:
-   - `Scripts/check-worktree-lane.sh`
+9. Inside the materialized worktree, confirm the lane preflight that matches
+   the lane authorization mode:
+   - `worktree-auto-commit-approved`: `Scripts/check-worktree-lane.sh`
+   - `per-commit-approval`: `Scripts/check-worktree-lane.sh --mode contract`
 10. Validate the lane manifest itself after approval-record edits:
    - `Scripts/check-worktree-lane-approvals.sh`
 11. At milestone closeout, use the retrospective contract rather than an

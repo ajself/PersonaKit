@@ -39,18 +39,22 @@ This exists for the case where:
    lane still escalate to AJ.
 8. A named non-`main` lane may still use `per-commit-approval` when AJ approves
    the lane scope but does not grant standing auto-commit authority for it.
+9. Manifest entries default to milestone-level execution lanes or explicitly
+   approved slices; packet, task, and story units stay inside that lane unless
+   AJ explicitly approves a separate lane for isolation.
 
 ## Standard Use
 
-1. AJ records or approves the lane in the manifest and any attempt-specific
-   prep artifact.
+1. AJ records or approves the milestone-level lane or explicitly approved slice
+   in the manifest and any attempt-specific prep artifact.
 2. Samwise verifies the lane contract from the repo root:
    - `Scripts/check-worktree-lane.sh --mode contract --branch <branch>`
 3. When live execution is approved, materialize the lane into a dedicated
    worktree:
    - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
-4. Inside the materialized worktree, run `Scripts/check-worktree-lane.sh`
-   before relying on standing commit authority.
+4. Inside the materialized worktree, run the matching lane preflight:
+   - `worktree-auto-commit-approved`: `Scripts/check-worktree-lane.sh`
+   - `per-commit-approval`: `Scripts/check-worktree-lane.sh --mode contract`
 5. If any step fails, stop and ask AJ.
 
 ## AJ In Codex
@@ -62,8 +66,10 @@ Use this flow when AJ is still the one clicking the worktree UI:
 2. Materialize the approved lane into the new worktree:
    - `Scripts/materialize-worktree-lane.sh --branch <branch> --path /absolute/path/to/worktree`
 3. Open the new worktree thread.
-4. Re-run `Scripts/check-worktree-lane.sh` if needed.
-5. Start work only after the standing-authority check passes.
+4. Re-run the matching lane preflight only if needed:
+   - `worktree-auto-commit-approved`: `Scripts/check-worktree-lane.sh`
+   - `per-commit-approval`: `Scripts/check-worktree-lane.sh --mode contract`
+5. Start work only after the lane preflight matches the approved commit mode.
 
 ## Current Named Lanes
 
@@ -76,8 +82,8 @@ Use this flow when AJ is still the one clicking the worktree UI:
 4. `codex/orbit-learning-loop`
    - historical exploratory post-MVP lane from the first Orbit exercise
 5. `codex/m4-preflight`
-   - approved per-commit Orbit preflight lane for the `M4` dossier and packet
-     kickoff gate
+   - approved per-commit Orbit preflight lane for the `M4` dossier and
+     milestone-execution handoff gate
 
 ## Orbit Attempt Naming Rule
 
@@ -114,3 +120,5 @@ the worktree preflight passes.
   verify the lane without requiring a materialized worktree.
 - `Scripts/check-worktree-lane.sh` in default authority mode still treats a
   missing or stale lane note as a failing preflight for executable lanes.
+- `Scripts/materialize-worktree-lane.sh` runs the matching worktree preflight
+  automatically so per-commit lanes do not pretend to have standing authority.

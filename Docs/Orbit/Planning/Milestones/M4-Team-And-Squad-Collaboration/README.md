@@ -78,6 +78,12 @@ Out of scope:
 
 ## Execution Packets
 
+These packets are sequential scope checkpoints inside the single `M4`
+execution lane by default.
+
+They do not request separate branches or worktrees unless AJ explicitly
+approves extra isolation.
+
 ### Packet 1. Freeze Group Structure Assumptions
 
 Outcome:
@@ -173,6 +179,7 @@ Avoid:
 - parallel feature expansion into promoted meetings before inline group behavior
   is trusted
 - starting runtime-facing packet work from dossier hardening alone
+- treating packet labels as default requests for separate branches or worktrees
 
 ## Evidence Package
 
