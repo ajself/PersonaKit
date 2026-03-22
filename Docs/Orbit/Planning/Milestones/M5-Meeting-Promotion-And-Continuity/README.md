@@ -69,18 +69,23 @@ Out of scope:
 
 Outcome:
 
-- the system knows when a thread stays inline and when it should enter meeting
-  mode
+- the `v1` trigger contract is frozen for staying inline, entering lightweight
+  meeting mode, and promoting into a linked meeting post
 
 Work:
 
-- define lightweight meeting trigger conditions
-- define explicit promotion conditions
-- define how the operator can inspect or override the transition
+- define inline as the explicit default for every target class
+- define the narrow trigger conditions for lightweight meeting mode and
+  promoted meeting posts
+- define how the operator can inspect or override the transition and see
+  promotion-failure visibility without implying runtime implementation depth
 
 Done when:
 
-- meeting transitions no longer depend on hidden heuristics
+- meeting transitions no longer depend on hidden heuristics or target-class
+  defaults
+- no team, squad, or other target class auto-promotes or defaults to
+  lightweight meeting mode in `v1`
 
 ### Packet 2. Implement Meeting-State Runtime Records
 
