@@ -119,6 +119,7 @@ public struct OrbitPhase1RoomWriteService: Sendable {
       ),
       messages: snapshot.messages + [message],
       postParticipants: snapshot.postParticipants,
+      postLinks: snapshot.postLinks,
       meetingState: updatedMeetingState,
       meetingMembers: snapshot.meetingMembers,
       postEvents: snapshot.postEvents,

@@ -28,7 +28,8 @@ struct Phase1MeetingRoomPromotionServiceTests {
       },
       loadCreatedRoom: { _, _, _ in await recorder.snapshot },
       now: { createdAt },
-      makePostEventID: { UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")! }
+      makePostEventID: { UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")! },
+      makePostLinkID: { UUID(uuidString: "efefefef-efef-efef-efef-efefefefefef")! }
     )
 
     let result = try await service.promoteMeetingRoom(
@@ -74,9 +75,15 @@ struct Phase1MeetingRoomPromotionServiceTests {
     #expect(originRealtimeEvents.count == 1)
     #expect(originRealtimeEvents.first?.category == .meetingPromotionAttempted)
     #expect(bootstrappedRoom.post.id == createdPostID)
+    #expect(bootstrappedRoom.postLinks.count == 1)
+    #expect(bootstrappedRoom.postLinks.first?.id == UUID(uuidString: "efefefef-efef-efef-efef-efefefefefef")!)
+    #expect(bootstrappedRoom.postLinks.first?.fromPostID == originPostID)
+    #expect(bootstrappedRoom.postLinks.first?.toPostID == createdPostID)
+    #expect(bootstrappedRoom.postLinks.first?.linkType == .promotion)
     #expect(result.originPostEvent == originPostEvent)
     #expect(result.meeting.scope.postID == createdPostID)
     #expect(result.meeting.snapshot.post.id == createdPostID)
+    #expect(result.meeting.snapshot.postLinks == bootstrappedRoom.postLinks)
   }
 
   @Test
@@ -268,6 +275,7 @@ private actor MeetingPromotionRecorder {
       thread: room.thread,
       messages: room.seedMessages,
       postParticipants: room.postParticipants,
+      postLinks: room.postLinks,
       meetingState: room.meetingState,
       meetingMembers: room.meetingMembers,
       postEvents: room.postEvents,

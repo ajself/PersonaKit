@@ -54,6 +54,7 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
   public let loadCreatedRoom: CreatedRoomLoader
   public let now: @Sendable () -> Date
   public let makePostEventID: @Sendable () -> UUID
+  public let makePostLinkID: @Sendable () -> UUID
 
   public init(
     loadOriginSnapshot: @escaping OriginSnapshotLoader,
@@ -61,7 +62,8 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
     bootstrapPromotedMeetingRoom: @escaping PromotedRoomBootstrapper,
     loadCreatedRoom: @escaping CreatedRoomLoader,
     now: @escaping @Sendable () -> Date = Date.init,
-    makePostEventID: @escaping @Sendable () -> UUID = UUID.init
+    makePostEventID: @escaping @Sendable () -> UUID = UUID.init,
+    makePostLinkID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.loadOriginSnapshot = loadOriginSnapshot
     self.prepareMeetingRoom = prepareMeetingRoom
@@ -69,6 +71,7 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
     self.loadCreatedRoom = loadCreatedRoom
     self.now = now
     self.makePostEventID = makePostEventID
+    self.makePostLinkID = makePostLinkID
   }
 
   public func promoteMeetingRoom(
@@ -84,6 +87,17 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
 
     let preparedMeeting = try await prepareMeetingRoom(request.meeting)
     let timestamp = now()
+    let continuityLink = OrbitPostLinkRecord(
+      id: makePostLinkID(),
+      fromPostID: originSnapshot.post.id,
+      toPostID: preparedMeeting.bootstrap.post.id,
+      linkType: .promotion,
+      createdAt: timestamp
+    )
+    let promotedRoomBootstrap = roomBootstrap(
+      from: preparedMeeting.bootstrap,
+      appending: continuityLink
+    )
     let originPostEvent = OrbitPostEventRecord(
       id: makePostEventID(),
       postID: originSnapshot.post.id,
@@ -100,7 +114,7 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
     try await bootstrapPromotedMeetingRoom(
       originPostEvent,
       originRealtimeEvents,
-      preparedMeeting.bootstrap
+      promotedRoomBootstrap
     )
 
     guard
@@ -123,6 +137,31 @@ public struct OrbitPhase1MeetingRoomPromotionService: Sendable {
       originPostEvent: originPostEvent
     )
   }
+
+  private func roomBootstrap(
+    from bootstrap: OrbitPhase1RoomBootstrap,
+    appending postLink: OrbitPostLinkRecord
+  ) -> OrbitPhase1RoomBootstrap {
+    OrbitPhase1RoomBootstrap(
+      workspace: bootstrap.workspace,
+      channel: bootstrap.channel,
+      workspacePersonas: bootstrap.workspacePersonas,
+      teams: bootstrap.teams,
+      squads: bootstrap.squads,
+      workspacePersonaMemberships: bootstrap.workspacePersonaMemberships,
+      post: bootstrap.post,
+      thread: bootstrap.thread,
+      seedMessages: bootstrap.seedMessages,
+      realtimeEvents: bootstrap.realtimeEvents,
+      postParticipants: bootstrap.postParticipants,
+      postLinks: bootstrap.postLinks + [postLink],
+      meetingState: bootstrap.meetingState,
+      meetingMembers: bootstrap.meetingMembers,
+      postEvents: bootstrap.postEvents,
+      personaActivations: bootstrap.personaActivations,
+      agentRuns: bootstrap.agentRuns
+    )
+  }
 }
 
 public protocol OrbitPhase1MeetingRoomPromotionServing: Sendable {
@@ -136,7 +175,8 @@ public extension OrbitPhase1MeetingRoomPromotionService {
     runtimeStore: OrbitPostgresRuntimeStore,
     meetingCreationService: OrbitPhase1MeetingRoomCreationService,
     now: @escaping @Sendable () -> Date = Date.init,
-    makePostEventID: @escaping @Sendable () -> UUID = UUID.init
+    makePostEventID: @escaping @Sendable () -> UUID = UUID.init,
+    makePostLinkID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.init(
       loadOriginSnapshot: { workspaceSlug, channelSlug, postID in
@@ -164,7 +204,8 @@ public extension OrbitPhase1MeetingRoomPromotionService {
         )
       },
       now: now,
-      makePostEventID: makePostEventID
+      makePostEventID: makePostEventID,
+      makePostLinkID: makePostLinkID
     )
   }
 }

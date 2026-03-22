@@ -260,6 +260,40 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
     }
   }
 
+  @Test
+  func liveRuntimeStoreLoadsPromotionPostLinksForOriginAndMeetingSnapshotsWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let originRoom = sampleRoomBootstrap()
+      let meetingRoom = samplePromotedMeetingRoomBootstrap(originRoom: originRoom)
+      let promotionLink = try #require(meetingRoom.postLinks.first)
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(originRoom)
+      try await store.bootstrapRoom(meetingRoom)
+
+      let originSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: originRoom.workspace.slug,
+        channelSlug: originRoom.channel.slug,
+        postID: originRoom.post.id
+      )
+      let promotedMeetingSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: meetingRoom.workspace.slug,
+        channelSlug: meetingRoom.channel.slug,
+        postID: meetingRoom.post.id
+      )
+
+      #expect(originSnapshot?.postLinks == [promotionLink])
+      #expect(promotedMeetingSnapshot?.postLinks == [promotionLink])
+    } catch {
+      Issue.record("Unexpected live Postgres post-link error: \(String(reflecting: error))")
+    }
+  }
+
   private func integrationConfiguration() -> OrbitPostgresConfiguration? {
     let env = ProcessInfo.processInfo.environment
 
@@ -405,6 +439,93 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
           participationRole: .contributor,
           selectedReason: "Selected via founding-group checkpoint scope.",
           joinedAt: bootstrap.post.createdAt
+        )
+      ]
+    )
+  }
+
+  private func samplePromotedMeetingRoomBootstrap(
+    originRoom: OrbitPhase1RoomBootstrap
+  ) -> OrbitPhase1RoomBootstrap {
+    let meetingPostID = UUID()
+    let meetingThreadID = UUID()
+    let meetingParticipantID = UUID()
+    let meetingSeedMessageID = UUID()
+    let meetingMemberID = UUID()
+    let promotionLinkID = UUID()
+    let createdAt = originRoom.post.createdAt.addingTimeInterval(60)
+
+    return OrbitPhase1RoomBootstrap(
+      workspace: originRoom.workspace,
+      channel: originRoom.channel,
+      workspacePersonas: originRoom.workspacePersonas,
+      post: OrbitPostRecord(
+        id: meetingPostID,
+        workspaceID: originRoom.workspace.id,
+        channelID: originRoom.channel.id,
+        postType: .meeting,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        title: "Promoted meeting room",
+        status: .active,
+        createdAt: createdAt
+      ),
+      thread: OrbitThreadRecord(
+        id: meetingThreadID,
+        postID: meetingPostID,
+        status: .open,
+        lastActivityAt: createdAt,
+        createdAt: createdAt
+      ),
+      seedMessages: [
+        OrbitMessageRecord(
+          id: meetingSeedMessageID,
+          postID: meetingPostID,
+          threadID: meetingThreadID,
+          authorType: .user,
+          authorID: "aj",
+          body: "Promoted meeting room bootstrapped.",
+          messageFormat: .plainText,
+          state: .persisted,
+          createdAt: createdAt,
+          updatedAt: createdAt
+        )
+      ],
+      postParticipants: [
+        OrbitPostParticipantRecord(
+          id: meetingParticipantID,
+          postID: meetingPostID,
+          participantType: .workspacePersona,
+          participantID: "workspace-persona-orbit-samwise",
+          joinedAt: createdAt,
+          participationMode: .active
+        )
+      ],
+      postLinks: [
+        OrbitPostLinkRecord(
+          id: promotionLinkID,
+          fromPostID: originRoom.post.id,
+          toPostID: meetingPostID,
+          linkType: .promotion,
+          createdAt: createdAt
+        )
+      ],
+      meetingState: OrbitMeetingStateRecord(
+        postID: meetingPostID,
+        meetingType: .team,
+        status: .created,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: createdAt
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: meetingMemberID,
+          meetingPostID: meetingPostID,
+          postParticipantID: meetingParticipantID,
+          participationRole: .contributor,
+          selectedReason: "Selected via explicit promotion.",
+          joinedAt: createdAt
         )
       ]
     )

@@ -48,6 +48,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
                 )
               )
             ],
+            postLinks: room.postLinks,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
@@ -108,6 +109,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             thread: room.thread,
             messages: messages,
             postParticipants: room.postParticipants,
+            postLinks: room.postLinks,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
@@ -139,6 +141,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           ),
           messages: room.messages,
           postParticipants: room.postParticipants,
+          postLinks: room.postLinks,
           meetingState: room.meetingState,
           meetingMembers: room.meetingMembers,
           postEvents: room.postEvents,
@@ -185,6 +188,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           thread: room.thread,
           messages: room.messages,
           postParticipants: room.postParticipants,
+          postLinks: room.postLinks,
           meetingState: room.meetingState,
           meetingMembers: room.meetingMembers,
           postEvents: postEvents,
@@ -204,6 +208,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             thread: room.thread,
             messages: room.messages,
             postParticipants: room.postParticipants,
+            postLinks: room.postLinks,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents + [
@@ -233,6 +238,7 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             thread: room.thread,
             messages: room.messages,
             postParticipants: room.postParticipants,
+            postLinks: room.postLinks,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents + [

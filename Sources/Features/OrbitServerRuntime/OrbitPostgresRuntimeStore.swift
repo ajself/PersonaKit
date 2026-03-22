@@ -288,6 +288,17 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         )
       }
 
+      let postLinkRows = try await client.query(
+        repository.selectPostLinksQuery(postID: post.id)
+      )
+
+      var postLinks = [OrbitPostLinkRecord]()
+      for try await postLinkRow in postLinkRows {
+        postLinks.append(
+          try decodePostLink(from: postLinkRow.makeRandomAccess())
+        )
+      }
+
       let meetingStateRows = try await client.query(
         repository.selectMeetingStateQuery(postID: post.id)
       )
@@ -353,6 +364,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         thread: thread,
         messages: messages,
         postParticipants: postParticipants,
+        postLinks: postLinks,
         meetingState: meetingState,
         meetingMembers: meetingMembers,
         postEvents: postEvents,
@@ -671,6 +683,22 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         from: row["participation_mode"],
         columnName: "participation_mode"
       )
+    )
+  }
+
+  private func decodePostLink(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitPostLinkRecord {
+    try OrbitPostLinkRecord(
+      id: row["id"].decode(UUID.self),
+      fromPostID: row["from_post_id"].decode(UUID.self),
+      toPostID: row["to_post_id"].decode(UUID.self),
+      linkType: try decodeEnum(
+        OrbitPostLinkType.self,
+        from: row["link_type"],
+        columnName: "link_type"
+      ),
+      createdAt: row["created_at"].decode(Date.self)
     )
   }
 

@@ -144,6 +144,7 @@ extension OrbitWorkspace {
     ],
     activationFailureRecords: [],
     meetingPromotionRecords: [],
+    meetingContinuityRecords: [],
     nextMessageSequence: 2,
     nextActivationSequence: 2,
     nextActivationFailureSequence: 1

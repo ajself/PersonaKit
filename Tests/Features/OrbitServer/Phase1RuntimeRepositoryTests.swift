@@ -92,7 +92,7 @@ struct Phase1RuntimeRepositoryTests {
     try await repository.promoteMeetingRoom(
       originPostEvent: sampleOriginPromotionAttemptPostEvent(),
       originRealtimeEvents: sampleOriginPromotionAttemptRealtimeEvents(),
-      room: sampleMeetingRoomBootstrap(),
+      room: samplePromotedMeetingRoomBootstrap(),
       using: executor
     )
 
@@ -104,6 +104,7 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.filter { $0.contains("INSERT INTO post_event") }.count >= 2)
     #expect(queries.filter { $0.contains("INSERT INTO realtime_event") }.count >= 2)
     #expect(queries.contains(where: { $0.contains("INSERT INTO post") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO post_link") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
   }
@@ -191,6 +192,7 @@ struct Phase1RuntimeRepositoryTests {
   @Test
   func participantAndEventQueriesPreserveReplayOrder() {
     let participantQuery = repository.selectPostParticipantsQuery(postID: UUID())
+    let postLinkQuery = repository.selectPostLinksQuery(postID: UUID())
     let meetingStateQuery = repository.selectMeetingStateQuery(postID: UUID())
     let meetingMemberQuery = repository.selectMeetingMembersQuery(meetingPostID: UUID())
     let eventQuery = repository.selectPostEventsQuery(postID: UUID())
@@ -223,6 +225,12 @@ struct Phase1RuntimeRepositoryTests {
     #expect(participantQuery.sql.contains("FROM post_participant"))
     #expect(participantQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
     #expect(participantQuery.binds.count == 1)
+
+    #expect(postLinkQuery.sql.contains("FROM post_link"))
+    #expect(postLinkQuery.sql.contains("WHERE from_post_id = $1"))
+    #expect(postLinkQuery.sql.contains("OR to_post_id = $2"))
+    #expect(postLinkQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(postLinkQuery.binds.count == 2)
 
     #expect(meetingStateQuery.sql.contains("FROM meeting_state"))
     #expect(meetingStateQuery.sql.contains("WHERE post_id = $1"))
@@ -620,6 +628,109 @@ struct Phase1RuntimeRepositoryTests {
       postEvents: bootstrap.postEvents,
       personaActivations: bootstrap.personaActivations,
       agentRuns: bootstrap.agentRuns
+    )
+  }
+
+  private func samplePromotedMeetingRoomBootstrap() -> OrbitPhase1RoomBootstrap {
+    let meetingRoom = sampleMeetingRoomBootstrap()
+    let originRoom = sampleRoomBootstrap()
+    let promotedPostID = UUID(uuidString: "02020202-0202-0202-0202-020202020202")!
+    let promotedThreadID = UUID(uuidString: "03030303-0303-0303-0303-030303030303")!
+    let promotedParticipants = meetingRoom.postParticipants.map { participant in
+      OrbitPostParticipantRecord(
+        id: participant.id,
+        postID: promotedPostID,
+        participantType: participant.participantType,
+        participantID: participant.participantID,
+        joinedAt: participant.joinedAt,
+        leftAt: participant.leftAt,
+        participationMode: participant.participationMode
+      )
+    }
+
+    return OrbitPhase1RoomBootstrap(
+      workspace: meetingRoom.workspace,
+      channel: meetingRoom.channel,
+      workspacePersonas: meetingRoom.workspacePersonas,
+      teams: meetingRoom.teams,
+      squads: meetingRoom.squads,
+      workspacePersonaMemberships: meetingRoom.workspacePersonaMemberships,
+      post: OrbitPostRecord(
+        id: promotedPostID,
+        workspaceID: meetingRoom.post.workspaceID,
+        channelID: meetingRoom.post.channelID,
+        postType: .meeting,
+        createdByParticipantType: meetingRoom.post.createdByParticipantType,
+        createdByParticipantID: meetingRoom.post.createdByParticipantID,
+        title: meetingRoom.post.title,
+        status: meetingRoom.post.status,
+        createdAt: meetingRoom.post.createdAt.addingTimeInterval(90),
+        archivedAt: meetingRoom.post.archivedAt
+      ),
+      thread: OrbitThreadRecord(
+        id: promotedThreadID,
+        postID: promotedPostID,
+        status: meetingRoom.thread.status,
+        lastActivityAt: meetingRoom.thread.lastActivityAt.addingTimeInterval(90),
+        createdAt: meetingRoom.thread.createdAt.addingTimeInterval(90),
+        closedAt: meetingRoom.thread.closedAt
+      ),
+      seedMessages: meetingRoom.seedMessages.map { message in
+        OrbitMessageRecord(
+          id: message.id,
+          postID: promotedPostID,
+          threadID: promotedThreadID,
+          authorType: message.authorType,
+          authorID: message.authorID,
+          replyToMessageID: message.replyToMessageID,
+          body: message.body,
+          messageFormat: message.messageFormat,
+          state: message.state,
+          createdAt: message.createdAt.addingTimeInterval(90),
+          updatedAt: message.updatedAt.addingTimeInterval(90)
+        )
+      },
+      realtimeEvents: [],
+      postParticipants: promotedParticipants,
+      postLinks: [
+        OrbitPostLinkRecord(
+          id: UUID(uuidString: "01010101-0101-0101-0101-010101010101")!,
+          fromPostID: originRoom.post.id,
+          toPostID: promotedPostID,
+          linkType: .promotion,
+          createdAt: referenceDate.addingTimeInterval(89)
+        )
+      ],
+      meetingState: OrbitMeetingStateRecord(
+        postID: promotedPostID,
+        meetingType: .team,
+        status: .active,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: referenceDate.addingTimeInterval(90)
+      ),
+      meetingMembers: promotedParticipants.map { participant in
+        OrbitMeetingMemberRecord(
+          id: participant.id,
+          meetingPostID: promotedPostID,
+          postParticipantID: participant.id,
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: participant.joinedAt
+        )
+      },
+      postEvents: [
+        OrbitPostEventRecord(
+          id: UUID(uuidString: "04040404-0404-0404-0404-040404040404")!,
+          postID: promotedPostID,
+          threadID: promotedThreadID,
+          eventType: OrbitPhase1RealtimeEventCategory.activationResolved.rawValue,
+          payloadJSON: "{\"response_mode\":\"direct-address\"}",
+          createdAt: referenceDate.addingTimeInterval(91)
+        )
+      ],
+      personaActivations: [],
+      agentRuns: []
     )
   }
 

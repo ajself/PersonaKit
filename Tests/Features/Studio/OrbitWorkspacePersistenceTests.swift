@@ -221,6 +221,35 @@ struct OrbitWorkspacePersistenceTests {
   }
 
   @Test
+  func meetingContinuityEvidenceRoundTripsAcrossReload() throws {
+    let persistence = OrbitWorkspacePersistence()
+    let fileManager = FileManager.default
+    let workspaceURL = fileManager.temporaryDirectory
+      .appendingPathComponent("orbit-meeting-continuity-restart", isDirectory: true)
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+
+    try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: workspaceURL) }
+
+    var workspace = OrbitWorkspace.defaultWorkspace
+    let expectedRecord = OrbitMeetingContinuityRecord(
+      id: "promotion-link-0001",
+      currentPerspective: .promotedMeeting,
+      originPostID: "post-origin-0001",
+      promotedMeetingPostID: "post-meeting-0001"
+    )
+    workspace.meetingContinuityRecords = [expectedRecord]
+
+    try persistence.persist(workspace, to: workspaceURL)
+
+    let loadedWorkspace = try persistence.loadWorkspace(from: workspaceURL)
+    let reloadedWorkspace = try #require(loadedWorkspace)
+
+    #expect(reloadedWorkspace.meetingContinuityRecords == [expectedRecord])
+    #expect(reloadedWorkspace.meetingContinuityRecords.first?.linkedPostID == "post-origin-0001")
+  }
+
+  @Test
   func emptyWorkspaceRoundTripsWithoutInventingDiscussion() throws {
     let persistence = OrbitWorkspacePersistence()
     let fileManager = FileManager.default

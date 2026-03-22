@@ -17,6 +17,7 @@ enum OrbitServerRoomProjection {
     )
     let activationFailureRecords = projectedActivationFailureRecords(from: room)
     let meetingPromotionRecords = projectedMeetingPromotionRecords(from: room)
+    let meetingContinuityRecords = projectedMeetingContinuityRecords(from: room)
     let activationRecords = projectedActivationRecords(
       from: room,
       participants: participants,
@@ -57,6 +58,7 @@ enum OrbitServerRoomProjection {
       activationContractSnapshots: activationContractSnapshots,
       activationFailureRecords: activationFailureRecords,
       meetingPromotionRecords: meetingPromotionRecords,
+      meetingContinuityRecords: meetingContinuityRecords,
       nextMessageSequence: messages.count + 1,
       nextActivationSequence: activationRecords.count + 1,
       nextActivationFailureSequence: activationFailureRecords.count + 1
@@ -420,6 +422,38 @@ enum OrbitServerRoomProjection {
       }
   }
 
+  private static func projectedMeetingContinuityRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingContinuityRecord] {
+    room.postLinks
+      .sorted(by: postLinkSort)
+      .compactMap { postLink -> OrbitMeetingContinuityRecord? in
+        guard postLink.linkType == .promotion else {
+          return nil
+        }
+
+        if postLink.fromPostID == room.post.id {
+          return OrbitMeetingContinuityRecord(
+            id: postLink.id.uuidString,
+            currentPerspective: .originThread,
+            originPostID: postLink.fromPostID.uuidString,
+            promotedMeetingPostID: postLink.toPostID.uuidString
+          )
+        }
+
+        guard postLink.toPostID == room.post.id else {
+          return nil
+        }
+
+        return OrbitMeetingContinuityRecord(
+          id: postLink.id.uuidString,
+          currentPerspective: .promotedMeeting,
+          originPostID: postLink.fromPostID.uuidString,
+          promotedMeetingPostID: postLink.toPostID.uuidString
+        )
+      }
+  }
+
   private static func projectedParticipantID(
     for workspacePersona: OrbitWorkspacePersonaRecord
   ) -> String {
@@ -736,6 +770,17 @@ enum OrbitServerRoomProjection {
   private static func postEventSort(
     _ lhs: OrbitPostEventRecord,
     _ rhs: OrbitPostEventRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func postLinkSort(
+    _ lhs: OrbitPostLinkRecord,
+    _ rhs: OrbitPostLinkRecord
   ) -> Bool {
     if lhs.createdAt == rhs.createdAt {
       return lhs.id.uuidString < rhs.id.uuidString

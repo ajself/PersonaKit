@@ -209,6 +209,42 @@ struct Phase1RealtimeSnapshotReducerTests {
   }
 
   @Test
+  func reducerPreservesPromotionContinuityLinksAcrossReplay() throws {
+    let initial = sampleMeetingSnapshotWithContinuityLink()
+    let messageDate = Date(timeIntervalSince1970: 1_742_342_530)
+    let event = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "91919191-9191-9191-9191-919191919191")!,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: messageDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: UUID(uuidString: "92929292-9292-9292-9292-929292929292")!,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.workspacePersona.rawValue,
+          authorID: "workspace-persona-orbit-samwise",
+          body: "Continuity should survive replay.",
+          messageFormat: OrbitMessageFormat.markdown.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: messageDate,
+          updatedAt: messageDate,
+          replyToMessageID: nil
+        )
+      )
+    )
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(
+      events: [event],
+      to: initial
+    )
+
+    #expect(reduced.room.postLinks == initial.room.postLinks)
+  }
+
+  @Test
   func reducerAddsMeetingPromotionAttemptAndFailureEvidence() throws {
     let initial = sampleSnapshot()
     let failureMessageID = UUID(uuidString: "dededede-dede-dede-dede-dededededede")!
@@ -427,6 +463,37 @@ struct Phase1RealtimeSnapshotReducerTests {
 
     return OrbitPhase1RealtimeSnapshot(
       room: room,
+      replayCursor: baseline.replayCursor
+    )
+  }
+
+  private func sampleMeetingSnapshotWithContinuityLink() -> OrbitPhase1RealtimeSnapshot {
+    let baseline = sampleMeetingSnapshot()
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: baseline.room.workspace,
+        channel: baseline.room.channel,
+        workspacePersonas: baseline.room.workspacePersonas,
+        post: baseline.room.post,
+        thread: baseline.room.thread,
+        messages: baseline.room.messages,
+        postParticipants: baseline.room.postParticipants,
+        postLinks: [
+          OrbitPostLinkRecord(
+            id: UUID(uuidString: "93939393-9393-9393-9393-939393939393")!,
+            fromPostID: UUID(uuidString: "94949494-9494-9494-9494-949494949494")!,
+            toPostID: baseline.room.post.id,
+            linkType: .promotion,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_519)
+          )
+        ],
+        meetingState: baseline.room.meetingState,
+        meetingMembers: baseline.room.meetingMembers,
+        postEvents: baseline.room.postEvents,
+        personaActivations: baseline.room.personaActivations,
+        agentRuns: baseline.room.agentRuns
+      ),
       replayCursor: baseline.replayCursor
     )
   }

@@ -402,6 +402,36 @@ public struct OrbitPostParticipantRecord: Codable, Equatable, Sendable {
   }
 }
 
+public enum OrbitPostLinkType: String, Codable, Equatable, Sendable {
+  case origin
+  case followUp = "follow_up"
+  case dependency
+  case promotion
+  case related
+}
+
+public struct OrbitPostLinkRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let fromPostID: UUID
+  public let toPostID: UUID
+  public let linkType: OrbitPostLinkType
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    fromPostID: UUID,
+    toPostID: UUID,
+    linkType: OrbitPostLinkType,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.fromPostID = fromPostID
+    self.toPostID = toPostID
+    self.linkType = linkType
+    self.createdAt = createdAt
+  }
+}
+
 public struct OrbitMeetingStateRecord: Codable, Equatable, Sendable {
   public let postID: UUID
   public let meetingType: OrbitMeetingType
@@ -622,6 +652,7 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let seedMessages: [OrbitMessageRecord]
   public let realtimeEvents: [OrbitRealtimeEventRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
+  public let postLinks: [OrbitPostLinkRecord]
   public let meetingState: OrbitMeetingStateRecord?
   public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
@@ -640,6 +671,7 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     seedMessages: [OrbitMessageRecord],
     realtimeEvents: [OrbitRealtimeEventRecord] = [],
     postParticipants: [OrbitPostParticipantRecord] = [],
+    postLinks: [OrbitPostLinkRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
     meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
@@ -657,6 +689,7 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     self.seedMessages = seedMessages
     self.realtimeEvents = realtimeEvents
     self.postParticipants = postParticipants
+    self.postLinks = postLinks
     self.meetingState = meetingState
     self.meetingMembers = meetingMembers
     self.postEvents = postEvents
@@ -676,6 +709,7 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let thread: OrbitThreadRecord
   public let messages: [OrbitMessageRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
+  public let postLinks: [OrbitPostLinkRecord]
   public let meetingState: OrbitMeetingStateRecord?
   public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
@@ -693,6 +727,7 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     thread: OrbitThreadRecord,
     messages: [OrbitMessageRecord],
     postParticipants: [OrbitPostParticipantRecord] = [],
+    postLinks: [OrbitPostLinkRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
     meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
@@ -709,6 +744,7 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     self.thread = thread
     self.messages = messages
     self.postParticipants = postParticipants
+    self.postLinks = postLinks
     self.meetingState = meetingState
     self.meetingMembers = meetingMembers
     self.postEvents = postEvents

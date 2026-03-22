@@ -213,6 +213,129 @@ struct OrbitServerRoomProjectionTests {
     )
   }
 
+  @Test
+  func projectionRestoresOriginThreadContinuityFromCanonicalPostLinks() {
+    let snapshot = sampleSnapshot()
+    let meetingPostID = UUID(uuidString: "12121212-3434-5656-7878-909090909090")!
+    let linkedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: snapshot.room.post,
+        thread: snapshot.room.thread,
+        messages: snapshot.room.messages,
+        postParticipants: snapshot.room.postParticipants,
+        postLinks: [
+          OrbitPostLinkRecord(
+            id: UUID(uuidString: "13131313-3434-5656-7878-909090909090")!,
+            fromPostID: snapshot.room.post.id,
+            toPostID: meetingPostID,
+            linkType: .promotion,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_472)
+          )
+        ],
+        postEvents: snapshot.room.postEvents,
+        personaActivations: snapshot.room.personaActivations,
+        agentRuns: snapshot.room.agentRuns
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: linkedSnapshot)
+    let continuityRecord = workspace.meetingContinuityRecords.first
+
+    #expect(workspace.meetingContinuityRecords.count == 1)
+    #expect(continuityRecord?.currentPerspective == .originThread)
+    #expect(continuityRecord?.originPostID == snapshot.room.post.id.uuidString)
+    #expect(continuityRecord?.promotedMeetingPostID == meetingPostID.uuidString)
+    #expect(continuityRecord?.currentPostID == snapshot.room.post.id.uuidString)
+    #expect(continuityRecord?.linkedPostID == meetingPostID.uuidString)
+  }
+
+  @Test
+  func projectionRestoresPromotedMeetingContinuityFromCanonicalPostLinks() {
+    let snapshot = sampleSnapshot()
+    let originPostID = snapshot.room.post.id
+    let promotedPostID = UUID(uuidString: "14141414-3434-5656-7878-909090909090")!
+    let promotedThreadID = UUID(uuidString: "15151515-3434-5656-7878-909090909090")!
+    let linkedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: OrbitPostRecord(
+          id: promotedPostID,
+          workspaceID: snapshot.room.workspace.id,
+          channelID: snapshot.room.channel.id,
+          postType: .meeting,
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          title: "Founding Group Meeting",
+          status: .active,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_472)
+        ),
+        thread: OrbitThreadRecord(
+          id: promotedThreadID,
+          postID: promotedPostID,
+          status: .open,
+          lastActivityAt: Date(timeIntervalSince1970: 1_742_342_472),
+          createdAt: Date(timeIntervalSince1970: 1_742_342_472)
+        ),
+        messages: [],
+        postParticipants: snapshot.room.postParticipants.map { participant in
+          OrbitPostParticipantRecord(
+            id: participant.id,
+            postID: promotedPostID,
+            participantType: participant.participantType,
+            participantID: participant.participantID,
+            joinedAt: participant.joinedAt,
+            leftAt: participant.leftAt,
+            participationMode: participant.participationMode
+          )
+        },
+        postLinks: [
+          OrbitPostLinkRecord(
+            id: UUID(uuidString: "16161616-3434-5656-7878-909090909090")!,
+            fromPostID: originPostID,
+            toPostID: promotedPostID,
+            linkType: .promotion,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_472)
+          )
+        ],
+        meetingState: OrbitMeetingStateRecord(
+          postID: promotedPostID,
+          meetingType: .team,
+          status: .created,
+          startedByParticipantType: .user,
+          startedByParticipantID: "aj",
+          startedAt: Date(timeIntervalSince1970: 1_742_342_472)
+        ),
+        meetingMembers: [],
+        postEvents: [],
+        personaActivations: [],
+        agentRuns: []
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: linkedSnapshot)
+    let continuityRecord = workspace.meetingContinuityRecords.first
+
+    #expect(workspace.meetingContinuityRecords.count == 1)
+    #expect(continuityRecord?.currentPerspective == .promotedMeeting)
+    #expect(continuityRecord?.originPostID == originPostID.uuidString)
+    #expect(continuityRecord?.promotedMeetingPostID == promotedPostID.uuidString)
+    #expect(continuityRecord?.currentPostID == promotedPostID.uuidString)
+    #expect(continuityRecord?.linkedPostID == originPostID.uuidString)
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let workspaceID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
     let channelID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!

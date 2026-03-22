@@ -160,6 +160,7 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
       ),
       messages: snapshot.messages + [systemMessage],
       postParticipants: snapshot.postParticipants,
+      postLinks: snapshot.postLinks,
       meetingState: updatedMeetingState,
       meetingMembers: snapshot.meetingMembers,
       postEvents: snapshot.postEvents + [postEvent],

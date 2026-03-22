@@ -18,6 +18,7 @@ struct OrbitWorkspace: Codable, Equatable {
   var activationContractSnapshots: [OrbitActivationContractSnapshot]
   var activationFailureRecords: [OrbitActivationFailureRecord]
   var meetingPromotionRecords: [OrbitMeetingPromotionRecord]
+  var meetingContinuityRecords: [OrbitMeetingContinuityRecord]
   var nextMessageSequence: Int
   var nextActivationSequence: Int
   var nextActivationFailureSequence: Int
@@ -1079,6 +1080,26 @@ struct OrbitMeetingPromotionRecord: Codable, Equatable, Identifiable {
   }
 }
 
+struct OrbitMeetingContinuityRecord: Codable, Equatable, Identifiable {
+  enum Perspective: String, Codable, Equatable {
+    case originThread = "origin_thread"
+    case promotedMeeting = "promoted_meeting"
+  }
+
+  let id: String
+  let currentPerspective: Perspective
+  let originPostID: String
+  let promotedMeetingPostID: String
+
+  var currentPostID: String {
+    currentPerspective == .originThread ? originPostID : promotedMeetingPostID
+  }
+
+  var linkedPostID: String {
+    currentPerspective == .originThread ? promotedMeetingPostID : originPostID
+  }
+}
+
 enum OrbitDirectiveSource: String, Codable, Equatable {
   case participantDefault
 }
@@ -1148,6 +1169,7 @@ extension OrbitWorkspace {
     case activationContractSnapshots
     case activationFailureRecords
     case meetingPromotionRecords
+    case meetingContinuityRecords
     case nextMessageSequence
     case nextActivationSequence
     case nextActivationFailureSequence
@@ -1204,6 +1226,9 @@ extension OrbitWorkspace {
     meetingPromotionRecords =
       try container.decodeIfPresent([OrbitMeetingPromotionRecord].self, forKey: .meetingPromotionRecords)
       ?? []
+    meetingContinuityRecords =
+      try container.decodeIfPresent([OrbitMeetingContinuityRecord].self, forKey: .meetingContinuityRecords)
+      ?? []
 
     nextMessageSequence = try container.decode(Int.self, forKey: .nextMessageSequence)
     nextActivationSequence = try container.decode(Int.self, forKey: .nextActivationSequence)
@@ -1228,6 +1253,7 @@ extension OrbitWorkspace {
     try container.encode(activationContractSnapshots, forKey: .activationContractSnapshots)
     try container.encode(activationFailureRecords, forKey: .activationFailureRecords)
     try container.encode(meetingPromotionRecords, forKey: .meetingPromotionRecords)
+    try container.encode(meetingContinuityRecords, forKey: .meetingContinuityRecords)
     try container.encode(nextMessageSequence, forKey: .nextMessageSequence)
     try container.encode(nextActivationSequence, forKey: .nextActivationSequence)
     try container.encode(nextActivationFailureSequence, forKey: .nextActivationFailureSequence)

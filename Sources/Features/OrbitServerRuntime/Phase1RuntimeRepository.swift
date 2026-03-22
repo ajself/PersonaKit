@@ -195,6 +195,10 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     try await executor.execute(query: insertPostQuery(room.post))
     try await executor.execute(query: insertThreadQuery(room.thread))
 
+    for postLink in room.postLinks {
+      try await executor.execute(query: insertPostLinkQuery(postLink))
+    }
+
     for realtimeEvent in realtimeEvents {
       try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
     }
@@ -538,6 +542,23 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       \(event.eventType),
       \(event.payloadJSON)::jsonb,
       \(event.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func insertPostLinkQuery(
+    _ postLink: OrbitPostLinkRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO post_link (
+      id, from_post_id, to_post_id, link_type, created_at
+    ) VALUES (
+      \(postLink.id),
+      \(postLink.fromPostID),
+      \(postLink.toPostID),
+      \(postLink.linkType.rawValue),
+      \(postLink.createdAt)
     )
     ON CONFLICT (id) DO NOTHING
     """
@@ -967,6 +988,23 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       created_at
     FROM post_event
     WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectPostLinksQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      from_post_id,
+      to_post_id,
+      link_type,
+      created_at
+    FROM post_link
+    WHERE from_post_id = \(postID)
+      OR to_post_id = \(postID)
     ORDER BY created_at ASC, id ASC
     """
   }
