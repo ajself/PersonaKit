@@ -8,6 +8,7 @@ enum OrbitServerBackedRoomCoordinatorError: LocalizedError, Equatable {
   case preflightActivationRecordUnavailable(String)
   case preflightContractSnapshotUnavailable(String)
   case preflightActivationFailureUnavailable(String)
+  case promotionRequiresResolvedGroupTarget
 
   var errorDescription: String? {
     switch self {
@@ -23,7 +24,24 @@ enum OrbitServerBackedRoomCoordinatorError: LocalizedError, Equatable {
       return "Orbit could not recover staged contract evidence for \(activationID)."
     case .preflightActivationFailureUnavailable(let triggerMessageID):
       return "Orbit could not recover staged activation-failure evidence for \(triggerMessageID)."
+    case .promotionRequiresResolvedGroupTarget:
+      return "Orbit can only promote a resolved team or squad target into a dedicated meeting room."
     }
+  }
+}
+
+private struct OrbitServerBackedRoomPromotionAttempt {
+  let targetResolution: OrbitTargetResolution
+  let meetingRequest: OrbitPhase1CreateMeetingRoomRequest
+}
+
+struct OrbitServerBackedRoomPromotionRequest: Equatable, Sendable {
+  let title: String?
+
+  init(
+    title: String? = nil
+  ) {
+    self.title = title
   }
 }
 
@@ -121,9 +139,60 @@ struct OrbitServerBackedRoomCoordinator {
     authorID: String,
     body: String,
     addressedParticipantID: String?,
+    promotion: OrbitServerBackedRoomPromotionRequest? = nil,
     resolveContract: ((OrbitParticipant) throws -> OrbitResolvedActivationContract)? = nil,
     client: OrbitServerBackedRoomClient
   ) async throws {
+    if let promotion {
+      let promotionAttempt = try promotionAttempt(
+        scope: scope,
+        authorID: authorID,
+        addressedParticipantID: addressedParticipantID,
+        promotion: promotion
+      )
+
+      do {
+        let promotedScope = try await promoteConversationTurn(
+          attempt: promotionAttempt,
+          client: client
+        )
+
+        try await appendConversationTurn(
+          scope: promotedScope,
+          authorID: authorID,
+          body: body,
+          addressedParticipantID: addressedParticipantID,
+          resolveContract: resolveContract,
+          client: client
+        )
+
+        return
+      } catch {
+        _ = try await client.appendSystemMessage(
+          OrbitPhase1AppendSystemMessageRequest(
+            workspaceSlug: scope.workspaceSlug,
+            channelSlug: scope.channelSlug,
+            postID: scope.postID,
+            body: promotionFailureBody(
+              for: promotionAttempt.targetResolution,
+              error: error
+            )
+          )
+        )
+      }
+
+      try await appendConversationTurn(
+        scope: scope,
+        authorID: authorID,
+        body: body,
+        addressedParticipantID: addressedParticipantID,
+        resolveContract: resolveContract,
+        client: client
+      )
+
+      return
+    }
+
     guard let projectedWorkspace = roomState.projectedWorkspace else {
       throw OrbitServerBackedRoomCoordinatorError.projectedWorkspaceUnavailable
     }
@@ -236,6 +305,18 @@ struct OrbitServerBackedRoomCoordinator {
     }
   }
 
+  @MainActor
+  private mutating func promoteConversationTurn(
+    attempt: OrbitServerBackedRoomPromotionAttempt,
+    client: OrbitServerBackedRoomClient
+  ) async throws -> OrbitPhase1RealtimeSubscriptionScope {
+    let result = try await client.createMeetingRoom(attempt.meetingRequest)
+
+    try await connect(scope: result.scope, client: client)
+
+    return result.scope
+  }
+
   mutating func reconnect(
     scope: OrbitPhase1RealtimeSubscriptionScope,
     client: OrbitServerBackedRoomClient
@@ -311,6 +392,146 @@ struct OrbitServerBackedRoomCoordinator {
       createdMessages: createdMessages,
       userMessage: userMessage
     )
+  }
+
+  private func promotionAttempt(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    authorID: String,
+    addressedParticipantID: String?,
+    promotion: OrbitServerBackedRoomPromotionRequest
+  ) throws -> OrbitServerBackedRoomPromotionAttempt {
+    guard let workspace = roomState.projectedWorkspace else {
+      throw OrbitServerBackedRoomCoordinatorError.projectedWorkspaceUnavailable
+    }
+
+    let targetResolution = try promotedTargetResolution(
+      addressedParticipantID: addressedParticipantID,
+      in: workspace
+    )
+
+    return OrbitServerBackedRoomPromotionAttempt(
+      targetResolution: targetResolution,
+      meetingRequest: try meetingRoomRequest(
+        scope: scope,
+        authorID: authorID,
+        promotion: promotion,
+        targetResolution: targetResolution,
+        in: workspace
+      )
+    )
+  }
+
+  private func promotedTargetResolution(
+    addressedParticipantID: String?,
+    in workspace: OrbitWorkspace
+  ) throws -> OrbitTargetResolution {
+    guard let addressedParticipantID else {
+      throw OrbitServerBackedRoomCoordinatorError.promotionRequiresResolvedGroupTarget
+    }
+
+    let targetResolution = OrbitParticipantResponseBridge.targetResolution(
+      in: workspace,
+      addressedParticipantID: addressedParticipantID
+    )
+
+    guard
+      targetResolution.status == .resolved,
+      targetResolution.targetKind != .collaborator
+    else {
+      throw OrbitServerBackedRoomCoordinatorError.promotionRequiresResolvedGroupTarget
+    }
+
+    return targetResolution
+  }
+
+  private func meetingRoomRequest(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    authorID: String,
+    promotion: OrbitServerBackedRoomPromotionRequest,
+    targetResolution: OrbitTargetResolution,
+    in workspace: OrbitWorkspace
+  ) throws -> OrbitPhase1CreateMeetingRoomRequest {
+    let includedReasonsByParticipantID: [String: OrbitTargetParticipantReason] = Dictionary(
+      uniqueKeysWithValues: targetResolution.includedParticipantReasons.compactMap { reason in
+        guard let participantID = reason.participantID else {
+          return nil
+        }
+
+        return (participantID, reason)
+      }
+    )
+    let members = try targetResolution.includedParticipants.map { participant in
+      guard
+        let workspacePersonaIDString = participant.workspacePersonaID,
+        let workspacePersonaID = UUID(uuidString: workspacePersonaIDString)
+      else {
+        throw OrbitServerBackedRoomCoordinatorError.collaboratorWorkspacePersonaMissing(
+          participant.id
+        )
+      }
+
+      return OrbitPhase1MeetingMemberSpec(
+        workspacePersonaID: workspacePersonaID,
+        participationRole: .contributor,
+        selectedReason:
+          includedReasonsByParticipantID[participant.id]?.explanation
+          ?? "Orbit selected \(participant.displayName) for the promoted \(targetResolution.targetKind.rawValue) meeting."
+      )
+    }
+
+    return OrbitPhase1CreateMeetingRoomRequest(
+      workspaceSlug: scope.workspaceSlug,
+      channelSlug: scope.channelSlug,
+      title: meetingTitle(
+        for: targetResolution,
+        promotion: promotion
+      ),
+      meetingType: meetingType(for: targetResolution.targetKind),
+      startedByParticipantType: .user,
+      startedByParticipantID: authorID,
+      members: members
+    )
+  }
+
+  private func meetingTitle(
+    for targetResolution: OrbitTargetResolution,
+    promotion: OrbitServerBackedRoomPromotionRequest
+  ) -> String {
+    guard
+      let title = promotion.title?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !title.isEmpty
+    else {
+      return "\(targetResolution.targetDisplayName) Meeting"
+    }
+
+    return title
+  }
+
+  private func meetingType(
+    for targetKind: OrbitAddressedTargetKind
+  ) -> OrbitMeetingType {
+    switch targetKind {
+    case .team:
+      return .team
+    case .squad:
+      return .squad
+    case .collaborator:
+      return .adHoc
+    }
+  }
+
+  private func promotionFailureBody(
+    for targetResolution: OrbitTargetResolution,
+    error: Error
+  ) -> String {
+    """
+    Orbit meeting promotion failed
+    attempted target: kind=\(targetResolution.targetKind.rawValue) reference=\(targetResolution.targetReferenceID) workspace=\(targetResolution.workspaceID)
+    outcome: promotion did not complete
+    fallback: current thread
+    detail: \(error.localizedDescription)
+    """
   }
 
   private func activationRecord(

@@ -10,6 +10,7 @@ struct OrbitPanelView: View {
   @State var orbitWorkspace = OrbitWorkspace.defaultWorkspace
   @State var draftMessageBody = ""
   @State var addressedParticipantID: String?
+  @State var promoteToMeetingRoom = false
   @State var expandedTraceMessageIDs: Set<String>
   @State var serverBackedRoomCoordinator = OrbitServerBackedRoomCoordinator()
   @State var persistenceMessage: String?
@@ -60,6 +61,16 @@ struct OrbitPanelView: View {
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       loadConfiguredOrbitRoom()
+    }
+    .onChange(of: addressedParticipantID) { _, _ in
+      if !showsMeetingPromotionToggle {
+        promoteToMeetingRoom = false
+      }
+    }
+    .onChange(of: orbitWorkspace) { _, _ in
+      if !showsMeetingPromotionToggle {
+        promoteToMeetingRoom = false
+      }
     }
     .onChange(of: orbitWorkspace) { _, _ in
       if serverBackedRoomClient == nil {

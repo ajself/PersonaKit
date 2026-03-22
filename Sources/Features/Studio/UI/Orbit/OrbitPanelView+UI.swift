@@ -373,6 +373,21 @@ extension OrbitPanelView {
 
       interactionRoutingCard
 
+      if showsMeetingPromotionToggle {
+        Toggle(
+          isOn: $promoteToMeetingRoom
+        ) {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("Promote into meeting room")
+              .font(.subheadline.weight(.semibold))
+            Text("Create a dedicated meeting room for this group target before sending the turn.")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+        .toggleStyle(.switch)
+      }
+
       TextField(
         "Message AJ wants to send into Orbit",
         text: $draftMessageBody,
@@ -455,14 +470,34 @@ extension OrbitPanelView {
     return "Delivery target: \(addressLabel(for: addressedParticipantID) ?? "selected collaborator")"
   }
 
-  @ViewBuilder
-  var interactionRoutingCard: some View {
-    let targetResolution = addressedParticipantID.map { addressedParticipantID in
+  var targetResolutionForComposer: OrbitTargetResolution? {
+    addressedParticipantID.map { addressedParticipantID in
       OrbitParticipantResponseBridge.targetResolution(
         in: orbitWorkspace,
         addressedParticipantID: addressedParticipantID
       )
     }
+  }
+
+  var canPromoteTargetToMeetingRoom: Bool {
+    guard
+      let targetResolution = targetResolutionForComposer,
+      targetResolution.status == .resolved
+    else {
+      return false
+    }
+
+    return targetResolution.targetKind == .team
+      || targetResolution.targetKind == .squad
+  }
+
+  var showsMeetingPromotionToggle: Bool {
+    serverBackedRoomClient != nil && canPromoteTargetToMeetingRoom
+  }
+
+  @ViewBuilder
+  var interactionRoutingCard: some View {
+    let targetResolution = targetResolutionForComposer
 
     switch targetResolution?.targetKind {
     case nil:
@@ -470,9 +505,11 @@ extension OrbitPanelView {
         Text("Current thread routing")
           .font(.caption.weight(.semibold))
           .foregroundStyle(.secondary)
-        Text("Orbit keeps the turn in the active room and routes the next response through the current thread steward so the exchange stays visible and reviewable.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Text(
+          "Orbit keeps the turn in the active room and routes the next response through the current thread steward so the exchange stays visible and reviewable."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
       .padding(10)
       .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
@@ -481,9 +518,11 @@ extension OrbitPanelView {
         Text("Lightweight exchange")
           .font(.caption.weight(.semibold))
           .foregroundStyle(.secondary)
-        Text("Orbit resolves this target from persisted workspace membership, records a visible target-expansion summary, and then invites the included participants into the same room thread.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Text(
+          "Orbit resolves this target from persisted workspace membership, records a visible target-expansion summary, and then invites the included participants into the same room thread."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
       .padding(10)
       .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
@@ -492,9 +531,11 @@ extension OrbitPanelView {
         Text("Direct collaborator routing")
           .font(.caption.weight(.semibold))
           .foregroundStyle(.secondary)
-        Text("Orbit sends this turn only to \(addressLabel(for: addressedParticipantID) ?? "the selected collaborator") and records the activation as a direct address.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Text(
+          "Orbit sends this turn only to \(addressLabel(for: addressedParticipantID) ?? "the selected collaborator") and records the activation as a direct address."
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
       }
       .padding(10)
       .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
@@ -544,9 +585,11 @@ extension OrbitPanelView {
       Text("Orbit is ready for the first room discussion.")
         .font(.headline)
 
-      Text("Use the current thread for an open room turn, address one collaborator directly, or invite the founding group into a lightweight exchange.")
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+      Text(
+        "Use the current thread for an open room turn, address one collaborator directly, or invite the founding group into a lightweight exchange."
+      )
+      .font(.subheadline)
+      .foregroundStyle(.secondary)
 
       HStack(spacing: 8) {
         shellStatusBadge(
@@ -653,6 +696,7 @@ extension OrbitPanelView {
       )
       orbitWorkspace = stagedWorkspace
       draftMessageBody = ""
+      promoteToMeetingRoom = false
       persistenceMessage = nil
       persistenceIsError = false
     } catch let error as OrbitContractResolutionError {
@@ -687,6 +731,10 @@ extension OrbitPanelView {
         authorID: OrbitParticipantID.aj.rawValue,
         body: messageBody,
         addressedParticipantID: addressedParticipantID,
+        promotion:
+          promoteToMeetingRoom
+          ? OrbitServerBackedRoomPromotionRequest()
+          : nil,
         resolveContract: { participant in
           try OrbitContractResolver.resolve(
             participant: participant,
@@ -700,6 +748,7 @@ extension OrbitPanelView {
         orbitWorkspace = projectedWorkspace
       }
       draftMessageBody = ""
+      promoteToMeetingRoom = false
       persistenceMessage = nil
       persistenceIsError = false
     } catch let error as OrbitContractResolutionError {

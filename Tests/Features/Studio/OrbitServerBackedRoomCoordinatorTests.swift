@@ -79,7 +79,9 @@ struct OrbitServerBackedRoomCoordinatorTests {
       )
     )
 
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == "Server-backed replay response")
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == "Server-backed replay response"
+    )
     #expect(coordinator.roomState.session?.replayCursor.lastEventID == replayEvent.id)
   }
 
@@ -235,7 +237,10 @@ struct OrbitServerBackedRoomCoordinatorTests {
       )
     )
 
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == "Canonical replay restored the collaborator response without losing its contract trace.")
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body
+        == "Canonical replay restored the collaborator response without losing its contract trace."
+    )
     #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
     #expect(coordinator.roomState.projectedWorkspace?.activationContractSnapshots.count == 1)
     #expect(coordinator.roomState.snapshot?.room.postEvents.last?.id == postEventID)
@@ -333,7 +338,11 @@ struct OrbitServerBackedRoomCoordinatorTests {
     #expect(activationFailure.failureReason == .missingDirective)
     #expect(activationFailure.systemEventMessageID == systemMessageID.uuidString)
     #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.kind == .systemEvent)
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body.contains("blocked the collaborator activation") == true)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body.contains(
+        "blocked the collaborator activation"
+      ) == true
+    )
   }
 
   @Test
@@ -388,7 +397,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
       id: UUID(uuidString: "62626262-6262-6262-6262-626262626262")!,
       authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
       replyToMessageID: firstRecoveryMessage.id,
-      body: "Persistent transport reconnected again and kept the collaborator trace attached to the same canonical turn.",
+      body:
+        "Persistent transport reconnected again and kept the collaborator trace attached to the same canonical turn.",
       createdAt: Date(timeIntervalSince1970: 1_742_342_542)
     )
     let secondRecoveryMessageEvent = OrbitPhase1RealtimeEventEnvelope(
@@ -585,11 +595,13 @@ struct OrbitServerBackedRoomCoordinatorTests {
     #expect(connectRequests[1].cursor == initialSnapshot.replayCursor)
     #expect(connectRequests[2].cursor == firstRecoverySession.replayCursor)
     #expect(connectRequests[3].cursor == secondRecoverySession.replayCursor)
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.map(\.body) == [
-      "Orbit room bootstrapped.",
-      firstRecoveryMessage.body,
-      secondRecoveryMessage.body,
-    ])
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.map(\.body) == [
+        "Orbit room bootstrapped.",
+        firstRecoveryMessage.body,
+        secondRecoveryMessage.body,
+      ]
+    )
     #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
     #expect(coordinator.roomState.projectedWorkspace?.activationContractSnapshots.count == 1)
     #expect(coordinator.roomState.session?.replayCursor == resyncedSnapshot.replayCursor)
@@ -632,7 +644,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
       authorType: .workspacePersona,
       authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
       replyToMessageID: updatedMessage.id,
-      body: "I am on it. I am treating \"Server-backed append\" as the active objective and keeping the first checkpoint bounded to workspace, roster, conversation, and trace.",
+      body:
+        "I am on it. I am treating \"Server-backed append\" as the active objective and keeping the first checkpoint bounded to workspace, roster, conversation, and trace.",
       messageFormat: .markdown,
       state: .completed,
       createdAt: Date(timeIntervalSince1970: 1_742_342_521),
@@ -800,7 +813,11 @@ struct OrbitServerBackedRoomCoordinatorTests {
     #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body == responseMessage.body)
     #expect(coordinator.roomState.projectedWorkspace?.activationRecords.count == 1)
     #expect(coordinator.roomState.projectedWorkspace?.activationContractSnapshots.count == 1)
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.first(where: { $0.id == updatedMessage.id.uuidString })?.addressedParticipantID == OrbitParticipantID.samwise.rawValue)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.first(where: {
+        $0.id == updatedMessage.id.uuidString
+      })?.addressedParticipantID == OrbitParticipantID.samwise.rawValue
+    )
     #expect(coordinator.roomState.session?.replayCursor.lastEventID == responseMessage.id)
   }
 
@@ -846,14 +863,16 @@ struct OrbitServerBackedRoomCoordinatorTests {
       id: UUID(uuidString: "22222220-2222-2222-2222-222222222220")!,
       authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
       replyToMessageID: updatedMessage.id,
-      body: "I am in the room. I will turn \"Founding group, align on the next Orbit checkpoint.\" into the next concrete execution step and keep the Orbit lane moving without widening scope.",
+      body:
+        "I am in the room. I will turn \"Founding group, align on the next Orbit checkpoint.\" into the next concrete execution step and keep the Orbit lane moving without widening scope.",
       createdAt: Date(timeIntervalSince1970: 1_742_342_522)
     )
     let prodDocResponse = collaboratorResponseMessage(
       id: UUID(uuidString: "23232323-2323-2323-2323-232323232323")!,
       authorID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!.uuidString,
       replyToMessageID: updatedMessage.id,
-      body: "Product lens: \"Founding group, align on the next Orbit checkpoint.\" should make the command-center surface feel more intentional than chat while staying light enough for the first checkpoint.",
+      body:
+        "Product lens: \"Founding group, align on the next Orbit checkpoint.\" should make the command-center surface feel more intentional than chat while staying light enough for the first checkpoint.",
       createdAt: Date(timeIntervalSince1970: 1_742_342_523)
     )
     let exchangeStateMessage = OrbitMessageRecord(
@@ -885,7 +904,9 @@ struct OrbitServerBackedRoomCoordinatorTests {
         workspacePersonaMemberships: initialSnapshot.room.workspacePersonaMemberships,
         post: initialSnapshot.room.post,
         thread: initialSnapshot.room.thread,
-        messages: initialSnapshot.room.messages + [updatedMessage, systemMessage, samwiseResponse, prodDocResponse, exchangeStateMessage],
+        messages: initialSnapshot.room.messages + [
+          updatedMessage, systemMessage, samwiseResponse, prodDocResponse, exchangeStateMessage,
+        ],
         postParticipants: initialSnapshot.room.postParticipants,
         postEvents: initialSnapshot.room.postEvents,
         personaActivations: initialSnapshot.room.personaActivations,
@@ -988,7 +1009,9 @@ struct OrbitServerBackedRoomCoordinatorTests {
     #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.count == 6)
     #expect(await collaboratorWriter.requests.count == 2)
     #expect(await systemWriter.requests.count == 2)
-    #expect(await systemWriter.requests.first?.body.contains("resolved target: kind=team reference=founding-group") == true)
+    #expect(
+      await systemWriter.requests.first?.body.contains("resolved target: kind=team reference=founding-group") == true
+    )
     #expect(await systemWriter.requests.first?.body.contains("reasonCategory=team_membership") == true)
     #expect(await systemWriter.requests.first?.body.contains("ProdDoc | role=reviewer | state=pending") == true)
     #expect(await systemWriter.requests.last?.body.contains("Orbit exchange state") == true)
@@ -998,6 +1021,533 @@ struct OrbitServerBackedRoomCoordinatorTests {
         $0.kind == .systemEvent
           && $0.body.contains("resolved target: kind=team reference=founding-group")
       }) == true
+    )
+  }
+
+  @Test
+  func appendConversationTurnPromotesFoundingGroupIntoCreatedMeetingRoomScope() async throws {
+    let initialSnapshot = meetingSampleSnapshot()
+    let promotedPostID = UUID(uuidString: "a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0")!
+    let promotedThreadID = UUID(uuidString: "b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0")!
+    let updatedMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "c0c0c0c0-c0c0-c0c0-c0c0-c0c0c0c0c0c0")!,
+      postID: promotedPostID,
+      threadID: promotedThreadID,
+      authorType: .user,
+      authorID: "aj",
+      body: "Founding group, align on the next Orbit checkpoint.",
+      messageFormat: .plainText,
+      state: .persisted,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_620),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_620)
+    )
+    let systemMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0")!,
+      postID: promotedPostID,
+      threadID: promotedThreadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: updatedMessage.id,
+      body: """
+        Orbit target expansion
+        resolved target: kind=team reference=founding-group workspace=orbit status=resolved
+        included participants:
+        - ProdDoc | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included ProdDoc through persisted team membership for Founding Group.
+        - Samwise | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included Samwise through persisted team membership for Founding Group.
+        participant states:
+        - ProdDoc | role=reviewer | state=pending
+        - Samwise | role=contributor | state=pending
+        exchange state: active
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_621),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_621)
+    )
+    let samwiseResponse = collaboratorResponseMessage(
+      id: UUID(uuidString: "e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0")!,
+      authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
+      replyToMessageID: updatedMessage.id,
+      body:
+        "I am in the room. I will turn \"Founding group, align on the next Orbit checkpoint.\" into the next concrete execution step and keep the Orbit lane moving without widening scope.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_622)
+    )
+    let prodDocResponse = collaboratorResponseMessage(
+      id: UUID(uuidString: "f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0")!,
+      authorID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!.uuidString,
+      replyToMessageID: updatedMessage.id,
+      body:
+        "Product lens: \"Founding group, align on the next Orbit checkpoint.\" should make the command-center surface feel more intentional than chat while staying light enough for the first checkpoint.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_623)
+    )
+    let exchangeStateMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+      postID: promotedPostID,
+      threadID: promotedThreadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: updatedMessage.id,
+      body: """
+        Orbit exchange state
+        resolved target: kind=team reference=founding-group workspace=orbit state=completed
+        participant states:
+        - ProdDoc | role=reviewer | state=replied
+        - Samwise | role=contributor | state=replied
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_624),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_624)
+    )
+    let createdSnapshot = promotedMeetingSnapshot(
+      postID: promotedPostID,
+      threadID: promotedThreadID,
+      title: "Founding Group Meeting"
+    )
+    let updatedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: createdSnapshot.room.workspace,
+        channel: createdSnapshot.room.channel,
+        workspacePersonas: createdSnapshot.room.workspacePersonas,
+        teams: createdSnapshot.room.teams,
+        squads: createdSnapshot.room.squads,
+        workspacePersonaMemberships: createdSnapshot.room.workspacePersonaMemberships,
+        post: createdSnapshot.room.post,
+        thread: createdSnapshot.room.thread,
+        messages: [
+          updatedMessage,
+          systemMessage,
+          samwiseResponse,
+          prodDocResponse,
+          exchangeStateMessage,
+        ],
+        postParticipants: createdSnapshot.room.postParticipants,
+        meetingState: createdSnapshot.room.meetingState,
+        meetingMembers: createdSnapshot.room.meetingMembers,
+        postEvents: createdSnapshot.room.postEvents,
+        personaActivations: createdSnapshot.room.personaActivations,
+        agentRuns: createdSnapshot.room.agentRuns
+      ),
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: exchangeStateMessage.id,
+        lastEventCreatedAt: exchangeStateMessage.createdAt
+      )
+    )
+    let createdSession = scopedSession(
+      snapshot: createdSnapshot,
+      postID: promotedPostID
+    )
+    let updatedSession = scopedSession(
+      snapshot: updatedSnapshot,
+      postID: promotedPostID
+    )
+    let transport = SequencedClientTransport(
+      connectResponses: [
+        .bootstrap(createdSession, createdSnapshot),
+        .bootstrap(updatedSession, updatedSnapshot),
+      ],
+      pollResponse: .noChange(updatedSession)
+    )
+    let meetingCreator = StubMeetingCreator(
+      result: OrbitPhase1CreateMeetingRoomResult(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center",
+          postID: promotedPostID
+        ),
+        snapshot: createdSnapshot.room
+      )
+    )
+    let roomWriter = StubClientRoomWriter(
+      result: OrbitPhase1AppendUserMessageResult(
+        snapshot: createdSnapshot.room,
+        message: updatedMessage
+      )
+    )
+    let systemWriter = StubClientSystemWriter(
+      result: OrbitPhase1AppendSystemMessageResult(
+        snapshot: createdSnapshot.room,
+        message: systemMessage
+      )
+    )
+    let collaboratorWriter = StubClientCollaboratorWriter(
+      result: OrbitPhase1AppendCollaboratorResponseResult(
+        snapshot: updatedSnapshot.room,
+        message: samwiseResponse,
+        activation: collaboratorActivation(
+          id: UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!,
+          workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+          triggerMessageID: updatedMessage.id,
+          responseMode: .currentThread,
+          addressedTargetKind: .team,
+          addressedTargetReferenceID: OrbitAddressTargetID.foundingGroup.rawValue
+        ),
+        agentRun: collaboratorRun(
+          id: UUID(uuidString: "dededede-dede-dede-dede-dededededede")!,
+          activationID: UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!,
+          startedAt: samwiseResponse.createdAt
+        )
+      )
+    )
+    let client = OrbitServerBackedRoomClient(
+      transport: transport,
+      roomWriter: roomWriter,
+      systemWriter: systemWriter,
+      failureWriter: StubClientFailureWriter(
+        result: activationFailureResult(
+          snapshot: createdSnapshot.room,
+          systemMessageBody: "unused"
+        )
+      ),
+      collaboratorWriter: collaboratorWriter,
+      meetingCreator: meetingCreator
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator(
+      roomState: OrbitServerBackedRoomState(
+        snapshot: initialSnapshot,
+        session: sampleSession(snapshot: initialSnapshot),
+        projectedWorkspace: OrbitServerRoomProjection.workspace(from: initialSnapshot)
+      )
+    )
+
+    try await coordinator.appendConversationTurn(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      authorID: "aj",
+      body: "Founding group, align on the next Orbit checkpoint.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue,
+      promotion: OrbitServerBackedRoomPromotionRequest(),
+      resolveContract: { participant in
+        if participant.id == OrbitParticipantID.samwise.rawValue {
+          return OrbitResolvedActivationContract(
+            directiveID: "maintain-partner-sync-and-handoffs",
+            directiveSource: .participantDefault,
+            kitIDs: ["trusted-partner-core"],
+            authorizedSkillIDs: ["codex-cli"],
+            requiredSkillIDs: ["codex-cli"],
+            stopPointIDs: [],
+            reviewGateIDs: ["intent:partner-sync-review"],
+            memoryScopeIDs: [],
+            failureReasons: []
+          )
+        }
+
+        return OrbitResolvedActivationContract(
+          directiveID: "run-venture-product-planning",
+          directiveSource: .participantDefault,
+          kitIDs: ["venture-product-core"],
+          authorizedSkillIDs: ["codex-cli"],
+          requiredSkillIDs: ["codex-cli"],
+          stopPointIDs: ["Pause for AJ review before execution handoff."],
+          reviewGateIDs: ["intent:plan-macos-feature-delivery"],
+          memoryScopeIDs: [],
+          failureReasons: []
+        )
+      },
+      client: client
+    )
+
+    let meetingRequest = try #require(await meetingCreator.requests.first)
+    let collaboratorRequests = await collaboratorWriter.requests
+    let connectRequests = await transport.connectRequests
+
+    #expect(meetingRequest.title == "Founding Group Meeting")
+    #expect(meetingRequest.meetingType == .team)
+    #expect(meetingRequest.startedByParticipantType == .user)
+    #expect(meetingRequest.startedByParticipantID == "aj")
+    #expect(
+      meetingRequest.members.map(\.workspacePersonaID) == [
+        UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+        UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+      ]
+    )
+    #expect(meetingRequest.members.allSatisfy { $0.participationRole == .contributor })
+    #expect(meetingRequest.members.allSatisfy { $0.selectedReason.contains("Founding Group") })
+    #expect(await roomWriter.requests.first?.postID == promotedPostID)
+    #expect(await systemWriter.requests.first?.postID == promotedPostID)
+    #expect(collaboratorRequests.count == 2)
+    #expect(collaboratorRequests.allSatisfy { $0.postID == promotedPostID })
+    #expect(connectRequests.map { $0.scope.postID } == [promotedPostID, promotedPostID])
+    #expect(connectRequests.first?.cursor == nil)
+    #expect(connectRequests.last?.cursor == createdSnapshot.replayCursor)
+    #expect(coordinator.roomState.session?.scope.postID == promotedPostID)
+    #expect(coordinator.roomState.snapshot?.room.post.id == promotedPostID)
+    #expect(coordinator.roomState.snapshot?.room.meetingState?.postID == promotedPostID)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.map(\.body) == [
+        updatedMessage.body,
+        systemMessage.body,
+        samwiseResponse.body,
+        prodDocResponse.body,
+        exchangeStateMessage.body,
+      ]
+    )
+  }
+
+  @Test
+  func appendConversationTurnFallsBackInlineWhenMeetingPromotionFails() async throws {
+    let initialSnapshot = meetingSampleSnapshot()
+    let promotionFailureMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "12121212-1212-1212-1212-121212121212")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      body: """
+        Orbit meeting promotion failed
+        attempted target: kind=team reference=founding-group workspace=orbit
+        outcome: promotion did not complete
+        fallback: current thread
+        detail: The operation could not be completed. (PersonaKitTests.TestFailure error 0.)
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_618),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_618)
+    )
+    let updatedMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "13131313-1313-1313-1313-131313131313")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .user,
+      authorID: "aj",
+      body: "Founding group, align on the next Orbit checkpoint.",
+      messageFormat: .plainText,
+      state: .persisted,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_620),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_620)
+    )
+    let systemMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "14141414-1414-1414-1414-141414141414")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: updatedMessage.id,
+      body: """
+        Orbit target expansion
+        resolved target: kind=team reference=founding-group workspace=orbit status=resolved
+        included participants:
+        - ProdDoc | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included ProdDoc through persisted team membership for Founding Group.
+        - Samwise | reasonCategory=team_membership | sourceTargetKind=team | sourceTargetReferenceID=founding-group | Orbit included Samwise through persisted team membership for Founding Group.
+        participant states:
+        - ProdDoc | role=reviewer | state=pending
+        - Samwise | role=contributor | state=pending
+        exchange state: active
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_621),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_621)
+    )
+    let samwiseResponse = collaboratorResponseMessage(
+      id: UUID(uuidString: "15151515-1515-1515-1515-151515151515")!,
+      authorID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!.uuidString,
+      replyToMessageID: updatedMessage.id,
+      body:
+        "I am in the room. I will turn \"Founding group, align on the next Orbit checkpoint.\" into the next concrete execution step and keep the Orbit lane moving without widening scope.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_622)
+    )
+    let prodDocResponse = collaboratorResponseMessage(
+      id: UUID(uuidString: "16161616-1616-1616-1616-161616161616")!,
+      authorID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!.uuidString,
+      replyToMessageID: updatedMessage.id,
+      body:
+        "Product lens: \"Founding group, align on the next Orbit checkpoint.\" should make the command-center surface feel more intentional than chat while staying light enough for the first checkpoint.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_623)
+    )
+    let exchangeStateMessage = OrbitMessageRecord(
+      id: UUID(uuidString: "17171717-1717-1717-1717-171717171717")!,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      replyToMessageID: updatedMessage.id,
+      body: """
+        Orbit exchange state
+        resolved target: kind=team reference=founding-group workspace=orbit state=completed
+        participant states:
+        - ProdDoc | role=reviewer | state=replied
+        - Samwise | role=contributor | state=replied
+        """,
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_624),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_624)
+    )
+    let updatedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: initialSnapshot.room.workspace,
+        channel: initialSnapshot.room.channel,
+        workspacePersonas: initialSnapshot.room.workspacePersonas,
+        teams: initialSnapshot.room.teams,
+        squads: initialSnapshot.room.squads,
+        workspacePersonaMemberships: initialSnapshot.room.workspacePersonaMemberships,
+        post: initialSnapshot.room.post,
+        thread: initialSnapshot.room.thread,
+        messages: initialSnapshot.room.messages + [
+          promotionFailureMessage,
+          updatedMessage,
+          systemMessage,
+          samwiseResponse,
+          prodDocResponse,
+          exchangeStateMessage,
+        ],
+        postParticipants: initialSnapshot.room.postParticipants,
+        postEvents: initialSnapshot.room.postEvents,
+        personaActivations: initialSnapshot.room.personaActivations,
+        agentRuns: initialSnapshot.room.agentRuns
+      ),
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: exchangeStateMessage.id,
+        lastEventCreatedAt: exchangeStateMessage.createdAt
+      )
+    )
+    let transport = StubClientTransport(
+      connectResponse: .bootstrap(updatedSnapshot.replayCursorSession, updatedSnapshot),
+      pollResponse: .noChange(updatedSnapshot.replayCursorSession)
+    )
+    let meetingCreator = StubMeetingCreator(
+      result: OrbitPhase1CreateMeetingRoomResult(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center",
+          postID: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
+        ),
+        snapshot: initialSnapshot.room
+      ),
+      error: TestFailure.simulatedFailure
+    )
+    let roomWriter = StubClientRoomWriter(
+      result: OrbitPhase1AppendUserMessageResult(
+        snapshot: initialSnapshot.room,
+        message: updatedMessage
+      )
+    )
+    let systemWriter = StubClientSystemWriter(
+      results: [
+        OrbitPhase1AppendSystemMessageResult(
+          snapshot: initialSnapshot.room,
+          message: promotionFailureMessage
+        ),
+        OrbitPhase1AppendSystemMessageResult(
+          snapshot: initialSnapshot.room,
+          message: systemMessage
+        ),
+        OrbitPhase1AppendSystemMessageResult(
+          snapshot: updatedSnapshot.room,
+          message: exchangeStateMessage
+        ),
+      ]
+    )
+    let collaboratorWriter = StubClientCollaboratorWriter(
+      result: OrbitPhase1AppendCollaboratorResponseResult(
+        snapshot: updatedSnapshot.room,
+        message: samwiseResponse,
+        activation: collaboratorActivation(
+          id: UUID(uuidString: "19191919-1919-1919-1919-191919191919")!,
+          workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+          triggerMessageID: updatedMessage.id,
+          responseMode: .currentThread,
+          addressedTargetKind: .team,
+          addressedTargetReferenceID: OrbitAddressTargetID.foundingGroup.rawValue
+        ),
+        agentRun: collaboratorRun(
+          id: UUID(uuidString: "20202020-2020-2020-2020-202020202020")!,
+          activationID: UUID(uuidString: "19191919-1919-1919-1919-191919191919")!,
+          startedAt: samwiseResponse.createdAt
+        )
+      )
+    )
+    let client = OrbitServerBackedRoomClient(
+      transport: transport,
+      roomWriter: roomWriter,
+      systemWriter: systemWriter,
+      failureWriter: StubClientFailureWriter(
+        result: activationFailureResult(
+          snapshot: initialSnapshot.room,
+          systemMessageBody: "unused"
+        )
+      ),
+      collaboratorWriter: collaboratorWriter,
+      meetingCreator: meetingCreator
+    )
+    var coordinator = OrbitServerBackedRoomCoordinator(
+      roomState: OrbitServerBackedRoomState(
+        snapshot: initialSnapshot,
+        session: sampleSession(snapshot: initialSnapshot),
+        projectedWorkspace: OrbitServerRoomProjection.workspace(from: initialSnapshot)
+      )
+    )
+
+    try await coordinator.appendConversationTurn(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center"
+      ),
+      authorID: "aj",
+      body: "Founding group, align on the next Orbit checkpoint.",
+      addressedParticipantID: OrbitAddressTargetID.foundingGroup.rawValue,
+      promotion: OrbitServerBackedRoomPromotionRequest(),
+      resolveContract: { participant in
+        if participant.id == OrbitParticipantID.samwise.rawValue {
+          return OrbitResolvedActivationContract(
+            directiveID: "maintain-partner-sync-and-handoffs",
+            directiveSource: .participantDefault,
+            kitIDs: ["trusted-partner-core"],
+            authorizedSkillIDs: ["codex-cli"],
+            requiredSkillIDs: ["codex-cli"],
+            stopPointIDs: [],
+            reviewGateIDs: ["intent:partner-sync-review"],
+            memoryScopeIDs: [],
+            failureReasons: []
+          )
+        }
+
+        return OrbitResolvedActivationContract(
+          directiveID: "run-venture-product-planning",
+          directiveSource: .participantDefault,
+          kitIDs: ["venture-product-core"],
+          authorizedSkillIDs: ["codex-cli"],
+          requiredSkillIDs: ["codex-cli"],
+          stopPointIDs: ["Pause for AJ review before execution handoff."],
+          reviewGateIDs: ["intent:plan-macos-feature-delivery"],
+          memoryScopeIDs: [],
+          failureReasons: []
+        )
+      },
+      client: client
+    )
+
+    let meetingRequests = await meetingCreator.requests
+    let systemRequests = await systemWriter.requests
+    let collaboratorRequests = await collaboratorWriter.requests
+
+    #expect(meetingRequests.count == 1)
+    #expect(await roomWriter.requests.first?.postID == nil)
+    #expect(systemRequests.count == 3)
+    #expect(systemRequests.first?.body.contains("Orbit meeting promotion failed") == true)
+    #expect(systemRequests.first?.body.contains("fallback: current thread") == true)
+    #expect(
+      systemRequests.dropFirst().first?.body.contains("resolved target: kind=team reference=founding-group") == true
+    )
+    #expect(collaboratorRequests.count == 2)
+    #expect(collaboratorRequests.allSatisfy { $0.postID == nil })
+    #expect(coordinator.roomState.session?.scope.postID == nil)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.map(\.body) == [
+        "Orbit room bootstrapped.",
+        promotionFailureMessage.body,
+        updatedMessage.body,
+        systemMessage.body,
+        samwiseResponse.body,
+        prodDocResponse.body,
+        exchangeStateMessage.body,
+      ]
     )
   }
 
@@ -1149,9 +1699,15 @@ struct OrbitServerBackedRoomCoordinatorTests {
     )
 
     #expect(await collaboratorWriter.requests.isEmpty)
-    #expect(await failureWriter.requests.first?.failure.failureReason == OrbitActivationFailureReason.missingDirective.rawValue)
+    #expect(
+      await failureWriter.requests.first?.failure.failureReason
+        == OrbitActivationFailureReason.missingDirective.rawValue
+    )
     #expect(coordinator.roomState.projectedWorkspace?.activationFailureRecords.count == 1)
-    #expect(coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body.contains("blocked the activation") == true)
+    #expect(
+      coordinator.roomState.projectedWorkspace?.activeThread?.messages.last?.body.contains("blocked the activation")
+        == true
+    )
   }
 
   @Test
@@ -1317,6 +1873,24 @@ struct OrbitServerBackedRoomCoordinatorTests {
     )
   }
 
+  private func scopedSession(
+    snapshot: OrbitPhase1RealtimeSnapshot,
+    postID: UUID
+  ) -> OrbitPhase1RealtimeSession {
+    OrbitPhase1RealtimeSession(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: postID
+      ),
+      replayCursor: snapshot.replayCursor,
+      connectedAt: Date(timeIntervalSince1970: 1_742_342_400),
+      lastInteractionAt:
+        snapshot.replayCursor.lastEventCreatedAt
+        ?? Date(timeIntervalSince1970: 1_742_342_400)
+    )
+  }
+
   private func threadActivityEvent(
     id: UUID,
     createdAt: Date,
@@ -1476,7 +2050,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
           displayName: "ProdDoc",
           status: .active,
           createdAt: Date(timeIntervalSince1970: 1_742_342_401)
-        )
+        ),
       ],
       teams: [
         OrbitTeamRecord(
@@ -1523,13 +2097,105 @@ struct OrbitServerBackedRoomCoordinatorTests {
           participantID: "workspace-persona-orbit-proddoc",
           joinedAt: Date(timeIntervalSince1970: 1_742_342_406),
           participationMode: .active
-        )
+        ),
       ]
     )
 
     return OrbitPhase1RealtimeSnapshot(
       room: room,
       replayCursor: sampleSnapshot().replayCursor
+    )
+  }
+
+  private func promotedMeetingSnapshot(
+    postID: UUID,
+    threadID: UUID,
+    title: String
+  ) -> OrbitPhase1RealtimeSnapshot {
+    let sourceSnapshot = meetingSampleSnapshot()
+    let workspacePersonaIDs = [
+      UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
+      UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+    ]
+    let participantRecords = [
+      OrbitPostParticipantRecord(
+        id: UUID(uuidString: "acacacac-acac-acac-acac-acacacacacac")!,
+        postID: postID,
+        participantType: .workspacePersona,
+        participantID: workspacePersonaIDs[0].uuidString,
+        joinedAt: Date(timeIntervalSince1970: 1_742_342_610),
+        participationMode: .active
+      ),
+      OrbitPostParticipantRecord(
+        id: UUID(uuidString: "bcbcbcbc-bcbc-bcbc-bcbc-bcbcbcbcbcbc")!,
+        postID: postID,
+        participantType: .workspacePersona,
+        participantID: workspacePersonaIDs[1].uuidString,
+        joinedAt: Date(timeIntervalSince1970: 1_742_342_611),
+        participationMode: .active
+      ),
+    ]
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: sourceSnapshot.room.workspace,
+        channel: sourceSnapshot.room.channel,
+        workspacePersonas: sourceSnapshot.room.workspacePersonas,
+        teams: sourceSnapshot.room.teams,
+        squads: sourceSnapshot.room.squads,
+        workspacePersonaMemberships: sourceSnapshot.room.workspacePersonaMemberships,
+        post: OrbitPostRecord(
+          id: postID,
+          workspaceID: workspaceID,
+          channelID: channelID,
+          postType: .meeting,
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          title: title,
+          status: .active,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_610)
+        ),
+        thread: OrbitThreadRecord(
+          id: threadID,
+          postID: postID,
+          status: .open,
+          lastActivityAt: Date(timeIntervalSince1970: 1_742_342_610),
+          createdAt: Date(timeIntervalSince1970: 1_742_342_610)
+        ),
+        messages: [],
+        postParticipants: participantRecords,
+        meetingState: OrbitMeetingStateRecord(
+          postID: postID,
+          meetingType: .team,
+          status: .created,
+          startedByParticipantType: .user,
+          startedByParticipantID: "aj",
+          startedAt: Date(timeIntervalSince1970: 1_742_342_610)
+        ),
+        meetingMembers: [
+          OrbitMeetingMemberRecord(
+            id: participantRecords[0].id,
+            meetingPostID: postID,
+            postParticipantID: participantRecords[0].id,
+            participationRole: .contributor,
+            selectedReason: "Orbit included Samwise through persisted team membership for Founding Group.",
+            joinedAt: participantRecords[0].joinedAt
+          ),
+          OrbitMeetingMemberRecord(
+            id: participantRecords[1].id,
+            meetingPostID: postID,
+            postParticipantID: participantRecords[1].id,
+            participationRole: .contributor,
+            selectedReason: "Orbit included ProdDoc through persisted team membership for Founding Group.",
+            joinedAt: participantRecords[1].joinedAt
+          ),
+        ]
+      ),
+      replayCursor: OrbitPhase1ReplayCursor(
+        workspaceID: workspaceID,
+        lastEventID: UUID(uuidString: "cececece-cece-cece-cece-cececececece")!,
+        lastEventCreatedAt: Date(timeIntervalSince1970: 1_742_342_610)
+      )
     )
   }
 
@@ -1779,20 +2445,38 @@ private actor StubClientCollaboratorWriter: OrbitPhase1CollaboratorResponseServi
 }
 
 private actor StubClientSystemWriter: OrbitPhase1SystemMessageServing {
-  let result: OrbitPhase1AppendSystemMessageResult
+  private var remainingResults: [OrbitPhase1AppendSystemMessageResult]
+  private let fallbackResult: OrbitPhase1AppendSystemMessageResult?
   var requests = [OrbitPhase1AppendSystemMessageRequest]()
 
   init(
     result: OrbitPhase1AppendSystemMessageResult
   ) {
-    self.result = result
+    self.remainingResults = [result]
+    self.fallbackResult = result
+  }
+
+  init(
+    results: [OrbitPhase1AppendSystemMessageResult]
+  ) {
+    self.remainingResults = results
+    self.fallbackResult = results.last
   }
 
   func appendSystemMessage(
     _ request: OrbitPhase1AppendSystemMessageRequest
   ) async throws -> OrbitPhase1AppendSystemMessageResult {
     requests.append(request)
-    return result
+
+    if !remainingResults.isEmpty {
+      return remainingResults.removeFirst()
+    }
+
+    guard let fallbackResult else {
+      throw TestFailure.simulatedFailure
+    }
+
+    return fallbackResult
   }
 }
 
@@ -1814,8 +2498,34 @@ private actor StubClientFailureWriter: OrbitPhase1ActivationFailureServing {
   }
 }
 
-private extension OrbitPhase1RealtimeSnapshot {
-  var replayCursorSession: OrbitPhase1RealtimeSession {
+private actor StubMeetingCreator: OrbitPhase1MeetingRoomCreationServing {
+  let result: OrbitPhase1CreateMeetingRoomResult
+  let error: Error?
+  var requests = [OrbitPhase1CreateMeetingRoomRequest]()
+
+  init(
+    result: OrbitPhase1CreateMeetingRoomResult,
+    error: Error? = nil
+  ) {
+    self.result = result
+    self.error = error
+  }
+
+  func createMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    requests.append(request)
+
+    if let error {
+      throw error
+    }
+
+    return result
+  }
+}
+
+extension OrbitPhase1RealtimeSnapshot {
+  fileprivate var replayCursorSession: OrbitPhase1RealtimeSession {
     OrbitPhase1RealtimeSession(
       scope: OrbitPhase1RealtimeSubscriptionScope(workspaceSlug: room.workspace.slug, channelSlug: room.channel.slug),
       replayCursor: replayCursor,
