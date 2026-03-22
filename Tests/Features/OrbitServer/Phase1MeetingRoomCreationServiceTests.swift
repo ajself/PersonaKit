@@ -18,6 +18,7 @@ struct Phase1MeetingRoomCreationServiceTests {
     let threadID = UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
     let firstParticipantID = UUID(uuidString: "cccccccc-cccc-cccc-cccc-cccccccccccc")!
     let secondParticipantID = UUID(uuidString: "dddddddd-dddd-dddd-dddd-dddddddddddd")!
+    let noteID = UUID(uuidString: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")!
     let participantIDs = Mutex<[UUID]>([
       firstParticipantID,
       secondParticipantID,
@@ -35,7 +36,8 @@ struct Phase1MeetingRoomCreationServiceTests {
         participantIDs.withLock { ids in
           ids.removeFirst()
         }
-      }
+      },
+      makeNoteID: { noteID }
     )
 
     let result = try await service.createMeetingRoom(
@@ -67,10 +69,17 @@ struct Phase1MeetingRoomCreationServiceTests {
     #expect(bootstrap.thread.id == threadID)
     #expect(bootstrap.seedMessages.isEmpty)
     #expect(bootstrap.meetingState?.status == .created)
+    #expect(bootstrap.notes.count == 1)
+    #expect(bootstrap.notes.first?.id == noteID)
+    #expect(bootstrap.notes.first?.noteType == .meetingSummary)
+    #expect(bootstrap.notes.first?.body == "Summary pending.")
+    #expect(bootstrap.meetingOutputState?.outcomeState == .pending)
     #expect(bootstrap.meetingMembers.map(\.postParticipantID) == [firstParticipantID, secondParticipantID])
     #expect(bootstrap.postParticipants.map(\.participantID) == [samwiseID.uuidString, prodDocID.uuidString])
     #expect(result.scope.postID == postID)
     #expect(result.snapshot.post.id == postID)
+    #expect(result.snapshot.notes == bootstrap.notes)
+    #expect(result.snapshot.meetingOutputState == bootstrap.meetingOutputState)
     #expect(result.snapshot.meetingMembers.count == 2)
     #expect(result.snapshot.meetingState?.status == .created)
   }
@@ -175,6 +184,11 @@ private actor MeetingBootstrapRecorder {
       thread: bootstrap.thread,
       messages: bootstrap.seedMessages,
       postParticipants: bootstrap.postParticipants,
+      notes: bootstrap.notes,
+      decisions: bootstrap.decisions,
+      references: bootstrap.references,
+      meetingOutputState: bootstrap.meetingOutputState,
+      meetingOpenQuestions: bootstrap.meetingOpenQuestions,
       meetingState: bootstrap.meetingState,
       meetingMembers: bootstrap.meetingMembers,
       postEvents: bootstrap.postEvents,

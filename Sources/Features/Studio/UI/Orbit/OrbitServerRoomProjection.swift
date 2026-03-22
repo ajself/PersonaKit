@@ -18,6 +18,13 @@ enum OrbitServerRoomProjection {
     let activationFailureRecords = projectedActivationFailureRecords(from: room)
     let meetingPromotionRecords = projectedMeetingPromotionRecords(from: room)
     let meetingContinuityRecords = projectedMeetingContinuityRecords(from: room)
+    let meetingSummaryRecords = projectedMeetingSummaryRecords(from: room)
+    let meetingStatusRecords = projectedMeetingStatusRecords(from: room)
+    let meetingOutcomeRecords = projectedMeetingOutcomeRecords(from: room)
+    let meetingDecisionRecords = projectedMeetingDecisionRecords(from: room)
+    let meetingOpenQuestionRecords = projectedMeetingOpenQuestionRecords(from: room)
+    let meetingReferenceRecords = projectedMeetingReferenceRecords(from: room)
+    let meetingMemberRecords = projectedMeetingMemberRecords(from: room)
     let activationRecords = projectedActivationRecords(
       from: room,
       participants: participants,
@@ -43,6 +50,7 @@ enum OrbitServerRoomProjection {
       teams: projectedTeams(from: room),
       squads: projectedSquads(from: room),
       workspacePersonaMemberships: projectedWorkspacePersonaMemberships(from: room),
+      activePostID: room.post.id.uuidString,
       activeThreadID: threadID,
       threads: [
         OrbitConversationThread(
@@ -59,6 +67,13 @@ enum OrbitServerRoomProjection {
       activationFailureRecords: activationFailureRecords,
       meetingPromotionRecords: meetingPromotionRecords,
       meetingContinuityRecords: meetingContinuityRecords,
+      meetingSummaryRecords: meetingSummaryRecords,
+      meetingStatusRecords: meetingStatusRecords,
+      meetingOutcomeRecords: meetingOutcomeRecords,
+      meetingDecisionRecords: meetingDecisionRecords,
+      meetingOpenQuestionRecords: meetingOpenQuestionRecords,
+      meetingReferenceRecords: meetingReferenceRecords,
+      meetingMemberRecords: meetingMemberRecords,
       nextMessageSequence: messages.count + 1,
       nextActivationSequence: activationRecords.count + 1,
       nextActivationFailureSequence: activationFailureRecords.count + 1
@@ -454,6 +469,158 @@ enum OrbitServerRoomProjection {
       }
   }
 
+  private static func projectedMeetingSummaryRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingSummaryRecord] {
+    room.notes
+      .sorted { lhs, rhs in
+        if lhs.createdAt == rhs.createdAt {
+          return lhs.id.uuidString < rhs.id.uuidString
+        }
+        return lhs.createdAt < rhs.createdAt
+      }
+      .compactMap { note -> OrbitMeetingSummaryRecord? in
+        guard note.noteType == .meetingSummary else {
+          return nil
+        }
+
+        return OrbitMeetingSummaryRecord(
+          id: note.id.uuidString,
+          postID: note.postID.uuidString,
+          postTitle: room.post.title,
+          body: note.body,
+          createdByParticipantType: note.createdByParticipantType,
+          createdByParticipantID: note.createdByParticipantID,
+          createdAt: note.createdAt
+        )
+      }
+  }
+
+  private static func projectedMeetingStatusRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingStatusRecord] {
+    guard let meetingState = room.meetingState else {
+      return []
+    }
+
+    return [
+      OrbitMeetingStatusRecord(
+        id: meetingState.postID.uuidString,
+        postID: meetingState.postID.uuidString,
+        meetingType: meetingState.meetingType,
+        status: meetingState.status,
+        startedByParticipantType: meetingState.startedByParticipantType,
+        startedByParticipantID: meetingState.startedByParticipantID,
+        startedAt: meetingState.startedAt,
+        completedAt: meetingState.completedAt
+      )
+    ]
+  }
+
+  private static func projectedMeetingOutcomeRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingOutcomeRecord] {
+    guard let meetingOutputState = room.meetingOutputState else {
+      return []
+    }
+
+    return [
+      OrbitMeetingOutcomeRecord(
+        id: meetingOutputState.postID.uuidString,
+        postID: meetingOutputState.postID.uuidString,
+        outcomeState: meetingOutputState.outcomeState,
+        detail: meetingOutputState.detail,
+        recordedByParticipantType: meetingOutputState.recordedByParticipantType,
+        recordedByParticipantID: meetingOutputState.recordedByParticipantID,
+        recordedAt: meetingOutputState.recordedAt
+      )
+    ]
+  }
+
+  private static func projectedMeetingDecisionRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingDecisionRecord] {
+    room.decisions
+      .sorted(by: decisionSort)
+      .map { decision in
+        OrbitMeetingDecisionRecord(
+          id: decision.id.uuidString,
+          postID: decision.postID.uuidString,
+          title: decision.title,
+          body: decision.body,
+          decisionState: decision.decisionState,
+          rationaleNoteID: decision.rationaleNoteID?.uuidString,
+          createdAt: decision.createdAt
+        )
+      }
+  }
+
+  private static func projectedMeetingOpenQuestionRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingOpenQuestionRecord] {
+    room.meetingOpenQuestions
+      .sorted(by: meetingOpenQuestionSort)
+      .map { question in
+        OrbitMeetingOpenQuestionRecord(
+          id: question.id.uuidString,
+          postID: question.postID.uuidString,
+          body: question.body,
+          createdByParticipantType: question.createdByParticipantType,
+          createdByParticipantID: question.createdByParticipantID,
+          createdAt: question.createdAt
+        )
+      }
+  }
+
+  private static func projectedMeetingReferenceRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingReferenceRecord] {
+    room.references
+      .sorted(by: referenceSort)
+      .map { reference in
+        OrbitMeetingReferenceRecord(
+          id: reference.id.uuidString,
+          postID: reference.postID.uuidString,
+          referenceType: reference.referenceType,
+          target: reference.target,
+          title: reference.title,
+          createdAt: reference.createdAt
+        )
+      }
+  }
+
+  private static func projectedMeetingMemberRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingMemberRecord] {
+    let postParticipantsByID = Dictionary(
+      uniqueKeysWithValues: room.postParticipants.map { ($0.id, $0) }
+    )
+    let workspacePersonasByID = Dictionary(
+      uniqueKeysWithValues: room.workspacePersonas.map { ($0.id, $0) }
+    )
+
+    return room.meetingMembers
+      .sorted(by: meetingMemberSort)
+      .map { meetingMember in
+        let participantID = projectedMeetingParticipantID(
+          meetingMember: meetingMember,
+          postParticipantsByID: postParticipantsByID,
+          workspacePersonasByID: workspacePersonasByID
+        )
+
+        return OrbitMeetingMemberRecord(
+          id: meetingMember.id.uuidString,
+          postID: meetingMember.meetingPostID.uuidString,
+          postParticipantID: meetingMember.postParticipantID.uuidString,
+          participantID: participantID,
+          participationRole: meetingMember.participationRole,
+          selectedReason: meetingMember.selectedReason,
+          joinedAt: meetingMember.joinedAt,
+          completedAt: meetingMember.completedAt
+        )
+      }
+  }
+
   private static func projectedParticipantID(
     for workspacePersona: OrbitWorkspacePersonaRecord
   ) -> String {
@@ -478,6 +645,26 @@ enum OrbitServerRoomProjection {
     default:
       return "Collaborator"
     }
+  }
+
+  private static func projectedMeetingParticipantID(
+    meetingMember: OrbitServerRuntime.OrbitMeetingMemberRecord,
+    postParticipantsByID: [UUID: OrbitPostParticipantRecord],
+    workspacePersonasByID: [UUID: OrbitWorkspacePersonaRecord]
+  ) -> String? {
+    guard
+      let postParticipant = postParticipantsByID[meetingMember.postParticipantID],
+      postParticipant.participantType == .workspacePersona,
+      let workspacePersonaID = UUID(uuidString: postParticipant.participantID)
+    else {
+      return nil
+    }
+
+    guard let workspacePersona = workspacePersonasByID[workspacePersonaID] else {
+      return postParticipant.participantID
+    }
+
+    return projectedParticipantID(for: workspacePersona)
   }
 
   private static func projectedSpeakerParticipantID(
@@ -787,5 +974,49 @@ enum OrbitServerRoomProjection {
     }
 
     return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func decisionSort(
+    _ lhs: OrbitDecisionRecord,
+    _ rhs: OrbitDecisionRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func referenceSort(
+    _ lhs: OrbitReferenceRecord,
+    _ rhs: OrbitReferenceRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func meetingOpenQuestionSort(
+    _ lhs: OrbitServerRuntime.OrbitMeetingOpenQuestionRecord,
+    _ rhs: OrbitServerRuntime.OrbitMeetingOpenQuestionRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func meetingMemberSort(
+    _ lhs: OrbitServerRuntime.OrbitMeetingMemberRecord,
+    _ rhs: OrbitServerRuntime.OrbitMeetingMemberRecord
+  ) -> Bool {
+    if lhs.joinedAt == rhs.joinedAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.joinedAt < rhs.joinedAt
   }
 }

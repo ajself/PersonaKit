@@ -9,6 +9,7 @@ enum OrbitServerBackedRoomCoordinatorError: LocalizedError, Equatable {
   case preflightContractSnapshotUnavailable(String)
   case preflightActivationFailureUnavailable(String)
   case promotionRequiresResolvedGroupTarget
+  case meetingCompletionRequiresMeetingPostScope
 
   var errorDescription: String? {
     switch self {
@@ -26,6 +27,8 @@ enum OrbitServerBackedRoomCoordinatorError: LocalizedError, Equatable {
       return "Orbit could not recover staged activation-failure evidence for \(triggerMessageID)."
     case .promotionRequiresResolvedGroupTarget:
       return "Orbit can only promote a resolved team or squad target into a dedicated meeting room."
+    case .meetingCompletionRequiresMeetingPostScope:
+      return "Orbit meeting completion requires a dedicated meeting post scope."
     }
   }
 }
@@ -42,6 +45,40 @@ struct OrbitServerBackedRoomPromotionRequest: Equatable, Sendable {
     title: String? = nil
   ) {
     self.title = title
+  }
+}
+
+struct OrbitServerBackedMeetingCompletionRequest: Equatable, Sendable {
+  let summaryBody: String
+  let outcome: OrbitPhase1MeetingCompletionOutcome
+  let decisionTitle: String?
+  let decisionBody: String?
+  let noDecisionDetail: String?
+  let openQuestions: [String]
+  let followUpReferences: [OrbitPhase1MeetingReferenceSpec]
+  let completedByParticipantType: OrbitParticipantAuthorType
+  let completedByParticipantID: String
+
+  init(
+    summaryBody: String,
+    outcome: OrbitPhase1MeetingCompletionOutcome,
+    decisionTitle: String? = nil,
+    decisionBody: String? = nil,
+    noDecisionDetail: String? = nil,
+    openQuestions: [String] = [],
+    followUpReferences: [OrbitPhase1MeetingReferenceSpec] = [],
+    completedByParticipantType: OrbitParticipantAuthorType,
+    completedByParticipantID: String
+  ) {
+    self.summaryBody = summaryBody
+    self.outcome = outcome
+    self.decisionTitle = decisionTitle
+    self.decisionBody = decisionBody
+    self.noDecisionDetail = noDecisionDetail
+    self.openQuestions = openQuestions
+    self.followUpReferences = followUpReferences
+    self.completedByParticipantType = completedByParticipantType
+    self.completedByParticipantID = completedByParticipantID
   }
 }
 
@@ -127,6 +164,35 @@ struct OrbitServerBackedRoomCoordinator {
         postID: scope.postID,
         authorID: authorID,
         body: body
+      )
+    )
+
+    try await reconnect(scope: scope, client: client)
+  }
+
+  mutating func completeMeeting(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    request: OrbitServerBackedMeetingCompletionRequest,
+    client: OrbitServerBackedRoomClient
+  ) async throws {
+    guard let postID = scope.postID else {
+      throw OrbitServerBackedRoomCoordinatorError.meetingCompletionRequiresMeetingPostScope
+    }
+
+    _ = try await client.completeMeeting(
+      OrbitPhase1CompleteMeetingRequest(
+        workspaceSlug: scope.workspaceSlug,
+        channelSlug: scope.channelSlug,
+        postID: postID,
+        summaryBody: request.summaryBody,
+        outcome: request.outcome,
+        decisionTitle: request.decisionTitle,
+        decisionBody: request.decisionBody,
+        noDecisionDetail: request.noDecisionDetail,
+        openQuestions: request.openQuestions,
+        followUpReferences: request.followUpReferences,
+        completedByParticipantType: request.completedByParticipantType,
+        completedByParticipantID: request.completedByParticipantID
       )
     )
 

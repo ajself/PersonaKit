@@ -48,12 +48,13 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     threadLastActivityAt: Date,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
-    let effectiveRealtimeEvents = try realtimeEvents.isEmpty
+    let effectiveRealtimeEvents =
+      try realtimeEvents.isEmpty
       ? OrbitPhase1RealtimeEventProjector.appendEvents(
-          workspaceID: workspaceID,
-          message: message,
-          threadLastActivityAt: threadLastActivityAt
-        )
+        workspaceID: workspaceID,
+        message: message,
+        threadLastActivityAt: threadLastActivityAt
+      )
       : realtimeEvents
 
     do {
@@ -165,11 +166,93 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     }
   }
 
+  public func completeMeeting(
+    workspaceID: UUID,
+    summaryNote: OrbitNoteRecord,
+    meetingOutputState: OrbitMeetingOutputStateRecord,
+    decision: OrbitDecisionRecord?,
+    references: [OrbitReferenceRecord],
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
+    meetingState: OrbitMeetingStateRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadID: UUID,
+    threadLastActivityAt: Date,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await completeMeetingTransactionally(
+        workspaceID: workspaceID,
+        summaryNote: summaryNote,
+        meetingOutputState: meetingOutputState,
+        decision: decision,
+        references: references,
+        meetingOpenQuestions: meetingOpenQuestions,
+        meetingState: meetingState,
+        postEvent: postEvent,
+        realtimeEvents: realtimeEvents,
+        threadID: threadID,
+        threadLastActivityAt: threadLastActivityAt,
+        using: executor
+      )
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
+
+  public func completeMeetingTransactionally(
+    workspaceID _: UUID,
+    summaryNote: OrbitNoteRecord,
+    meetingOutputState: OrbitMeetingOutputStateRecord,
+    decision: OrbitDecisionRecord?,
+    references: [OrbitReferenceRecord],
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
+    meetingState: OrbitMeetingStateRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadID: UUID,
+    threadLastActivityAt: Date,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    try await executor.execute(query: upsertNoteQuery(summaryNote))
+    try await executor.execute(query: upsertMeetingOutputStateQuery(meetingOutputState))
+
+    if let decision {
+      try await executor.execute(query: insertDecisionQuery(decision))
+    }
+
+    for meetingOpenQuestion in meetingOpenQuestions {
+      try await executor.execute(query: insertMeetingOpenQuestionQuery(meetingOpenQuestion))
+    }
+
+    for reference in references {
+      try await executor.execute(query: insertReferenceQuery(reference))
+    }
+
+    try await executor.execute(query: upsertMeetingStateQuery(meetingState))
+    try await executor.execute(query: insertPostEventQuery(postEvent))
+
+    for realtimeEvent in realtimeEvents {
+      try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+    }
+
+    try await executor.execute(
+      query: updateThreadActivityQuery(
+        threadID: threadID,
+        lastActivityAt: threadLastActivityAt
+      )
+    )
+  }
+
   private func executeBootstrapRoomQueries(
     _ room: OrbitPhase1RoomBootstrap,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
-    let realtimeEvents = try room.realtimeEvents.isEmpty
+    let realtimeEvents =
+      try room.realtimeEvents.isEmpty
       ? OrbitPhase1RealtimeEventProjector.bootstrapEvents(for: room)
       : room.realtimeEvents
 
@@ -197,6 +280,26 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
 
     for postLink in room.postLinks {
       try await executor.execute(query: insertPostLinkQuery(postLink))
+    }
+
+    for note in room.notes {
+      try await executor.execute(query: insertNoteQuery(note))
+    }
+
+    for decision in room.decisions {
+      try await executor.execute(query: insertDecisionQuery(decision))
+    }
+
+    for reference in room.references {
+      try await executor.execute(query: insertReferenceQuery(reference))
+    }
+
+    if let meetingOutputState = room.meetingOutputState {
+      try await executor.execute(query: upsertMeetingOutputStateQuery(meetingOutputState))
+    }
+
+    for meetingOpenQuestion in room.meetingOpenQuestions {
+      try await executor.execute(query: insertMeetingOpenQuestionQuery(meetingOpenQuestion))
     }
 
     for realtimeEvent in realtimeEvents {
@@ -353,49 +456,69 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
   ) -> PostgresQuery {
     if let teamID = membership.teamID {
       return """
-      INSERT INTO workspace_persona_membership (
-        id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
-      )
-      SELECT
-        \(membership.id),
-        \(membership.workspacePersonaID),
-        \(membership.teamID),
-        \(membership.squadID),
-        \(membership.roleInGroup),
-        \(membership.createdAt)
-      WHERE NOT EXISTS (
-        SELECT 1
-        FROM workspace_persona_membership
-        WHERE id <> \(membership.id)
-          AND workspace_persona_id = \(membership.workspacePersonaID)
-          AND team_id = \(teamID)
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        workspace_persona_id = EXCLUDED.workspace_persona_id,
-        team_id = EXCLUDED.team_id,
-        squad_id = EXCLUDED.squad_id,
-        role_in_group = EXCLUDED.role_in_group
-      """
+        INSERT INTO workspace_persona_membership (
+          id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
+        )
+        SELECT
+          \(membership.id),
+          \(membership.workspacePersonaID),
+          \(membership.teamID),
+          \(membership.squadID),
+          \(membership.roleInGroup),
+          \(membership.createdAt)
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM workspace_persona_membership
+          WHERE id <> \(membership.id)
+            AND workspace_persona_id = \(membership.workspacePersonaID)
+            AND team_id = \(teamID)
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          workspace_persona_id = EXCLUDED.workspace_persona_id,
+          team_id = EXCLUDED.team_id,
+          squad_id = EXCLUDED.squad_id,
+          role_in_group = EXCLUDED.role_in_group
+        """
     }
 
     if let squadID = membership.squadID {
       return """
+        INSERT INTO workspace_persona_membership (
+          id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
+        )
+        SELECT
+          \(membership.id),
+          \(membership.workspacePersonaID),
+          \(membership.teamID),
+          \(membership.squadID),
+          \(membership.roleInGroup),
+          \(membership.createdAt)
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM workspace_persona_membership
+          WHERE id <> \(membership.id)
+            AND workspace_persona_id = \(membership.workspacePersonaID)
+            AND squad_id = \(squadID)
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          workspace_persona_id = EXCLUDED.workspace_persona_id,
+          team_id = EXCLUDED.team_id,
+          squad_id = EXCLUDED.squad_id,
+          role_in_group = EXCLUDED.role_in_group
+        """
+    }
+
+    return """
       INSERT INTO workspace_persona_membership (
         id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
       )
-      SELECT
+      VALUES (
         \(membership.id),
         \(membership.workspacePersonaID),
         \(membership.teamID),
         \(membership.squadID),
         \(membership.roleInGroup),
         \(membership.createdAt)
-      WHERE NOT EXISTS (
-        SELECT 1
-        FROM workspace_persona_membership
-        WHERE id <> \(membership.id)
-          AND workspace_persona_id = \(membership.workspacePersonaID)
-          AND squad_id = \(squadID)
       )
       ON CONFLICT (id) DO UPDATE SET
         workspace_persona_id = EXCLUDED.workspace_persona_id,
@@ -403,26 +526,6 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
         squad_id = EXCLUDED.squad_id,
         role_in_group = EXCLUDED.role_in_group
       """
-    }
-
-    return """
-    INSERT INTO workspace_persona_membership (
-      id, workspace_persona_id, team_id, squad_id, role_in_group, created_at
-    )
-    VALUES (
-      \(membership.id),
-      \(membership.workspacePersonaID),
-      \(membership.teamID),
-      \(membership.squadID),
-      \(membership.roleInGroup),
-      \(membership.createdAt)
-    )
-    ON CONFLICT (id) DO UPDATE SET
-      workspace_persona_id = EXCLUDED.workspace_persona_id,
-      team_id = EXCLUDED.team_id,
-      squad_id = EXCLUDED.squad_id,
-      role_in_group = EXCLUDED.role_in_group
-    """
   }
 
   public func insertPostQuery(
@@ -559,6 +662,127 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       \(postLink.toPostID),
       \(postLink.linkType.rawValue),
       \(postLink.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func insertNoteQuery(
+    _ note: OrbitNoteRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO note (
+      id, post_id, note_type, body, created_by_participant_type,
+      created_by_participant_id, created_at
+    ) VALUES (
+      \(note.id),
+      \(note.postID),
+      \(note.noteType.rawValue),
+      \(note.body),
+      \(note.createdByParticipantType.rawValue),
+      \(note.createdByParticipantID),
+      \(note.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func upsertNoteQuery(
+    _ note: OrbitNoteRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO note (
+      id, post_id, note_type, body, created_by_participant_type,
+      created_by_participant_id, created_at
+    ) VALUES (
+      \(note.id),
+      \(note.postID),
+      \(note.noteType.rawValue),
+      \(note.body),
+      \(note.createdByParticipantType.rawValue),
+      \(note.createdByParticipantID),
+      \(note.createdAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      body = EXCLUDED.body
+    """
+  }
+
+  public func insertDecisionQuery(
+    _ decision: OrbitDecisionRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO decision (
+      id, post_id, title, body, decision_state, rationale_note_id, created_at
+    ) VALUES (
+      \(decision.id),
+      \(decision.postID),
+      \(decision.title),
+      \(decision.body),
+      \(decision.decisionState.rawValue),
+      \(decision.rationaleNoteID),
+      \(decision.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func insertReferenceQuery(
+    _ reference: OrbitReferenceRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO reference (
+      id, post_id, reference_type, target, title, created_at
+    ) VALUES (
+      \(reference.id),
+      \(reference.postID),
+      \(reference.referenceType.rawValue),
+      \(reference.target),
+      \(reference.title),
+      \(reference.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func upsertMeetingOutputStateQuery(
+    _ meetingOutputState: OrbitMeetingOutputStateRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO meeting_output_state (
+      post_id, outcome_state, detail, recorded_by_participant_type,
+      recorded_by_participant_id, recorded_at
+    ) VALUES (
+      \(meetingOutputState.postID),
+      \(meetingOutputState.outcomeState.rawValue),
+      \(meetingOutputState.detail),
+      \(meetingOutputState.recordedByParticipantType.rawValue),
+      \(meetingOutputState.recordedByParticipantID),
+      \(meetingOutputState.recordedAt)
+    )
+    ON CONFLICT (post_id) DO UPDATE SET
+      outcome_state = EXCLUDED.outcome_state,
+      detail = EXCLUDED.detail,
+      recorded_by_participant_type = EXCLUDED.recorded_by_participant_type,
+      recorded_by_participant_id = EXCLUDED.recorded_by_participant_id,
+      recorded_at = EXCLUDED.recorded_at
+    """
+  }
+
+  public func insertMeetingOpenQuestionQuery(
+    _ meetingOpenQuestion: OrbitMeetingOpenQuestionRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO meeting_open_question (
+      id, post_id, body, created_by_participant_type, created_by_participant_id,
+      created_at
+    ) VALUES (
+      \(meetingOpenQuestion.id),
+      \(meetingOpenQuestion.postID),
+      \(meetingOpenQuestion.body),
+      \(meetingOpenQuestion.createdByParticipantType.rawValue),
+      \(meetingOpenQuestion.createdByParticipantID),
+      \(meetingOpenQuestion.createdAt)
     )
     ON CONFLICT (id) DO NOTHING
     """
@@ -887,6 +1111,46 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     {
       if let postID {
         return """
+          SELECT
+            id,
+            workspace_id,
+            post_id,
+            thread_id,
+            category,
+            payload,
+            created_at
+          FROM realtime_event
+          WHERE workspace_id = \(workspaceID)
+            AND post_id = \(postID)
+            AND (
+              created_at > \(lastEventCreatedAt)
+              OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
+            )
+          ORDER BY created_at ASC, id ASC
+          """
+      }
+
+      return """
+        SELECT
+          id,
+          workspace_id,
+          post_id,
+          thread_id,
+          category,
+          payload,
+          created_at
+        FROM realtime_event
+        WHERE workspace_id = \(workspaceID)
+          AND (
+            created_at > \(lastEventCreatedAt)
+            OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
+          )
+        ORDER BY created_at ASC, id ASC
+        """
+    }
+
+    if let postID {
+      return """
         SELECT
           id,
           workspace_id,
@@ -898,63 +1162,23 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
         FROM realtime_event
         WHERE workspace_id = \(workspaceID)
           AND post_id = \(postID)
-          AND (
-            created_at > \(lastEventCreatedAt)
-            OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
-          )
         ORDER BY created_at ASC, id ASC
         """
-      }
-
-      return """
-      SELECT
-        id,
-        workspace_id,
-        post_id,
-        thread_id,
-        category,
-        payload,
-        created_at
-      FROM realtime_event
-      WHERE workspace_id = \(workspaceID)
-        AND (
-          created_at > \(lastEventCreatedAt)
-          OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
-        )
-      ORDER BY created_at ASC, id ASC
-      """
-    }
-
-    if let postID {
-      return """
-      SELECT
-        id,
-        workspace_id,
-        post_id,
-        thread_id,
-        category,
-        payload,
-        created_at
-      FROM realtime_event
-      WHERE workspace_id = \(workspaceID)
-        AND post_id = \(postID)
-      ORDER BY created_at ASC, id ASC
-      """
     }
 
     return """
-    SELECT
-      id,
-      workspace_id,
-      post_id,
-      thread_id,
-      category,
-      payload,
-      created_at
-    FROM realtime_event
-    WHERE workspace_id = \(workspaceID)
-    ORDER BY created_at ASC, id ASC
-    """
+      SELECT
+        id,
+        workspace_id,
+        post_id,
+        thread_id,
+        category,
+        payload,
+        created_at
+      FROM realtime_event
+      WHERE workspace_id = \(workspaceID)
+      ORDER BY created_at ASC, id ASC
+      """
   }
 
   public func selectPostParticipantsQuery(
@@ -987,6 +1211,110 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       payload,
       created_at
     FROM post_event
+    WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectNotesQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      post_id,
+      note_type,
+      body,
+      created_by_participant_type,
+      created_by_participant_id,
+      created_at
+    FROM note
+    WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectDecisionsQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      post_id,
+      title,
+      body,
+      decision_state,
+      rationale_note_id,
+      created_at
+    FROM decision
+    WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectReferencesQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      post_id,
+      reference_type,
+      target,
+      title,
+      created_at
+    FROM reference
+    WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectMeetingOutputStateQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      post_id,
+      outcome_state,
+      detail,
+      recorded_by_participant_type,
+      recorded_by_participant_id,
+      recorded_at
+    FROM meeting_output_state
+    WHERE post_id = \(postID)
+    """
+  }
+
+  public func selectMeetingStateForUpdateQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      post_id,
+      meeting_type,
+      status,
+      started_by_participant_type,
+      started_by_participant_id,
+      started_at,
+      completed_at
+    FROM meeting_state
+    WHERE post_id = \(postID)
+    FOR UPDATE
+    """
+  }
+
+  public func selectMeetingOpenQuestionsQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      post_id,
+      body,
+      created_by_participant_type,
+      created_by_participant_id,
+      created_at
+    FROM meeting_open_question
     WHERE post_id = \(postID)
     ORDER BY created_at ASC, id ASC
     """

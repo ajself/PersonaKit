@@ -2,7 +2,7 @@ import Foundation
 import OrbitServerGateway
 import OrbitServerRuntime
 
-enum OrbitGatewayNetworkClientError: LocalizedError {
+enum OrbitGatewayNetworkClientError: LocalizedError, Equatable {
   case invalidHTTPResponse
   case unexpectedStatusCode(Int, String)
   case invalidSocketURL(String)
@@ -246,6 +246,36 @@ actor OrbitGatewayNetworkClient {
     return response.result
   }
 
+  func completeMeeting(
+    _ request: OrbitPhase1CompleteMeetingRequest
+  ) async throws -> OrbitPhase1CompleteMeetingResult {
+    let response: OrbitGatewayCompleteMeetingResponse = try await post(
+      "api/orbit/room/meeting-completions",
+      body: OrbitGatewayCompleteMeetingRequest(
+        workspaceSlug: request.workspaceSlug,
+        channelSlug: request.channelSlug,
+        postID: request.postID,
+        summaryBody: request.summaryBody,
+        outcome: request.outcome.rawValue,
+        decisionTitle: request.decisionTitle,
+        decisionBody: request.decisionBody,
+        noDecisionDetail: request.noDecisionDetail,
+        openQuestions: request.openQuestions,
+        followUpReferences: request.followUpReferences.map { reference in
+          OrbitGatewayMeetingReferencePayload(
+            referenceType: reference.referenceType.rawValue,
+            target: reference.target,
+            title: reference.title
+          )
+        },
+        completedByParticipantType: request.completedByParticipantType.rawValue,
+        completedByParticipantID: request.completedByParticipantID
+      )
+    )
+
+    return response.result
+  }
+
   func promoteMeetingRoom(
     _ request: OrbitPhase1PromoteMeetingRoomRequest
   ) async throws -> OrbitPhase1PromoteMeetingRoomResult {
@@ -356,7 +386,7 @@ actor OrbitGatewayNetworkClient {
       throw OrbitGatewayNetworkClientError.invalidHTTPResponse
     }
 
-    guard (200 ..< 300).contains(httpResponse.statusCode) else {
+    guard (200..<300).contains(httpResponse.statusCode) else {
       throw OrbitGatewayNetworkClientError.unexpectedStatusCode(
         httpResponse.statusCode,
         String(decoding: data, as: UTF8.self)
@@ -445,8 +475,7 @@ actor OrbitGatewayNetworkClient {
     let text = try await socket.receiveText()
     let data = Data(text.utf8)
 
-    if
-      let errorPayload = try? decoder.decode(OrbitGatewaySocketErrorPayload.self, from: data),
+    if let errorPayload = try? decoder.decode(OrbitGatewaySocketErrorPayload.self, from: data),
       errorPayload.kind == "error"
     {
       throw OrbitGatewayNetworkClientError.socketRejectedRequest

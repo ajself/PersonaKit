@@ -10,6 +10,7 @@ private enum OrbitServerBackedRoomClientError: Error {
   case meetingCreationUnavailable
   case meetingPromotionUnavailable
   case meetingRoomPromotionUnavailable
+  case meetingCompletionUnavailable
 }
 
 struct OrbitServerBackedRoomClient: Sendable {
@@ -23,6 +24,7 @@ struct OrbitServerBackedRoomClient: Sendable {
   let appendMeetingPromotionHandler: @Sendable (OrbitPhase1AppendMeetingPromotionEventRequest) async throws -> OrbitPhase1AppendMeetingPromotionEventResult
   let promoteMeetingHandler: @Sendable (OrbitPhase1PromoteMeetingRoomRequest) async throws -> OrbitPhase1PromoteMeetingRoomResult
   let createMeetingHandler: @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult
+  let completeMeetingHandler: @Sendable (OrbitPhase1CompleteMeetingRequest) async throws -> OrbitPhase1CompleteMeetingResult
 
   init(
     connectHandler: @escaping @Sendable (OrbitPhase1RealtimeConnectRequest) async throws -> OrbitPhase1RealtimeTransportResponse,
@@ -40,6 +42,9 @@ struct OrbitServerBackedRoomClient: Sendable {
     },
     createMeetingHandler: @escaping @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult = { _ in
       throw OrbitServerBackedRoomClientError.meetingCreationUnavailable
+    },
+    completeMeetingHandler: @escaping @Sendable (OrbitPhase1CompleteMeetingRequest) async throws -> OrbitPhase1CompleteMeetingResult = { _ in
+      throw OrbitServerBackedRoomClientError.meetingCompletionUnavailable
     }
   ) {
     self.connectHandler = connectHandler
@@ -52,6 +57,7 @@ struct OrbitServerBackedRoomClient: Sendable {
     self.appendMeetingPromotionHandler = appendMeetingPromotionHandler
     self.promoteMeetingHandler = promoteMeetingHandler
     self.createMeetingHandler = createMeetingHandler
+    self.completeMeetingHandler = completeMeetingHandler
   }
 
   init<
@@ -227,6 +233,63 @@ struct OrbitServerBackedRoomClient: Sendable {
     )
   }
 
+  init<
+    Transport: OrbitPhase1RealtimeTransportServing,
+    Writer: OrbitPhase1RoomWriteServing,
+    SystemWriter: OrbitPhase1SystemMessageServing,
+    FailureWriter: OrbitPhase1ActivationFailureServing,
+    PromotionWriter: OrbitPhase1MeetingPromotionEventServing,
+    MeetingPromoter: OrbitPhase1MeetingRoomPromotionServing,
+    CollaboratorWriter: OrbitPhase1CollaboratorResponseServing,
+    MeetingCreator: OrbitPhase1MeetingRoomCreationServing,
+    MeetingCompleter: OrbitPhase1MeetingCompletionServing
+  >(
+    transport: Transport,
+    roomWriter: Writer,
+    systemWriter: SystemWriter,
+    failureWriter: FailureWriter,
+    promotionWriter: PromotionWriter,
+    meetingPromoter: MeetingPromoter,
+    collaboratorWriter: CollaboratorWriter,
+    meetingCreator: MeetingCreator,
+    meetingCompleter: MeetingCompleter
+  ) {
+    self.init(
+      connectHandler: { request in
+        try await transport.connect(request: request)
+      },
+      pollHandler: { session in
+        try await transport.poll(
+          request: OrbitPhase1RealtimePollRequest(session: session)
+        )
+      },
+      appendHandler: { request in
+        try await roomWriter.appendUserMessage(request)
+      },
+      appendSystemHandler: { request in
+        try await systemWriter.appendSystemMessage(request)
+      },
+      appendCollaboratorHandler: { request in
+        try await collaboratorWriter.appendCollaboratorResponse(request)
+      },
+      appendFailureHandler: { request in
+        try await failureWriter.appendActivationFailure(request)
+      },
+      appendMeetingPromotionHandler: { request in
+        try await promotionWriter.appendMeetingPromotionEvent(request)
+      },
+      promoteMeetingHandler: { request in
+        try await meetingPromoter.promoteMeetingRoom(request)
+      },
+      createMeetingHandler: { request in
+        try await meetingCreator.createMeetingRoom(request)
+      },
+      completeMeetingHandler: { request in
+        try await meetingCompleter.completeMeeting(request)
+      }
+    )
+  }
+
   func connect(
     scope: OrbitPhase1RealtimeSubscriptionScope,
     cursor: OrbitPhase1ReplayCursor? = nil
@@ -303,5 +366,11 @@ struct OrbitServerBackedRoomClient: Sendable {
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
     try await createMeetingHandler(request)
+  }
+
+  func completeMeeting(
+    _ request: OrbitPhase1CompleteMeetingRequest
+  ) async throws -> OrbitPhase1CompleteMeetingResult {
+    try await completeMeetingHandler(request)
   }
 }

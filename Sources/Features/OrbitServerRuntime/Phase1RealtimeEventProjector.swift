@@ -269,4 +269,21 @@ public enum OrbitPhase1RealtimeEventProjector {
       return lhs.createdAt < rhs.createdAt
     }
   }
+
+  public static func meetingCompletionEvents(
+    workspaceID: UUID,
+    postEvent: OrbitPostEventRecord
+  ) throws -> [OrbitRealtimeEventRecord] {
+    [
+      OrbitRealtimeEventRecord(
+        id: postEvent.id,
+        workspaceID: workspaceID,
+        postID: postEvent.postID,
+        threadID: postEvent.threadID,
+        category: .meetingOutputCommitted,
+        payloadJSON: postEvent.payloadJSON,
+        createdAt: postEvent.createdAt
+      ),
+    ]
+  }
 }

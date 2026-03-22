@@ -144,6 +144,34 @@ public struct OrbitPhase1MeetingPromotionEventPayload: Codable, Equatable, Senda
   }
 }
 
+public struct OrbitPhase1MeetingCompletionEventPayload: Codable, Equatable, Sendable {
+  public let summaryNote: OrbitNoteRecord
+  public let meetingOutputState: OrbitMeetingOutputStateRecord
+  public let decision: OrbitDecisionRecord?
+  public let references: [OrbitReferenceRecord]
+  public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
+  public let meetingState: OrbitMeetingStateRecord
+  public let threadLastActivityAt: Date
+
+  public init(
+    summaryNote: OrbitNoteRecord,
+    meetingOutputState: OrbitMeetingOutputStateRecord,
+    decision: OrbitDecisionRecord? = nil,
+    references: [OrbitReferenceRecord] = [],
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
+    meetingState: OrbitMeetingStateRecord,
+    threadLastActivityAt: Date
+  ) {
+    self.summaryNote = summaryNote
+    self.meetingOutputState = meetingOutputState
+    self.decision = decision
+    self.references = references
+    self.meetingOpenQuestions = meetingOpenQuestions
+    self.meetingState = meetingState
+    self.threadLastActivityAt = threadLastActivityAt
+  }
+}
+
 public struct OrbitPhase1ActivationEventPayload: Codable, Equatable, Sendable {
   public let activationID: UUID?
   public let initiatedByParticipantType: String?

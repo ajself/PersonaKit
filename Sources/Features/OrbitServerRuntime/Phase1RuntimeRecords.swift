@@ -410,6 +410,37 @@ public enum OrbitPostLinkType: String, Codable, Equatable, Sendable {
   case related
 }
 
+public enum OrbitNoteType: String, Codable, Equatable, Sendable {
+  case brief
+  case detailed
+  case meetingSummary = "meeting_summary"
+  case retrospective
+  case workstreamCloseout = "workstream_closeout"
+  case manual
+}
+
+public enum OrbitDecisionState: String, Codable, Equatable, Sendable {
+  case proposed
+  case adopted
+  case rejected
+  case superseded
+}
+
+public enum OrbitReferenceType: String, Codable, Equatable, Sendable {
+  case url
+  case doc
+  case file
+  case issue
+  case commit
+  case externalNote = "external_note"
+}
+
+public enum OrbitMeetingOutcomeState: String, Codable, Equatable, Sendable {
+  case pending
+  case decisionRecorded = "decision_recorded"
+  case noDecisionRecorded = "no_decision_recorded"
+}
+
 public struct OrbitPostLinkRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let fromPostID: UUID
@@ -428,6 +459,137 @@ public struct OrbitPostLinkRecord: Codable, Equatable, Sendable {
     self.fromPostID = fromPostID
     self.toPostID = toPostID
     self.linkType = linkType
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitNoteRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let postID: UUID
+  public let noteType: OrbitNoteType
+  public let body: String
+  public let createdByParticipantType: OrbitParticipantAuthorType
+  public let createdByParticipantID: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    postID: UUID,
+    noteType: OrbitNoteType,
+    body: String,
+    createdByParticipantType: OrbitParticipantAuthorType,
+    createdByParticipantID: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.postID = postID
+    self.noteType = noteType
+    self.body = body
+    self.createdByParticipantType = createdByParticipantType
+    self.createdByParticipantID = createdByParticipantID
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitDecisionRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let postID: UUID
+  public let title: String
+  public let body: String
+  public let decisionState: OrbitDecisionState
+  public let rationaleNoteID: UUID?
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    postID: UUID,
+    title: String,
+    body: String,
+    decisionState: OrbitDecisionState,
+    rationaleNoteID: UUID? = nil,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.postID = postID
+    self.title = title
+    self.body = body
+    self.decisionState = decisionState
+    self.rationaleNoteID = rationaleNoteID
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitReferenceRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let postID: UUID
+  public let referenceType: OrbitReferenceType
+  public let target: String
+  public let title: String?
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    postID: UUID,
+    referenceType: OrbitReferenceType,
+    target: String,
+    title: String? = nil,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.postID = postID
+    self.referenceType = referenceType
+    self.target = target
+    self.title = title
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitMeetingOutputStateRecord: Codable, Equatable, Sendable {
+  public let postID: UUID
+  public let outcomeState: OrbitMeetingOutcomeState
+  public let detail: String?
+  public let recordedByParticipantType: OrbitParticipantAuthorType
+  public let recordedByParticipantID: String
+  public let recordedAt: Date
+
+  public init(
+    postID: UUID,
+    outcomeState: OrbitMeetingOutcomeState,
+    detail: String? = nil,
+    recordedByParticipantType: OrbitParticipantAuthorType,
+    recordedByParticipantID: String,
+    recordedAt: Date
+  ) {
+    self.postID = postID
+    self.outcomeState = outcomeState
+    self.detail = detail
+    self.recordedByParticipantType = recordedByParticipantType
+    self.recordedByParticipantID = recordedByParticipantID
+    self.recordedAt = recordedAt
+  }
+}
+
+public struct OrbitMeetingOpenQuestionRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let postID: UUID
+  public let body: String
+  public let createdByParticipantType: OrbitParticipantAuthorType
+  public let createdByParticipantID: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    postID: UUID,
+    body: String,
+    createdByParticipantType: OrbitParticipantAuthorType,
+    createdByParticipantID: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.postID = postID
+    self.body = body
+    self.createdByParticipantType = createdByParticipantType
+    self.createdByParticipantID = createdByParticipantID
     self.createdAt = createdAt
   }
 }
@@ -653,6 +815,11 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let realtimeEvents: [OrbitRealtimeEventRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
   public let postLinks: [OrbitPostLinkRecord]
+  public let notes: [OrbitNoteRecord]
+  public let decisions: [OrbitDecisionRecord]
+  public let references: [OrbitReferenceRecord]
+  public let meetingOutputState: OrbitMeetingOutputStateRecord?
+  public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
   public let meetingState: OrbitMeetingStateRecord?
   public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
@@ -672,6 +839,11 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     realtimeEvents: [OrbitRealtimeEventRecord] = [],
     postParticipants: [OrbitPostParticipantRecord] = [],
     postLinks: [OrbitPostLinkRecord] = [],
+    notes: [OrbitNoteRecord] = [],
+    decisions: [OrbitDecisionRecord] = [],
+    references: [OrbitReferenceRecord] = [],
+    meetingOutputState: OrbitMeetingOutputStateRecord? = nil,
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
     meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
@@ -690,6 +862,11 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     self.realtimeEvents = realtimeEvents
     self.postParticipants = postParticipants
     self.postLinks = postLinks
+    self.notes = notes
+    self.decisions = decisions
+    self.references = references
+    self.meetingOutputState = meetingOutputState
+    self.meetingOpenQuestions = meetingOpenQuestions
     self.meetingState = meetingState
     self.meetingMembers = meetingMembers
     self.postEvents = postEvents
@@ -710,6 +887,11 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let messages: [OrbitMessageRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
   public let postLinks: [OrbitPostLinkRecord]
+  public let notes: [OrbitNoteRecord]
+  public let decisions: [OrbitDecisionRecord]
+  public let references: [OrbitReferenceRecord]
+  public let meetingOutputState: OrbitMeetingOutputStateRecord?
+  public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
   public let meetingState: OrbitMeetingStateRecord?
   public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
@@ -728,6 +910,11 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     messages: [OrbitMessageRecord],
     postParticipants: [OrbitPostParticipantRecord] = [],
     postLinks: [OrbitPostLinkRecord] = [],
+    notes: [OrbitNoteRecord] = [],
+    decisions: [OrbitDecisionRecord] = [],
+    references: [OrbitReferenceRecord] = [],
+    meetingOutputState: OrbitMeetingOutputStateRecord? = nil,
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
     meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
@@ -745,6 +932,11 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     self.messages = messages
     self.postParticipants = postParticipants
     self.postLinks = postLinks
+    self.notes = notes
+    self.decisions = decisions
+    self.references = references
+    self.meetingOutputState = meetingOutputState
+    self.meetingOpenQuestions = meetingOpenQuestions
     self.meetingState = meetingState
     self.meetingMembers = meetingMembers
     self.postEvents = postEvents

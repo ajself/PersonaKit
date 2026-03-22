@@ -92,6 +92,7 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
   public let makePostID: @Sendable () -> UUID
   public let makeThreadID: @Sendable () -> UUID
   public let makePostParticipantID: @Sendable () -> UUID
+  public let makeNoteID: @Sendable () -> UUID
 
   public init(
     loadContext: @escaping ContextLoader,
@@ -100,7 +101,8 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
     now: @escaping @Sendable () -> Date = Date.init,
     makePostID: @escaping @Sendable () -> UUID = UUID.init,
     makeThreadID: @escaping @Sendable () -> UUID = UUID.init,
-    makePostParticipantID: @escaping @Sendable () -> UUID = UUID.init
+    makePostParticipantID: @escaping @Sendable () -> UUID = UUID.init,
+    makeNoteID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.loadContext = loadContext
     self.loadCreatedRoom = loadCreatedRoom
@@ -109,6 +111,7 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
     self.makePostID = makePostID
     self.makeThreadID = makeThreadID
     self.makePostParticipantID = makePostParticipantID
+    self.makeNoteID = makeNoteID
   }
 
   public func createMeetingRoom(
@@ -219,6 +222,22 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
       startedByParticipantID: request.startedByParticipantID,
       startedAt: createdAt
     )
+    let summaryShell = OrbitNoteRecord(
+      id: makeNoteID(),
+      postID: postID,
+      noteType: .meetingSummary,
+      body: "Summary pending.",
+      createdByParticipantType: .system,
+      createdByParticipantID: "orbit-system",
+      createdAt: createdAt
+    )
+    let meetingOutputState = OrbitMeetingOutputStateRecord(
+      postID: postID,
+      outcomeState: .pending,
+      recordedByParticipantType: .system,
+      recordedByParticipantID: "orbit-system",
+      recordedAt: createdAt
+    )
     let bootstrap = OrbitPhase1RoomBootstrap(
       workspace: context.workspace,
       channel: context.channel,
@@ -230,6 +249,8 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
       thread: thread,
       seedMessages: [],
       postParticipants: participantRecords,
+      notes: [summaryShell],
+      meetingOutputState: meetingOutputState,
       meetingState: meetingState,
       meetingMembers: meetingMembers
     )
@@ -257,7 +278,8 @@ public extension OrbitPhase1MeetingRoomCreationService {
     now: @escaping @Sendable () -> Date = Date.init,
     makePostID: @escaping @Sendable () -> UUID = UUID.init,
     makeThreadID: @escaping @Sendable () -> UUID = UUID.init,
-    makePostParticipantID: @escaping @Sendable () -> UUID = UUID.init
+    makePostParticipantID: @escaping @Sendable () -> UUID = UUID.init,
+    makeNoteID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.init(
       loadContext: { workspaceSlug, channelSlug in
@@ -279,7 +301,8 @@ public extension OrbitPhase1MeetingRoomCreationService {
       now: now,
       makePostID: makePostID,
       makeThreadID: makeThreadID,
-      makePostParticipantID: makePostParticipantID
+      makePostParticipantID: makePostParticipantID,
+      makeNoteID: makeNoteID
     )
   }
 }

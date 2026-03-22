@@ -81,8 +81,111 @@ struct Phase1RuntimeRepositoryTests {
 
     let queries = await executor.queries().map { $0.sql }
 
+    #expect(queries.filter { $0.contains("INSERT INTO note") }.count == 1)
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_output_state") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
+  }
+
+  @Test
+  func completeMeetingExecutesCanonicalOutputBundleInsideTransaction() async throws {
+    let executor = RecordingRepositoryExecutor()
+    let room = sampleMeetingRoomBootstrap()
+    let summaryNote = try #require(room.notes.first)
+    let updatedSummaryNote = OrbitNoteRecord(
+      id: summaryNote.id,
+      postID: summaryNote.postID,
+      noteType: summaryNote.noteType,
+      body: "Completed summary.",
+      createdByParticipantType: summaryNote.createdByParticipantType,
+      createdByParticipantID: summaryNote.createdByParticipantID,
+      createdAt: summaryNote.createdAt
+    )
+    let outputState = OrbitMeetingOutputStateRecord(
+      postID: room.post.id,
+      outcomeState: .decisionRecorded,
+      recordedByParticipantType: .user,
+      recordedByParticipantID: "aj",
+      recordedAt: referenceDate.addingTimeInterval(10)
+    )
+    let decision = OrbitDecisionRecord(
+      id: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!,
+      postID: room.post.id,
+      title: "Record decision",
+      body: "Persist the first completion bundle.",
+      decisionState: .adopted,
+      createdAt: referenceDate.addingTimeInterval(10)
+    )
+    let reference = OrbitReferenceRecord(
+      id: UUID(uuidString: "19191919-1919-1919-1919-191919191919")!,
+      postID: room.post.id,
+      referenceType: .doc,
+      target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+      createdAt: referenceDate.addingTimeInterval(11)
+    )
+    let question = OrbitMeetingOpenQuestionRecord(
+      id: UUID(uuidString: "20202020-2020-2020-2020-202020202020")!,
+      postID: room.post.id,
+      body: "How should future edits work?",
+      createdByParticipantType: .user,
+      createdByParticipantID: "aj",
+      createdAt: referenceDate.addingTimeInterval(10)
+    )
+    let meetingState = OrbitMeetingStateRecord(
+      postID: room.post.id,
+      meetingType: .team,
+      status: .completed,
+      startedByParticipantType: .user,
+      startedByParticipantID: "aj",
+      startedAt: referenceDate,
+      completedAt: referenceDate.addingTimeInterval(10)
+    )
+    let postEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "21212121-2121-2121-2121-212121212121")!,
+      postID: room.post.id,
+      threadID: room.thread.id,
+      eventType: OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue,
+      payloadJSON: "{}",
+      createdAt: referenceDate.addingTimeInterval(10)
+    )
+    let realtimeEvent = OrbitRealtimeEventRecord(
+      id: postEvent.id,
+      workspaceID: room.workspace.id,
+      postID: room.post.id,
+      threadID: room.thread.id,
+      category: .meetingOutputCommitted,
+      payloadJSON: "{}",
+      createdAt: postEvent.createdAt
+    )
+
+    try await repository.completeMeeting(
+      workspaceID: room.workspace.id,
+      summaryNote: updatedSummaryNote,
+      meetingOutputState: outputState,
+      decision: decision,
+      references: [reference],
+      meetingOpenQuestions: [question],
+      meetingState: meetingState,
+      postEvent: postEvent,
+      realtimeEvents: [realtimeEvent],
+      threadID: room.thread.id,
+      threadLastActivityAt: postEvent.createdAt,
+      using: executor
+    )
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.first == "BEGIN")
+    #expect(queries.last == "COMMIT")
+    #expect(queries.contains(where: { $0.contains("ON CONFLICT (id) DO UPDATE SET") && $0.contains("body = EXCLUDED.body") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_output_state") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO decision") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO reference") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_open_question") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO post_event") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO realtime_event") }))
+    #expect(queries.contains(where: { $0.contains("UPDATE thread") }))
   }
 
   @Test
@@ -105,6 +208,7 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.filter { $0.contains("INSERT INTO realtime_event") }.count >= 2)
     #expect(queries.contains(where: { $0.contains("INSERT INTO post") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO post_link") }))
+    #expect(queries.filter { $0.contains("INSERT INTO note") }.count == 1)
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
   }
@@ -192,7 +296,12 @@ struct Phase1RuntimeRepositoryTests {
   @Test
   func participantAndEventQueriesPreserveReplayOrder() {
     let participantQuery = repository.selectPostParticipantsQuery(postID: UUID())
+    let noteQuery = repository.selectNotesQuery(postID: UUID())
+    let decisionQuery = repository.selectDecisionsQuery(postID: UUID())
+    let referenceQuery = repository.selectReferencesQuery(postID: UUID())
     let postLinkQuery = repository.selectPostLinksQuery(postID: UUID())
+    let meetingOutputStateQuery = repository.selectMeetingOutputStateQuery(postID: UUID())
+    let meetingOpenQuestionQuery = repository.selectMeetingOpenQuestionsQuery(postID: UUID())
     let meetingStateQuery = repository.selectMeetingStateQuery(postID: UUID())
     let meetingMemberQuery = repository.selectMeetingMembersQuery(meetingPostID: UUID())
     let eventQuery = repository.selectPostEventsQuery(postID: UUID())
@@ -226,6 +335,18 @@ struct Phase1RuntimeRepositoryTests {
     #expect(participantQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
     #expect(participantQuery.binds.count == 1)
 
+    #expect(noteQuery.sql.contains("FROM note"))
+    #expect(noteQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(noteQuery.binds.count == 1)
+
+    #expect(decisionQuery.sql.contains("FROM decision"))
+    #expect(decisionQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(decisionQuery.binds.count == 1)
+
+    #expect(referenceQuery.sql.contains("FROM reference"))
+    #expect(referenceQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(referenceQuery.binds.count == 1)
+
     #expect(postLinkQuery.sql.contains("FROM post_link"))
     #expect(postLinkQuery.sql.contains("WHERE from_post_id = $1"))
     #expect(postLinkQuery.sql.contains("OR to_post_id = $2"))
@@ -235,6 +356,14 @@ struct Phase1RuntimeRepositoryTests {
     #expect(meetingStateQuery.sql.contains("FROM meeting_state"))
     #expect(meetingStateQuery.sql.contains("WHERE post_id = $1"))
     #expect(meetingStateQuery.binds.count == 1)
+
+    #expect(meetingOutputStateQuery.sql.contains("FROM meeting_output_state"))
+    #expect(meetingOutputStateQuery.sql.contains("WHERE post_id = $1"))
+    #expect(meetingOutputStateQuery.binds.count == 1)
+
+    #expect(meetingOpenQuestionQuery.sql.contains("FROM meeting_open_question"))
+    #expect(meetingOpenQuestionQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(meetingOpenQuestionQuery.binds.count == 1)
 
     #expect(meetingMemberQuery.sql.contains("FROM meeting_member"))
     #expect(meetingMemberQuery.sql.contains("WHERE meeting_post_id = $1"))
@@ -599,6 +728,24 @@ struct Phase1RuntimeRepositoryTests {
       seedMessages: bootstrap.seedMessages,
       realtimeEvents: bootstrap.realtimeEvents,
       postParticipants: bootstrap.postParticipants,
+      notes: [
+        OrbitNoteRecord(
+          id: UUID(uuidString: "17171717-1717-1717-1717-171717171717")!,
+          postID: bootstrap.post.id,
+          noteType: .meetingSummary,
+          body: "Summary pending.",
+          createdByParticipantType: .system,
+          createdByParticipantID: "orbit-system",
+          createdAt: referenceDate.addingTimeInterval(4)
+        )
+      ],
+      meetingOutputState: OrbitMeetingOutputStateRecord(
+        postID: bootstrap.post.id,
+        outcomeState: .pending,
+        recordedByParticipantType: .system,
+        recordedByParticipantID: "orbit-system",
+        recordedAt: referenceDate.addingTimeInterval(4)
+      ),
       meetingState: OrbitMeetingStateRecord(
         postID: bootstrap.post.id,
         meetingType: .team,
@@ -701,6 +848,17 @@ struct Phase1RuntimeRepositoryTests {
           createdAt: referenceDate.addingTimeInterval(89)
         )
       ],
+      notes: meetingRoom.notes.map { note in
+        OrbitNoteRecord(
+          id: note.id,
+          postID: promotedPostID,
+          noteType: note.noteType,
+          body: note.body,
+          createdByParticipantType: note.createdByParticipantType,
+          createdByParticipantID: note.createdByParticipantID,
+          createdAt: note.createdAt.addingTimeInterval(90)
+        )
+      },
       meetingState: OrbitMeetingStateRecord(
         postID: promotedPostID,
         meetingType: .team,

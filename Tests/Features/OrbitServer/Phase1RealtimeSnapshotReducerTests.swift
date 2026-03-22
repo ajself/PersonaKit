@@ -245,6 +245,162 @@ struct Phase1RealtimeSnapshotReducerTests {
   }
 
   @Test
+  func reducerPreservesMeetingSummaryShellAcrossReplay() throws {
+    let initial = sampleMeetingSnapshotWithSummaryShell()
+    let messageDate = Date(timeIntervalSince1970: 1_742_342_531)
+    let event = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "95959595-9595-9595-9595-959595959595")!,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: messageDate,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MessageCreatedPayload(
+          messageID: UUID(uuidString: "96969696-9696-9696-9696-969696969696")!,
+          postID: postID,
+          threadID: threadID,
+          authorType: OrbitParticipantAuthorType.workspacePersona.rawValue,
+          authorID: "workspace-persona-orbit-samwise",
+          body: "Summary shell should survive replay.",
+          messageFormat: OrbitMessageFormat.markdown.rawValue,
+          state: OrbitMessageState.completed.rawValue,
+          createdAt: messageDate,
+          updatedAt: messageDate,
+          replyToMessageID: nil
+        )
+      )
+    )
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(
+      events: [event],
+      to: initial
+    )
+
+    #expect(reduced.room.notes == initial.room.notes)
+  }
+
+  @Test
+  func reducerReplaysMeetingCompletionBundleWithoutDroppingContinuityEvidence() throws {
+    let baseline = sampleMeetingSnapshotWithSummaryShell()
+    let initial = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: baseline.room.workspace,
+        channel: baseline.room.channel,
+        workspacePersonas: baseline.room.workspacePersonas,
+        post: baseline.room.post,
+        thread: baseline.room.thread,
+        messages: baseline.room.messages,
+        postParticipants: baseline.room.postParticipants,
+        postLinks: [
+          OrbitPostLinkRecord(
+            id: UUID(uuidString: "98989898-9898-9898-9898-989898989898")!,
+            fromPostID: UUID(uuidString: "99999999-aaaa-bbbb-cccc-dddddddddddd")!,
+            toPostID: baseline.room.post.id,
+            linkType: .promotion,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_517)
+          )
+        ],
+        notes: baseline.room.notes,
+        meetingOutputState: OrbitMeetingOutputStateRecord(
+          postID: baseline.room.post.id,
+          outcomeState: .pending,
+          recordedByParticipantType: .system,
+          recordedByParticipantID: "orbit-system",
+          recordedAt: Date(timeIntervalSince1970: 1_742_342_518)
+        ),
+        meetingState: baseline.room.meetingState,
+        meetingMembers: baseline.room.meetingMembers,
+        postEvents: baseline.room.postEvents,
+        personaActivations: baseline.room.personaActivations,
+        agentRuns: baseline.room.agentRuns
+      ),
+      replayCursor: baseline.replayCursor
+    )
+    let completedAt = Date(timeIntervalSince1970: 1_742_342_540)
+    let event = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0")!,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .meetingOutputCommitted,
+      createdAt: completedAt,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MeetingCompletionEventPayload(
+          summaryNote: OrbitNoteRecord(
+            id: UUID(uuidString: "97979797-9797-9797-9797-979797979797")!,
+            postID: postID,
+            noteType: .meetingSummary,
+            body: "Meeting outputs survived replay.",
+            createdByParticipantType: .system,
+            createdByParticipantID: "orbit-system",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_518)
+          ),
+          meetingOutputState: OrbitMeetingOutputStateRecord(
+            postID: postID,
+            outcomeState: .decisionRecorded,
+            recordedByParticipantType: .user,
+            recordedByParticipantID: "aj",
+            recordedAt: completedAt
+          ),
+          decision: OrbitDecisionRecord(
+            id: UUID(uuidString: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1")!,
+            postID: postID,
+            title: "Persist completion bundle",
+            body: "Replay should keep summary, decision, questions, and references.",
+            decisionState: .adopted,
+            createdAt: completedAt
+          ),
+          references: [
+            OrbitReferenceRecord(
+              id: UUID(uuidString: "a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2")!,
+              postID: postID,
+              referenceType: .doc,
+              target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+              createdAt: completedAt.addingTimeInterval(0.001)
+            )
+          ],
+          meetingOpenQuestions: [
+            OrbitMeetingOpenQuestionRecord(
+              id: UUID(uuidString: "a3a3a3a3-a3a3-a3a3-a3a3-a3a3a3a3a3a3")!,
+              postID: postID,
+              body: "Should edits reopen completed meetings?",
+              createdByParticipantType: .user,
+              createdByParticipantID: "aj",
+              createdAt: completedAt
+            )
+          ],
+          meetingState: OrbitMeetingStateRecord(
+            postID: postID,
+            meetingType: .team,
+            status: .completed,
+            startedByParticipantType: .user,
+            startedByParticipantID: "aj",
+            startedAt: initial.room.meetingState?.startedAt ?? completedAt,
+            completedAt: completedAt
+          ),
+          threadLastActivityAt: completedAt
+        )
+      )
+    )
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(
+      events: [event],
+      to: initial
+    )
+
+    #expect(reduced.room.notes.first?.body == "Meeting outputs survived replay.")
+    #expect(reduced.room.meetingOutputState?.outcomeState == .decisionRecorded)
+    #expect(reduced.room.decisions.count == 1)
+    #expect(reduced.room.references.count == 1)
+    #expect(reduced.room.meetingOpenQuestions.count == 1)
+    #expect(reduced.room.meetingState?.status == .completed)
+    #expect(reduced.room.postLinks == initial.room.postLinks)
+    #expect(reduced.room.postEvents.last?.eventType == OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue)
+    #expect(reduced.room.thread.lastActivityAt == completedAt)
+  }
+
+  @Test
   func reducerAddsMeetingPromotionAttemptAndFailureEvidence() throws {
     let initial = sampleSnapshot()
     let failureMessageID = UUID(uuidString: "dededede-dede-dede-dede-dededededede")!
@@ -438,6 +594,14 @@ struct Phase1RealtimeSnapshotReducerTests {
       thread: baseline.room.thread,
       messages: baseline.room.messages,
       postParticipants: baseline.room.postParticipants,
+      notes: baseline.room.notes,
+      meetingOutputState: OrbitMeetingOutputStateRecord(
+        postID: baseline.room.post.id,
+        outcomeState: .pending,
+        recordedByParticipantType: .system,
+        recordedByParticipantID: "orbit-system",
+        recordedAt: baseline.room.post.createdAt
+      ),
       meetingState: OrbitMeetingStateRecord(
         postID: baseline.room.post.id,
         meetingType: .team,
@@ -488,6 +652,42 @@ struct Phase1RealtimeSnapshotReducerTests {
             createdAt: Date(timeIntervalSince1970: 1_742_342_519)
           )
         ],
+        notes: baseline.room.notes,
+        meetingOutputState: baseline.room.meetingOutputState,
+        meetingState: baseline.room.meetingState,
+        meetingMembers: baseline.room.meetingMembers,
+        postEvents: baseline.room.postEvents,
+        personaActivations: baseline.room.personaActivations,
+        agentRuns: baseline.room.agentRuns
+      ),
+      replayCursor: baseline.replayCursor
+    )
+  }
+
+  private func sampleMeetingSnapshotWithSummaryShell() -> OrbitPhase1RealtimeSnapshot {
+    let baseline = sampleMeetingSnapshot()
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: baseline.room.workspace,
+        channel: baseline.room.channel,
+        workspacePersonas: baseline.room.workspacePersonas,
+        post: baseline.room.post,
+        thread: baseline.room.thread,
+        messages: baseline.room.messages,
+        postParticipants: baseline.room.postParticipants,
+        notes: [
+          OrbitNoteRecord(
+            id: UUID(uuidString: "97979797-9797-9797-9797-979797979797")!,
+            postID: baseline.room.post.id,
+            noteType: .meetingSummary,
+            body: "Summary pending.",
+            createdByParticipantType: .system,
+            createdByParticipantID: "orbit-system",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_518)
+          )
+        ],
+        meetingOutputState: baseline.room.meetingOutputState,
         meetingState: baseline.room.meetingState,
         meetingMembers: baseline.room.meetingMembers,
         postEvents: baseline.room.postEvents,

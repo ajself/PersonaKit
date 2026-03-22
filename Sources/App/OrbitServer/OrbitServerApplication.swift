@@ -40,6 +40,9 @@ enum OrbitServerApplication {
         runtimeStore: runtimeStore,
         meetingCreationService: meetingCreator
       )
+      let meetingCompleter = OrbitPhase1MeetingCompletionService(
+        runtimeStore: runtimeStore
+      )
       let collaboratorWriter = OrbitPhase1CollaboratorResponseService(
         runtimeStore: runtimeStore
       )
@@ -54,7 +57,8 @@ enum OrbitServerApplication {
         promotionWriter: promotionWriter,
         meetingPromoter: meetingPromoter,
         collaboratorWriter: collaboratorWriter,
-        meetingCreator: meetingCreator
+        meetingCreator: meetingCreator,
+        meetingCompleter: meetingCompleter
       )
 
       return app
@@ -74,7 +78,8 @@ enum OrbitServerApplication {
     promotionWriter: (any OrbitMeetingPromotionEventHandling)? = nil,
     meetingPromoter: (any OrbitMeetingRoomPromotionHandling)? = nil,
     collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
-    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
+    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil,
+    meetingCompleter: (any OrbitMeetingCompletionHandling)? = nil
   ) {
     app.http.server.configuration.hostname = configuration.host
     app.http.server.configuration.port = configuration.port
@@ -92,7 +97,8 @@ enum OrbitServerApplication {
       promotionWriter: promotionWriter,
       meetingPromoter: meetingPromoter,
       collaboratorWriter: collaboratorWriter,
-      meetingCreator: meetingCreator
+      meetingCreator: meetingCreator,
+      meetingCompleter: meetingCompleter
     )
   }
 }

@@ -14,6 +14,11 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case postParticipant = "post_participant"
   case postEvent = "post_event"
   case postLink = "post_link"
+  case note
+  case decision
+  case reference
+  case meetingOutputState = "meeting_output_state"
+  case meetingOpenQuestion = "meeting_open_question"
   case meetingState = "meeting_state"
   case meetingMember = "meeting_member"
   case personaActivation = "persona_activation"
@@ -30,6 +35,7 @@ public enum OrbitPhase1EventCategory: String, CaseIterable, Sendable {
   case activationFailed = "activation.failed"
   case meetingPromotionAttempted = "meeting.promotion.attempted"
   case meetingPromotionFailed = "meeting.promotion.failed"
+  case meetingOutputCommitted = "meeting.output.committed"
 }
 
 public struct OrbitPhase1SchemaStatement: Equatable, Sendable {
@@ -242,6 +248,73 @@ public enum OrbitPhase1RuntimeSchema {
           from_post_id UUID NOT NULL REFERENCES post(id),
           to_post_id UUID NOT NULL REFERENCES post(id),
           link_type TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .note,
+      sql: """
+        CREATE TABLE IF NOT EXISTS note (
+          id UUID PRIMARY KEY,
+          post_id UUID NOT NULL REFERENCES post(id),
+          note_type TEXT NOT NULL,
+          body TEXT NOT NULL,
+          created_by_participant_type TEXT NOT NULL,
+          created_by_participant_id TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        CREATE TABLE IF NOT EXISTS decision (
+          id UUID PRIMARY KEY,
+          post_id UUID NOT NULL REFERENCES post(id),
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          decision_state TEXT NOT NULL,
+          rationale_note_id UUID REFERENCES note(id),
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        CREATE TABLE IF NOT EXISTS reference (
+          id UUID PRIMARY KEY,
+          post_id UUID NOT NULL REFERENCES post(id),
+          reference_type TEXT NOT NULL,
+          target TEXT NOT NULL,
+          title TEXT,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .meetingOutputState,
+      sql: """
+        CREATE TABLE IF NOT EXISTS meeting_output_state (
+          post_id UUID PRIMARY KEY REFERENCES post(id),
+          outcome_state TEXT NOT NULL,
+          detail TEXT,
+          recorded_by_participant_type TEXT NOT NULL,
+          recorded_by_participant_id TEXT NOT NULL,
+          recorded_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .meetingOpenQuestion,
+      sql: """
+        CREATE TABLE IF NOT EXISTS meeting_open_question (
+          id UUID PRIMARY KEY,
+          post_id UUID NOT NULL REFERENCES post(id),
+          body TEXT NOT NULL,
+          created_by_participant_type TEXT NOT NULL,
+          created_by_participant_id TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL
         )
         """

@@ -352,7 +352,7 @@ struct OrbitGatewayNetworkClientTests {
           meetingType: OrbitMeetingType.team.rawValue,
           title: "Founding Group Meeting",
           memberWorkspacePersonaIDs: [
-            UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+            UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
           ]
         )
       )
@@ -404,6 +404,109 @@ struct OrbitGatewayNetworkClientTests {
             selectedReason: "Selected from founding-group target."
           )
         ]
+      )
+    )
+
+    #expect(response == result)
+  }
+
+  @Test
+  func completeMeetingEncodesRequestAndDecodesCanonicalResult() async throws {
+    let snapshot = sampleSnapshot()
+    let result = OrbitPhase1CompleteMeetingResult(
+      snapshot: snapshot.room,
+      summaryNote: OrbitNoteRecord(
+        id: UUID(uuidString: "30303030-3030-3030-3030-303030303030")!,
+        postID: snapshot.room.post.id,
+        noteType: .meetingSummary,
+        body: "Completed summary",
+        createdByParticipantType: .system,
+        createdByParticipantID: "orbit-system",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_530)
+      ),
+      meetingOutputState: OrbitMeetingOutputStateRecord(
+        postID: snapshot.room.post.id,
+        outcomeState: .decisionRecorded,
+        recordedByParticipantType: .user,
+        recordedByParticipantID: "aj",
+        recordedAt: Date(timeIntervalSince1970: 1_742_342_530)
+      ),
+      decision: OrbitDecisionRecord(
+        id: UUID(uuidString: "31313131-3131-3131-3131-313131313131")!,
+        postID: snapshot.room.post.id,
+        title: "Ship packet 4 shell",
+        body: "Persist meeting outputs through replay and reload.",
+        decisionState: .adopted,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_530)
+      ),
+      references: [
+        OrbitReferenceRecord(
+          id: UUID(uuidString: "32323232-3232-3232-3232-323232323232")!,
+          postID: snapshot.room.post.id,
+          referenceType: .doc,
+          target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+          title: "Packet scope",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_531)
+        )
+      ],
+      meetingOpenQuestions: [
+        OrbitMeetingOpenQuestionRecord(
+          id: UUID(uuidString: "33333333-4444-5555-6666-777777777777")!,
+          postID: snapshot.room.post.id,
+          body: "How should edits work?",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_530)
+        )
+      ],
+      postEvent: OrbitPostEventRecord(
+        id: UUID(uuidString: "34343434-3434-3434-3434-343434343434")!,
+        postID: snapshot.room.post.id,
+        threadID: snapshot.room.thread.id,
+        eventType: OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue,
+        payloadJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_530)
+      )
+    )
+    let client = makeClient { request in
+      #expect(request.url?.path == "/api/orbit/room/meeting-completions")
+      let body = try JSONDecoder().decode(
+        OrbitGatewayCompleteMeetingRequest.self,
+        from: try requestBody(for: request)
+      )
+      #expect(body.summaryBody == "Completed summary")
+      #expect(body.outcome == OrbitPhase1MeetingCompletionOutcome.decision.rawValue)
+      #expect(body.decisionTitle == "Ship packet 4 shell")
+      #expect(body.openQuestions == ["How should edits work?"])
+      #expect(body.followUpReferences.first?.referenceType == OrbitReferenceType.doc.rawValue)
+      #expect(body.completedByParticipantType == OrbitParticipantAuthorType.user.rawValue)
+
+      return try makeResponse(
+        statusCode: 200,
+        body: OrbitGatewayCompleteMeetingResponse(result: result),
+        url: try #require(request.url)
+      )
+    }
+
+    let response = try await client.completeMeeting(
+      OrbitPhase1CompleteMeetingRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: snapshot.room.post.id,
+        summaryBody: "Completed summary",
+        outcome: .decision,
+        decisionTitle: "Ship packet 4 shell",
+        decisionBody: "Persist meeting outputs through replay and reload.",
+        openQuestions: ["How should edits work?"],
+        followUpReferences: [
+          OrbitPhase1MeetingReferenceSpec(
+            referenceType: .doc,
+            target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+            title: "Packet scope"
+          )
+        ],
+        completedByParticipantType: .user,
+        completedByParticipantID: "aj"
       )
     )
 
@@ -474,7 +577,7 @@ struct OrbitGatewayNetworkClientTests {
           meetingType: OrbitMeetingType.team.rawValue,
           title: "Founding Group Promotion",
           memberWorkspacePersonaIDs: [
-            UUID(uuidString: "55555555-5555-5555-5555-555555555555")!,
+            UUID(uuidString: "55555555-5555-5555-5555-555555555555")!
           ]
         )
       )

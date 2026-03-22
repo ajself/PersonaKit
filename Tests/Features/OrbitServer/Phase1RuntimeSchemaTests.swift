@@ -33,6 +33,11 @@ struct Phase1RuntimeSchemaTests {
         "post_participant",
         "post_event",
         "post_link",
+        "note",
+        "decision",
+        "reference",
+        "meeting_output_state",
+        "meeting_open_question",
         "meeting_state",
         "meeting_member",
         "persona_activation",
@@ -70,6 +75,7 @@ struct Phase1RuntimeSchemaTests {
         "activation.failed",
         "meeting.promotion.attempted",
         "meeting.promotion.failed",
+        "meeting.output.committed",
       ]
     )
   }

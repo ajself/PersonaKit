@@ -2,7 +2,7 @@ import Foundation
 import OrbitServerRuntime
 
 struct OrbitWorkspace: Codable, Equatable {
-  static let currentSchemaVersion = 6
+  static let currentSchemaVersion = 8
 
   var schemaVersion = OrbitWorkspace.currentSchemaVersion
   var id: String
@@ -12,6 +12,7 @@ struct OrbitWorkspace: Codable, Equatable {
   var teams: [OrbitTeam] = []
   var squads: [OrbitSquad] = []
   var workspacePersonaMemberships: [OrbitWorkspacePersonaMembership] = []
+  var activePostID: String?
   var activeThreadID: String
   var threads: [OrbitConversationThread]
   var activationRecords: [OrbitActivationRecord]
@@ -19,6 +20,13 @@ struct OrbitWorkspace: Codable, Equatable {
   var activationFailureRecords: [OrbitActivationFailureRecord]
   var meetingPromotionRecords: [OrbitMeetingPromotionRecord]
   var meetingContinuityRecords: [OrbitMeetingContinuityRecord]
+  var meetingSummaryRecords: [OrbitMeetingSummaryRecord] = []
+  var meetingStatusRecords: [OrbitMeetingStatusRecord] = []
+  var meetingOutcomeRecords: [OrbitMeetingOutcomeRecord] = []
+  var meetingDecisionRecords: [OrbitMeetingDecisionRecord] = []
+  var meetingOpenQuestionRecords: [OrbitMeetingOpenQuestionRecord] = []
+  var meetingReferenceRecords: [OrbitMeetingReferenceRecord] = []
+  var meetingMemberRecords: [OrbitMeetingMemberRecord] = []
   var nextMessageSequence: Int
   var nextActivationSequence: Int
   var nextActivationFailureSequence: Int
@@ -101,6 +109,104 @@ struct OrbitWorkspace: Codable, Equatable {
     meetingPromotionRecords.first {
       $0.outcome == .failed && $0.systemEventMessageID == messageID
     }
+  }
+
+  func meetingSummaryRecord(
+    for postID: String
+  ) -> OrbitMeetingSummaryRecord? {
+    meetingSummaryRecords.first { $0.postID == postID }
+  }
+
+  func meetingStatusRecord(
+    for postID: String
+  ) -> OrbitMeetingStatusRecord? {
+    meetingStatusRecords.first { $0.postID == postID }
+  }
+
+  func meetingOutcomeRecord(
+    for postID: String
+  ) -> OrbitMeetingOutcomeRecord? {
+    meetingOutcomeRecords.first { $0.postID == postID }
+  }
+
+  func meetingDecisionRecord(
+    for postID: String
+  ) -> OrbitMeetingDecisionRecord? {
+    meetingDecisionRecords.first { $0.postID == postID }
+  }
+
+  func meetingOpenQuestionRecords(
+    for postID: String
+  ) -> [OrbitMeetingOpenQuestionRecord] {
+    meetingOpenQuestionRecords.filter { $0.postID == postID }
+  }
+
+  func meetingReferenceRecords(
+    for postID: String
+  ) -> [OrbitMeetingReferenceRecord] {
+    meetingReferenceRecords.filter { $0.postID == postID }
+  }
+
+  func meetingMemberRecords(
+    for postID: String
+  ) -> [OrbitMeetingMemberRecord] {
+    meetingMemberRecords.filter { $0.postID == postID }
+  }
+
+  var activeMeetingSummaryRecord: OrbitMeetingSummaryRecord? {
+    guard let activePostID else {
+      return nil
+    }
+
+    return meetingSummaryRecord(for: activePostID)
+  }
+
+  var activeMeetingStatusRecord: OrbitMeetingStatusRecord? {
+    guard let activePostID else {
+      return nil
+    }
+
+    return meetingStatusRecord(for: activePostID)
+  }
+
+  var activeMeetingOutcomeRecord: OrbitMeetingOutcomeRecord? {
+    guard let activePostID else {
+      return nil
+    }
+
+    return meetingOutcomeRecord(for: activePostID)
+  }
+
+  var activeMeetingDecisionRecord: OrbitMeetingDecisionRecord? {
+    guard let activePostID else {
+      return nil
+    }
+
+    return meetingDecisionRecord(for: activePostID)
+  }
+
+  var activeMeetingOpenQuestionRecords: [OrbitMeetingOpenQuestionRecord] {
+    guard let activePostID else {
+      return []
+    }
+
+    return meetingOpenQuestionRecords(for: activePostID)
+  }
+
+  var activeMeetingReferenceRecords: [OrbitMeetingReferenceRecord] {
+    guard let activePostID else {
+      return []
+    }
+
+    return meetingReferenceRecords(for: activePostID)
+  }
+
+  var activeMeetingMemberRecords: [OrbitMeetingMemberRecord] {
+    guard let activePostID else {
+      return []
+    }
+
+    return meetingMemberRecords(for: activePostID)
   }
 
   @discardableResult
@@ -1100,6 +1206,76 @@ struct OrbitMeetingContinuityRecord: Codable, Equatable, Identifiable {
   }
 }
 
+struct OrbitMeetingSummaryRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let postTitle: String?
+  let body: String
+  let createdByParticipantType: OrbitParticipantAuthorType
+  let createdByParticipantID: String
+  let createdAt: Date
+}
+
+struct OrbitMeetingStatusRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let meetingType: OrbitMeetingType
+  let status: OrbitMeetingStatus
+  let startedByParticipantType: OrbitParticipantAuthorType
+  let startedByParticipantID: String
+  let startedAt: Date
+  let completedAt: Date?
+}
+
+struct OrbitMeetingOutcomeRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let outcomeState: OrbitMeetingOutcomeState
+  let detail: String?
+  let recordedByParticipantType: OrbitParticipantAuthorType
+  let recordedByParticipantID: String
+  let recordedAt: Date
+}
+
+struct OrbitMeetingDecisionRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let title: String
+  let body: String
+  let decisionState: OrbitDecisionState
+  let rationaleNoteID: String?
+  let createdAt: Date
+}
+
+struct OrbitMeetingOpenQuestionRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let body: String
+  let createdByParticipantType: OrbitParticipantAuthorType
+  let createdByParticipantID: String
+  let createdAt: Date
+}
+
+struct OrbitMeetingReferenceRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let referenceType: OrbitReferenceType
+  let target: String
+  let title: String?
+  let createdAt: Date
+}
+
+struct OrbitMeetingMemberRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let postID: String
+  let postParticipantID: String
+  let participantID: String?
+  let participationRole: OrbitMeetingParticipationRole
+  let selectedReason: String
+  let joinedAt: Date
+  let completedAt: Date?
+}
+
 enum OrbitDirectiveSource: String, Codable, Equatable {
   case participantDefault
 }
@@ -1153,6 +1329,51 @@ enum OrbitActivationTriggerSource: String, Codable, Equatable {
   }
 }
 
+extension OrbitMeetingStatus {
+  var displayText: String {
+    switch self {
+    case .created:
+      return "Created"
+    case .active:
+      return "Active"
+    case .summarizing:
+      return "Summarizing"
+    case .completed:
+      return "Completed"
+    case .failed:
+      return "Failed"
+    }
+  }
+}
+
+extension OrbitMeetingOutcomeState {
+  var displayText: String {
+    switch self {
+    case .pending:
+      return "Pending"
+    case .decisionRecorded:
+      return "Decision Recorded"
+    case .noDecisionRecorded:
+      return "No Decision"
+    }
+  }
+}
+
+extension OrbitMeetingParticipationRole {
+  var displayText: String {
+    switch self {
+    case .facilitator:
+      return "Facilitator"
+    case .contributor:
+      return "Contributor"
+    case .observer:
+      return "Observer"
+    case .summarizer:
+      return "Summarizer"
+    }
+  }
+}
+
 extension OrbitWorkspace {
   private enum CodingKeys: String, CodingKey {
     case schemaVersion
@@ -1163,6 +1384,7 @@ extension OrbitWorkspace {
     case teams
     case squads
     case workspacePersonaMemberships
+    case activePostID
     case activeThreadID
     case threads
     case activationRecords
@@ -1170,6 +1392,13 @@ extension OrbitWorkspace {
     case activationFailureRecords
     case meetingPromotionRecords
     case meetingContinuityRecords
+    case meetingSummaryRecords
+    case meetingStatusRecords
+    case meetingOutcomeRecords
+    case meetingDecisionRecords
+    case meetingOpenQuestionRecords
+    case meetingReferenceRecords
+    case meetingMemberRecords
     case nextMessageSequence
     case nextActivationSequence
     case nextActivationFailureSequence
@@ -1192,6 +1421,7 @@ extension OrbitWorkspace {
         [OrbitWorkspacePersonaMembership].self,
         forKey: .workspacePersonaMemberships
       ) ?? []
+    activePostID = try container.decodeIfPresent(String.self, forKey: .activePostID)
     activeThreadID = try container.decode(String.self, forKey: .activeThreadID)
     let decodedThreads = try container.decode([OrbitConversationThread].self, forKey: .threads)
     threads = decodedThreads
@@ -1229,6 +1459,29 @@ extension OrbitWorkspace {
     meetingContinuityRecords =
       try container.decodeIfPresent([OrbitMeetingContinuityRecord].self, forKey: .meetingContinuityRecords)
       ?? []
+    meetingSummaryRecords =
+      try container.decodeIfPresent([OrbitMeetingSummaryRecord].self, forKey: .meetingSummaryRecords)
+      ?? []
+    meetingStatusRecords =
+      try container.decodeIfPresent([OrbitMeetingStatusRecord].self, forKey: .meetingStatusRecords)
+      ?? []
+    meetingOutcomeRecords =
+      try container.decodeIfPresent([OrbitMeetingOutcomeRecord].self, forKey: .meetingOutcomeRecords)
+      ?? []
+    meetingDecisionRecords =
+      try container.decodeIfPresent([OrbitMeetingDecisionRecord].self, forKey: .meetingDecisionRecords)
+      ?? []
+    meetingOpenQuestionRecords =
+      try container.decodeIfPresent(
+        [OrbitMeetingOpenQuestionRecord].self,
+        forKey: .meetingOpenQuestionRecords
+      ) ?? []
+    meetingReferenceRecords =
+      try container.decodeIfPresent([OrbitMeetingReferenceRecord].self, forKey: .meetingReferenceRecords)
+      ?? []
+    meetingMemberRecords =
+      try container.decodeIfPresent([OrbitMeetingMemberRecord].self, forKey: .meetingMemberRecords)
+      ?? []
 
     nextMessageSequence = try container.decode(Int.self, forKey: .nextMessageSequence)
     nextActivationSequence = try container.decode(Int.self, forKey: .nextActivationSequence)
@@ -1247,6 +1500,7 @@ extension OrbitWorkspace {
     try container.encode(teams, forKey: .teams)
     try container.encode(squads, forKey: .squads)
     try container.encode(workspacePersonaMemberships, forKey: .workspacePersonaMemberships)
+    try container.encodeIfPresent(activePostID, forKey: .activePostID)
     try container.encode(activeThreadID, forKey: .activeThreadID)
     try container.encode(threads, forKey: .threads)
     try container.encode(activationRecords, forKey: .activationRecords)
@@ -1254,6 +1508,13 @@ extension OrbitWorkspace {
     try container.encode(activationFailureRecords, forKey: .activationFailureRecords)
     try container.encode(meetingPromotionRecords, forKey: .meetingPromotionRecords)
     try container.encode(meetingContinuityRecords, forKey: .meetingContinuityRecords)
+    try container.encode(meetingSummaryRecords, forKey: .meetingSummaryRecords)
+    try container.encode(meetingStatusRecords, forKey: .meetingStatusRecords)
+    try container.encode(meetingOutcomeRecords, forKey: .meetingOutcomeRecords)
+    try container.encode(meetingDecisionRecords, forKey: .meetingDecisionRecords)
+    try container.encode(meetingOpenQuestionRecords, forKey: .meetingOpenQuestionRecords)
+    try container.encode(meetingReferenceRecords, forKey: .meetingReferenceRecords)
+    try container.encode(meetingMemberRecords, forKey: .meetingMemberRecords)
     try container.encode(nextMessageSequence, forKey: .nextMessageSequence)
     try container.encode(nextActivationSequence, forKey: .nextActivationSequence)
     try container.encode(nextActivationFailureSequence, forKey: .nextActivationFailureSequence)

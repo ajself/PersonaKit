@@ -49,6 +49,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
               )
             ],
             postLinks: room.postLinks,
+            notes: room.notes,
+            decisions: room.decisions,
+            references: room.references,
+            meetingOutputState: room.meetingOutputState,
+            meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
@@ -110,6 +115,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             messages: messages,
             postParticipants: room.postParticipants,
             postLinks: room.postLinks,
+            notes: room.notes,
+            decisions: room.decisions,
+            references: room.references,
+            meetingOutputState: room.meetingOutputState,
+            meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
@@ -142,6 +152,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           messages: room.messages,
           postParticipants: room.postParticipants,
           postLinks: room.postLinks,
+          notes: room.notes,
+          decisions: room.decisions,
+          references: room.references,
+          meetingOutputState: room.meetingOutputState,
+          meetingOpenQuestions: room.meetingOpenQuestions,
           meetingState: room.meetingState,
           meetingMembers: room.meetingMembers,
           postEvents: room.postEvents,
@@ -189,6 +204,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           messages: room.messages,
           postParticipants: room.postParticipants,
           postLinks: room.postLinks,
+          notes: room.notes,
+          decisions: room.decisions,
+          references: room.references,
+          meetingOutputState: room.meetingOutputState,
+          meetingOpenQuestions: room.meetingOpenQuestions,
           meetingState: room.meetingState,
           meetingMembers: room.meetingMembers,
           postEvents: postEvents,
@@ -209,6 +229,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             messages: room.messages,
             postParticipants: room.postParticipants,
             postLinks: room.postLinks,
+            notes: room.notes,
+            decisions: room.decisions,
+            references: room.references,
+            meetingOutputState: room.meetingOutputState,
+            meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents + [
@@ -239,6 +264,11 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             messages: room.messages,
             postParticipants: room.postParticipants,
             postLinks: room.postLinks,
+            notes: room.notes,
+            decisions: room.decisions,
+            references: room.references,
+            meetingOutputState: room.meetingOutputState,
+            meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
             meetingMembers: room.meetingMembers,
             postEvents: room.postEvents + [
@@ -255,6 +285,70 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             agentRuns: room.agentRuns
           )
         }
+      case .meetingOutputCommitted:
+        let payload = try OrbitPhase1RealtimeEventPayloadCodec.decode(
+          OrbitPhase1MeetingCompletionEventPayload.self,
+          from: event.payloadJSON
+        )
+        let notes = mergeNotes(
+          room.notes,
+          note: payload.summaryNote
+        )
+        let decisions = mergeDecisions(
+          room.decisions,
+          decision: payload.decision
+        )
+        let references = mergeReferences(
+          room.references,
+          references: payload.references
+        )
+        let meetingOpenQuestions = mergeMeetingOpenQuestions(
+          room.meetingOpenQuestions,
+          questions: payload.meetingOpenQuestions
+        )
+        let postEvents = room.postEvents.contains(where: { $0.id == event.id })
+          ? room.postEvents
+          : room.postEvents + [
+              OrbitPostEventRecord(
+                id: event.id,
+                postID: event.postID ?? room.post.id,
+                threadID: event.threadID,
+                eventType: event.category.rawValue,
+                payloadJSON: event.payloadJSON,
+                createdAt: event.createdAt
+              )
+            ]
+
+        room = OrbitPhase1RoomSnapshot(
+          workspace: room.workspace,
+          channel: room.channel,
+          workspacePersonas: room.workspacePersonas,
+          teams: room.teams,
+          squads: room.squads,
+          workspacePersonaMemberships: room.workspacePersonaMemberships,
+          post: room.post,
+          thread: OrbitThreadRecord(
+            id: room.thread.id,
+            postID: room.thread.postID,
+            status: room.thread.status,
+            lastActivityAt: payload.threadLastActivityAt,
+            createdAt: room.thread.createdAt,
+            closedAt: room.thread.closedAt
+          ),
+          messages: room.messages,
+          postParticipants: room.postParticipants,
+          postLinks: room.postLinks,
+          notes: notes,
+          decisions: decisions,
+          references: references,
+          meetingOutputState: payload.meetingOutputState,
+          meetingOpenQuestions: meetingOpenQuestions,
+          meetingState: payload.meetingState,
+          meetingMembers: room.meetingMembers,
+          postEvents: postEvents,
+          personaActivations: room.personaActivations,
+          agentRuns: room.agentRuns
+        )
       case .postCreated, .participantFailed:
         continue
       }
@@ -286,6 +380,60 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
     }
 
     return value
+  }
+
+  private static func mergeNotes(
+    _ current: [OrbitNoteRecord],
+    note: OrbitNoteRecord
+  ) -> [OrbitNoteRecord] {
+    let merged = current.contains(where: { $0.id == note.id })
+      ? current.map { existingNote in
+          existingNote.id == note.id ? note : existingNote
+        }
+      : current + [note]
+
+    return merged.sorted(by: noteSort)
+  }
+
+  private static func mergeDecisions(
+    _ current: [OrbitDecisionRecord],
+    decision: OrbitDecisionRecord?
+  ) -> [OrbitDecisionRecord] {
+    guard let decision else {
+      return current.sorted(by: decisionSort)
+    }
+
+    let merged = current.contains(where: { $0.id == decision.id })
+      ? current
+      : current + [decision]
+
+    return merged.sorted(by: decisionSort)
+  }
+
+  private static func mergeReferences(
+    _ current: [OrbitReferenceRecord],
+    references: [OrbitReferenceRecord]
+  ) -> [OrbitReferenceRecord] {
+    var merged = current
+
+    for reference in references where !merged.contains(where: { $0.id == reference.id }) {
+      merged.append(reference)
+    }
+
+    return merged.sorted(by: referenceSort)
+  }
+
+  private static func mergeMeetingOpenQuestions(
+    _ current: [OrbitMeetingOpenQuestionRecord],
+    questions: [OrbitMeetingOpenQuestionRecord]
+  ) -> [OrbitMeetingOpenQuestionRecord] {
+    var merged = current
+
+    for question in questions where !merged.contains(where: { $0.id == question.id }) {
+      merged.append(question)
+    }
+
+    return merged.sorted(by: meetingOpenQuestionSort)
   }
 
   private static func mergedPersonaActivations(
@@ -369,5 +517,49 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
         failureReason: payload.reason
       )
     ]
+  }
+
+  private static func noteSort(
+    _ lhs: OrbitNoteRecord,
+    _ rhs: OrbitNoteRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func decisionSort(
+    _ lhs: OrbitDecisionRecord,
+    _ rhs: OrbitDecisionRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func referenceSort(
+    _ lhs: OrbitReferenceRecord,
+    _ rhs: OrbitReferenceRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func meetingOpenQuestionSort(
+    _ lhs: OrbitMeetingOpenQuestionRecord,
+    _ rhs: OrbitMeetingOpenQuestionRecord
+  ) -> Bool {
+    if lhs.createdAt == rhs.createdAt {
+      return lhs.id.uuidString < rhs.id.uuidString
+    }
+
+    return lhs.createdAt < rhs.createdAt
   }
 }

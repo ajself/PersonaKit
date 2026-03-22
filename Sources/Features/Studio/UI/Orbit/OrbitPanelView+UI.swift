@@ -1,7 +1,125 @@
 import AppKit
+import OrbitServerRuntime
 import SwiftUI
 
+struct OrbitMeetingFollowUpReferenceParseResult: Equatable {
+  let references: [OrbitPhase1MeetingReferenceSpec]
+  let invalidLines: [String]
+}
+
+struct OrbitMeetingCompletionDraftSeed: Equatable {
+  let meetingSummaryDraft: String
+  let meetingOutcome: OrbitPhase1MeetingCompletionOutcome
+  let meetingDecisionTitleDraft: String
+  let meetingDecisionBodyDraft: String
+  let meetingNoDecisionDetailDraft: String
+  let meetingOpenQuestionsDraft: String
+  let meetingFollowUpReferencesDraft: String
+  let syncedMeetingDraftPostID: String?
+}
+
 extension OrbitPanelView {
+  static func parseMeetingFollowUpReferencesDraft(
+    _ draft: String
+  ) -> OrbitMeetingFollowUpReferenceParseResult {
+    var references = [OrbitPhase1MeetingReferenceSpec]()
+    var invalidLines = [String]()
+
+    for rawLine in draft.split(separator: "\n") {
+      let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+
+      guard !line.isEmpty else {
+        continue
+      }
+
+      let parts = line.split(separator: "|", maxSplits: 1).map {
+        $0.trimmingCharacters(in: .whitespacesAndNewlines)
+      }
+      let leftPart = parts.first ?? ""
+      let title = parts.count > 1 ? parts[1] : nil
+      let leftTokens = leftPart.split(separator: " ", maxSplits: 1).map(String.init)
+
+      guard
+        leftTokens.count == 2,
+        let referenceType = OrbitReferenceType(rawValue: leftTokens[0]),
+        !leftTokens[1].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      else {
+        invalidLines.append(line)
+        continue
+      }
+
+      references.append(
+        OrbitPhase1MeetingReferenceSpec(
+          referenceType: referenceType,
+          target: leftTokens[1].trimmingCharacters(in: .whitespacesAndNewlines),
+          title: title?.isEmpty == false ? title : nil
+        )
+      )
+    }
+
+    return OrbitMeetingFollowUpReferenceParseResult(
+      references: references,
+      invalidLines: invalidLines
+    )
+  }
+
+  static func meetingFollowUpReferenceValidationMessage(
+    for parseResult: OrbitMeetingFollowUpReferenceParseResult
+  ) -> String? {
+    guard !parseResult.invalidLines.isEmpty else {
+      return nil
+    }
+
+    return
+      "Each follow-up reference must use `type target | title` with a supported type such as `doc`, `file`, `url`, `issue`, `commit`, or `external_note`."
+  }
+
+  static func shouldSyncMeetingCompletionDrafts(
+    force: Bool,
+    meetingCompletionDraftsDirty: Bool,
+    activeMeetingPostID: String?,
+    syncedMeetingDraftPostID: String?
+  ) -> Bool {
+    force || !meetingCompletionDraftsDirty || activeMeetingPostID != syncedMeetingDraftPostID
+  }
+
+  static func meetingCompletionDraftSeed(
+    from workspace: OrbitWorkspace
+  ) -> OrbitMeetingCompletionDraftSeed {
+    let meetingOutcome: OrbitPhase1MeetingCompletionOutcome
+
+    switch workspace.activeMeetingOutcomeRecord?.outcomeState {
+    case .noDecisionRecorded:
+      meetingOutcome = .noDecision
+    default:
+      meetingOutcome = .decision
+    }
+
+    return OrbitMeetingCompletionDraftSeed(
+      meetingSummaryDraft: workspace.activeMeetingSummaryRecord?.body ?? "",
+      meetingOutcome: meetingOutcome,
+      meetingDecisionTitleDraft: workspace.activeMeetingDecisionRecord?.title ?? "",
+      meetingDecisionBodyDraft: workspace.activeMeetingDecisionRecord?.body ?? "",
+      meetingNoDecisionDetailDraft: workspace.activeMeetingOutcomeRecord?.detail ?? "",
+      meetingOpenQuestionsDraft: workspace.activeMeetingOpenQuestionRecords
+        .map(\.body)
+        .joined(separator: "\n"),
+      meetingFollowUpReferencesDraft: workspace.activeMeetingReferenceRecords
+        .map { reference in
+          if let title = reference.title, !title.isEmpty {
+            return "\(reference.referenceType.rawValue) \(reference.target) | \(title)"
+          }
+
+          return "\(reference.referenceType.rawValue) \(reference.target)"
+        }
+        .joined(separator: "\n"),
+      syncedMeetingDraftPostID: workspace.activePostID
+        ?? workspace.activeMeetingStatusRecord?.postID
+        ?? workspace.activeMeetingSummaryRecord?.postID
+        ?? workspace.activeMeetingOutcomeRecord?.postID
+    )
+  }
+
   var sortedParticipants: [OrbitParticipant] {
     orbitWorkspace.participants.sorted { $0.sortOrder < $1.sortOrder }
   }
@@ -34,6 +152,147 @@ extension OrbitPanelView {
 
   var activeThread: OrbitConversationThread? {
     orbitWorkspace.activeThread
+  }
+
+  var isMeetingRoom: Bool {
+    orbitWorkspace.activeMeetingStatusRecord != nil
+      || orbitWorkspace.activeMeetingSummaryRecord != nil
+      || orbitWorkspace.activeMeetingOutcomeRecord != nil
+  }
+
+  var isMeetingCompletionEditable: Bool {
+    guard serverBackedRoomClient != nil else {
+      return false
+    }
+
+    guard let status = orbitWorkspace.activeMeetingStatusRecord?.status else {
+      return false
+    }
+
+    return status == .created || status == .active || status == .summarizing
+  }
+
+  var activeMeetingPostID: String? {
+    orbitWorkspace.activePostID
+      ?? orbitWorkspace.activeMeetingStatusRecord?.postID
+      ?? orbitWorkspace.activeMeetingSummaryRecord?.postID
+      ?? orbitWorkspace.activeMeetingOutcomeRecord?.postID
+  }
+
+  var parsedMeetingOpenQuestions: [String] {
+    meetingOpenQuestionsDraft
+      .split(separator: "\n")
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+  }
+
+  var meetingFollowUpReferenceParseResult: OrbitMeetingFollowUpReferenceParseResult {
+    Self.parseMeetingFollowUpReferencesDraft(meetingFollowUpReferencesDraft)
+  }
+
+  var parsedMeetingFollowUpReferences: [OrbitPhase1MeetingReferenceSpec] {
+    meetingFollowUpReferenceParseResult.references
+  }
+
+  var meetingFollowUpReferenceValidationMessage: String? {
+    Self.meetingFollowUpReferenceValidationMessage(
+      for: meetingFollowUpReferenceParseResult
+    )
+  }
+
+  var canSubmitMeetingCompletion: Bool {
+    let summaryBody = meetingSummaryDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard
+      isMeetingCompletionEditable,
+      !isSubmittingMeetingCompletion,
+      !summaryBody.isEmpty,
+      meetingFollowUpReferenceValidationMessage == nil
+    else {
+      return false
+    }
+
+    switch meetingOutcome {
+    case .decision:
+      return !meetingDecisionTitleDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        && !meetingDecisionBodyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    case .noDecision:
+      return true
+    }
+  }
+
+  func markMeetingCompletionDraftsDirty() {
+    meetingCompletionDraftsDirty = true
+  }
+
+  var meetingSummaryDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingSummaryDraft },
+      set: { newValue in
+        meetingSummaryDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingOutcomeBinding: Binding<OrbitPhase1MeetingCompletionOutcome> {
+    Binding(
+      get: { meetingOutcome },
+      set: { newValue in
+        meetingOutcome = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingDecisionTitleDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingDecisionTitleDraft },
+      set: { newValue in
+        meetingDecisionTitleDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingDecisionBodyDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingDecisionBodyDraft },
+      set: { newValue in
+        meetingDecisionBodyDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingNoDecisionDetailDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingNoDecisionDetailDraft },
+      set: { newValue in
+        meetingNoDecisionDetailDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingOpenQuestionsDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingOpenQuestionsDraft },
+      set: { newValue in
+        meetingOpenQuestionsDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
+  }
+
+  var meetingFollowUpReferencesDraftBinding: Binding<String> {
+    Binding(
+      get: { meetingFollowUpReferencesDraft },
+      set: { newValue in
+        meetingFollowUpReferencesDraft = newValue
+        markMeetingCompletionDraftsDirty()
+      }
+    )
   }
 
   var workspaceHeaderCard: some View {
@@ -77,6 +336,36 @@ extension OrbitPanelView {
           title: "Trace",
           value: "Inspectable"
         )
+
+        if let meetingStatus = orbitWorkspace.activeMeetingStatusRecord {
+          shellSummaryPill(
+            icon: "person.2.wave.2.fill",
+            title: "Meeting",
+            value: meetingStatus.status.displayText
+          )
+        }
+
+        if let meetingOutcome = orbitWorkspace.activeMeetingOutcomeRecord {
+          shellSummaryPill(
+            icon: "checklist",
+            title: "Outcome",
+            value: meetingOutcome.outcomeState.displayText
+          )
+        }
+
+        if isMeetingRoom {
+          shellSummaryPill(
+            icon: "questionmark.bubble.fill",
+            title: "Open Questions",
+            value: "\(orbitWorkspace.activeMeetingOpenQuestionRecords.count)"
+          )
+
+          shellSummaryPill(
+            icon: "link",
+            title: "References",
+            value: "\(orbitWorkspace.activeMeetingReferenceRecords.count)"
+          )
+        }
       }
 
       if let activeThread {
@@ -184,6 +473,310 @@ extension OrbitPanelView {
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
     .padding(.horizontal, 16)
+  }
+
+  @ViewBuilder
+  var meetingOutputsCard: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Meeting Outputs")
+          .font(.headline)
+
+        Text("Canonical meeting summary, explicit outcome, member roster, and follow-up evidence.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+
+      HStack(spacing: 8) {
+        if let meetingStatus = orbitWorkspace.activeMeetingStatusRecord {
+          shellStatusBadge(
+            title: meetingStatus.status.displayText,
+            tint: Color.accentColor.opacity(0.12),
+            foreground: .accentColor
+          )
+        }
+
+        if let meetingOutcome = orbitWorkspace.activeMeetingOutcomeRecord {
+          shellStatusBadge(
+            title: meetingOutcome.outcomeState.displayText,
+            tint: Color.secondary.opacity(0.10),
+            foreground: .secondary
+          )
+        }
+      }
+
+      if isMeetingCompletionEditable {
+        editableMeetingOutputsForm
+      } else {
+        readOnlyMeetingOutputs
+      }
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
+    .padding(.horizontal, 16)
+  }
+
+  @ViewBuilder
+  var editableMeetingOutputsForm: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      meetingOutputSection(
+        title: "Summary",
+        caption: "This updates the single canonical meeting summary shell in place."
+      ) {
+        TextField(
+          "Summarize the meeting outcome",
+          text: meetingSummaryDraftBinding,
+          axis: .vertical
+        )
+        .textFieldStyle(.roundedBorder)
+        .lineLimit(3...6)
+      }
+
+      meetingOutputSection(
+        title: "Outcome",
+        caption: "Choose one explicit completion result for this meeting."
+      ) {
+        Picker(
+          "Outcome",
+          selection: meetingOutcomeBinding
+        ) {
+          Text("Decision")
+            .tag(OrbitPhase1MeetingCompletionOutcome.decision)
+
+          Text("No Decision")
+            .tag(OrbitPhase1MeetingCompletionOutcome.noDecision)
+        }
+        .pickerStyle(.segmented)
+
+        switch meetingOutcome {
+        case .decision:
+          TextField(
+            "Decision title",
+            text: meetingDecisionTitleDraftBinding
+          )
+          .textFieldStyle(.roundedBorder)
+
+          TextField(
+            "Decision detail",
+            text: meetingDecisionBodyDraftBinding,
+            axis: .vertical
+          )
+          .textFieldStyle(.roundedBorder)
+          .lineLimit(2...5)
+        case .noDecision:
+          TextField(
+            "Optional no-decision detail",
+            text: meetingNoDecisionDetailDraftBinding,
+            axis: .vertical
+          )
+          .textFieldStyle(.roundedBorder)
+          .lineLimit(2...4)
+        }
+      }
+
+      meetingParticipantsSection
+
+      meetingOutputSection(
+        title: "Open Questions",
+        caption: "One question per line."
+      ) {
+        TextField(
+          "Question one\nQuestion two",
+          text: meetingOpenQuestionsDraftBinding,
+          axis: .vertical
+        )
+        .textFieldStyle(.roundedBorder)
+        .lineLimit(2...5)
+      }
+
+      meetingOutputSection(
+        title: "Follow-Up References",
+        caption: "Use `type target | title`. Example: `doc Docs/Orbit/README.md | Packet notes`."
+      ) {
+        VStack(alignment: .leading, spacing: 8) {
+          TextField(
+            "doc Docs/Orbit/README.md | Packet notes",
+            text: meetingFollowUpReferencesDraftBinding,
+            axis: .vertical
+          )
+          .textFieldStyle(.roundedBorder)
+          .lineLimit(2...5)
+
+          if let meetingFollowUpReferenceValidationMessage {
+            Text(meetingFollowUpReferenceValidationMessage)
+              .font(.caption)
+              .foregroundStyle(.red)
+          }
+        }
+      }
+
+      HStack {
+        Spacer()
+
+        Button {
+          submitMeetingCompletion()
+        } label: {
+          Label(
+            isSubmittingMeetingCompletion ? "Completing..." : "Complete Meeting",
+            systemImage: "checkmark.circle.fill"
+          )
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(!canSubmitMeetingCompletion)
+      }
+    }
+  }
+
+  @ViewBuilder
+  var readOnlyMeetingOutputs: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      meetingOutputSection(
+        title: "Summary",
+        caption: orbitWorkspace.activeMeetingSummaryRecord?.createdAt.formatted() ?? "Inspectable after reload."
+      ) {
+        Text(orbitWorkspace.activeMeetingSummaryRecord?.body ?? "Summary pending.")
+          .font(.body)
+          .textSelection(.enabled)
+      }
+
+      meetingOutputSection(
+        title: "Outcome",
+        caption: orbitWorkspace.activeMeetingOutcomeRecord?.recordedAt.formatted() ?? "Pending"
+      ) {
+        VStack(alignment: .leading, spacing: 8) {
+          if let meetingOutcome = orbitWorkspace.activeMeetingOutcomeRecord {
+            Text(meetingOutcome.outcomeState.displayText)
+              .font(.subheadline.weight(.semibold))
+
+            if let detail = meetingOutcome.detail, !detail.isEmpty {
+              Text(detail)
+                .font(.body)
+                .foregroundStyle(.secondary)
+            }
+          } else {
+            Text("Pending")
+              .font(.body)
+              .foregroundStyle(.secondary)
+          }
+
+          if let decision = orbitWorkspace.activeMeetingDecisionRecord {
+            VStack(alignment: .leading, spacing: 4) {
+              Text(decision.title)
+                .font(.subheadline.weight(.semibold))
+              Text(decision.body)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+            }
+          }
+        }
+      }
+
+      meetingParticipantsSection
+
+      meetingOutputSection(
+        title: "Open Questions",
+        caption: "\(orbitWorkspace.activeMeetingOpenQuestionRecords.count) pending"
+      ) {
+        if orbitWorkspace.activeMeetingOpenQuestionRecords.isEmpty {
+          Text("No open questions recorded.")
+            .font(.body)
+            .foregroundStyle(.secondary)
+        } else {
+          VStack(alignment: .leading, spacing: 6) {
+            ForEach(orbitWorkspace.activeMeetingOpenQuestionRecords) { question in
+              Text("• \(question.body)")
+                .font(.body)
+                .textSelection(.enabled)
+            }
+          }
+        }
+      }
+
+      meetingOutputSection(
+        title: "Follow-Up References",
+        caption: "\(orbitWorkspace.activeMeetingReferenceRecords.count) linked"
+      ) {
+        if orbitWorkspace.activeMeetingReferenceRecords.isEmpty {
+          Text("No follow-up references recorded.")
+            .font(.body)
+            .foregroundStyle(.secondary)
+        } else {
+          VStack(alignment: .leading, spacing: 8) {
+            ForEach(orbitWorkspace.activeMeetingReferenceRecords) { reference in
+              VStack(alignment: .leading, spacing: 2) {
+                Text(reference.title ?? reference.target)
+                  .font(.subheadline.weight(.semibold))
+                Text("\(reference.referenceType.rawValue): \(reference.target)")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  .textSelection(.enabled)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  func meetingOutputSection<Content: View>(
+    title: String,
+    caption: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.subheadline.weight(.semibold))
+        Text(caption)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      content()
+    }
+    .padding(12)
+    .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+  }
+
+  @ViewBuilder
+  var meetingParticipantsSection: some View {
+    meetingOutputSection(
+      title: "Participants",
+      caption: "Projected meeting roster and roles."
+    ) {
+      if orbitWorkspace.activeMeetingMemberRecords.isEmpty {
+        Text("No projected meeting participants yet.")
+          .font(.body)
+          .foregroundStyle(.secondary)
+      } else {
+        VStack(alignment: .leading, spacing: 8) {
+          ForEach(orbitWorkspace.activeMeetingMemberRecords) { member in
+            HStack(alignment: .top, spacing: 8) {
+              Text(
+                orbitWorkspace.participant(id: member.participantID ?? "")?.displayName
+                  ?? member.participantID
+                  ?? "Unknown collaborator"
+              )
+              .font(.subheadline.weight(.semibold))
+
+              shellStatusBadge(
+                title: member.participationRole.displayText,
+                tint: Color.secondary.opacity(0.10),
+                foreground: .secondary
+              )
+
+              Spacer(minLength: 0)
+            }
+
+            Text(member.selectedReason)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
+    }
   }
 
   var conversationCard: some View {
@@ -664,6 +1257,91 @@ extension OrbitPanelView {
         tint: Color.secondary.opacity(0.10),
         foreground: .secondary
       )
+    }
+  }
+
+  func syncMeetingCompletionDrafts(
+    force: Bool = false
+  ) {
+    guard
+      Self.shouldSyncMeetingCompletionDrafts(
+        force: force,
+        meetingCompletionDraftsDirty: meetingCompletionDraftsDirty,
+        activeMeetingPostID: activeMeetingPostID,
+        syncedMeetingDraftPostID: syncedMeetingDraftPostID
+      )
+    else {
+      return
+    }
+
+    let seed = Self.meetingCompletionDraftSeed(from: orbitWorkspace)
+    meetingSummaryDraft = seed.meetingSummaryDraft
+    meetingOutcome = seed.meetingOutcome
+    meetingDecisionTitleDraft = seed.meetingDecisionTitleDraft
+    meetingDecisionBodyDraft = seed.meetingDecisionBodyDraft
+    meetingNoDecisionDetailDraft = seed.meetingNoDecisionDetailDraft
+    meetingOpenQuestionsDraft = seed.meetingOpenQuestionsDraft
+    meetingFollowUpReferencesDraft = seed.meetingFollowUpReferencesDraft
+    syncedMeetingDraftPostID = seed.syncedMeetingDraftPostID
+    meetingCompletionDraftsDirty = false
+  }
+
+  func submitMeetingCompletion() {
+    guard canSubmitMeetingCompletion, let serverBackedRoomClient else {
+      return
+    }
+
+    Task {
+      await submitMeetingCompletionThroughServer(using: serverBackedRoomClient)
+    }
+  }
+
+  @MainActor
+  func submitMeetingCompletionThroughServer(
+    using client: OrbitServerBackedRoomClient
+  ) async {
+    guard canSubmitMeetingCompletion else {
+      return
+    }
+
+    guard !isSubmittingMeetingCompletion else {
+      return
+    }
+
+    isSubmittingMeetingCompletion = true
+    defer {
+      isSubmittingMeetingCompletion = false
+    }
+
+    do {
+      var coordinator = serverBackedRoomCoordinator
+      try await coordinator.completeMeeting(
+        scope: serverBackedRoomScope,
+        request: OrbitServerBackedMeetingCompletionRequest(
+          summaryBody: meetingSummaryDraft,
+          outcome: meetingOutcome,
+          decisionTitle: meetingDecisionTitleDraft,
+          decisionBody: meetingDecisionBodyDraft,
+          noDecisionDetail: meetingNoDecisionDetailDraft,
+          openQuestions: parsedMeetingOpenQuestions,
+          followUpReferences: parsedMeetingFollowUpReferences,
+          completedByParticipantType: .user,
+          completedByParticipantID: OrbitParticipantID.aj.rawValue
+        ),
+        client: client
+      )
+      serverBackedRoomCoordinator = coordinator
+      if let projectedWorkspace = coordinator.roomState.projectedWorkspace {
+        orbitWorkspace = projectedWorkspace
+      }
+      meetingCompletionDraftsDirty = false
+      syncMeetingCompletionDrafts(force: true)
+      persistenceMessage = nil
+      persistenceIsError = false
+    } catch {
+      persistenceMessage =
+        "Orbit blocked the meeting completion because the canonical server write path failed: \(error.localizedDescription)"
+      persistenceIsError = true
     }
   }
 

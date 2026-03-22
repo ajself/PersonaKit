@@ -214,6 +214,136 @@ struct OrbitServerRoomProjectionTests {
   }
 
   @Test
+  func projectionRestoresMeetingOutputRecordsFromCanonicalRuntimeTruth() {
+    let snapshot = sampleSnapshot()
+    let meetingPostID = UUID(uuidString: "16161616-1616-1616-1616-161616161616")!
+    let meetingThreadID = UUID(uuidString: "17171717-1717-1717-1717-171717171717")!
+    let participantID = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
+    let participantRecordID = UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
+    let completedAt = Date(timeIntervalSince1970: 1_742_342_540)
+    let meetingSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: OrbitPostRecord(
+          id: meetingPostID,
+          workspaceID: snapshot.room.workspace.id,
+          channelID: snapshot.room.channel.id,
+          postType: .meeting,
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          title: "Founding Group Meeting",
+          status: .active,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_500)
+        ),
+        thread: OrbitThreadRecord(
+          id: meetingThreadID,
+          postID: meetingPostID,
+          status: .open,
+          lastActivityAt: completedAt,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_500)
+        ),
+        messages: [],
+        postParticipants: [
+          OrbitPostParticipantRecord(
+            id: participantRecordID,
+            postID: meetingPostID,
+            participantType: .workspacePersona,
+            participantID: participantID.uuidString,
+            joinedAt: Date(timeIntervalSince1970: 1_742_342_500),
+            participationMode: .active
+          )
+        ],
+        notes: [
+          OrbitNoteRecord(
+            id: UUID(uuidString: "19191919-1919-1919-1919-191919191919")!,
+            postID: meetingPostID,
+            noteType: .meetingSummary,
+            body: "Meeting output shell completed.",
+            createdByParticipantType: .system,
+            createdByParticipantID: "orbit-system",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_500)
+          )
+        ],
+        decisions: [
+          OrbitDecisionRecord(
+            id: UUID(uuidString: "20202020-2020-2020-2020-202020202020")!,
+            postID: meetingPostID,
+            title: "Ship packet 4 shell",
+            body: "Keep the completion slice bounded.",
+            decisionState: .adopted,
+            createdAt: completedAt
+          )
+        ],
+        references: [
+          OrbitReferenceRecord(
+            id: UUID(uuidString: "21212121-2121-2121-2121-212121212121")!,
+            postID: meetingPostID,
+            referenceType: .doc,
+            target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+            title: "Packet scope",
+            createdAt: completedAt.addingTimeInterval(0.001)
+          )
+        ],
+        meetingOutputState: OrbitMeetingOutputStateRecord(
+          postID: meetingPostID,
+          outcomeState: .decisionRecorded,
+          recordedByParticipantType: .user,
+          recordedByParticipantID: "aj",
+          recordedAt: completedAt
+        ),
+        meetingOpenQuestions: [
+          OrbitMeetingOpenQuestionRecord(
+            id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
+            postID: meetingPostID,
+            body: "How should post-completion edits work?",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: completedAt
+          )
+        ],
+        meetingState: OrbitMeetingStateRecord(
+          postID: meetingPostID,
+          meetingType: .team,
+          status: .completed,
+          startedByParticipantType: .user,
+          startedByParticipantID: "aj",
+          startedAt: Date(timeIntervalSince1970: 1_742_342_500),
+          completedAt: completedAt
+        ),
+        meetingMembers: [
+          OrbitMeetingMemberRecord(
+            id: UUID(uuidString: "23232323-2323-2323-2323-232323232323")!,
+            meetingPostID: meetingPostID,
+            postParticipantID: participantRecordID,
+            participationRole: .contributor,
+            selectedReason: "Selected from the founding group scope.",
+            joinedAt: Date(timeIntervalSince1970: 1_742_342_500)
+          )
+        ]
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: meetingSnapshot)
+
+    #expect(workspace.activePostID == meetingPostID.uuidString)
+    #expect(workspace.activeMeetingSummaryRecord?.body == "Meeting output shell completed.")
+    #expect(workspace.activeMeetingStatusRecord?.status == .completed)
+    #expect(workspace.activeMeetingOutcomeRecord?.outcomeState == .decisionRecorded)
+    #expect(workspace.activeMeetingDecisionRecord?.title == "Ship packet 4 shell")
+    #expect(workspace.activeMeetingOpenQuestionRecords.map(\.body) == [
+      "How should post-completion edits work?"
+    ])
+    #expect(workspace.activeMeetingReferenceRecords.first?.referenceType == .doc)
+    #expect(workspace.activeMeetingMemberRecords.first?.participantID == OrbitParticipantID.samwise.rawValue)
+  }
+
+  @Test
   func projectionRestoresOriginThreadContinuityFromCanonicalPostLinks() {
     let snapshot = sampleSnapshot()
     let meetingPostID = UUID(uuidString: "12121212-3434-5656-7878-909090909090")!
@@ -334,6 +464,21 @@ struct OrbitServerRoomProjectionTests {
     #expect(continuityRecord?.promotedMeetingPostID == promotedPostID.uuidString)
     #expect(continuityRecord?.currentPostID == promotedPostID.uuidString)
     #expect(continuityRecord?.linkedPostID == originPostID.uuidString)
+  }
+
+  @Test
+  func projectionRestoresMeetingSummaryShellFromCanonicalNotes() {
+    let snapshot = sampleMeetingSummarySnapshot()
+
+    let workspace = OrbitServerRoomProjection.workspace(from: snapshot)
+    let summaryRecord = workspace.meetingSummaryRecords.first
+
+    #expect(workspace.meetingSummaryRecords.count == 1)
+    #expect(summaryRecord?.postID == snapshot.room.post.id.uuidString)
+    #expect(summaryRecord?.postTitle == "Founding Group Meeting")
+    #expect(summaryRecord?.body == "Summary pending.")
+    #expect(summaryRecord?.createdByParticipantType == .system)
+    #expect(summaryRecord?.createdByParticipantID == "orbit-system")
   }
 
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
@@ -771,6 +916,80 @@ struct OrbitServerRoomProjectionTests {
       postEvents: snapshot.room.postEvents + [failurePostEvent],
       personaActivations: snapshot.room.personaActivations,
       agentRuns: snapshot.room.agentRuns
+    )
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: room,
+      replayCursor: snapshot.replayCursor
+    )
+  }
+
+  private func sampleMeetingSummarySnapshot() -> OrbitPhase1RealtimeSnapshot {
+    let snapshot = sampleSnapshot()
+    let promotedPostID = UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
+    let promotedThreadID = UUID(uuidString: "19191919-1919-1919-1919-191919191919")!
+    let t1 = Date(timeIntervalSince1970: 1_742_342_518)
+
+    let room = OrbitPhase1RoomSnapshot(
+      workspace: snapshot.room.workspace,
+      channel: snapshot.room.channel,
+      workspacePersonas: snapshot.room.workspacePersonas,
+      teams: snapshot.room.teams,
+      squads: snapshot.room.squads,
+      workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+      post: OrbitPostRecord(
+        id: promotedPostID,
+        workspaceID: snapshot.room.workspace.id,
+        channelID: snapshot.room.channel.id,
+        postType: .meeting,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        title: "Founding Group Meeting",
+        status: .active,
+        createdAt: t1
+      ),
+      thread: OrbitThreadRecord(
+        id: promotedThreadID,
+        postID: promotedPostID,
+        status: .open,
+        lastActivityAt: t1,
+        createdAt: t1
+      ),
+      messages: [],
+      postParticipants: snapshot.room.postParticipants.map { participant in
+        OrbitPostParticipantRecord(
+          id: participant.id,
+          postID: promotedPostID,
+          participantType: participant.participantType,
+          participantID: participant.participantID,
+          joinedAt: participant.joinedAt,
+          leftAt: participant.leftAt,
+          participationMode: participant.participationMode
+        )
+      },
+      notes: [
+        OrbitNoteRecord(
+          id: UUID(uuidString: "20202020-2020-2020-2020-202020202021")!,
+          postID: promotedPostID,
+          noteType: .meetingSummary,
+          body: "Summary pending.",
+          createdByParticipantType: .system,
+          createdByParticipantID: "orbit-system",
+          createdAt: t1
+        )
+      ],
+      meetingState: OrbitMeetingStateRecord(
+        postID: promotedPostID,
+        meetingType: .team,
+        status: .created,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: t1
+      ),
+      meetingMembers: [],
+      postEvents: [],
+      personaActivations: [],
+      agentRuns: []
     )
 
     return OrbitPhase1RealtimeSnapshot(

@@ -194,6 +194,68 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func completeMeeting(
+    workspaceID: UUID,
+    summaryNote: OrbitNoteRecord,
+    meetingOutputState: OrbitMeetingOutputStateRecord,
+    decision: OrbitDecisionRecord?,
+    references: [OrbitReferenceRecord],
+    meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
+    meetingState: OrbitMeetingStateRecord,
+    postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    threadID: UUID,
+    threadLastActivityAt: Date,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      let executor = OrbitPostgresClientExecutor(client: client)
+
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+
+      do {
+        let lockedMeetingStateRows = try await client.query(
+          repository.selectMeetingStateForUpdateQuery(postID: meetingState.postID)
+        )
+        var lockedMeetingState: OrbitMeetingStateRecord?
+
+        for try await lockedMeetingStateRow in lockedMeetingStateRows {
+          lockedMeetingState = try decodeMeetingState(
+            from: lockedMeetingStateRow.makeRandomAccess()
+          )
+        }
+
+        guard let lockedMeetingState else {
+          throw OrbitPostgresRuntimeStoreError.meetingStateMissing
+        }
+
+        guard lockedMeetingState.status != .completed else {
+          throw OrbitPostgresRuntimeStoreError.meetingAlreadyCompleted
+        }
+
+        try await repository.completeMeetingTransactionally(
+          workspaceID: workspaceID,
+          summaryNote: summaryNote,
+          meetingOutputState: meetingOutputState,
+          decision: decision,
+          references: references,
+          meetingOpenQuestions: meetingOpenQuestions,
+          meetingState: meetingState,
+          postEvent: postEvent,
+          realtimeEvents: realtimeEvents,
+          threadID: threadID,
+          threadLastActivityAt: threadLastActivityAt,
+          using: executor
+        )
+
+        try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+      } catch {
+        try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+        throw error
+      }
+    }
+  }
+
   public func promoteMeetingRoom(
     originPostEvent: OrbitPostEventRecord,
     originRealtimeEvents: [OrbitRealtimeEventRecord],
@@ -299,6 +361,61 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         )
       }
 
+      let noteRows = try await client.query(
+        repository.selectNotesQuery(postID: post.id)
+      )
+
+      var notes = [OrbitNoteRecord]()
+      for try await noteRow in noteRows {
+        notes.append(
+          try decodeNote(from: noteRow.makeRandomAccess())
+        )
+      }
+
+      let decisionRows = try await client.query(
+        repository.selectDecisionsQuery(postID: post.id)
+      )
+
+      var decisions = [OrbitDecisionRecord]()
+      for try await decisionRow in decisionRows {
+        decisions.append(
+          try decodeDecision(from: decisionRow.makeRandomAccess())
+        )
+      }
+
+      let referenceRows = try await client.query(
+        repository.selectReferencesQuery(postID: post.id)
+      )
+
+      var references = [OrbitReferenceRecord]()
+      for try await referenceRow in referenceRows {
+        references.append(
+          try decodeReference(from: referenceRow.makeRandomAccess())
+        )
+      }
+
+      let meetingOutputStateRows = try await client.query(
+        repository.selectMeetingOutputStateQuery(postID: post.id)
+      )
+
+      var meetingOutputState: OrbitMeetingOutputStateRecord?
+      for try await meetingOutputStateRow in meetingOutputStateRows {
+        meetingOutputState = try decodeMeetingOutputState(
+          from: meetingOutputStateRow.makeRandomAccess()
+        )
+      }
+
+      let meetingOpenQuestionRows = try await client.query(
+        repository.selectMeetingOpenQuestionsQuery(postID: post.id)
+      )
+
+      var meetingOpenQuestions = [OrbitMeetingOpenQuestionRecord]()
+      for try await meetingOpenQuestionRow in meetingOpenQuestionRows {
+        meetingOpenQuestions.append(
+          try decodeMeetingOpenQuestion(from: meetingOpenQuestionRow.makeRandomAccess())
+        )
+      }
+
       let meetingStateRows = try await client.query(
         repository.selectMeetingStateQuery(postID: post.id)
       )
@@ -365,6 +482,11 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         messages: messages,
         postParticipants: postParticipants,
         postLinks: postLinks,
+        notes: notes,
+        decisions: decisions,
+        references: references,
+        meetingOutputState: meetingOutputState,
+        meetingOpenQuestions: meetingOpenQuestions,
         meetingState: meetingState,
         meetingMembers: meetingMembers,
         postEvents: postEvents,
@@ -710,9 +832,10 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     if payloadData.type == .jsonb {
       payloadBuffer?.moveReaderIndex(forwardBy: 1)
     }
-    let payloadJSONString = payloadBuffer.map { buffer in
-      String(decoding: buffer.readableBytesView, as: UTF8.self)
-    } ?? "null"
+    let payloadJSONString =
+      payloadBuffer.map { buffer in
+        String(decoding: buffer.readableBytesView, as: UTF8.self)
+      } ?? "null"
 
     return try OrbitPostEventRecord(
       id: row["id"].decode(UUID.self),
@@ -720,6 +843,101 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       threadID: row["thread_id"].decode(Optional<UUID>.self),
       eventType: row["event_type"].decode(String.self),
       payloadJSON: payloadJSONString,
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeNote(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitNoteRecord {
+    try OrbitNoteRecord(
+      id: row["id"].decode(UUID.self),
+      postID: row["post_id"].decode(UUID.self),
+      noteType: try decodeEnum(
+        OrbitNoteType.self,
+        from: row["note_type"],
+        columnName: "note_type"
+      ),
+      body: row["body"].decode(String.self),
+      createdByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["created_by_participant_type"],
+        columnName: "created_by_participant_type"
+      ),
+      createdByParticipantID: row["created_by_participant_id"].decode(String.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeDecision(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitDecisionRecord {
+    try OrbitDecisionRecord(
+      id: row["id"].decode(UUID.self),
+      postID: row["post_id"].decode(UUID.self),
+      title: row["title"].decode(String.self),
+      body: row["body"].decode(String.self),
+      decisionState: try decodeEnum(
+        OrbitDecisionState.self,
+        from: row["decision_state"],
+        columnName: "decision_state"
+      ),
+      rationaleNoteID: row["rationale_note_id"].decode(Optional<UUID>.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeReference(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitReferenceRecord {
+    try OrbitReferenceRecord(
+      id: row["id"].decode(UUID.self),
+      postID: row["post_id"].decode(UUID.self),
+      referenceType: try decodeEnum(
+        OrbitReferenceType.self,
+        from: row["reference_type"],
+        columnName: "reference_type"
+      ),
+      target: row["target"].decode(String.self),
+      title: row["title"].decode(Optional<String>.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeMeetingOutputState(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMeetingOutputStateRecord {
+    try OrbitMeetingOutputStateRecord(
+      postID: row["post_id"].decode(UUID.self),
+      outcomeState: try decodeEnum(
+        OrbitMeetingOutcomeState.self,
+        from: row["outcome_state"],
+        columnName: "outcome_state"
+      ),
+      detail: row["detail"].decode(Optional<String>.self),
+      recordedByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["recorded_by_participant_type"],
+        columnName: "recorded_by_participant_type"
+      ),
+      recordedByParticipantID: row["recorded_by_participant_id"].decode(String.self),
+      recordedAt: row["recorded_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeMeetingOpenQuestion(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMeetingOpenQuestionRecord {
+    try OrbitMeetingOpenQuestionRecord(
+      id: row["id"].decode(UUID.self),
+      postID: row["post_id"].decode(UUID.self),
+      body: row["body"].decode(String.self),
+      createdByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["created_by_participant_type"],
+        columnName: "created_by_participant_type"
+      ),
+      createdByParticipantID: row["created_by_participant_id"].decode(String.self),
       createdAt: row["created_at"].decode(Date.self)
     )
   }
@@ -776,9 +994,10 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     if payloadData.type == .jsonb {
       payloadBuffer?.moveReaderIndex(forwardBy: 1)
     }
-    let payloadJSONString = payloadBuffer.map { buffer in
-      String(decoding: buffer.readableBytesView, as: UTF8.self)
-    } ?? "null"
+    let payloadJSONString =
+      payloadBuffer.map { buffer in
+        String(decoding: buffer.readableBytesView, as: UTF8.self)
+      } ?? "null"
 
     return try OrbitPhase1RealtimeEventEnvelope(
       id: row["id"].decode(UUID.self),
@@ -871,4 +1090,6 @@ public struct OrbitPostgresRuntimeStore: Sendable {
 
 public enum OrbitPostgresRuntimeStoreError: Error, Equatable {
   case invalidEnumValue(column: String, rawValue: String)
+  case meetingAlreadyCompleted
+  case meetingStateMissing
 }

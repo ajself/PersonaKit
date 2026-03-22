@@ -250,6 +250,134 @@ struct OrbitWorkspacePersistenceTests {
   }
 
   @Test
+  func meetingSummaryEvidenceRoundTripsAcrossReload() throws {
+    let persistence = OrbitWorkspacePersistence()
+    let fileManager = FileManager.default
+    let workspaceURL = fileManager.temporaryDirectory
+      .appendingPathComponent("orbit-meeting-summary-restart", isDirectory: true)
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+
+    try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: workspaceURL) }
+
+    var workspace = OrbitWorkspace.defaultWorkspace
+    let expectedRecord = OrbitMeetingSummaryRecord(
+      id: "meeting-summary-0001",
+      postID: "post-meeting-0001",
+      postTitle: "Founding Group Meeting",
+      body: "Summary pending.",
+      createdByParticipantType: .system,
+      createdByParticipantID: "orbit-system",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_500)
+    )
+    workspace.meetingSummaryRecords = [expectedRecord]
+
+    try persistence.persist(workspace, to: workspaceURL)
+
+    let loadedWorkspace = try persistence.loadWorkspace(from: workspaceURL)
+    let reloadedWorkspace = try #require(loadedWorkspace)
+
+    #expect(reloadedWorkspace.meetingSummaryRecords == [expectedRecord])
+    #expect(reloadedWorkspace.meetingSummaryRecord(for: "post-meeting-0001") == expectedRecord)
+  }
+
+  @Test
+  func meetingCompletionEvidenceRoundTripsAcrossReload() throws {
+    let persistence = OrbitWorkspacePersistence()
+    let fileManager = FileManager.default
+    let workspaceURL = fileManager.temporaryDirectory
+      .appendingPathComponent("orbit-meeting-output-restart", isDirectory: true)
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+
+    try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: workspaceURL) }
+
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.activePostID = "post-meeting-0001"
+    workspace.meetingStatusRecords = [
+      OrbitMeetingStatusRecord(
+        id: "post-meeting-0001",
+        postID: "post-meeting-0001",
+        meetingType: .team,
+        status: .completed,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: Date(timeIntervalSince1970: 1_742_342_500),
+        completedAt: Date(timeIntervalSince1970: 1_742_342_600)
+      )
+    ]
+    workspace.meetingOutcomeRecords = [
+      OrbitMeetingOutcomeRecord(
+        id: "post-meeting-0001",
+        postID: "post-meeting-0001",
+        outcomeState: .decisionRecorded,
+        detail: nil,
+        recordedByParticipantType: .user,
+        recordedByParticipantID: "aj",
+        recordedAt: Date(timeIntervalSince1970: 1_742_342_600)
+      )
+    ]
+    workspace.meetingDecisionRecords = [
+      OrbitMeetingDecisionRecord(
+        id: "decision-0001",
+        postID: "post-meeting-0001",
+        title: "Ship packet 4 shell",
+        body: "Keep completion inspectable after reload.",
+        decisionState: .adopted,
+        rationaleNoteID: nil,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_600)
+      )
+    ]
+    workspace.meetingOpenQuestionRecords = [
+      OrbitMeetingOpenQuestionRecord(
+        id: "question-0001",
+        postID: "post-meeting-0001",
+        body: "Should edits reopen the meeting?",
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_601)
+      )
+    ]
+    workspace.meetingReferenceRecords = [
+      OrbitMeetingReferenceRecord(
+        id: "reference-0001",
+        postID: "post-meeting-0001",
+        referenceType: .doc,
+        target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+        title: "Packet scope",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_602)
+      )
+    ]
+    workspace.meetingMemberRecords = [
+      OrbitMeetingMemberRecord(
+        id: "member-0001",
+        postID: "post-meeting-0001",
+        postParticipantID: "participant-0001",
+        participantID: OrbitParticipantID.samwise.rawValue,
+        participationRole: .contributor,
+        selectedReason: "Selected from founding group scope.",
+        joinedAt: Date(timeIntervalSince1970: 1_742_342_500),
+        completedAt: nil
+      )
+    ]
+
+    try persistence.persist(workspace, to: workspaceURL)
+
+    let loadedWorkspace = try persistence.loadWorkspace(from: workspaceURL)
+    let reloadedWorkspace = try #require(loadedWorkspace)
+
+    #expect(reloadedWorkspace.activePostID == "post-meeting-0001")
+    #expect(reloadedWorkspace.activeMeetingStatusRecord?.status == .completed)
+    #expect(reloadedWorkspace.activeMeetingOutcomeRecord?.outcomeState == .decisionRecorded)
+    #expect(reloadedWorkspace.activeMeetingDecisionRecord?.title == "Ship packet 4 shell")
+    #expect(reloadedWorkspace.activeMeetingOpenQuestionRecords.map(\.body) == [
+      "Should edits reopen the meeting?"
+    ])
+    #expect(reloadedWorkspace.activeMeetingReferenceRecords.first?.referenceType == .doc)
+    #expect(reloadedWorkspace.activeMeetingMemberRecords.first?.participantID == OrbitParticipantID.samwise.rawValue)
+  }
+
+  @Test
   func emptyWorkspaceRoundTripsWithoutInventingDiscussion() throws {
     let persistence = OrbitWorkspacePersistence()
     let fileManager = FileManager.default

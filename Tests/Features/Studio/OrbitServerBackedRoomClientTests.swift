@@ -131,6 +131,43 @@ struct OrbitServerBackedRoomClientTests {
         createdAt: Date(timeIntervalSince1970: 1_742_342_514)
       )
     )
+    let completionResult = OrbitPhase1CompleteMeetingResult(
+      snapshot: snapshot.room,
+      summaryNote: OrbitNoteRecord(
+        id: UUID(uuidString: "15151510-1515-1515-1515-151515151510")!,
+        postID: snapshot.room.post.id,
+        noteType: .meetingSummary,
+        body: "Completed summary",
+        createdByParticipantType: .system,
+        createdByParticipantID: "orbit-system",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_515)
+      ),
+      meetingOutputState: OrbitMeetingOutputStateRecord(
+        postID: snapshot.room.post.id,
+        outcomeState: .decisionRecorded,
+        recordedByParticipantType: .user,
+        recordedByParticipantID: "aj",
+        recordedAt: Date(timeIntervalSince1970: 1_742_342_515)
+      ),
+      decision: OrbitDecisionRecord(
+        id: UUID(uuidString: "16161610-1616-1616-1616-161616161610")!,
+        postID: snapshot.room.post.id,
+        title: "Ship packet 4 shell",
+        body: "Keep meeting outputs inspectable.",
+        decisionState: .adopted,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_515)
+      ),
+      references: [],
+      meetingOpenQuestions: [],
+      postEvent: OrbitPostEventRecord(
+        id: UUID(uuidString: "17171710-1717-1717-1717-171717171710")!,
+        postID: snapshot.room.post.id,
+        threadID: snapshot.room.thread.id,
+        eventType: OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue,
+        payloadJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_515)
+      )
+    )
     let transport = StubClientTransport(
       connectResponse: .bootstrap(snapshot.replayCursorSession, snapshot),
       pollResponse: .noChange(snapshot.replayCursorSession)
@@ -142,6 +179,7 @@ struct OrbitServerBackedRoomClientTests {
     let collaboratorWriter = StubClientCollaboratorWriter(result: collaboratorResult)
     let meetingPromoter = StubClientMeetingPromoter(result: promotedMeetingResult)
     let meetingCreator = StubClientMeetingCreator(result: meetingResult)
+    let meetingCompleter = StubClientMeetingCompleter(result: completionResult)
     let client = OrbitServerBackedRoomClient(
       transport: transport,
       roomWriter: roomWriter,
@@ -150,7 +188,8 @@ struct OrbitServerBackedRoomClientTests {
       promotionWriter: promotionWriter,
       meetingPromoter: meetingPromoter,
       collaboratorWriter: collaboratorWriter,
-      meetingCreator: meetingCreator
+      meetingCreator: meetingCreator,
+      meetingCompleter: meetingCompleter
     )
     let scope = OrbitPhase1RealtimeSubscriptionScope(
       workspaceSlug: "orbit",
@@ -273,6 +312,19 @@ struct OrbitServerBackedRoomClientTests {
         )
       )
     )
+    let completionResponse = try await client.completeMeeting(
+      OrbitPhase1CompleteMeetingRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: snapshot.room.post.id,
+        summaryBody: "Completed summary",
+        outcome: .decision,
+        decisionTitle: "Ship packet 4 shell",
+        decisionBody: "Keep meeting outputs inspectable.",
+        completedByParticipantType: .user,
+        completedByParticipantID: "aj"
+      )
+    )
 
     #expect(connectResponse == .bootstrap(snapshot.replayCursorSession, snapshot))
     #expect(pollResponse == .noChange(snapshot.replayCursorSession))
@@ -283,6 +335,7 @@ struct OrbitServerBackedRoomClientTests {
     #expect(promotionResponse == promotionResult)
     #expect(meetingResponse == meetingResult)
     #expect(promotedMeetingResponse == promotedMeetingResult)
+    #expect(completionResponse == completionResult)
     #expect(
       await transport.connectCalls == [
         OrbitPhase1RealtimeConnectRequest(
@@ -299,6 +352,7 @@ struct OrbitServerBackedRoomClientTests {
     #expect(await collaboratorWriter.requests.first?.body == "Canonical collaborator response")
     #expect(await meetingPromoter.requests.first?.promotion.addressedTargetReferenceID == "founding-group")
     #expect(await meetingCreator.requests.first?.title == "Meeting room")
+    #expect(await meetingCompleter.requests.first?.decisionTitle == "Ship packet 4 shell")
   }
 
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
@@ -487,6 +541,24 @@ private actor StubClientMeetingCreator: OrbitPhase1MeetingRoomCreationServing {
   func createMeetingRoom(
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    requests.append(request)
+    return result
+  }
+}
+
+private actor StubClientMeetingCompleter: OrbitPhase1MeetingCompletionServing {
+  let result: OrbitPhase1CompleteMeetingResult
+  var requests = [OrbitPhase1CompleteMeetingRequest]()
+
+  init(
+    result: OrbitPhase1CompleteMeetingResult
+  ) {
+    self.result = result
+  }
+
+  func completeMeeting(
+    _ request: OrbitPhase1CompleteMeetingRequest
+  ) async throws -> OrbitPhase1CompleteMeetingResult {
     requests.append(request)
     return result
   }

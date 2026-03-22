@@ -51,6 +51,9 @@ enum OrbitServerBackedRoomClientFactory {
       },
       createMeetingHandler: { request in
         try await gatewayClient.createMeetingRoom(request)
+      },
+      completeMeetingHandler: { request in
+        try await gatewayClient.completeMeeting(request)
       }
     )
   }

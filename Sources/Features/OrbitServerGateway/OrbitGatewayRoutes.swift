@@ -12,7 +12,8 @@ public enum OrbitGatewayRoutes {
     promotionWriter: (any OrbitMeetingPromotionEventHandling)? = nil,
     meetingPromoter: (any OrbitMeetingRoomPromotionHandling)? = nil,
     collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
-    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
+    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil,
+    meetingCompleter: (any OrbitMeetingCompletionHandling)? = nil
   ) {
     let realtime = app.grouped("api", "orbit", "realtime")
     let room = app.grouped("api", "orbit", "room")
@@ -127,6 +128,14 @@ public enum OrbitGatewayRoutes {
         let body = try request.content.decode(OrbitGatewayCreateMeetingRoomRequest.self)
         let result = try await meetingCreator.createMeetingRoom(try body.runtimeRequest)
         return OrbitGatewayCreateMeetingRoomResponse(result: result)
+      }
+    }
+
+    if let meetingCompleter {
+      room.post("meeting-completions") { request async throws -> OrbitGatewayCompleteMeetingResponse in
+        let body = try request.content.decode(OrbitGatewayCompleteMeetingRequest.self)
+        let result = try await meetingCompleter.completeMeeting(try body.runtimeRequest)
+        return OrbitGatewayCompleteMeetingResponse(result: result)
       }
     }
   }

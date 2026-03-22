@@ -229,6 +229,8 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
 
       #expect(bootstrappedSnapshot?.meetingState == room.meetingState)
       #expect(bootstrappedSnapshot?.meetingMembers == room.meetingMembers)
+      #expect(bootstrappedSnapshot?.notes == room.notes)
+      #expect(bootstrappedSnapshot?.meetingOutputState == room.meetingOutputState)
 
       let userMessageDate = Date(timeIntervalSince1970: 1_742_342_520)
       let userMessageID = UUID()
@@ -255,13 +257,96 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
       #expect(appendResult.snapshot.meetingState?.status == .active)
       #expect(updatedSnapshot?.meetingState?.status == .active)
       #expect(updatedSnapshot?.meetingMembers == room.meetingMembers)
+      #expect(appendResult.snapshot.notes == room.notes)
+      #expect(updatedSnapshot?.notes == room.notes)
+      #expect(appendResult.snapshot.meetingOutputState == room.meetingOutputState)
+      #expect(updatedSnapshot?.meetingOutputState == room.meetingOutputState)
     } catch {
       Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
     }
   }
 
   @Test
-  func liveRuntimeStoreLoadsPromotionPostLinksForOriginAndMeetingSnapshotsWhenDatabaseEnvironmentIsAvailable() async throws {
+  func liveRuntimeStoreRoundTripsMeetingCompletionBundleWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleMeetingRoomBootstrap()
+      let completionDate = Date(timeIntervalSince1970: 1_742_342_560)
+      let decisionID = UUID(uuidString: "55555555-1111-2222-3333-444444444444")!
+      let referenceID = UUID(uuidString: "66666666-1111-2222-3333-444444444444")!
+      let openQuestionID = UUID(uuidString: "77777777-1111-2222-3333-444444444444")!
+      let postEventID = UUID(uuidString: "88888888-1111-2222-3333-444444444444")!
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+
+      let completionService = OrbitPhase1MeetingCompletionService(
+        runtimeStore: store,
+        now: { completionDate },
+        makeDecisionID: { decisionID },
+        makeReferenceID: { referenceID },
+        makeMeetingOpenQuestionID: { openQuestionID },
+        makePostEventID: { postEventID }
+      )
+
+      let completionResult = try await completionService.completeMeeting(
+        OrbitPhase1CompleteMeetingRequest(
+          workspaceSlug: room.workspace.slug,
+          channelSlug: room.channel.slug,
+          postID: room.post.id,
+          summaryBody: "Live Postgres completion proof",
+          outcome: .decision,
+          decisionTitle: "Ship the meeting outputs card",
+          decisionBody: "Keep the first durable output bundle inspectable after reload.",
+          openQuestions: ["How should follow-up edits work?"],
+          followUpReferences: [
+            OrbitPhase1MeetingReferenceSpec(
+              referenceType: .doc,
+              target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+              title: "Packet scope"
+            )
+          ],
+          completedByParticipantType: .user,
+          completedByParticipantID: "aj"
+        )
+      )
+      let loadedSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: room.workspace.slug,
+        channelSlug: room.channel.slug,
+        postID: room.post.id
+      )
+      let loadedEvents = try await store.loadRealtimeEvents(
+        workspaceID: room.workspace.id,
+        after: nil
+      )
+
+      #expect(completionResult.summaryNote.id == room.notes.first?.id)
+      #expect(completionResult.summaryNote.body == "Live Postgres completion proof")
+      #expect(completionResult.meetingOutputState.outcomeState == .decisionRecorded)
+      #expect(completionResult.decision?.id == decisionID)
+      #expect(completionResult.references.map(\.id) == [referenceID])
+      #expect(completionResult.meetingOpenQuestions.map(\.id) == [openQuestionID])
+      #expect(loadedSnapshot?.meetingState?.status == .completed)
+      #expect(loadedSnapshot?.meetingState?.completedAt == completionDate)
+      #expect(loadedSnapshot?.notes.first?.body == "Live Postgres completion proof")
+      #expect(loadedSnapshot?.meetingOutputState?.outcomeState == .decisionRecorded)
+      #expect(loadedSnapshot?.decisions.map(\.id) == [decisionID])
+      #expect(loadedSnapshot?.references.map(\.id) == [referenceID])
+      #expect(loadedSnapshot?.meetingOpenQuestions.map(\.id) == [openQuestionID])
+      #expect(loadedEvents.contains { $0.id == postEventID && $0.category == .meetingOutputCommitted })
+    } catch {
+      Issue.record("Unexpected live Postgres meeting completion error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
+  func liveRuntimeStoreLoadsPromotionPostLinksForOriginAndMeetingSnapshotsWhenDatabaseEnvironmentIsAvailable()
+    async throws
+  {
     guard let configuration = integrationConfiguration() else {
       return
     }
@@ -423,6 +508,24 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
       thread: bootstrap.thread,
       seedMessages: bootstrap.seedMessages,
       postParticipants: bootstrap.postParticipants,
+      notes: [
+        OrbitNoteRecord(
+          id: UUID(),
+          postID: bootstrap.post.id,
+          noteType: .meetingSummary,
+          body: "Summary pending.",
+          createdByParticipantType: .system,
+          createdByParticipantID: "orbit-system",
+          createdAt: bootstrap.post.createdAt
+        )
+      ],
+      meetingOutputState: OrbitMeetingOutputStateRecord(
+        postID: bootstrap.post.id,
+        outcomeState: .pending,
+        recordedByParticipantType: .system,
+        recordedByParticipantID: "orbit-system",
+        recordedAt: bootstrap.post.createdAt
+      ),
       meetingState: OrbitMeetingStateRecord(
         postID: bootstrap.post.id,
         meetingType: .team,
@@ -507,6 +610,17 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
           fromPostID: originRoom.post.id,
           toPostID: meetingPostID,
           linkType: .promotion,
+          createdAt: createdAt
+        )
+      ],
+      notes: [
+        OrbitNoteRecord(
+          id: UUID(),
+          postID: meetingPostID,
+          noteType: .meetingSummary,
+          body: "Summary pending.",
+          createdByParticipantType: .system,
+          createdByParticipantID: "orbit-system",
           createdAt: createdAt
         )
       ],

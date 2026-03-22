@@ -17,6 +17,7 @@ struct Phase1RealtimeContractTests {
         "activation.failed",
         "meeting.promotion.attempted",
         "meeting.promotion.failed",
+        "meeting.output.committed",
       ]
     )
   }

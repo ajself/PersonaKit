@@ -93,6 +93,7 @@ extension OrbitWorkspace {
         createdAt: Date(timeIntervalSince1970: 1_742_342_404)
       ),
     ],
+    activePostID: nil,
     activeThreadID: "thread-0001",
     threads: [
       OrbitConversationThread(
@@ -145,6 +146,13 @@ extension OrbitWorkspace {
     activationFailureRecords: [],
     meetingPromotionRecords: [],
     meetingContinuityRecords: [],
+    meetingSummaryRecords: [],
+    meetingStatusRecords: [],
+    meetingOutcomeRecords: [],
+    meetingDecisionRecords: [],
+    meetingOpenQuestionRecords: [],
+    meetingReferenceRecords: [],
+    meetingMemberRecords: [],
     nextMessageSequence: 2,
     nextActivationSequence: 2,
     nextActivationFailureSequence: 1

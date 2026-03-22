@@ -76,6 +76,9 @@ struct Phase1MeetingRoomPromotionServiceTests {
     #expect(originRealtimeEvents.first?.category == .meetingPromotionAttempted)
     #expect(bootstrappedRoom.post.id == createdPostID)
     #expect(bootstrappedRoom.postLinks.count == 1)
+    #expect(bootstrappedRoom.notes.count == 1)
+    #expect(bootstrappedRoom.notes.first?.noteType == .meetingSummary)
+    #expect(bootstrappedRoom.notes.first?.body == "Summary pending.")
     #expect(bootstrappedRoom.postLinks.first?.id == UUID(uuidString: "efefefef-efef-efef-efef-efefefefefef")!)
     #expect(bootstrappedRoom.postLinks.first?.fromPostID == originPostID)
     #expect(bootstrappedRoom.postLinks.first?.toPostID == createdPostID)
@@ -83,6 +86,7 @@ struct Phase1MeetingRoomPromotionServiceTests {
     #expect(result.originPostEvent == originPostEvent)
     #expect(result.meeting.scope.postID == createdPostID)
     #expect(result.meeting.snapshot.post.id == createdPostID)
+    #expect(result.meeting.snapshot.notes == bootstrappedRoom.notes)
     #expect(result.meeting.snapshot.postLinks == bootstrappedRoom.postLinks)
   }
 
@@ -227,6 +231,17 @@ struct Phase1MeetingRoomPromotionServiceTests {
             participationMode: .active
           )
         ],
+        notes: [
+          OrbitNoteRecord(
+            id: UUID(uuidString: "67676767-6767-6767-6767-676767676767")!,
+            postID: createdPostID,
+            noteType: .meetingSummary,
+            body: "Summary pending.",
+            createdByParticipantType: .system,
+            createdByParticipantID: "orbit-system",
+            createdAt: createdAt
+          )
+        ],
         meetingState: OrbitMeetingStateRecord(
           postID: createdPostID,
           meetingType: .team,
@@ -276,6 +291,7 @@ private actor MeetingPromotionRecorder {
       messages: room.seedMessages,
       postParticipants: room.postParticipants,
       postLinks: room.postLinks,
+      notes: room.notes,
       meetingState: room.meetingState,
       meetingMembers: room.meetingMembers,
       postEvents: room.postEvents,

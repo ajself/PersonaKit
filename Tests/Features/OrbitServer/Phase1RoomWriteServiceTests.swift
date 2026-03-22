@@ -84,6 +84,7 @@ struct Phase1RoomWriteServiceTests {
 
     #expect(result.snapshot.meetingState == sampleMeetingRoomSnapshot().meetingState)
     #expect(result.snapshot.meetingMembers == sampleMeetingRoomSnapshot().meetingMembers)
+    #expect(result.snapshot.notes == sampleMeetingRoomSnapshot().notes)
   }
 
   @Test
@@ -226,6 +227,17 @@ struct Phase1RoomWriteServiceTests {
           participationMode: .active
         )
       ],
+      notes: [
+        OrbitNoteRecord(
+          id: UUID(uuidString: "99999999-8888-7777-6666-555555555555")!,
+          postID: postID,
+          noteType: .meetingSummary,
+          body: "Summary pending.",
+          createdByParticipantType: .system,
+          createdByParticipantID: "orbit-system",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_404)
+        )
+      ],
       meetingState: OrbitMeetingStateRecord(
         postID: postID,
         meetingType: .team,
@@ -257,6 +269,7 @@ struct Phase1RoomWriteServiceTests {
       thread: snapshot.thread,
       messages: snapshot.messages,
       postParticipants: snapshot.postParticipants,
+      notes: snapshot.notes,
       meetingState: OrbitMeetingStateRecord(
         postID: postID,
         meetingType: .team,

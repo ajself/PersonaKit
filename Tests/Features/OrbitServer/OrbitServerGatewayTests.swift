@@ -7,6 +7,7 @@ import XCTVapor
 @testable import OrbitServerGateway
 @testable import OrbitServerRuntime
 
+@Suite(.serialized)
 struct OrbitServerGatewayTests {
   @Test
   func transportResponseEncodingPreservesLegacySummaryFields() throws {
@@ -590,7 +591,7 @@ struct OrbitServerGatewayTests {
                   meetingType: OrbitMeetingType.team.rawValue,
                   title: "Founding Group Meeting",
                   memberWorkspacePersonaIDs: [
-                    UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+                    UUID(uuidString: "77777777-7777-7777-7777-777777777777")!
                   ]
                 )
               )
@@ -941,7 +942,7 @@ struct OrbitServerGatewayTests {
                   meetingType: OrbitMeetingType.team.rawValue,
                   title: "Founding Group Promotion",
                   memberWorkspacePersonaIDs: [
-                    UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+                    UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
                   ]
                 )
               )
@@ -953,6 +954,106 @@ struct OrbitServerGatewayTests {
             #expect(payload.workspaceSlug == "orbit")
             #expect(payload.originPostEventID == result.originPostEvent.id)
             #expect(payload.postID == result.meeting.snapshot.post.id)
+          }
+        )
+      }
+    } catch {
+      try? await app.asyncShutdown()
+      throw error
+    }
+
+    try await app.asyncShutdown()
+  }
+
+  @Test
+  func completeMeetingRouteReturnsCanonicalMeetingOutputPayload() async throws {
+    let app = try await Application.make(.testing)
+    let snapshot = sampleMeetingSnapshot(
+      cursorEventID: UUID(uuidString: "35353535-3535-3535-3535-353535353535")!,
+      status: .completed,
+      outcomeState: .decisionRecorded,
+      summaryBody: "Completed summary"
+    )
+    let summaryNote = try #require(snapshot.room.notes.first)
+    let meetingOutputState = try #require(snapshot.room.meetingOutputState)
+    let postEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "36363636-3636-3636-3636-363636363636")!,
+      postID: snapshot.room.post.id,
+      threadID: snapshot.room.thread.id,
+      eventType: OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue,
+      payloadJSON: "{}",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_540)
+    )
+    let result = OrbitPhase1CompleteMeetingResult(
+      snapshot: snapshot.room,
+      summaryNote: summaryNote,
+      meetingOutputState: meetingOutputState,
+      decision: snapshot.room.decisions.first,
+      references: snapshot.room.references,
+      meetingOpenQuestions: snapshot.room.meetingOpenQuestions,
+      postEvent: postEvent
+    )
+
+    do {
+      OrbitGatewayRoutes.register(
+        on: app,
+        transport: StubTransport(
+          connectHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) },
+          pollHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) }
+        ),
+        meetingCompleter: StubMeetingCompleter { request in
+          #expect(request.workspaceSlug == "orbit")
+          #expect(request.channelSlug == "command-center")
+          #expect(request.postID == snapshot.room.post.id)
+          #expect(request.summaryBody == "Completed summary")
+          #expect(request.outcome == .decision)
+          #expect(request.decisionTitle == "Ship packet 4")
+          #expect(request.decisionBody == "Keep meeting outputs inspectable after reload.")
+          #expect(request.openQuestions == ["How should edits work?"])
+          #expect(request.followUpReferences.first?.referenceType == .doc)
+          #expect(request.completedByParticipantType == .user)
+          #expect(request.completedByParticipantID == "aj")
+          return result
+        }
+      )
+
+      try XCTVaporContext.$emitWarningIfCurrentTestInfoIsAvailable.withValue(false) {
+        try app.test(
+          .POST,
+          "/api/orbit/room/meeting-completions",
+          beforeRequest: { request in
+            try request.content.encode(
+              OrbitGatewayCompleteMeetingRequest(
+                workspaceSlug: "orbit",
+                channelSlug: "command-center",
+                postID: snapshot.room.post.id,
+                summaryBody: "Completed summary",
+                outcome: OrbitPhase1MeetingCompletionOutcome.decision.rawValue,
+                decisionTitle: "Ship packet 4",
+                decisionBody: "Keep meeting outputs inspectable after reload.",
+                openQuestions: ["How should edits work?"],
+                followUpReferences: [
+                  OrbitGatewayMeetingReferencePayload(
+                    referenceType: OrbitReferenceType.doc.rawValue,
+                    target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+                    title: "Packet scope"
+                  )
+                ],
+                completedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+                completedByParticipantID: "aj"
+              )
+            )
+          },
+          afterResponse: { response in
+            #expect(response.status == .ok)
+            let payload = try response.content.decode(OrbitGatewayCompleteMeetingResponse.self)
+            #expect(payload.workspaceSlug == "orbit")
+            #expect(payload.postID == snapshot.room.post.id)
+            #expect(payload.postEventID == postEvent.id)
+            #expect(payload.outcomeState == OrbitMeetingOutcomeState.decisionRecorded.rawValue)
+            #expect(payload.decisionID == snapshot.room.decisions.first?.id)
+            #expect(payload.openQuestionCount == 1)
+            #expect(payload.referenceCount == 1)
           }
         )
       }
@@ -1053,7 +1154,8 @@ private struct StubFailureWriter: OrbitActivationFailureHandling {
 
 private struct StubMeetingPromotionWriter: OrbitMeetingPromotionEventHandling {
   let appendHandler:
-    @Sendable (OrbitPhase1AppendMeetingPromotionEventRequest) async throws -> OrbitPhase1AppendMeetingPromotionEventResult
+    @Sendable (OrbitPhase1AppendMeetingPromotionEventRequest) async throws ->
+      OrbitPhase1AppendMeetingPromotionEventResult
 
   init(
     _ appendHandler:
@@ -1071,8 +1173,7 @@ private struct StubMeetingPromotionWriter: OrbitMeetingPromotionEventHandling {
 }
 
 private struct StubMeetingCreator: OrbitMeetingRoomCreationHandling {
-  let createHandler:
-    @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult
+  let createHandler: @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult
 
   init(
     _ createHandler:
@@ -1103,6 +1204,23 @@ private struct StubMeetingPromoter: OrbitMeetingRoomPromotionHandling {
     _ request: OrbitPhase1PromoteMeetingRoomRequest
   ) async throws -> OrbitPhase1PromoteMeetingRoomResult {
     try await promoteHandler(request)
+  }
+}
+
+private struct StubMeetingCompleter: OrbitMeetingCompletionHandling {
+  let completionHandler: @Sendable (OrbitPhase1CompleteMeetingRequest) async throws -> OrbitPhase1CompleteMeetingResult
+
+  init(
+    _ completionHandler:
+      @escaping @Sendable (OrbitPhase1CompleteMeetingRequest) async throws -> OrbitPhase1CompleteMeetingResult
+  ) {
+    self.completionHandler = completionHandler
+  }
+
+  func completeMeeting(
+    _ request: OrbitPhase1CompleteMeetingRequest
+  ) async throws -> OrbitPhase1CompleteMeetingResult {
+    try await completionHandler(request)
   }
 }
 
@@ -1194,5 +1312,127 @@ private func sampleSnapshot(
       lastEventID: cursorEventID,
       lastEventCreatedAt: Date(timeIntervalSince1970: 1_742_342_460)
     )
+  )
+}
+
+private func sampleMeetingSnapshot(
+  cursorEventID: UUID,
+  status: OrbitMeetingStatus,
+  outcomeState: OrbitMeetingOutcomeState,
+  summaryBody: String
+) -> OrbitPhase1RealtimeSnapshot {
+  let baseline = sampleSnapshot(cursorEventID: cursorEventID)
+  let createdAt = Date(timeIntervalSince1970: 1_742_342_500)
+  let completedAt =
+    status == .completed
+    ? Date(timeIntervalSince1970: 1_742_342_540)
+    : nil
+  let postID = baseline.room.post.id
+  let participantID = UUID(uuidString: "56565656-5656-5656-5656-565656565656")!
+  let room = OrbitPhase1RoomSnapshot(
+    workspace: baseline.room.workspace,
+    channel: baseline.room.channel,
+    workspacePersonas: baseline.room.workspacePersonas,
+    post: OrbitPostRecord(
+      id: postID,
+      workspaceID: baseline.room.workspace.id,
+      channelID: baseline.room.channel.id,
+      postType: .meeting,
+      createdByParticipantType: .user,
+      createdByParticipantID: "aj",
+      title: "Founding Group Meeting",
+      status: .active,
+      createdAt: createdAt
+    ),
+    thread: OrbitThreadRecord(
+      id: baseline.room.thread.id,
+      postID: postID,
+      status: .open,
+      lastActivityAt: completedAt ?? createdAt,
+      createdAt: createdAt
+    ),
+    messages: baseline.room.messages,
+    postParticipants: [
+      OrbitPostParticipantRecord(
+        id: participantID,
+        postID: postID,
+        participantType: .workspacePersona,
+        participantID: "workspace-persona-orbit-samwise",
+        joinedAt: createdAt,
+        participationMode: .active
+      )
+    ],
+    notes: [
+      OrbitNoteRecord(
+        id: UUID(uuidString: "57575757-5757-5757-5757-575757575757")!,
+        postID: postID,
+        noteType: .meetingSummary,
+        body: summaryBody,
+        createdByParticipantType: .system,
+        createdByParticipantID: "orbit-system",
+        createdAt: createdAt
+      )
+    ],
+    decisions: [
+      OrbitDecisionRecord(
+        id: UUID(uuidString: "58585858-5858-5858-5858-585858585858")!,
+        postID: postID,
+        title: "Ship packet 4",
+        body: "Keep meeting outputs inspectable after reload.",
+        decisionState: .adopted,
+        createdAt: completedAt ?? createdAt
+      )
+    ],
+    references: [
+      OrbitReferenceRecord(
+        id: UUID(uuidString: "59595959-5959-5959-5959-595959595959")!,
+        postID: postID,
+        referenceType: .doc,
+        target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+        title: "Packet scope",
+        createdAt: completedAt ?? createdAt
+      )
+    ],
+    meetingOutputState: OrbitMeetingOutputStateRecord(
+      postID: postID,
+      outcomeState: outcomeState,
+      recordedByParticipantType: .user,
+      recordedByParticipantID: "aj",
+      recordedAt: completedAt ?? createdAt
+    ),
+    meetingOpenQuestions: [
+      OrbitMeetingOpenQuestionRecord(
+        id: UUID(uuidString: "5a5a5a5a-5a5a-5a5a-5a5a-5a5a5a5a5a5a")!,
+        postID: postID,
+        body: "How should edits work?",
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        createdAt: completedAt ?? createdAt
+      )
+    ],
+    meetingState: OrbitMeetingStateRecord(
+      postID: postID,
+      meetingType: .team,
+      status: status,
+      startedByParticipantType: .user,
+      startedByParticipantID: "aj",
+      startedAt: createdAt,
+      completedAt: completedAt
+    ),
+    meetingMembers: [
+      OrbitMeetingMemberRecord(
+        id: UUID(uuidString: "5b5b5b5b-5b5b-5b5b-5b5b-5b5b5b5b5b5b")!,
+        meetingPostID: postID,
+        postParticipantID: participantID,
+        participationRole: .contributor,
+        selectedReason: "Selected from founding-group scope.",
+        joinedAt: createdAt
+      )
+    ]
+  )
+
+  return OrbitPhase1RealtimeSnapshot(
+    room: room,
+    replayCursor: baseline.replayCursor
   )
 }

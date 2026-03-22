@@ -1,3 +1,4 @@
+import OrbitServerRuntime
 import SwiftUI
 
 struct OrbitPanelView: View {
@@ -11,6 +12,16 @@ struct OrbitPanelView: View {
   @State var draftMessageBody = ""
   @State var addressedParticipantID: String?
   @State var promoteToMeetingRoom = false
+  @State var meetingSummaryDraft = ""
+  @State var meetingOutcome = OrbitPhase1MeetingCompletionOutcome.decision
+  @State var meetingDecisionTitleDraft = ""
+  @State var meetingDecisionBodyDraft = ""
+  @State var meetingNoDecisionDetailDraft = ""
+  @State var meetingOpenQuestionsDraft = ""
+  @State var meetingFollowUpReferencesDraft = ""
+  @State var meetingCompletionDraftsDirty = false
+  @State var syncedMeetingDraftPostID: String?
+  @State var isSubmittingMeetingCompletion = false
   @State var expandedTraceMessageIDs: Set<String>
   @State var serverBackedRoomCoordinator = OrbitServerBackedRoomCoordinator()
   @State var persistenceMessage: String?
@@ -37,6 +48,9 @@ struct OrbitPanelView: View {
 
       workspaceHeaderCard
       rosterCard
+      if isMeetingRoom {
+        meetingOutputsCard
+      }
 
       if let persistenceMessage {
         Text(persistenceMessage)
@@ -51,6 +65,7 @@ struct OrbitPanelView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .onAppear {
       loadConfiguredOrbitRoom()
+      syncMeetingCompletionDrafts(force: true)
     }
     .task(id: workspaceStore.workspaceURL) {
       guard let serverBackedRoomClient else {
@@ -71,6 +86,8 @@ struct OrbitPanelView: View {
       if !showsMeetingPromotionToggle {
         promoteToMeetingRoom = false
       }
+
+      syncMeetingCompletionDrafts()
     }
     .onChange(of: orbitWorkspace) { _, _ in
       if serverBackedRoomClient == nil {

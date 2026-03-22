@@ -481,6 +481,113 @@ public struct OrbitGatewayAppendMeetingPromotionEventRequest: Content, Equatable
   }
 }
 
+public struct OrbitGatewayMeetingReferencePayload: Content, Equatable {
+  public let referenceType: String
+  public let target: String
+  public let title: String?
+
+  public init(
+    referenceType: String,
+    target: String,
+    title: String? = nil
+  ) {
+    self.referenceType = referenceType
+    self.target = target
+    self.title = title
+  }
+
+  var runtimeReference: OrbitPhase1MeetingReferenceSpec? {
+    guard let referenceType = OrbitReferenceType(rawValue: referenceType) else {
+      return nil
+    }
+
+    return OrbitPhase1MeetingReferenceSpec(
+      referenceType: referenceType,
+      target: target,
+      title: title
+    )
+  }
+}
+
+public struct OrbitGatewayCompleteMeetingRequest: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let postID: UUID
+  public let summaryBody: String
+  public let outcome: String
+  public let decisionTitle: String?
+  public let decisionBody: String?
+  public let noDecisionDetail: String?
+  public let openQuestions: [String]
+  public let followUpReferences: [OrbitGatewayMeetingReferencePayload]
+  public let completedByParticipantType: String
+  public let completedByParticipantID: String
+
+  public init(
+    workspaceSlug: String,
+    channelSlug: String,
+    postID: UUID,
+    summaryBody: String,
+    outcome: String,
+    decisionTitle: String? = nil,
+    decisionBody: String? = nil,
+    noDecisionDetail: String? = nil,
+    openQuestions: [String] = [],
+    followUpReferences: [OrbitGatewayMeetingReferencePayload] = [],
+    completedByParticipantType: String,
+    completedByParticipantID: String
+  ) {
+    self.workspaceSlug = workspaceSlug
+    self.channelSlug = channelSlug
+    self.postID = postID
+    self.summaryBody = summaryBody
+    self.outcome = outcome
+    self.decisionTitle = decisionTitle
+    self.decisionBody = decisionBody
+    self.noDecisionDetail = noDecisionDetail
+    self.openQuestions = openQuestions
+    self.followUpReferences = followUpReferences
+    self.completedByParticipantType = completedByParticipantType
+    self.completedByParticipantID = completedByParticipantID
+  }
+
+  var runtimeRequest: OrbitPhase1CompleteMeetingRequest {
+    get throws {
+      guard
+        let outcome = OrbitPhase1MeetingCompletionOutcome(rawValue: outcome),
+        let completedByParticipantType = OrbitParticipantAuthorType(
+          rawValue: completedByParticipantType
+        )
+      else {
+        throw Abort(.badRequest)
+      }
+
+      let followUpReferences = try followUpReferences.map { reference in
+        guard let runtimeReference = reference.runtimeReference else {
+          throw Abort(.badRequest)
+        }
+
+        return runtimeReference
+      }
+
+      return OrbitPhase1CompleteMeetingRequest(
+        workspaceSlug: workspaceSlug,
+        channelSlug: channelSlug,
+        postID: postID,
+        summaryBody: summaryBody,
+        outcome: outcome,
+        decisionTitle: decisionTitle,
+        decisionBody: decisionBody,
+        noDecisionDetail: noDecisionDetail,
+        openQuestions: openQuestions,
+        followUpReferences: followUpReferences,
+        completedByParticipantType: completedByParticipantType,
+        completedByParticipantID: completedByParticipantID
+      )
+    }
+  }
+}
+
 public struct OrbitGatewayCreateMeetingRoomRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
@@ -639,6 +746,34 @@ public struct OrbitGatewayAppendMeetingPromotionEventResponse: Content, Equatabl
     self.systemMessageID = result.systemMessage?.id
     self.messageCount = result.snapshot.messages.count
     self.threadID = result.snapshot.thread.id
+  }
+}
+
+public struct OrbitGatewayCompleteMeetingResponse: Content, Equatable {
+  public let result: OrbitPhase1CompleteMeetingResult
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let postID: UUID
+  public let threadID: UUID
+  public let postEventID: UUID
+  public let outcomeState: String
+  public let decisionID: UUID?
+  public let openQuestionCount: Int
+  public let referenceCount: Int
+
+  public init(
+    result: OrbitPhase1CompleteMeetingResult
+  ) {
+    self.result = result
+    self.workspaceSlug = result.snapshot.workspace.slug
+    self.channelSlug = result.snapshot.channel.slug
+    self.postID = result.snapshot.post.id
+    self.threadID = result.snapshot.thread.id
+    self.postEventID = result.postEvent.id
+    self.outcomeState = result.meetingOutputState.outcomeState.rawValue
+    self.decisionID = result.decision?.id
+    self.openQuestionCount = result.meetingOpenQuestions.count
+    self.referenceCount = result.references.count
   }
 }
 

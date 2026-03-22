@@ -79,9 +79,14 @@ enum OrbitWorkspacePersistenceError: LocalizedError {
 
 extension OrbitPanelView {
   var serverBackedRoomScope: OrbitPhase1RealtimeSubscriptionScope {
-    OrbitPhase1RealtimeSubscriptionScope(
+    let postID =
+      serverBackedRoomCoordinator.roomState.session?.scope.postID
+      ?? orbitWorkspace.activePostID.flatMap(UUID.init(uuidString:))
+
+    return OrbitPhase1RealtimeSubscriptionScope(
       workspaceSlug: "orbit",
-      channelSlug: "command-center"
+      channelSlug: "command-center",
+      postID: postID
     )
   }
 
