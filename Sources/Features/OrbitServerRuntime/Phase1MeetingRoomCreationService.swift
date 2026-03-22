@@ -57,6 +57,19 @@ public struct OrbitPhase1CreateMeetingRoomResult: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitPhase1PreparedMeetingRoom: Sendable {
+  public let scope: OrbitPhase1RealtimeSubscriptionScope
+  public let bootstrap: OrbitPhase1RoomBootstrap
+
+  public init(
+    scope: OrbitPhase1RealtimeSubscriptionScope,
+    bootstrap: OrbitPhase1RoomBootstrap
+  ) {
+    self.scope = scope
+    self.bootstrap = bootstrap
+  }
+}
+
 public enum OrbitPhase1MeetingRoomCreationServiceError: Error, Equatable {
   case roomContextNotFound
   case duplicateWorkspacePersona(UUID)
@@ -101,6 +114,31 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
   public func createMeetingRoom(
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    let preparedMeeting = try await prepareMeetingRoom(request)
+
+    try await bootstrapRoom(preparedMeeting.bootstrap)
+
+    guard
+      let snapshot = try await loadCreatedRoom(
+        request.workspaceSlug,
+        request.channelSlug,
+        preparedMeeting.bootstrap.post.id
+      )
+    else {
+      throw OrbitPhase1MeetingRoomCreationServiceError.createdRoomUnavailable(
+        preparedMeeting.bootstrap.post.id
+      )
+    }
+
+    return OrbitPhase1CreateMeetingRoomResult(
+      scope: preparedMeeting.scope,
+      snapshot: snapshot
+    )
+  }
+
+  func prepareMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1PreparedMeetingRoom {
     guard let context = try await loadContext(request.workspaceSlug, request.channelSlug) else {
       throw OrbitPhase1MeetingRoomCreationServiceError.roomContextNotFound
     }
@@ -196,25 +234,13 @@ public struct OrbitPhase1MeetingRoomCreationService: Sendable {
       meetingMembers: meetingMembers
     )
 
-    try await bootstrapRoom(bootstrap)
-
-    guard
-      let snapshot = try await loadCreatedRoom(
-        request.workspaceSlug,
-        request.channelSlug,
-        postID
-      )
-    else {
-      throw OrbitPhase1MeetingRoomCreationServiceError.createdRoomUnavailable(postID)
-    }
-
-    return OrbitPhase1CreateMeetingRoomResult(
+    return OrbitPhase1PreparedMeetingRoom(
       scope: OrbitPhase1RealtimeSubscriptionScope(
         workspaceSlug: request.workspaceSlug,
         channelSlug: request.channelSlug,
         postID: postID
       ),
-      snapshot: snapshot
+      bootstrap: bootstrap
     )
   }
 }

@@ -43,6 +43,12 @@ enum OrbitServerBackedRoomClientFactory {
       appendFailureHandler: { request in
         try await gatewayClient.appendActivationFailure(request)
       },
+      appendMeetingPromotionHandler: { request in
+        try await gatewayClient.appendMeetingPromotionEvent(request)
+      },
+      promoteMeetingHandler: { request in
+        try await gatewayClient.promoteMeetingRoom(request)
+      },
       createMeetingHandler: { request in
         try await gatewayClient.createMeetingRoom(request)
       }

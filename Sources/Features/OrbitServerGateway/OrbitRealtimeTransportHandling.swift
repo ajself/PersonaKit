@@ -29,6 +29,22 @@ public protocol OrbitActivationFailureHandling: Sendable {
 
 extension OrbitPhase1ActivationFailureService: OrbitActivationFailureHandling {}
 
+public protocol OrbitMeetingPromotionEventHandling: Sendable {
+  func appendMeetingPromotionEvent(
+    _ request: OrbitPhase1AppendMeetingPromotionEventRequest
+  ) async throws -> OrbitPhase1AppendMeetingPromotionEventResult
+}
+
+extension OrbitPhase1MeetingPromotionEventService: OrbitMeetingPromotionEventHandling {}
+
+public protocol OrbitMeetingRoomPromotionHandling: Sendable {
+  func promoteMeetingRoom(
+    _ request: OrbitPhase1PromoteMeetingRoomRequest
+  ) async throws -> OrbitPhase1PromoteMeetingRoomResult
+}
+
+extension OrbitPhase1MeetingRoomPromotionService: OrbitMeetingRoomPromotionHandling {}
+
 public protocol OrbitCollaboratorResponseHandling: Sendable {
   func appendCollaboratorResponse(
     _ request: OrbitPhase1AppendCollaboratorResponseRequest

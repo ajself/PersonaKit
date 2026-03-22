@@ -1149,6 +1149,26 @@ struct OrbitServerBackedRoomCoordinatorTests {
       ],
       pollResponse: .noChange(updatedSession)
     )
+    let meetingPromoter = StubMeetingPromoter(
+      result: OrbitPhase1PromoteMeetingRoomResult(
+        meeting: OrbitPhase1CreateMeetingRoomResult(
+          scope: OrbitPhase1RealtimeSubscriptionScope(
+            workspaceSlug: "orbit",
+            channelSlug: "command-center",
+            postID: promotedPostID
+          ),
+          snapshot: createdSnapshot.room
+        ),
+        originPostEvent: OrbitPostEventRecord(
+          id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+          postID: postID,
+          threadID: threadID,
+          eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+          payloadJSON: "{}",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_519)
+        )
+      )
+    )
     let meetingCreator = StubMeetingCreator(
       result: OrbitPhase1CreateMeetingRoomResult(
         scope: OrbitPhase1RealtimeSubscriptionScope(
@@ -1171,6 +1191,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
         message: systemMessage
       )
     )
+    let promotionWriter = StubClientMeetingPromotionWriter(results: [])
     let collaboratorWriter = StubClientCollaboratorWriter(
       result: OrbitPhase1AppendCollaboratorResponseResult(
         snapshot: updatedSnapshot.room,
@@ -1200,6 +1221,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
           systemMessageBody: "unused"
         )
       ),
+      promotionWriter: promotionWriter,
+      meetingPromoter: meetingPromoter,
       collaboratorWriter: collaboratorWriter,
       meetingCreator: meetingCreator
     )
@@ -1250,22 +1273,27 @@ struct OrbitServerBackedRoomCoordinatorTests {
       client: client
     )
 
-    let meetingRequest = try #require(await meetingCreator.requests.first)
+    let promotionRequest = try #require(await meetingPromoter.requests.first)
     let collaboratorRequests = await collaboratorWriter.requests
     let connectRequests = await transport.connectRequests
+    let promotionRequests = await promotionWriter.requests
 
-    #expect(meetingRequest.title == "Founding Group Meeting")
-    #expect(meetingRequest.meetingType == .team)
-    #expect(meetingRequest.startedByParticipantType == .user)
-    #expect(meetingRequest.startedByParticipantID == "aj")
+    #expect(promotionRequest.meeting.title == "Founding Group Meeting")
+    #expect(promotionRequest.meeting.meetingType == .team)
+    #expect(promotionRequest.meeting.startedByParticipantType == .user)
+    #expect(promotionRequest.meeting.startedByParticipantID == "aj")
     #expect(
-      meetingRequest.members.map(\.workspacePersonaID) == [
+      promotionRequest.meeting.members.map(\.workspacePersonaID) == [
         UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
         UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
       ]
     )
-    #expect(meetingRequest.members.allSatisfy { $0.participationRole == .contributor })
-    #expect(meetingRequest.members.allSatisfy { $0.selectedReason.contains("Founding Group") })
+    #expect(promotionRequest.meeting.members.allSatisfy { $0.participationRole == .contributor })
+    #expect(promotionRequest.meeting.members.allSatisfy { $0.selectedReason.contains("Founding Group") })
+    #expect(promotionRequest.originPostID == nil)
+    #expect(promotionRequest.promotion.addressedTargetReferenceID == OrbitAddressTargetID.foundingGroup.rawValue)
+    #expect(promotionRequest.promotion.failure == nil)
+    #expect(promotionRequests.isEmpty)
     #expect(await roomWriter.requests.first?.postID == promotedPostID)
     #expect(await systemWriter.requests.first?.postID == promotedPostID)
     #expect(collaboratorRequests.count == 2)
@@ -1411,6 +1439,27 @@ struct OrbitServerBackedRoomCoordinatorTests {
       connectResponse: .bootstrap(updatedSnapshot.replayCursorSession, updatedSnapshot),
       pollResponse: .noChange(updatedSnapshot.replayCursorSession)
     )
+    let meetingPromoter = StubMeetingPromoter(
+      result: OrbitPhase1PromoteMeetingRoomResult(
+        meeting: OrbitPhase1CreateMeetingRoomResult(
+          scope: OrbitPhase1RealtimeSubscriptionScope(
+            workspaceSlug: "orbit",
+            channelSlug: "command-center",
+            postID: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
+          ),
+          snapshot: initialSnapshot.room
+        ),
+        originPostEvent: OrbitPostEventRecord(
+          id: UUID(uuidString: "21212121-2121-2121-2121-212121212121")!,
+          postID: postID,
+          threadID: threadID,
+          eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+          payloadJSON: "{}",
+          createdAt: Date(timeIntervalSince1970: 1_742_342_619)
+        )
+      ),
+      error: TestFailure.simulatedFailure
+    )
     let meetingCreator = StubMeetingCreator(
       result: OrbitPhase1CreateMeetingRoomResult(
         scope: OrbitPhase1RealtimeSubscriptionScope(
@@ -1419,8 +1468,7 @@ struct OrbitServerBackedRoomCoordinatorTests {
           postID: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
         ),
         snapshot: initialSnapshot.room
-      ),
-      error: TestFailure.simulatedFailure
+      )
     )
     let roomWriter = StubClientRoomWriter(
       result: OrbitPhase1AppendUserMessageResult(
@@ -1432,15 +1480,61 @@ struct OrbitServerBackedRoomCoordinatorTests {
       results: [
         OrbitPhase1AppendSystemMessageResult(
           snapshot: initialSnapshot.room,
-          message: promotionFailureMessage
-        ),
-        OrbitPhase1AppendSystemMessageResult(
-          snapshot: initialSnapshot.room,
           message: systemMessage
         ),
         OrbitPhase1AppendSystemMessageResult(
           snapshot: updatedSnapshot.room,
           message: exchangeStateMessage
+        ),
+      ]
+    )
+    let promotionWriter = StubClientMeetingPromotionWriter(
+      results: [
+        OrbitPhase1AppendMeetingPromotionEventResult(
+          snapshot: initialSnapshot.room,
+          postEvent: OrbitPostEventRecord(
+            id: UUID(uuidString: "21212121-2121-2121-2121-212121212121")!,
+            postID: postID,
+            threadID: threadID,
+            eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+            payloadJSON: "{}",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_619)
+          )
+        ),
+        OrbitPhase1AppendMeetingPromotionEventResult(
+          snapshot: OrbitPhase1RoomSnapshot(
+            workspace: initialSnapshot.room.workspace,
+            channel: initialSnapshot.room.channel,
+            workspacePersonas: initialSnapshot.room.workspacePersonas,
+            teams: initialSnapshot.room.teams,
+            squads: initialSnapshot.room.squads,
+            workspacePersonaMemberships: initialSnapshot.room.workspacePersonaMemberships,
+            post: initialSnapshot.room.post,
+            thread: initialSnapshot.room.thread,
+            messages: initialSnapshot.room.messages + [promotionFailureMessage],
+            postParticipants: initialSnapshot.room.postParticipants,
+            postEvents: initialSnapshot.room.postEvents + [
+              OrbitPostEventRecord(
+                id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
+                postID: postID,
+                threadID: threadID,
+                eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionFailed.rawValue,
+                payloadJSON: "{}",
+                createdAt: Date(timeIntervalSince1970: 1_742_342_619)
+              )
+            ],
+            personaActivations: initialSnapshot.room.personaActivations,
+            agentRuns: initialSnapshot.room.agentRuns
+          ),
+          postEvent: OrbitPostEventRecord(
+            id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
+            postID: postID,
+            threadID: threadID,
+            eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionFailed.rawValue,
+            payloadJSON: "{}",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_619)
+          ),
+          systemMessage: promotionFailureMessage
         ),
       ]
     )
@@ -1473,6 +1567,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
           systemMessageBody: "unused"
         )
       ),
+      promotionWriter: promotionWriter,
+      meetingPromoter: meetingPromoter,
       collaboratorWriter: collaboratorWriter,
       meetingCreator: meetingCreator
     )
@@ -1523,17 +1619,18 @@ struct OrbitServerBackedRoomCoordinatorTests {
       client: client
     )
 
-    let meetingRequests = await meetingCreator.requests
+    let promotionMeetingRequests = await meetingPromoter.requests
     let systemRequests = await systemWriter.requests
     let collaboratorRequests = await collaboratorWriter.requests
+    let promotionRequests = await promotionWriter.requests
 
-    #expect(meetingRequests.count == 1)
+    #expect(promotionMeetingRequests.count == 1)
     #expect(await roomWriter.requests.first?.postID == nil)
-    #expect(systemRequests.count == 3)
-    #expect(systemRequests.first?.body.contains("Orbit meeting promotion failed") == true)
-    #expect(systemRequests.first?.body.contains("fallback: current thread") == true)
+    #expect(systemRequests.count == 2)
+    #expect(promotionRequests.count == 1)
+    #expect(promotionRequests.first?.promotion.failure?.systemEventBody.contains("Orbit meeting promotion failed") == true)
     #expect(
-      systemRequests.dropFirst().first?.body.contains("resolved target: kind=team reference=founding-group") == true
+      systemRequests.first?.body.contains("resolved target: kind=team reference=founding-group") == true
     )
     #expect(collaboratorRequests.count == 2)
     #expect(collaboratorRequests.allSatisfy { $0.postID == nil })
@@ -2498,6 +2595,42 @@ private actor StubClientFailureWriter: OrbitPhase1ActivationFailureServing {
   }
 }
 
+private actor StubClientMeetingPromotionWriter: OrbitPhase1MeetingPromotionEventServing {
+  private var remainingResults: [OrbitPhase1AppendMeetingPromotionEventResult]
+  private let fallbackResult: OrbitPhase1AppendMeetingPromotionEventResult?
+  var requests = [OrbitPhase1AppendMeetingPromotionEventRequest]()
+
+  init(
+    result: OrbitPhase1AppendMeetingPromotionEventResult
+  ) {
+    self.remainingResults = [result]
+    self.fallbackResult = result
+  }
+
+  init(
+    results: [OrbitPhase1AppendMeetingPromotionEventResult]
+  ) {
+    self.remainingResults = results
+    self.fallbackResult = results.last
+  }
+
+  func appendMeetingPromotionEvent(
+    _ request: OrbitPhase1AppendMeetingPromotionEventRequest
+  ) async throws -> OrbitPhase1AppendMeetingPromotionEventResult {
+    requests.append(request)
+
+    if !remainingResults.isEmpty {
+      return remainingResults.removeFirst()
+    }
+
+    guard let fallbackResult else {
+      throw TestFailure.simulatedFailure
+    }
+
+    return fallbackResult
+  }
+}
+
 private actor StubMeetingCreator: OrbitPhase1MeetingRoomCreationServing {
   let result: OrbitPhase1CreateMeetingRoomResult
   let error: Error?
@@ -2514,6 +2647,32 @@ private actor StubMeetingCreator: OrbitPhase1MeetingRoomCreationServing {
   func createMeetingRoom(
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    requests.append(request)
+
+    if let error {
+      throw error
+    }
+
+    return result
+  }
+}
+
+private actor StubMeetingPromoter: OrbitPhase1MeetingRoomPromotionServing {
+  let result: OrbitPhase1PromoteMeetingRoomResult
+  let error: Error?
+  var requests = [OrbitPhase1PromoteMeetingRoomRequest]()
+
+  init(
+    result: OrbitPhase1PromoteMeetingRoomResult,
+    error: Error? = nil
+  ) {
+    self.result = result
+    self.error = error
+  }
+
+  func promoteMeetingRoom(
+    _ request: OrbitPhase1PromoteMeetingRoomRequest
+  ) async throws -> OrbitPhase1PromoteMeetingRoomResult {
     requests.append(request)
 
     if let error {

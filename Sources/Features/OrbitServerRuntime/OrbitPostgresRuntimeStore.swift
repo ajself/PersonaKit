@@ -178,6 +178,38 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func appendPostEvent(
+    workspaceID: UUID,
+    _ postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      try await repository.appendPostEvent(
+        workspaceID: workspaceID,
+        postEvent,
+        realtimeEvents: realtimeEvents,
+        using: OrbitPostgresClientExecutor(client: client)
+      )
+    }
+  }
+
+  public func promoteMeetingRoom(
+    originPostEvent: OrbitPostEventRecord,
+    originRealtimeEvents: [OrbitRealtimeEventRecord],
+    room: OrbitPhase1RoomBootstrap,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      try await repository.promoteMeetingRoom(
+        originPostEvent: originPostEvent,
+        originRealtimeEvents: originRealtimeEvents,
+        room: room,
+        using: OrbitPostgresClientExecutor(client: client)
+      )
+    }
+  }
+
   public func loadRoomSnapshot(
     workspaceSlug: String,
     channelSlug: String,

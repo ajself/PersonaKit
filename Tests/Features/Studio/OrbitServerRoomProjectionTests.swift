@@ -88,6 +88,131 @@ struct OrbitServerRoomProjectionTests {
     #expect(workspace.activationFailureRecords.last?.triggerSource == .directAddress)
   }
 
+  @Test
+  func projectionRestoresMeetingPromotionAttemptEvidenceFromCanonicalPostEvents() {
+    let snapshot = sampleSnapshot()
+    let postID = snapshot.room.post.id
+    let threadID = snapshot.room.thread.id
+    let attemptPostEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")!,
+      postID: postID,
+      threadID: threadID,
+      eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+      payloadJSON: try! OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MeetingPromotionEventPayload(
+          initiatedByParticipantID: "aj",
+          addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+          addressedTargetReferenceID: "founding-group",
+          targetDisplayName: "Founding Group",
+          meetingType: OrbitMeetingType.team.rawValue,
+          title: "Founding Group Meeting",
+          memberWorkspacePersonaIDs: [
+            UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+            UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!,
+          ]
+        )
+      ),
+      createdAt: Date(timeIntervalSince1970: 1_742_342_470)
+    )
+    let promotedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: snapshot.room.post,
+        thread: snapshot.room.thread,
+        messages: snapshot.room.messages,
+        postParticipants: snapshot.room.postParticipants,
+        postEvents: snapshot.room.postEvents + [attemptPostEvent],
+        personaActivations: snapshot.room.personaActivations,
+        agentRuns: snapshot.room.agentRuns
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: promotedSnapshot)
+
+    #expect(workspace.meetingPromotionRecords.count == 1)
+    #expect(workspace.meetingPromotionRecords.first?.outcome == .attempted)
+    #expect(workspace.meetingPromotionRecords.first?.addressedTargetReferenceID == "founding-group")
+    #expect(workspace.meetingPromotionRecords.first?.memberWorkspacePersonaIDs.count == 2)
+  }
+
+  @Test
+  func projectionRestoresMeetingPromotionFailureEvidenceFromCanonicalPostEvents() {
+    let snapshot = sampleSnapshot()
+    let postID = snapshot.room.post.id
+    let threadID = snapshot.room.thread.id
+    let systemMessageID = UUID(uuidString: "ffffffff-eeee-dddd-cccc-bbbbbbbbbbbb")!
+    let failurePostEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
+      postID: postID,
+      threadID: threadID,
+      eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionFailed.rawValue,
+      payloadJSON: try! OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MeetingPromotionEventPayload(
+          initiatedByParticipantID: "aj",
+          addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+          addressedTargetReferenceID: "founding-group",
+          targetDisplayName: "Founding Group",
+          meetingType: OrbitMeetingType.team.rawValue,
+          title: "Founding Group Meeting",
+          memberWorkspacePersonaIDs: [
+            UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+          ],
+          failure: OrbitPhase1MeetingPromotionFailurePayload(
+            systemEventMessageID: systemMessageID,
+            systemEventBody: "Orbit meeting promotion failed",
+            detail: "The operation could not be completed."
+          )
+        )
+      ),
+      createdAt: Date(timeIntervalSince1970: 1_742_342_471)
+    )
+    let systemMessage = OrbitMessageRecord(
+      id: systemMessageID,
+      postID: postID,
+      threadID: threadID,
+      authorType: .system,
+      authorID: "orbit-system",
+      body: "Orbit meeting promotion failed",
+      messageFormat: .plainText,
+      state: .completed,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_471),
+      updatedAt: Date(timeIntervalSince1970: 1_742_342_471)
+    )
+    let promotedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: snapshot.room.post,
+        thread: snapshot.room.thread,
+        messages: snapshot.room.messages + [systemMessage],
+        postParticipants: snapshot.room.postParticipants,
+        postEvents: snapshot.room.postEvents + [failurePostEvent],
+        personaActivations: snapshot.room.personaActivations,
+        agentRuns: snapshot.room.agentRuns
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: promotedSnapshot)
+
+    #expect(workspace.meetingPromotionRecords.count == 1)
+    #expect(workspace.meetingPromotionRecords.first?.outcome == .failed)
+    #expect(
+      workspace.meetingPromotionFailureRecordForSystemEvent(systemMessageID.uuidString)?.detail
+        == "The operation could not be completed."
+    )
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let workspaceID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
     let channelID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!

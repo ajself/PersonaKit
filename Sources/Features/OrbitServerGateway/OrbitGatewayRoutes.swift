@@ -9,6 +9,8 @@ public enum OrbitGatewayRoutes {
     roomWriter: (any OrbitPhase1RoomWriteServing)? = nil,
     systemWriter: (any OrbitSystemMessageHandling)? = nil,
     failureWriter: (any OrbitActivationFailureHandling)? = nil,
+    promotionWriter: (any OrbitMeetingPromotionEventHandling)? = nil,
+    meetingPromoter: (any OrbitMeetingRoomPromotionHandling)? = nil,
     collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
     meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
   ) {
@@ -90,6 +92,22 @@ public enum OrbitGatewayRoutes {
         let body = try request.content.decode(OrbitGatewayAppendActivationFailureRequest.self)
         let result = try await failureWriter.appendActivationFailure(body.runtimeRequest)
         return OrbitGatewayAppendActivationFailureResponse(result: result)
+      }
+    }
+
+    if let promotionWriter {
+      room.post("meeting-promotions") { request async throws -> OrbitGatewayAppendMeetingPromotionEventResponse in
+        let body = try request.content.decode(OrbitGatewayAppendMeetingPromotionEventRequest.self)
+        let result = try await promotionWriter.appendMeetingPromotionEvent(body.runtimeRequest)
+        return OrbitGatewayAppendMeetingPromotionEventResponse(result: result)
+      }
+    }
+
+    if let meetingPromoter {
+      room.post("promoted-meetings") { request async throws -> OrbitGatewayPromoteMeetingRoomResponse in
+        let body = try request.content.decode(OrbitGatewayPromoteMeetingRoomRequest.self)
+        let result = try await meetingPromoter.promoteMeetingRoom(try body.runtimeRequest)
+        return OrbitGatewayPromoteMeetingRoomResponse(result: result)
       }
     }
 

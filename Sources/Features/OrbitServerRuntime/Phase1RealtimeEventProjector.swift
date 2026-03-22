@@ -87,7 +87,7 @@ public enum OrbitPhase1RealtimeEventProjector {
     )
 
     events.append(
-      contentsOf: try room.postEvents.compactMap { event in
+      contentsOf: room.postEvents.compactMap { event in
         guard let category = OrbitPhase1RealtimeEventCategory(rawValue: event.eventType) else {
           return nil
         }
@@ -218,6 +218,49 @@ public enum OrbitPhase1RealtimeEventProjector {
         createdAt: systemMessage.createdAt
       )
     )
+
+    return events.sorted { lhs, rhs in
+      if lhs.createdAt == rhs.createdAt {
+        return lhs.id.uuidString < rhs.id.uuidString
+      }
+      return lhs.createdAt < rhs.createdAt
+    }
+  }
+
+  public static func postEventOnlyEvents(
+    workspaceID: UUID,
+    postEvent: OrbitPostEventRecord
+  ) throws -> [OrbitRealtimeEventRecord] {
+    guard let category = OrbitPhase1RealtimeEventCategory(rawValue: postEvent.eventType) else {
+      return []
+    }
+
+    return [
+      OrbitRealtimeEventRecord(
+        id: postEvent.id,
+        workspaceID: workspaceID,
+        postID: postEvent.postID,
+        threadID: postEvent.threadID,
+        category: category,
+        payloadJSON: postEvent.payloadJSON,
+        createdAt: postEvent.createdAt
+      ),
+    ]
+  }
+
+  public static func meetingPromotionFailureEvents(
+    workspaceID: UUID,
+    systemMessage: OrbitMessageRecord,
+    postEvent: OrbitPostEventRecord,
+    threadLastActivityAt: Date
+  ) throws -> [OrbitRealtimeEventRecord] {
+    var events = try appendEvents(
+      workspaceID: workspaceID,
+      message: systemMessage,
+      threadLastActivityAt: threadLastActivityAt
+    )
+
+    events.append(contentsOf: try postEventOnlyEvents(workspaceID: workspaceID, postEvent: postEvent))
 
     return events.sorted { lhs, rhs in
       if lhs.createdAt == rhs.createdAt {

@@ -310,6 +310,58 @@ struct OrbitGatewayNetworkClientTests {
   }
 
   @Test
+  func appendMeetingPromotionEventEncodesRequestAndDecodesCanonicalResult() async throws {
+    let result = OrbitPhase1AppendMeetingPromotionEventResult(
+      snapshot: sampleSnapshot().room,
+      postEvent: OrbitPostEventRecord(
+        id: UUID(uuidString: "89898989-8989-8989-8989-898989898989")!,
+        postID: sampleSnapshot().room.post.id,
+        threadID: sampleSnapshot().room.thread.id,
+        eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+        payloadJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_520)
+      )
+    )
+    let client = makeClient { request in
+      #expect(request.url?.path == "/api/orbit/room/meeting-promotions")
+      let body = try JSONDecoder().decode(
+        OrbitGatewayAppendMeetingPromotionEventRequest.self,
+        from: try requestBody(for: request)
+      )
+      #expect(body.workspaceSlug == "orbit")
+      #expect(body.promotion.addressedTargetReferenceID == "founding-group")
+      #expect(body.promotion.failure == nil)
+
+      return try makeResponse(
+        statusCode: 200,
+        body: OrbitGatewayAppendMeetingPromotionEventResponse(result: result),
+        url: try #require(request.url)
+      )
+    }
+
+    let response = try await client.appendMeetingPromotionEvent(
+      OrbitPhase1AppendMeetingPromotionEventRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: sampleSnapshot().room.post.id,
+        promotion: OrbitPhase1MeetingPromotionEventPayload(
+          initiatedByParticipantID: "aj",
+          addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+          addressedTargetReferenceID: "founding-group",
+          targetDisplayName: "Founding Group",
+          meetingType: OrbitMeetingType.team.rawValue,
+          title: "Founding Group Meeting",
+          memberWorkspacePersonaIDs: [
+            UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+          ]
+        )
+      )
+    )
+
+    #expect(response == result)
+  }
+
+  @Test
   func createMeetingRoomEncodesRequestAndDecodesCanonicalResult() async throws {
     let result = OrbitPhase1CreateMeetingRoomResult(
       scope: OrbitPhase1RealtimeSubscriptionScope(
@@ -352,6 +404,79 @@ struct OrbitGatewayNetworkClientTests {
             selectedReason: "Selected from founding-group target."
           )
         ]
+      )
+    )
+
+    #expect(response == result)
+  }
+
+  @Test
+  func promoteMeetingRoomEncodesRequestAndDecodesCanonicalResult() async throws {
+    let result = OrbitPhase1PromoteMeetingRoomResult(
+      meeting: OrbitPhase1CreateMeetingRoomResult(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center",
+          postID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+        ),
+        snapshot: sampleSnapshot().room
+      ),
+      originPostEvent: OrbitPostEventRecord(
+        id: UUID(uuidString: "44444444-4444-4444-4444-444444444444")!,
+        postID: sampleSnapshot().room.post.id,
+        threadID: sampleSnapshot().room.thread.id,
+        eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+        payloadJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_520)
+      )
+    )
+    let client = makeClient { request in
+      #expect(request.url?.path == "/api/orbit/room/promoted-meetings")
+      let body = try JSONDecoder().decode(
+        OrbitGatewayPromoteMeetingRoomRequest.self,
+        from: try requestBody(for: request)
+      )
+      #expect(body.originPostID == sampleSnapshot().room.post.id)
+      #expect(body.meeting.title == "Founding Group Promotion")
+      #expect(body.meeting.meetingType == OrbitMeetingType.team.rawValue)
+      #expect(body.promotion.addressedTargetReferenceID == "founding-group")
+
+      return try makeResponse(
+        statusCode: 200,
+        body: OrbitGatewayPromoteMeetingRoomResponse(result: result),
+        url: try #require(request.url)
+      )
+    }
+
+    let response = try await client.promoteMeetingRoom(
+      OrbitPhase1PromoteMeetingRoomRequest(
+        originPostID: sampleSnapshot().room.post.id,
+        meeting: OrbitPhase1CreateMeetingRoomRequest(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center",
+          title: "Founding Group Promotion",
+          meetingType: .team,
+          startedByParticipantType: .user,
+          startedByParticipantID: "aj",
+          members: [
+            OrbitPhase1MeetingMemberSpec(
+              workspacePersonaID: UUID(uuidString: "55555555-5555-5555-5555-555555555555")!,
+              participationRole: .contributor,
+              selectedReason: "Selected from founding-group target."
+            )
+          ]
+        ),
+        promotion: OrbitPhase1MeetingPromotionEventPayload(
+          initiatedByParticipantID: "aj",
+          addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+          addressedTargetReferenceID: "founding-group",
+          targetDisplayName: "Founding Group",
+          meetingType: OrbitMeetingType.team.rawValue,
+          title: "Founding Group Promotion",
+          memberWorkspacePersonaIDs: [
+            UUID(uuidString: "55555555-5555-5555-5555-555555555555")!,
+          ]
+        )
       )
     )
 

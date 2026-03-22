@@ -86,6 +86,29 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func promoteMeetingRoomExecutesOriginEvidenceAndMeetingBootstrapInsideTransaction() async throws {
+    let executor = RecordingRepositoryExecutor()
+
+    try await repository.promoteMeetingRoom(
+      originPostEvent: sampleOriginPromotionAttemptPostEvent(),
+      originRealtimeEvents: sampleOriginPromotionAttemptRealtimeEvents(),
+      room: sampleMeetingRoomBootstrap(),
+      using: executor
+    )
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.first == "BEGIN")
+    #expect(queries.last == "COMMIT")
+    #expect(queries.contains(where: { $0.contains("INSERT INTO post_event") }))
+    #expect(queries.filter { $0.contains("INSERT INTO post_event") }.count >= 2)
+    #expect(queries.filter { $0.contains("INSERT INTO realtime_event") }.count >= 2)
+    #expect(queries.contains(where: { $0.contains("INSERT INTO post") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
+    #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
+  }
+
+  @Test
   func bootstrapRoomRollsBackWhenAnInsertFails() async {
     let executor = FailingRepositoryExecutor(failureIndex: 4)
 
@@ -598,5 +621,35 @@ struct Phase1RuntimeRepositoryTests {
       personaActivations: bootstrap.personaActivations,
       agentRuns: bootstrap.agentRuns
     )
+  }
+
+  private func sampleOriginPromotionAttemptPostEvent() -> OrbitPostEventRecord {
+    let room = sampleRoomBootstrap()
+
+    return OrbitPostEventRecord(
+      id: UUID(uuidString: "f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1")!,
+      postID: room.post.id,
+      threadID: room.thread.id,
+      eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+      payloadJSON: "{\"title\":\"Founding Group Meeting\"}",
+      createdAt: referenceDate.addingTimeInterval(90)
+    )
+  }
+
+  private func sampleOriginPromotionAttemptRealtimeEvents() -> [OrbitRealtimeEventRecord] {
+    let room = sampleRoomBootstrap()
+    let postEvent = sampleOriginPromotionAttemptPostEvent()
+
+    return [
+      OrbitRealtimeEventRecord(
+        id: UUID(uuidString: "f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2")!,
+        workspaceID: room.workspace.id,
+        postID: room.post.id,
+        threadID: room.thread.id,
+        category: .meetingPromotionAttempted,
+        payloadJSON: postEvent.payloadJSON,
+        createdAt: postEvent.createdAt
+      )
+    ]
   }
 }

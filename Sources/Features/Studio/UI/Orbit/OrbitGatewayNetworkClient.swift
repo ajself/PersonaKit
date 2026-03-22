@@ -211,6 +211,22 @@ actor OrbitGatewayNetworkClient {
     return response.result
   }
 
+  func appendMeetingPromotionEvent(
+    _ request: OrbitPhase1AppendMeetingPromotionEventRequest
+  ) async throws -> OrbitPhase1AppendMeetingPromotionEventResult {
+    let response: OrbitGatewayAppendMeetingPromotionEventResponse = try await post(
+      "api/orbit/room/meeting-promotions",
+      body: OrbitGatewayAppendMeetingPromotionEventRequest(
+        workspaceSlug: request.workspaceSlug,
+        channelSlug: request.channelSlug,
+        postID: request.postID,
+        promotion: request.promotion
+      )
+    )
+
+    return response.result
+  }
+
   func createMeetingRoom(
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
@@ -224,6 +240,29 @@ actor OrbitGatewayNetworkClient {
         startedByParticipantType: request.startedByParticipantType.rawValue,
         startedByParticipantID: request.startedByParticipantID,
         members: request.members
+      )
+    )
+
+    return response.result
+  }
+
+  func promoteMeetingRoom(
+    _ request: OrbitPhase1PromoteMeetingRoomRequest
+  ) async throws -> OrbitPhase1PromoteMeetingRoomResult {
+    let response: OrbitGatewayPromoteMeetingRoomResponse = try await post(
+      "api/orbit/room/promoted-meetings",
+      body: OrbitGatewayPromoteMeetingRoomRequest(
+        originPostID: request.originPostID,
+        meeting: OrbitGatewayCreateMeetingRoomRequest(
+          workspaceSlug: request.meeting.workspaceSlug,
+          channelSlug: request.meeting.channelSlug,
+          title: request.meeting.title,
+          meetingType: request.meeting.meetingType.rawValue,
+          startedByParticipantType: request.meeting.startedByParticipantType.rawValue,
+          startedByParticipantID: request.meeting.startedByParticipantID,
+          members: request.meeting.members
+        ),
+        promotion: request.promotion
       )
     )
 

@@ -453,6 +453,34 @@ public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
   }
 }
 
+public struct OrbitGatewayAppendMeetingPromotionEventRequest: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let postID: UUID?
+  public let promotion: OrbitPhase1MeetingPromotionEventPayload
+
+  public init(
+    workspaceSlug: String,
+    channelSlug: String,
+    postID: UUID? = nil,
+    promotion: OrbitPhase1MeetingPromotionEventPayload
+  ) {
+    self.workspaceSlug = workspaceSlug
+    self.channelSlug = channelSlug
+    self.postID = postID
+    self.promotion = promotion
+  }
+
+  var runtimeRequest: OrbitPhase1AppendMeetingPromotionEventRequest {
+    OrbitPhase1AppendMeetingPromotionEventRequest(
+      workspaceSlug: workspaceSlug,
+      channelSlug: channelSlug,
+      postID: postID,
+      promotion: promotion
+    )
+  }
+}
+
 public struct OrbitGatewayCreateMeetingRoomRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
@@ -502,6 +530,32 @@ public struct OrbitGatewayCreateMeetingRoomRequest: Content, Equatable {
   }
 }
 
+public struct OrbitGatewayPromoteMeetingRoomRequest: Content, Equatable {
+  public let originPostID: UUID?
+  public let meeting: OrbitGatewayCreateMeetingRoomRequest
+  public let promotion: OrbitPhase1MeetingPromotionEventPayload
+
+  public init(
+    originPostID: UUID? = nil,
+    meeting: OrbitGatewayCreateMeetingRoomRequest,
+    promotion: OrbitPhase1MeetingPromotionEventPayload
+  ) {
+    self.originPostID = originPostID
+    self.meeting = meeting
+    self.promotion = promotion
+  }
+
+  var runtimeRequest: OrbitPhase1PromoteMeetingRoomRequest {
+    get throws {
+      OrbitPhase1PromoteMeetingRoomRequest(
+        originPostID: originPostID,
+        meeting: try meeting.runtimeRequest,
+        promotion: promotion
+      )
+    }
+  }
+}
+
 public struct OrbitGatewayCreateMeetingRoomResponse: Content, Equatable {
   public let result: OrbitPhase1CreateMeetingRoomResult
   public let workspaceSlug: String
@@ -522,6 +576,28 @@ public struct OrbitGatewayCreateMeetingRoomResponse: Content, Equatable {
   }
 }
 
+public struct OrbitGatewayPromoteMeetingRoomResponse: Content, Equatable {
+  public let result: OrbitPhase1PromoteMeetingRoomResult
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let originPostEventID: UUID
+  public let postID: UUID
+  public let threadID: UUID
+  public let memberCount: Int
+
+  public init(
+    result: OrbitPhase1PromoteMeetingRoomResult
+  ) {
+    self.result = result
+    self.workspaceSlug = result.meeting.snapshot.workspace.slug
+    self.channelSlug = result.meeting.snapshot.channel.slug
+    self.originPostEventID = result.originPostEvent.id
+    self.postID = result.meeting.snapshot.post.id
+    self.threadID = result.meeting.snapshot.thread.id
+    self.memberCount = result.meeting.snapshot.meetingMembers.count
+  }
+}
+
 public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
   public let result: OrbitPhase1AppendActivationFailureResult
   public let workspaceSlug: String
@@ -539,6 +615,28 @@ public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
     self.channelSlug = result.snapshot.channel.slug
     self.systemMessageID = result.systemMessage.id
     self.postEventID = result.postEvent.id
+    self.messageCount = result.snapshot.messages.count
+    self.threadID = result.snapshot.thread.id
+  }
+}
+
+public struct OrbitGatewayAppendMeetingPromotionEventResponse: Content, Equatable {
+  public let result: OrbitPhase1AppendMeetingPromotionEventResult
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let postEventID: UUID
+  public let systemMessageID: UUID?
+  public let messageCount: Int
+  public let threadID: UUID
+
+  public init(
+    result: OrbitPhase1AppendMeetingPromotionEventResult
+  ) {
+    self.result = result
+    self.workspaceSlug = result.snapshot.workspace.slug
+    self.channelSlug = result.snapshot.channel.slug
+    self.postEventID = result.postEvent.id
+    self.systemMessageID = result.systemMessage?.id
     self.messageCount = result.snapshot.messages.count
     self.threadID = result.snapshot.thread.id
   }

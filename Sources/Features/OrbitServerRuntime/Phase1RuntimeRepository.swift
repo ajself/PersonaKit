@@ -8,66 +8,31 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     _ room: OrbitPhase1RoomBootstrap,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
-    let realtimeEvents = try room.realtimeEvents.isEmpty
-      ? OrbitPhase1RealtimeEventProjector.bootstrapEvents(for: room)
-      : room.realtimeEvents
-
     do {
       try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
-      try await executor.execute(query: upsertWorkspaceQuery(room.workspace))
-      try await executor.execute(query: upsertChannelQuery(room.channel))
+      try await executeBootstrapRoomQueries(room, using: executor)
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
 
-      for workspacePersona in room.workspacePersonas {
-        try await executor.execute(query: upsertWorkspacePersonaQuery(workspacePersona))
-      }
+  public func promoteMeetingRoom(
+    originPostEvent: OrbitPostEventRecord,
+    originRealtimeEvents: [OrbitRealtimeEventRecord],
+    room: OrbitPhase1RoomBootstrap,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await executor.execute(query: insertPostEventQuery(originPostEvent))
 
-      for team in room.teams {
-        try await executor.execute(query: upsertTeamQuery(team))
-      }
-
-      for squad in room.squads {
-        try await executor.execute(query: upsertSquadQuery(squad))
-      }
-
-      for membership in room.workspacePersonaMemberships {
-        try await executor.execute(query: upsertWorkspacePersonaMembershipQuery(membership))
-      }
-
-      try await executor.execute(query: insertPostQuery(room.post))
-      try await executor.execute(query: insertThreadQuery(room.thread))
-
-      for realtimeEvent in realtimeEvents {
+      for realtimeEvent in originRealtimeEvents {
         try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
       }
 
-      for postParticipant in room.postParticipants {
-        try await executor.execute(query: insertPostParticipantQuery(postParticipant))
-      }
-
-      if let meetingState = room.meetingState {
-        try await executor.execute(query: upsertMeetingStateQuery(meetingState))
-      }
-
-      for meetingMember in room.meetingMembers {
-        try await executor.execute(query: upsertMeetingMemberQuery(meetingMember))
-      }
-
-      for message in room.seedMessages {
-        try await executor.execute(query: insertMessageQuery(message))
-      }
-
-      for postEvent in room.postEvents {
-        try await executor.execute(query: insertPostEventQuery(postEvent))
-      }
-
-      for personaActivation in room.personaActivations {
-        try await executor.execute(query: insertPersonaActivationQuery(personaActivation))
-      }
-
-      for agentRun in room.agentRuns {
-        try await executor.execute(query: insertAgentRunQuery(agentRun))
-      }
-
+      try await executeBootstrapRoomQueries(room, using: executor)
       try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
     } catch {
       try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
@@ -178,6 +143,88 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     } catch {
       try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
       throw error
+    }
+  }
+
+  public func appendPostEvent(
+    workspaceID: UUID,
+    _ postEvent: OrbitPostEventRecord,
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await executor.execute(query: insertPostEventQuery(postEvent))
+      for realtimeEvent in realtimeEvents {
+        try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
+
+  private func executeBootstrapRoomQueries(
+    _ room: OrbitPhase1RoomBootstrap,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    let realtimeEvents = try room.realtimeEvents.isEmpty
+      ? OrbitPhase1RealtimeEventProjector.bootstrapEvents(for: room)
+      : room.realtimeEvents
+
+    try await executor.execute(query: upsertWorkspaceQuery(room.workspace))
+    try await executor.execute(query: upsertChannelQuery(room.channel))
+
+    for workspacePersona in room.workspacePersonas {
+      try await executor.execute(query: upsertWorkspacePersonaQuery(workspacePersona))
+    }
+
+    for team in room.teams {
+      try await executor.execute(query: upsertTeamQuery(team))
+    }
+
+    for squad in room.squads {
+      try await executor.execute(query: upsertSquadQuery(squad))
+    }
+
+    for membership in room.workspacePersonaMemberships {
+      try await executor.execute(query: upsertWorkspacePersonaMembershipQuery(membership))
+    }
+
+    try await executor.execute(query: insertPostQuery(room.post))
+    try await executor.execute(query: insertThreadQuery(room.thread))
+
+    for realtimeEvent in realtimeEvents {
+      try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+    }
+
+    for postParticipant in room.postParticipants {
+      try await executor.execute(query: insertPostParticipantQuery(postParticipant))
+    }
+
+    if let meetingState = room.meetingState {
+      try await executor.execute(query: upsertMeetingStateQuery(meetingState))
+    }
+
+    for meetingMember in room.meetingMembers {
+      try await executor.execute(query: upsertMeetingMemberQuery(meetingMember))
+    }
+
+    for message in room.seedMessages {
+      try await executor.execute(query: insertMessageQuery(message))
+    }
+
+    for postEvent in room.postEvents {
+      try await executor.execute(query: insertPostEventQuery(postEvent))
+    }
+
+    for personaActivation in room.personaActivations {
+      try await executor.execute(query: insertPersonaActivationQuery(personaActivation))
+    }
+
+    for agentRun in room.agentRuns {
+      try await executor.execute(query: insertAgentRunQuery(agentRun))
     }
   }
 

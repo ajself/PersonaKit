@@ -531,6 +531,90 @@ struct OrbitServerGatewayTests {
   }
 
   @Test
+  func appendMeetingPromotionEventRouteReturnsCanonicalPromotionPayload() async throws {
+    let app = try await Application.make(.testing)
+    let postEventID = UUID(uuidString: "31313131-3131-3131-3131-313131313131")!
+
+    do {
+      OrbitGatewayRoutes.register(
+        on: app,
+        transport: StubTransport(
+          connectHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) },
+          pollHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) }
+        ),
+        promotionWriter: StubMeetingPromotionWriter { request in
+          #expect(request.workspaceSlug == "orbit")
+          #expect(request.channelSlug == "command-center")
+          #expect(request.promotion.addressedTargetReferenceID == "founding-group")
+          #expect(request.promotion.failure == nil)
+
+          let snapshot = sampleSnapshot(cursorEventID: UUID())
+          let postEvent = OrbitPostEventRecord(
+            id: postEventID,
+            postID: snapshot.room.post.id,
+            threadID: snapshot.room.thread.id,
+            eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+            payloadJSON: "{}",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_520)
+          )
+          let updatedSnapshot = OrbitPhase1RoomSnapshot(
+            workspace: snapshot.room.workspace,
+            channel: snapshot.room.channel,
+            post: snapshot.room.post,
+            thread: snapshot.room.thread,
+            messages: snapshot.room.messages,
+            postEvents: [postEvent]
+          )
+
+          return OrbitPhase1AppendMeetingPromotionEventResult(
+            snapshot: updatedSnapshot,
+            postEvent: postEvent
+          )
+        }
+      )
+
+      try XCTVaporContext.$emitWarningIfCurrentTestInfoIsAvailable.withValue(false) {
+        try app.test(
+          .POST,
+          "/api/orbit/room/meeting-promotions",
+          beforeRequest: { request in
+            try request.content.encode(
+              OrbitGatewayAppendMeetingPromotionEventRequest(
+                workspaceSlug: "orbit",
+                channelSlug: "command-center",
+                promotion: OrbitPhase1MeetingPromotionEventPayload(
+                  initiatedByParticipantID: "aj",
+                  addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+                  addressedTargetReferenceID: "founding-group",
+                  targetDisplayName: "Founding Group",
+                  meetingType: OrbitMeetingType.team.rawValue,
+                  title: "Founding Group Meeting",
+                  memberWorkspacePersonaIDs: [
+                    UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+                  ]
+                )
+              )
+            )
+          },
+          afterResponse: { response in
+            #expect(response.status == .ok)
+            let payload = try response.content.decode(OrbitGatewayAppendMeetingPromotionEventResponse.self)
+            #expect(payload.workspaceSlug == "orbit")
+            #expect(payload.channelSlug == "command-center")
+            #expect(payload.postEventID == postEventID)
+            #expect(payload.systemMessageID == nil)
+          }
+        )
+      }
+    } catch {
+      try? await app.asyncShutdown()
+      throw error
+    }
+
+    try await app.asyncShutdown()
+  }
+
+  @Test
   func pollRouteReturnsReplayPayload() async throws {
     let event = OrbitPhase1RealtimeEventEnvelope(
       id: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!,
@@ -786,6 +870,99 @@ struct OrbitServerGatewayTests {
 
     try await app.asyncShutdown()
   }
+
+  @Test
+  func promoteMeetingRoomRouteReturnsCanonicalPromotionPayload() async throws {
+    let app = try await Application.make(.testing)
+    let result = OrbitPhase1PromoteMeetingRoomResult(
+      meeting: OrbitPhase1CreateMeetingRoomResult(
+        scope: OrbitPhase1RealtimeSubscriptionScope(
+          workspaceSlug: "orbit",
+          channelSlug: "command-center",
+          postID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+        ),
+        snapshot: sampleSnapshot(cursorEventID: UUID()).room
+      ),
+      originPostEvent: OrbitPostEventRecord(
+        id: UUID(uuidString: "34343434-3434-3434-3434-343434343434")!,
+        postID: sampleSnapshot(cursorEventID: UUID()).room.post.id,
+        threadID: sampleSnapshot(cursorEventID: UUID()).room.thread.id,
+        eventType: OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+        payloadJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_521)
+      )
+    )
+
+    do {
+      OrbitGatewayRoutes.register(
+        on: app,
+        transport: StubTransport(
+          connectHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) },
+          pollHandler: { _ in .noChange(sampleSnapshot(cursorEventID: UUID()).replayCursorSession) }
+        ),
+        meetingPromoter: StubMeetingPromoter { request in
+          #expect(request.originPostID == sampleSnapshot(cursorEventID: UUID()).room.post.id)
+          #expect(request.meeting.workspaceSlug == "orbit")
+          #expect(request.meeting.channelSlug == "command-center")
+          #expect(request.meeting.title == "Founding Group Promotion")
+          #expect(request.promotion.addressedTargetReferenceID == "founding-group")
+          return result
+        }
+      )
+
+      try XCTVaporContext.$emitWarningIfCurrentTestInfoIsAvailable.withValue(false) {
+        try app.test(
+          .POST,
+          "/api/orbit/room/promoted-meetings",
+          beforeRequest: { request in
+            try request.content.encode(
+              OrbitGatewayPromoteMeetingRoomRequest(
+                originPostID: sampleSnapshot(cursorEventID: UUID()).room.post.id,
+                meeting: OrbitGatewayCreateMeetingRoomRequest(
+                  workspaceSlug: "orbit",
+                  channelSlug: "command-center",
+                  title: "Founding Group Promotion",
+                  meetingType: OrbitMeetingType.team.rawValue,
+                  startedByParticipantType: OrbitParticipantAuthorType.user.rawValue,
+                  startedByParticipantID: "aj",
+                  members: [
+                    OrbitPhase1MeetingMemberSpec(
+                      workspacePersonaID: UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+                      participationRole: .contributor,
+                      selectedReason: "Selected from founding-group target."
+                    )
+                  ]
+                ),
+                promotion: OrbitPhase1MeetingPromotionEventPayload(
+                  initiatedByParticipantID: "aj",
+                  addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+                  addressedTargetReferenceID: "founding-group",
+                  targetDisplayName: "Founding Group",
+                  meetingType: OrbitMeetingType.team.rawValue,
+                  title: "Founding Group Promotion",
+                  memberWorkspacePersonaIDs: [
+                    UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!,
+                  ]
+                )
+              )
+            )
+          },
+          afterResponse: { response in
+            #expect(response.status == .ok)
+            let payload = try response.content.decode(OrbitGatewayPromoteMeetingRoomResponse.self)
+            #expect(payload.workspaceSlug == "orbit")
+            #expect(payload.originPostEventID == result.originPostEvent.id)
+            #expect(payload.postID == result.meeting.snapshot.post.id)
+          }
+        )
+      }
+    } catch {
+      try? await app.asyncShutdown()
+      throw error
+    }
+
+    try await app.asyncShutdown()
+  }
 }
 
 private struct StubTransport: OrbitRealtimeTransportHandling {
@@ -874,6 +1051,25 @@ private struct StubFailureWriter: OrbitActivationFailureHandling {
   }
 }
 
+private struct StubMeetingPromotionWriter: OrbitMeetingPromotionEventHandling {
+  let appendHandler:
+    @Sendable (OrbitPhase1AppendMeetingPromotionEventRequest) async throws -> OrbitPhase1AppendMeetingPromotionEventResult
+
+  init(
+    _ appendHandler:
+      @escaping @Sendable (OrbitPhase1AppendMeetingPromotionEventRequest) async throws ->
+      OrbitPhase1AppendMeetingPromotionEventResult
+  ) {
+    self.appendHandler = appendHandler
+  }
+
+  func appendMeetingPromotionEvent(
+    _ request: OrbitPhase1AppendMeetingPromotionEventRequest
+  ) async throws -> OrbitPhase1AppendMeetingPromotionEventResult {
+    try await appendHandler(request)
+  }
+}
+
 private struct StubMeetingCreator: OrbitMeetingRoomCreationHandling {
   let createHandler:
     @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult
@@ -889,6 +1085,24 @@ private struct StubMeetingCreator: OrbitMeetingRoomCreationHandling {
     _ request: OrbitPhase1CreateMeetingRoomRequest
   ) async throws -> OrbitPhase1CreateMeetingRoomResult {
     try await createHandler(request)
+  }
+}
+
+private struct StubMeetingPromoter: OrbitMeetingRoomPromotionHandling {
+  let promoteHandler:
+    @Sendable (OrbitPhase1PromoteMeetingRoomRequest) async throws -> OrbitPhase1PromoteMeetingRoomResult
+
+  init(
+    _ promoteHandler:
+      @escaping @Sendable (OrbitPhase1PromoteMeetingRoomRequest) async throws -> OrbitPhase1PromoteMeetingRoomResult
+  ) {
+    self.promoteHandler = promoteHandler
+  }
+
+  func promoteMeetingRoom(
+    _ request: OrbitPhase1PromoteMeetingRoomRequest
+  ) async throws -> OrbitPhase1PromoteMeetingRoomResult {
+    try await promoteHandler(request)
   }
 }
 

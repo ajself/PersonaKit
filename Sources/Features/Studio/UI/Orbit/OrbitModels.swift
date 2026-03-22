@@ -2,7 +2,7 @@ import Foundation
 import OrbitServerRuntime
 
 struct OrbitWorkspace: Codable, Equatable {
-  static let currentSchemaVersion = 5
+  static let currentSchemaVersion = 6
 
   var schemaVersion = OrbitWorkspace.currentSchemaVersion
   var id: String
@@ -17,6 +17,7 @@ struct OrbitWorkspace: Codable, Equatable {
   var activationRecords: [OrbitActivationRecord]
   var activationContractSnapshots: [OrbitActivationContractSnapshot]
   var activationFailureRecords: [OrbitActivationFailureRecord]
+  var meetingPromotionRecords: [OrbitMeetingPromotionRecord]
   var nextMessageSequence: Int
   var nextActivationSequence: Int
   var nextActivationFailureSequence: Int
@@ -91,6 +92,14 @@ struct OrbitWorkspace: Codable, Equatable {
     _ messageID: String
   ) -> OrbitActivationFailureRecord? {
     activationFailureRecords.first { $0.systemEventMessageID == messageID }
+  }
+
+  func meetingPromotionFailureRecordForSystemEvent(
+    _ messageID: String
+  ) -> OrbitMeetingPromotionRecord? {
+    meetingPromotionRecords.first {
+      $0.outcome == .failed && $0.systemEventMessageID == messageID
+    }
   }
 
   @discardableResult
@@ -1035,6 +1044,41 @@ extension OrbitActivationFailureRecord {
   }
 }
 
+struct OrbitMeetingPromotionRecord: Codable, Equatable, Identifiable {
+  enum Outcome: String, Codable, Equatable {
+    case attempted
+    case failed
+  }
+
+  let id: String
+  let workspaceID: String?
+  let initiatedByParticipantID: String
+  let addressedTargetKind: OrbitAddressedTargetKind
+  let addressedTargetReferenceID: String
+  let targetDisplayName: String
+  let meetingType: OrbitMeetingType
+  let title: String
+  let memberWorkspacePersonaIDs: [String]
+  let outcome: Outcome
+  let systemEventMessageID: String?
+  let systemEventBody: String?
+  let detail: String?
+
+  var traceSummaryLines: [String] {
+    var lines = [
+      "target: \(addressedTargetKind.rawValue) \(addressedTargetReferenceID) | title: \(title)",
+      "meeting type: \(meetingType.rawValue) | initiated by: \(initiatedByParticipantID)",
+      "members: \(memberWorkspacePersonaIDs.isEmpty ? "none" : memberWorkspacePersonaIDs.joined(separator: ", "))",
+    ]
+
+    if let detail {
+      lines.append("detail: \(detail)")
+    }
+
+    return lines
+  }
+}
+
 enum OrbitDirectiveSource: String, Codable, Equatable {
   case participantDefault
 }
@@ -1103,6 +1147,7 @@ extension OrbitWorkspace {
     case activationRecords
     case activationContractSnapshots
     case activationFailureRecords
+    case meetingPromotionRecords
     case nextMessageSequence
     case nextActivationSequence
     case nextActivationFailureSequence
@@ -1156,6 +1201,9 @@ extension OrbitWorkspace {
     activationFailureRecords =
       try container.decodeIfPresent([OrbitActivationFailureRecord].self, forKey: .activationFailureRecords)
       ?? []
+    meetingPromotionRecords =
+      try container.decodeIfPresent([OrbitMeetingPromotionRecord].self, forKey: .meetingPromotionRecords)
+      ?? []
 
     nextMessageSequence = try container.decode(Int.self, forKey: .nextMessageSequence)
     nextActivationSequence = try container.decode(Int.self, forKey: .nextActivationSequence)
@@ -1179,6 +1227,7 @@ extension OrbitWorkspace {
     try container.encode(activationRecords, forKey: .activationRecords)
     try container.encode(activationContractSnapshots, forKey: .activationContractSnapshots)
     try container.encode(activationFailureRecords, forKey: .activationFailureRecords)
+    try container.encode(meetingPromotionRecords, forKey: .meetingPromotionRecords)
     try container.encode(nextMessageSequence, forKey: .nextMessageSequence)
     try container.encode(nextActivationSequence, forKey: .nextActivationSequence)
     try container.encode(nextActivationFailureSequence, forKey: .nextActivationFailureSequence)

@@ -220,6 +220,35 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             agentRuns: room.agentRuns
           )
         }
+      case .meetingPromotionAttempted, .meetingPromotionFailed:
+        if !room.postEvents.contains(where: { $0.id == event.id }) {
+          room = OrbitPhase1RoomSnapshot(
+            workspace: room.workspace,
+            channel: room.channel,
+            workspacePersonas: room.workspacePersonas,
+            teams: room.teams,
+            squads: room.squads,
+            workspacePersonaMemberships: room.workspacePersonaMemberships,
+            post: room.post,
+            thread: room.thread,
+            messages: room.messages,
+            postParticipants: room.postParticipants,
+            meetingState: room.meetingState,
+            meetingMembers: room.meetingMembers,
+            postEvents: room.postEvents + [
+              OrbitPostEventRecord(
+                id: event.id,
+                postID: event.postID ?? room.post.id,
+                threadID: event.threadID,
+                eventType: event.category.rawValue,
+                payloadJSON: event.payloadJSON,
+                createdAt: event.createdAt
+              )
+            ],
+            personaActivations: room.personaActivations,
+            agentRuns: room.agentRuns
+          )
+        }
       case .postCreated, .participantFailed:
         continue
       }

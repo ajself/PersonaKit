@@ -5,7 +5,7 @@ import Testing
 
 struct Phase1RealtimeContractTests {
   @Test
-  func realtimeCategoriesMatchThePacketThreeContract() {
+  func realtimeCategoriesIncludeMeetingPromotionVisibilityEvents() {
     #expect(
       OrbitPhase1RealtimeContract.categories == [
         "post.created",
@@ -15,6 +15,8 @@ struct Phase1RealtimeContractTests {
         "participant.failed",
         "activation.resolved",
         "activation.failed",
+        "meeting.promotion.attempted",
+        "meeting.promotion.failed",
       ]
     )
   }

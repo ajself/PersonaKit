@@ -178,6 +178,49 @@ struct OrbitWorkspacePersistenceTests {
   }
 
   @Test
+  func meetingPromotionEvidenceRoundTripsAcrossReload() throws {
+    let persistence = OrbitWorkspacePersistence()
+    let fileManager = FileManager.default
+    let workspaceURL = fileManager.temporaryDirectory
+      .appendingPathComponent("orbit-meeting-promotion-restart", isDirectory: true)
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+
+    try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: workspaceURL) }
+
+    var workspace = OrbitWorkspace.defaultWorkspace
+    let expectedRecord = OrbitMeetingPromotionRecord(
+      id: "promotion-failure-thread-0001-0001",
+      workspaceID: workspace.id,
+      initiatedByParticipantID: OrbitParticipantID.aj.rawValue,
+      addressedTargetKind: .team,
+      addressedTargetReferenceID: OrbitAddressTargetID.foundingGroup.rawValue,
+      targetDisplayName: OrbitAddressTargetID.foundingGroup.displayText,
+      meetingType: .team,
+      title: "Founding Group Sync",
+      memberWorkspacePersonaIDs: [
+        "workspace-persona-orbit-proddoc",
+        "workspace-persona-orbit-samwise",
+      ],
+      outcome: .failed,
+      systemEventMessageID: "msg-0099",
+      systemEventBody: "Meeting promotion failed; staying inline.",
+      detail: "Meeting room creation returned no room projection."
+    )
+    workspace.meetingPromotionRecords = [expectedRecord]
+
+    try persistence.persist(workspace, to: workspaceURL)
+
+    let loadedWorkspace = try persistence.loadWorkspace(from: workspaceURL)
+    let reloadedWorkspace = try #require(loadedWorkspace)
+
+    #expect(reloadedWorkspace.meetingPromotionRecords == [expectedRecord])
+    #expect(
+      reloadedWorkspace.meetingPromotionFailureRecordForSystemEvent("msg-0099") == expectedRecord
+    )
+  }
+
+  @Test
   func emptyWorkspaceRoundTripsWithoutInventingDiscussion() throws {
     let persistence = OrbitWorkspacePersistence()
     let fileManager = FileManager.default

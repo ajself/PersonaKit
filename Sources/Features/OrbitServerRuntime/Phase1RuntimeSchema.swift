@@ -28,6 +28,8 @@ public enum OrbitPhase1EventCategory: String, CaseIterable, Sendable {
   case participantFailed = "participant.failed"
   case activationResolved = "activation.resolved"
   case activationFailed = "activation.failed"
+  case meetingPromotionAttempted = "meeting.promotion.attempted"
+  case meetingPromotionFailed = "meeting.promotion.failed"
 }
 
 public struct OrbitPhase1SchemaStatement: Equatable, Sendable {

@@ -97,6 +97,53 @@ public struct OrbitPhase1ActivationFailurePayload: Codable, Equatable, Sendable 
   }
 }
 
+public struct OrbitPhase1MeetingPromotionFailurePayload: Codable, Equatable, Sendable {
+  public let systemEventMessageID: UUID
+  public let systemEventBody: String
+  public let detail: String
+
+  public init(
+    systemEventMessageID: UUID,
+    systemEventBody: String,
+    detail: String
+  ) {
+    self.systemEventMessageID = systemEventMessageID
+    self.systemEventBody = systemEventBody
+    self.detail = detail
+  }
+}
+
+public struct OrbitPhase1MeetingPromotionEventPayload: Codable, Equatable, Sendable {
+  public let initiatedByParticipantID: String
+  public let addressedTargetKind: String
+  public let addressedTargetReferenceID: String
+  public let targetDisplayName: String
+  public let meetingType: String
+  public let title: String
+  public let memberWorkspacePersonaIDs: [UUID]
+  public let failure: OrbitPhase1MeetingPromotionFailurePayload?
+
+  public init(
+    initiatedByParticipantID: String,
+    addressedTargetKind: String,
+    addressedTargetReferenceID: String,
+    targetDisplayName: String,
+    meetingType: String,
+    title: String,
+    memberWorkspacePersonaIDs: [UUID],
+    failure: OrbitPhase1MeetingPromotionFailurePayload? = nil
+  ) {
+    self.initiatedByParticipantID = initiatedByParticipantID
+    self.addressedTargetKind = addressedTargetKind
+    self.addressedTargetReferenceID = addressedTargetReferenceID
+    self.targetDisplayName = targetDisplayName
+    self.meetingType = meetingType
+    self.title = title
+    self.memberWorkspacePersonaIDs = memberWorkspacePersonaIDs
+    self.failure = failure
+  }
+}
+
 public struct OrbitPhase1ActivationEventPayload: Codable, Equatable, Sendable {
   public let activationID: UUID?
   public let initiatedByParticipantType: String?

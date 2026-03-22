@@ -152,8 +152,19 @@ struct OrbitServerBackedRoomCoordinator {
       )
 
       do {
+        let promotedMeeting = try await client.promoteMeetingRoom(
+          OrbitPhase1PromoteMeetingRoomRequest(
+            originPostID: scope.postID,
+            meeting: promotionAttempt.meetingRequest,
+            promotion: promotionPayload(
+              for: promotionAttempt,
+              initiatedByParticipantID: authorID
+            )
+          )
+        )
+
         let promotedScope = try await promoteConversationTurn(
-          attempt: promotionAttempt,
+          result: promotedMeeting.meeting,
           client: client
         )
 
@@ -168,14 +179,22 @@ struct OrbitServerBackedRoomCoordinator {
 
         return
       } catch {
-        _ = try await client.appendSystemMessage(
-          OrbitPhase1AppendSystemMessageRequest(
+        _ = try await client.appendMeetingPromotionEvent(
+          OrbitPhase1AppendMeetingPromotionEventRequest(
             workspaceSlug: scope.workspaceSlug,
             channelSlug: scope.channelSlug,
             postID: scope.postID,
-            body: promotionFailureBody(
-              for: promotionAttempt.targetResolution,
-              error: error
+            promotion: promotionPayload(
+              for: promotionAttempt,
+              initiatedByParticipantID: authorID,
+              failure: OrbitPhase1MeetingPromotionFailurePayload(
+                systemEventMessageID: UUID(),
+                systemEventBody: promotionFailureBody(
+                  for: promotionAttempt.targetResolution,
+                  error: error
+                ),
+                detail: promotionFailureDetail(error)
+              )
             )
           )
         )
@@ -307,11 +326,9 @@ struct OrbitServerBackedRoomCoordinator {
 
   @MainActor
   private mutating func promoteConversationTurn(
-    attempt: OrbitServerBackedRoomPromotionAttempt,
+    result: OrbitPhase1CreateMeetingRoomResult,
     client: OrbitServerBackedRoomClient
   ) async throws -> OrbitPhase1RealtimeSubscriptionScope {
-    let result = try await client.createMeetingRoom(attempt.meetingRequest)
-
     try await connect(scope: result.scope, client: client)
 
     return result.scope
@@ -521,6 +538,25 @@ struct OrbitServerBackedRoomCoordinator {
     }
   }
 
+  private func promotionPayload(
+    for attempt: OrbitServerBackedRoomPromotionAttempt,
+    initiatedByParticipantID: String,
+    failure: OrbitPhase1MeetingPromotionFailurePayload? = nil
+  ) -> OrbitPhase1MeetingPromotionEventPayload {
+    OrbitPhase1MeetingPromotionEventPayload(
+      initiatedByParticipantID: initiatedByParticipantID,
+      addressedTargetKind: attempt.targetResolution.targetKind.rawValue,
+      addressedTargetReferenceID: attempt.targetResolution.targetReferenceID,
+      targetDisplayName: attempt.targetResolution.targetDisplayName,
+      meetingType: attempt.meetingRequest.meetingType.rawValue,
+      title: attempt.meetingRequest.title,
+      memberWorkspacePersonaIDs: attempt.meetingRequest.members
+        .map(\.workspacePersonaID)
+        .sorted { $0.uuidString < $1.uuidString },
+      failure: failure
+    )
+  }
+
   private func promotionFailureBody(
     for targetResolution: OrbitTargetResolution,
     error: Error
@@ -530,8 +566,14 @@ struct OrbitServerBackedRoomCoordinator {
     attempted target: kind=\(targetResolution.targetKind.rawValue) reference=\(targetResolution.targetReferenceID) workspace=\(targetResolution.workspaceID)
     outcome: promotion did not complete
     fallback: current thread
-    detail: \(error.localizedDescription)
+    detail: \(promotionFailureDetail(error))
     """
+  }
+
+  private func promotionFailureDetail(
+    _ error: Error
+  ) -> String {
+    error.localizedDescription
   }
 
   private func activationRecord(

@@ -208,6 +208,94 @@ struct Phase1RealtimeSnapshotReducerTests {
     #expect(reduced.room.meetingMembers == initial.room.meetingMembers)
   }
 
+  @Test
+  func reducerAddsMeetingPromotionAttemptAndFailureEvidence() throws {
+    let initial = sampleSnapshot()
+    let failureMessageID = UUID(uuidString: "dededede-dede-dede-dede-dededededede")!
+    let eventDate = Date(timeIntervalSince1970: 1_742_342_520)
+    let failurePayload = OrbitPhase1MeetingPromotionEventPayload(
+      initiatedByParticipantID: "aj",
+      addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+      addressedTargetReferenceID: "founding-group",
+      targetDisplayName: "Founding Group",
+      meetingType: OrbitMeetingType.team.rawValue,
+      title: "Founding Group Meeting",
+      memberWorkspacePersonaIDs: [
+        UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!,
+      ],
+      failure: OrbitPhase1MeetingPromotionFailurePayload(
+        systemEventMessageID: failureMessageID,
+        systemEventBody: "Orbit meeting promotion failed",
+        detail: "The operation could not be completed."
+      )
+    )
+    let events = [
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .meetingPromotionAttempted,
+        createdAt: eventDate,
+        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+          OrbitPhase1MeetingPromotionEventPayload(
+            initiatedByParticipantID: "aj",
+            addressedTargetKind: OrbitAddressedTargetKind.team.rawValue,
+            addressedTargetReferenceID: "founding-group",
+            targetDisplayName: "Founding Group",
+            meetingType: OrbitMeetingType.team.rawValue,
+            title: "Founding Group Meeting",
+            memberWorkspacePersonaIDs: [
+              UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd")!,
+            ]
+          )
+        )
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: failureMessageID,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .messageCreated,
+        createdAt: eventDate.addingTimeInterval(1),
+        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+          OrbitPhase1MessageCreatedPayload(
+            messageID: failureMessageID,
+            postID: postID,
+            threadID: threadID,
+            authorType: OrbitParticipantAuthorType.system.rawValue,
+            authorID: "orbit-system",
+            body: "Orbit meeting promotion failed",
+            messageFormat: OrbitMessageFormat.plainText.rawValue,
+            state: OrbitMessageState.completed.rawValue,
+            createdAt: eventDate.addingTimeInterval(1),
+            updatedAt: eventDate.addingTimeInterval(1),
+            replyToMessageID: nil
+          )
+        )
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "bcbcbcbc-bcbc-bcbc-bcbc-bcbcbcbcbcbc")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .meetingPromotionFailed,
+        createdAt: eventDate.addingTimeInterval(1),
+        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(failurePayload)
+      ),
+    ]
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(events: events, to: initial)
+
+    #expect(reduced.room.messages.last?.id == failureMessageID)
+    #expect(
+      reduced.room.postEvents.map(\.eventType) == [
+        OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue,
+        OrbitPhase1RealtimeEventCategory.meetingPromotionFailed.rawValue,
+      ]
+    )
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let room = OrbitPhase1RoomSnapshot(
       workspace: OrbitWorkspaceRecord(

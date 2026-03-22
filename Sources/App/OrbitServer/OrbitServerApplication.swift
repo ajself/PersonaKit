@@ -32,10 +32,15 @@ enum OrbitServerApplication {
       let roomWriter = OrbitPhase1RoomWriteService(runtimeStore: runtimeStore)
       let systemWriter = OrbitPhase1SystemMessageService(runtimeStore: runtimeStore)
       let failureWriter = OrbitPhase1ActivationFailureService(runtimeStore: runtimeStore)
-      let collaboratorWriter = OrbitPhase1CollaboratorResponseService(
+      let promotionWriter = OrbitPhase1MeetingPromotionEventService(runtimeStore: runtimeStore)
+      let meetingCreator = OrbitPhase1MeetingRoomCreationService(
         runtimeStore: runtimeStore
       )
-      let meetingCreator = OrbitPhase1MeetingRoomCreationService(
+      let meetingPromoter = OrbitPhase1MeetingRoomPromotionService(
+        runtimeStore: runtimeStore,
+        meetingCreationService: meetingCreator
+      )
+      let collaboratorWriter = OrbitPhase1CollaboratorResponseService(
         runtimeStore: runtimeStore
       )
 
@@ -46,6 +51,8 @@ enum OrbitServerApplication {
         roomWriter: roomWriter,
         systemWriter: systemWriter,
         failureWriter: failureWriter,
+        promotionWriter: promotionWriter,
+        meetingPromoter: meetingPromoter,
         collaboratorWriter: collaboratorWriter,
         meetingCreator: meetingCreator
       )
@@ -64,6 +71,8 @@ enum OrbitServerApplication {
     roomWriter: (any OrbitPhase1RoomWriteServing)? = nil,
     systemWriter: (any OrbitSystemMessageHandling)? = nil,
     failureWriter: (any OrbitActivationFailureHandling)? = nil,
+    promotionWriter: (any OrbitMeetingPromotionEventHandling)? = nil,
+    meetingPromoter: (any OrbitMeetingRoomPromotionHandling)? = nil,
     collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
     meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
   ) {
@@ -80,6 +89,8 @@ enum OrbitServerApplication {
       roomWriter: roomWriter,
       systemWriter: systemWriter,
       failureWriter: failureWriter,
+      promotionWriter: promotionWriter,
+      meetingPromoter: meetingPromoter,
       collaboratorWriter: collaboratorWriter,
       meetingCreator: meetingCreator
     )

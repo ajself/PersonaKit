@@ -16,6 +16,7 @@ enum OrbitServerRoomProjection {
       activationPayloadsByID: resolvedActivationPayloadsByID
     )
     let activationFailureRecords = projectedActivationFailureRecords(from: room)
+    let meetingPromotionRecords = projectedMeetingPromotionRecords(from: room)
     let activationRecords = projectedActivationRecords(
       from: room,
       participants: participants,
@@ -55,6 +56,7 @@ enum OrbitServerRoomProjection {
       activationRecords: activationRecords,
       activationContractSnapshots: activationContractSnapshots,
       activationFailureRecords: activationFailureRecords,
+      meetingPromotionRecords: meetingPromotionRecords,
       nextMessageSequence: messages.count + 1,
       nextActivationSequence: activationRecords.count + 1,
       nextActivationFailureSequence: activationFailureRecords.count + 1
@@ -368,6 +370,52 @@ enum OrbitServerRoomProjection {
           authorizedSkillIDs: failure.authorizedSkillIDs,
           failureReason: failureReason,
           systemEventBody: failure.systemEventBody
+        )
+      }
+  }
+
+  private static func projectedMeetingPromotionRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitMeetingPromotionRecord] {
+    room.postEvents
+      .sorted(by: postEventSort)
+      .compactMap { postEvent -> OrbitMeetingPromotionRecord? in
+        let outcome: OrbitMeetingPromotionRecord.Outcome
+
+        switch postEvent.eventType {
+        case OrbitPhase1RealtimeEventCategory.meetingPromotionAttempted.rawValue:
+          outcome = .attempted
+        case OrbitPhase1RealtimeEventCategory.meetingPromotionFailed.rawValue:
+          outcome = .failed
+        default:
+          return nil
+        }
+
+        guard
+          let payload = try? OrbitPhase1RealtimeEventPayloadCodec.decode(
+            OrbitPhase1MeetingPromotionEventPayload.self,
+            from: postEvent.payloadJSON
+          ),
+          let addressedTargetKind = OrbitAddressedTargetKind(rawValue: payload.addressedTargetKind),
+          let meetingType = OrbitMeetingType(rawValue: payload.meetingType)
+        else {
+          return nil
+        }
+
+        return OrbitMeetingPromotionRecord(
+          id: postEvent.id.uuidString,
+          workspaceID: room.workspace.slug,
+          initiatedByParticipantID: payload.initiatedByParticipantID,
+          addressedTargetKind: addressedTargetKind,
+          addressedTargetReferenceID: payload.addressedTargetReferenceID,
+          targetDisplayName: payload.targetDisplayName,
+          meetingType: meetingType,
+          title: payload.title,
+          memberWorkspacePersonaIDs: payload.memberWorkspacePersonaIDs.map(\.uuidString),
+          outcome: outcome,
+          systemEventMessageID: payload.failure?.systemEventMessageID.uuidString,
+          systemEventBody: payload.failure?.systemEventBody,
+          detail: payload.failure?.detail
         )
       }
   }

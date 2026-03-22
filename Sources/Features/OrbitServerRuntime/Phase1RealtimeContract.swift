@@ -24,6 +24,8 @@ public enum OrbitPhase1RealtimeEventCategory: String, CaseIterable, Codable, Sen
   case participantFailed = "participant.failed"
   case activationResolved = "activation.resolved"
   case activationFailed = "activation.failed"
+  case meetingPromotionAttempted = "meeting.promotion.attempted"
+  case meetingPromotionFailed = "meeting.promotion.failed"
 }
 
 public struct OrbitPhase1RealtimeEventEnvelope: Codable, Equatable, Sendable {

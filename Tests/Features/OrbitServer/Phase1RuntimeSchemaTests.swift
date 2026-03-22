@@ -58,7 +58,7 @@ struct Phase1RuntimeSchemaTests {
   }
 
   @Test
-  func initialRealtimeEventCategoriesStayInsideThePacketOneContract() {
+  func initialRealtimeEventCategoriesIncludeMeetingPromotionVisibilityEvents() {
     #expect(
       OrbitPhase1RuntimeSchema.initialRealtimeEventCategories == [
         "post.created",
@@ -68,6 +68,8 @@ struct Phase1RuntimeSchemaTests {
         "participant.failed",
         "activation.resolved",
         "activation.failed",
+        "meeting.promotion.attempted",
+        "meeting.promotion.failed",
       ]
     )
   }
