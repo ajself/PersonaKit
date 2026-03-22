@@ -6,6 +6,10 @@ typealias OrbitServerBackedRoomResponseStream = AsyncThrowingStream<
   Error
 >
 
+private enum OrbitServerBackedRoomClientError: Error {
+  case meetingCreationUnavailable
+}
+
 struct OrbitServerBackedRoomClient: Sendable {
   let connectHandler: @Sendable (OrbitPhase1RealtimeConnectRequest) async throws -> OrbitPhase1RealtimeTransportResponse
   let pollHandler: @Sendable (OrbitPhase1RealtimeSession) async throws -> OrbitPhase1RealtimeTransportResponse
@@ -14,6 +18,7 @@ struct OrbitServerBackedRoomClient: Sendable {
   let appendSystemHandler: @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult
   let appendCollaboratorHandler: @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult
   let appendFailureHandler: @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
+  let createMeetingHandler: @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult
 
   init(
     connectHandler: @escaping @Sendable (OrbitPhase1RealtimeConnectRequest) async throws -> OrbitPhase1RealtimeTransportResponse,
@@ -22,7 +27,10 @@ struct OrbitServerBackedRoomClient: Sendable {
     appendHandler: @escaping @Sendable (OrbitPhase1AppendUserMessageRequest) async throws -> OrbitPhase1AppendUserMessageResult,
     appendSystemHandler: @escaping @Sendable (OrbitPhase1AppendSystemMessageRequest) async throws -> OrbitPhase1AppendSystemMessageResult,
     appendCollaboratorHandler: @escaping @Sendable (OrbitPhase1AppendCollaboratorResponseRequest) async throws -> OrbitPhase1AppendCollaboratorResponseResult,
-    appendFailureHandler: @escaping @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult
+    appendFailureHandler: @escaping @Sendable (OrbitPhase1AppendActivationFailureRequest) async throws -> OrbitPhase1AppendActivationFailureResult,
+    createMeetingHandler: @escaping @Sendable (OrbitPhase1CreateMeetingRoomRequest) async throws -> OrbitPhase1CreateMeetingRoomResult = { _ in
+      throw OrbitServerBackedRoomClientError.meetingCreationUnavailable
+    }
   ) {
     self.connectHandler = connectHandler
     self.pollHandler = pollHandler
@@ -31,6 +39,7 @@ struct OrbitServerBackedRoomClient: Sendable {
     self.appendSystemHandler = appendSystemHandler
     self.appendCollaboratorHandler = appendCollaboratorHandler
     self.appendFailureHandler = appendFailureHandler
+    self.createMeetingHandler = createMeetingHandler
   }
 
   init<
@@ -66,6 +75,48 @@ struct OrbitServerBackedRoomClient: Sendable {
       },
       appendFailureHandler: { request in
         try await failureWriter.appendActivationFailure(request)
+      }
+    )
+  }
+
+  init<
+    Transport: OrbitPhase1RealtimeTransportServing,
+    Writer: OrbitPhase1RoomWriteServing,
+    SystemWriter: OrbitPhase1SystemMessageServing,
+    FailureWriter: OrbitPhase1ActivationFailureServing,
+    CollaboratorWriter: OrbitPhase1CollaboratorResponseServing,
+    MeetingCreator: OrbitPhase1MeetingRoomCreationServing
+  >(
+    transport: Transport,
+    roomWriter: Writer,
+    systemWriter: SystemWriter,
+    failureWriter: FailureWriter,
+    collaboratorWriter: CollaboratorWriter,
+    meetingCreator: MeetingCreator
+  ) {
+    self.init(
+      connectHandler: { request in
+        try await transport.connect(request: request)
+      },
+      pollHandler: { session in
+        try await transport.poll(
+          request: OrbitPhase1RealtimePollRequest(session: session)
+        )
+      },
+      appendHandler: { request in
+        try await roomWriter.appendUserMessage(request)
+      },
+      appendSystemHandler: { request in
+        try await systemWriter.appendSystemMessage(request)
+      },
+      appendCollaboratorHandler: { request in
+        try await collaboratorWriter.appendCollaboratorResponse(request)
+      },
+      appendFailureHandler: { request in
+        try await failureWriter.appendActivationFailure(request)
+      },
+      createMeetingHandler: { request in
+        try await meetingCreator.createMeetingRoom(request)
       }
     )
   }
@@ -128,5 +179,11 @@ struct OrbitServerBackedRoomClient: Sendable {
     _ request: OrbitPhase1AppendActivationFailureRequest
   ) async throws -> OrbitPhase1AppendActivationFailureResult {
     try await appendFailureHandler(request)
+  }
+
+  func createMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    try await createMeetingHandler(request)
   }
 }

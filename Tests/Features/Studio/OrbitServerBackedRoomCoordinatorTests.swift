@@ -911,7 +911,9 @@ struct OrbitServerBackedRoomCoordinatorTests {
           id: UUID(uuidString: "24242424-2424-2424-2424-242424242424")!,
           workspacePersonaID: UUID(uuidString: "66666666-6666-6666-6666-666666666666")!,
           triggerMessageID: updatedMessage.id,
-          responseMode: .lightweightMeeting
+          responseMode: .currentThread,
+          addressedTargetKind: .team,
+          addressedTargetReferenceID: OrbitAddressTargetID.foundingGroup.rawValue
         ),
         agentRun: collaboratorRun(
           id: UUID(uuidString: "25252525-2525-2525-2525-252525252525")!,
@@ -1557,9 +1559,18 @@ struct OrbitServerBackedRoomCoordinatorTests {
     id: UUID,
     workspacePersonaID: UUID,
     triggerMessageID: UUID,
-    responseMode: OrbitCanonicalResponseMode = .directAddress
+    responseMode: OrbitCanonicalResponseMode = .directAddress,
+    addressedTargetKind: OrbitAddressedTargetKind? = nil,
+    addressedTargetReferenceID: String? = nil
   ) -> OrbitPersonaActivationRecord {
-    OrbitPersonaActivationRecord(
+    let resolvedTargetKind = addressedTargetKind ?? (responseMode == .directAddress ? .collaborator : .team)
+    let resolvedTargetReferenceID =
+      addressedTargetReferenceID
+      ?? (resolvedTargetKind == .collaborator
+        ? workspacePersonaID.uuidString
+        : OrbitAddressTargetID.foundingGroup.rawValue)
+
+    return OrbitPersonaActivationRecord(
       id: id,
       initiatedByParticipantType: .user,
       initiatedByParticipantID: "aj",
@@ -1568,10 +1579,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
       originPostID: postID,
       originThreadID: threadID,
       triggerMessageID: triggerMessageID,
-      addressedTargetKind: responseMode == .lightweightMeeting ? .team : .collaborator,
-      addressedTargetReferenceID: responseMode == .lightweightMeeting
-        ? OrbitAddressTargetID.foundingGroup.rawValue
-        : workspacePersonaID.uuidString,
+      addressedTargetKind: resolvedTargetKind,
+      addressedTargetReferenceID: resolvedTargetReferenceID,
       resolvedWorkspacePersonaInstanceID: workspacePersonaID,
       responseMode: responseMode,
       createdAt: Date(timeIntervalSince1970: 1_742_342_521)

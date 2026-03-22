@@ -36,3 +36,11 @@ public protocol OrbitCollaboratorResponseHandling: Sendable {
 }
 
 extension OrbitPhase1CollaboratorResponseService: OrbitCollaboratorResponseHandling {}
+
+public protocol OrbitMeetingRoomCreationHandling: Sendable {
+  func createMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1CreateMeetingRoomResult
+}
+
+extension OrbitPhase1MeetingRoomCreationService: OrbitMeetingRoomCreationHandling {}

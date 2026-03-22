@@ -101,6 +101,14 @@ struct OrbitServerBackedRoomClientTests {
         createdAt: Date(timeIntervalSince1970: 1_742_342_512)
       )
     )
+    let meetingResult = OrbitPhase1CreateMeetingRoomResult(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: snapshot.room.post.id
+      ),
+      snapshot: snapshot.room
+    )
     let transport = StubClientTransport(
       connectResponse: .bootstrap(snapshot.replayCursorSession, snapshot),
       pollResponse: .noChange(snapshot.replayCursorSession)
@@ -109,12 +117,14 @@ struct OrbitServerBackedRoomClientTests {
     let systemWriter = StubClientSystemWriter(result: systemResult)
     let failureWriter = StubClientFailureWriter(result: failureResult)
     let collaboratorWriter = StubClientCollaboratorWriter(result: collaboratorResult)
+    let meetingCreator = StubClientMeetingCreator(result: meetingResult)
     let client = OrbitServerBackedRoomClient(
       transport: transport,
       roomWriter: roomWriter,
       systemWriter: systemWriter,
       failureWriter: failureWriter,
-      collaboratorWriter: collaboratorWriter
+      collaboratorWriter: collaboratorWriter,
+      meetingCreator: meetingCreator
     )
     let scope = OrbitPhase1RealtimeSubscriptionScope(
       workspaceSlug: "orbit",
@@ -172,6 +182,23 @@ struct OrbitServerBackedRoomClientTests {
         )
       )
     )
+    let meetingResponse = try await client.createMeetingRoom(
+      OrbitPhase1CreateMeetingRoomRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        title: "Meeting room",
+        meetingType: .team,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        members: [
+          OrbitPhase1MeetingMemberSpec(
+            workspacePersonaID: UUID(uuidString: "77777777-7777-7777-7777-777777777777")!,
+            participationRole: .contributor,
+            selectedReason: "Selected from founding-group target."
+          )
+        ]
+      )
+    )
 
     #expect(connectResponse == .bootstrap(snapshot.replayCursorSession, snapshot))
     #expect(pollResponse == .noChange(snapshot.replayCursorSession))
@@ -179,6 +206,7 @@ struct OrbitServerBackedRoomClientTests {
     #expect(collaboratorResponse == collaboratorResult)
     #expect(systemResponse == systemResult)
     #expect(failureResponse == failureResult)
+    #expect(meetingResponse == meetingResult)
     #expect(
       await transport.connectCalls == [
         OrbitPhase1RealtimeConnectRequest(
@@ -192,6 +220,7 @@ struct OrbitServerBackedRoomClientTests {
     #expect(await systemWriter.requests.first?.body == "Meeting system event")
     #expect(await failureWriter.requests.first?.failure.failureReason == "unauthorizedSkillPosture")
     #expect(await collaboratorWriter.requests.first?.body == "Canonical collaborator response")
+    #expect(await meetingCreator.requests.first?.title == "Meeting room")
   }
 
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
@@ -344,6 +373,24 @@ private actor StubClientFailureWriter: OrbitPhase1ActivationFailureServing {
   func appendActivationFailure(
     _ request: OrbitPhase1AppendActivationFailureRequest
   ) async throws -> OrbitPhase1AppendActivationFailureResult {
+    requests.append(request)
+    return result
+  }
+}
+
+private actor StubClientMeetingCreator: OrbitPhase1MeetingRoomCreationServing {
+  let result: OrbitPhase1CreateMeetingRoomResult
+  var requests = [OrbitPhase1CreateMeetingRoomRequest]()
+
+  init(
+    result: OrbitPhase1CreateMeetingRoomResult
+  ) {
+    self.result = result
+  }
+
+  func createMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1CreateMeetingRoomResult {
     requests.append(request)
     return result
   }

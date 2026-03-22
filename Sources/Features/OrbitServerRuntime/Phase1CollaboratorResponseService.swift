@@ -3,6 +3,7 @@ import Foundation
 public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let workspacePersonaID: UUID
   public let initiatedByParticipantID: String
   public let triggerMessageID: UUID
@@ -16,6 +17,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     workspacePersonaID: UUID,
     initiatedByParticipantID: String,
     triggerMessageID: UUID,
@@ -28,6 +30,7 @@ public struct OrbitPhase1AppendCollaboratorResponseRequest: Equatable, Sendable 
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.workspacePersonaID = workspacePersonaID
     self.initiatedByParticipantID = initiatedByParticipantID
     self.triggerMessageID = triggerMessageID
@@ -66,7 +69,8 @@ public enum OrbitPhase1CollaboratorResponseServiceError: Error, Equatable {
 }
 
 public struct OrbitPhase1CollaboratorResponseService: Sendable {
-  public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
+  public typealias SnapshotLoader =
+    @Sendable (String, String, UUID?) async throws -> OrbitPhase1RoomSnapshot?
   public typealias ResponseAppender =
     @Sendable (
       UUID,
@@ -108,7 +112,11 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
   public func appendCollaboratorResponse(
     _ request: OrbitPhase1AppendCollaboratorResponseRequest
   ) async throws -> OrbitPhase1AppendCollaboratorResponseResult {
-    guard let snapshot = try await loadSnapshot(request.workspaceSlug, request.channelSlug) else {
+    guard let snapshot = try await loadSnapshot(
+      request.workspaceSlug,
+      request.channelSlug,
+      request.postID
+    ) else {
       throw OrbitPhase1CollaboratorResponseServiceError.roomNotFound
     }
 
@@ -242,10 +250,11 @@ public extension OrbitPhase1CollaboratorResponseService {
     makePostEventID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.init(
-      loadSnapshot: { workspaceSlug, channelSlug in
+      loadSnapshot: { workspaceSlug, channelSlug, postID in
         try await runtimeStore.loadRoomSnapshot(
           workspaceSlug: workspaceSlug,
-          channelSlug: channelSlug
+          channelSlug: channelSlug,
+          postID: postID
         )
       },
       appendResponse: {

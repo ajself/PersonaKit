@@ -16,7 +16,7 @@ struct Phase1ActivationFailureServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = ActivationFailureAppendRecorder()
     let service = OrbitPhase1ActivationFailureService(
-      loadSnapshot: { _, _ in sampleSnapshot() },
+      loadSnapshot: { _, _, _ in sampleSnapshot() },
       appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, _, _ in
         await recorder.record(
           workspaceID: workspaceID,
@@ -68,7 +68,7 @@ struct Phase1ActivationFailureServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = ActivationFailureAppendRecorder()
     let service = OrbitPhase1ActivationFailureService(
-      loadSnapshot: { _, _ in sampleCreatedMeetingSnapshot() },
+      loadSnapshot: { _, _, _ in sampleCreatedMeetingSnapshot() },
       appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, meetingState, _ in
         await recorder.record(
           workspaceID: workspaceID,

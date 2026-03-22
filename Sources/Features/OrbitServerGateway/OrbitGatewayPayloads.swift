@@ -5,6 +5,7 @@ import Vapor
 public struct OrbitGatewayConnectRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let cursorWorkspaceID: UUID?
   public let cursorEventID: UUID?
   public let cursorEventCreatedAt: Date?
@@ -12,12 +13,14 @@ public struct OrbitGatewayConnectRequest: Content, Equatable {
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     cursorWorkspaceID: UUID? = nil,
     cursorEventID: UUID? = nil,
     cursorEventCreatedAt: Date? = nil
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.cursorWorkspaceID = cursorWorkspaceID
     self.cursorEventID = cursorEventID
     self.cursorEventCreatedAt = cursorEventCreatedAt
@@ -27,7 +30,8 @@ public struct OrbitGatewayConnectRequest: Content, Equatable {
     OrbitPhase1RealtimeConnectRequest(
       scope: OrbitPhase1RealtimeSubscriptionScope(
         workspaceSlug: workspaceSlug,
-        channelSlug: channelSlug
+        channelSlug: channelSlug,
+        postID: postID
       ),
       cursor: cursorEventID.flatMap { eventID in
         guard let cursorWorkspaceID else {
@@ -61,6 +65,7 @@ public struct OrbitGatewayPollRequest: Content, Equatable {
 public struct OrbitGatewaySessionPayload: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let workspaceID: UUID
   public let cursorEventID: UUID?
   public let cursorEventCreatedAt: Date?
@@ -70,6 +75,7 @@ public struct OrbitGatewaySessionPayload: Content, Equatable {
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     workspaceID: UUID,
     cursorEventID: UUID?,
     cursorEventCreatedAt: Date?,
@@ -78,6 +84,7 @@ public struct OrbitGatewaySessionPayload: Content, Equatable {
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.workspaceID = workspaceID
     self.cursorEventID = cursorEventID
     self.cursorEventCreatedAt = cursorEventCreatedAt
@@ -90,6 +97,7 @@ public struct OrbitGatewaySessionPayload: Content, Equatable {
   ) {
     self.workspaceSlug = session.scope.workspaceSlug
     self.channelSlug = session.scope.channelSlug
+    self.postID = session.scope.postID
     self.workspaceID = session.replayCursor.workspaceID
     self.cursorEventID = session.replayCursor.lastEventID
     self.cursorEventCreatedAt = session.replayCursor.lastEventCreatedAt
@@ -101,7 +109,8 @@ public struct OrbitGatewaySessionPayload: Content, Equatable {
     OrbitPhase1RealtimeSession(
       scope: OrbitPhase1RealtimeSubscriptionScope(
         workspaceSlug: workspaceSlug,
-        channelSlug: channelSlug
+        channelSlug: channelSlug,
+        postID: postID
       ),
       replayCursor: OrbitPhase1ReplayCursor(
         workspaceID: workspaceID,
@@ -218,17 +227,20 @@ public struct OrbitGatewayEventPayload: Content, Equatable {
 public struct OrbitGatewayAppendMessageRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let authorID: String
   public let body: String
 
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     authorID: String,
     body: String
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.authorID = authorID
     self.body = body
   }
@@ -237,6 +249,7 @@ public struct OrbitGatewayAppendMessageRequest: Content, Equatable {
     OrbitPhase1AppendUserMessageRequest(
       workspaceSlug: workspaceSlug,
       channelSlug: channelSlug,
+      postID: postID,
       authorID: authorID,
       body: body
     )
@@ -266,17 +279,20 @@ public struct OrbitGatewayAppendMessageResponse: Content, Equatable {
 public struct OrbitGatewayAppendSystemMessageRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let body: String
   public let replyToMessageID: UUID?
 
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     body: String,
     replyToMessageID: UUID? = nil
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.body = body
     self.replyToMessageID = replyToMessageID
   }
@@ -285,6 +301,7 @@ public struct OrbitGatewayAppendSystemMessageRequest: Content, Equatable {
     OrbitPhase1AppendSystemMessageRequest(
       workspaceSlug: workspaceSlug,
       channelSlug: channelSlug,
+      postID: postID,
       body: body,
       replyToMessageID: replyToMessageID
     )
@@ -314,6 +331,7 @@ public struct OrbitGatewayAppendSystemMessageResponse: Content, Equatable {
 public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let workspacePersonaID: UUID
   public let initiatedByParticipantID: String
   public let triggerMessageID: UUID
@@ -327,6 +345,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     workspacePersonaID: UUID,
     initiatedByParticipantID: String,
     triggerMessageID: UUID,
@@ -339,6 +358,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.workspacePersonaID = workspacePersonaID
     self.initiatedByParticipantID = initiatedByParticipantID
     self.triggerMessageID = triggerMessageID
@@ -361,6 +381,7 @@ public struct OrbitGatewayAppendCollaboratorResponseRequest: Content, Equatable 
     return OrbitPhase1AppendCollaboratorResponseRequest(
       workspaceSlug: workspaceSlug,
       channelSlug: channelSlug,
+      postID: postID,
       workspacePersonaID: workspacePersonaID,
       initiatedByParticipantID: initiatedByParticipantID,
       triggerMessageID: triggerMessageID,
@@ -399,6 +420,7 @@ public struct OrbitGatewayAppendCollaboratorResponse: Content, Equatable {
 public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let initiatedByParticipantID: String
   public let triggerMessageID: UUID
   public let failure: OrbitPhase1ActivationFailurePayload
@@ -406,12 +428,14 @@ public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     initiatedByParticipantID: String,
     triggerMessageID: UUID,
     failure: OrbitPhase1ActivationFailurePayload
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.initiatedByParticipantID = initiatedByParticipantID
     self.triggerMessageID = triggerMessageID
     self.failure = failure
@@ -421,10 +445,80 @@ public struct OrbitGatewayAppendActivationFailureRequest: Content, Equatable {
     OrbitPhase1AppendActivationFailureRequest(
       workspaceSlug: workspaceSlug,
       channelSlug: channelSlug,
+      postID: postID,
       initiatedByParticipantID: initiatedByParticipantID,
       triggerMessageID: triggerMessageID,
       failure: failure
     )
+  }
+}
+
+public struct OrbitGatewayCreateMeetingRoomRequest: Content, Equatable {
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let title: String
+  public let meetingType: String
+  public let startedByParticipantType: String
+  public let startedByParticipantID: String
+  public let members: [OrbitPhase1MeetingMemberSpec]
+
+  public init(
+    workspaceSlug: String,
+    channelSlug: String,
+    title: String,
+    meetingType: String,
+    startedByParticipantType: String,
+    startedByParticipantID: String,
+    members: [OrbitPhase1MeetingMemberSpec]
+  ) {
+    self.workspaceSlug = workspaceSlug
+    self.channelSlug = channelSlug
+    self.title = title
+    self.meetingType = meetingType
+    self.startedByParticipantType = startedByParticipantType
+    self.startedByParticipantID = startedByParticipantID
+    self.members = members
+  }
+
+  var runtimeRequest: OrbitPhase1CreateMeetingRoomRequest {
+    get throws {
+      guard
+        let meetingType = OrbitMeetingType(rawValue: meetingType),
+        let participantType = OrbitParticipantAuthorType(rawValue: startedByParticipantType)
+      else {
+        throw Abort(.badRequest)
+      }
+
+      return OrbitPhase1CreateMeetingRoomRequest(
+        workspaceSlug: workspaceSlug,
+        channelSlug: channelSlug,
+        title: title,
+        meetingType: meetingType,
+        startedByParticipantType: participantType,
+        startedByParticipantID: startedByParticipantID,
+        members: members
+      )
+    }
+  }
+}
+
+public struct OrbitGatewayCreateMeetingRoomResponse: Content, Equatable {
+  public let result: OrbitPhase1CreateMeetingRoomResult
+  public let workspaceSlug: String
+  public let channelSlug: String
+  public let postID: UUID
+  public let threadID: UUID
+  public let memberCount: Int
+
+  public init(
+    result: OrbitPhase1CreateMeetingRoomResult
+  ) {
+    self.result = result
+    self.workspaceSlug = result.snapshot.workspace.slug
+    self.channelSlug = result.snapshot.channel.slug
+    self.postID = result.snapshot.post.id
+    self.threadID = result.snapshot.thread.id
+    self.memberCount = result.snapshot.meetingMembers.count
   }
 }
 
@@ -453,6 +547,7 @@ public struct OrbitGatewayAppendActivationFailureResponse: Content, Equatable {
 public struct OrbitGatewayWebSocketConnectQuery: Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let cursorWorkspaceID: UUID?
   public let cursorEventID: UUID?
   public let cursorEventCreatedAt: Date?
@@ -460,12 +555,14 @@ public struct OrbitGatewayWebSocketConnectQuery: Equatable, Sendable {
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     cursorWorkspaceID: UUID? = nil,
     cursorEventID: UUID? = nil,
     cursorEventCreatedAt: Date? = nil
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.cursorWorkspaceID = cursorWorkspaceID
     self.cursorEventID = cursorEventID
     self.cursorEventCreatedAt = cursorEventCreatedAt
@@ -475,6 +572,7 @@ public struct OrbitGatewayWebSocketConnectQuery: Equatable, Sendable {
     OrbitGatewayConnectRequest(
       workspaceSlug: workspaceSlug,
       channelSlug: channelSlug,
+      postID: postID,
       cursorWorkspaceID: cursorWorkspaceID,
       cursorEventID: cursorEventID,
       cursorEventCreatedAt: cursorEventCreatedAt

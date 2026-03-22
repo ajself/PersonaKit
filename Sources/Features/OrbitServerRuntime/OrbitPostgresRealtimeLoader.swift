@@ -15,13 +15,15 @@ public struct OrbitPostgresRealtimeLoader: Sendable {
   ) async throws -> OrbitPhase1RealtimeSnapshot? {
     guard let room = try await runtimeStore.loadRoomSnapshot(
       workspaceSlug: scope.workspaceSlug,
-      channelSlug: scope.channelSlug
+      channelSlug: scope.channelSlug,
+      postID: scope.postID
     ) else {
       return nil
     }
 
     let events = try await runtimeStore.loadRealtimeEvents(
       workspaceID: room.workspace.id,
+      postID: scope.postID,
       after: nil
     )
     let cursor = OrbitPhase1RealtimeContract.makeReplayCursor(
@@ -41,13 +43,15 @@ public struct OrbitPostgresRealtimeLoader: Sendable {
   ) async throws -> OrbitPhase1RealtimeReplayBatch {
     guard try await runtimeStore.loadRoomSnapshot(
       workspaceSlug: scope.workspaceSlug,
-      channelSlug: scope.channelSlug
+      channelSlug: scope.channelSlug,
+      postID: scope.postID
     ) != nil else {
       return OrbitPhase1RealtimeReplayBatch(events: [], hasGap: false)
     }
 
     let replayEvents = try await runtimeStore.loadRealtimeEvents(
       workspaceID: cursor.workspaceID,
+      postID: scope.postID,
       after: cursor
     )
 

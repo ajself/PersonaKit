@@ -119,12 +119,12 @@ enum OrbitParticipantResponseBridge {
       return .directMessage
     }
 
-    let targetKind = targetResolution(
+    _ = targetResolution(
       in: workspace,
       addressedParticipantID: addressedParticipantID
-    ).targetKind
+    )
 
-    return targetKind == .collaborator ? .directMessage : .lightweightMeeting
+    return .directMessage
   }
 
   static func triggerSource(
@@ -140,7 +140,7 @@ enum OrbitParticipantResponseBridge {
       addressedParticipantID: addressedParticipantID
     ).targetKind
 
-    return targetKind == .collaborator ? .directAddress : .meetingInvocation
+    return targetKind == .collaborator ? .directAddress : .generalThreadReply
   }
 
   static func systemEventBody(

@@ -458,6 +458,31 @@ public struct OrbitMeetingMemberRecord: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitPhase1MeetingRoomContext: Equatable, Sendable {
+  public let workspace: OrbitWorkspaceRecord
+  public let channel: OrbitChannelRecord
+  public let workspacePersonas: [OrbitWorkspacePersonaRecord]
+  public let teams: [OrbitTeamRecord]
+  public let squads: [OrbitSquadRecord]
+  public let workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord]
+
+  public init(
+    workspace: OrbitWorkspaceRecord,
+    channel: OrbitChannelRecord,
+    workspacePersonas: [OrbitWorkspacePersonaRecord] = [],
+    teams: [OrbitTeamRecord] = [],
+    squads: [OrbitSquadRecord] = [],
+    workspacePersonaMemberships: [OrbitWorkspacePersonaMembershipRecord] = []
+  ) {
+    self.workspace = workspace
+    self.channel = channel
+    self.workspacePersonas = workspacePersonas
+    self.teams = teams
+    self.squads = squads
+    self.workspacePersonaMemberships = workspacePersonaMemberships
+  }
+}
+
 public struct OrbitPostEventRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID

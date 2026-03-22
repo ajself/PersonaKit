@@ -521,9 +521,9 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     let responseAddressedParticipantID =
-      triggerSource == .meetingInvocation
-      ? (triggerMessage.addressedParticipantID ?? OrbitParticipantID.aj.rawValue)
-      : OrbitParticipantID.aj.rawValue
+      triggerSource == .directAddress
+      ? OrbitParticipantID.aj.rawValue
+      : (triggerMessage.addressedParticipantID ?? OrbitParticipantID.aj.rawValue)
 
     let responseMessage = appendMessage(
       threadIndex: threadIndex,

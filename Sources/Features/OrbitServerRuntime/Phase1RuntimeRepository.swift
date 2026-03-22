@@ -596,6 +596,97 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
 
   public func selectRoomSnapshotQuery(
     workspaceSlug: String,
+    channelSlug: String,
+    postID: UUID? = nil
+  ) -> PostgresQuery {
+    if let postID {
+      """
+      SELECT
+        workspace.id AS workspace_id,
+        workspace.slug AS workspace_slug,
+        workspace.name AS workspace_name,
+        workspace.status AS workspace_status,
+        workspace.created_at AS workspace_created_at,
+        workspace.archived_at AS workspace_archived_at,
+        channel.id AS channel_id,
+        channel.slug AS channel_slug,
+        channel.name AS channel_name,
+        channel.purpose AS channel_purpose,
+        channel.status AS channel_status,
+        channel.created_at AS channel_created_at,
+        channel.archived_at AS channel_archived_at,
+        post.id AS post_id,
+        post.workspace_id AS post_workspace_id,
+        post.channel_id AS post_channel_id,
+        post.post_type AS post_type,
+        post.created_by_participant_type AS post_created_by_participant_type,
+        post.created_by_participant_id AS post_created_by_participant_id,
+        post.title AS post_title,
+        post.status AS post_status,
+        post.created_at AS post_created_at,
+        post.archived_at AS post_archived_at,
+        thread.id AS thread_id,
+        thread.post_id AS thread_post_id,
+        thread.status AS thread_status,
+        thread.last_activity_at AS thread_last_activity_at,
+        thread.created_at AS thread_created_at,
+        thread.closed_at AS thread_closed_at
+      FROM workspace
+      JOIN channel ON channel.workspace_id = workspace.id
+      JOIN post ON post.channel_id = channel.id
+      JOIN thread ON thread.post_id = post.id
+      WHERE workspace.slug = \(workspaceSlug)
+        AND channel.slug = \(channelSlug)
+        AND post.id = \(postID)
+      ORDER BY thread.created_at ASC
+      LIMIT 1
+      """
+    } else {
+      """
+      SELECT
+        workspace.id AS workspace_id,
+        workspace.slug AS workspace_slug,
+        workspace.name AS workspace_name,
+        workspace.status AS workspace_status,
+        workspace.created_at AS workspace_created_at,
+        workspace.archived_at AS workspace_archived_at,
+        channel.id AS channel_id,
+        channel.slug AS channel_slug,
+        channel.name AS channel_name,
+        channel.purpose AS channel_purpose,
+        channel.status AS channel_status,
+        channel.created_at AS channel_created_at,
+        channel.archived_at AS channel_archived_at,
+        post.id AS post_id,
+        post.workspace_id AS post_workspace_id,
+        post.channel_id AS post_channel_id,
+        post.post_type AS post_type,
+        post.created_by_participant_type AS post_created_by_participant_type,
+        post.created_by_participant_id AS post_created_by_participant_id,
+        post.title AS post_title,
+        post.status AS post_status,
+        post.created_at AS post_created_at,
+        post.archived_at AS post_archived_at,
+        thread.id AS thread_id,
+        thread.post_id AS thread_post_id,
+        thread.status AS thread_status,
+        thread.last_activity_at AS thread_last_activity_at,
+        thread.created_at AS thread_created_at,
+        thread.closed_at AS thread_closed_at
+      FROM workspace
+      JOIN channel ON channel.workspace_id = workspace.id
+      JOIN post ON post.channel_id = channel.id
+      JOIN thread ON thread.post_id = post.id
+      WHERE workspace.slug = \(workspaceSlug)
+        AND channel.slug = \(channelSlug)
+      ORDER BY post.created_at ASC, thread.created_at ASC
+      LIMIT 1
+      """
+    }
+  }
+
+  public func selectMeetingRoomContextQuery(
+    workspaceSlug: String,
     channelSlug: String
   ) -> PostgresQuery {
     """
@@ -607,35 +698,17 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       workspace.created_at AS workspace_created_at,
       workspace.archived_at AS workspace_archived_at,
       channel.id AS channel_id,
+      channel.workspace_id AS channel_workspace_id,
       channel.slug AS channel_slug,
       channel.name AS channel_name,
       channel.purpose AS channel_purpose,
       channel.status AS channel_status,
       channel.created_at AS channel_created_at,
-      channel.archived_at AS channel_archived_at,
-      post.id AS post_id,
-      post.workspace_id AS post_workspace_id,
-      post.channel_id AS post_channel_id,
-      post.post_type AS post_type,
-      post.created_by_participant_type AS post_created_by_participant_type,
-      post.created_by_participant_id AS post_created_by_participant_id,
-      post.title AS post_title,
-      post.status AS post_status,
-      post.created_at AS post_created_at,
-      post.archived_at AS post_archived_at,
-      thread.id AS thread_id,
-      thread.post_id AS thread_post_id,
-      thread.status AS thread_status,
-      thread.last_activity_at AS thread_last_activity_at,
-      thread.created_at AS thread_created_at,
-      thread.closed_at AS thread_closed_at
+      channel.archived_at AS channel_archived_at
     FROM workspace
     JOIN channel ON channel.workspace_id = workspace.id
-    JOIN post ON post.channel_id = channel.id
-    JOIN thread ON thread.post_id = post.id
     WHERE workspace.slug = \(workspaceSlug)
       AND channel.slug = \(channelSlug)
-    ORDER BY post.created_at ASC, thread.created_at ASC
     LIMIT 1
     """
   }
@@ -737,12 +810,34 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
 
   public func selectRealtimeEventsQuery(
     workspaceID: UUID,
+    postID: UUID? = nil,
     after cursor: OrbitPhase1ReplayCursor?
   ) -> PostgresQuery {
     if let cursor,
       let lastEventCreatedAt = cursor.lastEventCreatedAt,
       let lastEventID = cursor.lastEventID
     {
+      if let postID {
+        return """
+        SELECT
+          id,
+          workspace_id,
+          post_id,
+          thread_id,
+          category,
+          payload,
+          created_at
+        FROM realtime_event
+        WHERE workspace_id = \(workspaceID)
+          AND post_id = \(postID)
+          AND (
+            created_at > \(lastEventCreatedAt)
+            OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
+          )
+        ORDER BY created_at ASC, id ASC
+        """
+      }
+
       return """
       SELECT
         id,
@@ -758,6 +853,23 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
           created_at > \(lastEventCreatedAt)
           OR (created_at = \(lastEventCreatedAt) AND id > \(lastEventID))
         )
+      ORDER BY created_at ASC, id ASC
+      """
+    }
+
+    if let postID {
+      return """
+      SELECT
+        id,
+        workspace_id,
+        post_id,
+        thread_id,
+        category,
+        payload,
+        created_at
+      FROM realtime_event
+      WHERE workspace_id = \(workspaceID)
+        AND post_id = \(postID)
       ORDER BY created_at ASC, id ASC
       """
     }

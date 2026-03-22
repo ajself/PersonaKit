@@ -181,13 +181,15 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   public func loadRoomSnapshot(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws -> OrbitPhase1RoomSnapshot? {
     try await withClient { client in
       let snapshotRows = try await client.query(
         repository.selectRoomSnapshotQuery(
           workspaceSlug: workspaceSlug,
-          channelSlug: channelSlug
+          channelSlug: channelSlug,
+          postID: postID
         )
       ).collect()
 
@@ -328,8 +330,83 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func loadMeetingRoomContext(
+    workspaceSlug: String,
+    channelSlug: String,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitPhase1MeetingRoomContext? {
+    try await withClient { client in
+      let contextRows = try await client.query(
+        repository.selectMeetingRoomContextQuery(
+          workspaceSlug: workspaceSlug,
+          channelSlug: channelSlug
+        )
+      ).collect()
+
+      guard let contextRow = contextRows.first else {
+        return nil
+      }
+
+      let randomAccessRow = contextRow.makeRandomAccess()
+      let workspace = try decodeWorkspace(from: randomAccessRow)
+      let channel = try decodeChannel(from: randomAccessRow)
+
+      let workspacePersonaRows = try await client.query(
+        repository.selectWorkspacePersonasQuery(workspaceID: workspace.id)
+      )
+
+      var workspacePersonas = [OrbitWorkspacePersonaRecord]()
+      for try await workspacePersonaRow in workspacePersonaRows {
+        workspacePersonas.append(
+          try decodeWorkspacePersona(from: workspacePersonaRow.makeRandomAccess())
+        )
+      }
+
+      let teamRows = try await client.query(
+        repository.selectTeamsQuery(workspaceID: workspace.id)
+      )
+
+      var teams = [OrbitTeamRecord]()
+      for try await teamRow in teamRows {
+        teams.append(try decodeTeam(from: teamRow.makeRandomAccess()))
+      }
+
+      let squadRows = try await client.query(
+        repository.selectSquadsQuery(workspaceID: workspace.id)
+      )
+
+      var squads = [OrbitSquadRecord]()
+      for try await squadRow in squadRows {
+        squads.append(try decodeSquad(from: squadRow.makeRandomAccess()))
+      }
+
+      let workspacePersonaMembershipRows = try await client.query(
+        repository.selectWorkspacePersonaMembershipsQuery(workspaceID: workspace.id)
+      )
+
+      var workspacePersonaMemberships = [OrbitWorkspacePersonaMembershipRecord]()
+      for try await workspacePersonaMembershipRow in workspacePersonaMembershipRows {
+        workspacePersonaMemberships.append(
+          try decodeWorkspacePersonaMembership(
+            from: workspacePersonaMembershipRow.makeRandomAccess()
+          )
+        )
+      }
+
+      return OrbitPhase1MeetingRoomContext(
+        workspace: workspace,
+        channel: channel,
+        workspacePersonas: workspacePersonas,
+        teams: teams,
+        squads: squads,
+        workspacePersonaMemberships: workspacePersonaMemberships
+      )
+    }
+  }
+
   public func loadRealtimeEvents(
     workspaceID: UUID,
+    postID: UUID? = nil,
     after cursor: OrbitPhase1ReplayCursor?,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws -> [OrbitPhase1RealtimeEventEnvelope] {
@@ -337,6 +414,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       let rows = try await client.query(
         repository.selectRealtimeEventsQuery(
           workspaceID: workspaceID,
+          postID: postID,
           after: cursor
         )
       )

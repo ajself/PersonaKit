@@ -159,7 +159,7 @@ struct OrbitWorkspacePersistenceTests {
     let meetingResponses = activeThread.messages.filter { $0.kind == .participantResponse }.suffix(2)
     let systemEvents = activeThread.messages.filter { $0.kind == .systemEvent }
 
-    #expect(activeThread.interactionMode == .lightweightMeeting)
+    #expect(activeThread.interactionMode == .directMessage)
     #expect(meetingResponses.count == 2)
     #expect(systemEvents.count == 2)
     #expect(Set(meetingResponses.map(\.speakerParticipantID)) == [
@@ -173,7 +173,7 @@ struct OrbitWorkspacePersistenceTests {
     )
     #expect(systemEvents.first?.body.contains("exchange state: active") == true)
     #expect(systemEvents.last?.body.contains("state=completed") == true)
-    #expect(reloadedWorkspace.activationRecords.suffix(2).allSatisfy { $0.triggerSource == .meetingInvocation })
+    #expect(reloadedWorkspace.activationRecords.suffix(2).allSatisfy { $0.triggerSource == .generalThreadReply })
     #expect(reloadedWorkspace.activationFailureRecords == [])
   }
 

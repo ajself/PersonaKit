@@ -106,6 +106,7 @@ struct OrbitServerBackedRoomCoordinator {
       OrbitPhase1AppendUserMessageRequest(
         workspaceSlug: scope.workspaceSlug,
         channelSlug: scope.channelSlug,
+        postID: scope.postID,
         authorID: authorID,
         body: body
       )
@@ -137,6 +138,7 @@ struct OrbitServerBackedRoomCoordinator {
       OrbitPhase1AppendUserMessageRequest(
         workspaceSlug: scope.workspaceSlug,
         channelSlug: scope.channelSlug,
+        postID: scope.postID,
         authorID: authorID,
         body: body
       )
@@ -155,6 +157,7 @@ struct OrbitServerBackedRoomCoordinator {
               OrbitPhase1AppendActivationFailureRequest(
                 workspaceSlug: scope.workspaceSlug,
                 channelSlug: scope.channelSlug,
+                postID: scope.postID,
                 initiatedByParticipantID: authorID,
                 triggerMessageID: appendResult.message.id,
                 failure: failurePayload(
@@ -168,6 +171,7 @@ struct OrbitServerBackedRoomCoordinator {
               OrbitPhase1AppendSystemMessageRequest(
                 workspaceSlug: scope.workspaceSlug,
                 channelSlug: scope.channelSlug,
+                postID: scope.postID,
                 body: message.body,
                 replyToMessageID: appendResult.message.id
               )
@@ -200,6 +204,7 @@ struct OrbitServerBackedRoomCoordinator {
             OrbitPhase1AppendCollaboratorResponseRequest(
               workspaceSlug: scope.workspaceSlug,
               channelSlug: scope.channelSlug,
+              postID: scope.postID,
               workspacePersonaID: workspacePersonaID,
               initiatedByParticipantID: authorID,
               triggerMessageID: appendResult.message.id,
@@ -251,7 +256,7 @@ struct OrbitServerBackedRoomCoordinator {
 
     return targetResolution.targetKind == .collaborator
       ? .directAddress
-      : .lightweightMeeting
+      : .currentThread
   }
 
   private func addressedTargetKind(

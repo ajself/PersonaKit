@@ -9,7 +9,8 @@ public enum OrbitGatewayRoutes {
     roomWriter: (any OrbitPhase1RoomWriteServing)? = nil,
     systemWriter: (any OrbitSystemMessageHandling)? = nil,
     failureWriter: (any OrbitActivationFailureHandling)? = nil,
-    collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil
+    collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
+    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
   ) {
     let realtime = app.grouped("api", "orbit", "realtime")
     let room = app.grouped("api", "orbit", "room")
@@ -102,6 +103,14 @@ public enum OrbitGatewayRoutes {
         return OrbitGatewayAppendCollaboratorResponse(result: result)
       }
     }
+
+    if let meetingCreator {
+      room.post("meetings") { request async throws -> OrbitGatewayCreateMeetingRoomResponse in
+        let body = try request.content.decode(OrbitGatewayCreateMeetingRoomRequest.self)
+        let result = try await meetingCreator.createMeetingRoom(try body.runtimeRequest)
+        return OrbitGatewayCreateMeetingRoomResponse(result: result)
+      }
+    }
   }
 
   static func makeSocketConnectQuery(
@@ -110,6 +119,7 @@ public enum OrbitGatewayRoutes {
     OrbitGatewayWebSocketConnectQuery(
       workspaceSlug: try request.query.get(String.self, at: "workspaceSlug"),
       channelSlug: try request.query.get(String.self, at: "channelSlug"),
+      postID: try request.query.get(UUID?.self, at: "postID"),
       cursorWorkspaceID: try request.query.get(UUID?.self, at: "cursorWorkspaceID"),
       cursorEventID: try request.query.get(UUID?.self, at: "cursorEventID"),
       cursorEventCreatedAt: try request.query.get(Date?.self, at: "cursorEventCreatedAt")

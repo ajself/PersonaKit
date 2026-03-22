@@ -14,7 +14,7 @@ struct Phase1SystemMessageServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = SystemMessageAppendRecorder()
     let service = OrbitPhase1SystemMessageService(
-      loadSnapshot: { _, _ in sampleSnapshot() },
+      loadSnapshot: { _, _, _ in sampleSnapshot() },
       appendMessage: { workspaceID, message, realtimeEvents, _, _ in
         await recorder.record(
           workspaceID: workspaceID,
@@ -47,7 +47,7 @@ struct Phase1SystemMessageServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = SystemMessageAppendRecorder()
     let service = OrbitPhase1SystemMessageService(
-      loadSnapshot: { _, _ in sampleCreatedMeetingSnapshot() },
+      loadSnapshot: { _, _, _ in sampleCreatedMeetingSnapshot() },
       appendMessage: { workspaceID, message, realtimeEvents, meetingState, _ in
         await recorder.record(
           workspaceID: workspaceID,

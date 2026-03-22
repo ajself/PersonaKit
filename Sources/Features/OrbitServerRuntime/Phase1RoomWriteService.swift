@@ -3,17 +3,20 @@ import Foundation
 public struct OrbitPhase1AppendUserMessageRequest: Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let authorID: String
   public let body: String
 
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     authorID: String,
     body: String
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.authorID = authorID
     self.body = body
   }
@@ -37,7 +40,8 @@ public enum OrbitPhase1RoomWriteServiceError: Error, Equatable {
 }
 
 public struct OrbitPhase1RoomWriteService: Sendable {
-  public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
+  public typealias SnapshotLoader =
+    @Sendable (String, String, UUID?) async throws -> OrbitPhase1RoomSnapshot?
   public typealias MessageAppender =
     @Sendable (UUID, OrbitMessageRecord, [OrbitRealtimeEventRecord], OrbitMeetingStateRecord?, Date) async throws -> Void
 
@@ -61,7 +65,11 @@ public struct OrbitPhase1RoomWriteService: Sendable {
   public func appendUserMessage(
     _ request: OrbitPhase1AppendUserMessageRequest
   ) async throws -> OrbitPhase1AppendUserMessageResult {
-    guard let snapshot = try await loadSnapshot(request.workspaceSlug, request.channelSlug) else {
+    guard let snapshot = try await loadSnapshot(
+      request.workspaceSlug,
+      request.channelSlug,
+      request.postID
+    ) else {
       throw OrbitPhase1RoomWriteServiceError.roomNotFound
     }
 
@@ -138,10 +146,11 @@ public extension OrbitPhase1RoomWriteService {
     makeMessageID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.init(
-      loadSnapshot: { workspaceSlug, channelSlug in
+      loadSnapshot: { workspaceSlug, channelSlug, postID in
         try await runtimeStore.loadRoomSnapshot(
           workspaceSlug: workspaceSlug,
-          channelSlug: channelSlug
+          channelSlug: channelSlug,
+          postID: postID
         )
       },
       appendMessage: { workspaceID, message, realtimeEvents, meetingState, timestamp in

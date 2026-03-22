@@ -19,6 +19,7 @@ struct OrbitGatewayNetworkClientTests {
       )
       #expect(body.workspaceSlug == "orbit")
       #expect(body.channelSlug == "command-center")
+      #expect(body.postID == UUID(uuidString: "33333333-3333-3333-3333-333333333333")!)
 
       return try makeResponse(
         statusCode: 200,
@@ -33,7 +34,8 @@ struct OrbitGatewayNetworkClientTests {
       request: OrbitPhase1RealtimeConnectRequest(
         scope: OrbitPhase1RealtimeSubscriptionScope(
           workspaceSlug: "orbit",
-          channelSlug: "command-center"
+          channelSlug: "command-center",
+          postID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
         )
       )
     )
@@ -113,7 +115,8 @@ struct OrbitGatewayNetworkClientTests {
       request: OrbitPhase1RealtimeConnectRequest(
         scope: OrbitPhase1RealtimeSubscriptionScope(
           workspaceSlug: "orbit",
-          channelSlug: "command-center"
+          channelSlug: "command-center",
+          postID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
         )
       ),
       pollInterval: Duration.seconds(2)
@@ -147,6 +150,14 @@ struct OrbitGatewayNetworkClientTests {
     )?.queryItems
     #expect(queryItems?.contains(URLQueryItem(name: "workspaceSlug", value: "orbit")) == true)
     #expect(queryItems?.contains(URLQueryItem(name: "channelSlug", value: "command-center")) == true)
+    #expect(
+      queryItems?.contains(
+        URLQueryItem(
+          name: "postID",
+          value: "33333333-3333-3333-3333-333333333333"
+        )
+      ) == true
+    )
   }
 
   @Test
@@ -259,6 +270,7 @@ struct OrbitGatewayNetworkClientTests {
         from: try requestBody(for: request)
       )
       #expect(body.workspaceSlug == "orbit")
+      #expect(body.postID == result.snapshot.post.id)
       #expect(body.contract?.authorizedSkillIDs == ["codex-cli"])
       #expect(body.contract?.reviewGateIDs == ["intent:partner-sync-review"])
 
@@ -273,6 +285,7 @@ struct OrbitGatewayNetworkClientTests {
       OrbitPhase1AppendCollaboratorResponseRequest(
         workspaceSlug: "orbit",
         channelSlug: "command-center",
+        postID: result.snapshot.post.id,
         workspacePersonaID: result.activation.resolvedWorkspacePersonaInstanceID,
         initiatedByParticipantID: "aj",
         triggerMessageID: result.activation.triggerMessageID,
@@ -290,6 +303,55 @@ struct OrbitGatewayNetworkClientTests {
           reviewGateIDs: ["intent:partner-sync-review"],
           memoryScopeIDs: []
         )
+      )
+    )
+
+    #expect(response == result)
+  }
+
+  @Test
+  func createMeetingRoomEncodesRequestAndDecodesCanonicalResult() async throws {
+    let result = OrbitPhase1CreateMeetingRoomResult(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+      ),
+      snapshot: sampleSnapshot().room
+    )
+    let client = makeClient { request in
+      #expect(request.url?.path == "/api/orbit/room/meetings")
+      let body = try JSONDecoder().decode(
+        OrbitGatewayCreateMeetingRoomRequest.self,
+        from: try requestBody(for: request)
+      )
+      #expect(body.title == "Founding Group Promotion")
+      #expect(body.meetingType == OrbitMeetingType.team.rawValue)
+      #expect(body.startedByParticipantType == OrbitParticipantAuthorType.user.rawValue)
+      #expect(body.members.count == 1)
+
+      return try makeResponse(
+        statusCode: 200,
+        body: OrbitGatewayCreateMeetingRoomResponse(result: result),
+        url: try #require(request.url)
+      )
+    }
+
+    let response = try await client.createMeetingRoom(
+      OrbitPhase1CreateMeetingRoomRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        title: "Founding Group Promotion",
+        meetingType: .team,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        members: [
+          OrbitPhase1MeetingMemberSpec(
+            workspacePersonaID: UUID(uuidString: "55555555-5555-5555-5555-555555555555")!,
+            participationRole: .contributor,
+            selectedReason: "Selected from founding-group target."
+          )
+        ]
       )
     )
 

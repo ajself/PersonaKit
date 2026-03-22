@@ -3,13 +3,16 @@ import Foundation
 public struct OrbitPhase1RealtimeSubscriptionScope: Codable, Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
 
   public init(
     workspaceSlug: String,
-    channelSlug: String
+    channelSlug: String,
+    postID: UUID? = nil
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
   }
 }
 
@@ -79,6 +82,19 @@ public struct OrbitPhase1RealtimeFeedService: Sendable {
     }
 
     if batch.events.contains(where: { $0.workspaceID != cursor.workspaceID }) {
+      return try await resync(scope: scope, reason: .inconsistentReplayBatch)
+    }
+
+    if
+      let postID = scope.postID,
+      batch.events.contains(where: { event in
+        guard let eventPostID = event.postID else {
+          return false
+        }
+
+        return eventPostID != postID
+      })
+    {
       return try await resync(scope: scope, reason: .inconsistentReplayBatch)
     }
 

@@ -299,9 +299,9 @@ struct OrbitWorkspaceTests {
       ]
     )
     #expect(activationRecords.count == 2)
-    #expect(activationRecords.allSatisfy { $0.triggerSource == .meetingInvocation })
+    #expect(activationRecords.allSatisfy { $0.triggerSource == .generalThreadReply })
     #expect(activationRecords.allSatisfy { $0.workspaceID == "orbit" })
-    #expect(activationRecords.allSatisfy { $0.responseMode == .lightweightMeeting })
+    #expect(activationRecords.allSatisfy { $0.responseMode == .directMessage })
     #expect(activationRecords.allSatisfy { $0.memorySourceRefs == [] })
     #expect(contractSnapshots.count == 2)
     #expect(contractSnapshots.allSatisfy { $0.directiveSource == .participantDefault })
@@ -327,7 +327,7 @@ struct OrbitWorkspaceTests {
     }
 
     #expect(workspace.activationFailureRecords == [])
-    #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
+    #expect(workspace.activeThread?.interactionMode == .directMessage)
   }
 
   @Test
@@ -652,8 +652,8 @@ struct OrbitWorkspaceTests {
     #expect(responseMessages.first?.addressedParticipantID == "command-center-feedback-squad")
     #expect(exchangeStateEvent.body.contains("state=completed"))
     #expect(exchangeStateEvent.body.contains("ProdDoc | role=reviewer | state=replied"))
-    #expect(workspace.activationRecords.last?.triggerSource == .meetingInvocation)
-    #expect(workspace.activeThread?.interactionMode == .lightweightMeeting)
+    #expect(workspace.activationRecords.last?.triggerSource == .generalThreadReply)
+    #expect(workspace.activeThread?.interactionMode == .directMessage)
   }
 
   @Test

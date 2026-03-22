@@ -103,6 +103,7 @@ actor OrbitGatewayNetworkClient {
       body: OrbitGatewayConnectRequest(
         workspaceSlug: request.scope.workspaceSlug,
         channelSlug: request.scope.channelSlug,
+        postID: request.scope.postID,
         cursorWorkspaceID: request.cursor?.workspaceID,
         cursorEventID: request.cursor?.lastEventID,
         cursorEventCreatedAt: request.cursor?.lastEventCreatedAt
@@ -121,6 +122,7 @@ actor OrbitGatewayNetworkClient {
         session: OrbitGatewaySessionPayload(
           workspaceSlug: request.session.scope.workspaceSlug,
           channelSlug: request.session.scope.channelSlug,
+          postID: request.session.scope.postID,
           workspaceID: request.session.replayCursor.workspaceID,
           cursorEventID: request.session.replayCursor.lastEventID,
           cursorEventCreatedAt: request.session.replayCursor.lastEventCreatedAt,
@@ -141,6 +143,7 @@ actor OrbitGatewayNetworkClient {
       body: OrbitGatewayAppendMessageRequest(
         workspaceSlug: request.workspaceSlug,
         channelSlug: request.channelSlug,
+        postID: request.postID,
         authorID: request.authorID,
         body: request.body
       )
@@ -157,6 +160,7 @@ actor OrbitGatewayNetworkClient {
       body: OrbitGatewayAppendSystemMessageRequest(
         workspaceSlug: request.workspaceSlug,
         channelSlug: request.channelSlug,
+        postID: request.postID,
         body: request.body,
         replyToMessageID: request.replyToMessageID
       )
@@ -173,6 +177,7 @@ actor OrbitGatewayNetworkClient {
       body: OrbitGatewayAppendCollaboratorResponseRequest(
         workspaceSlug: request.workspaceSlug,
         channelSlug: request.channelSlug,
+        postID: request.postID,
         workspacePersonaID: request.workspacePersonaID,
         initiatedByParticipantID: request.initiatedByParticipantID,
         triggerMessageID: request.triggerMessageID,
@@ -196,9 +201,29 @@ actor OrbitGatewayNetworkClient {
       body: OrbitGatewayAppendActivationFailureRequest(
         workspaceSlug: request.workspaceSlug,
         channelSlug: request.channelSlug,
+        postID: request.postID,
         initiatedByParticipantID: request.initiatedByParticipantID,
         triggerMessageID: request.triggerMessageID,
         failure: request.failure
+      )
+    )
+
+    return response.result
+  }
+
+  func createMeetingRoom(
+    _ request: OrbitPhase1CreateMeetingRoomRequest
+  ) async throws -> OrbitPhase1CreateMeetingRoomResult {
+    let response: OrbitGatewayCreateMeetingRoomResponse = try await post(
+      "api/orbit/room/meetings",
+      body: OrbitGatewayCreateMeetingRoomRequest(
+        workspaceSlug: request.workspaceSlug,
+        channelSlug: request.channelSlug,
+        title: request.title,
+        meetingType: request.meetingType.rawValue,
+        startedByParticipantType: request.startedByParticipantType.rawValue,
+        startedByParticipantID: request.startedByParticipantID,
+        members: request.members
       )
     )
 
@@ -244,6 +269,7 @@ actor OrbitGatewayNetworkClient {
                 session: OrbitGatewaySessionPayload(
                   workspaceSlug: currentSession.scope.workspaceSlug,
                   channelSlug: currentSession.scope.channelSlug,
+                  postID: currentSession.scope.postID,
                   workspaceID: currentSession.replayCursor.workspaceID,
                   cursorEventID: currentSession.replayCursor.lastEventID,
                   cursorEventCreatedAt: currentSession.replayCursor.lastEventCreatedAt,
@@ -328,6 +354,15 @@ actor OrbitGatewayNetworkClient {
       URLQueryItem(name: "workspaceSlug", value: request.scope.workspaceSlug),
       URLQueryItem(name: "channelSlug", value: request.scope.channelSlug),
     ]
+
+    if let postID = request.scope.postID {
+      queryItems.append(
+        URLQueryItem(
+          name: "postID",
+          value: postID.uuidString
+        )
+      )
+    }
 
     if let cursor = request.cursor {
       queryItems.append(

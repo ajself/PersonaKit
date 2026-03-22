@@ -33,7 +33,7 @@ struct Phase1RoomWriteServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_500)
     let recorder = AppendRecorder()
     let service = OrbitPhase1RoomWriteService(
-      loadSnapshot: { _, _ in sampleRoomSnapshot() },
+      loadSnapshot: { _, _, _ in sampleRoomSnapshot() },
       appendMessage: { workspaceID, message, realtimeEvents, meetingState, _ in
         await recorder.record(
           workspaceID: workspaceID,
@@ -67,7 +67,7 @@ struct Phase1RoomWriteServiceTests {
   func appendUserMessagePreservesMeetingRuntimeRecords() async throws {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_500)
     let service = OrbitPhase1RoomWriteService(
-      loadSnapshot: { _, _ in sampleMeetingRoomSnapshot() },
+      loadSnapshot: { _, _, _ in sampleMeetingRoomSnapshot() },
       appendMessage: { _, _, _, _, _ in },
       now: { createdAt },
       makeMessageID: { UUID(uuidString: "55555555-5555-5555-5555-555555555555")! }
@@ -91,7 +91,7 @@ struct Phase1RoomWriteServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_500)
     let recorder = AppendRecorder()
     let service = OrbitPhase1RoomWriteService(
-      loadSnapshot: { _, _ in sampleCreatedMeetingRoomSnapshot() },
+      loadSnapshot: { _, _, _ in sampleCreatedMeetingRoomSnapshot() },
       appendMessage: { workspaceID, message, realtimeEvents, meetingState, _ in
         await recorder.record(
           workspaceID: workspaceID,
@@ -120,7 +120,7 @@ struct Phase1RoomWriteServiceTests {
   @Test
   func appendUserMessageFailsWhenRoomIsMissing() async {
     let service = OrbitPhase1RoomWriteService(
-      loadSnapshot: { _, _ in nil },
+      loadSnapshot: { _, _, _ in nil },
       appendMessage: { _, _, _, _, _ in
         Issue.record("appendMessage should not be called when room is missing")
       }

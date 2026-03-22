@@ -3,6 +3,7 @@ import Foundation
 public struct OrbitPhase1AppendActivationFailureRequest: Equatable, Sendable {
   public let workspaceSlug: String
   public let channelSlug: String
+  public let postID: UUID?
   public let initiatedByParticipantID: String
   public let triggerMessageID: UUID
   public let failure: OrbitPhase1ActivationFailurePayload
@@ -10,12 +11,14 @@ public struct OrbitPhase1AppendActivationFailureRequest: Equatable, Sendable {
   public init(
     workspaceSlug: String,
     channelSlug: String,
+    postID: UUID? = nil,
     initiatedByParticipantID: String,
     triggerMessageID: UUID,
     failure: OrbitPhase1ActivationFailurePayload
   ) {
     self.workspaceSlug = workspaceSlug
     self.channelSlug = channelSlug
+    self.postID = postID
     self.initiatedByParticipantID = initiatedByParticipantID
     self.triggerMessageID = triggerMessageID
     self.failure = failure
@@ -44,7 +47,8 @@ public enum OrbitPhase1ActivationFailureServiceError: Error, Equatable {
 }
 
 public struct OrbitPhase1ActivationFailureService: Sendable {
-  public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
+  public typealias SnapshotLoader =
+    @Sendable (String, String, UUID?) async throws -> OrbitPhase1RoomSnapshot?
   public typealias FailureAppender =
     @Sendable (
       UUID,
@@ -75,7 +79,11 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
   public func appendActivationFailure(
     _ request: OrbitPhase1AppendActivationFailureRequest
   ) async throws -> OrbitPhase1AppendActivationFailureResult {
-    guard let snapshot = try await loadSnapshot(request.workspaceSlug, request.channelSlug) else {
+    guard let snapshot = try await loadSnapshot(
+      request.workspaceSlug,
+      request.channelSlug,
+      request.postID
+    ) else {
       throw OrbitPhase1ActivationFailureServiceError.roomNotFound
     }
 
@@ -180,10 +188,11 @@ public extension OrbitPhase1ActivationFailureService {
     makePostEventID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.init(
-      loadSnapshot: { workspaceSlug, channelSlug in
+      loadSnapshot: { workspaceSlug, channelSlug, postID in
         try await runtimeStore.loadRoomSnapshot(
           workspaceSlug: workspaceSlug,
-          channelSlug: channelSlug
+          channelSlug: channelSlug,
+          postID: postID
         )
       },
       appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, meetingState, timestamp in

@@ -122,6 +122,40 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func roomSnapshotQueryCanTargetAnExplicitPostID() {
+    let postID = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+    let query = repository.selectRoomSnapshotQuery(
+      workspaceSlug: "orbit",
+      channelSlug: "command-center",
+      postID: postID
+    )
+
+    #expect(query.sql.contains("WHERE workspace.slug = $1"))
+    #expect(query.sql.contains("AND channel.slug = $2"))
+    #expect(query.sql.contains("AND post.id = $3"))
+    #expect(query.sql.contains("ORDER BY thread.created_at ASC"))
+    #expect(query.sql.contains("LIMIT 1"))
+    #expect(query.binds.count == 3)
+  }
+
+  @Test
+  func meetingRoomContextQueryReadsWorkspaceAndChannelWithoutPostDependency() {
+    let query = repository.selectMeetingRoomContextQuery(
+      workspaceSlug: "orbit",
+      channelSlug: "command-center"
+    )
+
+    #expect(query.sql.contains("FROM workspace"))
+    #expect(query.sql.contains("JOIN channel ON channel.workspace_id = workspace.id"))
+    #expect(query.sql.contains("JOIN post") == false)
+    #expect(query.sql.contains("JOIN thread") == false)
+    #expect(query.sql.contains("WHERE workspace.slug = $1"))
+    #expect(query.sql.contains("AND channel.slug = $2"))
+    #expect(query.sql.contains("LIMIT 1"))
+    #expect(query.binds.count == 2)
+  }
+
+  @Test
   func threadMessagesQueryPreservesReplayOrder() {
     let query = repository.selectThreadMessagesQuery(threadID: UUID())
 
@@ -183,6 +217,28 @@ struct Phase1RuntimeRepositoryTests {
     #expect(realtimeEventQuery.sql.contains("FROM realtime_event"))
     #expect(realtimeEventQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
     #expect(realtimeEventQuery.binds.count == 1)
+  }
+
+  @Test
+  func realtimeEventQueryCanTargetAnExplicitPostID() {
+    let postID = UUID(uuidString: "34343434-3434-3434-3434-343434343434")!
+    let cursor = OrbitPhase1ReplayCursor(
+      workspaceID: UUID(uuidString: "45454545-4545-4545-4545-454545454545")!,
+      lastEventID: UUID(uuidString: "56565656-5656-5656-5656-565656565656")!,
+      lastEventCreatedAt: referenceDate
+    )
+    let query = repository.selectRealtimeEventsQuery(
+      workspaceID: cursor.workspaceID,
+      postID: postID,
+      after: cursor
+    )
+
+    #expect(query.sql.contains("FROM realtime_event"))
+    #expect(query.sql.contains("WHERE workspace_id = $1"))
+    #expect(query.sql.contains("AND post_id = $2"))
+    #expect(query.sql.contains("created_at > $3"))
+    #expect(query.sql.contains("id > $5"))
+    #expect(query.binds.count == 5)
   }
 
   @Test

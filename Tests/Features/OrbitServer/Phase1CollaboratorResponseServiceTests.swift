@@ -16,7 +16,7 @@ struct Phase1CollaboratorResponseServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = CollaboratorAppendRecorder()
     let service = OrbitPhase1CollaboratorResponseService(
-      loadSnapshot: { _, _ in sampleSnapshot() },
+      loadSnapshot: { _, _, _ in sampleSnapshot() },
       appendResponse: {
         workspaceID,
         message,
@@ -94,7 +94,7 @@ struct Phase1CollaboratorResponseServiceTests {
     let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
     let recorder = CollaboratorAppendRecorder()
     let service = OrbitPhase1CollaboratorResponseService(
-      loadSnapshot: { _, _ in sampleCreatedMeetingSnapshot() },
+      loadSnapshot: { _, _, _ in sampleCreatedMeetingSnapshot() },
       appendResponse: {
         workspaceID,
         message,
@@ -142,7 +142,7 @@ struct Phase1CollaboratorResponseServiceTests {
   @Test
   func appendCollaboratorResponseFailsWhenWorkspacePersonaIsMissing() async {
     let service = OrbitPhase1CollaboratorResponseService(
-      loadSnapshot: { _, _ in sampleSnapshot(workspacePersonas: []) },
+      loadSnapshot: { _, _, _ in sampleSnapshot(workspacePersonas: []) },
       appendResponse: { _, _, _, _, _, _, _, _ in
         Issue.record("appendResponse should not be called")
       }
@@ -173,7 +173,7 @@ struct Phase1CollaboratorResponseServiceTests {
   @Test
   func appendCollaboratorResponseFailsWhenTriggerMessageIsMissing() async {
     let service = OrbitPhase1CollaboratorResponseService(
-      loadSnapshot: { _, _ in sampleSnapshot(messages: []) },
+      loadSnapshot: { _, _, _ in sampleSnapshot(messages: []) },
       appendResponse: { _, _, _, _, _, _, _, _ in
         Issue.record("appendResponse should not be called")
       }

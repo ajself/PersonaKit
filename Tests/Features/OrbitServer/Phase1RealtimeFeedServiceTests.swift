@@ -165,6 +165,35 @@ struct Phase1RealtimeFeedServiceTests {
     #expect(result == .resync(snapshot: snapshot, reason: .inconsistentReplayBatch))
   }
 
+  @Test
+  func replayRequestsResyncWhenPostScopedBatchContainsDifferentPost() async throws {
+    let snapshot = sampleSnapshot(cursorEventID: UUID())
+    let mismatchedEvent = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+      workspaceID: workspaceID,
+      postID: UUID(uuidString: "99999999-aaaa-bbbb-cccc-dddddddddddd")!,
+      threadID: threadID,
+      category: .messageCreated,
+      createdAt: Date(timeIntervalSince1970: 1_742_342_400),
+      payloadJSON: "{}"
+    )
+    let service = OrbitPhase1RealtimeFeedService(
+      loadSnapshot: { _ in snapshot },
+      loadReplayBatch: { _, _ in OrbitPhase1RealtimeReplayBatch(events: [mismatchedEvent]) }
+    )
+
+    let result = try await service.replay(
+      scope: OrbitPhase1RealtimeSubscriptionScope(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        postID: postID
+      ),
+      cursor: OrbitPhase1ReplayCursor(workspaceID: workspaceID)
+    )
+
+    #expect(result == .resync(snapshot: snapshot, reason: .inconsistentReplayBatch))
+  }
+
   private func sampleSnapshot(
     cursorEventID: UUID
   ) -> OrbitPhase1RealtimeSnapshot {

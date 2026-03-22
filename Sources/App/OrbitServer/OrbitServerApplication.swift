@@ -35,6 +35,9 @@ enum OrbitServerApplication {
       let collaboratorWriter = OrbitPhase1CollaboratorResponseService(
         runtimeStore: runtimeStore
       )
+      let meetingCreator = OrbitPhase1MeetingRoomCreationService(
+        runtimeStore: runtimeStore
+      )
 
       configure(
         app: app,
@@ -43,7 +46,8 @@ enum OrbitServerApplication {
         roomWriter: roomWriter,
         systemWriter: systemWriter,
         failureWriter: failureWriter,
-        collaboratorWriter: collaboratorWriter
+        collaboratorWriter: collaboratorWriter,
+        meetingCreator: meetingCreator
       )
 
       return app
@@ -60,7 +64,8 @@ enum OrbitServerApplication {
     roomWriter: (any OrbitPhase1RoomWriteServing)? = nil,
     systemWriter: (any OrbitSystemMessageHandling)? = nil,
     failureWriter: (any OrbitActivationFailureHandling)? = nil,
-    collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil
+    collaboratorWriter: (any OrbitCollaboratorResponseHandling)? = nil,
+    meetingCreator: (any OrbitMeetingRoomCreationHandling)? = nil
   ) {
     app.http.server.configuration.hostname = configuration.host
     app.http.server.configuration.port = configuration.port
@@ -75,7 +80,8 @@ enum OrbitServerApplication {
       roomWriter: roomWriter,
       systemWriter: systemWriter,
       failureWriter: failureWriter,
-      collaboratorWriter: collaboratorWriter
+      collaboratorWriter: collaboratorWriter,
+      meetingCreator: meetingCreator
     )
   }
 }
