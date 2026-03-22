@@ -75,6 +75,30 @@ public enum OrbitCanonicalResponseMode: String, Codable, Equatable, Sendable {
   case lightweightMeeting = "lightweight-meeting"
 }
 
+public enum OrbitMeetingType: String, Codable, Equatable, Sendable {
+  case adHoc = "ad_hoc"
+  case squad
+  case team
+  case review
+  case planning
+  case retrospective
+}
+
+public enum OrbitMeetingStatus: String, Codable, Equatable, Sendable {
+  case created
+  case active
+  case summarizing
+  case completed
+  case failed
+}
+
+public enum OrbitMeetingParticipationRole: String, Codable, Equatable, Sendable {
+  case facilitator
+  case contributor
+  case observer
+  case summarizer
+}
+
 public enum OrbitAgentRunStatus: String, Codable, Equatable, Sendable {
   case queued
   case running
@@ -378,6 +402,62 @@ public struct OrbitPostParticipantRecord: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitMeetingStateRecord: Codable, Equatable, Sendable {
+  public let postID: UUID
+  public let meetingType: OrbitMeetingType
+  public let status: OrbitMeetingStatus
+  public let startedByParticipantType: OrbitParticipantAuthorType
+  public let startedByParticipantID: String
+  public let startedAt: Date
+  public let completedAt: Date?
+
+  public init(
+    postID: UUID,
+    meetingType: OrbitMeetingType,
+    status: OrbitMeetingStatus,
+    startedByParticipantType: OrbitParticipantAuthorType,
+    startedByParticipantID: String,
+    startedAt: Date,
+    completedAt: Date? = nil
+  ) {
+    self.postID = postID
+    self.meetingType = meetingType
+    self.status = status
+    self.startedByParticipantType = startedByParticipantType
+    self.startedByParticipantID = startedByParticipantID
+    self.startedAt = startedAt
+    self.completedAt = completedAt
+  }
+}
+
+public struct OrbitMeetingMemberRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let meetingPostID: UUID
+  public let postParticipantID: UUID
+  public let participationRole: OrbitMeetingParticipationRole
+  public let selectedReason: String
+  public let joinedAt: Date
+  public let completedAt: Date?
+
+  public init(
+    id: UUID,
+    meetingPostID: UUID,
+    postParticipantID: UUID,
+    participationRole: OrbitMeetingParticipationRole,
+    selectedReason: String,
+    joinedAt: Date,
+    completedAt: Date? = nil
+  ) {
+    self.id = id
+    self.meetingPostID = meetingPostID
+    self.postParticipantID = postParticipantID
+    self.participationRole = participationRole
+    self.selectedReason = selectedReason
+    self.joinedAt = joinedAt
+    self.completedAt = completedAt
+  }
+}
+
 public struct OrbitPostEventRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
@@ -517,6 +597,8 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let seedMessages: [OrbitMessageRecord]
   public let realtimeEvents: [OrbitRealtimeEventRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
+  public let meetingState: OrbitMeetingStateRecord?
+  public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
   public let personaActivations: [OrbitPersonaActivationRecord]
   public let agentRuns: [OrbitAgentRunRecord]
@@ -533,6 +615,8 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     seedMessages: [OrbitMessageRecord],
     realtimeEvents: [OrbitRealtimeEventRecord] = [],
     postParticipants: [OrbitPostParticipantRecord] = [],
+    meetingState: OrbitMeetingStateRecord? = nil,
+    meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
     personaActivations: [OrbitPersonaActivationRecord] = [],
     agentRuns: [OrbitAgentRunRecord] = []
@@ -548,6 +632,8 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     self.seedMessages = seedMessages
     self.realtimeEvents = realtimeEvents
     self.postParticipants = postParticipants
+    self.meetingState = meetingState
+    self.meetingMembers = meetingMembers
     self.postEvents = postEvents
     self.personaActivations = personaActivations
     self.agentRuns = agentRuns
@@ -565,6 +651,8 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let thread: OrbitThreadRecord
   public let messages: [OrbitMessageRecord]
   public let postParticipants: [OrbitPostParticipantRecord]
+  public let meetingState: OrbitMeetingStateRecord?
+  public let meetingMembers: [OrbitMeetingMemberRecord]
   public let postEvents: [OrbitPostEventRecord]
   public let personaActivations: [OrbitPersonaActivationRecord]
   public let agentRuns: [OrbitAgentRunRecord]
@@ -580,6 +668,8 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     thread: OrbitThreadRecord,
     messages: [OrbitMessageRecord],
     postParticipants: [OrbitPostParticipantRecord] = [],
+    meetingState: OrbitMeetingStateRecord? = nil,
+    meetingMembers: [OrbitMeetingMemberRecord] = [],
     postEvents: [OrbitPostEventRecord] = [],
     personaActivations: [OrbitPersonaActivationRecord] = [],
     agentRuns: [OrbitAgentRunRecord] = []
@@ -594,8 +684,36 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     self.thread = thread
     self.messages = messages
     self.postParticipants = postParticipants
+    self.meetingState = meetingState
+    self.meetingMembers = meetingMembers
     self.postEvents = postEvents
     self.personaActivations = personaActivations
     self.agentRuns = agentRuns
+  }
+}
+
+public extension OrbitPhase1RoomSnapshot {
+  func meetingStateAfterConversationMessage() -> OrbitMeetingStateRecord? {
+    guard post.postType == .meeting else {
+      return nil
+    }
+
+    guard let meetingState else {
+      return nil
+    }
+
+    guard meetingState.status == .created else {
+      return meetingState
+    }
+
+    return OrbitMeetingStateRecord(
+      postID: meetingState.postID,
+      meetingType: meetingState.meetingType,
+      status: .active,
+      startedByParticipantType: meetingState.startedByParticipantType,
+      startedByParticipantID: meetingState.startedByParticipantID,
+      startedAt: meetingState.startedAt,
+      completedAt: meetingState.completedAt
+    )
   }
 }

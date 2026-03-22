@@ -114,6 +114,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     workspaceID: UUID,
     _ message: OrbitMessageRecord,
     realtimeEvents: [OrbitRealtimeEventRecord] = [],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws {
@@ -122,6 +123,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         workspaceID: workspaceID,
         message,
         realtimeEvents: realtimeEvents,
+        meetingState: meetingState,
         threadLastActivityAt: threadLastActivityAt,
         using: OrbitPostgresClientExecutor(client: client)
       )
@@ -135,6 +137,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     agentRun: OrbitAgentRunRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws {
@@ -146,6 +149,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         agentRun: agentRun,
         postEvent: postEvent,
         realtimeEvents: realtimeEvents,
+        meetingState: meetingState,
         threadLastActivityAt: threadLastActivityAt,
         using: OrbitPostgresClientExecutor(client: client)
       )
@@ -157,6 +161,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     _ systemMessage: OrbitMessageRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
   ) async throws {
@@ -166,6 +171,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         systemMessage,
         postEvent: postEvent,
         realtimeEvents: realtimeEvents,
+        meetingState: meetingState,
         threadLastActivityAt: threadLastActivityAt,
         using: OrbitPostgresClientExecutor(client: client)
       )
@@ -248,6 +254,26 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         )
       }
 
+      let meetingStateRows = try await client.query(
+        repository.selectMeetingStateQuery(postID: post.id)
+      )
+
+      var meetingState: OrbitMeetingStateRecord?
+      for try await meetingStateRow in meetingStateRows {
+        meetingState = try decodeMeetingState(from: meetingStateRow.makeRandomAccess())
+      }
+
+      let meetingMemberRows = try await client.query(
+        repository.selectMeetingMembersQuery(meetingPostID: post.id)
+      )
+
+      var meetingMembers = [OrbitMeetingMemberRecord]()
+      for try await meetingMemberRow in meetingMemberRows {
+        meetingMembers.append(
+          try decodeMeetingMember(from: meetingMemberRow.makeRandomAccess())
+        )
+      }
+
       let postEventRows = try await client.query(
         repository.selectPostEventsQuery(postID: post.id)
       )
@@ -293,6 +319,8 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         thread: thread,
         messages: messages,
         postParticipants: postParticipants,
+        meetingState: meetingState,
+        meetingMembers: meetingMembers,
         postEvents: postEvents,
         personaActivations: personaActivationsByID.values.sorted { $0.createdAt < $1.createdAt },
         agentRuns: agentRunsByID.values.sorted { $0.startedAt < $1.startedAt }
@@ -555,6 +583,50 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       eventType: row["event_type"].decode(String.self),
       payloadJSON: payloadJSONString,
       createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeMeetingState(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMeetingStateRecord {
+    try OrbitMeetingStateRecord(
+      postID: row["post_id"].decode(UUID.self),
+      meetingType: try decodeEnum(
+        OrbitMeetingType.self,
+        from: row["meeting_type"],
+        columnName: "meeting_type"
+      ),
+      status: try decodeEnum(
+        OrbitMeetingStatus.self,
+        from: row["status"],
+        columnName: "status"
+      ),
+      startedByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["started_by_participant_type"],
+        columnName: "started_by_participant_type"
+      ),
+      startedByParticipantID: row["started_by_participant_id"].decode(String.self),
+      startedAt: row["started_at"].decode(Date.self),
+      completedAt: row["completed_at"].decode(Optional<Date>.self)
+    )
+  }
+
+  private func decodeMeetingMember(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMeetingMemberRecord {
+    try OrbitMeetingMemberRecord(
+      id: row["id"].decode(UUID.self),
+      meetingPostID: row["meeting_post_id"].decode(UUID.self),
+      postParticipantID: row["post_participant_id"].decode(UUID.self),
+      participationRole: try decodeEnum(
+        OrbitMeetingParticipationRole.self,
+        from: row["participation_role"],
+        columnName: "participation_role"
+      ),
+      selectedReason: row["selected_reason"].decode(String.self),
+      joinedAt: row["joined_at"].decode(Date.self),
+      completedAt: row["completed_at"].decode(Optional<Date>.self)
     )
   }
 

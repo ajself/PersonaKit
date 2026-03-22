@@ -17,7 +17,15 @@ struct Phase1CollaboratorResponseServiceTests {
     let recorder = CollaboratorAppendRecorder()
     let service = OrbitPhase1CollaboratorResponseService(
       loadSnapshot: { _, _ in sampleSnapshot() },
-      appendResponse: { workspaceID, message, activation, agentRun, postEvent, realtimeEvents, _ in
+      appendResponse: {
+        workspaceID,
+        message,
+        activation,
+        agentRun,
+        postEvent,
+        realtimeEvents,
+        _,
+        _ in
         await recorder.record(
           workspaceID: workspaceID,
           message: message,
@@ -82,10 +90,60 @@ struct Phase1CollaboratorResponseServiceTests {
   }
 
   @Test
+  func appendCollaboratorResponseActivatesCreatedMeetingState() async throws {
+    let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
+    let recorder = CollaboratorAppendRecorder()
+    let service = OrbitPhase1CollaboratorResponseService(
+      loadSnapshot: { _, _ in sampleCreatedMeetingSnapshot() },
+      appendResponse: {
+        workspaceID,
+        message,
+        activation,
+        agentRun,
+        postEvent,
+        realtimeEvents,
+        meetingState,
+        _ in
+        await recorder.record(
+          workspaceID: workspaceID,
+          message: message,
+          activation: activation,
+          agentRun: agentRun,
+          postEvent: postEvent,
+          realtimeEvents: realtimeEvents,
+          meetingState: meetingState
+        )
+      },
+      now: { createdAt },
+      makeMessageID: { UUID(uuidString: "77777777-7777-7777-7777-777777777777")! },
+      makeActivationID: { UUID(uuidString: "88888888-8888-8888-8888-888888888888")! },
+      makeAgentRunID: { UUID(uuidString: "99999999-9999-9999-9999-999999999999")! },
+      makePostEventID: { UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")! }
+    )
+
+    let result = try await service.appendCollaboratorResponse(
+      OrbitPhase1AppendCollaboratorResponseRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        workspacePersonaID: workspacePersonaID,
+        initiatedByParticipantID: "aj",
+        triggerMessageID: triggerMessageID,
+        addressedTargetKind: .team,
+        addressedTargetReferenceID: "founding-group",
+        responseMode: .lightweightMeeting,
+        body: "Canonical collaborator response"
+      )
+    )
+
+    #expect(await recorder.meetingState?.status == .active)
+    #expect(result.snapshot.meetingState?.status == .active)
+  }
+
+  @Test
   func appendCollaboratorResponseFailsWhenWorkspacePersonaIsMissing() async {
     let service = OrbitPhase1CollaboratorResponseService(
       loadSnapshot: { _, _ in sampleSnapshot(workspacePersonas: []) },
-      appendResponse: { _, _, _, _, _, _, _ in
+      appendResponse: { _, _, _, _, _, _, _, _ in
         Issue.record("appendResponse should not be called")
       }
     )
@@ -116,7 +174,7 @@ struct Phase1CollaboratorResponseServiceTests {
   func appendCollaboratorResponseFailsWhenTriggerMessageIsMissing() async {
     let service = OrbitPhase1CollaboratorResponseService(
       loadSnapshot: { _, _ in sampleSnapshot(messages: []) },
-      appendResponse: { _, _, _, _, _, _, _ in
+      appendResponse: { _, _, _, _, _, _, _, _ in
         Issue.record("appendResponse should not be called")
       }
     )
@@ -145,7 +203,11 @@ struct Phase1CollaboratorResponseServiceTests {
 
   private func sampleSnapshot(
     workspacePersonas: [OrbitWorkspacePersonaRecord]? = nil,
-    messages: [OrbitMessageRecord]? = nil
+    messages: [OrbitMessageRecord]? = nil,
+    post: OrbitPostRecord? = nil,
+    postParticipants: [OrbitPostParticipantRecord] = [],
+    meetingState: OrbitMeetingStateRecord? = nil,
+    meetingMembers: [OrbitMeetingMemberRecord] = []
   ) -> OrbitPhase1RoomSnapshot {
     OrbitPhase1RoomSnapshot(
       workspace: OrbitWorkspaceRecord(
@@ -174,7 +236,7 @@ struct Phase1CollaboratorResponseServiceTests {
           createdAt: Date(timeIntervalSince1970: 1_742_342_400)
         )
       ],
-      post: OrbitPostRecord(
+      post: post ?? OrbitPostRecord(
         id: postID,
         workspaceID: workspaceID,
         channelID: channelID,
@@ -205,6 +267,55 @@ struct Phase1CollaboratorResponseServiceTests {
           createdAt: Date(timeIntervalSince1970: 1_742_342_410),
           updatedAt: Date(timeIntervalSince1970: 1_742_342_410)
         )
+      ],
+      postParticipants: postParticipants,
+      meetingState: meetingState,
+      meetingMembers: meetingMembers
+    )
+  }
+
+  private func sampleCreatedMeetingSnapshot() -> OrbitPhase1RoomSnapshot {
+    let participantID = UUID(uuidString: "12121212-1212-1212-1212-121212121212")!
+
+    return sampleSnapshot(
+      post: OrbitPostRecord(
+        id: postID,
+        workspaceID: workspaceID,
+        channelID: channelID,
+        postType: .meeting,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        title: "Orbit room",
+        status: .active,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      postParticipants: [
+        OrbitPostParticipantRecord(
+          id: participantID,
+          postID: postID,
+          participantType: .workspacePersona,
+          participantID: workspacePersonaID.uuidString,
+          joinedAt: Date(timeIntervalSince1970: 1_742_342_405),
+          participationMode: .active
+        )
+      ],
+      meetingState: OrbitMeetingStateRecord(
+        postID: postID,
+        meetingType: .team,
+        status: .created,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: UUID(uuidString: "13131313-1313-1313-1313-131313131313")!,
+          meetingPostID: postID,
+          postParticipantID: participantID,
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: Date(timeIntervalSince1970: 1_742_342_405)
+        )
       ]
     )
   }
@@ -218,6 +329,7 @@ private actor CollaboratorAppendRecorder {
   var postEvent: OrbitPostEventRecord?
   var realtimeEvents = [OrbitRealtimeEventRecord]()
   var postEventPayload: OrbitPhase1ActivationEventPayload?
+  var meetingState: OrbitMeetingStateRecord?
 
   func record(
     workspaceID: UUID,
@@ -225,7 +337,8 @@ private actor CollaboratorAppendRecorder {
     activation: OrbitPersonaActivationRecord,
     agentRun: OrbitAgentRunRecord,
     postEvent: OrbitPostEventRecord,
-    realtimeEvents: [OrbitRealtimeEventRecord]
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil
   ) {
     self.workspaceID = workspaceID
     self.message = message
@@ -237,5 +350,6 @@ private actor CollaboratorAppendRecorder {
       OrbitPhase1ActivationEventPayload.self,
       from: postEvent.payloadJSON
     )
+    self.meetingState = meetingState
   }
 }

@@ -209,6 +209,57 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
     }
   }
 
+  @Test
+  func liveRuntimeStoreRoundTripsMeetingRecordsWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleMeetingRoomBootstrap()
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+
+      let bootstrappedSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: room.workspace.slug,
+        channelSlug: room.channel.slug
+      )
+
+      #expect(bootstrappedSnapshot?.meetingState == room.meetingState)
+      #expect(bootstrappedSnapshot?.meetingMembers == room.meetingMembers)
+
+      let userMessageDate = Date(timeIntervalSince1970: 1_742_342_520)
+      let userMessageID = UUID()
+      let userWriteService = OrbitPhase1RoomWriteService(
+        runtimeStore: store,
+        now: { userMessageDate },
+        makeMessageID: { userMessageID }
+      )
+
+      let appendResult = try await userWriteService.appendUserMessage(
+        OrbitPhase1AppendUserMessageRequest(
+          workspaceSlug: room.workspace.slug,
+          channelSlug: room.channel.slug,
+          authorID: "aj",
+          body: "Meeting runtime activation proof"
+        )
+      )
+
+      let updatedSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: room.workspace.slug,
+        channelSlug: room.channel.slug
+      )
+
+      #expect(appendResult.snapshot.meetingState?.status == .active)
+      #expect(updatedSnapshot?.meetingState?.status == .active)
+      #expect(updatedSnapshot?.meetingMembers == room.meetingMembers)
+    } catch {
+      Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
+    }
+  }
+
   private func integrationConfiguration() -> OrbitPostgresConfiguration? {
     let env = ProcessInfo.processInfo.environment
 
@@ -310,6 +361,50 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
           participantID: "workspace-persona-orbit-samwise",
           joinedAt: baseDate,
           participationMode: .active
+        )
+      ]
+    )
+  }
+
+  private func sampleMeetingRoomBootstrap() -> OrbitPhase1RoomBootstrap {
+    let bootstrap = sampleRoomBootstrap()
+    let participantID = bootstrap.postParticipants[0].id
+
+    return OrbitPhase1RoomBootstrap(
+      workspace: bootstrap.workspace,
+      channel: bootstrap.channel,
+      workspacePersonas: bootstrap.workspacePersonas,
+      post: OrbitPostRecord(
+        id: bootstrap.post.id,
+        workspaceID: bootstrap.post.workspaceID,
+        channelID: bootstrap.post.channelID,
+        postType: .meeting,
+        createdByParticipantType: bootstrap.post.createdByParticipantType,
+        createdByParticipantID: bootstrap.post.createdByParticipantID,
+        title: bootstrap.post.title,
+        status: bootstrap.post.status,
+        createdAt: bootstrap.post.createdAt,
+        archivedAt: bootstrap.post.archivedAt
+      ),
+      thread: bootstrap.thread,
+      seedMessages: bootstrap.seedMessages,
+      postParticipants: bootstrap.postParticipants,
+      meetingState: OrbitMeetingStateRecord(
+        postID: bootstrap.post.id,
+        meetingType: .team,
+        status: .created,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: bootstrap.post.createdAt
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: UUID(),
+          meetingPostID: bootstrap.post.id,
+          postParticipantID: participantID,
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: bootstrap.post.createdAt
         )
       ]
     )

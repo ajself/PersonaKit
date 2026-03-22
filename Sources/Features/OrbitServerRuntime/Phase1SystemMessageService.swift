@@ -38,7 +38,8 @@ public enum OrbitPhase1SystemMessageServiceError: Error, Equatable {
 
 public struct OrbitPhase1SystemMessageService: Sendable {
   public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
-  public typealias MessageAppender = @Sendable (UUID, OrbitMessageRecord, [OrbitRealtimeEventRecord], Date) async throws -> Void
+  public typealias MessageAppender =
+    @Sendable (UUID, OrbitMessageRecord, [OrbitRealtimeEventRecord], OrbitMeetingStateRecord?, Date) async throws -> Void
 
   public let loadSnapshot: SnapshotLoader
   public let appendMessage: MessageAppender
@@ -83,11 +84,13 @@ public struct OrbitPhase1SystemMessageService: Sendable {
       message: message,
       threadLastActivityAt: timestamp
     )
+    let updatedMeetingState = snapshot.meetingState
 
     try await appendMessage(
       snapshot.workspace.id,
       message,
       realtimeEvents,
+      updatedMeetingState,
       timestamp
     )
 
@@ -109,6 +112,8 @@ public struct OrbitPhase1SystemMessageService: Sendable {
       ),
       messages: snapshot.messages + [message],
       postParticipants: snapshot.postParticipants,
+      meetingState: updatedMeetingState,
+      meetingMembers: snapshot.meetingMembers,
       postEvents: snapshot.postEvents,
       personaActivations: snapshot.personaActivations,
       agentRuns: snapshot.agentRuns
@@ -140,11 +145,12 @@ public extension OrbitPhase1SystemMessageService {
           channelSlug: channelSlug
         )
       },
-      appendMessage: { workspaceID, message, realtimeEvents, timestamp in
+      appendMessage: { workspaceID, message, realtimeEvents, meetingState, timestamp in
         try await runtimeStore.appendMessage(
           workspaceID: workspaceID,
           message,
           realtimeEvents: realtimeEvents,
+          meetingState: meetingState,
           threadLastActivityAt: timestamp
         )
       },

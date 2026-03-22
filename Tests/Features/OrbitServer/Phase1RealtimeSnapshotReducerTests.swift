@@ -157,6 +157,57 @@ struct Phase1RealtimeSnapshotReducerTests {
     #expect(reduced.room.postEvents.last?.id == activationID)
   }
 
+  @Test
+  func reducerPreservesMeetingRuntimeRecordsAcrossThreadUpdates() throws {
+    let initial = sampleMeetingSnapshot()
+    let messageDate = Date(timeIntervalSince1970: 1_742_342_520)
+    let threadDate = Date(timeIntervalSince1970: 1_742_342_521)
+    let events = [
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .messageCreated,
+        createdAt: messageDate,
+        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+          OrbitPhase1MessageCreatedPayload(
+            messageID: UUID(uuidString: "bcbcbcbc-bcbc-bcbc-bcbc-bcbcbcbcbcbc")!,
+            postID: postID,
+            threadID: threadID,
+            authorType: OrbitParticipantAuthorType.workspacePersona.rawValue,
+            authorID: "workspace-persona-orbit-proddoc",
+            body: "Meeting record should survive this append.",
+            messageFormat: OrbitMessageFormat.markdown.rawValue,
+            state: OrbitMessageState.completed.rawValue,
+            createdAt: messageDate,
+            updatedAt: messageDate,
+            replyToMessageID: nil
+          )
+        )
+      ),
+      OrbitPhase1RealtimeEventEnvelope(
+        id: UUID(uuidString: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdce")!,
+        workspaceID: workspaceID,
+        postID: postID,
+        threadID: threadID,
+        category: .threadActivityUpdated,
+        createdAt: threadDate,
+        payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+          OrbitPhase1ThreadActivityUpdatedPayload(
+            threadID: threadID,
+            lastActivityAt: threadDate
+          )
+        )
+      ),
+    ]
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(events: events, to: initial)
+
+    #expect(reduced.room.meetingState == initial.room.meetingState)
+    #expect(reduced.room.meetingMembers == initial.room.meetingMembers)
+  }
+
   private func sampleSnapshot() -> OrbitPhase1RealtimeSnapshot {
     let room = OrbitPhase1RoomSnapshot(
       workspace: OrbitWorkspaceRecord(
@@ -237,6 +288,58 @@ struct Phase1RealtimeSnapshotReducerTests {
         lastEventID: baselineCursorID,
         lastEventCreatedAt: Date(timeIntervalSince1970: 1_742_342_460)
       )
+    )
+  }
+
+  private func sampleMeetingSnapshot() -> OrbitPhase1RealtimeSnapshot {
+    let baseline = sampleSnapshot()
+    let participantIDs = baseline.room.postParticipants.map(\.id)
+
+    let room = OrbitPhase1RoomSnapshot(
+      workspace: baseline.room.workspace,
+      channel: baseline.room.channel,
+      workspacePersonas: baseline.room.workspacePersonas,
+      post: OrbitPostRecord(
+        id: baseline.room.post.id,
+        workspaceID: baseline.room.post.workspaceID,
+        channelID: baseline.room.post.channelID,
+        postType: .meeting,
+        createdByParticipantType: baseline.room.post.createdByParticipantType,
+        createdByParticipantID: baseline.room.post.createdByParticipantID,
+        title: baseline.room.post.title,
+        status: baseline.room.post.status,
+        createdAt: baseline.room.post.createdAt,
+        archivedAt: baseline.room.post.archivedAt
+      ),
+      thread: baseline.room.thread,
+      messages: baseline.room.messages,
+      postParticipants: baseline.room.postParticipants,
+      meetingState: OrbitMeetingStateRecord(
+        postID: baseline.room.post.id,
+        meetingType: .team,
+        status: .active,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: baseline.room.post.createdAt
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: UUID(uuidString: "dededede-dede-dede-dede-dededededede")!,
+          meetingPostID: baseline.room.post.id,
+          postParticipantID: participantIDs[0],
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: baseline.room.postParticipants[0].joinedAt
+        )
+      ],
+      postEvents: baseline.room.postEvents,
+      personaActivations: baseline.room.personaActivations,
+      agentRuns: baseline.room.agentRuns
+    )
+
+    return OrbitPhase1RealtimeSnapshot(
+      room: room,
+      replayCursor: baseline.replayCursor
     )
   }
 }

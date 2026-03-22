@@ -44,6 +44,14 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
         try await executor.execute(query: insertPostParticipantQuery(postParticipant))
       }
 
+      if let meetingState = room.meetingState {
+        try await executor.execute(query: upsertMeetingStateQuery(meetingState))
+      }
+
+      for meetingMember in room.meetingMembers {
+        try await executor.execute(query: upsertMeetingMemberQuery(meetingMember))
+      }
+
       for message in room.seedMessages {
         try await executor.execute(query: insertMessageQuery(message))
       }
@@ -71,6 +79,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     workspaceID: UUID,
     _ message: OrbitMessageRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
@@ -87,6 +96,9 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       try await executor.execute(query: insertMessageQuery(message))
       for realtimeEvent in effectiveRealtimeEvents {
         try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      if let meetingState {
+        try await executor.execute(query: upsertMeetingStateQuery(meetingState))
       }
       try await executor.execute(
         query: updateThreadActivityQuery(
@@ -108,6 +120,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     agentRun: OrbitAgentRunRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
@@ -119,6 +132,9 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       try await executor.execute(query: insertPostEventQuery(postEvent))
       for realtimeEvent in realtimeEvents {
         try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      if let meetingState {
+        try await executor.execute(query: upsertMeetingStateQuery(meetingState))
       }
       try await executor.execute(
         query: updateThreadActivityQuery(
@@ -138,6 +154,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     _ systemMessage: OrbitMessageRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil,
     threadLastActivityAt: Date,
     using executor: some OrbitPostgresStatementExecutor
   ) async throws {
@@ -147,6 +164,9 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       try await executor.execute(query: insertPostEventQuery(postEvent))
       for realtimeEvent in realtimeEvents {
         try await executor.execute(query: insertRealtimeEventQuery(realtimeEvent))
+      }
+      if let meetingState {
+        try await executor.execute(query: upsertMeetingStateQuery(meetingState))
       }
       try await executor.execute(
         query: updateThreadActivityQuery(
@@ -476,6 +496,56 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     """
   }
 
+  public func upsertMeetingStateQuery(
+    _ meetingState: OrbitMeetingStateRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO meeting_state (
+      post_id, meeting_type, status, started_by_participant_type,
+      started_by_participant_id, started_at, completed_at
+    ) VALUES (
+      \(meetingState.postID),
+      \(meetingState.meetingType.rawValue),
+      \(meetingState.status.rawValue),
+      \(meetingState.startedByParticipantType.rawValue),
+      \(meetingState.startedByParticipantID),
+      \(meetingState.startedAt),
+      \(meetingState.completedAt)
+    )
+    ON CONFLICT (post_id) DO UPDATE SET
+      meeting_type = EXCLUDED.meeting_type,
+      status = EXCLUDED.status,
+      started_by_participant_type = EXCLUDED.started_by_participant_type,
+      started_by_participant_id = EXCLUDED.started_by_participant_id,
+      started_at = EXCLUDED.started_at,
+      completed_at = EXCLUDED.completed_at
+    """
+  }
+
+  public func upsertMeetingMemberQuery(
+    _ meetingMember: OrbitMeetingMemberRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO meeting_member (
+      id, meeting_post_id, post_participant_id, participation_role,
+      selected_reason, joined_at, completed_at
+    ) VALUES (
+      \(meetingMember.id),
+      \(meetingMember.meetingPostID),
+      \(meetingMember.postParticipantID),
+      \(meetingMember.participationRole.rawValue),
+      \(meetingMember.selectedReason),
+      \(meetingMember.joinedAt),
+      \(meetingMember.completedAt)
+    )
+    ON CONFLICT (meeting_post_id, post_participant_id) DO UPDATE SET
+      participation_role = EXCLUDED.participation_role,
+      selected_reason = EXCLUDED.selected_reason,
+      joined_at = EXCLUDED.joined_at,
+      completed_at = EXCLUDED.completed_at
+    """
+  }
+
   public func insertPersonaActivationQuery(
     _ activation: OrbitPersonaActivationRecord
   ) -> PostgresQuery {
@@ -739,6 +809,41 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     FROM post_event
     WHERE post_id = \(postID)
     ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectMeetingStateQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      post_id,
+      meeting_type,
+      status,
+      started_by_participant_type,
+      started_by_participant_id,
+      started_at,
+      completed_at
+    FROM meeting_state
+    WHERE post_id = \(postID)
+    """
+  }
+
+  public func selectMeetingMembersQuery(
+    meetingPostID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      meeting_post_id,
+      post_participant_id,
+      participation_role,
+      selected_reason,
+      joined_at,
+      completed_at
+    FROM meeting_member
+    WHERE meeting_post_id = \(meetingPostID)
+    ORDER BY joined_at ASC, id ASC
     """
   }
 

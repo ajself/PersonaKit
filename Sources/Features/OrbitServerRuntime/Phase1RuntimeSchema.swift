@@ -14,6 +14,8 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case postParticipant = "post_participant"
   case postEvent = "post_event"
   case postLink = "post_link"
+  case meetingState = "meeting_state"
+  case meetingMember = "meeting_member"
   case personaActivation = "persona_activation"
   case agentRun = "agent_run"
 }
@@ -239,6 +241,35 @@ public enum OrbitPhase1RuntimeSchema {
           to_post_id UUID NOT NULL REFERENCES post(id),
           link_type TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .meetingState,
+      sql: """
+        CREATE TABLE IF NOT EXISTS meeting_state (
+          post_id UUID PRIMARY KEY REFERENCES post(id),
+          meeting_type TEXT NOT NULL,
+          status TEXT NOT NULL,
+          started_by_participant_type TEXT NOT NULL,
+          started_by_participant_id TEXT NOT NULL,
+          started_at TIMESTAMPTZ NOT NULL,
+          completed_at TIMESTAMPTZ
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .meetingMember,
+      sql: """
+        CREATE TABLE IF NOT EXISTS meeting_member (
+          id UUID PRIMARY KEY,
+          meeting_post_id UUID NOT NULL REFERENCES post(id),
+          post_participant_id UUID NOT NULL REFERENCES post_participant(id),
+          participation_role TEXT NOT NULL,
+          selected_reason TEXT NOT NULL,
+          joined_at TIMESTAMPTZ NOT NULL,
+          completed_at TIMESTAMPTZ,
+          UNIQUE(meeting_post_id, post_participant_id)
         )
         """
     ),

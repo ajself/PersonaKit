@@ -45,7 +45,15 @@ public enum OrbitPhase1ActivationFailureServiceError: Error, Equatable {
 
 public struct OrbitPhase1ActivationFailureService: Sendable {
   public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
-  public typealias FailureAppender = @Sendable (UUID, OrbitMessageRecord, OrbitPostEventRecord, [OrbitRealtimeEventRecord], Date) async throws -> Void
+  public typealias FailureAppender =
+    @Sendable (
+      UUID,
+      OrbitMessageRecord,
+      OrbitPostEventRecord,
+      [OrbitRealtimeEventRecord],
+      OrbitMeetingStateRecord?,
+      Date
+    ) async throws -> Void
 
   public let loadSnapshot: SnapshotLoader
   public let appendFailure: FailureAppender
@@ -115,12 +123,14 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
       payloadJSON: postEvent.payloadJSON,
       threadLastActivityAt: timestamp
     )
+    let updatedMeetingState = snapshot.meetingState
 
     try await appendFailure(
       snapshot.workspace.id,
       systemMessage,
       postEvent,
       realtimeEvents,
+      updatedMeetingState,
       timestamp
     )
 
@@ -142,6 +152,8 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
       ),
       messages: snapshot.messages + [systemMessage],
       postParticipants: snapshot.postParticipants,
+      meetingState: updatedMeetingState,
+      meetingMembers: snapshot.meetingMembers,
       postEvents: snapshot.postEvents + [postEvent],
       personaActivations: snapshot.personaActivations,
       agentRuns: snapshot.agentRuns
@@ -174,12 +186,13 @@ public extension OrbitPhase1ActivationFailureService {
           channelSlug: channelSlug
         )
       },
-      appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, timestamp in
+      appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, meetingState, timestamp in
         try await runtimeStore.appendActivationFailure(
           workspaceID: workspaceID,
           systemMessage,
           postEvent: postEvent,
           realtimeEvents: realtimeEvents,
+          meetingState: meetingState,
           threadLastActivityAt: timestamp
         )
       },

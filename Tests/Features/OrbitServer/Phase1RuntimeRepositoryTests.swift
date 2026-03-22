@@ -74,6 +74,18 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func bootstrapMeetingRoomExecutesMeetingRuntimeInsertsInsideTransaction() async throws {
+    let executor = RecordingRepositoryExecutor()
+
+    try await repository.bootstrapRoom(sampleMeetingRoomBootstrap(), using: executor)
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
+    #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
+  }
+
+  @Test
   func bootstrapRoomRollsBackWhenAnInsertFails() async {
     let executor = FailingRepositoryExecutor(failureIndex: 4)
 
@@ -122,6 +134,8 @@ struct Phase1RuntimeRepositoryTests {
   @Test
   func participantAndEventQueriesPreserveReplayOrder() {
     let participantQuery = repository.selectPostParticipantsQuery(postID: UUID())
+    let meetingStateQuery = repository.selectMeetingStateQuery(postID: UUID())
+    let meetingMemberQuery = repository.selectMeetingMembersQuery(meetingPostID: UUID())
     let eventQuery = repository.selectPostEventsQuery(postID: UUID())
     let workspacePersonaQuery = repository.selectWorkspacePersonasQuery(workspaceID: UUID())
     let teamQuery = repository.selectTeamsQuery(workspaceID: UUID())
@@ -152,6 +166,15 @@ struct Phase1RuntimeRepositoryTests {
     #expect(participantQuery.sql.contains("FROM post_participant"))
     #expect(participantQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
     #expect(participantQuery.binds.count == 1)
+
+    #expect(meetingStateQuery.sql.contains("FROM meeting_state"))
+    #expect(meetingStateQuery.sql.contains("WHERE post_id = $1"))
+    #expect(meetingStateQuery.binds.count == 1)
+
+    #expect(meetingMemberQuery.sql.contains("FROM meeting_member"))
+    #expect(meetingMemberQuery.sql.contains("WHERE meeting_post_id = $1"))
+    #expect(meetingMemberQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
+    #expect(meetingMemberQuery.binds.count == 1)
 
     #expect(eventQuery.sql.contains("FROM post_event"))
     #expect(eventQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
@@ -223,6 +246,14 @@ struct Phase1RuntimeRepositoryTests {
   func appendMessageWrapsInsertAndThreadTouchInsideTransaction() async throws {
     let executor = RecordingRepositoryExecutor()
     let message = sampleRoomBootstrap().seedMessages[1]
+    let meetingState = OrbitMeetingStateRecord(
+      postID: sampleRoomBootstrap().post.id,
+      meetingType: .team,
+      status: .active,
+      startedByParticipantType: .user,
+      startedByParticipantID: "aj",
+      startedAt: referenceDate
+    )
 
     try await repository.appendMessage(
       workspaceID: sampleRoomBootstrap().workspace.id,
@@ -238,6 +269,7 @@ struct Phase1RuntimeRepositoryTests {
           createdAt: referenceDate.addingTimeInterval(120)
         )
       ],
+      meetingState: meetingState,
       threadLastActivityAt: referenceDate.addingTimeInterval(120),
       using: executor
     )
@@ -248,7 +280,23 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.last == "COMMIT")
     #expect(queries.contains(where: { $0.contains("INSERT INTO message") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO realtime_event") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.contains(where: { $0.contains("UPDATE thread") }))
+  }
+
+  @Test
+  func meetingRuntimeUpsertsUseStableConflictKeys() {
+    let room = sampleMeetingRoomBootstrap()
+    let meetingState = room.meetingState!
+    let meetingMember = room.meetingMembers[0]
+
+    let meetingStateQuery = repository.upsertMeetingStateQuery(meetingState)
+    let meetingMemberQuery = repository.upsertMeetingMemberQuery(meetingMember)
+
+    #expect(meetingStateQuery.sql.contains("INSERT INTO meeting_state"))
+    #expect(meetingStateQuery.sql.contains("ON CONFLICT (post_id) DO UPDATE"))
+    #expect(meetingMemberQuery.sql.contains("INSERT INTO meeting_member"))
+    #expect(meetingMemberQuery.sql.contains("ON CONFLICT (meeting_post_id, post_participant_id) DO UPDATE"))
   }
 
   private func sampleRoomBootstrap() -> OrbitPhase1RoomBootstrap {
@@ -434,6 +482,65 @@ struct Phase1RuntimeRepositoryTests {
           completedAt: referenceDate.addingTimeInterval(62)
         ),
       ]
+    )
+  }
+
+  private func sampleMeetingRoomBootstrap() -> OrbitPhase1RoomBootstrap {
+    let bootstrap = sampleRoomBootstrap()
+    let participantIDs = bootstrap.postParticipants.map(\.id)
+
+    return OrbitPhase1RoomBootstrap(
+      workspace: bootstrap.workspace,
+      channel: bootstrap.channel,
+      workspacePersonas: bootstrap.workspacePersonas,
+      teams: bootstrap.teams,
+      squads: bootstrap.squads,
+      workspacePersonaMemberships: bootstrap.workspacePersonaMemberships,
+      post: OrbitPostRecord(
+        id: bootstrap.post.id,
+        workspaceID: bootstrap.post.workspaceID,
+        channelID: bootstrap.post.channelID,
+        postType: .meeting,
+        createdByParticipantType: bootstrap.post.createdByParticipantType,
+        createdByParticipantID: bootstrap.post.createdByParticipantID,
+        title: bootstrap.post.title,
+        status: bootstrap.post.status,
+        createdAt: bootstrap.post.createdAt,
+        archivedAt: bootstrap.post.archivedAt
+      ),
+      thread: bootstrap.thread,
+      seedMessages: bootstrap.seedMessages,
+      realtimeEvents: bootstrap.realtimeEvents,
+      postParticipants: bootstrap.postParticipants,
+      meetingState: OrbitMeetingStateRecord(
+        postID: bootstrap.post.id,
+        meetingType: .team,
+        status: .active,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: referenceDate
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: UUID(uuidString: "dededede-dede-dede-dede-dededededede")!,
+          meetingPostID: bootstrap.post.id,
+          postParticipantID: participantIDs[0],
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: bootstrap.postParticipants[0].joinedAt
+        ),
+        OrbitMeetingMemberRecord(
+          id: UUID(uuidString: "efefefef-efef-efef-efef-efefefefefef")!,
+          meetingPostID: bootstrap.post.id,
+          postParticipantID: participantIDs[1],
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: bootstrap.postParticipants[1].joinedAt
+        ),
+      ],
+      postEvents: bootstrap.postEvents,
+      personaActivations: bootstrap.personaActivations,
+      agentRuns: bootstrap.agentRuns
     )
   }
 }

@@ -67,7 +67,17 @@ public enum OrbitPhase1CollaboratorResponseServiceError: Error, Equatable {
 
 public struct OrbitPhase1CollaboratorResponseService: Sendable {
   public typealias SnapshotLoader = @Sendable (String, String) async throws -> OrbitPhase1RoomSnapshot?
-  public typealias ResponseAppender = @Sendable (UUID, OrbitMessageRecord, OrbitPersonaActivationRecord, OrbitAgentRunRecord, OrbitPostEventRecord, [OrbitRealtimeEventRecord], Date) async throws -> Void
+  public typealias ResponseAppender =
+    @Sendable (
+      UUID,
+      OrbitMessageRecord,
+      OrbitPersonaActivationRecord,
+      OrbitAgentRunRecord,
+      OrbitPostEventRecord,
+      [OrbitRealtimeEventRecord],
+      OrbitMeetingStateRecord?,
+      Date
+    ) async throws -> Void
 
   public let loadSnapshot: SnapshotLoader
   public let appendResponse: ResponseAppender
@@ -169,6 +179,7 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       eventCreatedAt: postEvent.createdAt,
       threadLastActivityAt: timestamp
     )
+    let updatedMeetingState = snapshot.meetingStateAfterConversationMessage()
 
     try await appendResponse(
       snapshot.workspace.id,
@@ -177,6 +188,7 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       agentRun,
       postEvent,
       realtimeEvents,
+      updatedMeetingState,
       timestamp
     )
 
@@ -198,6 +210,8 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       ),
       messages: snapshot.messages + [message],
       postParticipants: snapshot.postParticipants,
+      meetingState: updatedMeetingState,
+      meetingMembers: snapshot.meetingMembers,
       postEvents: snapshot.postEvents + [postEvent],
       personaActivations: snapshot.personaActivations + [activation],
       agentRuns: snapshot.agentRuns + [agentRun]
@@ -234,7 +248,15 @@ public extension OrbitPhase1CollaboratorResponseService {
           channelSlug: channelSlug
         )
       },
-      appendResponse: { workspaceID, message, activation, agentRun, postEvent, realtimeEvents, timestamp in
+      appendResponse: {
+        workspaceID,
+        message,
+        activation,
+        agentRun,
+        postEvent,
+        realtimeEvents,
+        meetingState,
+        timestamp in
         try await runtimeStore.appendCollaboratorResponse(
           workspaceID: workspaceID,
           message,
@@ -242,6 +264,7 @@ public extension OrbitPhase1CollaboratorResponseService {
           agentRun: agentRun,
           postEvent: postEvent,
           realtimeEvents: realtimeEvents,
+          meetingState: meetingState,
           threadLastActivityAt: timestamp
         )
       },

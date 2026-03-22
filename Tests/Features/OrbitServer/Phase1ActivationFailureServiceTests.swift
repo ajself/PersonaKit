@@ -17,7 +17,7 @@ struct Phase1ActivationFailureServiceTests {
     let recorder = ActivationFailureAppendRecorder()
     let service = OrbitPhase1ActivationFailureService(
       loadSnapshot: { _, _ in sampleSnapshot() },
-      appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, _ in
+      appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, _, _ in
         await recorder.record(
           workspaceID: workspaceID,
           systemMessage: systemMessage,
@@ -61,6 +61,51 @@ struct Phase1ActivationFailureServiceTests {
     #expect(payload.failure?.systemEventMessageID == systemEventMessageID)
     #expect(result.snapshot.messages.last?.id == systemEventMessageID)
     #expect(result.snapshot.postEvents.last?.eventType == OrbitPhase1RealtimeEventCategory.activationFailed.rawValue)
+  }
+
+  @Test
+  func appendActivationFailureDoesNotActivateCreatedMeetingState() async throws {
+    let createdAt = Date(timeIntervalSince1970: 1_742_342_520)
+    let recorder = ActivationFailureAppendRecorder()
+    let service = OrbitPhase1ActivationFailureService(
+      loadSnapshot: { _, _ in sampleCreatedMeetingSnapshot() },
+      appendFailure: { workspaceID, systemMessage, postEvent, realtimeEvents, meetingState, _ in
+        await recorder.record(
+          workspaceID: workspaceID,
+          systemMessage: systemMessage,
+          postEvent: postEvent,
+          realtimeEvents: realtimeEvents,
+          meetingState: meetingState
+        )
+      },
+      now: { createdAt },
+      makePostEventID: { UUID(uuidString: "78787878-7878-7878-7878-787878787878")! }
+    )
+
+    let result = try await service.appendActivationFailure(
+      OrbitPhase1AppendActivationFailureRequest(
+        workspaceSlug: "orbit",
+        channelSlug: "command-center",
+        initiatedByParticipantID: "aj",
+        triggerMessageID: triggerMessageID,
+        failure: OrbitPhase1ActivationFailurePayload(
+          addressedTargetID: "samwise",
+          participantID: "samwise",
+          workspacePersonaID: systemEventMessageID.uuidString,
+          personaTemplateID: "samwise",
+          directiveID: "maintain-partner-sync-and-handoffs",
+          triggerSource: "directAddress",
+          systemEventMessageID: systemEventMessageID,
+          requiredSkillIDs: ["codex-cli"],
+          authorizedSkillIDs: [],
+          failureReason: "unauthorizedSkillPosture",
+          systemEventBody: "Orbit blocked the activation because the required skill posture is not authorized for this collaborator."
+        )
+      )
+    )
+
+    #expect(await recorder.meetingState?.status == .created)
+    #expect(result.snapshot.meetingState?.status == .created)
   }
 
   private func sampleSnapshot() -> OrbitPhase1RoomSnapshot {
@@ -115,6 +160,87 @@ struct Phase1ActivationFailureServiceTests {
       ]
     )
   }
+
+  private func sampleCreatedMeetingSnapshot() -> OrbitPhase1RoomSnapshot {
+    OrbitPhase1RoomSnapshot(
+      workspace: OrbitWorkspaceRecord(
+        id: workspaceID,
+        slug: "orbit",
+        name: "Orbit",
+        status: .active,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      channel: OrbitChannelRecord(
+        id: channelID,
+        workspaceID: workspaceID,
+        slug: "command-center",
+        name: "Command Center",
+        purpose: "Primary Orbit room",
+        status: .active,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      post: OrbitPostRecord(
+        id: postID,
+        workspaceID: workspaceID,
+        channelID: channelID,
+        postType: .meeting,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
+        title: "Orbit room",
+        status: .active,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      thread: OrbitThreadRecord(
+        id: threadID,
+        postID: postID,
+        status: .open,
+        lastActivityAt: Date(timeIntervalSince1970: 1_742_342_460),
+        createdAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      messages: [
+        OrbitMessageRecord(
+          id: triggerMessageID,
+          postID: postID,
+          threadID: threadID,
+          authorType: .user,
+          authorID: "aj",
+          body: "Samwise, use the tool lane for this checkpoint.",
+          messageFormat: .plainText,
+          state: .persisted,
+          createdAt: Date(timeIntervalSince1970: 1_742_342_410),
+          updatedAt: Date(timeIntervalSince1970: 1_742_342_410)
+        )
+      ],
+      postParticipants: [
+        OrbitPostParticipantRecord(
+          id: UUID(uuidString: "89898989-8989-8989-8989-898989898989")!,
+          postID: postID,
+          participantType: .workspacePersona,
+          participantID: "workspace-persona-orbit-samwise",
+          joinedAt: Date(timeIntervalSince1970: 1_742_342_405),
+          participationMode: .active
+        )
+      ],
+      meetingState: OrbitMeetingStateRecord(
+        postID: postID,
+        meetingType: .team,
+        status: .created,
+        startedByParticipantType: .user,
+        startedByParticipantID: "aj",
+        startedAt: Date(timeIntervalSince1970: 1_742_342_400)
+      ),
+      meetingMembers: [
+        OrbitMeetingMemberRecord(
+          id: UUID(uuidString: "90909090-9090-9090-9090-909090909090")!,
+          meetingPostID: postID,
+          postParticipantID: UUID(uuidString: "89898989-8989-8989-8989-898989898989")!,
+          participationRole: .contributor,
+          selectedReason: "Selected via founding-group checkpoint scope.",
+          joinedAt: Date(timeIntervalSince1970: 1_742_342_405)
+        )
+      ]
+    )
+  }
 }
 
 private actor ActivationFailureAppendRecorder {
@@ -123,12 +249,14 @@ private actor ActivationFailureAppendRecorder {
   var postEvent: OrbitPostEventRecord?
   var realtimeEvents = [OrbitRealtimeEventRecord]()
   var postEventPayload: OrbitPhase1ActivationEventPayload?
+  var meetingState: OrbitMeetingStateRecord?
 
   func record(
     workspaceID: UUID,
     systemMessage: OrbitMessageRecord,
     postEvent: OrbitPostEventRecord,
-    realtimeEvents: [OrbitRealtimeEventRecord]
+    realtimeEvents: [OrbitRealtimeEventRecord],
+    meetingState: OrbitMeetingStateRecord? = nil
   ) {
     self.workspaceID = workspaceID
     self.systemMessage = systemMessage
@@ -138,5 +266,6 @@ private actor ActivationFailureAppendRecorder {
       OrbitPhase1ActivationEventPayload.self,
       from: postEvent.payloadJSON
     )
+    self.meetingState = meetingState
   }
 }

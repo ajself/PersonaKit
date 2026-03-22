@@ -23,6 +23,9 @@ struct Phase1RuntimeSchemaTests {
         "workspace",
         "channel",
         "workspace_persona",
+        "team",
+        "squad",
+        "workspace_persona_membership",
         "post",
         "thread",
         "message",
@@ -30,6 +33,8 @@ struct Phase1RuntimeSchemaTests {
         "post_participant",
         "post_event",
         "post_link",
+        "meeting_state",
+        "meeting_member",
         "persona_activation",
         "agent_run",
       ]

@@ -48,6 +48,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
                 )
               )
             ],
+            meetingState: room.meetingState,
+            meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
             personaActivations: room.personaActivations,
             agentRuns: room.agentRuns
@@ -106,6 +108,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             thread: room.thread,
             messages: messages,
             postParticipants: room.postParticipants,
+            meetingState: room.meetingState,
+            meetingMembers: room.meetingMembers,
             postEvents: room.postEvents,
             personaActivations: room.personaActivations,
             agentRuns: room.agentRuns
@@ -135,6 +139,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           ),
           messages: room.messages,
           postParticipants: room.postParticipants,
+          meetingState: room.meetingState,
+          meetingMembers: room.meetingMembers,
           postEvents: room.postEvents,
           personaActivations: room.personaActivations,
           agentRuns: room.agentRuns
@@ -179,6 +185,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           thread: room.thread,
           messages: room.messages,
           postParticipants: room.postParticipants,
+          meetingState: room.meetingState,
+          meetingMembers: room.meetingMembers,
           postEvents: postEvents,
           personaActivations: personaActivations,
           agentRuns: agentRuns
@@ -196,6 +204,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             thread: room.thread,
             messages: room.messages,
             postParticipants: room.postParticipants,
+            meetingState: room.meetingState,
+            meetingMembers: room.meetingMembers,
             postEvents: room.postEvents + [
               OrbitPostEventRecord(
                 id: event.id,

@@ -211,6 +211,32 @@ public enum OrbitCanonicalCommandCenterBootstrap {
       ),
       createdAt: samwiseResponseAt
     )
+    let meetingState = OrbitMeetingStateRecord(
+      postID: postID,
+      meetingType: .team,
+      status: .active,
+      startedByParticipantType: .user,
+      startedByParticipantID: "aj",
+      startedAt: kickoffAt
+    )
+    let meetingMembers = [
+      OrbitMeetingMemberRecord(
+        id: UUID(uuidString: "d7438f56-97e7-4a5a-9012-f0873030d5ea")!,
+        meetingPostID: postID,
+        postParticipantID: samwiseParticipantID,
+        participationRole: .contributor,
+        selectedReason: "Selected via founding-group checkpoint scope.",
+        joinedAt: samwiseJoinedAt
+      ),
+      OrbitMeetingMemberRecord(
+        id: UUID(uuidString: "a89a982f-10c0-44c8-b8a4-bf2b0c2caa56")!,
+        meetingPostID: postID,
+        postParticipantID: prodDocParticipantID,
+        participationRole: .contributor,
+        selectedReason: "Selected via founding-group checkpoint scope.",
+        joinedAt: prodDocJoinedAt
+      ),
+    ]
 
     return OrbitPhase1RoomBootstrap(
       workspace: workspace,
@@ -243,6 +269,8 @@ public enum OrbitCanonicalCommandCenterBootstrap {
           participationMode: .active
         ),
       ],
+      meetingState: meetingState,
+      meetingMembers: meetingMembers,
       postEvents: [samwiseActivationEvent],
       personaActivations: [samwiseActivation],
       agentRuns: [samwiseAgentRun]
