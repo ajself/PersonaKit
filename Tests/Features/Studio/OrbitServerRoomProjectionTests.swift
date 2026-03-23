@@ -444,6 +444,10 @@ struct OrbitServerRoomProjectionTests {
             title: "Adopt canonical attachment ordering",
             body: "Projection should read mixed objects through one ordered model.",
             decisionState: .adopted,
+            rationale: "The attachment lane is the canonical source of truth.",
+            tradeoffs: "Adds one more ordered projection path to maintain.",
+            dissent: "none recorded",
+            linkedReferenceIDs: [referenceID],
             createdByParticipantType: .user,
             createdByParticipantID: "aj",
             createdAt: createdAt.addingTimeInterval(1)
@@ -521,6 +525,24 @@ struct OrbitServerRoomProjectionTests {
       decisionID.uuidString,
       referenceID.uuidString,
     ])
+
+    let projectedDecisionRecord = try! #require(
+      workspace.activeStructuredPostObjectRecords.first {
+        $0.structuredObjectType == .decision
+      }
+    )
+
+    guard case let .decision(projectedDecision) = projectedDecisionRecord.object else {
+      Issue.record("Expected projected structured decision object.")
+      return
+    }
+
+    #expect(projectedDecision.rationale == "The attachment lane is the canonical source of truth.")
+    #expect(projectedDecision.tradeoffs == "Adds one more ordered projection path to maintain.")
+    #expect(projectedDecision.dissent == "none recorded")
+    #expect(projectedDecision.linkedReferenceIDs == [referenceID])
+    #expect(projectedDecision.createdByParticipantType == .user)
+    #expect(projectedDecision.createdByParticipantID == "aj")
   }
 
   @Test

@@ -51,6 +51,9 @@ struct OrbitPanelView: View {
       if isMeetingRoom {
         meetingOutputsCard
       }
+      if showsStructuredNotesAndDecisionsCard {
+        structuredNotesAndDecisionsCard
+      }
 
       if let persistenceMessage {
         Text(persistenceMessage)

@@ -120,6 +120,13 @@ extension OrbitPanelView {
     )
   }
 
+  static func shouldShowStructuredNotesAndDecisionsCard(
+    isMeetingCompletionEditable: Bool,
+    surfaceItems: [OrbitStructuredNotesAndDecisionsSurfaceItem]
+  ) -> Bool {
+    !isMeetingCompletionEditable && !surfaceItems.isEmpty
+  }
+
   var sortedParticipants: [OrbitParticipant] {
     orbitWorkspace.participants.sorted { $0.sortOrder < $1.sortOrder }
   }
@@ -177,6 +184,17 @@ extension OrbitPanelView {
       ?? orbitWorkspace.activeMeetingStatusRecord?.postID
       ?? orbitWorkspace.activeMeetingSummaryRecord?.postID
       ?? orbitWorkspace.activeMeetingOutcomeRecord?.postID
+  }
+
+  var activeStructuredNotesAndDecisionsSurfaceItems: [OrbitStructuredNotesAndDecisionsSurfaceItem] {
+    orbitWorkspace.activeStructuredNotesAndDecisionsSurfaceItems
+  }
+
+  var showsStructuredNotesAndDecisionsCard: Bool {
+    Self.shouldShowStructuredNotesAndDecisionsCard(
+      isMeetingCompletionEditable: isMeetingCompletionEditable,
+      surfaceItems: activeStructuredNotesAndDecisionsSurfaceItems
+    )
   }
 
   var parsedMeetingOpenQuestions: [String] {
@@ -515,6 +533,165 @@ extension OrbitPanelView {
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
     .padding(.horizontal, 16)
+  }
+
+  @ViewBuilder
+  var structuredNotesAndDecisionsCard: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Structured Notes And Decisions")
+          .font(.headline)
+
+        Text("Read-only attached context from this post in canonical attachment order.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+
+      VStack(alignment: .leading, spacing: 12) {
+        ForEach(activeStructuredNotesAndDecisionsSurfaceItems) { item in
+          structuredNotesAndDecisionsRow(item)
+        }
+      }
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
+    .padding(.horizontal, 16)
+  }
+
+  @ViewBuilder
+  func structuredNotesAndDecisionsRow(
+    _ item: OrbitStructuredNotesAndDecisionsSurfaceItem
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .center, spacing: 8) {
+        switch item.content {
+        case let .note(note):
+          shellStatusBadge(
+            title: note.noteType.displayText,
+            tint: Color.secondary.opacity(0.10),
+            foreground: .secondary
+          )
+        case let .decision(decision):
+          shellStatusBadge(
+            title: decision.decisionState.displayText,
+            tint: Color.accentColor.opacity(0.12),
+            foreground: .accentColor
+          )
+        }
+
+        Text(structuredSurfaceMetadataCaption(for: item))
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+        Spacer(minLength: 0)
+      }
+
+      switch item.content {
+      case let .note(note):
+        structuredNoteContent(note)
+      case let .decision(decision):
+        structuredDecisionContent(decision)
+      }
+    }
+    .padding(12)
+    .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+  }
+
+  @ViewBuilder
+  func structuredNoteContent(
+    _ note: OrbitStructuredNoteSurface
+  ) -> some View {
+    switch note.presentation {
+    case .fullBody:
+      Text(note.body)
+        .font(.body)
+        .textSelection(.enabled)
+    case .meetingSummaryReference:
+      Text("Meeting summary shown above in Meeting Outputs.")
+        .font(.body)
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  @ViewBuilder
+  func structuredDecisionContent(
+    _ decision: OrbitStructuredDecisionSurface
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text(decision.title)
+        .font(.subheadline.weight(.semibold))
+
+      Text(decision.body)
+        .font(.body)
+        .textSelection(.enabled)
+
+      structuredDecisionField(
+        title: "Rationale",
+        value: decision.rationale
+      )
+      structuredDecisionField(
+        title: "Tradeoffs",
+        value: decision.tradeoffs
+      )
+      structuredDecisionField(
+        title: "Dissent",
+        value: decision.dissent
+      )
+      structuredDecisionEvidenceSection(decision.evidence)
+    }
+  }
+
+  func structuredDecisionField(
+    title: String,
+    value: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 2) {
+      Text(title)
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+      Text(value)
+        .font(.body)
+        .foregroundStyle(.secondary)
+        .textSelection(.enabled)
+    }
+  }
+
+  @ViewBuilder
+  func structuredDecisionEvidenceSection(
+    _ evidence: [OrbitStructuredDecisionEvidenceSurface]
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Linked Evidence")
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+
+      if evidence.isEmpty {
+        Text("None recorded.")
+          .font(.body)
+          .foregroundStyle(.secondary)
+      } else {
+        VStack(alignment: .leading, spacing: 8) {
+          ForEach(evidence) { evidence in
+            VStack(alignment: .leading, spacing: 2) {
+              Text(evidence.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(evidence.isMissing ? .secondary : .primary)
+              Text(evidence.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  func structuredSurfaceMetadataCaption(
+    for item: OrbitStructuredNotesAndDecisionsSurfaceItem
+  ) -> String {
+    "\(item.createdByDisplayName) • \(item.createdAt.formatted(date: .abbreviated, time: .shortened))"
   }
 
   @ViewBuilder

@@ -1,6 +1,6 @@
 # M6 Packet 3: Readiness Review
 
-Status: Needs Another Planning Pass
+Status: Addressed By Packet Execution Note
 Packet Id: `M6-P3`
 Milestone: `M6`
 Prepared By: `samwise`
@@ -11,6 +11,9 @@ Last Updated: 2026-03-23
 Decide whether the current `M6` dossier is specific enough to start the note
 and decision surface packet without reopening `M6-P1` or broadening beyond the
 next smallest slice.
+
+This readiness review is now historical context. The packet boundary it called
+for is frozen in `Packet-03-Read-Only-Note-And-Decision-Surfaces.md`.
 
 ## Inputs Reviewed
 
@@ -30,45 +33,36 @@ next smallest slice.
 - the Studio projection already has one ordered per-post structured-object model
   available through `orderedStructuredObjectRecords`.
 
-## Why `M6-P3` Is Not Yet Ready For Work
+## What This Review Identified
 
-- the milestone README still mixes two different scopes: rendering note and
-  decision surfaces, and "make edits" work. That is too broad for the next
-  smallest slice and risks pulling editing UX into `M6-P3` by accident.
-- the dossier does not yet freeze the source-of-truth rule for surfaces. `M6-P3`
-  should explicitly say that note and decision read surfaces derive from the
-  ordered attachment lane, not from parallel meeting-only arrays or per-type
-  sort rules.
-- the dossier does not yet freeze the context boundary for the first surface
-  slice. It needs to say exactly how the first note and decision read surface
-  behaves on one originating post, how meeting posts differ from message posts
-  if they differ at all, and how the accepted `M5` meeting-output card remains
-  stable while the new surface is introduced.
-- the dossier does not yet freeze the minimum visible decision fields for the
-  first surface pass. `M6-P1` already froze the semantic field floor, but
-  `M6-P3` still needs to decide which of those fields are visible in the first
-  read-only surface and how explicit "none recorded" values should appear.
+Before implementation, this review found four packet-boundary gaps:
 
-## Readiness Judgment
+- the milestone README still mixed read surfaces with editing work, which was
+  too broad for the next smallest slice.
+- the dossier had not yet frozen the source-of-truth rule for note and decision
+  surfaces.
+- the dossier had not yet frozen the one-post context boundary or the coexistence
+  rule with the accepted `M5` meeting outputs card.
+- the dossier had not yet frozen the minimum visible decision fields for the
+  first read-only surface pass.
 
-`M6-P3` needs another planning pass before implementation starts.
+## Disposition
 
-This is not a data-model blocker. The ordered attachment runtime and projection
-lane are ready enough.
+Those gaps were resolved by the packet execution note in
+`Packet-03-Read-Only-Note-And-Decision-Surfaces.md` and the corresponding
+milestone README updates.
 
-It is a packet-boundary blocker: the UI packet still needs one written first
-slice that keeps the work read-only, derives from the canonical ordered
-attachment lane, preserves the current `M5` surface, and defers edit flows plus
-reference and artifact surfaces to later packets.
-
-## Recommended Planning Target
-
-The next planning pass should freeze one bounded `M6-P3` slice:
+The packet is now explicitly bounded to:
 
 - read-only note and decision surfaces only
 - one originating post at a time
-- canonical order comes from `structured_attachment`
+- canonical order from `structured_attachment`
 - no editing UX
-- no reference or artifact surface work except the minimum linkage needed to
-  keep decision evidence legible
-- no reopening of `M6-P1`, `M6-P2`, or `M5`
+- no broad reference or artifact surface work beyond minimal decision-evidence
+  display
+- no reopening of `M6-P1`, `M6-P2`, or the accepted `M5` meeting outputs card
+
+## Historical Value
+
+Keep this note as the archived rationale for why `M6-P3` was narrowed before
+implementation. It should not be read as the active packet contract.

@@ -391,6 +391,8 @@ struct OrbitWorkspacePersistenceTests {
 
     var workspace = OrbitWorkspace.defaultWorkspace
     workspace.activePostID = "post-message-0001"
+    let referenceID = UUID(uuidString: "99999999-1111-2222-3333-444444444444")!
+    let decisionID = UUID(uuidString: "aaaaaaaa-1111-2222-3333-444444444444")!
     workspace.orderedStructuredObjectRecords = [
       OrbitStructuredPostObjectRecord(
         id: "artifact:artifact-0001",
@@ -431,6 +433,50 @@ struct OrbitWorkspacePersistenceTests {
           )
         )
       ),
+      OrbitStructuredPostObjectRecord(
+        id: "decision:decision-0001",
+        originPostID: "post-message-0001",
+        structuredObjectType: .decision,
+        structuredObjectID: "decision-0001",
+        attachmentOrdinal: 2,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_702),
+        object: .decision(
+          OrbitDecisionRecord(
+            id: decisionID,
+            postID: UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")!,
+            title: "Ship the structured card",
+            body: "Keep the first read-only slice attached to one post.",
+            decisionState: .adopted,
+            rationale: "The ordered structured-object lane already has the needed payload.",
+            tradeoffs: "Adds one more room card to the current Studio surface.",
+            dissent: "none recorded",
+            linkedReferenceIDs: [referenceID],
+            createdByParticipantType: .workspacePersona,
+            createdByParticipantID: "workspace-persona-orbit-samwise",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_702)
+          )
+        )
+      ),
+      OrbitStructuredPostObjectRecord(
+        id: "reference:reference-0001",
+        originPostID: "post-message-0001",
+        structuredObjectType: .reference,
+        structuredObjectID: "reference-0001",
+        attachmentOrdinal: 3,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_703),
+        object: .reference(
+          OrbitReferenceRecord(
+            id: referenceID,
+            postID: UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")!,
+            referenceType: .doc,
+            target: "Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md",
+            title: "Orbit vision",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_703)
+          )
+        )
+      ),
     ]
 
     try persistence.persist(workspace, to: workspaceURL)
@@ -441,11 +487,37 @@ struct OrbitWorkspacePersistenceTests {
     #expect(reloadedWorkspace.activeStructuredPostObjectRecords.map(\.structuredObjectType) == [
       .artifact,
       .note,
+      .decision,
+      .reference,
     ])
     #expect(reloadedWorkspace.activeStructuredPostObjectRecords.map(\.structuredObjectID) == [
       "artifact-0001",
       "note-0001",
+      "decision-0001",
+      "reference-0001",
     ])
+
+    let surfaceItems = reloadedWorkspace.activeStructuredNotesAndDecisionsSurfaceItems
+    #expect(surfaceItems.map(\.id) == [
+      "note:note-0001",
+      "decision:decision-0001",
+    ])
+    #expect(surfaceItems.map(\.createdByDisplayName) == [
+      "AJ",
+      "Samwise",
+    ])
+
+    let decisionSurface = try #require(surfaceItems.last)
+
+    guard case let .decision(surface) = decisionSurface.content else {
+      Issue.record("Expected decision surface after reload.")
+      return
+    }
+
+    #expect(surface.rationale == "The ordered structured-object lane already has the needed payload.")
+    #expect(surface.tradeoffs == "Adds one more room card to the current Studio surface.")
+    #expect(surface.dissent == "none recorded")
+    #expect(surface.evidence.map(\.title) == ["Orbit vision"])
   }
 
   @Test

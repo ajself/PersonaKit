@@ -1,6 +1,6 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: In Progress - `M6-P2` concluded, `M6-P3` needs another planning pass
+Status: In Progress - `M6-P3` read-only note and decision surfaces underway
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
 Last Updated: 2026-03-23
@@ -18,9 +18,10 @@ inspectable objects to posts and meetings.
   implemented through `structured_attachment`, replay and reload stay stable for
   mixed structured objects on one post, and the current `M5` meeting-output
   surface remains stable.
-- `M6-P3` is not yet ready for implementation as currently written in this
-  dossier; it needs one packet-local planning pass to freeze the first note and
-  decision surface boundary before UI work starts.
+- `M6-P3` is now frozen as a bounded read-only surface packet: one separate
+  structured notes-and-decisions card, one active post at a time, canonical
+  order from `structured_attachment`, and no editing or broad reference/artifact
+  UI work in this slice.
 
 ## File Map
 
@@ -32,6 +33,8 @@ inspectable objects to posts and meetings.
   local closeout note for the ordered attachment runtime and projection slice
 - `Packet-03-Readiness-Review.md`
   readiness judgment for the note-and-decision surface packet
+- `Packet-03-Read-Only-Note-And-Decision-Surfaces.md`
+  execution note freezing the first `M6-P3` read-only surface slice
 
 ## Preconditions
 
@@ -105,13 +108,14 @@ Outcome:
 
 Work:
 
-- render notes from posts and meetings
-- render decisions with rationale, tradeoffs, dissent, and linked evidence
-- make edits and inspection feel deliberate rather than bolted on
+- render read-only note and decision surfaces from the ordered attachment lane
+- keep the accepted `M5` meeting outputs card stable as a separate surface
+- defer editing, full reference surfaces, and artifact surfaces to later packets
 
 Done when:
 
-- decisions no longer disappear into reply text
+- readers can inspect ordered notes and decisions for one originating post
+  without rereading the whole thread
 
 ### Packet 4. Implement Reference And Artifact Surfaces
 
