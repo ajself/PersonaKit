@@ -410,6 +410,13 @@ public enum OrbitPostLinkType: String, Codable, Equatable, Sendable {
   case related
 }
 
+public enum OrbitStructuredObjectType: String, Codable, Equatable, Sendable {
+  case note
+  case decision
+  case reference
+  case artifact
+}
+
 public enum OrbitNoteType: String, Codable, Equatable, Sendable {
   case brief
   case detailed
@@ -433,6 +440,15 @@ public enum OrbitReferenceType: String, Codable, Equatable, Sendable {
   case issue
   case commit
   case externalNote = "external_note"
+}
+
+public enum OrbitArtifactType: String, Codable, Equatable, Sendable {
+  case file
+  case image
+  case codeOutput = "code_output"
+  case report
+  case bundle
+  case other
 }
 
 public enum OrbitMeetingOutcomeState: String, Codable, Equatable, Sendable {
@@ -491,13 +507,41 @@ public struct OrbitNoteRecord: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitStructuredAttachmentRecord: Codable, Equatable, Sendable {
+  public let originPostID: UUID
+  public let structuredObjectType: OrbitStructuredObjectType
+  public let structuredObjectID: UUID
+  public let attachmentOrdinal: Int
+  public let attachedAt: Date
+
+  public init(
+    originPostID: UUID,
+    structuredObjectType: OrbitStructuredObjectType,
+    structuredObjectID: UUID,
+    attachmentOrdinal: Int,
+    attachedAt: Date
+  ) {
+    self.originPostID = originPostID
+    self.structuredObjectType = structuredObjectType
+    self.structuredObjectID = structuredObjectID
+    self.attachmentOrdinal = attachmentOrdinal
+    self.attachedAt = attachedAt
+  }
+}
+
 public struct OrbitDecisionRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let postID: UUID
   public let title: String
   public let body: String
   public let decisionState: OrbitDecisionState
+  public let rationale: String
+  public let tradeoffs: String
+  public let dissent: String
+  public let linkedReferenceIDs: [UUID]
   public let rationaleNoteID: UUID?
+  public let createdByParticipantType: OrbitParticipantAuthorType
+  public let createdByParticipantID: String
   public let createdAt: Date
 
   public init(
@@ -506,7 +550,13 @@ public struct OrbitDecisionRecord: Codable, Equatable, Sendable {
     title: String,
     body: String,
     decisionState: OrbitDecisionState,
+    rationale: String = "none recorded",
+    tradeoffs: String = "none recorded",
+    dissent: String = "none recorded",
+    linkedReferenceIDs: [UUID] = [],
     rationaleNoteID: UUID? = nil,
+    createdByParticipantType: OrbitParticipantAuthorType,
+    createdByParticipantID: String,
     createdAt: Date
   ) {
     self.id = id
@@ -514,7 +564,13 @@ public struct OrbitDecisionRecord: Codable, Equatable, Sendable {
     self.title = title
     self.body = body
     self.decisionState = decisionState
+    self.rationale = rationale
+    self.tradeoffs = tradeoffs
+    self.dissent = dissent
+    self.linkedReferenceIDs = linkedReferenceIDs
     self.rationaleNoteID = rationaleNoteID
+    self.createdByParticipantType = createdByParticipantType
+    self.createdByParticipantID = createdByParticipantID
     self.createdAt = createdAt
   }
 }
@@ -525,6 +581,8 @@ public struct OrbitReferenceRecord: Codable, Equatable, Sendable {
   public let referenceType: OrbitReferenceType
   public let target: String
   public let title: String?
+  public let createdByParticipantType: OrbitParticipantAuthorType
+  public let createdByParticipantID: String
   public let createdAt: Date
 
   public init(
@@ -533,6 +591,8 @@ public struct OrbitReferenceRecord: Codable, Equatable, Sendable {
     referenceType: OrbitReferenceType,
     target: String,
     title: String? = nil,
+    createdByParticipantType: OrbitParticipantAuthorType,
+    createdByParticipantID: String,
     createdAt: Date
   ) {
     self.id = id
@@ -540,7 +600,107 @@ public struct OrbitReferenceRecord: Codable, Equatable, Sendable {
     self.referenceType = referenceType
     self.target = target
     self.title = title
+    self.createdByParticipantType = createdByParticipantType
+    self.createdByParticipantID = createdByParticipantID
     self.createdAt = createdAt
+  }
+}
+
+public struct OrbitArtifactRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let postID: UUID
+  public let artifactType: OrbitArtifactType
+  public let storageRef: String
+  public let title: String?
+  public let createdByParticipantType: OrbitParticipantAuthorType
+  public let createdByParticipantID: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    postID: UUID,
+    artifactType: OrbitArtifactType,
+    storageRef: String,
+    title: String? = nil,
+    createdByParticipantType: OrbitParticipantAuthorType,
+    createdByParticipantID: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.postID = postID
+    self.artifactType = artifactType
+    self.storageRef = storageRef
+    self.title = title
+    self.createdByParticipantType = createdByParticipantType
+    self.createdByParticipantID = createdByParticipantID
+    self.createdAt = createdAt
+  }
+}
+
+public enum OrbitStructuredObjectRecord: Codable, Equatable, Sendable {
+  case note(OrbitNoteRecord)
+  case decision(OrbitDecisionRecord)
+  case reference(OrbitReferenceRecord)
+  case artifact(OrbitArtifactRecord)
+
+  public var id: UUID {
+    switch self {
+    case let .note(record):
+      return record.id
+    case let .decision(record):
+      return record.id
+    case let .reference(record):
+      return record.id
+    case let .artifact(record):
+      return record.id
+    }
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case type
+    case note
+    case decision
+    case reference
+    case artifact
+  }
+
+  public init(
+    from decoder: Decoder
+  ) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    let type = try container.decode(OrbitStructuredObjectType.self, forKey: .type)
+
+    switch type {
+    case .note:
+      self = .note(try container.decode(OrbitNoteRecord.self, forKey: .note))
+    case .decision:
+      self = .decision(try container.decode(OrbitDecisionRecord.self, forKey: .decision))
+    case .reference:
+      self = .reference(try container.decode(OrbitReferenceRecord.self, forKey: .reference))
+    case .artifact:
+      self = .artifact(try container.decode(OrbitArtifactRecord.self, forKey: .artifact))
+    }
+  }
+
+  public func encode(
+    to encoder: Encoder
+  ) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    switch self {
+    case let .note(record):
+      try container.encode(OrbitStructuredObjectType.note, forKey: .type)
+      try container.encode(record, forKey: .note)
+    case let .decision(record):
+      try container.encode(OrbitStructuredObjectType.decision, forKey: .type)
+      try container.encode(record, forKey: .decision)
+    case let .reference(record):
+      try container.encode(OrbitStructuredObjectType.reference, forKey: .type)
+      try container.encode(record, forKey: .reference)
+    case let .artifact(record):
+      try container.encode(OrbitStructuredObjectType.artifact, forKey: .type)
+      try container.encode(record, forKey: .artifact)
+    }
   }
 }
 
@@ -818,6 +978,8 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
   public let notes: [OrbitNoteRecord]
   public let decisions: [OrbitDecisionRecord]
   public let references: [OrbitReferenceRecord]
+  public let artifacts: [OrbitArtifactRecord]
+  public let structuredAttachments: [OrbitStructuredAttachmentRecord]
   public let meetingOutputState: OrbitMeetingOutputStateRecord?
   public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
   public let meetingState: OrbitMeetingStateRecord?
@@ -842,6 +1004,8 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     notes: [OrbitNoteRecord] = [],
     decisions: [OrbitDecisionRecord] = [],
     references: [OrbitReferenceRecord] = [],
+    artifacts: [OrbitArtifactRecord] = [],
+    structuredAttachments: [OrbitStructuredAttachmentRecord]? = nil,
     meetingOutputState: OrbitMeetingOutputStateRecord? = nil,
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
@@ -865,6 +1029,16 @@ public struct OrbitPhase1RoomBootstrap: Codable, Equatable, Sendable {
     self.notes = notes
     self.decisions = decisions
     self.references = references
+    self.artifacts = artifacts
+    let resolvedStructuredAttachments = structuredAttachments
+      ?? orbitDefaultStructuredAttachments(
+        postID: post.id,
+        notes: notes,
+        decisions: decisions,
+        references: references,
+        artifacts: artifacts
+      )
+    self.structuredAttachments = resolvedStructuredAttachments.sorted(by: orbitStructuredAttachmentSort)
     self.meetingOutputState = meetingOutputState
     self.meetingOpenQuestions = meetingOpenQuestions
     self.meetingState = meetingState
@@ -890,6 +1064,8 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
   public let notes: [OrbitNoteRecord]
   public let decisions: [OrbitDecisionRecord]
   public let references: [OrbitReferenceRecord]
+  public let artifacts: [OrbitArtifactRecord]
+  public let structuredAttachments: [OrbitStructuredAttachmentRecord]
   public let meetingOutputState: OrbitMeetingOutputStateRecord?
   public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
   public let meetingState: OrbitMeetingStateRecord?
@@ -913,6 +1089,8 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     notes: [OrbitNoteRecord] = [],
     decisions: [OrbitDecisionRecord] = [],
     references: [OrbitReferenceRecord] = [],
+    artifacts: [OrbitArtifactRecord] = [],
+    structuredAttachments: [OrbitStructuredAttachmentRecord]? = nil,
     meetingOutputState: OrbitMeetingOutputStateRecord? = nil,
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
     meetingState: OrbitMeetingStateRecord? = nil,
@@ -935,6 +1113,16 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
     self.notes = notes
     self.decisions = decisions
     self.references = references
+    self.artifacts = artifacts
+    let resolvedStructuredAttachments = structuredAttachments
+      ?? orbitDefaultStructuredAttachments(
+        postID: post.id,
+        notes: notes,
+        decisions: decisions,
+        references: references,
+        artifacts: artifacts
+      )
+    self.structuredAttachments = resolvedStructuredAttachments.sorted(by: orbitStructuredAttachmentSort)
     self.meetingOutputState = meetingOutputState
     self.meetingOpenQuestions = meetingOpenQuestions
     self.meetingState = meetingState
@@ -946,6 +1134,39 @@ public struct OrbitPhase1RoomSnapshot: Codable, Equatable, Sendable {
 }
 
 public extension OrbitPhase1RoomSnapshot {
+  func structuredObject(
+    for attachment: OrbitStructuredAttachmentRecord
+  ) -> OrbitStructuredObjectRecord? {
+    guard attachment.originPostID == post.id else {
+      return nil
+    }
+
+    switch attachment.structuredObjectType {
+    case .note:
+      return notes
+        .first(where: { $0.id == attachment.structuredObjectID })
+        .map(OrbitStructuredObjectRecord.note)
+    case .decision:
+      return decisions
+        .first(where: { $0.id == attachment.structuredObjectID })
+        .map(OrbitStructuredObjectRecord.decision)
+    case .reference:
+      return references
+        .first(where: { $0.id == attachment.structuredObjectID })
+        .map(OrbitStructuredObjectRecord.reference)
+    case .artifact:
+      return artifacts
+        .first(where: { $0.id == attachment.structuredObjectID })
+        .map(OrbitStructuredObjectRecord.artifact)
+    }
+  }
+
+  var orderedStructuredObjects: [OrbitStructuredObjectRecord] {
+    structuredAttachments
+      .sorted(by: orbitStructuredAttachmentSort)
+      .compactMap(structuredObject(for:))
+  }
+
   func meetingStateAfterConversationMessage() -> OrbitMeetingStateRecord? {
     guard post.postType == .meeting else {
       return nil
@@ -969,4 +1190,94 @@ public extension OrbitPhase1RoomSnapshot {
       completedAt: meetingState.completedAt
     )
   }
+}
+
+private struct OrbitDefaultStructuredAttachmentSeed {
+  let type: OrbitStructuredObjectType
+  let objectID: UUID
+  let createdAt: Date
+}
+
+private func orbitDefaultStructuredAttachments(
+  postID: UUID,
+  notes: [OrbitNoteRecord],
+  decisions: [OrbitDecisionRecord],
+  references: [OrbitReferenceRecord],
+  artifacts: [OrbitArtifactRecord]
+) -> [OrbitStructuredAttachmentRecord] {
+  let seeds =
+    notes.map {
+      OrbitDefaultStructuredAttachmentSeed(
+        type: .note,
+        objectID: $0.id,
+        createdAt: $0.createdAt
+      )
+    }
+    + decisions.map {
+      OrbitDefaultStructuredAttachmentSeed(
+        type: .decision,
+        objectID: $0.id,
+        createdAt: $0.createdAt
+      )
+    }
+    + references.map {
+      OrbitDefaultStructuredAttachmentSeed(
+        type: .reference,
+        objectID: $0.id,
+        createdAt: $0.createdAt
+      )
+    }
+    + artifacts.map {
+      OrbitDefaultStructuredAttachmentSeed(
+        type: .artifact,
+        objectID: $0.id,
+        createdAt: $0.createdAt
+      )
+    }
+
+  let sortedSeeds = seeds.sorted(by: orbitDefaultStructuredAttachmentSeedSort)
+
+  return sortedSeeds.enumerated().map { index, seed in
+    OrbitStructuredAttachmentRecord(
+      originPostID: postID,
+      structuredObjectType: seed.type,
+      structuredObjectID: seed.objectID,
+      attachmentOrdinal: index,
+      attachedAt: seed.createdAt
+    )
+  }
+}
+
+private func orbitDefaultStructuredAttachmentSeedSort(
+  _ lhs: OrbitDefaultStructuredAttachmentSeed,
+  _ rhs: OrbitDefaultStructuredAttachmentSeed
+) -> Bool {
+  if lhs.createdAt == rhs.createdAt {
+    if lhs.type == rhs.type {
+      return lhs.objectID.uuidString < rhs.objectID.uuidString
+    }
+
+    return lhs.type.rawValue < rhs.type.rawValue
+  }
+
+  return lhs.createdAt < rhs.createdAt
+}
+
+private func orbitStructuredAttachmentSort(
+  _ lhs: OrbitStructuredAttachmentRecord,
+  _ rhs: OrbitStructuredAttachmentRecord
+) -> Bool {
+  if lhs.attachmentOrdinal == rhs.attachmentOrdinal {
+    if lhs.attachedAt == rhs.attachedAt {
+      if lhs.structuredObjectType == rhs.structuredObjectType {
+        return lhs.structuredObjectID.uuidString < rhs.structuredObjectID.uuidString
+      }
+
+      return lhs.structuredObjectType.rawValue < rhs.structuredObjectType.rawValue
+    }
+
+    return lhs.attachedAt < rhs.attachedAt
+  }
+
+  return lhs.attachmentOrdinal < rhs.attachmentOrdinal
 }

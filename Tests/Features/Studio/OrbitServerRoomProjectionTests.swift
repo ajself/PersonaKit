@@ -276,6 +276,8 @@ struct OrbitServerRoomProjectionTests {
             title: "Ship packet 4 shell",
             body: "Keep the completion slice bounded.",
             decisionState: .adopted,
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
             createdAt: completedAt
           )
         ],
@@ -286,6 +288,8 @@ struct OrbitServerRoomProjectionTests {
             referenceType: .doc,
             target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
             title: "Packet scope",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
             createdAt: completedAt.addingTimeInterval(0.001)
           )
         ],
@@ -384,6 +388,139 @@ struct OrbitServerRoomProjectionTests {
     #expect(continuityRecord?.promotedMeetingPostID == meetingPostID.uuidString)
     #expect(continuityRecord?.currentPostID == snapshot.room.post.id.uuidString)
     #expect(continuityRecord?.linkedPostID == meetingPostID.uuidString)
+  }
+
+  @Test
+  func projectionBuildsOrderedStructuredObjectRecordsFromCanonicalAttachmentOrder() {
+    let snapshot = sampleSnapshot()
+    let postID = UUID(uuidString: "31313131-3131-3131-3131-313131313131")!
+    let noteID = UUID(uuidString: "41414141-4141-4141-4141-414141414141")!
+    let decisionID = UUID(uuidString: "42424242-4242-4242-4242-424242424242")!
+    let referenceID = UUID(uuidString: "43434343-4343-4343-4343-434343434343")!
+    let artifactID = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
+    let createdAt = Date(timeIntervalSince1970: 1_742_342_700)
+    let mixedSnapshot = OrbitPhase1RealtimeSnapshot(
+      room: OrbitPhase1RoomSnapshot(
+        workspace: snapshot.room.workspace,
+        channel: snapshot.room.channel,
+        workspacePersonas: snapshot.room.workspacePersonas,
+        teams: snapshot.room.teams,
+        squads: snapshot.room.squads,
+        workspacePersonaMemberships: snapshot.room.workspacePersonaMemberships,
+        post: OrbitPostRecord(
+          id: postID,
+          workspaceID: snapshot.room.workspace.id,
+          channelID: snapshot.room.channel.id,
+          postType: .message,
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          title: "Mixed structured attachments",
+          status: .active,
+          createdAt: createdAt
+        ),
+        thread: OrbitThreadRecord(
+          id: UUID(uuidString: "51515151-5151-5151-5151-515151515151")!,
+          postID: postID,
+          status: .open,
+          lastActivityAt: createdAt,
+          createdAt: createdAt
+        ),
+        messages: [],
+        notes: [
+          OrbitNoteRecord(
+            id: noteID,
+            postID: postID,
+            noteType: .brief,
+            body: "Narrative context",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: createdAt
+          )
+        ],
+        decisions: [
+          OrbitDecisionRecord(
+            id: decisionID,
+            postID: postID,
+            title: "Adopt canonical attachment ordering",
+            body: "Projection should read mixed objects through one ordered model.",
+            decisionState: .adopted,
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: createdAt.addingTimeInterval(1)
+          )
+        ],
+        references: [
+          OrbitReferenceRecord(
+            id: referenceID,
+            postID: postID,
+            referenceType: .doc,
+            target: "Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md",
+            title: "Runtime model RFC",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: createdAt.addingTimeInterval(2)
+          )
+        ],
+        artifacts: [
+          OrbitArtifactRecord(
+            id: artifactID,
+            postID: postID,
+            artifactType: .report,
+            storageRef: "reports/m6-p2-slice.md",
+            title: "M6 P2 Slice",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: createdAt.addingTimeInterval(3)
+          )
+        ],
+        structuredAttachments: [
+          OrbitStructuredAttachmentRecord(
+            originPostID: postID,
+            structuredObjectType: .artifact,
+            structuredObjectID: artifactID,
+            attachmentOrdinal: 0,
+            attachedAt: createdAt.addingTimeInterval(10)
+          ),
+          OrbitStructuredAttachmentRecord(
+            originPostID: postID,
+            structuredObjectType: .note,
+            structuredObjectID: noteID,
+            attachmentOrdinal: 1,
+            attachedAt: createdAt.addingTimeInterval(11)
+          ),
+          OrbitStructuredAttachmentRecord(
+            originPostID: postID,
+            structuredObjectType: .decision,
+            structuredObjectID: decisionID,
+            attachmentOrdinal: 2,
+            attachedAt: createdAt.addingTimeInterval(12)
+          ),
+          OrbitStructuredAttachmentRecord(
+            originPostID: postID,
+            structuredObjectType: .reference,
+            structuredObjectID: referenceID,
+            attachmentOrdinal: 3,
+            attachedAt: createdAt.addingTimeInterval(13)
+          ),
+        ]
+      ),
+      replayCursor: snapshot.replayCursor
+    )
+
+    let workspace = OrbitServerRoomProjection.workspace(from: mixedSnapshot)
+
+    #expect(workspace.activeStructuredPostObjectRecords.map(\.structuredObjectType) == [
+      .artifact,
+      .note,
+      .decision,
+      .reference,
+    ])
+    #expect(workspace.activeStructuredPostObjectRecords.map(\.structuredObjectID) == [
+      artifactID.uuidString,
+      noteID.uuidString,
+      decisionID.uuidString,
+      referenceID.uuidString,
+    ])
   }
 
   @Test

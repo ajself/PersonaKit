@@ -318,6 +318,9 @@ struct Phase1RealtimeSnapshotReducerTests {
       replayCursor: baseline.replayCursor
     )
     let completedAt = Date(timeIntervalSince1970: 1_742_342_540)
+    let summaryNoteID = UUID(uuidString: "97979797-9797-9797-9797-979797979797")!
+    let decisionID = UUID(uuidString: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1")!
+    let referenceID = UUID(uuidString: "a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2")!
     let event = OrbitPhase1RealtimeEventEnvelope(
       id: UUID(uuidString: "a0a0a0a0-a0a0-a0a0-a0a0-a0a0a0a0a0a0")!,
       workspaceID: workspaceID,
@@ -328,7 +331,7 @@ struct Phase1RealtimeSnapshotReducerTests {
       payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
         OrbitPhase1MeetingCompletionEventPayload(
           summaryNote: OrbitNoteRecord(
-            id: UUID(uuidString: "97979797-9797-9797-9797-979797979797")!,
+            id: summaryNoteID,
             postID: postID,
             noteType: .meetingSummary,
             body: "Meeting outputs survived replay.",
@@ -344,21 +347,48 @@ struct Phase1RealtimeSnapshotReducerTests {
             recordedAt: completedAt
           ),
           decision: OrbitDecisionRecord(
-            id: UUID(uuidString: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1")!,
+            id: decisionID,
             postID: postID,
             title: "Persist completion bundle",
             body: "Replay should keep summary, decision, questions, and references.",
             decisionState: .adopted,
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
             createdAt: completedAt
           ),
           references: [
             OrbitReferenceRecord(
-              id: UUID(uuidString: "a2a2a2a2-a2a2-a2a2-a2a2-a2a2a2a2a2a2")!,
+              id: referenceID,
               postID: postID,
               referenceType: .doc,
               target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+              createdByParticipantType: .user,
+              createdByParticipantID: "aj",
               createdAt: completedAt.addingTimeInterval(0.001)
             )
+          ],
+          structuredAttachments: [
+            OrbitStructuredAttachmentRecord(
+              originPostID: postID,
+              structuredObjectType: .reference,
+              structuredObjectID: referenceID,
+              attachmentOrdinal: 0,
+              attachedAt: completedAt.addingTimeInterval(0.001)
+            ),
+            OrbitStructuredAttachmentRecord(
+              originPostID: postID,
+              structuredObjectType: .note,
+              structuredObjectID: summaryNoteID,
+              attachmentOrdinal: 1,
+              attachedAt: Date(timeIntervalSince1970: 1_742_342_518)
+            ),
+            OrbitStructuredAttachmentRecord(
+              originPostID: postID,
+              structuredObjectType: .decision,
+              structuredObjectID: decisionID,
+              attachmentOrdinal: 2,
+              attachedAt: completedAt
+            ),
           ],
           meetingOpenQuestions: [
             OrbitMeetingOpenQuestionRecord(
@@ -395,9 +425,103 @@ struct Phase1RealtimeSnapshotReducerTests {
     #expect(reduced.room.references.count == 1)
     #expect(reduced.room.meetingOpenQuestions.count == 1)
     #expect(reduced.room.meetingState?.status == .completed)
+    #expect(reduced.room.structuredAttachments.map(\.structuredObjectType) == [
+      .reference,
+      .note,
+      .decision,
+    ])
+    #expect(reduced.room.orderedStructuredObjects.map(\.id) == [
+      referenceID,
+      summaryNoteID,
+      decisionID,
+    ])
     #expect(reduced.room.postLinks == initial.room.postLinks)
     #expect(reduced.room.postEvents.last?.eventType == OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue)
     #expect(reduced.room.thread.lastActivityAt == completedAt)
+  }
+
+  @Test
+  func reducerSynthesizesStructuredAttachmentsForLegacyMeetingCompletionPayloads() throws {
+    let initial = sampleMeetingSnapshotWithSummaryShell()
+    let completedAt = Date(timeIntervalSince1970: 1_742_342_541)
+    let decisionID = UUID(uuidString: "b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1")!
+    let referenceID = UUID(uuidString: "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2")!
+    let event = OrbitPhase1RealtimeEventEnvelope(
+      id: UUID(uuidString: "b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0")!,
+      workspaceID: workspaceID,
+      postID: postID,
+      threadID: threadID,
+      category: .meetingOutputCommitted,
+      createdAt: completedAt,
+      payloadJSON: try OrbitPhase1RealtimeEventPayloadCodec.encode(
+        OrbitPhase1MeetingCompletionEventPayload(
+          summaryNote: OrbitNoteRecord(
+            id: initial.room.notes[0].id,
+            postID: postID,
+            noteType: .meetingSummary,
+            body: "Legacy payload without attachment list.",
+            createdByParticipantType: .system,
+            createdByParticipantID: "orbit-system",
+            createdAt: initial.room.notes[0].createdAt
+          ),
+          meetingOutputState: OrbitMeetingOutputStateRecord(
+            postID: postID,
+            outcomeState: .decisionRecorded,
+            recordedByParticipantType: .user,
+            recordedByParticipantID: "aj",
+            recordedAt: completedAt
+          ),
+          decision: OrbitDecisionRecord(
+            id: decisionID,
+            postID: postID,
+            title: "Legacy completion",
+            body: "Replay should still synthesize attachment order.",
+            decisionState: .adopted,
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: completedAt
+          ),
+          references: [
+            OrbitReferenceRecord(
+              id: referenceID,
+              postID: postID,
+              referenceType: .doc,
+              target: "Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md",
+              createdByParticipantType: .user,
+              createdByParticipantID: "aj",
+              createdAt: completedAt.addingTimeInterval(0.001)
+            )
+          ],
+          meetingOpenQuestions: [],
+          meetingState: OrbitMeetingStateRecord(
+            postID: postID,
+            meetingType: .team,
+            status: .completed,
+            startedByParticipantType: .user,
+            startedByParticipantID: "aj",
+            startedAt: initial.room.meetingState?.startedAt ?? completedAt,
+            completedAt: completedAt
+          ),
+          threadLastActivityAt: completedAt
+        )
+      )
+    )
+
+    let reduced = try OrbitPhase1RealtimeSnapshotReducer.applying(
+      events: [event],
+      to: initial
+    )
+
+    #expect(reduced.room.structuredAttachments.map(\.structuredObjectType) == [
+      .note,
+      .decision,
+      .reference,
+    ])
+    #expect(reduced.room.orderedStructuredObjects.map(\.id) == [
+      initial.room.notes[0].id,
+      decisionID,
+      referenceID,
+    ])
   }
 
   @Test

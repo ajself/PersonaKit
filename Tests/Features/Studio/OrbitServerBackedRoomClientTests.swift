@@ -155,6 +155,8 @@ struct OrbitServerBackedRoomClientTests {
         title: "Ship packet 4 shell",
         body: "Keep meeting outputs inspectable.",
         decisionState: .adopted,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
         createdAt: Date(timeIntervalSince1970: 1_742_342_515)
       ),
       references: [],

@@ -1380,6 +1380,8 @@ private func sampleMeetingSnapshot(
         title: "Ship packet 4",
         body: "Keep meeting outputs inspectable after reload.",
         decisionState: .adopted,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
         createdAt: completedAt ?? createdAt
       )
     ],
@@ -1390,6 +1392,8 @@ private func sampleMeetingSnapshot(
         referenceType: .doc,
         target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
         title: "Packet scope",
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
         createdAt: completedAt ?? createdAt
       )
     ],

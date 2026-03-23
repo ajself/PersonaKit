@@ -172,6 +172,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     meetingOutputState: OrbitMeetingOutputStateRecord,
     decision: OrbitDecisionRecord?,
     references: [OrbitReferenceRecord],
+    structuredAttachments: [OrbitStructuredAttachmentRecord],
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
     meetingState: OrbitMeetingStateRecord,
     postEvent: OrbitPostEventRecord,
@@ -188,6 +189,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
         meetingOutputState: meetingOutputState,
         decision: decision,
         references: references,
+        structuredAttachments: structuredAttachments,
         meetingOpenQuestions: meetingOpenQuestions,
         meetingState: meetingState,
         postEvent: postEvent,
@@ -209,6 +211,7 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     meetingOutputState: OrbitMeetingOutputStateRecord,
     decision: OrbitDecisionRecord?,
     references: [OrbitReferenceRecord],
+    structuredAttachments: [OrbitStructuredAttachmentRecord],
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
     meetingState: OrbitMeetingStateRecord,
     postEvent: OrbitPostEventRecord,
@@ -224,12 +227,16 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       try await executor.execute(query: insertDecisionQuery(decision))
     }
 
-    for meetingOpenQuestion in meetingOpenQuestions {
-      try await executor.execute(query: insertMeetingOpenQuestionQuery(meetingOpenQuestion))
-    }
-
     for reference in references {
       try await executor.execute(query: insertReferenceQuery(reference))
+    }
+
+    for structuredAttachment in structuredAttachments {
+      try await executor.execute(query: upsertStructuredAttachmentQuery(structuredAttachment))
+    }
+
+    for meetingOpenQuestion in meetingOpenQuestions {
+      try await executor.execute(query: insertMeetingOpenQuestionQuery(meetingOpenQuestion))
     }
 
     try await executor.execute(query: upsertMeetingStateQuery(meetingState))
@@ -292,6 +299,14 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
 
     for reference in room.references {
       try await executor.execute(query: insertReferenceQuery(reference))
+    }
+
+    for artifact in room.artifacts {
+      try await executor.execute(query: insertArtifactQuery(artifact))
+    }
+
+    for structuredAttachment in room.structuredAttachments {
+      try await executor.execute(query: upsertStructuredAttachmentQuery(structuredAttachment))
     }
 
     if let meetingOutputState = room.meetingOutputState {
@@ -708,19 +723,48 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     """
   }
 
+  public func upsertStructuredAttachmentQuery(
+    _ attachment: OrbitStructuredAttachmentRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO structured_attachment (
+      origin_post_id, structured_object_type, structured_object_id,
+      attachment_ordinal, attached_at
+    ) VALUES (
+      \(attachment.originPostID),
+      \(attachment.structuredObjectType.rawValue),
+      \(attachment.structuredObjectID),
+      \(attachment.attachmentOrdinal),
+      \(attachment.attachedAt)
+    )
+    ON CONFLICT (structured_object_type, structured_object_id) DO UPDATE SET
+      origin_post_id = EXCLUDED.origin_post_id,
+      attachment_ordinal = EXCLUDED.attachment_ordinal,
+      attached_at = EXCLUDED.attached_at
+    """
+  }
+
   public func insertDecisionQuery(
     _ decision: OrbitDecisionRecord
   ) -> PostgresQuery {
     """
     INSERT INTO decision (
-      id, post_id, title, body, decision_state, rationale_note_id, created_at
+      id, post_id, title, body, decision_state, rationale, tradeoffs, dissent,
+      linked_reference_ids, rationale_note_id, created_by_participant_type,
+      created_by_participant_id, created_at
     ) VALUES (
       \(decision.id),
       \(decision.postID),
       \(decision.title),
       \(decision.body),
       \(decision.decisionState.rawValue),
+      \(decision.rationale),
+      \(decision.tradeoffs),
+      \(decision.dissent),
+      \(decision.linkedReferenceIDs.jsonString)::jsonb,
       \(decision.rationaleNoteID),
+      \(decision.createdByParticipantType.rawValue),
+      \(decision.createdByParticipantID),
       \(decision.createdAt)
     )
     ON CONFLICT (id) DO NOTHING
@@ -732,14 +776,38 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
   ) -> PostgresQuery {
     """
     INSERT INTO reference (
-      id, post_id, reference_type, target, title, created_at
+      id, post_id, reference_type, target, title, created_by_participant_type,
+      created_by_participant_id, created_at
     ) VALUES (
       \(reference.id),
       \(reference.postID),
       \(reference.referenceType.rawValue),
       \(reference.target),
       \(reference.title),
+      \(reference.createdByParticipantType.rawValue),
+      \(reference.createdByParticipantID),
       \(reference.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func insertArtifactQuery(
+    _ artifact: OrbitArtifactRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO artifact (
+      id, post_id, artifact_type, storage_ref, title,
+      created_by_participant_type, created_by_participant_id, created_at
+    ) VALUES (
+      \(artifact.id),
+      \(artifact.postID),
+      \(artifact.artifactType.rawValue),
+      \(artifact.storageRef),
+      \(artifact.title),
+      \(artifact.createdByParticipantType.rawValue),
+      \(artifact.createdByParticipantID),
+      \(artifact.createdAt)
     )
     ON CONFLICT (id) DO NOTHING
     """
@@ -1234,6 +1302,22 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     """
   }
 
+  public func selectStructuredAttachmentsQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      origin_post_id,
+      structured_object_type,
+      structured_object_id,
+      attachment_ordinal,
+      attached_at
+    FROM structured_attachment
+    WHERE origin_post_id = \(postID)
+    ORDER BY attachment_ordinal ASC, attached_at ASC, structured_object_id ASC
+    """
+  }
+
   public func selectDecisionsQuery(
     postID: UUID
   ) -> PostgresQuery {
@@ -1244,7 +1328,13 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       title,
       body,
       decision_state,
+      rationale,
+      tradeoffs,
+      dissent,
+      linked_reference_ids,
       rationale_note_id,
+      created_by_participant_type,
+      created_by_participant_id,
       created_at
     FROM decision
     WHERE post_id = \(postID)
@@ -1262,8 +1352,29 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       reference_type,
       target,
       title,
+      created_by_participant_type,
+      created_by_participant_id,
       created_at
     FROM reference
+    WHERE post_id = \(postID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectArtifactsQuery(
+    postID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      post_id,
+      artifact_type,
+      storage_ref,
+      title,
+      created_by_participant_type,
+      created_by_participant_id,
+      created_at
+    FROM artifact
     WHERE post_id = \(postID)
     ORDER BY created_at ASC, id ASC
     """
@@ -1412,5 +1523,13 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     SET last_activity_at = \(lastActivityAt)
     WHERE id = \(threadID)
     """
+  }
+}
+
+private extension Array where Element == UUID {
+  var jsonString: String {
+    let values = map(\.uuidString)
+    let data = try! JSONEncoder().encode(values)
+    return String(decoding: data, as: UTF8.self)
   }
 }

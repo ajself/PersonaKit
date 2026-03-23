@@ -164,6 +164,8 @@ public struct OrbitPhase1ActivationFailureService: Sendable {
       notes: snapshot.notes,
       decisions: snapshot.decisions,
       references: snapshot.references,
+      artifacts: snapshot.artifacts,
+      structuredAttachments: snapshot.structuredAttachments,
       meetingOutputState: snapshot.meetingOutputState,
       meetingOpenQuestions: snapshot.meetingOpenQuestions,
       meetingState: updatedMeetingState,

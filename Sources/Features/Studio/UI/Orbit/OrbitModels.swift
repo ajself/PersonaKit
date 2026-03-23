@@ -2,7 +2,7 @@ import Foundation
 import OrbitServerRuntime
 
 struct OrbitWorkspace: Codable, Equatable {
-  static let currentSchemaVersion = 8
+  static let currentSchemaVersion = 9
 
   var schemaVersion = OrbitWorkspace.currentSchemaVersion
   var id: String
@@ -27,6 +27,7 @@ struct OrbitWorkspace: Codable, Equatable {
   var meetingOpenQuestionRecords: [OrbitMeetingOpenQuestionRecord] = []
   var meetingReferenceRecords: [OrbitMeetingReferenceRecord] = []
   var meetingMemberRecords: [OrbitMeetingMemberRecord] = []
+  var orderedStructuredObjectRecords: [OrbitStructuredPostObjectRecord] = []
   var nextMessageSequence: Int
   var nextActivationSequence: Int
   var nextActivationFailureSequence: Int
@@ -153,6 +154,12 @@ struct OrbitWorkspace: Codable, Equatable {
     meetingMemberRecords.filter { $0.postID == postID }
   }
 
+  func structuredPostObjectRecords(
+    for postID: String
+  ) -> [OrbitStructuredPostObjectRecord] {
+    orderedStructuredObjectRecords.filter { $0.originPostID == postID }
+  }
+
   var activeMeetingSummaryRecord: OrbitMeetingSummaryRecord? {
     guard let activePostID else {
       return nil
@@ -207,6 +214,14 @@ struct OrbitWorkspace: Codable, Equatable {
     }
 
     return meetingMemberRecords(for: activePostID)
+  }
+
+  var activeStructuredPostObjectRecords: [OrbitStructuredPostObjectRecord] {
+    guard let activePostID else {
+      return []
+    }
+
+    return structuredPostObjectRecords(for: activePostID)
   }
 
   @discardableResult
@@ -1276,6 +1291,16 @@ struct OrbitMeetingMemberRecord: Codable, Equatable, Identifiable {
   let completedAt: Date?
 }
 
+struct OrbitStructuredPostObjectRecord: Codable, Equatable, Identifiable {
+  let id: String
+  let originPostID: String
+  let structuredObjectType: OrbitStructuredObjectType
+  let structuredObjectID: String
+  let attachmentOrdinal: Int
+  let attachedAt: Date
+  let object: OrbitStructuredObjectRecord
+}
+
 enum OrbitDirectiveSource: String, Codable, Equatable {
   case participantDefault
 }
@@ -1399,6 +1424,7 @@ extension OrbitWorkspace {
     case meetingOpenQuestionRecords
     case meetingReferenceRecords
     case meetingMemberRecords
+    case orderedStructuredObjectRecords
     case nextMessageSequence
     case nextActivationSequence
     case nextActivationFailureSequence
@@ -1482,6 +1508,11 @@ extension OrbitWorkspace {
     meetingMemberRecords =
       try container.decodeIfPresent([OrbitMeetingMemberRecord].self, forKey: .meetingMemberRecords)
       ?? []
+    orderedStructuredObjectRecords =
+      try container.decodeIfPresent(
+        [OrbitStructuredPostObjectRecord].self,
+        forKey: .orderedStructuredObjectRecords
+      ) ?? []
 
     nextMessageSequence = try container.decode(Int.self, forKey: .nextMessageSequence)
     nextActivationSequence = try container.decode(Int.self, forKey: .nextActivationSequence)
@@ -1515,6 +1546,7 @@ extension OrbitWorkspace {
     try container.encode(meetingOpenQuestionRecords, forKey: .meetingOpenQuestionRecords)
     try container.encode(meetingReferenceRecords, forKey: .meetingReferenceRecords)
     try container.encode(meetingMemberRecords, forKey: .meetingMemberRecords)
+    try container.encode(orderedStructuredObjectRecords, forKey: .orderedStructuredObjectRecords)
     try container.encode(nextMessageSequence, forKey: .nextMessageSequence)
     try container.encode(nextActivationSequence, forKey: .nextActivationSequence)
     try container.encode(nextActivationFailureSequence, forKey: .nextActivationFailureSequence)

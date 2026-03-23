@@ -153,6 +153,7 @@ extension OrbitWorkspace {
     meetingOpenQuestionRecords: [],
     meetingReferenceRecords: [],
     meetingMemberRecords: [],
+    orderedStructuredObjectRecords: [],
     nextMessageSequence: 2,
     nextActivationSequence: 2,
     nextActivationFailureSequence: 1

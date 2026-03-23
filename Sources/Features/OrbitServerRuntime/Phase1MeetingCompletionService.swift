@@ -113,6 +113,7 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
       OrbitMeetingOutputStateRecord,
       OrbitDecisionRecord?,
       [OrbitReferenceRecord],
+      [OrbitStructuredAttachmentRecord],
       [OrbitMeetingOpenQuestionRecord],
       OrbitMeetingStateRecord,
       OrbitPostEventRecord,
@@ -197,51 +198,6 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
     let trimmedDecisionTitle = trimmedOrNil(request.decisionTitle)
     let trimmedDecisionBody = trimmedOrNil(request.decisionBody)
     let trimmedNoDecisionDetail = trimmedOrNil(request.noDecisionDetail)
-
-    let decision: OrbitDecisionRecord?
-    let meetingOutputState: OrbitMeetingOutputStateRecord
-
-    switch request.outcome {
-    case .decision:
-      guard
-        let decisionTitle = trimmedDecisionTitle,
-        let decisionBody = trimmedDecisionBody,
-        trimmedNoDecisionDetail == nil
-      else {
-        throw OrbitPhase1MeetingCompletionServiceError.invalidDecisionPayload
-      }
-
-      decision = OrbitDecisionRecord(
-        id: makeDecisionID(),
-        postID: snapshot.post.id,
-        title: decisionTitle,
-        body: decisionBody,
-        decisionState: .adopted,
-        createdAt: timestamp
-      )
-      meetingOutputState = OrbitMeetingOutputStateRecord(
-        postID: snapshot.post.id,
-        outcomeState: .decisionRecorded,
-        recordedByParticipantType: request.completedByParticipantType,
-        recordedByParticipantID: request.completedByParticipantID,
-        recordedAt: timestamp
-      )
-    case .noDecision:
-      guard trimmedDecisionTitle == nil, trimmedDecisionBody == nil else {
-        throw OrbitPhase1MeetingCompletionServiceError.invalidNoDecisionPayload
-      }
-
-      decision = nil
-      meetingOutputState = OrbitMeetingOutputStateRecord(
-        postID: snapshot.post.id,
-        outcomeState: .noDecisionRecorded,
-        detail: trimmedNoDecisionDetail,
-        recordedByParticipantType: request.completedByParticipantType,
-        recordedByParticipantID: request.completedByParticipantID,
-        recordedAt: timestamp
-      )
-    }
-
     let meetingOpenQuestions = request.openQuestions
       .compactMap(trimmedOrNil)
       .enumerated()
@@ -271,12 +227,62 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
           referenceType: reference.referenceType,
           target: target,
           title: trimmedOrNil(reference.title),
+          createdByParticipantType: request.completedByParticipantType,
+          createdByParticipantID: request.completedByParticipantID,
           createdAt: orderedTimestamp(
             base: timestamp,
             offset: index + meetingOpenQuestions.count
           )
         )
       }
+
+    let decision: OrbitDecisionRecord?
+    let meetingOutputState: OrbitMeetingOutputStateRecord
+
+    switch request.outcome {
+    case .decision:
+      guard
+        let decisionTitle = trimmedDecisionTitle,
+        let decisionBody = trimmedDecisionBody,
+        trimmedNoDecisionDetail == nil
+      else {
+        throw OrbitPhase1MeetingCompletionServiceError.invalidDecisionPayload
+      }
+
+      decision = OrbitDecisionRecord(
+        id: makeDecisionID(),
+        postID: snapshot.post.id,
+        title: decisionTitle,
+        body: decisionBody,
+        decisionState: .adopted,
+        linkedReferenceIDs: references.map(\.id),
+        createdByParticipantType: request.completedByParticipantType,
+        createdByParticipantID: request.completedByParticipantID,
+        createdAt: timestamp
+      )
+      meetingOutputState = OrbitMeetingOutputStateRecord(
+        postID: snapshot.post.id,
+        outcomeState: .decisionRecorded,
+        recordedByParticipantType: request.completedByParticipantType,
+        recordedByParticipantID: request.completedByParticipantID,
+        recordedAt: timestamp
+      )
+    case .noDecision:
+      guard trimmedDecisionTitle == nil, trimmedDecisionBody == nil else {
+        throw OrbitPhase1MeetingCompletionServiceError.invalidNoDecisionPayload
+      }
+
+      decision = nil
+      meetingOutputState = OrbitMeetingOutputStateRecord(
+        postID: snapshot.post.id,
+        outcomeState: .noDecisionRecorded,
+        detail: trimmedNoDecisionDetail,
+        recordedByParticipantType: request.completedByParticipantType,
+        recordedByParticipantID: request.completedByParticipantID,
+        recordedAt: timestamp
+      )
+    }
+
     let completedMeetingState = OrbitMeetingStateRecord(
       postID: meetingState.postID,
       meetingType: meetingState.meetingType,
@@ -286,11 +292,18 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
       startedAt: meetingState.startedAt,
       completedAt: timestamp
     )
+    let structuredAttachments = makeStructuredAttachments(
+      snapshot: snapshot,
+      summaryNote: updatedSummaryNote,
+      decision: decision,
+      references: references
+    )
     let eventPayload = OrbitPhase1MeetingCompletionEventPayload(
       summaryNote: updatedSummaryNote,
       meetingOutputState: meetingOutputState,
       decision: decision,
       references: references,
+      structuredAttachments: structuredAttachments,
       meetingOpenQuestions: meetingOpenQuestions,
       meetingState: completedMeetingState,
       threadLastActivityAt: timestamp
@@ -307,7 +320,6 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
       workspaceID: snapshot.workspace.id,
       postEvent: postEvent
     )
-
     do {
       try await completeMeetingWrite(
         snapshot.workspace.id,
@@ -315,6 +327,7 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
         meetingOutputState,
         decision,
         references,
+        structuredAttachments,
         meetingOpenQuestions,
         completedMeetingState,
         postEvent,
@@ -328,7 +341,7 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
         throw OrbitPhase1MeetingCompletionServiceError.meetingAlreadyCompleted
       case .meetingStateMissing:
         throw OrbitPhase1MeetingCompletionServiceError.roomIsNotMeeting
-      case .invalidEnumValue:
+      case .invalidEnumValue, .invalidUUIDValue:
         throw error
       }
     }
@@ -358,6 +371,8 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
       notes: updatedNotes,
       decisions: snapshot.decisions + (decision.map { [$0] } ?? []),
       references: snapshot.references + references,
+      artifacts: snapshot.artifacts,
+      structuredAttachments: structuredAttachments,
       meetingOutputState: meetingOutputState,
       meetingOpenQuestions: snapshot.meetingOpenQuestions + meetingOpenQuestions,
       meetingState: completedMeetingState,
@@ -383,6 +398,82 @@ public struct OrbitPhase1MeetingCompletionService: Sendable {
     offset: Int
   ) -> Date {
     Date(timeInterval: Double(offset + 1) / 1_000, since: base)
+  }
+
+  private func makeStructuredAttachments(
+    snapshot: OrbitPhase1RoomSnapshot,
+    summaryNote: OrbitNoteRecord,
+    decision: OrbitDecisionRecord?,
+    references: [OrbitReferenceRecord]
+  ) -> [OrbitStructuredAttachmentRecord] {
+    let newStructuredObjectIDs = Set(
+      references.map(\.id) + (decision.map { [$0.id] } ?? [])
+    )
+    var attachments = snapshot.structuredAttachments.filter { attachment in
+      !newStructuredObjectIDs.contains(attachment.structuredObjectID)
+    }
+
+    if attachments.contains(where: {
+      $0.structuredObjectType == .note && $0.structuredObjectID == summaryNote.id
+    }) == false {
+      let summaryOrdinal = attachments.isEmpty
+        ? 0
+        : (attachments.map(\.attachmentOrdinal).max() ?? -1) + 1
+
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: snapshot.post.id,
+          structuredObjectType: .note,
+          structuredObjectID: summaryNote.id,
+          attachmentOrdinal: summaryOrdinal,
+          attachedAt: summaryNote.createdAt
+        )
+      )
+    }
+
+    var nextOrdinal = (attachments.map(\.attachmentOrdinal).max() ?? -1) + 1
+
+    if let decision {
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: snapshot.post.id,
+          structuredObjectType: .decision,
+          structuredObjectID: decision.id,
+          attachmentOrdinal: nextOrdinal,
+          attachedAt: decision.createdAt
+        )
+      )
+      nextOrdinal += 1
+    }
+
+    for reference in references {
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: snapshot.post.id,
+          structuredObjectType: .reference,
+          structuredObjectID: reference.id,
+          attachmentOrdinal: nextOrdinal,
+          attachedAt: reference.createdAt
+        )
+      )
+      nextOrdinal += 1
+    }
+
+    return attachments.sorted { lhs, rhs in
+      if lhs.attachmentOrdinal == rhs.attachmentOrdinal {
+        if lhs.attachedAt == rhs.attachedAt {
+          if lhs.structuredObjectType == rhs.structuredObjectType {
+            return lhs.structuredObjectID.uuidString < rhs.structuredObjectID.uuidString
+          }
+
+          return lhs.structuredObjectType.rawValue < rhs.structuredObjectType.rawValue
+        }
+
+        return lhs.attachedAt < rhs.attachedAt
+      }
+
+      return lhs.attachmentOrdinal < rhs.attachmentOrdinal
+    }
   }
 
   private func trimmedOrNil(
@@ -426,6 +517,7 @@ extension OrbitPhase1MeetingCompletionService {
         meetingOutputState,
         decision,
         references,
+        structuredAttachments,
         meetingOpenQuestions,
         meetingState,
         postEvent,
@@ -439,6 +531,7 @@ extension OrbitPhase1MeetingCompletionService {
             meetingOutputState: meetingOutputState,
             decision: decision,
             references: references,
+            structuredAttachments: structuredAttachments,
             meetingOpenQuestions: meetingOpenQuestions,
             meetingState: meetingState,
             postEvent: postEvent,
@@ -452,7 +545,7 @@ extension OrbitPhase1MeetingCompletionService {
             throw OrbitPhase1MeetingCompletionServiceError.meetingAlreadyCompleted
           case .meetingStateMissing:
             throw OrbitPhase1MeetingCompletionServiceError.roomIsNotMeeting
-          case .invalidEnumValue:
+          case .invalidEnumValue, .invalidUUIDValue:
             throw error
           }
         }

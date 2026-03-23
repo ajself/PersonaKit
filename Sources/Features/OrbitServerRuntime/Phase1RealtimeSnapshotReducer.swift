@@ -52,6 +52,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             notes: room.notes,
             decisions: room.decisions,
             references: room.references,
+            artifacts: room.artifacts,
+            structuredAttachments: room.structuredAttachments,
             meetingOutputState: room.meetingOutputState,
             meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
@@ -118,6 +120,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             notes: room.notes,
             decisions: room.decisions,
             references: room.references,
+            artifacts: room.artifacts,
+            structuredAttachments: room.structuredAttachments,
             meetingOutputState: room.meetingOutputState,
             meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
@@ -155,6 +159,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           notes: room.notes,
           decisions: room.decisions,
           references: room.references,
+          artifacts: room.artifacts,
+          structuredAttachments: room.structuredAttachments,
           meetingOutputState: room.meetingOutputState,
           meetingOpenQuestions: room.meetingOpenQuestions,
           meetingState: room.meetingState,
@@ -207,6 +213,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           notes: room.notes,
           decisions: room.decisions,
           references: room.references,
+          artifacts: room.artifacts,
+          structuredAttachments: room.structuredAttachments,
           meetingOutputState: room.meetingOutputState,
           meetingOpenQuestions: room.meetingOpenQuestions,
           meetingState: room.meetingState,
@@ -232,6 +240,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             notes: room.notes,
             decisions: room.decisions,
             references: room.references,
+            artifacts: room.artifacts,
+            structuredAttachments: room.structuredAttachments,
             meetingOutputState: room.meetingOutputState,
             meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
@@ -267,6 +277,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
             notes: room.notes,
             decisions: room.decisions,
             references: room.references,
+            artifacts: room.artifacts,
+            structuredAttachments: room.structuredAttachments,
             meetingOutputState: room.meetingOutputState,
             meetingOpenQuestions: room.meetingOpenQuestions,
             meetingState: room.meetingState,
@@ -306,6 +318,16 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           room.meetingOpenQuestions,
           questions: payload.meetingOpenQuestions
         )
+        let structuredAttachments: [OrbitStructuredAttachmentRecord]? =
+          payload.structuredAttachments.isEmpty
+          ? mergeStructuredAttachments(
+              room.structuredAttachments,
+              postID: room.post.id,
+              summaryNote: payload.summaryNote,
+              decision: payload.decision,
+              references: payload.references
+            )
+          : payload.structuredAttachments
         let postEvents = room.postEvents.contains(where: { $0.id == event.id })
           ? room.postEvents
           : room.postEvents + [
@@ -341,6 +363,8 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
           notes: notes,
           decisions: decisions,
           references: references,
+          artifacts: room.artifacts,
+          structuredAttachments: structuredAttachments,
           meetingOutputState: payload.meetingOutputState,
           meetingOpenQuestions: meetingOpenQuestions,
           meetingState: payload.meetingState,
@@ -434,6 +458,69 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
     }
 
     return merged.sorted(by: meetingOpenQuestionSort)
+  }
+
+  private static func mergeStructuredAttachments(
+    _ current: [OrbitStructuredAttachmentRecord],
+    postID: UUID,
+    summaryNote: OrbitNoteRecord,
+    decision: OrbitDecisionRecord?,
+    references: [OrbitReferenceRecord]
+  ) -> [OrbitStructuredAttachmentRecord] {
+    let newStructuredObjectIDs = Set(
+      references.map(\.id) + (decision.map { [$0.id] } ?? [])
+    )
+    var attachments = current.filter { attachment in
+      !newStructuredObjectIDs.contains(attachment.structuredObjectID)
+    }
+
+    if attachments.contains(where: {
+      $0.structuredObjectType == .note && $0.structuredObjectID == summaryNote.id
+    }) == false {
+      let summaryOrdinal = attachments.isEmpty
+        ? 0
+        : (attachments.map(\.attachmentOrdinal).max() ?? -1) + 1
+
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: postID,
+          structuredObjectType: .note,
+          structuredObjectID: summaryNote.id,
+          attachmentOrdinal: summaryOrdinal,
+          attachedAt: summaryNote.createdAt
+        )
+      )
+    }
+
+    var nextOrdinal = (attachments.map(\.attachmentOrdinal).max() ?? -1) + 1
+
+    if let decision {
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: postID,
+          structuredObjectType: .decision,
+          structuredObjectID: decision.id,
+          attachmentOrdinal: nextOrdinal,
+          attachedAt: decision.createdAt
+        )
+      )
+      nextOrdinal += 1
+    }
+
+    for reference in references {
+      attachments.append(
+        OrbitStructuredAttachmentRecord(
+          originPostID: postID,
+          structuredObjectType: .reference,
+          structuredObjectID: reference.id,
+          attachmentOrdinal: nextOrdinal,
+          attachedAt: reference.createdAt
+        )
+      )
+      nextOrdinal += 1
+    }
+
+    return attachments.sorted(by: structuredAttachmentSort)
   }
 
   private static func mergedPersonaActivations(
@@ -561,5 +648,24 @@ public enum OrbitPhase1RealtimeSnapshotReducer {
     }
 
     return lhs.createdAt < rhs.createdAt
+  }
+
+  private static func structuredAttachmentSort(
+    _ lhs: OrbitStructuredAttachmentRecord,
+    _ rhs: OrbitStructuredAttachmentRecord
+  ) -> Bool {
+    if lhs.attachmentOrdinal == rhs.attachmentOrdinal {
+      if lhs.attachedAt == rhs.attachedAt {
+        if lhs.structuredObjectType == rhs.structuredObjectType {
+          return lhs.structuredObjectID.uuidString < rhs.structuredObjectID.uuidString
+        }
+
+        return lhs.structuredObjectType.rawValue < rhs.structuredObjectType.rawValue
+      }
+
+      return lhs.attachedAt < rhs.attachedAt
+    }
+
+    return lhs.attachmentOrdinal < rhs.attachmentOrdinal
   }
 }

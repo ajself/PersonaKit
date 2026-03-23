@@ -25,6 +25,7 @@ enum OrbitServerRoomProjection {
     let meetingOpenQuestionRecords = projectedMeetingOpenQuestionRecords(from: room)
     let meetingReferenceRecords = projectedMeetingReferenceRecords(from: room)
     let meetingMemberRecords = projectedMeetingMemberRecords(from: room)
+    let orderedStructuredObjectRecords = projectedStructuredObjectRecords(from: room)
     let activationRecords = projectedActivationRecords(
       from: room,
       participants: participants,
@@ -74,6 +75,7 @@ enum OrbitServerRoomProjection {
       meetingOpenQuestionRecords: meetingOpenQuestionRecords,
       meetingReferenceRecords: meetingReferenceRecords,
       meetingMemberRecords: meetingMemberRecords,
+      orderedStructuredObjectRecords: orderedStructuredObjectRecords,
       nextMessageSequence: messages.count + 1,
       nextActivationSequence: activationRecords.count + 1,
       nextActivationFailureSequence: activationFailureRecords.count + 1
@@ -619,6 +621,26 @@ enum OrbitServerRoomProjection {
           completedAt: meetingMember.completedAt
         )
       }
+  }
+
+  private static func projectedStructuredObjectRecords(
+    from room: OrbitPhase1RoomSnapshot
+  ) -> [OrbitStructuredPostObjectRecord] {
+    room.structuredAttachments.compactMap { attachment in
+      guard let object = room.structuredObject(for: attachment) else {
+        return nil
+      }
+
+      return OrbitStructuredPostObjectRecord(
+        id: "\(attachment.structuredObjectType.rawValue):\(attachment.structuredObjectID.uuidString)",
+        originPostID: attachment.originPostID.uuidString,
+        structuredObjectType: attachment.structuredObjectType,
+        structuredObjectID: attachment.structuredObjectID.uuidString,
+        attachmentOrdinal: attachment.attachmentOrdinal,
+        attachedAt: attachment.attachedAt,
+        object: object
+      )
+    }
   }
 
   private static func projectedParticipantID(

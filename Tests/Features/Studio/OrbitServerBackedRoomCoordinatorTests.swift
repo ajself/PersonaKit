@@ -266,6 +266,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
         title: "Ship packet 4 shell",
         body: "Keep completion visible after reconnect.",
         decisionState: .adopted,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
         createdAt: Date(timeIntervalSince1970: 1_742_342_540)
       )
     )
@@ -2423,6 +2425,8 @@ struct OrbitServerBackedRoomCoordinatorTests {
           referenceType: .doc,
           target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
           title: "Packet scope",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
           createdAt: Date(timeIntervalSince1970: 1_742_342_541)
         )
       ],

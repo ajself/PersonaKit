@@ -437,6 +437,8 @@ struct OrbitGatewayNetworkClientTests {
         title: "Ship packet 4 shell",
         body: "Persist meeting outputs through replay and reload.",
         decisionState: .adopted,
+        createdByParticipantType: .user,
+        createdByParticipantID: "aj",
         createdAt: Date(timeIntervalSince1970: 1_742_342_530)
       ),
       references: [
@@ -446,6 +448,8 @@ struct OrbitGatewayNetworkClientTests {
           referenceType: .doc,
           target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
           title: "Packet scope",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
           createdAt: Date(timeIntervalSince1970: 1_742_342_531)
         )
       ],

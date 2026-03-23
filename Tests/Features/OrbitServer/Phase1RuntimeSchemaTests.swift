@@ -33,9 +33,11 @@ struct Phase1RuntimeSchemaTests {
         "post_participant",
         "post_event",
         "post_link",
+        "structured_attachment",
         "note",
         "decision",
         "reference",
+        "artifact",
         "meeting_output_state",
         "meeting_open_question",
         "meeting_state",
@@ -56,9 +58,13 @@ struct Phase1RuntimeSchemaTests {
   }
 
   @Test
-  func everySchemaStatementCreatesItsExpectedTable() {
-    for statement in OrbitPhase1RuntimeSchema.statements {
-      #expect(statement.sql.contains("CREATE TABLE IF NOT EXISTS \(statement.table.rawValue)"))
+  func everyCanonicalTableHasACreateStatement() {
+    for tableName in OrbitPhase1RuntimeSchema.tableNames {
+      #expect(
+        OrbitPhase1RuntimeSchema.statements.contains { statement in
+          statement.sql.contains("CREATE TABLE IF NOT EXISTS \(tableName)")
+        }
+      )
     }
   }
 

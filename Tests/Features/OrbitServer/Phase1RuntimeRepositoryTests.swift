@@ -82,9 +82,60 @@ struct Phase1RuntimeRepositoryTests {
     let queries = await executor.queries().map { $0.sql }
 
     #expect(queries.filter { $0.contains("INSERT INTO note") }.count == 1)
+    #expect(queries.filter { $0.contains("INSERT INTO structured_attachment") }.count == 1)
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_output_state") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.filter { $0.contains("INSERT INTO meeting_member") }.count == 2)
+  }
+
+  @Test
+  func bootstrapRoomExecutesArtifactAndAttachmentInsertsWhenArtifactsArePresent() async throws {
+    let executor = RecordingRepositoryExecutor()
+    let room = sampleRoomBootstrap()
+    let artifact = OrbitArtifactRecord(
+      id: UUID(uuidString: "abababab-abab-abab-abab-abababababab")!,
+      postID: room.post.id,
+      artifactType: .report,
+      storageRef: "reports/m6-p2-slice.md",
+      title: "M6 P2 Slice",
+      createdByParticipantType: .user,
+      createdByParticipantID: "aj",
+      createdAt: referenceDate.addingTimeInterval(70)
+    )
+
+    try await repository.bootstrapRoom(
+      OrbitPhase1RoomBootstrap(
+        workspace: room.workspace,
+        channel: room.channel,
+        workspacePersonas: room.workspacePersonas,
+        teams: room.teams,
+        squads: room.squads,
+        workspacePersonaMemberships: room.workspacePersonaMemberships,
+        post: room.post,
+        thread: room.thread,
+        seedMessages: room.seedMessages,
+        realtimeEvents: room.realtimeEvents,
+        postParticipants: room.postParticipants,
+        postLinks: room.postLinks,
+        notes: room.notes,
+        decisions: room.decisions,
+        references: room.references,
+        artifacts: [artifact],
+        meetingOutputState: room.meetingOutputState,
+        meetingOpenQuestions: room.meetingOpenQuestions,
+        meetingState: room.meetingState,
+        meetingMembers: room.meetingMembers,
+        postEvents: room.postEvents,
+        personaActivations: room.personaActivations,
+        agentRuns: room.agentRuns
+      ),
+      using: executor
+    )
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.contains(where: { $0.contains("INSERT INTO artifact") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO structured_attachment") }))
   }
 
   @Test
@@ -114,6 +165,8 @@ struct Phase1RuntimeRepositoryTests {
       title: "Record decision",
       body: "Persist the first completion bundle.",
       decisionState: .adopted,
+      createdByParticipantType: .user,
+      createdByParticipantID: "aj",
       createdAt: referenceDate.addingTimeInterval(10)
     )
     let reference = OrbitReferenceRecord(
@@ -121,6 +174,8 @@ struct Phase1RuntimeRepositoryTests {
       postID: room.post.id,
       referenceType: .doc,
       target: "Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/README.md",
+      createdByParticipantType: .user,
+      createdByParticipantID: "aj",
       createdAt: referenceDate.addingTimeInterval(11)
     )
     let question = OrbitMeetingOpenQuestionRecord(
@@ -164,6 +219,29 @@ struct Phase1RuntimeRepositoryTests {
       meetingOutputState: outputState,
       decision: decision,
       references: [reference],
+      structuredAttachments: [
+        OrbitStructuredAttachmentRecord(
+          originPostID: room.post.id,
+          structuredObjectType: .note,
+          structuredObjectID: updatedSummaryNote.id,
+          attachmentOrdinal: 0,
+          attachedAt: updatedSummaryNote.createdAt
+        ),
+        OrbitStructuredAttachmentRecord(
+          originPostID: room.post.id,
+          structuredObjectType: .decision,
+          structuredObjectID: decision.id,
+          attachmentOrdinal: 1,
+          attachedAt: decision.createdAt
+        ),
+        OrbitStructuredAttachmentRecord(
+          originPostID: room.post.id,
+          structuredObjectType: .reference,
+          structuredObjectID: reference.id,
+          attachmentOrdinal: 2,
+          attachedAt: reference.createdAt
+        ),
+      ],
       meetingOpenQuestions: [question],
       meetingState: meetingState,
       postEvent: postEvent,
@@ -181,6 +259,7 @@ struct Phase1RuntimeRepositoryTests {
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_output_state") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO decision") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO reference") }))
+    #expect(queries.filter { $0.contains("INSERT INTO structured_attachment") }.count == 3)
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_open_question") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO meeting_state") }))
     #expect(queries.contains(where: { $0.contains("INSERT INTO post_event") }))

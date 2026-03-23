@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 
+@testable import OrbitServerRuntime
 @testable import StudioFeatures
 
 private func orbitRepositoryRootURL() -> URL {
@@ -375,6 +376,76 @@ struct OrbitWorkspacePersistenceTests {
     ])
     #expect(reloadedWorkspace.activeMeetingReferenceRecords.first?.referenceType == .doc)
     #expect(reloadedWorkspace.activeMeetingMemberRecords.first?.participantID == OrbitParticipantID.samwise.rawValue)
+  }
+
+  @Test
+  func orderedStructuredObjectProjectionRoundTripsAcrossReload() throws {
+    let persistence = OrbitWorkspacePersistence()
+    let fileManager = FileManager.default
+    let workspaceURL = fileManager.temporaryDirectory
+      .appendingPathComponent("orbit-structured-object-restart", isDirectory: true)
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+
+    try fileManager.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: workspaceURL) }
+
+    var workspace = OrbitWorkspace.defaultWorkspace
+    workspace.activePostID = "post-message-0001"
+    workspace.orderedStructuredObjectRecords = [
+      OrbitStructuredPostObjectRecord(
+        id: "artifact:artifact-0001",
+        originPostID: "post-message-0001",
+        structuredObjectType: .artifact,
+        structuredObjectID: "artifact-0001",
+        attachmentOrdinal: 0,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_700),
+        object: .artifact(
+          OrbitArtifactRecord(
+            id: UUID(uuidString: "77777777-1111-2222-3333-444444444444")!,
+            postID: UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")!,
+            artifactType: .report,
+            storageRef: "reports/m6-p2-slice.md",
+            title: "M6 P2 Slice",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_700)
+          )
+        )
+      ),
+      OrbitStructuredPostObjectRecord(
+        id: "note:note-0001",
+        originPostID: "post-message-0001",
+        structuredObjectType: .note,
+        structuredObjectID: "note-0001",
+        attachmentOrdinal: 1,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_701),
+        object: .note(
+          OrbitNoteRecord(
+            id: UUID(uuidString: "88888888-1111-2222-3333-444444444444")!,
+            postID: UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")!,
+            noteType: .brief,
+            body: "Narrative context",
+            createdByParticipantType: .user,
+            createdByParticipantID: "aj",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_701)
+          )
+        )
+      ),
+    ]
+
+    try persistence.persist(workspace, to: workspaceURL)
+
+    let loadedWorkspace = try persistence.loadWorkspace(from: workspaceURL)
+    let reloadedWorkspace = try #require(loadedWorkspace)
+
+    #expect(reloadedWorkspace.activeStructuredPostObjectRecords.map(\.structuredObjectType) == [
+      .artifact,
+      .note,
+    ])
+    #expect(reloadedWorkspace.activeStructuredPostObjectRecords.map(\.structuredObjectID) == [
+      "artifact-0001",
+      "note-0001",
+    ])
   }
 
   @Test

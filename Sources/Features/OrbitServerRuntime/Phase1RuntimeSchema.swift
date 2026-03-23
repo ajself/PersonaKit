@@ -14,9 +14,11 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case postParticipant = "post_participant"
   case postEvent = "post_event"
   case postLink = "post_link"
+  case structuredAttachment = "structured_attachment"
   case note
   case decision
   case reference
+  case artifact
   case meetingOutputState = "meeting_output_state"
   case meetingOpenQuestion = "meeting_open_question"
   case meetingState = "meeting_state"
@@ -253,6 +255,20 @@ public enum OrbitPhase1RuntimeSchema {
         """
     ),
     OrbitPhase1SchemaStatement(
+      table: .structuredAttachment,
+      sql: """
+        CREATE TABLE IF NOT EXISTS structured_attachment (
+          origin_post_id UUID NOT NULL REFERENCES post(id),
+          structured_object_type TEXT NOT NULL,
+          structured_object_id UUID NOT NULL,
+          attachment_ordinal INTEGER NOT NULL CHECK (attachment_ordinal >= 0),
+          attached_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (structured_object_type, structured_object_id),
+          UNIQUE(origin_post_id, attachment_ordinal)
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
       table: .note,
       sql: """
         CREATE TABLE IF NOT EXISTS note (
@@ -275,7 +291,13 @@ public enum OrbitPhase1RuntimeSchema {
           title TEXT NOT NULL,
           body TEXT NOT NULL,
           decision_state TEXT NOT NULL,
+          rationale TEXT NOT NULL,
+          tradeoffs TEXT NOT NULL,
+          dissent TEXT NOT NULL,
+          linked_reference_ids JSONB NOT NULL,
           rationale_note_id UUID REFERENCES note(id),
+          created_by_participant_type TEXT NOT NULL,
+          created_by_participant_id TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL
         )
         """
@@ -289,8 +311,302 @@ public enum OrbitPhase1RuntimeSchema {
           reference_type TEXT NOT NULL,
           target TEXT NOT NULL,
           title TEXT,
+          created_by_participant_type TEXT NOT NULL,
+          created_by_participant_id TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL
         )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .artifact,
+      sql: """
+        CREATE TABLE IF NOT EXISTS artifact (
+          id UUID PRIMARY KEY,
+          post_id UUID NOT NULL REFERENCES post(id),
+          artifact_type TEXT NOT NULL,
+          storage_ref TEXT NOT NULL,
+          title TEXT,
+          created_by_participant_type TEXT NOT NULL,
+          created_by_participant_id TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS rationale TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS tradeoffs TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS dissent TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS linked_reference_ids JSONB
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS created_by_participant_type TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ADD COLUMN IF NOT EXISTS created_by_participant_id TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET rationale = 'none recorded'
+        WHERE rationale IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET tradeoffs = 'none recorded'
+        WHERE tradeoffs IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET dissent = 'none recorded'
+        WHERE dissent IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        WITH reference_groups AS (
+          SELECT
+            post_id,
+            COALESCE(
+              jsonb_agg(id ORDER BY created_at ASC, id ASC),
+              '[]'::jsonb
+            ) AS linked_reference_ids
+          FROM reference
+          GROUP BY post_id
+        )
+        UPDATE decision
+        SET linked_reference_ids = reference_groups.linked_reference_ids
+        FROM reference_groups
+        WHERE decision.post_id = reference_groups.post_id
+          AND decision.linked_reference_ids IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET linked_reference_ids = '[]'::jsonb
+        WHERE linked_reference_ids IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET
+          created_by_participant_type = post.created_by_participant_type,
+          created_by_participant_id = post.created_by_participant_id
+        FROM post
+        WHERE decision.post_id = post.id
+          AND (
+            decision.created_by_participant_type IS NULL
+            OR decision.created_by_participant_id IS NULL
+          )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET created_by_participant_type = 'system'
+        WHERE created_by_participant_type IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        UPDATE decision
+        SET created_by_participant_id = 'orbit-system'
+        WHERE created_by_participant_id IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN rationale SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN tradeoffs SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN dissent SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN linked_reference_ids SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN created_by_participant_type SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .decision,
+      sql: """
+        ALTER TABLE IF EXISTS decision
+        ALTER COLUMN created_by_participant_id SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        ALTER TABLE IF EXISTS reference
+        ADD COLUMN IF NOT EXISTS created_by_participant_type TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        ALTER TABLE IF EXISTS reference
+        ADD COLUMN IF NOT EXISTS created_by_participant_id TEXT
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        UPDATE reference
+        SET
+          created_by_participant_type = post.created_by_participant_type,
+          created_by_participant_id = post.created_by_participant_id
+        FROM post
+        WHERE reference.post_id = post.id
+          AND (
+            reference.created_by_participant_type IS NULL
+            OR reference.created_by_participant_id IS NULL
+          )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        UPDATE reference
+        SET created_by_participant_type = 'system'
+        WHERE created_by_participant_type IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        UPDATE reference
+        SET created_by_participant_id = 'orbit-system'
+        WHERE created_by_participant_id IS NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        ALTER TABLE IF EXISTS reference
+        ALTER COLUMN created_by_participant_type SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .reference,
+      sql: """
+        ALTER TABLE IF EXISTS reference
+        ALTER COLUMN created_by_participant_id SET NOT NULL
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .structuredAttachment,
+      sql: """
+        INSERT INTO structured_attachment (
+          origin_post_id,
+          structured_object_type,
+          structured_object_id,
+          attachment_ordinal,
+          attached_at
+        )
+        SELECT
+          origin_post_id,
+          structured_object_type,
+          structured_object_id,
+          ROW_NUMBER() OVER (
+            PARTITION BY origin_post_id
+            ORDER BY attached_at ASC, structured_object_type ASC, structured_object_id ASC
+          ) - 1,
+          attached_at
+        FROM (
+          SELECT
+            post_id AS origin_post_id,
+            'note' AS structured_object_type,
+            id AS structured_object_id,
+            created_at AS attached_at
+          FROM note
+          UNION ALL
+          SELECT
+            post_id AS origin_post_id,
+            'decision' AS structured_object_type,
+            id AS structured_object_id,
+            created_at AS attached_at
+          FROM decision
+          UNION ALL
+          SELECT
+            post_id AS origin_post_id,
+            'reference' AS structured_object_type,
+            id AS structured_object_id,
+            created_at AS attached_at
+          FROM reference
+          UNION ALL
+          SELECT
+            post_id AS origin_post_id,
+            'artifact' AS structured_object_type,
+            id AS structured_object_id,
+            created_at AS attached_at
+          FROM artifact
+        ) AS structured_objects
+        ON CONFLICT (structured_object_type, structured_object_id) DO NOTHING
         """
     ),
     OrbitPhase1SchemaStatement(
@@ -385,7 +701,13 @@ public enum OrbitPhase1RuntimeSchema {
   ]
 
   public static var tableNames: [String] {
-    statements.map { $0.table.rawValue }
+    var seen = Set<String>()
+
+    return statements.compactMap { statement in
+      let tableName = statement.table.rawValue
+      let inserted = seen.insert(tableName).inserted
+      return inserted ? tableName : nil
+    }
   }
 
   public static var bootstrapSQL: String {

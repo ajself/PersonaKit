@@ -31,6 +31,7 @@ struct Phase1MeetingCompletionServiceTests {
         meetingOutputState,
         decision,
         references,
+        structuredAttachments,
         meetingOpenQuestions,
         meetingState,
         postEvent,
@@ -43,6 +44,7 @@ struct Phase1MeetingCompletionServiceTests {
           meetingOutputState: meetingOutputState,
           decision: decision,
           references: references,
+          structuredAttachments: structuredAttachments,
           meetingOpenQuestions: meetingOpenQuestions,
           meetingState: meetingState,
           postEvent: postEvent,
@@ -103,7 +105,11 @@ struct Phase1MeetingCompletionServiceTests {
     #expect(capturedWrite.meetingOutputState.recordedByParticipantID == "aj")
     #expect(capturedWrite.decision?.id == decisionID)
     #expect(capturedWrite.decision?.decisionState == .adopted)
+    #expect(capturedWrite.decision?.createdByParticipantID == "aj")
+    #expect(capturedWrite.decision?.linkedReferenceIDs == [referenceID1, referenceID2])
     #expect(capturedWrite.references.map(\.id) == [referenceID1, referenceID2])
+    #expect(capturedWrite.references.allSatisfy { $0.createdByParticipantID == "aj" })
+    #expect(capturedWrite.structuredAttachments.count == 4)
     #expect(capturedWrite.meetingOpenQuestions.map(\.id) == [questionID1, questionID2])
     #expect(capturedWrite.meetingOpenQuestions[0].createdAt < capturedWrite.meetingOpenQuestions[1].createdAt)
     #expect(capturedWrite.references[0].createdAt < capturedWrite.references[1].createdAt)
@@ -111,12 +117,22 @@ struct Phase1MeetingCompletionServiceTests {
     #expect(capturedWrite.meetingState.completedAt == completedAt)
     #expect(capturedWrite.postEvent.id == postEventID)
     #expect(capturedWrite.postEvent.eventType == OrbitPhase1RealtimeEventCategory.meetingOutputCommitted.rawValue)
+    let completionPayload = try OrbitPhase1RealtimeEventPayloadCodec.decode(
+      OrbitPhase1MeetingCompletionEventPayload.self,
+      from: capturedWrite.postEvent.payloadJSON
+    )
+    #expect(completionPayload.structuredAttachments.map(\.structuredObjectType) == [
+      .note,
+      .decision,
+      .reference,
+      .reference,
+    ])
     #expect(capturedWrite.realtimeEvents.map(\.category) == [.meetingOutputCommitted])
     #expect(capturedWrite.threadID == threadID)
     #expect(capturedWrite.threadLastActivityAt == completedAt)
 
     #expect(result.summaryNote.id == summaryNoteID)
-    #expect(result.meetingOutputState.outcomeState == .decisionRecorded)
+    #expect(result.meetingOutputState.outcomeState == OrbitMeetingOutcomeState.decisionRecorded)
     #expect(result.decision?.title == "Ship the first meeting completion shell")
     #expect(result.references.count == 2)
     #expect(result.meetingOpenQuestions.count == 2)
@@ -137,6 +153,7 @@ struct Phase1MeetingCompletionServiceTests {
         meetingOutputState,
         decision,
         references,
+        structuredAttachments,
         meetingOpenQuestions,
         meetingState,
         postEvent,
@@ -149,6 +166,7 @@ struct Phase1MeetingCompletionServiceTests {
           meetingOutputState: meetingOutputState,
           decision: decision,
           references: references,
+          structuredAttachments: structuredAttachments,
           meetingOpenQuestions: meetingOpenQuestions,
           meetingState: meetingState,
           postEvent: postEvent,
@@ -178,14 +196,14 @@ struct Phase1MeetingCompletionServiceTests {
     #expect(capturedWrite.meetingOutputState.outcomeState == .noDecisionRecorded)
     #expect(capturedWrite.meetingOutputState.detail == "Team needs one more implementation spike before choosing.")
     #expect(result.decision == nil)
-    #expect(result.meetingOutputState.outcomeState == .noDecisionRecorded)
+    #expect(result.meetingOutputState.outcomeState == OrbitMeetingOutcomeState.noDecisionRecorded)
   }
 
   @Test
   func completeMeetingRejectsMixedNoDecisionPayload() async {
     let service = OrbitPhase1MeetingCompletionService(
       loadSnapshot: { _, _, _ in sampleMeetingSnapshot() },
-      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _ in
+      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _, _ in
         Issue.record("completeMeetingWrite should not be called")
       }
     )
@@ -216,7 +234,7 @@ struct Phase1MeetingCompletionServiceTests {
   func completeMeetingRejectsBlankFollowUpReferenceTarget() async {
     let service = OrbitPhase1MeetingCompletionService(
       loadSnapshot: { _, _, _ in sampleMeetingSnapshot() },
-      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _ in
+      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _, _ in
         Issue.record("completeMeetingWrite should not be called")
       }
     )
@@ -253,7 +271,7 @@ struct Phase1MeetingCompletionServiceTests {
   func completeMeetingRejectsNonMeetingScope() async {
     let service = OrbitPhase1MeetingCompletionService(
       loadSnapshot: { _, _, _ in sampleNonMeetingSnapshot() },
-      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _ in
+      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _, _ in
         Issue.record("completeMeetingWrite should not be called")
       }
     )
@@ -282,7 +300,7 @@ struct Phase1MeetingCompletionServiceTests {
   func completeMeetingMapsConcurrentWriteConflictToAlreadyCompleted() async {
     let service = OrbitPhase1MeetingCompletionService(
       loadSnapshot: { _, _, _ in sampleMeetingSnapshot() },
-      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _ in
+      completeMeetingWrite: { _, _, _, _, _, _, _, _, _, _, _, _ in
         throw OrbitPostgresRuntimeStoreError.meetingAlreadyCompleted
       }
     )
@@ -431,6 +449,7 @@ private actor MeetingCompletionRecorder {
     let meetingOutputState: OrbitMeetingOutputStateRecord
     let decision: OrbitDecisionRecord?
     let references: [OrbitReferenceRecord]
+    let structuredAttachments: [OrbitStructuredAttachmentRecord]
     let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
     let meetingState: OrbitMeetingStateRecord
     let postEvent: OrbitPostEventRecord
@@ -447,6 +466,7 @@ private actor MeetingCompletionRecorder {
     meetingOutputState: OrbitMeetingOutputStateRecord,
     decision: OrbitDecisionRecord?,
     references: [OrbitReferenceRecord],
+    structuredAttachments: [OrbitStructuredAttachmentRecord],
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
     meetingState: OrbitMeetingStateRecord,
     postEvent: OrbitPostEventRecord,
@@ -460,6 +480,7 @@ private actor MeetingCompletionRecorder {
       meetingOutputState: meetingOutputState,
       decision: decision,
       references: references,
+      structuredAttachments: structuredAttachments,
       meetingOpenQuestions: meetingOpenQuestions,
       meetingState: meetingState,
       postEvent: postEvent,

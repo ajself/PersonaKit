@@ -200,6 +200,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     meetingOutputState: OrbitMeetingOutputStateRecord,
     decision: OrbitDecisionRecord?,
     references: [OrbitReferenceRecord],
+    structuredAttachments: [OrbitStructuredAttachmentRecord],
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord],
     meetingState: OrbitMeetingStateRecord,
     postEvent: OrbitPostEventRecord,
@@ -239,6 +240,7 @@ public struct OrbitPostgresRuntimeStore: Sendable {
           meetingOutputState: meetingOutputState,
           decision: decision,
           references: references,
+          structuredAttachments: structuredAttachments,
           meetingOpenQuestions: meetingOpenQuestions,
           meetingState: meetingState,
           postEvent: postEvent,
@@ -394,6 +396,28 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         )
       }
 
+      let artifactRows = try await client.query(
+        repository.selectArtifactsQuery(postID: post.id)
+      )
+
+      var artifacts = [OrbitArtifactRecord]()
+      for try await artifactRow in artifactRows {
+        artifacts.append(
+          try decodeArtifact(from: artifactRow.makeRandomAccess())
+        )
+      }
+
+      let structuredAttachmentRows = try await client.query(
+        repository.selectStructuredAttachmentsQuery(postID: post.id)
+      )
+
+      var structuredAttachments = [OrbitStructuredAttachmentRecord]()
+      for try await structuredAttachmentRow in structuredAttachmentRows {
+        structuredAttachments.append(
+          try decodeStructuredAttachment(from: structuredAttachmentRow.makeRandomAccess())
+        )
+      }
+
       let meetingOutputStateRows = try await client.query(
         repository.selectMeetingOutputStateQuery(postID: post.id)
       )
@@ -485,6 +509,8 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         notes: notes,
         decisions: decisions,
         references: references,
+        artifacts: artifacts,
+        structuredAttachments: structuredAttachments.isEmpty ? nil : structuredAttachments,
         meetingOutputState: meetingOutputState,
         meetingOpenQuestions: meetingOpenQuestions,
         meetingState: meetingState,
@@ -827,22 +853,15 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   private func decodePostEvent(
     from row: PostgresRandomAccessRow
   ) throws -> OrbitPostEventRecord {
-    let payloadData = row[data: "payload"]
-    var payloadBuffer = payloadData.value
-    if payloadData.type == .jsonb {
-      payloadBuffer?.moveReaderIndex(forwardBy: 1)
-    }
-    let payloadJSONString =
-      payloadBuffer.map { buffer in
-        String(decoding: buffer.readableBytesView, as: UTF8.self)
-      } ?? "null"
-
     return try OrbitPostEventRecord(
       id: row["id"].decode(UUID.self),
       postID: row["post_id"].decode(UUID.self),
       threadID: row["thread_id"].decode(Optional<UUID>.self),
       eventType: row["event_type"].decode(String.self),
-      payloadJSON: payloadJSONString,
+      payloadJSON: decodeJSONString(
+        from: row,
+        columnName: "payload"
+      ),
       createdAt: row["created_at"].decode(Date.self)
     )
   }
@@ -882,7 +901,20 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         from: row["decision_state"],
         columnName: "decision_state"
       ),
+      rationale: row["rationale"].decode(String.self),
+      tradeoffs: row["tradeoffs"].decode(String.self),
+      dissent: row["dissent"].decode(String.self),
+      linkedReferenceIDs: try decodeUUIDArray(
+        from: row,
+        columnName: "linked_reference_ids"
+      ),
       rationaleNoteID: row["rationale_note_id"].decode(Optional<UUID>.self),
+      createdByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["created_by_participant_type"],
+        columnName: "created_by_participant_type"
+      ),
+      createdByParticipantID: row["created_by_participant_id"].decode(String.self),
       createdAt: row["created_at"].decode(Date.self)
     )
   }
@@ -900,7 +932,52 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       ),
       target: row["target"].decode(String.self),
       title: row["title"].decode(Optional<String>.self),
+      createdByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["created_by_participant_type"],
+        columnName: "created_by_participant_type"
+      ),
+      createdByParticipantID: row["created_by_participant_id"].decode(String.self),
       createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeArtifact(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitArtifactRecord {
+    try OrbitArtifactRecord(
+      id: row["id"].decode(UUID.self),
+      postID: row["post_id"].decode(UUID.self),
+      artifactType: try decodeEnum(
+        OrbitArtifactType.self,
+        from: row["artifact_type"],
+        columnName: "artifact_type"
+      ),
+      storageRef: row["storage_ref"].decode(String.self),
+      title: row["title"].decode(Optional<String>.self),
+      createdByParticipantType: try decodeEnum(
+        OrbitParticipantAuthorType.self,
+        from: row["created_by_participant_type"],
+        columnName: "created_by_participant_type"
+      ),
+      createdByParticipantID: row["created_by_participant_id"].decode(String.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeStructuredAttachment(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitStructuredAttachmentRecord {
+    try OrbitStructuredAttachmentRecord(
+      originPostID: row["origin_post_id"].decode(UUID.self),
+      structuredObjectType: try decodeEnum(
+        OrbitStructuredObjectType.self,
+        from: row["structured_object_type"],
+        columnName: "structured_object_type"
+      ),
+      structuredObjectID: row["structured_object_id"].decode(UUID.self),
+      attachmentOrdinal: row["attachment_ordinal"].decode(Int.self),
+      attachedAt: row["attached_at"].decode(Date.self)
     )
   }
 
@@ -989,16 +1066,6 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   private func decodeRealtimeEvent(
     from row: PostgresRandomAccessRow
   ) throws -> OrbitPhase1RealtimeEventEnvelope {
-    let payloadData = row[data: "payload"]
-    var payloadBuffer = payloadData.value
-    if payloadData.type == .jsonb {
-      payloadBuffer?.moveReaderIndex(forwardBy: 1)
-    }
-    let payloadJSONString =
-      payloadBuffer.map { buffer in
-        String(decoding: buffer.readableBytesView, as: UTF8.self)
-      } ?? "null"
-
     return try OrbitPhase1RealtimeEventEnvelope(
       id: row["id"].decode(UUID.self),
       workspaceID: row["workspace_id"].decode(UUID.self),
@@ -1010,7 +1077,10 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         columnName: "category"
       ),
       createdAt: row["created_at"].decode(Date.self),
-      payloadJSON: payloadJSONString
+      payloadJSON: decodeJSONString(
+        from: row,
+        columnName: "payload"
+      )
     )
   }
 
@@ -1086,10 +1156,48 @@ public struct OrbitPostgresRuntimeStore: Sendable {
 
     return value
   }
+
+  private func decodeJSONString(
+    from row: PostgresRandomAccessRow,
+    columnName: String
+  ) -> String {
+    let payloadData = row[data: columnName]
+    var payloadBuffer = payloadData.value
+    if payloadData.type == .jsonb {
+      payloadBuffer?.moveReaderIndex(forwardBy: 1)
+    }
+
+    return payloadBuffer.map { buffer in
+      String(decoding: buffer.readableBytesView, as: UTF8.self)
+    } ?? "null"
+  }
+
+  private func decodeUUIDArray(
+    from row: PostgresRandomAccessRow,
+    columnName: String
+  ) throws -> [UUID] {
+    let jsonString = decodeJSONString(
+      from: row,
+      columnName: columnName
+    )
+    let rawValues = try JSONDecoder().decode([String].self, from: Data(jsonString.utf8))
+
+    return try rawValues.map { rawValue in
+      guard let value = UUID(uuidString: rawValue) else {
+        throw OrbitPostgresRuntimeStoreError.invalidUUIDValue(
+          column: columnName,
+          rawValue: rawValue
+        )
+      }
+
+      return value
+    }
+  }
 }
 
 public enum OrbitPostgresRuntimeStoreError: Error, Equatable {
   case invalidEnumValue(column: String, rawValue: String)
+  case invalidUUIDValue(column: String, rawValue: String)
   case meetingAlreadyCompleted
   case meetingStateMissing
 }

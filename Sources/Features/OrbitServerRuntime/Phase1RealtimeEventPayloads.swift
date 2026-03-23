@@ -149,15 +149,28 @@ public struct OrbitPhase1MeetingCompletionEventPayload: Codable, Equatable, Send
   public let meetingOutputState: OrbitMeetingOutputStateRecord
   public let decision: OrbitDecisionRecord?
   public let references: [OrbitReferenceRecord]
+  public let structuredAttachments: [OrbitStructuredAttachmentRecord]
   public let meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord]
   public let meetingState: OrbitMeetingStateRecord
   public let threadLastActivityAt: Date
+
+  private enum CodingKeys: String, CodingKey {
+    case summaryNote
+    case meetingOutputState
+    case decision
+    case references
+    case structuredAttachments
+    case meetingOpenQuestions
+    case meetingState
+    case threadLastActivityAt
+  }
 
   public init(
     summaryNote: OrbitNoteRecord,
     meetingOutputState: OrbitMeetingOutputStateRecord,
     decision: OrbitDecisionRecord? = nil,
     references: [OrbitReferenceRecord] = [],
+    structuredAttachments: [OrbitStructuredAttachmentRecord] = [],
     meetingOpenQuestions: [OrbitMeetingOpenQuestionRecord] = [],
     meetingState: OrbitMeetingStateRecord,
     threadLastActivityAt: Date
@@ -166,9 +179,51 @@ public struct OrbitPhase1MeetingCompletionEventPayload: Codable, Equatable, Send
     self.meetingOutputState = meetingOutputState
     self.decision = decision
     self.references = references
+    self.structuredAttachments = structuredAttachments
     self.meetingOpenQuestions = meetingOpenQuestions
     self.meetingState = meetingState
     self.threadLastActivityAt = threadLastActivityAt
+  }
+
+  public init(
+    from decoder: Decoder
+  ) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+    summaryNote = try container.decode(OrbitNoteRecord.self, forKey: .summaryNote)
+    meetingOutputState = try container.decode(
+      OrbitMeetingOutputStateRecord.self,
+      forKey: .meetingOutputState
+    )
+    decision = try container.decodeIfPresent(OrbitDecisionRecord.self, forKey: .decision)
+    references = try container.decodeIfPresent([OrbitReferenceRecord].self, forKey: .references) ?? []
+    structuredAttachments =
+      try container.decodeIfPresent(
+        [OrbitStructuredAttachmentRecord].self,
+        forKey: .structuredAttachments
+      ) ?? []
+    meetingOpenQuestions =
+      try container.decodeIfPresent(
+        [OrbitMeetingOpenQuestionRecord].self,
+        forKey: .meetingOpenQuestions
+      ) ?? []
+    meetingState = try container.decode(OrbitMeetingStateRecord.self, forKey: .meetingState)
+    threadLastActivityAt = try container.decode(Date.self, forKey: .threadLastActivityAt)
+  }
+
+  public func encode(
+    to encoder: Encoder
+  ) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+
+    try container.encode(summaryNote, forKey: .summaryNote)
+    try container.encode(meetingOutputState, forKey: .meetingOutputState)
+    try container.encodeIfPresent(decision, forKey: .decision)
+    try container.encode(references, forKey: .references)
+    try container.encode(structuredAttachments, forKey: .structuredAttachments)
+    try container.encode(meetingOpenQuestions, forKey: .meetingOpenQuestions)
+    try container.encode(meetingState, forKey: .meetingState)
+    try container.encode(threadLastActivityAt, forKey: .threadLastActivityAt)
   }
 }
 
