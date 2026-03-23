@@ -1,9 +1,9 @@
 # M5 Meeting Promotion And Continuity
 
-Status: Planned
+Status: Closed for M5 Closeout
 Primary Owner: `orbit-meeting-coordinator`
 Supporting Personas: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-21
+Last Updated: 2026-03-22
 
 ## Purpose
 
@@ -25,6 +25,10 @@ without losing continuity.
 
 The bare minimum is not a milestone win.
 
+`M5` is closed for first-slice meeting promotion and continuity.
+The current dossier evidence is sufficient to hand off to `M6` without
+reopening the accepted `M5` boundary.
+
 ## File Map
 
 - `README.md`
@@ -32,6 +36,16 @@ The bare minimum is not a milestone win.
 - `Packet-01-Freeze-Meeting-Trigger-Rules.md`
   preflight packet contract for inline versus meeting versus promoted-post
   trigger rules
+- `Meeting-Output-Examples.md`
+  concrete examples of the bounded `M5` meeting output shape and preserved
+  boundaries
+- `Product-And-Interaction-Review-Artifact.md`
+  prepared interaction-legibility review for meeting completion surfaces
+- `Validation-Review-Artifact.md`
+  prepared deterministic validation readout for meeting continuity and output
+  persistence
+- `AJ-Closeout-Review-Artifact.md`
+  AJ-facing closeout note and non-authorization boundary
 
 ## Preconditions
 
@@ -169,11 +183,11 @@ Avoid:
 ## Evidence Package
 
 - `Packet-01-Freeze-Meeting-Trigger-Rules.md`
-- meeting trigger note
-- meeting-state examples
-- continuity-link examples
-- meeting output examples
-- interaction and validation review artifacts
+- meeting-state and continuity examples from the shipped runtime and tests
+- `Meeting-Output-Examples.md`
+- `Product-And-Interaction-Review-Artifact.md`
+- `Validation-Review-Artifact.md`
+- `AJ-Closeout-Review-Artifact.md`
 
 ## Stop Points
 
