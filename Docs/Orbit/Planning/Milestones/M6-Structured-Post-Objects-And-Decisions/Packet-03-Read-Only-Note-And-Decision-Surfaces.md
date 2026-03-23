@@ -1,6 +1,6 @@
 # M6 Packet 3: Read-Only Note And Decision Surfaces
 
-Status: In Progress
+Status: Concluded Locally
 Packet Id: `M6-P3`
 Milestone: `M6`
 Prepared By: `samwise`

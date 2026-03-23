@@ -1,6 +1,6 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: In Progress - `M6-P3` read-only note and decision surfaces underway
+Status: In Progress - `M6-P4` read-only reference and artifact surfaces underway
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
 Last Updated: 2026-03-23
@@ -18,10 +18,14 @@ inspectable objects to posts and meetings.
   implemented through `structured_attachment`, replay and reload stay stable for
   mixed structured objects on one post, and the current `M5` meeting-output
   surface remains stable.
-- `M6-P3` is now frozen as a bounded read-only surface packet: one separate
-  structured notes-and-decisions card, one active post at a time, canonical
-  order from `structured_attachment`, and no editing or broad reference/artifact
-  UI work in this slice.
+- `M6-P3` is now concluded locally: one separate structured notes-and-decisions
+  card ships from canonical `structured_attachment` order, preserves the
+  accepted `M5` meeting outputs card, and keeps note and decision inspection
+  read-only.
+- `M6-P4` is now frozen as a bounded read-only evidence packet: one separate
+  structured references-and-artifacts card, one active post at a time,
+  canonical order from `structured_attachment`, and no editing, previews, or
+  connector/storage broadening in this slice.
 
 ## File Map
 
@@ -35,6 +39,8 @@ inspectable objects to posts and meetings.
   readiness judgment for the note-and-decision surface packet
 - `Packet-03-Read-Only-Note-And-Decision-Surfaces.md`
   execution note freezing the first `M6-P3` read-only surface slice
+- `Packet-04-Read-Only-Reference-And-Artifact-Surfaces.md`
+  execution note freezing the first `M6-P4` read-only evidence slice
 
 ## Preconditions
 
@@ -125,13 +131,17 @@ Outcome:
 
 Work:
 
-- render references and artifacts inline or in linked inspectors
-- keep provenance visible
-- avoid oversized attachment UX for the first slice
+- render read-only reference and artifact surfaces from the ordered attachment
+  lane
+- keep the accepted `M5` meeting references surface stable as a separate legacy
+  section
+- defer previews, open actions, and connector-aware artifact handling to later
+  packets
 
 Done when:
 
-- a reader can inspect the evidence packet behind a post or meeting outcome
+- a reader can inspect ordered references and artifacts for one originating post
+  without broadening into previews or editing
 
 ### Packet 5. Run Product And Interaction Review
 

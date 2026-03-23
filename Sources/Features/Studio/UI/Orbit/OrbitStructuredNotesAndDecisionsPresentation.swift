@@ -157,7 +157,7 @@ extension OrbitWorkspace {
     }
   }
 
-  private func isMeetingPost(
+  func isMeetingPost(
     postID: String
   ) -> Bool {
     meetingStatusRecord(for: postID) != nil

@@ -127,6 +127,13 @@ extension OrbitPanelView {
     !isMeetingCompletionEditable && !surfaceItems.isEmpty
   }
 
+  static func shouldShowStructuredReferencesAndArtifactsCard(
+    isMeetingCompletionEditable: Bool,
+    surfaceItems: [OrbitStructuredReferencesAndArtifactsSurfaceItem]
+  ) -> Bool {
+    !isMeetingCompletionEditable && !surfaceItems.isEmpty
+  }
+
   var sortedParticipants: [OrbitParticipant] {
     orbitWorkspace.participants.sorted { $0.sortOrder < $1.sortOrder }
   }
@@ -194,6 +201,17 @@ extension OrbitPanelView {
     Self.shouldShowStructuredNotesAndDecisionsCard(
       isMeetingCompletionEditable: isMeetingCompletionEditable,
       surfaceItems: activeStructuredNotesAndDecisionsSurfaceItems
+    )
+  }
+
+  var activeStructuredReferencesAndArtifactsSurfaceItems: [OrbitStructuredReferencesAndArtifactsSurfaceItem] {
+    orbitWorkspace.activeStructuredReferencesAndArtifactsSurfaceItems
+  }
+
+  var showsStructuredReferencesAndArtifactsCard: Bool {
+    Self.shouldShowStructuredReferencesAndArtifactsCard(
+      isMeetingCompletionEditable: isMeetingCompletionEditable,
+      surfaceItems: activeStructuredReferencesAndArtifactsSurfaceItems
     )
   }
 
@@ -560,6 +578,30 @@ extension OrbitPanelView {
   }
 
   @ViewBuilder
+  var structuredReferencesAndArtifactsCard: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      VStack(alignment: .leading, spacing: 4) {
+        Text("Structured References And Artifacts")
+          .font(.headline)
+
+        Text("Read-only supporting context and outputs from this post in canonical attachment order.")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+
+      VStack(alignment: .leading, spacing: 12) {
+        ForEach(activeStructuredReferencesAndArtifactsSurfaceItems) { item in
+          structuredReferencesAndArtifactsRow(item)
+        }
+      }
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
+    .padding(.horizontal, 16)
+  }
+
+  @ViewBuilder
   func structuredNotesAndDecisionsRow(
     _ item: OrbitStructuredNotesAndDecisionsSurfaceItem
   ) -> some View {
@@ -592,6 +634,45 @@ extension OrbitPanelView {
         structuredNoteContent(note)
       case let .decision(decision):
         structuredDecisionContent(decision)
+      }
+    }
+    .padding(12)
+    .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+  }
+
+  @ViewBuilder
+  func structuredReferencesAndArtifactsRow(
+    _ item: OrbitStructuredReferencesAndArtifactsSurfaceItem
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .center, spacing: 8) {
+        switch item.content {
+        case let .reference(reference):
+          shellStatusBadge(
+            title: reference.referenceType.displayText,
+            tint: Color.secondary.opacity(0.10),
+            foreground: .secondary
+          )
+        case let .artifact(artifact):
+          shellStatusBadge(
+            title: artifact.artifactType.displayText,
+            tint: Color.accentColor.opacity(0.12),
+            foreground: .accentColor
+          )
+        }
+
+        Text(structuredSurfaceMetadataCaption(for: item))
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+        Spacer(minLength: 0)
+      }
+
+      switch item.content {
+      case let .reference(reference):
+        structuredReferenceContent(reference)
+      case let .artifact(artifact):
+        structuredArtifactContent(artifact)
       }
     }
     .padding(12)
@@ -639,6 +720,42 @@ extension OrbitPanelView {
         value: decision.dissent
       )
       structuredDecisionEvidenceSection(decision.evidence)
+    }
+  }
+
+  @ViewBuilder
+  func structuredReferenceContent(
+    _ reference: OrbitStructuredReferenceSurface
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(reference.title)
+        .font(.subheadline.weight(.semibold))
+
+      switch reference.presentation {
+      case .fullMetadata:
+        Text("\(reference.referenceType.displayText): \(reference.target)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .textSelection(.enabled)
+      case .meetingOutputsReference:
+        Text("Reference details shown above in Meeting Outputs.")
+          .font(.body)
+          .foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  func structuredArtifactContent(
+    _ artifact: OrbitStructuredArtifactSurface
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(artifact.title)
+        .font(.subheadline.weight(.semibold))
+
+      Text("\(artifact.artifactType.displayText): \(artifact.storageRef)")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .textSelection(.enabled)
     }
   }
 
@@ -690,6 +807,12 @@ extension OrbitPanelView {
 
   func structuredSurfaceMetadataCaption(
     for item: OrbitStructuredNotesAndDecisionsSurfaceItem
+  ) -> String {
+    "\(item.createdByDisplayName) • \(item.createdAt.formatted(date: .abbreviated, time: .shortened))"
+  }
+
+  func structuredSurfaceMetadataCaption(
+    for item: OrbitStructuredReferencesAndArtifactsSurfaceItem
   ) -> String {
     "\(item.createdByDisplayName) • \(item.createdAt.formatted(date: .abbreviated, time: .shortened))"
   }

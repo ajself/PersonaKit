@@ -176,7 +176,7 @@
       let view = makeHostingView(
         workspaceStore: store,
         width: 1500,
-        height: 1040
+        height: 1280
       )
 
       assertSnapshot(
@@ -223,6 +223,7 @@
     workspace.activePostID = "post-message-structured"
     let referenceID = UUID(uuidString: "a1a1a1a1-1111-2222-3333-444444444444")!
     let decisionID = UUID(uuidString: "b2b2b2b2-1111-2222-3333-444444444444")!
+    let artifactID = UUID(uuidString: "f7f7f7f7-1111-2222-3333-444444444444")!
 
     workspace.orderedStructuredObjectRecords = [
       OrbitStructuredPostObjectRecord(
@@ -288,6 +289,26 @@
           )
         )
       ),
+      OrbitStructuredPostObjectRecord(
+        id: "artifact:\(artifactID.uuidString)",
+        originPostID: "post-message-structured",
+        structuredObjectType: .artifact,
+        structuredObjectID: artifactID.uuidString,
+        attachmentOrdinal: 3,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_913),
+        object: .artifact(
+          OrbitArtifactRecord(
+            id: artifactID,
+            postID: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
+            artifactType: .report,
+            storageRef: "reports/m6-p4-evidence-card.md",
+            title: "Evidence card closeout",
+            createdByParticipantType: .workspacePersona,
+            createdByParticipantID: "workspace-persona-orbit-samwise",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_913)
+          )
+        )
+      ),
     ]
 
     return workspace
@@ -299,6 +320,7 @@
     let summaryDate = Date(timeIntervalSince1970: 1_742_342_930)
     let referenceID = UUID(uuidString: "d4d4d4d4-1111-2222-3333-444444444444")!
     let decisionID = UUID(uuidString: "e5e5e5e5-1111-2222-3333-444444444444")!
+    let artifactID = UUID(uuidString: "f8f8f8f8-1111-2222-3333-444444444444")!
 
     workspace.meetingSummaryRecords = [
       OrbitMeetingSummaryRecord(
@@ -347,7 +369,7 @@
     ]
     workspace.meetingReferenceRecords = [
       OrbitMeetingReferenceRecord(
-        id: "meeting-reference-structured",
+        id: referenceID.uuidString,
         postID: "post-meeting-structured",
         referenceType: .doc,
         target: "Docs/Orbit/Planning/Milestones/M6-Structured-Post-Objects-And-Decisions/Packet-01-Freeze-Object-Definitions.md",
@@ -428,6 +450,26 @@
             createdByParticipantType: .user,
             createdByParticipantID: OrbitParticipantID.aj.rawValue,
             createdAt: summaryDate.addingTimeInterval(121)
+          )
+        )
+      ),
+      OrbitStructuredPostObjectRecord(
+        id: "artifact:\(artifactID.uuidString)",
+        originPostID: "post-meeting-structured",
+        structuredObjectType: .artifact,
+        structuredObjectID: artifactID.uuidString,
+        attachmentOrdinal: 3,
+        attachedAt: summaryDate.addingTimeInterval(122),
+        object: .artifact(
+          OrbitArtifactRecord(
+            id: artifactID,
+            postID: UUID(uuidString: "22222222-aaaa-bbbb-cccc-222222222222")!,
+            artifactType: .report,
+            storageRef: "reports/meeting-evidence-closeout.md",
+            title: "Meeting evidence closeout",
+            createdByParticipantType: .workspacePersona,
+            createdByParticipantID: "workspace-persona-orbit-samwise",
+            createdAt: summaryDate.addingTimeInterval(122)
           )
         )
       ),

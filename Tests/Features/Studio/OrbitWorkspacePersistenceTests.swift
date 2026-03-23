@@ -518,6 +518,39 @@ struct OrbitWorkspacePersistenceTests {
     #expect(surface.tradeoffs == "Adds one more room card to the current Studio surface.")
     #expect(surface.dissent == "none recorded")
     #expect(surface.evidence.map(\.title) == ["Orbit vision"])
+
+    let evidenceSurfaceItems = reloadedWorkspace.activeStructuredReferencesAndArtifactsSurfaceItems
+    #expect(evidenceSurfaceItems.map(\.id) == [
+      "artifact:artifact-0001",
+      "reference:reference-0001",
+    ])
+    #expect(evidenceSurfaceItems.map(\.createdByDisplayName) == [
+      "AJ",
+      "AJ",
+    ])
+
+    let artifactSurface = try #require(evidenceSurfaceItems.first)
+
+    guard case let .artifact(artifact) = artifactSurface.content else {
+      Issue.record("Expected artifact surface after reload.")
+      return
+    }
+
+    #expect(artifact.artifactType == .report)
+    #expect(artifact.title == "M6 P2 Slice")
+    #expect(artifact.storageRef == "reports/m6-p2-slice.md")
+
+    let referenceSurface = try #require(evidenceSurfaceItems.last)
+
+    guard case let .reference(reference) = referenceSurface.content else {
+      Issue.record("Expected reference surface after reload.")
+      return
+    }
+
+    #expect(reference.referenceType == .doc)
+    #expect(reference.title == "Orbit vision")
+    #expect(reference.target == "Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md")
+    #expect(reference.presentation == .fullMetadata)
   }
 
   @Test

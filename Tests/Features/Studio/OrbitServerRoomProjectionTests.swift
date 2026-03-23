@@ -543,6 +543,40 @@ struct OrbitServerRoomProjectionTests {
     #expect(projectedDecision.linkedReferenceIDs == [referenceID])
     #expect(projectedDecision.createdByParticipantType == .user)
     #expect(projectedDecision.createdByParticipantID == "aj")
+
+    let projectedReferenceRecord = try! #require(
+      workspace.activeStructuredPostObjectRecords.first {
+        $0.structuredObjectType == .reference
+      }
+    )
+
+    guard case let .reference(projectedReference) = projectedReferenceRecord.object else {
+      Issue.record("Expected projected structured reference object.")
+      return
+    }
+
+    #expect(projectedReference.referenceType == .doc)
+    #expect(projectedReference.target == "Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md")
+    #expect(projectedReference.title == "Runtime model RFC")
+    #expect(projectedReference.createdByParticipantType == .user)
+    #expect(projectedReference.createdByParticipantID == "aj")
+
+    let projectedArtifactRecord = try! #require(
+      workspace.activeStructuredPostObjectRecords.first {
+        $0.structuredObjectType == .artifact
+      }
+    )
+
+    guard case let .artifact(projectedArtifact) = projectedArtifactRecord.object else {
+      Issue.record("Expected projected structured artifact object.")
+      return
+    }
+
+    #expect(projectedArtifact.artifactType == .report)
+    #expect(projectedArtifact.storageRef == "reports/m6-p2-slice.md")
+    #expect(projectedArtifact.title == "M6 P2 Slice")
+    #expect(projectedArtifact.createdByParticipantType == .user)
+    #expect(projectedArtifact.createdByParticipantID == "aj")
   }
 
   @Test

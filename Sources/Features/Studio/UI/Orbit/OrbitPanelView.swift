@@ -54,6 +54,9 @@ struct OrbitPanelView: View {
       if showsStructuredNotesAndDecisionsCard {
         structuredNotesAndDecisionsCard
       }
+      if showsStructuredReferencesAndArtifactsCard {
+        structuredReferencesAndArtifactsCard
+      }
 
       if let persistenceMessage {
         Text(persistenceMessage)
