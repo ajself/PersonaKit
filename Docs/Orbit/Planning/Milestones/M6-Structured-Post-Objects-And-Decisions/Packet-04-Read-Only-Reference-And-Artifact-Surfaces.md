@@ -1,6 +1,6 @@
 # M6 Packet 4: Read-Only Reference And Artifact Surfaces
 
-Status: In Progress
+Status: Concluded Locally
 Packet Id: `M6-P4`
 Milestone: `M6`
 Prepared By: `samwise`

@@ -1,6 +1,6 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: In Progress - `M6-P4` read-only reference and artifact surfaces underway
+Status: In Progress - M6-P5 product and interaction review preparation underway
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
 Last Updated: 2026-03-23
@@ -22,10 +22,14 @@ inspectable objects to posts and meetings.
   card ships from canonical `structured_attachment` order, preserves the
   accepted `M5` meeting outputs card, and keeps note and decision inspection
   read-only.
-- `M6-P4` is now frozen as a bounded read-only evidence packet: one separate
-  structured references-and-artifacts card, one active post at a time,
-  canonical order from `structured_attachment`, and no editing, previews, or
-  connector/storage broadening in this slice.
+- `M6-P4` is now concluded locally: one separate structured
+  references-and-artifacts card ships from canonical
+  `structured_attachment` order, preserves the accepted `M5` meeting-reference
+  surface as a separate legacy section, and keeps evidence inspection
+  read-only.
+- `M6-P5` is now the active review packet: the next pass prepares the dossier,
+  examples, and product-and-interaction artifact needed to judge whether the
+  shipped `M6` surfaces add signal rather than overhead.
 
 ## File Map
 
@@ -41,6 +45,15 @@ inspectable objects to posts and meetings.
   execution note freezing the first `M6-P3` read-only surface slice
 - `Packet-04-Read-Only-Reference-And-Artifact-Surfaces.md`
   execution note freezing the first `M6-P4` read-only evidence slice
+- `Packet-05-Product-And-Interaction-Review.md`
+  packet contract freezing the first `M6-P5` product-and-interaction review
+  pass
+- `Structured-Object-Surface-Examples.md`
+  reviewer-readable examples of the shipped message-post and meeting-post
+  structured-object surfaces
+- `Product-And-Interaction-Review-Artifact.md`
+  prepared `M6-P5` review artifact grounded in shipped docs, tests, and
+  snapshots
 
 ## Preconditions
 
@@ -151,13 +164,16 @@ Outcome:
 
 Work:
 
-- verify that structured objects clarify workflows
-- verify that the first packet shape is small enough
-- identify clutter or duplication risks before broadening further
+- review the shipped read-only `M6-P3` and `M6-P4` surfaces as one bounded
+  story
+- verify that structured objects clarify workflows without replacing the post
+  model
+- identify clutter, duplication, or boundary risks before any later broadening
 
 Done when:
 
-- product and interaction reviewers agree the objects add signal, not overhead
+- product and interaction reviewers can judge the shipped surfaces from explicit
+  dossier artifacts instead of code reconstruction
 
 ## Subagent Use Pattern
 
@@ -174,10 +190,9 @@ Avoid:
 ## Evidence Package
 
 - object-definition note
-- attachment model example
-- decision packet example
-- reference and artifact example
-- product and interaction review artifacts
+- attachment-plumbing closeout note
+- structured-object surface examples for message and meeting posts
+- product and interaction review artifact
 
 ## Stop Points
 
