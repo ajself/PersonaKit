@@ -1,14 +1,37 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: Planned
+Status: In Progress - `M6-P2` concluded, `M6-P3` needs another planning pass
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-23
 
 ## Purpose
 
 Stop important context from disappearing into thread text by attaching durable,
 inspectable objects to posts and meetings.
+
+## Current Milestone Position
+
+- `M6-P1` remains the authoritative semantic freeze for `note`, `decision`,
+  `reference`, and `artifact`.
+- `M6-P2` is now concluded locally: ordered attachment reads and projection are
+  implemented through `structured_attachment`, replay and reload stay stable for
+  mixed structured objects on one post, and the current `M5` meeting-output
+  surface remains stable.
+- `M6-P3` is not yet ready for implementation as currently written in this
+  dossier; it needs one packet-local planning pass to freeze the first note and
+  decision surface boundary before UI work starts.
+
+## File Map
+
+- `README.md`
+  milestone overview, packet order, and current closeout/readiness posture
+- `Packet-01-Freeze-Object-Definitions.md`
+  accepted first-pass object-definition freeze for `M6`
+- `Packet-02-Attachment-Plumbing-Closeout.md`
+  local closeout note for the ordered attachment runtime and projection slice
+- `Packet-03-Readiness-Review.md`
+  readiness judgment for the note-and-decision surface packet
 
 ## Preconditions
 

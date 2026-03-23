@@ -336,10 +336,69 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
       #expect(loadedSnapshot?.meetingOutputState?.outcomeState == .decisionRecorded)
       #expect(loadedSnapshot?.decisions.map(\.id) == [decisionID])
       #expect(loadedSnapshot?.references.map(\.id) == [referenceID])
+      #expect(loadedSnapshot?.structuredAttachments.map(\.structuredObjectID) == [
+        room.notes[0].id,
+        decisionID,
+        referenceID,
+      ])
+      #expect(loadedSnapshot?.orderedStructuredObjects.map(\.id) == [
+        room.notes[0].id,
+        decisionID,
+        referenceID,
+      ])
       #expect(loadedSnapshot?.meetingOpenQuestions.map(\.id) == [openQuestionID])
       #expect(loadedEvents.contains { $0.id == postEventID && $0.category == .meetingOutputCommitted })
     } catch {
       Issue.record("Unexpected live Postgres meeting completion error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
+  func liveRuntimeStoreLoadsMixedStructuredAttachmentsInCanonicalOrderWhenDatabaseEnvironmentIsAvailable()
+    async throws
+  {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleMixedStructuredAttachmentRoomBootstrap()
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+
+      let loadedSnapshot = try await store.loadRoomSnapshot(
+        workspaceSlug: room.workspace.slug,
+        channelSlug: room.channel.slug,
+        postID: room.post.id
+      )
+
+      let noteID = try #require(room.notes.first?.id)
+      let decisionID = try #require(room.decisions.first?.id)
+      let referenceID = try #require(room.references.first?.id)
+      let artifactID = try #require(room.artifacts.first?.id)
+
+      #expect(loadedSnapshot?.notes.map(\.id) == [noteID])
+      #expect(loadedSnapshot?.decisions.map(\.id) == [decisionID])
+      #expect(loadedSnapshot?.references.map(\.id) == [referenceID])
+      #expect(loadedSnapshot?.artifacts.map(\.id) == [artifactID])
+      #expect(loadedSnapshot?.structuredAttachments.map(\.structuredObjectID) == [
+        artifactID,
+        noteID,
+        decisionID,
+        referenceID,
+      ])
+      #expect(loadedSnapshot?.orderedStructuredObjects.map(\.id) == [
+        artifactID,
+        noteID,
+        decisionID,
+        referenceID,
+      ])
+    } catch {
+      Issue.record(
+        "Unexpected live Postgres mixed structured attachment error: \(String(reflecting: error))"
+      )
     }
   }
 
@@ -543,6 +602,102 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
           selectedReason: "Selected via founding-group checkpoint scope.",
           joinedAt: bootstrap.post.createdAt
         )
+      ]
+    )
+  }
+
+  private func sampleMixedStructuredAttachmentRoomBootstrap() -> OrbitPhase1RoomBootstrap {
+    let bootstrap = sampleRoomBootstrap()
+    let noteID = UUID()
+    let decisionID = UUID()
+    let referenceID = UUID()
+    let artifactID = UUID()
+    let baseDate = bootstrap.post.createdAt
+
+    return OrbitPhase1RoomBootstrap(
+      workspace: bootstrap.workspace,
+      channel: bootstrap.channel,
+      workspacePersonas: bootstrap.workspacePersonas,
+      post: bootstrap.post,
+      thread: bootstrap.thread,
+      seedMessages: bootstrap.seedMessages,
+      postParticipants: bootstrap.postParticipants,
+      notes: [
+        OrbitNoteRecord(
+          id: noteID,
+          postID: bootstrap.post.id,
+          noteType: .brief,
+          body: "Narrative context for the mixed attachment slice.",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          createdAt: baseDate
+        )
+      ],
+      decisions: [
+        OrbitDecisionRecord(
+          id: decisionID,
+          postID: bootstrap.post.id,
+          title: "Adopt structured attachment ordering",
+          body: "Read mixed structured objects through one canonical ordered lane.",
+          decisionState: .adopted,
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          createdAt: baseDate.addingTimeInterval(1)
+        )
+      ],
+      references: [
+        OrbitReferenceRecord(
+          id: referenceID,
+          postID: bootstrap.post.id,
+          referenceType: .doc,
+          target: "Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md",
+          title: "Runtime model RFC",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          createdAt: baseDate.addingTimeInterval(2)
+        )
+      ],
+      artifacts: [
+        OrbitArtifactRecord(
+          id: artifactID,
+          postID: bootstrap.post.id,
+          artifactType: .report,
+          storageRef: "reports/m6-p2-slice.md",
+          title: "M6 P2 Slice",
+          createdByParticipantType: .user,
+          createdByParticipantID: "aj",
+          createdAt: baseDate.addingTimeInterval(3)
+        )
+      ],
+      structuredAttachments: [
+        OrbitStructuredAttachmentRecord(
+          originPostID: bootstrap.post.id,
+          structuredObjectType: .artifact,
+          structuredObjectID: artifactID,
+          attachmentOrdinal: 0,
+          attachedAt: baseDate.addingTimeInterval(10)
+        ),
+        OrbitStructuredAttachmentRecord(
+          originPostID: bootstrap.post.id,
+          structuredObjectType: .note,
+          structuredObjectID: noteID,
+          attachmentOrdinal: 1,
+          attachedAt: baseDate.addingTimeInterval(11)
+        ),
+        OrbitStructuredAttachmentRecord(
+          originPostID: bootstrap.post.id,
+          structuredObjectType: .decision,
+          structuredObjectID: decisionID,
+          attachmentOrdinal: 2,
+          attachedAt: baseDate.addingTimeInterval(12)
+        ),
+        OrbitStructuredAttachmentRecord(
+          originPostID: bootstrap.post.id,
+          structuredObjectType: .reference,
+          structuredObjectID: referenceID,
+          attachmentOrdinal: 3,
+          attachedAt: baseDate.addingTimeInterval(13)
+        ),
       ]
     )
   }
