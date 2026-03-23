@@ -1076,8 +1076,8 @@ Fields:
 - `created_at`
 
 Purpose:
-- captures summaries, reflective notes, and other durable text artifacts tied to
-  a post
+- captures meeting recap, synthesis, reflection, and other durable narrative
+  text tied to a post
 
 ---
 
@@ -1095,11 +1095,24 @@ Fields:
   - `adopted`
   - `rejected`
   - `superseded`
-- `rationale_note_id` nullable
+- `rationale`
+- `tradeoffs`
+- `dissent`
+- `linked_reference_ids` ordered list, may be empty
+- `created_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `created_by_participant_id`
 - `created_at`
 
 Purpose:
-- captures committed or rejected choices with rationale and status
+- captures an explicit adopted, rejected, or superseded choice with the
+  decision statement, rationale, tradeoffs, dissent, and linked evidence
+
+Boundary:
+- explicit `no_decision` meeting outcomes should remain no-decision truth rather
+  than manufacturing a thin decision record for symmetry
 
 ---
 
@@ -1119,11 +1132,16 @@ Fields:
   - `external_note`
 - `target`
 - `title` nullable
+- `created_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `created_by_participant_id`
 - `created_at`
 
 Purpose:
-- keeps supporting context linked to collaboration without hiding it in message
-  bodies
+- cites supporting or downstream context without hiding that provenance inside
+  message bodies
 
 ---
 
@@ -1143,10 +1161,31 @@ Fields:
   - `other`
 - `storage_ref`
 - `title` nullable
+- `created_by_participant_type`
+  - `user`
+  - `workspace_persona`
+  - `system`
+- `created_by_participant_id`
 - `created_at`
 
 Purpose:
 - tracks durable outputs produced by meeting or workstream activity
+
+### 9.7.1 First-pass semantic boundary
+
+- all structured objects carry explicit creator attribution so attached objects
+  stay attributable and reviewable at object level, not only through enclosing
+  post context
+- `note` preserves narrative context such as recap, synthesis, and
+  `meeting_summary`
+- `decision` preserves the explicit call itself plus rationale, tradeoffs,
+  dissent, and linked evidence
+- `reference` points to supporting or downstream context
+- `artifact` preserves produced output
+- the same underlying file, document, or URL may appear as a `reference` when
+  cited as context or as an `artifact` when preserved as collaboration output
+- open questions remain outside the first-pass structured-object set rather than
+  becoming a fifth structured-object type here
 
 ---
 
