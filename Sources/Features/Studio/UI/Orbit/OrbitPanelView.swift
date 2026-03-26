@@ -51,11 +51,8 @@ struct OrbitPanelView: View {
       if isMeetingRoom {
         meetingOutputsCard
       }
-      if showsStructuredNotesAndDecisionsCard {
-        structuredNotesAndDecisionsCard
-      }
-      if showsStructuredReferencesAndArtifactsCard {
-        structuredReferencesAndArtifactsCard
+      ForEach(orderedStructuredSurfaceCardKinds, id: \.self) { cardKind in
+        structuredSurfaceCard(cardKind)
       }
 
       if let persistenceMessage {

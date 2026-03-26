@@ -236,6 +236,90 @@ struct OrbitStructuredNotesAndDecisionsPresentationTests {
       ) == false
     )
   }
+
+  @Test
+  func structuredSurfaceCardOrderUsesEarliestAttachmentFamily() {
+    let orderedStructuredObjectRecords = [
+      structuredArtifactRecord(
+        id: "61616161-6161-6161-6161-616161616161",
+        originPostID: "post-message-0004",
+        ordinal: 0
+      ),
+      structuredNoteRecord(
+        id: "71717171-7171-7171-7171-717171717171",
+        originPostID: "post-message-0004",
+        ordinal: 1,
+        noteType: .brief,
+        body: "Narrative context",
+        createdByParticipantType: .user,
+        createdByParticipantID: OrbitParticipantID.aj.rawValue
+      ),
+      structuredDecisionRecord(
+        id: "81818181-8181-8181-8181-818181818181",
+        originPostID: "post-message-0004",
+        ordinal: 2,
+        title: "Keep card order grounded in attachments",
+        linkedReferenceIDs: [],
+        createdByParticipantType: .workspacePersona,
+        createdByParticipantID: "workspace-persona-orbit-samwise"
+      ),
+      structuredReferenceRecord(
+        id: "91919191-9191-9191-9191-919191919191",
+        originPostID: "post-message-0004",
+        ordinal: 3,
+        target: "Docs/Orbit/Vision/orbit-platform-vision-and-system-design.md"
+      ),
+    ]
+
+    #expect(
+      OrbitPanelView.orderedStructuredSurfaceCardKinds(
+        isMeetingCompletionEditable: false,
+        orderedStructuredObjectRecords: orderedStructuredObjectRecords
+      ) == [.referencesAndArtifacts, .notesAndDecisions]
+    )
+  }
+
+  @Test
+  func structuredSurfaceCardOrderSkipsMissingFamiliesAndEditableState() {
+    let notesOnlyRecords = [
+      structuredNoteRecord(
+        id: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+        originPostID: "post-message-0005",
+        ordinal: 0,
+        noteType: .brief,
+        body: "Narrative context",
+        createdByParticipantType: .user,
+        createdByParticipantID: OrbitParticipantID.aj.rawValue
+      )
+    ]
+    let referencesOnlyRecords = [
+      structuredReferenceRecord(
+        id: "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2",
+        originPostID: "post-message-0006",
+        ordinal: 0,
+        target: "Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md"
+      )
+    ]
+
+    #expect(
+      OrbitPanelView.orderedStructuredSurfaceCardKinds(
+        isMeetingCompletionEditable: false,
+        orderedStructuredObjectRecords: notesOnlyRecords
+      ) == [.notesAndDecisions]
+    )
+    #expect(
+      OrbitPanelView.orderedStructuredSurfaceCardKinds(
+        isMeetingCompletionEditable: false,
+        orderedStructuredObjectRecords: referencesOnlyRecords
+      ) == [.referencesAndArtifacts]
+    )
+    #expect(
+      OrbitPanelView.orderedStructuredSurfaceCardKinds(
+        isMeetingCompletionEditable: true,
+        orderedStructuredObjectRecords: notesOnlyRecords + referencesOnlyRecords
+      ).isEmpty
+    )
+  }
 }
 
 private func structuredNoteRecord(

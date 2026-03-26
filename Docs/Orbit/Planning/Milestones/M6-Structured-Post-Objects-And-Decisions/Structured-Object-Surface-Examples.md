@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M6`
 Prepared By: `samwise`
-Last Updated: 2026-03-23
+Last Updated: 2026-03-26
 
 ## Purpose
 
@@ -29,17 +29,21 @@ instead of code reconstruction.
 The current message-post surface now shows one originating post with two
 separate read-only cards driven from the same canonical ordered attachment lane:
 
-- a structured notes-and-decisions card for narrative and decision objects
-- a structured references-and-artifacts card for supporting context and outputs
+- in the current shipped example, a structured references-and-artifacts card
+  first because supporting context was attached first
+- then a structured notes-and-decisions card for narrative and decision objects
 
 What the operator can inspect:
 
-- notes and decisions in canonical `structured_attachment` order
+- notes and decisions in canonical `structured_attachment` order within the
+  notes-and-decisions card
 - explicit creator attribution and timestamps on every visible row
 - full decision semantics from `M6-P1`, including rationale, tradeoffs,
   dissent, and linked evidence
-- references and artifacts in canonical attachment order rather than grouped
-  by type
+- references and artifacts in canonical attachment order within the evidence
+  card rather than grouped by type
+- the two structured cards follow the earliest attachment family from that
+  canonical lane instead of a fixed notes-first stack
 - evidence and outputs without rereading the full thread body
 
 Evidence:
@@ -63,12 +67,13 @@ What the operator can inspect:
 
 - the `M5` Meeting Outputs card remains first and preserves summary, outcome,
   open questions, and follow-up references
-- the structured notes-and-decisions card appears below it and keeps
+- in this shipped example, the structured notes-and-decisions card appears below
+  it and keeps
   `meeting_summary` deduped back to the `M5` card instead of repeating the full
   summary body
-- the structured references-and-artifacts card appears below that and keeps
-  mirrored meeting references compactly deduped back to the `M5` card when a
-  matching meeting reference already exists
+- in this shipped example, the structured references-and-artifacts card appears
+  below that and keeps mirrored meeting references compactly deduped back to the
+  `M5` card when a matching meeting reference already exists
 - artifacts still render in full because `M5` has no artifact surface
 - both `M6` cards remain hidden while meeting completion is actively editable,
   preserving the accepted `M5` drafting flow
@@ -89,10 +94,11 @@ Evidence:
 
 These examples show that the shipped `M6` slice now preserves:
 
-- one canonical ordered attachment lane for mixed structured objects
+- one canonical ordered attachment lane underneath both structured cards
 - read-only inspectability for notes, decisions, references, and artifacts
 - coexistence with the accepted `M5` meeting outputs surface
-- visible attribution, ordering, and bounded deduplication rules
+- visible attribution, earliest-family card order, card-local ordering, and
+  bounded deduplication rules
 
 They do not authorize:
 

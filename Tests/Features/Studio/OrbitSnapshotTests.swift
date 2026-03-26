@@ -227,12 +227,52 @@
 
     workspace.orderedStructuredObjectRecords = [
       OrbitStructuredPostObjectRecord(
+        id: "reference:\(referenceID.uuidString)",
+        originPostID: "post-message-structured",
+        structuredObjectType: .reference,
+        structuredObjectID: referenceID.uuidString,
+        attachmentOrdinal: 0,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_910),
+        object: .reference(
+          OrbitReferenceRecord(
+            id: referenceID,
+            postID: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
+            referenceType: .doc,
+            target: "Docs/Orbit/Planning/Milestones/M6-Structured-Post-Objects-And-Decisions/README.md",
+            title: "M6 milestone packet",
+            createdByParticipantType: .user,
+            createdByParticipantID: OrbitParticipantID.aj.rawValue,
+            createdAt: Date(timeIntervalSince1970: 1_742_342_910)
+          )
+        )
+      ),
+      OrbitStructuredPostObjectRecord(
+        id: "artifact:\(artifactID.uuidString)",
+        originPostID: "post-message-structured",
+        structuredObjectType: .artifact,
+        structuredObjectID: artifactID.uuidString,
+        attachmentOrdinal: 1,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_911),
+        object: .artifact(
+          OrbitArtifactRecord(
+            id: artifactID,
+            postID: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
+            artifactType: .report,
+            storageRef: "reports/m6-p4-evidence-card.md",
+            title: "Evidence card closeout",
+            createdByParticipantType: .workspacePersona,
+            createdByParticipantID: "workspace-persona-orbit-samwise",
+            createdAt: Date(timeIntervalSince1970: 1_742_342_911)
+          )
+        )
+      ),
+      OrbitStructuredPostObjectRecord(
         id: "note:c3c3c3c3-1111-2222-3333-444444444444",
         originPostID: "post-message-structured",
         structuredObjectType: .note,
         structuredObjectID: "c3c3c3c3-1111-2222-3333-444444444444",
-        attachmentOrdinal: 0,
-        attachedAt: Date(timeIntervalSince1970: 1_742_342_910),
+        attachmentOrdinal: 2,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_912),
         object: .note(
           OrbitNoteRecord(
             id: UUID(uuidString: "c3c3c3c3-1111-2222-3333-444444444444")!,
@@ -241,7 +281,7 @@
             body: "Keep the first structured surface read-only and tied to one originating post.",
             createdByParticipantType: .user,
             createdByParticipantID: OrbitParticipantID.aj.rawValue,
-            createdAt: Date(timeIntervalSince1970: 1_742_342_910)
+            createdAt: Date(timeIntervalSince1970: 1_742_342_912)
           )
         )
       ),
@@ -250,8 +290,8 @@
         originPostID: "post-message-structured",
         structuredObjectType: .decision,
         structuredObjectID: decisionID.uuidString,
-        attachmentOrdinal: 1,
-        attachedAt: Date(timeIntervalSince1970: 1_742_342_911),
+        attachmentOrdinal: 3,
+        attachedAt: Date(timeIntervalSince1970: 1_742_342_913),
         object: .decision(
           OrbitDecisionRecord(
             id: decisionID,
@@ -263,46 +303,6 @@
             tradeoffs: "Adds a second read-only card to the room surface.",
             dissent: "none recorded",
             linkedReferenceIDs: [referenceID],
-            createdByParticipantType: .workspacePersona,
-            createdByParticipantID: "workspace-persona-orbit-samwise",
-            createdAt: Date(timeIntervalSince1970: 1_742_342_911)
-          )
-        )
-      ),
-      OrbitStructuredPostObjectRecord(
-        id: "reference:\(referenceID.uuidString)",
-        originPostID: "post-message-structured",
-        structuredObjectType: .reference,
-        structuredObjectID: referenceID.uuidString,
-        attachmentOrdinal: 2,
-        attachedAt: Date(timeIntervalSince1970: 1_742_342_912),
-        object: .reference(
-          OrbitReferenceRecord(
-            id: referenceID,
-            postID: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
-            referenceType: .doc,
-            target: "Docs/Orbit/Planning/Milestones/M6-Structured-Post-Objects-And-Decisions/README.md",
-            title: "M6 milestone packet",
-            createdByParticipantType: .user,
-            createdByParticipantID: OrbitParticipantID.aj.rawValue,
-            createdAt: Date(timeIntervalSince1970: 1_742_342_912)
-          )
-        )
-      ),
-      OrbitStructuredPostObjectRecord(
-        id: "artifact:\(artifactID.uuidString)",
-        originPostID: "post-message-structured",
-        structuredObjectType: .artifact,
-        structuredObjectID: artifactID.uuidString,
-        attachmentOrdinal: 3,
-        attachedAt: Date(timeIntervalSince1970: 1_742_342_913),
-        object: .artifact(
-          OrbitArtifactRecord(
-            id: artifactID,
-            postID: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
-            artifactType: .report,
-            storageRef: "reports/m6-p4-evidence-card.md",
-            title: "Evidence card closeout",
             createdByParticipantType: .workspacePersona,
             createdByParticipantID: "workspace-persona-orbit-samwise",
             createdAt: Date(timeIntervalSince1970: 1_742_342_913)

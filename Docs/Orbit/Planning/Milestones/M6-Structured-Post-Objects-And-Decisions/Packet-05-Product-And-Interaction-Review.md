@@ -1,15 +1,15 @@
 # M6 Packet 5: Product And Interaction Review
 
-Status: In Progress
+Status: Ready For Review
 Packet Id: `M6-P5`
 Milestone: `M6`
 Execution Owner: `venture-product-steward`
 Review Personas: `studio-interaction-quality-lead`, `samwise`
-Last Updated: 2026-03-23
+Last Updated: 2026-03-26
 
 ## Header
 
-- status: `needs-review`
+- status: `ready-for-review`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -96,14 +96,13 @@ Exclude:
 - current milestone README aligned with shipped `M6-P3` / `M6-P4` status
 - one packet-local contract for `M6-P5`
 - one examples primer that covers both message-post and meeting-post surfaces
-- one prepared product-and-interaction review artifact grounded in shipped docs,
-  tests, and snapshots
+- one product-and-interaction review artifact updated with the actual local
+  findings from shipped docs, implementation, tests, and snapshots
 
 ## Failure Dispositions
 
 - `ready-for-review`
-  dossier, examples, and prepared review artifact exist and are internally
-  consistent
+  dossier, examples, and review artifact exist and are internally consistent
 - `needs-review`
   the review package exists but still needs reviewer confirmation or sharper
   wording before it should guide milestone judgment
@@ -124,7 +123,7 @@ Exclude:
 
 - dossier status normalized
 - examples primer prepared
-- review artifact prepared
+- review artifact updated with actual findings
 - residual risks
 - disposition: `ready-for-review`, `needs-review`, `blocked`, or
   `grounding-blocked`

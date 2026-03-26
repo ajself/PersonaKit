@@ -1,9 +1,9 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: In Progress - M6-P5 product and interaction review preparation underway
+Status: In Progress - M6-P5 local review recorded, awaiting reviewer confirmation
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
-Last Updated: 2026-03-23
+Last Updated: 2026-03-26
 
 ## Purpose
 
@@ -27,9 +27,9 @@ inspectable objects to posts and meetings.
   `structured_attachment` order, preserves the accepted `M5` meeting-reference
   surface as a separate legacy section, and keeps evidence inspection
   read-only.
-- `M6-P5` is now the active review packet: the next pass prepares the dossier,
-  examples, and product-and-interaction artifact needed to judge whether the
-  shipped `M6` surfaces add signal rather than overhead.
+- `M6-P5` is now the active review packet: the local product-and-interaction
+  pass is recorded, and the shipped two-card surface now follows earliest
+  attachment family instead of a fixed notes-first stack.
 
 ## File Map
 
@@ -52,8 +52,8 @@ inspectable objects to posts and meetings.
   reviewer-readable examples of the shipped message-post and meeting-post
   structured-object surfaces
 - `Product-And-Interaction-Review-Artifact.md`
-  prepared `M6-P5` review artifact grounded in shipped docs, tests, and
-  snapshots
+  `M6-P5` review artifact updated with the local review findings grounded in
+  shipped docs, implementation, tests, and snapshots
 
 ## Preconditions
 

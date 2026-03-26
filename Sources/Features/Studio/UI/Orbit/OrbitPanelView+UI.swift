@@ -18,6 +18,11 @@ struct OrbitMeetingCompletionDraftSeed: Equatable {
   let syncedMeetingDraftPostID: String?
 }
 
+enum OrbitStructuredSurfaceCardKind: Hashable {
+  case notesAndDecisions
+  case referencesAndArtifacts
+}
+
 extension OrbitPanelView {
   static func parseMeetingFollowUpReferencesDraft(
     _ draft: String
@@ -134,6 +139,46 @@ extension OrbitPanelView {
     !isMeetingCompletionEditable && !surfaceItems.isEmpty
   }
 
+  static func orderedStructuredSurfaceCardKinds(
+    isMeetingCompletionEditable: Bool,
+    orderedStructuredObjectRecords: [OrbitStructuredPostObjectRecord]
+  ) -> [OrbitStructuredSurfaceCardKind] {
+    guard !isMeetingCompletionEditable else {
+      return []
+    }
+
+    var firstNotesAndDecisionsOrdinal: Int?
+    var firstReferencesAndArtifactsOrdinal: Int?
+
+    for record in orderedStructuredObjectRecords {
+      switch record.structuredObjectType {
+      case .note, .decision:
+        if firstNotesAndDecisionsOrdinal == nil {
+          firstNotesAndDecisionsOrdinal = record.attachmentOrdinal
+        }
+      case .reference, .artifact:
+        if firstReferencesAndArtifactsOrdinal == nil {
+          firstReferencesAndArtifactsOrdinal = record.attachmentOrdinal
+        }
+      }
+    }
+
+    switch (firstNotesAndDecisionsOrdinal, firstReferencesAndArtifactsOrdinal) {
+    case let (.some(notesAndDecisionsOrdinal), .some(referencesAndArtifactsOrdinal)):
+      if notesAndDecisionsOrdinal <= referencesAndArtifactsOrdinal {
+        return [.notesAndDecisions, .referencesAndArtifacts]
+      }
+
+      return [.referencesAndArtifacts, .notesAndDecisions]
+    case (.some, .none):
+      return [.notesAndDecisions]
+    case (.none, .some):
+      return [.referencesAndArtifacts]
+    case (.none, .none):
+      return []
+    }
+  }
+
   var sortedParticipants: [OrbitParticipant] {
     orbitWorkspace.participants.sorted { $0.sortOrder < $1.sortOrder }
   }
@@ -213,6 +258,25 @@ extension OrbitPanelView {
       isMeetingCompletionEditable: isMeetingCompletionEditable,
       surfaceItems: activeStructuredReferencesAndArtifactsSurfaceItems
     )
+  }
+
+  var orderedStructuredSurfaceCardKinds: [OrbitStructuredSurfaceCardKind] {
+    Self.orderedStructuredSurfaceCardKinds(
+      isMeetingCompletionEditable: isMeetingCompletionEditable,
+      orderedStructuredObjectRecords: orbitWorkspace.activeStructuredPostObjectRecords
+    )
+  }
+
+  @ViewBuilder
+  func structuredSurfaceCard(
+    _ cardKind: OrbitStructuredSurfaceCardKind
+  ) -> some View {
+    switch cardKind {
+    case .notesAndDecisions:
+      structuredNotesAndDecisionsCard
+    case .referencesAndArtifacts:
+      structuredReferencesAndArtifactsCard
+    }
   }
 
   var parsedMeetingOpenQuestions: [String] {

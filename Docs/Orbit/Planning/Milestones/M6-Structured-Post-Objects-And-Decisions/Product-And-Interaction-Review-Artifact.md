@@ -1,11 +1,11 @@
 # M6 Product And Interaction Review Artifact
 
-Status: Draft
+Status: Ready For Review
 Milestone: `M6`
 Review Pass: Product and interaction review
 Prepared For: `venture-product-steward`, `studio-interaction-quality-lead`
 Prepared By: `samwise`
-Last Updated: 2026-03-23
+Last Updated: 2026-03-26
 
 ## Purpose
 
@@ -34,23 +34,31 @@ signal-to-noise ratio rather than implementation confidence alone.
 - `Packet-03-Read-Only-Note-And-Decision-Surfaces.md`
 - `Packet-04-Read-Only-Reference-And-Artifact-Surfaces.md`
 - `Docs/Orbit/Planning/Milestones/M5-Meeting-Promotion-And-Continuity/Meeting-Output-Examples.md`
+- `Sources/Features/Studio/UI/Orbit/OrbitPanelView.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitPanelView+UI.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitStructuredNotesAndDecisionsPresentation.swift`
+- `Sources/Features/Studio/UI/Orbit/OrbitStructuredReferencesAndArtifactsPresentation.swift`
 - `Tests/Features/Studio/OrbitStructuredNotesAndDecisionsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitStructuredReferencesAndArtifactsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitServerRoomProjectionTests.swift`
 - `Tests/Features/Studio/OrbitWorkspacePersistenceTests.swift`
 - `Tests/Features/Studio/OrbitPanelViewMeetingCompletionTests.swift`
 - `Tests/Features/Studio/OrbitSnapshotTests.swift`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMessagePost.orbit-structured-message-post.png`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMeetingPost.orbit-structured-meeting-post.png`
 
-## Prepared Findings
+## Findings
 
-- The shipped `M6` surfaces make structured outputs inspectable from the
+- The two structured cards now follow the earliest attachment family from the
+  canonical ordered lane, so the room no longer forces notes and decisions
+  above supporting evidence when references or artifacts were attached first.
+  The shipped message-post snapshot now demonstrates that evidence-first case
+  directly.
+- The shipped `M6` surfaces still make structured outputs inspectable from the
   originating post instead of burying durable context in thread prose alone.
-- Canonical `structured_attachment` order now reads through both cards
-  consistently, so mixed structured objects do not force the operator to infer
-  hidden ordering logic.
 - The meeting-post stack stays intentionally layered: accepted `M5` meeting
-  outputs first, then structured notes and decisions, then structured
-  references and artifacts.
+  outputs first, then the two structured cards from the originating post in
+  earliest-family attachment order.
 - Current dedupe rules reduce noise rather than flattening meaning:
   `meeting_summary` points back to `M5`, mirrored meeting references collapse to
   compact rows, and artifacts remain fully visible because `M5` has no artifact
@@ -59,10 +67,13 @@ signal-to-noise ratio rather than implementation confidence alone.
   no connector-aware artifact behavior, and no workstream or memory semantics
   are implied by the current cards.
 
-## Provisional Outcome
+## Outcome Of This Pass
 
 - Ready for reviewer confirmation as a believable first-slice `M6`
-  structured-object surface package.
+  structured-object surface package that adds more signal than overhead overall.
+- The earlier fixed-card-order concern is resolved locally by grounding the two
+  structured cards in the canonical attachment lane instead of a fixed
+  notes-first stack.
 - Strong enough to support a real product and interaction review without
   reopening `M5` meeting basics or relitigating `M6-P1` object semantics.
 
@@ -72,7 +83,9 @@ signal-to-noise ratio rather than implementation confidence alone.
   the captured message-post and meeting-post examples now show the full shipped
   `M6-P3` plus `M6-P4` surface stack.
 - The first slice intentionally favors separate cards over a unified inspector;
-  if later milestones want a more consolidated surface, that should be treated
-  as new work rather than silently folded into `M6-P5`.
-- This artifact prepares the product and interaction review only. Validation and
-  AJ closeout artifacts remain out of scope for this first `M6-P5` docs pass.
+  if later milestones want a fully continuous mixed sequence across every
+  structured attachment, that should be treated as new work rather than
+  silently folded into `M6-P5`.
+- This artifact records the local product and interaction review pass only.
+  Validation and AJ closeout artifacts remain out of scope for this `M6-P5`
+  pass.
