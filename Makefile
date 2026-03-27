@@ -14,7 +14,23 @@ INSTALL_BIN_DIR ?= /usr/local/bin
 CLI_PRODUCT_NAME ?= personakit
 CLI_COMPLETION_SOURCE ?= $(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)
 ZSH_COMPLETION_DIR ?= $(HOME)/.zsh/completions
+RELEASE_LOCAL_CONFIG ?= Config/Release.local.mk
+PKG_BUILD_DIR ?= .build/Release
+PKG_ARCHIVE_PATH ?= $(PKG_BUILD_DIR)/$(APP_NAME).xcarchive
+PKG_EXPORT_PATH ?= $(PKG_BUILD_DIR)/export
+PKG_OUTPUT_PATH ?= $(PKG_BUILD_DIR)/$(APP_NAME).pkg
+PKG_STAGE_ROOT ?= $(PKG_BUILD_DIR)/pkgroot
+PKG_COMPONENT_PLIST ?= $(PKG_BUILD_DIR)/component.plist
+PKG_EXPORT_OPTIONS_PLIST ?= Config/ExportOptions-DeveloperID.plist
+PKG_ARCHS ?= arm64 x86_64
+PKG_IDENTIFIER ?= com.ajself.PersonaKit
+PKG_VERSION ?= 1.0.0
+APP_INSTALL_LOCATION ?= /Applications
+INSTALLER_SIGN_IDENTITY ?=
+NOTARY_KEYCHAIN_PROFILE ?=
 TEST_FILTER ?=
+
+-include $(RELEASE_LOCAL_CONFIG)
 
 ROOT ?=
 PERSONA ?= senior-swiftui-engineer
@@ -38,7 +54,9 @@ CLOSEOUT_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-server-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof orbit-transport-soak-local orbit-m3-proof orbit-m3-proof-local export list graph zip format-check
+.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-server-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof orbit-transport-soak-local orbit-m3-proof orbit-m3-proof-local export list graph zip format-check pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg
+
+archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg: CONFIGURATION = Release
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -56,6 +74,14 @@ help:
 	@printf "  %-24s %s\n" "run" "Build and run macOS app with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "test" "Run SwiftPM tests and default Xcode host/UI smoke checks."
 	@printf "  %-24s %s\n" "test-cli" "Run CLI-focused SwiftPM tests (defaults to filter \`CLI\`)."
+	@printf "  %-24s %s\n" "pkg-preflight" "Check macOS packaging tools, export options, and release inputs."
+	@printf "  %-24s %s\n" "archive-app-release" "Archive the host app for Release distribution."
+	@printf "  %-24s %s\n" "export-app-release" "Export the archived host app for Developer ID distribution."
+	@printf "  %-24s %s\n" "pkg-app" "Create a signed installer package for the exported app."
+	@printf "  %-24s %s\n" "notarize-pkg" "Submit the installer package for notarization."
+	@printf "  %-24s %s\n" "staple-pkg" "Staple the notarization ticket to the installer package."
+	@printf "  %-24s %s\n" "verify-pkg" "Verify installer signing and stapled notarization."
+	@printf "  %-24s %s\n" "release-pkg" "Run the full archive, export, package, notarize, staple, verify flow."
 	@printf "  %-24s %s\n" "zip" "Create a project zip archive."
 	@echo ""
 	@echo "PersonaKit workflow targets:"
@@ -89,6 +115,20 @@ help:
 	@printf "  %-24s %s\n" "CLI_PRODUCT_NAME" "$(CLI_PRODUCT_NAME)"
 	@printf "  %-24s %s\n" "CLI_COMPLETION_SOURCE" "$(CLI_COMPLETION_SOURCE)"
 	@printf "  %-24s %s\n" "ZSH_COMPLETION_DIR" "$(ZSH_COMPLETION_DIR)"
+	@printf "  %-24s %s\n" "RELEASE_LOCAL_CONFIG" "$(RELEASE_LOCAL_CONFIG)"
+	@printf "  %-24s %s\n" "PKG_BUILD_DIR" "$(PKG_BUILD_DIR)"
+	@printf "  %-24s %s\n" "PKG_ARCHIVE_PATH" "$(PKG_ARCHIVE_PATH)"
+	@printf "  %-24s %s\n" "PKG_EXPORT_PATH" "$(PKG_EXPORT_PATH)"
+	@printf "  %-24s %s\n" "PKG_OUTPUT_PATH" "$(PKG_OUTPUT_PATH)"
+	@printf "  %-24s %s\n" "PKG_STAGE_ROOT" "$(PKG_STAGE_ROOT)"
+	@printf "  %-24s %s\n" "PKG_COMPONENT_PLIST" "$(PKG_COMPONENT_PLIST)"
+	@printf "  %-24s %s\n" "PKG_EXPORT_OPTIONS_PLIST" "$(PKG_EXPORT_OPTIONS_PLIST)"
+	@printf "  %-24s %s\n" "PKG_ARCHS" "$(PKG_ARCHS)"
+	@printf "  %-24s %s\n" "PKG_IDENTIFIER" "$(PKG_IDENTIFIER)"
+	@printf "  %-24s %s\n" "PKG_VERSION" "$(PKG_VERSION)"
+	@printf "  %-24s %s\n" "APP_INSTALL_LOCATION" "$(APP_INSTALL_LOCATION)"
+	@printf "  %-24s %s\n" "INSTALLER_SIGN_IDENTITY" "$(INSTALLER_SIGN_IDENTITY)"
+	@printf "  %-24s %s\n" "NOTARY_KEYCHAIN_PROFILE" "$(NOTARY_KEYCHAIN_PROFILE)"
 	@printf "  %-24s %s\n" "TEST_FILTER" "$(TEST_FILTER)"
 	@printf "  %-24s %s\n" "ROOT" "$(ROOT)"
 	@printf "  %-24s %s\n" "PERSONA" "$(PERSONA)"
@@ -110,6 +150,10 @@ help:
 	@echo "  make run [RUN_SCHEME=PersonaKit] [APP_NAME=PersonaKit]"
 	@echo "  make test [TEST_FILTER=TaskboardSnapshotTests]"
 	@echo "  make test-cli [TEST_FILTER=CLISessionTests]"
+	@echo "  cp Config/Release.local.mk.example Config/Release.local.mk"
+	@echo "  make pkg-preflight"
+	@echo "  make pkg-app INSTALLER_SIGN_IDENTITY=\"Developer ID Installer: Example (TEAMID)\""
+	@echo "  make release-pkg INSTALLER_SIGN_IDENTITY=\"Developer ID Installer: Example (TEAMID)\" NOTARY_KEYCHAIN_PROFILE=persona-release"
 	@echo "  make cli [ARGS=\"list personas\"]"
 	@echo "  make validate [ROOT=/Users/me/Code/PersonaKit/.personakit] [NO_GLOBAL=1]"
 	@echo "  make export [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants] [OUTPUT=/tmp/session.md]"
@@ -201,6 +245,136 @@ test: doctor
 
 test-cli:
 	swift test --filter $(if $(TEST_FILTER),$(TEST_FILTER),CLI)
+
+pkg-preflight:
+	@if ! command -v xcodebuild >/dev/null 2>&1; then \
+		echo "error: xcodebuild is required."; \
+		exit 1; \
+	fi
+	@if ! command -v productbuild >/dev/null 2>&1; then \
+		echo "error: productbuild is required."; \
+		exit 1; \
+	fi
+	@if ! command -v pkgbuild >/dev/null 2>&1; then \
+		echo "error: pkgbuild is required."; \
+		exit 1; \
+	fi
+	@if ! command -v xcrun >/dev/null 2>&1; then \
+		echo "error: xcrun is required."; \
+		exit 1; \
+	fi
+	@if ! xcrun --find notarytool >/dev/null 2>&1; then \
+		echo "error: notarytool is required via xcrun."; \
+		exit 1; \
+	fi
+	@if ! xcrun --find stapler >/dev/null 2>&1; then \
+		echo "error: stapler is required via xcrun."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(PKG_EXPORT_OPTIONS_PLIST)" ]; then \
+		echo "error: export options plist not found at $(PKG_EXPORT_OPTIONS_PLIST)"; \
+		exit 1; \
+	fi
+	@echo "pkg-preflight: OK"
+
+archive-app-release: pkg-preflight
+	@mkdir -p "$(dir $(PKG_ARCHIVE_PATH))"
+	xcodebuild archive \
+		-workspace "$(WORKSPACE_PATH)" \
+		-scheme "$(RUN_SCHEME)" \
+		-configuration "$(CONFIGURATION)" \
+		-destination "generic/platform=macOS" \
+		-archivePath "$(PKG_ARCHIVE_PATH)" \
+		ONLY_ACTIVE_ARCH=NO \
+		ARCHS="$(PKG_ARCHS)"
+
+export-app-release:
+	@if [ ! -d "$(PKG_ARCHIVE_PATH)" ]; then \
+		echo "error: archive not found at $(PKG_ARCHIVE_PATH)"; \
+		echo "hint: run 'make archive-app-release' first"; \
+		exit 1; \
+	fi
+	@mkdir -p "$(PKG_BUILD_DIR)"
+	@rm -rf "$(PKG_EXPORT_PATH)"
+	xcodebuild -exportArchive \
+		-archivePath "$(PKG_ARCHIVE_PATH)" \
+		-exportOptionsPlist "$(PKG_EXPORT_OPTIONS_PLIST)" \
+		-exportPath "$(PKG_EXPORT_PATH)"
+	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
+		echo "error: exported app not found at $(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
+		exit 1; \
+	fi
+
+pkg-app:
+	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
+		echo "error: exported app not found at $(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
+		echo "hint: run 'make export-app-release' first"; \
+		exit 1; \
+	fi
+	@if [ -z "$(INSTALLER_SIGN_IDENTITY)" ]; then \
+		echo "error: INSTALLER_SIGN_IDENTITY is required."; \
+		exit 1; \
+	fi
+	@mkdir -p "$(dir $(PKG_OUTPUT_PATH))"
+	@rm -rf "$(PKG_STAGE_ROOT)"
+	@mkdir -p "$(PKG_STAGE_ROOT)$(APP_INSTALL_LOCATION)"
+	# Preserve the signed app bundle shape while packaging it as a non-relocatable installer component.
+	@ditto --norsrc --noqtn "$(PKG_EXPORT_PATH)/$(APP_NAME).app" "$(PKG_STAGE_ROOT)$(APP_INSTALL_LOCATION)/$(APP_NAME).app"
+	@xattr -cr "$(PKG_STAGE_ROOT)"
+	@find "$(PKG_STAGE_ROOT)" -name '._*' -delete
+	@pkgbuild --analyze --root "$(PKG_STAGE_ROOT)" "$(PKG_COMPONENT_PLIST)"
+	@/usr/libexec/PlistBuddy -c "Set :0:BundleIsRelocatable false" "$(PKG_COMPONENT_PLIST)"
+	@/usr/libexec/PlistBuddy -c "Set :0:BundleHasStrictIdentifier true" "$(PKG_COMPONENT_PLIST)"
+	@/usr/libexec/PlistBuddy -c "Set :0:BundleOverwriteAction upgrade" "$(PKG_COMPONENT_PLIST)"
+	@rm -f "$(PKG_OUTPUT_PATH)"
+	pkgbuild \
+		--root "$(PKG_STAGE_ROOT)" \
+		--identifier "$(PKG_IDENTIFIER)" \
+		--version "$(PKG_VERSION)" \
+		--install-location "/" \
+		--component-plist "$(PKG_COMPONENT_PLIST)" \
+		--sign "$(INSTALLER_SIGN_IDENTITY)" \
+		--timestamp \
+		"$(PKG_OUTPUT_PATH)"
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		exit 1; \
+	fi
+
+notarize-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		echo "hint: run 'make pkg-app INSTALLER_SIGN_IDENTITY=…' first"; \
+		exit 1; \
+	fi
+	@if [ -z "$(NOTARY_KEYCHAIN_PROFILE)" ]; then \
+		echo "error: NOTARY_KEYCHAIN_PROFILE is required."; \
+		exit 1; \
+	fi
+	xcrun notarytool submit "$(PKG_OUTPUT_PATH)" \
+		--keychain-profile "$(NOTARY_KEYCHAIN_PROFILE)" \
+		--wait
+
+staple-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		echo "hint: run 'make pkg-app INSTALLER_SIGN_IDENTITY=…' first"; \
+		exit 1; \
+	fi
+	xcrun stapler staple "$(PKG_OUTPUT_PATH)"
+
+verify-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		echo "hint: run 'make pkg-app INSTALLER_SIGN_IDENTITY=…' first"; \
+		exit 1; \
+	fi
+	pkgutil --check-signature "$(PKG_OUTPUT_PATH)"
+	xcrun stapler validate "$(PKG_OUTPUT_PATH)"
+	@echo "verify-pkg: signature and stapling look good."
+	@echo "verify-pkg: if 'pkgutil --payload-files' shows synthetic ._* entries, trust the installed /Applications bundle and Gatekeeper checks."
+
+release-pkg: pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg
 
 cli:
 	personakit $(ARGS)
