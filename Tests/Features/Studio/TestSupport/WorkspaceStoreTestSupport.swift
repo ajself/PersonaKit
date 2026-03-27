@@ -375,6 +375,9 @@ final class BlockingCallGate: Sendable {
       if state.withLock({ $0.isReleased }) {
         return
       }
+
+      // Keep test gates deterministic without busy-spinning the whole process.
+      Thread.sleep(forTimeInterval: 0.001)
     }
   }
 

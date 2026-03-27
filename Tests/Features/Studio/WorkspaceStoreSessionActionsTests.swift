@@ -6,6 +6,7 @@ import Testing
 
 @testable import StudioFeatures
 
+@Suite(.serialized)
 @MainActor
 struct WorkspaceStoreSessionActionsTests {
   @Test
