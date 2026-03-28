@@ -333,7 +333,7 @@ struct MCPToolTests {
 
     let data = try #require(object["data"] as? [String: Any])
     let triggerSummaries = try #require(data["triggerSummaries"] as? [String])
-    #expect(triggerSummaries == ["flags=swiftui", "paths=**/*View.swift, **/Views/**/*.swift"])
+    #expect(triggerSummaries == ["referenceTags=swiftui", "paths=**/*View.swift, **/Views/**/*.swift"])
   }
 
   @Test
@@ -347,7 +347,7 @@ struct MCPToolTests {
         "personaId": "senior-swiftui-engineer",
         "directiveId": "apply-style",
         "targetPaths": ["Sources/FooView.swift"],
-        "flags": ["swiftui"],
+        "referenceTags": ["swiftui"],
       ]
     )
 

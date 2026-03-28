@@ -85,18 +85,18 @@ public struct ResolvedReference: Codable, Equatable, Sendable {
 /// Deterministic trigger inputs supplied by callers when evaluating references.
 public struct ReferenceSelectionInput: Equatable, Sendable {
   public let targetPaths: [String]
-  public let requestFlags: [String]
+  public let referenceTags: [String]
 
   public init(
     targetPaths: [String],
-    requestFlags: [String]
+    referenceTags: [String]
   ) {
     self.targetPaths = Set(targetPaths.map(normalizeReferenceTargetPath)).sorted()
-    self.requestFlags = Set(requestFlags.map(normalizeReferenceRequestFlag)).sorted()
+    self.referenceTags = Set(referenceTags.map(normalizeReferenceTag)).sorted()
   }
 
   public var isEmpty: Bool {
-    targetPaths.isEmpty && requestFlags.isEmpty
+    targetPaths.isEmpty && referenceTags.isEmpty
   }
 }
 
@@ -105,18 +105,18 @@ public struct ResolvedReferenceMatchRule: Codable, Equatable, Sendable {
   public let ruleIndex: Int
   public let matchedPathGlobs: [String]
   public let matchedPaths: [String]
-  public let matchedRequestFlags: [String]
+  public let matchedReferenceTags: [String]
 
   public init(
     ruleIndex: Int,
     matchedPathGlobs: [String],
     matchedPaths: [String],
-    matchedRequestFlags: [String]
+    matchedReferenceTags: [String]
   ) {
     self.ruleIndex = ruleIndex
     self.matchedPathGlobs = matchedPathGlobs
     self.matchedPaths = matchedPaths
-    self.matchedRequestFlags = matchedRequestFlags
+    self.matchedReferenceTags = matchedReferenceTags
   }
 }
 
@@ -351,8 +351,8 @@ private func normalizeReferenceTargetPath(_ path: String) -> String {
   return normalized
 }
 
-private func normalizeReferenceRequestFlag(_ flag: String) -> String {
-  flag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+private func normalizeReferenceTag(_ tag: String) -> String {
+  tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 }
 
 /// Aggregate resolution failure with deterministic sorting.

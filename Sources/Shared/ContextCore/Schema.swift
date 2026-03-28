@@ -360,14 +360,14 @@ public struct Skill: Codable, Sendable {
 /// Deterministic trigger rule for on-demand reference expansion.
 public struct ReferenceTriggerRule: Codable, Equatable, Sendable {
   public let pathGlobs: [String]?
-  public let requestFlags: [String]?
+  public let referenceTags: [String]?
 
   public init(
     pathGlobs: [String]? = nil,
-    requestFlags: [String]? = nil
+    referenceTags: [String]? = nil
   ) {
     self.pathGlobs = pathGlobs
-    self.requestFlags = requestFlags
+    self.referenceTags = referenceTags
   }
 }
 

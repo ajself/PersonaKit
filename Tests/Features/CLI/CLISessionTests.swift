@@ -96,7 +96,7 @@ struct CLISessionTests {
         "senior-swiftui-engineer_apply-style",
         "--target-path",
         "Sources/FooView.swift",
-        "--flag",
+        "--reference-tag",
         "swiftui",
       ])
     }

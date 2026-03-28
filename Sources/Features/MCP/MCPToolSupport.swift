@@ -72,7 +72,7 @@ enum MCPInternalSupport {
     directiveId: String,
     kitOverrides: [String],
     targetPaths: [String] = [],
-    requestFlags: [String] = []
+    referenceTags: [String] = []
   ) throws -> String {
     let output = try SessionExporter.export(
       scopes: scopes,
@@ -80,7 +80,7 @@ enum MCPInternalSupport {
       directiveId: directiveId,
       kitOverrides: kitOverrides,
       targetPaths: targetPaths,
-      requestFlags: requestFlags
+      referenceTags: referenceTags
     )
     return output + "\n"
   }

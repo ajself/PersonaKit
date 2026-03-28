@@ -7,7 +7,7 @@ struct MCPToolArguments: Equatable {
   let directiveId: String
   let kitOverrides: [String]
   let targetPaths: [String]
-  let requestFlags: [String]
+  let referenceTags: [String]
 }
 
 struct MCPEntityArguments: Equatable {
@@ -75,13 +75,16 @@ enum MCPToolArgumentParser {
     let directiveId = try requireString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseStringList(arguments?["targetPaths"], fieldName: "targetPaths")
-    let requestFlags = try parseStringList(arguments?["flags"], fieldName: "flags")
+    let referenceTags = try parseStringList(
+      arguments?["referenceTags"],
+      fieldName: "referenceTags"
+    )
     return MCPToolArguments(
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: kitOverrides,
       targetPaths: targetPaths,
-      requestFlags: requestFlags
+      referenceTags: referenceTags
     )
   }
 

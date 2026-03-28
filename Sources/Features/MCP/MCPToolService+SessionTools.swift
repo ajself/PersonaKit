@@ -24,7 +24,7 @@ extension MCPToolService {
         directiveId: input.directiveId,
         kitOverrides: input.kitOverrides,
         targetPaths: input.targetPaths,
-        requestFlags: input.requestFlags
+        referenceTags: input.referenceTags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))
@@ -40,7 +40,7 @@ extension MCPToolService {
         kitOverrides: input.kitOverrides,
         input: ReferenceSelectionInput(
           targetPaths: input.targetPaths,
-          requestFlags: input.requestFlags
+          referenceTags: input.referenceTags
         )
       )
       return try MCPInternalSupport.encodeToolJSON(result)
