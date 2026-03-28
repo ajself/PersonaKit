@@ -300,7 +300,7 @@ private func firstText(_ result: CallTool.Result) -> String? {
     return nil
   }
 
-  if case .text(let text) = first {
+  if case let .text(text, _, _) = first {
     return text
   }
 
