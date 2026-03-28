@@ -1,19 +1,81 @@
 # M7 Workstream Posts And Execution Lanes
 
-Status: Planned
-Primary Owner: `worktree-squad-lead` unless AJ approves `orbit-workstream-runner`
+Status: Closed for M7 Closeout
+Primary Owner: `worktree-squad-lead`
 Supporting Personas: `samwise`, `venture-product-steward`, `studio-integration-coordinator`, `studio-coverage-architect`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-27
 
 ## Purpose
 
 Bridge discussion to execution without collapsing execution into chat.
 
+## Quality Standard
+
+`M7` is not successful because a discussion can technically launch a workstream.
+
+`M7` is successful only when workstream execution remains:
+
+- explicit about who owns the lane and why that owner is authorized
+- reviewable enough that launch, progress, and closeout do not read as hidden
+  background magic
+- bounded enough that later runtime, UI, and schema work can build on one
+  frozen contract instead of re-arguing lane authority
+
+The bare minimum is not a milestone win.
+
+`M7` is closed for first-slice workstream planning and proof.
+The current dossier evidence is sufficient to hand forward to later
+implementation work without reopening the accepted `M7` packet set.
+
+## Current Milestone Position
+
+- `M7-P1` is accepted: the owner decision and handoff contract are now frozen
+  as the planning baseline for the milestone
+- `M7-P2` is accepted: the runtime record and lifecycle contract are now frozen
+  as the implementation boundary for later packets
+- `M7-P3` is accepted: the handoff contract from discussion into execution is
+  now frozen as the launch boundary for later packets
+- `M7-P4` is accepted: the progress, artifact, and closeout return contract is
+  now frozen as the return boundary for later packets
+- `M7-P5` is accepted: the proof and review-gate contract is now frozen as the
+  closeout baseline for the milestone
+- `M7` proof artifacts were prepared under the accepted packet set without
+  widening scope
+- `M7` milestone closeout is accepted on the prepared dossier
+
+## File Map
+
+- `README.md`
+  milestone overview, packet order, and top-level guardrails
+- `Packet-01-Freeze-Workstream-Ownership-And-Contract.md`
+  first-pass owner and handoff contract for `M7-P1`
+- `Packet-02-Freeze-Workstream-Runtime-Model.md`
+  first-pass runtime record and lifecycle contract for `M7-P2`
+- `Packet-03-Freeze-Handoff-From-Discussion-To-Execution.md`
+  first-pass launch and failure-visibility contract for `M7-P3`
+- `Packet-04-Freeze-Progress-And-Artifact-Return.md`
+  first-pass return contract for progress, artifacts, and closeout in `M7-P4`
+- `Packet-05-Prove-Lane-Discipline-And-Review-Gates.md`
+  first-pass proof contract and validation floor for `M7-P5`
+- `Example-Launch-Packet.md`
+  concrete approved-launch and blocked-non-launch examples for `M7` closeout review
+- `Workstream-Lifecycle-Example.md`
+  concrete lifecycle examples for launched workstreams across active, blocked, and terminal states
+- `Progress-And-Artifact-Return-Example.md`
+  concrete bounded-return and artifact-source-of-truth example for `M7`
+- `Validation-Review-Artifact.md`
+  validation note for the prepared `M7` proof package
+- `Milestone-Closeout-Review-Artifact.md`
+  AJ-facing milestone closeout note for the full `M7` dossier
+- `AJ-Closeout-Review-Artifact.md`
+  AJ-facing planning closeout note for the `M7-P1` owner and handoff contract
+
 ## Preconditions
 
 - `M5` meeting continuity is stable enough to hand work forward
 - `M6` structured objects can capture context and evidence
-- the execution-owner persona for workstreams is explicitly approved
+- `M0` owner coverage still supports `worktree-squad-lead` for the first cut
+  of `M7`
 
 ## Scope Freeze
 
@@ -44,66 +106,78 @@ Out of scope:
 
 Outcome:
 
-- one explicit identity owns execution-lane behavior
+- one explicit identity and launch contract own first-cut execution-lane
+  behavior
 
 Work:
 
-- confirm whether `worktree-squad-lead` is sufficient
-- if not, stage or create `orbit-workstream-runner`
-- define workstream handoff packet shape and approval rules
+- confirm whether `worktree-squad-lead` is sufficient for bounded reviewed
+  execution lanes
+- record the explicit reopen criteria for `orbit-workstream-runner`
+- define workstream handoff packet shape, approval rules, review gates, and
+  stop points
 
 Done when:
 
-- no workstream lane starts with fuzzy authority or implicit autonomy
+- no workstream lane starts with fuzzy authority, implicit autonomy, or an
+  underspecified handoff packet
 
-### Packet 2. Implement Workstream Runtime Model
+### Packet 2. Freeze Workstream Runtime Model
 
 Outcome:
 
-- workstream posts have durable state, assignment, and lifecycle records
+- workstream posts have one accepted first-pass runtime model with explicit
+  state, roster, and linkage rules
 
 Work:
 
-- implement workstream post shape
-- implement assignment records
-- implement status model and lifecycle transitions
+- freeze the required runtime record set for a workstream post
+- freeze the lifecycle and assignment contract later packets must preserve
+- freeze explicit deferred items so launch plumbing and UI do not leak into the
+  runtime-model slice
 
 Done when:
 
-- a workstream exists as a first-class runtime object instead of a note in a
-  thread
+- later implementation work can create workstream posts as first-class runtime
+  objects without relitigating the record boundary
 
-### Packet 3. Implement Handoff From Discussion To Execution
+### Packet 3. Freeze Handoff From Discussion To Execution
 
 Outcome:
 
-- a source post can launch bounded execution intentionally
+- a source post can hand off into a bounded workstream intentionally and
+  inspectably
 
 Work:
 
-- define launch paths from message and meeting posts
-- preserve source context and acceptance criteria in the handoff
-- define explicit blocked and failed states
+- freeze handoff eligibility from message and meeting posts
+- freeze the minimum launch payload carried into a workstream
+- freeze blocked, failed, and partial-creation visibility rules
 
 Done when:
 
-- the originating discussion can show that concrete work has started elsewhere
+- later implementation work can create linked workstream posts without hidden
+  launch authority or ambiguous failure handling
 
-### Packet 4. Implement Progress And Artifact Return
+### Packet 4. Freeze Progress And Artifact Return
 
 Outcome:
 
-- workstream progress is visible in Orbit without flooding the source thread
+- workstream progress, artifacts, and closeout have one accepted return contract
+  back into Orbit
 
 Work:
 
-- stream progress updates back
-- attach artifacts to the workstream and source context
-- summarize closeout state explicitly
+- freeze what progress updates return to source context and what stays on the
+  workstream as detailed history
+- freeze how produced artifacts remain inspectable without creating attachment
+  ambiguity
+- freeze the closeout return contract and blocker/failure visibility rules
 
 Done when:
 
-- the operator can inspect progress, artifacts, and closeout cleanly
+- later implementation work can return durable progress, artifacts, and closeout
+  without flooding the origin context or splitting source of truth
 
 ### Packet 5. Prove Lane Discipline And Review Gates
 
@@ -136,15 +210,23 @@ Avoid:
 
 ## Evidence Package
 
-- workstream contract note
-- example launch packet
-- workstream lifecycle example
-- progress and artifact return example
-- closeout and validation artifacts
+- `Packet-01-Freeze-Workstream-Ownership-And-Contract.md`
+- `Packet-02-Freeze-Workstream-Runtime-Model.md`
+- `Packet-03-Freeze-Handoff-From-Discussion-To-Execution.md`
+- `Packet-04-Freeze-Progress-And-Artifact-Return.md`
+- `Packet-05-Prove-Lane-Discipline-And-Review-Gates.md`
+- `Example-Launch-Packet.md`
+- `Workstream-Lifecycle-Example.md`
+- `Progress-And-Artifact-Return-Example.md`
+- `Validation-Review-Artifact.md`
+- `Milestone-Closeout-Review-Artifact.md`
+- `AJ-Closeout-Review-Artifact.md`
 
 ## Stop Points
 
 - stop if the workstream owner persona is unresolved
+- stop if `worktree-squad-lead` would need authority beyond bounded reviewed
+  delivery lanes to make `M7` coherent
 - stop if workstreams begin performing hidden consequential actions
 - stop if closeout is implied instead of explicitly recorded
 
