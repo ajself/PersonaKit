@@ -190,7 +190,7 @@ enum StarterKitManifest {
     StarterFile(
       relativePath: "Packs/references/swiftui-style-guide-reference.reference.json",
       contents:
-        "{\n  \"id\": \"swiftui-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Guide Reference\",\n  \"summary\": \"Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.\",\n  \"triggerRules\": [\n    {\n      \"requestFlags\": [\n        \"swiftui\"\n      ]\n    },\n    {\n      \"pathGlobs\": [\n        \"**/*View.swift\",\n        \"**/Views/**/*.swift\"\n      ]\n    }\n  ]\n}"
+        "{\n  \"id\": \"swiftui-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Guide Reference\",\n  \"summary\": \"Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.\",\n  \"triggerRules\": [\n    {\n      \"referenceTags\": [\n        \"swiftui\"\n      ]\n    },\n    {\n      \"pathGlobs\": [\n        \"**/*View.swift\",\n        \"**/Views/**/*.swift\"\n      ]\n    }\n  ]\n}"
         .utf8Data
     ),
     StarterFile(

@@ -374,11 +374,11 @@ enum ValidatorReferenceChecker {
           let pathGlobs = (triggerRule.pathGlobs ?? []).map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
           }
-          let requestFlags = (triggerRule.requestFlags ?? []).map {
+          let referenceTags = (triggerRule.referenceTags ?? []).map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
           }
 
-          if pathGlobs.allSatisfy(\.isEmpty) && requestFlags.allSatisfy(\.isEmpty) {
+          if pathGlobs.allSatisfy(\.isEmpty) && referenceTags.allSatisfy(\.isEmpty) {
             errors.append(
               ValidationError(
                 entityType: .reference,
@@ -386,7 +386,7 @@ enum ValidatorReferenceChecker {
                 field: "triggerRules[\(ruleIndex)]",
                 missingId: nil,
                 expectedPath: nil,
-                message: "Trigger rule must declare at least one non-empty pathGlobs or requestFlags value."
+                message: "Trigger rule must declare at least one non-empty pathGlobs or referenceTags value."
               )
             )
           }

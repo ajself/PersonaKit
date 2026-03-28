@@ -10,10 +10,10 @@ struct ReferenceTriggerOptions: ParsableArguments {
   var targetPaths: [String] = []
 
   @Option(
-    name: .customLong("flag"),
-    help: "Request flag used when evaluating available references."
+    name: .customLong("reference-tag"),
+    help: "Reference tag used when evaluating available references."
   )
-  var requestFlags: [String] = []
+  var referenceTags: [String] = []
 }
 
 /// Resolves and prints the structured PersonaKit operating contract.
@@ -120,7 +120,7 @@ struct ExportCommand: ParsableCommand {
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
         targetPaths: referenceTriggers.targetPaths,
-        requestFlags: referenceTriggers.requestFlags
+        referenceTags: referenceTriggers.referenceTags
       )
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
@@ -183,7 +183,7 @@ struct ResolveReferencesCommand: ParsableCommand {
         kitOverrides: sessionInput.kitOverrides,
         input: ReferenceSelectionInput(
           targetPaths: referenceTriggers.targetPaths,
-          requestFlags: referenceTriggers.requestFlags
+          referenceTags: referenceTriggers.referenceTags
         )
       )
 

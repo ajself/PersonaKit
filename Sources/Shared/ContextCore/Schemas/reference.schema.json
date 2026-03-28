@@ -27,7 +27,7 @@
               "type": "string"
             }
           },
-          "requestFlags": {
+          "referenceTags": {
             "type": "array",
             "items": {
               "type": "string"

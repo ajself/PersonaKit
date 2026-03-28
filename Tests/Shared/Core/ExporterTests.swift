@@ -98,7 +98,7 @@ struct ExporterTests {
       directiveId: "apply-style",
       kitOverrides: [],
       targetPaths: ["Sources/FooView.swift"],
-      requestFlags: ["swiftui"]
+      referenceTags: ["swiftui"]
     )
 
     #expect(output.contains("# Available References"))
@@ -106,7 +106,7 @@ struct ExporterTests {
     #expect(output.contains("## swift-style-guide-reference"))
     #expect(output.contains("rule[0]: paths=**/*.swift => Sources/FooView.swift"))
     #expect(output.contains("## swiftui-style-guide-reference"))
-    #expect(output.contains("rule[0]: flags=swiftui"))
+    #expect(output.contains("rule[0]: referenceTags=swiftui"))
     #expect(output.contains("Extended SwiftUI ownership and composition guidance"))
   }
 
@@ -125,7 +125,7 @@ struct ExporterTests {
         directiveId: "apply-style",
         kitOverrides: [],
         targetPaths: ["Sources/FooView.swift"],
-        requestFlags: ["swiftui"]
+        referenceTags: ["swiftui"]
       )
       #expect(Bool(false))
     } catch let error as ExportError {

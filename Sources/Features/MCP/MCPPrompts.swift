@@ -24,7 +24,7 @@ enum MCPPromptName: String, CaseIterable {
         .init(name: "directiveId", description: "Directive id", required: true),
         .init(name: "kits", description: "Comma-separated kit ids"),
         .init(name: "targetPaths", description: "Comma-separated target file paths"),
-        .init(name: "flags", description: "Comma-separated request flags"),
+        .init(name: "referenceTags", description: "Comma-separated reference tags"),
       ]
     case .sessionGraph:
       return [
@@ -42,7 +42,7 @@ struct MCPPromptArguments: Equatable {
   let directiveId: String
   let kitOverrides: [String]
   let targetPaths: [String]
-  let requestFlags: [String]
+  let referenceTags: [String]
 }
 
 /// Prompt argument parsing failures returned as MCP invalid-params errors.
@@ -68,14 +68,17 @@ enum MCPPromptArgumentParser {
     let directiveId = try requireString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseCSV(arguments?["targetPaths"], fieldName: "targetPaths")
-    let requestFlags = try parseCSV(arguments?["flags"], fieldName: "flags")
+    let referenceTags = try parseCSV(
+      arguments?["referenceTags"],
+      fieldName: "referenceTags"
+    )
 
     return MCPPromptArguments(
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: kitOverrides,
       targetPaths: targetPaths,
-      requestFlags: requestFlags
+      referenceTags: referenceTags
     )
   }
 
@@ -174,7 +177,7 @@ struct MCPPromptService: Sendable {
         directiveId: input.directiveId,
         kitOverrides: input.kitOverrides,
         targetPaths: input.targetPaths,
-        requestFlags: input.requestFlags
+        referenceTags: input.referenceTags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))

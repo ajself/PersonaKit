@@ -31,7 +31,7 @@ public struct SessionExporter {
     kitOverrides: [String],
     sessionId: String? = nil,
     targetPaths: [String] = [],
-    requestFlags: [String] = [],
+    referenceTags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     try export(
@@ -41,7 +41,7 @@ public struct SessionExporter {
       kitOverrides: kitOverrides,
       sessionId: sessionId,
       targetPaths: targetPaths,
-      requestFlags: requestFlags,
+      referenceTags: referenceTags,
       fileManager: fileManager
     )
   }
@@ -63,7 +63,7 @@ public struct SessionExporter {
     kitOverrides: [String],
     sessionId: String? = nil,
     targetPaths: [String] = [],
-    requestFlags: [String] = [],
+    referenceTags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
@@ -94,7 +94,7 @@ public struct SessionExporter {
     let essentials = try loadEssentials(session.essentials, fileManager: fileManager)
     let referenceInput = ReferenceSelectionInput(
       targetPaths: targetPaths,
-      requestFlags: requestFlags
+      referenceTags: referenceTags
     )
     let matchedReferences = ReferenceSupport.resolveMatches(
       availableReferences: session.availableReferences,
@@ -329,8 +329,8 @@ public struct SessionExporter {
               "paths=\(rule.matchedPathGlobs.joined(separator: ", ")) => \(rule.matchedPaths.joined(separator: ", "))"
             )
           }
-          if !rule.matchedRequestFlags.isEmpty {
-            ruleDetails.append("flags=\(rule.matchedRequestFlags.joined(separator: ", "))")
+          if !rule.matchedReferenceTags.isEmpty {
+            ruleDetails.append("referenceTags=\(rule.matchedReferenceTags.joined(separator: ", "))")
           }
           appendLine("- rule[\(rule.ruleIndex)]: \(ruleDetails.joined(separator: " + "))")
         }

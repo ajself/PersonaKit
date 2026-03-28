@@ -57,7 +57,7 @@ Sources:
 ## swiftui-style-guide-reference
 Name: SwiftUI Style Guide Reference
 Summary: Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.
-Triggers: flags=swiftui | paths=**/*View.swift, **/Views/**/*.swift
+Triggers: referenceTags=swiftui | paths=**/*View.swift, **/Views/**/*.swift
 Sources:
 - kit:swiftui-style [referenceIds]
 - directive:apply-style [referenceIds]

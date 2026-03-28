@@ -5,7 +5,7 @@
   "summary": "Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.",
   "triggerRules": [
     {
-      "requestFlags": [
+      "referenceTags": [
         "swiftui"
       ]
     },

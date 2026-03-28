@@ -30,7 +30,7 @@ enum MCPToolName: String, CaseIterable {
     case .resolveSessionRef:
       return "Resolve a session reference supplied as either a session id or a session-file path."
     case .resolveReferences:
-      return "Resolve triggered references declared for a session using explicit target paths and request flags."
+      return "Resolve triggered references declared for a session using explicit target paths and reference tags."
     case .traceSession:
       return "Trace a session into persona/directive/kits/intents/skills/essentials edges."
     case .validate:
@@ -127,9 +127,9 @@ enum MCPToolName: String, CaseIterable {
             "type": "string"
           ],
         ],
-        "flags": [
+        "referenceTags": [
           "type": "array",
-          "description": "Optional request flags used when evaluating references.",
+          "description": "Optional reference tags used when evaluating references.",
           "items": [
             "type": "string"
           ],

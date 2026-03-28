@@ -52,9 +52,9 @@ public enum ReferenceSupport {
       parts.append("paths=" + pathGlobs.joined(separator: ", "))
     }
 
-    let requestFlags = uniqueSorted(rule.requestFlags ?? [])
-    if !requestFlags.isEmpty {
-      parts.append("flags=" + requestFlags.joined(separator: ", "))
+    let referenceTags = uniqueSorted(rule.referenceTags ?? [])
+    if !referenceTags.isEmpty {
+      parts.append("referenceTags=" + referenceTags.joined(separator: ", "))
     }
 
     return parts.joined(separator: " + ")
@@ -150,11 +150,11 @@ public enum ReferenceSupport {
     input: ReferenceSelectionInput
   ) -> ResolvedReferenceMatchRule? {
     let pathGlobs = uniqueSorted(rule.pathGlobs ?? [])
-    let requestFlags = uniqueSorted((rule.requestFlags ?? []).map { $0.lowercased() })
+    let referenceTags = uniqueSorted((rule.referenceTags ?? []).map { $0.lowercased() })
 
     var matchedPathGlobs: [String] = []
     var matchedPaths: [String] = []
-    var matchedRequestFlags: [String] = []
+    var matchedReferenceTags: [String] = []
 
     if !pathGlobs.isEmpty {
       for pathGlob in pathGlobs {
@@ -172,9 +172,9 @@ public enum ReferenceSupport {
       }
     }
 
-    if !requestFlags.isEmpty {
-      matchedRequestFlags = requestFlags.filter { input.requestFlags.contains($0) }
-      if matchedRequestFlags.isEmpty {
+    if !referenceTags.isEmpty {
+      matchedReferenceTags = referenceTags.filter { input.referenceTags.contains($0) }
+      if matchedReferenceTags.isEmpty {
         return nil
       }
     }
@@ -183,7 +183,7 @@ public enum ReferenceSupport {
       ruleIndex: ruleIndex,
       matchedPathGlobs: matchedPathGlobs,
       matchedPaths: uniqueSorted(matchedPaths),
-      matchedRequestFlags: matchedRequestFlags
+      matchedReferenceTags: matchedReferenceTags
     )
   }
 }
