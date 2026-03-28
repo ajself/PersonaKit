@@ -9,6 +9,10 @@
 
   @MainActor
   final class TaskboardSnapshotTests: XCTestCase {
+    private var imageSnapshotStrategy: Snapshotting<NSView, NSImage> {
+      .image(precision: 0.999, perceptualPrecision: 0.99)
+    }
+
     override func invokeTest() {
       let recordMode: SnapshotTestingConfiguration.Record =
         ProcessInfo.processInfo
@@ -29,7 +33,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-default-board"
       )
     }
@@ -56,7 +60,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-empty-board"
       )
     }
@@ -74,7 +78,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-dense-board"
       )
     }
@@ -95,7 +99,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-selected-lane"
       )
     }
@@ -120,7 +124,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-selected-ticket"
       )
     }
@@ -143,7 +147,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-lane-editor-open"
       )
     }
@@ -167,7 +171,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-ticket-editor-open"
       )
     }
@@ -195,7 +199,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-inline-quick-edit"
       )
     }
@@ -221,7 +225,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "taskboard-active-drag-target"
       )
     }

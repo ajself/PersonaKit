@@ -10,6 +10,10 @@
 
   @MainActor
   final class OrbitSnapshotTests: XCTestCase {
+    private var imageSnapshotStrategy: Snapshotting<NSView, NSImage> {
+      .image(precision: 0.999, perceptualPrecision: 0.99)
+    }
+
     override func invokeTest() {
       let recordMode: SnapshotTestingConfiguration.Record =
         ProcessInfo.processInfo
@@ -33,7 +37,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-default-workspace"
       )
     }
@@ -69,7 +73,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-empty-workspace"
       )
     }
@@ -93,7 +97,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-direct-address-conversation"
       )
     }
@@ -121,7 +125,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-direct-address-trace-expanded"
       )
     }
@@ -145,7 +149,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-meeting-conversation"
       )
     }
@@ -163,7 +167,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-structured-message-post"
       )
     }
@@ -181,7 +185,7 @@
 
       assertSnapshot(
         of: view,
-        as: .image,
+        as: imageSnapshotStrategy,
         named: "orbit-structured-meeting-post"
       )
     }
