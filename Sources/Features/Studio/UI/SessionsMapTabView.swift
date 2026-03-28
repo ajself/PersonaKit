@@ -157,6 +157,8 @@ struct SessionsMapTabView: View {
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
+    case .missingReferenceId(let sourceType, let sourceId, let field, let missingId):
+      return "\(sourceType.rawValue) \(sourceId) \(field) references missing reference \"\(missingId)\"."
     }
   }
 
@@ -178,6 +180,8 @@ struct SessionsMapTabView: View {
       return "skill:\(missingID)"
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"
+    case .missingReferenceId(_, _, _, let missingID):
+      return "reference:\(missingID)"
     }
   }
 }

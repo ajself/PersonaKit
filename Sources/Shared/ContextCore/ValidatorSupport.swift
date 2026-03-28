@@ -141,6 +141,8 @@ enum ValidatorSupport {
       return .directive
     case .intentTemplate:
       return .intent
+    case .reference:
+      return .reference
     case .skill:
       return .skill
     case .packsRoot:
@@ -160,6 +162,9 @@ enum ValidatorSupport {
     }
     if schemaPath.contains("/intents/") || schemaPath.hasSuffix(".intent.json") {
       return .intent
+    }
+    if schemaPath.contains("/references/") || schemaPath.hasSuffix(".reference.json") {
+      return .reference
     }
     if schemaPath.contains("/skills/") || schemaPath.hasSuffix(".skill.json") {
       return .skill
@@ -196,6 +201,37 @@ enum ValidatorSupport {
       ) {
         for file in files where file.pathExtension == "md" {
           ids.insert(file.deletingPathExtension().lastPathComponent)
+        }
+      }
+    }
+
+    return ids.sorted()
+  }
+
+  static func listReferenceIds(
+    scopes: ScopeSet,
+    fileManager: FileManager
+  ) -> [String] {
+    var ids: Set<String> = []
+
+    for root in scopes.loadOrder {
+      let referencesURL = PersonaKitDirectory.referencesURL(root: root)
+      var isDirectory: ObjCBool = false
+
+      guard fileManager.fileExists(atPath: referencesURL.path, isDirectory: &isDirectory),
+        isDirectory.boolValue
+      else {
+        continue
+      }
+
+      if let files = try? fileManager.contentsOfDirectory(
+        at: referencesURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      ) {
+        for file in files where file.lastPathComponent.hasSuffix(".reference.json") {
+          let fileName = file.deletingPathExtension().lastPathComponent
+          ids.insert((fileName as NSString).deletingPathExtension)
         }
       }
     }

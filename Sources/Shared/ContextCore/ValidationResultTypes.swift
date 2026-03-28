@@ -7,6 +7,7 @@ public enum ValidationEntityType: String, Sendable {
   case kit
   case directive
   case intent
+  case reference
   case skill
   case essentials
 
@@ -23,10 +24,12 @@ public enum ValidationEntityType: String, Sendable {
       return 3
     case .intent:
       return 4
-    case .skill:
+    case .reference:
       return 5
-    case .essentials:
+    case .skill:
       return 6
+    case .essentials:
+      return 7
     }
   }
 }
@@ -85,6 +88,7 @@ public struct ValidationCounts: Equatable, Sendable {
   public let kits: Int
   public let directives: Int
   public let intents: Int
+  public let references: Int
   public let skills: Int
   public let essentials: Int
 
@@ -93,6 +97,7 @@ public struct ValidationCounts: Equatable, Sendable {
     kits: Int,
     directives: Int,
     intents: Int,
+    references: Int,
     skills: Int,
     essentials: Int
   ) {
@@ -100,6 +105,7 @@ public struct ValidationCounts: Equatable, Sendable {
     self.kits = kits
     self.directives = directives
     self.intents = intents
+    self.references = references
     self.skills = skills
     self.essentials = essentials
   }
@@ -109,6 +115,7 @@ public struct ValidationCounts: Equatable, Sendable {
     kits: 0,
     directives: 0,
     intents: 0,
+    references: 0,
     skills: 0,
     essentials: 0
   )
@@ -122,7 +129,7 @@ public struct ValidationResult: Equatable, Sendable {
   /// Human-readable summary string used in user-facing output.
   public var summary: String {
     return
-      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) intents=\(counts.intents) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
+      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) intents=\(counts.intents) references=\(counts.references) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
   }
 
   /// Creates a validation result and sorts errors for stable output.

@@ -20,6 +20,7 @@ struct ValidatorTests {
           kits: 3,
           directives: 1,
           intents: 1,
+          references: 2,
           skills: 2,
           essentials: 5
         )

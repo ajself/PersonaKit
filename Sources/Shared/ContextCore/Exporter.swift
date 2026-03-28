@@ -30,6 +30,8 @@ public struct SessionExporter {
     directiveId: String,
     kitOverrides: [String],
     sessionId: String? = nil,
+    targetPaths: [String] = [],
+    requestFlags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     try export(
@@ -38,6 +40,8 @@ public struct SessionExporter {
       directiveId: directiveId,
       kitOverrides: kitOverrides,
       sessionId: sessionId,
+      targetPaths: targetPaths,
+      requestFlags: requestFlags,
       fileManager: fileManager
     )
   }
@@ -58,6 +62,8 @@ public struct SessionExporter {
     directiveId: String,
     kitOverrides: [String],
     sessionId: String? = nil,
+    targetPaths: [String] = [],
+    requestFlags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
@@ -86,6 +92,25 @@ public struct SessionExporter {
     }
 
     let essentials = try loadEssentials(session.essentials, fileManager: fileManager)
+    let referenceInput = ReferenceSelectionInput(
+      targetPaths: targetPaths,
+      requestFlags: requestFlags
+    )
+    let matchedReferences = ReferenceSupport.resolveMatches(
+      availableReferences: session.availableReferences,
+      input: referenceInput
+    )
+    let expandedReferences: [ExpandedReferenceDocument]
+
+    do {
+      expandedReferences = try ReferenceSupport.loadExpandedDocuments(
+        matches: matchedReferences,
+        scopes: scopes,
+        fileManager: fileManager
+      )
+    } catch let error as ReferenceResolutionError {
+      throw ExportError.readFailed(error.message)
+    }
 
     return renderSession(
       persona: session.persona,
@@ -94,6 +119,8 @@ public struct SessionExporter {
       intents: session.intents.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
       essentials: essentials,
+      availableReferences: session.availableReferences.sorted { $0.id < $1.id },
+      expandedReferences: expandedReferences,
       skillAuthorization: session.skillAuthorization,
       sessionId: sessionId
     )
@@ -153,6 +180,8 @@ public struct SessionExporter {
     intents: [IntentTemplate],
     skills: [Skill],
     essentials: [ResolvedEssential],
+    availableReferences: [ResolvedReference],
+    expandedReferences: [ExpandedReferenceDocument],
     skillAuthorization: ResolvedSkillAuthorization,
     sessionId: String?
   ) -> String {
@@ -254,6 +283,24 @@ public struct SessionExporter {
     }
 
     appendLine()
+    appendLine("# Available References")
+
+    if availableReferences.isEmpty {
+      appendLine("- none")
+    } else {
+      for reference in availableReferences {
+        appendLine("## \(reference.id)")
+        appendLine("Name: \(reference.name)")
+        appendLine("Summary: \(reference.summary)")
+        appendLine("Triggers: \(ReferenceSupport.triggerSummary(for: reference))")
+        appendLine("Sources:")
+        for source in reference.sources {
+          appendLine("- \(source.sourceType.rawValue):\(source.sourceId) [\(source.field)]")
+        }
+      }
+    }
+
+    appendLine()
     appendLine("# Essentials")
 
     let orderedEssentials = SystemEssentials.sortResolvedEssentialsForResolvedOutput(essentials)
@@ -263,6 +310,34 @@ public struct SessionExporter {
       output.append(essential.content ?? "")
       if index < orderedEssentials.count - 1 {
         appendLine()
+      }
+    }
+
+    if !expandedReferences.isEmpty {
+      appendLine()
+      appendLine("# Expanded References")
+
+      for (index, reference) in expandedReferences.enumerated() {
+        appendLine("## \(reference.id)")
+        appendLine("Name: \(reference.title)")
+        appendLine("Summary: \(reference.match.summary)")
+        appendLine("Matched Triggers:")
+        for rule in reference.match.matchedRules {
+          var ruleDetails: [String] = []
+          if !rule.matchedPathGlobs.isEmpty {
+            ruleDetails.append(
+              "paths=\(rule.matchedPathGlobs.joined(separator: ", ")) => \(rule.matchedPaths.joined(separator: ", "))"
+            )
+          }
+          if !rule.matchedRequestFlags.isEmpty {
+            ruleDetails.append("flags=\(rule.matchedRequestFlags.joined(separator: ", "))")
+          }
+          appendLine("- rule[\(rule.ruleIndex)]: \(ruleDetails.joined(separator: " + "))")
+        }
+        output.append(reference.content)
+        if index < expandedReferences.count - 1 {
+          appendLine()
+        }
       }
     }
 

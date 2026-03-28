@@ -87,4 +87,62 @@ struct ExporterTests {
 
     #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
   }
+
+  @Test
+  func exportExpandsMatchedReferencesWhenTriggerInputsProvided() throws {
+    let root = fixtureKitRootURL()
+
+    let output = try SessionExporter.export(
+      root: root,
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: [],
+      targetPaths: ["Sources/FooView.swift"],
+      requestFlags: ["swiftui"]
+    )
+
+    #expect(output.contains("# Available References"))
+    #expect(output.contains("# Expanded References"))
+    #expect(output.contains("## swift-style-guide-reference"))
+    #expect(output.contains("rule[0]: paths=**/*.swift => Sources/FooView.swift"))
+    #expect(output.contains("## swiftui-style-guide-reference"))
+    #expect(output.contains("rule[0]: flags=swiftui"))
+    #expect(output.contains("Extended SwiftUI ownership and composition guidance"))
+  }
+
+  @Test
+  func exportFailsClosedWhenMatchedReferenceBodyIsMissing() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+
+    let missingURL = root.appendingPathComponent("Packs/references/swiftui-style-guide-reference.md")
+    try FileManager.default.removeItem(at: missingURL)
+
+    do {
+      _ = try SessionExporter.export(
+        root: root,
+        personaId: "senior-swiftui-engineer",
+        directiveId: "apply-style",
+        kitOverrides: [],
+        targetPaths: ["Sources/FooView.swift"],
+        requestFlags: ["swiftui"]
+      )
+      #expect(Bool(false))
+    } catch let error as ExportError {
+      switch error {
+      case .validationFailed(let result):
+        #expect(
+          result.errors.contains { validationError in
+            validationError.entityType == ValidationEntityType.reference
+              && validationError.field == "body"
+              && validationError.expectedPath == "Packs/references/swiftui-style-guide-reference.md"
+          }
+        )
+      case .readFailed(let message):
+        #expect(message.contains("Packs/references/swiftui-style-guide-reference.md"))
+      default:
+        #expect(Bool(false))
+      }
+    }
+  }
 }

@@ -42,6 +42,7 @@ struct WorkspaceValidatorTests {
             kits: 1,
             directives: 0,
             intents: 0,
+            references: 0,
             skills: 0,
             essentials: 0
           ),
@@ -83,12 +84,12 @@ struct WorkspaceValidatorTests {
 
     #expect(snapshot.summary.contains("errors=3"))
     #expect(snapshot.issues.count == 3)
-    #expect(snapshot.issues[0].entityType == .persona)
+    #expect(snapshot.issues[0].entityType == WorkspaceValidationEntityType.persona)
     #expect(snapshot.issues[0].filePath == projectPersonaURL.path())
-    #expect(snapshot.issues[0].severity == .error)
-    #expect(snapshot.issues[1].entityType == .kit)
+    #expect(snapshot.issues[0].severity == WorkspaceValidationSeverity.error)
+    #expect(snapshot.issues[1].entityType == WorkspaceValidationEntityType.kit)
     #expect(snapshot.issues[1].filePath == globalKitURL.path())
-    #expect(snapshot.issues[2].entityType == .essentials)
+    #expect(snapshot.issues[2].entityType == WorkspaceValidationEntityType.essentials)
     #expect(snapshot.issues[2].filePath == ambiguousPath)
   }
 

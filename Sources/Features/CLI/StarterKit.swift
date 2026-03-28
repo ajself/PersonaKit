@@ -120,13 +120,13 @@ enum StarterKitManifest {
     StarterFile(
       relativePath: "Packs/kits/swift-style.kit.json",
       contents:
-        "{\n  \"id\": \"swift-style\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Kit\",\n  \"summary\": \"Swift language style and conventions.\",\n  \"essentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}"
+        "{\n  \"id\": \"swift-style\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Kit\",\n  \"summary\": \"Swift language style and conventions.\",\n  \"essentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"referenceIds\": [\n    \"swift-style-guide-reference\"\n  ]\n}"
         .utf8Data
     ),
     StarterFile(
       relativePath: "Packs/kits/swiftui-style.kit.json",
       contents:
-        "{\n  \"id\": \"swiftui-style\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Kit\",\n  \"summary\": \"SwiftUI-specific style and accessibility rules.\",\n  \"essentialIds\": [\n    \"swiftui-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}"
+        "{\n  \"id\": \"swiftui-style\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Kit\",\n  \"summary\": \"SwiftUI-specific style and accessibility rules.\",\n  \"essentialIds\": [\n    \"swiftui-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"referenceIds\": [\n    \"swiftui-style-guide-reference\"\n  ]\n}"
         .utf8Data
     ),
     StarterFile(
@@ -138,7 +138,7 @@ enum StarterKitManifest {
     StarterFile(
       relativePath: "Packs/directives/apply-style.directive.json",
       contents:
-        "{\n  \"id\": \"apply-style\",\n  \"version\": \"1.0\",\n  \"title\": \"Apply Swift + SwiftUI style guides\",\n  \"goal\": \"Ensure the change matches Swift and SwiftUI style guides.\",\n  \"steps\": [\n    {\n      \"text\": \"Identify the target files and intended behavior.\"\n    },\n    {\n      \"text\": \"Apply Swift and SwiftUI style rules consistently.\"\n    },\n    {\n      \"text\": \"Avoid unrelated refactors.\",\n      \"requiresReview\": true\n    },\n    {\n      \"text\": \"Update or add tests as needed.\"\n    },\n    {\n      \"text\": \"Provide a concise diff summary.\"\n    }\n  ],\n  \"acceptanceCriteria\": [\n    \"Code matches Swift style guide\",\n    \"Code matches SwiftUI style guide\",\n    \"Tests pass\",\n    \"No unintended behavior changes\"\n  ],\n  \"verification\": [\n    {\n      \"kind\": \"command\",\n      \"text\": \"swift test\"\n    },\n    {\n      \"kind\": \"manual\",\n      \"text\": \"Review diff for scope creep\"\n    }\n  ],\n  \"requiresIntentTemplateIds\": [\n    \"swift-refactor-safe\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ]\n}"
+        "{\n  \"id\": \"apply-style\",\n  \"version\": \"1.0\",\n  \"title\": \"Apply Swift + SwiftUI style guides\",\n  \"goal\": \"Ensure the change matches Swift and SwiftUI style guides.\",\n  \"steps\": [\n    {\n      \"text\": \"Identify the target files and intended behavior.\"\n    },\n    {\n      \"text\": \"Apply Swift and SwiftUI style rules consistently.\"\n    },\n    {\n      \"text\": \"Avoid unrelated refactors.\",\n      \"requiresReview\": true\n    },\n    {\n      \"text\": \"Update or add tests as needed.\"\n    },\n    {\n      \"text\": \"Provide a concise diff summary.\"\n    }\n  ],\n  \"acceptanceCriteria\": [\n    \"Code matches Swift style guide\",\n    \"Code matches SwiftUI style guide\",\n    \"Tests pass\",\n    \"No unintended behavior changes\"\n  ],\n  \"verification\": [\n    {\n      \"kind\": \"command\",\n      \"text\": \"swift test\"\n    },\n    {\n      \"kind\": \"manual\",\n      \"text\": \"Review diff for scope creep\"\n    }\n  ],\n  \"requiresIntentTemplateIds\": [\n    \"swift-refactor-safe\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"referenceIds\": [\n    \"swift-style-guide-reference\",\n    \"swiftui-style-guide-reference\"\n  ]\n}"
         .utf8Data
     ),
     StarterFile(
@@ -165,11 +165,39 @@ enum StarterKitManifest {
     ),
     StarterFile(
       relativePath: "Packs/essentials/swift-style-guide.md",
-      contents: "# Swift Style Guide\n\n(Paste your real Swift style guide here.)\n".utf8Data
+      contents:
+        "# Swift Style Guide\n\nUse this runtime guide for active Swift implementation and review sessions.\nConsult reference id `swift-style-guide-reference` when you need examples, tradeoff rationale, or deeper Swift structure guidance.\n"
+        .utf8Data
     ),
     StarterFile(
       relativePath: "Packs/essentials/swiftui-style-guide.md",
-      contents: "# SwiftUI Style Guide\n\n(Paste your real SwiftUI style guide here.)\n".utf8Data
+      contents:
+        "# SwiftUI Style Guide\n\nUse this runtime guide for active SwiftUI implementation and review sessions.\nConsult reference id `swiftui-style-guide-reference` when you need examples, architecture rationale, or deeper SwiftUI composition guidance.\n"
+        .utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/swift-style-guide-reference.reference.json",
+      contents:
+        "{\n  \"id\": \"swift-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Guide Reference\",\n  \"summary\": \"Extended Swift style examples and rationale for deeper language-structure decisions.\",\n  \"triggerRules\": [\n    {\n      \"pathGlobs\": [\n        \"**/*.swift\"\n      ]\n    }\n  ]\n}"
+        .utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/swift-style-guide-reference.md",
+      contents:
+        "# Swift Style Guide\n\nExtended Swift style examples and rationale live here for prompt expansion tests.\n"
+        .utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/swiftui-style-guide-reference.reference.json",
+      contents:
+        "{\n  \"id\": \"swiftui-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Guide Reference\",\n  \"summary\": \"Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.\",\n  \"triggerRules\": [\n    {\n      \"requestFlags\": [\n        \"swiftui\"\n      ]\n    },\n    {\n      \"pathGlobs\": [\n        \"**/*View.swift\",\n        \"**/Views/**/*.swift\"\n      ]\n    }\n  ]\n}"
+        .utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/swiftui-style-guide-reference.md",
+      contents:
+        "# SwiftUI Style Guide\n\nExtended SwiftUI ownership and composition guidance lives here for prompt expansion tests.\n"
+        .utf8Data
     ),
     StarterFile(
       relativePath: "Packs/essentials/tools-and-constraints.md",

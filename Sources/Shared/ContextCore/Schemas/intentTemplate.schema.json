@@ -71,6 +71,12 @@
         "type": "string"
       }
     },
+    "referenceIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "risk": {
       "type": "object",
       "properties": {

@@ -6,6 +6,8 @@ struct MCPToolArguments: Equatable {
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]
+  let targetPaths: [String]
+  let requestFlags: [String]
 }
 
 struct MCPEntityArguments: Equatable {
@@ -72,10 +74,14 @@ enum MCPToolArgumentParser {
     let personaId = try requireString(arguments, name: "personaId")
     let directiveId = try requireString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
+    let targetPaths = try parseStringList(arguments?["targetPaths"], fieldName: "targetPaths")
+    let requestFlags = try parseStringList(arguments?["flags"], fieldName: "flags")
     return MCPToolArguments(
       personaId: personaId,
       directiveId: directiveId,
-      kitOverrides: kitOverrides
+      kitOverrides: kitOverrides,
+      targetPaths: targetPaths,
+      requestFlags: requestFlags
     )
   }
 
@@ -243,6 +249,10 @@ enum MCPToolArgumentParser {
   }
 
   private static func parseRequestedSkillIds(_ value: Value?) throws -> [String] {
+    try parseStringList(value, fieldName: "requestedSkillIds")
+  }
+
+  private static func parseStringList(_ value: Value?, fieldName: String) throws -> [String] {
     guard let value else {
       return []
     }
@@ -252,7 +262,7 @@ enum MCPToolArgumentParser {
     }
 
     guard let arrayValue = value.arrayValue else {
-      throw MCPToolArgumentError.invalidType("requestedSkillIds")
+      throw MCPToolArgumentError.invalidType(fieldName)
     }
 
     var parsed: [String] = []
@@ -271,7 +281,7 @@ enum MCPToolArgumentParser {
     }
 
     if sawNonString {
-      throw MCPToolArgumentError.invalidType("requestedSkillIds")
+      throw MCPToolArgumentError.invalidType(fieldName)
     }
 
     return parsed

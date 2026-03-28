@@ -2,6 +2,20 @@ import ArgumentParser
 import ContextCore
 import Foundation
 
+struct ReferenceTriggerOptions: ParsableArguments {
+  @Option(
+    name: .customLong("target-path"),
+    help: "Target file path used when evaluating available references."
+  )
+  var targetPaths: [String] = []
+
+  @Option(
+    name: .customLong("flag"),
+    help: "Request flag used when evaluating available references."
+  )
+  var requestFlags: [String] = []
+}
+
 /// Resolves and prints the structured PersonaKit operating contract.
 struct ContractCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
@@ -83,6 +97,9 @@ struct ExportCommand: ParsableCommand {
   @OptionGroup
   var session: SessionSelection
 
+  @OptionGroup
+  var referenceTriggers: ReferenceTriggerOptions
+
   @Option(name: .customLong("output"), help: "Write output to a file path.")
   var outputPath: String?
 
@@ -101,7 +118,9 @@ struct ExportCommand: ParsableCommand {
         scopes: scopes,
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
-        kitOverrides: sessionInput.kitOverrides
+        kitOverrides: sessionInput.kitOverrides,
+        targetPaths: referenceTriggers.targetPaths,
+        requestFlags: referenceTriggers.requestFlags
       )
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
@@ -123,6 +142,80 @@ struct ExportCommand: ParsableCommand {
         }
       case .readFailed(let message):
         stderrStream.write("Error: \(message)\n")
+      }
+      throw ExitCode.failure
+    }
+  }
+}
+
+/// Resolves triggered workflow references for inspection/debugging.
+struct ResolveReferencesCommand: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "resolve-references",
+    abstract: "Resolve triggered references for a session prompt."
+  )
+
+  @OptionGroup
+  var scope: ScopeOptions
+
+  @OptionGroup
+  var session: SessionSelection
+
+  @OptionGroup
+  var referenceTriggers: ReferenceTriggerOptions
+
+  mutating func validate() throws {
+    try session.validate(mode: .resolveReferences)
+  }
+
+  func run() throws {
+    let scopes = try CLIHelpers.resolveScopes(options: scope)
+
+    do {
+      let sessionInput = try CLIHelpers.resolveSessionInput(
+        from: session,
+        scopes: scopes
+      )
+      let result = try WorkflowReferenceResolver.resolve(
+        scopes: scopes,
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides,
+        input: ReferenceSelectionInput(
+          targetPaths: referenceTriggers.targetPaths,
+          requestFlags: referenceTriggers.requestFlags
+        )
+      )
+
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+      let data = try encoder.encode(result)
+
+      guard let output = String(data: data, encoding: .utf8) else {
+        throw CLIError.failure("Failed to encode reference resolution output.")
+      }
+
+      print(output)
+    } catch let error as ReferenceLookupError {
+      var stderrStream = StandardError()
+      switch error {
+      case .validationFailed(let result):
+        stderrStream.write(result.summary + "\n")
+        for validationError in result.errors {
+          stderrStream.write(validationError.lineDescription() + "\n")
+        }
+      case .resolutionFailed(let resolutionError):
+        for resolutionError in resolutionError.errors {
+          stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+        }
+      case .referenceResolutionFailed(let resolutionError):
+        stderrStream.write("Error: \(resolutionError.message)\n")
+      }
+      throw ExitCode.failure
+    } catch let error as RegistryLoadError {
+      var stderrStream = StandardError()
+      for registryError in error.errors {
+        stderrStream.write(CLIHelpers.formatRegistryError(registryError) + "\n")
       }
       throw ExitCode.failure
     }

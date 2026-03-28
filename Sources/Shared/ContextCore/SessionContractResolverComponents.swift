@@ -7,11 +7,19 @@ struct SessionContractRequiredSkillReference: Sendable {
   let skillId: String
 }
 
+struct SessionContractReferenceDeclaration: Sendable {
+  let sourceType: ResolverEntityType
+  let sourceId: String
+  let field: String
+  let referenceId: String
+}
+
 struct SessionContractComponents {
   let persona: Persona
   let directive: Directive?
   let kits: [Kit]
   let essentials: [ResolvedEssential]
+  let availableReferences: [ResolvedReference]
   let intents: [IntentTemplate]
   let skills: [Skill]
   let requiredSkillReferences: [SessionContractRequiredSkillReference]
@@ -77,6 +85,7 @@ enum SessionContractComponentResolver {
 
     var intentIds: [String] = []
     var requiredSkillReferences: [SessionContractRequiredSkillReference] = []
+    var referenceDeclarations: [SessionContractReferenceDeclaration] = []
 
     if let resolvedDirective = directive {
       for kit in resolvedKits {
@@ -113,6 +122,28 @@ enum SessionContractComponentResolver {
               sourceId: kit.id,
               field: "skillIds",
               skillId: skillId
+            )
+          )
+        }
+
+        for referenceId in kit.referenceIds ?? [] {
+          if registry.referencesById[referenceId] == nil {
+            errors.append(
+              .missingReferenceId(
+                sourceType: .kit,
+                sourceId: kit.id,
+                field: "referenceIds",
+                missingId: referenceId
+              )
+            )
+          }
+
+          referenceDeclarations.append(
+            SessionContractReferenceDeclaration(
+              sourceType: .kit,
+              sourceId: kit.id,
+              field: "referenceIds",
+              referenceId: referenceId
             )
           )
         }
@@ -154,6 +185,28 @@ enum SessionContractComponentResolver {
           )
         )
       }
+
+      for referenceId in resolvedDirective.referenceIds ?? [] {
+        if registry.referencesById[referenceId] == nil {
+          errors.append(
+            .missingReferenceId(
+              sourceType: .directive,
+              sourceId: resolvedDirective.id,
+              field: "referenceIds",
+              missingId: referenceId
+            )
+          )
+        }
+
+        referenceDeclarations.append(
+          SessionContractReferenceDeclaration(
+            sourceType: .directive,
+            sourceId: resolvedDirective.id,
+            field: "referenceIds",
+            referenceId: referenceId
+          )
+        )
+      }
     }
 
     let uniqueIntentIds = uniqueSorted(intentIds)
@@ -161,6 +214,28 @@ enum SessionContractComponentResolver {
 
     if directive != nil {
       for intent in resolvedIntents {
+        for referenceId in intent.referenceIds ?? [] {
+          if registry.referencesById[referenceId] == nil {
+            errors.append(
+              .missingReferenceId(
+                sourceType: .intentTemplate,
+                sourceId: intent.id,
+                field: "referenceIds",
+                missingId: referenceId
+              )
+            )
+          }
+
+          referenceDeclarations.append(
+            SessionContractReferenceDeclaration(
+              sourceType: .intentTemplate,
+              sourceId: intent.id,
+              field: "referenceIds",
+              referenceId: referenceId
+            )
+          )
+        }
+
         for skillId in intent.requiresSkillIds {
           if registry.skillsById[skillId] == nil {
             errors.append(
@@ -245,12 +320,17 @@ enum SessionContractComponentResolver {
         fileManager: fileManager
       )
     }
+    let availableReferences = resolveAvailableReferences(
+      declarations: referenceDeclarations,
+      registry: registry
+    )
 
     return SessionContractComponents(
       persona: resolvedPersona,
       directive: directive,
       kits: resolvedKits,
       essentials: resolvedEssentials,
+      availableReferences: availableReferences,
       intents: resolvedIntents,
       skills: resolvedSkills,
       requiredSkillReferences: requiredSkillReferences
@@ -260,4 +340,45 @@ enum SessionContractComponentResolver {
 
 private func uniqueSorted(_ values: [String]) -> [String] {
   Set(values).sorted()
+}
+
+private func resolveAvailableReferences(
+  declarations: [SessionContractReferenceDeclaration],
+  registry: Registry
+) -> [ResolvedReference] {
+  let groupedDeclarations = Dictionary(grouping: declarations, by: \.referenceId)
+
+  return groupedDeclarations.keys.sorted().compactMap { referenceId in
+    guard let reference = registry.referencesById[referenceId] else {
+      return nil
+    }
+
+    let sources = (groupedDeclarations[referenceId] ?? [])
+      .map {
+        ResolvedReferenceSource(
+          sourceType: $0.sourceType,
+          sourceId: $0.sourceId,
+          field: $0.field
+        )
+      }
+      .sorted {
+        if $0.sourceType.sortOrder != $1.sourceType.sortOrder {
+          return $0.sourceType.sortOrder < $1.sourceType.sortOrder
+        }
+
+        if $0.sourceId != $1.sourceId {
+          return $0.sourceId < $1.sourceId
+        }
+
+        return $0.field < $1.field
+      }
+
+    return ResolvedReference(
+      id: reference.id,
+      name: reference.name,
+      summary: reference.summary,
+      triggerRules: reference.triggerRules,
+      sources: sources
+    )
+  }
 }

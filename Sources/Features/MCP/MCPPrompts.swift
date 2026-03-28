@@ -17,11 +17,22 @@ enum MCPPromptName: String, CaseIterable {
   }
 
   var arguments: [Prompt.Argument] {
-    return [
-      .init(name: "personaId", description: "Persona id", required: true),
-      .init(name: "directiveId", description: "Directive id", required: true),
-      .init(name: "kits", description: "Comma-separated kit ids"),
-    ]
+    switch self {
+    case .sessionExport:
+      return [
+        .init(name: "personaId", description: "Persona id", required: true),
+        .init(name: "directiveId", description: "Directive id", required: true),
+        .init(name: "kits", description: "Comma-separated kit ids"),
+        .init(name: "targetPaths", description: "Comma-separated target file paths"),
+        .init(name: "flags", description: "Comma-separated request flags"),
+      ]
+    case .sessionGraph:
+      return [
+        .init(name: "personaId", description: "Persona id", required: true),
+        .init(name: "directiveId", description: "Directive id", required: true),
+        .init(name: "kits", description: "Comma-separated kit ids"),
+      ]
+    }
   }
 }
 
@@ -30,6 +41,8 @@ struct MCPPromptArguments: Equatable {
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]
+  let targetPaths: [String]
+  let requestFlags: [String]
 }
 
 /// Prompt argument parsing failures returned as MCP invalid-params errors.
@@ -54,11 +67,15 @@ enum MCPPromptArgumentParser {
     let personaId = try requireString(arguments, name: "personaId")
     let directiveId = try requireString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
+    let targetPaths = try parseCSV(arguments?["targetPaths"], fieldName: "targetPaths")
+    let requestFlags = try parseCSV(arguments?["flags"], fieldName: "flags")
 
     return MCPPromptArguments(
       personaId: personaId,
       directiveId: directiveId,
-      kitOverrides: kitOverrides
+      kitOverrides: kitOverrides,
+      targetPaths: targetPaths,
+      requestFlags: requestFlags
     )
   }
 
@@ -81,12 +98,16 @@ enum MCPPromptArgumentParser {
   }
 
   private static func parseKitOverrides(_ value: Value?) throws -> [String] {
+    try parseCSV(value, fieldName: "kits")
+  }
+
+  private static func parseCSV(_ value: Value?, fieldName: String) throws -> [String] {
     guard let value else {
       return []
     }
 
     guard let stringValue = value.stringValue else {
-      throw MCPPromptArgumentError.invalidType("kits")
+      throw MCPPromptArgumentError.invalidType(fieldName)
     }
 
     return
@@ -151,7 +172,9 @@ struct MCPPromptService: Sendable {
         scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides
+        kitOverrides: input.kitOverrides,
+        targetPaths: input.targetPaths,
+        requestFlags: input.requestFlags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))

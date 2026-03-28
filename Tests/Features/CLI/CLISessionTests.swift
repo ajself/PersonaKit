@@ -82,6 +82,37 @@ struct CLISessionTests {
   }
 
   @Test
+  func resolveReferencesViaSessionReturnsStructuredJSON() throws {
+    let root = fixtureKitRootURL()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "resolve-references",
+        "--root",
+        root.path,
+        "--session",
+        "senior-swiftui-engineer_apply-style",
+        "--target-path",
+        "Sources/FooView.swift",
+        "--flag",
+        "swiftui",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
+    #expect(matchedReferences.map { $0["id"] as? String } == [
+      "swift-style-guide-reference",
+      "swiftui-style-guide-reference",
+    ])
+  }
+
+  @Test
   func exportRequiresDirectiveWhenPersonaProvided() {
     var status: Int32 = 0
     let stderrOutput = captureStderr {

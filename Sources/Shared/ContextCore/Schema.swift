@@ -45,6 +45,7 @@ public struct Kit: Codable, Sendable {
   public let name: String
   public let summary: String
   public let essentialIds: [String]
+  public let referenceIds: [String]?
   public let intentTemplateIds: [String]?
   public let skillIds: [String]?
 
@@ -54,6 +55,7 @@ public struct Kit: Codable, Sendable {
     name: String,
     summary: String,
     essentialIds: [String],
+    referenceIds: [String]? = nil,
     intentTemplateIds: [String]?,
     skillIds: [String]?
   ) {
@@ -62,6 +64,7 @@ public struct Kit: Codable, Sendable {
     self.name = name
     self.summary = summary
     self.essentialIds = essentialIds
+    self.referenceIds = referenceIds
     self.intentTemplateIds = intentTemplateIds
     self.skillIds = skillIds
   }
@@ -192,6 +195,7 @@ public struct Directive: Codable, Sendable {
   public let verification: [VerificationItem]
   public let requiresIntentTemplateIds: [String]
   public let requiresSkillIds: [String]
+  public let referenceIds: [String]?
   public let workstream: Workstream?
 
   public init(
@@ -204,6 +208,7 @@ public struct Directive: Codable, Sendable {
     verification: [VerificationItem],
     requiresIntentTemplateIds: [String],
     requiresSkillIds: [String],
+    referenceIds: [String]? = nil,
     workstream: Workstream? = nil
   ) {
     self.id = id
@@ -215,6 +220,7 @@ public struct Directive: Codable, Sendable {
     self.verification = verification
     self.requiresIntentTemplateIds = requiresIntentTemplateIds
     self.requiresSkillIds = requiresSkillIds
+    self.referenceIds = referenceIds
     self.workstream = workstream
   }
 }
@@ -277,6 +283,7 @@ public struct IntentTemplate: Codable, Sendable {
   public let parameterConstraints: [ParameterConstraint]?
   public let includesEssentialIds: [String]
   public let requiresSkillIds: [String]
+  public let referenceIds: [String]?
   public let risk: Risk
 
   public init(
@@ -288,6 +295,7 @@ public struct IntentTemplate: Codable, Sendable {
     parameterConstraints: [ParameterConstraint]? = nil,
     includesEssentialIds: [String],
     requiresSkillIds: [String],
+    referenceIds: [String]? = nil,
     risk: Risk
   ) {
     self.id = id
@@ -298,6 +306,7 @@ public struct IntentTemplate: Codable, Sendable {
     self.parameterConstraints = parameterConstraints
     self.includesEssentialIds = includesEssentialIds
     self.requiresSkillIds = requiresSkillIds
+    self.referenceIds = referenceIds
     self.risk = risk
   }
 }
@@ -345,6 +354,43 @@ public struct Skill: Codable, Sendable {
     self.providedBy = providedBy
     self.risk = risk
     self.notes = notes
+  }
+}
+
+/// Deterministic trigger rule for on-demand reference expansion.
+public struct ReferenceTriggerRule: Codable, Equatable, Sendable {
+  public let pathGlobs: [String]?
+  public let requestFlags: [String]?
+
+  public init(
+    pathGlobs: [String]? = nil,
+    requestFlags: [String]? = nil
+  ) {
+    self.pathGlobs = pathGlobs
+    self.requestFlags = requestFlags
+  }
+}
+
+/// Reference definition loaded from `Packs/references/*.reference.json`.
+public struct Reference: Codable, Equatable, Sendable {
+  public let id: String
+  public let version: String
+  public let name: String
+  public let summary: String
+  public let triggerRules: [ReferenceTriggerRule]
+
+  public init(
+    id: String,
+    version: String,
+    name: String,
+    summary: String,
+    triggerRules: [ReferenceTriggerRule]
+  ) {
+    self.id = id
+    self.version = version
+    self.name = name
+    self.summary = summary
+    self.triggerRules = triggerRules
   }
 }
 

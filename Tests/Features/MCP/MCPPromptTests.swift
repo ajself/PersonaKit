@@ -66,4 +66,19 @@ struct MCPPromptTests {
       #expect(Bool(false))
     }
   }
+
+  @Test
+  func promptArgumentsParseReferenceTriggers() throws {
+    let args: [String: Value] = [
+      "personaId": .string("senior-swiftui-engineer"),
+      "directiveId": .string("apply-style"),
+      "targetPaths": .string(" Sources/FooView.swift , Views/BarView.swift "),
+      "flags": .string(" swiftui , "),
+    ]
+
+    let parsed = try MCPPromptArgumentParser.parse(args)
+
+    #expect(parsed.targetPaths == ["Sources/FooView.swift", "Views/BarView.swift"])
+    #expect(parsed.requestFlags == ["swiftui"])
+  }
 }

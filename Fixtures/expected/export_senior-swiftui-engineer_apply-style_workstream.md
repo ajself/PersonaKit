@@ -46,6 +46,22 @@ Authorized: true
 - Swift Style Kit (swift-style)
 - SwiftUI Style Kit (swiftui-style)
 
+# Available References
+## swift-style-guide-reference
+Name: Swift Style Guide Reference
+Summary: Extended Swift style examples and rationale for deeper language-structure decisions.
+Triggers: paths=**/*.swift
+Sources:
+- kit:swift-style [referenceIds]
+- directive:apply-style [referenceIds]
+## swiftui-style-guide-reference
+Name: SwiftUI Style Guide Reference
+Summary: Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.
+Triggers: flags=swiftui | paths=**/*View.swift, **/Views/**/*.swift
+Sources:
+- kit:swiftui-style [referenceIds]
+- directive:apply-style [referenceIds]
+
 # Essentials
 ## persona-activation-contract
 # Persona Activation Contract
@@ -121,12 +137,14 @@ PersonaKit grounding happens before external skill selection.
 ## swift-style-guide
 # Swift Style Guide
 
-(Paste your real Swift style guide here.)
+Use this runtime guide for active Swift implementation and review sessions.
+Consult reference id `swift-style-guide-reference` when you need examples, tradeoff rationale, or deeper Swift structure guidance.
 
 ## swiftui-style-guide
 # SwiftUI Style Guide
 
-(Paste your real SwiftUI style guide here.)
+Use this runtime guide for active SwiftUI implementation and review sessions.
+Consult reference id `swiftui-style-guide-reference` when you need examples, architecture rationale, or deeper SwiftUI composition guidance.
 
 ## tools-and-constraints
 # Tools & Constraints

@@ -34,6 +34,21 @@ struct ListCommandTests {
   }
 
   @Test
+  func listReferences() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try PersonaKitInitializer().run(destination: root.path)
+
+    let output = try ListCommand.list(root: root, entityType: .references)
+
+    let expected = [
+      "swift-style-guide-reference — Swift Style Guide Reference",
+      "swiftui-style-guide-reference — SwiftUI Style Guide Reference",
+    ].joined(separator: "\n")
+
+    #expect(output == expected)
+  }
+
+  @Test
   func listSessions() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
