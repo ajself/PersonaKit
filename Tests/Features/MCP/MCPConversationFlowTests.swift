@@ -214,7 +214,7 @@ private func requireFirstText(_ result: CallTool.Result) throws -> String {
   guard let first = result.content.first else {
     throw MCPConversationFlowTestError.missingTextContent
   }
-  if case .text(let text) = first {
+  if case let .text(text, _, _) = first {
     return text
   }
   throw MCPConversationFlowTestError.missingTextContent

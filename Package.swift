@@ -29,7 +29,7 @@ let package = Package(
     ),
   ],
   dependencies: [
-    .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
+    .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.12.0"),
     .package(url: "https://github.com/vapor/async-kit.git", exact: "1.22.0"),
     .package(url: "https://github.com/vapor/vapor.git", from: "4.121.3"),
     .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),

@@ -365,7 +365,7 @@ private func firstText(_ result: CallTool.Result) -> String? {
   guard let first = result.content.first else {
     return nil
   }
-  if case .text(let text) = first {
+  if case let .text(text, _, _) = first {
     return text
   }
   return nil
