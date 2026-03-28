@@ -69,9 +69,10 @@ public struct MCPServerRunner: MCPServerRunning {
     }
 
     await server.withMethodHandler(GetPrompt.self) { params in
+      let promptArguments = params.arguments?.mapValues { Value.string($0) }
       return try promptService.getPrompt(
         name: params.name,
-        arguments: params.arguments
+        arguments: promptArguments
       )
     }
 
