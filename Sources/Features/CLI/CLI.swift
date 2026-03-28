@@ -7,14 +7,17 @@ import Foundation
 struct PersonaKitCLI {
   private let scopeRootResolver: ScopeRootResolver
   private let mcpServerRunner: any MCPServerRunning
+  private let interactiveIO: CLIInteractiveIO
 
   /// Creates a CLI runtime with injectable environment dependencies.
   init(
     scopeRootResolver: ScopeRootResolver = ScopeRootResolver(),
-    mcpServerRunner: any MCPServerRunning = MCPServerRunner()
+    mcpServerRunner: any MCPServerRunning = MCPServerRunner(),
+    interactiveIO: CLIInteractiveIO = .live()
   ) {
     self.scopeRootResolver = scopeRootResolver
     self.mcpServerRunner = mcpServerRunner
+    self.interactiveIO = interactiveIO
   }
 
   /// Parses and runs PersonaKit command-line arguments.
@@ -24,7 +27,8 @@ struct PersonaKitCLI {
   func run(arguments: [String]) -> Int32 {
     let context = CLIContext(
       scopeRootResolver: scopeRootResolver,
-      mcpServerRunner: mcpServerRunner
+      mcpServerRunner: mcpServerRunner,
+      interactiveIO: interactiveIO
     )
 
     return CLIEnvironment.withContext(context) {
@@ -56,6 +60,7 @@ struct PersonaKitCommand: ParsableCommand {
     abstract: "PersonaKit CLI",
     subcommands: [
       InitCommand.self,
+      CreateCommand.self,
       ValidateCommand.self,
       WorkstreamDocsCommand.self,
       MigrateLogRecordsCommand.self,

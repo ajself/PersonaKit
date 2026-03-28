@@ -374,15 +374,55 @@ Essentials are included verbatim in exports and MCP prompts.
 
 Creating new Directives and Sessions (fast path)
 
-You don’t need generators or special commands.
+The supported authoring path is the CLI.
 
-To create a new Directive:
-- Copy an existing file in `Packs/directives/`
-- Rename it
-- Edit the words
+Use `personakit create` for common authored types:
 
-To create a Session (optional convenience):
-- Create a file in `Sessions/` that names a Persona and a Directive
+```bash
+personakit create persona --name "Orbit Planner" --summary "Plans milestone slices honestly."
+personakit create directive --title "Apply Style" --goal "Apply the repo style contract."
+personakit create session --persona senior-swiftui-engineer --directive apply-style
+personakit create essential --title "Planning Guardrails" --stdin-body
+```
+
+Creation supports:
+- interactive prompting when required fields are omitted in a TTY
+- deterministic flag-driven creation for scripting
+- `--dry-run` to show the destination and rendered content without writing
+- `--json` for machine-readable output
+- `--template starter|minimal`
+- `--force` to overwrite an existing authored file
+
+Examples:
+
+```bash
+personakit create persona \
+  --name "Orbit Planner" \
+  --summary "Plans milestone slices honestly."
+
+personakit create directive \
+  --title "Review Closeout" \
+  --goal "Review milestone closeout artifacts." \
+  --step "Read the closeout packet." \
+  --review-step "Stop for AJ review." \
+  --acceptance "The packet scope is explicit." \
+  --verify-manual "Confirm the closeout packet matches the milestone."
+
+personakit create session \
+  --persona senior-swiftui-engineer \
+  --directive apply-style
+
+printf 'Keep milestone slices honest.\n' | \
+  personakit create essential \
+    --title "Planning Guardrails" \
+    --stdin-body
+
+personakit create directive \
+  --title "Apply Style" \
+  --goal "Apply the repo style contract." \
+  --dry-run \
+  --json
+```
 
 Sessions are shortcuts. If you don’t need one, you can always export directly with `--persona` and `--directive`.
 
@@ -395,6 +435,7 @@ PersonaKit provides two ways to consume context.
 Swift CLI
 
 personakit init <path>
+personakit create persona|kit|directive|intent|skill|session|essential [options]
 personakit validate [--root <path>] [--no-project] [--no-global]
 personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
 personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials|sessions
@@ -407,6 +448,7 @@ with project overrides. Use `--root` to bypass scope discovery, or
 `--no-project` / `--no-global` to disable a scope.
 
 The CLI is deterministic, testable, and intended for local workflows.
+It is also the supported creation surface for new personas, kits, directives, intents, skills, sessions, and essentials.
 
 ⸻
 
@@ -451,6 +493,7 @@ A minimal example (stdio transport):
 
 Notes:
 - `command` and `args` must launch `personakit mcp`.
+- The MCP server is read-only. It can export and read PersonaKit context, but it cannot create or edit personas, kits, directives, intents, skills, sessions, or essentials.
 - MCP scope resolution is local-first and single-scope:
   1) `--root <path>` (highest priority)
   2) `PERSONAKIT_ROOT`

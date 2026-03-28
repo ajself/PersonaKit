@@ -7,6 +7,17 @@ import Foundation
 struct CLIContext: Sendable {
   let scopeRootResolver: ScopeRootResolver
   let mcpServerRunner: any MCPServerRunning
+  let interactiveIO: CLIInteractiveIO
+
+  init(
+    scopeRootResolver: ScopeRootResolver,
+    mcpServerRunner: any MCPServerRunning,
+    interactiveIO: CLIInteractiveIO = .live()
+  ) {
+    self.scopeRootResolver = scopeRootResolver
+    self.mcpServerRunner = mcpServerRunner
+    self.interactiveIO = interactiveIO
+  }
 }
 
 /// Task-local access to CLI runtime dependencies.
@@ -14,7 +25,8 @@ enum CLIEnvironment {
   @TaskLocal
   static var context: CLIContext = CLIContext(
     scopeRootResolver: ScopeRootResolver(),
-    mcpServerRunner: MCPServerRunner()
+    mcpServerRunner: MCPServerRunner(),
+    interactiveIO: .live()
   )
 
   /// The currently active CLI context.

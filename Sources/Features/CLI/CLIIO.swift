@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// CLI-specific error type for user-facing failures.
 enum CLIError: LocalizedError {
@@ -18,6 +19,33 @@ struct StandardError: TextOutputStream {
   mutating func write(_ string: String) {
     guard let data = string.data(using: .utf8) else { return }
     FileHandle.standardError.write(data)
+  }
+}
+
+/// Injectable interactive CLI IO used by prompt-driven commands and stdin reads.
+struct CLIInteractiveIO: Sendable {
+  let isInteractive: @Sendable () -> Bool
+  let readLine: @Sendable () -> String?
+  let readStdinToEnd: @Sendable () throws -> String
+
+  static func live() -> CLIInteractiveIO {
+    CLIInteractiveIO(
+      isInteractive: {
+        isatty(STDIN_FILENO) != 0
+      },
+      readLine: {
+        Swift.readLine(strippingNewline: true)
+      },
+      readStdinToEnd: {
+        let data = FileHandle.standardInput.readDataToEndOfFile()
+
+        guard let text = String(data: data, encoding: .utf8) else {
+          throw CLIError.failure("Failed to read UTF-8 text from stdin.")
+        }
+
+        return text
+      }
+    )
   }
 }
 

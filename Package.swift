@@ -62,6 +62,7 @@ let package = Package(
       name: "ContextCLI",
       dependencies: [
         "ContextCore",
+        "ContextWorkspaceCore",
         "ContextMCP",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
