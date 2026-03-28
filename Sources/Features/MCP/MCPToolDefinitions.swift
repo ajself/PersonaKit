@@ -9,6 +9,7 @@ enum MCPToolName: String, CaseIterable {
   case graph = "personakit_graph"
   case recommendSession = "personakit_recommend_session"
   case resolveSessionRef = "personakit_resolve_session_ref"
+  case resolveReferences = "personakit_resolve_references"
   case traceSession = "personakit_trace_session"
   case validate = "personakit_validate"
 
@@ -28,6 +29,8 @@ enum MCPToolName: String, CaseIterable {
       return "Recommend sessions for a goal using deterministic ranking."
     case .resolveSessionRef:
       return "Resolve a session reference supplied as either a session id or a session-file path."
+    case .resolveReferences:
+      return "Resolve triggered references declared for a session using explicit target paths and request flags."
     case .traceSession:
       return "Trace a session into persona/directive/kits/intents/skills/essentials edges."
     case .validate:
@@ -76,7 +79,7 @@ enum MCPToolName: String, CaseIterable {
         ],
         "additionalProperties": false,
       ]
-    case .export, .graph:
+    case .graph:
       let properties: Value = [
         "personaId": [
           "type": "string",
@@ -89,6 +92,44 @@ enum MCPToolName: String, CaseIterable {
         "kits": [
           "type": "array",
           "description": "Optional kit id overrides",
+          "items": [
+            "type": "string"
+          ],
+        ],
+      ]
+      return [
+        "type": "object",
+        "properties": properties,
+        "required": ["personaId", "directiveId"],
+        "additionalProperties": false,
+      ]
+    case .export, .resolveReferences:
+      let properties: Value = [
+        "personaId": [
+          "type": "string",
+          "description": "Persona id",
+        ],
+        "directiveId": [
+          "type": "string",
+          "description": "Directive id",
+        ],
+        "kits": [
+          "type": "array",
+          "description": "Optional kit id overrides",
+          "items": [
+            "type": "string"
+          ],
+        ],
+        "targetPaths": [
+          "type": "array",
+          "description": "Optional target file paths used when evaluating references.",
+          "items": [
+            "type": "string"
+          ],
+        ],
+        "flags": [
+          "type": "array",
+          "description": "Optional request flags used when evaluating references.",
           "items": [
             "type": "string"
           ],
@@ -196,6 +237,7 @@ enum MCPEntityType: String, CaseIterable {
   case kit
   case session
   case intent
+  case reference
   case skill
   case essential
 }

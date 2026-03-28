@@ -7,6 +7,7 @@ enum MCPToolPayloads {
       let kits: Int
       let directives: Int
       let intents: Int
+      let references: Int
       let skills: Int
       let essentials: Int
     }
@@ -22,6 +23,7 @@ enum MCPToolPayloads {
         kits: result.counts.kits,
         directives: result.counts.directives,
         intents: result.counts.intents,
+        references: result.counts.references,
         skills: result.counts.skills,
         essentials: result.counts.essentials
       )
@@ -51,6 +53,7 @@ enum MCPToolPayloads {
     let title: String
     let goal: String
     let requiredIntentIds: [String]
+    let referenceIds: [String]
     let requiredSkillIds: [String]
     let stepsCount: Int
     let reviewStepCount: Int
@@ -70,6 +73,7 @@ enum MCPToolPayloads {
     let name: String
     let summary: String
     let essentialIds: [String]
+    let referenceIds: [String]
     let intentTemplateIds: [String]
     let skillIds: [String]
   }
@@ -79,9 +83,17 @@ enum MCPToolPayloads {
     let description: String
     let parameterConstraints: [String]
     let includesEssentialIds: [String]
+    let referenceIds: [String]
     let requiresSkillIds: [String]
     let riskLevel: String
     let requiresHumanReview: Bool
+  }
+
+  struct ReferenceExplainData: Encodable {
+    let name: String
+    let summary: String
+    let triggerSummaries: [String]
+    let resolvedBodyPath: String?
   }
 
   struct SkillExplainData: Encodable {
@@ -207,6 +219,7 @@ enum MCPToolPayloads {
     let directiveId: String
     let kitIds: [String]
     let essentialIds: [String]
+    let availableReferenceIds: [String]
     let intentIds: [String]
     let skillIds: [String]
     let skillAuthorization: SessionTraceSkillAuthorization
@@ -225,11 +238,14 @@ enum MCPToolPayloads {
     let personaDefaultKitIds: [String]
     let sessionKitOverrideIds: [String]
     let directiveIntentIds: [String]
+    let directiveReferenceIds: [String]
     let directiveSkillIds: [String]
     let kitToEssentials: [SessionTraceEdgeMap]
+    let kitToReferences: [SessionTraceEdgeMap]
     let kitToIntents: [SessionTraceEdgeMap]
     let kitToSkills: [SessionTraceEdgeMap]
     let intentToEssentials: [SessionTraceEdgeMap]
+    let intentToReferences: [SessionTraceEdgeMap]
     let intentToSkills: [SessionTraceEdgeMap]
     let systemEssentialIds: [String]
   }

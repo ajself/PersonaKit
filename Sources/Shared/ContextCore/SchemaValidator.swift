@@ -44,6 +44,7 @@ struct SchemaValidator {
     SchemaMapping(directory: "kits", suffix: ".kit.json", schemaName: "kit.schema.json"),
     SchemaMapping(directory: "directives", suffix: ".directive.json", schemaName: "directive.schema.json"),
     SchemaMapping(directory: "intents", suffix: ".intent.json", schemaName: "intentTemplate.schema.json"),
+    SchemaMapping(directory: "references", suffix: ".reference.json", schemaName: "reference.schema.json"),
     SchemaMapping(directory: "skills", suffix: ".skill.json", schemaName: "skill.schema.json"),
   ]
 

@@ -98,6 +98,7 @@ func writeDirective(
     verification: templateDirective.verification,
     requiresIntentTemplateIds: templateDirective.requiresIntentTemplateIds,
     requiresSkillIds: templateDirective.requiresSkillIds,
+    referenceIds: templateDirective.referenceIds,
     workstream: workstream
   )
 

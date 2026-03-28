@@ -121,6 +121,21 @@ enum ValidatorReferenceChecker {
           )
         }
       }
+
+      for referenceId in kit.referenceIds ?? [] {
+        if registry.referencesById[referenceId] == nil {
+          errors.append(
+            ValidationError(
+              entityType: .kit,
+              entityId: kit.id,
+              field: "referenceIds",
+              missingId: referenceId,
+              expectedPath: nil,
+              message: "Missing reference id \"\(referenceId)\"."
+            )
+          )
+        }
+      }
     }
 
     for directive in registry.directives {
@@ -151,6 +166,21 @@ enum ValidatorReferenceChecker {
               missingId: skillId,
               expectedPath: nil,
               message: "Missing skill id \"\(skillId)\"."
+            )
+          )
+        }
+      }
+
+      for referenceId in directive.referenceIds ?? [] {
+        if registry.referencesById[referenceId] == nil {
+          errors.append(
+            ValidationError(
+              entityType: .directive,
+              entityId: directive.id,
+              field: "referenceIds",
+              missingId: referenceId,
+              expectedPath: nil,
+              message: "Missing reference id \"\(referenceId)\"."
             )
           )
         }
@@ -210,6 +240,21 @@ enum ValidatorReferenceChecker {
         }
       }
 
+      for referenceId in intent.referenceIds ?? [] {
+        if registry.referencesById[referenceId] == nil {
+          errors.append(
+            ValidationError(
+              entityType: .intent,
+              entityId: intent.id,
+              field: "referenceIds",
+              missingId: referenceId,
+              expectedPath: nil,
+              message: "Missing reference id \"\(referenceId)\"."
+            )
+          )
+        }
+      }
+
       for constraint in intent.parameterConstraints ?? [] {
         switch constraint.kind {
         case "allDistinct":
@@ -262,6 +307,86 @@ enum ValidatorReferenceChecker {
                 missingId: parameterName,
                 expectedPath: nil,
                 message: "Constraint references missing parameter name \"\(parameterName)\"."
+              )
+            )
+          }
+        }
+      }
+    }
+
+    let decoder = JSONDecoder()
+    for root in scopes.loadOrder {
+      try ValidatorSupport.checkCancellation()
+
+      let referencesURL = PersonaKitDirectory.referencesURL(root: root)
+      var isDirectory: ObjCBool = false
+
+      guard fileManager.fileExists(atPath: referencesURL.path, isDirectory: &isDirectory),
+        isDirectory.boolValue
+      else {
+        continue
+      }
+
+      let files = try fileManager.contentsOfDirectory(
+        at: referencesURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      )
+      let sortedFiles = files
+        .filter { $0.lastPathComponent.hasSuffix(".reference.json") }
+        .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+      for fileURL in sortedFiles {
+        try ValidatorSupport.checkCancellation()
+
+        let data = try Data(contentsOf: fileURL)
+        let reference = try decoder.decode(Reference.self, from: data)
+        let expectedPath = ReferenceSupport.referenceBodyRelativePath(id: reference.id)
+        let bodyURL = root.appendingPathComponent(expectedPath)
+
+        if !fileManager.fileExists(atPath: bodyURL.path) {
+          errors.append(
+            ValidationError(
+              entityType: .reference,
+              entityId: reference.id,
+              field: "body",
+              missingId: reference.id,
+              expectedPath: expectedPath,
+              message: "Missing reference body at \(expectedPath)."
+            )
+          )
+        }
+
+        if reference.triggerRules.isEmpty {
+          errors.append(
+            ValidationError(
+              entityType: .reference,
+              entityId: reference.id,
+              field: "triggerRules",
+              missingId: nil,
+              expectedPath: nil,
+              message: "Reference must declare at least one trigger rule."
+            )
+          )
+        }
+
+        for (ruleIndex, triggerRule) in reference.triggerRules.enumerated() {
+          let pathGlobs = (triggerRule.pathGlobs ?? []).map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+          }
+          let requestFlags = (triggerRule.requestFlags ?? []).map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+          }
+
+          if pathGlobs.allSatisfy(\.isEmpty) && requestFlags.allSatisfy(\.isEmpty) {
+            errors.append(
+              ValidationError(
+                entityType: .reference,
+                entityId: reference.id,
+                field: "triggerRules[\(ruleIndex)]",
+                missingId: nil,
+                expectedPath: nil,
+                message: "Trigger rule must declare at least one non-empty pathGlobs or requestFlags value."
               )
             )
           }

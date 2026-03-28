@@ -1,0 +1,19 @@
+{
+  "id": "swiftui-style-guide-reference",
+  "version": "1.0",
+  "name": "SwiftUI Style Guide Reference",
+  "summary": "Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.",
+  "triggerRules": [
+    {
+      "requestFlags": [
+        "swiftui"
+      ]
+    },
+    {
+      "pathGlobs": [
+        "**/*View.swift",
+        "**/Views/**/*.swift"
+      ]
+    }
+  ]
+}

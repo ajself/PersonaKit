@@ -46,6 +46,10 @@ struct MCPToolService: Sendable {
       let input = try parseSessionArguments(arguments)
       let output = try graphTool(input: input)
       return CallTool.Result(content: [.text(output)])
+    case .resolveReferences:
+      let input = try parseSessionArguments(arguments)
+      let output = try resolveReferencesTool(input: input)
+      return CallTool.Result(content: [.text(output)])
     case .explainEntity:
       let input = try parseEntityArguments(arguments)
       let output = try explainEntityTool(input: input)

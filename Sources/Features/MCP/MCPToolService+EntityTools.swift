@@ -44,6 +44,7 @@ extension MCPToolService {
             title: directive.title,
             goal: directive.goal,
             requiredIntentIds: MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+            referenceIds: MCPInternalSupport.uniqueSorted(directive.referenceIds ?? []),
             requiredSkillIds: MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
             stepsCount: directive.steps.count,
             reviewStepCount: reviewStepCount,
@@ -65,6 +66,7 @@ extension MCPToolService {
             name: kit.name,
             summary: kit.summary,
             essentialIds: MCPInternalSupport.uniqueSorted(kit.essentialIds),
+            referenceIds: MCPInternalSupport.uniqueSorted(kit.referenceIds ?? []),
             intentTemplateIds: MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
             skillIds: MCPInternalSupport.uniqueSorted(kit.skillIds ?? [])
           )
@@ -85,9 +87,32 @@ extension MCPToolService {
             description: intent.description,
             parameterConstraints: intent.parameterConstraints?.map(MCPInternalSupport.parameterConstraintSummary) ?? [],
             includesEssentialIds: MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
+            referenceIds: MCPInternalSupport.uniqueSorted(intent.referenceIds ?? []),
             requiresSkillIds: MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
             riskLevel: intent.risk.level,
             requiresHumanReview: intent.risk.requiresHumanReview
+          )
+        )
+      )
+    case .reference:
+      guard let reference = registry.referencesById[input.id] else {
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .reference, id: input.id)
+        )
+      }
+      return try MCPInternalSupport.encodeToolJSON(
+        MCPToolPayloads.ExplainPayload(
+          entityType: input.entityType.rawValue,
+          id: input.id,
+          data: MCPToolPayloads.ReferenceExplainData(
+            name: reference.name,
+            summary: reference.summary,
+            triggerSummaries: reference.triggerRules.map(ReferenceSupport.triggerSummary(for:)),
+            resolvedBodyPath: ReferenceSupport.resolveReferenceBodyURL(
+              id: reference.id,
+              scopes: scopes,
+              fileManager: .default
+            )?.path
           )
         )
       )
@@ -338,6 +363,7 @@ extension MCPToolService {
         ],
         lists: [
           "requiresIntentTemplateIds": MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+          "referenceIds": MCPInternalSupport.uniqueSorted(directive.referenceIds ?? []),
           "requiresSkillIds": MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
           "acceptanceCriteria": MCPInternalSupport.uniqueSorted(directive.acceptanceCriteria),
         ]
@@ -357,6 +383,7 @@ extension MCPToolService {
         ],
         lists: [
           "essentialIds": MCPInternalSupport.uniqueSorted(kit.essentialIds),
+          "referenceIds": MCPInternalSupport.uniqueSorted(kit.referenceIds ?? []),
           "intentTemplateIds": MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
           "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? []),
         ]
@@ -393,7 +420,27 @@ extension MCPToolService {
             (intent.parameterConstraints ?? []).map(MCPInternalSupport.parameterConstraintSummary)
           ),
           "includesEssentialIds": MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
+          "referenceIds": MCPInternalSupport.uniqueSorted(intent.referenceIds ?? []),
           "requiresSkillIds": MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
+        ]
+      )
+    case .reference:
+      guard let reference = registry.referencesById[id] else {
+        throw MCPError.invalidParams(
+          MCPInternalSupport.missingEntityMessage(entityType: .reference, id: id)
+        )
+      }
+      return MCPToolPayloads.EntityComparableSnapshot(
+        scalars: [
+          "id": reference.id,
+          "name": reference.name,
+          "summary": reference.summary,
+          "version": reference.version,
+        ],
+        lists: [
+          "triggerSummaries": MCPInternalSupport.uniqueSorted(
+            reference.triggerRules.map(ReferenceSupport.triggerSummary(for:))
+          )
         ]
       )
     case .skill:

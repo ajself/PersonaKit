@@ -97,6 +97,8 @@ struct StudioDiagnosticsPanelView: View {
       return .skills
     case .essentials:
       return .essentials
+    case .reference:
+      return .essentials
     }
   }
 
@@ -151,6 +153,8 @@ struct StudioDiagnosticsPanelView: View {
       return removingSuffix(".skill.json", from: lastPathComponent)
     case .essentials:
       return removingSuffix(".md", from: lastPathComponent)
+    case .reference:
+      return removingSuffix(".reference.json", from: lastPathComponent)
     }
   }
 

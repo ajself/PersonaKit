@@ -28,6 +28,7 @@ public struct GraphPrinter {
       "- intent:\($0)"
     }
     let directiveSkillLines = uniqueSorted(directive.requiresSkillIds).map { "- skill:\($0)" }
+    let directiveReferenceLines = uniqueSorted(directive.referenceIds ?? []).map { "- reference:\($0)" }
     let kitsToEssentialsLines = appliedKits.flatMap { kit -> [String] in
       var lines: [String] = [kit.id]
       let essentials = uniqueSorted(kit.essentialIds)
@@ -46,12 +47,27 @@ public struct GraphPrinter {
       lines.append(contentsOf: skills.map { "  - skill:\($0)" })
       return lines
     }
+    let kitsToReferenceLines = appliedKits.flatMap { kit -> [String] in
+      var lines: [String] = [kit.id]
+      let references = uniqueSorted(kit.referenceIds ?? [])
+      lines.append(contentsOf: references.map { "  - reference:\($0)" })
+      return lines
+    }
     let resolvedEssentialLines =
       SystemEssentials
       .sortEssentialIdsForResolvedOutput(resolvedSession.essentials.map(\.id))
       .map { "- \($0)" }
     let resolvedIntentLines = resolvedSession.intents.map { $0.id }.sorted().map { "- \($0)" }
+    let resolvedReferenceLines = resolvedSession.availableReferences.map(\.id).sorted().map { "- \($0)" }
     let resolvedSkillLines = resolvedSession.skills.map { $0.id }.sorted().map { "- \($0)" }
+    let intentToReferenceLines = resolvedSession.intents
+      .sorted { $0.id < $1.id }
+      .flatMap { intent -> [String] in
+        var lines: [String] = [intent.id]
+        let references = uniqueSorted(intent.referenceIds ?? [])
+        lines.append(contentsOf: references.map { "  - reference:\($0)" })
+        return lines
+      }
     var lines = [String]()
     var finalLines = ["Essentials:"]
 
@@ -66,9 +82,12 @@ public struct GraphPrinter {
     appendSection("## Applied kits (after overrides)", body: appliedKitLines, to: &lines)
     appendSection("## Kits \u{2192} Essentials", body: kitsToEssentialsLines, to: &lines)
     appendSection("## Kits \u{2192} Intent templates", body: kitsToIntentLines, to: &lines)
+    appendSection("## Kits \u{2192} References", body: kitsToReferenceLines, to: &lines)
     appendSection("## Kits \u{2192} Skills", body: kitsToSkillLines, to: &lines)
     appendSection("## Directive \u{2192} Intent templates", body: directiveIntentLines, to: &lines)
+    appendSection("## Directive \u{2192} References", body: directiveReferenceLines, to: &lines)
     appendSection("## Directive \u{2192} Skills", body: directiveSkillLines, to: &lines)
+    appendSection("## Intent templates \u{2192} References", body: intentToReferenceLines, to: &lines)
     appendSection(
       "## Skill Contract",
       body: skillContractLines(for: resolvedSession.skillAuthorization),
@@ -83,6 +102,8 @@ public struct GraphPrinter {
     }
 
     finalLines.append(contentsOf: resolvedEssentialLines)
+    finalLines.append("References:")
+    finalLines.append(contentsOf: resolvedReferenceLines)
     finalLines.append("Intents:")
     finalLines.append(contentsOf: resolvedIntentLines)
     finalLines.append("Skills:")

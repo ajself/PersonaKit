@@ -42,12 +42,114 @@ public struct ResolvedEssential: Equatable, Sendable {
   }
 }
 
+/// Source edge for a reference declared by a resolved session component.
+public struct ResolvedReferenceSource: Codable, Equatable, Sendable {
+  public let sourceType: ResolverEntityType
+  public let sourceId: String
+  public let field: String
+
+  public init(
+    sourceType: ResolverEntityType,
+    sourceId: String,
+    field: String
+  ) {
+    self.sourceType = sourceType
+    self.sourceId = sourceId
+    self.field = field
+  }
+}
+
+/// Reference metadata made available to a resolved session without inlining its body.
+public struct ResolvedReference: Codable, Equatable, Sendable {
+  public let id: String
+  public let name: String
+  public let summary: String
+  public let triggerRules: [ReferenceTriggerRule]
+  public let sources: [ResolvedReferenceSource]
+
+  public init(
+    id: String,
+    name: String,
+    summary: String,
+    triggerRules: [ReferenceTriggerRule],
+    sources: [ResolvedReferenceSource]
+  ) {
+    self.id = id
+    self.name = name
+    self.summary = summary
+    self.triggerRules = triggerRules
+    self.sources = sources
+  }
+}
+
+/// Deterministic trigger inputs supplied by callers when evaluating references.
+public struct ReferenceSelectionInput: Equatable, Sendable {
+  public let targetPaths: [String]
+  public let requestFlags: [String]
+
+  public init(
+    targetPaths: [String],
+    requestFlags: [String]
+  ) {
+    self.targetPaths = Set(targetPaths.map(normalizeReferenceTargetPath)).sorted()
+    self.requestFlags = Set(requestFlags.map(normalizeReferenceRequestFlag)).sorted()
+  }
+
+  public var isEmpty: Bool {
+    targetPaths.isEmpty && requestFlags.isEmpty
+  }
+}
+
+/// Deterministic reason explaining how a single trigger rule matched.
+public struct ResolvedReferenceMatchRule: Codable, Equatable, Sendable {
+  public let ruleIndex: Int
+  public let matchedPathGlobs: [String]
+  public let matchedPaths: [String]
+  public let matchedRequestFlags: [String]
+
+  public init(
+    ruleIndex: Int,
+    matchedPathGlobs: [String],
+    matchedPaths: [String],
+    matchedRequestFlags: [String]
+  ) {
+    self.ruleIndex = ruleIndex
+    self.matchedPathGlobs = matchedPathGlobs
+    self.matchedPaths = matchedPaths
+    self.matchedRequestFlags = matchedRequestFlags
+  }
+}
+
+/// Reference selected for expansion, with deterministic match reasons.
+public struct ResolvedReferenceMatch: Codable, Equatable, Sendable {
+  public let id: String
+  public let name: String
+  public let summary: String
+  public let sources: [ResolvedReferenceSource]
+  public let matchedRules: [ResolvedReferenceMatchRule]
+
+  public init(
+    id: String,
+    name: String,
+    summary: String,
+    sources: [ResolvedReferenceSource],
+    matchedRules: [ResolvedReferenceMatchRule]
+  ) {
+    self.id = id
+    self.name = name
+    self.summary = summary
+    self.sources = sources
+    self.matchedRules = matchedRules
+  }
+}
+
 /// Fully resolved PersonaKit entities for a single session.
 public struct ResolvedSession: Sendable {
   public let persona: Persona
   public let directive: Directive
   public let kits: [Kit]
   public let essentials: [ResolvedEssential]
+  public let availableReferences: [ResolvedReference]
   public let intents: [IntentTemplate]
   public let skills: [Skill]
   public let skillAuthorization: ResolvedSkillAuthorization
@@ -57,6 +159,7 @@ public struct ResolvedSession: Sendable {
     directive: Directive,
     kits: [Kit],
     essentials: [ResolvedEssential],
+    availableReferences: [ResolvedReference],
     intents: [IntentTemplate],
     skills: [Skill],
     skillAuthorization: ResolvedSkillAuthorization
@@ -65,6 +168,7 @@ public struct ResolvedSession: Sendable {
     self.directive = directive
     self.kits = kits
     self.essentials = essentials
+    self.availableReferences = availableReferences
     self.intents = intents
     self.skills = skills
     self.skillAuthorization = skillAuthorization
@@ -72,7 +176,7 @@ public struct ResolvedSession: Sendable {
 }
 
 /// Entity categories used to attribute resolution failures.
-public enum ResolverEntityType: String, Sendable {
+public enum ResolverEntityType: String, Codable, Equatable, Sendable {
   case sessionDefinition = "session"
   case persona
   case kit
@@ -105,6 +209,7 @@ public enum ResolverError: Error, Equatable {
   case missingDirective(field: String, id: String)
   case missingKitId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingIntentId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
+  case missingReferenceId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
   case unauthorizedSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
@@ -126,6 +231,8 @@ public enum ResolverError: Error, Equatable {
     case .missingKitId(let sourceType, _, _, _):
       return sourceType
     case .missingIntentId(let sourceType, _, _, _):
+      return sourceType
+    case .missingReferenceId(let sourceType, _, _, _):
       return sourceType
     case .missingSkillId(let sourceType, _, _, _):
       return sourceType
@@ -149,6 +256,8 @@ public enum ResolverError: Error, Equatable {
       return sourceId
     case .missingIntentId(_, let sourceId, _, _):
       return sourceId
+    case .missingReferenceId(_, let sourceId, _, _):
+      return sourceId
     case .missingSkillId(_, let sourceId, _, _):
       return sourceId
     case .conflictingPersonaSkillId(let sourceId, _, _):
@@ -170,6 +279,8 @@ public enum ResolverError: Error, Equatable {
     case .missingKitId(_, _, let field, _):
       return field
     case .missingIntentId(_, _, let field, _):
+      return field
+    case .missingReferenceId(_, _, let field, _):
       return field
     case .missingSkillId(_, _, let field, _):
       return field
@@ -193,6 +304,8 @@ public enum ResolverError: Error, Equatable {
       return missingId
     case .missingIntentId(_, _, _, let missingId):
       return missingId
+    case .missingReferenceId(_, _, _, let missingId):
+      return missingId
     case .missingSkillId(_, _, _, let missingId):
       return missingId
     case .conflictingPersonaSkillId(_, _, let missingId):
@@ -215,6 +328,8 @@ public enum ResolverError: Error, Equatable {
       return "Missing kit id."
     case .missingIntentId:
       return "Missing intent template id."
+    case .missingReferenceId:
+      return "Missing reference id."
     case .missingSkillId:
       return "Missing skill id."
     case .conflictingPersonaSkillId:
@@ -225,6 +340,19 @@ public enum ResolverError: Error, Equatable {
       return "Missing essential file at \(expectedPath)."
     }
   }
+}
+
+private func normalizeReferenceTargetPath(_ path: String) -> String {
+  let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+  let normalized = trimmed.replacingOccurrences(of: "\\", with: "/")
+  if normalized.hasPrefix("./") {
+    return String(normalized.dropFirst(2))
+  }
+  return normalized
+}
+
+private func normalizeReferenceRequestFlag(_ flag: String) -> String {
+  flag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 }
 
 /// Aggregate resolution failure with deterministic sorting.

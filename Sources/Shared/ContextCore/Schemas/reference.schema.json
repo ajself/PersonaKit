@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reference.schema.json",
+  "title": "Reference",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "triggerRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pathGlobs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "name",
+    "summary",
+    "triggerRules"
+  ]
+}

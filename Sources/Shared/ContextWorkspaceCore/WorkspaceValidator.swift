@@ -74,6 +74,8 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       return .directive
     case .intent:
       return .intent
+    case .reference:
+      return .reference
     case .skill:
       return .skill
     case .essentials:

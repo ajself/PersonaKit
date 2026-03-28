@@ -22,10 +22,38 @@ extension MCPToolService {
         scopes: scopes,
         personaId: input.personaId,
         directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides
+        kitOverrides: input.kitOverrides,
+        targetPaths: input.targetPaths,
+        requestFlags: input.requestFlags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))
+    }
+  }
+
+  func resolveReferencesTool(input: MCPToolArguments) throws -> String {
+    do {
+      let result = try WorkflowReferenceResolver.resolve(
+        scopes: scopes,
+        personaId: input.personaId,
+        directiveId: input.directiveId,
+        kitOverrides: input.kitOverrides,
+        input: ReferenceSelectionInput(
+          targetPaths: input.targetPaths,
+          requestFlags: input.requestFlags
+        )
+      )
+      return try MCPInternalSupport.encodeToolJSON(result)
+    } catch let error as ReferenceLookupError {
+      switch error {
+      case .validationFailed(let result):
+        let lines = [result.summary] + result.errors.map { $0.lineDescription() }
+        throw MCPError.invalidParams(lines.joined(separator: "\n"))
+      case .resolutionFailed(let resolutionError):
+        throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(resolutionError.errors))
+      case .referenceResolutionFailed(let resolutionError):
+        throw MCPError.invalidParams("Error: \(resolutionError.message)")
+      }
     }
   }
 
@@ -150,12 +178,26 @@ extension MCPToolService {
         targetIds: MCPInternalSupport.uniqueSorted($0.skillIds ?? [])
       )
     }
+    let kitToReferences = appliedKits.map {
+      MCPToolPayloads.SessionTraceEdgeMap(
+        sourceId: $0.id,
+        targetIds: MCPInternalSupport.uniqueSorted($0.referenceIds ?? [])
+      )
+    }
     let intentToEssentials = resolved.intents
       .sorted { $0.id < $1.id }
       .map {
         MCPToolPayloads.SessionTraceEdgeMap(
           sourceId: $0.id,
           targetIds: MCPInternalSupport.uniqueSorted($0.includesEssentialIds)
+        )
+      }
+    let intentToReferences = resolved.intents
+      .sorted { $0.id < $1.id }
+      .map {
+        MCPToolPayloads.SessionTraceEdgeMap(
+          sourceId: $0.id,
+          targetIds: MCPInternalSupport.uniqueSorted($0.referenceIds ?? [])
         )
       }
     let intentToSkills = resolved.intents
@@ -183,6 +225,7 @@ extension MCPToolService {
           directiveId: resolved.directive.id,
           kitIds: resolved.kits.map(\.id).sorted(),
           essentialIds: resolved.essentials.map(\.id),
+          availableReferenceIds: resolved.availableReferences.map(\.id).sorted(),
           intentIds: resolved.intents.map(\.id).sorted(),
           skillIds: resolved.skills.map(\.id).sorted(),
           skillAuthorization: MCPToolPayloads.SessionTraceSkillAuthorization(
@@ -198,11 +241,14 @@ extension MCPToolService {
           personaDefaultKitIds: MCPInternalSupport.uniqueSorted(resolved.persona.defaultKitIds),
           sessionKitOverrideIds: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
           directiveIntentIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresIntentTemplateIds),
+          directiveReferenceIds: MCPInternalSupport.uniqueSorted(resolved.directive.referenceIds ?? []),
           directiveSkillIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresSkillIds),
           kitToEssentials: kitToEssentials,
+          kitToReferences: kitToReferences,
           kitToIntents: kitToIntents,
           kitToSkills: kitToSkills,
           intentToEssentials: intentToEssentials,
+          intentToReferences: intentToReferences,
           intentToSkills: intentToSkills,
           systemEssentialIds: systemEssentialIds
         ),

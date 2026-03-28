@@ -21,6 +21,7 @@ struct MCPToolTests {
         "personakit_graph",
         "personakit_recommend_session",
         "personakit_resolve_contract",
+        "personakit_resolve_references",
         "personakit_resolve_session_ref",
         "personakit_trace_session",
         "personakit_validate",
@@ -233,6 +234,8 @@ struct MCPToolTests {
     let resolved = try #require(object["resolved"] as? [String: Any])
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+    let availableReferenceIds = try #require(resolved["availableReferenceIds"] as? [String])
+    #expect(availableReferenceIds == ["swift-style-guide-reference", "swiftui-style-guide-reference"])
     let essentialIds = try #require(resolved["essentialIds"] as? [String])
     #expect(
       essentialIds == [
@@ -309,6 +312,53 @@ struct MCPToolTests {
 
     let edges = try #require(workstream["edges"] as? [[String: Any]])
     #expect(edges.count == 2)
+  }
+
+  @Test
+  func explainReferenceToolReturnsTriggerMetadata() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_explain_entity",
+      arguments: [
+        "entityType": "reference",
+        "id": "swiftui-style-guide-reference",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    #expect(object["entityType"] as? String == "reference")
+
+    let data = try #require(object["data"] as? [String: Any])
+    let triggerSummaries = try #require(data["triggerSummaries"] as? [String])
+    #expect(triggerSummaries == ["flags=swiftui", "paths=**/*View.swift, **/Views/**/*.swift"])
+  }
+
+  @Test
+  func resolveReferencesToolReturnsMatchedReferences() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_references",
+      arguments: [
+        "personaId": "senior-swiftui-engineer",
+        "directiveId": "apply-style",
+        "targetPaths": ["Sources/FooView.swift"],
+        "flags": ["swiftui"],
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
+
+    #expect(matchedReferences.map { $0["id"] as? String } == [
+      "swift-style-guide-reference",
+      "swiftui-style-guide-reference",
+    ])
   }
 
   @Test

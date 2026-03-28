@@ -27,6 +27,12 @@ struct ResolverTests {
     #expect(session.intents.map { $0.id } == ["swift-refactor-safe"])
     #expect(session.skills.map { $0.id } == ["codex-cli"])
     #expect(
+      session.availableReferences.map(\.id) == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+      ]
+    )
+    #expect(
       session.essentials.map { $0.id } == [
         "persona-activation-contract",
         "skill-authorization-contract",
@@ -148,6 +154,9 @@ struct ResolverTests {
     #expect(session.kits.map { $0.id } == session.kits.map { $0.id }.sorted())
     #expect(session.intents.map { $0.id } == session.intents.map { $0.id }.sorted())
     #expect(session.skills.map { $0.id } == session.skills.map { $0.id }.sorted())
+    #expect(
+      session.availableReferences.map(\.id) == session.availableReferences.map(\.id).sorted()
+    )
     #expect(
       session.essentials.map { $0.id } == [
         "persona-activation-contract",
