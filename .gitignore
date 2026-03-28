@@ -84,3 +84,4 @@ Artifacts/
 .appops/
 .codex/
 Config/Release.local.mk
+.personakit/Orbit/
