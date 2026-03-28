@@ -1,46 +1,46 @@
 {
   "id": "run-gated-worktree-delivery-loop",
-  "version": "1.1",
+  "version": "1.0",
   "title": "Run gated worktree delivery loop",
   "goal": "Deliver the highest-priority bounded objective through deterministic gates in a dedicated non-main worktree with explicit approval control.",
   "steps": [
     {
-      "text": "Review the objective, constraints, approved gate boundary, and `worktree-squad-gating-contract` for this loop."
+      "text": "Review objective, constraints, approved gate boundary, and `worktree-squad-gating-contract` for this loop."
     },
     {
-      "text": "Verify the branch and worktree scope are dedicated and non-main, then record authorization mode before editing."
+      "text": "Verify branch/worktree scope is dedicated and non-main; record commit authorization mode before editing."
     },
     {
-      "text": "Sync with Samwise on orchestration ownership and gate-boundary decisions."
+      "text": "Sync with Samwise on orchestration ownership for this loop and confirm gate boundary decisions."
     },
     {
-      "text": "Choose one bounded work item with explicit acceptance criteria and verification commands."
+      "text": "Decompose objective into smallest reviewable work item with acceptance criteria and verification commands."
     },
     {
-      "text": "Declare lane ownership and write scope for the roles participating in this loop."
+      "text": "Assign lane ownership and write scope for implementation, reliability, design QA, and product QA."
     },
     {
-      "text": "Implement only the selected work item, then run the required verification checks and record evidence."
+      "text": "Implement only the selected work item, then run required verification checks and record evidence."
     },
     {
       "text": "Pause for AJ review before crossing the next gate or creating a commit when per-commit approval mode is active.",
       "requiresReview": true
     },
     {
-      "text": "Apply approved follow-up actions, append the loop entry with `worktree-squad-loop-log-contract`, update checkpoint summary, and emit the next queued actions for resume."
+      "text": "Apply approved follow-up actions, append one loop entry using `worktree-squad-loop-log-contract` with derived workstream routing when the active directive is workstream-aware, update checkpoint summary, and emit next 3 queued actions for resume."
     },
     {
-      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review`, produce the retrospective report, and append the retrospective entry with `worktree-squad-retrospective-log-contract`."
+      "text": "When assignment scope is complete, run `worktree-squad-retrospective-review`, produce the retrospective report, and append one retrospective entry using `worktree-squad-retrospective-log-contract` with derived workstream routing when the active directive is workstream-aware."
     }
   ],
   "acceptanceCriteria": [
     "Active branch/worktree scope and authorization mode are explicitly recorded",
     "Exactly one bounded work item is completed per loop unless AJ expands scope",
     "Verification evidence is captured for required checks",
-    "Staff-level code review findings are recorded with blocker, major, and minor severity",
+    "Staff-level code review findings are recorded with blocker/major/minor severity",
     "Samwise orchestration sync is recorded for lane ownership and gate decisions",
-    "One loop entry is appended per completed loop",
-    "Assignment closeout includes a retrospective report and retrospective JSONL entry when scope completes",
+    "One loop entry is appended per completed loop, including derived workstream routing when the active directive is workstream-aware",
+    "Assignment closeout includes a retrospective report and retrospective JSONL entry with derived workstream routing when the active directive is workstream-aware",
     "Gate status and residual risks are updated in checkpoint notes",
     "No commit occurs without AJ-approved authorization mode for the current scope"
   ],
@@ -60,6 +60,10 @@
     {
       "kind": "manual",
       "text": "Confirm loop entries satisfy `worktree-squad-loop-log-contract` and retrospective closeout satisfies `worktree-squad-retrospective-log-contract`"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm workstream-aware loop and retrospective entries record current session, next sessions, and required closeout routing as derived visibility only"
     },
     {
       "kind": "manual",

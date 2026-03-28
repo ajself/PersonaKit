@@ -1,29 +1,29 @@
 {
   "id": "run-orbit-rerun-startup",
-  "version": "1.1",
+  "version": "1.0",
   "title": "Run Orbit rerun startup",
   "goal": "Let Samwise stage a fresh main-based Orbit build attempt, freeze the execution contract, and hand the approved lane contract to the dedicated Orbit rerun execution session.",
   "steps": [
     {
-      "text": "Load the active Orbit execution artifacts plus the explicit handoff artifacts named by the intent parameters."
+      "text": "Load the active Orbit execution artifacts plus the explicit handoff artifacts named by the intent parameters, beginning with `Docs/Orbit/Execution/Orbit-Build-Rerun-Checklist.md`, `Docs/Orbit/Execution/Orbit-Product-Acceptance-Checklist.md`, the explicit `rerunPrepPath`, and the explicit `retrospectivePath`."
     },
     {
       "text": "Summarize the current attempt contract: first-slice scope, required participants, required evidence, required product gates, and the hybrid retrospective closeout rule."
     },
     {
-      "text": "Confirm the approved lane contract from the repo root. If AJ approves live execution during this startup pass, materialize and bootstrap the lane worktree and run baseline validation there; otherwise keep the lane staged and stop before implementation."
+      "text": "Confirm the approved lane contract from the repo root. If AJ approves live execution during this startup pass, materialize/bootstrap the lane worktree and run baseline validation there; otherwise keep the lane staged and stop before implementation."
     },
     {
       "text": "Record the active participants for this attempt and the concrete evidence expected from each role before implementation begins."
     },
     {
-      "text": "Hand the approved lane contract, and if already materialized the live lane, to `samwise-orbit-rerun-execution` once startup prerequisites are green."
+      "text": "Hand the approved lane contract, and if already materialized the live lane, to `samwise-orbit-rerun-execution` once startup prerequisites are green, and do not let this startup session stand in for the required multiagent execution loop."
     },
     {
-      "text": "Record the exact attempt-specific product, interaction, validation, participant-evidence, red-pen, evidence-packet, and retrospective artifact paths plus the review gates that the execution session must satisfy."
+      "text": "Record the exact attempt-specific product, interaction, validation, participant-evidence, red-pen, evidence-packet, and retrospective artifact paths plus the review gates that the execution session must satisfy before any `review-ready` or `MVP candidate` language is allowed."
     },
     {
-      "text": "Update the rerun-prep artifact with startup state, lane identity, any pinned start point, the required session map, the attempt-specific artifact paths, and the execution handoff note."
+      "text": "Update the rerun-prep artifact with startup state, lane identity, any pinned start point, the required session map, the exact attempt-specific artifact paths, and the execution-handoff/materialization note."
     },
     {
       "text": "Pause for AJ review if startup prerequisites are not green, the required session routing is missing, or a structural workflow gap is discovered before the live execution handoff.",
@@ -53,6 +53,10 @@
     {
       "kind": "manual",
       "text": "Confirm the rerun-prep artifact was updated with startup state, lane identity, any pinned start point, and handoff conditions"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm retrospective closeout remains owned by `samwise-orbit-rerun-execution` instead of being treated as part of the startup session itself"
     },
     {
       "kind": "command",

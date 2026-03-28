@@ -1,76 +1,34 @@
 # Pack Gardening Standards
 
-Use this essential to keep Packs and Sessions accurate as project phases evolve.
+Use this runtime standard to keep packs and sessions aligned to current project workflows.
+For full maintenance detail, see `pack-gardening-standards-reference`.
 
-## Objectives
+## Core Rules
 
-1. Keep active packs aligned to current project workflows.
-2. Keep sessions accurate, discoverable, and phase-appropriate.
-3. Record drift, decisions, and follow-up items in stable logs.
-4. Improve incrementally without broad, speculative rewrites.
+1. Keep active packs aligned to current workflows and phase boundaries.
+2. Keep sessions accurate, discoverable, and reviewable.
+3. Record decisions and drift in canonical gardening logs.
+4. Improve incrementally; avoid broad speculative rewrites.
 
-## Required Logs
+## Root Boundary Rules
 
-For each project using this pack, maintain:
+1. `.personakit` keeps plain ids for repo-owned entities.
+2. `~/.personakit` should use namespaced ids for AJ baseline entities when a repo-local plain id already exists.
+3. Allow same-id entities across roots only when they are intentionally universal and byte-identical.
 
-1. `Docs/PersonaKit/Development/pack-gardener-log.md`
-2. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
-3. `Docs/PersonaKit/Development/logs/gardening-events.schema.json`
-4. `Docs/Archive/PersonaKit/Plans/Archive/pack-session-improvement-backlog.md`
-5. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.jsonl`
-6. `Docs/PersonaKit/Development/logs/gardening-health-snapshots.schema.json`
-7. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.jsonl`
-8. `Docs/PersonaKit/Development/logs/gardening-recommendation-feedback.schema.json`
-9. `Docs/PersonaKit/Development/logs/gardening-recommendations.jsonl`
-10. `Docs/PersonaKit/Development/logs/gardening-recommendations.schema.json`
-11. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
-12. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.schema.json`
-13. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
-14. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.schema.json`
-15. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
-16. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.schema.json`
+## Prompt-Budget Guardrails
 
-`pack-gardener-log.md` is a generated projection over `gardening-events.jsonl`.
-Update the canonical JSONL first, then refresh the markdown projection.
+1. Style and review session exports should target `<= 20 KB`.
+2. Orchestration and workflow session exports should target `<= 30 KB`.
+3. Any session over `35 KB` needs explicit justification.
+4. Any essential over roughly `4 KB` included by a core kit should be split into:
+   - a short runtime form
+   - and a reference, template, or checklist companion
+5. Any directive over roughly `4 KB` should be reviewed for schema or template prose that belongs elsewhere.
 
-## Maintenance Cadence
+## Execution Guardrails
 
-Run a maintenance pass:
-
-1. At phase kickoff.
-2. At major milestone transitions.
-3. At phase closeout.
-
-Run `gardening-v2-checklist` during every maintenance pass.
-At milestone/phase closeout, use the repo closeout checklist if available and
-log the result in maintenance records.
-
-## Required Log Fields
-
-Each log entry should include:
-
-- date
-- phase/milestone label
-- observed drift or mismatch
-- decision taken
-- affected IDs (persona/kit/directive/session)
-- verification status
-
-Each JSONL entry should follow `gardening-log-contract` required fields.
-Each maintenance pass should also record one health snapshot and any accepted
-or deferred recommendation outcomes.
-Recommendation updates should include ranked `GREC-*` entries with deterministic
-score breakdown and explanation fields.
-Each maintenance pass should record coverage snapshot, policy-conflict detector
-status, and self-gardening safety preflight status.
-Refresh generated log projections after canonical JSONL updates.
-
-## Guardrails
-
-- No broad renaming without migration notes.
-- No deleting sessions without replacement or deprecation note.
-- No scope expansion beyond pack/session maintenance intent.
-- Revalidate after edits.
-- Keep analysis-only and execution phases explicitly separated.
-- Self-gardening is allowed, but follows the same analysis-only, review, and
-  approved-execution flow as any other gardening pass.
+1. No broad renaming without migration notes.
+2. No deleting sessions without replacement or deprecation note.
+3. Revalidate after edits.
+4. Keep analysis-only and execution phases explicit.

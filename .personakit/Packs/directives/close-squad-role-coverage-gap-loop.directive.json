@@ -2,16 +2,16 @@
   "id": "close-squad-role-coverage-gap-loop",
   "version": "1.0",
   "title": "Close approved squad role-coverage gaps",
-  "goal": "Remediate approved missing-role or covered-with-gaps findings from a squad-planning pass and return a cleaner handoff for execution or further planning.",
+  "goal": "Remediate approved role-coverage gaps from planning and return a cleaner handoff for execution or further planning.",
   "steps": [
     {
       "text": "Load the target planning report and machine-readable planning log entry."
     },
     {
-      "text": "Select only AJ-approved role gaps for remediation and map each gap to the smallest sufficient follow-up path: reverse-interview, hiring-gap remediation, bounded pack updates, or explicit defer."
+      "text": "Select only AJ-approved role gaps and map each to the smallest sufficient follow-up path: reverse-interview, hiring-gap remediation, bounded pack updates, or explicit defer."
     },
     {
-      "text": "When a role depends on a new or uncertain persona, route through `samwise-persona-hiring` first and use `samwise-persona-hiring-calibration` if approved gap closure requires structural artifact updates."
+      "text": "When a role depends on a new or uncertain persona, route through `samwise-persona-hiring` first and use `samwise-persona-hiring-calibration` only when approved closure needs structural artifact updates."
     },
     {
       "text": "Draft bounded remediation changes with explicit role owners, updated definition of done, and validation checks for the first blocked checkpoint."
@@ -21,7 +21,7 @@
       "requiresReview": true
     },
     {
-      "text": "Apply only approved updates and run PersonaKit validation plus squad-planning-log checks, and run hiring-log checks only when the remediation path updated hiring artifacts."
+      "text": "Apply only approved updates and run PersonaKit validation plus squad-planning-log checks, and run hiring-log checks only when hiring artifacts changed."
     },
     {
       "text": "Write remediation status back into the planning report and planning JSONL stream, including updated role coverage, any related hiring review IDs, and the recommended next session."

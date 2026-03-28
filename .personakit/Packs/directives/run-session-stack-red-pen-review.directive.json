@@ -1,38 +1,35 @@
 {
   "id": "run-session-stack-red-pen-review",
-  "version": "1.0",
+  "version": "1.1",
   "title": "Run session stack red-pen review",
   "goal": "Let Samwise review a PersonaKit session stack through PersonaKit MCP first, score its safety and likely deliverable quality, red-pen the highest-leverage weaknesses, and persist a durable review artifact before recommending follow-up action.",
   "steps": [
     {
-      "text": "Resolve `targetSessionRef` through PersonaKit MCP first using `personakit_resolve_session_ref`. Accept either a canonical session id or a session-file path, then normalize the review target to one canonical session id before continuing."
+      "text": "Resolve `targetSessionRef` through PersonaKit MCP first and normalize the review target to one canonical session id before continuing."
     },
     {
-      "text": "Use PersonaKit MCP to trace and inspect the normalized session stack: call `personakit_trace_session`, then explain the directive and any materially relevant entities before reading secondary docs."
+      "text": "Trace the normalized session stack through the target directive, required intents, and the essentials most responsible for behavior before reading secondary docs."
     },
     {
-      "text": "If PersonaKit MCP is unavailable, missing required session-resolution capability, or cannot trace the normalized target, stop the review, write an MCP-gap artifact instead of a fake confidence review, and recommend the smallest MCP improvement needed next."
+      "text": "If PersonaKit MCP cannot resolve or trace the target, fail closed with an MCP-gap artifact instead of a fake confidence review."
     },
     {
       "text": "Restate the target session's promised goal, expected deliverables, normalized session id, and real execution surface before making judgments."
     },
     {
-      "text": "Produce ordered findings first, with severity and file references, focusing on contradictions, weak enforcement, drift risk, hallucination risk, persona/identity collision risk, operator-surprise risk, and any gap between the stated contract and what the machine-readable stack actually guarantees."
+      "text": "Produce ordered findings first, with severity and file references, focusing on contract contradictions, weak enforcement, drift risk, hallucination risk, persona collision risk, and operator surprise risk."
     },
     {
-      "text": "For each reviewed artifact, write a SWOT plus fixed risk-dimension scores for contract clarity, enforcement strength, drift resistance, hallucination risk, persona/identity collision risk, operator surprise risk, reviewability, and MCP dependency health. Then compute one overall confidence score and safe/caution/unsafe verdict."
+      "text": "For each reviewed artifact, write a SWOT plus fixed risk-dimension scores, then compute an overall confidence score and verdict."
     },
     {
-      "text": "Run a red-pen pass that proposes the smallest changes most likely to improve reliability, then rescore each artifact under those explicit red-pen assumptions."
+      "text": "Run a red-pen pass that proposes the smallest changes most likely to improve reliability, then rescore each artifact under those assumptions."
     },
     {
-      "text": "Write or update the human-readable review artifact at `reviewArtifactPath` or the default session-review path from `session-stack-review-log-contract`, then append one machine-readable log entry with current/projected confidence, verdict, blocker count, and MCP status."
+      "text": "Write the human-readable review artifact at `reviewArtifactPath` or the default session-review path, then append the machine-readable log entry."
     },
     {
-      "text": "Summarize the review in one table plus one short paragraph that distinguishes current confidence from projected post-red-pen confidence."
-    },
-    {
-      "text": "Pause for AJ review before implementing any fixes, broadening the review scope, or converting review findings into structural pack/session updates.",
+      "text": "Pause for AJ review before implementing fixes, broadening the review scope, or converting review findings into structural pack/session updates.",
       "requiresReview": true
     }
   ],
@@ -43,8 +40,7 @@
     "Each reviewed artifact has a SWOT, fixed risk-dimension scores, and a current confidence score",
     "The red-pen pass proposes bounded changes instead of vague aspirations",
     "Each artifact is rescored after the red-pen assumptions",
-    "The review artifact and JSONL log are both written at durable session-review paths",
-    "The final summary includes both a table and a short narrative conclusion"
+    "The review artifact and JSONL log are both written at durable session-review paths"
   ],
   "verification": [
     {
@@ -54,10 +50,6 @@
     {
       "kind": "manual",
       "text": "Confirm findings come first and fixed risk-dimension scoring is present before and after the red-pen pass"
-    },
-    {
-      "kind": "manual",
-      "text": "Confirm the review artifact includes one summary table, one short concluding paragraph, and one explicit verdict"
     },
     {
       "kind": "command",

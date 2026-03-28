@@ -17,20 +17,20 @@
       "text": "Run `gardening-v2-checklist` and capture pass status before recommendations are finalized."
     },
     {
-      "text": "Run coverage auditing, policy-conflict detection, and safety-preflight checks; record outputs before review and integration steps."
+      "text": "Run coverage auditing, policy-conflict detection, and safety-preflight checks; record outputs before review and integration."
     },
     {
-      "text": "When squad-loop or diary artifacts changed, run `rosie-retrospective-garden-review` and append recommendation outputs before review pause."
+      "text": "When squad-loop or diary artifacts changed, run `rosie-retrospective-garden-review` and append recommendation outputs before the review pause."
     },
     {
       "text": "Pause for AJ review before applying non-trivial updates or performing lane-to-main integration in the main worktree.",
       "requiresReview": true
     },
     {
-      "text": "Apply approved lane updates, commit within lane scope only under AJ-approved authorization mode, and refresh partner/handoff/gardening logs."
+      "text": "Apply approved lane updates, commit within lane scope only under AJ-approved authorization mode, and refresh partner, handoff, and gardening logs."
     },
     {
-      "text": "Execute approved lane-to-main integration in the main worktree, then sync updated main back onto rosies-garden and record residual risks."
+      "text": "Execute approved lane-to-main integration in the main worktree, then sync updated main back onto `rosies-garden` and record residual risks."
     }
   ],
   "acceptanceCriteria": [

@@ -1,0 +1,167 @@
+{
+  "id": "assemble-squad-and-plan",
+  "version": "1.0",
+  "title": "Assemble squad and plan",
+  "goal": "Let Samwise translate an objective into a staffed multiagent plan, identify missing role coverage, and stop cleanly before execution begins.",
+  "steps": [
+    {
+      "text": "Load the objective, current artifacts, constraints, and any known persona candidates."
+    },
+    {
+      "text": "Define the current objective boundary, first checkpoint definition of done, and required validation evidence."
+    },
+    {
+      "text": "Identify the roles required to shape, review, execute, and approve the work."
+    },
+    {
+      "text": "Map required roles to known personas, assign explicit ownership where possible, and classify each role as covered, covered-with-gaps, or missing."
+    },
+    {
+      "text": "When role fit is uncertain or missing, run the reverse-interview workflow using the current objective as role context and record the result before execution handoff."
+    },
+    {
+      "text": "Recommend the smallest missing artifact set needed to close the top role-coverage gaps."
+    },
+    {
+      "text": "Draft the initial squad roster, role boundaries, milestone or checkpoint plan, dependencies, review gates, validation ownership, handoff status, named next session, required closeout session when the routed workflow is not complete until a formal closeout pass runs, and a derived workstream routing summary when the active directive carries workstream metadata."
+    },
+    {
+      "text": "For any role expected to be staffed by a spawned agent, draft a compact delegated handoff packet that names one authoritative operating persona, any optional review personas separately, the persona/session grounding target, live PersonaKit MCP as the preferred grounding path, approved static export fallback only for bounded implementation or review work, write scope, validation expectations, provenance and freshness fields for static exports, stop points, an explicit no-blended-execution rule, and `grounding-blocked` as the failure disposition when no valid grounding path exists."
+    },
+    {
+      "text": "Write or update the planning report using `squad-planning-report-template` at the explicit output path or approved workspace-local fallback."
+    },
+    {
+      "text": "Append one machine-readable planning entry using `squad-planning-log-contract`, including role assignments, missing artifacts, definition of done, validation owner, next session, and derived workstream routing when the active directive is workstream-aware."
+    },
+    {
+      "text": "Pause for AJ review before applying structural pack updates or handing the plan to execution.",
+      "requiresReview": true
+    },
+    {
+      "text": "Apply only approved follow-up updates and revalidate the affected PersonaKit artifacts plus planning logs, and run hiring-log checks only when reverse-interview or hiring-remediation work was part of the pass."
+    }
+  ],
+  "acceptanceCriteria": [
+    "Objective scope, constraints, and current artifacts are explicitly summarized",
+    "Definition of done and validation expectations are explicit for the first checkpoint",
+    "Required roles are listed with explicit ownership and coverage classification",
+    "Uncertain or missing roles trigger reverse-interview analysis or an explicit stop-for-guidance before execution handoff",
+    "Execution-critical missing or covered-with-gaps roles route to a named remediation or hiring session before execution",
+    "Missing artifact recommendations are grouped by type and prioritized",
+    "Initial plan includes owners, dependencies, review gates, validation ownership, handoff status, next actions, next session, required closeout session when the routed workflow expects formal closeout, and derived workstream routing when the active directive is workstream-aware",
+    "Delegated roles expected to use spawned agents include explicit handoff packets with one authoritative operating persona, any optional review personas listed separately, grounding mode, provenance and freshness fields for static exports, write scope, validation expectations, stop points, and a fail-closed path when PersonaKit grounding is unavailable",
+    "A durable planning report exists at the declared output path or approved fallback",
+    "A schema-valid machine-readable planning entry exists and names the same next session as the report",
+    "Hiring-log validation runs only when reverse-interview or hiring-remediation work was part of the pass",
+    "No structural updates or execution handoff occur without AJ review"
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Confirm squad plan includes role coverage, missing artifacts, and first next actions"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm reverse-interview output is present for uncertain or missing role coverage"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm planning report includes squad roster, role coverage, definition of done, validation owner, and recommended next session"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm any required operating rule is stated in active planning artifacts and not only supported by continuity logs"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm definition of done, validation evidence, and execution stop point are explicit before implementation handoff"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm required closeout session is explicit when the routed workflow family is not complete until delivery logs, retrospectives, or comparable closeout artifacts exist"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm workstream-aware planning passes record workstream id, phase, current session, entry session, next sessions, and required closeout session without treating the report or log as the routing source of truth"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm delegated handoff packets exist for spawned-agent roles and name one authoritative operating persona, any optional review personas separately, the grounding path, fallback rule, provenance and freshness fields for static exports, write scope, validation expectations, no-blended-execution rule, and `grounding-blocked` failure disposition"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm any execution-critical role gaps route to `samwise-squad-planning-remediation` or another explicit hiring session before execution"
+    },
+    {
+      "kind": "command",
+      "text": "If reverse-interview or hiring-remediation work was part of the pass, run `Scripts/check-persona-hiring-logs.sh` and confirm `PERSONA_HIRING_LOGS_CHECK:PASS`."
+    },
+    {
+      "kind": "command",
+      "text": "Scripts/check-squad-planning-logs.sh"
+    },
+    {
+      "kind": "command",
+      "text": "swift run personakit validate --root .personakit"
+    }
+  ],
+  "workstream": {
+    "id": "worktree-squad-lifecycle",
+    "phase": "planning",
+    "entrySessionId": "samwise-squad-planning",
+    "requiredCloseoutSessionId": "worktree-squad-retrospective",
+    "nodes": [
+      {
+        "sessionId": "samwise-squad-planning",
+        "phase": "planning"
+      },
+      {
+        "sessionId": "samwise-worktree-squad-oversight",
+        "phase": "oversight"
+      },
+      {
+        "sessionId": "worktree-squad-delivery",
+        "phase": "delivery"
+      },
+      {
+        "sessionId": "worktree-squad-retrospective",
+        "phase": "retrospective"
+      },
+      {
+        "sessionId": "rosie-retrospective-garden",
+        "phase": "gardening"
+      }
+    ],
+    "edges": [
+      {
+        "fromSessionId": "samwise-squad-planning",
+        "toSessionId": "samwise-worktree-squad-oversight",
+        "kind": "required-next"
+      },
+      {
+        "fromSessionId": "samwise-worktree-squad-oversight",
+        "toSessionId": "worktree-squad-delivery",
+        "kind": "required-next"
+      },
+      {
+        "fromSessionId": "worktree-squad-delivery",
+        "toSessionId": "worktree-squad-retrospective",
+        "kind": "required-closeout"
+      },
+      {
+        "fromSessionId": "worktree-squad-retrospective",
+        "toSessionId": "rosie-retrospective-garden",
+        "kind": "optional-follow-up"
+      }
+    ]
+  },
+  "requiresIntentTemplateIds": [
+    "assemble-squad-and-plan-review",
+    "reverse-interview-persona-fit",
+    "remediate-squad-role-coverage-gaps"
+  ],
+  "requiresSkillIds": [
+    "codex-cli"
+  ]
+}

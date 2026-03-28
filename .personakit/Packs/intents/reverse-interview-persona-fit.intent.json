@@ -2,7 +2,7 @@
   "id": "reverse-interview-persona-fit",
   "version": "1.0",
   "name": "Reverse Interview Persona Fit",
-  "description": "Assess whether a persona candidate is qualified for a target role and identify missing PersonaKit artifacts required for strong execution.",
+  "description": "Assess role fit for a persona candidate and identify the highest-value missing artifacts.",
   "parameters": [
     {
       "name": "personaId",
@@ -44,7 +44,6 @@
     "persona-hiring-standards",
     "persona-hiring-research-loop",
     "persona-hiring-log-contract",
-    "persona-hiring-calibration-playbook",
     "partner-trust-contract",
     "non-goals",
     "tools-and-constraints"
@@ -56,11 +55,11 @@
     "level": "medium",
     "requiresHumanReview": true,
     "notes": [
-      "Do not treat role-fit analysis as approval to modify candidate artifacts.",
-      "Proposed missing artifacts must be explicit, bounded, and prioritized.",
-      "If confidence is low, run research loop before final verdict.",
-      "Persist results to markdown report and JSONL log contract before concluding.",
-      "Pause for AJ approval before applying structural pack/session changes."
+      "Role-fit analysis is not approval to change candidate artifacts.",
+      "Keep missing-artifact recommendations explicit, bounded, and prioritized.",
+      "Run the research loop before any low-confidence verdict.",
+      "Write report and JSONL outputs before concluding.",
+      "Pause for AJ approval before structural pack or session changes."
     ]
   }
 }

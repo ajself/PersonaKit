@@ -1,238 +1,52 @@
 # Multiagent Squad Planning Contract
 
-Use this contract when Samwise needs to turn a new objective into a staffed
-multiagent plan before execution begins.
+Use this runtime contract when Samwise turns a new objective into a staffed
+multiagent plan.
+For deeper examples and rationale, see `multiagent-squad-planning-reference`.
 
 ## Purpose
 
-1. Convert an objective into a bounded planning package with explicit owners,
-   gates, and next actions.
-2. Check whether current personas cover the required roles with enough
-   confidence.
-3. Identify missing personas, kits, intents, directives, or sessions before
-   implementation starts.
-4. Keep staffing, planning, and pack-expansion recommendations reviewable and
-   workspace-agnostic.
+1. Turn an objective into a bounded planning package with explicit owners, gates, and next actions.
+2. Make role coverage explicit before execution begins.
+3. Keep planning, hiring, and remediation decisions reviewable and workspace-aware.
 
 ## Active Authority Rule
 
-The planning stack should distinguish active operating contract from historical
-continuity evidence.
+1. Active operating rules come from the resolved session stack, not from continuity logs alone.
+2. If a required planning rule exists only in a log, promote it into an active artifact before execution handoff.
 
-1. Sessions, directives, intents, kits, and essentials carry the active
-   operating rules for `samwise-squad-planning`.
-2. Planning reports may cite logs or continuity notes as supporting evidence,
-   but logs must not be the only place a required operating rule is stated.
-3. If an operator would behave incorrectly without reading a continuity log, the
-   missing rule should be promoted into an active artifact instead.
+## Required Planning Output
 
-## Required Inputs
-
-1. Objective summary.
-2. Workspace or initiative scope.
-3. Hard constraints and non-goals.
-4. Current artifact set relevant to the objective.
-
-Optional but recommended:
-
-1. Known persona IDs expected to participate.
-2. Explicit planning output path.
-3. Confidence threshold for role-fit checks (defaults to `80` if omitted).
-4. Definition of done for the first execution checkpoint.
-5. Required validation expectations or commands.
-6. Roles expected to be delegated to spawned agents.
-7. Known grounding artifact paths if a static PersonaKit export fallback is
-   already available.
-
-## Required Role-Coverage Review
-
-For each new objective, the planning pass must:
-
-1. Identify the roles required to shape, review, and execute the work.
-2. Map each role to an existing persona candidate when possible.
-3. Mark each role as one of:
-   - `covered`
-   - `covered-with-gaps`
-   - `missing`
-4. Record the responsibility boundary for each role:
-   - shaping
-   - execution
-   - review
-   - approval
-5. Require an explicit owner or explicit missing-role disposition for every
-   required role.
-6. Trigger reverse-interview analysis when:
-   - a required role has no obvious persona owner
-   - a candidate role fit is uncertain
-   - the role introduces a new domain, delivery mode, or risk profile
-
-## Delegated Handoff Requirements
-
-When a role is expected to be staffed by a spawned agent, the planning pass
-must produce a compact delegated handoff packet for that role before execution
-handoff is considered ready.
-
-Use `delegated-agent-handoff-template` as the default packet shape.
-
-Each delegated handoff packet should name:
-
-1. Role and one authoritative operating persona ID.
-2. Required session ID or directive ID.
-3. Grounding requirement:
-   - live PersonaKit MCP first
-   - approved static PersonaKit export second for bounded implementation or
-     review work
-4. PersonaKit context load target:
-   - persona
-   - directive
-   - associated kits
-   - associated essentials
-5. Objective boundary and write scope.
-6. Acceptance criteria.
-7. Validation commands or evidence expectations.
-8. Stop points and return conditions.
-9. Failure disposition when grounding is unavailable:
-   - `grounding-blocked`
-10. Grounding source path or export source reference.
-11. Snapshot date when the grounding mode is `static-export`.
-12. Optional review personas, if any, recorded separately from the operating persona.
-
-Guardrails:
-
-1. Planning, hiring, remediation, and open-ended discovery work must not
-   silently degrade to cached PersonaKit context.
-2. Static export fallback is acceptable only for bounded implementation or
-   review work.
-3. If neither live MCP nor an approved static export is available, the
-   delegated lane stops as `grounding-blocked`.
-4. Static export fallback should record provenance and freshness so delegated
-   lanes can distinguish the intended snapshot from stale cache data.
-5. Delegated execution identity must not blend multiple active personas inside
-   one lane.
-
-## Output Contract
-
-Each squad-planning pass should produce:
+Each planning pass should produce:
 
 1. Objective summary and scope boundary.
-2. Proposed squad roster with role responsibilities and named owners or
-   explicit missing-role dispositions.
-3. Role-coverage table with confidence notes.
-4. Missing-role and missing-artifact recommendations grouped by type:
-   - personas
-   - essentials
-   - kits
-   - intents
-   - directives
-   - sessions
-5. Initial milestone or checkpoint plan with:
-   - owners
-   - definition of done
-   - dependencies
-   - review gates
-   - validation expectations
-   - next actions
-6. Delegated handoff packets for any roles expected to be staffed by spawned
-   agents.
+2. Role coverage with explicit owners or explicit missing-role disposition.
+3. Missing artifact recommendations grouped by type.
+4. First checkpoint plan with definition of done, dependencies, review gates, and validation expectations.
+5. Named next session, required closeout session when applicable, and handoff status.
 
-Required sections:
+## Delegated Handoff Packet
 
-1. Evidence references.
-2. Unknowns and assumptions.
-3. Stop points before execution.
-4. Recommended first planning or hiring step.
-5. Validation plan with owner and command or evidence expectations.
-6. Recommended next session for execution or remediation.
-7. Required closeout session when the routed workflow expects a formal closeout
-   before the assignment can be treated as complete.
-8. Handoff status (`awaiting-aj-review`, `ready-for-remediation`,
-   `ready-for-execution`, or `blocked`).
-9. Delegated grounding status when delegated roles exist.
-10. Workstream routing summary when the active directive carries workstream
-    metadata:
-   - workstream id
-   - phase
-   - current session
-   - entry session
-   - next sessions
-   - required closeout session
+When a role will be staffed by a spawned agent, include:
 
-## Persistence Requirements
-
-Each squad-planning pass should produce one human-readable report using the
-shared template plus one machine-readable log entry:
-
-1. Preferred path:
-   - explicit `planningOutputPath`
-2. Default shared path:
-   - `Docs/PersonaKit/Development/planning-reviews/YYYY-MM-DD-<objective>.md`
-3. Machine log:
-   - append one schema-valid row to
-     `Docs/PersonaKit/Development/logs/squad-planning-reviews.jsonl`
-4. Fallback:
-   - an approved workspace-local planning path when one is already established
-5. Otherwise:
-   - stop and request AJ guidance before concluding the pass
-
-The report and JSONL entry should agree on:
-
-1. named next session
-2. required closeout session when one is declared
-3. first checkpoint
-4. validation owner
-5. handoff status
-6. delegated handoff summary when delegated roles exist
-7. static-export provenance and snapshot date when static fallback is used
-8. workstream routing summary when the active directive is workstream-aware
-
-## Reverse-Interview Rules
-
-When reverse-interview is required:
-
-1. Use the existing hiring rubric and evidence requirements.
-2. Keep the assessment tied to the current objective and role boundary.
-3. Recommend the smallest artifact set needed to close the top gap.
-4. Do not treat a reverse-interview verdict as approval to apply structural
-   changes without AJ review.
-5. For any newly proposed persona that is likely required for execution,
-   complete at least one reverse-interview pass before execution handoff.
-6. If an execution-critical role remains `missing` or `covered-with-gaps` after
-   reverse interview, route the next session to
-   `samwise-squad-planning-remediation`, `samwise-persona-hiring`, or another
-   explicit approved remediation loop before execution.
-
-## Stop Gates
-
-Stop and request AJ review before:
-
-1. Creating or modifying personas, kits, directives, intents, or sessions.
-2. Promoting the plan into execution handoff.
-3. Expanding scope beyond the declared objective.
-4. Treating a low-confidence role fit as execution-ready.
-5. Leaving a required role without an owner or explicit missing-role
-   disposition.
-6. Concluding the pass without a durable report, JSONL entry, validation owner,
-   and named next session.
-7. Handing delegated work to execution without an explicit handoff packet and
-   grounding path.
+1. One authoritative operating persona.
+2. Required session or directive.
+3. Grounding mode and source:
+   - live PersonaKit MCP first
+   - approved static export only for bounded implementation or review work
+4. Write scope, acceptance criteria, validation expectations, and stop points.
+5. Failure disposition:
+   - `grounding-blocked`
 
 ## Guardrails
 
-- Keep the workflow reusable across workspaces; do not hard-code one product or
-  initiative into the contract.
-- Prefer the smallest sufficient squad over speculative staffing.
-- Keep missing-role recommendations explicit and prioritized.
-- Do not collapse planning, hiring, and execution into one uninterrupted pass.
-- Require explicit definition-of-done and validation evidence before execution
-  handoff.
-- Require required closeout routing to be explicit when the next session enters
-  a workflow family that is not complete until delivery logs, retrospectives,
-  or comparable closeout artifacts exist.
-- Require workstream-aware planning passes to project directive-owned routing
-  into the report and log as derived visibility only; those projected fields
-  must not become a competing routing authority.
-- Require a durable planning report, a schema-valid planning log entry, and a
-  named next-session handoff before treating the pass as complete.
-- Require delegated roles to carry explicit grounding instructions; do not
-  assume spawned agents will infer PersonaKit context from slim prompts.
-- Respect active commit authorization policy and stop points.
+1. Planning and hiring work must not silently degrade to cached PersonaKit context.
+2. If valid grounding is unavailable for a delegated lane, stop as `grounding-blocked`.
+3. Static export fallback is acceptable only for bounded implementation or review work.
+4. Stop for AJ review before structural pack changes or execution handoff.
+
+## Persistence
+
+1. Write the human report using `squad-planning-report-template`.
+2. Append the machine-readable entry using `squad-planning-log-contract`.
+3. Keep the report and JSONL entry aligned on next session, closeout routing, and delegated handoffs.

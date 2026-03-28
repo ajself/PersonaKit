@@ -1,54 +1,19 @@
 # Rosie Worktree Upkeep Standards
 
-Use this essential when running ongoing Rosie gardening work in a dedicated
-lane worktree.
+Use this runtime standard for ongoing Rosie gardening work in the dedicated lane worktree.
+For the full upkeep loop, see `rosie-worktree-upkeep-standards-reference`.
 
-## Objectives
+## Core Rules
 
-1. Keep Rosie gardening changes isolated in an approved non-`main` lane.
-2. Preserve explicit traceability from lane commits to `main` integration.
-3. Keep lane and `main` synchronized through a repeatable upkeep loop.
-4. Keep human review gates explicit around history-altering actions.
-
-## Operating Scope
-
-- Dedicated Rosie lane worktree approved by AJ
-- Lane branch: `rosies-garden`
-- Integration target branch: `main` (in the main worktree)
+1. Keep Rosie gardening isolated in the approved non-`main` lane.
+2. Preserve traceability from lane commits to `main` integration.
+3. Keep human review gates explicit around history-altering actions.
 
 ## Required Upkeep Loop
 
-1. Confirm active lane scope and AJ approval are recorded in partner logs.
-2. Sync lane from latest `main` before starting new gardening changes.
-3. Run approved gardening updates with bounded scope and required logs.
+1. Confirm the active lane scope and AJ approval.
+2. Sync the lane from latest `main`.
+3. Run bounded gardening updates with required logs.
 4. Run coverage, policy-conflict, and safety-preflight checks before integration.
-5. Commit accepted updates on `rosies-garden`.
-6. Rebase or replay lane commits onto `main` in the main worktree.
-7. Sync updated `main` back onto `rosies-garden` for the next pass baseline.
-8. Record validation status and residual risks after each integration cycle.
-
-## Required Records
-
-For each upkeep cycle, update:
-
-1. `Docs/PersonaKit/Development/partner-context-log.md`
-2. `Docs/PersonaKit/Development/logs/partner-context-events.jsonl`
-3. `Docs/PersonaKit/Development/partner-handoff-register.md`
-4. `Docs/PersonaKit/Development/logs/partner-handoffs.jsonl`
-5. `Docs/PersonaKit/Development/pack-gardener-log.md`
-6. `Docs/PersonaKit/Development/logs/gardening-events.jsonl`
-7. `Docs/PersonaKit/Development/logs/gardening-pack-coverage.jsonl`
-8. `Docs/PersonaKit/Development/logs/gardening-policy-conflicts.jsonl`
-9. `Docs/PersonaKit/Development/logs/gardening-safety-preflight.jsonl`
-
-The markdown partner and gardener logs are generated projections over canonical
-JSONL resources.
-
-## Guardrails
-
-- Keep commits bounded to approved gardening scope.
-- Pause for AJ review before any history-altering integration on `main`.
-- If sync conflicts occur, stop and produce a bounded conflict-resolution plan.
-- Re-run validation after approved updates.
-- Never delete a lane branch or worktree until ancestor verification confirms
-  lane commits are contained in `main`.
+5. Pause for AJ review before any history-altering lane-to-main step.
+6. Record validation status and residual risks after the cycle.

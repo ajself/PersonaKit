@@ -49,9 +49,9 @@
     "notes": [
       "Pause for AJ review before any history-altering lane-to-main integration.",
       "Record lane scope, affected IDs, and validation status in partner and gardening logs.",
-      "Run coverage, policy-conflict, and safety-preflight checks before lane-to-main integration steps.",
-      "If lane/main sync conflicts appear, stop and present a bounded resolution plan before applying edits.",
-      "If laneBranch or integrationBranch differ from approved scope, stop and request AJ confirmation before proceeding."
+      "Run coverage, policy-conflict, and safety-preflight checks before lane-to-main integration.",
+      "If lane/main sync conflicts appear, stop and present a bounded resolution plan.",
+      "If laneBranch or integrationBranch differ from approved scope, stop for AJ confirmation."
     ]
   }
 }

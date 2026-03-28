@@ -2,7 +2,7 @@
   "id": "remediate-persona-hiring-gaps",
   "version": "1.0",
   "name": "Remediate Persona Hiring Gaps",
-  "description": "Convert approved reverse-interview findings into bounded artifact updates and tracked closure actions.",
+  "description": "Convert approved reverse-interview findings into bounded artifact updates and tracked closure work.",
   "parameters": [
     {
       "name": "candidatePersonaId",
@@ -28,7 +28,6 @@
   "includesEssentialIds": [
     "persona-hiring-standards",
     "persona-hiring-log-contract",
-    "persona-hiring-calibration-playbook",
     "partner-trust-contract",
     "non-goals",
     "tools-and-constraints"
@@ -42,7 +41,7 @@
     "notes": [
       "Only remediate gaps explicitly approved by AJ.",
       "Keep artifact updates bounded to approved scope.",
-      "Update hiring report and JSONL outcomes after approved remediation."
+      "Update hiring report and JSONL outputs after approved remediation."
     ]
   }
 }

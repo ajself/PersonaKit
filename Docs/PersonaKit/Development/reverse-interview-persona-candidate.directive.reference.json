@@ -1,6 +1,6 @@
 {
   "id": "reverse-interview-persona-candidate",
-  "version": "1.1",
+  "version": "1.0",
   "title": "Reverse interview a persona candidate for role fit",
   "goal": "Qualify a persona candidate for a specific line of work and identify missing PersonaKit artifacts needed for reliable execution.",
   "steps": [
@@ -8,25 +8,31 @@
       "text": "Load candidate persona context plus related kits, directives, intents, and sessions."
     },
     {
-      "text": "Define role requirements and target confidence threshold for this assessment."
+      "text": "Define role requirements and target confidence threshold for this assessment (default threshold is 80 when omitted)."
     },
     {
       "text": "Map role requirements to candidate strengths and observed gaps."
     },
     {
-      "text": "Run reverse-interview analysis across domain, delivery, risk, collaboration, and tooling fit with explicit evidence references."
+      "text": "Run reverse-interview analysis across domain fit, delivery fit, risk fit, collaboration fit, and tooling fit with explicit evidence references."
     },
     {
-      "text": "Score confidence using the hiring rubric and record unknowns."
+      "text": "Score confidence using hiring rubric and record unknowns."
     },
     {
-      "text": "If confidence is below threshold or unknowns are material, run `persona-hiring-research-loop`, then re-score before issuing the final verdict."
+      "text": "If confidence is below threshold or unknowns are material, run `persona-hiring-research-loop`, then re-score before issuing final verdict."
     },
     {
-      "text": "Produce the qualification verdict, prioritized gap list, and missing artifact recommendations with one concrete first step."
+      "text": "Produce a qualification verdict and prioritized gap list with severity and confidence percent."
     },
     {
-      "text": "Write the markdown report at the default hiring-review path unless an approved override path is provided, then append the machine-readable entry."
+      "text": "Write or update a markdown report at `Docs/PersonaKit/Development/hiring-reviews/YYYY-MM-DD-<personaId>.md` unless an approved override path is provided."
+    },
+    {
+      "text": "Append one machine-readable entry to `Docs/PersonaKit/Development/logs/persona-hiring-reviews.jsonl` following the schema contract."
+    },
+    {
+      "text": "Recommend missing essentials/kits/intents/directives/sessions and a first implementation step."
     },
     {
       "text": "Pause for AJ review before applying any candidate or pack artifact updates.",
@@ -44,7 +50,8 @@
     "Markdown report path is explicit and populated",
     "JSONL entry is appended using hiring log contract fields",
     "Missing artifact recommendations are grouped by type and prioritized",
-    "No structural updates occur without AJ review approval"
+    "No structural updates occur without AJ review approval",
+    "Validation status is recorded after approved updates"
   ],
   "verification": [
     {
@@ -61,7 +68,11 @@
     },
     {
       "kind": "manual",
-      "text": "Confirm report and JSONL entry exist and include the required contract fields"
+      "text": "Confirm report file exists and matches output contract sections"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm JSONL entry includes required contract fields and valid reportPath"
     },
     {
       "kind": "command",
@@ -69,7 +80,11 @@
     },
     {
       "kind": "manual",
-      "text": "Confirm the missing-artifact list includes at least one concrete first step"
+      "text": "Confirm missing-artifact list includes at least one concrete first step"
+    },
+    {
+      "kind": "manual",
+      "text": "Confirm validation results are captured after approved updates"
     }
   ],
   "requiresIntentTemplateIds": [

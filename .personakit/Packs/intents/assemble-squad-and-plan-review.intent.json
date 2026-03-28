@@ -2,7 +2,7 @@
   "id": "assemble-squad-and-plan-review",
   "version": "1.0",
   "name": "Assemble Squad And Plan Review",
-  "description": "Turn an objective into a staffed multiagent plan with explicit role coverage, missing-artifact recommendations, and execution gates.",
+  "description": "Turn an objective into a staffed plan with explicit role coverage and gates.",
   "parameters": [
     {
       "name": "objective",
@@ -67,8 +67,6 @@
     "squad-planning-report-template",
     "squad-planning-log-contract",
     "partner-trust-contract",
-    "roadmap-milestone-tracking-standard",
-    "venture-product-quality-gate",
     "worktree-squad-gating-contract",
     "non-goals",
     "tools-and-constraints"
@@ -81,15 +79,10 @@
     "requiresHumanReview": true,
     "notes": [
       "Do not turn planning recommendations into implementation without AJ review.",
-      "Run reverse-interview analysis when role coverage is uncertain or missing.",
-      "Keep hiring branches explicit by routing them through the hiring workflow and loading hiring context only for that branch.",
-      "Require explicit owners, definition-of-done, and validation expectations before execution handoff.",
-      "If delegated lanes will be staffed by spawned agents, require compact handoff packets with PersonaKit MCP grounding instructions, write scope, validation, and stop points before execution handoff.",
-      "Slim prompts are insufficient for PersonaKit-backed delegated lanes; planning-heavy work must not silently degrade to cached context.",
-      "If live PersonaKit MCP is unavailable, static export fallback is allowed only for bounded implementation or review work; otherwise stop as `grounding-blocked`.",
-      "Produce a durable report, a schema-valid JSONL entry, and name the next session before concluding the planning pass.",
-      "Keep new artifact recommendations bounded to the current objective.",
-      "Pause before structural pack/session updates or execution handoff."
+      "Require explicit owners, definition of done, and validation before execution handoff.",
+      "Delegated lanes need compact handoff packets with grounding path, write scope, validation, and stop points.",
+      "Static-export fallback is only for bounded implementation or review work; otherwise stop as `grounding-blocked`.",
+      "Pause before structural pack updates or execution handoff."
     ]
   }
 }
