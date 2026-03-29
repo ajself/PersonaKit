@@ -18,6 +18,12 @@ struct WorkspaceSnapshotBuilderTests {
     let projectPersonaURL = projectScopeURL.appendingPathComponent(
       "Packs/personas/senior-swiftui-engineer.persona.json"
     )
+    let globalReferenceURL = globalScopeURL.appendingPathComponent(
+      "Packs/references/swift-style-guide-reference.reference.json"
+    )
+    let projectReferenceURL = projectScopeURL.appendingPathComponent(
+      "Packs/references/swift-style-guide-reference.reference.json"
+    )
     let globalSkillURL = globalScopeURL.appendingPathComponent("Packs/skills/global-only-skill.skill.json")
 
     let globalSession = SessionFile(
@@ -69,6 +75,24 @@ struct WorkspaceSnapshotBuilderTests {
       ),
       notes: []
     )
+    let globalReference = Reference(
+      id: "swift-style-guide-reference",
+      version: "1.0",
+      name: "Global Swift Style Guide Reference",
+      summary: "Global",
+      triggerRules: [
+        ReferenceTriggerRule(pathGlobs: ["**/*.swift"])
+      ]
+    )
+    let projectReference = Reference(
+      id: "swift-style-guide-reference",
+      version: "1.0",
+      name: "Project Swift Style Guide Reference",
+      summary: "Project",
+      triggerRules: [
+        ReferenceTriggerRule(pathGlobs: ["**/*.swift"])
+      ]
+    )
 
     let dependencies = try makeDependencies(
       directories: [
@@ -78,6 +102,8 @@ struct WorkspaceSnapshotBuilderTests {
         PersonaKitDirectory.sessionsURL(root: globalScopeURL),
         projectScopeURL.appendingPathComponent("Packs/personas"),
         globalScopeURL.appendingPathComponent("Packs/personas"),
+        projectScopeURL.appendingPathComponent("Packs/references"),
+        globalScopeURL.appendingPathComponent("Packs/references"),
         globalScopeURL.appendingPathComponent("Packs/skills"),
       ],
       directoryContents: [
@@ -85,6 +111,8 @@ struct WorkspaceSnapshotBuilderTests {
         PersonaKitDirectory.sessionsURL(root: projectScopeURL): [projectSessionURL],
         globalScopeURL.appendingPathComponent("Packs/personas"): [globalPersonaURL],
         projectScopeURL.appendingPathComponent("Packs/personas"): [projectPersonaURL],
+        globalScopeURL.appendingPathComponent("Packs/references"): [globalReferenceURL],
+        projectScopeURL.appendingPathComponent("Packs/references"): [projectReferenceURL],
         globalScopeURL.appendingPathComponent("Packs/skills"): [globalSkillURL],
       ],
       fileData: [
@@ -92,6 +120,8 @@ struct WorkspaceSnapshotBuilderTests {
         projectSessionURL: try encode(projectSession),
         globalPersonaURL: try encode(globalPersona),
         projectPersonaURL: try encode(projectPersona),
+        globalReferenceURL: try encode(globalReference),
+        projectReferenceURL: try encode(projectReference),
         globalSkillURL: try encode(globalOnlySkill),
       ]
     )
@@ -110,6 +140,12 @@ struct WorkspaceSnapshotBuilderTests {
       snapshot.skills.first(where: { $0.id == "global-only-skill" })
     )
     #expect(globalSkill.sourceScope == .global)
+
+    let reference = try #require(
+      snapshot.references.first(where: { $0.id == "swift-style-guide-reference" })
+    )
+    #expect(reference.sourceScope == .project)
+    #expect(reference.displayName == "Project Swift Style Guide Reference")
 
     let session = try #require(
       snapshot.sessions.first(where: { $0.id == "shared-session" })

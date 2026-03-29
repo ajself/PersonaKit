@@ -41,7 +41,7 @@ struct StudioDiagnosticsPanelView: View {
           issues: issues,
           searchText: $searchText,
           onNavigateToIssue: { issue in
-            let navigationTarget = diagnosticsNavigationTarget(for: issue)
+            let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
             selection = navigationTarget.sidebarItem
             selectedLibraryItemID = navigationTarget.selectedLibraryItemID
             searchText = navigationTarget.searchText
@@ -80,29 +80,16 @@ struct StudioDiagnosticsPanelView: View {
   private var normalizedSearchText: String {
     searchText.trimmingCharacters(in: .whitespacesAndNewlines)
   }
+}
 
-  private func sidebarItem(for entityType: WorkspaceValidationEntityType) -> SidebarItem {
-    switch entityType {
-    case .session:
-      return .sessions
-    case .persona:
-      return .personas
-    case .kit:
-      return .kits
-    case .directive:
-      return .directives
-    case .intent:
-      return .intents
-    case .skill:
-      return .skills
-    case .essentials:
-      return .essentials
-    case .reference:
-      return .essentials
-    }
-  }
+struct DiagnosticsNavigationTarget: Equatable, Sendable {
+  let sidebarItem: SidebarItem
+  let selectedLibraryItemID: String?
+  let searchText: String
+}
 
-  private func diagnosticsNavigationTarget(
+enum StudioDiagnosticsNavigationResolver {
+  static func navigationTarget(
     for issue: WorkspaceValidationIssue
   ) -> DiagnosticsNavigationTarget {
     let sidebarItem = sidebarItem(for: issue.entityType)
@@ -131,7 +118,32 @@ struct StudioDiagnosticsPanelView: View {
     )
   }
 
-  private func inferredEntityID(for issue: WorkspaceValidationIssue) -> String? {
+  static func sidebarItem(
+    for entityType: WorkspaceValidationEntityType
+  ) -> SidebarItem {
+    switch entityType {
+    case .session:
+      return .sessions
+    case .persona:
+      return .personas
+    case .kit:
+      return .kits
+    case .directive:
+      return .directives
+    case .intent:
+      return .intents
+    case .reference:
+      return .references
+    case .skill:
+      return .skills
+    case .essentials:
+      return .essentials
+    }
+  }
+
+  private static func inferredEntityID(
+    for issue: WorkspaceValidationIssue
+  ) -> String? {
     guard let filePath = issue.filePath else {
       return nil
     }
@@ -149,26 +161,24 @@ struct StudioDiagnosticsPanelView: View {
       return removingSuffix(".directive.json", from: lastPathComponent)
     case .intent:
       return removingSuffix(".intent.json", from: lastPathComponent)
+    case .reference:
+      return removingSuffix(".reference.json", from: lastPathComponent)
+        ?? removingSuffix(".md", from: lastPathComponent)
     case .skill:
       return removingSuffix(".skill.json", from: lastPathComponent)
     case .essentials:
       return removingSuffix(".md", from: lastPathComponent)
-    case .reference:
-      return removingSuffix(".reference.json", from: lastPathComponent)
     }
   }
 
-  private func removingSuffix(_ suffix: String, from value: String) -> String? {
+  private static func removingSuffix(
+    _ suffix: String,
+    from value: String
+  ) -> String? {
     guard value.hasSuffix(suffix) else {
       return nil
     }
 
     return String(value.dropLast(suffix.count))
   }
-}
-
-private struct DiagnosticsNavigationTarget {
-  let sidebarItem: SidebarItem
-  let selectedLibraryItemID: String?
-  let searchText: String
 }

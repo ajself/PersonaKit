@@ -7,6 +7,7 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
   case kit
   case directive
   case intent
+  case reference
   case skill
 
   /// Display label used in Studio editing UI.
@@ -20,6 +21,8 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "Directive"
     case .intent:
       return "Intent"
+    case .reference:
+      return "Reference"
     case .skill:
       return "Skill"
     }
@@ -36,6 +39,8 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "directives"
     case .intent:
       return "intents"
+    case .reference:
+      return "references"
     case .skill:
       return "skills"
     }
@@ -52,6 +57,8 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return ".directive.json"
     case .intent:
       return ".intent.json"
+    case .reference:
+      return ".reference.json"
     case .skill:
       return ".skill.json"
     }
@@ -67,6 +74,8 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "directive.schema.json"
     case .intent:
       return "intentTemplate.schema.json"
+    case .reference:
+      return "reference.schema.json"
     case .skill:
       return "skill.schema.json"
     }

@@ -74,6 +74,7 @@ struct WorkspaceSystemFeatureModelTests {
         workspaceURL.appendingPathComponent(".personakit/Packs/directives").standardizedFileURL,
         workspaceURL.appendingPathComponent(".personakit/Packs/kits").standardizedFileURL,
         workspaceURL.appendingPathComponent(".personakit/Packs/intents").standardizedFileURL,
+        workspaceURL.appendingPathComponent(".personakit/Packs/references").standardizedFileURL,
         workspaceURL.appendingPathComponent(".personakit/Packs/skills").standardizedFileURL,
         workspaceURL.appendingPathComponent(".personakit/Packs/essentials").standardizedFileURL,
         workspaceURL.appendingPathComponent(".personakit/Sessions").standardizedFileURL,

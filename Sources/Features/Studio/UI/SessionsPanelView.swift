@@ -543,6 +543,10 @@ struct SessionsPanelView: View {
       scopes["essential:\(essential.id)"] = essential.sourceScope
     }
 
+    for reference in workspaceStore.snapshot.references {
+      scopes["reference:\(reference.id)"] = reference.sourceScope
+    }
+
     return scopes
   }
 

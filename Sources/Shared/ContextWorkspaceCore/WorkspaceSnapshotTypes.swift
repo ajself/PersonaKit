@@ -21,7 +21,7 @@ public enum WorkspaceSourceScope: String, Codable, Sendable {
   }
 }
 
-/// Read-only list item for personas, directives, kits, skills, intents, and essentials.
+/// Read-only list item for personas, directives, kits, skills, intents, references, and essentials.
 public struct WorkspaceListItem: Equatable, Sendable {
   public let id: String
   public let displayName: String
@@ -78,6 +78,7 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
   public let kits: [WorkspaceListItem]
   public let skills: [WorkspaceListItem]
   public let intents: [WorkspaceListItem]
+  public let references: [WorkspaceListItem]
   public let essentials: [WorkspaceListItem]
 
   public init(
@@ -87,6 +88,7 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
     kits: [WorkspaceListItem],
     skills: [WorkspaceListItem],
     intents: [WorkspaceListItem],
+    references: [WorkspaceListItem] = [],
     essentials: [WorkspaceListItem]
   ) {
     self.sessions = sessions
@@ -95,6 +97,7 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
     self.kits = kits
     self.skills = skills
     self.intents = intents
+    self.references = references
     self.essentials = essentials
   }
 
@@ -105,6 +108,7 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
     kits: [],
     skills: [],
     intents: [],
+    references: [],
     essentials: []
   )
 }

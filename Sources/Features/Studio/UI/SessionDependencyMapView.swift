@@ -17,6 +17,7 @@ struct SessionDependencyMapView: View {
     .intent,
     .skill,
     .essential,
+    .reference,
   ]
 
   var body: some View {
@@ -205,6 +206,8 @@ extension WorkspaceSessionMapNodeKind {
       return "Skills"
     case .essential:
       return "Essentials"
+    case .reference:
+      return "References"
     }
   }
 }

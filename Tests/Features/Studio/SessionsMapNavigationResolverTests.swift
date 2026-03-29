@@ -47,6 +47,23 @@ struct SessionsMapNavigationResolverTests {
     #expect(target.searchText == "session-a")
   }
 
+  @Test
+  func referenceNodeNavigatesToReferencesLibrary() throws {
+    let target = try #require(
+      SessionsMapNavigationResolver.navigationTarget(
+        for: makeNode(
+          id: "swift-style-guide-reference",
+          kind: .reference
+        ),
+        selectedSessionID: "session-a"
+      )
+    )
+
+    #expect(target.sidebarItem == .references)
+    #expect(target.selectedLibraryItemID == "swift-style-guide-reference")
+    #expect(target.searchText == "swift-style-guide-reference")
+  }
+
   private func makeNode(
     id: String,
     kind: WorkspaceSessionMapNodeKind
