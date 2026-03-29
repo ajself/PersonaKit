@@ -21,8 +21,9 @@ struct RawJSONEditorView: View {
   let onValidate: @Sendable (String) async -> String?
   let onSave: @Sendable (String) async -> String?
 
-  private let formAdapter: WorkspaceLibraryEntityFormAdapter
-  private let formDescriptor: WorkspaceLibraryEntityFormDescriptor
+  private let availableModes: [EditorMode]
+  private let formAdapter: WorkspaceLibraryEntityFormAdapter?
+  private let formDescriptor: WorkspaceLibraryEntityFormDescriptor?
 
   @State private var rawJSON: String
   @State private var editorMode: EditorMode
@@ -42,29 +43,39 @@ struct RawJSONEditorView: View {
     onValidate: @escaping @Sendable (String) async -> String?,
     onSave: @escaping @Sendable (String) async -> String?
   ) {
-    let formAdapter = WorkspaceLibraryEntityFormAdapter(entityType: entityType)
-
     self.title = title
     self.entityType = entityType
     self.onCancel = onCancel
     self.onRevealInFinder = onRevealInFinder
     self.onValidate = onValidate
     self.onSave = onSave
-    self.formAdapter = formAdapter
-    self.formDescriptor = formAdapter.descriptor
-
     _rawJSON = State(initialValue: initialRawJSON)
 
-    do {
-      let initialFormState = try formAdapter.parseFormState(from: initialRawJSON)
+    if entityType.supportsMinimalForm {
+      let formAdapter = WorkspaceLibraryEntityFormAdapter(entityType: entityType)
 
-      _editorMode = State(initialValue: .form)
-      _formState = State(initialValue: initialFormState)
-      _formSyncErrorMessage = State(initialValue: nil)
-    } catch {
+      self.availableModes = EditorMode.allCases
+      self.formAdapter = formAdapter
+      self.formDescriptor = formAdapter.descriptor
+
+      do {
+        let initialFormState = try formAdapter.parseFormState(from: initialRawJSON)
+
+        _editorMode = State(initialValue: .form)
+        _formState = State(initialValue: initialFormState)
+        _formSyncErrorMessage = State(initialValue: nil)
+      } catch {
+        _editorMode = State(initialValue: .rawJSON)
+        _formState = State(initialValue: .empty)
+        _formSyncErrorMessage = State(initialValue: error.localizedDescription)
+      }
+    } else {
+      self.availableModes = [.rawJSON]
+      self.formAdapter = nil
+      self.formDescriptor = nil
       _editorMode = State(initialValue: .rawJSON)
       _formState = State(initialValue: .empty)
-      _formSyncErrorMessage = State(initialValue: error.localizedDescription)
+      _formSyncErrorMessage = State(initialValue: nil)
     }
   }
 
@@ -78,15 +89,19 @@ struct RawJSONEditorView: View {
         .font(.subheadline)
         .foregroundStyle(.secondary)
 
-      Picker("Editor", selection: $editorMode) {
-        ForEach(EditorMode.allCases) { mode in
-          Text(mode.rawValue)
-            .tag(mode)
+      if availableModes.count > 1 {
+        Picker("Editor", selection: $editorMode) {
+          ForEach(availableModes) { mode in
+            Text(mode.rawValue)
+              .tag(mode)
+          }
         }
+        .pickerStyle(.segmented)
       }
-      .pickerStyle(.segmented)
 
-      if editorMode == .form {
+      if editorMode == .form,
+        let formDescriptor
+      {
         RawJSONEditorMinimalFormView(
           formDescriptor: formDescriptor,
           formSyncErrorMessage: formSyncErrorMessage,
@@ -222,6 +237,10 @@ struct RawJSONEditorView: View {
   }
 
   private func syncFormStateFromRawJSON() {
+    guard let formAdapter else {
+      return
+    }
+
     do {
       formState = try formAdapter.parseFormState(from: rawJSON)
       formSyncErrorMessage = nil
@@ -231,6 +250,10 @@ struct RawJSONEditorView: View {
   }
 
   private func syncRawJSONFromFormState() {
+    guard let formAdapter else {
+      return
+    }
+
     do {
       rawJSON = try formAdapter.applyFormState(
         formState,

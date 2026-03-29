@@ -19,6 +19,8 @@ struct StudioLibraryPanelView: View {
   private var isKitsHelpExpanded = false
   @SceneStorage(StudioHelpStorageKey.essentials)
   private var isEssentialsHelpExpanded = false
+  @SceneStorage(StudioHelpStorageKey.references)
+  private var isReferencesHelpExpanded = false
   @SceneStorage(StudioHelpStorageKey.skills)
   private var isSkillsHelpExpanded = false
   @SceneStorage(StudioHelpStorageKey.intents)
@@ -235,6 +237,8 @@ struct StudioLibraryPanelView: View {
       return .directive
     case .kits:
       return .kit
+    case .references:
+      return .reference
     case .skills:
       return .skill
     case .intents:
@@ -350,6 +354,8 @@ struct StudioLibraryPanelView: View {
       return $isKitsHelpExpanded
     case .essentials:
       return $isEssentialsHelpExpanded
+    case .references:
+      return $isReferencesHelpExpanded
     case .skills:
       return $isSkillsHelpExpanded
     case .intents:

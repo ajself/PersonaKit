@@ -31,6 +31,7 @@ struct StudioLibraryActionBarState {
     case .personas,
       .directives,
       .kits,
+      .references,
       .skills,
       .intents:
       editAction = .rawJSON

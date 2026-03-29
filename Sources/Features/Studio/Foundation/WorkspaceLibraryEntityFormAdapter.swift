@@ -29,6 +29,10 @@ public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
 }
 
 extension WorkspaceLibraryEntityType {
+  public var supportsMinimalForm: Bool {
+    self != .reference
+  }
+
   var minimalFormDescriptor: WorkspaceLibraryEntityFormDescriptor {
     switch self {
     case .persona:
@@ -67,6 +71,8 @@ extension WorkspaceLibraryEntityType {
         secondArrayKey: "requiresSkillIds",
         secondArrayLabel: "Required Skill IDs"
       )
+    case .reference:
+      preconditionFailure("Reference entities use raw JSON editing only.")
     case .skill:
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",

@@ -146,6 +146,38 @@ struct WorkspaceLibraryEntityManagerTests {
       .appendingPathComponent(".personakit/Packs/personas/persona-a.persona.json")
     #expect(FileManager.default.fileExists(atPath: destinationURL.path()))
   }
+
+  @Test
+  func saveRawJSONWritesToProjectScopeReferencePath() throws {
+    let manager = WorkspaceLibraryEntityManager(
+      schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),
+      dependencies: .live()
+    )
+    let workspaceURL = try makeTempDirectory()
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    try FileManager.default.createDirectory(
+      at: packsURL,
+      withIntermediateDirectories: true
+    )
+
+    try manager.saveRawJSON(
+      workspaceURL: workspaceURL,
+      itemID: "swift-style-guide-reference",
+      rawJSON:
+        """
+          {
+            "id": "swift-style-guide-reference"
+          }
+        """,
+      entityType: .reference
+    )
+
+    let destinationURL =
+      workspaceURL
+      .appendingPathComponent(".personakit/Packs/references/swift-style-guide-reference.reference.json")
+
+    #expect(FileManager.default.fileExists(atPath: destinationURL.path()))
+  }
 }
 
 private struct StubEntitySchemaValidator: WorkspaceEntityJSONSchemaValidating, Sendable {

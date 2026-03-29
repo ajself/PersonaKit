@@ -99,6 +99,30 @@ struct WorkspaceRelationshipMapBuilderTests {
     #expect(!workspaceOnlyEssential.isMissing)
   }
 
+  @Test
+  func relationshipMapIncludesReferenceNodesAndDirectiveEdges() throws {
+    let (workspaceURL, _) = try makeWorkspaceWithProjectFixture()
+
+    let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
+    let map = try builder.build(workspaceURL: workspaceURL)
+
+    let referenceNode = try #require(
+      map.nodes.first(where: { $0.key == "reference:swift-style-guide-reference" })
+    )
+    #expect(referenceNode.displayName == "Swift Style Guide Reference")
+    #expect(!referenceNode.isMissing)
+
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "directive:apply-style",
+          toKey: "reference:swift-style-guide-reference",
+          reason: "directive.referenceIds"
+        )
+      )
+    )
+  }
+
   private func makeWorkspaceWithProjectFixture() throws -> (
     workspaceURL: URL,
     projectScopeURL: URL

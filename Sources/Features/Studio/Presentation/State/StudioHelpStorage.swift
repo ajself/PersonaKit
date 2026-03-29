@@ -6,6 +6,7 @@ enum StudioHelpStorageKey {
   static let directives = "studio.help.directives.expanded"
   static let kits = "studio.help.kits.expanded"
   static let essentials = "studio.help.essentials.expanded"
+  static let references = "studio.help.references.expanded"
   static let skills = "studio.help.skills.expanded"
   static let intents = "studio.help.intents.expanded"
   static let taskboard = "studio.help.taskboard.expanded"

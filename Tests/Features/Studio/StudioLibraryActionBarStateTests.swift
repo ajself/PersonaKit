@@ -89,6 +89,22 @@ struct StudioLibraryActionBarStateTests {
   }
 
   @Test
+  func referencesProjectSelectionUsesRawJSONEdit() {
+    let state = StudioLibraryActionBarState(
+      selection: .references,
+      selectedItem: makeItem(scope: .project),
+      isLoadingLibraryEditor: false
+    )
+
+    #expect(state.editAction == .rawJSON)
+    #expect(!state.showsCreateAction)
+    #expect(!state.canCreate)
+    #expect(state.canReveal)
+    #expect(state.canEdit)
+    #expect(!state.canCopyToProject)
+  }
+
+  @Test
   func directivesSelectionHidesCreateAction() {
     let state = StudioLibraryActionBarState(
       selection: .directives,

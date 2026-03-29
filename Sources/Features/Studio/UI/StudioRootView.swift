@@ -86,6 +86,7 @@ public struct StudioRootView: View {
         .directives,
         .kits,
         .essentials,
+        .references,
         .skills,
         .intents:
         StudioLibraryPanelView(
@@ -117,6 +118,8 @@ public struct StudioRootView: View {
       return workspaceStore.snapshot.kits
     case .essentials:
       return workspaceStore.snapshot.essentials
+    case .references:
+      return workspaceStore.snapshot.references
     case .skills:
       return workspaceStore.snapshot.skills
     case .intents:
@@ -149,6 +152,7 @@ enum SidebarItem: Hashable {
   case directives
   case kits
   case essentials
+  case references
   case skills
   case intents
   case relationshipMap
@@ -159,6 +163,7 @@ enum SidebarItem: Hashable {
     .directives,
     .kits,
     .essentials,
+    .references,
     .skills,
     .intents,
   ]
@@ -179,6 +184,8 @@ enum SidebarItem: Hashable {
       return "Kits"
     case .essentials:
       return "Essentials"
+    case .references:
+      return "References"
     case .skills:
       return "Skills"
     case .intents:
@@ -206,6 +213,8 @@ enum SidebarItem: Hashable {
       return "shippingbox"
     case .essentials:
       return "doc.text"
+    case .references:
+      return "book.closed"
     case .skills:
       return "hammer"
     case .intents:

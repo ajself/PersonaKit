@@ -107,6 +107,10 @@ struct SessionsMapTabView: View {
       scopes["essential:\(essential.id)"] = essential.sourceScope
     }
 
+    for reference in snapshot.references {
+      scopes["reference:\(reference.id)"] = reference.sourceScope
+    }
+
     scopes["session:active-session"] = selectedSession.sourceScope
 
     return scopes

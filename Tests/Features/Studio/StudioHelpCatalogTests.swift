@@ -13,6 +13,7 @@ struct StudioHelpCatalogTests {
       .directives,
       .kits,
       .essentials,
+      .references,
       .skills,
       .intents,
       .taskboard,
@@ -77,6 +78,7 @@ struct StudioHelpCatalogTests {
     #expect(SidebarItem.directives.helpExpansionStorageKey == "studio.help.directives.expanded")
     #expect(SidebarItem.kits.helpExpansionStorageKey == "studio.help.kits.expanded")
     #expect(SidebarItem.essentials.helpExpansionStorageKey == "studio.help.essentials.expanded")
+    #expect(SidebarItem.references.helpExpansionStorageKey == "studio.help.references.expanded")
     #expect(SidebarItem.skills.helpExpansionStorageKey == "studio.help.skills.expanded")
     #expect(SidebarItem.intents.helpExpansionStorageKey == "studio.help.intents.expanded")
     #expect(SidebarItem.taskboard.helpExpansionStorageKey == "studio.help.taskboard.expanded")
@@ -95,6 +97,7 @@ struct StudioHelpCatalogTests {
       SidebarItem.directives.helpExpansionStorageKey,
       SidebarItem.kits.helpExpansionStorageKey,
       SidebarItem.essentials.helpExpansionStorageKey,
+      SidebarItem.references.helpExpansionStorageKey,
       SidebarItem.skills.helpExpansionStorageKey,
       SidebarItem.intents.helpExpansionStorageKey,
       SidebarItem.taskboard.helpExpansionStorageKey,

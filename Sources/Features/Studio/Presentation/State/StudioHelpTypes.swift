@@ -8,6 +8,7 @@ enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case kits
   case orbit
   case personas
+  case references
   case relationshipMap
   case sessionEditor
   case sessions

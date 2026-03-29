@@ -62,6 +62,13 @@ enum SessionsMapNavigationResolver {
         selectedLibraryItemID: node.id,
         searchText: node.id
       )
+
+    case .reference:
+      return SessionsNavigationTarget(
+        sidebarItem: .references,
+        selectedLibraryItemID: node.id,
+        searchText: node.id
+      )
     }
   }
 }

@@ -66,6 +66,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       kits: try loadEntityItems(scopes: scopes, type: Kit.self),
       skills: try loadEntityItems(scopes: scopes, type: Skill.self),
       intents: try loadEntityItems(scopes: scopes, type: IntentTemplate.self),
+      references: try loadEntityItems(scopes: scopes, type: Reference.self),
       essentials: try loadEssentialItems(scopes: scopes)
     )
   }
@@ -379,6 +380,15 @@ extension Skill: WorkspaceEntityDocument {
 extension IntentTemplate: WorkspaceEntityDocument {
   static let directoryName = "intents"
   static let fileSuffix = ".intent.json"
+
+  var workspaceDisplayName: String {
+    name
+  }
+}
+
+extension Reference: WorkspaceEntityDocument {
+  static let directoryName = "references"
+  static let fileSuffix = ".reference.json"
 
   var workspaceDisplayName: String {
     name

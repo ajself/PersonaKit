@@ -57,6 +57,8 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:swift-style-guide" }))
+    #expect(map.nodes.contains(where: { $0.key == "reference:swift-style-guide-reference" }))
+    #expect(map.nodes.contains(where: { $0.key == "reference:swiftui-style-guide-reference" }))
 
     #expect(
       map.edges.contains(
@@ -82,6 +84,15 @@ struct WorkspaceSessionMapBuilderTests {
           fromKey: "session:active-session",
           toKey: "essential:skill-authorization-contract",
           reason: "session.resolvedEssentials"
+        )
+      )
+    )
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "directive:apply-style",
+          toKey: "reference:swift-style-guide-reference",
+          reason: "directive.referenceIds"
         )
       )
     )
@@ -126,7 +137,8 @@ struct WorkspaceSessionMapBuilderTests {
         acceptanceCriteria: directive.acceptanceCriteria,
         verification: directive.verification,
         requiresIntentTemplateIds: ["missing-intent"],
-        requiresSkillIds: ["missing-skill"]
+        requiresSkillIds: ["missing-skill"],
+        referenceIds: ["missing-reference"]
       )
     }
 
@@ -161,6 +173,7 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "intent:missing-intent" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "skill:missing-skill" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "essential:missing-essential-doc" && $0.isMissing }))
+    #expect(map.nodes.contains(where: { $0.key == "reference:missing-reference" && $0.isMissing }))
   }
 
   @Test
