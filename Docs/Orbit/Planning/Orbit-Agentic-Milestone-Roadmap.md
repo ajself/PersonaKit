@@ -3,7 +3,7 @@
 Status: Accepted
 Owner: Samwise
 Workspace: Orbit
-Last Updated: 2026-03-18
+Last Updated: 2026-03-29
 
 ## Purpose
 
@@ -155,6 +155,9 @@ These existing personas are already good fits for early Orbit delivery:
   `worktree-squad-lead` and domain implementation personas for early milestones,
   but a dedicated Orbit-native execution identity may become necessary once
   workstreams become first-class product behavior
+- `orbit-memory-gardener` - owner coverage now exists for `M8` through `M10`,
+  but the persona still relies on shared repo constraints and candidate
+  sessions rather than a dedicated memory-governance kit
 - `ProdDoc` collaborator identity - the first checkpoint now treats `ProdDoc` as
   the product-facing collaborator label mapped to `venture-product-steward`;
   create a formal persona later only if a milestone needs a distinct authored
@@ -164,8 +167,6 @@ These existing personas are already good fits for early Orbit delivery:
 
 - `orbit-meeting-coordinator` - needed before group-targeting and meeting
   behavior are delegated to an AI lane
-- `orbit-memory-gardener` - needed before journaling, candidate review, memory
-  promotion, and contradiction handling are delegated
 - `orbit-platform-operator` or `orbit-server-steward` - needed before server
   operations, deployment stewardship, backups, replay integrity, and multi-client
   operational work are delegated

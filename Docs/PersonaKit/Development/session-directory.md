@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-20
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -41,6 +41,8 @@ Lifecycle legend:
 
 ## Orbit Collaboration Workflows
 
+- `orbit-memory-gardener-review` - owner: `orbit-memory-gardener` - state: `candidate`
+- `orbit-memory-gardener-delivery` - owner: `orbit-memory-gardener` - state: `candidate`
 - `orbit-meeting-coordinator-review` - owner: `orbit-meeting-coordinator` - state: `candidate`
 - `orbit-meeting-coordinator-delivery` - owner: `orbit-meeting-coordinator` - state: `candidate`
 
@@ -80,7 +82,7 @@ Lifecycle legend:
 ## State Summary
 
 - `active`: 21 sessions
-- `candidate`: 12 sessions
+- `candidate`: 14 sessions
 - `deprecated`: 0 sessions
 
 <!-- WORKSTREAM_MEMBERSHIP:START -->

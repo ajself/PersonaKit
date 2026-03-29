@@ -3,7 +3,7 @@
 Status: Accepted
 Milestone: `M0`
 Owner: `samwise`
-Last Updated: 2026-03-20
+Last Updated: 2026-03-29
 
 ## Purpose
 
@@ -22,9 +22,9 @@ personas, and any unresolved persona gaps that must be handled before delegation
 | `M5` | `orbit-meeting-coordinator` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | conditionally covered | Persona coverage is now in place, but meeting promotion still waits on `M4` evidence |
 | `M6` | `venture-product-steward` | `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor` | covered | Product-heavy milestone with architecture review |
 | `M7` | `worktree-squad-lead` | `samwise`, `venture-product-steward`, `studio-integration-coordinator`, `studio-coverage-architect` | conditionally covered | Reassess whether `orbit-workstream-runner` is needed before delegation scale increases |
-| `M8` | `orbit-memory-gardener` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | blocked on missing persona | Required before journaling and memory review are delegated |
-| `M9` | `orbit-memory-gardener` | `architectural-editor`, `studio-coverage-architect`, `venture-product-steward` | blocked on missing persona | Same missing persona as `M8` |
-| `M10` | `orbit-memory-gardener` | `samwise`, `venture-product-steward`, `studio-coverage-architect` | blocked on missing persona | Same missing persona as `M8` and `M9` |
+| `M8` | `orbit-memory-gardener` | `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect` | conditionally covered | `PHR-0010` clears the owner gap for `M8`; later packets still require explicit kickoff from accepted `M8-P1` |
+| `M9` | `orbit-memory-gardener` | `architectural-editor`, `studio-coverage-architect`, `venture-product-steward` | conditionally covered | Owner coverage now exists, but `M9` still depends on accepted earlier memory-governance work |
+| `M10` | `orbit-memory-gardener` | `samwise`, `venture-product-steward`, `studio-coverage-architect` | conditionally covered | Owner coverage now exists, but `M10` still depends on accepted `M8` and `M9` groundwork |
 | `M11` | `senior-swiftui-engineer` | `studio-reliability-engineer`, `venture-product-steward`, `studio-coverage-architect` | covered | Depends on `M3` being truly stable |
 | `M12` | `senior-swiftui-engineer` | `studio-interaction-quality-lead`, `orbit-meeting-coordinator`, `venture-product-steward` | conditionally covered | Coordinator support is now available, but earlier Orbit meeting work still gates this milestone |
 | `M13` | `orbit-platform-operator` or `orbit-server-steward` | `studio-integration-coordinator`, `studio-reliability-engineer`, `studio-coverage-architect`, `architectural-editor` | blocked on missing persona | Need one approved platform operations identity |
@@ -76,6 +76,13 @@ Why this matters:
 
 - memory staging and reuse are governance-sensitive; a generic implementation
   persona is not a strong enough substitute
+
+Current state:
+
+- qualified in hiring review `PHR-0010`
+- initial review and delivery sessions exist; keep them packetized and
+  review-led
+- this closes the missing-owner gap only; later milestone gates still apply
 
 ### `orbit-platform-operator` or `orbit-server-steward`
 

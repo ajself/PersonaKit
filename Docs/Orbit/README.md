@@ -2,7 +2,7 @@
 
 Status: Active
 Owner: AJ
-Last Reviewed: 2026-03-10
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -11,6 +11,16 @@ direction in this repository.
 
 Orbit is the platform/product direction.
 PersonaKit is the engine inside Orbit.
+
+## Current Orbit Status
+
+- Orbit is the active forward product direction for the repository.
+- Most recently closed milestone: `M6` Structured Post Objects And Decision
+  Packets.
+- Immediate post-`M6` gate resolved: `orbit-memory-gardener` now exists as the
+  required owner for later memory-governance work.
+- `M8` planning is prepared and no longer persona-blocked, but later packets
+  remain to be started from the accepted `M8-P1` baseline.
 
 ## Start Here
 
