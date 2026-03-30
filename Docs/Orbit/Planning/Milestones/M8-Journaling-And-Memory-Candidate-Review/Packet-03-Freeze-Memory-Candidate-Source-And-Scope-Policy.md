@@ -1,6 +1,6 @@
 # M8 Packet 3: Freeze Memory Candidate Source And Scope Policy
 
-Status: Ready For Review
+Status: Accepted
 Packet Id: `M8-P3`
 Milestone: `M8`
 Execution Owner: `orbit-memory-gardener`
@@ -9,7 +9,7 @@ Last Updated: 2026-03-29
 
 ## Header
 
-- status: `ready-for-review`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `planning`
 
@@ -100,12 +100,26 @@ Exclude:
 
 ## Validation And Evidence
 
-- updated `M8` milestone README aligned with `M8-P3` as the next bounded
-  packet after accepted `M8-P2`
+- updated `M8` milestone README aligned with accepted `M8-P3` as the frozen
+  candidate-staging boundary after accepted `M8-P2`
 - packet note naming the `memory_candidate` source boundary, proposed-scope
   posture, and deferred review items
 - explicit language preserving candidates as reviewed proposals rather than
   implied memory
+
+## Packet 3 Closure Position
+
+- accepted journals remain the normal primary source for first-slice
+  `memory_candidate` staging
+- `note`, `decision`, and explicit manual proposal artifacts may stage
+  candidates directly only as bounded structured-source exceptions allowed by
+  the RFC floor, not as a replacement for journal-first discipline
+- first-slice candidate staging should preserve one inspectable primary-source
+  posture per candidate before later review workflow decides what to approve,
+  reject, defer, or archive
+- later `M8` packets may freeze `memory_review` action semantics only if they
+  preserve the candidate-staging boundary and the journal-first source posture
+  frozen here
 
 ## Packet 3 Working Contract
 
@@ -120,8 +134,17 @@ Exclude:
 ### Normal First-Slice Candidate Sources
 
 - accepted journals are the normal first-slice candidate source
+- first-slice staging should nominate one primary source artifact per
+  candidate so lineage stays inspectable within the existing `RFC-0002`
+  `source_type` / `source_id` floor
+- when an accepted journal and a structured artifact both point at the same
+  durable learning, the journal should be the normal primary source and the
+  structured artifact should remain supporting evidence unless explicit later
+  policy reopens that posture
 - `note` and `decision` artifacts may also serve as normal candidate sources
-  because the RFC floor already treats them as explicit structured artifacts
+  only when they are the clearest explicit durable artifact for the proposed
+  learning and no accepted journal is being used as the primary source for that
+  same candidate
 - explicit operator-entered manual proposals remain allowed by the RFC floor
 - `reference` and `artifact` objects are usually supporting evidence or context
   and should normally shape journals, notes, or decisions first
@@ -150,9 +173,6 @@ Exclude:
 
 ## Open Risks And Review Decisions Needed
 
-- later review still needs one explicit decision on how candidate staging should
-  treat mixed-source proposals when both a journal and a structured artifact
-  point at the same durable learning
 - if real usage later proves that accepted journals are too coarse for normal
   candidate formation, that should reopen `M8-P2` and `M8-P3` together instead
   of weakening journal-first discipline silently

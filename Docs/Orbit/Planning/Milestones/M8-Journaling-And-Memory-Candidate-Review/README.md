@@ -1,6 +1,6 @@
 # M8 Journaling And Memory Candidate Review
 
-Status: `M8-P1` and `M8-P2` accepted; `M8-P3` ready for review
+Status: `M8-P1`, `M8-P2`, `M8-P3`, and `M8-P4` accepted
 Primary Owner: `orbit-memory-gardener`
 Supporting Personas: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
 Last Updated: 2026-03-29
@@ -44,12 +44,16 @@ start from that boundary instead of broadening from owner availability alone.
 - `M8-P2` is accepted: the first `journal_entry` and `journal_source` boundary
   is now frozen from the accepted `M8-P1` intake bundle, including the
   first-slice entry-type posture and normal source discipline
-- `M8-P3` is the next bounded planning slice: freeze `memory_candidate` source,
-  staging, and proposed-scope policy from accepted journals and structured
-  artifacts without starting `memory_review`, approved memory, runtime, UI,
-  schema, or implementation work
-- later `M8` packets remain intentionally unfrozen and must still start from
-  the accepted `M8-P1` and `M8-P2` boundaries rather than improvisation
+- `M8-P3` is accepted: the first `memory_candidate` source, staging, and
+  proposed-scope policy is now frozen from the accepted journaling boundary,
+  including journal-first primary-source discipline for first-slice candidate
+  staging
+- `M8-P4` is accepted: the first-pass `memory_review` action semantics and
+  reviewer posture are now frozen from the accepted candidate-staging
+  boundary, including explicit operator authority over trusted memory
+- later `M8` review-workflow packets remain intentionally unfrozen and must
+  still start from the accepted `M8-P1`, `M8-P2`, and `M8-P3` boundaries
+  plus the accepted `M8-P4` action floor rather than improvisation
 
 ## File Map
 
@@ -60,7 +64,9 @@ start from that boundary instead of broadening from owner availability alone.
 - `Packet-02-Freeze-Journal-Entry-And-Source-Policy.md`
   accepted journaling-boundary packet for `M8-P2`
 - `Packet-03-Freeze-Memory-Candidate-Source-And-Scope-Policy.md`
-  next bounded planning packet for `M8-P3`
+  accepted candidate-source and candidate-scope packet for `M8-P3`
+- `Packet-04-Freeze-Memory-Review-Action-Semantics.md`
+  accepted review-action packet for `M8-P4`
 
 ## Preconditions
 
@@ -73,8 +79,8 @@ start from that boundary instead of broadening from owner availability alone.
 - `RFC-0004` remains the authority for follow-up continuity and coordinator
   trigger points, not memory governance or workstream execution
 - `orbit-memory-gardener` is now available as the required owner, but that
-  owner availability does not bypass the accepted `M8-P1` and `M8-P2`
-  planning boundaries
+  owner availability does not bypass the accepted `M8-P1`, `M8-P2`, `M8-P3`,
+  and `M8-P4` planning boundaries
 
 ## Scope Freeze
 
@@ -187,13 +193,39 @@ Done when:
 
 Status:
 
-- ready for review
+- accepted
+
+### Packet 4. Freeze Memory Review Action Semantics
+
+Outcome:
+
+- accepted `memory_candidate` proposals map to one first-pass
+  `memory_review` action floor before any approved-memory behavior is frozen
+
+Work:
+
+- define the first-pass semantics for `approve`, `reject`, `archive`, and
+  `defer`
+- define the reviewer posture for `operator`, `steward`, and `system` review
+  records without bypassing operator authority
+- preserve review as governance while deferring approved-memory materialization,
+  scope-promotion semantics, tooling, and implementation
+
+Done when:
+
+- later `M8` workflow packets can rely on one explicit review-action boundary
+  without re-litigating operator authority, first-pass action meanings, or the
+  separation between review and approved memory
+
+Status:
+
+- accepted
 
 ## Subagent Use Pattern
 
 Safe subagents:
 
-- none for `M8-P1` through `M8-P3`; delegation remains out of scope unless AJ
+- none for `M8-P1` through `M8-P4`; delegation remains out of scope unless AJ
   explicitly approves it later
 
 Avoid:
@@ -208,6 +240,7 @@ Avoid:
 - `Packet-01-Freeze-M7-To-Journal-Intake-Boundary.md`
 - `Packet-02-Freeze-Journal-Entry-And-Source-Policy.md`
 - `Packet-03-Freeze-Memory-Candidate-Source-And-Scope-Policy.md`
+- `Packet-04-Freeze-Memory-Review-Action-Semantics.md`
 
 ## Stop Points
 
@@ -232,6 +265,5 @@ Exit when the dossier freezes:
 
 Handoff forward to:
 
-- `M8-P3` to freeze `memory_candidate` source, staging, and proposed-scope
-  policy from the accepted journaling boundary
-- later `M8` review-workflow packets once `M8-P3` is reviewed and accepted
+- later `M8` review-workflow packets from the accepted `M8-P4`
+  action-semantics floor
