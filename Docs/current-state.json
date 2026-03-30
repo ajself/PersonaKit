@@ -9,9 +9,10 @@
     "packetId": "M9-P1",
     "title": "Freeze Approved-Memory Scope Rules",
     "ownerPersona": "orbit-memory-gardener",
-    "status": "planned",
+    "status": "accepted",
     "sourceRefs": [
       "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md",
+      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md",
       "Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Milestone-Closeout-Review-Artifact.md"
     ]
   },

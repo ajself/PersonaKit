@@ -32,9 +32,10 @@ explicit reprioritization changes.
 - Packet Id: `M9-P1`
 - Title: `Freeze Approved-Memory Scope Rules`
 - Owner: `orbit-memory-gardener`
-- Status: `planned`
+- Status: `accepted`
 - Source refs:
   - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md`
+  - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md`
   - `Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Milestone-Closeout-Review-Artifact.md`
 
 ## Next Up

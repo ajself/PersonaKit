@@ -3,7 +3,7 @@
 Status: Planned
 Primary Owner: `orbit-memory-gardener`
 Supporting Personas: `architectural-editor`, `studio-coverage-architect`, `venture-product-steward`
-Last Updated: 2026-03-18
+Last Updated: 2026-03-30
 
 ## Purpose
 
@@ -39,6 +39,23 @@ Out of scope:
 - `Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md`
 - `M8` evidence package
 
+## File Map
+
+- `README.md`
+  milestone overview, packet order, and top-level guardrails
+- `Packet-01-Freeze-Approved-Memory-Scope-Rules.md`
+  bounded planning packet for `M9-P1`
+
+## Current Milestone Position
+
+- `Docs/Current-State.md` identifies `M9-P1` as the active current work item
+- accepted `M8` closeout is the frozen handoff boundary into `M9`
+- `M9-P1` is accepted as the bounded packet that freezes approved-memory scope
+  meaning only
+- later `M9` packets remain intentionally unfrozen and must not smuggle in
+  retrieval, activation, lineage, or implementation work under the scope-freeze
+  label
+
 ## Execution Packets
 
 ### Packet 1. Freeze Approved-Memory Scope Rules
@@ -57,6 +74,10 @@ Work:
 Done when:
 
 - scope contamination risks can be tested explicitly
+
+Status:
+
+- accepted
 
 ### Packet 2. Implement Approved Memory Records
 
@@ -139,6 +160,7 @@ Avoid:
 ## Evidence Package
 
 - memory scope note
+- `Packet-01-Freeze-Approved-Memory-Scope-Rules.md`
 - approved memory example with lineage
 - retrieval eligibility matrix
 - activation trace example with memory influence
@@ -147,6 +169,8 @@ Avoid:
 ## Stop Points
 
 - stop if approved memory starts mutating authored persona definitions
+- stop if scope meaning requires retrieval, activation, lineage, or promotion
+  semantics to be understandable
 - stop if retrieval paths cannot be explained in the UI or evidence packet
 - stop if scope leakage appears in tests
 
