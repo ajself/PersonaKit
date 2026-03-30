@@ -15,12 +15,12 @@ PersonaKit is the engine inside Orbit.
 ## Current Orbit Status
 
 - Orbit is the active forward product direction for the repository.
+- Repo-wide current work priority is governed only by
+  `Docs/Current-State.md`.
 - Most recently closed milestone: `M6` Structured Post Objects And Decision
   Packets.
-- Immediate post-`M6` gate resolved: `orbit-memory-gardener` now exists as the
-  required owner for later memory-governance work.
-- `M8` planning is prepared and no longer persona-blocked, but later packets
-  remain to be started from the accepted `M8-P1` baseline.
+- `M8-P5` is the current Orbit focus item because `Docs/Current-State.md`
+  names it as the one current work item.
 
 ## Start Here
 
@@ -41,28 +41,30 @@ now, read:
 ## Active Planning Docs
 
 - [Planning/Orbit-Proving-Loop.md](./Planning/Orbit-Proving-Loop.md)
-  The active implementation-facing proving-loop plan.
+  Accepted proving-loop rationale and first-checkpoint phase model. Not the
+  live queue unless `Docs/Current-State.md` points to it.
 - [Planning/Orbit-macOS-Command-Center.md](./Planning/Orbit-macOS-Command-Center.md)
-  The approved product-facing companion draft.
+  Approved product-facing companion draft. Not the live queue by itself.
 - [Planning/Orbit-Execution-Plan.md](./Planning/Orbit-Execution-Plan.md)
-  The execution bridge that records what Orbit is actually doing next.
+  Historical accepted first-checkpoint execution baseline. Not the current
+  execution queue unless `Docs/Current-State.md` says so.
 
 ## Active Execution Docs
 
 - [Execution/Orbit-Build-Rerun-Checklist.md](./Execution/Orbit-Build-Rerun-Checklist.md)
-  The startup and closeout playbook for a fresh `main`-based Orbit lane rerun.
+  Historical startup and closeout playbook for a fresh `main`-based Orbit lane
+  rerun.
 - [Execution/Orbit-Product-Acceptance-Checklist.md](./Execution/Orbit-Product-Acceptance-Checklist.md)
-  The required first-checkpoint product bar before Orbit can be called
-  `review-ready` or `MVP candidate`.
+  Historical first-checkpoint product bar.
 - [Execution/Orbit-Foundation-Lane.md](./Execution/Orbit-Foundation-Lane.md)
   The historical first-run MVP lane contract for `codex/orbit-foundation`.
 - [Execution/2026-03-09-orbit-foundation-retrospective.md](./Execution/2026-03-09-orbit-foundation-retrospective.md)
   The first Orbit foundation execution retrospective and process report.
 - [Execution/2026-03-10-orbit-1-rerun-prep.md](./Execution/2026-03-10-orbit-1-rerun-prep.md)
-  The active staged rerun note for the next manifest-approved fresh-main Orbit
-  attempt.
+  Historical staged rerun note for the next manifest-approved fresh-main Orbit
+  attempt at the time it was written.
 - [Execution/Orbit-Attempt-1-Lane.md](./Execution/Orbit-Attempt-1-Lane.md)
-  The generated lane contract for the current `codex/orbit-1` execution lane.
+  Historical generated lane contract for the `codex/orbit-1` execution lane.
 - [Execution/Orbit-Retrospective-Policy.md](./Execution/Orbit-Retrospective-Policy.md)
   The required Orbit retrospective closeout policy, including Starfish cadence
   and synthesis rules.

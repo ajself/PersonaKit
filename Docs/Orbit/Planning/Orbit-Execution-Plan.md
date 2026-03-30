@@ -5,6 +5,10 @@ Owner: Samwise
 Workspace: Orbit
 Last Updated: 2026-03-18
 
+This document is a historical accepted baseline for the first Orbit checkpoint.
+It is not the current execution queue unless `Docs/Current-State.md`
+explicitly names it as the current work authority.
+
 ## Purpose
 
 Record what Orbit is actually doing next.

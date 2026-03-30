@@ -1,6 +1,16 @@
 # Documentation Index
 
+Status: Active
+Owner: AJ
+Last Reviewed: 2026-03-29
+
 Use this file as the navigation map for project documentation.
+
+## Start Here Now
+
+- [Current State](./Current-State.md): the only active-work authority for the
+  repo-wide queue, including the one current work item, staged next item, and
+  non-active work.
 
 ## Current Direction
 
@@ -33,6 +43,10 @@ Use this file as the navigation map for project documentation.
 
 ## How To Read The Current State
 
+- If you want the **current repo-wide priority picture**, start with
+  `Docs/Current-State.md`.
+- `Docs/Current-State.md` is the only authority for what is current right now;
+  accepted baselines and planning docs do not override it.
 - If you want the **current product direction**, start with `Docs/Orbit/`.
 - If you want the **current PersonaKit engine/runtime implementation rules**,
   start with `Docs/PersonaKit/`.
