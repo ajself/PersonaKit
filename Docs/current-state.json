@@ -2,17 +2,17 @@
   "version": 1,
   "authorityDoc": "Docs/Current-State.md",
   "current": {
-    "id": "M8-P5",
+    "id": "M9-P1",
     "program": "Orbit",
     "workspace": "Orbit",
-    "milestoneId": "M8",
-    "packetId": "M8-P5",
-    "title": "Freeze Memory Review Workflow And Inspection Surface",
+    "milestoneId": "M9",
+    "packetId": "M9-P1",
+    "title": "Freeze Approved-Memory Scope Rules",
     "ownerPersona": "orbit-memory-gardener",
-    "status": "ready-for-review",
+    "status": "planned",
     "sourceRefs": [
-      "Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/README.md",
-      "Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Packet-05-Freeze-Memory-Review-Workflow-And-Inspection-Surface.md"
+      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md",
+      "Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Milestone-Closeout-Review-Artifact.md"
     ]
   },
   "next": null,
@@ -28,6 +28,10 @@
       {
         "id": "M1-M2-first-checkpoint",
         "title": "Orbit first checkpoint baseline"
+      },
+      {
+        "id": "M8",
+        "title": "Journaling And Memory Candidate Review"
       },
       {
         "id": "M6",

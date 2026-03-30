@@ -12,15 +12,15 @@ direction in this repository.
 Orbit is the platform/product direction.
 PersonaKit is the engine inside Orbit.
 
-## Current Orbit Status
+## Work Status
 
-- Orbit is the active forward product direction for the repository.
-- Repo-wide current work priority is governed only by
-  `Docs/Current-State.md`.
-- Most recently closed milestone: `M6` Structured Post Objects And Decision
-  Packets.
-- `M8-P5` is the current Orbit focus item because `Docs/Current-State.md`
-  names it as the one current work item.
+Orbit is the active forward product direction for the repository.
+
+This README is not the source of truth for live work status, current packets,
+or milestone progress.
+
+If an agent needs to understand what is current, what is next, or what was most
+recently closed, read [../Current-State.md](../Current-State.md).
 
 ## Start Here
 

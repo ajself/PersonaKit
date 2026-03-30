@@ -2,7 +2,7 @@
 
 Status: Active
 Owner: AJ + Samwise
-Last Reviewed: 2026-03-29
+Last Reviewed: 2026-03-30
 
 ## Purpose
 
@@ -28,14 +28,14 @@ explicit reprioritization changes.
 - Orbit is the forward product direction for the repository.
 - Program: `Orbit`
 - Workspace: `Orbit`
-- Milestone: `M8`
-- Packet Id: `M8-P5`
-- Title: `Freeze Memory Review Workflow And Inspection Surface`
+- Milestone: `M9`
+- Packet Id: `M9-P1`
+- Title: `Freeze Approved-Memory Scope Rules`
 - Owner: `orbit-memory-gardener`
-- Status: `ready-for-review`
+- Status: `planned`
 - Source refs:
-  - `Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/README.md`
-  - `Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Packet-05-Freeze-Memory-Review-Workflow-And-Inspection-Surface.md`
+  - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md`
+  - `Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Milestone-Closeout-Review-Artifact.md`
 
 ## Next Up
 
@@ -53,8 +53,10 @@ Parked:
 Historical baselines:
 - `M1-M2-first-checkpoint` - Orbit first checkpoint baseline remains accepted
   context, not the live queue.
-- `M6` - Structured Post Objects And Decision Packets is the most recently
-  closed milestone, not the current work item.
+- `M8` - Journaling And Memory Candidate Review is the most recently closed
+  milestone, not the current work item.
+- `M6` - Structured Post Objects And Decision Packets remains accepted context,
+  not the live queue.
 
 ## Source-Of-Truth Map
 

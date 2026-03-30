@@ -1,9 +1,9 @@
 # M8 Journaling And Memory Candidate Review
 
-Status: `M8-P1`, `M8-P2`, `M8-P3`, and `M8-P4` accepted
+Status: Closed for M8 Closeout
 Primary Owner: `orbit-memory-gardener`
 Supporting Personas: `venture-product-steward`, `studio-interaction-quality-lead`, `studio-coverage-architect`
-Last Updated: 2026-03-29
+Last Updated: 2026-03-30
 
 ## Purpose
 
@@ -25,9 +25,14 @@ compressed into a journal or candidate.
 
 The bare minimum is not a milestone win.
 
-`M8` planning starts with one bounded intake-boundary packet from the accepted
+`M8` planning started with one bounded intake-boundary packet from the accepted
 local `M7` dossier. Later journal, candidate, and review packets must still
 start from that boundary instead of broadening from owner availability alone.
+
+`M8` is closed for first-pass journaling, candidate-staging, and review-workflow
+planning.
+The current dossier evidence is sufficient to hand forward to `M9` scope work
+without reopening the accepted `M7` or `M8` packet set.
 
 ## Current Milestone Position
 
@@ -51,9 +56,14 @@ start from that boundary instead of broadening from owner availability alone.
 - `M8-P4` is accepted: the first-pass `memory_review` action semantics and
   reviewer posture are now frozen from the accepted candidate-staging
   boundary, including explicit operator authority over trusted memory
-- later `M8` review-workflow packets remain intentionally unfrozen and must
-  still start from the accepted `M8-P1`, `M8-P2`, and `M8-P3` boundaries
-  plus the accepted `M8-P4` action floor rather than improvisation
+- `M8-P5` is accepted: the first-pass memory-review workflow and operator
+  inspection surface are now frozen from the accepted candidate-staging and
+  review-action boundaries without freezing approved memory, retrieval, or
+  later governance actions
+- `M8` milestone closeout is accepted on the prepared dossier
+- later work beyond accepted `M8-P5` remains intentionally unfrozen and must
+  still start from the accepted `M8-P1`, `M8-P2`, `M8-P3`, and `M8-P4`
+  boundaries rather than improvisation
 
 ## File Map
 
@@ -67,6 +77,10 @@ start from that boundary instead of broadening from owner availability alone.
   accepted candidate-source and candidate-scope packet for `M8-P3`
 - `Packet-04-Freeze-Memory-Review-Action-Semantics.md`
   accepted review-action packet for `M8-P4`
+- `Packet-05-Freeze-Memory-Review-Workflow-And-Inspection-Surface.md`
+  accepted workflow and operator-inspection packet for `M8-P5`
+- `Milestone-Closeout-Review-Artifact.md`
+  AJ-facing milestone closeout note for the full accepted `M8` dossier
 
 ## Preconditions
 
@@ -76,11 +90,13 @@ start from that boundary instead of broadening from owner availability alone.
   implicitly
 - `RFC-0002` remains the data-model floor for `journal_entry`,
   `journal_source`, `memory_candidate`, and `memory_review`
+- `RFC-0005` remains the lifecycle and governance authority for journaling,
+  candidate review, and later approved-memory boundaries
 - `RFC-0004` remains the authority for follow-up continuity and coordinator
   trigger points, not memory governance or workstream execution
 - `orbit-memory-gardener` is now available as the required owner, but that
   owner availability does not bypass the accepted `M8-P1`, `M8-P2`, `M8-P3`,
-  and `M8-P4` planning boundaries
+  `M8-P4`, and accepted `M8-P5` planning boundaries
 
 ## Scope Freeze
 
@@ -88,16 +104,20 @@ In scope:
 
 - `M8` planning only from the frozen `M7` baseline
 - first-pass intake eligibility from accepted `M7` workstream evidence
+- the accepted journaling, candidate-staging, and review-action boundaries from
+  `M8-P2` through `M8-P4`
+- the accepted first-pass review workflow and operator inspection requirements
+  from `M8-P5`
 - the resolved-owner posture and stop points that prevent
   `orbit-memory-gardener` from being treated as blanket execution approval
-- the handoff boundary from accepted `M7` closeout into later `M8` packets
 
 Out of scope:
 
 - journal generation
-- memory-candidate creation or review actions
+- runtime candidate creation, review execution, or automated governance
 - approved memory influencing activations
-- cross-workspace promotion, automated gardening, or contradiction handling
+- scope-promotion or scope-demotion design, contradiction handling,
+  supersession, or linked-memory action design
 - persona creation, runtime work, UI work, schema work, or implementation
 
 ## Required Inputs
@@ -110,6 +130,7 @@ Out of scope:
 - `Docs/Orbit/Planning/Milestones/M7-Workstream-Posts-And-Execution-Lanes/Packet-04-Freeze-Progress-And-Artifact-Return.md`
 - `Docs/Orbit/Planning/Milestones/M7-Workstream-Posts-And-Execution-Lanes/Packet-05-Prove-Lane-Discipline-And-Review-Gates.md`
 - `Docs/Orbit/RFCs/RFC-0002-Collaboration-Runtime-and-Memory-Data-Model.md`
+- `Docs/Orbit/RFCs/RFC-0005-Memory-Journaling-and-Gardening-Model.md`
 - `Docs/Orbit/RFCs/RFC-0004-Teams-Squads-and-Meeting-Coordinator.md`
 
 ## Execution Packets
@@ -221,11 +242,40 @@ Status:
 
 - accepted
 
+### Packet 5. Freeze Memory Review Workflow And Inspection Surface
+
+Outcome:
+
+- accepted candidate staging and the accepted `memory_review` action floor map
+  to one first-pass review workflow and operator inspection contract before any
+  approved-memory behavior is frozen
+
+Work:
+
+- define the first-pass path from staged candidate into operator-visible review
+  without reopening accepted source or action semantics
+- define the minimum inspection surface for candidate summary, proposed scope,
+  provenance, and review context without requiring raw runtime reconstruction
+  or UI design
+- preserve review as governance while deferring approved memory, retrieval,
+  scope-change actions, contradiction handling, linked-memory actions, tooling,
+  and implementation
+
+Done when:
+
+- `M8` can be judged as having one explicit review workflow boundary without
+  re-litigating operator inspection needs, queue posture, or the separation
+  between review and approved memory
+
+Status:
+
+- accepted
+
 ## Subagent Use Pattern
 
 Safe subagents:
 
-- none for `M8-P1` through `M8-P4`; delegation remains out of scope unless AJ
+- none for `M8-P1` through `M8-P5`; delegation remains out of scope unless AJ
   explicitly approves it later
 
 Avoid:
@@ -241,6 +291,8 @@ Avoid:
 - `Packet-02-Freeze-Journal-Entry-And-Source-Policy.md`
 - `Packet-03-Freeze-Memory-Candidate-Source-And-Scope-Policy.md`
 - `Packet-04-Freeze-Memory-Review-Action-Semantics.md`
+- `Packet-05-Freeze-Memory-Review-Workflow-And-Inspection-Surface.md`
+- `Milestone-Closeout-Review-Artifact.md`
 
 ## Stop Points
 
@@ -253,6 +305,10 @@ Avoid:
   intake without hidden state reconstruction
 - stop if later candidate packets bypass the accepted journal-first boundary
   and normalize raw runtime artifacts without explicit reopen and review
+- stop if review workflow depends on approved-memory materialization,
+  activation influence, or retrieval semantics to seem coherent
+- stop if the workflow widens into promotion, demotion, contradiction,
+  supersession, or linked-memory review actions
 
 ## Exit And Handoff
 
@@ -260,10 +316,12 @@ Exit when the dossier freezes:
 
 - explicit `M7` to `M8` intake eligibility
 - the first journaling boundary from that intake bundle
-- the next bounded candidate-staging slice without implying review or
-  implementation authority
+- the first candidate-staging and review-action boundaries without implying
+  approved memory or implementation authority
+- the first-pass review workflow and operator inspection requirements from the
+  accepted staging and action floor
 
 Handoff forward to:
 
-- later `M8` review-workflow packets from the accepted `M8-P4`
-  action-semantics floor
+- `M9-P1` to freeze approved-memory scope rules without reopening accepted
+  `M8` governance boundaries
