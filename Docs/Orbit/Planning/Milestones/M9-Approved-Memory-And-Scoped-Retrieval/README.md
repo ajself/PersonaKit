@@ -3,7 +3,7 @@
 Status: Planned
 Primary Owner: `orbit-memory-gardener`
 Supporting Personas: `architectural-editor`, `studio-coverage-architect`, `venture-product-steward`
-Last Updated: 2026-03-30
+Last Updated: 2026-03-31
 
 ## Purpose
 
@@ -50,16 +50,18 @@ Out of scope:
 
 ## Current Milestone Position
 
-- `Docs/Current-State.md` identifies `M9-P3` as the active current work item
+- `Docs/Current-State.md` identifies `M9-P4` as the active current work item
 - accepted `M8` closeout is the frozen handoff boundary into `M9`
 - `M9-P1` remains accepted as the bounded packet that freezes approved-memory
   scope meaning only
 - `M9-P2` is now accepted as the bounded code-first slice that materializes
   approved-memory records and the separate persona-global memory profile
   surface while preserving the accepted `M9-P1` scope meanings
-- `M9-P3` is the next bounded slice that should make retrieval eligibility
-  explicit without widening into trace UI, broader lineage inspection, or
-  promotion semantics
+- `M9-P3` is now accepted as the bounded slice that makes retrieval
+  eligibility explicit without widening into trace UI, broader lineage
+  inspection, or promotion semantics
+- `M9-P4` is the current bounded slice for trace and lineage inspection on top
+  of the accepted retrieval-eligibility posture
 - later `M9` packets remain intentionally unfrozen and must not smuggle in
   trace-inspection, broader lineage traversal, or governance redesign under the
   retrieval-eligibility label
@@ -125,7 +127,7 @@ Done when:
 
 Status:
 
-- current
+- accepted
 
 ### Packet 4. Implement Trace And Lineage Inspection
 
@@ -142,6 +144,10 @@ Work:
 Done when:
 
 - one response can show its memory influence cleanly
+
+Status:
+
+- current
 
 ### Packet 5. Run Regression And Governance Review
 

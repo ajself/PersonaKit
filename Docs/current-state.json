@@ -2,18 +2,16 @@
   "version": 1,
   "authorityDoc": "Docs/Current-State.md",
   "current": {
-    "id": "M9-P3",
+    "id": "M9-P4",
     "program": "Orbit",
     "workspace": "Orbit",
     "milestoneId": "M9",
-    "packetId": "M9-P3",
-    "title": "Implement Retrieval Eligibility Rules",
+    "packetId": "M9-P4",
+    "title": "Implement Trace And Lineage Inspection",
     "ownerPersona": "orbit-memory-gardener",
     "status": "active",
     "sourceRefs": [
-      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md",
-      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-03-Implement-Retrieval-Eligibility-Rules.md",
-      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md"
+      "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md"
     ]
   },
   "next": null,

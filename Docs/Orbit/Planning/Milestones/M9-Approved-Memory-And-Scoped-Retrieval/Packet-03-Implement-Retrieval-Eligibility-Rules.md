@@ -1,15 +1,15 @@
 # M9 Packet 3: Implement Retrieval Eligibility Rules
 
-Status: Current
+Status: Accepted
 Packet Id: `M9-P3`
 Milestone: `M9`
 Execution Owner: `orbit-memory-gardener`
 Review Personas: `venture-product-steward`, `studio-coverage-architect`, `architectural-editor`
-Last Updated: 2026-03-30
+Last Updated: 2026-03-31
 
 ## Header
 
-- status: `ready-for-dev`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `implementation`
 
