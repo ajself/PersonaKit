@@ -210,6 +210,41 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
   }
 
   @Test
+  func liveRuntimeStoreRoundTripsApprovedMemoryRecordsWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleRoomBootstrap()
+      let bundle = sampleApprovedMemoryRecordBundle(room: room)
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+      try await store.recordApprovedMemory(bundle)
+
+      let personaTemplateID = try #require(bundle.entry.personaTemplateID)
+      let loadedCandidate = try await store.loadMemoryCandidate(id: bundle.candidate.id)
+      let loadedReviews = try await store.loadMemoryReviews(
+        memoryCandidateID: bundle.candidate.id
+      )
+      let loadedEntry = try await store.loadApprovedMemoryEntry(id: bundle.entry.id)
+      let loadedPersonaGlobalProfile = try await store.loadPersonaGlobalMemoryProfile(
+        personaTemplateID: personaTemplateID
+      )
+
+      #expect(loadedCandidate == bundle.candidate)
+      #expect(loadedReviews == [bundle.review])
+      #expect(loadedEntry == bundle.entry)
+      #expect(loadedEntry?.sourceMemoryCandidateID == bundle.candidate.id)
+      #expect(loadedPersonaGlobalProfile == bundle.personaGlobalProfile)
+    } catch {
+      Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
   func liveRuntimeStoreRoundTripsMeetingRecordsWhenDatabaseEnvironmentIsAvailable() async throws {
     guard let configuration = integrationConfiguration() else {
       return
@@ -541,6 +576,59 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
           participationMode: .active
         )
       ]
+    )
+  }
+
+  private func sampleApprovedMemoryRecordBundle(
+    room: OrbitPhase1RoomBootstrap
+  ) -> OrbitApprovedMemoryRecordBundle {
+    let workspacePersona = room.workspacePersonas[0]
+    let candidateID = UUID(uuidString: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1")!
+    let reviewDate = Date(timeIntervalSince1970: 1_742_342_530)
+
+    return OrbitApprovedMemoryRecordBundle(
+      candidate: OrbitMemoryCandidateRecord(
+        id: candidateID,
+        workspaceID: room.workspace.id,
+        workspacePersonaID: workspacePersona.id,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        sourceType: .post,
+        sourceID: room.post.id.uuidString,
+        proposedScope: .personaGlobal,
+        title: "Samwise keeps approved memory separate",
+        body: "Reviewed approved memory stays distinct from candidate staging.",
+        confidence: 0.91,
+        status: .approved,
+        createdAt: Date(timeIntervalSince1970: 1_742_342_525),
+        reviewedAt: reviewDate
+      ),
+      review: OrbitMemoryReviewRecord(
+        id: UUID(uuidString: "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2")!,
+        memoryCandidateID: candidateID,
+        reviewerType: .operator,
+        reviewerID: "aj",
+        decision: .approve,
+        notes: "Materialize as persona-global expertise.",
+        createdAt: reviewDate
+      ),
+      entry: OrbitMemoryEntryRecord(
+        id: UUID(uuidString: "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3")!,
+        scope: .personaGlobal,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        title: "Samwise keeps approved memory separate",
+        body: "Approved memory remains a durable runtime artifact, not an authored persona mutation.",
+        status: .active,
+        validFrom: reviewDate,
+        sourceMemoryCandidateID: candidateID,
+        createdAt: reviewDate
+      ),
+      personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord(
+        id: UUID(uuidString: "c4c4c4c4-c4c4-c4c4-c4c4-c4c4c4c4c4c4")!,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        summary: "Curated Samwise persona-global memory profile.",
+        lastCuratedAt: reviewDate,
+        createdAt: reviewDate
+      )
     )
   }
 

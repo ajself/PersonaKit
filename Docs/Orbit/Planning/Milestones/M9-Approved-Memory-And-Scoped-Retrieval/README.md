@@ -48,13 +48,16 @@ Out of scope:
 
 ## Current Milestone Position
 
-- `Docs/Current-State.md` identifies `M9-P1` as the active current work item
+- `Docs/Current-State.md` identifies `M9-P2` as the active current work item
 - accepted `M8` closeout is the frozen handoff boundary into `M9`
-- `M9-P1` is accepted as the bounded packet that freezes approved-memory scope
-  meaning only
+- `M9-P1` remains accepted as the bounded packet that freezes approved-memory
+  scope meaning only
+- `M9-P2` is the bounded code-first slice that materializes approved-memory
+  records and the separate persona-global memory profile surface while
+  preserving the accepted `M9-P1` scope meanings
 - later `M9` packets remain intentionally unfrozen and must not smuggle in
-  retrieval, activation, lineage, or implementation work under the scope-freeze
-  label
+  retrieval, activation, broader lineage, or trace-inspection work under the
+  approved-memory-record label
 
 ## Execution Packets
 
@@ -88,12 +91,16 @@ Outcome:
 Work:
 
 - add approved-memory records
-- add memory links and profile records
-- preserve lineage from candidate to approved memory
+- add the separate persona-global memory profile surface
+- preserve the minimum candidate-to-approved lineage needed for the packet
 
 Done when:
 
-- a reviewed candidate can become durable approved memory with visible lineage
+- a reviewed candidate can become durable approved memory with inspectable lineage
+
+Status:
+
+- current
 
 ### Packet 3. Implement Retrieval Eligibility Rules
 

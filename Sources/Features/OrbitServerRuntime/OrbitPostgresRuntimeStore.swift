@@ -101,6 +101,18 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func recordApprovedMemory(
+    _ bundle: OrbitApprovedMemoryRecordBundle,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws {
+    try await withClient { client in
+      try await repository.recordApprovedMemory(
+        bundle,
+        using: OrbitPostgresClientExecutor(client: client)
+      )
+    }
+  }
+
   public func bootstrapRoom(
     _ room: OrbitPhase1RoomBootstrap,
     repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
@@ -271,6 +283,75 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         room: room,
         using: OrbitPostgresClientExecutor(client: client)
       )
+    }
+  }
+
+  public func loadMemoryCandidate(
+    id: UUID,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitMemoryCandidateRecord? {
+    try await withClient { client in
+      let rows = try await client.query(
+        repository.selectMemoryCandidateQuery(id: id)
+      ).collect()
+
+      guard let row = rows.first else {
+        return nil
+      }
+
+      return try decodeMemoryCandidate(from: row.makeRandomAccess())
+    }
+  }
+
+  public func loadMemoryReviews(
+    memoryCandidateID: UUID,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> [OrbitMemoryReviewRecord] {
+    try await withClient { client in
+      let rows = try await client.query(
+        repository.selectMemoryReviewsQuery(memoryCandidateID: memoryCandidateID)
+      )
+
+      var reviews = [OrbitMemoryReviewRecord]()
+      for try await row in rows {
+        reviews.append(try decodeMemoryReview(from: row.makeRandomAccess()))
+      }
+
+      return reviews
+    }
+  }
+
+  public func loadApprovedMemoryEntry(
+    id: UUID,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitMemoryEntryRecord? {
+    try await withClient { client in
+      let rows = try await client.query(
+        repository.selectMemoryEntryQuery(id: id)
+      ).collect()
+
+      guard let row = rows.first else {
+        return nil
+      }
+
+      return try decodeMemoryEntry(from: row.makeRandomAccess())
+    }
+  }
+
+  public func loadPersonaGlobalMemoryProfile(
+    personaTemplateID: String,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitPersonaGlobalMemoryProfileRecord? {
+    try await withClient { client in
+      let rows = try await client.query(
+        repository.selectPersonaGlobalMemoryProfileQuery(personaTemplateID: personaTemplateID)
+      ).collect()
+
+      guard let row = rows.first else {
+        return nil
+      }
+
+      return try decodePersonaGlobalMemoryProfile(from: row.makeRandomAccess())
     }
   }
 
@@ -1137,6 +1218,99 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       startedAt: row["run_started_at"].decode(Date.self),
       completedAt: row["run_completed_at"].decode(Optional<Date>.self),
       failureReason: row["run_failure_reason"].decode(Optional<String>.self)
+    )
+  }
+
+  private func decodeMemoryCandidate(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMemoryCandidateRecord {
+    try OrbitMemoryCandidateRecord(
+      id: row["id"].decode(UUID.self),
+      workspaceID: row["workspace_id"].decode(Optional<UUID>.self),
+      workspacePersonaID: row["workspace_persona_id"].decode(Optional<UUID>.self),
+      personaTemplateID: row["persona_template_id"].decode(Optional<String>.self),
+      sourceType: try decodeEnum(
+        OrbitMemoryCandidateSourceType.self,
+        from: row["source_type"],
+        columnName: "source_type"
+      ),
+      sourceID: row["source_id"].decode(String.self),
+      proposedScope: try decodeEnum(
+        OrbitMemoryScope.self,
+        from: row["proposed_scope"],
+        columnName: "proposed_scope"
+      ),
+      title: row["title"].decode(String.self),
+      body: row["body"].decode(String.self),
+      confidence: row["confidence"].decode(Double.self),
+      status: try decodeEnum(
+        OrbitMemoryCandidateStatus.self,
+        from: row["status"],
+        columnName: "status"
+      ),
+      createdAt: row["created_at"].decode(Date.self),
+      reviewedAt: row["reviewed_at"].decode(Optional<Date>.self)
+    )
+  }
+
+  private func decodeMemoryReview(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMemoryReviewRecord {
+    try OrbitMemoryReviewRecord(
+      id: row["id"].decode(UUID.self),
+      memoryCandidateID: row["memory_candidate_id"].decode(UUID.self),
+      reviewerType: try decodeEnum(
+        OrbitMemoryReviewerType.self,
+        from: row["reviewer_type"],
+        columnName: "reviewer_type"
+      ),
+      reviewerID: row["reviewer_id"].decode(String.self),
+      decision: try decodeEnum(
+        OrbitMemoryReviewDecision.self,
+        from: row["decision"],
+        columnName: "decision"
+      ),
+      notes: row["notes"].decode(Optional<String>.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeMemoryEntry(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMemoryEntryRecord {
+    try OrbitMemoryEntryRecord(
+      id: row["id"].decode(UUID.self),
+      scope: try decodeEnum(
+        OrbitMemoryScope.self,
+        from: row["scope"],
+        columnName: "scope"
+      ),
+      workspaceID: row["workspace_id"].decode(Optional<UUID>.self),
+      workspacePersonaID: row["workspace_persona_id"].decode(Optional<UUID>.self),
+      personaTemplateID: row["persona_template_id"].decode(Optional<String>.self),
+      title: row["title"].decode(String.self),
+      body: row["body"].decode(String.self),
+      status: try decodeEnum(
+        OrbitMemoryEntryStatus.self,
+        from: row["status"],
+        columnName: "status"
+      ),
+      validFrom: row["valid_from"].decode(Date.self),
+      validTo: row["valid_to"].decode(Optional<Date>.self),
+      sourceMemoryCandidateID: row["source_memory_candidate_id"].decode(Optional<UUID>.self),
+      createdAt: row["created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodePersonaGlobalMemoryProfile(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitPersonaGlobalMemoryProfileRecord {
+    try OrbitPersonaGlobalMemoryProfileRecord(
+      id: row["id"].decode(UUID.self),
+      personaTemplateID: row["persona_template_id"].decode(String.self),
+      summary: row["summary"].decode(String.self),
+      lastCuratedAt: row["last_curated_at"].decode(Date.self),
+      createdAt: row["created_at"].decode(Date.self)
     )
   }
 

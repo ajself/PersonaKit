@@ -25,6 +25,10 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case meetingMember = "meeting_member"
   case personaActivation = "persona_activation"
   case agentRun = "agent_run"
+  case memoryCandidate = "memory_candidate"
+  case memoryReview = "memory_review"
+  case memoryEntry = "memory_entry"
+  case personaGlobalMemoryProfile = "persona_global_memory_profile"
 }
 
 public enum OrbitPhase1EventCategory: String, CaseIterable, Sendable {
@@ -695,6 +699,71 @@ public enum OrbitPhase1RuntimeSchema {
           started_at TIMESTAMPTZ NOT NULL,
           completed_at TIMESTAMPTZ,
           failure_reason TEXT
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .memoryCandidate,
+      sql: """
+        CREATE TABLE IF NOT EXISTS memory_candidate (
+          id UUID PRIMARY KEY,
+          workspace_id UUID REFERENCES workspace(id),
+          workspace_persona_id UUID REFERENCES workspace_persona(id),
+          persona_template_id TEXT,
+          source_type TEXT NOT NULL,
+          source_id TEXT NOT NULL,
+          proposed_scope TEXT NOT NULL,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          confidence DOUBLE PRECISION NOT NULL,
+          status TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL,
+          reviewed_at TIMESTAMPTZ
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .memoryReview,
+      sql: """
+        CREATE TABLE IF NOT EXISTS memory_review (
+          id UUID PRIMARY KEY,
+          memory_candidate_id UUID NOT NULL REFERENCES memory_candidate(id),
+          reviewer_type TEXT NOT NULL,
+          reviewer_id TEXT NOT NULL,
+          decision TEXT NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .memoryEntry,
+      sql: """
+        CREATE TABLE IF NOT EXISTS memory_entry (
+          id UUID PRIMARY KEY,
+          scope TEXT NOT NULL,
+          workspace_id UUID REFERENCES workspace(id),
+          workspace_persona_id UUID REFERENCES workspace_persona(id),
+          persona_template_id TEXT,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          status TEXT NOT NULL,
+          valid_from TIMESTAMPTZ NOT NULL,
+          valid_to TIMESTAMPTZ,
+          source_memory_candidate_id UUID REFERENCES memory_candidate(id),
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .personaGlobalMemoryProfile,
+      sql: """
+        CREATE TABLE IF NOT EXISTS persona_global_memory_profile (
+          id UUID PRIMARY KEY,
+          persona_template_id TEXT NOT NULL UNIQUE,
+          summary TEXT NOT NULL,
+          last_curated_at TIMESTAMPTZ NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
         )
         """
     ),

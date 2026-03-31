@@ -107,6 +107,52 @@ public enum OrbitAgentRunStatus: String, Codable, Equatable, Sendable {
   case cancelled
 }
 
+public enum OrbitMemoryScope: String, Codable, Equatable, Sendable {
+  case workspace
+  case workspacePersona = "workspace_persona"
+  case personaGlobal = "persona_global"
+  case organization
+}
+
+public enum OrbitMemoryCandidateSourceType: String, Codable, Equatable, Sendable {
+  case journal
+  case post
+  case thread
+  case message
+  case run
+  case note
+  case decision
+  case manual
+}
+
+public enum OrbitMemoryCandidateStatus: String, Codable, Equatable, Sendable {
+  case candidate
+  case approved
+  case rejected
+  case archived
+  case deferred
+}
+
+public enum OrbitMemoryReviewerType: String, Codable, Equatable, Sendable {
+  case `operator`
+  case steward
+  case system
+}
+
+public enum OrbitMemoryReviewDecision: String, Codable, Equatable, Sendable {
+  case approve
+  case reject
+  case archive
+  case `defer`
+}
+
+public enum OrbitMemoryEntryStatus: String, Codable, Equatable, Sendable {
+  case active
+  case archived
+  case superseded
+  case expired
+}
+
 public struct OrbitWorkspaceRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let slug: String
@@ -959,6 +1005,164 @@ public struct OrbitAgentRunRecord: Codable, Equatable, Sendable {
     self.startedAt = startedAt
     self.completedAt = completedAt
     self.failureReason = failureReason
+  }
+}
+
+public struct OrbitMemoryCandidateRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let workspaceID: UUID?
+  public let workspacePersonaID: UUID?
+  public let personaTemplateID: String?
+  public let sourceType: OrbitMemoryCandidateSourceType
+  public let sourceID: String
+  public let proposedScope: OrbitMemoryScope
+  public let title: String
+  public let body: String
+  public let confidence: Double
+  public let status: OrbitMemoryCandidateStatus
+  public let createdAt: Date
+  public let reviewedAt: Date?
+
+  public init(
+    id: UUID,
+    workspaceID: UUID? = nil,
+    workspacePersonaID: UUID? = nil,
+    personaTemplateID: String? = nil,
+    sourceType: OrbitMemoryCandidateSourceType,
+    sourceID: String,
+    proposedScope: OrbitMemoryScope,
+    title: String,
+    body: String,
+    confidence: Double,
+    status: OrbitMemoryCandidateStatus,
+    createdAt: Date,
+    reviewedAt: Date? = nil
+  ) {
+    self.id = id
+    self.workspaceID = workspaceID
+    self.workspacePersonaID = workspacePersonaID
+    self.personaTemplateID = personaTemplateID
+    self.sourceType = sourceType
+    self.sourceID = sourceID
+    self.proposedScope = proposedScope
+    self.title = title
+    self.body = body
+    self.confidence = confidence
+    self.status = status
+    self.createdAt = createdAt
+    self.reviewedAt = reviewedAt
+  }
+}
+
+public struct OrbitMemoryReviewRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let memoryCandidateID: UUID
+  public let reviewerType: OrbitMemoryReviewerType
+  public let reviewerID: String
+  public let decision: OrbitMemoryReviewDecision
+  public let notes: String?
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    memoryCandidateID: UUID,
+    reviewerType: OrbitMemoryReviewerType,
+    reviewerID: String,
+    decision: OrbitMemoryReviewDecision,
+    notes: String? = nil,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.memoryCandidateID = memoryCandidateID
+    self.reviewerType = reviewerType
+    self.reviewerID = reviewerID
+    self.decision = decision
+    self.notes = notes
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitMemoryEntryRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let scope: OrbitMemoryScope
+  public let workspaceID: UUID?
+  public let workspacePersonaID: UUID?
+  public let personaTemplateID: String?
+  public let title: String
+  public let body: String
+  public let status: OrbitMemoryEntryStatus
+  public let validFrom: Date
+  public let validTo: Date?
+  public let sourceMemoryCandidateID: UUID?
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    scope: OrbitMemoryScope,
+    workspaceID: UUID? = nil,
+    workspacePersonaID: UUID? = nil,
+    personaTemplateID: String? = nil,
+    title: String,
+    body: String,
+    status: OrbitMemoryEntryStatus,
+    validFrom: Date,
+    validTo: Date? = nil,
+    sourceMemoryCandidateID: UUID? = nil,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.scope = scope
+    self.workspaceID = workspaceID
+    self.workspacePersonaID = workspacePersonaID
+    self.personaTemplateID = personaTemplateID
+    self.title = title
+    self.body = body
+    self.status = status
+    self.validFrom = validFrom
+    self.validTo = validTo
+    self.sourceMemoryCandidateID = sourceMemoryCandidateID
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitPersonaGlobalMemoryProfileRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let personaTemplateID: String
+  public let summary: String
+  public let lastCuratedAt: Date
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    personaTemplateID: String,
+    summary: String,
+    lastCuratedAt: Date,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.personaTemplateID = personaTemplateID
+    self.summary = summary
+    self.lastCuratedAt = lastCuratedAt
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitApprovedMemoryRecordBundle: Codable, Equatable, Sendable {
+  public let candidate: OrbitMemoryCandidateRecord
+  public let review: OrbitMemoryReviewRecord
+  public let entry: OrbitMemoryEntryRecord
+  public let personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord?
+
+  public init(
+    candidate: OrbitMemoryCandidateRecord,
+    review: OrbitMemoryReviewRecord,
+    entry: OrbitMemoryEntryRecord,
+    personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord? = nil
+  ) {
+    self.candidate = candidate
+    self.review = review
+    self.entry = entry
+    self.personaGlobalProfile = personaGlobalProfile
   }
 }
 

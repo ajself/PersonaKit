@@ -29,10 +29,10 @@ explicit reprioritization changes.
 - Program: `Orbit`
 - Workspace: `Orbit`
 - Milestone: `M9`
-- Packet Id: `M9-P1`
-- Title: `Freeze Approved-Memory Scope Rules`
+- Packet Id: `M9-P2`
+- Title: `Implement Approved Memory Records`
 - Owner: `orbit-memory-gardener`
-- Status: `accepted`
+- Status: `active`
 - Source refs:
   - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md`
   - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md`

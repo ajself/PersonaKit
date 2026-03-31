@@ -312,6 +312,29 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func recordApprovedMemoryExecutesSeparateCandidateReviewEntryAndProfileWrites() async throws {
+    let executor = RecordingRepositoryExecutor()
+    let bundle = sampleApprovedMemoryRecordBundle()
+
+    try await repository.recordApprovedMemory(bundle, using: executor)
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.first == "BEGIN")
+    #expect(queries.last == "COMMIT")
+    #expect(queries.contains(where: { $0.contains("INSERT INTO memory_candidate") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO memory_review") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO memory_entry") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO persona_global_memory_profile") }))
+    #expect(
+      queries.contains(where: {
+        $0.contains("INSERT INTO memory_entry")
+          && $0.contains("source_memory_candidate_id")
+      })
+    )
+  }
+
+  @Test
   func roomSnapshotQueryReadsCanonicalWorkspaceChannelPostAndThreadState() {
     let query = repository.selectRoomSnapshotQuery(
       workspaceSlug: "orbit",
@@ -392,6 +415,12 @@ struct Phase1RuntimeRepositoryTests {
       workspaceID: UUID(),
       after: nil
     )
+    let memoryCandidateQuery = repository.selectMemoryCandidateQuery(id: UUID())
+    let memoryReviewQuery = repository.selectMemoryReviewsQuery(memoryCandidateID: UUID())
+    let memoryEntryQuery = repository.selectMemoryEntryQuery(id: UUID())
+    let personaGlobalProfileQuery = repository.selectPersonaGlobalMemoryProfileQuery(
+      personaTemplateID: "samwise"
+    )
 
     #expect(workspacePersonaQuery.sql.contains("FROM workspace_persona"))
     #expect(workspacePersonaQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
@@ -409,6 +438,22 @@ struct Phase1RuntimeRepositoryTests {
     #expect(membershipQuery.sql.contains("JOIN workspace_persona"))
     #expect(membershipQuery.sql.contains("ORDER BY workspace_persona_membership.created_at ASC, workspace_persona_membership.id ASC"))
     #expect(membershipQuery.binds.count == 1)
+
+    #expect(memoryCandidateQuery.sql.contains("FROM memory_candidate"))
+    #expect(memoryCandidateQuery.sql.contains("LIMIT 1"))
+    #expect(memoryCandidateQuery.binds.count == 1)
+
+    #expect(memoryReviewQuery.sql.contains("FROM memory_review"))
+    #expect(memoryReviewQuery.sql.contains("ORDER BY created_at ASC, id ASC"))
+    #expect(memoryReviewQuery.binds.count == 1)
+
+    #expect(memoryEntryQuery.sql.contains("FROM memory_entry"))
+    #expect(memoryEntryQuery.sql.contains("LIMIT 1"))
+    #expect(memoryEntryQuery.binds.count == 1)
+
+    #expect(personaGlobalProfileQuery.sql.contains("FROM persona_global_memory_profile"))
+    #expect(personaGlobalProfileQuery.sql.contains("LIMIT 1"))
+    #expect(personaGlobalProfileQuery.binds.count == 1)
 
     #expect(participantQuery.sql.contains("FROM post_participant"))
     #expect(participantQuery.sql.contains("ORDER BY joined_at ASC, id ASC"))
@@ -999,5 +1044,57 @@ struct Phase1RuntimeRepositoryTests {
         createdAt: postEvent.createdAt
       )
     ]
+  }
+
+  private func sampleApprovedMemoryRecordBundle() -> OrbitApprovedMemoryRecordBundle {
+    let room = sampleRoomBootstrap()
+    let workspacePersona = room.workspacePersonas[0]
+    let candidateID = UUID(uuidString: "b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1")!
+    let reviewDate = referenceDate.addingTimeInterval(120)
+
+    return OrbitApprovedMemoryRecordBundle(
+      candidate: OrbitMemoryCandidateRecord(
+        id: candidateID,
+        workspaceID: room.workspace.id,
+        workspacePersonaID: workspacePersona.id,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        sourceType: .post,
+        sourceID: room.post.id.uuidString,
+        proposedScope: .personaGlobal,
+        title: "Samwise keeps Orbit memory boundaries explicit",
+        body: "Preserve approved memory as a separate reviewed artifact.",
+        confidence: 0.94,
+        status: .approved,
+        createdAt: referenceDate.addingTimeInterval(110),
+        reviewedAt: reviewDate
+      ),
+      review: OrbitMemoryReviewRecord(
+        id: UUID(uuidString: "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2")!,
+        memoryCandidateID: candidateID,
+        reviewerType: .operator,
+        reviewerID: "aj",
+        decision: .approve,
+        notes: "Carry this forward as persona-global expertise.",
+        createdAt: reviewDate
+      ),
+      entry: OrbitMemoryEntryRecord(
+        id: UUID(uuidString: "b3b3b3b3-b3b3-b3b3-b3b3-b3b3b3b3b3b3")!,
+        scope: .personaGlobal,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        title: "Samwise keeps Orbit memory boundaries explicit",
+        body: "Approved memory stays separate from authored persona definitions.",
+        status: .active,
+        validFrom: reviewDate,
+        sourceMemoryCandidateID: candidateID,
+        createdAt: reviewDate
+      ),
+      personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord(
+        id: UUID(uuidString: "b4b4b4b4-b4b4-b4b4-b4b4-b4b4b4b4b4b4")!,
+        personaTemplateID: workspacePersona.personaTemplateID,
+        summary: "Curated cross-workspace expertise for Samwise.",
+        lastCuratedAt: reviewDate,
+        createdAt: reviewDate
+      )
+    )
   }
 }

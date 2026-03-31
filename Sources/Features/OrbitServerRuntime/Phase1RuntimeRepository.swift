@@ -254,6 +254,27 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     )
   }
 
+  public func recordApprovedMemory(
+    _ bundle: OrbitApprovedMemoryRecordBundle,
+    using executor: some OrbitPostgresStatementExecutor
+  ) async throws {
+    do {
+      try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
+      try await executor.execute(query: upsertMemoryCandidateQuery(bundle.candidate))
+      try await executor.execute(query: insertMemoryReviewQuery(bundle.review))
+      try await executor.execute(query: upsertMemoryEntryQuery(bundle.entry))
+      if let personaGlobalProfile = bundle.personaGlobalProfile {
+        try await executor.execute(
+          query: upsertPersonaGlobalMemoryProfileQuery(personaGlobalProfile)
+        )
+      }
+      try await executor.execute(query: .init(unsafeSQL: "COMMIT"))
+    } catch {
+      try? await executor.execute(query: .init(unsafeSQL: "ROLLBACK"))
+      throw error
+    }
+  }
+
   private func executeBootstrapRoomQueries(
     _ room: OrbitPhase1RoomBootstrap,
     using executor: some OrbitPostgresStatementExecutor
@@ -951,6 +972,199 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       \(agentRun.failureReason)
     )
     ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func upsertMemoryCandidateQuery(
+    _ candidate: OrbitMemoryCandidateRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO memory_candidate (
+      id, workspace_id, workspace_persona_id, persona_template_id, source_type,
+      source_id, proposed_scope, title, body, confidence, status, created_at,
+      reviewed_at
+    ) VALUES (
+      \(candidate.id),
+      \(candidate.workspaceID),
+      \(candidate.workspacePersonaID),
+      \(candidate.personaTemplateID),
+      \(candidate.sourceType.rawValue),
+      \(candidate.sourceID),
+      \(candidate.proposedScope.rawValue),
+      \(candidate.title),
+      \(candidate.body),
+      \(candidate.confidence),
+      \(candidate.status.rawValue),
+      \(candidate.createdAt),
+      \(candidate.reviewedAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      workspace_id = EXCLUDED.workspace_id,
+      workspace_persona_id = EXCLUDED.workspace_persona_id,
+      persona_template_id = EXCLUDED.persona_template_id,
+      source_type = EXCLUDED.source_type,
+      source_id = EXCLUDED.source_id,
+      proposed_scope = EXCLUDED.proposed_scope,
+      title = EXCLUDED.title,
+      body = EXCLUDED.body,
+      confidence = EXCLUDED.confidence,
+      status = EXCLUDED.status,
+      reviewed_at = EXCLUDED.reviewed_at
+    """
+  }
+
+  public func insertMemoryReviewQuery(
+    _ review: OrbitMemoryReviewRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO memory_review (
+      id, memory_candidate_id, reviewer_type, reviewer_id, decision, notes,
+      created_at
+    ) VALUES (
+      \(review.id),
+      \(review.memoryCandidateID),
+      \(review.reviewerType.rawValue),
+      \(review.reviewerID),
+      \(review.decision.rawValue),
+      \(review.notes),
+      \(review.createdAt)
+    )
+    ON CONFLICT (id) DO NOTHING
+    """
+  }
+
+  public func upsertMemoryEntryQuery(
+    _ entry: OrbitMemoryEntryRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO memory_entry (
+      id, scope, workspace_id, workspace_persona_id, persona_template_id, title,
+      body, status, valid_from, valid_to, source_memory_candidate_id, created_at
+    ) VALUES (
+      \(entry.id),
+      \(entry.scope.rawValue),
+      \(entry.workspaceID),
+      \(entry.workspacePersonaID),
+      \(entry.personaTemplateID),
+      \(entry.title),
+      \(entry.body),
+      \(entry.status.rawValue),
+      \(entry.validFrom),
+      \(entry.validTo),
+      \(entry.sourceMemoryCandidateID),
+      \(entry.createdAt)
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      scope = EXCLUDED.scope,
+      workspace_id = EXCLUDED.workspace_id,
+      workspace_persona_id = EXCLUDED.workspace_persona_id,
+      persona_template_id = EXCLUDED.persona_template_id,
+      title = EXCLUDED.title,
+      body = EXCLUDED.body,
+      status = EXCLUDED.status,
+      valid_from = EXCLUDED.valid_from,
+      valid_to = EXCLUDED.valid_to,
+      source_memory_candidate_id = EXCLUDED.source_memory_candidate_id
+    """
+  }
+
+  public func upsertPersonaGlobalMemoryProfileQuery(
+    _ profile: OrbitPersonaGlobalMemoryProfileRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO persona_global_memory_profile (
+      id, persona_template_id, summary, last_curated_at, created_at
+    ) VALUES (
+      \(profile.id),
+      \(profile.personaTemplateID),
+      \(profile.summary),
+      \(profile.lastCuratedAt),
+      \(profile.createdAt)
+    )
+    ON CONFLICT (persona_template_id) DO UPDATE SET
+      summary = EXCLUDED.summary,
+      last_curated_at = EXCLUDED.last_curated_at
+    """
+  }
+
+  public func selectMemoryCandidateQuery(
+    id: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      workspace_id,
+      workspace_persona_id,
+      persona_template_id,
+      source_type,
+      source_id,
+      proposed_scope,
+      title,
+      body,
+      confidence,
+      status,
+      created_at,
+      reviewed_at
+    FROM memory_candidate
+    WHERE id = \(id)
+    LIMIT 1
+    """
+  }
+
+  public func selectMemoryReviewsQuery(
+    memoryCandidateID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      memory_candidate_id,
+      reviewer_type,
+      reviewer_id,
+      decision,
+      notes,
+      created_at
+    FROM memory_review
+    WHERE memory_candidate_id = \(memoryCandidateID)
+    ORDER BY created_at ASC, id ASC
+    """
+  }
+
+  public func selectMemoryEntryQuery(
+    id: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      scope,
+      workspace_id,
+      workspace_persona_id,
+      persona_template_id,
+      title,
+      body,
+      status,
+      valid_from,
+      valid_to,
+      source_memory_candidate_id,
+      created_at
+    FROM memory_entry
+    WHERE id = \(id)
+    LIMIT 1
+    """
+  }
+
+  public func selectPersonaGlobalMemoryProfileQuery(
+    personaTemplateID: String
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      persona_template_id,
+      summary,
+      last_curated_at,
+      created_at
+    FROM persona_global_memory_profile
+    WHERE persona_template_id = \(personaTemplateID)
+    LIMIT 1
     """
   }
 

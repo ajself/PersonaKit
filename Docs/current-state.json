@@ -2,14 +2,14 @@
   "version": 1,
   "authorityDoc": "Docs/Current-State.md",
   "current": {
-    "id": "M9-P1",
+    "id": "M9-P2",
     "program": "Orbit",
     "workspace": "Orbit",
     "milestoneId": "M9",
-    "packetId": "M9-P1",
-    "title": "Freeze Approved-Memory Scope Rules",
+    "packetId": "M9-P2",
+    "title": "Implement Approved Memory Records",
     "ownerPersona": "orbit-memory-gardener",
-    "status": "accepted",
+    "status": "active",
     "sourceRefs": [
       "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md",
       "Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md",
