@@ -335,6 +335,111 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func appendCollaboratorResponsePersistsTraceRecordsBeforeRunCompletion() async throws {
+    let executor = RecordingRepositoryExecutor()
+    let room = sampleRoomBootstrap()
+    let message = OrbitMessageRecord(
+      id: UUID(uuidString: "10101010-1010-1010-1010-101010101010")!,
+      postID: room.post.id,
+      threadID: room.thread.id,
+      authorType: .workspacePersona,
+      authorID: room.workspacePersonas[0].id.uuidString,
+      replyToMessageID: room.seedMessages[0].id,
+      body: "Trace-aware collaborator response",
+      messageFormat: .markdown,
+      state: .completed,
+      createdAt: referenceDate,
+      updatedAt: referenceDate
+    )
+    let activation = OrbitPersonaActivationRecord(
+      id: UUID(uuidString: "11111111-aaaa-bbbb-cccc-111111111111")!,
+      initiatedByParticipantType: .user,
+      initiatedByParticipantID: "aj",
+      workspaceID: room.workspace.id,
+      channelID: room.channel.id,
+      originPostID: room.post.id,
+      originThreadID: room.thread.id,
+      triggerMessageID: room.seedMessages[0].id,
+      addressedTargetKind: .collaborator,
+      addressedTargetReferenceID: room.workspacePersonas[0].id.uuidString,
+      resolvedWorkspacePersonaInstanceID: room.workspacePersonas[0].id,
+      responseMode: .directAddress,
+      createdAt: referenceDate
+    )
+    let contractSnapshot = OrbitActivationContractSnapshotRecord(
+      personaActivationID: activation.id,
+      directiveID: "maintain-partner-sync-and-handoffs",
+      directiveSource: "participantDefault",
+      kitIDs: ["trusted-partner-core"],
+      authorizedSkillIDs: ["codex-cli"],
+      requiredSkillIDs: ["codex-cli"],
+      stopPointIDs: ["Pause for AJ review before execution handoff."],
+      reviewGateIDs: ["intent:partner-sync-review"],
+      memoryScopeIDs: ["workspace", "workspace_persona", "persona_global"],
+      createdAt: referenceDate
+    )
+    let memorySources = [
+      OrbitActivationMemorySourceRecord(
+        id: UUID(uuidString: "12121212-aaaa-bbbb-cccc-121212121212")!,
+        personaActivationID: activation.id,
+        memoryEntryID: UUID(uuidString: "13131313-aaaa-bbbb-cccc-131313131313")!,
+        sourceOrder: 0,
+        retrievalReason: "workspace-scope-match",
+        createdAt: referenceDate
+      ),
+      OrbitActivationMemorySourceRecord(
+        id: UUID(uuidString: "14141414-aaaa-bbbb-cccc-141414141414")!,
+        personaActivationID: activation.id,
+        memoryEntryID: UUID(uuidString: "15151515-aaaa-bbbb-cccc-151515151515")!,
+        sourceOrder: 1,
+        retrievalReason: "persona-template-match",
+        createdAt: referenceDate
+      ),
+    ]
+    let agentRun = OrbitAgentRunRecord(
+      id: UUID(uuidString: "16161616-aaaa-bbbb-cccc-161616161616")!,
+      personaActivationID: activation.id,
+      runnerKind: "local-bridge",
+      status: .completed,
+      startedAt: referenceDate,
+      completedAt: referenceDate
+    )
+    let postEvent = OrbitPostEventRecord(
+      id: UUID(uuidString: "17171717-aaaa-bbbb-cccc-171717171717")!,
+      postID: room.post.id,
+      threadID: room.thread.id,
+      eventType: OrbitPhase1RealtimeEventCategory.activationResolved.rawValue,
+      payloadJSON: "{}",
+      createdAt: referenceDate
+    )
+
+    try await repository.appendCollaboratorResponse(
+      workspaceID: room.workspace.id,
+      message,
+      activation: activation,
+      contractSnapshot: contractSnapshot,
+      memorySources: memorySources,
+      agentRun: agentRun,
+      postEvent: postEvent,
+      realtimeEvents: [],
+      threadLastActivityAt: referenceDate,
+      using: executor
+    )
+
+    let queries = await executor.queries().map { $0.sql }
+
+    #expect(queries.first == "BEGIN")
+    #expect(queries.last == "COMMIT")
+    #expect(queries.contains(where: { $0.contains("INSERT INTO message") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO persona_activation") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO activation_contract_snapshot") }))
+    #expect(queries.filter { $0.contains("INSERT INTO activation_memory_source") }.count == 2)
+    #expect(queries.contains(where: { $0.contains("INSERT INTO agent_run") }))
+    #expect(queries.contains(where: { $0.contains("INSERT INTO post_event") }))
+    #expect(queries.contains(where: { $0.contains("UPDATE thread") }))
+  }
+
+  @Test
   func eligibleApprovedMemoryQueryKeepsEligibilityScopedAndDeterministic() {
     let query = repository.selectEligibleApprovedMemoryEntriesQuery(
       workspaceID: UUID(uuidString: "16161616-1616-1616-1616-161616161616")!,
@@ -358,6 +463,38 @@ struct Phase1RuntimeRepositoryTests {
     #expect(query.sql.contains("created_at ASC"))
     #expect(query.sql.contains("id ASC"))
     #expect(query.binds.count == 4)
+  }
+
+  @Test
+  func activationTraceQueryReadsActivationContractAndRuns() {
+    let query = repository.selectActivationTraceQuery(
+      activationID: UUID(uuidString: "18181818-1818-1818-1818-181818181818")!
+    )
+
+    #expect(query.sql.contains("FROM persona_activation"))
+    #expect(query.sql.contains("LEFT JOIN activation_contract_snapshot"))
+    #expect(query.sql.contains("LEFT JOIN agent_run"))
+    #expect(query.sql.contains("contract_memory_scope_ids"))
+    #expect(query.sql.contains("run_failure_reason"))
+    #expect(query.sql.contains("WHERE persona_activation.id = $1"))
+    #expect(query.sql.contains("ORDER BY agent_run.started_at ASC NULLS FIRST"))
+    #expect(query.binds.count == 1)
+  }
+
+  @Test
+  func activationMemoryTraceQueryReadsSourcesEntriesAndCandidateLineage() {
+    let query = repository.selectActivationMemoryTraceQuery(
+      activationID: UUID(uuidString: "19191919-1919-1919-1919-191919191919")!
+    )
+
+    #expect(query.sql.contains("FROM activation_memory_source"))
+    #expect(query.sql.contains("JOIN memory_entry"))
+    #expect(query.sql.contains("LEFT JOIN memory_candidate"))
+    #expect(query.sql.contains("entry_source_memory_candidate_id"))
+    #expect(query.sql.contains("candidate_reviewed_at"))
+    #expect(query.sql.contains("WHERE activation_memory_source.persona_activation_id = $1"))
+    #expect(query.sql.contains("ORDER BY activation_memory_source.source_order ASC"))
+    #expect(query.binds.count == 1)
   }
 
   @Test

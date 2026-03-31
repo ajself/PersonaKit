@@ -43,10 +43,12 @@ struct Phase1RuntimeSchemaTests {
         "meeting_state",
         "meeting_member",
         "persona_activation",
+        "activation_contract_snapshot",
         "agent_run",
         "memory_candidate",
         "memory_review",
         "memory_entry",
+        "activation_memory_source",
         "persona_global_memory_profile",
       ]
     )

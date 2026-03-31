@@ -83,6 +83,8 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     workspaceID: UUID,
     _ message: OrbitMessageRecord,
     activation: OrbitPersonaActivationRecord,
+    contractSnapshot: OrbitActivationContractSnapshotRecord?,
+    memorySources: [OrbitActivationMemorySourceRecord],
     agentRun: OrbitAgentRunRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
@@ -94,6 +96,12 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
       try await executor.execute(query: .init(unsafeSQL: "BEGIN"))
       try await executor.execute(query: insertMessageQuery(message))
       try await executor.execute(query: insertPersonaActivationQuery(activation))
+      if let contractSnapshot {
+        try await executor.execute(query: upsertActivationContractSnapshotQuery(contractSnapshot))
+      }
+      for memorySource in memorySources {
+        try await executor.execute(query: upsertActivationMemorySourceQuery(memorySource))
+      }
       try await executor.execute(query: insertAgentRunQuery(agentRun))
       try await executor.execute(query: insertPostEventQuery(postEvent))
       for realtimeEvent in realtimeEvents {
@@ -975,6 +983,60 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     """
   }
 
+  public func upsertActivationContractSnapshotQuery(
+    _ snapshot: OrbitActivationContractSnapshotRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO activation_contract_snapshot (
+      persona_activation_id, directive_id, directive_source, kit_ids,
+      authorized_skill_ids, required_skill_ids, stop_point_ids,
+      review_gate_ids, memory_scope_ids, created_at
+    ) VALUES (
+      \(snapshot.personaActivationID),
+      \(snapshot.directiveID),
+      \(snapshot.directiveSource),
+      \(snapshot.kitIDs.jsonString),
+      \(snapshot.authorizedSkillIDs.jsonString),
+      \(snapshot.requiredSkillIDs.jsonString),
+      \(snapshot.stopPointIDs.jsonString),
+      \(snapshot.reviewGateIDs.jsonString),
+      \(snapshot.memoryScopeIDs.jsonString),
+      \(snapshot.createdAt)
+    )
+    ON CONFLICT (persona_activation_id) DO UPDATE SET
+      directive_id = EXCLUDED.directive_id,
+      directive_source = EXCLUDED.directive_source,
+      kit_ids = EXCLUDED.kit_ids,
+      authorized_skill_ids = EXCLUDED.authorized_skill_ids,
+      required_skill_ids = EXCLUDED.required_skill_ids,
+      stop_point_ids = EXCLUDED.stop_point_ids,
+      review_gate_ids = EXCLUDED.review_gate_ids,
+      memory_scope_ids = EXCLUDED.memory_scope_ids
+    """
+  }
+
+  public func upsertActivationMemorySourceQuery(
+    _ source: OrbitActivationMemorySourceRecord
+  ) -> PostgresQuery {
+    """
+    INSERT INTO activation_memory_source (
+      id, persona_activation_id, memory_entry_id, source_order, retrieval_reason,
+      created_at
+    ) VALUES (
+      \(source.id),
+      \(source.personaActivationID),
+      \(source.memoryEntryID),
+      \(source.sourceOrder),
+      \(source.retrievalReason),
+      \(source.createdAt)
+    )
+    ON CONFLICT (persona_activation_id, source_order) DO UPDATE SET
+      memory_entry_id = EXCLUDED.memory_entry_id,
+      retrieval_reason = EXCLUDED.retrieval_reason,
+      created_at = EXCLUDED.created_at
+    """
+  }
+
   public func upsertMemoryCandidateQuery(
     _ candidate: OrbitMemoryCandidateRecord
   ) -> PostgresQuery {
@@ -1211,6 +1273,93 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     FROM persona_global_memory_profile
     WHERE persona_template_id = \(personaTemplateID)
     LIMIT 1
+    """
+  }
+
+  public func selectActivationTraceQuery(
+    activationID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      persona_activation.id AS activation_id,
+      persona_activation.initiated_by_participant_type AS activation_initiated_by_participant_type,
+      persona_activation.initiated_by_participant_id AS activation_initiated_by_participant_id,
+      persona_activation.workspace_id AS activation_workspace_id,
+      persona_activation.channel_id AS activation_channel_id,
+      persona_activation.origin_post_id AS activation_origin_post_id,
+      persona_activation.origin_thread_id AS activation_origin_thread_id,
+      persona_activation.trigger_message_id AS activation_trigger_message_id,
+      persona_activation.addressed_target_kind AS activation_addressed_target_kind,
+      persona_activation.addressed_target_reference_id AS activation_addressed_target_reference_id,
+      persona_activation.resolved_workspace_persona_instance_id AS activation_resolved_workspace_persona_instance_id,
+      persona_activation.response_mode AS activation_response_mode,
+      persona_activation.created_at AS activation_created_at,
+      activation_contract_snapshot.persona_activation_id AS contract_persona_activation_id,
+      activation_contract_snapshot.directive_id AS contract_directive_id,
+      activation_contract_snapshot.directive_source AS contract_directive_source,
+      activation_contract_snapshot.kit_ids AS contract_kit_ids,
+      activation_contract_snapshot.authorized_skill_ids AS contract_authorized_skill_ids,
+      activation_contract_snapshot.required_skill_ids AS contract_required_skill_ids,
+      activation_contract_snapshot.stop_point_ids AS contract_stop_point_ids,
+      activation_contract_snapshot.review_gate_ids AS contract_review_gate_ids,
+      activation_contract_snapshot.memory_scope_ids AS contract_memory_scope_ids,
+      activation_contract_snapshot.created_at AS contract_created_at,
+      agent_run.id AS run_id,
+      agent_run.runner_kind AS run_runner_kind,
+      agent_run.status AS run_status,
+      agent_run.started_at AS run_started_at,
+      agent_run.completed_at AS run_completed_at,
+      agent_run.failure_reason AS run_failure_reason
+    FROM persona_activation
+    LEFT JOIN activation_contract_snapshot
+      ON activation_contract_snapshot.persona_activation_id = persona_activation.id
+    LEFT JOIN agent_run ON agent_run.persona_activation_id = persona_activation.id
+    WHERE persona_activation.id = \(activationID)
+    ORDER BY agent_run.started_at ASC NULLS FIRST, agent_run.id ASC NULLS FIRST
+    """
+  }
+
+  public func selectActivationMemoryTraceQuery(
+    activationID: UUID
+  ) -> PostgresQuery {
+    """
+    SELECT
+      activation_memory_source.id AS source_id,
+      activation_memory_source.persona_activation_id AS source_persona_activation_id,
+      activation_memory_source.memory_entry_id AS source_memory_entry_id,
+      activation_memory_source.source_order AS source_source_order,
+      activation_memory_source.retrieval_reason AS source_retrieval_reason,
+      activation_memory_source.created_at AS source_created_at,
+      memory_entry.id AS entry_id,
+      memory_entry.scope AS entry_scope,
+      memory_entry.workspace_id AS entry_workspace_id,
+      memory_entry.workspace_persona_id AS entry_workspace_persona_id,
+      memory_entry.persona_template_id AS entry_persona_template_id,
+      memory_entry.title AS entry_title,
+      memory_entry.body AS entry_body,
+      memory_entry.status AS entry_status,
+      memory_entry.valid_from AS entry_valid_from,
+      memory_entry.valid_to AS entry_valid_to,
+      memory_entry.source_memory_candidate_id AS entry_source_memory_candidate_id,
+      memory_entry.created_at AS entry_created_at,
+      memory_candidate.id AS candidate_id,
+      memory_candidate.workspace_id AS candidate_workspace_id,
+      memory_candidate.workspace_persona_id AS candidate_workspace_persona_id,
+      memory_candidate.persona_template_id AS candidate_persona_template_id,
+      memory_candidate.source_type AS candidate_source_type,
+      memory_candidate.source_id AS candidate_source_id,
+      memory_candidate.proposed_scope AS candidate_proposed_scope,
+      memory_candidate.title AS candidate_title,
+      memory_candidate.body AS candidate_body,
+      memory_candidate.confidence AS candidate_confidence,
+      memory_candidate.status AS candidate_status,
+      memory_candidate.created_at AS candidate_created_at,
+      memory_candidate.reviewed_at AS candidate_reviewed_at
+    FROM activation_memory_source
+    JOIN memory_entry ON memory_entry.id = activation_memory_source.memory_entry_id
+    LEFT JOIN memory_candidate ON memory_candidate.id = memory_entry.source_memory_candidate_id
+    WHERE activation_memory_source.persona_activation_id = \(activationID)
+    ORDER BY activation_memory_source.source_order ASC, activation_memory_source.id ASC
     """
   }
 
@@ -1790,6 +1939,13 @@ private extension Array where Element == UUID {
   var jsonString: String {
     let values = map(\.uuidString)
     let data = try! JSONEncoder().encode(values)
+    return String(decoding: data, as: UTF8.self)
+  }
+}
+
+private extension Array where Element == String {
+  var jsonString: String {
+    let data = try! JSONEncoder().encode(self)
     return String(decoding: data, as: UTF8.self)
   }
 }

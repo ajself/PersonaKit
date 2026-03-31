@@ -24,10 +24,12 @@ public enum OrbitPhase1Table: String, CaseIterable, Sendable {
   case meetingState = "meeting_state"
   case meetingMember = "meeting_member"
   case personaActivation = "persona_activation"
+  case activationContractSnapshot = "activation_contract_snapshot"
   case agentRun = "agent_run"
   case memoryCandidate = "memory_candidate"
   case memoryReview = "memory_review"
   case memoryEntry = "memory_entry"
+  case activationMemorySource = "activation_memory_source"
   case personaGlobalMemoryProfile = "persona_global_memory_profile"
 }
 
@@ -689,6 +691,23 @@ public enum OrbitPhase1RuntimeSchema {
         """
     ),
     OrbitPhase1SchemaStatement(
+      table: .activationContractSnapshot,
+      sql: """
+        CREATE TABLE IF NOT EXISTS activation_contract_snapshot (
+          persona_activation_id UUID PRIMARY KEY REFERENCES persona_activation(id),
+          directive_id TEXT,
+          directive_source TEXT,
+          kit_ids JSONB NOT NULL,
+          authorized_skill_ids JSONB NOT NULL,
+          required_skill_ids JSONB NOT NULL,
+          stop_point_ids JSONB NOT NULL,
+          review_gate_ids JSONB NOT NULL,
+          memory_scope_ids JSONB NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
       table: .agentRun,
       sql: """
         CREATE TABLE IF NOT EXISTS agent_run (
@@ -752,6 +771,20 @@ public enum OrbitPhase1RuntimeSchema {
           valid_to TIMESTAMPTZ,
           source_memory_candidate_id UUID REFERENCES memory_candidate(id),
           created_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    ),
+    OrbitPhase1SchemaStatement(
+      table: .activationMemorySource,
+      sql: """
+        CREATE TABLE IF NOT EXISTS activation_memory_source (
+          id UUID PRIMARY KEY,
+          persona_activation_id UUID NOT NULL REFERENCES persona_activation(id),
+          memory_entry_id UUID NOT NULL REFERENCES memory_entry(id),
+          source_order INTEGER NOT NULL,
+          retrieval_reason TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL,
+          UNIQUE(persona_activation_id, source_order)
         )
         """
     ),

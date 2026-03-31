@@ -47,6 +47,8 @@ Out of scope:
   bounded planning packet for `M9-P1`
 - `Packet-03-Implement-Retrieval-Eligibility-Rules.md`
   bounded implementation packet for `M9-P3`
+- `Packet-04-Implement-Trace-And-Lineage-Inspection.md`
+  bounded implementation packet for `M9-P4`
 
 ## Current Milestone Position
 
@@ -61,7 +63,8 @@ Out of scope:
   eligibility explicit without widening into trace UI, broader lineage
   inspection, or promotion semantics
 - `M9-P4` is the current bounded slice for trace and lineage inspection on top
-  of the accepted retrieval-eligibility posture
+  of the accepted retrieval-eligibility posture, using a runtime-first
+  store-level inspection surface
 - later `M9` packets remain intentionally unfrozen and must not smuggle in
   trace-inspection, broader lineage traversal, or governance redesign under the
   retrieval-eligibility label
@@ -133,17 +136,21 @@ Status:
 
 Outcome:
 
-- operators can see which memory influenced a response and why
+- one activation trace can show which contract and approved memory influenced a
+  response
 
 Work:
 
-- surface activation-memory-source linkage
-- surface lineage and traversal paths
-- keep the first UI simple but sufficient for review
+- persist activation-contract snapshot context for inspection
+- persist activation-memory-source linkage for eligible approved memory only
+- load minimum candidate-to-approved ancestry for traced memory entries
+- keep the first surface store-first with no gateway or Studio UI in this
+  packet
 
 Done when:
 
-- one response can show its memory influence cleanly
+- one activation trace bundle can show its memory influence cleanly and
+  deterministically
 
 Status:
 

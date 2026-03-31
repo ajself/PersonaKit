@@ -1008,6 +1008,68 @@ public struct OrbitAgentRunRecord: Codable, Equatable, Sendable {
   }
 }
 
+public struct OrbitActivationContractSnapshotRecord: Codable, Equatable, Sendable {
+  public let personaActivationID: UUID
+  public let directiveID: String?
+  public let directiveSource: String?
+  public let kitIDs: [String]
+  public let authorizedSkillIDs: [String]
+  public let requiredSkillIDs: [String]
+  public let stopPointIDs: [String]
+  public let reviewGateIDs: [String]
+  public let memoryScopeIDs: [String]
+  public let createdAt: Date
+
+  public init(
+    personaActivationID: UUID,
+    directiveID: String? = nil,
+    directiveSource: String? = nil,
+    kitIDs: [String] = [],
+    authorizedSkillIDs: [String] = [],
+    requiredSkillIDs: [String] = [],
+    stopPointIDs: [String] = [],
+    reviewGateIDs: [String] = [],
+    memoryScopeIDs: [String] = [],
+    createdAt: Date
+  ) {
+    self.personaActivationID = personaActivationID
+    self.directiveID = directiveID
+    self.directiveSource = directiveSource
+    self.kitIDs = kitIDs
+    self.authorizedSkillIDs = authorizedSkillIDs
+    self.requiredSkillIDs = requiredSkillIDs
+    self.stopPointIDs = stopPointIDs
+    self.reviewGateIDs = reviewGateIDs
+    self.memoryScopeIDs = memoryScopeIDs
+    self.createdAt = createdAt
+  }
+}
+
+public struct OrbitActivationMemorySourceRecord: Codable, Equatable, Sendable {
+  public let id: UUID
+  public let personaActivationID: UUID
+  public let memoryEntryID: UUID
+  public let sourceOrder: Int
+  public let retrievalReason: String
+  public let createdAt: Date
+
+  public init(
+    id: UUID,
+    personaActivationID: UUID,
+    memoryEntryID: UUID,
+    sourceOrder: Int,
+    retrievalReason: String,
+    createdAt: Date
+  ) {
+    self.id = id
+    self.personaActivationID = personaActivationID
+    self.memoryEntryID = memoryEntryID
+    self.sourceOrder = sourceOrder
+    self.retrievalReason = retrievalReason
+    self.createdAt = createdAt
+  }
+}
+
 public struct OrbitMemoryCandidateRecord: Codable, Equatable, Sendable {
   public let id: UUID
   public let workspaceID: UUID?
@@ -1173,6 +1235,41 @@ public struct OrbitEligibleApprovedMemory: Codable, Equatable, Sendable {
   ) {
     self.entries = entries
     self.personaGlobalProfile = personaGlobalProfile
+  }
+}
+
+public struct OrbitActivationTraceMemoryRecord: Codable, Equatable, Sendable {
+  public let source: OrbitActivationMemorySourceRecord
+  public let entry: OrbitMemoryEntryRecord
+  public let sourceCandidate: OrbitMemoryCandidateRecord?
+
+  public init(
+    source: OrbitActivationMemorySourceRecord,
+    entry: OrbitMemoryEntryRecord,
+    sourceCandidate: OrbitMemoryCandidateRecord? = nil
+  ) {
+    self.source = source
+    self.entry = entry
+    self.sourceCandidate = sourceCandidate
+  }
+}
+
+public struct OrbitActivationTraceBundle: Codable, Equatable, Sendable {
+  public let activation: OrbitPersonaActivationRecord
+  public let contractSnapshot: OrbitActivationContractSnapshotRecord?
+  public let agentRuns: [OrbitAgentRunRecord]
+  public let memory: [OrbitActivationTraceMemoryRecord]
+
+  public init(
+    activation: OrbitPersonaActivationRecord,
+    contractSnapshot: OrbitActivationContractSnapshotRecord? = nil,
+    agentRuns: [OrbitAgentRunRecord] = [],
+    memory: [OrbitActivationTraceMemoryRecord] = []
+  ) {
+    self.activation = activation
+    self.contractSnapshot = contractSnapshot
+    self.agentRuns = agentRuns
+    self.memory = memory
   }
 }
 

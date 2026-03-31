@@ -146,6 +146,8 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     workspaceID: UUID,
     _ message: OrbitMessageRecord,
     activation: OrbitPersonaActivationRecord,
+    contractSnapshot: OrbitActivationContractSnapshotRecord? = nil,
+    memorySources: [OrbitActivationMemorySourceRecord] = [],
     agentRun: OrbitAgentRunRecord,
     postEvent: OrbitPostEventRecord,
     realtimeEvents: [OrbitRealtimeEventRecord],
@@ -158,6 +160,8 @@ public struct OrbitPostgresRuntimeStore: Sendable {
         workspaceID: workspaceID,
         message,
         activation: activation,
+        contractSnapshot: contractSnapshot,
+        memorySources: memorySources,
         agentRun: agentRun,
         postEvent: postEvent,
         realtimeEvents: realtimeEvents,
@@ -386,6 +390,67 @@ public struct OrbitPostgresRuntimeStore: Sendable {
       return OrbitEligibleApprovedMemory(
         entries: entries,
         personaGlobalProfile: personaGlobalProfile
+      )
+    }
+  }
+
+  public func loadActivationTrace(
+    activationID: UUID,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitActivationTraceBundle? {
+    try await withClient { client in
+      let activationTraceRows = try await client.query(
+        repository.selectActivationTraceQuery(activationID: activationID)
+      ).collect()
+
+      guard let firstActivationTraceRow = activationTraceRows.first else {
+        return nil
+      }
+
+      let activationTraceRandomAccessRow = firstActivationTraceRow.makeRandomAccess()
+      let activation = try decodePersonaActivation(from: activationTraceRandomAccessRow)
+      let contractSnapshot = try decodeActivationContractSnapshot(
+        from: activationTraceRandomAccessRow
+      )
+
+      var agentRunsByID = [UUID: OrbitAgentRunRecord]()
+      for activationTraceRow in activationTraceRows {
+        let randomAccessActivationTraceRow = activationTraceRow.makeRandomAccess()
+        if let agentRun = try decodeAgentRun(from: randomAccessActivationTraceRow) {
+          agentRunsByID[agentRun.id] = agentRun
+        }
+      }
+
+      let activationMemoryTraceRows = try await client.query(
+        repository.selectActivationMemoryTraceQuery(activationID: activationID)
+      )
+
+      var memory = [OrbitActivationTraceMemoryRecord]()
+      for try await activationMemoryTraceRow in activationMemoryTraceRows {
+        let randomAccessActivationMemoryTraceRow = activationMemoryTraceRow.makeRandomAccess()
+        memory.append(
+          try OrbitActivationTraceMemoryRecord(
+            source: decodeActivationMemorySource(from: randomAccessActivationMemoryTraceRow),
+            entry: decodeMemoryEntry(
+              from: randomAccessActivationMemoryTraceRow,
+              columnPrefix: "entry_"
+            ),
+            sourceCandidate: decodeTraceMemoryCandidate(from: randomAccessActivationMemoryTraceRow)
+          )
+        )
+      }
+
+      return OrbitActivationTraceBundle(
+        activation: activation,
+        contractSnapshot: contractSnapshot,
+        agentRuns: agentRunsByID.values.sorted { lhs, rhs in
+          if lhs.startedAt == rhs.startedAt {
+            return lhs.id.uuidString < rhs.id.uuidString
+          }
+
+          return lhs.startedAt < rhs.startedAt
+        },
+        memory: memory
       )
     }
   }
@@ -1257,34 +1322,35 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   }
 
   private func decodeMemoryCandidate(
-    from row: PostgresRandomAccessRow
+    from row: PostgresRandomAccessRow,
+    columnPrefix: String = ""
   ) throws -> OrbitMemoryCandidateRecord {
     try OrbitMemoryCandidateRecord(
-      id: row["id"].decode(UUID.self),
-      workspaceID: row["workspace_id"].decode(Optional<UUID>.self),
-      workspacePersonaID: row["workspace_persona_id"].decode(Optional<UUID>.self),
-      personaTemplateID: row["persona_template_id"].decode(Optional<String>.self),
+      id: row["\(columnPrefix)id"].decode(UUID.self),
+      workspaceID: row["\(columnPrefix)workspace_id"].decode(Optional<UUID>.self),
+      workspacePersonaID: row["\(columnPrefix)workspace_persona_id"].decode(Optional<UUID>.self),
+      personaTemplateID: row["\(columnPrefix)persona_template_id"].decode(Optional<String>.self),
       sourceType: try decodeEnum(
         OrbitMemoryCandidateSourceType.self,
-        from: row["source_type"],
-        columnName: "source_type"
+        from: row["\(columnPrefix)source_type"],
+        columnName: "\(columnPrefix)source_type"
       ),
-      sourceID: row["source_id"].decode(String.self),
+      sourceID: row["\(columnPrefix)source_id"].decode(String.self),
       proposedScope: try decodeEnum(
         OrbitMemoryScope.self,
-        from: row["proposed_scope"],
-        columnName: "proposed_scope"
+        from: row["\(columnPrefix)proposed_scope"],
+        columnName: "\(columnPrefix)proposed_scope"
       ),
-      title: row["title"].decode(String.self),
-      body: row["body"].decode(String.self),
-      confidence: row["confidence"].decode(Double.self),
+      title: row["\(columnPrefix)title"].decode(String.self),
+      body: row["\(columnPrefix)body"].decode(String.self),
+      confidence: row["\(columnPrefix)confidence"].decode(Double.self),
       status: try decodeEnum(
         OrbitMemoryCandidateStatus.self,
-        from: row["status"],
-        columnName: "status"
+        from: row["\(columnPrefix)status"],
+        columnName: "\(columnPrefix)status"
       ),
-      createdAt: row["created_at"].decode(Date.self),
-      reviewedAt: row["reviewed_at"].decode(Optional<Date>.self)
+      createdAt: row["\(columnPrefix)created_at"].decode(Date.self),
+      reviewedAt: row["\(columnPrefix)reviewed_at"].decode(Optional<Date>.self)
     )
   }
 
@@ -1311,29 +1377,30 @@ public struct OrbitPostgresRuntimeStore: Sendable {
   }
 
   private func decodeMemoryEntry(
-    from row: PostgresRandomAccessRow
+    from row: PostgresRandomAccessRow,
+    columnPrefix: String = ""
   ) throws -> OrbitMemoryEntryRecord {
     try OrbitMemoryEntryRecord(
-      id: row["id"].decode(UUID.self),
+      id: row["\(columnPrefix)id"].decode(UUID.self),
       scope: try decodeEnum(
         OrbitMemoryScope.self,
-        from: row["scope"],
-        columnName: "scope"
+        from: row["\(columnPrefix)scope"],
+        columnName: "\(columnPrefix)scope"
       ),
-      workspaceID: row["workspace_id"].decode(Optional<UUID>.self),
-      workspacePersonaID: row["workspace_persona_id"].decode(Optional<UUID>.self),
-      personaTemplateID: row["persona_template_id"].decode(Optional<String>.self),
-      title: row["title"].decode(String.self),
-      body: row["body"].decode(String.self),
+      workspaceID: row["\(columnPrefix)workspace_id"].decode(Optional<UUID>.self),
+      workspacePersonaID: row["\(columnPrefix)workspace_persona_id"].decode(Optional<UUID>.self),
+      personaTemplateID: row["\(columnPrefix)persona_template_id"].decode(Optional<String>.self),
+      title: row["\(columnPrefix)title"].decode(String.self),
+      body: row["\(columnPrefix)body"].decode(String.self),
       status: try decodeEnum(
         OrbitMemoryEntryStatus.self,
-        from: row["status"],
-        columnName: "status"
+        from: row["\(columnPrefix)status"],
+        columnName: "\(columnPrefix)status"
       ),
-      validFrom: row["valid_from"].decode(Date.self),
-      validTo: row["valid_to"].decode(Optional<Date>.self),
-      sourceMemoryCandidateID: row["source_memory_candidate_id"].decode(Optional<UUID>.self),
-      createdAt: row["created_at"].decode(Date.self)
+      validFrom: row["\(columnPrefix)valid_from"].decode(Date.self),
+      validTo: row["\(columnPrefix)valid_to"].decode(Optional<Date>.self),
+      sourceMemoryCandidateID: row["\(columnPrefix)source_memory_candidate_id"].decode(Optional<UUID>.self),
+      createdAt: row["\(columnPrefix)created_at"].decode(Date.self)
     )
   }
 
@@ -1401,6 +1468,76 @@ public struct OrbitPostgresRuntimeStore: Sendable {
 
       return value
     }
+  }
+
+  private func decodeActivationContractSnapshot(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitActivationContractSnapshotRecord? {
+    let personaActivationID = try row["contract_persona_activation_id"].decode(Optional<UUID>.self)
+
+    guard let personaActivationID else {
+      return nil
+    }
+
+    return try OrbitActivationContractSnapshotRecord(
+      personaActivationID: personaActivationID,
+      directiveID: row["contract_directive_id"].decode(Optional<String>.self),
+      directiveSource: row["contract_directive_source"].decode(Optional<String>.self),
+      kitIDs: decodeStringArray(from: row, columnName: "contract_kit_ids"),
+      authorizedSkillIDs: decodeStringArray(
+        from: row,
+        columnName: "contract_authorized_skill_ids"
+      ),
+      requiredSkillIDs: decodeStringArray(
+        from: row,
+        columnName: "contract_required_skill_ids"
+      ),
+      stopPointIDs: decodeStringArray(from: row, columnName: "contract_stop_point_ids"),
+      reviewGateIDs: decodeStringArray(from: row, columnName: "contract_review_gate_ids"),
+      memoryScopeIDs: decodeStringArray(from: row, columnName: "contract_memory_scope_ids"),
+      createdAt: row["contract_created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeActivationMemorySource(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitActivationMemorySourceRecord {
+    try OrbitActivationMemorySourceRecord(
+      id: row["source_id"].decode(UUID.self),
+      personaActivationID: row["source_persona_activation_id"].decode(UUID.self),
+      memoryEntryID: row["source_memory_entry_id"].decode(UUID.self),
+      sourceOrder: row["source_source_order"].decode(Int.self),
+      retrievalReason: row["source_retrieval_reason"].decode(String.self),
+      createdAt: row["source_created_at"].decode(Date.self)
+    )
+  }
+
+  private func decodeTraceMemoryCandidate(
+    from row: PostgresRandomAccessRow
+  ) throws -> OrbitMemoryCandidateRecord? {
+    let candidateID = try row["candidate_id"].decode(Optional<UUID>.self)
+
+    guard candidateID != nil else {
+      return nil
+    }
+
+    return try decodeMemoryCandidate(from: row, columnPrefix: "candidate_")
+  }
+
+  private func decodeStringArray(
+    from row: PostgresRandomAccessRow,
+    columnName: String
+  ) throws -> [String] {
+    let jsonString = decodeJSONString(
+      from: row,
+      columnName: columnName
+    )
+
+    guard jsonString != "null" else {
+      return []
+    }
+
+    return try JSONDecoder().decode([String].self, from: Data(jsonString.utf8))
   }
 }
 

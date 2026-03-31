@@ -71,11 +71,15 @@ public enum OrbitPhase1CollaboratorResponseServiceError: Error, Equatable {
 public struct OrbitPhase1CollaboratorResponseService: Sendable {
   public typealias SnapshotLoader =
     @Sendable (String, String, UUID?) async throws -> OrbitPhase1RoomSnapshot?
+  public typealias EligibleMemoryLoader =
+    @Sendable (OrbitApprovedMemoryEligibilityRequest) async throws -> OrbitEligibleApprovedMemory
   public typealias ResponseAppender =
     @Sendable (
       UUID,
       OrbitMessageRecord,
       OrbitPersonaActivationRecord,
+      OrbitActivationContractSnapshotRecord?,
+      [OrbitActivationMemorySourceRecord],
       OrbitAgentRunRecord,
       OrbitPostEventRecord,
       [OrbitRealtimeEventRecord],
@@ -84,27 +88,33 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
     ) async throws -> Void
 
   public let loadSnapshot: SnapshotLoader
+  public let loadEligibleApprovedMemory: EligibleMemoryLoader
   public let appendResponse: ResponseAppender
   public let now: @Sendable () -> Date
   public let makeMessageID: @Sendable () -> UUID
   public let makeActivationID: @Sendable () -> UUID
+  public let makeActivationMemorySourceID: @Sendable () -> UUID
   public let makeAgentRunID: @Sendable () -> UUID
   public let makePostEventID: @Sendable () -> UUID
 
   public init(
     loadSnapshot: @escaping SnapshotLoader,
+    loadEligibleApprovedMemory: @escaping EligibleMemoryLoader,
     appendResponse: @escaping ResponseAppender,
     now: @escaping @Sendable () -> Date = Date.init,
     makeMessageID: @escaping @Sendable () -> UUID = UUID.init,
     makeActivationID: @escaping @Sendable () -> UUID = UUID.init,
+    makeActivationMemorySourceID: @escaping @Sendable () -> UUID = UUID.init,
     makeAgentRunID: @escaping @Sendable () -> UUID = UUID.init,
     makePostEventID: @escaping @Sendable () -> UUID = UUID.init
   ) {
     self.loadSnapshot = loadSnapshot
+    self.loadEligibleApprovedMemory = loadEligibleApprovedMemory
     self.appendResponse = appendResponse
     self.now = now
     self.makeMessageID = makeMessageID
     self.makeActivationID = makeActivationID
+    self.makeActivationMemorySourceID = makeActivationMemorySourceID
     self.makeAgentRunID = makeAgentRunID
     self.makePostEventID = makePostEventID
   }
@@ -157,6 +167,28 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       responseMode: request.responseMode,
       createdAt: timestamp
     )
+    let eligibleMemory = try await loadEligibleApprovedMemory(
+      OrbitApprovedMemoryEligibilityRequest(
+        workspaceID: snapshot.workspace.id,
+        workspacePersonaID: workspacePersona.id,
+        personaTemplateID: workspacePersona.personaTemplateID
+      )
+    )
+    let contractSnapshot = activationContractSnapshot(
+      activationID: activation.id,
+      contract: request.contract,
+      createdAt: timestamp
+    )
+    let memorySources = eligibleMemory.entries.enumerated().map { index, entry in
+      OrbitActivationMemorySourceRecord(
+        id: makeActivationMemorySourceID(),
+        personaActivationID: activation.id,
+        memoryEntryID: entry.id,
+        sourceOrder: index,
+        retrievalReason: retrievalReason(for: entry.scope),
+        createdAt: timestamp
+      )
+    }
     let agentRun = OrbitAgentRunRecord(
       id: makeAgentRunID(),
       personaActivationID: activation.id,
@@ -193,6 +225,8 @@ public struct OrbitPhase1CollaboratorResponseService: Sendable {
       snapshot.workspace.id,
       message,
       activation,
+      contractSnapshot,
+      memorySources,
       agentRun,
       postEvent,
       realtimeEvents,
@@ -254,6 +288,7 @@ public extension OrbitPhase1CollaboratorResponseService {
     now: @escaping @Sendable () -> Date = Date.init,
     makeMessageID: @escaping @Sendable () -> UUID = UUID.init,
     makeActivationID: @escaping @Sendable () -> UUID = UUID.init,
+    makeActivationMemorySourceID: @escaping @Sendable () -> UUID = UUID.init,
     makeAgentRunID: @escaping @Sendable () -> UUID = UUID.init,
     makePostEventID: @escaping @Sendable () -> UUID = UUID.init
   ) {
@@ -265,10 +300,15 @@ public extension OrbitPhase1CollaboratorResponseService {
           postID: postID
         )
       },
+      loadEligibleApprovedMemory: { request in
+        try await runtimeStore.loadEligibleApprovedMemory(request)
+      },
       appendResponse: {
         workspaceID,
         message,
         activation,
+        contractSnapshot,
+        memorySources,
         agentRun,
         postEvent,
         realtimeEvents,
@@ -278,6 +318,8 @@ public extension OrbitPhase1CollaboratorResponseService {
           workspaceID: workspaceID,
           message,
           activation: activation,
+          contractSnapshot: contractSnapshot,
+          memorySources: memorySources,
           agentRun: agentRun,
           postEvent: postEvent,
           realtimeEvents: realtimeEvents,
@@ -288,9 +330,50 @@ public extension OrbitPhase1CollaboratorResponseService {
       now: now,
       makeMessageID: makeMessageID,
       makeActivationID: makeActivationID,
+      makeActivationMemorySourceID: makeActivationMemorySourceID,
       makeAgentRunID: makeAgentRunID,
       makePostEventID: makePostEventID
     )
+  }
+}
+
+private extension OrbitPhase1CollaboratorResponseService {
+  func activationContractSnapshot(
+    activationID: UUID,
+    contract: OrbitPhase1ResolvedContractPayload?,
+    createdAt: Date
+  ) -> OrbitActivationContractSnapshotRecord? {
+    guard let contract else {
+      return nil
+    }
+
+    return OrbitActivationContractSnapshotRecord(
+      personaActivationID: activationID,
+      directiveID: contract.directiveID,
+      directiveSource: contract.directiveSource,
+      kitIDs: contract.kitIDs,
+      authorizedSkillIDs: contract.authorizedSkillIDs,
+      requiredSkillIDs: contract.requiredSkillIDs,
+      stopPointIDs: contract.stopPointIDs,
+      reviewGateIDs: contract.reviewGateIDs,
+      memoryScopeIDs: contract.memoryScopeIDs,
+      createdAt: createdAt
+    )
+  }
+
+  func retrievalReason(
+    for scope: OrbitMemoryScope
+  ) -> String {
+    switch scope {
+    case .workspace:
+      return "workspace-scope-match"
+    case .workspacePersona:
+      return "workspace-persona-scope-match"
+    case .personaGlobal:
+      return "persona-template-match"
+    case .organization:
+      return "organization-scope-match"
+    }
   }
 }
 

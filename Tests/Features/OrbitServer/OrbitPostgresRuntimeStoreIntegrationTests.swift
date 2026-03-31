@@ -400,6 +400,219 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
   }
 
   @Test
+  func liveRuntimeStoreLoadsActivationTraceWithoutContractOrMemoryWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleRoomBootstrap()
+      let workspacePersonaID = try #require(room.workspacePersonas.first?.id)
+      let activationID = UUID(uuidString: "abababab-1111-2222-3333-444444444444")!
+      let agentRunID = UUID(uuidString: "bcbcbcbc-1111-2222-3333-444444444444")!
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+
+      let collaboratorService = OrbitPhase1CollaboratorResponseService(
+        runtimeStore: store,
+        now: { Date(timeIntervalSince1970: 1_742_342_540) },
+        makeMessageID: { UUID(uuidString: "cdcdcdcd-1111-2222-3333-444444444444")! },
+        makeActivationID: { activationID },
+        makeAgentRunID: { agentRunID },
+        makePostEventID: { UUID(uuidString: "dededede-1111-2222-3333-444444444444")! }
+      )
+
+      _ = try await collaboratorService.appendCollaboratorResponse(
+        OrbitPhase1AppendCollaboratorResponseRequest(
+          workspaceSlug: room.workspace.slug,
+          channelSlug: room.channel.slug,
+          workspacePersonaID: workspacePersonaID,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: room.seedMessages[0].id,
+          addressedTargetKind: .collaborator,
+          addressedTargetReferenceID: workspacePersonaID.uuidString,
+          responseMode: .directAddress,
+          body: "Trace baseline with no contract or memory."
+        )
+      )
+
+      let trace = try await store.loadActivationTrace(activationID: activationID)
+
+      #expect(trace?.activation.id == activationID)
+      #expect(trace?.contractSnapshot == nil)
+      #expect(trace?.agentRuns.map(\.id) == [agentRunID])
+      #expect(trace?.memory.isEmpty == true)
+    } catch {
+      Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
+  func liveRuntimeStoreLoadsActivationTraceWithScopedMemoryAndMinimumLineageWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let room = sampleRoomBootstrap()
+      let workspacePersona = room.workspacePersonas[0]
+      let activationID = UUID(uuidString: "efefefef-1111-2222-3333-444444444444")!
+      let agentRunID = UUID(uuidString: "f0f0f0f0-1111-2222-3333-444444444444")!
+      let workspaceBundle = approvedMemoryRecordBundle(
+        room: room,
+        candidateID: UUID(uuidString: "01010101-1111-2222-3333-444444444444")!,
+        reviewID: UUID(uuidString: "02020202-1111-2222-3333-444444444444")!,
+        entryID: UUID(uuidString: "03030303-1111-2222-3333-444444444444")!,
+        scope: .workspace,
+        title: "Workspace norm",
+        body: "Scoped to the current workspace only.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_531)
+      )
+      let workspaceWithoutLineageBaseBundle = approvedMemoryRecordBundle(
+        room: room,
+        candidateID: UUID(uuidString: "04040404-1111-2222-3333-444444444444")!,
+        reviewID: UUID(uuidString: "05050505-1111-2222-3333-444444444444")!,
+        entryID: UUID(uuidString: "06060606-1111-2222-3333-444444444444")!,
+        scope: .workspace,
+        title: "Workspace note without ancestry",
+        body: "Approved memory can exist without candidate ancestry.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_532)
+      )
+      let workspaceWithoutLineageBundle = OrbitApprovedMemoryRecordBundle(
+        candidate: workspaceWithoutLineageBaseBundle.candidate,
+        review: workspaceWithoutLineageBaseBundle.review,
+        entry: OrbitMemoryEntryRecord(
+          id: workspaceWithoutLineageBaseBundle.entry.id,
+          scope: workspaceWithoutLineageBaseBundle.entry.scope,
+          workspaceID: workspaceWithoutLineageBaseBundle.entry.workspaceID,
+          workspacePersonaID: workspaceWithoutLineageBaseBundle.entry.workspacePersonaID,
+          personaTemplateID: workspaceWithoutLineageBaseBundle.entry.personaTemplateID,
+          title: workspaceWithoutLineageBaseBundle.entry.title,
+          body: workspaceWithoutLineageBaseBundle.entry.body,
+          status: workspaceWithoutLineageBaseBundle.entry.status,
+          validFrom: workspaceWithoutLineageBaseBundle.entry.validFrom,
+          validTo: workspaceWithoutLineageBaseBundle.entry.validTo,
+          sourceMemoryCandidateID: nil,
+          createdAt: workspaceWithoutLineageBaseBundle.entry.createdAt
+        )
+      )
+      let workspacePersonaBundle = approvedMemoryRecordBundle(
+        room: room,
+        candidateID: UUID(uuidString: "07070707-1111-2222-3333-444444444444")!,
+        reviewID: UUID(uuidString: "08080808-1111-2222-3333-444444444444")!,
+        entryID: UUID(uuidString: "09090909-1111-2222-3333-444444444444")!,
+        scope: .workspacePersona,
+        title: "Workspace persona habit",
+        body: "Scoped to the workspace persona instance.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_533)
+      )
+      let personaGlobalBundle = approvedMemoryRecordBundle(
+        room: room,
+        candidateID: UUID(uuidString: "11111111-2222-3333-4444-555555555555")!,
+        reviewID: UUID(uuidString: "12121212-2222-3333-4444-555555555555")!,
+        entryID: UUID(uuidString: "13131313-2222-3333-4444-555555555555")!,
+        profileID: UUID(uuidString: "14141414-2222-3333-4444-555555555555")!,
+        scope: .personaGlobal,
+        title: "Persona global craft",
+        body: "Scoped to the shared Samwise template.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_534),
+        includePersonaGlobalProfile: true
+      )
+      let organizationBundle = approvedMemoryRecordBundle(
+        room: room,
+        candidateID: UUID(uuidString: "15151515-2222-3333-4444-555555555555")!,
+        reviewID: UUID(uuidString: "16161616-2222-3333-4444-555555555555")!,
+        entryID: UUID(uuidString: "17171717-2222-3333-4444-555555555555")!,
+        scope: .organization,
+        title: "Organization memory",
+        body: "Default-off organization memory should stay out of trace.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_535)
+      )
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(room)
+
+      for bundle in [
+        workspaceBundle,
+        workspaceWithoutLineageBundle,
+        workspacePersonaBundle,
+        personaGlobalBundle,
+        organizationBundle,
+      ] {
+        try await store.recordApprovedMemory(bundle)
+      }
+
+      let collaboratorService = OrbitPhase1CollaboratorResponseService(
+        runtimeStore: store,
+        now: { Date(timeIntervalSince1970: 1_742_342_540) },
+        makeMessageID: { UUID(uuidString: "18181818-2222-3333-4444-555555555555")! },
+        makeActivationID: { activationID },
+        makeAgentRunID: { agentRunID },
+        makePostEventID: { UUID(uuidString: "19191919-2222-3333-4444-555555555555")! }
+      )
+
+      _ = try await collaboratorService.appendCollaboratorResponse(
+        OrbitPhase1AppendCollaboratorResponseRequest(
+          workspaceSlug: room.workspace.slug,
+          channelSlug: room.channel.slug,
+          workspacePersonaID: workspacePersona.id,
+          initiatedByParticipantID: "aj",
+          triggerMessageID: room.seedMessages[0].id,
+          addressedTargetKind: .collaborator,
+          addressedTargetReferenceID: workspacePersona.id.uuidString,
+          responseMode: .directAddress,
+          body: "Trace the approved memory influence.",
+          contract: OrbitPhase1ResolvedContractPayload(
+            directiveID: "maintain-partner-sync-and-handoffs",
+            directiveSource: "participantDefault",
+            kitIDs: ["trusted-partner-core"],
+            authorizedSkillIDs: ["codex-cli"],
+            requiredSkillIDs: ["codex-cli"],
+            stopPointIDs: ["Pause for AJ review before execution handoff."],
+            reviewGateIDs: ["intent:partner-sync-review"],
+            memoryScopeIDs: ["workspace", "workspace_persona", "persona_global"]
+          )
+        )
+      )
+
+      let trace = try await store.loadActivationTrace(activationID: activationID)
+      let contractSnapshot = try #require(trace?.contractSnapshot)
+      let memory = try #require(trace?.memory)
+
+      #expect(trace?.activation.id == activationID)
+      #expect(trace?.agentRuns.map(\.id) == [agentRunID])
+      #expect(contractSnapshot.directiveID == "maintain-partner-sync-and-handoffs")
+      #expect(contractSnapshot.stopPointIDs == ["Pause for AJ review before execution handoff."])
+      #expect(contractSnapshot.memoryScopeIDs == ["workspace", "workspace_persona", "persona_global"])
+      #expect(memory.map(\.entry.id) == [
+        workspaceBundle.entry.id,
+        workspaceWithoutLineageBundle.entry.id,
+        workspacePersonaBundle.entry.id,
+        personaGlobalBundle.entry.id,
+      ])
+      #expect(memory.map(\.source.sourceOrder) == [0, 1, 2, 3])
+      #expect(memory.map(\.source.retrievalReason) == [
+        "workspace-scope-match",
+        "workspace-scope-match",
+        "workspace-persona-scope-match",
+        "persona-template-match",
+      ])
+      #expect(memory.map(\.sourceCandidate?.id) == [
+        workspaceBundle.candidate.id,
+        nil,
+        workspacePersonaBundle.candidate.id,
+        personaGlobalBundle.candidate.id,
+      ])
+      #expect(memory.contains { $0.entry.id == organizationBundle.entry.id } == false)
+    } catch {
+      Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
   func liveRuntimeStoreRoundTripsMeetingRecordsWhenDatabaseEnvironmentIsAvailable() async throws {
     guard let configuration = integrationConfiguration() else {
       return
