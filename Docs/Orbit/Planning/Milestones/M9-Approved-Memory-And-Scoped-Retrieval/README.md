@@ -52,7 +52,7 @@ Out of scope:
 
 ## Current Milestone Position
 
-- `Docs/Current-State.md` identifies `M9-P4` as the active current work item
+- `Docs/Current-State.md` identifies `M9-P5` as the active current work item
 - accepted `M8` closeout is the frozen handoff boundary into `M9`
 - `M9-P1` remains accepted as the bounded packet that freezes approved-memory
   scope meaning only
@@ -62,9 +62,12 @@ Out of scope:
 - `M9-P3` is now accepted as the bounded slice that makes retrieval
   eligibility explicit without widening into trace UI, broader lineage
   inspection, or promotion semantics
-- `M9-P4` is the current bounded slice for trace and lineage inspection on top
-  of the accepted retrieval-eligibility posture, using a runtime-first
-  store-level inspection surface
+- `M9-P4` is now accepted as the bounded slice that persists runtime-first,
+  store-level trace inspection on top of the accepted retrieval-eligibility
+  posture
+- `M9-P5` is the current bounded slice for regression and governance review on
+  top of the accepted `M9-P3` eligibility posture and accepted `M9-P4` trace
+  bundle
 - later `M9` packets remain intentionally unfrozen and must not smuggle in
   trace-inspection, broader lineage traversal, or governance redesign under the
   retrieval-eligibility label
@@ -154,7 +157,7 @@ Done when:
 
 Status:
 
-- current
+- accepted
 
 ### Packet 5. Run Regression And Governance Review
 
@@ -172,6 +175,10 @@ Done when:
 
 - approved memory reuse can be treated as a real Orbit feature rather than an
   opaque trick
+
+Status:
+
+- current
 
 ## Subagent Use Pattern
 

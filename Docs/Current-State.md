@@ -29,8 +29,8 @@ explicit reprioritization changes.
 - Program: `Orbit`
 - Workspace: `Orbit`
 - Milestone: `M9`
-- Packet Id: `M9-P4`
-- Title: `Implement Trace And Lineage Inspection`
+- Packet Id: `M9-P5`
+- Title: `Run Regression And Governance Review`
 - Owner: `orbit-memory-gardener`
 - Status: `active`
 - Source refs:
@@ -52,6 +52,8 @@ Parked:
 Historical baselines:
 - `M1-M2-first-checkpoint` - Orbit first checkpoint baseline remains accepted
   context, not the live queue.
+- `M9-P4` - Trace And Lineage Inspection is now accepted context, not the live
+  queue.
 - `M8` - Journaling And Memory Candidate Review is the most recently closed
   milestone, not the current work item.
 - `M6` - Structured Post Objects And Decision Packets remains accepted context,

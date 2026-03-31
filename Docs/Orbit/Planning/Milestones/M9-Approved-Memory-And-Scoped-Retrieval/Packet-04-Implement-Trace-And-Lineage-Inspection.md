@@ -1,6 +1,6 @@
 # M9 Packet 4: Implement Trace And Lineage Inspection
 
-Status: Current
+Status: Accepted
 Packet Id: `M9-P4`
 Milestone: `M9`
 Execution Owner: `orbit-memory-gardener`
@@ -9,7 +9,7 @@ Last Updated: 2026-03-31
 
 ## Header
 
-- status: `current`
+- status: `done`
 - operator or reviewer required: `yes`
 - packet type: `implementation`
 
@@ -38,7 +38,8 @@ Last Updated: 2026-03-31
 
 ## Preconditions
 
-- `Docs/Current-State.md` identifies `M9-P4` as the current work item
+- `Docs/Current-State.md` identified `M9-P4` as the current work item at
+  packet start
 - accepted `M9-P1` remains the authority for approved-memory scope meaning
 - accepted `M9-P2` remains the authority for durable approved-memory records
   and persona-global profile separation

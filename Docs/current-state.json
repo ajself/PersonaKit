@@ -2,12 +2,12 @@
   "version": 1,
   "authorityDoc": "Docs/Current-State.md",
   "current": {
-    "id": "M9-P4",
+    "id": "M9-P5",
     "program": "Orbit",
     "workspace": "Orbit",
     "milestoneId": "M9",
-    "packetId": "M9-P4",
-    "title": "Implement Trace And Lineage Inspection",
+    "packetId": "M9-P5",
+    "title": "Run Regression And Governance Review",
     "ownerPersona": "orbit-memory-gardener",
     "status": "active",
     "sourceRefs": [
@@ -27,6 +27,10 @@
       {
         "id": "M1-M2-first-checkpoint",
         "title": "Orbit first checkpoint baseline"
+      },
+      {
+        "id": "M9-P4",
+        "title": "Trace And Lineage Inspection"
       },
       {
         "id": "M8",
