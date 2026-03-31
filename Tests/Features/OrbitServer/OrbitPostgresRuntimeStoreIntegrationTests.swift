@@ -245,6 +245,161 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
   }
 
   @Test
+  func liveRuntimeStoreLoadsOnlyEligibleApprovedMemoryWhenDatabaseEnvironmentIsAvailable() async throws {
+    guard let configuration = integrationConfiguration() else {
+      return
+    }
+
+    do {
+      let store = OrbitPostgresRuntimeStore(configuration: configuration)
+      let primaryRoom = sampleRoomBootstrap()
+      let sameTemplateRoom = sampleRoomBootstrap()
+      let differentTemplateRoom = sampleRoomBootstrap(personaTemplateID: "venture-product-steward")
+      let primaryPersona = primaryRoom.workspacePersonas[0]
+
+      let workspaceBundle = approvedMemoryRecordBundle(
+        room: primaryRoom,
+        candidateID: UUID(uuidString: "d1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1")!,
+        reviewID: UUID(uuidString: "d2d2d2d2-d2d2-d2d2-d2d2-d2d2d2d2d2d2")!,
+        entryID: UUID(uuidString: "d3d3d3d3-d3d3-d3d3-d3d3-d3d3d3d3d3d3")!,
+        scope: .workspace,
+        title: "Workspace norm",
+        body: "This workspace keeps approved memory local.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_531)
+      )
+      let workspacePersonaBundle = approvedMemoryRecordBundle(
+        room: primaryRoom,
+        candidateID: UUID(uuidString: "d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4")!,
+        reviewID: UUID(uuidString: "d5d5d5d5-d5d5-d5d5-d5d5-d5d5d5d5d5d5")!,
+        entryID: UUID(uuidString: "d6d6d6d6-d6d6-d6d6-d6d6-d6d6d6d6d6d6")!,
+        scope: .workspacePersona,
+        title: "Workspace persona habit",
+        body: "This memory belongs only to the local Samwise instance.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_532)
+      )
+      let personaGlobalBundle = approvedMemoryRecordBundle(
+        room: primaryRoom,
+        candidateID: UUID(uuidString: "d7d7d7d7-d7d7-d7d7-d7d7-d7d7d7d7d7d7")!,
+        reviewID: UUID(uuidString: "d8d8d8d8-d8d8-d8d8-d8d8-d8d8d8d8d8d8")!,
+        entryID: UUID(uuidString: "d9d9d9d9-d9d9-d9d9-d9d9-d9d9d9d9d9d9")!,
+        profileID: UUID(uuidString: "dadadada-dada-dada-dada-dadadadadada")!,
+        scope: .personaGlobal,
+        title: "Samwise global craft",
+        body: "This expertise follows the Samwise template across workspaces.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_533),
+        includePersonaGlobalProfile: true
+      )
+      let sameTemplatePersonaGlobalBundle = approvedMemoryRecordBundle(
+        room: sameTemplateRoom,
+        candidateID: UUID(uuidString: "dbdbdbdb-dbdb-dbdb-dbdb-dbdbdbdbdbdb")!,
+        reviewID: UUID(uuidString: "dcdcdcdc-dcdc-dcdc-dcdc-dcdcdcdcdcdc")!,
+        entryID: UUID(uuidString: "dddddddd-1111-2222-3333-444444444444")!,
+        scope: .personaGlobal,
+        title: "Cross-workspace Samwise expertise",
+        body: "Persona-global memory remains eligible for the same template only.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_534)
+      )
+      let differentWorkspaceBundle = approvedMemoryRecordBundle(
+        room: sameTemplateRoom,
+        candidateID: UUID(uuidString: "dededede-dede-dede-dede-dededededede")!,
+        reviewID: UUID(uuidString: "dfdfdfdf-dfdf-dfdf-dfdf-dfdfdfdfdfdf")!,
+        entryID: UUID(uuidString: "e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e0e0")!,
+        scope: .workspace,
+        title: "Other workspace norm",
+        body: "A different workspace should stay isolated.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_535)
+      )
+      let differentWorkspacePersonaBundle = approvedMemoryRecordBundle(
+        room: sameTemplateRoom,
+        candidateID: UUID(uuidString: "e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1")!,
+        reviewID: UUID(uuidString: "e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2")!,
+        entryID: UUID(uuidString: "e3e3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3")!,
+        scope: .workspacePersona,
+        title: "Other workspace persona habit",
+        body: "A different workspace persona should stay isolated.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_536)
+      )
+      let organizationBundle = approvedMemoryRecordBundle(
+        room: primaryRoom,
+        candidateID: UUID(uuidString: "e4e4e4e4-e4e4-e4e4-e4e4-e4e4e4e4e4e4")!,
+        reviewID: UUID(uuidString: "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5")!,
+        entryID: UUID(uuidString: "e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6")!,
+        scope: .organization,
+        title: "Organization memory",
+        body: "Organization scope stays default-off in this repo posture.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_537)
+      )
+      let archivedBundle = approvedMemoryRecordBundle(
+        room: primaryRoom,
+        candidateID: UUID(uuidString: "e7e7e7e7-e7e7-e7e7-e7e7-e7e7e7e7e7e7")!,
+        reviewID: UUID(uuidString: "e8e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e8")!,
+        entryID: UUID(uuidString: "e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9")!,
+        scope: .workspace,
+        title: "Archived workspace memory",
+        body: "Non-active approved memory should not be retrieved.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_538),
+        status: .archived
+      )
+      let differentTemplateBundle = approvedMemoryRecordBundle(
+        room: differentTemplateRoom,
+        candidateID: UUID(uuidString: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")!,
+        reviewID: UUID(uuidString: "efefefef-efef-efef-efef-efefefefefef")!,
+        entryID: UUID(uuidString: "f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0")!,
+        scope: .personaGlobal,
+        title: "Other template global craft",
+        body: "Different persona templates should not cross over.",
+        createdAt: Date(timeIntervalSince1970: 1_742_342_539)
+      )
+
+      try await store.applyPhase1Schema()
+      try await store.bootstrapRoom(primaryRoom)
+      try await store.bootstrapRoom(sameTemplateRoom)
+      try await store.bootstrapRoom(differentTemplateRoom)
+
+      for bundle in [
+        workspaceBundle,
+        workspacePersonaBundle,
+        personaGlobalBundle,
+        sameTemplatePersonaGlobalBundle,
+        differentWorkspaceBundle,
+        differentWorkspacePersonaBundle,
+        organizationBundle,
+        archivedBundle,
+        differentTemplateBundle,
+      ] {
+        try await store.recordApprovedMemory(bundle)
+      }
+
+      let eligibleMemory = try await store.loadEligibleApprovedMemory(
+        OrbitApprovedMemoryEligibilityRequest(
+          workspaceID: primaryRoom.workspace.id,
+          workspacePersonaID: primaryPersona.id,
+          personaTemplateID: primaryPersona.personaTemplateID
+        )
+      )
+
+      #expect(
+        eligibleMemory.entries.map(\.id) == [
+          workspaceBundle.entry.id,
+          workspacePersonaBundle.entry.id,
+          personaGlobalBundle.entry.id,
+          sameTemplatePersonaGlobalBundle.entry.id,
+        ]
+      )
+      #expect(eligibleMemory.personaGlobalProfile == personaGlobalBundle.personaGlobalProfile)
+      #expect(eligibleMemory.entries.contains { $0.id == differentWorkspaceBundle.entry.id } == false)
+      #expect(
+        eligibleMemory.entries.contains { $0.id == differentWorkspacePersonaBundle.entry.id } == false
+      )
+      #expect(eligibleMemory.entries.contains { $0.id == organizationBundle.entry.id } == false)
+      #expect(eligibleMemory.entries.contains { $0.id == archivedBundle.entry.id } == false)
+      #expect(eligibleMemory.entries.contains { $0.id == differentTemplateBundle.entry.id } == false)
+    } catch {
+      Issue.record("Unexpected live Postgres error: \(String(reflecting: error))")
+    }
+  }
+
+  @Test
   func liveRuntimeStoreRoundTripsMeetingRecordsWhenDatabaseEnvironmentIsAvailable() async throws {
     guard let configuration = integrationConfiguration() else {
       return
@@ -496,7 +651,9 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
     )
   }
 
-  private func sampleRoomBootstrap() -> OrbitPhase1RoomBootstrap {
+  private func sampleRoomBootstrap(
+    personaTemplateID: String = "samwise"
+  ) -> OrbitPhase1RoomBootstrap {
     let workspaceID = UUID()
     let channelID = UUID()
     let postID = UUID()
@@ -528,8 +685,8 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
         OrbitWorkspacePersonaRecord(
           id: workspacePersonaID,
           workspaceID: workspaceID,
-          personaTemplateID: "samwise",
-          displayName: "Samwise",
+          personaTemplateID: personaTemplateID,
+          displayName: personaTemplateID == "samwise" ? "Samwise" : "ProdDoc",
           status: .active,
           createdAt: baseDate
         )
@@ -582,53 +739,110 @@ struct OrbitPostgresRuntimeStoreIntegrationTests {
   private func sampleApprovedMemoryRecordBundle(
     room: OrbitPhase1RoomBootstrap
   ) -> OrbitApprovedMemoryRecordBundle {
+    approvedMemoryRecordBundle(
+      room: room,
+      candidateID: UUID(uuidString: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1")!,
+      reviewID: UUID(uuidString: "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2")!,
+      entryID: UUID(uuidString: "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3")!,
+      profileID: UUID(uuidString: "c4c4c4c4-c4c4-c4c4-c4c4-c4c4c4c4c4c4")!,
+      scope: .personaGlobal,
+      title: "Samwise keeps approved memory separate",
+      body: "Approved memory remains a durable runtime artifact, not an authored persona mutation.",
+      createdAt: Date(timeIntervalSince1970: 1_742_342_530),
+      includePersonaGlobalProfile: true
+    )
+  }
+
+  private func approvedMemoryRecordBundle(
+    room: OrbitPhase1RoomBootstrap,
+    candidateID: UUID,
+    reviewID: UUID,
+    entryID: UUID,
+    profileID: UUID? = nil,
+    scope: OrbitMemoryScope,
+    title: String,
+    body: String,
+    createdAt: Date,
+    status: OrbitMemoryEntryStatus = .active,
+    workspaceID: UUID? = nil,
+    workspacePersonaID: UUID? = nil,
+    personaTemplateID: String? = nil,
+    includePersonaGlobalProfile: Bool = false
+  ) -> OrbitApprovedMemoryRecordBundle {
     let workspacePersona = room.workspacePersonas[0]
-    let candidateID = UUID(uuidString: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1")!
-    let reviewDate = Date(timeIntervalSince1970: 1_742_342_530)
+    let candidateCreatedAt = createdAt.addingTimeInterval(-5)
+    let effectiveWorkspaceID = workspaceID ?? {
+      switch scope {
+      case .workspace, .workspacePersona:
+        return room.workspace.id
+      case .personaGlobal, .organization:
+        return nil
+      }
+    }()
+    let effectiveWorkspacePersonaID = workspacePersonaID ?? {
+      switch scope {
+      case .workspacePersona:
+        return workspacePersona.id
+      case .workspace, .personaGlobal, .organization:
+        return nil
+      }
+    }()
+    let effectivePersonaTemplateID = personaTemplateID ?? {
+      switch scope {
+      case .personaGlobal:
+        return workspacePersona.personaTemplateID
+      case .workspace, .workspacePersona, .organization:
+        return nil
+      }
+    }()
 
     return OrbitApprovedMemoryRecordBundle(
       candidate: OrbitMemoryCandidateRecord(
         id: candidateID,
-        workspaceID: room.workspace.id,
-        workspacePersonaID: workspacePersona.id,
-        personaTemplateID: workspacePersona.personaTemplateID,
+        workspaceID: effectiveWorkspaceID,
+        workspacePersonaID: effectiveWorkspacePersonaID ?? workspacePersona.id,
+        personaTemplateID: effectivePersonaTemplateID ?? workspacePersona.personaTemplateID,
         sourceType: .post,
         sourceID: room.post.id.uuidString,
-        proposedScope: .personaGlobal,
-        title: "Samwise keeps approved memory separate",
+        proposedScope: scope,
+        title: title,
         body: "Reviewed approved memory stays distinct from candidate staging.",
         confidence: 0.91,
         status: .approved,
-        createdAt: Date(timeIntervalSince1970: 1_742_342_525),
-        reviewedAt: reviewDate
+        createdAt: candidateCreatedAt,
+        reviewedAt: createdAt
       ),
       review: OrbitMemoryReviewRecord(
-        id: UUID(uuidString: "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2")!,
+        id: reviewID,
         memoryCandidateID: candidateID,
         reviewerType: .operator,
         reviewerID: "aj",
         decision: .approve,
-        notes: "Materialize as persona-global expertise.",
-        createdAt: reviewDate
+        notes: "Materialize as reviewed approved memory.",
+        createdAt: createdAt
       ),
       entry: OrbitMemoryEntryRecord(
-        id: UUID(uuidString: "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3")!,
-        scope: .personaGlobal,
-        personaTemplateID: workspacePersona.personaTemplateID,
-        title: "Samwise keeps approved memory separate",
-        body: "Approved memory remains a durable runtime artifact, not an authored persona mutation.",
-        status: .active,
-        validFrom: reviewDate,
+        id: entryID,
+        scope: scope,
+        workspaceID: effectiveWorkspaceID,
+        workspacePersonaID: effectiveWorkspacePersonaID,
+        personaTemplateID: effectivePersonaTemplateID,
+        title: title,
+        body: body,
+        status: status,
+        validFrom: createdAt,
         sourceMemoryCandidateID: candidateID,
-        createdAt: reviewDate
+        createdAt: createdAt
       ),
-      personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord(
-        id: UUID(uuidString: "c4c4c4c4-c4c4-c4c4-c4c4-c4c4c4c4c4c4")!,
-        personaTemplateID: workspacePersona.personaTemplateID,
-        summary: "Curated Samwise persona-global memory profile.",
-        lastCuratedAt: reviewDate,
-        createdAt: reviewDate
-      )
+      personaGlobalProfile: includePersonaGlobalProfile
+        ? OrbitPersonaGlobalMemoryProfileRecord(
+          id: profileID ?? UUID(),
+          personaTemplateID: workspacePersona.personaTemplateID,
+          summary: "Curated \(workspacePersona.personaTemplateID) persona-global memory profile.",
+          lastCuratedAt: createdAt,
+          createdAt: createdAt
+        )
+        : nil
     )
   }
 

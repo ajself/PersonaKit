@@ -355,6 +355,41 @@ public struct OrbitPostgresRuntimeStore: Sendable {
     }
   }
 
+  public func loadEligibleApprovedMemory(
+    _ request: OrbitApprovedMemoryEligibilityRequest,
+    repository: OrbitPhase1RuntimeRepository = OrbitPhase1RuntimeRepository()
+  ) async throws -> OrbitEligibleApprovedMemory {
+    try await withClient { client in
+      let entryRows = try await client.query(
+        repository.selectEligibleApprovedMemoryEntriesQuery(
+          workspaceID: request.workspaceID,
+          workspacePersonaID: request.workspacePersonaID,
+          personaTemplateID: request.personaTemplateID
+        )
+      )
+
+      var entries = [OrbitMemoryEntryRecord]()
+      for try await row in entryRows {
+        entries.append(try decodeMemoryEntry(from: row.makeRandomAccess()))
+      }
+
+      let profileRows = try await client.query(
+        repository.selectPersonaGlobalMemoryProfileQuery(
+          personaTemplateID: request.personaTemplateID
+        )
+      ).collect()
+
+      let personaGlobalProfile = try profileRows.first.map {
+        try decodePersonaGlobalMemoryProfile(from: $0.makeRandomAccess())
+      }
+
+      return OrbitEligibleApprovedMemory(
+        entries: entries,
+        personaGlobalProfile: personaGlobalProfile
+      )
+    }
+  }
+
   public func loadRoomSnapshot(
     workspaceSlug: String,
     channelSlug: String,

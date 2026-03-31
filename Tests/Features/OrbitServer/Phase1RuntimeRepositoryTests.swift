@@ -335,6 +335,32 @@ struct Phase1RuntimeRepositoryTests {
   }
 
   @Test
+  func eligibleApprovedMemoryQueryKeepsEligibilityScopedAndDeterministic() {
+    let query = repository.selectEligibleApprovedMemoryEntriesQuery(
+      workspaceID: UUID(uuidString: "16161616-1616-1616-1616-161616161616")!,
+      workspacePersonaID: UUID(uuidString: "17171717-1717-1717-1717-171717171717")!,
+      personaTemplateID: "samwise"
+    )
+
+    #expect(query.sql.contains("FROM memory_entry"))
+    #expect(query.sql.contains("FROM memory_candidate") == false)
+    #expect(query.sql.contains("status = 'active'"))
+    #expect(query.sql.contains("scope = 'workspace' AND workspace_id = $1"))
+    #expect(query.sql.contains("scope = 'workspace_persona'"))
+    #expect(query.sql.contains("workspace_id = $2"))
+    #expect(query.sql.contains("workspace_persona_id = $3"))
+    #expect(query.sql.contains("scope = 'persona_global'"))
+    #expect(query.sql.contains("persona_template_id = $4"))
+    #expect(query.sql.contains("scope = 'organization'") == false)
+    #expect(query.sql.contains("ORDER BY"))
+    #expect(query.sql.contains("CASE"))
+    #expect(query.sql.contains("valid_from ASC"))
+    #expect(query.sql.contains("created_at ASC"))
+    #expect(query.sql.contains("id ASC"))
+    #expect(query.binds.count == 4)
+  }
+
+  @Test
   func roomSnapshotQueryReadsCanonicalWorkspaceChannelPostAndThreadState() {
     let query = repository.selectRoomSnapshotQuery(
       workspaceSlug: "orbit",

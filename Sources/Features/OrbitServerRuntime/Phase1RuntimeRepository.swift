@@ -1152,6 +1152,52 @@ public struct OrbitPhase1RuntimeRepository: Sendable {
     """
   }
 
+  public func selectEligibleApprovedMemoryEntriesQuery(
+    workspaceID: UUID,
+    workspacePersonaID: UUID,
+    personaTemplateID: String
+  ) -> PostgresQuery {
+    """
+    SELECT
+      id,
+      scope,
+      workspace_id,
+      workspace_persona_id,
+      persona_template_id,
+      title,
+      body,
+      status,
+      valid_from,
+      valid_to,
+      source_memory_candidate_id,
+      created_at
+    FROM memory_entry
+    WHERE status = 'active'
+      AND (
+        (scope = 'workspace' AND workspace_id = \(workspaceID))
+        OR (
+          scope = 'workspace_persona'
+            AND workspace_id = \(workspaceID)
+            AND workspace_persona_id = \(workspacePersonaID)
+        )
+        OR (
+          scope = 'persona_global'
+            AND persona_template_id = \(personaTemplateID)
+        )
+      )
+    ORDER BY
+      CASE
+        WHEN scope = 'workspace' THEN 0
+        WHEN scope = 'workspace_persona' THEN 1
+        WHEN scope = 'persona_global' THEN 2
+        ELSE 99
+      END ASC,
+      valid_from ASC,
+      created_at ASC,
+      id ASC
+    """
+  }
+
   public func selectPersonaGlobalMemoryProfileQuery(
     personaTemplateID: String
   ) -> PostgresQuery {

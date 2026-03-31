@@ -1147,6 +1147,35 @@ public struct OrbitPersonaGlobalMemoryProfileRecord: Codable, Equatable, Sendabl
   }
 }
 
+public struct OrbitApprovedMemoryEligibilityRequest: Codable, Equatable, Sendable {
+  public let workspaceID: UUID
+  public let workspacePersonaID: UUID
+  public let personaTemplateID: String
+
+  public init(
+    workspaceID: UUID,
+    workspacePersonaID: UUID,
+    personaTemplateID: String
+  ) {
+    self.workspaceID = workspaceID
+    self.workspacePersonaID = workspacePersonaID
+    self.personaTemplateID = personaTemplateID
+  }
+}
+
+public struct OrbitEligibleApprovedMemory: Codable, Equatable, Sendable {
+  public let entries: [OrbitMemoryEntryRecord]
+  public let personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord?
+
+  public init(
+    entries: [OrbitMemoryEntryRecord] = [],
+    personaGlobalProfile: OrbitPersonaGlobalMemoryProfileRecord? = nil
+  ) {
+    self.entries = entries
+    self.personaGlobalProfile = personaGlobalProfile
+  }
+}
+
 public struct OrbitApprovedMemoryRecordBundle: Codable, Equatable, Sendable {
   public let candidate: OrbitMemoryCandidateRecord
   public let review: OrbitMemoryReviewRecord
