@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -24,9 +24,32 @@ Use this three-line metadata block near the top of operational docs:
 - Required when substantially editing an existing operational doc.
 - Legacy docs may adopt this gradually when they are touched.
 
-- `Status: Draft | Active | Archived`
+- `Status: Active | In Progress | Ready For Review | Blocked | Planned | Accepted | Closed for Closeout | Parked | Archived`
 - `Owner: <person or team>`
 - `Last Reviewed: YYYY-MM-DD`
+
+## Status Usage
+
+Use status labels consistently:
+
+- `Active`: current operator-facing index, queue, or live operational guide
+- `In Progress`: current execution milestone or packet
+- `Ready For Review`: waiting on human review or confirmation
+- `Blocked`: cannot proceed until a named prerequisite is resolved
+- `Planned`: future work, not active execution
+- `Accepted`: approved baseline or accepted artifact, but not the live queue by
+  itself
+- `Closed for Closeout`: functionally complete, pending formal closeout
+- `Parked`: intentionally not the active queue, but still has an unresolved
+  checkpoint or return condition
+- `Archived`: historical only
+
+Status labels describe lifecycle, not cross-repo priority.
+
+`Accepted` and `Archived` do not imply current priority.
+
+Cross-domain priority must be stated in `Docs/Current-State.md` or the local
+area `README.md`.
 
 ## File Naming Rules
 

@@ -1,21 +1,27 @@
 # Taskboard V2 Feature Lock
 
-Status: Active  
+Status: Parked
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Freeze the expected board-and-card parity feature set for Taskboard v2 after
 research is complete and before deeper parity implementation continues.
 
+Historical posture:
+
+- preserved as the approved Taskboard v2 feature-lock decision
+- not the current repo-wide execution queue
+- current repo-wide priority lives in `Docs/Current-State.md`
+
 ## Inputs
 
-1. `Docs/Research/taskboard-trello-benchmark.md`
-2. `Docs/Research/taskboard-trello-gap-matrix.md`
-3. `Docs/Research/taskboard-trello-image-catalog.md`
-4. `Docs/Plan/taskboard-v2-initiative-plan.md`
-5. `Docs/Plan/taskboard-trello-parity-execution-charter.md`
+1. `Docs/Archive/PersonaKit/Research/taskboard-trello-benchmark.md`
+2. `Docs/Archive/PersonaKit/Research/taskboard-trello-gap-matrix.md`
+3. `Docs/Archive/PersonaKit/Research/taskboard-trello-image-catalog.md`
+4. `Docs/Archive/PersonaKit/Plans/taskboard-v2-initiative-plan.md`
+5. `Docs/Archive/PersonaKit/Plans/taskboard-trello-parity-execution-charter.md`
 
 ## Feature Lock Decision
 

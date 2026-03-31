@@ -1,14 +1,20 @@
 # Night Shift Taskboard Rival Plan
 
-Status: Active  
+Status: Parked
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Provide a dependency-linked night-shift execution system so Samwise can
 orchestrate multi-agent delivery in small, verifiable increments toward a
 Trello-rival Taskboard experience.
+
+Historical posture:
+
+- preserved as the final Taskboard parity execution-system plan
+- Taskboard is parked historical work with one open checkpoint
+- current repo-wide priority lives in `Docs/Current-State.md`
 
 ## Current Execution Snapshot (2026-03-09)
 
@@ -178,7 +184,7 @@ Scope:
    - `.personakit/Taskboard/night-shift/interaction-events.jsonl`
 2. Add explicit ticket workflow states needed for throughput measurement.
 3. Add nightly report template and artifact location:
-   - `Docs/Plan/templates/taskboard-night-shift-report-template.md`
+   - `Docs/Archive/PersonaKit/Plans/templates/taskboard-night-shift-report-template.md`
    - `.personakit/Taskboard/night-shift/interaction-report.md`
 
 Verifiable outcomes:

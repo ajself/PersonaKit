@@ -1,13 +1,19 @@
 # Taskboard Trello-Parity Execution Charter
 
-Status: Active
+Status: Parked
 Owner: AJ + Samwise
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Define the active execution charter for getting Taskboard to board-and-card
 parity that a human user could reasonably mistake for Trello.
+
+Historical posture:
+
+- preserved as the Taskboard parity execution charter for the parked initiative
+- not the current repo-wide execution queue
+- current repo-wide priority lives in `Docs/Current-State.md`
 
 ## Summary
 
@@ -75,7 +81,7 @@ Rule:
 
 ## Related Docs
 
-1. `Docs/Plan/taskboard-v2-initiative-plan.md`
-2. `Docs/Plan/taskboard-v2-feature-lock.md`
-3. `Docs/Plan/taskboard-ai-mutation-contract.md`
-4. `Docs/Plan/taskboard-v2-snapshot-lane.md`
+1. `Docs/Archive/PersonaKit/Plans/taskboard-v2-initiative-plan.md`
+2. `Docs/Archive/PersonaKit/Plans/taskboard-v2-feature-lock.md`
+3. `Docs/Archive/PersonaKit/Plans/taskboard-ai-mutation-contract.md`
+4. `Docs/Archive/PersonaKit/Plans/taskboard-v2-snapshot-lane.md`

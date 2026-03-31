@@ -2,7 +2,7 @@
 
 Status: Archived
 Owner: AJ
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -23,7 +23,12 @@ Taskboard-era work.
 Older logs and historical docs may still mention `Docs/Plan/` or
 `Docs/Research/`.
 
-Those references now point to the archived materials in this folder.
+Use these translations:
+
+- `Docs/Plan/...` -> `Docs/Archive/PersonaKit/Plans/...`
+- `Docs/Research/...` -> `Docs/Archive/PersonaKit/Research/...`
+
+Preserve the original historical wording in append-only records.
 
 ## Relationship To Active Docs
 

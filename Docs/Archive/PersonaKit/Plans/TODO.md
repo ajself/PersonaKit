@@ -1,12 +1,20 @@
 # TODO
 
-Status: Active  
+Status: Parked
 Owner: AJ + Samwise  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
-Keep execution focused. This file lists only actionable, in-order tasks.
+Preserve the final ordered Taskboard execution queue as historical planning
+context.
+
+This is not the current repo-wide execution queue.
+
+Taskboard is parked historical work with one open checkpoint: the real `NS0`
+paired evidence run plus the follow-up readiness memo.
+
+For current repo-wide priority, start with `Docs/Current-State.md`.
 
 ## Action Queue (In Order)
 
@@ -14,17 +22,17 @@ Keep execution focused. This file lists only actionable, in-order tasks.
 
 Plan source:
 
-- `Docs/Plan/taskboard-trello-parity-execution-charter.md`
-- `Docs/Plan/taskboard-v2-initiative-plan.md`
-- `Docs/Plan/taskboard-v2-feature-lock.md`
-- `Docs/Plan/taskboard-ai-mutation-contract.md`
-- `Docs/Plan/taskboard-v2-snapshot-lane.md`
-- `Docs/Plan/night-shift-taskboard-rival-plan.md`
+- `Docs/Archive/PersonaKit/Plans/taskboard-trello-parity-execution-charter.md`
+- `Docs/Archive/PersonaKit/Plans/taskboard-v2-initiative-plan.md`
+- `Docs/Archive/PersonaKit/Plans/taskboard-v2-feature-lock.md`
+- `Docs/Archive/PersonaKit/Plans/taskboard-ai-mutation-contract.md`
+- `Docs/Archive/PersonaKit/Plans/taskboard-v2-snapshot-lane.md`
+- `Docs/Archive/PersonaKit/Plans/night-shift-taskboard-rival-plan.md`
 
 Historical baseline:
 
-- `Docs/Plan/Archive/admin-ticket-planning-feature-brief.md`
-- `Docs/Plan/Archive/taskboard-parity-polish-pass-2.md`
+- `Docs/Archive/PersonaKit/Plans/Archive/admin-ticket-planning-feature-brief.md`
+- `Docs/Archive/PersonaKit/Plans/Archive/taskboard-parity-polish-pass-2.md`
 
 Objective:
 
@@ -58,7 +66,8 @@ Exit criteria:
 2. Snapshot lane required scenario coverage is complete (`7/7`).
 3. Final parity review has `0` blockers.
 4. AI-operable contract is callable, deterministic, and safe.
-5. No dangling active Taskboard tasks remain in `Docs/Plan/`.
+5. No dangling active Taskboard tasks remain in
+   `Docs/Archive/PersonaKit/Plans/`.
 
 Execution note:
 
@@ -108,7 +117,9 @@ Execution note:
 
 ## Plan Hygiene Rules
 
-1. Keep only active plans in `Docs/Plan/`.
-2. Move completed plans to `Docs/Plan/Archive/`.
+1. Keep only parked historical Taskboard planning docs in
+   `Docs/Archive/PersonaKit/Plans/`.
+2. Move completed historical Taskboard planning artifacts to
+   `Docs/Archive/PersonaKit/Plans/Archive/`.
 3. Keep durable operational records in `Docs/Development/`, not here.
 4. Keep this TODO ordered and current after each milestone.

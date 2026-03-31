@@ -29,14 +29,14 @@ explicit reprioritization changes.
 - Program: `Orbit`
 - Workspace: `Orbit`
 - Milestone: `M9`
-- Packet Id: `M9-P2`
-- Title: `Implement Approved Memory Records`
+- Packet Id: `M9-P3`
+- Title: `Implement Retrieval Eligibility Rules`
 - Owner: `orbit-memory-gardener`
 - Status: `active`
 - Source refs:
   - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/README.md`
+  - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-03-Implement-Retrieval-Eligibility-Rules.md`
   - `Docs/Orbit/Planning/Milestones/M9-Approved-Memory-And-Scoped-Retrieval/Packet-01-Freeze-Approved-Memory-Scope-Rules.md`
-  - `Docs/Orbit/Planning/Milestones/M8-Journaling-And-Memory-Candidate-Review/Milestone-Closeout-Review-Artifact.md`
 
 ## Next Up
 

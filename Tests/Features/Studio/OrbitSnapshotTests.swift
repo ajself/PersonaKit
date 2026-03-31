@@ -154,7 +154,7 @@
       )
     }
 
-    func testOrbitStructuredNotesAndDecisionsMessagePost() throws {
+    func testOrbitStructuredObjectsMessagePost() throws {
       let workspaceURL = try makeWorkspace(with: structuredMessageWorkspace())
 
       let store = WorkspaceStore()
@@ -168,11 +168,11 @@
       assertSnapshot(
         of: view,
         as: imageSnapshotStrategy,
-        named: "orbit-structured-message-post"
+        named: "orbit-structured-objects-message-post"
       )
     }
 
-    func testOrbitStructuredNotesAndDecisionsMeetingPost() throws {
+    func testOrbitStructuredObjectsMeetingPost() throws {
       let workspaceURL = try makeWorkspace(with: structuredMeetingWorkspace())
 
       let store = WorkspaceStore()
@@ -186,7 +186,7 @@
       assertSnapshot(
         of: view,
         as: imageSnapshotStrategy,
-        named: "orbit-structured-meeting-post"
+        named: "orbit-structured-objects-meeting-post"
       )
     }
 

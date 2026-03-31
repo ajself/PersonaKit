@@ -1,13 +1,19 @@
 # Taskboard V2 Snapshot Lane
 
-Status: Active  
+Status: Parked
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Define the visual QA lane for Taskboard so UI changes are reviewed with stable
 snapshot evidence instead of subjective memory.
+
+Historical posture:
+
+- preserved as the Taskboard visual QA and snapshot policy baseline
+- not the current repo-wide execution queue
+- current repo-wide priority lives in `Docs/Current-State.md`
 
 ## Scope
 
@@ -58,7 +64,7 @@ snapshot evidence instead of subjective memory.
 1. Any Taskboard UI change requires snapshot diff review.
 2. If diff materially changes hierarchy, spacing, contrast, or controls:
    - run a red-pen pass
-   - log findings in `Docs/Plan/`
+   - log findings in `Docs/Archive/PersonaKit/Plans/`
 3. Block release for blocker-level visual regressions.
 
 ## Command contracts

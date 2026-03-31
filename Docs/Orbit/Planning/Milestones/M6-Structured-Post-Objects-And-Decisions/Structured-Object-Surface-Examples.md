@@ -21,8 +21,8 @@ instead of code reconstruction.
 - no workstream or memory behavior is introduced here
 - accepted `M5` meeting-output semantics remain intact and are not reopened by
   these examples
-- the current snapshot names still use the `M6-P3` label, but they now show the
-  full shipped structured-object surface from `M6-P3` plus `M6-P4`
+- the current snapshot names now align with the full shipped structured-object
+  surface shown in the message-post and meeting-post examples
 
 ## Example 1. Message Post With Ordered Structured Surfaces
 
@@ -55,7 +55,7 @@ Evidence:
 - `Tests/Features/Studio/OrbitStructuredNotesAndDecisionsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitStructuredReferencesAndArtifactsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitSnapshotTests.swift`
-- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMessagePost.orbit-structured-message-post.png`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredObjectsMessagePost.orbit-structured-objects-message-post.png`
 
 ## Example 2. Completed Meeting Post With Bounded Coexistence
 
@@ -88,7 +88,7 @@ Evidence:
 - `Tests/Features/Studio/OrbitStructuredNotesAndDecisionsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitStructuredReferencesAndArtifactsPresentationTests.swift`
 - `Tests/Features/Studio/OrbitSnapshotTests.swift`
-- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMeetingPost.orbit-structured-meeting-post.png`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredObjectsMeetingPost.orbit-structured-objects-meeting-post.png`
 
 ## Why This Is Enough For `M6-P5`
 

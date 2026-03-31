@@ -1,9 +1,9 @@
 # M6 Structured Post Objects And Decision Packets
 
-Status: In Progress - M6-P5 local review recorded, awaiting reviewer confirmation
+Status: Closed for M6 Closeout
 Primary Owner: `venture-product-steward`
 Supporting Personas: `senior-swiftui-engineer`, `studio-interaction-quality-lead`, `architectural-editor`
-Last Updated: 2026-03-26
+Last Updated: 2026-03-29
 
 ## Purpose
 
@@ -27,9 +27,12 @@ inspectable objects to posts and meetings.
   `structured_attachment` order, preserves the accepted `M5` meeting-reference
   surface as a separate legacy section, and keeps evidence inspection
   read-only.
-- `M6-P5` is now the active review packet: the local product-and-interaction
-  pass is recorded, and the shipped two-card surface now follows earliest
-  attachment family instead of a fixed notes-first stack.
+- `M6-P5` is accepted: the shipped two-card surface follows earliest
+  attachment family instead of a fixed notes-first stack, and the review
+  artifacts are internally consistent with the current implementation, tests,
+  and snapshots.
+- `M6` closeout is accepted on the prepared dossier without reopening `M6-P1`
+  through `M6-P5`
 
 ## File Map
 
@@ -54,6 +57,8 @@ inspectable objects to posts and meetings.
 - `Product-And-Interaction-Review-Artifact.md`
   `M6-P5` review artifact updated with the local review findings grounded in
   shipped docs, implementation, tests, and snapshots
+- `AJ-Closeout-Review-Artifact.md`
+  prepared AJ-facing closeout note for the bounded first-slice `M6` dossier
 
 ## Preconditions
 
@@ -193,6 +198,7 @@ Avoid:
 - attachment-plumbing closeout note
 - structured-object surface examples for message and meeting posts
 - product and interaction review artifact
+- `AJ-Closeout-Review-Artifact.md`
 
 ## Stop Points
 

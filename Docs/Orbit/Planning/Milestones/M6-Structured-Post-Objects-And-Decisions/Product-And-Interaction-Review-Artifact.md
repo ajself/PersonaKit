@@ -44,8 +44,8 @@ signal-to-noise ratio rather than implementation confidence alone.
 - `Tests/Features/Studio/OrbitWorkspacePersistenceTests.swift`
 - `Tests/Features/Studio/OrbitPanelViewMeetingCompletionTests.swift`
 - `Tests/Features/Studio/OrbitSnapshotTests.swift`
-- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMessagePost.orbit-structured-message-post.png`
-- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredNotesAndDecisionsMeetingPost.orbit-structured-meeting-post.png`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredObjectsMessagePost.orbit-structured-objects-message-post.png`
+- `Tests/Features/Studio/__Snapshots__/OrbitSnapshotTests/testOrbitStructuredObjectsMeetingPost.orbit-structured-objects-meeting-post.png`
 
 ## Findings
 
@@ -79,9 +79,6 @@ signal-to-noise ratio rather than implementation confidence alone.
 
 ## Residual Notes
 
-- The current snapshot names still carry the `M6-P3` surface label even though
-  the captured message-post and meeting-post examples now show the full shipped
-  `M6-P3` plus `M6-P4` surface stack.
 - The first slice intentionally favors separate cards over a unified inspector;
   if later milestones want a fully continuous mixed sequence across every
   structured attachment, that should be treated as new work rather than

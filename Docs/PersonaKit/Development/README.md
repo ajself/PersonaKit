@@ -2,7 +2,7 @@
 
 Status: Active  
 Owner: AJ  
-Last Reviewed: 2026-03-10
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -12,6 +12,13 @@ agreements, session routing, ongoing logs, and validation commands.
 Samwise is the `samwise` persona and serves as AJ's Trusted Partner. Use
 `Trusted Partner` in human-facing documentation and `AJ Trusted Partner` when a
 stable agent-facing role label is helpful.
+
+This guide governs repo operations, workflow rules, and durable ledgers.
+
+It does not define cross-product priority across Orbit and historical
+initiatives.
+
+For the current repo-wide priority picture, use `Docs/Current-State.md`.
 
 ## Team operating agreement
 

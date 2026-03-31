@@ -2,7 +2,7 @@
 
 Status: Archived  
 Owner: AJ  
-Last Reviewed: 2026-03-09
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
@@ -11,13 +11,16 @@ direction of this repository.
 
 These plans are retained for historical reference.
 
-They are not the primary planning source for Orbit.
+They are not the current repo-wide execution queue.
 
 For current Orbit product and execution planning, use `Docs/Orbit/Planning/`.
 
-## Historical Plan Docs
+Taskboard remains visible here as a parked historical initiative with one open
+checkpoint: the paired `NS0` evidence run plus readiness memo.
 
-- `TODO.md` (ordered execution queue)
+## Parked Historical Initiative Docs
+
+- `TODO.md` (final Taskboard execution queue snapshot)
 - `taskboard-trello-parity-execution-charter.md`
 - `taskboard-v2-initiative-plan.md`
 - `taskboard-v2-feature-lock.md`
@@ -42,6 +45,7 @@ For current Orbit product and execution planning, use `Docs/Orbit/Planning/`.
 ## Rule of Use
 
 - Treat this folder as historical context, not the current execution queue.
+- For current repo-wide priority, start with `Docs/Current-State.md`.
 - Durable operating records still belong in `Docs/PersonaKit/Development/`.
 - Reusable planning support artifacts remain in `templates/README.md`.
 - Orbit planning should live in `Docs/Orbit/Planning/`, not here.

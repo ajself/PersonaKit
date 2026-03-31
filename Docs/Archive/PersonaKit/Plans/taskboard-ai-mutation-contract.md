@@ -1,13 +1,19 @@
 # Taskboard AI Mutation Contract
 
-Status: Active  
+Status: Parked
 Owner: AJ  
-Last Reviewed: 2026-03-07
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Define a deterministic, AI-safe mutation contract for Taskboard so Samwise (and
 other approved agents) can read and edit board state without ambiguous behavior.
+
+Historical posture:
+
+- preserved as the Taskboard AI-editability contract for the parked initiative
+- not the current repo-wide execution queue
+- current repo-wide priority lives in `Docs/Current-State.md`
 
 ## Current baseline (from code)
 

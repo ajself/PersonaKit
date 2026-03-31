@@ -1,14 +1,20 @@
 # Taskboard V2 Initiative Plan
 
-Status: Active  
+Status: Parked
 Owner: AJ  
-Last Reviewed: 2026-03-08
+Last Reviewed: 2026-03-29
 
 ## Purpose
 
 Define the active Taskboard initiative so PersonaKit Studio reaches
 `Board + Card Parity`: a human user should be able to use the board and
 card-detail experience and reasonably think it is Trello.
+
+Historical posture:
+
+- preserved as the final Taskboard v2 initiative planning baseline
+- not the current forward program for the repository
+- current repo-wide priority lives in `Docs/Current-State.md`
 
 ## Problem Statement
 
@@ -67,7 +73,7 @@ Goal:
 
 Deliverables:
 
-1. `Docs/Plan/taskboard-ai-mutation-contract.md`
+1. `Docs/Archive/PersonaKit/Plans/taskboard-ai-mutation-contract.md`
 2. Stable validation and failure modes
 3. Contract tests for supported mutation operations
 4. Callable local surface for read/write upkeep loops
@@ -80,9 +86,9 @@ Goal:
 
 Deliverables:
 
-1. `Docs/Research/taskboard-trello-benchmark.md`
-2. `Docs/Research/taskboard-trello-image-catalog.md`
-3. `Docs/Research/taskboard-trello-gap-matrix.md`
+1. `Docs/Archive/PersonaKit/Research/taskboard-trello-benchmark.md`
+2. `Docs/Archive/PersonaKit/Research/taskboard-trello-image-catalog.md`
+3. `Docs/Archive/PersonaKit/Research/taskboard-trello-gap-matrix.md`
 4. Explicit board-and-card parity checklist used by product and visual QA
 
 ### W3: Visual Quality Gate
@@ -212,7 +218,8 @@ Exit criteria:
 
 ### P6: Closeout
 
-1. Clear active Taskboard items from `Docs/Plan/TODO.md`.
+1. Clear active Taskboard items from
+   `Docs/Archive/PersonaKit/Plans/TODO.md`.
 2. Archive no-longer-active Taskboard planning artifacts.
 3. Run squad retrospectives and Rosie gardening.
 4. Review the delegated commit experiment.
@@ -224,8 +231,8 @@ Exit criteria:
 
 ## Related Docs
 
-1. `Docs/Plan/taskboard-trello-parity-execution-charter.md`
-2. `Docs/Plan/taskboard-v2-feature-lock.md`
-3. `Docs/Plan/taskboard-ai-mutation-contract.md`
-4. `Docs/Plan/taskboard-v2-snapshot-lane.md`
-5. `Docs/Plan/night-shift-taskboard-rival-plan.md`
+1. `Docs/Archive/PersonaKit/Plans/taskboard-trello-parity-execution-charter.md`
+2. `Docs/Archive/PersonaKit/Plans/taskboard-v2-feature-lock.md`
+3. `Docs/Archive/PersonaKit/Plans/taskboard-ai-mutation-contract.md`
+4. `Docs/Archive/PersonaKit/Plans/taskboard-v2-snapshot-lane.md`
+5. `Docs/Archive/PersonaKit/Plans/night-shift-taskboard-rival-plan.md`

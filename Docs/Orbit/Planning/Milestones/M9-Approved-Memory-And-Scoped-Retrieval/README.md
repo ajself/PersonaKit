@@ -45,19 +45,24 @@ Out of scope:
   milestone overview, packet order, and top-level guardrails
 - `Packet-01-Freeze-Approved-Memory-Scope-Rules.md`
   bounded planning packet for `M9-P1`
+- `Packet-03-Implement-Retrieval-Eligibility-Rules.md`
+  bounded implementation packet for `M9-P3`
 
 ## Current Milestone Position
 
-- `Docs/Current-State.md` identifies `M9-P2` as the active current work item
+- `Docs/Current-State.md` identifies `M9-P3` as the active current work item
 - accepted `M8` closeout is the frozen handoff boundary into `M9`
 - `M9-P1` remains accepted as the bounded packet that freezes approved-memory
   scope meaning only
-- `M9-P2` is the bounded code-first slice that materializes approved-memory
-  records and the separate persona-global memory profile surface while
-  preserving the accepted `M9-P1` scope meanings
+- `M9-P2` is now accepted as the bounded code-first slice that materializes
+  approved-memory records and the separate persona-global memory profile
+  surface while preserving the accepted `M9-P1` scope meanings
+- `M9-P3` is the next bounded slice that should make retrieval eligibility
+  explicit without widening into trace UI, broader lineage inspection, or
+  promotion semantics
 - later `M9` packets remain intentionally unfrozen and must not smuggle in
-  retrieval, activation, broader lineage, or trace-inspection work under the
-  approved-memory-record label
+  trace-inspection, broader lineage traversal, or governance redesign under the
+  retrieval-eligibility label
 
 ## Execution Packets
 
@@ -100,7 +105,7 @@ Done when:
 
 Status:
 
-- current
+- accepted
 
 ### Packet 3. Implement Retrieval Eligibility Rules
 
@@ -117,6 +122,10 @@ Work:
 Done when:
 
 - retrieval behavior is predictable and reviewable
+
+Status:
+
+- current
 
 ### Packet 4. Implement Trace And Lineage Inspection
 
