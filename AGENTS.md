@@ -20,7 +20,7 @@ Agents may interact with PersonaKit via:
 • the [Swift CLI](./README.md#using-personakit)
 • the [PersonaKit MCP server](./README.md#mcp-server-read-only) (agent-invoked, read-only)
 
-In both cases, PersonaKit is a source of context, not an execution engine. MCP access does not authorize action.
+In both cases, PersonaKit is primarily a source of context, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
 
 Reference:
 • [Using PersonaKit](./README.md#using-personakit)
@@ -37,26 +37,34 @@ They are not expected to:
 Ground Rules (Hard Constraints)
 
 Agents must follow these rules at all times:
-	1.	No execution inside PersonaKit
-	•	Do not add code that runs shell commands, subprocesses, or tools
-	•	Do not introduce Process, NSTask, system(), or equivalents
+	1.	Execution is narrowly bounded
+	•	Outside the V1 `personakit run` path, do not add code that runs shell commands, subprocesses, or tools
+	•	The only allowed execution path in V1 is `personakit run`, and it is limited to resolving PersonaKit context deterministically, assembling a runtime payload, invoking one configured agent adapter, and returning the adapter exit status
+	•	Do not introduce general workflow execution, long-running agent loops, platform-runtime behavior, or arbitrary tool invocation
+	•	Do not introduce `Process`, `NSTask`, `system()`, or equivalents outside the narrow `personakit run` launcher path
 	•	Do not attempt to use MCP Tools to perform execution (PersonaKit MCP exposes Resources and Prompts only).
 	•	Do not request or simulate command execution via MCP prompts.
-	2.	No autonomous planning
+	2.	V1 run guardrails
+	•	Do not add more than one supported adapter without AJ's explicit approval
+	•	Do not add orchestration patterns such as lead-worker, RPI, or multi-agent control flows
+	•	Do not add persistence, memory, or session continuation to `personakit run`
+	•	Do not redesign Studio as part of V1 run work
+	•	Do not reintroduce Orbit or Taskboard concepts
+	3.	No autonomous planning
 	•	Do not invent steps beyond what is defined in a Directive
 	•	If something is unclear, ask for clarification
-	3.	No scope expansion
+	4.	No scope expansion
 	•	Do not refactor unrelated code
 	•	Do not introduce new abstractions unless explicitly requested
-	4.	One approved lane/worktree per milestone by default
+	5.	One approved lane/worktree per milestone by default
 	•	Default to one approved execution lane and one worktree per milestone or explicitly approved slice
 	•	Do not create packet-, task-, or story-specific branches or worktrees unless AJ explicitly approves extra isolation
 	•	Treat packets, tasks, and stories as scope tracked in docs and commits, not as branch or worktree requests by default
-	5.	Determinism is required
+	6.	Determinism is required
 	•	Output must be stable across runs
 	•	Sort by id where ordering matters
 	•	Do not add timestamps, UUIDs, or environment-specific data
-	6.	Persona activation is explicit
+	7.	Persona activation is explicit
 	•	Do not operate as multiple active personas at the same time
 	•	When persona assignment changes, reload PersonaKit grounding before continuing
 	•	PersonaKit grounding must happen before external skill selection
@@ -65,12 +73,12 @@ Agents must follow these rules at all times:
 	•	On skill mismatch, stop and re-ground rather than improvising
 	•	Delegated agents must receive one authoritative persona assignment for their lane
 	•	Review personas are not the same thing as active execution identity
-	7.	Use Conventional Commits
+	8.	Use Conventional Commits
 	•	When creating a git commit, use Conventional Commit format: `type(scope): summary` when a clear scope exists, otherwise `type: summary`
 	•	Do not invent repo-specific commit formats or rely on memory for commit style
-	8.	Human review is mandatory at stop points
+	9.	Human review is mandatory at stop points
 	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
-	9. MCP usage is read-only
+	10. MCP usage is read-only
 	   • Treat all MCP Resources as immutable context
 	   • Prompts return assembled context only; they do not imply permission to act
 	   • Never attempt to write back to the PersonaKit root via MCP
@@ -97,6 +105,11 @@ When using the MCP server specifically:
 • Do not mix MCP-derived context with ad-hoc assumptions
 
 If PersonaKit validation fails, agents should not proceed.
+
+When implementing or reviewing `personakit run` specifically:
+• Treat it as a narrow launcher, not a general automation surface
+• Keep execution-light behavior everywhere outside that one command
+• Preserve the boundary between context resolution and external agent execution
 
 ⸻
 
@@ -170,7 +183,8 @@ PersonaKit is designed to keep humans in control while still benefiting from AI 
 Summary (for agents)
 	•	PersonaKit defines the role, constraints, and directive — not you
 	•	Use CLI outputs and MCP [Resources](./README.md#mcp-server-read-only) / [Prompts](./README.md#mcp-server-read-only) as authoritative context
-	•	MCP is read-only; no execution or writes are permitted
+	•	MCP is read-only; it never authorizes execution or writes
+	•	The only V1 execution exception is the narrow `personakit run` launcher path
 	•	Do not expand scope or invent steps
 	•	Stop at explicit review points
 
