@@ -48,8 +48,8 @@ Status labels describe lifecycle, not cross-repo priority.
 
 `Accepted` and `Archived` do not imply current priority.
 
-Cross-domain priority must be stated in `Docs/Current-State.md` or the local
-area `README.md`.
+Cross-domain priority must be stated in `README.md`,
+`Docs/V1_DIRECTION.md`, or the local area `README.md`.
 
 ## File Naming Rules
 
@@ -62,9 +62,7 @@ area `README.md`.
 
 - `Docs/PersonaKit/`: current engine/runtime and repository operating docs.
 - `Docs/PersonaKit/Architecture/`: durable technical decisions and invariants.
-- `Docs/Orbit/`: current forward product direction, planning, architecture, and RFCs.
-- `Docs/Archive/`: historical documentation preserved for reference.
-- `Docs/PersonaKit/Development/`: development process, branch closeouts, and working agreements.
+- `Docs/V1_DIRECTION.md`: active V1 launcher scope and product contract.
 - `Docs/MCP/`: MCP-specific usage and debugging guidance.
 - `Workspaces/<name>/`: initiative subprojects with isolated docs and `.personakit` roots.
 

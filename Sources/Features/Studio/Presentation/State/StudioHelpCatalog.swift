@@ -148,34 +148,6 @@ enum StudioHelpCatalog {
         ]
       )
 
-    case .orbit:
-      return StudioHelpTopic(
-        id: .orbit,
-        title: "Orbit Help",
-        shortHint: "Orbit is the command-center proving surface for persistent collaborators.",
-        purpose:
-          "Use Orbit to prove the first checkpoint: visible workspace context, durable collaborators, local conversation state, and lightweight activation trace.",
-        keyFields: [
-          "Workspace header should make Orbit unmistakable.",
-          "Founding-group roster should keep AJ, Samwise, and ProdDoc visible.",
-          "Conversation should stay local, durable, and attributable.",
-        ],
-        commonMistakes: [
-          "Turning Orbit into a full backend architecture project too early.",
-          "Hiding activation trace until after the conversation loop exists.",
-          "Treating this panel as generic chat instead of a workspace command center.",
-        ],
-        examples: [
-          "Example first pass: load Orbit, verify roster visibility, add one AJ message, then restart and confirm the thread still exists."
-        ],
-        nextStepText:
-          "Protect the MVP boundary first, then expand response behavior only after the local loop feels real.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
-        ]
-      )
-
     case .personas:
       return StudioHelpTopic(
         id: .personas,
@@ -324,34 +296,6 @@ enum StudioHelpCatalog {
         ]
       )
 
-    case .taskboard:
-      return StudioHelpTopic(
-        id: .taskboard,
-        title: "Taskboard Help",
-        shortHint: "Taskboard is the Admin planning board for lane-and-ticket workflows.",
-        purpose:
-          "Use Taskboard to stage planning work with lanes and tickets, then run interaction-quality passes before claiming parity-level UX.",
-        keyFields: [
-          "Lanes represent workflow stages and should remain action-oriented.",
-          "Tickets are the core work unit and should keep concise, clear titles.",
-          "The M1 panel is a placeholder shell with deterministic sample data.",
-        ],
-        commonMistakes: [
-          "Using Taskboard as a replacement for session planning context logs.",
-          "Adding advanced features before lane and ticket core flows are stable.",
-          "Claiming parity-level quality without rubric-backed review output.",
-        ],
-        examples: [
-          "Example flow: open Taskboard, verify lane sequencing, then run `studio-interaction-quality` for a red-pen pass."
-        ],
-        nextStepText:
-          "After each implementation slice, run an interaction-quality pass and prioritize blocker fixes first.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: "studio-interaction-quality"),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
-        ]
-      )
-
     case .validationResults:
       return StudioHelpTopic(
         id: .validationResults,
@@ -391,12 +335,8 @@ enum StudioHelpCatalog {
 extension SidebarItem {
   var helpTopicID: StudioHelpTopicID {
     switch self {
-    case .orbit:
-      return .orbit
     case .sessions:
       return .sessions
-    case .taskboard:
-      return .taskboard
     case .personas:
       return .personas
     case .directives:
@@ -420,12 +360,8 @@ extension SidebarItem {
 
   var helpExpansionStorageKey: String {
     switch self {
-    case .orbit:
-      return StudioHelpStorageKey.orbit
     case .sessions:
       return StudioHelpStorageKey.sessions
-    case .taskboard:
-      return StudioHelpStorageKey.taskboard
     case .personas:
       return StudioHelpStorageKey.personas
     case .directives:

@@ -42,8 +42,8 @@ struct PersonaKitCLI {
         var stderrStream = StandardError()
         stderrStream.write("Error: \(error.message)\n")
         return 1
-      } catch is ExitCode {
-        return 1
+      } catch let exitCode as ExitCode {
+        return exitCode.rawValue
       } catch {
         var stderrStream = StandardError()
         stderrStream.write("Error: \(error.localizedDescription)\n")
@@ -71,6 +71,7 @@ struct PersonaKitCommand: ParsableCommand {
       ListCLICommand.self,
       GraphCommand.self,
       MCPCommand.self,
+      RunCommand.self,
     ]
   )
 }

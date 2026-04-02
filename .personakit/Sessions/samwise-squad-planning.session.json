@@ -1,9 +1,0 @@
-{
-  "id": "samwise-squad-planning",
-  "personaId": "samwise",
-  "directiveId": "assemble-squad-and-plan",
-  "kitOverrides": [
-    "persona-hiring-core",
-    "samwise-planning-core"
-  ]
-}

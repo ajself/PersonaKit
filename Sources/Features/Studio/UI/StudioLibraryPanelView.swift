@@ -360,9 +360,7 @@ struct StudioLibraryPanelView: View {
       return $isSkillsHelpExpanded
     case .intents:
       return $isIntentsHelpExpanded
-    case .orbit,
-      .sessions,
-      .taskboard,
+    case .sessions,
       .relationshipMap,
       .validationResults:
       return .constant(false)

@@ -12,10 +12,6 @@ repository.
 These documents describe the current PersonaKit repository and Studio
 implementation.
 
-They are not the primary Orbit platform architecture docs.
-
-For Orbit product and platform architecture, use `Docs/Orbit/Architecture/`.
-
 ## Contents
 
 - [ADR-0001-unified-fosa-restructure.md](./ADR-0001-unified-fosa-restructure.md)

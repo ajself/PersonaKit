@@ -8,7 +8,6 @@ struct StudioHelpCatalogTests {
   func everySidebarItemMapsToHelpTopic() throws {
     let sidebarItems: [SidebarItem] = [
       .sessions,
-      .orbit,
       .personas,
       .directives,
       .kits,
@@ -16,7 +15,6 @@ struct StudioHelpCatalogTests {
       .references,
       .skills,
       .intents,
-      .taskboard,
       .relationshipMap,
       .validationResults,
     ]
@@ -73,7 +71,6 @@ struct StudioHelpCatalogTests {
   @Test
   func everySidebarItemMapsToStableHelpExpansionStorageKey() {
     #expect(SidebarItem.sessions.helpExpansionStorageKey == "studio.help.sessions.expanded")
-    #expect(SidebarItem.orbit.helpExpansionStorageKey == "studio.help.orbit.expanded")
     #expect(SidebarItem.personas.helpExpansionStorageKey == "studio.help.personas.expanded")
     #expect(SidebarItem.directives.helpExpansionStorageKey == "studio.help.directives.expanded")
     #expect(SidebarItem.kits.helpExpansionStorageKey == "studio.help.kits.expanded")
@@ -81,7 +78,6 @@ struct StudioHelpCatalogTests {
     #expect(SidebarItem.references.helpExpansionStorageKey == "studio.help.references.expanded")
     #expect(SidebarItem.skills.helpExpansionStorageKey == "studio.help.skills.expanded")
     #expect(SidebarItem.intents.helpExpansionStorageKey == "studio.help.intents.expanded")
-    #expect(SidebarItem.taskboard.helpExpansionStorageKey == "studio.help.taskboard.expanded")
     #expect(SidebarItem.relationshipMap.helpExpansionStorageKey == "studio.help.relationshipMap.expanded")
     #expect(
       SidebarItem.validationResults.helpExpansionStorageKey == "studio.help.validationResults.expanded"
@@ -92,7 +88,6 @@ struct StudioHelpCatalogTests {
   func helpExpansionStorageKeysAreUnique() {
     let keys = [
       SidebarItem.sessions.helpExpansionStorageKey,
-      SidebarItem.orbit.helpExpansionStorageKey,
       SidebarItem.personas.helpExpansionStorageKey,
       SidebarItem.directives.helpExpansionStorageKey,
       SidebarItem.kits.helpExpansionStorageKey,
@@ -100,7 +95,6 @@ struct StudioHelpCatalogTests {
       SidebarItem.references.helpExpansionStorageKey,
       SidebarItem.skills.helpExpansionStorageKey,
       SidebarItem.intents.helpExpansionStorageKey,
-      SidebarItem.taskboard.helpExpansionStorageKey,
       SidebarItem.relationshipMap.helpExpansionStorageKey,
       SidebarItem.validationResults.helpExpansionStorageKey,
     ]

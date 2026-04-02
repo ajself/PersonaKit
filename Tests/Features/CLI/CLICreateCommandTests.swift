@@ -18,7 +18,7 @@ struct CLICreateCommandTests {
         "--root",
         root.path,
         "--name",
-        "Orbit Planner",
+        "Session Planner",
         "--summary",
         "Plans milestone slices honestly.",
         "--dry-run",
@@ -33,14 +33,14 @@ struct CLICreateCommandTests {
     let result = try #require(object["result"] as? [String: Any])
 
     #expect(result["entityType"] as? String == "persona")
-    #expect(result["entityID"] as? String == "orbit-planner")
+    #expect(result["entityID"] as? String == "session-planner")
     #expect(result["dryRun"] as? Bool == true)
 
     let renderedContent = try #require(object["renderedContent"] as? String)
-    #expect(renderedContent.contains("\"id\" : \"orbit-planner\""))
+    #expect(renderedContent.contains("\"id\" : \"session-planner\""))
     #expect(
       !FileManager.default.fileExists(
-        atPath: root.appendingPathComponent("Packs/personas/orbit-planner.persona.json").path
+        atPath: root.appendingPathComponent("Packs/personas/session-planner.persona.json").path
       )
     )
   }
@@ -50,7 +50,7 @@ struct CLICreateCommandTests {
     let root = try makeWritableFixtureRoot()
     let interactiveIO = makeInteractiveIO(
       lines: [
-        "Orbit Planner",
+        "Session Planner",
         "",
         "Plans milestone slices honestly.",
         "",
@@ -76,13 +76,13 @@ struct CLICreateCommandTests {
 
     #expect(status == 0)
 
-    let personaURL = root.appendingPathComponent("Packs/personas/orbit-planner.persona.json")
+    let personaURL = root.appendingPathComponent("Packs/personas/session-planner.persona.json")
     let rawJSON = try String(contentsOf: personaURL, encoding: .utf8)
     let data = try #require(rawJSON.data(using: .utf8))
     let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
-    #expect(object["id"] as? String == "orbit-planner")
-    #expect(object["name"] as? String == "Orbit Planner")
+    #expect(object["id"] as? String == "session-planner")
+    #expect(object["name"] as? String == "Session Planner")
     #expect(object["summary"] as? String == "Plans milestone slices honestly.")
   }
 

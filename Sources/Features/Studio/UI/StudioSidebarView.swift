@@ -7,12 +7,7 @@ struct StudioSidebarView: View {
   var body: some View {
     List(selection: $selection) {
       Section("Workspace") {
-        sidebarRow(for: .orbit)
         sidebarRow(for: .sessions)
-      }
-
-      Section("Admin") {
-        sidebarRow(for: .taskboard)
       }
 
       Section("Library") {

@@ -1,8 +1,0 @@
-{
-  "id": "samwise-persona-hiring",
-  "personaId": "samwise",
-  "directiveId": "reverse-interview-persona-candidate",
-  "kitOverrides": [
-    "persona-hiring-core"
-  ]
-}

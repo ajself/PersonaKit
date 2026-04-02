@@ -1,8 +1,0 @@
-{
-  "id": "samwise-worktree-squad-oversight",
-  "personaId": "samwise",
-  "directiveId": "oversee-worktree-squad-delivery",
-  "kitOverrides": [
-    "samwise-worktree-oversight-core"
-  ]
-}

@@ -23,16 +23,9 @@ let package = Package(
       name: "PersonaKitStudio",
       targets: ["PersonaKitStudio"]
     ),
-    .executable(
-      name: "OrbitServer",
-      targets: ["OrbitServer"]
-    ),
   ],
   dependencies: [
     .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.12.0"),
-    .package(url: "https://github.com/vapor/async-kit.git", exact: "1.22.0"),
-    .package(url: "https://github.com/vapor/vapor.git", from: "4.121.3"),
-    .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
     .package(
       url: "https://github.com/apple/swift-argument-parser",
       .upToNextMinor(from: "1.7.0")
@@ -77,22 +70,6 @@ let package = Package(
       path: "Sources/Features/MCP"
     ),
     .target(
-      name: "OrbitServerRuntime",
-      dependencies: [
-        .product(name: "PostgresNIO", package: "postgres-nio"),
-      ],
-      path: "Sources/Features/OrbitServerRuntime"
-    ),
-    .target(
-      name: "OrbitServerGateway",
-      dependencies: [
-        "OrbitServerRuntime",
-        .product(name: "AsyncKit", package: "async-kit"),
-        .product(name: "Vapor", package: "vapor"),
-      ],
-      path: "Sources/Features/OrbitServerGateway"
-    ),
-    .target(
       name: "StudioFoundation",
       dependencies: [
         "ContextCore",
@@ -105,8 +82,6 @@ let package = Package(
       dependencies: [
         "ContextCore",
         "ContextWorkspaceCore",
-        "OrbitServerGateway",
-        "OrbitServerRuntime",
         "StudioFoundation",
       ],
       path: "Sources/Features/Studio",
@@ -131,15 +106,6 @@ let package = Package(
         "README.md"
       ]
     ),
-    .executableTarget(
-      name: "OrbitServer",
-      dependencies: [
-        "OrbitServerGateway",
-        "OrbitServerRuntime",
-        .product(name: "Vapor", package: "vapor"),
-      ],
-      path: "Sources/App/OrbitServer"
-    ),
     .testTarget(
       name: "PersonaKitTests",
       dependencies: [
@@ -147,14 +113,10 @@ let package = Package(
         "ContextMCP",
         "ContextCore",
         "ContextWorkspaceCore",
-        "OrbitServerGateway",
-        "OrbitServerRuntime",
-        "OrbitServer",
         "StudioFeatures",
         "PersonaKitStudio",
         .product(name: "MCP", package: "swift-sdk"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
-        .product(name: "XCTVapor", package: "vapor"),
       ],
       path: "Tests",
       exclude: [

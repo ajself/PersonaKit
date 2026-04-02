@@ -14,7 +14,7 @@ struct CLICompletionTests {
     try writeCompletionSession(
       root: personaKitRoot,
       session: SessionFile(
-        id: "samwise-orbit-rerun-execution",
+        id: "samwise-review-session",
         personaId: "senior-swiftui-engineer",
         directiveId: "apply-style",
         kitOverrides: nil
@@ -34,7 +34,7 @@ struct CLICompletionTests {
       )
     }
 
-    #expect(completions == ["samwise-orbit-rerun-execution"])
+    #expect(completions == ["samwise-review-session"])
   }
 
   @Test

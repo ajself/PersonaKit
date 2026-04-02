@@ -55,12 +55,6 @@ public struct StudioRootView: View {
       let activeSelection = selection ?? .sessions
 
       switch activeSelection {
-      case .orbit:
-        OrbitPanelView(
-          workspaceStore: workspaceStore,
-          serverBackedRoomClient: OrbitServerBackedRoomClientFactory.makeIfConfigured()
-        )
-
       case .sessions:
         SessionsPanelView(
           workspaceStore: workspaceStore,
@@ -78,9 +72,6 @@ public struct StudioRootView: View {
             applyNavigationTarget(target)
           }
         )
-
-      case .taskboard:
-        TaskboardPanelView(workspaceStore: workspaceStore)
 
       case .personas,
         .directives,
@@ -145,9 +136,7 @@ public struct StudioRootView: View {
 }
 
 enum SidebarItem: Hashable {
-  case orbit
   case sessions
-  case taskboard
   case personas
   case directives
   case kits
@@ -170,12 +159,8 @@ enum SidebarItem: Hashable {
 
   var title: String {
     switch self {
-    case .orbit:
-      return "Orbit"
     case .sessions:
       return "Sessions"
-    case .taskboard:
-      return "Taskboard"
     case .personas:
       return "Personas"
     case .directives:
@@ -199,12 +184,8 @@ enum SidebarItem: Hashable {
 
   var systemImage: String {
     switch self {
-    case .orbit:
-      return "sparkles.rectangle.stack"
     case .sessions:
       return "clock.arrow.circlepath"
-    case .taskboard:
-      return "rectangle.3.group.bubble.left"
     case .personas:
       return "person.2"
     case .directives:

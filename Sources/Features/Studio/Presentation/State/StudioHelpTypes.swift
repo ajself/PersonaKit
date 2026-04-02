@@ -6,14 +6,12 @@ enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case essentials
   case intents
   case kits
-  case orbit
   case personas
   case references
   case relationshipMap
   case sessionEditor
   case sessions
   case skills
-  case taskboard
   case validationResults
 }
 

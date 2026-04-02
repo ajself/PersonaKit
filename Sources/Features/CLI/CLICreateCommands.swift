@@ -171,7 +171,7 @@ struct CreatePersonaCommand: ParsableCommand {
           resolvedSummary.isEmpty ? "--summary" : nil,
         ],
         example:
-          "personakit create persona --name \"Orbit Planner\" --summary \"Plans milestone packets.\"",
+          "personakit create persona --name \"Session Planner\" --summary \"Plans milestone slices.\"",
         interactive: prompter.isInteractive
       )
 

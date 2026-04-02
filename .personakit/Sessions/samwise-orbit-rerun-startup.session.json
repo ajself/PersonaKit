@@ -1,8 +1,0 @@
-{
-  "id": "samwise-orbit-rerun-startup",
-  "personaId": "samwise",
-  "directiveId": "run-orbit-rerun-startup",
-  "kitOverrides": [
-    "orbit-rerun-core"
-  ]
-}

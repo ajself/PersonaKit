@@ -1,8 +1,0 @@
-{
-  "id": "samwise-persona-hiring-calibration",
-  "personaId": "samwise",
-  "directiveId": "close-persona-hiring-gap-loop",
-  "kitOverrides": [
-    "persona-hiring-core"
-  ]
-}

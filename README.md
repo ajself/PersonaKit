@@ -1,114 +1,153 @@
-PersonaKit
+# PersonaKit
 
-PersonaKit is an execution-free system for structuring AI work around real professional roles.
+PersonaKit eliminates prompt setup before using AI tools.
 
-It helps you work with AI agents the same way you work with people on a strong team: clear roles, explicit constraints, shared standards, and well-defined directives — without automation magic or hidden behavior.
+PersonaKit V1 is for solo developers to invoke AI coding tasks with consistent, reusable context without rebuilding that context every session.
 
-If you’ve ever thought “this agent is smart, but it doesn’t work the way we do”, PersonaKit is for you.
+It is not an agent, planner, memory system, or workflow platform. PersonaKit resolves known context and launches work with that context applied.
 
 ## Current Direction
 
-PersonaKit remains the engine and context system in this repository.
+PersonaKit V1 is focused on one core workflow:
 
-The forward product direction now being explored in-repo is **Orbit**: a
-workspace-centric command center for running persistent AI teams. In that
-direction:
-
-- Orbit is the product/platform surface
-- PersonaKit is the identity, directive, and grounding engine inside Orbit
-
-That means this repository currently contains both:
-
-- stable PersonaKit engine/runtime documentation
-- newer Orbit product, architecture, and planning documents
-
-For the clearest current product direction, start in `Docs/Orbit/`.
-
-⸻
-
-The mental model (60 seconds)
-
-PersonaKit assembles context by combining **who** is working with **what** they are doing, using shared standards.
-
-Think in questions, not files:
-- **Persona** — Who is doing the work?
-- **Kits** — How do we do things here?
-- **Directive** — What needs to be done now?
-- **Essentials** — What rules or references must always be followed?
-- **Session** — This exact situation (Persona + Directive, with optional overrides).
-
-A Session is not a workflow or runtime. It’s simply the result of combining inputs into a single, deterministic context.
-
-⸻
-
-Quick start: from zero to grounded agent (5 minutes)
-
-This is the shortest path to using PersonaKit for real work.
-
-Scenario: you want an AI agent to review a SwiftUI change as a **Senior SwiftUI Engineer**, following your Swift and SwiftUI style guides, without inventing scope.
-
-1) Have a `.personakit/` directory
-
-In your project root:
-
+```bash
+personakit run --session <id> --agent <agent> -- "<task>"
 ```
+
+That command:
+
+- resolve reusable context from a named session
+- assemble deterministic runtime context from PersonaKit data
+- launch one supported AI agent with that context applied
+- remove the need for manual copy/paste prompt setup
+
+If a feature does not directly support that workflow, it is out of scope for V1.
+
+For the active product direction, read `Docs/V1_DIRECTION.md`.
+
+## What PersonaKit Is
+
+PersonaKit is a context resolver and launcher for AI work.
+
+It helps you define and reuse:
+
+- **Persona** — who is doing the work
+- **Kits** — how that role works
+- **Directive** — what kind of work is being done
+- **Essentials** — rules and references that must be present
+- **Session** — a named pairing of persona + directive, with optional overrides
+
+PersonaKit resolves those inputs into deterministic runtime context so you do not have to restate them every time you start an agent task.
+
+## What PersonaKit Is Not
+
+PersonaKit is deliberately not:
+
+- an agent
+- a workflow engine
+- a memory platform
+- a remote orchestration system
+- a task management product
+- a replacement for your coding agent
+
+PersonaKit prepares context. Another tool performs the work.
+
+## V1 Product Principles
+
+- boring over clever
+- explicit over inferred
+- deterministic over magical
+- local workflow first
+- one sharp workflow over many partial ones
+
+If a proposed feature violates these principles, it does not belong in V1.
+
+## V1 Scope
+
+In scope:
+
+- session-based context resolution
+- deterministic merging of personas, kits, directives, and essentials
+- a CLI `run` command
+- one agent adapter
+- dry-run inspection for debugging and trust
+
+Out of scope:
+
+- memory systems
+- multi-session continuity
+- remote execution platforms
+- workflow orchestration patterns
+- Studio expansion beyond basic administration
+
+## Mental Model
+
+Think in one sentence:
+
+> PersonaKit resolves reusable professional context so an AI agent can start work already grounded.
+
+The core model is:
+
+```text
+Persona (who)
++ Kits (how)
++ Directive (what kind of work)
++ Essentials (must-include grounding)
+= Session context
+```
+
+A session is the practical entry point for V1. It gives a stable name to a context pairing you want to reuse.
+
+## Quick Start
+
+### 1. Create or locate a PersonaKit root
+
+PersonaKit expects PersonaKit content under `.personakit/` in a project, and may also use `~/.personakit/` for global content.
+
+Example:
+
+```text
 .project/
   .personakit/
     Packs/
       personas/
-      directives/
       kits/
+      directives/
       intents/
       skills/
       essentials/
+    Sessions/
 ```
 
-PersonaKit will also load `~/.personakit/` if it exists and merge both scopes (project overrides global).
+### 2. Validate your authored data
 
-2) Validate
-
-From the project root:
-
-```
+```bash
 personakit validate
 ```
 
-If validation fails, stop here and fix the first error.
+If validation fails, fix the first error before moving on.
 
-3) Discover available IDs (optional)
+### 3. Export a session manually when needed
 
-```
-personakit list personas
-personakit list directives
-```
-
-This tells you exactly which IDs are valid.
-
-4) Export the session context (CLI)
-
-```
-personakit export \
-  --persona senior-swiftui-engineer \
-  --directive apply-style
-```
-
-This output is the canonical session context—paste it into an agent or consume it via MCP.
-
-With a Session in place, you can export the same context more simply:
-
-```
+```bash
 personakit export --session review-swiftui
 ```
 
-4a) Save this pairing as a Session (optional, recommended)
+This is useful for inspection and debugging.
 
-If you find yourself using the same Persona + Directive repeatedly, you can save that pairing as a Session.
+### 4. Run work with grounded context
 
-Create a file under `Sessions/`:
-
+```bash
+personakit run --session review-swiftui --agent opencode -- "Review the current SwiftUI change and propose the smallest safe refactor."
 ```
-Sessions/review-swiftui.session.json
-```
+
+That is the intended V1 experience: one command, known context, one live task.
+
+## Sessions
+
+A session is a named shortcut for reusable context.
+
+Example:
 
 ```json
 {
@@ -118,512 +157,71 @@ Sessions/review-swiftui.session.json
 }
 ```
 
-A Session is a named shortcut for a Persona + Directive pairing. It introduces no new behavior.
+Sessions are important in V1 because they reduce setup friction and give you a stable entry point across tools.
 
-For you, this means:
-- fewer flags to remember
-- a stable name you can reuse across tools
+## CLI Surface
 
-For the agent, this means:
-- a consistent, repeatable context
-- no ambiguity about which Persona or Directive is active
+Current CLI commands:
 
-Architectural Editor sessions (project example):
-
-```
-personakit export --session architectural-editor-review
-personakit export --session architectural-editor-prompt-review
+```text
+personakit validate
+personakit export --session <id>
+personakit list personas|kits|directives|intents|skills|essentials|sessions
+personakit graph --session <id>
+personakit mcp
+personakit run --session <id> --agent <agent> -- "<task>"
 ```
 
-These pair the `architectural-editor` persona with directive-specific review flows:
-- `architectural-editor-review` → `review-architecture-invariants`
-- `architectural-editor-prompt-review` → `review-implementation-prompts`
+`run` is the primary product direction for V1.
 
-5) Use MCP instead of copy/paste (optional)
+## MCP
 
-Start the MCP server from the project directory:
+PersonaKit includes a read-only MCP server so compatible tools can read PersonaKit context directly.
 
-```
+```bash
 personakit mcp
 ```
 
-Configure your MCP client (example):
+MCP is an integration surface, not the core product story. For V1, focus on deterministic context resolution and the `run` workflow.
 
-```json
-{
-  "mcpServers": {
-    "personakit": {
-      "command": "personakit",
-      "args": ["mcp"]
-    }
-  }
-}
-```
+## Safety And Determinism
 
-Your agent can now read PersonaKit resources and prompts directly.
+PersonaKit should remain:
 
-No copy/paste is required, and the agent always sees the same context as the CLI.
+- execution-light in its core context model
+- deterministic in output ordering and resolution
+- explicit in failures
+- inspectable through export and dry-run flows
 
-6) Ground the agent (one line)
+If a feature makes PersonaKit feel magical, hidden, or difficult to trust, it is probably the wrong feature.
 
-When you prompt an agent, give it a one-line grounding cue:
+## Repository Status
 
-```
-Ground with PersonaKit: senior-swiftui-engineer / apply-style
-```
+This repository is being actively simplified around the V1 direction.
 
-Or, if you are using a Session:
+That means:
 
-```
-Ground with PersonaKit: review-swiftui
-```
+- PersonaKit is the product
+- `Docs/V1_DIRECTION.md` is the active direction document
+- older exploratory directions that do not support V1 should be treated as non-authoritative or removed
+- Studio is paused for V1
 
-Then ask for the work you want done.
+## Why This Exists
 
-At this point, the agent is fully grounded. You can now ask for work—reviews, refactors, explanations—without restating roles, rules, or constraints.
+AI tools are powerful, but repeated context setup is tedious and error-prone.
 
-### Persona Activation And Delegation
+PersonaKit exists to make expectations explicit and reusable so your tools can start from a known professional operating context instead of improvising from scratch.
 
-Personas are operating contracts, not tone presets.
+## For Agents Working In This Repo
 
-When PersonaKit resolves a session for runtime grounding, it includes the
-source-backed universal `persona-activation-contract` essential by default. A
-project-local `Packs/essentials/persona-activation-contract.md` file may
-override that default when explicitly present. That means:
+`AGENTS.md` is binding for agent behavior in this repository.
 
-- one active persona per agent at a time
-- persona reassignment requires fresh grounding
-- orchestrator work should stay pinned to one active persona while coordinating
-- multi-persona work should happen through explicit turn changes or separate agents
-- delegated lanes should receive one authoritative operating persona, with any
-  review personas named separately
+Agents working here must preserve the V1 direction:
 
-This rule applies to resolved-session surfaces such as CLI export, graph, MCP
-session prompts, and session-trace style runtime views. Raw catalog/entity/file
-reads still reflect only the underlying authored pack data rather than injected
-runtime contracts.
+- do not introduce memory systems
+- do not reintroduce removed platform concepts
+- do not expand into workflow orchestration
+- do not broaden PersonaKit into a platform product
+- prefer reuse of existing resolver and export logic
 
-### Skill Authorization
-
-PersonaKit grounding also comes before skill selection.
-
-Resolved runtime surfaces include the source-backed universal
-`skill-authorization-contract` by default, with an optional project-local
-override at `Packs/essentials/skill-authorization-contract.md`. In practice,
-that means:
-
-- only PersonaKit-declared skills are eligible for authorization
-- the resolved persona contract sets the skill ceiling
-- undeclared host-local or external skills are unauthorized by default
-- if a required or requested skill falls outside the resolved contract, stop and
-  re-ground instead of improvising
-
-As with persona activation, this contract belongs to resolved runtime views.
-Raw catalog/entity/file reads remain authored-only unless an override file is
-actually present on disk.
-
-⸻
-
-What PersonaKit is
-
-PersonaKit lets you define:
-	•	Personas — who the agent is supposed to be (a role you would actually hire)
-	•	Kits — how that role works (standards, constraints, style, guardrails)
-	•	Directives — what work is being done right now
-
-PersonaKit then:
-	•	validates everything deterministically
-	•	resolves relationships by ID
-	•	exports or serves a single, predictable session context
-
-PersonaKit never executes code, runs tools, or makes decisions for you.
-
-⸻
-
-What PersonaKit is not
-
-PersonaKit is deliberately not:
-	•	an agent framework
-	•	a planner or workflow engine
-	•	a skills runtime
-	•	an automation system
-	•	a replacement for Codex, ChatGPT, or editor agents
-
-PersonaKit prepares context. Agents execute elsewhere.
-
-⸻
-
-The core model (in one minute)
-
-Persona (who)
-+ default Kits (how)
-+ Directive (what)
-------------------
-Session (assembled context)
-
-A Session is the assembled context that an agent consumes. It’s derived, not authored.
-
-⸻
-
-Personas: real roles, not vibes
-
-A Persona represents a role you would hire for.
-
-Examples:
-	•	Senior SwiftUI Engineer
-	•	Pragmatic Product Manager
-	•	Code Review Physician
-
-A Persona defines:
-	•	responsibilities
-	•	values and judgment
-	•	blind spots and non-goals
-	•	default Kits it brings to the job
-
-PersonaKit requires a persona for any session. There is no omniscient “do everything” agent.
-PersonaKit also assumes one active persona per agent at a time for reliable,
-auditable execution.
-
-⸻
-
-Kits: how work gets done
-
-A Kit is a reusable bundle of professional context.
-
-Kits typically include:
-	•	style guides
-	•	tools & constraints
-	•	environment assumptions
-	•	non-goals / anti-patterns
-	•	approved intent templates
-	•	skill awareness
-
-Kits are composable and reusable across personas.
-
-A Persona defines the role. A Kit defines how that role works.
-
-⸻
-
-Directives: explicit work, no improvisation
-
-A Directive defines the work being done right now.
-
-Directives include:
-	•	a concrete goal
-	•	ordered steps
-	•	acceptance criteria
-	•	verification instructions
-	•	explicit stop points for review
-
-Directives prevent scope creep and invented plans.
-
-If you can explain a piece of work in plain English, it belongs in a Directive.
-
-⸻
-
-Intent Templates: repeatable judgment
-
-An Intent Template encodes how a class of work should be approached.
-
-Examples:
-	•	Safe Swift refactor
-	•	Add tests without behavior changes
-	•	Accessibility review
-
-Intent Templates:
-	•	are reusable
-	•	may be parameterized
-	•	reference required standards and skills
-	•	never execute anything
-
-They are PersonaKit’s alternative to executable “skills”.
-
-⸻
-
-Skills: descriptive only
-
-PersonaKit acknowledges that agents have capabilities.
-
-A Skill describes:
-	•	what a capability is
-	•	who provides it
-	•	its risk level
-
-Skills:
-	•	are metadata only
-	•	contain no commands
-	•	are never invoked by PersonaKit
-
-PersonaKit describes skills so intent can be explicit and bounded.
-
-⸻
-
-Essentials: ground truth
-
-Essentials are foundational context that is always included.
-
-Typically:
-	•	Swift / SwiftUI style guides
-	•	tools & constraints
-	•	environment assumptions
-	•	non-goals
-
-Essentials are included verbatim in exports and MCP prompts.
-
-⸻
-
-Creating new Directives and Sessions (fast path)
-
-The supported authoring path is the CLI.
-
-Use `personakit create` for common authored types:
-
-```bash
-personakit create persona --name "Orbit Planner" --summary "Plans milestone slices honestly."
-personakit create directive --title "Apply Style" --goal "Apply the repo style contract."
-personakit create session --persona senior-swiftui-engineer --directive apply-style
-personakit create essential --title "Planning Guardrails" --stdin-body
-```
-
-Creation supports:
-- interactive prompting when required fields are omitted in a TTY
-- deterministic flag-driven creation for scripting
-- `--dry-run` to show the destination and rendered content without writing
-- `--json` for machine-readable output
-- `--template starter|minimal`
-- `--force` to overwrite an existing authored file
-
-Examples:
-
-```bash
-personakit create persona \
-  --name "Orbit Planner" \
-  --summary "Plans milestone slices honestly."
-
-personakit create directive \
-  --title "Review Closeout" \
-  --goal "Review milestone closeout artifacts." \
-  --step "Read the closeout packet." \
-  --review-step "Stop for AJ review." \
-  --acceptance "The packet scope is explicit." \
-  --verify-manual "Confirm the closeout packet matches the milestone."
-
-personakit create session \
-  --persona senior-swiftui-engineer \
-  --directive apply-style
-
-printf 'Keep milestone slices honest.\n' | \
-  personakit create essential \
-    --title "Planning Guardrails" \
-    --stdin-body
-
-personakit create directive \
-  --title "Apply Style" \
-  --goal "Apply the repo style contract." \
-  --dry-run \
-  --json
-```
-
-Sessions are shortcuts. If you don’t need one, you can always export directly with `--persona` and `--directive`.
-
-⸻
-
-Using PersonaKit
-
-PersonaKit provides two ways to consume context.
-
-Swift CLI
-
-personakit init <path>
-personakit create persona|kit|directive|intent|skill|session|essential [options]
-personakit validate [--root <path>] [--no-project] [--no-global]
-personakit export [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
-personakit list [--root <path>] [--no-project] [--no-global] personas|kits|directives|intents|skills|essentials|sessions
-personakit graph [--root <path>] [--no-project] [--no-global] --persona <id> --directive <id>
-personakit mcp [--root <path>] [--no-project] [--no-global]
-
-When `--root` is omitted, PersonaKit loads the nearest `.personakit` in the
-current directory (project scope) and `~/.personakit` (global scope), merging
-with project overrides. Use `--root` to bypass scope discovery, or
-`--no-project` / `--no-global` to disable a scope.
-
-The CLI is deterministic, testable, and intended for local workflows.
-It is also the supported creation surface for new personas, kits, directives, intents, skills, sessions, and essentials.
-
-⸻
-
-MCP Server (read-only)
-
-Configuring the MCP server
-
-The PersonaKit MCP server is provided by the Swift CLI and exposes PersonaKit context over stdio.
-See `Docs/MCP/README.md` for a quick setup guide and example client configs.
-
-Important
-
-The Swift CLI and Swift code are the single source of truth for PersonaKit behavior and contracts.
-- The Swift MCP server is the supported integration path.
-
-Basic setup (default, recommended):
-
-1. Choose a project directory that contains `.personakit/` (project scope), or ensure `~/.personakit` exists (global scope).
-
-2. Start the MCP server:
-
-   personakit mcp
-
-3. Configure your MCP-compatible agent or client to connect to the server via stdio.
-
-Example MCP client configuration
-
-Most MCP-compatible clients connect to servers using a JSON configuration file that declares how the server is launched.
-
-A minimal example (stdio transport):
-
-```json
-{
-  "mcpServers": {
-    "personakit": {
-      "command": "personakit",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-Notes:
-- `command` and `args` must launch `personakit mcp`.
-- The MCP server is read-only. It can export and read PersonaKit context, but it cannot create or edit personas, kits, directives, intents, skills, sessions, or essentials.
-- MCP scope resolution is local-first and single-scope:
-  1) `--root <path>` (highest priority)
-  2) `PERSONAKIT_ROOT`
-  3) local project `.personakit`
-  4) `~/.personakit`
-  5) fail if none are available
-- `PERSONAKIT_ROOT` must point to a PersonaKit root containing `Packs/`.
-- `PERSONAKIT_ROOT_OVERRIDE=1` remains supported and requires `PERSONAKIT_ROOT`.
-- MCP loads only one scope (project or global). It does not merge both scopes.
-- Use `--no-project` or `--no-global` to disable fallback steps in discovery.
-- The server communicates over **stdio**; no ports are opened.
-- Paths should be absolute to avoid ambiguity.
-
-Example: force local project identity context
-
-```json
-{
-  "mcpServers": {
-    "personakit": {
-      "command": "personakit",
-      "args": ["mcp", "--root", "/Users/ajself/Code/PersonaKit/.personakit"]
-    }
-  }
-}
-```
-
-Once configured, MCP clients can:
-- list PersonaKit resources
-- read Personas, Kits, Directives, and Essentials
-- request session export and graph prompts
-
-No write or execution permissions are granted to the server.
-
-The MCP server is read-only:
-- it never writes to the kit
-- it never executes external commands
-
-Multiple agents may safely connect to the same kit root concurrently.
-
-Resources (read-only)
-	•	personakit://packs/personas/<id>
-	•	personakit://packs/kits/<id>
-	•	personakit://packs/directives/<id>
-	•	personakit://packs/intents/<id>
-	•	personakit://packs/skills/<id>
-	•	personakit://essentials/<id>
-
-Prompts
-	•	personakit.session.export — resolved session context (Markdown)
-	•	personakit.session.graph — resolved dependency graph (text)
-
-The MCP server:
-	•	is read-only
-	•	never executes external commands
-	•	enforces deterministic ordering and stable output
-
-This enables copy/paste-free, live integration with MCP-compatible agents while keeping Swift as the single source of truth.
-
-⸻
-
-Determinism & safety
-
-PersonaKit guarantees:
-	•	no execution (no subprocesses, no shell calls)
-	•	deterministic output
-	•	stable ordering
-	•	explicit, actionable errors
-	•	no hidden state
-
-If it validates, it can be consumed. If it doesn’t validate, it won’t.
-
-⸻
-
-Why this exists
-
-AI tools are powerful, but most fail in the same ways:
-	•	style drift
-	•	constraint erosion
-	•	hallucinated confidence
-	•	forgotten decisions
-
-PersonaKit doesn’t try to make agents smarter.
-
-It makes expectations explicit.
-
-⸻
-
-Who this is for
-
-PersonaKit is designed for:
-	•	senior and staff-level engineers
-	•	people used to working with PMs and designers
-	•	teams that care about standards and correctness
-	•	anyone new to AI who wants predictability first
-
-⸻
-
-Philosophy
-	•	boring over clever
-	•	explicit over inferred
-	•	structure over autonomy
-	•	humans in control
-
-If a feature violates these principles, it’s out of scope.
-
-⸻
-
-Using AI agents responsibly
-
-PersonaKit assumes AI agents are assistants operating under human supervision.
-
-When using PersonaKit with agents:
-- Follow the rules defined in AGENTS.md
-- Do not allow agents to execute commands autonomously
-- Do not allow agents to expand scope beyond the Directive
-- Require review at explicit stop points
-
-[AGENTS.md](./AGENTS.md) is considered a binding contract for agent behavior in this repo.
-
-Status
-
-PersonaKit is a complete, execution-free MVP:
-	•	CLI
-	•	validation
-	•	export
-	•	discovery (list, graph)
-	•	MCP Resources + Prompts
-
-The next step is real-world use, not more abstraction.
-
-⸻
-
-PersonaKit helps AI agents behave like disciplined teammates — without giving up control.
+PersonaKit V1 wins by being narrow, predictable, and useful.
