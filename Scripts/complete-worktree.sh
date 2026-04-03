@@ -5,10 +5,10 @@ IFS=$'\n\t'
 usage() {
   cat <<'EOF'
 Usage:
-  Scripts/closeout-local.sh [--branch <branch>] [--worktree <path>] [--main <main-branch>] [--no-cleanup]
+  Scripts/complete-worktree.sh [--branch <branch>] [--worktree <path>] [--main <main-branch>] [--no-cleanup]
 
 Description:
-  Local-only closeout workflow for a feature worktree/branch:
+  Complete a feature worktree/branch locally:
   1) Require clean feature worktree.
   2) Rebase feature branch onto local main branch (no fetch).
   3) Fast-forward merge feature branch into main.
@@ -16,7 +16,7 @@ Description:
   5) Remove feature worktree and delete feature branch (unless --no-cleanup).
 
 Options:
-  --branch <branch>     Feature branch to close out. Defaults to current branch in --worktree.
+  --branch <branch>     Feature branch to complete. Defaults to current branch in --worktree.
   --worktree <path>     Feature worktree path. Defaults to worktree currently on --branch.
   --main <branch>       Main integration branch. Default: main.
   --no-cleanup          Keep feature worktree and branch after merge.
@@ -25,7 +25,7 @@ EOF
 }
 
 die() {
-  printf "closeout-local: %s\n" "$*" >&2
+  printf "complete-worktree: %s\n" "$*" >&2
   exit 1
 }
 
@@ -154,4 +154,4 @@ git -C "$main_worktree" worktree remove "$feature_worktree"
 echo "Deleting feature branch: $feature_branch"
 git -C "$main_worktree" branch -D "$feature_branch"
 
-echo "Local closeout complete."
+echo "Local worktree completion complete."
