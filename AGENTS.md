@@ -141,12 +141,12 @@ Agents should never assume they are operating autonomously.
 
 ⸻
 
-Local-Only Closeout Protocol
+Local-Only Closeout Protocol (complete worktree)
 
-When the user requests `closeout local-only`, agents must use the repository
+When the user requests `complete worktree`, agents must use the repository
 workflow command:
 
-• `make closeout-local`
+• `make complete-worktree`
 
 Hard rule:
 	•	Never delete a lane branch or worktree before verifying that `main`

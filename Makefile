@@ -33,9 +33,7 @@ TEST_FILTER ?=
 -include $(RELEASE_LOCAL_CONFIG)
 
 ROOT ?=
-PERSONA ?= senior-swiftui-engineer
-DIRECTIVE ?= apply-style
-KITS ?=
+SESSION ?= architectural-editor-review
 OUTPUT ?= /tmp/session.md
 TYPE ?=
 ARGS ?=
@@ -46,15 +44,15 @@ VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
 
-CLOSEOUT_BRANCH ?=
-CLOSEOUT_WORKTREE ?=
-CLOSEOUT_MAIN ?= main
-CLOSEOUT_NO_CLEANUP ?= 0
+COMPLETE_WORKTREE_BRANCH ?=
+COMPLETE_WORKTREE_PATH ?=
+COMPLETE_WORKTREE_MAIN ?= main
+COMPLETE_WORKTREE_NO_CLEANUP ?= 0
 
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install_cli install_zsh_completion run test test-cli cli init validate validate-repo closeout-local orbit-server-local orbit-live-db-proof orbit-live-db-proof-local orbit-transport-proof orbit-transport-soak-local orbit-m3-proof orbit-m3-proof-local export list graph zip format-check pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg
+.PHONY: help doctor build build-app build-cli install-cli install-zsh-completion run test test-cli cli init validate validate-repo complete-worktree export list graph zip format-check pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg
 
 archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg: CONFIGURATION = Release
 
@@ -64,13 +62,13 @@ help:
 	@echo "Usage:"
 	@echo "  make <target> [VAR=value]"
 	@echo ""
-	@echo "XcodeBuildMCP targets:"
+	@echo "Tasks:"
 	@printf "  %-24s %s\n" "doctor" "Check required tools and workspace health."
 	@printf "  %-24s %s\n" "build" "Build macOS app and CLI with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-app" "Build macOS app scheme with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-cli" "Build CLI scheme with XcodeBuildMCP."
-	@printf "  %-24s %s\n" "install_cli" "Build the Swift CLI and install it into INSTALL_BIN_DIR."
-	@printf "  %-24s %s\n" "install_zsh_completion" "Install zsh completion for the installed personakit CLI."
+	@printf "  %-24s %s\n" "install-cli" "Build the Swift CLI and install it into INSTALL_BIN_DIR."
+	@printf "  %-24s %s\n" "install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-24s %s\n" "run" "Build and run macOS app with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "test" "Run SwiftPM tests and default Xcode host/UI smoke checks."
 	@printf "  %-24s %s\n" "test-cli" "Run CLI-focused SwiftPM tests (defaults to filter \`CLI\`)."
@@ -84,82 +82,15 @@ help:
 	@printf "  %-24s %s\n" "release-pkg" "Run the full archive, export, package, notarize, staple, verify flow."
 	@printf "  %-24s %s\n" "zip" "Create a project zip archive."
 	@echo ""
-	@echo "PersonaKit workflow targets:"
+	@echo "PersonaKit workflow tasks:"
 	@printf "  %-24s %s\n" "cli" "Run the personakit CLI directly."
 	@printf "  %-24s %s\n" "init" "Initialize a starter kit in ./.personakit."
 	@printf "  %-24s %s\n" "validate" "Validate using scope discovery or ROOT override."
 	@printf "  %-24s %s\n" "validate-repo" "Run deterministic repo validation."
-	@printf "  %-24s %s\n" "closeout-local" "Run local-only closeout workflow."
-	@printf "  %-24s %s\n" "orbit-server-local" "Run the local Orbit server executable against the configured ORBIT_PG_* environment."
-	@printf "  %-24s %s\n" "orbit-live-db-proof" "Repeat the Orbit live Postgres proof harness using ORBIT_PG_*."
-	@printf "  %-24s %s\n" "orbit-live-db-proof-local" "Boot a temp local Postgres instance and run the Orbit live proof harness."
-	@printf "  %-24s %s\n" "orbit-transport-proof" "Repeat the Orbit persistent-transport confidence ring."
-	@printf "  %-24s %s\n" "orbit-transport-soak-local" "Run a longer local Orbit transport soak over the focused confidence ring."
-	@printf "  %-24s %s\n" "orbit-m3-proof" "Run the Orbit M3 proof bundle using configured ORBIT_PG_* environment."
-	@printf "  %-24s %s\n" "orbit-m3-proof-local" "Run the local Orbit M3 proof bundle (transport + temp Postgres live-db)."
+	@printf "  %-24s %s\n" "complete-worktree" "Rebase & ff-merge feature branch to main, delete worktree & branch (--no-cleanup preserves worktree/branch)"
 	@printf "  %-24s %s\n" "export" "Export a resolved PersonaKit session prompt."
 	@printf "  %-24s %s\n" "list" "List PersonaKit entities (requires TYPE)."
 	@printf "  %-24s %s\n" "graph" "Render session dependency graph."
-	@echo ""
-	@echo "Configurable variables:"
-	@printf "  %-24s %s\n" "WORKSPACE_PATH" "$(WORKSPACE_PATH)"
-	@printf "  %-24s %s\n" "RUN_SCHEME" "$(RUN_SCHEME)"
-	@printf "  %-24s %s\n" "APP_NAME" "$(APP_NAME)"
-	@printf "  %-24s %s\n" "APP_BUILD_SCHEME" "$(APP_BUILD_SCHEME)"
-	@printf "  %-24s %s\n" "CLI_BUILD_SCHEME" "$(CLI_BUILD_SCHEME)"
-	@printf "  %-24s %s\n" "CONFIGURATION" "$(CONFIGURATION)"
-	@printf "  %-24s %s\n" "SWIFT_CONFIGURATION" "$(SWIFT_CONFIGURATION)"
-	@printf "  %-24s %s\n" "DERIVED_DATA_PATH" "$(DERIVED_DATA_PATH)"
-	@printf "  %-24s %s\n" "ZIP_NAME" "$(ZIP_NAME)"
-	@printf "  %-24s %s\n" "INSTALL_BIN_DIR" "$(INSTALL_BIN_DIR)"
-	@printf "  %-24s %s\n" "CLI_PRODUCT_NAME" "$(CLI_PRODUCT_NAME)"
-	@printf "  %-24s %s\n" "CLI_COMPLETION_SOURCE" "$(CLI_COMPLETION_SOURCE)"
-	@printf "  %-24s %s\n" "ZSH_COMPLETION_DIR" "$(ZSH_COMPLETION_DIR)"
-	@printf "  %-24s %s\n" "RELEASE_LOCAL_CONFIG" "$(RELEASE_LOCAL_CONFIG)"
-	@printf "  %-24s %s\n" "PKG_BUILD_DIR" "$(PKG_BUILD_DIR)"
-	@printf "  %-24s %s\n" "PKG_ARCHIVE_PATH" "$(PKG_ARCHIVE_PATH)"
-	@printf "  %-24s %s\n" "PKG_EXPORT_PATH" "$(PKG_EXPORT_PATH)"
-	@printf "  %-24s %s\n" "PKG_OUTPUT_PATH" "$(PKG_OUTPUT_PATH)"
-	@printf "  %-24s %s\n" "PKG_STAGE_ROOT" "$(PKG_STAGE_ROOT)"
-	@printf "  %-24s %s\n" "PKG_COMPONENT_PLIST" "$(PKG_COMPONENT_PLIST)"
-	@printf "  %-24s %s\n" "PKG_EXPORT_OPTIONS_PLIST" "$(PKG_EXPORT_OPTIONS_PLIST)"
-	@printf "  %-24s %s\n" "PKG_ARCHS" "$(PKG_ARCHS)"
-	@printf "  %-24s %s\n" "PKG_IDENTIFIER" "$(PKG_IDENTIFIER)"
-	@printf "  %-24s %s\n" "PKG_VERSION" "$(PKG_VERSION)"
-	@printf "  %-24s %s\n" "APP_INSTALL_LOCATION" "$(APP_INSTALL_LOCATION)"
-	@printf "  %-24s %s\n" "INSTALLER_SIGN_IDENTITY" "$(INSTALLER_SIGN_IDENTITY)"
-	@printf "  %-24s %s\n" "NOTARY_KEYCHAIN_PROFILE" "$(NOTARY_KEYCHAIN_PROFILE)"
-	@printf "  %-24s %s\n" "TEST_FILTER" "$(TEST_FILTER)"
-	@printf "  %-24s %s\n" "ROOT" "$(ROOT)"
-	@printf "  %-24s %s\n" "PERSONA" "$(PERSONA)"
-	@printf "  %-24s %s\n" "DIRECTIVE" "$(DIRECTIVE)"
-	@printf "  %-24s %s\n" "KITS" "$(KITS)"
-	@printf "  %-24s %s\n" "OUTPUT" "$(OUTPUT)"
-	@printf "  %-24s %s\n" "TYPE" "$(TYPE)"
-	@printf "  %-24s %s\n" "ARGS" "$(ARGS)"
-	@printf "  %-24s %s\n" "NO_PROJECT" "$(NO_PROJECT)"
-	@printf "  %-24s %s\n" "NO_GLOBAL" "$(NO_GLOBAL)"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make doctor"
-	@echo "  make build [CONFIGURATION=Release]"
-	@echo "  make build-app [APP_BUILD_SCHEME=PersonaKitStudio] [CONFIGURATION=Release]"
-	@echo "  make build-cli [CLI_BUILD_SCHEME=PersonaKitCLI] [CONFIGURATION=Release]"
-	@echo "  make install_cli [SWIFT_CONFIGURATION=release] [INSTALL_BIN_DIR=/usr/local/bin]"
-	@echo "  make install_zsh_completion [CLI_COMPLETION_SOURCE=/usr/local/bin/personakit]"
-	@echo "  make run [RUN_SCHEME=PersonaKit] [APP_NAME=PersonaKit]"
-	@echo "  make test [TEST_FILTER=TaskboardSnapshotTests]"
-	@echo "  make test-cli [TEST_FILTER=CLISessionTests]"
-	@echo "  cp Config/Release.local.mk.example Config/Release.local.mk"
-	@echo "  make pkg-preflight"
-	@echo "  make pkg-app INSTALLER_SIGN_IDENTITY=\"Developer ID Installer: Example (TEAMID)\""
-	@echo "  make release-pkg INSTALLER_SIGN_IDENTITY=\"Developer ID Installer: Example (TEAMID)\" NOTARY_KEYCHAIN_PROFILE=persona-release"
-	@echo "  make cli [ARGS=\"list personas\"]"
-	@echo "  make validate [ROOT=/Users/me/Code/PersonaKit/.personakit] [NO_GLOBAL=1]"
-	@echo "  make export [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants] [OUTPUT=/tmp/session.md]"
-	@echo "  make list [TYPE=personas] [ROOT=/Users/me/Code/PersonaKit/.personakit]"
-	@echo "  make graph [PERSONA=architectural-editor] [DIRECTIVE=review-architecture-invariants]"
-	@echo "  make zip [ZIP_NAME=PersonaKit-archive.zip]"
 
 doctor:
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
@@ -203,15 +134,15 @@ build-cli: doctor
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-install_cli:
+install-cli:
 	swift build -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
 	install -d "$(INSTALL_BIN_DIR)"
 	install -m 755 ".build/$(SWIFT_CONFIGURATION)/$(CLI_PRODUCT_NAME)" "$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"
 
-install_zsh_completion:
+install-zsh-completion:
 	@if [ ! -x "$(CLI_COMPLETION_SOURCE)" ]; then \
 		echo "error: completion source not found or not executable: $(CLI_COMPLETION_SOURCE)"; \
-		echo "hint: run 'make install_cli' first or set CLI_COMPLETION_SOURCE=/path/to/personakit"; \
+		echo "hint: run 'make install-cli' first or set CLI_COMPLETION_SOURCE=/path/to/personakit"; \
 		exit 1; \
 	fi
 	install -d "$(ZSH_COMPLETION_DIR)"
@@ -393,36 +324,15 @@ validate:
 validate-repo:
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
-closeout-local:
-	./Scripts/closeout-local.sh \
-		$(if $(CLOSEOUT_BRANCH),--branch $(CLOSEOUT_BRANCH),) \
-		$(if $(CLOSEOUT_WORKTREE),--worktree $(CLOSEOUT_WORKTREE),) \
-		--main $(CLOSEOUT_MAIN) \
-		$(if $(filter 1 true yes,$(CLOSEOUT_NO_CLEANUP)),--no-cleanup,)
-
-orbit-server-local:
-	swift run OrbitServer
-
-orbit-live-db-proof:
-	./Scripts/run-orbit-live-db-proof.sh
-
-orbit-live-db-proof-local:
-	./Scripts/run-orbit-live-db-proof.sh --local-temp-postgres
-
-orbit-transport-proof:
-	./Scripts/run-orbit-transport-proof.sh
-
-orbit-transport-soak-local:
-	./Scripts/run-orbit-transport-soak-local.sh
-
-orbit-m3-proof:
-	./Scripts/run-orbit-m3-proof.sh
-
-orbit-m3-proof-local:
-	./Scripts/run-orbit-m3-proof-local.sh
+complete-worktree:
+	./Scripts/complete-worktree.sh \
+		$(if $(COMPLETE_WORKTREE_BRANCH),--branch $(COMPLETE_WORKTREE_BRANCH),) \
+		$(if $(COMPLETE_WORKTREE_PATH),--worktree $(COMPLETE_WORKTREE_PATH),) \
+		--main $(COMPLETE_WORKTREE_MAIN) \
+		$(if $(filter 1 true yes,$(COMPLETE_WORKTREE_NO_CLEANUP)),--no-cleanup,)
 
 export:
-	personakit export $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),) --output $(OUTPUT)
+	personakit export $(SCOPE_ARGS) --session $(SESSION) --output $(OUTPUT)
 
 list:
 	@if [ -z "$(TYPE)" ]; then \
@@ -432,7 +342,7 @@ list:
 	personakit list $(SCOPE_ARGS) $(TYPE)
 
 graph:
-	personakit graph $(SCOPE_ARGS) --persona $(PERSONA) --directive $(DIRECTIVE) $(if $(KITS),--kits $(KITS),)
+	personakit graph $(SCOPE_ARGS) --session $(SESSION)
 
 zip:
 	zip -r $(ZIP_NAME) . \
