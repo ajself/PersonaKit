@@ -269,6 +269,27 @@ struct WorkspaceStoreStubLibraryEntityManager: WorkspaceLibraryEntityManaging, S
   }
 }
 
+struct WorkspaceStoreStubInstallEnvironment: WorkspaceInstallEnvironmentProviding, Sendable {
+  let rootHomeDirectoryURL: URL
+  let resolvedBundledCLIURL: URL?
+  let resolvedBundledCLISupportBundleURL: URL?
+
+  @MainActor
+  func homeDirectoryURL() -> URL {
+    rootHomeDirectoryURL.standardizedFileURL
+  }
+
+  @MainActor
+  func bundledCLIURL() -> URL? {
+    resolvedBundledCLIURL?.standardizedFileURL
+  }
+
+  @MainActor
+  func bundledCLISupportBundleURL() -> URL? {
+    resolvedBundledCLISupportBundleURL?.standardizedFileURL
+  }
+}
+
 struct WorkspaceStoreStubEssentialManager: WorkspaceEssentialManaging, Sendable {
   let loadMarkdownHandler: @Sendable (URL) throws -> String
   let saveMarkdownHandler: @Sendable (URL, String, String) throws -> Void

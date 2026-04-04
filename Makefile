@@ -4,7 +4,7 @@ XCODEBUILDMCP ?= xcodebuildmcp
 WORKSPACE_PATH ?= PersonaKit.xcworkspace
 RUN_SCHEME ?= PersonaKit
 APP_NAME ?= PersonaKit
-APP_BUILD_SCHEME ?= PersonaKitStudio
+APP_BUILD_SCHEME ?= PersonaKit
 CLI_BUILD_SCHEME ?= PersonaKitCLI
 CONFIGURATION ?= Debug
 SWIFT_CONFIGURATION ?= debug
@@ -26,6 +26,7 @@ PKG_ARCHS ?= arm64 x86_64
 PKG_IDENTIFIER ?= com.ajself.PersonaKit
 PKG_VERSION ?= 1.0.0
 APP_INSTALL_LOCATION ?= /Applications
+APP_SIGN_IDENTITY ?=
 INSTALLER_SIGN_IDENTITY ?=
 NOTARY_KEYCHAIN_PROFILE ?=
 TEST_FILTER ?=
@@ -52,7 +53,7 @@ COMPLETE_WORKTREE_NO_CLEANUP ?= 0
 ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
 SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
 
-.PHONY: help doctor build build-app build-cli install-cli install-zsh-completion run test test-cli cli init validate validate-repo complete-worktree export list graph zip format-check pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg
+.PHONY: help doctor clean build build-app build-cli install-cli install-zsh-completion run test test-cli cli init validate validate-repo complete-worktree export list graph zip format-check pkg-preflight archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg
 
 archive-app-release export-app-release pkg-app notarize-pkg staple-pkg verify-pkg release-pkg: CONFIGURATION = Release
 
@@ -64,8 +65,9 @@ help:
 	@echo ""
 	@echo "Tasks:"
 	@printf "  %-24s %s\n" "doctor" "Check required tools and workspace health."
+	@printf "  %-24s %s\n" "clean" "Remove SwiftPM, Xcode derived data, and packaging build artifacts."
 	@printf "  %-24s %s\n" "build" "Build macOS app and CLI with XcodeBuildMCP."
-	@printf "  %-24s %s\n" "build-app" "Build macOS app scheme with XcodeBuildMCP."
+	@printf "  %-24s %s\n" "build-app" "Build the packaged macOS app target with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "build-cli" "Build CLI scheme with XcodeBuildMCP."
 	@printf "  %-24s %s\n" "install-cli" "Build the Swift CLI and install it into INSTALL_BIN_DIR."
 	@printf "  %-24s %s\n" "install-zsh-completion" "Install zsh completion for the installed personakit CLI."
@@ -74,7 +76,7 @@ help:
 	@printf "  %-24s %s\n" "test-cli" "Run CLI-focused SwiftPM tests (defaults to filter \`CLI\`)."
 	@printf "  %-24s %s\n" "pkg-preflight" "Check macOS packaging tools, export options, and release inputs."
 	@printf "  %-24s %s\n" "archive-app-release" "Archive the host app for Release distribution."
-	@printf "  %-24s %s\n" "export-app-release" "Export the archived host app for Developer ID distribution."
+	@printf "  %-24s %s\n" "export-app-release" "Copy the signed archived app into the release export directory."
 	@printf "  %-24s %s\n" "pkg-app" "Create a signed installer package for the exported app."
 	@printf "  %-24s %s\n" "notarize-pkg" "Submit the installer package for notarization."
 	@printf "  %-24s %s\n" "staple-pkg" "Staple the notarization ticket to the installer package."
@@ -114,6 +116,15 @@ doctor:
 	fi
 	@$(XCODEBUILDMCP) --version
 	@echo "doctor: OK"
+
+clean:
+	@echo "Removing SwiftPM build products..."
+	@swift package clean
+	@echo "Removing Xcode derived data..."
+	@rm -rf "$(DERIVED_DATA_PATH)"
+	@echo "Removing packaging artifacts..."
+	@rm -rf "$(PKG_BUILD_DIR)"
+	@echo "clean: OK"
 
 build: build-app build-cli
 
@@ -202,8 +213,8 @@ pkg-preflight:
 		echo "error: stapler is required via xcrun."; \
 		exit 1; \
 	fi
-	@if [ ! -f "$(PKG_EXPORT_OPTIONS_PLIST)" ]; then \
-		echo "error: export options plist not found at $(PKG_EXPORT_OPTIONS_PLIST)"; \
+	@if [ -z "$(APP_SIGN_IDENTITY)" ]; then \
+		echo "error: APP_SIGN_IDENTITY is required."; \
 		exit 1; \
 	fi
 	@echo "pkg-preflight: OK"
@@ -216,6 +227,8 @@ archive-app-release: pkg-preflight
 		-configuration "$(CONFIGURATION)" \
 		-destination "generic/platform=macOS" \
 		-archivePath "$(PKG_ARCHIVE_PATH)" \
+		CODE_SIGN_STYLE=Manual \
+		CODE_SIGN_IDENTITY="$(APP_SIGN_IDENTITY)" \
 		ONLY_ACTIVE_ARCH=NO \
 		ARCHS="$(PKG_ARCHS)"
 
@@ -225,12 +238,14 @@ export-app-release:
 		echo "hint: run 'make archive-app-release' first"; \
 		exit 1; \
 	fi
+	@if [ ! -d "$(PKG_ARCHIVE_PATH)/Products/Applications/$(APP_NAME).app" ]; then \
+		echo "error: archived app not found at $(PKG_ARCHIVE_PATH)/Products/Applications/$(APP_NAME).app"; \
+		exit 1; \
+	fi
 	@mkdir -p "$(PKG_BUILD_DIR)"
 	@rm -rf "$(PKG_EXPORT_PATH)"
-	xcodebuild -exportArchive \
-		-archivePath "$(PKG_ARCHIVE_PATH)" \
-		-exportOptionsPlist "$(PKG_EXPORT_OPTIONS_PLIST)" \
-		-exportPath "$(PKG_EXPORT_PATH)"
+	@mkdir -p "$(PKG_EXPORT_PATH)"
+	@ditto --norsrc --noqtn "$(PKG_ARCHIVE_PATH)/Products/Applications/$(APP_NAME).app" "$(PKG_EXPORT_PATH)/$(APP_NAME).app"
 	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
 		echo "error: exported app not found at $(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
 		exit 1; \

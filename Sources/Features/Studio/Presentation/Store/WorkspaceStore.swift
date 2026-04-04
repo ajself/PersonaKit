@@ -50,6 +50,8 @@ public final class WorkspaceStore {
   private(set) var snapshotRevision = 0
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
+  var installStatus: WorkspaceInstallStatus
+  var installResult: StudioInstallResult?
   var validation: WorkspaceValidationSnapshot {
     get {
       validationFeatureModel.validation
@@ -157,7 +159,9 @@ public final class WorkspaceStore {
     previewExportDestinationPicker: any PreviewExportDestinationPicking =
       PreviewExportDestinationPickerClient(),
     pasteboardWriter: any PasteboardWriting = PasteboardClient(),
-    fileRevealer: any FileRevealing = FileRevealerClient()
+    fileRevealer: any FileRevealing = FileRevealerClient(),
+    installEnvironment: any WorkspaceInstallEnvironmentProviding =
+      WorkspaceInstallEnvironmentClient()
   ) {
     let resolvedEssentialManager =
       essentialManager
@@ -191,8 +195,10 @@ public final class WorkspaceStore {
     self.systemFeatureModel = WorkspaceSystemFeatureModel(
       workspacePicker: workspacePicker,
       workspaceInitializer: workspaceInitializer,
-      fileRevealer: fileRevealer
+      fileRevealer: fileRevealer,
+      installEnvironment: installEnvironment
     )
+    self.installStatus = self.systemFeatureModel.refreshInstallStatus()
     self.libraryFeatureModel = WorkspaceLibraryFeatureModel(operationRunner: operationRunner)
     self.sessionEditorFeatureModel = WorkspaceSessionEditorFeatureModel(
       operationRunner: operationRunner
