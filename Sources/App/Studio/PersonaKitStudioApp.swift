@@ -13,12 +13,7 @@ struct PersonaKitStudioApp: App {
       StudioRootView(workspaceStore: workspaceStore)
     }
     .commands {
-      CommandGroup(after: .newItem) {
-        Button("Open Workspace…") {
-          workspaceStore.openWorkspacePicker()
-        }
-        .keyboardShortcut("o", modifiers: [.command])
-      }
+      StudioAppCommands(workspaceStore: workspaceStore)
     }
   }
 }

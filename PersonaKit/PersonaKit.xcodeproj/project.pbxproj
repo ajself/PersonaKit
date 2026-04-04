@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D1A6F0012FC0000000670F8F /* PersonaKitCLI in Resources */ = {isa = PBXBuildFile; fileRef = D15697CC2F5BA47200670F8F /* PersonaKitCLI */; };
 		D15697C72F5BA42E00670F8F /* StudioFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D15697C62F5BA42E00670F8F /* StudioFeatures */; };
 		D15697D72F5BA48E00670F8F /* ContextCLI in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D62F5BA48E00670F8F /* ContextCLI */; };
 /* End PBXBuildFile section */
@@ -25,6 +26,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = D156979A2F5BA3AB00670F8F;
 			remoteInfo = PersonaKit;
+		};
+		D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D15697CB2F5BA47200670F8F;
+			remoteInfo = PersonaKitCLI;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -140,6 +148,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				D1A6F0032FC0000000670F8F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D156979D2F5BA3AB00670F8F /* PersonaKit */,
@@ -277,6 +286,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1A6F0012FC0000000670F8F /* PersonaKitCLI in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -328,6 +338,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		D1A6F0032FC0000000670F8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D15697CB2F5BA47200670F8F /* PersonaKitCLI */;
+			targetProxy = D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */;
+		};
 		D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = D156979A2F5BA3AB00670F8F /* PersonaKit */;

@@ -38,6 +38,24 @@ extension WorkspaceStore {
     loadWorkspace()
   }
 
+  func refreshInstallStatus() {
+    installStatus = systemFeatureModel.refreshInstallStatus()
+  }
+
+  func installOrUpdateCLI() {
+    installResult = systemFeatureModel.installOrUpdateCLI()
+    refreshInstallStatus()
+  }
+
+  func installOrUpdateOpenCodeMCP() {
+    installResult = systemFeatureModel.installOrUpdateOpenCodeMCP()
+    refreshInstallStatus()
+  }
+
+  func dismissInstallResult() {
+    installResult = nil
+  }
+
   /// Creates a minimal PersonaKit folder structure at the selected workspace and reloads state.
   func initializeWorkspaceStructure() {
     do {

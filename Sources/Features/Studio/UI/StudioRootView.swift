@@ -22,6 +22,27 @@ public struct StudioRootView: View {
     }
     .task {
       workspaceStore.loadLaunchWorkspaceIfNeeded()
+      workspaceStore.refreshInstallStatus()
+    }
+    .alert(
+      workspaceStore.installResult?.title ?? "",
+      isPresented: Binding(
+        get: {
+          workspaceStore.installResult != nil
+        },
+        set: { isPresented in
+          if !isPresented {
+            workspaceStore.dismissInstallResult()
+          }
+        }
+      ),
+      presenting: workspaceStore.installResult
+    ) { _ in
+      Button("OK") {
+        workspaceStore.dismissInstallResult()
+      }
+    } message: { result in
+      Text(result.message)
     }
   }
 
