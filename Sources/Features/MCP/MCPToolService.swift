@@ -33,43 +33,43 @@ struct MCPToolService: Sendable {
     switch tool {
     case .validate:
       let output = try validateTool(arguments: arguments)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .contract:
       let input = try parseContractArguments(arguments)
       let output = try contractTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .export:
       let input = try parseSessionArguments(arguments)
       let output = try exportTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .graph:
       let input = try parseSessionArguments(arguments)
       let output = try graphTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .resolveReferences:
       let input = try parseSessionArguments(arguments)
       let output = try resolveReferencesTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .explainEntity:
       let input = try parseEntityArguments(arguments)
       let output = try explainEntityTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .compareEntities:
       let input = try parseCompareArguments(arguments)
       let output = try compareEntitiesTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .recommendSession:
       let input = try parseRecommendArguments(arguments)
       let output = try recommendSessionTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .resolveSessionRef:
       let input = try parseResolveSessionArguments(arguments)
       let output = try resolveSessionRefTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .traceSession:
       let input = try parseTraceArguments(arguments)
       let output = try traceSessionTool(input: input)
-      return CallTool.Result(content: [.text(output)])
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     }
   }
 
