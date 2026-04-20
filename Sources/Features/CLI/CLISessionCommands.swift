@@ -100,6 +100,9 @@ struct ExportCommand: ParsableCommand {
   @OptionGroup
   var referenceTriggers: ReferenceTriggerOptions
 
+  @Flag(name: .customLong("copy"), help: "Copy output to the clipboard instead of printing.")
+  var copyToClipboard = false
+
   @Option(name: .customLong("output"), help: "Write output to a file path.")
   var outputPath: String?
 
@@ -108,6 +111,10 @@ struct ExportCommand: ParsableCommand {
   }
 
   func run() throws {
+    if copyToClipboard, outputPath != nil {
+      throw CLIError.failure("export allows only one destination: --copy or --output.")
+    }
+
     let scopes = try CLIHelpers.resolveScopes(options: scope)
     do {
       let sessionInput = try CLIHelpers.resolveSessionInput(
@@ -125,6 +132,13 @@ struct ExportCommand: ParsableCommand {
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
         try AtomicFileWriter().write(contents: output, to: outputURL)
+      } else if copyToClipboard {
+        guard CLIEnvironment.current.clipboardIO.writeString(output) else {
+          throw CLIError.failure("Failed to copy prompt to the clipboard.")
+        }
+
+        var stderrStream = StandardError()
+        stderrStream.write("Copied prompt to clipboard.\n")
       } else {
         print(output)
       }

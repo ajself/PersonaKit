@@ -8,15 +8,18 @@ struct CLIContext: Sendable {
   let scopeRootResolver: ScopeRootResolver
   let mcpServerRunner: any MCPServerRunning
   let interactiveIO: CLIInteractiveIO
+  let clipboardIO: CLIClipboardIO
 
   init(
     scopeRootResolver: ScopeRootResolver,
     mcpServerRunner: any MCPServerRunning,
-    interactiveIO: CLIInteractiveIO = .live()
+    interactiveIO: CLIInteractiveIO = .live(),
+    clipboardIO: CLIClipboardIO = .live()
   ) {
     self.scopeRootResolver = scopeRootResolver
     self.mcpServerRunner = mcpServerRunner
     self.interactiveIO = interactiveIO
+    self.clipboardIO = clipboardIO
   }
 }
 
@@ -26,7 +29,8 @@ enum CLIEnvironment {
   static var context: CLIContext = CLIContext(
     scopeRootResolver: ScopeRootResolver(),
     mcpServerRunner: MCPServerRunner(),
-    interactiveIO: .live()
+    interactiveIO: .live(),
+    clipboardIO: .live()
   )
 
   /// The currently active CLI context.
