@@ -122,6 +122,12 @@ struct RunCommand: ParsableCommand {
   @Flag(name: .customLong("dry-run"), help: "Print the runtime payload instead of invoking the agent.")
   var dryRun = false
 
+  @Flag(
+    name: .customLong("copy"),
+    help: "Copy the dry-run payload to the clipboard instead of printing."
+  )
+  var copyToClipboard = false
+
   @Option(name: .customLong("output"), help: "Write the runtime payload to a file path.")
   var outputPath: String?
 
@@ -150,6 +156,10 @@ struct RunCommand: ParsableCommand {
   }
 
   func run() throws {
+    if copyToClipboard, !dryRun {
+      throw CLIError.failure("run allows --copy only with --dry-run.")
+    }
+
     let scopes = try CLIHelpers.resolveScopes(options: scope)
 
     do {
@@ -180,7 +190,17 @@ struct RunCommand: ParsableCommand {
       }
 
       if dryRun {
-        print(result.payload)
+        if copyToClipboard {
+          guard CLIEnvironment.current.clipboardIO.writeString(result.payload) else {
+            throw CLIError.failure("Failed to copy dry-run payload to the clipboard.")
+          }
+
+          var stderrStream = StandardError()
+          stderrStream.write("Copied dry-run payload to clipboard.\n")
+        } else {
+          print(result.payload)
+        }
+
         return
       }
 

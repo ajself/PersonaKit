@@ -149,6 +149,12 @@ personakit run --session review-swiftui --agent opencode -- "Review the current 
 
 That is the intended V1 experience: one command, known context, one live task.
 
+To copy the dry-run payload instead of printing it:
+
+```bash
+personakit run --session review-swiftui --agent opencode --dry-run --copy -- "Review the current SwiftUI change and propose the smallest safe refactor."
+```
+
 ## Sessions
 
 A session is a named shortcut for reusable context.
@@ -177,6 +183,7 @@ personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
 personakit mcp
 personakit run --session <id> --agent <agent> -- "<task>"
+personakit run --session <id> --agent <agent> --dry-run --copy -- "<task>"
 ```
 
 `run` is the primary product direction for V1.
