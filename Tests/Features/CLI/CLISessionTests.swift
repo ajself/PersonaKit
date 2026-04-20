@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 
 @testable import ContextCLI
@@ -26,6 +27,46 @@ struct CLISessionTests {
 
     #expect(status == 0)
     #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func exportViaSessionCopiesToClipboard() throws {
+    let root = fixtureKitRootURL()
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+    let clipboardContents = Mutex<String?>(nil)
+    let cli = PersonaKitCLI(
+      clipboardIO: CLIClipboardIO(
+        writeString: { value in
+          clipboardContents.withLock { contents in
+            contents = value
+          }
+          return true
+        }
+      )
+    )
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      let stdoutOutput = captureStdout {
+        status = cli.run(arguments: [
+          "personakit",
+          "export",
+          "--root",
+          root.path,
+          "--session",
+          "senior-swiftui-engineer_apply-style",
+          "--copy",
+        ])
+      }
+
+      #expect(stdoutOutput.isEmpty)
+    }
+
+    #expect(status == 0)
+    #expect(stderrOutput.contains("Copied prompt to clipboard."))
+    #expect(clipboardContents.withLock { $0 } == expected)
   }
 
   @Test
@@ -146,5 +187,54 @@ struct CLISessionTests {
 
     #expect(status == 1)
     #expect(stderrOutput.contains("Error:"))
+  }
+
+  @Test
+  func exportRejectsCopyAndOutputTogether() {
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "export",
+        "--session",
+        "senior-swiftui-engineer_apply-style",
+        "--copy",
+        "--output",
+        "/tmp/export.md",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("export allows only one destination: --copy or --output."))
+  }
+
+  @Test
+  func exportReportsClipboardFailure() {
+    let root = fixtureKitRootURL()
+    let cli = PersonaKitCLI(
+      clipboardIO: CLIClipboardIO(
+        writeString: { _ in false }
+      )
+    )
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      let stdoutOutput = captureStdout {
+        status = cli.run(arguments: [
+          "personakit",
+          "export",
+          "--root",
+          root.path,
+          "--session",
+          "senior-swiftui-engineer_apply-style",
+          "--copy",
+        ])
+      }
+
+      #expect(stdoutOutput.isEmpty)
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("Failed to copy prompt to the clipboard."))
   }
 }

@@ -8,16 +8,19 @@ struct PersonaKitCLI {
   private let scopeRootResolver: ScopeRootResolver
   private let mcpServerRunner: any MCPServerRunning
   private let interactiveIO: CLIInteractiveIO
+  private let clipboardIO: CLIClipboardIO
 
   /// Creates a CLI runtime with injectable environment dependencies.
   init(
     scopeRootResolver: ScopeRootResolver = ScopeRootResolver(),
     mcpServerRunner: any MCPServerRunning = MCPServerRunner(),
-    interactiveIO: CLIInteractiveIO = .live()
+    interactiveIO: CLIInteractiveIO = .live(),
+    clipboardIO: CLIClipboardIO = .live()
   ) {
     self.scopeRootResolver = scopeRootResolver
     self.mcpServerRunner = mcpServerRunner
     self.interactiveIO = interactiveIO
+    self.clipboardIO = clipboardIO
   }
 
   /// Parses and runs PersonaKit command-line arguments.
@@ -28,7 +31,8 @@ struct PersonaKitCLI {
     let context = CLIContext(
       scopeRootResolver: scopeRootResolver,
       mcpServerRunner: mcpServerRunner,
-      interactiveIO: interactiveIO
+      interactiveIO: interactiveIO,
+      clipboardIO: clipboardIO
     )
 
     return CLIEnvironment.withContext(context) {

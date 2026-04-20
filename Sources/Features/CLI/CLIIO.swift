@@ -1,5 +1,6 @@
-import Foundation
+import AppKit
 import Darwin
+import Foundation
 
 /// CLI-specific error type for user-facing failures.
 enum CLIError: LocalizedError {
@@ -44,6 +45,21 @@ struct CLIInteractiveIO: Sendable {
         }
 
         return text
+      }
+    )
+  }
+}
+
+/// Injectable clipboard IO used by copy-oriented CLI commands.
+struct CLIClipboardIO: Sendable {
+  let writeString: @Sendable (String) -> Bool
+
+  static func live() -> CLIClipboardIO {
+    CLIClipboardIO(
+      writeString: { value in
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        return pasteboard.setString(value, forType: .string)
       }
     )
   }

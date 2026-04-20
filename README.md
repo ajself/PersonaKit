@@ -135,6 +135,12 @@ personakit export --session review-swiftui
 
 This is useful for inspection and debugging.
 
+To copy the stitched prompt directly to the clipboard:
+
+```bash
+personakit export --session review-swiftui --copy
+```
+
 ### 4. Run work with grounded context
 
 ```bash
@@ -166,6 +172,7 @@ Current CLI commands:
 ```text
 personakit validate
 personakit export --session <id>
+personakit export --session <id> --copy
 personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
 personakit mcp
