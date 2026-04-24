@@ -199,7 +199,7 @@ enum ValidatorReferenceChecker {
     }
 
     errors.append(
-      contentsOf: WorkstreamDocsBuilder.consistencyErrors(
+      contentsOf: ValidatorWorkstreamValidator.consistencyErrors(
         directives: registry.directives
       )
     )

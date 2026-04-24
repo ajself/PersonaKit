@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 
 @testable import ContextCLI
@@ -263,22 +264,20 @@ private func makeInteractiveIO(
   )
 }
 
-private final class InteractiveLineState: @unchecked Sendable {
-  private let lock = NSLock()
-  private var lines: [String]
+private final class InteractiveLineState: Sendable {
+  private let lines: Mutex<[String]>
 
   init(lines: [String]) {
-    self.lines = lines
+    self.lines = Mutex(lines)
   }
 
   func next() -> String? {
-    lock.lock()
-    defer { lock.unlock() }
+    return lines.withLock { lines in
+      guard !lines.isEmpty else {
+        return nil
+      }
 
-    guard !lines.isEmpty else {
-      return nil
+      return lines.removeFirst()
     }
-
-    return lines.removeFirst()
   }
 }

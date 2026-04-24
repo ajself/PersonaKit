@@ -1,6 +1,114 @@
 import Foundation
 
 enum ValidatorWorkstreamValidator {
+  static func consistencyErrors(
+    directives: [Directive]
+  ) -> [ValidationError] {
+    let grouped = Dictionary(
+      grouping: directives.compactMap { directive in
+        directive.workstream.map {
+          GroupedDirective(
+            directiveId: directive.id,
+            workstream: $0
+          )
+        }
+      },
+      by: \.workstream.id
+    )
+
+    var errors: [ValidationError] = []
+
+    for workstreamId in grouped.keys.sorted() {
+      guard let groupedDirectives = grouped[workstreamId] else {
+        continue
+      }
+
+      let sortedDirectives = groupedDirectives.sorted { lhs, rhs in
+        lhs.directiveId < rhs.directiveId
+      }
+
+      guard let representative = sortedDirectives.first else {
+        continue
+      }
+
+      let directiveIDs = sortedDirectives.map(\.directiveId)
+      let normalizedNodes = normalizedNodesKey(representative.workstream.nodes)
+      let normalizedEdges = normalizedEdgesKey(representative.workstream.edges)
+      let entrySessionId = representative.workstream.entrySessionId
+      let requiredCloseoutSessionId = representative.workstream.requiredCloseoutSessionId
+
+      let mismatchedNodeDirectives = sortedDirectives.filter {
+        normalizedNodesKey($0.workstream.nodes) != normalizedNodes
+      }
+
+      if !mismatchedNodeDirectives.isEmpty {
+        errors.append(
+          makeConsistencyError(
+            representativeDirectiveId: representative.directiveId,
+            workstreamId: workstreamId,
+            directiveIDs: directiveIDs,
+            field: "workstream.nodes",
+            message:
+              "Workstream id \"\(workstreamId)\" has inconsistent node sets across directives."
+          )
+        )
+      }
+
+      let mismatchedEdgeDirectives = sortedDirectives.filter {
+        normalizedEdgesKey($0.workstream.edges) != normalizedEdges
+      }
+
+      if !mismatchedEdgeDirectives.isEmpty {
+        errors.append(
+          makeConsistencyError(
+            representativeDirectiveId: representative.directiveId,
+            workstreamId: workstreamId,
+            directiveIDs: directiveIDs,
+            field: "workstream.edges",
+            message:
+              "Workstream id \"\(workstreamId)\" has inconsistent edge sets across directives."
+          )
+        )
+      }
+
+      let mismatchedEntryDirectives = sortedDirectives.filter {
+        $0.workstream.entrySessionId != entrySessionId
+      }
+
+      if !mismatchedEntryDirectives.isEmpty {
+        errors.append(
+          makeConsistencyError(
+            representativeDirectiveId: representative.directiveId,
+            workstreamId: workstreamId,
+            directiveIDs: directiveIDs,
+            field: "workstream.entrySessionId",
+            message:
+              "Workstream id \"\(workstreamId)\" has inconsistent entry session ids across directives."
+          )
+        )
+      }
+
+      let mismatchedCloseoutDirectives = sortedDirectives.filter {
+        $0.workstream.requiredCloseoutSessionId != requiredCloseoutSessionId
+      }
+
+      if !mismatchedCloseoutDirectives.isEmpty {
+        errors.append(
+          makeConsistencyError(
+            representativeDirectiveId: representative.directiveId,
+            workstreamId: workstreamId,
+            directiveIDs: directiveIDs,
+            field: "workstream.requiredCloseoutSessionId",
+            message:
+              "Workstream id \"\(workstreamId)\" has inconsistent required closeout session ids across directives."
+          )
+        )
+      }
+    }
+
+    return errors
+  }
+
   static func validate(
     _ workstream: Directive.Workstream,
     directiveId: String,
@@ -195,6 +303,11 @@ enum ValidatorWorkstreamValidator {
   }
 }
 
+private struct GroupedDirective {
+  let directiveId: String
+  let workstream: Directive.Workstream
+}
+
 private func duplicateValue(in values: [String]) -> String? {
   var seen: Set<String> = []
 
@@ -206,6 +319,39 @@ private func duplicateValue(in values: [String]) -> String? {
   }
 
   return nil
+}
+
+private func normalizedNodesKey(
+  _ nodes: [Directive.Workstream.Node]
+) -> [String] {
+  nodes
+    .map { "\($0.phase)|\($0.sessionId)" }
+    .sorted()
+}
+
+private func normalizedEdgesKey(
+  _ edges: [Directive.Workstream.Edge]
+) -> [String] {
+  edges
+    .map { "\($0.fromSessionId)|\($0.toSessionId)|\($0.kind)" }
+    .sorted()
+}
+
+private func makeConsistencyError(
+  representativeDirectiveId: String,
+  workstreamId: String,
+  directiveIDs: [String],
+  field: String,
+  message: String
+) -> ValidationError {
+  ValidationError(
+    entityType: .directive,
+    entityId: representativeDirectiveId,
+    field: field,
+    missingId: workstreamId,
+    expectedPath: nil,
+    message: message + " Conflicting directives: \(directiveIDs.joined(separator: ", "))."
+  )
 }
 
 private func isReachable(

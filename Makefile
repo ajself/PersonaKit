@@ -2,9 +2,8 @@
 
 XCODEBUILDMCP ?= xcodebuildmcp
 WORKSPACE_PATH ?= PersonaKit.xcworkspace
-RUN_SCHEME ?= PersonaKit
+STUDIO_SCHEME ?= PersonaKit
 APP_NAME ?= PersonaKit
-APP_BUILD_SCHEME ?= PersonaKit
 CONFIGURATION ?= Debug
 SWIFT_CONFIGURATION ?= debug
 DERIVED_DATA_PATH ?= .build/XcodeDerivedData
@@ -20,7 +19,6 @@ PKG_EXPORT_PATH ?= $(PKG_BUILD_DIR)/export
 PKG_OUTPUT_PATH ?= $(PKG_BUILD_DIR)/$(APP_NAME).pkg
 PKG_STAGE_ROOT ?= $(PKG_BUILD_DIR)/pkgroot
 PKG_COMPONENT_PLIST ?= $(PKG_BUILD_DIR)/component.plist
-PKG_EXPORT_OPTIONS_PLIST ?= Config/ExportOptions-DeveloperID.plist
 PKG_ARCHS ?= arm64 x86_64
 PKG_IDENTIFIER ?= com.ajself.PersonaKit
 PKG_VERSION ?= 1.0.0
@@ -32,16 +30,6 @@ TEST_FILTER ?=
 
 -include $(RELEASE_LOCAL_CONFIG)
 
-ROOT ?=
-SESSION ?= architectural-editor-review
-OUTPUT ?= /tmp/session.md
-TYPE ?=
-ARGS ?=
-AGENT ?= opencode
-TASK ?=
-NO_PROJECT ?= 0
-NO_GLOBAL ?= 0
-
 VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
@@ -51,13 +39,9 @@ COMPLETE_WORKTREE_PATH ?=
 COMPLETE_WORKTREE_MAIN ?= main
 COMPLETE_WORKTREE_NO_CLEANUP ?= 0
 
-ROOT_ARG := $(if $(ROOT),--root $(ROOT),)
-SCOPE_ARGS := $(ROOT_ARG) $(if $(filter 1 true yes,$(NO_PROJECT)),--no-project,) $(if $(filter 1 true yes,$(NO_GLOBAL)),--no-global,)
-
-.PHONY: help doctor clean build test format-check \
+.PHONY: help studio-doctor clean build test format-check \
 	core-validate-repo core-complete-worktree core-zip \
-	cli-build cli-install cli-install-zsh-completion cli cli-init cli-validate cli-export cli-list cli-graph cli-test cli-run-task cli-run-dry-run \
-	mcp-run \
+	cli-build cli-install cli-install-zsh-completion cli-test \
 	studio-build studio-run studio-test \
 	studio-pkg-preflight studio-archive-release studio-export-release studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg
 
@@ -70,10 +54,9 @@ help:
 	@echo "  make <target> [VAR=value]"
 	@echo ""
 	@echo "Shared/Core:"
-	@printf "  %-28s %s\n" "doctor" "Check required tools and workspace health for Studio-related targets."
 	@printf "  %-28s %s\n" "clean" "Remove SwiftPM, Xcode derived data, and packaging build artifacts."
-	@printf "  %-28s %s\n" "build" "Build the CLI and Studio surfaces."
-	@printf "  %-28s %s\n" "test" "Run shared SwiftPM tests, plus Studio host/UI smoke checks when TEST_FILTER is unset."
+	@printf "  %-28s %s\n" "build" "Build the default local CLI surface with SwiftPM."
+	@printf "  %-28s %s\n" "test" "Run the package test suite with optional TEST_FILTER."
 	@printf "  %-28s %s\n" "format-check" "Lint Sources and Tests with swift-format."
 	@printf "  %-28s %s\n" "core-validate-repo" "Run deterministic repo validation."
 	@printf "  %-28s %s\n" "core-complete-worktree" "Rebase & ff-merge feature branch to main, delete worktree & branch."
@@ -83,23 +66,12 @@ help:
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
 	@printf "  %-28s %s\n" "cli-install" "Install the SwiftPM CLI executable into INSTALL_BIN_DIR."
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
-	@printf "  %-28s %s\n" "cli" "Run the personakit CLI directly with ARGS."
-	@printf "  %-28s %s\n" "cli-init" "Initialize a starter kit in ./.personakit."
-	@printf "  %-28s %s\n" "cli-validate" "Validate using scope discovery or ROOT override."
-	@printf "  %-28s %s\n" "cli-export" "Export a resolved PersonaKit session prompt."
-	@printf "  %-28s %s\n" "cli-list" "List PersonaKit entities (requires TYPE)."
-	@printf "  %-28s %s\n" "cli-graph" "Render session dependency graph."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
-	@printf "  %-28s %s\n" "cli-run-task" "Run a live PersonaKit task via the CLI run surface."
-	@printf "  %-28s %s\n" "cli-run-dry-run" "Render the PersonaKit run payload without launching the agent."
-	@echo ""
-	@echo "MCP surface:"
-	@printf "  %-28s %s\n" "mcp-run" "Run the PersonaKit MCP server surface."
 	@echo ""
 	@echo "Studio surface:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-run" "Build and run the Studio app with XcodeBuildMCP."
-	@printf "  %-28s %s\n" "studio-test" "Run Studio host/UI smoke checks only."
+	@printf "  %-28s %s\n" "studio-test" "Run Studio Xcode tests only (requires WORKSPACE_PATH)."
 	@printf "  %-28s %s\n" "studio-pkg-preflight" "Check Studio packaging tools, export options, and release inputs."
 	@printf "  %-28s %s\n" "studio-archive-release" "Archive the Studio app for Release distribution."
 	@printf "  %-28s %s\n" "studio-export-release" "Copy the signed archived app into the release export directory."
@@ -109,7 +81,7 @@ help:
 	@printf "  %-28s %s\n" "studio-verify-pkg" "Verify Studio installer signing and stapled notarization."
 	@printf "  %-28s %s\n" "studio-release-pkg" "Run the full Studio archive/export/package/notarize/staple/verify flow."
 
-doctor:
+studio-doctor:
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
 		echo "error: xcodebuild is required. Install Xcode and Command Line Tools."; \
 		echo "hint: xcode-select --install"; \
@@ -120,17 +92,10 @@ doctor:
 		exit 1; \
 	fi
 	@if ! command -v $(XCODEBUILDMCP) >/dev/null 2>&1; then \
-		echo "xcodebuildmcp not found. Installing via Homebrew..."; \
-		if ! command -v brew >/dev/null 2>&1; then \
-			echo "error: Homebrew is required to install xcodebuildmcp."; \
-			echo "hint: https://brew.sh"; \
-			exit 1; \
-		fi; \
-		brew tap getsentry/tools; \
-		brew install getsentry/tools/xcodebuildmcp; \
+		echo "error: $(XCODEBUILDMCP) is required for Studio Xcode targets."; \
+		exit 1; \
 	fi
-	@$(XCODEBUILDMCP) --version
-	@echo "doctor: OK"
+	@echo "studio-doctor: OK"
 
 clean:
 	@echo "Removing SwiftPM build products..."
@@ -141,15 +106,15 @@ clean:
 	@rm -rf "$(PKG_BUILD_DIR)"
 	@echo "clean: OK"
 
-build: cli-build studio-build
+build: cli-build
 
 format-check:
 	swift format lint -r Sources Tests
 
-studio-build: doctor
+studio-build: studio-doctor
 	$(XCODEBUILDMCP) macos build \
 		--workspace-path "$(WORKSPACE_PATH)" \
-		--scheme "$(APP_BUILD_SCHEME)" \
+		--scheme "$(STUDIO_SCHEME)" \
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
 
@@ -181,26 +146,23 @@ cli-install-zsh-completion:
 	@echo "  autoload -Uz compinit"
 	@echo "  compinit"
 
-studio-run: doctor
+studio-run: studio-doctor
 	@echo "Stopping existing $(APP_NAME) instances via XcodeBuildMCP..."
 	@$(XCODEBUILDMCP) macos stop --app-name "$(APP_NAME)" >/dev/null 2>&1 || true
 	$(XCODEBUILDMCP) macos build-and-run \
 		--workspace-path "$(WORKSPACE_PATH)" \
-		--scheme "$(RUN_SCHEME)" \
+		--scheme "$(STUDIO_SCHEME)" \
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-test: doctor
+test:
 	swift test $(if $(TEST_FILTER),--filter $(TEST_FILTER),)
-	@if [ -z "$(TEST_FILTER)" ]; then \
-		$(MAKE) studio-test CONFIGURATION="$(CONFIGURATION)" DERIVED_DATA_PATH="$(DERIVED_DATA_PATH)"; \
-	fi
 
-studio-test: doctor
+studio-test: studio-doctor
 	@$(XCODEBUILDMCP) macos stop --app-name "$(APP_NAME)" >/dev/null 2>&1 || true
 	xcodebuild \
 		-workspace "$(WORKSPACE_PATH)" \
-		-scheme "PersonaKit" \
+		-scheme "$(STUDIO_SCHEME)" \
 		-configuration "$(CONFIGURATION)" \
 		-derivedDataPath "$(DERIVED_DATA_PATH)" \
 		test
@@ -208,11 +170,7 @@ studio-test: doctor
 cli-test:
 	swift test --filter $(if $(TEST_FILTER),$(TEST_FILTER),CLI)
 
-studio-pkg-preflight:
-	@if ! command -v xcodebuild >/dev/null 2>&1; then \
-		echo "error: xcodebuild is required."; \
-		exit 1; \
-	fi
+studio-pkg-preflight: studio-doctor
 	@if ! command -v productbuild >/dev/null 2>&1; then \
 		echo "error: productbuild is required."; \
 		exit 1; \
@@ -243,7 +201,7 @@ studio-archive-release: studio-pkg-preflight
 	@mkdir -p "$(dir $(PKG_ARCHIVE_PATH))"
 	xcodebuild archive \
 		-workspace "$(WORKSPACE_PATH)" \
-		-scheme "$(RUN_SCHEME)" \
+		-scheme "$(STUDIO_SCHEME)" \
 		-configuration "$(CONFIGURATION)" \
 		-destination "generic/platform=macOS" \
 		-archivePath "$(PKG_ARCHIVE_PATH)" \
@@ -342,20 +300,6 @@ studio-verify-pkg:
 
 studio-release-pkg: studio-pkg-preflight studio-archive-release studio-export-release studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg
 
-cli:
-	personakit $(ARGS)
-
-cli-init:
-	@dest="$(CURDIR)/.personakit"; \
-	if [ -e "$$dest" ]; then \
-		printf "%s already exists.\n" "$$dest"; \
-	else \
-		personakit init "$$dest"; \
-	fi
-
-cli-validate:
-	personakit validate $(SCOPE_ARGS)
-
 core-validate-repo:
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
@@ -366,19 +310,6 @@ core-complete-worktree:
 		--main $(COMPLETE_WORKTREE_MAIN) \
 		$(if $(filter 1 true yes,$(COMPLETE_WORKTREE_NO_CLEANUP)),--no-cleanup,)
 
-cli-export:
-	personakit export $(SCOPE_ARGS) --session $(SESSION) --output $(OUTPUT)
-
-cli-list:
-	@if [ -z "$(TYPE)" ]; then \
-		printf "Missing TYPE. Example: make cli-list TYPE=personas\n"; \
-		exit 1; \
-	fi
-	personakit list $(SCOPE_ARGS) $(TYPE)
-
-cli-graph:
-	personakit graph $(SCOPE_ARGS) --session $(SESSION)
-
 core-zip:
 	zip -r $(ZIP_NAME) . \
 		-x "*.git/*" \
@@ -387,17 +318,5 @@ core-zip:
 		-x "*/.DS_Store" \
 		-x "._*" \
 		-x ".build/*" \
+		-x "*.swiftpm/*" \
 		-x "*/DerivedData/*"
-
-cli-run-task:
-	@test -n "$(SESSION)" || (printf "Missing SESSION. Example: make cli-run-task SESSION=review-swiftui TASK='Review the change'\n"; exit 1)
-	@test -n "$(TASK)" || (printf "Missing TASK. Example: make cli-run-task SESSION=review-swiftui TASK='Review the change'\n"; exit 1)
-	personakit run $(SCOPE_ARGS) --session "$(SESSION)" --agent "$(AGENT)" -- "$(TASK)"
-
-cli-run-dry-run:
-	@test -n "$(SESSION)" || (printf "Missing SESSION. Example: make cli-run-dry-run SESSION=review-swiftui TASK='Review the change'\n"; exit 1)
-	@test -n "$(TASK)" || (printf "Missing TASK. Example: make cli-run-dry-run SESSION=review-swiftui TASK='Review the change'\n"; exit 1)
-	personakit run $(SCOPE_ARGS) --session "$(SESSION)" --agent "$(AGENT)" --dry-run -- "$(TASK)"
-
-mcp-run:
-	personakit mcp $(SCOPE_ARGS)

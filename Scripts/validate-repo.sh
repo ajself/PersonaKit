@@ -13,7 +13,6 @@ session_id="senior-swiftui-engineer_apply-style"
 validate_tmp_root="${PERSONAKIT_VALIDATE_TMP_ROOT:-${TMPDIR:-/tmp}}"
 work_dir="${validate_tmp_root}/personakit-validate"
 cleanup_on_success="true"
-unchecked_sendable_approval_file="Docs/PersonaKit/Architecture/unchecked-sendable-approvals.txt"
 
 rm -rf "$work_dir"
 mkdir -p "$work_dir"
@@ -44,13 +43,7 @@ if rg -n "import ContextWorkspaceCore" Sources/Shared/ContextCore >/dev/null; th
 fi
 
 echo "Checking @unchecked Sendable policy..."
-if [[ ! -f "$unchecked_sendable_approval_file" ]]; then
-  echo "Missing approval registry: $unchecked_sendable_approval_file"
-  exit 1
-fi
-
 unchecked_matches_file="$work_dir/unchecked-sendable-matches.txt"
-unauthorized_matches_file="$work_dir/unchecked-sendable-unapproved.txt"
 unchecked_search_roots=()
 
 for search_root in App Sources Tests; do
@@ -65,39 +58,15 @@ if [[ ${#unchecked_search_roots[@]} -eq 0 ]]; then
 fi
 
 rg -n --no-heading "@unchecked[[:space:]]+Sendable" "${unchecked_search_roots[@]}" >"$unchecked_matches_file" || true
-: >"$unauthorized_matches_file"
 
-while IFS= read -r match; do
-  [[ -z "$match" ]] && continue
-  match_path="${match%%:*}"
-  match_remainder="${match#*:}"
-  match_line="${match_remainder%%:*}"
-  match_id="${match_path}:${match_line}"
-
-  if ! grep -Fxq "$match_id" "$unchecked_sendable_approval_file"; then
-    printf '%s\n' "$match" >>"$unauthorized_matches_file"
-  fi
-done <"$unchecked_matches_file"
-
-if [[ -s "$unauthorized_matches_file" ]]; then
-  echo "Unapproved @unchecked Sendable usage detected."
-  echo "Repository policy requires explicit owner approval for each usage."
-  echo "Add an exact path:line entry to $unchecked_sendable_approval_file only when approved."
-  cat "$unauthorized_matches_file"
+if [[ -s "$unchecked_matches_file" ]]; then
+  echo "@unchecked Sendable is not allowed in this repository."
+  cat "$unchecked_matches_file"
   exit 1
 fi
 
 echo "Running swift test..."
 swift test
-
-echo "Checking generated workstream docs..."
-swift run personakit workstream-docs --root .personakit --check
-
-echo "Checking generated operational record docs..."
-swift run personakit log-docs --root .personakit --check
-
-echo "Checking operational record schemas..."
-./Scripts/check-operational-records.sh
 
 echo "Validating kit..."
 swift run personakit validate --root "$kit_root"

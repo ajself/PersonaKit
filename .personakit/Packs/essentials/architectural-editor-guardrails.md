@@ -26,7 +26,7 @@ Not allowed:
 - Owner types backing SwiftUI state are `@MainActor`.
 - Do not mutate UI-observable state off-main.
 - Do not use `Task.detached` without explicit justification.
-- Do not use `@unchecked Sendable` without explicit documented exception.
+- Do not use `@unchecked Sendable`.
 - Cancellation paths must leave state consistent.
 
 2. View purity
