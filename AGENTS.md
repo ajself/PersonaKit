@@ -17,14 +17,14 @@ They are expected to:
 	•	stop when constraints or stop points are reached
 
 Agents may interact with PersonaKit via:
-• the [Swift CLI](./README.md#using-personakit)
-• the [PersonaKit MCP server](./README.md#mcp-server-read-only) (agent-invoked, read-only)
+• the [Swift CLI](./README.md#quick-start)
+• the [PersonaKit MCP server](./README.md#mcp) (agent-invoked, read-only)
 
 In both cases, PersonaKit is primarily a source of context, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
 
 Reference:
-• [Using PersonaKit](./README.md#using-personakit)
-• [MCP Server (read-only)](./README.md#mcp-server-read-only)
+• [Quick Start](./README.md#quick-start)
+• [MCP](./README.md#mcp)
 
 They are not expected to:
 	•	invent plans
@@ -100,8 +100,8 @@ When working on this repo, agents should:
 	6.	Follow all constraints and non-goals verbatim
 
 When using the MCP server specifically:
-• Prefer reading [Resources](./README.md#mcp-server-read-only) for raw context (personas, kits, directives, essentials)
-• Prefer [Prompts](./README.md#mcp-server-read-only) for resolved session views (export, graph)
+• Prefer reading [Resources](./README.md#mcp) for raw context (personas, kits, directives, essentials)
+• Prefer [Prompts](./README.md#mcp) for resolved session views (export, graph)
 • Do not mix MCP-derived context with ad-hoc assumptions
 
 If PersonaKit validation fails, agents should not proceed.
@@ -146,7 +146,7 @@ Local-Only Closeout Protocol (complete worktree)
 When the user requests `complete worktree`, agents must use the repository
 workflow command:
 
-• `make complete-worktree`
+• `make core-complete-worktree`
 
 Hard rule:
 	•	Never delete a lane branch or worktree before verifying that `main`
@@ -182,7 +182,7 @@ PersonaKit is designed to keep humans in control while still benefiting from AI 
 
 Summary (for agents)
 	•	PersonaKit defines the role, constraints, and directive — not you
-	•	Use CLI outputs and MCP [Resources](./README.md#mcp-server-read-only) / [Prompts](./README.md#mcp-server-read-only) as authoritative context
+	•	Use CLI outputs and MCP [Resources](./README.md#mcp) / [Prompts](./README.md#mcp) as authoritative context
 	•	MCP is read-only; it never authorizes execution or writes
 	•	The only V1 execution exception is the narrow `personakit run` launcher path
 	•	Do not expand scope or invent steps

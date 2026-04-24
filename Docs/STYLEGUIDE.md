@@ -60,11 +60,8 @@ Cross-domain priority must be stated in `README.md`,
 
 ## Folder Intent
 
-- `Docs/PersonaKit/`: current engine/runtime and repository operating docs.
-- `Docs/PersonaKit/Architecture/`: durable technical decisions and invariants.
 - `Docs/V1_DIRECTION.md`: active V1 launcher scope and product contract.
-- `Docs/MCP/`: MCP-specific usage and debugging guidance.
-- `Workspaces/<name>/`: initiative subprojects with isolated docs and `.personakit` roots.
+- `Docs/`: minimal product and repo guidance for the current V1 surface.
 
 ## Structure Expectations
 
@@ -98,4 +95,3 @@ For plan docs, also include explicit status and next checkpoint.
 Related docs:
 
 - [Documentation Index](./README.md)
-- [Workspaces Index](../Workspaces/README.md)

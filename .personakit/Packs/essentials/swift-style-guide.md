@@ -7,7 +7,7 @@ Consult reference id `swift-style-guide-reference` when you need examples, trade
 
 1. Preserve the repo's declared Swift language mode and strict concurrency settings.
 2. Do not weaken concurrency checking to make code compile.
-3. `@unchecked Sendable` is prohibited unless the repository owner gave explicit approval for the exact change and the approval is recorded in `Docs/PersonaKit/Architecture/unchecked-sendable-approvals.txt`.
+3. `@unchecked Sendable` is prohibited in this repository.
 4. Treat `nonisolated(unsafe)` and `Task.detached` as last-resort exceptions that require a short exception comment.
 5. Keep IO behind explicit clients or services and keep the dependency graph obvious.
 
