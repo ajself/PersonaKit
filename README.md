@@ -2,9 +2,9 @@
 
 PersonaKit eliminates prompt setup before using AI tools.
 
-PersonaKit V1 is for solo developers to invoke AI coding tasks with consistent, reusable context without rebuilding that context every session.
+PersonaKit V1 is for solo developers to invoke AI coding tasks with a deterministic, reusable operating contract instead of rebuilding role, constraints, and grounding every session.
 
-It is not an agent, planner, memory system, or workflow platform. PersonaKit resolves known context and launches work with that context applied.
+It is not an agent, planner, memory system, or workflow platform. PersonaKit resolves a known operating contract and launches work with that contract applied.
 
 ## Current Direction
 
@@ -16,9 +16,9 @@ personakit run --session <id> --agent <agent> -- "<task>"
 
 That command:
 
-- resolve reusable context from a named session
-- assemble deterministic runtime context from PersonaKit data
-- launch one supported AI agent with that context applied
+- resolve a named operating contract from PersonaKit data
+- assemble deterministic runtime grounding from that contract
+- launch one supported AI agent with that contract applied
 - remove the need for manual copy/paste prompt setup
 
 If a feature does not directly support that workflow, it is out of scope for V1.
@@ -27,7 +27,9 @@ For the active product direction, read `Docs/V1_DIRECTION.md`.
 
 ## What PersonaKit Is
 
-PersonaKit is a context resolver and launcher for AI work.
+PersonaKit is an operating-contract resolver and launcher for AI work.
+
+It does not just bundle prompt text. It resolves the active role, required grounding, allowed skills, and stop points for the work.
 
 It helps you define and reuse:
 
@@ -35,9 +37,9 @@ It helps you define and reuse:
 - **Kits** — how that role works
 - **Directive** — what kind of work is being done
 - **Essentials** — rules and references that must be present
-- **Session** — a named pairing of persona + directive, with optional overrides
+- **Session** — a named entry point to a resolved operating contract
 
-PersonaKit resolves those inputs into deterministic runtime context so you do not have to restate them every time you start an agent task.
+PersonaKit resolves those inputs into a deterministic operating contract so you do not have to restate them every time you start an agent task.
 
 ## What PersonaKit Is Not
 
@@ -50,7 +52,16 @@ PersonaKit is deliberately not:
 - a task management product
 - a replacement for your coding agent
 
-PersonaKit prepares context. Another tool performs the work.
+PersonaKit activates the contract. Another tool performs the work.
+
+## Authority Stack
+
+Use these layers in order:
+
+- `AGENTS.md` constrains local repo behavior.
+- PersonaKit activates the current operating contract.
+- skills provide authorized procedures.
+- tools execute within those repo and contract constraints.
 
 ## V1 Product Principles
 
@@ -66,7 +77,7 @@ If a proposed feature violates these principles, it does not belong in V1.
 
 In scope:
 
-- session-based context resolution
+- session-based contract resolution
 - deterministic merging of personas, kits, directives, and essentials
 - a CLI `run` command
 - one agent adapter
@@ -84,7 +95,7 @@ Out of scope:
 
 Think in one sentence:
 
-> PersonaKit resolves reusable professional context so an AI agent can start work already grounded.
+> PersonaKit resolves a reusable operating contract so an AI agent can start work already grounded.
 
 The core model is:
 
@@ -93,10 +104,11 @@ Persona (who)
 + Kits (how)
 + Directive (what kind of work)
 + Essentials (must-include grounding)
-= Session context
++ Skill authorization
+= Resolved operating contract
 ```
 
-A session is the practical entry point for V1. It gives a stable name to a context pairing you want to reuse.
+A session is the practical entry point for V1. It gives a stable name to a contract you want to reuse.
 
 ## Quick Start
 
@@ -127,24 +139,32 @@ personakit validate
 
 If validation fails, fix the first error before moving on.
 
-### 3. Export a session manually when needed
+### 3. Inspect a session contract manually when needed
 
 ```bash
-personakit export --session review-swiftui
+personakit contract --session architectural-editor-review
 ```
 
-This is useful for inspection and debugging.
+This is useful when you want to inspect the resolved role, skill authorization, and stop points directly.
+
+### 4. Export a session manually when needed
+
+```bash
+personakit export --session architectural-editor-review
+```
+
+This renders a human-readable prompt form of the resolved contract. It is useful for inspection and debugging.
 
 To copy the stitched prompt directly to the clipboard:
 
 ```bash
-personakit export --session review-swiftui --copy
+personakit export --session architectural-editor-review --copy
 ```
 
-### 4. Run work with grounded context
+### 5. Run work with grounded context
 
 ```bash
-personakit run --session review-swiftui --agent opencode -- "Review the current SwiftUI change and propose the smallest safe refactor."
+personakit run --session architectural-editor-review --agent opencode -- "Review the current SwiftUI change and propose the smallest safe refactor."
 ```
 
 That is the intended V1 experience: one command, known context, one live task.
@@ -152,20 +172,20 @@ That is the intended V1 experience: one command, known context, one live task.
 To copy the dry-run payload instead of printing it:
 
 ```bash
-personakit run --session review-swiftui --agent opencode --dry-run --copy -- "Review the current SwiftUI change and propose the smallest safe refactor."
+personakit run --session architectural-editor-review --agent opencode --dry-run --copy -- "Review the current SwiftUI change and propose the smallest safe refactor."
 ```
 
 ## Sessions
 
-A session is a named shortcut for reusable context.
+A session is a named shortcut for a reusable operating contract.
 
 Example:
 
 ```json
 {
-  "id": "review-swiftui",
-  "personaId": "senior-swiftui-engineer",
-  "directiveId": "apply-style"
+  "id": "architectural-editor-review",
+  "personaId": "architectural-editor",
+  "directiveId": "review-architecture-invariants"
 }
 ```
 
@@ -177,6 +197,7 @@ Current CLI commands:
 
 ```text
 personakit validate
+personakit contract --session <id>
 personakit export --session <id>
 personakit export --session <id> --copy
 personakit list personas|kits|directives|intents|skills|essentials|sessions
@@ -196,7 +217,7 @@ PersonaKit includes a read-only MCP server so compatible tools can read PersonaK
 personakit mcp
 ```
 
-MCP is an integration surface, not the core product story. For V1, focus on deterministic context resolution and the `run` workflow.
+MCP is an integration surface, not the core product story. For V1, focus on deterministic contract resolution and the `run` workflow.
 
 ## Safety And Determinism
 
@@ -224,18 +245,10 @@ That means:
 
 AI tools are powerful, but repeated context setup is tedious and error-prone.
 
-PersonaKit exists to make expectations explicit and reusable so your tools can start from a known professional operating context instead of improvising from scratch.
+PersonaKit exists to make expectations explicit and reusable so your tools can start from a known professional operating contract instead of improvising from scratch.
 
 ## For Agents Working In This Repo
 
-`AGENTS.md` is binding for agent behavior in this repository.
-
-Agents working here must preserve the V1 direction:
-
-- do not introduce memory systems
-- do not reintroduce removed platform concepts
-- do not expand into workflow orchestration
-- do not broaden PersonaKit into a platform product
-- prefer reuse of existing resolver and export logic
+`AGENTS.md` is binding for agent behavior in this repository. Use it as the local authority for repo rules and execution boundaries.
 
 PersonaKit V1 wins by being narrow, predictable, and useful.
