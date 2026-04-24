@@ -11,9 +11,7 @@
     }
   ],
   "includesEssentialIds": [
-    "swift-style-guide",
-    "tools-and-constraints",
-    "non-goals"
+    "swift-style-guide"
   ],
   "requiresSkillIds": [
     "codex-cli"

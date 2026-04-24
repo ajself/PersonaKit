@@ -4,9 +4,7 @@
   "name": "SwiftUI Style Kit",
   "summary": "SwiftUI-specific style and accessibility rules.",
   "essentialIds": [
-    "swiftui-style-guide",
-    "tools-and-constraints",
-    "non-goals"
+    "swiftui-style-guide"
   ],
   "referenceIds": [
     "swiftui-style-guide-reference"

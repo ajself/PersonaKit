@@ -18,7 +18,7 @@ Consult reference id `swiftui-style-guide-reference` when you need examples, arc
    - one explicit owner type
    - injected client or service boundaries
 2. UI-facing owner types should usually be `@MainActor`.
-3. Read `App/ArchitectureDefaults.md` before adding a new feature owner shape.
+3. Read the repo's architecture defaults before adding a new feature owner shape.
 
 ## View And Data Guidance
 

@@ -1,5 +1,7 @@
 # Non-Goals
 
-- No architecture rewrites
-- No execution inside PersonaKit
-- No commit operations without AJ authorization under the active worktree policy
+- No architecture rewrites by default
+- No memory systems
+- No multi-session continuation
+- No workflow orchestration
+- No execution outside the narrow `personakit run` launcher path

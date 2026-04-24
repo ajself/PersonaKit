@@ -1,7 +1,6 @@
 # Repository Architecture Defaults
 
-PersonaKit implementation work follows Feature-Oriented SwiftUI Architecture
-(FOSA) defaults with explicit ownership and deterministic boundaries.
+Use this essential when the active contract needs the repo's default implementation shape.
 
 ## Defaults
 
@@ -21,10 +20,3 @@ Tests/
   Features/
   Shared/
 ```
-
-## Working Rules
-
-- Avoid unrelated architecture rewrites outside approved milestones.
-- Keep external user-facing entrypoints stable during migration unless a
-  milestone explicitly defines cutover.
-- Use milestone stop points and human review before advancing.

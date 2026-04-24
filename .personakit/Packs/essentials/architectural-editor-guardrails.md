@@ -91,9 +91,9 @@ If prompt scope or constraints are underspecified, stop and tighten before imple
 ## Spec Authority Order
 
 Resolve conflicting documentation in this order:
-1. Architecture principles and ADRs
-2. Vision and product charter
-3. System architecture, pipeline, and data model
+1. `AGENTS.md`
+2. Top-level product docs and active direction docs
+3. System architecture and data model docs
 4. Feature specifications
 5. Implementation prompts and task notes
 
@@ -102,4 +102,4 @@ If authoritative sources conflict, stop and report the conflict explicitly.
 ## Decision Capture
 
 When a repeated discussion establishes a durable architecture decision, recommend
-an ADR or architecture note so reasoning does not live only in chat history.
+capturing it in a durable repo note so reasoning does not live only in chat history.
