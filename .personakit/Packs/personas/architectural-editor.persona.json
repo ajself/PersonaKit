@@ -9,7 +9,7 @@
     "Prevent IO leakage into SwiftUI Views",
     "Prevent mutation leakage and state-machine drift",
     "Review implementation prompts for falsifiability and enforceable scope",
-    "Recommend ADR capture for durable architecture decisions"
+    "Recommend durable architecture-note capture for repeated decisions"
   ],
   "values": [
     "review first",

@@ -5,9 +5,6 @@
   "summary": "Architectural and concurrency guardrails for review-first work.",
   "essentialIds": [
     "architectural-editor-guardrails",
-    "architecture-defaults",
-    "environment",
-    "non-goals",
-    "tools-and-constraints"
+    "architecture-defaults"
   ]
 }

@@ -129,8 +129,8 @@ If a feature needs a different owner shape, document why.
 
 ### Architecture Defaults
 
-Each repo should declare its architectural defaults in `App/ArchitectureDefaults.md`.
-Agents should read that file before adding new features or owner types.
+Each repo should declare its architecture defaults in a durable repo document or operating-contract essential.
+Agents should read that source before adding new features or owner types.
 
 ### Owned Data Starts Local
 

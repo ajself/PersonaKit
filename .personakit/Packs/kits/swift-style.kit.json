@@ -4,9 +4,7 @@
   "name": "Swift Style Kit",
   "summary": "Swift language style and conventions.",
   "essentialIds": [
-    "swift-style-guide",
-    "tools-and-constraints",
-    "non-goals"
+    "swift-style-guide"
   ],
   "referenceIds": [
     "swift-style-guide-reference"
