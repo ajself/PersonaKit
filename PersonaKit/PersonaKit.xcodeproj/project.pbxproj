@@ -13,20 +13,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		D15697A92F5BA3AC00670F8F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = D156979A2F5BA3AB00670F8F;
-			remoteInfo = PersonaKit;
-		};
-		D15697B32F5BA3AC00670F8F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = D156979A2F5BA3AB00670F8F;
-			remoteInfo = PersonaKit;
-		};
 		D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
@@ -50,8 +36,6 @@
 
 /* Begin PBXFileReference section */
 		D156979B2F5BA3AB00670F8F /* PersonaKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitHostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaKitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D15697CC2F5BA47200670F8F /* PersonaKitCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PersonaKitCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -59,16 +43,6 @@
 		D156979D2F5BA3AB00670F8F /* PersonaKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PersonaKit;
-			sourceTree = "<group>";
-		};
-		D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaKitHostTests;
-			sourceTree = "<group>";
-		};
-		D15697B52F5BA3AC00670F8F /* PersonaKitUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaKitUITests;
 			sourceTree = "<group>";
 		};
 		D15697CD2F5BA47200670F8F /* PersonaKitCLI */ = {
@@ -116,8 +90,6 @@
 			isa = PBXGroup;
 			children = (
 				D156979D2F5BA3AB00670F8F /* PersonaKit */,
-				D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */,
-				D15697B52F5BA3AC00670F8F /* PersonaKitUITests */,
 				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
 				D156979C2F5BA3AB00670F8F /* Products */,
 			);
@@ -127,8 +99,6 @@
 			isa = PBXGroup;
 			children = (
 				D156979B2F5BA3AB00670F8F /* PersonaKit.app */,
-				D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */,
-				D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */,
 				D15697CC2F5BA47200670F8F /* PersonaKitCLI */,
 			);
 			name = Products;
@@ -160,52 +130,6 @@
 			productName = PersonaKit;
 			productReference = D156979B2F5BA3AB00670F8F /* PersonaKit.app */;
 			productType = "com.apple.product-type.application";
-		};
-		D15697A72F5BA3AC00670F8F /* PersonaKitHostTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitHostTests" */;
-			buildPhases = (
-				D15697A42F5BA3AC00670F8F /* Sources */,
-				D15697A52F5BA3AC00670F8F /* Frameworks */,
-				D15697A62F5BA3AC00670F8F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				D15697AB2F5BA3AC00670F8F /* PersonaKitHostTests */,
-			);
-			name = PersonaKitHostTests;
-			packageProductDependencies = (
-			);
-			productName = PersonaKitHostTests;
-			productReference = D15697A82F5BA3AC00670F8F /* PersonaKitHostTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		D15697B12F5BA3AC00670F8F /* PersonaKitUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = D15697C22F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitUITests" */;
-			buildPhases = (
-				D15697AE2F5BA3AC00670F8F /* Sources */,
-				D15697AF2F5BA3AC00670F8F /* Frameworks */,
-				D15697B02F5BA3AC00670F8F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				D15697B42F5BA3AC00670F8F /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				D15697B52F5BA3AC00670F8F /* PersonaKitUITests */,
-			);
-			name = PersonaKitUITests;
-			packageProductDependencies = (
-			);
-			productName = PersonaKitUITests;
-			productReference = D15697B22F5BA3AC00670F8F /* PersonaKitUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		D15697CB2F5BA47200670F8F /* PersonaKitCLI */ = {
 			isa = PBXNativeTarget;
@@ -243,14 +167,6 @@
 					D156979A2F5BA3AB00670F8F = {
 						CreatedOnToolsVersion = 26.2;
 					};
-					D15697A72F5BA3AC00670F8F = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = D156979A2F5BA3AB00670F8F;
-					};
-					D15697B12F5BA3AC00670F8F = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = D156979A2F5BA3AB00670F8F;
-					};
 					D15697CB2F5BA47200670F8F = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -274,8 +190,6 @@
 			projectRoot = "";
 			targets = (
 				D156979A2F5BA3AB00670F8F /* PersonaKit */,
-				D15697A72F5BA3AC00670F8F /* PersonaKitHostTests */,
-				D15697B12F5BA3AC00670F8F /* PersonaKitUITests */,
 				D15697CB2F5BA47200670F8F /* PersonaKitCLI */,
 			);
 		};
@@ -290,38 +204,10 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D15697A62F5BA3AC00670F8F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D15697B02F5BA3AC00670F8F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D15697972F5BA3AB00670F8F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D15697A42F5BA3AC00670F8F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D15697AE2F5BA3AC00670F8F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -342,16 +228,6 @@
 			isa = PBXTargetDependency;
 			target = D15697CB2F5BA47200670F8F /* PersonaKitCLI */;
 			targetProxy = D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */;
-		};
-		D15697AA2F5BA3AC00670F8F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = D156979A2F5BA3AB00670F8F /* PersonaKit */;
-			targetProxy = D15697A92F5BA3AC00670F8F /* PBXContainerItemProxy */;
-		};
-		D15697B42F5BA3AC00670F8F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = D156979A2F5BA3AB00670F8F /* PersonaKit */;
-			targetProxy = D15697B32F5BA3AC00670F8F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -540,86 +416,6 @@
 			};
 			name = Release;
 		};
-		D15697C02F5BA3AC00670F8F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitHostTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
-			};
-			name = Debug;
-		};
-		D15697C12F5BA3AC00670F8F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitHostTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaKit";
-			};
-			name = Release;
-		};
-		D15697C32F5BA3AC00670F8F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = PersonaKit;
-			};
-			name = Debug;
-		};
-		D15697C42F5BA3AC00670F8F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ajself.PersonaKitUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = PersonaKit;
-			};
-			name = Release;
-		};
 		D15697D12F5BA47200670F8F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -663,24 +459,6 @@
 			buildConfigurations = (
 				D15697BD2F5BA3AC00670F8F /* Debug */,
 				D15697BE2F5BA3AC00670F8F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		D15697BF2F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitHostTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D15697C02F5BA3AC00670F8F /* Debug */,
-				D15697C12F5BA3AC00670F8F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		D15697C22F5BA3AC00670F8F /* Build configuration list for PBXNativeTarget "PersonaKitUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D15697C32F5BA3AC00670F8F /* Debug */,
-				D15697C42F5BA3AC00670F8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
