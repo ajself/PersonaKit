@@ -20,7 +20,7 @@ Agents may interact with PersonaKit via:
 • the [Swift CLI](./README.md#quick-start)
 • the [PersonaKit MCP server](./README.md#mcp) (agent-invoked, read-only)
 
-In both cases, PersonaKit is primarily a source of context, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
+In both cases, PersonaKit resolves an operating contract, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
 
 Reference:
 • [Quick Start](./README.md#quick-start)
@@ -83,11 +83,24 @@ Agents must follow these rules at all times:
 	   • Prompts return assembled context only; they do not imply permission to act
 	   • Never attempt to write back to the PersonaKit root via MCP
 
+Authority Order
+
+Within this repo, use this order:
+	1.	`AGENTS.md`
+	2.	PersonaKit
+	3.	skills
+	4.	tools
+
+Implications:
+	•	PersonaKit may activate a mode of work, but it must not override repo-local policy in `AGENTS.md`.
+	•	Skills may guide procedure, but they must not override PersonaKit authorization.
+	•	Tools must remain subordinate to repo and contract rules even when directly available.
+
 ⸻
 
 How Agents Should Use PersonaKit
 
-Agents should treat PersonaKit as the source of truth for context.
+Agents should treat PersonaKit as the source of truth for the active operating contract once repo-local behavior is grounded in `AGENTS.md`.
 
 When working on this repo, agents should:
 	1.	Identify the active Persona
@@ -109,7 +122,7 @@ If PersonaKit validation fails, agents should not proceed.
 When implementing or reviewing `personakit run` specifically:
 • Treat it as a narrow launcher, not a general automation surface
 • Keep execution-light behavior everywhere outside that one command
-• Preserve the boundary between context resolution and external agent execution
+• Preserve the boundary between contract resolution and external agent execution
 
 ⸻
 
@@ -181,7 +194,7 @@ PersonaKit is designed to keep humans in control while still benefiting from AI 
 ⸻
 
 Summary (for agents)
-	•	PersonaKit defines the role, constraints, and directive — not you
+	•	`AGENTS.md` is the final local authority; PersonaKit resolves the active operating contract within that authority
 	•	Use CLI outputs and MCP [Resources](./README.md#mcp) / [Prompts](./README.md#mcp) as authoritative context
 	•	MCP is read-only; it never authorizes execution or writes
 	•	The only V1 execution exception is the narrow `personakit run` launcher path

@@ -8,7 +8,7 @@ PersonaKit V1 provides a single command:
 personakit run --session <id> --agent <agent> -- "<task>"
 ```
 
-That resolves reusable context (persona, kits, directives, essentials) and launches an AI agent with that context applied.
+That resolves a deterministic operating contract (persona, kits, directives, essentials, and skill authorization) and launches an AI agent with that contract applied.
 
 The user should not need to copy/paste prompts or manually reconstruct context.
 
@@ -31,7 +31,7 @@ This leads to:
 
 ### V1 Solution
 
-PersonaKit resolves a **named session** into a deterministic context bundle and injects it into an agent invocation.
+PersonaKit resolves a **named session** into a deterministic operating contract and injects it into an agent invocation.
 
 ---
 
@@ -48,7 +48,7 @@ PersonaKit V1 is successful if:
 
 ### In Scope
 
-- Session-based context resolution
+- Session-based contract resolution
 - Deterministic merging of:
   - persona
   - kits
@@ -76,6 +76,6 @@ PersonaKit V1 is successful if:
 
 PersonaKit is not an agent.
 
-PersonaKit is a **context resolver and launcher**.
+PersonaKit is a **deterministic operating-contract resolver and launcher**.
 
 It defines *how work should be done*, not *what work to do next*.
