@@ -66,6 +66,7 @@ enum MCPPackResourceType: String, CaseIterable, Equatable {
 
 /// Supported MCP catalog resources for API/domain discovery.
 enum MCPCatalogResourceType: String, CaseIterable, Equatable {
+  case start
   case index
   case personas
   case kits

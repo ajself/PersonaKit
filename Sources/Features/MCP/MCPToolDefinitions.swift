@@ -18,21 +18,21 @@ enum MCPToolName: String, CaseIterable {
     case .compareEntities:
       return "Compare two PersonaKit entities of the same type and report deterministic differences."
     case .contract:
-      return "Resolve the structured PersonaKit operating contract for a session or persona selection."
+      return "Resolve the structured PersonaKit operating contract before acting on a selected session or persona/directive pair."
     case .explainEntity:
       return "Explain a PersonaKit entity with key fields and relationship edges."
     case .export:
-      return "Assemble Persona+Kits+Directive into a single Markdown prompt."
+      return "Assemble Persona+Kits+Directive into a single Markdown prompt when human-readable grounding is needed."
     case .graph:
       return "Print a readable dependency graph for a session."
     case .recommendSession:
-      return "Recommend sessions for a goal using deterministic ranking."
+      return "Recommend sessions for a natural-language task when the correct session id is not known."
     case .resolveSessionRef:
       return "Resolve a session reference supplied as either a session id or a session-file path."
     case .resolveReferences:
-      return "Resolve triggered references declared for a session using explicit target paths and reference tags."
+      return "Resolve triggered references for explicit target paths or reference tags after the active contract is known."
     case .traceSession:
-      return "Trace a session into persona/directive/kits/intents/skills/essentials edges."
+      return "Trace a resolved session into persona/directive/kits/intents/skills/essentials edges for provenance review."
     case .validate:
       return "Validate PersonaKit packs and report errors."
     }

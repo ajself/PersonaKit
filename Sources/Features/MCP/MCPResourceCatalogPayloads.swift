@@ -2,6 +2,35 @@ import Foundation
 import MCP
 
 enum MCPCatalogPayloads {
+  struct Start: Encodable {
+    let schemaVersion: Int
+    let type: String
+    let purpose: String
+    let safetyModel: [String]
+    let quickStart: [StartStep]
+    let commonFlows: [StartFlow]
+    let resourceMap: [StartEntry]
+    let toolMap: [StartEntry]
+    let promptMap: [StartEntry]
+    let antiPatterns: [String]
+  }
+
+  struct StartStep: Encodable {
+    let order: Int
+    let action: String
+    let use: String
+  }
+
+  struct StartFlow: Encodable {
+    let goal: String
+    let steps: [String]
+  }
+
+  struct StartEntry: Encodable {
+    let id: String
+    let use: String
+  }
+
   struct Scope: Encodable {
     let projectRoot: String?
     let globalRoot: String?
@@ -49,6 +78,7 @@ enum MCPCatalogPayloads {
   struct API: Encodable {
     let schemaVersion: Int
     let type: String
+    let firstReadUri: String
     let resources: [APIResourceSummary]
   }
 }
@@ -56,6 +86,8 @@ enum MCPCatalogPayloads {
 enum MCPCatalogSupport {
   static func description(for type: MCPCatalogResourceType) -> String {
     switch type {
+    case .start:
+      return "Start-here guide for MCP discovery, grounding, safety, and common PersonaKit flows."
     case .index:
       return "Top-level catalog index with counts, scope metadata, and type URIs."
     case .personas:

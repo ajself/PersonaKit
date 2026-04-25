@@ -228,6 +228,18 @@ personakit mcp
 
 MCP is an integration surface, not the core product story. For V1, focus on deterministic contract resolution and the `run` workflow.
 
+For unfamiliar MCP clients and AI agents, start with:
+
+1. Read `personakit://catalog/start`.
+2. Read `personakit://catalog/sessions` or call `personakit_recommend_session`.
+3. Call `personakit_resolve_contract` for the selected session.
+4. Call `personakit_trace_session` when you need provenance for persona, directive, kits, skills, essentials, and references.
+5. Read raw pack or essential resources only as needed.
+
+PersonaKit MCP is read-only grounding. It does not authorize execution, write files, or turn PersonaKit into an autonomous workflow engine.
+
+More detail: [Docs/mcp.md](./Docs/mcp.md).
+
 ## Safety And Determinism
 
 PersonaKit should remain:
