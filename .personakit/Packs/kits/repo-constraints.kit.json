@@ -2,10 +2,9 @@
   "id": "repo-constraints",
   "version": "1.0",
   "name": "Repository Constraints Kit",
-  "summary": "Runtime defaults and non-goals specific to this codebase.",
+  "summary": "Local operating defaults and product boundaries for this repository.",
   "essentialIds": [
     "architecture-defaults",
-    "environment",
     "non-goals",
     "tools-and-constraints"
   ]
