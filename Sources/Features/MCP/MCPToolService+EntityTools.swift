@@ -253,68 +253,43 @@ extension MCPToolService {
       )
     }
 
-    let goalTerms = MCPInternalSupport.tokenSet(input.goal)
-    let recommendations = sessions.compactMap { session -> MCPToolPayloads.SessionRecommendation? in
-      guard let persona = registry.personasById[session.personaId],
-        let directive = registry.directivesById[session.directiveId]
-      else {
-        return nil
-      }
+    let result = SessionRecommendationSupport.recommend(
+      goal: input.goal,
+      sessions: sessions,
+      registry: registry
+    )
 
-      let personaTerms = MCPInternalSupport.matchedTerms(
-        goalTerms: goalTerms,
-        text: [
-          persona.id,
-          persona.name,
-          persona.summary,
-          persona.responsibilities.joined(separator: " "),
-          persona.values.joined(separator: " "),
-        ].joined(separator: " ")
-      )
-
-      let directiveTerms = MCPInternalSupport.matchedTerms(
-        goalTerms: goalTerms,
-        text: [
-          directive.id,
-          directive.title,
-          directive.goal,
-          directive.acceptanceCriteria.joined(separator: " "),
-          directive.steps.map(\.text).joined(separator: " "),
-        ].joined(separator: " ")
-      )
-
-      let sessionTerms = MCPInternalSupport.matchedTerms(goalTerms: goalTerms, text: session.id)
-
-      let score = personaTerms.count * 3 + directiveTerms.count * 2 + sessionTerms.count
-
-      return MCPToolPayloads.SessionRecommendation(
-        sessionId: session.id,
-        personaId: session.personaId,
-        directiveId: session.directiveId,
-        kitOverrides: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
-        score: score,
-        matchedGoalTerms: MCPInternalSupport.uniqueSorted(personaTerms + directiveTerms + sessionTerms),
-        termMatches: MCPToolPayloads.SessionRecommendationTermMatches(
-          persona: personaTerms,
-          directive: directiveTerms,
-          session: sessionTerms
+    if !result.invalidSessions.isEmpty {
+      throw MCPError.invalidParams(
+        MCPInternalSupport.withRecoveryHint(
+          SessionRecommendationSupport.formatInvalidSessions(result.invalidSessions),
+          hint: "Fix or remove invalid Sessions/*.session.json files in the active PersonaKit scope, then retry."
         )
       )
     }
-    .sorted {
-      if $0.score != $1.score {
-        return $0.score > $1.score
-      }
-      return $0.sessionId < $1.sessionId
-    }
 
-    let selected = Array(recommendations.prefix(input.limit))
+    let strongRecommendations = result.recommendations.filter { $0.score > 0 }
+    let selected = Array(strongRecommendations.prefix(input.limit)).map { recommendation in
+      MCPToolPayloads.SessionRecommendation(
+        sessionId: recommendation.sessionId,
+        personaId: recommendation.personaId,
+        directiveId: recommendation.directiveId,
+        kitOverrides: recommendation.kitOverrides,
+        score: recommendation.score,
+        matchedGoalTerms: recommendation.matchedGoalTerms,
+        termMatches: MCPToolPayloads.SessionRecommendationTermMatches(
+          persona: recommendation.termMatches.persona,
+          directive: recommendation.termMatches.directive,
+          session: recommendation.termMatches.session
+        )
+      )
+    }
 
     return try MCPInternalSupport.encodeToolJSON(
       MCPToolPayloads.SessionRecommendationPayload(
         goal: input.goal,
-        goalTerms: goalTerms,
-        consideredSessions: sessions.map(\.id).sorted(),
+        goalTerms: result.goalTerms,
+        consideredSessions: result.consideredSessionIds,
         policy: MCPToolPayloads.SessionRecommendationPolicy(),
         recommendations: selected
       )

@@ -139,7 +139,15 @@ personakit validate
 
 If validation fails, fix the first error before moving on.
 
-### 3. Inspect a session contract manually when needed
+### 3. Choose a session when the lane is not obvious
+
+```bash
+personakit recommend --goal "Review the current SwiftUI change"
+```
+
+Use this when you are unsure which session best fits the task.
+
+### 4. Inspect a session contract manually when needed
 
 ```bash
 personakit contract --session architectural-editor-review
@@ -147,7 +155,7 @@ personakit contract --session architectural-editor-review
 
 This is useful when you want to inspect the resolved role, skill authorization, and stop points directly.
 
-### 4. Export a session manually when needed
+### 5. Export a session manually when needed
 
 ```bash
 personakit export --session architectural-editor-review
@@ -161,7 +169,7 @@ To copy the stitched prompt directly to the clipboard:
 personakit export --session architectural-editor-review --copy
 ```
 
-### 5. Run work with grounded context
+### 6. Run work with grounded context
 
 ```bash
 personakit run --session architectural-editor-review --agent opencode -- "Review the current SwiftUI change and propose the smallest safe refactor."
@@ -197,6 +205,7 @@ Current CLI commands:
 
 ```text
 personakit validate
+personakit recommend --goal "<task>"
 personakit contract --session <id>
 personakit export --session <id>
 personakit export --session <id> --copy
