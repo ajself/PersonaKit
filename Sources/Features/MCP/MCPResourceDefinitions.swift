@@ -75,6 +75,7 @@ enum MCPCatalogResourceType: String, CaseIterable, Equatable {
   case skills
   case essentials
   case sessions
+  case guidance
   case api
 
   var mimeType: String {

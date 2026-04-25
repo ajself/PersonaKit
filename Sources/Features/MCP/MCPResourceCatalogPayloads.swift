@@ -6,6 +6,8 @@ enum MCPCatalogPayloads {
     let schemaVersion: Int
     let type: String
     let purpose: String
+    let scope: Scope
+    let warnings: [String]
     let safetyModel: [String]
     let quickStart: [StartStep]
     let commonFlows: [StartFlow]
@@ -104,6 +106,8 @@ enum MCPCatalogSupport {
       return "List of essential markdown ids available in the active scope set."
     case .sessions:
       return "Session summaries with persona, directive, and optional kit overrides."
+    case .guidance:
+      return "Best-effort agent guidance for verifying loaded scope and choosing the next grounding step."
     case .api:
       return "Catalog API overview for MCP discovery and navigation."
     }
