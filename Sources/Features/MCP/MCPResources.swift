@@ -70,11 +70,12 @@ struct MCPResourceService: Sendable {
     }
 
     let relativePath = reference.relativePath
-    guard let fileURL = MCPResourceFileSupport.resolveFileURL(
-      reference: reference,
-      scopes: scopes,
-      fileManager: .default
-    )
+    guard
+      let fileURL = MCPResourceFileSupport.resolveFileURL(
+        reference: reference,
+        scopes: scopes,
+        fileManager: .default
+      )
     else {
       throw MCPError.invalidParams(
         "Resource not found for URI \(uri); expected \(relativePath)"
@@ -168,6 +169,8 @@ extension MCPResourceService {
           sessions: sessions
         )
       )
+    case .guidance:
+      return try BestGuidanceSupport.encodeJSON(BestGuidanceSupport.build(scopes: scopes))
     case .api:
       return try MCPCatalogSupport.encodeJSON(catalogAPIPayload())
     }
@@ -179,6 +182,8 @@ extension MCPResourceService {
       type: "start",
       purpose:
         "PersonaKit MCP helps an AI agent discover and resolve deterministic PersonaKit operating contracts.",
+      scope: catalogScopePayload(),
+      warnings: catalogScopeWarnings(),
       safetyModel: [
         "PersonaKit MCP is read-only.",
         "PersonaKit MCP provides grounding context and does not authorize execution.",
@@ -188,26 +193,31 @@ extension MCPResourceService {
       quickStart: [
         MCPCatalogPayloads.StartStep(
           order: 1,
-          action: "Read the start guide.",
+          action: "Read the start guide and verify the loaded scope.",
           use: "personakit://catalog/start"
         ),
         MCPCatalogPayloads.StartStep(
           order: 2,
+          action: "Review best guidance for scope risks and next steps.",
+          use: "personakit://catalog/guidance or personakit_best_guidance"
+        ),
+        MCPCatalogPayloads.StartStep(
+          order: 3,
           action: "Discover or recommend a session.",
           use: "personakit://catalog/sessions or personakit_recommend_session"
         ),
         MCPCatalogPayloads.StartStep(
-          order: 3,
+          order: 4,
           action: "Resolve the operating contract.",
           use: "personakit_resolve_contract with sessionId"
         ),
         MCPCatalogPayloads.StartStep(
-          order: 4,
+          order: 5,
           action: "Trace provenance when constraints need audit context.",
           use: "personakit_trace_session"
         ),
         MCPCatalogPayloads.StartStep(
-          order: 5,
+          order: 6,
           action: "Read raw persona, kit, directive, skill, or essential resources only as needed.",
           use: "personakit://packs/... and personakit://essentials/..."
         ),
@@ -257,6 +267,10 @@ extension MCPResourceService {
           use: "List reusable sessions with persona, directive, and kit override ids."
         ),
         MCPCatalogPayloads.StartEntry(
+          id: "personakit://catalog/guidance",
+          use: "Read loaded scope, warnings, risks, and safe next grounding steps."
+        ),
+        MCPCatalogPayloads.StartEntry(
           id: "personakit://packs/<type>/<id>",
           use: "Read raw pack JSON for personas, kits, directives, intents, and skills."
         ),
@@ -269,6 +283,10 @@ extension MCPResourceService {
         MCPCatalogPayloads.StartEntry(
           id: "personakit_recommend_session",
           use: "Use when the task is known but the session id is not."
+        ),
+        MCPCatalogPayloads.StartEntry(
+          id: "personakit_best_guidance",
+          use: "Use before session selection when scope or grounding order may be ambiguous."
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit_resolve_contract",
@@ -322,12 +340,7 @@ extension MCPResourceService {
 
     return MCPCatalogPayloads.Index(
       schemaVersion: 1,
-      scope: MCPCatalogPayloads.Scope(
-        projectRoot: scopes.projectScopeURL?.path,
-        globalRoot: scopes.globalScopeURL?.path,
-        loadOrder: scopes.loadOrder.map(\.path),
-        resolutionOrder: scopes.resolutionOrder.map(\.path)
-      ),
+      scope: catalogScopePayload(),
       counts: [
         "start": 1,
         "personas": registry.personas.count,
@@ -337,6 +350,7 @@ extension MCPResourceService {
         "skills": registry.skills.count,
         "essentials": essentials.count,
         "sessions": sessions.count,
+        "guidance": 1,
       ],
       resources: resources
     )
@@ -364,7 +378,7 @@ extension MCPResourceService {
     sessionsCount: Int
   ) -> Int {
     switch type {
-    case .start, .index, .api:
+    case .start, .index, .guidance, .api:
       return 1
     case .personas:
       return registry.personas.count
@@ -381,6 +395,39 @@ extension MCPResourceService {
     case .sessions:
       return sessionsCount
     }
+  }
+
+  private func catalogScopePayload() -> MCPCatalogPayloads.Scope {
+    MCPCatalogPayloads.Scope(
+      projectRoot: scopes.projectScopeURL?.path,
+      globalRoot: scopes.globalScopeURL?.path,
+      loadOrder: scopes.loadOrder.map(\.path),
+      resolutionOrder: scopes.resolutionOrder.map(\.path)
+    )
+  }
+
+  private func catalogScopeWarnings() -> [String] {
+    let globalRoot = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent(".personakit")
+      .standardizedFileURL
+      .resolvingSymlinksInPath()
+      .path
+
+    let projectRoot = scopes.projectScopeURL?
+      .standardizedFileURL
+      .resolvingSymlinksInPath()
+      .path
+
+    guard projectRoot == globalRoot, scopes.globalScopeURL == nil else {
+      return []
+    }
+
+    let warning = [
+      "MCP loaded ~/.personakit as the only scope; project-local sessions may be hidden.",
+      "Verify the configured MCP --root or working directory when repo-local grounding is expected.",
+    ].joined(separator: " ")
+
+    return [warning]
   }
 }
 

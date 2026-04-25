@@ -2,6 +2,7 @@ import MCP
 
 /// Supported tool names exposed by the PersonaKit MCP server.
 enum MCPToolName: String, CaseIterable {
+  case bestGuidance = "personakit_best_guidance"
   case compareEntities = "personakit_compare_entities"
   case contract = "personakit_resolve_contract"
   case explainEntity = "personakit_explain_entity"
@@ -15,10 +16,13 @@ enum MCPToolName: String, CaseIterable {
 
   var description: String {
     switch self {
+    case .bestGuidance:
+      return "Report loaded scope, risks, and best next grounding steps before choosing a PersonaKit session."
     case .compareEntities:
       return "Compare two PersonaKit entities of the same type and report deterministic differences."
     case .contract:
-      return "Resolve the structured PersonaKit operating contract before acting on a selected session or persona/directive pair."
+      return
+        "Resolve the structured PersonaKit operating contract before acting on a selected session or persona/directive pair."
     case .explainEntity:
       return "Explain a PersonaKit entity with key fields and relationship edges."
     case .export:
@@ -30,9 +34,11 @@ enum MCPToolName: String, CaseIterable {
     case .resolveSessionRef:
       return "Resolve a session reference supplied as either a session id or a session-file path."
     case .resolveReferences:
-      return "Resolve triggered references for explicit target paths or reference tags after the active contract is known."
+      return
+        "Resolve triggered references for explicit target paths or reference tags after the active contract is known."
     case .traceSession:
-      return "Trace a resolved session into persona/directive/kits/intents/skills/essentials edges for provenance review."
+      return
+        "Trace a resolved session into persona/directive/kits/intents/skills/essentials edges for provenance review."
     case .validate:
       return "Validate PersonaKit packs and report errors."
     }
@@ -40,7 +46,7 @@ enum MCPToolName: String, CaseIterable {
 
   var inputSchema: Value {
     switch self {
-    case .validate:
+    case .bestGuidance, .validate:
       return [
         "type": "object",
         "properties": Value.object([:]),

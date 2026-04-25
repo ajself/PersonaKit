@@ -66,6 +66,7 @@ struct PersonaKitCommand: ParsableCommand {
       InitCommand.self,
       CreateCommand.self,
       ValidateCommand.self,
+      GuidanceCommand.self,
       RecommendCommand.self,
       ContractCommand.self,
       ExportCommand.self,
@@ -76,6 +77,25 @@ struct PersonaKitCommand: ParsableCommand {
       RunCommand.self,
     ]
   )
+}
+
+/// Prints best-effort guidance for agent grounding and scope verification.
+struct GuidanceCommand: ParsableCommand {
+  static let configuration = CommandConfiguration(
+    commandName: "guidance",
+    abstract: "Suggest safe PersonaKit grounding steps for the active scope."
+  )
+
+  @OptionGroup
+  var scope: ScopeOptions
+
+  func run() throws {
+    let scopes = try CLIHelpers.resolveMCPScopes(options: scope)
+    let payload = BestGuidanceSupport.build(scopes: scopes)
+    let output = try BestGuidanceSupport.encodeJSON(payload)
+
+    print(output)
+  }
 }
 
 /// Initializes a PersonaKit root directory at the provided path.

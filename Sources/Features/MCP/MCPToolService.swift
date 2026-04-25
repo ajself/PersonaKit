@@ -31,6 +31,9 @@ struct MCPToolService: Sendable {
     }
 
     switch tool {
+    case .bestGuidance:
+      let output = try bestGuidanceTool(arguments: arguments)
+      return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     case .validate:
       let output = try validateTool(arguments: arguments)
       return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
@@ -71,6 +74,14 @@ struct MCPToolService: Sendable {
       let output = try traceSessionTool(input: input)
       return CallTool.Result(content: [.text(text: output, annotations: nil, _meta: nil)])
     }
+  }
+
+  private func bestGuidanceTool(arguments: [String: Value]?) throws -> String {
+    guard arguments?.isEmpty ?? true else {
+      throw MCPError.invalidParams("personakit_best_guidance does not accept arguments.")
+    }
+
+    return try BestGuidanceSupport.encodeJSON(BestGuidanceSupport.build(scopes: scopes))
   }
 
   private func parseSessionArguments(_ arguments: [String: Value]?) throws -> MCPToolArguments {

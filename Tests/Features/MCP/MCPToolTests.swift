@@ -15,6 +15,7 @@ struct MCPToolTests {
 
     #expect(
       tools.map(\.name) == [
+        "personakit_best_guidance",
         "personakit_compare_entities",
         "personakit_explain_entity",
         "personakit_export",
@@ -37,6 +38,10 @@ struct MCPToolTests {
       uniqueKeysWithValues: service.listTools().map { ($0.name, $0.description ?? "") }
     )
 
+    #expect(
+      descriptions["personakit_best_guidance"]?
+        .contains("best next grounding steps") == true
+    )
     #expect(
       descriptions["personakit_recommend_session"]?
         .contains("when the correct session id is not known") == true
@@ -64,6 +69,33 @@ struct MCPToolTests {
     #expect(MCPServerRunner.instructions.contains("personakit://catalog/start"))
     #expect(MCPServerRunner.instructions.contains("read-only grounding"))
     #expect(MCPServerRunner.instructions.contains("does not authorize execution"))
+  }
+
+  @Test
+  func bestGuidanceToolReportsScopeAndCommands() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_best_guidance",
+      arguments: [:]
+    )
+
+    let output = try #require(firstText(result))
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let scope = try #require(object["scope"] as? [String: Any])
+    let risks = try #require(object["risks"] as? [String])
+    let commands = try #require(object["suggestedCommands"] as? [String])
+
+    #expect(scope["projectRoot"] as? String == fixtureKitRootURL().path)
+    #expect(
+      risks.contains(
+        "Current directory contains a project .personakit that is not in the loaded scope set."
+      )
+    )
+    #expect(!commands.contains { $0.contains("contract --root \(fixtureKitRootURL().path)") })
+    #expect(commands.contains("personakit guidance --root \(repoRootURL().appendingPathComponent(".personakit").path)"))
   }
 
   @Test
@@ -411,10 +443,12 @@ struct MCPToolTests {
     let object = try #require(jsonObject(output))
     let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
 
-    #expect(matchedReferences.map { $0["id"] as? String } == [
-      "swift-style-guide-reference",
-      "swiftui-style-guide-reference",
-    ])
+    #expect(
+      matchedReferences.map { $0["id"] as? String } == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+      ]
+    )
   }
 
   @Test
@@ -471,7 +505,7 @@ private func firstText(_ result: CallTool.Result) -> String? {
   guard let first = result.content.first else {
     return nil
   }
-  if case let .text(text, _, _) = first {
+  if case .text(let text, _, _) = first {
     return text
   }
   return nil
