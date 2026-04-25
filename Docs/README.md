@@ -4,6 +4,7 @@
 
 - [README.md](../README.md): top-level repo and product overview
 - [Docs/V1_DIRECTION.md](./V1_DIRECTION.md): active V1 product direction
+- [Docs/mcp.md](./mcp.md): MCP discovery and agent grounding guide
 
 ## Notes
 

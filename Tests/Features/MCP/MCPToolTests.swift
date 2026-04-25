@@ -30,6 +30,43 @@ struct MCPToolTests {
   }
 
   @Test
+  func groundingToolDescriptionsExplainWhenToUseThem() {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+    let descriptions = Dictionary(
+      uniqueKeysWithValues: service.listTools().map { ($0.name, $0.description ?? "") }
+    )
+
+    #expect(
+      descriptions["personakit_recommend_session"]?
+        .contains("when the correct session id is not known") == true
+    )
+    #expect(
+      descriptions["personakit_resolve_contract"]?
+        .contains("before acting") == true
+    )
+    #expect(
+      descriptions["personakit_trace_session"]?
+        .contains("provenance review") == true
+    )
+    #expect(
+      descriptions["personakit_resolve_references"]?
+        .contains("target paths or reference tags") == true
+    )
+    #expect(
+      descriptions["personakit_export"]?
+        .contains("human-readable grounding") == true
+    )
+  }
+
+  @Test
+  func mcpServerInstructionsPointAgentsAtStartResource() {
+    #expect(MCPServerRunner.instructions.contains("personakit://catalog/start"))
+    #expect(MCPServerRunner.instructions.contains("read-only grounding"))
+    #expect(MCPServerRunner.instructions.contains("does not authorize execution"))
+  }
+
+  @Test
   func toolCallExportMatchesFixture() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)

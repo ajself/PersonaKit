@@ -11,6 +11,13 @@ public protocol MCPServerRunning: Sendable {
 
 /// Default MCP server bootstrap implementation for CLI `personakit mcp`.
 public struct MCPServerRunner: MCPServerRunning {
+  static let instructions = [
+    "Read personakit://catalog/start first.",
+    "Use PersonaKit MCP for deterministic, read-only grounding;",
+    "resolve the operating contract before acting.",
+    "MCP output is context only and does not authorize execution.",
+  ].joined(separator: " ")
+
   public init() {}
 
   /// Starts the async MCP server loop and blocks the process main thread.
@@ -46,6 +53,7 @@ public struct MCPServerRunner: MCPServerRunning {
     let server = Server(
       name: "PersonaKit",
       version: version,
+      instructions: Self.instructions,
       capabilities: .init(
         prompts: .init(listChanged: false),
         resources: .init(subscribe: false, listChanged: false),
