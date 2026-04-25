@@ -177,6 +177,25 @@ struct MCPToolTests {
   }
 
   @Test
+  func recommendSessionToolReturnsNoStrongMatchForWeakGoal() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_recommend_session",
+      arguments: [
+        "goal": "warehouse forklift barcode",
+        "limit": 3,
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let recommendations = try #require(object["recommendations"] as? [[String: Any]])
+    #expect(recommendations.isEmpty)
+  }
+
+  @Test
   func resolveSessionRefToolNormalizesSessionID() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
