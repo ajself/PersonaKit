@@ -5,9 +5,13 @@ Use this essential when the active contract needs the repo's default implementat
 ## Defaults
 
 - Organize by feature first, then shared layers.
-- Use explicit feature owners for mutable state.
+- Use one explicit feature owner for mutable state.
 - Keep IO behind clients/managers and inject dependencies for tests.
-- Keep behavior deterministic across runs.
+- Preserve deterministic behavior and explicit mutation paths.
+
+## Deviation Rule
+
+- If a feature needs a different architecture shape, document the reason and tradeoff in the change.
 
 ## Target Layout
 
