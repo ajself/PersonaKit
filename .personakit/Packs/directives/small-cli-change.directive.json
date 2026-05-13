@@ -1,0 +1,41 @@
+{
+  "id": "small-cli-change",
+  "version": "1.0",
+  "title": "Make a small CLI change",
+  "goal": "Complete one bounded CLI improvement without expanding PersonaKit's V1 scope.",
+  "steps": [
+    {
+      "text": "Read the active contract and identify the requested change."
+    },
+    {
+      "text": "Make the smallest implementation or documentation update that satisfies the task."
+    },
+    {
+      "text": "Stop for review if the task requires new execution behavior, a new adapter, persistence, or orchestration.",
+      "requiresReview": true
+    },
+    {
+      "text": "Verify the change and summarize the result."
+    }
+  ],
+  "acceptanceCriteria": [
+    "The change stays inside the requested CLI task",
+    "No new autonomous execution behavior is introduced",
+    "Output ordering remains deterministic",
+    "Verification steps are reported"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "command",
+      "text": "swift run personakit validate"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "opencode-cli"
+  ]
+}

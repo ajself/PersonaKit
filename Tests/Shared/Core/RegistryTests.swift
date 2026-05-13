@@ -12,11 +12,11 @@ struct RegistryTests {
 
     let registry = try Registry.load(root: destination)
 
-    #expect(registry.personas.map(\.id) == ["senior-swiftui-engineer"])
-    #expect(registry.kits.map(\.id) == ["repo-constraints", "swift-style", "swiftui-style"])
-    #expect(registry.directives.map(\.id) == ["apply-style"])
-    #expect(registry.intentTemplates.map(\.id) == ["swift-refactor-safe"])
-    #expect(registry.skills.map(\.id) == ["autonomous-agent-loop", "codex-cli"])
+    #expect(registry.personas.map(\.id) == ["solo-developer"])
+    #expect(registry.kits.map(\.id) == ["v1-cli-guardrails"])
+    #expect(registry.directives.map(\.id) == ["small-cli-change"])
+    #expect(registry.intentTemplates.map(\.id) == [])
+    #expect(registry.skills.map(\.id) == ["autonomous-agent-loop", "opencode-cli"])
   }
 
   @Test

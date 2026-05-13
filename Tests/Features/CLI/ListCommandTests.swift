@@ -12,7 +12,9 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .personas)
 
-    #expect(output == "senior-swiftui-engineer — Senior SwiftUI Engineer")
+    let expected = "solo-developer — Solo Developer"
+
+    #expect(output == expected)
   }
 
   @Test
@@ -22,13 +24,7 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .essentials)
 
-    let expected = [
-      "environment",
-      "non-goals",
-      "swift-style-guide",
-      "swiftui-style-guide",
-      "tools-and-constraints",
-    ].joined(separator: "\n")
+    let expected = "v1-boundaries"
 
     #expect(output == expected)
   }
@@ -40,10 +36,7 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .references)
 
-    let expected = [
-      "swift-style-guide-reference — Swift Style Guide Reference",
-      "swiftui-style-guide-reference — SwiftUI Style Guide Reference",
-    ].joined(separator: "\n")
+    let expected = ""
 
     #expect(output == expected)
   }
@@ -56,18 +49,20 @@ struct ListCommandTests {
       root: root,
       session: SessionFile(
         id: "review-swiftui",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "apply-style",
-        kitOverrides: ["swift-style", "swiftui-style"]
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
+        kitOverrides: ["v1-cli-guardrails"]
       )
     )
 
     let output = try ListCommand.list(root: root, entityType: .sessions)
 
-    #expect(
-      output
-        == "review-swiftui — senior-swiftui-engineer / apply-style [kits: swift-style, swiftui-style]"
-    )
+    let expected = [
+      "review-swiftui — solo-developer / small-cli-change [kits: v1-cli-guardrails]",
+      "solo-dev-v1 — solo-developer / small-cli-change",
+    ].joined(separator: "\n")
+
+    #expect(output == expected)
   }
 
   @Test
@@ -83,8 +78,8 @@ struct ListCommandTests {
       root: globalRoot,
       session: SessionFile(
         id: "shared-review",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "apply-style",
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
         kitOverrides: nil
       )
     )
@@ -92,8 +87,8 @@ struct ListCommandTests {
       root: projectRoot,
       session: SessionFile(
         id: "shared-review",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "review-implementation-prompts",
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
         kitOverrides: nil
       )
     )
@@ -105,7 +100,12 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(scopes: scopes, entityType: .sessions)
 
-    #expect(output == "shared-review — senior-swiftui-engineer / review-implementation-prompts")
+    let expected = [
+      "shared-review — solo-developer / small-cli-change",
+      "solo-dev-v1 — solo-developer / small-cli-change",
+    ].joined(separator: "\n")
+
+    #expect(output == expected)
   }
 }
 

@@ -77,11 +77,9 @@ default.profraw
 *.xcresult
 .coverage/
 .idea/
-.swiftpm/xcode/xcuserdata/
-.swiftpm/xcode/package.xcworkspace/xcuserdata/
-.vscode/*.code-workspace
+.vscode/
+.workunits/
 Artifacts/
 .appops/
 .codex/
 Config/Release.local.mk
-.personakit/Orbit/

@@ -5,12 +5,16 @@ import SwiftUI
 /// Root Studio split view with sidebar navigation, session editing, and diagnostics.
 public struct StudioRootView: View {
   let workspaceStore: WorkspaceStore
-  @State private var selection: SidebarItem? = .sessions
+  @State private var selection: SidebarItem?
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
 
-  public init(workspaceStore: WorkspaceStore) {
+  public init(
+    workspaceStore: WorkspaceStore,
+    initialSection: StudioLaunchSection = .sessions
+  ) {
     self.workspaceStore = workspaceStore
+    self._selection = State(initialValue: SidebarItem(section: initialSection))
   }
 
   public var body: some View {
@@ -225,6 +229,31 @@ enum SidebarItem: Hashable {
       return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
       return "checklist"
+    }
+  }
+
+  init(section: StudioLaunchSection) {
+    switch section {
+    case .directives:
+      self = .directives
+    case .essentials:
+      self = .essentials
+    case .intents:
+      self = .intents
+    case .kits:
+      self = .kits
+    case .personas:
+      self = .personas
+    case .references:
+      self = .references
+    case .relationshipMap:
+      self = .relationshipMap
+    case .sessions:
+      self = .sessions
+    case .skills:
+      self = .skills
+    case .validationResults:
+      self = .validationResults
     }
   }
 }

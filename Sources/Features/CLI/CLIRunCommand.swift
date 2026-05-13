@@ -4,6 +4,10 @@ import Foundation
 
 enum SupportedAgent: String, ExpressibleByArgument {
   case opencode
+
+  var providerId: String {
+    rawValue
+  }
 }
 
 struct RunResolution: Equatable {
@@ -11,6 +15,8 @@ struct RunResolution: Equatable {
   let personaId: String
   let directiveId: String
   let kitIds: [String]
+  let authorizedSkillIds: [String]
+  let authorizedProviderIds: [String]
 }
 
 enum RunPayloadBuilder {
@@ -44,6 +50,14 @@ enum RunPayloadBuilder {
     )
     let kitIDs = resolved.kits.map(\.id).sorted()
     let kitsLine = kitIDs.isEmpty ? "[]" : "[\(kitIDs.joined(separator: ", "))]"
+    let authorizedSkillIDs = resolved.skillAuthorization.authorizedSkillIds
+    let authorizedSkillIDSet = Set(authorizedSkillIDs)
+    let authorizedProviderIDs = Set(
+      resolved.skills
+        .filter { authorizedSkillIDSet.contains($0.id) }
+        .flatMap(\.providedBy)
+    )
+    .sorted()
     let payload = """
       # PersonaKit Runtime Payload
 
@@ -65,16 +79,130 @@ enum RunPayloadBuilder {
         sessionId: session.id,
         personaId: resolved.persona.id,
         directiveId: resolved.directive.id,
-        kitIds: kitIDs
+        kitIds: kitIDs,
+        authorizedSkillIds: authorizedSkillIDs,
+        authorizedProviderIds: authorizedProviderIDs
       )
     )
   }
 }
 
+enum RunAgentAuthorization {
+  static func validate(agent: SupportedAgent, resolution: RunResolution) throws {
+    guard resolution.authorizedProviderIds.contains(agent.providerId) else {
+      let providers = displayList(resolution.authorizedProviderIds)
+      let skills = displayList(resolution.authorizedSkillIds)
+
+      throw CLIError.failure(
+        [
+          "run agent `\(agent.rawValue)` is not authorized by session `\(resolution.sessionId)`.",
+          "Add or select an authorized skill whose providedBy includes `\(agent.providerId)`.",
+          "Authorized providers: \(providers).",
+          "Authorized skills: \(skills).",
+        ].joined(separator: " ")
+      )
+    }
+  }
+
+  private static func displayList(_ values: [String]) -> String {
+    values.isEmpty ? "none" : values.joined(separator: ", ")
+  }
+}
+
+struct AgentProcessInvocation: Equatable {
+  let executableURL: URL
+  let arguments: [String]
+}
+
+protocol AgentProcessRunning {
+  func run(_ invocation: AgentProcessInvocation) throws -> Int32
+}
+
+struct LiveAgentProcessRunner: AgentProcessRunning {
+  func run(_ invocation: AgentProcessInvocation) throws -> Int32 {
+    let process = Process()
+    process.executableURL = invocation.executableURL
+    process.arguments = invocation.arguments
+
+    try process.run()
+    process.waitUntilExit()
+
+    return process.terminationStatus
+  }
+}
+
+protocol AgentExecutableResolving {
+  func executableURL(named executableName: String) -> URL?
+}
+
+struct PathAgentExecutableResolver: AgentExecutableResolving {
+  private let fileManager: FileManager
+  private let pathValue: String
+
+  init(
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    fileManager: FileManager = .default
+  ) {
+    self.fileManager = fileManager
+    self.pathValue = environment["PATH"] ?? ""
+  }
+
+  func executableURL(named executableName: String) -> URL? {
+    if executableName.contains("/") {
+      return executableURL(atPath: executableName)
+    }
+
+    for directory in pathValue.split(separator: ":", omittingEmptySubsequences: false) {
+      let candidatePath = URL(fileURLWithPath: String(directory), isDirectory: true)
+        .appendingPathComponent(executableName)
+        .path
+
+      if let executableURL = executableURL(atPath: candidatePath) {
+        return executableURL
+      }
+    }
+
+    return nil
+  }
+
+  private func executableURL(atPath path: String) -> URL? {
+    guard fileManager.isExecutableFile(atPath: path) else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: path)
+  }
+}
+
 struct OpenCodeAgentAdapter {
+  private let processRunner: any AgentProcessRunning
+  private let executableResolver: any AgentExecutableResolving
+  private let temporaryDirectory: URL
+  private let fileManager: FileManager
+
+  init(
+    processRunner: any AgentProcessRunning = LiveAgentProcessRunner(),
+    executableResolver: any AgentExecutableResolving = PathAgentExecutableResolver(),
+    temporaryDirectory: URL = FileManager.default.temporaryDirectory,
+    fileManager: FileManager = .default
+  ) {
+    self.processRunner = processRunner
+    self.executableResolver = executableResolver
+    self.temporaryDirectory = temporaryDirectory
+    self.fileManager = fileManager
+  }
+
   func invoke(payload: String) throws -> Int32 {
-    let fileManager = FileManager.default
-    let payloadURL = fileManager.temporaryDirectory
+    guard
+      let executableURL = executableResolver.executableURL(
+        named: SupportedAgent.opencode.rawValue
+      )
+    else {
+      throw Self.launchFailure()
+    }
+
+    let payloadURL =
+      temporaryDirectory
       .appendingPathComponent("personakit-run-\(UUID().uuidString)")
       .appendingPathExtension("md")
     try AtomicFileWriter().write(contents: payload, to: payloadURL)
@@ -82,20 +210,22 @@ struct OpenCodeAgentAdapter {
       try? fileManager.removeItem(at: payloadURL)
     }
 
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = [SupportedAgent.opencode.rawValue, payloadURL.path]
-
     do {
-      try process.run()
-    } catch {
-      throw CLIError.failure(
-        "Failed to launch opencode. Make sure `opencode` is installed and available on PATH."
+      return try processRunner.run(
+        AgentProcessInvocation(
+          executableURL: executableURL,
+          arguments: [payloadURL.path]
+        )
       )
+    } catch {
+      throw Self.launchFailure()
     }
+  }
 
-    process.waitUntilExit()
-    return process.terminationStatus
+  private static func launchFailure() -> CLIError {
+    CLIError.failure(
+      "Failed to launch opencode. Make sure `opencode` is installed and available on PATH."
+    )
   }
 }
 
@@ -103,7 +233,7 @@ struct OpenCodeAgentAdapter {
 struct RunCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "run",
-    abstract: "Resolve a session and launch a supported agent."
+    abstract: "Preview or launch one supported agent with a resolved session."
   )
 
   @OptionGroup
@@ -175,6 +305,7 @@ struct RunCommand: ParsableCommand {
         session: session,
         task: task
       )
+      try RunAgentAuthorization.validate(agent: agent, resolution: result.resolution)
 
       if verbose {
         var stderrStream = StandardError()

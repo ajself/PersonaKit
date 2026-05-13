@@ -17,13 +17,13 @@ They are expected to:
 	•	stop when constraints or stop points are reached
 
 Agents may interact with PersonaKit via:
-• the [Swift CLI](./README.md#quick-start)
+• the [Swift CLI](./README.md#first-five-minutes)
 • the [PersonaKit MCP server](./README.md#mcp) (agent-invoked, read-only)
 
 In both cases, PersonaKit resolves an operating contract, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
 
 Reference:
-• [Quick Start](./README.md#quick-start)
+• [First Five Minutes](./README.md#first-five-minutes)
 • [MCP](./README.md#mcp)
 
 They are not expected to:
@@ -42,14 +42,14 @@ Agents must follow these rules at all times:
 	•	The only allowed execution path in V1 is `personakit run`, and it is limited to resolving PersonaKit context deterministically, assembling a runtime payload, invoking one configured agent adapter, and returning the adapter exit status
 	•	Do not introduce general workflow execution, long-running agent loops, platform-runtime behavior, or arbitrary tool invocation
 	•	Do not introduce `Process`, `NSTask`, `system()`, or equivalents outside the narrow `personakit run` launcher path
-	•	Do not attempt to use MCP Tools to perform execution (PersonaKit MCP exposes Resources and Prompts only).
-	•	Do not request or simulate command execution via MCP prompts.
+	•	Do not attempt to use MCP Tools to perform execution (PersonaKit MCP exposes only read-only Resources, Prompts, and context tools).
+	•	Do not request or simulate command execution via MCP prompts or tools.
 	2.	V1 run guardrails
-	•	Do not add more than one supported adapter without AJ's explicit approval
+	•	Do not add more than one supported adapter without maintainer approval
 	•	Do not add orchestration patterns such as lead-worker, RPI, or multi-agent control flows
 	•	Do not add persistence, memory, or session continuation to `personakit run`
 	•	Do not redesign Studio as part of V1 run work
-	•	Do not reintroduce Orbit or Taskboard concepts
+	•	Do not reintroduce legacy task-management or orchestration concepts
 	3.	No autonomous planning
 	•	Do not invent steps beyond what is defined in a Directive
 	•	If something is unclear, ask for clarification
@@ -58,7 +58,7 @@ Agents must follow these rules at all times:
 	•	Do not introduce new abstractions unless explicitly requested
 	5.	One approved lane/worktree per milestone by default
 	•	Default to one approved execution lane and one worktree per milestone or explicitly approved slice
-	•	Do not create packet-, task-, or story-specific branches or worktrees unless AJ explicitly approves extra isolation
+	•	Do not create packet-, task-, or story-specific branches or worktrees unless a maintainer explicitly approves extra isolation
 	•	Treat packets, tasks, and stories as scope tracked in docs and commits, not as branch or worktree requests by default
 	6.	Determinism is required
 	•	Output must be stable across runs
@@ -114,6 +114,7 @@ When working on this repo, agents should:
 
 When using the MCP server specifically:
 • Prefer reading [Resources](./README.md#mcp) for raw context (personas, kits, directives, essentials)
+• Prefer MCP context tools for structured grounding, validation, recommendations, and provenance
 • Prefer [Prompts](./README.md#mcp) for resolved session views (export, graph)
 • Do not mix MCP-derived context with ad-hoc assumptions
 
@@ -196,7 +197,7 @@ PersonaKit is designed to keep humans in control while still benefiting from AI 
 Summary (for agents)
 	•	`AGENTS.md` is the final local authority; PersonaKit resolves the active operating contract within that authority
 	•	Use CLI outputs and MCP [Resources](./README.md#mcp) / [Prompts](./README.md#mcp) as authoritative context
-	•	MCP is read-only; it never authorizes execution or writes
+	•	MCP is read-only; its Resources, Prompts, and context tools never authorize execution or writes
 	•	The only V1 execution exception is the narrow `personakit run` launcher path
 	•	Do not expand scope or invent steps
 	•	Stop at explicit review points

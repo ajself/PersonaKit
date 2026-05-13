@@ -17,12 +17,12 @@ struct ValidatorTests {
       result.counts
         == ValidationCounts(
           personas: 1,
-          kits: 3,
+          kits: 1,
           directives: 1,
-          intents: 1,
-          references: 2,
+          intents: 0,
+          references: 0,
           skills: 2,
-          essentials: 5
+          essentials: 1
         )
     )
   }
@@ -32,8 +32,9 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/swiftui-style-guide.md")
+    let missingURL = root.appendingPathComponent("Packs/essentials/v1-boundaries.md")
     try FileManager.default.removeItem(at: missingURL)
+    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev-v1.session.json"))
 
     let result = try Validator.validate(root: root)
 
@@ -41,11 +42,11 @@ struct ValidatorTests {
       result.errors == [
         ValidationError(
           entityType: .kit,
-          entityId: "swiftui-style",
+          entityId: "v1-cli-guardrails",
           field: "essentialIds",
-          missingId: "swiftui-style-guide",
-          expectedPath: "Packs/essentials/swiftui-style-guide.md",
-          message: "Missing essential file at Packs/essentials/swiftui-style-guide.md."
+          missingId: "v1-boundaries",
+          expectedPath: "Packs/essentials/v1-boundaries.md",
+          message: "Missing essential file at Packs/essentials/v1-boundaries.md."
         )
       ]
     )
@@ -56,7 +57,7 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let personaURL = root.appendingPathComponent("Packs/personas/senior-swiftui-engineer.persona.json")
+    let personaURL = root.appendingPathComponent("Packs/personas/solo-developer.persona.json")
     let data = try Data(contentsOf: personaURL)
     let persona = try JSONDecoder().decode(Persona.self, from: data)
     let updatedPersona = Persona(
@@ -75,6 +76,7 @@ struct ValidatorTests {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     try encoder.encode(updatedPersona).write(to: personaURL)
+    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev-v1.session.json"))
 
     let result = try Validator.validate(root: root)
 
@@ -82,7 +84,7 @@ struct ValidatorTests {
       result.errors == [
         ValidationError(
           entityType: .persona,
-          entityId: "senior-swiftui-engineer",
+          entityId: "solo-developer",
           field: "defaultKitIds",
           missingId: "unknown-kit",
           expectedPath: nil,
@@ -97,7 +99,7 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let personaURL = root.appendingPathComponent("Packs/personas/senior-swiftui-engineer.persona.json")
+    let personaURL = root.appendingPathComponent("Packs/personas/solo-developer.persona.json")
     let data = try Data(contentsOf: personaURL)
     var object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
     object?["id"] = nil
@@ -108,14 +110,14 @@ struct ValidatorTests {
     let result = try Validator.validate(root: root)
 
     #expect(result.errors.count >= 1)
-    #expect(result.errors.contains { $0.expectedPath == "Packs/personas/senior-swiftui-engineer.persona.json" })
+    #expect(result.errors.contains { $0.expectedPath == "Packs/personas/solo-developer.persona.json" })
     #expect(result.errors.contains { $0.field == "schema" && $0.message.contains("Missing required property \"id\"") })
   }
 
   @Test
   func validateSchemaErrorsSuppressReferenceCascadeNoise() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
     let data = try Data(contentsOf: intentURL)
@@ -167,7 +169,7 @@ struct ValidatorTests {
   @Test
   func validateIntentParameterConstraintRequiresMultipleParameters() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
     let data = try Data(contentsOf: intentURL)

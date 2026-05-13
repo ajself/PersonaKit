@@ -61,7 +61,7 @@ struct PersonaKitCLI {
 struct PersonaKitCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "personakit",
-    abstract: "PersonaKit CLI",
+    abstract: "Reusable operating contracts for AI coding work.",
     subcommands: [
       InitCommand.self,
       CreateCommand.self,
@@ -102,14 +102,17 @@ struct GuidanceCommand: ParsableCommand {
 struct InitCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "init",
-    abstract: "Initialize a PersonaKit root."
+    abstract: "Initialize a PersonaKit root without replacing non-empty destinations unless --force is set."
   )
+
+  @Flag(name: .customLong("force"), help: "Replace an existing non-empty destination.")
+  var force = false
 
   @Argument(help: "Destination path.")
   var path: String
 
   func run() throws {
-    try PersonaKitInitializer().run(destination: path)
+    try PersonaKitInitializer().run(destination: path, force: force)
   }
 }
 
@@ -170,7 +173,7 @@ struct ListCLICommand: ParsableCommand {
 struct MCPCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "mcp",
-    abstract: "Run the PersonaKit MCP server."
+    abstract: "Run the read-only PersonaKit MCP server."
   )
 
   @OptionGroup

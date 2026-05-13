@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  swift:
+    name: Swift
+    runs-on: macos-26
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Run public V1 check
+        run: make public-v1-check
+
+      - name: Validate legacy Codex-only fixture root
+        run: swift run personakit validate --root Fixtures/kit-root
+
+      - name: Verify legacy Codex-only fixture rejects OpenCode adapter
+        run: |
+          set +e
+          output=$(swift run personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify public V1 onboarding." 2>&1)
+          status=$?
+          set -e
+          echo "$output"
+          if [ "$status" -eq 0 ]; then
+            echo "Expected Codex-only fixture session to reject --agent opencode."
+            exit 1
+          fi
+          echo "$output" | grep 'run agent `opencode` is not authorized'

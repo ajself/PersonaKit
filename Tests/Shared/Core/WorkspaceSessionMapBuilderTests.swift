@@ -99,6 +99,51 @@ struct WorkspaceSessionMapBuilderTests {
   }
 
   @Test
+  func sessionMapTreatsBuiltInEssentialReferencesAsResolved() throws {
+    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+
+    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    try copyFixtureKit(to: projectScopeURL)
+
+    let kitURL = projectScopeURL.appendingPathComponent("Packs/kits/swift-style.kit.json")
+
+    try mutateJSONFile(kitURL, as: Kit.self) { kit in
+      Kit(
+        id: kit.id,
+        version: kit.version,
+        name: kit.name,
+        summary: kit.summary,
+        essentialIds: kit.essentialIds + [
+          "persona-activation-contract",
+          "skill-authorization-contract",
+        ],
+        referenceIds: kit.referenceIds,
+        intentTemplateIds: kit.intentTemplateIds,
+        skillIds: kit.skillIds
+      )
+    }
+
+    let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
+    let map = try builder.build(
+      workspaceURL: workspaceURL,
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: []
+    )
+
+    let personaContract = try #require(
+      map.nodes.first { $0.key == "essential:persona-activation-contract" }
+    )
+    let skillContract = try #require(
+      map.nodes.first { $0.key == "essential:skill-authorization-contract" }
+    )
+
+    #expect(!personaContract.isMissing)
+    #expect(!skillContract.isMissing)
+  }
+
+  @Test
   func mapIncludesMissingReferenceNodesAndResolutionErrors() throws {
     let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
     let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")

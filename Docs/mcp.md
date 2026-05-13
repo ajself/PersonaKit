@@ -1,7 +1,7 @@
 # PersonaKit MCP Guide
 
 Status: Active
-Owner: AJ
+Owner: Maintainers
 Last Reviewed: 2026-04-25
 
 ## Why This Exists

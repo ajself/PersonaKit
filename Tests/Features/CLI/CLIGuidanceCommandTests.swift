@@ -27,7 +27,7 @@ struct CLIGuidanceCommandTests {
     #expect(scope["projectRoot"] as? String == root.path)
     #expect(
       commands.contains(
-        "personakit contract --root \(root.path) --session architectural-editor-review"
+        "personakit contract --root \(root.path) --session solo-dev-v1"
       )
     )
   }

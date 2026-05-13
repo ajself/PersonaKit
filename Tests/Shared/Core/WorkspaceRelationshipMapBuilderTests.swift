@@ -100,6 +100,47 @@ struct WorkspaceRelationshipMapBuilderTests {
   }
 
   @Test
+  func relationshipMapTreatsBuiltInEssentialReferencesAsResolved() throws {
+    let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
+    let kitURL = projectScopeURL.appendingPathComponent("Packs/kits/swift-style.kit.json")
+
+    try mutateJSONFile(kitURL, as: Kit.self) { kit in
+      Kit(
+        id: kit.id,
+        version: kit.version,
+        name: kit.name,
+        summary: kit.summary,
+        essentialIds: kit.essentialIds + [
+          "persona-activation-contract",
+          "skill-authorization-contract",
+        ],
+        referenceIds: kit.referenceIds,
+        intentTemplateIds: kit.intentTemplateIds,
+        skillIds: kit.skillIds
+      )
+    }
+
+    let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
+    let map = try builder.build(workspaceURL: workspaceURL)
+
+    let personaContract = try #require(
+      map.nodes.first { $0.key == "essential:persona-activation-contract" }
+    )
+    let skillContract = try #require(
+      map.nodes.first { $0.key == "essential:skill-authorization-contract" }
+    )
+
+    #expect(!personaContract.isMissing)
+    #expect(!skillContract.isMissing)
+    #expect(
+      !map.resolutionErrors.contains { error in
+        error.missingId == "persona-activation-contract"
+          || error.missingId == "skill-authorization-contract"
+      }
+    )
+  }
+
+  @Test
   func relationshipMapIncludesReferenceNodesAndDirectiveEdges() throws {
     let (workspaceURL, _) = try makeWorkspaceWithProjectFixture()
 

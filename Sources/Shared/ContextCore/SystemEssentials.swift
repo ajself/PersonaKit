@@ -126,55 +126,116 @@ func activeRootURL(for scopes: ScopeSet) -> URL? {
   scopes.projectScopeURL ?? scopes.globalScopeURL
 }
 
-func resolveSystemEssentialOverrideURL(
-  _ essentialId: String,
-  scopes: ScopeSet,
-  fileManager: FileManager
-) -> URL? {
-  guard let rootURL = activeRootURL(for: scopes) else {
-    return nil
+/// Public resolver for essential references, including PersonaKit built-in contracts.
+public enum PersonaKitEssentialResolver {
+  public static var builtInEssentialIds: [String] {
+    SystemEssentials.injectedEssentialIds
   }
 
-  let fileURL = rootURL.appendingPathComponent(SystemEssentials.expectedPath(for: essentialId))
+  public static func resolve(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileExists: (URL) -> Bool
+  ) -> ResolvedEssential? {
+    if SystemEssentials.injectedEssentialIds.contains(essentialId) {
+      return resolveSystemEssential(
+        essentialId,
+        scopes: scopes,
+        fileExists: fileExists
+      )
+    }
 
-  guard fileManager.fileExists(atPath: fileURL.path) else {
-    return nil
-  }
+    guard
+      let fileURL = resolveFileURL(
+        essentialId,
+        scopes: scopes,
+        fileExists: fileExists
+      )
+    else {
+      return nil
+    }
 
-  return fileURL
-}
-
-func resolveSystemEssential(
-  _ essentialId: String,
-  scopes: ScopeSet,
-  fileManager: FileManager
-) -> ResolvedEssential? {
-  if let overrideURL = resolveSystemEssentialOverrideURL(
-    essentialId,
-    scopes: scopes,
-    fileManager: fileManager
-  ) {
     return ResolvedEssential(
       id: essentialId,
-      url: overrideURL,
+      url: fileURL,
       content: nil,
       source: .file
     )
   }
 
-  guard
-    let content = SystemEssentials.builtInContent(for: essentialId),
-    let rootURL = activeRootURL(for: scopes)
-  else {
+  public static func resolve(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileManager: FileManager
+  ) -> ResolvedEssential? {
+    resolve(essentialId, scopes: scopes) { url in
+      fileManager.fileExists(atPath: url.path)
+    }
+  }
+
+  public static func expectedPath(for essentialId: String) -> String {
+    SystemEssentials.expectedPath(for: essentialId)
+  }
+
+  public static func resolveFileURL(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileExists: (URL) -> Bool
+  ) -> URL? {
+    let expectedPath = SystemEssentials.expectedPath(for: essentialId)
+
+    for root in scopes.resolutionOrder {
+      let fileURL = root.appendingPathComponent(expectedPath)
+
+      if fileExists(fileURL) {
+        return fileURL
+      }
+    }
+
     return nil
   }
 
-  return ResolvedEssential(
-    id: essentialId,
-    url: rootURL.appendingPathComponent(SystemEssentials.expectedPath(for: essentialId)),
-    content: content,
-    source: .systemBuiltIn
-  )
+  public static func resolveFileURL(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileManager: FileManager
+  ) -> URL? {
+    resolveFileURL(essentialId, scopes: scopes) { url in
+      fileManager.fileExists(atPath: url.path)
+    }
+  }
+
+  private static func resolveSystemEssential(
+    _ essentialId: String,
+    scopes: ScopeSet,
+    fileExists: (URL) -> Bool
+  ) -> ResolvedEssential? {
+    guard let rootURL = activeRootURL(for: scopes) else {
+      return nil
+    }
+
+    let fileURL = rootURL.appendingPathComponent(SystemEssentials.expectedPath(for: essentialId))
+
+    if fileExists(fileURL) {
+      return ResolvedEssential(
+        id: essentialId,
+        url: fileURL,
+        content: nil,
+        source: .file
+      )
+    }
+
+    guard let content = SystemEssentials.builtInContent(for: essentialId) else {
+      return nil
+    }
+
+    return ResolvedEssential(
+      id: essentialId,
+      url: fileURL,
+      content: content,
+      source: .systemBuiltIn
+    )
+  }
 }
 
 func resolveReferencedEssential(
@@ -182,42 +243,9 @@ func resolveReferencedEssential(
   scopes: ScopeSet,
   fileManager: FileManager
 ) -> ResolvedEssential? {
-  if SystemEssentials.injectedEssentialIds.contains(essentialId) {
-    return resolveSystemEssential(
-      essentialId,
-      scopes: scopes,
-      fileManager: fileManager
-    )
-  }
-
-  guard let fileURL = resolveEssentialURL(essentialId, scopes: scopes, fileManager: fileManager)
-  else {
-    return nil
-  }
-
-  return ResolvedEssential(
-    id: essentialId,
-    url: fileURL,
-    content: nil,
-    source: .file
+  PersonaKitEssentialResolver.resolve(
+    essentialId,
+    scopes: scopes,
+    fileManager: fileManager
   )
-}
-
-/// Resolves an essential id to the first existing file in scope resolution order.
-func resolveEssentialURL(
-  _ essentialId: String,
-  scopes: ScopeSet,
-  fileManager: FileManager
-) -> URL? {
-  let expectedPath = SystemEssentials.expectedPath(for: essentialId)
-
-  for root in scopes.resolutionOrder {
-    let fileURL = root.appendingPathComponent(expectedPath)
-
-    if fileManager.fileExists(atPath: fileURL.path) {
-      return fileURL
-    }
-  }
-
-  return nil
 }

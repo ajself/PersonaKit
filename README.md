@@ -1,97 +1,121 @@
 # PersonaKit
 
-PersonaKit eliminates prompt setup before using AI tools.
+PersonaKit eliminates repeated prompt setup before using AI coding tools.
 
-PersonaKit V1 is for solo developers to invoke AI coding tasks with a deterministic, reusable operating contract instead of rebuilding role, constraints, and grounding every session.
-
-It is not an agent, planner, memory system, or workflow platform. PersonaKit resolves a known operating contract and launches work with that contract applied.
-
-## Current Direction
-
-PersonaKit V1 is focused on one core workflow:
+V1 is for solo developers who want one reusable operating contract, one inspectable runtime payload, and one bounded agent launch:
 
 ```bash
-personakit run --session <id> --agent <agent> -- "<task>"
+personakit run --session <id> --agent opencode -- "<task>"
 ```
 
-That command:
+PersonaKit is not an agent, planner, memory system, task manager, or orchestration layer. It resolves a known contract; your coding agent does the work.
 
-- resolve a named operating contract from PersonaKit data
-- assemble deterministic runtime grounding from that contract
-- launch one supported AI agent with that contract applied
-- remove the need for manual copy/paste prompt setup
+PersonaKit is released under the MIT license.
 
-If a feature does not directly support that workflow, it is out of scope for V1.
+## First Five Minutes
 
-For the active product direction, read `Docs/V1_DIRECTION.md`.
+### Requirements
 
-## What PersonaKit Is
+PersonaKit currently builds with:
 
-PersonaKit is an operating-contract resolver and launcher for AI work.
+- macOS 26 SDK
+- Swift tools 6.2
+- Xcode 26 or newer
+- OpenCode on `PATH` only when using `personakit run --agent opencode` without `--dry-run`
 
-It does not just bundle prompt text. It resolves the active role, required grounding, allowed skills, and stop points for the work.
+### 1. Build The CLI
 
-It helps you define and reuse:
+From the repository root:
 
-- **Persona** — who is doing the work
-- **Kits** — how that role works
-- **Directive** — what kind of work is being done
-- **Essentials** — rules and references that must be present
-- **Session** — a named entry point to a resolved operating contract
+```bash
+swift build --product personakit
+```
 
-PersonaKit resolves those inputs into a deterministic operating contract so you do not have to restate them every time you start an agent task.
+For local development, run commands through SwiftPM:
 
-## What PersonaKit Is Not
+```bash
+swift run personakit --help
+```
 
-PersonaKit is deliberately not:
+To install the CLI locally:
 
-- an agent
-- a workflow engine
-- a memory platform
-- a remote orchestration system
-- a task management product
-- a replacement for your coding agent
+```bash
+make cli-install INSTALL_BIN_DIR="$HOME/.local/bin"
+```
 
-PersonaKit activates the contract. Another tool performs the work.
+Make sure the install directory is on your `PATH`.
 
-## Authority Stack
+### 2. Validate The Public Starter
 
-Use these layers in order:
+This repository includes a minimal public PersonaKit root at `Examples/public-starter/.personakit`.
 
-- `AGENTS.md` constrains local repo behavior.
-- PersonaKit activates the current operating contract.
-- skills provide authorized procedures.
-- tools execute within those repo and contract constraints.
+```bash
+swift run personakit validate --root Examples/public-starter/.personakit
+```
 
-## V1 Product Principles
+### 3. Inspect The Contract
 
-- boring over clever
-- explicit over inferred
-- deterministic over magical
-- local workflow first
-- one sharp workflow over many partial ones
+```bash
+swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev-v1
+```
 
-If a proposed feature violates these principles, it does not belong in V1.
+Use this before launching work when you want to inspect the resolved persona, directive, kits, skill authorization, and stop points.
 
-## V1 Scope
+### 4. Dry-Run The Runtime Payload
 
-In scope:
+```bash
+swift run personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement."
+```
 
-- session-based contract resolution
-- deterministic merging of personas, kits, directives, and essentials
-- a CLI `run` command
-- one agent adapter
-- dry-run inspection for debugging and trust
+The dry-run prints the exact payload PersonaKit would send to the supported adapter.
 
-Out of scope:
+### 5. Launch The Supported Adapter
 
-- memory systems
-- multi-session continuity
-- remote execution platforms
-- workflow orchestration patterns
-- Studio expansion beyond basic administration
+```bash
+swift run personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode -- "Make a small, reviewable CLI improvement."
+```
 
-## Mental Model
+For the current V1 implementation, `opencode` is the only supported agent adapter. The selected session must authorize a skill whose `providedBy` includes `opencode`.
+
+When you are unsure which session fits a task:
+
+```bash
+swift run personakit recommend --root Examples/public-starter/.personakit --goal "Make a small, reviewable CLI improvement"
+```
+
+## Create Your Own Root
+
+PersonaKit expects content under `.personakit/` in a project, and may also use `~/.personakit/` for global content.
+
+```text
+.project/
+  .personakit/
+    Packs/
+      personas/
+      kits/
+      directives/
+      intents/
+      skills/
+      essentials/
+    Sessions/
+```
+
+To create starter content in a new or throwaway project:
+
+```bash
+mkdir -p /tmp/personakit-demo
+swift run personakit init /tmp/personakit-demo/.personakit
+swift run personakit validate --root /tmp/personakit-demo/.personakit
+swift run personakit run --root /tmp/personakit-demo/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement."
+```
+
+`personakit init` refuses to replace a non-empty destination by default. Use `--force` only when you intentionally want to replace an existing starter root:
+
+```bash
+swift run personakit init /tmp/personakit-demo/.personakit --force
+```
+
+## How It Works
 
 Think in one sentence:
 
@@ -108,115 +132,53 @@ Persona (who)
 = Resolved operating contract
 ```
 
-A session is the practical entry point for V1. It gives a stable name to a contract you want to reuse.
+PersonaKit helps you define and reuse:
 
-## Quick Start
+- **Persona** — who is doing the work
+- **Kits** — how that role works
+- **Directive** — what kind of work is being done
+- **Essentials** — rules and references that must be present
+- **Session** — a named entry point to a resolved operating contract
 
-### 1. Create or locate a PersonaKit root
-
-PersonaKit expects PersonaKit content under `.personakit/` in a project, and may also use `~/.personakit/` for global content.
-
-Example:
-
-```text
-.project/
-  .personakit/
-    Packs/
-      personas/
-      kits/
-      directives/
-      intents/
-      skills/
-      essentials/
-    Sessions/
-```
-
-### 2. Validate your authored data
-
-```bash
-personakit validate
-```
-
-If validation fails, fix the first error before moving on.
-
-### 3. Choose a session when the lane is not obvious
-
-```bash
-personakit recommend --goal "Review the current SwiftUI change"
-```
-
-Use this when you are unsure which session best fits the task.
-
-### 4. Inspect a session contract manually when needed
-
-```bash
-personakit contract --session architectural-editor-review
-```
-
-This is useful when you want to inspect the resolved role, skill authorization, and stop points directly.
-
-### 5. Export a session manually when needed
-
-```bash
-personakit export --session architectural-editor-review
-```
-
-This renders a human-readable prompt form of the resolved contract. It is useful for inspection and debugging.
-
-To copy the stitched prompt directly to the clipboard:
-
-```bash
-personakit export --session architectural-editor-review --copy
-```
-
-### 6. Run work with grounded context
-
-```bash
-personakit run --session architectural-editor-review --agent opencode -- "Review the current SwiftUI change and propose the smallest safe refactor."
-```
-
-That is the intended V1 experience: one command, known context, one live task.
-
-To copy the dry-run payload instead of printing it:
-
-```bash
-personakit run --session architectural-editor-review --agent opencode --dry-run --copy -- "Review the current SwiftUI change and propose the smallest safe refactor."
-```
-
-## Sessions
-
-A session is a named shortcut for a reusable operating contract.
+A session is the practical V1 entry point. It gives a stable name to the contract you want to reuse.
 
 Example:
 
 ```json
 {
-  "id": "architectural-editor-review",
-  "personaId": "architectural-editor",
-  "directiveId": "review-architecture-invariants"
+  "id": "solo-dev-v1",
+  "personaId": "solo-developer",
+  "directiveId": "small-cli-change"
 }
 ```
 
-Sessions are important in V1 because they reduce setup friction and give you a stable entry point across tools.
-
 ## CLI Surface
 
-Current CLI commands:
+Primary V1 path:
 
 ```text
 personakit validate
-personakit recommend --goal "<task>"
 personakit contract --session <id>
+personakit run --session <id> --agent opencode --dry-run -- "<task>"
+personakit run --session <id> --agent opencode -- "<task>"
+```
+
+Authoring, inspection, and integration:
+
+```text
+personakit init <path>
+personakit create <subcommand>
+personakit guidance
+personakit recommend --goal "<task>"
 personakit export --session <id>
 personakit export --session <id> --copy
+personakit resolve-references --session <id>
 personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
 personakit mcp
-personakit run --session <id> --agent <agent> -- "<task>"
-personakit run --session <id> --agent <agent> --dry-run --copy -- "<task>"
 ```
 
-`run` is the primary product direction for V1.
+`run` is the primary product direction for V1. If a feature does not directly support deterministic contract resolution, dry-run inspection, or the bounded adapter launch, it is out of scope for V1.
 
 ## MCP
 
@@ -236,37 +198,48 @@ For unfamiliar MCP clients and AI agents, start with:
 4. Call `personakit_trace_session` when you need provenance for persona, directive, kits, skills, essentials, and references.
 5. Read raw pack or essential resources only as needed.
 
-PersonaKit MCP is read-only grounding. It does not authorize execution, write files, or turn PersonaKit into an autonomous workflow engine.
+PersonaKit MCP is read-only grounding. It does not authorize execution, write files, run shell commands, add orchestration, add memory, or perform autonomous planning.
 
 More detail: [Docs/mcp.md](./Docs/mcp.md).
 
-## Safety And Determinism
+## Studio Status
 
-PersonaKit should remain:
+Studio is available in the repository for administration workflows, but CLI readiness is the V1 open-source release bar. Studio packaging and notarization are not release blockers for this public pass.
 
-- execution-light in its core context model
-- deterministic in output ordering and resolution
-- explicit in failures
+Use `make studio-review` for the optional Studio review loop. It builds the app, launches deterministic demo workspaces, and captures screenshots under `Artifacts/studio-review/` for human inspection.
+
+## Product Boundaries
+
+PersonaKit V1 should remain:
+
+- boring over clever
+- explicit over inferred
+- deterministic over magical
+- local workflow first
+- one sharp workflow over many partial ones
 - inspectable through export and dry-run flows
 
-If a feature makes PersonaKit feel magical, hidden, or difficult to trust, it is probably the wrong feature.
+PersonaKit is deliberately not:
+
+- an agent
+- a workflow engine
+- a remote execution platform
+- a task management product
+- a replacement for your coding agent
+
+PersonaKit activates the contract. Another tool performs the work.
 
 ## Repository Status
 
 This repository is being actively simplified around the V1 direction.
 
-That means:
+- `Docs/V1_DIRECTION.md` is the active product direction.
+- `Docs/PUBLIC_V1_RELEASE_CHECKLIST.md` tracks the public release readiness pass.
+- Older exploratory directions that do not support V1 should be treated as non-authoritative or removed.
 
-- PersonaKit is the product
-- `Docs/V1_DIRECTION.md` is the active direction document
-- older exploratory directions that do not support V1 should be treated as non-authoritative or removed
-- Studio is paused for V1
+## Contributing
 
-## Why This Exists
-
-AI tools are powerful, but repeated context setup is tedious and error-prone.
-
-PersonaKit exists to make expectations explicit and reusable so your tools can start from a known professional operating contract instead of improvising from scratch.
+PersonaKit welcomes focused contributions that preserve the V1 boundaries. Start with [CONTRIBUTING.md](./CONTRIBUTING.md), and report security issues through the private process in [SECURITY.md](./SECURITY.md).
 
 ## For Agents Working In This Repo
 

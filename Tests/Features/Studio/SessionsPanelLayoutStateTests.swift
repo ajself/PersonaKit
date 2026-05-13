@@ -60,10 +60,20 @@ struct SessionsPanelLayoutStateTests {
   }
 
   @Test
-  func reconciledSelectionRemainsNilWhenNothingIsSelected() {
+  func reconciledSelectionSelectsFirstAvailableSessionWhenNothingIsSelected() {
     let reconciledSelection = SessionsPanelLayoutState.reconciledSelection(
       currentSelectedSessionID: nil,
       availableSessionIDs: ["session-a"]
+    )
+
+    #expect(reconciledSelection == "session-a")
+  }
+
+  @Test
+  func reconciledSelectionRemainsNilWhenNothingIsAvailable() {
+    let reconciledSelection = SessionsPanelLayoutState.reconciledSelection(
+      currentSelectedSessionID: nil,
+      availableSessionIDs: []
     )
 
     #expect(reconciledSelection == nil)

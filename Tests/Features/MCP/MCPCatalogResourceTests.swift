@@ -1,4 +1,5 @@
 import Foundation
+import MCP
 import Testing
 
 @testable import ContextCore
@@ -43,13 +44,108 @@ struct MCPCatalogResourceTests {
     #expect(counts["directives"] == 1)
     #expect(counts["intents"] == 1)
     #expect(counts["skills"] == 2)
-    #expect(counts["essentials"] == 5)
+    #expect(counts["essentials"] == 7)
     #expect(counts["sessions"] == 1)
 
     let resources = try #require(object["resources"] as? [[String: Any]])
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/guidance" })
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/index" })
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/personas" })
+  }
+
+  @Test
+  func builtInEssentialsAreListedAndReadableResources() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let registry = try Registry.load(scopes: scopes)
+    let service = MCPResourceService(registry: registry, scopes: scopes)
+
+    let uris = try service.listResources().map(\.uri)
+
+    #expect(uris.contains("personakit://essentials/persona-activation-contract"))
+    #expect(uris.contains("personakit://essentials/skill-authorization-contract"))
+
+    let personaContent = try service.readResource(
+      uri: "personakit://essentials/persona-activation-contract"
+    )
+    let skillContent = try service.readResource(
+      uri: "personakit://essentials/skill-authorization-contract"
+    )
+
+    #expect(resourceText(personaContent)?.contains("# Persona Activation Contract") == true)
+    #expect(resourceText(skillContent)?.contains("# Skill Authorization Contract") == true)
+  }
+
+  @Test
+  func listedPackResourceReadsWhenFilenameDiffersFromEntityId() throws {
+    let root = try makeTempDirectory().appendingPathComponent(".personakit")
+    try copyFixtureKit(to: root)
+
+    let originalURL = root.appendingPathComponent("Packs/kits/swift-style.kit.json")
+    let mismatchedURL = root.appendingPathComponent("Packs/kits/local-style-file.kit.json")
+    try FileManager.default.moveItem(at: originalURL, to: mismatchedURL)
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let registry = try Registry.load(scopes: scopes)
+    let service = MCPResourceService(registry: registry, scopes: scopes)
+    let resource = try #require(
+      try service.listResources().first { $0.uri == "personakit://packs/kits/swift-style" }
+    )
+
+    let content = try service.readResource(uri: resource.uri)
+
+    #expect(content.uri == "personakit://packs/kits/swift-style")
+    #expect(content.mimeType == "application/json")
+  }
+
+  @Test
+  func everyListedResourceCanBeRead() throws {
+    let root = try makeTempDirectory().appendingPathComponent(".personakit")
+    try copyFixtureKit(to: root)
+
+    let originalURL = root.appendingPathComponent("Packs/kits/swift-style.kit.json")
+    let mismatchedURL = root.appendingPathComponent("Packs/kits/local-style-file.kit.json")
+    try FileManager.default.moveItem(at: originalURL, to: mismatchedURL)
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let registry = try Registry.load(scopes: scopes)
+    let service = MCPResourceService(registry: registry, scopes: scopes)
+
+    for resource in try service.listResources() {
+      _ = try service.readResource(uri: resource.uri)
+    }
+  }
+
+  @Test
+  func packResourceReadsDecodedIDInsteadOfMatchingFilename() throws {
+    let root = try makeTempDirectory().appendingPathComponent(".personakit")
+    try copyFixtureKit(to: root)
+
+    let originalURL = root.appendingPathComponent("Packs/kits/swift-style.kit.json")
+    let crossedURL = root.appendingPathComponent("Packs/kits/local-style-file.kit.json")
+    try FileManager.default.copyItem(at: originalURL, to: crossedURL)
+    try mutateJSONFile(originalURL, as: Kit.self) { kit in
+      Kit(
+        id: "wrong-kit",
+        version: kit.version,
+        name: "Wrong Kit",
+        summary: kit.summary,
+        essentialIds: kit.essentialIds,
+        referenceIds: kit.referenceIds,
+        intentTemplateIds: kit.intentTemplateIds,
+        skillIds: kit.skillIds
+      )
+    }
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let registry = try Registry.load(scopes: scopes)
+    let service = MCPResourceService(registry: registry, scopes: scopes)
+
+    let content = try service.readResource(uri: "personakit://packs/kits/swift-style")
+    let decodedObject = try jsonObject(from: content)
+    let object = try #require(decodedObject)
+
+    #expect(object["id"] as? String == "swift-style")
+    #expect(object["name"] as? String == "Swift Style Kit")
   }
 
   @Test
@@ -90,7 +186,11 @@ struct MCPCatalogResourceTests {
     #expect(scope["resolutionOrder"] as? [String] == [fixtureKitRootURL().path])
 
     let warnings = try #require(object["warnings"] as? [String])
-    #expect(warnings.isEmpty)
+    #expect(
+      warnings.contains(
+        "Current directory contains a project .personakit that is not in the loaded scope set."
+      )
+    )
 
     let safetyModel = try #require(object["safetyModel"] as? [String])
     #expect(safetyModel.contains("PersonaKit MCP is read-only."))
@@ -159,6 +259,24 @@ struct MCPCatalogResourceTests {
   }
 
   @Test
+  func catalogIndexIncludesScopeWarningsFromGuidance() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let registry = try Registry.load(scopes: scopes)
+    let service = MCPResourceService(registry: registry, scopes: scopes)
+
+    let text = try service.readCatalogResource(type: .index)
+    let data = try #require(text.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let warnings = try #require(object["warnings"] as? [String])
+
+    #expect(
+      warnings.contains(
+        "Current directory contains a project .personakit that is not in the loaded scope set."
+      )
+    )
+  }
+
+  @Test
   func catalogStartReportsExplicitRootScope() throws {
     let root = try makeTempDirectory().appendingPathComponent(".personakit")
     try FileManager.default.createDirectory(
@@ -195,7 +313,12 @@ struct MCPCatalogResourceTests {
       "Verify the configured MCP --root or working directory when repo-local grounding is expected.",
     ].joined(separator: " ")
 
-    #expect(warnings == [expectedWarning])
+    #expect(warnings.contains(expectedWarning))
+    #expect(
+      warnings.contains(
+        "Current directory contains a project .personakit that is not in the loaded scope set."
+      )
+    )
   }
 
   @Test
@@ -229,4 +352,32 @@ private func emptyRegistry() -> Registry {
     referencesById: [:],
     skillsById: [:]
   )
+}
+
+private func mutateJSONFile<T: Codable>(
+  _ url: URL,
+  as type: T.Type,
+  mutate: (T) -> T
+) throws {
+  let data = try Data(contentsOf: url)
+  let value = try JSONDecoder().decode(type, from: data)
+  let updated = mutate(value)
+  let encoder = JSONEncoder()
+  encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+  let encoded = try encoder.encode(updated)
+  try encoded.write(to: url, options: .atomic)
+}
+
+private func jsonObject(from content: Resource.Content) throws -> [String: Any]? {
+  guard let text = resourceText(content),
+    let data = text.data(using: .utf8)
+  else {
+    return nil
+  }
+
+  return try JSONSerialization.jsonObject(with: data) as? [String: Any]
+}
+
+private func resourceText(_ content: Resource.Content) -> String? {
+  content.text
 }

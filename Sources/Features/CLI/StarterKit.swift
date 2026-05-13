@@ -5,10 +5,11 @@ struct PersonaKitInitializer {
   /// Validates and initializes the given destination.
   ///
   /// - Parameter destination: Destination path to initialize.
+  /// - Parameter force: Whether to replace an existing non-empty destination.
   /// - Throws: `InitError` when validation fails, or file-system errors during writing.
-  func run(destination: String) throws {
+  func run(destination: String, force: Bool = false) throws {
     let destinationURL = try DestinationValidator().validate(path: destination)
-    try StarterKitWriter().write(to: destinationURL)
+    try StarterKitWriter().write(to: destinationURL, force: force)
   }
 }
 
@@ -16,12 +17,17 @@ struct PersonaKitInitializer {
 struct StarterKitWriter {
   private let fileManager = FileManager.default
 
-  /// Recreates the destination directory and writes all starter files atomically.
+  /// Creates the destination directory and writes all starter files atomically.
   ///
   /// - Parameter destination: Directory where the starter content is written.
+  /// - Parameter force: Whether to replace an existing non-empty destination.
   /// - Throws: Any error produced while removing, creating, or writing files.
-  func write(to destination: URL) throws {
+  func write(to destination: URL, force: Bool = false) throws {
     if fileManager.fileExists(atPath: destination.path) {
+      guard force || isEmptyDirectory(destination) else {
+        throw InitError.destinationExists(destination.path)
+      }
+
       try fileManager.removeItem(at: destination)
     }
 
@@ -39,6 +45,20 @@ struct StarterKitWriter {
       try? fileManager.removeItem(at: destination)
       throw error
     }
+  }
+
+  private func isEmptyDirectory(_ destination: URL) -> Bool {
+    var isDirectory: ObjCBool = false
+
+    guard fileManager.fileExists(atPath: destination.path, isDirectory: &isDirectory),
+      isDirectory.boolValue
+    else {
+      return false
+    }
+
+    let contents = (try? fileManager.contentsOfDirectory(atPath: destination.path)) ?? []
+
+    return contents.isEmpty
   }
 }
 
@@ -87,6 +107,8 @@ enum InitError: Error, Equatable {
   case emptyPath
   /// The destination path resolves to a location that must not be initialized.
   case disallowedPath(String)
+  /// The destination already exists and contains files.
+  case destinationExists(String)
 
   /// Human-readable error description for CLI output.
   var description: String {
@@ -95,7 +117,15 @@ enum InitError: Error, Equatable {
       return "Destination path is required."
     case .disallowedPath(let path):
       return "Refusing to initialize at unsafe destination: \(path)"
+    case .destinationExists(let path):
+      return "Refusing to replace non-empty destination without --force: \(path)"
     }
+  }
+}
+
+extension InitError: LocalizedError {
+  var errorDescription: String? {
+    description
   }
 }
 
@@ -112,100 +142,176 @@ enum StarterKitManifest {
   /// Ordered starter files written into a freshly initialized PersonaKit root.
   static let entries: [StarterFile] = [
     StarterFile(
-      relativePath: "Packs/personas/senior-swiftui-engineer.persona.json",
+      relativePath: "Packs/personas/solo-developer.persona.json",
       contents:
-        "{\n  \"id\": \"senior-swiftui-engineer\",\n  \"version\": \"1.0\",\n  \"name\": \"Senior SwiftUI Engineer\",\n  \"summary\": \"Pragmatic, accessibility-first, small diffs.\",\n  \"responsibilities\": [\n    \"Implement SwiftUI features\",\n    \"Maintain accessibility\",\n    \"Write tests for changes\"\n  ],\n  \"values\": [\n    \"correctness over cleverness\",\n    \"small diffs\",\n    \"clarity\"\n  ],\n  \"nonGoals\": [\n    \"architecture rewrites\",\n    \"introducing new frameworks without approval\"\n  ],\n  \"defaultKitIds\": [\n    \"swift-style\",\n    \"swiftui-style\",\n    \"repo-constraints\"\n  ],\n  \"allowedSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"forbiddenSkillIds\": [\n    \"autonomous-agent-loop\"\n  ]\n}"
-        .utf8Data
+        """
+        {
+          "id": "solo-developer",
+          "version": "1.0",
+          "name": "Solo Developer",
+          "summary": "CLI-first developer who keeps changes small, explicit, and reviewable.",
+          "responsibilities": [
+            "Resolve the active operating contract before starting work",
+            "Keep implementation changes scoped to the requested task",
+            "Preserve deterministic behavior and clear verification steps"
+          ],
+          "values": [
+            "explicit over inferred",
+            "small diffs",
+            "deterministic output",
+            "human review"
+          ],
+          "nonGoals": [
+            "workflow orchestration",
+            "memory systems",
+            "multi-agent control flows"
+          ],
+          "defaultKitIds": [
+            "v1-cli-guardrails"
+          ],
+          "allowedSkillIds": [
+            "opencode-cli"
+          ],
+          "forbiddenSkillIds": [
+            "autonomous-agent-loop"
+          ]
+        }
+
+        """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/kits/swift-style.kit.json",
+      relativePath: "Packs/kits/v1-cli-guardrails.kit.json",
       contents:
-        "{\n  \"id\": \"swift-style\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Kit\",\n  \"summary\": \"Swift language style and conventions.\",\n  \"essentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"referenceIds\": [\n    \"swift-style-guide-reference\"\n  ]\n}"
-        .utf8Data
+        """
+        {
+          "id": "v1-cli-guardrails",
+          "version": "1.0",
+          "name": "V1 CLI Guardrails",
+          "summary": "Guardrails for narrow PersonaKit V1 CLI work.",
+          "essentialIds": [
+            "v1-boundaries"
+          ]
+        }
+
+        """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/kits/swiftui-style.kit.json",
+      relativePath: "Packs/directives/small-cli-change.directive.json",
       contents:
-        "{\n  \"id\": \"swiftui-style\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Kit\",\n  \"summary\": \"SwiftUI-specific style and accessibility rules.\",\n  \"essentialIds\": [\n    \"swiftui-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"referenceIds\": [\n    \"swiftui-style-guide-reference\"\n  ]\n}"
-        .utf8Data
+        """
+        {
+          "id": "small-cli-change",
+          "version": "1.0",
+          "title": "Make a small CLI change",
+          "goal": "Complete one bounded CLI improvement without expanding PersonaKit's V1 scope.",
+          "steps": [
+            {
+              "text": "Read the active contract and identify the requested change."
+            },
+            {
+              "text": "Make the smallest implementation or documentation update that satisfies the task."
+            },
+            {
+              "text": "Stop for review if the task requires new execution behavior, a new adapter, persistence, or orchestration.",
+              "requiresReview": true
+            },
+            {
+              "text": "Verify the change and summarize the result."
+            }
+          ],
+          "acceptanceCriteria": [
+            "The change stays inside the requested CLI task",
+            "No new autonomous execution behavior is introduced",
+            "Output ordering remains deterministic",
+            "Verification steps are reported"
+          ],
+          "verification": [
+            {
+              "kind": "command",
+              "text": "swift test"
+            },
+            {
+              "kind": "command",
+              "text": "swift run personakit validate"
+            }
+          ],
+          "requiresIntentTemplateIds": [],
+          "requiresSkillIds": [
+            "opencode-cli"
+          ]
+        }
+
+        """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/kits/repo-constraints.kit.json",
+      relativePath: "Packs/skills/opencode-cli.skill.json",
       contents:
-        "{\n  \"id\": \"repo-constraints\",\n  \"version\": \"1.0\",\n  \"name\": \"Repository Constraints Kit\",\n  \"summary\": \"Rules specific to this codebase.\",\n  \"essentialIds\": [\n    \"environment\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ]\n}"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/directives/apply-style.directive.json",
-      contents:
-        "{\n  \"id\": \"apply-style\",\n  \"version\": \"1.0\",\n  \"title\": \"Apply Swift + SwiftUI style guides\",\n  \"goal\": \"Ensure the change matches Swift and SwiftUI style guides.\",\n  \"steps\": [\n    {\n      \"text\": \"Identify the target files and intended behavior.\"\n    },\n    {\n      \"text\": \"Apply Swift and SwiftUI style rules consistently.\"\n    },\n    {\n      \"text\": \"Avoid unrelated refactors.\",\n      \"requiresReview\": true\n    },\n    {\n      \"text\": \"Update or add tests as needed.\"\n    },\n    {\n      \"text\": \"Provide a concise diff summary.\"\n    }\n  ],\n  \"acceptanceCriteria\": [\n    \"Code matches Swift style guide\",\n    \"Code matches SwiftUI style guide\",\n    \"Tests pass\",\n    \"No unintended behavior changes\"\n  ],\n  \"verification\": [\n    {\n      \"kind\": \"command\",\n      \"text\": \"swift test\"\n    },\n    {\n      \"kind\": \"manual\",\n      \"text\": \"Review diff for scope creep\"\n    }\n  ],\n  \"requiresIntentTemplateIds\": [\n    \"swift-refactor-safe\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"referenceIds\": [\n    \"swift-style-guide-reference\",\n    \"swiftui-style-guide-reference\"\n  ]\n}"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/intents/swift-refactor-safe.intent.json",
-      contents:
-        "{\n  \"id\": \"swift-refactor-safe\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Refactor (Safe)\",\n  \"description\": \"Perform a small refactor without changing behavior.\",\n  \"parameters\": [\n    {\n      \"name\": \"targetFiles\",\n      \"type\": \"string[]\",\n      \"required\": true\n    }\n  ],\n  \"includesEssentialIds\": [\n    \"swift-style-guide\",\n    \"tools-and-constraints\",\n    \"non-goals\"\n  ],\n  \"requiresSkillIds\": [\n    \"codex-cli\"\n  ],\n  \"risk\": {\n    \"level\": \"medium\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"No public API changes\",\n      \"No behavior changes\"\n    ]\n  }\n}"
-        .utf8Data
+        """
+        {
+          "id": "opencode-cli",
+          "version": "1.0",
+          "name": "OpenCode CLI",
+          "description": "Use the local OpenCode CLI outside PersonaKit after PersonaKit resolves the operating contract.",
+          "providedBy": [
+            "opencode"
+          ],
+          "risk": {
+            "level": "medium",
+            "requiresHumanReview": true,
+            "notes": [
+              "PersonaKit resolves context; OpenCode performs the requested work."
+            ]
+          },
+          "notes": [
+            "PersonaKit V1 supports one explicitly selected agent adapter."
+          ]
+        }
+
+        """.utf8Data
     ),
     StarterFile(
       relativePath: "Packs/skills/autonomous-agent-loop.skill.json",
       contents:
-        "{\n  \"id\": \"autonomous-agent-loop\",\n  \"version\": \"1.0\",\n  \"name\": \"Autonomous Agent Loop\",\n  \"description\": \"Executes directives without human checkpoints.\",\n  \"providedBy\": [\n    \"autonomous-agent-loop\"\n  ],\n  \"risk\": {\n    \"level\": \"high\",\n    \"requiresHumanReview\": true,\n    \"notes\": [\n      \"Execution is not allowed in PersonaKit\"\n    ]\n  },\n  \"notes\": [\n    \"Forbidden by default.\"\n  ]\n}"
-        .utf8Data
+        """
+        {
+          "id": "autonomous-agent-loop",
+          "version": "1.0",
+          "name": "Autonomous Agent Loop",
+          "description": "Long-running autonomous planning or execution loop.",
+          "providedBy": [
+            "unsupported"
+          ],
+          "risk": {
+            "level": "high",
+            "requiresHumanReview": true,
+            "notes": [
+              "Out of scope for PersonaKit V1."
+            ]
+          },
+          "notes": [
+            "Included only so the example can explicitly forbid this capability."
+          ]
+        }
+
+        """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/skills/codex-cli.skill.json",
+      relativePath: "Packs/essentials/v1-boundaries.md",
       contents:
-        "{\n  \"id\": \"codex-cli\",\n  \"version\": \"1.0\",\n  \"name\": \"Codex CLI\",\n  \"description\": \"Edits files and produces PR-sized diffs (outside PersonaKit).\",\n  \"providedBy\": [\n    \"codex-cli\"\n  ],\n  \"risk\": {\n    \"level\": \"medium\",\n    \"requiresHumanReview\": false,\n    \"notes\": []\n  },\n  \"notes\": [\n    \"PersonaKit never executes tools.\"\n  ]\n}"
+        "# V1 Boundaries\n\nPersonaKit V1 resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before running work.\n- Use dry-run output to inspect the runtime payload before launching an agent.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
         .utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/essentials/environment.md",
-      contents: "# Environment\n\n- Platform: macOS\n- Language: Swift\n".utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/essentials/swift-style-guide.md",
+      relativePath: "Sessions/solo-dev-v1.session.json",
       contents:
-        "# Swift Style Guide\n\nUse this runtime guide for active Swift implementation and review sessions.\nConsult reference id `swift-style-guide-reference` when you need examples, tradeoff rationale, or deeper Swift structure guidance.\n"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/essentials/swiftui-style-guide.md",
-      contents:
-        "# SwiftUI Style Guide\n\nUse this runtime guide for active SwiftUI implementation and review sessions.\nConsult reference id `swiftui-style-guide-reference` when you need examples, architecture rationale, or deeper SwiftUI composition guidance.\n"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/references/swift-style-guide-reference.reference.json",
-      contents:
-        "{\n  \"id\": \"swift-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"Swift Style Guide Reference\",\n  \"summary\": \"Extended Swift style examples and rationale for deeper language-structure decisions.\",\n  \"triggerRules\": [\n    {\n      \"pathGlobs\": [\n        \"**/*.swift\"\n      ]\n    }\n  ]\n}"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/references/swift-style-guide-reference.md",
-      contents:
-        "# Swift Style Guide\n\nExtended Swift style examples and rationale live here for prompt expansion tests.\n"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/references/swiftui-style-guide-reference.reference.json",
-      contents:
-        "{\n  \"id\": \"swiftui-style-guide-reference\",\n  \"version\": \"1.0\",\n  \"name\": \"SwiftUI Style Guide Reference\",\n  \"summary\": \"Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.\",\n  \"triggerRules\": [\n    {\n      \"referenceTags\": [\n        \"swiftui\"\n      ]\n    },\n    {\n      \"pathGlobs\": [\n        \"**/*View.swift\",\n        \"**/Views/**/*.swift\"\n      ]\n    }\n  ]\n}"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/references/swiftui-style-guide-reference.md",
-      contents:
-        "# SwiftUI Style Guide\n\nExtended SwiftUI ownership and composition guidance lives here for prompt expansion tests.\n"
-        .utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/essentials/tools-and-constraints.md",
-      contents: "# Tools & Constraints\n\n- No large refactors\n- No new dependencies without approval\n".utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/essentials/non-goals.md",
-      contents: "# Non-Goals\n\n- No architecture rewrites\n- No execution inside PersonaKit\n".utf8Data
+        """
+        {
+          "id": "solo-dev-v1",
+          "personaId": "solo-developer",
+          "directiveId": "small-cli-change"
+        }
+
+        """.utf8Data
     ),
   ]
 }
