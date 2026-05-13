@@ -6,11 +6,15 @@ import SwiftUI
 @main
 struct PersonaKitStudioApp: App {
   @NSApplicationDelegateAdaptor(StudioAppDelegate.self) private var appDelegate
-  @State private var workspaceStore = WorkspaceStore()
+  @State private var workspaceStore = WorkspaceStore.launchConfigured()
+  private let initialSection = StudioLaunchConfiguration.initialSection()
 
   var body: some Scene {
     WindowGroup {
-      StudioRootView(workspaceStore: workspaceStore)
+      StudioRootView(
+        workspaceStore: workspaceStore,
+        initialSection: initialSection
+      )
     }
     .commands {
       StudioAppCommands(workspaceStore: workspaceStore)
@@ -27,33 +31,5 @@ private final class StudioAppDelegate: NSObject, NSApplicationDelegate {
 
     NSApplication.shared.setActivationPolicy(.regular)
     NSApplication.shared.activate(ignoringOtherApps: true)
-  }
-}
-
-enum StudioLaunchConfiguration {
-  static let disableAutoActivateEnvironmentKey = "PERSONAKIT_STUDIO_DISABLE_AUTO_ACTIVATE"
-
-  static func shouldAutoActivate(
-    environment: [String: String] = ProcessInfo.processInfo.environment,
-    arguments: [String] = ProcessInfo.processInfo.arguments
-  ) -> Bool {
-    if arguments.contains("--no-auto-activate") {
-      return false
-    }
-
-    guard
-      let rawValue = environment[disableAutoActivateEnvironmentKey]?
-        .trimmingCharacters(in: .whitespacesAndNewlines),
-      !rawValue.isEmpty
-    else {
-      return true
-    }
-
-    switch rawValue.lowercased() {
-    case "1", "true", "yes":
-      return false
-    default:
-      return true
-    }
   }
 }

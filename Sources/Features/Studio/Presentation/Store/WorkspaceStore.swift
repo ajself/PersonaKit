@@ -48,13 +48,16 @@ public final class WorkspaceStore {
     }
   }
   private(set) var snapshotRevision = 0
+  // Keeps @Observable views subscribed when async validation mutates nested feature state.
+  private var validationRevision = 0
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var installStatus: WorkspaceInstallStatus
   var installResult: StudioInstallResult?
   var validation: WorkspaceValidationSnapshot {
     get {
-      validationFeatureModel.validation
+      _ = validationRevision
+      return validationFeatureModel.validation
     }
 
     set {
@@ -64,7 +67,8 @@ public final class WorkspaceStore {
 
   var validationErrorMessage: String? {
     get {
-      validationFeatureModel.validationErrorMessage
+      _ = validationRevision
+      return validationFeatureModel.validationErrorMessage
     }
 
     set {
@@ -211,6 +215,9 @@ public final class WorkspaceStore {
     self.validationFeatureModel = WorkspaceValidationFeatureModel(
       operationRunner: operationRunner
     )
+    self.validationFeatureModel.onChange = { [weak self] in
+      self?.validationRevision &+= 1
+    }
   }
 
 }

@@ -49,6 +49,7 @@ enum MCPCatalogPayloads {
   struct Index: Encodable {
     let schemaVersion: Int
     let scope: Scope
+    let warnings: [String]
     let counts: [String: Int]
     let resources: [IndexEntry]
   }

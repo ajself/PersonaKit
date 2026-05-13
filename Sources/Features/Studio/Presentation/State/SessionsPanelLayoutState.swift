@@ -57,7 +57,7 @@ enum SessionsPanelLayoutState {
     availableSessionIDs: [String]
   ) -> String? {
     guard let currentSelectedSessionID else {
-      return nil
+      return availableSessionIDs.first
     }
 
     if availableSessionIDs.contains(currentSelectedSessionID) {

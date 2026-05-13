@@ -55,7 +55,8 @@ PersonaKit V1 is successful if:
   - directives
   - essentials
 - CLI command: `personakit run`
-- One agent adapter (Codex OR OpenCode)
+- One agent adapter (OpenCode for the current V1 implementation)
+- Adapter launch requires a resolved contract that authorizes a skill provided by the selected adapter
 - Dry-run support for debugging
 
 ---
@@ -67,7 +68,7 @@ PersonaKit V1 is successful if:
 - Task orchestration (lead-worker, RPI automation)
 - Remote execution platforms
 - Team collaboration features
-- GUI enhancements (Studio paused)
+- GUI enhancements (Studio is present in the repository but paused for the V1 release bar)
 - Task management systems
 
 ---

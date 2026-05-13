@@ -7,9 +7,34 @@ struct SessionDependencyMapView: View {
   let scopeByNodeKey: [String: WorkspaceSourceScope]
   let highlightedNodeKey: String?
   let compact: Bool
+  let showsSessionLane: Bool
   let onSelectNode: (WorkspaceSessionMapNode) -> Void
 
-  private let laneOrder: [WorkspaceSessionMapNodeKind] = [
+  private var laneOrder: [WorkspaceSessionMapNodeKind] {
+    if showsSessionLane {
+      return Self.allLaneKinds
+    }
+
+    return Self.allLaneKinds.filter { $0 != .session }
+  }
+
+  init(
+    map: WorkspaceSessionMap,
+    scopeByNodeKey: [String: WorkspaceSourceScope],
+    highlightedNodeKey: String?,
+    compact: Bool,
+    showsSessionLane: Bool = true,
+    onSelectNode: @escaping (WorkspaceSessionMapNode) -> Void
+  ) {
+    self.map = map
+    self.scopeByNodeKey = scopeByNodeKey
+    self.highlightedNodeKey = highlightedNodeKey
+    self.compact = compact
+    self.showsSessionLane = showsSessionLane
+    self.onSelectNode = onSelectNode
+  }
+
+  private static let allLaneKinds: [WorkspaceSessionMapNodeKind] = [
     .session,
     .persona,
     .directive,

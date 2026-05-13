@@ -1,7 +1,7 @@
 # Documentation Style Guide
 
 Status: Active  
-Owner: AJ  
+Owner: Maintainers
 Last Reviewed: 2026-03-29
 
 ## Purpose

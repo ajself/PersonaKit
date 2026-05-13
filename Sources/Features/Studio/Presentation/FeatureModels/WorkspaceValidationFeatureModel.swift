@@ -11,6 +11,7 @@ final class WorkspaceValidationFeatureModel {
   private var validationTask: Task<Void, Never>?
   private var state = WorkspaceValidationState()
   private var activeWorkspaceURL: URL?
+  var onChange: (() -> Void)?
 
   init(operationRunner: WorkspaceOperationRunner) {
     self.operationRunner = operationRunner
@@ -23,6 +24,7 @@ final class WorkspaceValidationFeatureModel {
 
     set {
       state.setSnapshot(newValue)
+      onChange?()
     }
   }
 
@@ -33,6 +35,7 @@ final class WorkspaceValidationFeatureModel {
 
     set {
       state.setErrorMessage(newValue)
+      onChange?()
     }
   }
 
@@ -46,6 +49,7 @@ final class WorkspaceValidationFeatureModel {
     activeWorkspaceURL = nil
     state.setSnapshot(.empty)
     state.setErrorMessage(nil)
+    onChange?()
   }
 
   func runValidation(
@@ -63,6 +67,7 @@ final class WorkspaceValidationFeatureModel {
       )
     )
     state.setErrorMessage(nil)
+    onChange?()
 
     validationTask = Task { [requestedWorkspaceURL, snapshotAtValidationStart] in
       do {
@@ -79,6 +84,7 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(validation)
         state.setErrorMessage(nil)
+        onChange?()
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
           activeWorkspaceURL == requestedWorkspaceURL
@@ -88,6 +94,7 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(.empty)
         state.setErrorMessage(error.message)
+        onChange?()
       } catch {
         guard !Task.isCancelled,
           activeWorkspaceURL == requestedWorkspaceURL
@@ -97,6 +104,7 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(.empty)
         state.setErrorMessage(error.localizedDescription)
+        onChange?()
       }
     }
   }

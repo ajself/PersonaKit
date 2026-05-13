@@ -15,8 +15,8 @@ struct CLICompletionTests {
       root: personaKitRoot,
       session: SessionFile(
         id: "sample-review-session",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "apply-style",
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
         kitOverrides: nil
       )
     )
@@ -49,8 +49,8 @@ struct CLICompletionTests {
       root: firstRoot,
       session: SessionFile(
         id: "first-session",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "apply-style",
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
         kitOverrides: nil
       )
     )
@@ -58,8 +58,8 @@ struct CLICompletionTests {
       root: secondRoot,
       session: SessionFile(
         id: "second-session",
-        personaId: "senior-swiftui-engineer",
-        directiveId: "apply-style",
+        personaId: "solo-developer",
+        directiveId: "small-cli-change",
         kitOverrides: nil
       )
     )

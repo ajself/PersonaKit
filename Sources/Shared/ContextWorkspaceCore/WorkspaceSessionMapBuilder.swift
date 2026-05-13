@@ -277,7 +277,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
       for essentialID in uniqueSorted(kit.essentialIds) {
         authoredEssentialIDs.insert(essentialID)
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
-        let essentialExists = resolveEssentialURL(essentialID, scopes: scopes) != nil
+        let essentialExists = resolveEssential(essentialID, scopes: scopes) != nil
 
         upsertNode(
           in: &nodeStateByKey,
@@ -395,7 +395,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
       for essentialID in uniqueSorted(intent.includesEssentialIds) {
         authoredEssentialIDs.insert(essentialID)
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
-        let essentialExists = resolveEssentialURL(essentialID, scopes: scopes) != nil
+        let essentialExists = resolveEssential(essentialID, scopes: scopes) != nil
 
         upsertNode(
           in: &nodeStateByKey,
@@ -524,35 +524,15 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     )
   }
 
-  private func resolveEssentialURL(
+  private func resolveEssential(
     _ essentialID: String,
     scopes: ScopeSet
-  ) -> URL? {
-    let expectedPath = "Packs/essentials/\(essentialID).md"
-
-    if essentialID == "persona-activation-contract" {
-      guard let activeRootURL = scopes.projectScopeURL ?? scopes.globalScopeURL else {
-        return nil
-      }
-
-      let overrideURL = activeRootURL.appendingPathComponent(expectedPath)
-
-      if dependencies.fileExists(overrideURL) {
-        return overrideURL
-      }
-
-      return overrideURL
-    }
-
-    for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(expectedPath)
-
-      if dependencies.fileExists(fileURL) {
-        return fileURL
-      }
-    }
-
-    return nil
+  ) -> ResolvedEssential? {
+    PersonaKitEssentialResolver.resolve(
+      essentialID,
+      scopes: scopes,
+      fileExists: dependencies.fileExists
+    )
   }
 
   private func normalizedKitOverrides(_ input: [String]) -> [String]? {

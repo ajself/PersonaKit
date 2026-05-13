@@ -97,7 +97,7 @@ struct CLIRecommendCommandTests {
 
   @Test
   func recommendPrefersReviewLaneForReviewGoal() throws {
-    let scopes = ScopeSet(projectScopeURL: repoRootURL().appendingPathComponent(".personakit"), globalScopeURL: nil)
+    let scopes = ScopeSet(projectScopeURL: internalAgentRootURL(), globalScopeURL: nil)
     let registry = try Registry.load(scopes: scopes)
     let sessions = try SessionFileLoader.list(scopes: scopes)
 

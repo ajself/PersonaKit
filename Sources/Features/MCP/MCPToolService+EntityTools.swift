@@ -158,28 +158,24 @@ extension MCPToolService {
         )
       )
     case .essential:
-      guard let fileURL = MCPInternalSupport.resolveEssentialURL(
-        id: input.id,
-        scopes: scopes,
-        fileManager: .default
-      )
+      guard
+        let essential = MCPInternalSupport.resolveEssential(
+          id: input.id,
+          scopes: scopes,
+          fileManager: .default
+        )
       else {
         throw MCPError.invalidParams(
           MCPInternalSupport.missingEntityMessage(entityType: .essential, id: input.id)
         )
       }
-      let text: String
-      do {
-        text = try String(contentsOf: fileURL, encoding: .utf8)
-      } catch {
-        throw MCPError.internalError("Failed to read essential \(input.id).")
-      }
+      let text = try MCPInternalSupport.readEssentialText(essential, id: input.id)
       return try MCPInternalSupport.encodeToolJSON(
         MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
           id: input.id,
           data: MCPToolPayloads.EssentialExplainData(
-            resolvedPath: fileURL.path,
+            resolvedPath: essential.url.path,
             lineCount: MCPInternalSupport.lineCount(text),
             byteCount: text.utf8.count
           )
@@ -439,26 +435,22 @@ extension MCPToolService {
         ]
       )
     case .essential:
-      guard let fileURL = MCPInternalSupport.resolveEssentialURL(
-        id: id,
-        scopes: scopes,
-        fileManager: .default
-      )
+      guard
+        let essential = MCPInternalSupport.resolveEssential(
+          id: id,
+          scopes: scopes,
+          fileManager: .default
+        )
       else {
         throw MCPError.invalidParams(
           MCPInternalSupport.missingEntityMessage(entityType: .essential, id: id)
         )
       }
-      let content: String
-      do {
-        content = try String(contentsOf: fileURL, encoding: .utf8)
-      } catch {
-        throw MCPError.internalError("Failed to read essential \(id).")
-      }
+      let content = try MCPInternalSupport.readEssentialText(essential, id: id)
       return MCPToolPayloads.EntityComparableSnapshot(
         scalars: [
           "id": id,
-          "resolvedPath": fileURL.path,
+          "resolvedPath": essential.url.path,
           "lineCount": String(MCPInternalSupport.lineCount(content)),
           "byteCount": String(content.utf8.count),
         ],

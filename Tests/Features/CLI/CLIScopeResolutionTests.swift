@@ -25,7 +25,7 @@ struct CLIScopeResolutionTests {
     }
 
     #expect(status == 0)
-    #expect(output.contains("senior-swiftui-engineer"))
+    #expect(output.contains("solo-developer"))
   }
 
   @Test
@@ -48,7 +48,7 @@ struct CLIScopeResolutionTests {
     }
 
     #expect(status == 0)
-    #expect(output.contains("senior-swiftui-engineer"))
+    #expect(output.contains("solo-developer"))
   }
 
   @Test

@@ -100,6 +100,26 @@ public enum BestGuidanceSupport {
     )
   }
 
+  /// Builds scope-only risk messages without loading sessions or validating packs.
+  public static func scopeRiskMessages(
+    scopes: ScopeSet,
+    currentDirectoryPath: String = FileManager.default.currentDirectoryPath,
+    homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+  ) -> [String] {
+    let currentDirectoryProjectRoot = ProjectPersonaKitLocator(
+      startingURL: URL(fileURLWithPath: currentDirectoryPath)
+    )
+    .locate()?
+    .standardizedFileURL
+    .path
+
+    return scopeRiskMessages(
+      scopes: scopes,
+      currentDirectoryProjectRoot: currentDirectoryProjectRoot,
+      homeDirectory: homeDirectory
+    )
+  }
+
   /// Encodes guidance payload as stable, pretty-printed JSON.
   public static func encodeJSON(_ payload: Payload) throws -> String {
     let encoder = JSONEncoder()
@@ -139,6 +159,32 @@ public enum BestGuidanceSupport {
     validationError: String?,
     validationErrors: [ValidationError]
   ) -> [String] {
+    var risks = scopeRiskMessages(
+      scopes: scopes,
+      currentDirectoryProjectRoot: currentDirectoryProjectRoot,
+      homeDirectory: homeDirectory
+    )
+
+    if let sessionsError {
+      risks.append("Session discovery failed: \(sessionsError)")
+    }
+
+    if let validationError {
+      risks.append("Validation failed before pack checks completed: \(validationError)")
+    }
+
+    if !validationErrors.isEmpty {
+      risks.append("Validation reported \(validationErrors.count) issue(s) in the loaded scope set.")
+    }
+
+    return risks.sorted()
+  }
+
+  private static func scopeRiskMessages(
+    scopes: ScopeSet,
+    currentDirectoryProjectRoot: String?,
+    homeDirectory: URL
+  ) -> [String] {
     var risks: [String] = []
     let loadedRoots = Set(scopes.resolutionOrder.map { canonicalPath($0) })
 
@@ -159,18 +205,6 @@ public enum BestGuidanceSupport {
       risks.append(
         "MCP or CLI loaded ~/.personakit as the only scope; repo-local sessions may be hidden."
       )
-    }
-
-    if let sessionsError {
-      risks.append("Session discovery failed: \(sessionsError)")
-    }
-
-    if let validationError {
-      risks.append("Validation failed before pack checks completed: \(validationError)")
-    }
-
-    if !validationErrors.isEmpty {
-      risks.append("Validation reported \(validationErrors.count) issue(s) in the loaded scope set.")
     }
 
     return risks.sorted()

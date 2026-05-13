@@ -40,9 +40,9 @@ COMPLETE_WORKTREE_MAIN ?= main
 COMPLETE_WORKTREE_NO_CLEANUP ?= 0
 
 .PHONY: help studio-doctor clean build test format-check \
-	core-validate-repo core-complete-worktree core-zip \
+	core-validate-repo core-complete-worktree core-zip public-v1-check \
 	cli-build cli-install cli-install-zsh-completion cli-test \
-	studio-build studio-run studio-test \
+	studio-build studio-run studio-test studio-review studio-vqa \
 	studio-pkg-preflight studio-archive-release studio-export-release studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg
 
 studio-archive-release studio-export-release studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg: CONFIGURATION = Release
@@ -61,6 +61,7 @@ help:
 	@printf "  %-28s %s\n" "core-validate-repo" "Run deterministic repo validation."
 	@printf "  %-28s %s\n" "core-complete-worktree" "Rebase & ff-merge feature branch to main, delete worktree & branch."
 	@printf "  %-28s %s\n" "core-zip" "Create a project zip archive."
+	@printf "  %-28s %s\n" "public-v1-check" "Run public V1 README and starter verification."
 	@echo ""
 	@echo "CLI surface:"
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
@@ -68,10 +69,12 @@ help:
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@echo ""
-	@echo "Studio surface:"
+	@echo "Studio surface (optional; not part of the V1 release bar):"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-run" "Build and run the Studio app with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-test" "Run Studio Xcode tests only (requires WORKSPACE_PATH)."
+	@printf "  %-28s %s\n" "studio-review" "Build Studio and capture optional review screenshots."
+	@printf "  %-28s %s\n" "studio-vqa" "Alias for studio-review."
 	@printf "  %-28s %s\n" "studio-pkg-preflight" "Check Studio packaging tools, export options, and release inputs."
 	@printf "  %-28s %s\n" "studio-archive-release" "Archive the Studio app for Release distribution."
 	@printf "  %-28s %s\n" "studio-export-release" "Copy the signed archived app into the release export directory."
@@ -154,6 +157,11 @@ studio-run: studio-doctor
 		--scheme "$(STUDIO_SCHEME)" \
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
+
+studio-review:
+	bash Scripts/studio-review.sh
+
+studio-vqa: studio-review
 
 test:
 	swift test $(if $(TEST_FILTER),--filter $(TEST_FILTER),)
@@ -302,6 +310,38 @@ studio-release-pkg: studio-pkg-preflight studio-archive-release studio-export-re
 
 core-validate-repo:
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
+
+public-v1-check:
+	swift test
+	swift run personakit --help
+	swift run personakit run --help
+	rm -rf /tmp/personakit-public-v1-check
+	mkdir -p /tmp/personakit-public-v1-check
+	diff -qr .personakit Examples/public-starter/.personakit
+	swift run personakit validate --root .personakit
+	swift run personakit validate --root Fixtures/internal-agent-root/.personakit
+	swift run personakit validate --root Fixtures/kit-root
+	swift run personakit validate --root Examples/public-starter/.personakit
+	swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev-v1 > /tmp/personakit-public-v1-check/example-contract.json
+	rg '"sessionId" : "solo-dev-v1"' /tmp/personakit-public-v1-check/example-contract.json
+	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-v1-check/example-contract.json
+	swift run personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/example-dry-run.md
+	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/example-dry-run.md
+	rg '## Task' /tmp/personakit-public-v1-check/example-dry-run.md
+	swift run personakit init /tmp/personakit-public-v1-check/.personakit
+	swift run personakit validate --root /tmp/personakit-public-v1-check/.personakit
+	swift run personakit run --root /tmp/personakit-public-v1-check/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/init-dry-run.md
+	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/init-dry-run.md
+	rg '## Task' /tmp/personakit-public-v1-check/init-dry-run.md
+	mkdir -p /tmp/personakit-public-v1-check/non-empty
+	printf "occupied\n" > /tmp/personakit-public-v1-check/non-empty/README.md
+	! swift run personakit init /tmp/personakit-public-v1-check/non-empty
+	swift run personakit init /tmp/personakit-public-v1-check/non-empty --force
+	swift run personakit validate --root /tmp/personakit-public-v1-check/non-empty
+	! swift run personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-v1-check/legacy-rejection.txt 2>&1
+	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-v1-check/legacy-rejection.txt
+	! rg -n "A[J]|O[r]bit|T[ask]board|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md"
+	rg -n "memory|orchestration" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md" || true
 
 core-complete-worktree:
 	./Scripts/complete-worktree.sh \

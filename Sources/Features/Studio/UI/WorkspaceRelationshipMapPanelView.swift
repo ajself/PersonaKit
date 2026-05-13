@@ -162,6 +162,7 @@ struct WorkspaceRelationshipMapPanelView: View {
         }
       }
       .pickerStyle(.segmented)
+      .labelsHidden()
       .frame(width: 240)
 
       Menu("Entity Types") {
@@ -193,6 +194,7 @@ struct WorkspaceRelationshipMapPanelView: View {
         scopeByNodeKey: scopeByNodeKey,
         highlightedNodeKey: highlightedNodeKey,
         compact: false,
+        showsSessionLane: false,
         onSelectNode: { node in
           highlightedNodeKey = node.key
 

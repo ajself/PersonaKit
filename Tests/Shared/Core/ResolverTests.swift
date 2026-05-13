@@ -8,7 +8,7 @@ struct ResolverTests {
   @Test
   func resolveHappyPath() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
     let registry = try Registry.load(root: root)
 
     let definition = SessionDefinition(
@@ -58,7 +58,7 @@ struct ResolverTests {
   @Test
   func missingKitIdError() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let personaURL = root.appendingPathComponent("Packs/personas/senior-swiftui-engineer.persona.json")
     let data = try Data(contentsOf: personaURL)
@@ -107,7 +107,7 @@ struct ResolverTests {
   @Test
   func missingEssentialFileError() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let missingURL = root.appendingPathComponent("Packs/essentials/swiftui-style-guide.md")
     try FileManager.default.removeItem(at: missingURL)
@@ -140,7 +140,7 @@ struct ResolverTests {
   @Test
   func deterministicOrdering() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
     let registry = try Registry.load(root: root)
 
     let definition = SessionDefinition(
@@ -173,7 +173,7 @@ struct ResolverTests {
   @Test
   func requiredPersonaActivationContractIsDeduplicatedWhenExplicitlyIncluded() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let kitURL = root.appendingPathComponent("Packs/kits/repo-constraints.kit.json")
     let data = try Data(contentsOf: kitURL)
@@ -210,7 +210,7 @@ struct ResolverTests {
   @Test
   func projectOverrideReplacesBuiltInPersonaActivationContract() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
+    try copyFixtureKit(to: root)
 
     let overrideURL = root.appendingPathComponent(
       "Packs/essentials/\(SystemEssentials.personaActivationContractId).md"
@@ -242,8 +242,8 @@ struct ResolverTests {
     let projectScope = root.appendingPathComponent(".personakit")
     let globalScope = try makeTempDirectory().appendingPathComponent(".personakit")
 
-    try PersonaKitInitializer().run(destination: projectScope.path)
-    try PersonaKitInitializer().run(destination: globalScope.path)
+    try copyFixtureKit(to: projectScope)
+    try copyFixtureKit(to: globalScope)
 
     let globalOverrideURL = globalScope.appendingPathComponent(
       "Packs/essentials/\(SystemEssentials.personaActivationContractId).md"

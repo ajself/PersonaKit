@@ -32,7 +32,9 @@ struct CLIRunCommandTests {
           sessionId: "senior-swiftui-engineer_apply-style",
           personaId: "senior-swiftui-engineer",
           directiveId: "apply-style",
-          kitIds: ["repo-constraints", "swift-style", "swiftui-style"]
+          kitIds: ["repo-constraints", "swift-style", "swiftui-style"],
+          authorizedSkillIds: ["codex-cli"],
+          authorizedProviderIds: ["codex-cli"]
         )
     )
     #expect(result.payload.contains("## Context\n\(exportedContext)"))
@@ -41,7 +43,7 @@ struct CLIRunCommandTests {
 
   @Test
   func dryRunPrintsPayload() throws {
-    let root = fixtureKitRootURL()
+    let root = publicStarterRootURL()
 
     var status: Int32 = 0
     let output = captureStdout {
@@ -51,23 +53,23 @@ struct CLIRunCommandTests {
         "--root",
         root.path,
         "--session",
-        "senior-swiftui-engineer_apply-style",
+        "solo-dev-v1",
         "--agent",
         "opencode",
         "--dry-run",
         "--",
-        "Refactor the networking layer.",
+        "Make a small, reviewable CLI improvement.",
       ])
     }
 
     #expect(status == 0)
     #expect(output.contains("# PersonaKit Runtime Payload"))
-    #expect(output.contains("## Task\nRefactor the networking layer."))
+    #expect(output.contains("## Task\nMake a small, reviewable CLI improvement."))
   }
 
   @Test
   func dryRunCopiesPayloadToClipboard() {
-    let root = fixtureKitRootURL()
+    let root = publicStarterRootURL()
     let clipboardContents = Mutex<String?>(nil)
     let cli = PersonaKitCLI(
       clipboardIO: CLIClipboardIO(
@@ -90,13 +92,13 @@ struct CLIRunCommandTests {
           "--root",
           root.path,
           "--session",
-          "senior-swiftui-engineer_apply-style",
+          "solo-dev-v1",
           "--agent",
           "opencode",
           "--dry-run",
           "--copy",
           "--",
-          "Refactor the networking layer.",
+          "Make a small, reviewable CLI improvement.",
         ])
       }
 
@@ -106,7 +108,36 @@ struct CLIRunCommandTests {
     #expect(status == 0)
     #expect(stderrOutput.contains("Copied dry-run payload to clipboard."))
     #expect(clipboardContents.withLock { $0 }?.contains("# PersonaKit Runtime Payload") == true)
-    #expect(clipboardContents.withLock { $0 }?.contains("## Task\nRefactor the networking layer.") == true)
+    #expect(
+      clipboardContents.withLock { $0 }?
+        .contains("## Task\nMake a small, reviewable CLI improvement.") == true
+    )
+  }
+
+  @Test
+  func dryRunRejectsUnauthorizedAgent() {
+    let root = fixtureKitRootURL()
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "run",
+        "--root",
+        root.path,
+        "--session",
+        "senior-swiftui-engineer_apply-style",
+        "--agent",
+        "opencode",
+        "--dry-run",
+        "--",
+        "Refactor the networking layer.",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("run agent `opencode` is not authorized"))
+    #expect(stderrOutput.contains("Authorized providers: codex-cli"))
   }
 
   @Test
@@ -136,7 +167,7 @@ struct CLIRunCommandTests {
 
   @Test
   func dryRunReportsClipboardFailure() {
-    let root = fixtureKitRootURL()
+    let root = publicStarterRootURL()
     let cli = PersonaKitCLI(
       clipboardIO: CLIClipboardIO(
         writeString: { _ in false }
@@ -152,13 +183,13 @@ struct CLIRunCommandTests {
           "--root",
           root.path,
           "--session",
-          "senior-swiftui-engineer_apply-style",
+          "solo-dev-v1",
           "--agent",
           "opencode",
           "--dry-run",
           "--copy",
           "--",
-          "Refactor the networking layer.",
+          "Make a small, reviewable CLI improvement.",
         ])
       }
 
@@ -167,6 +198,71 @@ struct CLIRunCommandTests {
 
     #expect(status == 1)
     #expect(stderrOutput.contains("Failed to copy dry-run payload to the clipboard."))
+  }
+
+  @Test
+  func openCodeAdapterInvokesExecutableWithPayloadFile() throws {
+    let temporaryDirectory = try makeTempDirectory()
+    let executableURL = temporaryDirectory.appendingPathComponent("opencode")
+    let capturedInvocation = Mutex<AgentProcessInvocation?>(nil)
+    let capturedPayload = Mutex<String?>(nil)
+    let adapter = OpenCodeAgentAdapter(
+      processRunner: StubAgentProcessRunner { invocation in
+        capturedInvocation.withLock { $0 = invocation }
+        capturedPayload.withLock { payload in
+          payload = try? String(contentsOf: URL(fileURLWithPath: invocation.arguments[0]), encoding: .utf8)
+        }
+
+        return 0
+      },
+      executableResolver: StubAgentExecutableResolver(executableURL: executableURL),
+      temporaryDirectory: temporaryDirectory
+    )
+
+    let status = try adapter.invoke(payload: "resolved runtime payload")
+    let invocation = try #require(capturedInvocation.withLock { $0 })
+    let payloadPath = try #require(invocation.arguments.first)
+
+    #expect(status == 0)
+    #expect(invocation.executableURL == executableURL)
+    #expect(invocation.arguments.count == 1)
+    #expect(payloadPath.hasPrefix(temporaryDirectory.path))
+    #expect(payloadPath.hasSuffix(".md"))
+    #expect(capturedPayload.withLock { $0 } == "resolved runtime payload")
+    #expect(!FileManager.default.fileExists(atPath: payloadPath))
+  }
+
+  @Test
+  func openCodeAdapterPropagatesExitStatus() throws {
+    let temporaryDirectory = try makeTempDirectory()
+    let adapter = OpenCodeAgentAdapter(
+      processRunner: StubAgentProcessRunner { _ in 42 },
+      executableResolver: StubAgentExecutableResolver(
+        executableURL: temporaryDirectory.appendingPathComponent("opencode")
+      ),
+      temporaryDirectory: temporaryDirectory
+    )
+
+    #expect(try adapter.invoke(payload: "payload") == 42)
+  }
+
+  @Test
+  func openCodeAdapterReportsMissingExecutable() throws {
+    let adapter = OpenCodeAgentAdapter(
+      processRunner: StubAgentProcessRunner { _ in
+        #expect(Bool(false))
+        return 0
+      },
+      executableResolver: StubAgentExecutableResolver(executableURL: nil),
+      temporaryDirectory: try makeTempDirectory()
+    )
+
+    do {
+      _ = try adapter.invoke(payload: "payload")
+      #expect(Bool(false))
+    } catch {
+      #expect(error.localizedDescription.contains("Failed to launch opencode"))
+    }
   }
 
   @Test
@@ -213,5 +309,21 @@ struct CLIRunCommandTests {
     }
 
     #expect(status == 1)
+  }
+}
+
+private struct StubAgentProcessRunner: AgentProcessRunning {
+  let runHandler: (AgentProcessInvocation) throws -> Int32
+
+  func run(_ invocation: AgentProcessInvocation) throws -> Int32 {
+    try runHandler(invocation)
+  }
+}
+
+private struct StubAgentExecutableResolver: AgentExecutableResolving {
+  let executableURL: URL?
+
+  func executableURL(named executableName: String) -> URL? {
+    executableURL
   }
 }

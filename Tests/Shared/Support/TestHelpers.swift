@@ -64,6 +64,14 @@ func fixtureKitRootURL() -> URL {
   fixturesRootURL().appendingPathComponent("kit-root")
 }
 
+func internalAgentRootURL() -> URL {
+  fixturesRootURL().appendingPathComponent("internal-agent-root/.personakit")
+}
+
+func publicStarterRootURL() -> URL {
+  repoRootURL().appendingPathComponent("Examples/public-starter/.personakit")
+}
+
 func copyFixtureKit(to destination: URL) throws {
   try FileManager.default.copyItem(at: fixtureKitRootURL(), to: destination)
 }

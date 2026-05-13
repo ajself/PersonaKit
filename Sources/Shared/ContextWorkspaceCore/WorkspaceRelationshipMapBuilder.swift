@@ -376,7 +376,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
 
       for essentialID in uniqueSorted(kit.essentialIds) {
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
-        let exists = resolveEssentialURL(essentialID, scopes: scopes) != nil
+        let exists = resolveEssential(essentialID, scopes: scopes) != nil
 
         upsertNode(
           in: &nodeStateByKey,
@@ -401,7 +401,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
               sourceId: kit.id,
               field: "essentialIds",
               missingId: essentialID,
-              expectedPath: "Packs/essentials/\(essentialID).md"
+              expectedPath: PersonaKitEssentialResolver.expectedPath(for: essentialID)
             ),
             errors: &errors,
             errorKeys: &errorKeys
@@ -458,7 +458,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
 
       for essentialID in uniqueSorted(intent.includesEssentialIds) {
         let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
-        let exists = resolveEssentialURL(essentialID, scopes: scopes) != nil
+        let exists = resolveEssential(essentialID, scopes: scopes) != nil
 
         upsertNode(
           in: &nodeStateByKey,
@@ -484,7 +484,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
               sourceId: intent.id,
               field: "includesEssentialIds",
               missingId: essentialID,
-              expectedPath: "Packs/essentials/\(essentialID).md"
+              expectedPath: PersonaKitEssentialResolver.expectedPath(for: essentialID)
             ),
             errors: &errors,
             errorKeys: &errorKeys
@@ -655,35 +655,15 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     return urlsByEssentialID
   }
 
-  private func resolveEssentialURL(
+  private func resolveEssential(
     _ essentialID: String,
     scopes: ScopeSet
-  ) -> URL? {
-    let expectedPath = "Packs/essentials/\(essentialID).md"
-
-    if essentialID == "persona-activation-contract" {
-      guard let activeRootURL = scopes.projectScopeURL ?? scopes.globalScopeURL else {
-        return nil
-      }
-
-      let overrideURL = activeRootURL.appendingPathComponent(expectedPath)
-
-      if dependencies.fileExists(overrideURL) {
-        return overrideURL
-      }
-
-      return nil
-    }
-
-    for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(expectedPath)
-
-      if dependencies.fileExists(fileURL) {
-        return fileURL
-      }
-    }
-
-    return nil
+  ) -> ResolvedEssential? {
+    PersonaKitEssentialResolver.resolve(
+      essentialID,
+      scopes: scopes,
+      fileExists: dependencies.fileExists
+    )
   }
 
   private func appendUniqueError(

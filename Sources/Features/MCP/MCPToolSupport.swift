@@ -207,15 +207,31 @@ enum MCPInternalSupport {
     return Set(ids).sorted()
   }
 
-  static func resolveEssentialURL(id: String, scopes: ScopeSet, fileManager: FileManager) -> URL? {
-    let relativePath = "Packs/essentials/\(id).md"
-    for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(relativePath)
-      if fileManager.fileExists(atPath: fileURL.path) {
-        return fileURL
-      }
+  static func resolveEssential(
+    id: String,
+    scopes: ScopeSet,
+    fileManager: FileManager
+  ) -> ResolvedEssential? {
+    PersonaKitEssentialResolver.resolve(
+      id,
+      scopes: scopes,
+      fileManager: fileManager
+    )
+  }
+
+  static func readEssentialText(
+    _ essential: ResolvedEssential,
+    id: String
+  ) throws -> String {
+    if let content = essential.content {
+      return content
     }
-    return nil
+
+    do {
+      return try String(contentsOf: essential.url, encoding: .utf8)
+    } catch {
+      throw MCPError.internalError("Failed to read essential \(id).")
+    }
   }
 
   static func lineCount(_ text: String) -> Int {

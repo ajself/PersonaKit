@@ -7,14 +7,6 @@ struct MCPResourceService: Sendable {
   let registry: Registry
   let scopes: ScopeSet
 
-  init(
-    registry: Registry,
-    scopes: ScopeSet
-  ) {
-    self.registry = registry
-    self.scopes = scopes
-  }
-
   /// Lists available resources with deterministic URI ordering.
   func listResources() throws -> [Resource] {
     var entries: [MCPResourceEntry] = []
@@ -66,6 +58,33 @@ struct MCPResourceService: Sendable {
     }
     if case .catalog(let type) = reference {
       let text = try readCatalogResource(type: type)
+      return Resource.Content.text(text, uri: reference.uri, mimeType: reference.mimeType)
+    }
+
+    if case .essential(let id) = reference {
+      guard
+        let resolved = PersonaKitEssentialResolver.resolve(
+          id,
+          scopes: scopes,
+          fileManager: .default
+        )
+      else {
+        throw MCPError.invalidParams(
+          "Resource not found for URI \(uri); expected \(reference.relativePath)"
+        )
+      }
+
+      let text: String
+      if let content = resolved.content {
+        text = content
+      } else {
+        do {
+          text = try String(contentsOf: resolved.url, encoding: .utf8)
+        } catch {
+          throw MCPError.internalError("Failed to read \(reference.relativePath).")
+        }
+      }
+
       return Resource.Content.text(text, uri: reference.uri, mimeType: reference.mimeType)
     }
 
@@ -341,6 +360,7 @@ extension MCPResourceService {
     return MCPCatalogPayloads.Index(
       schemaVersion: 1,
       scope: catalogScopePayload(),
+      warnings: catalogScopeWarnings(),
       counts: [
         "start": 1,
         "personas": registry.personas.count,
@@ -407,6 +427,7 @@ extension MCPResourceService {
   }
 
   private func catalogScopeWarnings() -> [String] {
+    let guidanceRisks = BestGuidanceSupport.scopeRiskMessages(scopes: scopes)
     let globalRoot = FileManager.default.homeDirectoryForCurrentUser
       .appendingPathComponent(".personakit")
       .standardizedFileURL
@@ -419,7 +440,7 @@ extension MCPResourceService {
       .path
 
     guard projectRoot == globalRoot, scopes.globalScopeURL == nil else {
-      return []
+      return guidanceRisks
     }
 
     let warning = [
@@ -427,13 +448,18 @@ extension MCPResourceService {
       "Verify the configured MCP --root or working directory when repo-local grounding is expected.",
     ].joined(separator: " ")
 
-    return [warning]
+    return Set(guidanceRisks + [warning]).sorted()
   }
 }
 
 enum MCPResourceFileSupport {
   static func listEssentialIds(scopes: ScopeSet, fileManager: FileManager) throws -> [String] {
     var ids: Set<String> = []
+
+    if !scopes.isEmpty {
+      ids.formUnion(PersonaKitEssentialResolver.builtInEssentialIds)
+    }
+
     for root in scopes.loadOrder {
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       var isDirectory: ObjCBool = false
@@ -485,6 +511,21 @@ enum MCPResourceFileSupport {
     scopes: ScopeSet,
     fileManager: FileManager
   ) -> URL? {
+    if case .pack(let type, let id) = reference {
+      for root in scopes.resolutionOrder {
+        if let fileURL = resolvePackFileURLByDecodedID(
+          type: type,
+          id: id,
+          root: root,
+          fileManager: fileManager
+        ) {
+          return fileURL
+        }
+      }
+
+      return nil
+    }
+
     let relativePath = reference.relativePath
     for root in scopes.resolutionOrder {
       let fileURL = root.appendingPathComponent(relativePath)
@@ -492,6 +533,58 @@ enum MCPResourceFileSupport {
         return fileURL
       }
     }
+
     return nil
+  }
+
+  private static func resolvePackFileURLByDecodedID(
+    type: MCPPackResourceType,
+    id: String,
+    root: URL,
+    fileManager: FileManager
+  ) -> URL? {
+    let directoryURL = root.appendingPathComponent("Packs/\(type.rawValue)")
+    var isDirectory: ObjCBool = false
+
+    guard fileManager.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory),
+      isDirectory.boolValue
+    else {
+      return nil
+    }
+
+    let files: [URL]
+
+    do {
+      files = try fileManager.contentsOfDirectory(
+        at: directoryURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles]
+      )
+    } catch {
+      return nil
+    }
+
+    for fileURL in files.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+    where fileURL.lastPathComponent.hasSuffix(type.suffix) {
+      guard let decodedID = decodedEntityID(fileURL: fileURL) else {
+        continue
+      }
+
+      if decodedID == id {
+        return fileURL
+      }
+    }
+
+    return nil
+  }
+
+  private static func decodedEntityID(fileURL: URL) -> String? {
+    guard let data = try? Data(contentsOf: fileURL),
+      let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else {
+      return nil
+    }
+
+    return object["id"] as? String
   }
 }
