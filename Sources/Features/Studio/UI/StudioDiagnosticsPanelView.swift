@@ -18,6 +18,10 @@ struct StudioDiagnosticsPanelView: View {
     VStack(alignment: .leading, spacing: 12) {
       StudioDiagnosticsHeaderView(
         summary: workspaceStore.validation.summary,
+        validationStatus: StudioWorkspaceValidationStatus.status(
+          validation: workspaceStore.validation,
+          validationErrorMessage: workspaceStore.validationErrorMessage
+        ),
         onValidateWorkspace: {
           workspaceStore.validateWorkspace()
         }
