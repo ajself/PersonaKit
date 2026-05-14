@@ -64,7 +64,6 @@ Sources:
 
 # Essentials
 ## persona-activation-contract
-# Persona Activation Contract
 
 Use this essential as the universal runtime contract for persona assignment and reassignment.
 
@@ -98,7 +97,6 @@ Do not treat one agent as multiple active personas at the same time during execu
 That pattern softens role boundaries, obscures stop points, and makes it hard to audit who supplied which judgment.
 
 ## skill-authorization-contract
-# Skill Authorization Contract
 
 Use this essential as the universal runtime contract for skill selection after PersonaKit grounding.
 
@@ -123,31 +121,26 @@ PersonaKit grounding happens before external skill selection.
 3. Stop on mismatch rather than substituting or improvising with undeclared context.
 
 ## environment
-# Environment
 
 - Platform: macOS
 - Language: Swift
 
 ## non-goals
-# Non-Goals
 
 - No architecture rewrites
 - No execution inside PersonaKit
 
 ## swift-style-guide
-# Swift Style Guide
 
 Use this runtime guide for active Swift implementation and review sessions.
 Consult reference id `swift-style-guide-reference` when you need examples, tradeoff rationale, or deeper Swift structure guidance.
 
 ## swiftui-style-guide
-# SwiftUI Style Guide
 
 Use this runtime guide for active SwiftUI implementation and review sessions.
 Consult reference id `swiftui-style-guide-reference` when you need examples, architecture rationale, or deeper SwiftUI composition guidance.
 
 ## tools-and-constraints
-# Tools & Constraints
 
 - No large refactors
 - No new dependencies without approval

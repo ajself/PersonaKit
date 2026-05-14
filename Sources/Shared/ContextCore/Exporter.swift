@@ -307,7 +307,8 @@ public struct SessionExporter {
 
     for (index, essential) in orderedEssentials.enumerated() {
       appendLine("## \(essential.id)")
-      output.append(essential.content ?? "")
+      appendLine()
+      output.append(normalizeIncludedMarkdownBody(essential.content ?? ""))
       if index < orderedEssentials.count - 1 {
         appendLine()
       }
@@ -334,7 +335,8 @@ public struct SessionExporter {
           }
           appendLine("- rule[\(rule.ruleIndex)]: \(ruleDetails.joined(separator: " + "))")
         }
-        output.append(reference.content)
+        appendLine()
+        output.append(normalizeIncludedMarkdownBody(reference.content))
         if index < expandedReferences.count - 1 {
           appendLine()
         }
@@ -493,6 +495,33 @@ public struct SessionExporter {
     }
 
     return output
+  }
+
+  private static func normalizeIncludedMarkdownBody(_ content: String) -> String {
+    var lines = content.components(separatedBy: .newlines)
+
+    guard let firstLine = lines.first,
+      firstLine.hasPrefix("# "),
+      !firstLine.hasPrefix("## ")
+    else {
+      return content
+    }
+
+    lines.removeFirst()
+
+    while lines.first?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true {
+      lines.removeFirst()
+    }
+
+    var normalized = lines.joined(separator: "\n")
+
+    if !normalized.isEmpty,
+      !normalized.hasSuffix("\n")
+    {
+      normalized.append("\n")
+    }
+
+    return normalized
   }
 
   /// Appends a titled bullet list section when `items` is non-empty.

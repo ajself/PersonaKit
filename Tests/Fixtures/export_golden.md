@@ -31,29 +31,24 @@ Forbidden Skills:
 
 # Essentials
 ## environment
-# Environment
 
 - Platform: macOS
 - Language: Swift
 
 ## non-goals
-# Non-Goals
 
 - No architecture rewrites
 - No execution inside PersonaKit
 
 ## swift-style-guide
-# Swift Style Guide
 
 (Paste your real Swift style guide here.)
 
 ## swiftui-style-guide
-# SwiftUI Style Guide
 
 (Paste your real SwiftUI style guide here.)
 
 ## tools-and-constraints
-# Tools & Constraints
 
 - No large refactors
 - No new dependencies without approval
