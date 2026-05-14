@@ -106,10 +106,24 @@ struct StudioLibraryPanelView: View {
           .foregroundStyle(.secondary)
       }
 
-      StudioLibraryItemListView(
-        visibleItems: visibleItems,
-        selectedLibraryItemID: $selectedLibraryItemID
-      )
+      HSplitView {
+        StudioLibraryItemListView(
+          visibleItems: visibleItems,
+          selectedLibraryItemID: $selectedLibraryItemID
+        )
+        .frame(minWidth: 360, idealWidth: 520, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+        StudioLibraryPreviewView(
+          selection: selection,
+          state: selectedItem.map {
+            StudioLibraryPreviewState(
+              selection: selection,
+              item: $0,
+              workspaceURL: workspaceStore.workspaceURL
+            )
+          }
+        )
+      }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .searchable(text: $searchText, prompt: "Search \(selection.title)")
@@ -209,6 +223,12 @@ struct StudioLibraryPanelView: View {
       personaEditorPresentation = nil
       rawJSONEditorPresentation = nil
     }
+    .onChange(of: visibleItems.map(\.id)) { _, _ in
+      reconcileSelectedLibraryItem(visibleItems: visibleItems)
+    }
+    .onAppear {
+      reconcileSelectedLibraryItem(visibleItems: visibleItems)
+    }
   }
 
   private func filteredItems(_ items: [WorkspaceListItem]) -> [WorkspaceListItem] {
@@ -256,6 +276,18 @@ struct StudioLibraryPanelView: View {
     }
 
     return items.first { $0.id == selectedLibraryItemID }
+  }
+
+  private func reconcileSelectedLibraryItem(
+    visibleItems: [WorkspaceListItem]
+  ) {
+    if let selectedLibraryItemID,
+      visibleItems.contains(where: { $0.id == selectedLibraryItemID })
+    {
+      return
+    }
+
+    selectedLibraryItemID = visibleItems.first?.id
   }
 
   private func openRawJSONEditorForSelectedItem(

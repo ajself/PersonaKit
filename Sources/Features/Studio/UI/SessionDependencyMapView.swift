@@ -8,14 +8,20 @@ struct SessionDependencyMapView: View {
   let highlightedNodeKey: String?
   let compact: Bool
   let showsSessionLane: Bool
+  let showsEmptyLanes: Bool
   let onSelectNode: (WorkspaceSessionMapNode) -> Void
 
   private var laneOrder: [WorkspaceSessionMapNodeKind] {
-    if showsSessionLane {
-      return Self.allLaneKinds
-    }
+    let allKinds =
+      showsSessionLane
+      ? Self.allLaneKinds
+      : Self.allLaneKinds.filter { $0 != .session }
 
-    return Self.allLaneKinds.filter { $0 != .session }
+    return RelationshipMapPresentationState.visibleLaneKinds(
+      map: map,
+      laneOrder: allKinds,
+      showsEmptyLanes: showsEmptyLanes
+    )
   }
 
   init(
@@ -24,6 +30,7 @@ struct SessionDependencyMapView: View {
     highlightedNodeKey: String?,
     compact: Bool,
     showsSessionLane: Bool = true,
+    showsEmptyLanes: Bool = true,
     onSelectNode: @escaping (WorkspaceSessionMapNode) -> Void
   ) {
     self.map = map
@@ -31,6 +38,7 @@ struct SessionDependencyMapView: View {
     self.highlightedNodeKey = highlightedNodeKey
     self.compact = compact
     self.showsSessionLane = showsSessionLane
+    self.showsEmptyLanes = showsEmptyLanes
     self.onSelectNode = onSelectNode
   }
 
@@ -56,6 +64,7 @@ struct SessionDependencyMapView: View {
         }
       }
       .padding(compact ? 10 : 14)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       .overlayPreferenceValue(SessionMapNodeAnchorPreferenceKey.self) { anchors in
         GeometryReader { proxy in
           Canvas { context, _ in
@@ -89,6 +98,7 @@ struct SessionDependencyMapView: View {
         }
       }
     }
+    .defaultScrollAnchor(.topLeading)
   }
 
   private func laneView(
@@ -167,6 +177,7 @@ struct SessionDependencyMapView: View {
       }
     }
     .buttonStyle(.plain)
+    .accessibilityLabel(nodeAccessibilityLabel(node))
   }
 
   private func nodes(for kind: WorkspaceSessionMapNodeKind) -> [WorkspaceSessionMapNode] {
@@ -183,6 +194,27 @@ struct SessionDependencyMapView: View {
         RoundedRectangle(cornerRadius: 8)
           .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
       )
+  }
+
+  private func nodeAccessibilityLabel(_ node: WorkspaceSessionMapNode) -> String {
+    var parts = [
+      node.kind.title,
+      node.id,
+    ]
+
+    if node.displayName != node.id {
+      parts.append(node.displayName)
+    }
+
+    if let scope = scopeByNodeKey[node.key] {
+      parts.append(scope.displayName)
+    }
+
+    if !node.badges.isEmpty {
+      parts.append(node.badges.sorted().joined(separator: ", "))
+    }
+
+    return parts.joined(separator: ", ")
   }
 
   private func cardBackground(node: WorkspaceSessionMapNode) -> some View {

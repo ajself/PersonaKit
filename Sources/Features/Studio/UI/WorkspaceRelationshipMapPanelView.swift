@@ -60,6 +60,12 @@ struct WorkspaceRelationshipMapPanelView: View {
           systemImage: "exclamationmark.triangle",
           description: Text(errorMessage)
         )
+      } else if let focusUnavailableState = focusedMapUnavailableState {
+        ContentUnavailableView(
+          focusUnavailableState.title,
+          systemImage: focusUnavailableState.systemImage,
+          description: Text(focusUnavailableState.description)
+        )
       } else if let filteredMap {
         mapView(filteredMap)
       } else {
@@ -195,6 +201,7 @@ struct WorkspaceRelationshipMapPanelView: View {
         highlightedNodeKey: highlightedNodeKey,
         compact: false,
         showsSessionLane: false,
+        showsEmptyLanes: false,
         onSelectNode: { node in
           highlightedNodeKey = node.key
 
@@ -215,6 +222,8 @@ struct WorkspaceRelationshipMapPanelView: View {
         RoundedRectangle(cornerRadius: 8)
           .fill(.quaternary.opacity(0.18))
       )
+
+      relationshipReasonsView(filteredMap)
 
       if !filteredMap.resolutionErrors.isEmpty {
         VStack(alignment: .leading, spacing: 8) {
@@ -237,7 +246,7 @@ struct WorkspaceRelationshipMapPanelView: View {
                 .controlSize(.small)
               }
 
-              Button("Go to Diagnostics") {
+              Button("Go to Validation Results") {
                 onNavigate(
                   SessionsNavigationTarget(
                     sidebarItem: .validationResults,
@@ -256,6 +265,35 @@ struct WorkspaceRelationshipMapPanelView: View {
           RoundedRectangle(cornerRadius: 8)
             .fill(.orange.opacity(0.08))
         )
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func relationshipReasonsView(_ filteredMap: WorkspaceSessionMap) -> some View {
+    let summaries = RelationshipMapPresentationState.relationshipSummaries(map: filteredMap)
+
+    if !summaries.isEmpty {
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Relationship Reasons")
+          .font(.caption)
+          .fontWeight(.semibold)
+          .foregroundStyle(.secondary)
+
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 6) {
+            ForEach(summaries, id: \.self) { summary in
+              Text(summary)
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                  Capsule()
+                    .fill(.secondary.opacity(0.12))
+                )
+            }
+          }
+        }
       }
     }
   }
@@ -363,6 +401,7 @@ struct WorkspaceRelationshipMapPanelView: View {
 
     if focusModeEnabled,
       let selectedSession = selectedSessionContext(),
+      workspaceStore.sessionMapRequestKey == sessionMapRequestKey(for: selectedSession),
       let focusMap = workspaceStore.sessionMap
     {
       let focusNodeKeys = Set(focusMap.nodes.map(\.key)).union(["session:\(selectedSession.id)"])
@@ -389,6 +428,48 @@ struct WorkspaceRelationshipMapPanelView: View {
       resolutionErrors: resolutionErrors,
       isFullyResolved: resolutionErrors.isEmpty
     )
+  }
+
+  private var focusedMapUnavailableState: FocusedMapUnavailableState? {
+    guard focusModeEnabled else {
+      return nil
+    }
+
+    guard let selectedSession = selectedSessionContext() else {
+      return FocusedMapUnavailableState(
+        title: "Select a Session",
+        systemImage: "sidebar.leading",
+        description: "Choose a session to focus the relationship map."
+      )
+    }
+
+    guard workspaceStore.sessionMapRequestKey == sessionMapRequestKey(for: selectedSession) else {
+      return .loading
+    }
+
+    if workspaceStore.isLoadingSessionMap {
+      return .loading
+    }
+
+    if let sessionMapErrorMessage = workspaceStore.sessionMapErrorMessage {
+      return FocusedMapUnavailableState(
+        title: "Focused Map Failed",
+        systemImage: "exclamationmark.triangle",
+        description: sessionMapErrorMessage
+      )
+    }
+
+    guard workspaceStore.sessionMap != nil else {
+      return .loading
+    }
+
+    return nil
+  }
+
+  private func sessionMapRequestKey(
+    for session: WorkspaceSessionListItem
+  ) -> String {
+    "session:\(session.id)"
   }
 
   private func refreshFocusSessionMapIfNeeded() {
@@ -479,6 +560,18 @@ struct WorkspaceRelationshipMapPanelView: View {
       }
     )
   }
+}
+
+private struct FocusedMapUnavailableState {
+  let title: String
+  let systemImage: String
+  let description: String
+
+  static let loading = FocusedMapUnavailableState(
+    title: "Loading Focused Map",
+    systemImage: "point.topleft.down.curvedto.point.bottomright.up",
+    description: "Loading the selected session map before applying focus."
+  )
 }
 
 private enum RelationshipScopeFilter: CaseIterable {
