@@ -11,7 +11,9 @@ struct StudioWorkspaceInitializationView: View {
       ContentUnavailableView(
         "Workspace Missing PersonaKit",
         systemImage: "folder.badge.plus",
-        description: Text(loadErrorMessage)
+        description: Text(
+          "\(loadErrorMessage) Initialize the standard .personakit folders here, or choose a different workspace."
+        )
       )
 
       HStack(spacing: 10) {
@@ -20,7 +22,7 @@ struct StudioWorkspaceInitializationView: View {
         }
         .buttonStyle(.borderedProminent)
 
-        Button("Choose another folder") {
+        Button("Choose Another Folder") {
           onChooseAnotherFolder()
         }
       }
