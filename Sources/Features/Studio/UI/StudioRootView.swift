@@ -273,14 +273,17 @@ enum SidebarItem: Hashable {
   case relationshipMap
   case validationResults
 
-  static let libraryItems: [SidebarItem] = [
+  static let contractItems: [SidebarItem] = [
     .personas,
     .directives,
     .kits,
+    .intents,
+  ]
+
+  static let contextItems: [SidebarItem] = [
     .essentials,
     .references,
     .skills,
-    .intents,
   ]
 
   var title: String {

@@ -135,7 +135,7 @@ struct SessionsMapTabView: View {
         .controlSize(.small)
       }
 
-      Button("Go to Diagnostics") {
+      Button("Go to Validation Results") {
         onNavigateToDiagnostics()
       }
       .buttonStyle(.bordered)

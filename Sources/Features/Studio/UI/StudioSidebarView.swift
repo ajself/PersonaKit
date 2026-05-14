@@ -10,13 +10,19 @@ struct StudioSidebarView: View {
         sidebarRow(for: .sessions)
       }
 
-      Section("Library") {
-        ForEach(SidebarItem.libraryItems, id: \.self) { item in
+      Section("Contract") {
+        ForEach(SidebarItem.contractItems, id: \.self) { item in
           sidebarRow(for: item)
         }
       }
 
-      Section("Diagnostics") {
+      Section("Context") {
+        ForEach(SidebarItem.contextItems, id: \.self) { item in
+          sidebarRow(for: item)
+        }
+      }
+
+      Section("Review") {
         sidebarRow(for: .relationshipMap)
         sidebarRow(for: .validationResults)
       }
