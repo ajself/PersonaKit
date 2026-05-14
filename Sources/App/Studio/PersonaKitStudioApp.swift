@@ -9,6 +9,10 @@ struct PersonaKitStudioApp: App {
   @State private var workspaceStore = WorkspaceStore.launchConfigured()
   private let initialSection = StudioLaunchConfiguration.initialSection()
 
+  init() {
+    NSApplication.shared.setActivationPolicy(.regular)
+  }
+
   var body: some Scene {
     WindowGroup {
       StudioRootView(
@@ -29,7 +33,6 @@ private final class StudioAppDelegate: NSObject, NSApplicationDelegate {
       return
     }
 
-    NSApplication.shared.setActivationPolicy(.regular)
     NSApplication.shared.activate(ignoringOtherApps: true)
   }
 }

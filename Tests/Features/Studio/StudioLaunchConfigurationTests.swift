@@ -148,4 +148,16 @@ struct StudioLaunchConfigurationTests {
       ) == .sessions
     )
   }
+
+  @Test
+  func userDefaultsUsesSuiteNameWhenProvided() {
+    let defaults = StudioLaunchConfiguration.userDefaults(
+      environment: [
+        StudioLaunchConfiguration.userDefaultsSuiteNameEnvironmentKey:
+          "PersonaKitStudioLaunchConfigurationTests"
+      ]
+    )
+
+    #expect(defaults != .standard)
+  }
 }

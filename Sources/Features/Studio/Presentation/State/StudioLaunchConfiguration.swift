@@ -10,6 +10,8 @@ public enum StudioLaunchConfiguration {
     "PERSONAKIT_STUDIO_INITIAL_WORKSPACE_PATH"
   public static let globalScopePathEnvironmentKey =
     "PERSONAKIT_STUDIO_GLOBAL_SCOPE_PATH"
+  public static let userDefaultsSuiteNameEnvironmentKey =
+    "PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME"
 
   public static func shouldAutoActivate(
     environment: [String: String] = ProcessInfo.processInfo.environment,
@@ -93,8 +95,35 @@ public enum StudioLaunchConfiguration {
     return StudioLaunchSection(rawValue: trimmedSection) ?? .sessions
   }
 
+  public static func userDefaults(
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) -> UserDefaults {
+    guard
+      let suiteName = userDefaultsSuiteName(environment: environment),
+      let defaults = UserDefaults(suiteName: suiteName)
+    else {
+      return .standard
+    }
+
+    return defaults
+  }
+
   private static func launchWorkspacePath(from arguments: [String]) -> String? {
     argumentValue(for: "--workspace", in: arguments)
+  }
+
+  private static func userDefaultsSuiteName(
+    environment: [String: String]
+  ) -> String? {
+    guard
+      let trimmedSuiteName = environment[userDefaultsSuiteNameEnvironmentKey]?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !trimmedSuiteName.isEmpty
+    else {
+      return nil
+    }
+
+    return trimmedSuiteName
   }
 
   private static func argumentValue(

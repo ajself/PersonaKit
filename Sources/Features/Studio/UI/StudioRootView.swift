@@ -5,9 +5,15 @@ import SwiftUI
 /// Root Studio split view with sidebar navigation, session editing, and diagnostics.
 public struct StudioRootView: View {
   let workspaceStore: WorkspaceStore
+  @AppStorage(
+    StudioRecentWorkspacesState.storageKey,
+    store: StudioLaunchConfiguration.userDefaults()
+  )
+  private var recentWorkspacesStorageValue = "[]"
   @State private var selection: SidebarItem?
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
+  @State private var recentWorkspaceAccess = StudioRecentWorkspaceAccess()
 
   public init(
     workspaceStore: WorkspaceStore,
@@ -25,7 +31,13 @@ public struct StudioRootView: View {
       detailView
     }
     .task {
+      let previousWorkspaceURL = workspaceStore.workspaceURL
       workspaceStore.loadLaunchWorkspaceIfNeeded()
+
+      if workspaceStore.workspaceURL != previousWorkspaceURL {
+        recordCurrentWorkspaceIfLoaded()
+      }
+
       workspaceStore.refreshInstallStatus()
     }
     .alert(
@@ -53,10 +65,17 @@ public struct StudioRootView: View {
   @ViewBuilder
   private var detailView: some View {
     if workspaceStore.workspaceURL == nil {
-      ContentUnavailableView(
-        "No Workspace Selected",
-        systemImage: "folder.badge.questionmark",
-        description: Text("Use File > Open Workspace… to load a workspace.")
+      StudioWelcomeView(
+        recentWorkspaces: recentWorkspaces,
+        onOpenWorkspace: {
+          openWorkspaceFromPicker()
+        },
+        onOpenRecentWorkspace: { workspace in
+          openRecentWorkspace(workspace)
+        },
+        onRemoveRecentWorkspace: { workspace in
+          removeRecentWorkspace(workspace)
+        }
       )
     } else if let loadErrorMessage = workspaceStore.loadErrorMessage {
       if workspaceStore.canInitializeWorkspaceStructure {
@@ -66,18 +85,54 @@ public struct StudioRootView: View {
             workspaceStore.initializeWorkspaceStructure()
           },
           onChooseAnotherFolder: {
-            workspaceStore.openWorkspacePicker()
+            openWorkspaceFromPicker()
           }
         )
       } else {
         ContentUnavailableView(
-          "Workspace Load Failed",
-          systemImage: "exclamationmark.triangle",
-          description: Text(loadErrorMessage)
+          label: {
+            Label("Workspace Load Failed", systemImage: "exclamationmark.triangle")
+          },
+          description: {
+            Text("\(loadErrorMessage) Choose another folder to inspect a different PersonaKit root.")
+          },
+          actions: {
+            Button("Choose Another Folder") {
+              openWorkspaceFromPicker()
+            }
+            .accessibilityLabel("Choose Another Folder")
+            .help("Choose Another Folder")
+          }
         )
       }
     } else {
       let activeSelection = selection ?? .sessions
+
+      loadedWorkspaceView(activeSelection: activeSelection)
+    }
+  }
+
+  private var recentWorkspaces: [StudioRecentWorkspace] {
+    StudioRecentWorkspacesState.workspaces(from: recentWorkspacesStorageValue)
+  }
+
+  @ViewBuilder
+  private func loadedWorkspaceView(
+    activeSelection: SidebarItem
+  ) -> some View {
+    VStack(spacing: 0) {
+      if let workspaceURL = workspaceStore.workspaceURL {
+        StudioWorkspaceSummaryView(
+          state: StudioWorkspaceSummaryState(
+            workspaceURL: workspaceURL,
+            snapshot: workspaceStore.snapshot,
+            validation: workspaceStore.validation,
+            validationErrorMessage: workspaceStore.validationErrorMessage
+          )
+        )
+
+        Divider()
+      }
 
       switch activeSelection {
       case .sessions:
@@ -157,6 +212,52 @@ public struct StudioRootView: View {
     selection = state.selection
     selectedLibraryItemID = state.selectedLibraryItemID
     searchText = state.searchText
+  }
+
+  private func openWorkspaceFromPicker() {
+    let previousWorkspaceURL = workspaceStore.workspaceURL?.standardizedFileURL
+
+    workspaceStore.openWorkspacePicker()
+
+    guard workspaceStore.workspaceURL?.standardizedFileURL != previousWorkspaceURL else {
+      return
+    }
+
+    recentWorkspaceAccess.stop()
+    recordCurrentWorkspaceIfLoaded()
+  }
+
+  private func openRecentWorkspace(_ workspace: StudioRecentWorkspace) {
+    let workspaceURL = recentWorkspaceAccess.url(for: workspace)
+
+    workspaceStore.workspaceURL = workspaceURL
+    workspaceStore.loadWorkspace()
+    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
+      adding: workspaceURL,
+      bookmarkData: workspace.bookmarkData,
+      to: recentWorkspacesStorageValue
+    )
+  }
+
+  private func removeRecentWorkspace(_ workspace: StudioRecentWorkspace) {
+    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
+      removing: workspace,
+      from: recentWorkspacesStorageValue
+    )
+  }
+
+  private func recordCurrentWorkspaceIfLoaded() {
+    guard let workspaceURL = workspaceStore.workspaceURL else {
+      return
+    }
+
+    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
+      adding: workspaceURL,
+      bookmarkData: StudioRecentWorkspacesState.securityScopedBookmarkData(
+        for: workspaceURL
+      ),
+      to: recentWorkspacesStorageValue
+    )
   }
 }
 
