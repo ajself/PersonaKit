@@ -46,6 +46,23 @@ struct ExporterTests {
   }
 
   @Test
+  func exportOmitsEmbeddedTopLevelEssentialHeadings() throws {
+    let root = fixtureKitRootURL()
+
+    let output = try SessionExporter.export(
+      root: root,
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: [],
+      sessionId: "senior-swiftui-engineer_apply-style"
+    )
+
+    #expect(output.contains("## environment\n\n- Platform: macOS"))
+    #expect(!output.contains("## environment\n# Environment"))
+    #expect(!output.contains("## persona-activation-contract\n# Persona Activation Contract"))
+  }
+
+  @Test
   func exportFailsWhenValidationErrorsExist() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
