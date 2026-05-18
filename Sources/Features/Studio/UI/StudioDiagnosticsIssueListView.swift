@@ -5,46 +5,24 @@ import SwiftUI
 /// Diagnostics issue list with navigation and reveal actions.
 struct StudioDiagnosticsIssueListView: View {
   let issues: [WorkspaceValidationIssue]
-  @Binding var searchText: String
   let onNavigateToIssue: (WorkspaceValidationIssue) -> Void
   let onRevealIssueFile: (WorkspaceValidationIssue) -> Void
 
   var body: some View {
     let groups = StudioDiagnosticsIssueGrouping.groups(for: issues)
 
-    ScrollView {
-      LazyVStack(alignment: .leading, spacing: 10) {
-        ForEach(groups) { group in
-          StudioDiagnosticsIssueGroupRowView(
-            group: group,
-            onNavigateToIssue: onNavigateToIssue,
-            onRevealIssueFile: onRevealIssueFile
-          )
-        }
-      }
-      .padding(.horizontal, 2)
-      .padding(.vertical, 8)
-      .frame(maxWidth: .infinity, alignment: .topLeading)
-    }
-    .overlay {
-      if issues.isEmpty {
-        emptyStateView
+    LazyVStack(alignment: .leading, spacing: 10) {
+      ForEach(groups) { group in
+        StudioDiagnosticsIssueGroupRowView(
+          group: group,
+          onNavigateToIssue: onNavigateToIssue,
+          onRevealIssueFile: onRevealIssueFile
+        )
       }
     }
-    .searchable(text: $searchText, prompt: "Search Validation")
-  }
-
-  @ViewBuilder
-  private var emptyStateView: some View {
-    if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      ContentUnavailableView(
-        "Workspace Is Valid",
-        systemImage: "checkmark.circle",
-        description: Text("Validation found no schema or reference issues.")
-      )
-    } else {
-      ContentUnavailableView.search
-    }
+    .padding(.horizontal, 2)
+    .padding(.vertical, 8)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
   }
 }
 
@@ -62,9 +40,11 @@ private struct StudioDiagnosticsIssueGroupRowView: View {
       }
 
       HStack(spacing: 8) {
-        Button("Go to Issue") {
+        Button(group.navigationActionTitle) {
           onNavigateToIssue(group.navigationIssue)
         }
+        .accessibilityLabel(group.navigationActionTitle)
+        .help(group.navigationActionTitle)
 
         Button("Reveal") {
           guard let issue = group.revealIssue else {
@@ -74,6 +54,8 @@ private struct StudioDiagnosticsIssueGroupRowView: View {
           onRevealIssueFile(issue)
         }
         .disabled(group.revealIssue == nil)
+        .accessibilityLabel("Reveal Issue File")
+        .help("Reveal Issue File")
 
         Spacer()
       }
@@ -124,7 +106,7 @@ private struct StudioDiagnosticsIssueGroupRowView: View {
               .fill(.red.opacity(0.16))
           )
 
-        Text(issue.field)
+        Text("Field: \(issue.field)")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -135,7 +117,7 @@ private struct StudioDiagnosticsIssueGroupRowView: View {
         .multilineTextAlignment(.leading)
 
       if let filePath = issue.filePath {
-        Text(filePath)
+        Text("File: \(filePath)")
           .font(.caption.monospaced())
           .foregroundStyle(.tertiary)
       }

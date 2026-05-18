@@ -11,17 +11,22 @@ struct StudioDiagnosticsPanelView: View {
 
   @SceneStorage(StudioHelpStorageKey.validationResults)
   private var isValidationResultsHelpExpanded = false
+  @State private var selectedIssueFilterID = "all"
 
   var body: some View {
-    let issues = filteredValidationIssues(workspaceStore.validation.issues)
+    let report = StudioValidationReportState(
+      snapshot: workspaceStore.snapshot,
+      validation: workspaceStore.validation,
+      validationErrorMessage: workspaceStore.validationErrorMessage
+    )
+    let issues = report.visibleIssues(
+      selectedFilterID: selectedIssueFilterID,
+      searchText: searchText
+    )
 
     VStack(alignment: .leading, spacing: 12) {
       StudioDiagnosticsHeaderView(
-        summary: workspaceStore.validation.summary,
-        validationStatus: StudioWorkspaceValidationStatus.status(
-          validation: workspaceStore.validation,
-          validationErrorMessage: workspaceStore.validationErrorMessage
-        ),
+        report: report,
         onValidateWorkspace: {
           workspaceStore.validateWorkspace()
         }
@@ -41,48 +46,194 @@ struct StudioDiagnosticsPanelView: View {
           description: Text(validationErrorMessage)
         )
       } else {
-        StudioDiagnosticsIssueListView(
-          issues: issues,
-          searchText: $searchText,
-          onNavigateToIssue: { issue in
-            let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
-            selection = navigationTarget.sidebarItem
-            selectedLibraryItemID = navigationTarget.selectedLibraryItemID
-            searchText = navigationTarget.searchText
-          },
-          onRevealIssueFile: { issue in
-            guard let filePath = issue.filePath else {
-              return
-            }
+        ScrollView {
+          VStack(alignment: .leading, spacing: 14) {
+            if report.issues.isEmpty {
+              StudioValidationReportOverviewView(
+                report: report,
+                onNavigateToArea: { row in
+                  selection = row.sidebarItem
+                  selectedLibraryItemID = nil
+                  searchText = ""
+                }
+              )
+            } else {
+              StudioValidationIssueFilterBarView(
+                options: report.issueFilterOptions,
+                selectedIssueFilterID: $selectedIssueFilterID
+              )
 
-            workspaceStore.revealValidationIssueInFinder(filePath: filePath)
+              StudioValidationIssueStatsView(report: report)
+
+              if issues.isEmpty {
+                ContentUnavailableView.search
+                  .frame(maxWidth: .infinity, minHeight: 180)
+              } else {
+                StudioDiagnosticsIssueListView(
+                  issues: issues,
+                  onNavigateToIssue: { issue in
+                    let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
+                    selection = navigationTarget.sidebarItem
+                    selectedLibraryItemID = navigationTarget.selectedLibraryItemID
+                    searchText = navigationTarget.searchText
+                  },
+                  onRevealIssueFile: { issue in
+                    guard let filePath = issue.filePath else {
+                      return
+                    }
+
+                    workspaceStore.revealValidationIssueInFinder(filePath: filePath)
+                  }
+                )
+              }
+            }
           }
-        )
+          .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
-  }
-
-  private func filteredValidationIssues(
-    _ issues: [WorkspaceValidationIssue]
-  ) -> [WorkspaceValidationIssue] {
-    let normalizedSearch = normalizedSearchText
-
-    guard !normalizedSearch.isEmpty else {
-      return issues
-    }
-
-    return issues.filter { issue in
-      issue.message.localizedCaseInsensitiveContains(normalizedSearch)
-        || issue.entityType.rawValue.localizedCaseInsensitiveContains(normalizedSearch)
-        || (issue.entityId?.localizedCaseInsensitiveContains(normalizedSearch) ?? false)
-        || (issue.filePath?.localizedCaseInsensitiveContains(normalizedSearch) ?? false)
+    .searchable(text: $searchText, prompt: "Search Validation")
+    .onChange(of: report.issueFilterOptions.map(\.id)) { _, filterIDs in
+      if !filterIDs.contains(selectedIssueFilterID) {
+        selectedIssueFilterID = "all"
+      }
     }
   }
+}
 
-  private var normalizedSearchText: String {
-    searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+private struct StudioValidationReportOverviewView: View {
+  let report: StudioValidationReportState
+  let onNavigateToArea: (StudioValidationAreaRow) -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Validated Areas")
+        .font(.headline)
+
+      VStack(spacing: 0) {
+        ForEach(report.areaRows) { row in
+          Button {
+            onNavigateToArea(row)
+          } label: {
+            HStack(spacing: 10) {
+              Image(systemName: row.issueCount == 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(row.issueCount == 0 ? .green : .orange)
+                .frame(width: 18)
+
+              VStack(alignment: .leading, spacing: 2) {
+                Text(row.title)
+                  .font(.subheadline)
+                  .fontWeight(.semibold)
+
+                Text(row.countText)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
+
+              Spacer()
+
+              Text(statusText(for: row))
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(statusColor(for: row))
+
+              Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 9)
+          }
+          .buttonStyle(.plain)
+
+          if row.id != report.areaRows.last?.id {
+            Divider()
+          }
+        }
+      }
+      .padding(.horizontal, 12)
+      .background(
+        RoundedRectangle(cornerRadius: 8)
+          .fill(.secondary.opacity(0.06))
+      )
+
+      if let omittedAreaSummary = report.omittedAreaSummary {
+        Text(omittedAreaSummary)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .accessibilityElement(children: .contain)
+  }
+
+  private func statusText(for row: StudioValidationAreaRow) -> String {
+    switch report.status {
+    case .clean,
+      .issues:
+      return row.statusText
+    case .validating:
+      return "Checking"
+    case .failed:
+      return "Unavailable"
+    case .notRun:
+      return "Not validated"
+    }
+  }
+
+  private func statusColor(for row: StudioValidationAreaRow) -> Color {
+    if row.issueCount > 0 {
+      return .orange
+    }
+
+    return .secondary
+  }
+}
+
+private struct StudioValidationIssueFilterBarView: View {
+  let options: [StudioValidationIssueFilter]
+  @Binding var selectedIssueFilterID: String
+
+  var body: some View {
+    ScrollView(.horizontal, showsIndicators: false) {
+      HStack(spacing: 8) {
+        ForEach(options) { option in
+          Button(option.title) {
+            selectedIssueFilterID = option.id
+          }
+          .buttonStyle(.bordered)
+          .controlSize(.small)
+          .tint(selectedIssueFilterID == option.id ? .accentColor : .secondary)
+        }
+      }
+    }
+    .accessibilityLabel("Validation issue filters")
+  }
+}
+
+private struct StudioValidationIssueStatsView: View {
+  let report: StudioValidationReportState
+
+  var body: some View {
+    HStack(spacing: 8) {
+      statBadge(report.issueCountText)
+      statBadge(report.affectedEntitiesText)
+      statBadge(report.affectedFilesText)
+    }
+  }
+
+  private func statBadge(_ title: String) -> some View {
+    Text(title)
+      .font(.caption)
+      .fontWeight(.semibold)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 4)
+      .background(
+        Capsule()
+          .fill(.orange.opacity(0.14))
+      )
+      .foregroundStyle(.orange)
   }
 }
 
