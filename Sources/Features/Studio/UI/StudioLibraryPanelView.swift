@@ -10,6 +10,7 @@ struct StudioLibraryPanelView: View {
   let items: [WorkspaceListItem]
   @Binding var searchText: String
   @Binding var selectedLibraryItemID: String?
+  @Binding var isInspectorPresented: Bool
 
   @SceneStorage(StudioHelpStorageKey.personas)
   private var isPersonasHelpExpanded = false
@@ -106,27 +107,26 @@ struct StudioLibraryPanelView: View {
           .foregroundStyle(.secondary)
       }
 
-      HSplitView {
-        StudioLibraryItemListView(
-          visibleItems: visibleItems,
-          selectedLibraryItemID: $selectedLibraryItemID
-        )
-        .frame(minWidth: 360, idealWidth: 520, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-
-        StudioLibraryPreviewView(
-          selection: selection,
-          state: selectedItem.map {
-            StudioLibraryPreviewState(
-              selection: selection,
-              item: $0,
-              workspaceURL: workspaceStore.workspaceURL
-            )
-          }
-        )
-      }
+      StudioLibraryItemListView(
+        visibleItems: visibleItems,
+        selectedLibraryItemID: $selectedLibraryItemID
+      )
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .searchable(text: $searchText, prompt: "Search \(selection.title)")
+    .inspector(isPresented: $isInspectorPresented) {
+      StudioLibraryPreviewView(
+        selection: selection,
+        state: selectedItem.map {
+          StudioLibraryPreviewState(
+            selection: selection,
+            item: $0,
+            workspaceURL: workspaceStore.workspaceURL
+          )
+        }
+      )
+      .inspectorColumnWidth(min: 280, ideal: 340, max: 420)
+    }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .sheet(item: $personaEditorPresentation) { presentation in
       PersonaEditorView(

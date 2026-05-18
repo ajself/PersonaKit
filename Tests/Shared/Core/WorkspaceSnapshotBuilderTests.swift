@@ -140,6 +140,9 @@ struct WorkspaceSnapshotBuilderTests {
       snapshot.skills.first(where: { $0.id == "global-only-skill" })
     )
     #expect(globalSkill.sourceScope == .global)
+    #expect(globalSkill.skillMetadata?.providedBy == ["tests"])
+    #expect(globalSkill.skillMetadata?.riskLevel == "low")
+    #expect(globalSkill.skillMetadata?.requiresHumanReview == false)
 
     let reference = try #require(
       snapshot.references.first(where: { $0.id == "swift-style-guide-reference" })

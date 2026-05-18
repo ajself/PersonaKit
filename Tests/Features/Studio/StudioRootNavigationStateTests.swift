@@ -5,6 +5,27 @@ import Testing
 
 struct StudioRootNavigationStateTests {
   @Test
+  func inspectorSupportIsLimitedToSessionAndLibrarySections() {
+    let inspectorSections: [SidebarItem] = [
+      .sessions,
+      .personas,
+      .directives,
+      .kits,
+      .essentials,
+      .references,
+      .skills,
+      .intents,
+    ]
+
+    for section in inspectorSections {
+      #expect(section.supportsInspector)
+    }
+
+    #expect(!SidebarItem.relationshipMap.supportsInspector)
+    #expect(!SidebarItem.validationResults.supportsInspector)
+  }
+
+  @Test
   func mapNodeDrillDownUpdatesRootSelectionAndSelectedItem() throws {
     let node = WorkspaceSessionMapNode(
       key: "persona:persona-a",

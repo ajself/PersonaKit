@@ -17,7 +17,7 @@ enum StudioWorkspaceValidationStatus: Equatable, Sendable {
   var title: String {
     switch self {
     case .clean:
-      return "Clean"
+      return "No issues"
     case .issues(let count):
       return "\(count) issue\(count == 1 ? "" : "s")"
     case .validating:
@@ -25,7 +25,7 @@ enum StudioWorkspaceValidationStatus: Equatable, Sendable {
     case .failed:
       return "Validation failed"
     case .notRun:
-      return "Not run"
+      return "Not validated"
     }
   }
 
@@ -81,6 +81,20 @@ struct StudioWorkspaceSummaryState: Equatable, Sendable {
     ]
   }
 
+  var workspaceDisplayName: String {
+    let name = URL(fileURLWithPath: workspacePath).lastPathComponent
+
+    guard !name.isEmpty else {
+      return workspacePath
+    }
+
+    return name
+  }
+
+  var chipTitle: String {
+    workspaceDisplayName
+  }
+
   var accessibilitySummary: String {
     let countText =
       counts
@@ -88,7 +102,7 @@ struct StudioWorkspaceSummaryState: Equatable, Sendable {
       .joined(separator: ", ")
 
     return [
-      "Workspace Summary",
+      "Workspace Status",
       workspacePath,
       "Validation \(validationStatus.title)",
       countText,

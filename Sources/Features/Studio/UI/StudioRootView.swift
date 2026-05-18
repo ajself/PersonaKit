@@ -14,6 +14,8 @@ public struct StudioRootView: View {
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
   @State private var recentWorkspaceAccess = StudioRecentWorkspaceAccess()
+  @SceneStorage("studio.inspector.isPresented")
+  private var isInspectorPresented = true
 
   public init(
     workspaceStore: WorkspaceStore,
@@ -29,6 +31,34 @@ public struct StudioRootView: View {
         .navigationTitle("PersonaKit Studio")
     } detail: {
       detailView
+    }
+    .toolbar {
+      if let workspaceSummaryState {
+        ToolbarItem(placement: .principal) {
+          StudioWorkspaceSummaryView(
+            state: workspaceSummaryState,
+            onNavigate: { sidebarItem in
+              navigateToWorkspaceSection(sidebarItem)
+            },
+            onRevealWorkspace: {
+              revealLoadedWorkspace()
+            }
+          )
+        }
+      }
+
+      if shouldShowInspectorToggle {
+        ToolbarItem(placement: .primaryAction) {
+          Button {
+            isInspectorPresented.toggle()
+          } label: {
+            Label("Inspector", systemImage: "sidebar.trailing")
+          }
+          .accessibilityLabel("Inspector")
+          .accessibilityValue(isInspectorPresented ? "Shown" : "Hidden")
+          .help(isInspectorPresented ? "Hide Inspector" : "Show Inspector")
+        }
+      }
     }
     .task {
       let previousWorkspaceURL = workspaceStore.workspaceURL
@@ -116,67 +146,80 @@ public struct StudioRootView: View {
     StudioRecentWorkspacesState.workspaces(from: recentWorkspacesStorageValue)
   }
 
+  private var shouldShowInspectorToggle: Bool {
+    guard workspaceStore.workspaceURL != nil,
+      workspaceStore.loadErrorMessage == nil
+    else {
+      return false
+    }
+
+    return (selection ?? .sessions).supportsInspector
+  }
+
   @ViewBuilder
   private func loadedWorkspaceView(
     activeSelection: SidebarItem
   ) -> some View {
-    VStack(spacing: 0) {
-      if let workspaceURL = workspaceStore.workspaceURL {
-        StudioWorkspaceSummaryView(
-          state: StudioWorkspaceSummaryState(
-            workspaceURL: workspaceURL,
-            snapshot: workspaceStore.snapshot,
-            validation: workspaceStore.validation,
-            validationErrorMessage: workspaceStore.validationErrorMessage
-          )
-        )
+    switch activeSelection {
+    case .sessions:
+      SessionsPanelView(
+        workspaceStore: workspaceStore,
+        searchText: $searchText,
+        isInspectorPresented: $isInspectorPresented,
+        onNavigate: { target in
+          applyNavigationTarget(target)
+        }
+      )
 
-        Divider()
-      }
+    case .relationshipMap:
+      WorkspaceRelationshipMapPanelView(
+        workspaceStore: workspaceStore,
+        searchText: $searchText,
+        onNavigate: { target in
+          applyNavigationTarget(target)
+        }
+      )
 
-      switch activeSelection {
-      case .sessions:
-        SessionsPanelView(
-          workspaceStore: workspaceStore,
-          searchText: $searchText,
-          onNavigate: { target in
-            applyNavigationTarget(target)
-          }
-        )
+    case .personas,
+      .directives,
+      .kits,
+      .essentials,
+      .references,
+      .skills,
+      .intents:
+      StudioLibraryPanelView(
+        workspaceStore: workspaceStore,
+        selection: activeSelection,
+        items: libraryItems(for: activeSelection),
+        searchText: $searchText,
+        selectedLibraryItemID: $selectedLibraryItemID,
+        isInspectorPresented: $isInspectorPresented
+      )
 
-      case .relationshipMap:
-        WorkspaceRelationshipMapPanelView(
-          workspaceStore: workspaceStore,
-          searchText: $searchText,
-          onNavigate: { target in
-            applyNavigationTarget(target)
-          }
-        )
-
-      case .personas,
-        .directives,
-        .kits,
-        .essentials,
-        .references,
-        .skills,
-        .intents:
-        StudioLibraryPanelView(
-          workspaceStore: workspaceStore,
-          selection: activeSelection,
-          items: libraryItems(for: activeSelection),
-          searchText: $searchText,
-          selectedLibraryItemID: $selectedLibraryItemID
-        )
-
-      case .validationResults:
-        StudioDiagnosticsPanelView(
-          workspaceStore: workspaceStore,
-          selection: $selection,
-          selectedLibraryItemID: $selectedLibraryItemID,
-          searchText: $searchText
-        )
-      }
+    case .validationResults:
+      StudioDiagnosticsPanelView(
+        workspaceStore: workspaceStore,
+        selection: $selection,
+        selectedLibraryItemID: $selectedLibraryItemID,
+        searchText: $searchText
+      )
     }
+  }
+
+  private var workspaceSummaryState: StudioWorkspaceSummaryState? {
+    guard
+      let workspaceURL = workspaceStore.workspaceURL,
+      workspaceStore.loadErrorMessage == nil
+    else {
+      return nil
+    }
+
+    return StudioWorkspaceSummaryState(
+      workspaceURL: workspaceURL,
+      snapshot: workspaceStore.snapshot,
+      validation: workspaceStore.validation,
+      validationErrorMessage: workspaceStore.validationErrorMessage
+    )
   }
 
   private func libraryItems(for sidebarItem: SidebarItem) -> [WorkspaceListItem] {
@@ -212,6 +255,20 @@ public struct StudioRootView: View {
     selection = state.selection
     selectedLibraryItemID = state.selectedLibraryItemID
     searchText = state.searchText
+  }
+
+  private func navigateToWorkspaceSection(_ sidebarItem: SidebarItem) {
+    selection = sidebarItem
+    selectedLibraryItemID = nil
+    searchText = ""
+  }
+
+  private func revealLoadedWorkspace() {
+    guard let workspaceURL = workspaceStore.workspaceURL else {
+      return
+    }
+
+    workspaceStore.revealInFinder(fileURL: workspaceURL)
   }
 
   private func openWorkspaceFromPicker() {
@@ -333,6 +390,23 @@ enum SidebarItem: Hashable {
       return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
       return "checklist"
+    }
+  }
+
+  var supportsInspector: Bool {
+    switch self {
+    case .sessions,
+      .personas,
+      .directives,
+      .kits,
+      .essentials,
+      .references,
+      .skills,
+      .intents:
+      return true
+    case .relationshipMap,
+      .validationResults:
+      return false
     }
   }
 

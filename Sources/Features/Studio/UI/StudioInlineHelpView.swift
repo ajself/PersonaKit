@@ -20,11 +20,15 @@ struct StudioInlineHelpView: View {
           .padding(.horizontal, 10)
           .padding(.bottom, 12)
 
-        StudioHelpCardView(
-          topic: topic
-        )
-        .padding(.horizontal, 12)
-        .padding(.bottom, 12)
+        ScrollView {
+          StudioHelpCardView(
+            topic: topic
+          )
+          .padding(.horizontal, 12)
+          .padding(.bottom, 12)
+          .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxHeight: 260)
         .transition(.opacity)
       }
     }
