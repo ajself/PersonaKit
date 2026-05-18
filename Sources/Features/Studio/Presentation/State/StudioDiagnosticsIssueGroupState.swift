@@ -42,6 +42,37 @@ struct StudioDiagnosticsIssueGroup: Equatable, Sendable, Identifiable {
   var navigationIssue: WorkspaceValidationIssue {
     issues[0]
   }
+
+  var navigationActionTitle: String {
+    guard entityID != nil else {
+      return "Open File Context"
+    }
+
+    return "Open \(entityType.studioSingularTitle)"
+  }
+}
+
+extension WorkspaceValidationEntityType {
+  var studioSingularTitle: String {
+    switch self {
+    case .session:
+      return "Session"
+    case .persona:
+      return "Persona"
+    case .kit:
+      return "Kit"
+    case .directive:
+      return "Directive"
+    case .intent:
+      return "Intent"
+    case .reference:
+      return "Reference"
+    case .skill:
+      return "Skill"
+    case .essentials:
+      return "Essential"
+    }
+  }
 }
 
 enum StudioDiagnosticsIssueGrouping {
