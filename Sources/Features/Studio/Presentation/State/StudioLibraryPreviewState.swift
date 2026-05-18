@@ -8,6 +8,12 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
   let scope: String
   let relativePath: String
   let workstreamLine: String?
+  let skillCapabilityLine: String?
+  let skillBoundaryLine: String?
+  let skillProviderLine: String?
+  let skillRiskLine: String?
+  let skillReviewLine: String?
+  let skillNotesLine: String?
 
   init(
     selection: SidebarItem,
@@ -30,6 +36,24 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
     } else {
       workstreamLine = nil
     }
+
+    if selection == .skills,
+      let skillMetadata = item.skillMetadata
+    {
+      skillCapabilityLine = Self.textLine(skillMetadata.description)
+      skillBoundaryLine = "Capability boundary, not a runnable command."
+      skillProviderLine = Self.listLine(skillMetadata.providedBy)
+      skillRiskLine = skillMetadata.riskLevel
+      skillReviewLine = skillMetadata.requiresHumanReview ? "Required" : "Not required"
+      skillNotesLine = Self.listLine(skillMetadata.notes)
+    } else {
+      skillCapabilityLine = nil
+      skillBoundaryLine = nil
+      skillProviderLine = nil
+      skillRiskLine = nil
+      skillReviewLine = nil
+      skillNotesLine = nil
+    }
   }
 
   var accessibilitySummary: String {
@@ -48,7 +72,45 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
       parts.append(workstreamLine)
     }
 
+    if let skillCapabilityLine {
+      parts.append(skillCapabilityLine)
+    }
+
+    if let skillBoundaryLine {
+      parts.append(skillBoundaryLine)
+    }
+
+    if let skillProviderLine {
+      parts.append("provided by \(skillProviderLine)")
+    }
+
+    if let skillRiskLine {
+      parts.append("risk \(skillRiskLine)")
+    }
+
+    if let skillReviewLine {
+      parts.append("human review \(skillReviewLine)")
+    }
+
     return parts.joined(separator: ", ")
+  }
+
+  private static func listLine(_ values: [String]) -> String? {
+    guard !values.isEmpty else {
+      return nil
+    }
+
+    return values.joined(separator: ", ")
+  }
+
+  private static func textLine(_ value: String) -> String? {
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard !trimmedValue.isEmpty else {
+      return nil
+    }
+
+    return trimmedValue
   }
 
   private static func relativePath(

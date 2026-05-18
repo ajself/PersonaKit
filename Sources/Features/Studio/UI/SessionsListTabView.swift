@@ -27,7 +27,6 @@ struct SessionsListTabView: View {
           topic: helpTopic,
           isExpanded: $isHelpExpanded
         )
-        .layoutPriority(1)
       }
 
       if let sessionActionErrorMessage {

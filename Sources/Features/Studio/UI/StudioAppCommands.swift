@@ -8,6 +8,8 @@ public struct StudioAppCommands: Commands {
   }
 
   public var body: some Commands {
+    InspectorCommands()
+
     CommandGroup(after: .newItem) {
       Button("Open Workspace…") {
         workspaceStore.openWorkspacePicker()

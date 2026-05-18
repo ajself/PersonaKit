@@ -272,24 +272,29 @@ enum StudioHelpCatalog {
       return StudioHelpTopic(
         id: .skills,
         title: "Skills Help",
-        shortHint: "Skills describe available capabilities and their intended use boundaries.",
+        shortHint:
+          "Skills are machine-checkable capability boundaries that become plain operating guidance.",
         purpose:
-          "Skills document capability metadata and usage constraints so directives can reference tools intentionally.",
+          "A Skill is not a runnable command. It declares a capability, who provides it, and its risk so PersonaKit can decide whether a resolved session may use that capability.",
         keyFields: [
-          "Keep ids stable and descriptive.",
-          "Document scope and risk clearly.",
-          "Reference only skills actually available in your environment.",
+          "Use the id as the stable capability name referenced by personas, kits, directives, and intents.",
+          "Use providedBy to map the capability to an external provider or adapter, such as opencode.",
+          "Document risk so the agent can translate authorization into ordinary operating judgment.",
+          "Personas allow or forbid skills; kits, directives, and intents can require them.",
         ],
         commonMistakes: [
-          "Treating skills as executable automation from PersonaKit itself.",
-          "Using ambiguous descriptions that hide capability limits.",
-          "Referencing missing skills from kits/directives.",
+          "Treating skills as slash commands, prompts, or executable automation.",
+          "Listing every installed local tool instead of declared capabilities that matter to contracts.",
+          "Assuming a required skill is usable just because it exists; it must also be authorized by the active persona.",
+          "Forgetting that undeclared host-local skills are unauthorized by default.",
         ],
         examples: [
-          "Example skill entry: \"ajself-code-style\" with a short description and usage boundaries."
+          "Example: opencode-cli declares that OpenCode can perform code-editing work outside PersonaKit. A session may launch opencode only if the active persona authorizes a skill whose providedBy includes opencode."
         ],
-        nextStepText: "Confirm referenced skills resolve in map/validation before exporting session context.",
+        nextStepText:
+          "Confirm the selected skill reads like a capability boundary, then verify references resolve in map/validation before exporting session context.",
         relatedLinks: [
+          StudioHelpLink(label: "Go to Personas", destination: .personas, searchText: nil),
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
           StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
           StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),

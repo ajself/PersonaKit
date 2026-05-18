@@ -21,6 +21,29 @@ public enum WorkspaceSourceScope: String, Codable, Sendable {
   }
 }
 
+/// Skill-specific metadata surfaced in Studio list previews.
+public struct WorkspaceSkillMetadata: Equatable, Sendable {
+  public let description: String
+  public let providedBy: [String]
+  public let riskLevel: String
+  public let requiresHumanReview: Bool
+  public let notes: [String]
+
+  public init(
+    description: String,
+    providedBy: [String],
+    riskLevel: String,
+    requiresHumanReview: Bool,
+    notes: [String]
+  ) {
+    self.description = description
+    self.providedBy = providedBy
+    self.riskLevel = riskLevel
+    self.requiresHumanReview = requiresHumanReview
+    self.notes = notes
+  }
+}
+
 /// Read-only list item for personas, directives, kits, skills, intents, references, and essentials.
 public struct WorkspaceListItem: Equatable, Sendable {
   public let id: String
@@ -29,6 +52,7 @@ public struct WorkspaceListItem: Equatable, Sendable {
   public let sourceScope: WorkspaceSourceScope
   public let workstreamId: String?
   public let workstreamPhase: String?
+  public let skillMetadata: WorkspaceSkillMetadata?
 
   public init(
     id: String,
@@ -36,7 +60,8 @@ public struct WorkspaceListItem: Equatable, Sendable {
     fileURL: URL,
     sourceScope: WorkspaceSourceScope,
     workstreamId: String? = nil,
-    workstreamPhase: String? = nil
+    workstreamPhase: String? = nil,
+    skillMetadata: WorkspaceSkillMetadata? = nil
   ) {
     self.id = id
     self.displayName = displayName
@@ -44,6 +69,7 @@ public struct WorkspaceListItem: Equatable, Sendable {
     self.sourceScope = sourceScope
     self.workstreamId = workstreamId
     self.workstreamPhase = workstreamPhase
+    self.skillMetadata = skillMetadata
   }
 }
 

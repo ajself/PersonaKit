@@ -174,11 +174,15 @@ capture_state "01-no-workspace"
 capture_state "02-loaded-public-workspace" --workspace "$VALID_WORKSPACE"
 capture_state "03-library-list" --workspace "$VALID_WORKSPACE" --section personas
 capture_state \
-  "04-validation-results-error" \
+  "04-validation-results-valid" \
+  --workspace "$VALID_WORKSPACE" \
+  --section validation-results
+capture_state \
+  "05-validation-results-error" \
   --workspace "$INVALID_WORKSPACE" \
   --section validation-results
 capture_state \
-  "05-relationship-map" \
+  "06-relationship-map" \
   --workspace "$VALID_WORKSPACE" \
   --section relationship-map
 
@@ -192,8 +196,9 @@ Artifacts:
 - \`01-no-workspace.png\`: no workspace selected with seeded recent workspaces.
 - \`02-loaded-public-workspace.png\`: valid public starter workspace.
 - \`03-library-list.png\`: Library list seeded from the public starter workspace.
-- \`04-validation-results-error.png\`: Validation Results for a deterministic invalid workspace.
-- \`05-relationship-map.png\`: Relationship Map for the public starter workspace.
+- \`04-validation-results-valid.png\`: Validation Results report for the public starter workspace.
+- \`05-validation-results-error.png\`: Validation Results for a deterministic invalid workspace.
+- \`06-relationship-map.png\`: Relationship Map for the public starter workspace.
 - \`*.accessibility.txt\`: best-effort recursive accessibility hierarchy for review aid only.
 
 Manual review checklist:
@@ -201,6 +206,7 @@ Manual review checklist:
 - The no-workspace state makes the next action discoverable.
 - The loaded workspace shows a Sessions preview without private context.
 - The Library list is readable and scoped to public starter content.
+- Validation Results explains what a valid workspace checked.
 - Validation Results expose the deterministic error in the invalid workspace.
 - Relationship Map renders from the public starter workspace.
 - Primary controls have clear accessible labels and roles.
@@ -210,8 +216,9 @@ for state in \
   "01-no-workspace" \
   "02-loaded-public-workspace" \
   "03-library-list" \
-  "04-validation-results-error" \
-  "05-relationship-map"
+  "04-validation-results-valid" \
+  "05-validation-results-error" \
+  "06-relationship-map"
 do
   require_non_empty_file "$OUTPUT_DIR/$state.png"
   require_non_empty_file "$OUTPUT_DIR/$state.log"
@@ -226,16 +233,31 @@ require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Open
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Recent Workspaces"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$VALID_WORKSPACE"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$INVALID_WORKSPACE"
-require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Workspace Summary"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Workspace Status"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Inspector"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "solo-dev-v1"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Session Inspector"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Relationship Status"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Open Map to check"
 require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "solo-developer"
-require_accessibility_text "$OUTPUT_DIR/04-validation-results-error.accessibility.txt" "Validation Results"
-require_accessibility_text "$OUTPUT_DIR/04-validation-results-error.accessibility.txt" "broken-missing-persona"
-require_accessibility_text "$OUTPUT_DIR/04-validation-results-error.accessibility.txt" "Missing persona id."
-require_accessibility_text "$OUTPUT_DIR/05-relationship-map.accessibility.txt" "Relationship Map"
-require_accessibility_text "$OUTPUT_DIR/05-relationship-map.accessibility.txt" "Resolved"
-require_accessibility_text "$OUTPUT_DIR/05-relationship-map.accessibility.txt" "solo-developer"
-require_accessibility_text "$OUTPUT_DIR/05-relationship-map.accessibility.txt" "default kit"
-reject_accessibility_text "$OUTPUT_DIR/05-relationship-map.accessibility.txt" "No nodes"
+require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "description=Inspector"
+require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "Persona Preview"
+require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" ".personakit/Packs/personas/solo-developer.persona.json"
+require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "No validation issues reported"
+require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "Validated Areas"
+require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "No references or intents in this workspace"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "Validation Results"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "2 issues need review"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "1 affected entity"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "1 affected file"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "broken-missing-persona"
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "Missing persona id."
+require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "Open Session"
+reject_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "Validated Areas"
+require_accessibility_text "$OUTPUT_DIR/06-relationship-map.accessibility.txt" "Relationship Map"
+require_accessibility_text "$OUTPUT_DIR/06-relationship-map.accessibility.txt" "Resolved"
+require_accessibility_text "$OUTPUT_DIR/06-relationship-map.accessibility.txt" "solo-developer"
+require_accessibility_text "$OUTPUT_DIR/06-relationship-map.accessibility.txt" "default kit"
+reject_accessibility_text "$OUTPUT_DIR/06-relationship-map.accessibility.txt" "No nodes"
 
 echo "Studio review artifacts written to $OUTPUT_DIR"

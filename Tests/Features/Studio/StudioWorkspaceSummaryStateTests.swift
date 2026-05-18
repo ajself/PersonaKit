@@ -50,6 +50,8 @@ struct StudioWorkspaceSummaryStateTests {
     )
 
     #expect(state.workspacePath == "/Workspace")
+    #expect(state.workspaceDisplayName == "Workspace")
+    #expect(state.chipTitle == "Workspace")
     #expect(state.validationStatus == .issues(1))
     #expect(
       state.counts.map(\.id) == [
@@ -64,6 +66,7 @@ struct StudioWorkspaceSummaryStateTests {
       ]
     )
     #expect(state.accessibilitySummary.contains("Sessions 1"))
+    #expect(state.accessibilitySummary.contains("Workspace Status"))
     #expect(state.accessibilitySummary.contains("Validation 1 issue"))
   }
 
@@ -80,6 +83,8 @@ struct StudioWorkspaceSummaryStateTests {
     )
 
     #expect(state.validationStatus == .clean)
+    #expect(state.chipTitle == "Workspace")
+    #expect(state.accessibilitySummary.contains("Validation No issues"))
   }
 
   @Test
@@ -88,7 +93,7 @@ struct StudioWorkspaceSummaryStateTests {
       StudioWorkspaceValidationStatus.status(
         validation: .empty,
         validationErrorMessage: nil
-      ) == .notRun
+      ).title == "Not validated"
     )
 
     #expect(
@@ -96,6 +101,30 @@ struct StudioWorkspaceSummaryStateTests {
         validation: .empty,
         validationErrorMessage: "Validation failed."
       ) == .failed
+    )
+  }
+
+  @Test
+  func summaryNavigationResolverMapsCountsToSidebarItems() {
+    let countDestinations: [(StudioWorkspaceCount, SidebarItem)] = [
+      (StudioWorkspaceCount(id: "sessions", title: "Sessions", count: 1), .sessions),
+      (StudioWorkspaceCount(id: "personas", title: "Personas", count: 1), .personas),
+      (StudioWorkspaceCount(id: "directives", title: "Directives", count: 1), .directives),
+      (StudioWorkspaceCount(id: "kits", title: "Kits", count: 1), .kits),
+      (StudioWorkspaceCount(id: "skills", title: "Skills", count: 1), .skills),
+      (StudioWorkspaceCount(id: "essentials", title: "Essentials", count: 1), .essentials),
+      (StudioWorkspaceCount(id: "references", title: "References", count: 1), .references),
+      (StudioWorkspaceCount(id: "intents", title: "Intents", count: 1), .intents),
+    ]
+
+    for (count, sidebarItem) in countDestinations {
+      #expect(StudioWorkspaceSummaryNavigationResolver.sidebarItem(for: count) == sidebarItem)
+    }
+
+    #expect(
+      StudioWorkspaceSummaryNavigationResolver.sidebarItem(
+        for: StudioWorkspaceCount(id: "unknown", title: "Unknown", count: 0)
+      ) == nil
     )
   }
 }

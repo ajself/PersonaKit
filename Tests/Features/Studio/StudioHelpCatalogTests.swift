@@ -113,6 +113,17 @@ struct StudioHelpCatalogTests {
     #expect(sessionEditor.keyFields.contains { $0.contains("read-only context") })
   }
 
+  @Test
+  func skillsHelpExplainsCapabilityBoundaryModel() throws {
+    let skills = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.skills))
+
+    #expect(skills.shortHint.contains("capability boundaries"))
+    #expect(skills.purpose.contains("not a runnable command"))
+    #expect(skills.keyFields.contains { $0.contains("providedBy") })
+    #expect(skills.commonMistakes.contains { $0.contains("slash commands") })
+    #expect(skills.commonMistakes.contains { $0.contains("unauthorized by default") })
+  }
+
   private func trimmed(
     _ value: String
   ) -> String {

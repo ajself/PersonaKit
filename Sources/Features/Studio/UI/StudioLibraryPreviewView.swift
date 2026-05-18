@@ -5,20 +5,23 @@ struct StudioLibraryPreviewView: View {
   let state: StudioLibraryPreviewState?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 14) {
-      if let state {
-        previewContent(state)
-      } else {
-        ContentUnavailableView(
-          "Select a \(selection.singularTitle)",
-          systemImage: "sidebar.leading",
-          description: Text("Preview metadata and source location before opening raw content.")
-        )
+    ScrollView {
+      VStack(alignment: .leading, spacing: 14) {
+        if let state {
+          previewContent(state)
+        } else {
+          ContentUnavailableView(
+            "Select a \(selection.singularTitle)",
+            systemImage: "sidebar.trailing",
+            description: Text("Preview metadata and source location before opening raw content.")
+          )
+          .frame(maxWidth: .infinity, minHeight: 220)
+        }
       }
+      .padding(14)
+      .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-    .padding(14)
-    .frame(minWidth: 300, idealWidth: 360, maxWidth: 420, maxHeight: .infinity, alignment: .topLeading)
-    .background(.quaternary.opacity(0.06))
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
   private func previewContent(_ state: StudioLibraryPreviewState) -> some View {
@@ -49,8 +52,32 @@ struct StudioLibraryPreviewView: View {
       if let workstreamLine = state.workstreamLine {
         metadataRow(label: "Routing", value: workstreamLine)
       }
+
+      if let skillCapabilityLine = state.skillCapabilityLine {
+        metadataRow(label: "Capability", value: skillCapabilityLine)
+      }
+
+      if let skillBoundaryLine = state.skillBoundaryLine {
+        metadataRow(label: "Meaning", value: skillBoundaryLine)
+      }
+
+      if let skillProviderLine = state.skillProviderLine {
+        metadataRow(label: "Provided By", value: skillProviderLine)
+      }
+
+      if let skillRiskLine = state.skillRiskLine {
+        metadataRow(label: "Risk", value: skillRiskLine)
+      }
+
+      if let skillReviewLine = state.skillReviewLine {
+        metadataRow(label: "Human Review", value: skillReviewLine)
+      }
+
+      if let skillNotesLine = state.skillNotesLine {
+        metadataRow(label: "Notes", value: skillNotesLine)
+      }
     }
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .contain)
     .accessibilityLabel(state.accessibilitySummary)
   }
 
@@ -68,7 +95,8 @@ struct StudioLibraryPreviewView: View {
       Text(value)
         .font(monospaced ? .caption.monospaced() : .subheadline)
         .foregroundStyle(.primary)
-        .lineLimit(4)
+        .lineLimit(monospaced ? 3 : 4)
+        .truncationMode(monospaced ? .middle : .tail)
         .textSelection(.enabled)
     }
   }

@@ -41,12 +41,13 @@ private enum PersonaHelpSection: String, Identifiable {
   var helpText: String {
     switch self {
     case .allowedSkillIDs:
-      return "Allowed skills define tools or capabilities this persona can use when a directive requires them."
+      return
+        "Allowed skills are this persona's capability ceiling: the external help it may use when a resolved contract requires it."
     case .defaultKitIDs:
       return "Default kits provide shared standards and constraints this persona always carries."
     case .forbiddenSkillIDs:
       return
-        "Forbidden skills are guardrails. Use them to block capabilities that conflict with policy or safety boundaries."
+        "Forbidden skills are hard denials. They block capabilities even when a kit, directive, or intent asks for them."
     case .nonGoals:
       return "Non-goals prevent scope creep. List work this persona should explicitly avoid."
     case .persona:

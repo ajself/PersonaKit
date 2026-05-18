@@ -43,4 +43,36 @@ struct StudioLibraryPreviewStateTests {
 
     #expect(state.workstreamLine == "workstream: v1 · phase: review")
   }
+
+  @Test
+  func skillPreviewExplainsCapabilityBoundaryMetadata() {
+    let state = StudioLibraryPreviewState(
+      selection: .skills,
+      item: WorkspaceListItem(
+        id: "opencode-cli",
+        displayName: "OpenCode CLI",
+        fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Packs/skills/opencode-cli.skill.json"),
+        sourceScope: .project,
+        skillMetadata: WorkspaceSkillMetadata(
+          description: "Allows OpenCode to perform bounded code edits from resolved PersonaKit context.",
+          providedBy: ["opencode"],
+          riskLevel: "medium",
+          requiresHumanReview: true,
+          notes: ["PersonaKit resolves context; OpenCode performs work."]
+        )
+      ),
+      workspaceURL: URL(fileURLWithPath: "/Workspace")
+    )
+
+    #expect(
+      state.skillCapabilityLine
+        == "Allows OpenCode to perform bounded code edits from resolved PersonaKit context."
+    )
+    #expect(state.skillBoundaryLine == "Capability boundary, not a runnable command.")
+    #expect(state.skillProviderLine == "opencode")
+    #expect(state.skillRiskLine == "medium")
+    #expect(state.skillReviewLine == "Required")
+    #expect(state.skillNotesLine == "PersonaKit resolves context; OpenCode performs work.")
+    #expect(state.accessibilitySummary.contains("provided by opencode"))
+  }
 }

@@ -181,12 +181,29 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
           fileURL: fileURL.standardizedFileURL,
           sourceScope: sourceScope,
           workstreamId: entity.workspaceWorkstreamId,
-          workstreamPhase: entity.workspaceWorkstreamPhase
+          workstreamPhase: entity.workspaceWorkstreamPhase,
+          skillMetadata: skillMetadata(for: entity)
         )
       }
     }
 
     return recordsByID.keys.sorted().compactMap { recordsByID[$0] }
+  }
+
+  private func skillMetadata<T: WorkspaceEntityDocument>(
+    for entity: T
+  ) -> WorkspaceSkillMetadata? {
+    guard let skill = entity as? Skill else {
+      return nil
+    }
+
+    return WorkspaceSkillMetadata(
+      description: skill.description,
+      providedBy: skill.providedBy.sorted(),
+      riskLevel: skill.risk.level,
+      requiresHumanReview: skill.risk.requiresHumanReview,
+      notes: skill.risk.notes + skill.notes
+    )
   }
 
   private func listFiles(
