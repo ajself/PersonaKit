@@ -44,6 +44,8 @@ struct StudioLibraryPanelView: View {
     VStack(alignment: .leading, spacing: 0) {
       StudioLibraryToolbarView(
         actionState: actionState,
+        searchText: $searchText,
+        searchPrompt: "Search \(selection.title)",
         onNew: {
           openPersonaEditor()
         },
@@ -113,7 +115,6 @@ struct StudioLibraryPanelView: View {
       )
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
-    .searchable(text: $searchText, prompt: "Search \(selection.title)")
     .inspector(isPresented: $isInspectorPresented) {
       StudioLibraryPreviewView(
         selection: selection,

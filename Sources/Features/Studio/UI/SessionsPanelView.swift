@@ -43,6 +43,7 @@ struct SessionsPanelView: View {
     return HSplitView {
       SessionsListTabView(
         items: items,
+        searchText: $searchText,
         selectedSessionID: $selectedSessionID,
         sessionActionErrorMessage: sessionActionErrorMessage,
         actionState: listActionState,
@@ -89,26 +90,10 @@ struct SessionsPanelView: View {
       SessionsInspectorView(
         selectedSession: selectedSession,
         workspaceURL: workspaceStore.workspaceURL,
-        relationshipStatusText: inspectorRelationshipStatusText,
-        previewIsAvailable: !workspaceStore.sessionPreview.isEmpty,
-        isLoadingPreview: workspaceStore.isLoadingSessionPreview,
-        onRevealInFinder: {
-          guard let selectedSession else {
-            return
-          }
-
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-        },
-        onCopyPreview: {
-          copySessionPreview()
-        },
-        onExportPreview: {
-          exportSessionPreview()
-        }
+        relationshipStatusText: inspectorRelationshipStatusText
       )
       .inspectorColumnWidth(min: 280, ideal: 320, max: 420)
     }
-    .searchable(text: $searchText, prompt: "Search Sessions")
     .onChange(of: selectedSessionID) { _, _ in
       refreshSelectedSessionPreview()
 
@@ -280,7 +265,7 @@ struct SessionsPanelView: View {
       return mapHealthText
     }
 
-    return "Open Map to check"
+    return "Not checked"
   }
 
   @ViewBuilder
@@ -823,11 +808,6 @@ private struct SessionsInspectorView: View {
   let selectedSession: WorkspaceSessionListItem?
   let workspaceURL: URL?
   let relationshipStatusText: String
-  let previewIsAvailable: Bool
-  let isLoadingPreview: Bool
-  let onRevealInFinder: () -> Void
-  let onCopyPreview: () -> Void
-  let onExportPreview: () -> Void
 
   var body: some View {
     ScrollView {
@@ -838,7 +818,7 @@ private struct SessionsInspectorView: View {
           ContentUnavailableView(
             "Select a Session",
             systemImage: "sidebar.trailing",
-            description: Text("Inspect source metadata and preview actions for the selected session.")
+            description: Text("Inspect source metadata for the selected session.")
           )
           .frame(maxWidth: .infinity, minHeight: 220)
         }
@@ -852,64 +832,48 @@ private struct SessionsInspectorView: View {
   private func sessionContent(
     _ selectedSession: WorkspaceSessionListItem
   ) -> some View {
-    VStack(alignment: .leading, spacing: 16) {
-      VStack(alignment: .leading, spacing: 4) {
-        Text("Session Inspector")
-          .font(.caption)
-          .fontWeight(.semibold)
-          .foregroundStyle(.secondary)
+    VStack(alignment: .leading, spacing: 18) {
+      Text("Session Inspector")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
 
-        Text(selectedSession.id)
-          .font(.title3)
-          .fontWeight(.semibold)
-          .lineLimit(2)
-          .textSelection(.enabled)
+      inspectorSection("Identity") {
+        metadataRow(label: "Session", value: selectedSession.id)
+        metadataRow(label: "Persona", value: selectedSession.personaId)
+        metadataRow(label: "Directive", value: selectedSession.directiveId)
       }
 
-      metadataRow(label: "Persona", value: selectedSession.personaId)
-      metadataRow(label: "Directive", value: selectedSession.directiveId)
-      metadataRow(label: "Scope", value: selectedSession.sourceScope.displayName)
-      metadataRow(label: "Relationship Status", value: relationshipStatusText)
-      metadataRow(
-        label: "Path",
-        value: relativePath(for: selectedSession),
-        monospaced: true
-      )
-
-      Divider()
-
-      VStack(alignment: .leading, spacing: 8) {
-        Text("Actions")
-          .font(.caption)
-          .fontWeight(.semibold)
-          .foregroundStyle(.secondary)
-
-        Button {
-          onRevealInFinder()
-        } label: {
-          Label("Reveal in Finder", systemImage: "folder")
-        }
-        .accessibilityLabel("Reveal in Finder")
-
-        Button {
-          onCopyPreview()
-        } label: {
-          Label("Copy Preview", systemImage: "doc.on.doc")
-        }
-        .disabled(!previewIsAvailable || isLoadingPreview)
-        .accessibilityLabel("Copy Preview")
-
-        Button {
-          onExportPreview()
-        } label: {
-          Label("Export Markdown…", systemImage: "square.and.arrow.up")
-        }
-        .disabled(!previewIsAvailable || isLoadingPreview)
-        .accessibilityLabel("Export Markdown")
+      inspectorSection("Source") {
+        metadataRow(label: "Scope", value: selectedSession.sourceScope.displayName)
+        metadataRow(
+          label: "Path",
+          value: relativePath(for: selectedSession),
+          monospaced: true
+        )
       }
-      .buttonStyle(.bordered)
+
+      inspectorSection("Relationships") {
+        metadataRow(label: "Status", value: relationshipStatusText)
+      }
     }
     .accessibilityElement(children: .contain)
+  }
+
+  private func inspectorSection<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(title)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      VStack(alignment: .leading, spacing: 10) {
+        content()
+      }
+    }
   }
 
   private func metadataRow(
@@ -929,6 +893,7 @@ private struct SessionsInspectorView: View {
         .lineLimit(monospaced ? 3 : 4)
         .truncationMode(monospaced ? .middle : .tail)
         .textSelection(.enabled)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
   }
 

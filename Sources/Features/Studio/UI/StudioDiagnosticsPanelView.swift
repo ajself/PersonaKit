@@ -27,6 +27,7 @@ struct StudioDiagnosticsPanelView: View {
     VStack(alignment: .leading, spacing: 12) {
       StudioDiagnosticsHeaderView(
         report: report,
+        searchText: $searchText,
         onValidateWorkspace: {
           workspaceStore.validateWorkspace()
         }
@@ -94,7 +95,6 @@ struct StudioDiagnosticsPanelView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
-    .searchable(text: $searchText, prompt: "Search Validation")
     .onChange(of: report.issueFilterOptions.map(\.id)) { _, filterIDs in
       if !filterIDs.contains(selectedIssueFilterID) {
         selectedIssueFilterID = "all"

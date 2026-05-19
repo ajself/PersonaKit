@@ -5,6 +5,8 @@ import SwiftUI
 /// Toolbar for library and essentials list actions.
 struct StudioLibraryToolbarView: View {
   let actionState: StudioLibraryActionBarState
+  @Binding var searchText: String
+  let searchPrompt: String
   let onNew: () -> Void
   let onRevealInFinder: () -> Void
   let onEdit: () -> Void
@@ -13,7 +15,9 @@ struct StudioLibraryToolbarView: View {
   var body: some View {
     StudioActionBarView(
       actions: actionItems,
-      isLoading: actionState.isLoadingEditor
+      isLoading: actionState.isLoadingEditor,
+      searchText: $searchText,
+      searchPrompt: searchPrompt
     )
   }
 
