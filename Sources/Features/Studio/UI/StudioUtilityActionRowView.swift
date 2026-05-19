@@ -64,8 +64,7 @@ struct StudioUtilityActionRowView: View {
     Button {
       action.action()
     } label: {
-      Label(action.title, systemImage: action.systemImage)
-        .labelStyle(.titleAndIcon)
+      adaptiveLabel(action)
     }
     .buttonStyle(.borderedProminent)
     .controlSize(controlSize)
@@ -81,9 +80,7 @@ struct StudioUtilityActionRowView: View {
     return Button {
       action.action()
     } label: {
-      Label(action.title, systemImage: action.systemImage)
-        .labelStyle(.titleAndIcon)
-        .lineLimit(1)
+      adaptiveLabel(action)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .frame(minHeight: 24)
@@ -118,5 +115,16 @@ struct StudioUtilityActionRowView: View {
       }
     }
     .accessibilityLabel(action.title)
+  }
+
+  private func adaptiveLabel(_ action: StudioUtilityActionItem) -> some View {
+    ViewThatFits(in: .horizontal) {
+      Label(action.title, systemImage: action.systemImage)
+        .labelStyle(.titleAndIcon)
+        .lineLimit(1)
+
+      Label(action.title, systemImage: action.systemImage)
+        .labelStyle(.iconOnly)
+    }
   }
 }

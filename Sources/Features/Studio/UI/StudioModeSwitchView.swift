@@ -3,8 +3,8 @@ import SwiftUI
 private enum StudioModeSwitchTokens {
   static let railHeight = CGFloat(32)
   static let railHorizontalPadding = CGFloat(3)
-  static let segmentHorizontalPadding = CGFloat(12)
-  static let segmentMinimumWidth = CGFloat(92)
+  static let segmentHorizontalPadding = CGFloat(10)
+  static let segmentMinimumWidth = CGFloat(78)
 }
 
 /// Reusable capsule-rail switch for compact mode toggles in Studio panels.

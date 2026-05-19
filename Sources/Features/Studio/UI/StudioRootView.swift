@@ -14,8 +14,9 @@ public struct StudioRootView: View {
   @State private var selectedLibraryItemID: String?
   @State private var searchText = ""
   @State private var recentWorkspaceAccess = StudioRecentWorkspaceAccess()
+  @State private var sidebarVisibility = NavigationSplitViewVisibility.all
   @SceneStorage("studio.inspector.isPresented")
-  private var isInspectorPresented = true
+  private var isInspectorPresented = false
 
   public init(
     workspaceStore: WorkspaceStore,
@@ -26,13 +27,26 @@ public struct StudioRootView: View {
   }
 
   public var body: some View {
-    NavigationSplitView {
+    NavigationSplitView(columnVisibility: $sidebarVisibility) {
       StudioSidebarView(selection: $selection)
         .navigationTitle("PersonaKit Studio")
     } detail: {
       detailView
     }
     .toolbar {
+      if !sidebarIsVisible {
+        ToolbarItem(placement: .navigation) {
+          Button {
+            toggleCustomSidebarVisibility()
+          } label: {
+            Label(sidebarToggleTitle, systemImage: "sidebar.leading")
+          }
+          .accessibilityLabel(sidebarToggleTitle)
+          .accessibilityValue(sidebarIsVisible ? "Shown" : "Hidden")
+          .help(sidebarToggleTitle)
+        }
+      }
+
       if let workspaceSummaryState {
         ToolbarItem(placement: .principal) {
           StudioWorkspaceSummaryView(
@@ -154,6 +168,18 @@ public struct StudioRootView: View {
     }
 
     return (selection ?? .sessions).supportsInspector
+  }
+
+  private var sidebarIsVisible: Bool {
+    sidebarVisibility != .detailOnly
+  }
+
+  private var sidebarToggleTitle: String {
+    sidebarIsVisible ? "Hide Sidebar" : "Show Sidebar"
+  }
+
+  private func toggleCustomSidebarVisibility() {
+    sidebarVisibility = sidebarIsVisible ? .detailOnly : .all
   }
 
   @ViewBuilder

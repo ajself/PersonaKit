@@ -342,7 +342,7 @@ struct PersonaEditorView: View {
       }
     }
     .padding()
-    .frame(minWidth: 760, minHeight: 780)
+    .frame(minWidth: 640, minHeight: 620)
     .interactiveDismissDisabled(isSaving)
   }
 

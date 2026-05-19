@@ -70,7 +70,7 @@ struct SessionsPanelView: View {
           workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
         }
       )
-      .frame(minWidth: 330, idealWidth: 390, maxWidth: 500)
+      .frame(minWidth: 160, idealWidth: 250, maxWidth: .infinity)
 
       VStack(spacing: 0) {
         if let selectedSession {
@@ -84,7 +84,7 @@ struct SessionsPanelView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .inspector(isPresented: $isInspectorPresented) {
       SessionsInspectorView(
@@ -92,7 +92,7 @@ struct SessionsPanelView: View {
         workspaceURL: workspaceStore.workspaceURL,
         relationshipStatusText: inspectorRelationshipStatusText
       )
-      .inspectorColumnWidth(min: 280, ideal: 320, max: 420)
+      .inspectorColumnWidth(min: 180, ideal: 250, max: 340)
     }
     .onChange(of: selectedSessionID) { _, _ in
       refreshSelectedSessionPreview()
@@ -353,85 +353,11 @@ struct SessionsPanelView: View {
     selectedSession: WorkspaceSessionListItem
   ) -> some View {
     VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .top, spacing: 12) {
-        VStack(alignment: .leading, spacing: 4) {
-          Text(selectedSession.id)
-            .font(.title3)
-            .fontWeight(.semibold)
-            .lineLimit(1)
-            .truncationMode(.middle)
-
-          VStack(alignment: .leading, spacing: 2) {
-            Text(
-              SessionsPanelLayoutState.personaMetadataLine(
-                personaID: selectedSession.personaId
-              )
-            )
-            .lineLimit(1)
-            .truncationMode(.tail)
-
-            Text(
-              SessionsPanelLayoutState.directiveMetadataLine(
-                directiveID: selectedSession.directiveId
-              )
-            )
-            .lineLimit(1)
-            .truncationMode(.tail)
-
-            if let directive = selectedDirective(
-              for: selectedSession.directiveId
-            ),
-              let workstreamID = directive.workstreamId,
-              let phase = directive.workstreamPhase
-            {
-              Text(
-                SessionsPanelLayoutState.workstreamMetadataLine(
-                  workstreamID: workstreamID,
-                  phase: phase
-                )
-              )
-              .lineLimit(1)
-              .truncationMode(.tail)
-            }
-          }
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-        }
-
-        Spacer()
-
-        StudioModeSwitchView(
-          items: detailModeItems,
-          selection: detailModeBinding,
-          keyboardShortcut: { mode in
-            switch mode {
-            case .preview:
-              return ("1", [.command])
-            case .map:
-              return ("2", [.command])
-            }
-          }
-        )
-        .frame(width: 220)
-      }
+      detailTitleRow(selectedSession: selectedSession)
 
       switch detailMode {
       case .preview:
-        HStack(spacing: 8) {
-          StudioUtilityActionRowView(
-            primaryAction: previewPrimaryUtilityAction,
-            secondaryActions: previewSecondaryUtilityActions(
-              selectedSession: selectedSession
-            )
-          )
-
-          if workspaceStore.isLoadingSessionPreview {
-            ProgressView()
-              .controlSize(.small)
-          }
-
-          Spacer()
-        }
+        previewActionRow(selectedSession: selectedSession)
 
       case .map:
         HStack(spacing: 12) {
@@ -465,8 +391,129 @@ struct SessionsPanelView: View {
       }
     }
     .padding(12)
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
     .background(.quaternary.opacity(0.07))
+  }
+
+  private func detailTitleRow(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(alignment: .top, spacing: 12) {
+        detailTitleGroup(selectedSession: selectedSession)
+
+        Spacer()
+
+        detailModeSwitch
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        detailTitleGroup(selectedSession: selectedSession)
+        detailModeSwitch
+      }
+    }
+  }
+
+  private func detailTitleGroup(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text(selectedSession.id)
+        .font(.title3)
+        .fontWeight(.semibold)
+        .lineLimit(1)
+        .truncationMode(.middle)
+
+      VStack(alignment: .leading, spacing: 2) {
+        Text(
+          SessionsPanelLayoutState.personaMetadataLine(
+            personaID: selectedSession.personaId
+          )
+        )
+        .lineLimit(1)
+        .truncationMode(.tail)
+
+        Text(
+          SessionsPanelLayoutState.directiveMetadataLine(
+            directiveID: selectedSession.directiveId
+          )
+        )
+        .lineLimit(1)
+        .truncationMode(.tail)
+
+        if let directive = selectedDirective(
+          for: selectedSession.directiveId
+        ),
+          let workstreamID = directive.workstreamId,
+          let phase = directive.workstreamPhase
+        {
+          Text(
+            SessionsPanelLayoutState.workstreamMetadataLine(
+              workstreamID: workstreamID,
+              phase: phase
+            )
+          )
+          .lineLimit(1)
+          .truncationMode(.tail)
+        }
+      }
+      .font(.subheadline)
+      .foregroundStyle(.secondary)
+    }
+    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var detailModeSwitch: some View {
+    StudioModeSwitchView(
+      items: detailModeItems,
+      selection: detailModeBinding,
+      keyboardShortcut: { mode in
+        switch mode {
+        case .preview:
+          return ("1", [.command])
+        case .map:
+          return ("2", [.command])
+        }
+      }
+    )
+    .frame(minWidth: 180, idealWidth: 200, maxWidth: 220)
+  }
+
+  private func previewActionRow(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(spacing: 8) {
+        previewActionControls(selectedSession: selectedSession)
+        Spacer()
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        previewActionControls(selectedSession: selectedSession)
+      }
+    }
+  }
+
+  private func previewActionControls(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    ScrollView(.horizontal) {
+      HStack(spacing: 8) {
+        StudioUtilityActionRowView(
+          primaryAction: previewPrimaryUtilityAction,
+          secondaryActions: previewSecondaryUtilityActions(
+            selectedSession: selectedSession
+          )
+        )
+
+        if workspaceStore.isLoadingSessionPreview {
+          ProgressView()
+            .controlSize(.small)
+        }
+      }
+    }
+    .scrollIndicators(.hidden)
+    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
   }
 
   private var previewPrimaryUtilityAction: StudioUtilityActionItem {

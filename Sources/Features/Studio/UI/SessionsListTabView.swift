@@ -45,6 +45,8 @@ struct SessionsListTabView: View {
           HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(session.id)
               .font(.headline)
+              .lineLimit(1)
+              .truncationMode(.middle)
 
             Spacer()
 
@@ -54,10 +56,14 @@ struct SessionsListTabView: View {
           Text("persona: \(session.personaId) · directive: \(session.directiveId)")
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .truncationMode(.tail)
 
           Text(session.fileURL.path())
             .font(.caption.monospaced())
             .foregroundStyle(.tertiary)
+            .lineLimit(2)
+            .truncationMode(.middle)
             .textSelection(.enabled)
         }
         .padding(.vertical, 4)

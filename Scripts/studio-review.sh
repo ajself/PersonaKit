@@ -6,6 +6,8 @@ OUTPUT_DIR="${STUDIO_REVIEW_OUTPUT_DIR:-$REPO_ROOT/Artifacts/studio-review}"
 VALID_WORKSPACE="${STUDIO_REVIEW_WORKSPACE:-$REPO_ROOT/Fixtures/studio-demo-workspace}"
 INVALID_WORKSPACE="${STUDIO_REVIEW_INVALID_WORKSPACE:-$REPO_ROOT/Fixtures/studio-demo-invalid-workspace}"
 DEFAULTS_SUITE="${STUDIO_REVIEW_DEFAULTS_SUITE:-PersonaKitStudioReview}"
+MAX_WINDOW_WIDTH="${STUDIO_REVIEW_MAX_WINDOW_WIDTH:-1180}"
+MAX_WINDOW_HEIGHT="${STUDIO_REVIEW_MAX_WINDOW_HEIGHT:-820}"
 
 cleanup() {
   osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
@@ -84,6 +86,8 @@ APPLESCRIPT
     exit 1
   fi
 
+  printf "%s\n" "$window_bounds" > "$OUTPUT_DIR/$name.bounds.txt"
+  require_window_fits "$name" "$window_bounds"
   screencapture -x -R "$window_bounds" "$OUTPUT_DIR/$name.png"
   osascript > "$OUTPUT_DIR/$name.accessibility.txt" 2>&1 <<'APPLESCRIPT' || true
 on describeElement(elementRef, indent)
@@ -170,6 +174,41 @@ reject_accessibility_text() {
   fi
 }
 
+require_accessibility_text_count() {
+  local path="$1"
+  local expected="$2"
+  local expected_count="$3"
+  local actual_count
+
+  actual_count="$(grep -Fc "$expected" "$path" || true)"
+
+  if [ "$actual_count" -ne "$expected_count" ]; then
+    echo "error: expected accessibility text '$expected' $expected_count times in $path, got $actual_count" >&2
+    exit 1
+  fi
+}
+
+require_window_fits() {
+  local name="$1"
+  local bounds="$2"
+  local x
+  local y
+  local width
+  local height
+
+  IFS="," read -r x y width height <<< "$bounds"
+
+  if [ "$width" -gt "$MAX_WINDOW_WIDTH" ]; then
+    echo "error: expected $name window width <= $MAX_WINDOW_WIDTH, got $width" >&2
+    exit 1
+  fi
+
+  if [ "$height" -gt "$MAX_WINDOW_HEIGHT" ]; then
+    echo "error: expected $name window height <= $MAX_WINDOW_HEIGHT, got $height" >&2
+    exit 1
+  fi
+}
+
 capture_state "01-no-workspace"
 capture_state "02-loaded-public-workspace" --workspace "$VALID_WORKSPACE"
 capture_state "03-library-list" --workspace "$VALID_WORKSPACE" --section personas
@@ -200,6 +239,7 @@ Artifacts:
 - \`05-validation-results-error.png\`: Validation Results for a deterministic invalid workspace.
 - \`06-relationship-map.png\`: Relationship Map for the public starter workspace.
 - \`*.accessibility.txt\`: best-effort recursive accessibility hierarchy for review aid only.
+- \`*.bounds.txt\`: captured window x,y,width,height, guarded against oversized launch frames.
 
 Manual review checklist:
 
@@ -223,6 +263,7 @@ do
   require_non_empty_file "$OUTPUT_DIR/$state.png"
   require_non_empty_file "$OUTPUT_DIR/$state.log"
   require_non_empty_file "$OUTPUT_DIR/$state.accessibility.txt"
+  require_non_empty_file "$OUTPUT_DIR/$state.bounds.txt"
 done
 
 require_non_empty_file "$OUTPUT_DIR/review-notes.md"
@@ -233,18 +274,17 @@ require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Open
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Recent Workspaces"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$VALID_WORKSPACE"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$INVALID_WORKSPACE"
+require_accessibility_text_count "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "description=Hide Sidebar" 1
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Workspace Status"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Inspector"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "solo-dev-v1"
-require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Session Inspector"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Search Sessions"
-require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Relationships"
-require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Not checked"
+require_accessibility_text_count "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Hide Sidebar" 1
+reject_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Session Inspector"
 require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "solo-developer"
 require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "description=Inspector"
 require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "Search Personas"
-require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "Persona Preview"
-require_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" ".personakit/Packs/personas/solo-developer.persona.json"
+reject_accessibility_text "$OUTPUT_DIR/03-library-list.accessibility.txt" "Persona Preview"
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "No validation issues reported"
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "Validated Areas"
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "Search Validation"

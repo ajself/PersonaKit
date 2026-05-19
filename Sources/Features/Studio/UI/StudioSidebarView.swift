@@ -27,6 +27,7 @@ struct StudioSidebarView: View {
         sidebarRow(for: .validationResults)
       }
     }
+    .navigationSplitViewColumnWidth(min: 130, ideal: 190, max: 240)
   }
 
   private func sidebarRow(for item: SidebarItem) -> some View {

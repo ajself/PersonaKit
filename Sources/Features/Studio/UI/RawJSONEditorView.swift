@@ -133,7 +133,7 @@ struct RawJSONEditorView: View {
       )
     }
     .padding()
-    .frame(minWidth: 720, minHeight: 600)
+    .frame(minWidth: 640, minHeight: 520)
     .interactiveDismissDisabled(isSaving || isValidating)
     .onChange(of: editorMode) { _, newValue in
       guard newValue == .form else {
@@ -189,7 +189,7 @@ struct RawJSONEditorView: View {
     TextEditor(text: $rawJSON)
       .font(.body.monospaced())
       .padding(8)
-      .frame(minHeight: 420)
+      .frame(minHeight: 320)
       .background(
         RoundedRectangle(cornerRadius: 8)
           .fill(.quaternary.opacity(0.2))

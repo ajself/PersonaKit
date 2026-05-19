@@ -71,7 +71,7 @@ struct StudioDiagnosticsHeaderView: View {
         text: $searchText,
         prompt: "Search Validation"
       )
-      .frame(width: 260)
+      .frame(minWidth: 180, idealWidth: 240, maxWidth: 280)
 
       Button("Validate Workspace") {
         onValidateWorkspace()
