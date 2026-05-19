@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Session preview detail content.
@@ -34,18 +35,23 @@ struct SessionsPreviewTabView: View {
           )
         }
       } else {
-        ScrollView {
-          Text(sessionPreview)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .font(.body.monospaced())
-            .textSelection(.enabled)
-            .padding(12)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        StudioMultilineTextInput(
+          text: .constant(sessionPreview),
+          font: .monospacedSystemFont(
+            ofSize: NSFont.systemFontSize,
+            weight: .regular
+          ),
+          textColor: .labelColor,
+          isEditable: false,
+          horizontalInset: 12,
+          verticalInset: 12
+        )
+        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
+        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(previewPanelBackground)
       }
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
   }
 

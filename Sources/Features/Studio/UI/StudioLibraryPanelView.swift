@@ -126,7 +126,7 @@ struct StudioLibraryPanelView: View {
           )
         }
       )
-      .inspectorColumnWidth(min: 280, ideal: 340, max: 420)
+      .inspectorColumnWidth(min: 180, ideal: 260, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .sheet(item: $personaEditorPresentation) { presentation in

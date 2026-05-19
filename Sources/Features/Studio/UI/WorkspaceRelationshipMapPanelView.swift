@@ -144,7 +144,7 @@ struct WorkspaceRelationshipMapPanelView: View {
         text: $searchText,
         prompt: "Search Relationship Map"
       )
-      .frame(width: 280)
+      .frame(minWidth: 180, idealWidth: 240, maxWidth: 280)
 
       StudioUtilityActionRowView(
         primaryAction: refreshUtilityAction,
@@ -167,6 +167,47 @@ struct WorkspaceRelationshipMapPanelView: View {
   }
 
   private var filterControls: some View {
+    ViewThatFits(in: .horizontal) {
+      filterControlRow
+
+      VStack(alignment: .leading, spacing: 8) {
+        focusControls
+        filterSecondaryControls
+      }
+    }
+  }
+
+  private var filterControlRow: some View {
+    HStack(spacing: 12) {
+      focusControls
+      filterSecondaryControls
+      Spacer()
+    }
+  }
+
+  private var filterSecondaryControls: some View {
+    HStack(spacing: 12) {
+      Picker("Scope", selection: $selectedScopeFilter) {
+        ForEach(RelationshipScopeFilter.allCases, id: \.self) { filter in
+          Text(filter.title)
+            .tag(filter)
+        }
+      }
+      .labelsHidden()
+      .pickerStyle(.segmented)
+      .frame(minWidth: 180, idealWidth: 220, maxWidth: 240)
+
+      Menu("Entity Types") {
+        ForEach(nodeKindOrder, id: \.rawValue) { kind in
+          Toggle(isOn: bindingForNodeKind(kind)) {
+            Text(kind.menuTitle)
+          }
+        }
+      }
+    }
+  }
+
+  private var focusControls: some View {
     HStack(spacing: 12) {
       Toggle("Focus Selected Session", isOn: $focusModeEnabled)
         .toggleStyle(.checkbox)
@@ -182,28 +223,8 @@ struct WorkspaceRelationshipMapPanelView: View {
         }
       }
       .labelsHidden()
-      .frame(width: 220)
+      .frame(minWidth: 160, idealWidth: 200, maxWidth: 220)
       .disabled(!focusModeEnabled || workspaceStore.snapshot.sessions.isEmpty)
-
-      Picker("Scope", selection: $selectedScopeFilter) {
-        ForEach(RelationshipScopeFilter.allCases, id: \.self) { filter in
-          Text(filter.title)
-            .tag(filter)
-        }
-      }
-      .pickerStyle(.segmented)
-      .labelsHidden()
-      .frame(width: 240)
-
-      Menu("Entity Types") {
-        ForEach(nodeKindOrder, id: \.rawValue) { kind in
-          Toggle(isOn: bindingForNodeKind(kind)) {
-            Text(kind.menuTitle)
-          }
-        }
-      }
-
-      Spacer()
     }
   }
 

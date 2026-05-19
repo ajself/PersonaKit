@@ -10,6 +10,7 @@ struct StudioMultilineTextInput: View {
     weight: .regular
   )
   var textColor: NSColor = .labelColor
+  var isEditable = true
   var horizontalInset: CGFloat = 12
   var verticalInset: CGFloat = 10
   var lineFragmentPadding: CGFloat = 0
@@ -20,6 +21,7 @@ struct StudioMultilineTextInput: View {
         text: $text,
         font: font,
         textColor: textColor,
+        isEditable: isEditable,
         horizontalInset: horizontalInset,
         verticalInset: verticalInset,
         lineFragmentPadding: lineFragmentPadding
@@ -41,6 +43,7 @@ extension StudioMultilineTextInput {
     @Binding var text: String
     let font: NSFont
     let textColor: NSColor
+    let isEditable: Bool
     let horizontalInset: CGFloat
     let verticalInset: CGFloat
     let lineFragmentPadding: CGFloat
@@ -56,17 +59,21 @@ extension StudioMultilineTextInput {
       scrollView.autohidesScrollers = true
       scrollView.drawsBackground = false
       scrollView.borderType = .noBorder
+      scrollView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      scrollView.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
       let textView = NSTextView()
       textView.delegate = context.coordinator
-      textView.isEditable = true
+      textView.isEditable = isEditable
       textView.isSelectable = true
       textView.isRichText = false
       textView.importsGraphics = false
-      textView.allowsUndo = true
+      textView.allowsUndo = isEditable
       textView.drawsBackground = false
       textView.isVerticallyResizable = true
       textView.isHorizontallyResizable = false
+      textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
       textView.maxSize = NSSize(
         width: CGFloat.greatestFiniteMagnitude,
         height: CGFloat.greatestFiniteMagnitude
@@ -104,6 +111,8 @@ extension StudioMultilineTextInput {
 
       textView.font = font
       textView.textColor = textColor
+      textView.isEditable = isEditable
+      textView.allowsUndo = isEditable
       textView.textContainerInset = NSSize(
         width: horizontalInset,
         height: verticalInset
@@ -124,7 +133,9 @@ extension StudioMultilineTextInput {
         return
       }
 
-      text = textView.string
+      if textView.isEditable {
+        text = textView.string
+      }
     }
   }
 }

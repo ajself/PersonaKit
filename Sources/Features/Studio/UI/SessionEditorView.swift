@@ -99,7 +99,7 @@ struct SessionEditorView: View {
       )
     }
     .padding()
-    .frame(minWidth: 620, minHeight: 680)
+    .frame(minWidth: 600, minHeight: 620)
     .interactiveDismissDisabled(isSaving)
     .onAppear {
       scheduleMapRefresh()

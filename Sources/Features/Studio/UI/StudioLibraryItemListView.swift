@@ -13,6 +13,8 @@ struct StudioLibraryItemListView: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
           Text(item.id)
             .font(.headline)
+            .lineLimit(1)
+            .truncationMode(.middle)
 
           Spacer()
 
@@ -23,11 +25,15 @@ struct StudioLibraryItemListView: View {
           Text(item.displayName)
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .truncationMode(.tail)
         }
 
         Text(item.fileURL.path())
           .font(.caption.monospaced())
           .foregroundStyle(.tertiary)
+          .lineLimit(2)
+          .truncationMode(.middle)
           .textSelection(.enabled)
       }
       .padding(.vertical, 4)

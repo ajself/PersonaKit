@@ -24,6 +24,11 @@ struct StudioActionBarView: View {
   private static let itemSpacing = CGFloat(8)
   private static let sectionSpacing = CGFloat(12)
 
+  private enum LabelMode {
+    case full
+    case compact
+  }
+
   var body: some View {
     VStack(spacing: 0) {
       actionBarContent
@@ -54,30 +59,11 @@ struct StudioActionBarView: View {
   }
 
   private var actionButtons: some View {
-    HStack(spacing: Self.itemSpacing) {
-      actionSection(for: .primary)
-
-      if hasActions(for: .primary),
-        hasActions(for: .selection)
-      {
-        sectionSpacer
-      }
-
-      actionSection(for: .selection)
-
-      if isLoading {
-        ProgressView()
-          .controlSize(Self.controlSize)
-      }
-
-      if hasActions(for: .destructive),
-        hasActions(for: .selection)
-      {
-        sectionSpacer
-      }
-
-      actionSection(for: .destructive)
+    ViewThatFits(in: .horizontal) {
+      actionButtonRow(labelMode: .full)
+      actionButtonRow(labelMode: .compact)
     }
+    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
   }
 
   @ViewBuilder
@@ -89,7 +75,7 @@ struct StudioActionBarView: View {
         text: searchText,
         prompt: searchPrompt
       )
-      .frame(width: 260)
+      .frame(minWidth: 140, idealWidth: 200, maxWidth: 260)
     }
   }
 
@@ -100,10 +86,32 @@ struct StudioActionBarView: View {
       .padding(.horizontal, Self.sectionSpacing / 2)
   }
 
-  @ViewBuilder
-  private func actionSection(for group: StudioActionGroup) -> some View {
-    ForEach(actionsForGroup(group)) { action in
-      actionButton(for: action)
+  private func actionButtonRow(labelMode: LabelMode) -> some View {
+    HStack(spacing: Self.itemSpacing) {
+      actionSection(for: .primary, labelMode: labelMode)
+
+      if labelMode == .full,
+        hasActions(for: .primary),
+        hasActions(for: .selection)
+      {
+        sectionSpacer
+      }
+
+      actionSection(for: .selection, labelMode: labelMode)
+
+      if isLoading {
+        ProgressView()
+          .controlSize(Self.controlSize)
+      }
+
+      if labelMode == .full,
+        hasActions(for: .destructive),
+        hasActions(for: .selection)
+      {
+        sectionSpacer
+      }
+
+      actionSection(for: .destructive, labelMode: labelMode)
     }
   }
 
@@ -116,37 +124,73 @@ struct StudioActionBarView: View {
   }
 
   @ViewBuilder
-  private func actionButton(for action: StudioActionItem) -> some View {
+  private func actionSection(
+    for group: StudioActionGroup,
+    labelMode: LabelMode
+  ) -> some View {
+    ForEach(actionsForGroup(group)) { action in
+      actionButton(
+        for: action,
+        labelMode: labelMode
+      )
+    }
+  }
+
+  @ViewBuilder
+  private func actionButton(
+    for action: StudioActionItem,
+    labelMode: LabelMode
+  ) -> some View {
     switch action.role {
     case .primary:
       Button {
         action.action()
       } label: {
-        Label(action.title, systemImage: action.systemImage)
+        actionLabel(action, labelMode: labelMode)
       }
       .buttonStyle(.borderedProminent)
       .controlSize(Self.controlSize)
       .disabled(!action.isEnabled)
+      .help(action.title)
 
     case .standard:
       Button {
         action.action()
       } label: {
-        Label(action.title, systemImage: action.systemImage)
+        actionLabel(action, labelMode: labelMode)
       }
       .buttonStyle(.bordered)
       .controlSize(Self.controlSize)
       .disabled(!action.isEnabled)
+      .help(action.title)
 
     case .destructive:
       Button(role: .destructive) {
         action.action()
       } label: {
-        Label(action.title, systemImage: action.systemImage)
+        actionLabel(action, labelMode: labelMode)
       }
       .buttonStyle(.bordered)
       .controlSize(Self.controlSize)
       .disabled(!action.isEnabled)
+      .help(action.title)
+    }
+  }
+
+  @ViewBuilder
+  private func actionLabel(
+    _ action: StudioActionItem,
+    labelMode: LabelMode
+  ) -> some View {
+    switch labelMode {
+    case .full:
+      Label(action.title, systemImage: action.systemImage)
+        .labelStyle(.titleAndIcon)
+        .lineLimit(1)
+
+    case .compact:
+      Label(action.title, systemImage: action.systemImage)
+        .labelStyle(.iconOnly)
     }
   }
 }

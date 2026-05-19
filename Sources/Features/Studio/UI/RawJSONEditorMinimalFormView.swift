@@ -41,7 +41,7 @@ struct RawJSONEditorMinimalFormView: View {
       }
       .disabled(formSyncErrorMessage != nil)
     }
-    .frame(minHeight: 420, alignment: .top)
+    .frame(minHeight: 320, alignment: .top)
     .padding(12)
     .background(
       RoundedRectangle(cornerRadius: 8)
