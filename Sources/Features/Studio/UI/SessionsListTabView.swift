@@ -5,6 +5,7 @@ import SwiftUI
 /// Sessions list panel with CRUD actions and project/global scope labels.
 struct SessionsListTabView: View {
   let items: [WorkspaceSessionListItem]
+  @Binding var searchText: String
   @Binding var selectedSessionID: String?
   let sessionActionErrorMessage: String?
   let actionState: SessionsListActionState
@@ -19,7 +20,9 @@ struct SessionsListTabView: View {
     VStack(alignment: .leading, spacing: 0) {
       StudioActionBarView(
         actions: actionItems,
-        isLoading: actionState.isLoadingDraft
+        isLoading: actionState.isLoadingDraft,
+        searchText: $searchText,
+        searchPrompt: "Search Sessions"
       )
 
       if let helpTopic {

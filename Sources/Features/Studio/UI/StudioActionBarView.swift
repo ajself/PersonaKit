@@ -4,6 +4,20 @@ import SwiftUI
 struct StudioActionBarView: View {
   let actions: [StudioActionItem]
   let isLoading: Bool
+  let searchText: Binding<String>?
+  let searchPrompt: String?
+
+  init(
+    actions: [StudioActionItem],
+    isLoading: Bool,
+    searchText: Binding<String>? = nil,
+    searchPrompt: String? = nil
+  ) {
+    self.actions = actions
+    self.isLoading = isLoading
+    self.searchText = searchText
+    self.searchPrompt = searchPrompt
+  }
 
   private static let controlSize: ControlSize = .small
 
@@ -12,38 +26,70 @@ struct StudioActionBarView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HStack(spacing: Self.itemSpacing) {
-        actionSection(for: .primary)
-
-        if hasActions(for: .primary),
-          hasActions(for: .selection)
-        {
-          sectionSpacer
-        }
-
-        actionSection(for: .selection)
-
-        if isLoading {
-          ProgressView()
-            .controlSize(Self.controlSize)
-        }
-
-        if hasActions(for: .destructive),
-          hasActions(for: .selection)
-        {
-          sectionSpacer
-        }
-
-        actionSection(for: .destructive)
-
-        Spacer()
-      }
-      .padding(.horizontal, 12)
-      .padding(.vertical, 8)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(.quaternary.opacity(0.1))
+      actionBarContent
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.1))
 
       Divider()
+    }
+  }
+
+  private var actionBarContent: some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(spacing: Self.itemSpacing) {
+        actionButtons
+
+        Spacer(minLength: 12)
+
+        searchAccessory
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        actionButtons
+        searchAccessory
+      }
+    }
+  }
+
+  private var actionButtons: some View {
+    HStack(spacing: Self.itemSpacing) {
+      actionSection(for: .primary)
+
+      if hasActions(for: .primary),
+        hasActions(for: .selection)
+      {
+        sectionSpacer
+      }
+
+      actionSection(for: .selection)
+
+      if isLoading {
+        ProgressView()
+          .controlSize(Self.controlSize)
+      }
+
+      if hasActions(for: .destructive),
+        hasActions(for: .selection)
+      {
+        sectionSpacer
+      }
+
+      actionSection(for: .destructive)
+    }
+  }
+
+  @ViewBuilder
+  private var searchAccessory: some View {
+    if let searchText,
+      let searchPrompt
+    {
+      StudioSearchField(
+        text: searchText,
+        prompt: searchPrompt
+      )
+      .frame(width: 260)
     }
   }
 

@@ -78,7 +78,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
-    .searchable(text: $searchText, prompt: "Search Relationship Map")
     .onAppear {
       workspaceStore.refreshWorkspaceRelationshipMap()
       refreshFocusSessionMapIfNeeded()
@@ -102,6 +101,23 @@ struct WorkspaceRelationshipMapPanelView: View {
   }
 
   private var headerView: some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(spacing: 8) {
+        headerTitleGroup
+
+        Spacer(minLength: 12)
+
+        headerActionGroup
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        headerTitleGroup
+        headerActionGroup
+      }
+    }
+  }
+
+  private var headerTitleGroup: some View {
     HStack(spacing: 8) {
       Text("Relationship Map")
         .font(.title3)
@@ -119,8 +135,16 @@ struct WorkspaceRelationshipMapPanelView: View {
           )
           .foregroundStyle(workspaceMap.isFullyResolved ? .green : .orange)
       }
+    }
+  }
 
-      Spacer()
+  private var headerActionGroup: some View {
+    HStack(spacing: 8) {
+      StudioSearchField(
+        text: $searchText,
+        prompt: "Search Relationship Map"
+      )
+      .frame(width: 280)
 
       StudioUtilityActionRowView(
         primaryAction: refreshUtilityAction,
