@@ -17,6 +17,9 @@ struct StudioLibraryPanelView: View {
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
   @State private var personaEditorPresentation: PersonaEditorPresentation?
+  @State private var detailMode = StudioLibraryDetailMode.edit
+  @SceneStorage("studio.library.detailMode")
+  private var persistedDetailModeRawValue = StudioLibraryDetailMode.edit.rawValue
 
   var body: some View {
     let visibleItems = filteredItems(items)
@@ -25,6 +28,7 @@ struct StudioLibraryPanelView: View {
     let actionState = StudioLibraryActionBarState(
       selection: selection,
       selectedItem: selectedItem,
+      entityType: entityType,
       isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor
     )
     let previewState = selectedItem.map {
@@ -43,41 +47,6 @@ struct StudioLibraryPanelView: View {
           searchPrompt: "Search \(selection.title)",
           onNew: {
             openPersonaEditor()
-          },
-          onRevealInFinder: {
-            guard let selectedItem else {
-              return
-            }
-
-            workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
-          },
-          onEdit: {
-            switch actionState.editAction {
-            case .markdown:
-              openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
-            case .rawJSON:
-              openRawJSONEditorForSelectedItem(
-                selectedItem: selectedItem,
-                entityType: entityType
-              )
-            case nil:
-              break
-            }
-          },
-          onCopyToProject: {
-            switch actionState.editAction {
-            case .markdown:
-              copySelectedGlobalEssentialToProject(
-                selectedItem: selectedItem
-              )
-            case .rawJSON:
-              copySelectedGlobalItemToProject(
-                selectedItem: selectedItem,
-                entityType: entityType
-              )
-            case nil:
-              break
-            }
           }
         )
 
@@ -108,8 +77,56 @@ struct StudioLibraryPanelView: View {
       StudioLibraryDetailView(
         selection: selection,
         selectedItem: selectedItem,
+        entityType: entityType,
         previewState: previewState,
-        snapshotRevision: workspaceStore.snapshotRevision
+        snapshotRevision: workspaceStore.snapshotRevision,
+        workspaceURL: workspaceStore.workspaceURL,
+        detailMode: detailModeBinding,
+        onRevealInFinder: { fileURL in
+          workspaceStore.revealInFinder(fileURL: fileURL)
+        },
+        onEditInSheet: {
+          switch actionState.editAction {
+          case .markdown:
+            openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
+          case .rawJSON:
+            openRawJSONEditorForSelectedItem(
+              selectedItem: selectedItem,
+              entityType: entityType
+            )
+          case .inlineForm,
+            nil:
+            break
+          }
+        },
+        onCopyToProject: {
+          switch selection {
+          case .essentials:
+            copySelectedGlobalEssentialToProject(
+              selectedItem: selectedItem
+            )
+          default:
+            copySelectedGlobalItemToProject(
+              selectedItem: selectedItem,
+              entityType: entityType
+            )
+          }
+        },
+        onValidate: { rawJSON, presentation in
+          await workspaceStore.validateLibraryEditorRawJSON(
+            rawJSON,
+            presentation: presentation
+          )
+        },
+        onSave: { rawJSON, presentation in
+          await workspaceStore.saveLibraryEditorRawJSON(
+            rawJSON,
+            presentation: presentation
+          )
+        },
+        onSaveSucceeded: { itemID in
+          selectedLibraryItemID = itemID
+        }
       )
       .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -227,8 +244,25 @@ struct StudioLibraryPanelView: View {
       reconcileSelectedLibraryItem(visibleItems: visibleItems)
     }
     .onAppear {
+      detailMode = StudioLibraryDetailModeResolver.preferredMode(
+        persistedRawValue: persistedDetailModeRawValue,
+      )
       reconcileSelectedLibraryItem(visibleItems: visibleItems)
     }
+  }
+
+  private var detailModeBinding: Binding<StudioLibraryDetailMode> {
+    Binding(
+      get: {
+        detailMode
+      },
+      set: { mode in
+        detailMode = mode
+        persistedDetailModeRawValue = StudioLibraryDetailModeResolver.persistedRawValue(
+          for: mode
+        )
+      }
+    )
   }
 
   private func filteredItems(_ items: [WorkspaceListItem]) -> [WorkspaceListItem] {

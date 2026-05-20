@@ -8,11 +8,8 @@ struct SessionsListTabView: View {
   @Binding var searchText: String
   @Binding var selectedSessionID: String?
   let sessionActionErrorMessage: String?
-  let actionState: SessionsListActionState
+  let actionState: SessionsActionState
   let onNewSession: () -> Void
-  let onEditSession: () -> Void
-  let onDeleteSession: () -> Void
-  let onRevealInFinder: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -79,34 +76,7 @@ struct SessionsListTabView: View {
         role: .primary,
         isEnabled: actionState.canCreate,
         action: onNewSession
-      ),
-      StudioActionItem(
-        id: "edit-session",
-        group: .selection,
-        title: "Edit",
-        systemImage: "pencil",
-        role: .standard,
-        isEnabled: actionState.canEdit,
-        action: onEditSession
-      ),
-      StudioActionItem(
-        id: "reveal-session",
-        group: .selection,
-        title: "Reveal",
-        systemImage: "folder",
-        role: .standard,
-        isEnabled: actionState.canReveal,
-        action: onRevealInFinder
-      ),
-      StudioActionItem(
-        id: "delete-session",
-        group: .destructive,
-        title: "Delete",
-        systemImage: "trash",
-        role: .destructive,
-        isEnabled: actionState.canDelete,
-        action: onDeleteSession
-      ),
+      )
     ]
   }
 

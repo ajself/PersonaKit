@@ -35,7 +35,7 @@ struct SessionsPanelView: View {
     let items = filteredSessions(sessions)
     let availableSessionIDs = sessions.map(\.id).sorted()
     let selectedSession = currentSelectedSession()
-    let listActionState = SessionsListActionState(
+    let listActionState = SessionsActionState(
       selectedSession: selectedSession,
       isLoadingSessionDraft: isLoadingSessionDraft
     )
@@ -53,26 +53,16 @@ struct SessionsPanelView: View {
             originalSessionID: nil,
             draft: workspaceStore.defaultSessionDraft()
           )
-        },
-        onEditSession: {
-          openEditorForSelectedSession(selectedSession: selectedSession)
-        },
-        onDeleteSession: {
-          requestDeleteForSelectedSession(selectedSession: selectedSession)
-        },
-        onRevealInFinder: {
-          guard let selectedSession else {
-            return
-          }
-
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
         }
       )
       .frame(minWidth: 160, idealWidth: 250, maxWidth: .infinity)
 
       VStack(spacing: 0) {
         if let selectedSession {
-          detailHeader(selectedSession: selectedSession)
+          detailHeader(
+            selectedSession: selectedSession,
+            actionState: listActionState
+          )
 
           Divider()
 
@@ -341,10 +331,14 @@ struct SessionsPanelView: View {
 
   @ViewBuilder
   private func detailHeader(
-    selectedSession: WorkspaceSessionListItem
+    selectedSession: WorkspaceSessionListItem,
+    actionState: SessionsActionState
   ) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      detailTitleRow(selectedSession: selectedSession)
+      detailTitleRow(
+        selectedSession: selectedSession,
+        actionState: actionState
+      )
 
       detailMetadataRow(selectedSession: selectedSession)
       detailActionRow(selectedSession: selectedSession)
@@ -363,13 +357,38 @@ struct SessionsPanelView: View {
   }
 
   private func detailTitleRow(
-    selectedSession: WorkspaceSessionListItem
+    selectedSession: WorkspaceSessionListItem,
+    actionState: SessionsActionState
   ) -> some View {
-    HStack(alignment: .top, spacing: 12) {
-      detailTitleView(selectedSession: selectedSession)
-        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+    ViewThatFits(in: .horizontal) {
+      HStack(alignment: .firstTextBaseline, spacing: 10) {
+        detailTitleView(selectedSession: selectedSession)
 
-      detailModeSwitch
+        Spacer(minLength: 12)
+
+        detailModeSwitch
+        selectedSessionActionControls(
+          selectedSession: selectedSession,
+          actionState: actionState
+        )
+        detailScopeBadge(scope: selectedSession.sourceScope)
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+          detailTitleView(selectedSession: selectedSession)
+
+          Spacer(minLength: 8)
+
+          detailScopeBadge(scope: selectedSession.sourceScope)
+        }
+
+        detailModeSwitch
+        selectedSessionActionControls(
+          selectedSession: selectedSession,
+          actionState: actionState
+        )
+      }
     }
   }
 
@@ -381,6 +400,84 @@ struct SessionsPanelView: View {
       .fontWeight(.semibold)
       .lineLimit(1)
       .truncationMode(.middle)
+      .textSelection(.enabled)
+  }
+
+  private func selectedSessionActionControls(
+    selectedSession: WorkspaceSessionListItem,
+    actionState: SessionsActionState
+  ) -> some View {
+    StudioUtilityActionRowView(
+      primaryAction: selectedSessionPrimaryUtilityAction(
+        selectedSession: selectedSession,
+        actionState: actionState
+      ),
+      secondaryActions: selectedSessionSecondaryUtilityActions(
+        selectedSession: selectedSession,
+        actionState: actionState
+      ),
+      visibleSecondaryActionCount: 2
+    )
+  }
+
+  private func selectedSessionPrimaryUtilityAction(
+    selectedSession: WorkspaceSessionListItem,
+    actionState: SessionsActionState
+  ) -> StudioUtilityActionItem {
+    StudioUtilityActionItem(
+      id: "session-detail-edit",
+      title: selectedSession.sourceScope == .project ? "Edit" : "Copy to Project",
+      systemImage: selectedSession.sourceScope == .project ? "pencil" : "arrow.down.doc",
+      isEnabled: actionState.canEdit,
+      action: {
+        openEditorForSelectedSession(selectedSession: selectedSession)
+      }
+    )
+  }
+
+  private func selectedSessionSecondaryUtilityActions(
+    selectedSession: WorkspaceSessionListItem,
+    actionState: SessionsActionState
+  ) -> [StudioUtilityActionItem] {
+    var actions = [
+      StudioUtilityActionItem(
+        id: "session-detail-reveal",
+        title: "Reveal",
+        systemImage: "folder",
+        isEnabled: actionState.canReveal,
+        action: {
+          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
+        }
+      )
+    ]
+
+    if selectedSession.sourceScope == .project {
+      actions.append(
+        StudioUtilityActionItem(
+          id: "session-detail-delete",
+          title: "Delete",
+          systemImage: "trash",
+          isEnabled: actionState.canDelete,
+          action: {
+            requestDeleteForSelectedSession(selectedSession: selectedSession)
+          }
+        )
+      )
+    }
+
+    return actions
+  }
+
+  private func detailScopeBadge(scope: WorkspaceSourceScope) -> some View {
+    Text(scope.displayName)
+      .font(.caption2)
+      .fontWeight(.semibold)
+      .padding(.horizontal, 6)
+      .padding(.vertical, 2)
+      .background(
+        Capsule()
+          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
+      )
   }
 
   private func detailMetadataRow(
@@ -445,7 +542,7 @@ struct SessionsPanelView: View {
   ) -> some View {
     switch detailMode {
     case .preview:
-      previewActionRow(selectedSession: selectedSession)
+      previewActionRow()
 
     case .map:
       mapActionRow
@@ -489,31 +586,25 @@ struct SessionsPanelView: View {
     .accessibilityValue(mapHealthText)
   }
 
-  private func previewActionRow(
-    selectedSession: WorkspaceSessionListItem
-  ) -> some View {
+  private func previewActionRow() -> some View {
     ViewThatFits(in: .horizontal) {
       HStack(spacing: 8) {
-        previewActionControls(selectedSession: selectedSession)
+        previewActionControls()
         Spacer()
       }
 
       VStack(alignment: .leading, spacing: 8) {
-        previewActionControls(selectedSession: selectedSession)
+        previewActionControls()
       }
     }
   }
 
-  private func previewActionControls(
-    selectedSession: WorkspaceSessionListItem
-  ) -> some View {
+  private func previewActionControls() -> some View {
     ScrollView(.horizontal) {
       HStack(spacing: 8) {
         StudioUtilityActionRowView(
           primaryAction: previewPrimaryUtilityAction,
-          secondaryActions: previewSecondaryUtilityActions(
-            selectedSession: selectedSession
-          )
+          secondaryActions: previewSecondaryUtilityActions
         )
 
         if workspaceStore.isLoadingSessionPreview {
@@ -538,19 +629,8 @@ struct SessionsPanelView: View {
     )
   }
 
-  private func previewSecondaryUtilityActions(
-    selectedSession: WorkspaceSessionListItem
-  ) -> [StudioUtilityActionItem] {
+  private var previewSecondaryUtilityActions: [StudioUtilityActionItem] {
     [
-      StudioUtilityActionItem(
-        id: "session-preview-reveal",
-        title: "Reveal in Finder",
-        systemImage: "folder",
-        isEnabled: true,
-        action: {
-          workspaceStore.revealInFinder(fileURL: selectedSession.fileURL)
-        }
-      ),
       StudioUtilityActionItem(
         id: "session-preview-copy",
         title: "Copy",

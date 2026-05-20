@@ -8,9 +8,6 @@ struct StudioLibraryToolbarView: View {
   @Binding var searchText: String
   let searchPrompt: String
   let onNew: () -> Void
-  let onRevealInFinder: () -> Void
-  let onEdit: () -> Void
-  let onCopyToProject: () -> Void
 
   var body: some View {
     StudioActionBarView(
@@ -37,40 +34,6 @@ struct StudioLibraryToolbarView: View {
         )
       )
     }
-
-    actions.append(
-      StudioActionItem(
-        id: "library-reveal",
-        group: .selection,
-        title: "Reveal",
-        systemImage: "folder",
-        role: .standard,
-        isEnabled: actionState.canReveal,
-        action: onRevealInFinder
-      )
-    )
-    actions.append(
-      StudioActionItem(
-        id: "library-edit",
-        group: .selection,
-        title: "Edit",
-        systemImage: "pencil",
-        role: .standard,
-        isEnabled: actionState.canEdit,
-        action: onEdit
-      )
-    )
-    actions.append(
-      StudioActionItem(
-        id: "library-copy",
-        group: .selection,
-        title: "Copy to Project",
-        systemImage: "arrow.down.doc",
-        role: .standard,
-        isEnabled: actionState.canCopyToProject,
-        action: onCopyToProject
-      )
-    )
 
     return actions
   }

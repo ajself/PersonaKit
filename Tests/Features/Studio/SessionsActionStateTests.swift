@@ -4,10 +4,10 @@ import Testing
 
 @testable import StudioFeatures
 
-struct SessionsListActionStateTests {
+struct SessionsActionStateTests {
   @Test
   func noSelectionDisablesSelectionAndDeleteActions() {
-    let state = SessionsListActionState(
+    let state = SessionsActionState(
       selectedSession: nil,
       isLoadingSessionDraft: false
     )
@@ -21,7 +21,7 @@ struct SessionsListActionStateTests {
 
   @Test
   func projectSelectionEnablesEditRevealAndDelete() {
-    let state = SessionsListActionState(
+    let state = SessionsActionState(
       selectedSession: makeSession(scope: .project),
       isLoadingSessionDraft: false
     )
@@ -35,7 +35,7 @@ struct SessionsListActionStateTests {
 
   @Test
   func globalSelectionDisablesDelete() {
-    let state = SessionsListActionState(
+    let state = SessionsActionState(
       selectedSession: makeSession(scope: .global),
       isLoadingSessionDraft: false
     )
@@ -48,7 +48,7 @@ struct SessionsListActionStateTests {
 
   @Test
   func loadingDraftDisablesEditAndDeleteButKeepsReveal() {
-    let state = SessionsListActionState(
+    let state = SessionsActionState(
       selectedSession: makeSession(scope: .project),
       isLoadingSessionDraft: true
     )
