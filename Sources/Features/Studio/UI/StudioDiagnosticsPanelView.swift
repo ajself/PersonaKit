@@ -8,9 +8,9 @@ struct StudioDiagnosticsPanelView: View {
   @Binding var selection: SidebarItem?
   @Binding var selectedLibraryItemID: String?
   @Binding var searchText: String
+  @Binding var isInspectorPresented: Bool
+  @Binding var inspectorMode: StudioInspectorMode
 
-  @SceneStorage(StudioHelpStorageKey.validationResults)
-  private var isValidationResultsHelpExpanded = false
   @State private var selectedIssueFilterID = "all"
 
   var body: some View {
@@ -32,13 +32,6 @@ struct StudioDiagnosticsPanelView: View {
           workspaceStore.validateWorkspace()
         }
       )
-
-      if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.validationResults) {
-        StudioInlineHelpView(
-          topic: helpTopic,
-          isExpanded: $isValidationResultsHelpExpanded
-        )
-      }
 
       if let validationErrorMessage = workspaceStore.validationErrorMessage {
         ContentUnavailableView(
@@ -92,6 +85,24 @@ struct StudioDiagnosticsPanelView: View {
           .frame(maxWidth: .infinity, alignment: .topLeading)
         }
       }
+    }
+    .inspector(isPresented: $isInspectorPresented) {
+      StudioContextInspectorView(
+        primaryTitle: "Info",
+        helpTopic: StudioHelpCatalog.topic(for: SidebarItem.validationResults),
+        mode: $inspectorMode,
+        onNavigateHelpLink: { link in
+          selection = link.destination
+          selectedLibraryItemID = nil
+          searchText = link.searchText ?? ""
+        }
+      ) {
+        StudioValidationStatusInspectorView(
+          report: report,
+          selectedIssueFilterID: selectedIssueFilterID
+        )
+      }
+      .inspectorColumnWidth(min: 190, ideal: 270, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
@@ -234,6 +245,87 @@ private struct StudioValidationIssueStatsView: View {
           .fill(.orange.opacity(0.14))
       )
       .foregroundStyle(.orange)
+  }
+}
+
+private struct StudioValidationStatusInspectorView: View {
+  let report: StudioValidationReportState
+  let selectedIssueFilterID: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      Text("Validation Status")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      inspectorSection("Summary") {
+        metadataRow(label: "Status", value: report.status.title)
+        metadataRow(label: "Headline", value: report.statusHeadline)
+
+        if let coverageLine = report.coverageLine {
+          metadataRow(label: "Coverage", value: coverageLine)
+        }
+      }
+
+      inspectorSection("Issues") {
+        metadataRow(label: "Count", value: report.issueCountText)
+        metadataRow(label: "Entities", value: report.affectedEntitiesText)
+        metadataRow(label: "Files", value: report.affectedFilesText)
+        metadataRow(label: "Filter", value: selectedFilterTitle)
+      }
+
+      inspectorSection("Validated Areas") {
+        if report.areaRows.isEmpty {
+          metadataRow(label: "Areas", value: "None")
+        } else {
+          ForEach(report.areaRows) { row in
+            metadataRow(label: row.title, value: row.statusText)
+          }
+        }
+      }
+    }
+    .accessibilityElement(children: .contain)
+  }
+
+  private var selectedFilterTitle: String {
+    report.issueFilterOptions.first { $0.id == selectedIssueFilterID }?.title ?? "All"
+  }
+
+  private func inspectorSection<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(title)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      VStack(alignment: .leading, spacing: 10) {
+        content()
+      }
+    }
+  }
+
+  private func metadataRow(
+    label: String,
+    value: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 3) {
+      Text(label)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      Text(value)
+        .font(.subheadline)
+        .foregroundStyle(.primary)
+        .lineLimit(4)
+        .truncationMode(.tail)
+        .textSelection(.enabled)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
   }
 }
 

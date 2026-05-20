@@ -9,8 +9,6 @@ struct SessionsListTabView: View {
   @Binding var selectedSessionID: String?
   let sessionActionErrorMessage: String?
   let actionState: SessionsListActionState
-  let helpTopic: StudioHelpTopic?
-  @Binding var isHelpExpanded: Bool
   let onNewSession: () -> Void
   let onEditSession: () -> Void
   let onDeleteSession: () -> Void
@@ -24,13 +22,6 @@ struct SessionsListTabView: View {
         searchText: $searchText,
         searchPrompt: "Search Sessions"
       )
-
-      if let helpTopic {
-        StudioInlineHelpView(
-          topic: helpTopic,
-          isExpanded: $isHelpExpanded
-        )
-      }
 
       if let sessionActionErrorMessage {
         Text(sessionActionErrorMessage)

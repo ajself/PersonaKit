@@ -5,23 +5,19 @@ struct StudioLibraryPreviewView: View {
   let state: StudioLibraryPreviewState?
 
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 14) {
-        if let state {
-          previewContent(state)
-        } else {
-          ContentUnavailableView(
-            "Select a \(selection.singularTitle)",
-            systemImage: "sidebar.trailing",
-            description: Text("Preview metadata and source location before opening raw content.")
-          )
-          .frame(maxWidth: .infinity, minHeight: 220)
-        }
+    VStack(alignment: .leading, spacing: 14) {
+      if let state {
+        previewContent(state)
+      } else {
+        ContentUnavailableView(
+          "Select a \(selection.singularTitle)",
+          systemImage: "sidebar.trailing",
+          description: Text("Preview metadata and source location before opening raw content.")
+        )
+        .frame(maxWidth: .infinity, minHeight: 220)
       }
-      .padding(14)
-      .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
   }
 
   private func previewContent(_ state: StudioLibraryPreviewState) -> some View {

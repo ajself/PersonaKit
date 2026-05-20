@@ -6,10 +6,10 @@ import SwiftUI
 struct WorkspaceRelationshipMapPanelView: View {
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
+  @Binding var isInspectorPresented: Bool
+  @Binding var inspectorMode: StudioInspectorMode
   let onNavigate: (SessionsNavigationTarget) -> Void
-
-  @SceneStorage(StudioHelpStorageKey.relationshipMap)
-  private var isRelationshipMapHelpExpanded = false
+  let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var selectedSessionContextID: String?
   @State private var focusModeEnabled = false
@@ -43,13 +43,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     VStack(alignment: .leading, spacing: 12) {
       headerView
 
-      if let helpTopic = StudioHelpCatalog.topic(for: SidebarItem.relationshipMap) {
-        StudioInlineHelpView(
-          topic: helpTopic,
-          isExpanded: $isRelationshipMapHelpExpanded
-        )
-      }
-
       filterControls
 
       if workspaceStore.isLoadingWorkspaceRelationshipMap {
@@ -75,6 +68,26 @@ struct WorkspaceRelationshipMapPanelView: View {
           description: Text("Load a workspace to inspect cross-entity relationships.")
         )
       }
+    }
+    .inspector(isPresented: $isInspectorPresented) {
+      StudioContextInspectorView(
+        primaryTitle: "Info",
+        helpTopic: StudioHelpCatalog.topic(for: SidebarItem.relationshipMap),
+        mode: $inspectorMode,
+        onNavigateHelpLink: onNavigateHelpLink
+      ) {
+        RelationshipMapContextInspectorView(
+          workspaceMap: workspaceStore.workspaceRelationshipMap,
+          filteredMap: filteredMap,
+          isLoading: workspaceStore.isLoadingWorkspaceRelationshipMap,
+          focusModeEnabled: focusModeEnabled,
+          selectedSessionID: selectedSessionContextID,
+          selectedScopeTitle: selectedScopeFilter.title,
+          selectedNodeKindTitles: selectedNodeKinds.map(\.menuTitle).sorted(),
+          highlightedNodeKey: highlightedNodeKey
+        )
+      }
+      .inspectorColumnWidth(min: 190, ideal: 270, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .padding()
@@ -604,6 +617,114 @@ struct WorkspaceRelationshipMapPanelView: View {
         }
       }
     )
+  }
+}
+
+private struct RelationshipMapContextInspectorView: View {
+  let workspaceMap: WorkspaceSessionMap?
+  let filteredMap: WorkspaceSessionMap?
+  let isLoading: Bool
+  let focusModeEnabled: Bool
+  let selectedSessionID: String?
+  let selectedScopeTitle: String
+  let selectedNodeKindTitles: [String]
+  let highlightedNodeKey: String?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      Text("Relationship Map Context")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      inspectorSection("Health") {
+        if isLoading {
+          HStack(spacing: 6) {
+            ProgressView()
+              .controlSize(.small)
+
+            metadataText("Loading")
+          }
+        } else if let workspaceMap {
+          metadataRow(label: "Workspace Map", value: healthText(for: workspaceMap))
+        } else {
+          metadataRow(label: "Workspace Map", value: "Not loaded")
+        }
+
+        if let filteredMap {
+          metadataRow(label: "Visible Nodes", value: "\(filteredMap.nodes.count)")
+          metadataRow(label: "Visible Edges", value: "\(filteredMap.edges.count)")
+          metadataRow(label: "Visible Issues", value: "\(filteredMap.resolutionErrors.count)")
+        }
+      }
+
+      inspectorSection("Focus") {
+        metadataRow(label: "Mode", value: focusModeEnabled ? "Focused" : "Workspace")
+        metadataRow(label: "Session", value: selectedSessionID ?? "None")
+        metadataRow(label: "Highlighted Node", value: highlightedNodeKey ?? "None")
+      }
+
+      inspectorSection("Filters") {
+        metadataRow(label: "Scope", value: selectedScopeTitle)
+        metadataRow(
+          label: "Entity Types",
+          value: selectedNodeKindTitles.joined(separator: ", ")
+        )
+      }
+    }
+    .accessibilityElement(children: .contain)
+  }
+
+  private func healthText(
+    for map: WorkspaceSessionMap
+  ) -> String {
+    if map.isFullyResolved {
+      return "Resolved"
+    }
+
+    return "\(map.resolutionErrors.count) issue\(map.resolutionErrors.count == 1 ? "" : "s")"
+  }
+
+  private func inspectorSection<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(title)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      VStack(alignment: .leading, spacing: 10) {
+        content()
+      }
+    }
+  }
+
+  private func metadataRow(
+    label: String,
+    value: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 3) {
+      Text(label)
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      metadataText(value)
+    }
+  }
+
+  private func metadataText(
+    _ value: String
+  ) -> some View {
+    Text(value)
+      .font(.subheadline)
+      .foregroundStyle(.primary)
+      .lineLimit(4)
+      .truncationMode(.tail)
+      .textSelection(.enabled)
+      .frame(maxWidth: .infinity, alignment: .leading)
   }
 }
 

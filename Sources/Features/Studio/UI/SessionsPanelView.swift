@@ -15,15 +15,15 @@ struct SessionsPanelView: View {
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
   @Binding var isInspectorPresented: Bool
+  @Binding var inspectorMode: StudioInspectorMode
   let onNavigate: (SessionsNavigationTarget) -> Void
+  let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var selectedSessionID: String?
   @State private var detailMode = SessionsDetailMode.preview
   @State private var detailModeTransitionTask: Task<Void, Never>?
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
-  @SceneStorage(StudioHelpStorageKey.sessions)
-  private var isSessionsHelpExpanded = false
   @State private var sessionEditorPresentation: SessionEditorPresentation?
   @State private var pendingSessionDeletion: WorkspaceSessionListItem?
   @State private var isLoadingSessionDraft = false
@@ -47,8 +47,6 @@ struct SessionsPanelView: View {
         selectedSessionID: $selectedSessionID,
         sessionActionErrorMessage: sessionActionErrorMessage,
         actionState: listActionState,
-        helpTopic: sessionsHelpTopic,
-        isHelpExpanded: $isSessionsHelpExpanded,
         onNewSession: {
           sessionEditorPresentation = SessionEditorPresentation(
             title: "New Session",
@@ -80,18 +78,24 @@ struct SessionsPanelView: View {
 
           detailContent(selectedSession: selectedSession)
         } else {
-          Color.clear
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          detailEmptyState
         }
       }
       .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .inspector(isPresented: $isInspectorPresented) {
-      SessionsInspectorView(
-        selectedSession: selectedSession,
-        workspaceURL: workspaceStore.workspaceURL,
-        relationshipStatusText: inspectorRelationshipStatusText
-      )
+      StudioContextInspectorView(
+        primaryTitle: "Info",
+        helpTopic: StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions),
+        mode: $inspectorMode,
+        onNavigateHelpLink: onNavigateHelpLink
+      ) {
+        SessionsInspectorView(
+          selectedSession: selectedSession,
+          workspaceURL: workspaceStore.workspaceURL,
+          relationshipStatusText: inspectorRelationshipStatusText
+        )
+      }
       .inspectorColumnWidth(min: 180, ideal: 250, max: 340)
     }
     .onChange(of: selectedSessionID) { _, _ in
@@ -214,35 +218,12 @@ struct SessionsPanelView: View {
   }
 
   private var detailModeItems: [StudioModeSwitchItem<SessionsDetailMode>] {
-    let unresolvedIssueCount = workspaceStore.sessionMap?.resolutionErrors.count
-    let unresolvedIssueBadgeText: String?
-
-    if let mapRequestKey = workspaceStore.sessionMapRequestKey,
-      let selectedSessionID
-    {
-      unresolvedIssueBadgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-        issueCount: unresolvedIssueCount,
-        mapRequestKey: mapRequestKey,
-        selectedSessionID: selectedSessionID
-      )
-    } else {
-      unresolvedIssueBadgeText = nil
-    }
-
-    return SessionsDetailMode.allCases.map { mode in
-      let badgeText: String?
-
-      if mode == .map {
-        badgeText = unresolvedIssueBadgeText
-      } else {
-        badgeText = nil
-      }
-
-      return StudioModeSwitchItem(
+    SessionsDetailMode.allCases.map { mode in
+      StudioModeSwitchItem(
         id: mode,
         title: mode.title,
         systemImage: mode.systemImage,
-        badgeText: badgeText,
+        badgeText: nil,
         accessibilityHint: mode.accessibilityHint
       )
     }
@@ -266,6 +247,16 @@ struct SessionsPanelView: View {
     }
 
     return "Not checked"
+  }
+
+  private var detailEmptyState: some View {
+    ContentUnavailableView(
+      "Select a Session",
+      systemImage: "doc.text.magnifyingglass",
+      description: Text("Preview the resolved session contract or inspect its relationship map.")
+    )
+    .foregroundStyle(.secondary)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 
   @ViewBuilder
@@ -352,35 +343,11 @@ struct SessionsPanelView: View {
   private func detailHeader(
     selectedSession: WorkspaceSessionListItem
   ) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
+    VStack(alignment: .leading, spacing: 8) {
       detailTitleRow(selectedSession: selectedSession)
 
-      switch detailMode {
-      case .preview:
-        previewActionRow(selectedSession: selectedSession)
-
-      case .map:
-        HStack(spacing: 12) {
-          HStack(spacing: 8) {
-            Text("Map Health")
-              .font(.caption)
-              .fontWeight(.semibold)
-              .foregroundStyle(.secondary)
-
-            mapHealthStatusView
-          }
-          .accessibilityElement(children: .combine)
-          .accessibilityLabel("Map Health")
-          .accessibilityValue(mapHealthText)
-
-          Spacer()
-
-          StudioUtilityActionRowView(
-            primaryAction: mapPrimaryUtilityAction,
-            secondaryActions: []
-          )
-        }
-      }
+      detailMetadataRow(selectedSession: selectedSession)
+      detailActionRow(selectedSession: selectedSession)
 
       if detailMode == .preview,
         let sessionPreviewActionMessage
@@ -398,69 +365,62 @@ struct SessionsPanelView: View {
   private func detailTitleRow(
     selectedSession: WorkspaceSessionListItem
   ) -> some View {
-    ViewThatFits(in: .horizontal) {
-      HStack(alignment: .top, spacing: 12) {
-        detailTitleGroup(selectedSession: selectedSession)
+    HStack(alignment: .top, spacing: 12) {
+      detailTitleView(selectedSession: selectedSession)
+        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
-        Spacer()
-
-        detailModeSwitch
-      }
-
-      VStack(alignment: .leading, spacing: 8) {
-        detailTitleGroup(selectedSession: selectedSession)
-        detailModeSwitch
-      }
+      detailModeSwitch
     }
   }
 
-  private func detailTitleGroup(
+  private func detailTitleView(
     selectedSession: WorkspaceSessionListItem
   ) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
-      Text(selectedSession.id)
-        .font(.title3)
-        .fontWeight(.semibold)
-        .lineLimit(1)
-        .truncationMode(.middle)
+    Text(selectedSession.id)
+      .font(.title3)
+      .fontWeight(.semibold)
+      .lineLimit(1)
+      .truncationMode(.middle)
+  }
 
-      VStack(alignment: .leading, spacing: 2) {
-        Text(
-          SessionsPanelLayoutState.personaMetadataLine(
-            personaID: selectedSession.personaId
-          )
-        )
-        .lineLimit(1)
-        .truncationMode(.tail)
-
-        Text(
-          SessionsPanelLayoutState.directiveMetadataLine(
-            directiveID: selectedSession.directiveId
-          )
-        )
-        .lineLimit(1)
-        .truncationMode(.tail)
-
-        if let directive = selectedDirective(
-          for: selectedSession.directiveId
-        ),
-          let workstreamID = directive.workstreamId,
-          let phase = directive.workstreamPhase
-        {
-          Text(
-            SessionsPanelLayoutState.workstreamMetadataLine(
-              workstreamID: workstreamID,
-              phase: phase
-            )
-          )
-          .lineLimit(1)
-          .truncationMode(.tail)
-        }
-      }
+  private func detailMetadataRow(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    Text(detailMetadataText(selectedSession: selectedSession))
       .font(.subheadline)
       .foregroundStyle(.secondary)
+      .lineLimit(1)
+      .truncationMode(.tail)
+      .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+  }
+
+  private func detailMetadataText(
+    selectedSession: WorkspaceSessionListItem
+  ) -> String {
+    var metadata = [
+      SessionsPanelLayoutState.personaMetadataLine(
+        personaID: selectedSession.personaId
+      ),
+      SessionsPanelLayoutState.directiveMetadataLine(
+        directiveID: selectedSession.directiveId
+      ),
+    ]
+
+    if let directive = selectedDirective(
+      for: selectedSession.directiveId
+    ),
+      let workstreamID = directive.workstreamId,
+      let phase = directive.workstreamPhase
+    {
+      metadata.append(
+        SessionsPanelLayoutState.workstreamMetadataLine(
+          workstreamID: workstreamID,
+          phase: phase
+        )
+      )
     }
-    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+
+    return metadata.joined(separator: " · ")
   }
 
   private var detailModeSwitch: some View {
@@ -476,7 +436,57 @@ struct SessionsPanelView: View {
         }
       }
     )
-    .frame(minWidth: 180, idealWidth: 200, maxWidth: 220)
+    .frame(width: 170)
+  }
+
+  @ViewBuilder
+  private func detailActionRow(
+    selectedSession: WorkspaceSessionListItem
+  ) -> some View {
+    switch detailMode {
+    case .preview:
+      previewActionRow(selectedSession: selectedSession)
+
+    case .map:
+      mapActionRow
+    }
+  }
+
+  private var mapActionRow: some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(spacing: 12) {
+        mapHealthGroup
+        Spacer()
+
+        StudioUtilityActionRowView(
+          primaryAction: mapPrimaryUtilityAction,
+          secondaryActions: []
+        )
+      }
+
+      VStack(alignment: .leading, spacing: 8) {
+        mapHealthGroup
+
+        StudioUtilityActionRowView(
+          primaryAction: mapPrimaryUtilityAction,
+          secondaryActions: []
+        )
+      }
+    }
+  }
+
+  private var mapHealthGroup: some View {
+    HStack(spacing: 8) {
+      Text("Map Health")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      mapHealthStatusView
+    }
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel("Map Health")
+    .accessibilityValue(mapHealthText)
   }
 
   private func previewActionRow(
@@ -572,10 +582,6 @@ struct SessionsPanelView: View {
         refreshSelectedSessionMap(forceReload: true)
       }
     )
-  }
-
-  private var sessionsHelpTopic: StudioHelpTopic? {
-    StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions)
   }
 
   private var scopeByNodeKey: [String: WorkspaceSourceScope] {
@@ -857,23 +863,19 @@ private struct SessionsInspectorView: View {
   let relationshipStatusText: String
 
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 16) {
-        if let selectedSession {
-          sessionContent(selectedSession)
-        } else {
-          ContentUnavailableView(
-            "Select a Session",
-            systemImage: "sidebar.trailing",
-            description: Text("Inspect source metadata for the selected session.")
-          )
-          .frame(maxWidth: .infinity, minHeight: 220)
-        }
+    VStack(alignment: .leading, spacing: 16) {
+      if let selectedSession {
+        sessionContent(selectedSession)
+      } else {
+        ContentUnavailableView(
+          "Select a Session",
+          systemImage: "sidebar.trailing",
+          description: Text("Inspect source metadata for the selected session.")
+        )
+        .frame(maxWidth: .infinity, minHeight: 220)
       }
-      .padding(14)
-      .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
   }
 
   private func sessionContent(

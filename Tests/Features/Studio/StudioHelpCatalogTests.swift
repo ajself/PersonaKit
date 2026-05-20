@@ -69,37 +69,38 @@ struct StudioHelpCatalogTests {
   }
 
   @Test
-  func everySidebarItemMapsToStableHelpExpansionStorageKey() {
-    #expect(SidebarItem.sessions.helpExpansionStorageKey == "studio.help.sessions.expanded")
-    #expect(SidebarItem.personas.helpExpansionStorageKey == "studio.help.personas.expanded")
-    #expect(SidebarItem.directives.helpExpansionStorageKey == "studio.help.directives.expanded")
-    #expect(SidebarItem.kits.helpExpansionStorageKey == "studio.help.kits.expanded")
-    #expect(SidebarItem.essentials.helpExpansionStorageKey == "studio.help.essentials.expanded")
-    #expect(SidebarItem.references.helpExpansionStorageKey == "studio.help.references.expanded")
-    #expect(SidebarItem.skills.helpExpansionStorageKey == "studio.help.skills.expanded")
-    #expect(SidebarItem.intents.helpExpansionStorageKey == "studio.help.intents.expanded")
-    #expect(SidebarItem.relationshipMap.helpExpansionStorageKey == "studio.help.relationshipMap.expanded")
-    #expect(
-      SidebarItem.validationResults.helpExpansionStorageKey == "studio.help.validationResults.expanded"
-    )
+  func everySidebarHelpTopicCanUseInspector() {
+    let sidebarItems: [SidebarItem] = [
+      .sessions,
+      .personas,
+      .directives,
+      .kits,
+      .essentials,
+      .references,
+      .skills,
+      .intents,
+      .relationshipMap,
+      .validationResults,
+    ]
+
+    for item in sidebarItems {
+      #expect(StudioHelpCatalog.topic(for: item) != nil)
+      #expect(item.supportsInspector)
+    }
   }
 
   @Test
-  func helpExpansionStorageKeysAreUnique() {
-    let keys = [
-      SidebarItem.sessions.helpExpansionStorageKey,
-      SidebarItem.personas.helpExpansionStorageKey,
-      SidebarItem.directives.helpExpansionStorageKey,
-      SidebarItem.kits.helpExpansionStorageKey,
-      SidebarItem.essentials.helpExpansionStorageKey,
-      SidebarItem.references.helpExpansionStorageKey,
-      SidebarItem.skills.helpExpansionStorageKey,
-      SidebarItem.intents.helpExpansionStorageKey,
-      SidebarItem.relationshipMap.helpExpansionStorageKey,
-      SidebarItem.validationResults.helpExpansionStorageKey,
-    ]
+  func inspectorModeHasStableStorageAndFallback() {
+    #expect(StudioInspectorMode.storageKey == "studio.inspector.mode")
+    #expect(StudioInspectorMode.primary.rawValue == "primary")
+    #expect(StudioInspectorMode.help.rawValue == "help")
+    #expect(StudioInspectorMode.resolved(rawValue: "help") == .help)
+    #expect(StudioInspectorMode.resolved(rawValue: "unexpected") == .primary)
+  }
 
-    #expect(Set(keys).count == keys.count)
+  @Test
+  func inspectorModeOrderingMatchesSegmentOrder() {
+    #expect(StudioInspectorMode.allCases == [.primary, .help])
   }
 
   @Test

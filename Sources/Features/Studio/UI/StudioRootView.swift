@@ -17,6 +17,8 @@ public struct StudioRootView: View {
   @State private var sidebarVisibility = NavigationSplitViewVisibility.all
   @SceneStorage("studio.inspector.isPresented")
   private var isInspectorPresented = false
+  @SceneStorage(StudioInspectorMode.storageKey)
+  private var inspectorModeRawValue = StudioInspectorMode.primary.rawValue
 
   public init(
     workspaceStore: WorkspaceStore,
@@ -62,6 +64,16 @@ public struct StudioRootView: View {
       }
 
       if shouldShowInspectorToggle {
+        ToolbarItem(placement: .primaryAction) {
+          Button {
+            showInspectorHelp()
+          } label: {
+            Label("Help", systemImage: "questionmark.circle")
+          }
+          .accessibilityLabel("Help")
+          .help("Show Help in Inspector")
+        }
+
         ToolbarItem(placement: .primaryAction) {
           Button {
             isInspectorPresented.toggle()
@@ -170,6 +182,17 @@ public struct StudioRootView: View {
     return (selection ?? .sessions).supportsInspector
   }
 
+  private var inspectorModeBinding: Binding<StudioInspectorMode> {
+    Binding(
+      get: {
+        StudioInspectorMode.resolved(rawValue: inspectorModeRawValue)
+      },
+      set: { mode in
+        inspectorModeRawValue = mode.rawValue
+      }
+    )
+  }
+
   private var sidebarIsVisible: Bool {
     sidebarVisibility != .detailOnly
   }
@@ -192,8 +215,12 @@ public struct StudioRootView: View {
         workspaceStore: workspaceStore,
         searchText: $searchText,
         isInspectorPresented: $isInspectorPresented,
+        inspectorMode: inspectorModeBinding,
         onNavigate: { target in
           applyNavigationTarget(target)
+        },
+        onNavigateHelpLink: { link in
+          applyHelpLink(link)
         }
       )
 
@@ -201,8 +228,13 @@ public struct StudioRootView: View {
       WorkspaceRelationshipMapPanelView(
         workspaceStore: workspaceStore,
         searchText: $searchText,
+        isInspectorPresented: $isInspectorPresented,
+        inspectorMode: inspectorModeBinding,
         onNavigate: { target in
           applyNavigationTarget(target)
+        },
+        onNavigateHelpLink: { link in
+          applyHelpLink(link)
         }
       )
 
@@ -219,7 +251,11 @@ public struct StudioRootView: View {
         items: libraryItems(for: activeSelection),
         searchText: $searchText,
         selectedLibraryItemID: $selectedLibraryItemID,
-        isInspectorPresented: $isInspectorPresented
+        isInspectorPresented: $isInspectorPresented,
+        inspectorMode: inspectorModeBinding,
+        onNavigateHelpLink: { link in
+          applyHelpLink(link)
+        }
       )
 
     case .validationResults:
@@ -227,7 +263,9 @@ public struct StudioRootView: View {
         workspaceStore: workspaceStore,
         selection: $selection,
         selectedLibraryItemID: $selectedLibraryItemID,
-        searchText: $searchText
+        searchText: $searchText,
+        isInspectorPresented: $isInspectorPresented,
+        inspectorMode: inspectorModeBinding
       )
     }
   }
@@ -281,6 +319,21 @@ public struct StudioRootView: View {
     selection = state.selection
     selectedLibraryItemID = state.selectedLibraryItemID
     searchText = state.searchText
+  }
+
+  private func applyHelpLink(_ link: StudioHelpLink) {
+    applyNavigationTarget(
+      SessionsNavigationTarget(
+        sidebarItem: link.destination,
+        selectedLibraryItemID: nil,
+        searchText: link.searchText ?? ""
+      )
+    )
+  }
+
+  private func showInspectorHelp() {
+    inspectorModeRawValue = StudioInspectorMode.help.rawValue
+    isInspectorPresented = true
   }
 
   private func navigateToWorkspaceSection(_ sidebarItem: SidebarItem) {
@@ -428,11 +481,10 @@ enum SidebarItem: Hashable {
       .essentials,
       .references,
       .skills,
-      .intents:
-      return true
-    case .relationshipMap,
+      .intents,
+      .relationshipMap,
       .validationResults:
-      return false
+      return true
     }
   }
 
