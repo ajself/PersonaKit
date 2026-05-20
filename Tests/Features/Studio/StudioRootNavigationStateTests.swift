@@ -5,7 +5,7 @@ import Testing
 
 struct StudioRootNavigationStateTests {
   @Test
-  func inspectorSupportIsLimitedToSessionAndLibrarySections() {
+  func everyWorkspaceSectionSupportsInspector() {
     let inspectorSections: [SidebarItem] = [
       .sessions,
       .personas,
@@ -15,14 +15,13 @@ struct StudioRootNavigationStateTests {
       .references,
       .skills,
       .intents,
+      .relationshipMap,
+      .validationResults,
     ]
 
     for section in inspectorSections {
       #expect(section.supportsInspector)
     }
-
-    #expect(!SidebarItem.relationshipMap.supportsInspector)
-    #expect(!SidebarItem.validationResults.supportsInspector)
   }
 
   @Test

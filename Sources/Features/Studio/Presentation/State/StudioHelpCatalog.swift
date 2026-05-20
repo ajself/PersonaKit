@@ -336,7 +336,6 @@ enum StudioHelpCatalog {
     topic(for: sidebarItem.helpTopicID)
   }
 }
-
 extension SidebarItem {
   var helpTopicID: StudioHelpTopicID {
     switch self {
@@ -360,31 +359,6 @@ extension SidebarItem {
       return .relationshipMap
     case .validationResults:
       return .validationResults
-    }
-  }
-
-  var helpExpansionStorageKey: String {
-    switch self {
-    case .sessions:
-      return StudioHelpStorageKey.sessions
-    case .personas:
-      return StudioHelpStorageKey.personas
-    case .directives:
-      return StudioHelpStorageKey.directives
-    case .kits:
-      return StudioHelpStorageKey.kits
-    case .essentials:
-      return StudioHelpStorageKey.essentials
-    case .references:
-      return StudioHelpStorageKey.references
-    case .skills:
-      return StudioHelpStorageKey.skills
-    case .intents:
-      return StudioHelpStorageKey.intents
-    case .relationshipMap:
-      return StudioHelpStorageKey.relationshipMap
-    case .validationResults:
-      return StudioHelpStorageKey.validationResults
     }
   }
 }

@@ -11,21 +11,8 @@ struct StudioLibraryPanelView: View {
   @Binding var searchText: String
   @Binding var selectedLibraryItemID: String?
   @Binding var isInspectorPresented: Bool
-
-  @SceneStorage(StudioHelpStorageKey.personas)
-  private var isPersonasHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.directives)
-  private var isDirectivesHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.kits)
-  private var isKitsHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.essentials)
-  private var isEssentialsHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.references)
-  private var isReferencesHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.skills)
-  private var isSkillsHelpExpanded = false
-  @SceneStorage(StudioHelpStorageKey.intents)
-  private var isIntentsHelpExpanded = false
+  @Binding var inspectorMode: StudioInspectorMode
+  let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
@@ -40,92 +27,104 @@ struct StudioLibraryPanelView: View {
       selectedItem: selectedItem,
       isLoadingLibraryEditor: workspaceStore.isLoadingLibraryEditor
     )
-
-    VStack(alignment: .leading, spacing: 0) {
-      StudioLibraryToolbarView(
-        actionState: actionState,
-        searchText: $searchText,
-        searchPrompt: "Search \(selection.title)",
-        onNew: {
-          openPersonaEditor()
-        },
-        onRevealInFinder: {
-          guard let selectedItem else {
-            return
-          }
-
-          workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
-        },
-        onEdit: {
-          switch actionState.editAction {
-          case .markdown:
-            openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
-          case .rawJSON:
-            openRawJSONEditorForSelectedItem(
-              selectedItem: selectedItem,
-              entityType: entityType
-            )
-          case nil:
-            break
-          }
-        },
-        onCopyToProject: {
-          switch actionState.editAction {
-          case .markdown:
-            copySelectedGlobalEssentialToProject(
-              selectedItem: selectedItem
-            )
-          case .rawJSON:
-            copySelectedGlobalItemToProject(
-              selectedItem: selectedItem,
-              entityType: entityType
-            )
-          case nil:
-            break
-          }
-        }
+    let previewState = selectedItem.map {
+      StudioLibraryPreviewState(
+        selection: selection,
+        item: $0,
+        workspaceURL: workspaceStore.workspaceURL
       )
+    }
 
-      if let helpTopic = StudioHelpCatalog.topic(for: selection) {
-        StudioInlineHelpView(
-          topic: helpTopic,
-          isExpanded: libraryHelpExpandedBinding
+    HSplitView {
+      VStack(alignment: .leading, spacing: 0) {
+        StudioLibraryToolbarView(
+          actionState: actionState,
+          searchText: $searchText,
+          searchPrompt: "Search \(selection.title)",
+          onNew: {
+            openPersonaEditor()
+          },
+          onRevealInFinder: {
+            guard let selectedItem else {
+              return
+            }
+
+            workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
+          },
+          onEdit: {
+            switch actionState.editAction {
+            case .markdown:
+              openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
+            case .rawJSON:
+              openRawJSONEditorForSelectedItem(
+                selectedItem: selectedItem,
+                entityType: entityType
+              )
+            case nil:
+              break
+            }
+          },
+          onCopyToProject: {
+            switch actionState.editAction {
+            case .markdown:
+              copySelectedGlobalEssentialToProject(
+                selectedItem: selectedItem
+              )
+            case .rawJSON:
+              copySelectedGlobalItemToProject(
+                selectedItem: selectedItem,
+                entityType: entityType
+              )
+            case nil:
+              break
+            }
+          }
         )
-      }
 
-      if let libraryActionMessage = workspaceStore.libraryActionMessage {
-        Text(libraryActionMessage)
-          .font(.footnote)
-          .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
-      }
+        if let libraryActionMessage = workspaceStore.libraryActionMessage {
+          Text(libraryActionMessage)
+            .font(.footnote)
+            .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
+        }
 
-      if selection == .directives,
-        let selectedItem,
-        let workstreamId = selectedItem.workstreamId,
-        let workstreamPhase = selectedItem.workstreamPhase
-      {
-        Text("Workstream: \(workstreamId) · Phase: \(workstreamPhase)")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-      }
+        if selection == .directives,
+          let selectedItem,
+          let workstreamId = selectedItem.workstreamId,
+          let workstreamPhase = selectedItem.workstreamPhase
+        {
+          Text("Workstream: \(workstreamId) · Phase: \(workstreamPhase)")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
 
-      StudioLibraryItemListView(
-        visibleItems: visibleItems,
-        selectedLibraryItemID: $selectedLibraryItemID
+        StudioLibraryItemListView(
+          visibleItems: visibleItems,
+          selectedLibraryItemID: $selectedLibraryItemID
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      }
+      .frame(minWidth: 160, idealWidth: 320, maxWidth: .infinity)
+
+      StudioLibraryDetailView(
+        selection: selection,
+        selectedItem: selectedItem,
+        previewState: previewState,
+        snapshotRevision: workspaceStore.snapshotRevision
       )
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     .inspector(isPresented: $isInspectorPresented) {
-      StudioLibraryPreviewView(
-        selection: selection,
-        state: selectedItem.map {
-          StudioLibraryPreviewState(
-            selection: selection,
-            item: $0,
-            workspaceURL: workspaceStore.workspaceURL
-          )
-        }
-      )
+      StudioContextInspectorView(
+        primaryTitle: "Info",
+        helpTopic: StudioHelpCatalog.topic(for: selection),
+        mode: $inspectorMode,
+        onNavigateHelpLink: onNavigateHelpLink
+      ) {
+        StudioLibraryPreviewView(
+          selection: selection,
+          state: previewState
+        )
+      }
       .inspectorColumnWidth(min: 180, ideal: 260, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -282,13 +281,14 @@ struct StudioLibraryPanelView: View {
   private func reconcileSelectedLibraryItem(
     visibleItems: [WorkspaceListItem]
   ) {
-    if let selectedLibraryItemID,
-      visibleItems.contains(where: { $0.id == selectedLibraryItemID })
-    {
+    guard let selectedLibraryItemID else {
       return
     }
 
-    selectedLibraryItemID = visibleItems.first?.id
+    guard visibleItems.contains(where: { $0.id == selectedLibraryItemID }) else {
+      self.selectedLibraryItemID = nil
+      return
+    }
   }
 
   private func openRawJSONEditorForSelectedItem(
@@ -374,29 +374,6 @@ struct StudioLibraryPanelView: View {
       await MainActor.run {
         selectedLibraryItemID = selectedItemID
       }
-    }
-  }
-
-  private var libraryHelpExpandedBinding: Binding<Bool> {
-    switch selection {
-    case .personas:
-      return $isPersonasHelpExpanded
-    case .directives:
-      return $isDirectivesHelpExpanded
-    case .kits:
-      return $isKitsHelpExpanded
-    case .essentials:
-      return $isEssentialsHelpExpanded
-    case .references:
-      return $isReferencesHelpExpanded
-    case .skills:
-      return $isSkillsHelpExpanded
-    case .intents:
-      return $isIntentsHelpExpanded
-    case .sessions,
-      .relationshipMap,
-      .validationResults:
-      return .constant(false)
     }
   }
 }
