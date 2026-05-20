@@ -8,7 +8,7 @@ struct WorkspaceRelationshipMapPanelView: View {
   @Binding var searchText: String
   @Binding var isInspectorPresented: Bool
   @Binding var inspectorMode: StudioInspectorMode
-  let onNavigate: (SessionsNavigationTarget) -> Void
+  let onNavigate: (StudioNavigationTarget) -> Void
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var selectedSessionContextID: String?
@@ -39,6 +39,7 @@ struct WorkspaceRelationshipMapPanelView: View {
 
   var body: some View {
     let filteredMap = filteredWorkspaceMap()
+    let selectedNode = selectedNode(in: filteredMap)
 
     VStack(alignment: .leading, spacing: 12) {
       headerView
@@ -84,7 +85,20 @@ struct WorkspaceRelationshipMapPanelView: View {
           selectedSessionID: selectedSessionContextID,
           selectedScopeTitle: selectedScopeFilter.title,
           selectedNodeKindTitles: selectedNodeKinds.map(\.menuTitle).sorted(),
-          highlightedNodeKey: highlightedNodeKey
+          selectedNode: selectedNode,
+          selectedNodeScope: selectedNode.flatMap { scopeByNodeKey[$0.key] },
+          selectedNodeRelationships: selectedNodeRelationships(
+            in: workspaceStore.workspaceRelationshipMap,
+            selectedNode: selectedNode
+          ),
+          selectedNodeIssueDescriptions: selectedNodeIssueDescriptions(
+            in: workspaceStore.workspaceRelationshipMap,
+            selectedNode: selectedNode
+          ),
+          selectedNodeCanOpen: selectedNodeCanOpen(selectedNode),
+          onOpenSelectedNode: {
+            openSelectedNode(selectedNode)
+          }
         )
       }
       .inspectorColumnWidth(min: 190, ideal: 270, max: 360)
@@ -262,17 +276,6 @@ struct WorkspaceRelationshipMapPanelView: View {
         showsEmptyLanes: false,
         onSelectNode: { node in
           highlightedNodeKey = node.key
-
-          guard
-            let target = SessionsMapNavigationResolver.navigationTarget(
-              for: node,
-              selectedSessionID: selectedSessionContextID
-            )
-          else {
-            return
-          }
-
-          onNavigate(target)
         }
       )
       .frame(minHeight: 360)
@@ -306,9 +309,8 @@ struct WorkspaceRelationshipMapPanelView: View {
 
               Button("Go to Validation Results") {
                 onNavigate(
-                  SessionsNavigationTarget(
+                  StudioNavigationTarget(
                     sidebarItem: .validationResults,
-                    selectedLibraryItemID: nil,
                     searchText: ""
                   )
                 )
@@ -420,6 +422,100 @@ struct WorkspaceRelationshipMapPanelView: View {
 
   private var workspaceIdentityToken: String? {
     workspaceStore.workspaceURL?.standardizedFileURL.path
+  }
+
+  private func selectedNode(
+    in map: WorkspaceSessionMap?
+  ) -> WorkspaceSessionMapNode? {
+    guard let highlightedNodeKey else {
+      return nil
+    }
+
+    return map?.nodes.first { $0.key == highlightedNodeKey }
+  }
+
+  private func selectedNodeCanOpen(
+    _ node: WorkspaceSessionMapNode?
+  ) -> Bool {
+    guard let node else {
+      return false
+    }
+
+    return SessionsMapNavigationResolver.navigationTarget(
+      for: node,
+      selectedSessionID: selectedSessionContextID
+    ) != nil
+  }
+
+  private func openSelectedNode(
+    _ node: WorkspaceSessionMapNode?
+  ) {
+    guard let node,
+      let target = SessionsMapNavigationResolver.navigationTarget(
+        for: node,
+        selectedSessionID: selectedSessionContextID
+      )
+    else {
+      return
+    }
+
+    onNavigate(target)
+  }
+
+  private func selectedNodeRelationships(
+    in map: WorkspaceSessionMap?,
+    selectedNode: WorkspaceSessionMapNode?
+  ) -> [RelationshipMapInspectorRelationship] {
+    guard let map,
+      let selectedNode
+    else {
+      return []
+    }
+
+    let nodesByKey = Dictionary(uniqueKeysWithValues: map.nodes.map { ($0.key, $0) })
+
+    return map.edges.compactMap { edge in
+      if edge.fromKey == selectedNode.key,
+        let toNode = nodesByKey[edge.toKey]
+      {
+        return RelationshipMapInspectorRelationship(
+          id: "\(edge.fromKey)->\(edge.toKey)::\(edge.reason)",
+          label: "Outgoing: \(RelationshipMapPresentationState.reasonLabel(for: edge.reason)) -> \(toNode.id)"
+        )
+      }
+
+      if edge.toKey == selectedNode.key,
+        let fromNode = nodesByKey[edge.fromKey]
+      {
+        return RelationshipMapInspectorRelationship(
+          id: "\(edge.fromKey)->\(edge.toKey)::\(edge.reason)",
+          label: "Incoming: \(fromNode.id) -> \(RelationshipMapPresentationState.reasonLabel(for: edge.reason))"
+        )
+      }
+
+      return nil
+    }
+    .sorted { $0.label < $1.label }
+  }
+
+  private func selectedNodeIssueDescriptions(
+    in map: WorkspaceSessionMap?,
+    selectedNode: WorkspaceSessionMapNode?
+  ) -> [String] {
+    guard let map,
+      let selectedNode
+    else {
+      return []
+    }
+
+    return map.resolutionErrors.compactMap { issue in
+      guard nodeKey(for: issue) == selectedNode.key else {
+        return nil
+      }
+
+      return issueDescription(issue)
+    }
+    .sorted()
   }
 
   private func filteredWorkspaceMap() -> WorkspaceSessionMap? {
@@ -628,7 +724,12 @@ private struct RelationshipMapContextInspectorView: View {
   let selectedSessionID: String?
   let selectedScopeTitle: String
   let selectedNodeKindTitles: [String]
-  let highlightedNodeKey: String?
+  let selectedNode: WorkspaceSessionMapNode?
+  let selectedNodeScope: WorkspaceSourceScope?
+  let selectedNodeRelationships: [RelationshipMapInspectorRelationship]
+  let selectedNodeIssueDescriptions: [String]
+  let selectedNodeCanOpen: Bool
+  let onOpenSelectedNode: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -661,8 +762,9 @@ private struct RelationshipMapContextInspectorView: View {
       inspectorSection("Focus") {
         metadataRow(label: "Mode", value: focusModeEnabled ? "Focused" : "Workspace")
         metadataRow(label: "Session", value: selectedSessionID ?? "None")
-        metadataRow(label: "Highlighted Node", value: highlightedNodeKey ?? "None")
       }
+
+      selectedNodeSection
 
       inspectorSection("Filters") {
         metadataRow(label: "Scope", value: selectedScopeTitle)
@@ -673,6 +775,72 @@ private struct RelationshipMapContextInspectorView: View {
       }
     }
     .accessibilityElement(children: .contain)
+  }
+
+  @ViewBuilder
+  private var selectedNodeSection: some View {
+    inspectorSection("Selection") {
+      if let selectedNode {
+        metadataRow(label: "Kind", value: selectedNode.kind.menuTitle)
+        metadataRow(label: "ID", value: selectedNode.id)
+
+        if selectedNode.displayName != selectedNode.id {
+          metadataRow(label: "Name", value: selectedNode.displayName)
+        }
+
+        metadataRow(label: "Scope", value: selectedNodeScope?.displayName ?? "Unknown")
+
+        if !selectedNode.badges.isEmpty {
+          metadataRow(label: "Badges", value: selectedNode.badges.sorted().joined(separator: ", "))
+        }
+
+        if !selectedNodeRelationships.isEmpty {
+          relationshipList
+        }
+
+        if !selectedNodeIssueDescriptions.isEmpty {
+          issueList
+        }
+
+        Button {
+          onOpenSelectedNode()
+        } label: {
+          Label("Open", systemImage: "arrow.up.right.square")
+        }
+        .disabled(!selectedNodeCanOpen)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
+        .help(selectedNodeCanOpen ? "Open selected node" : "Selected node cannot be opened")
+      } else {
+        metadataText("Select a map node to inspect relationships.")
+      }
+    }
+  }
+
+  private var relationshipList: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Relationships")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      ForEach(selectedNodeRelationships) { relationship in
+        metadataText(relationship.label)
+      }
+    }
+  }
+
+  private var issueList: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Issues")
+        .font(.caption)
+        .fontWeight(.semibold)
+        .foregroundStyle(.secondary)
+
+      ForEach(selectedNodeIssueDescriptions, id: \.self) { issueDescription in
+        metadataText(issueDescription)
+      }
+    }
   }
 
   private func healthText(
@@ -726,6 +894,11 @@ private struct RelationshipMapContextInspectorView: View {
       .textSelection(.enabled)
       .frame(maxWidth: .infinity, alignment: .leading)
   }
+}
+
+private struct RelationshipMapInspectorRelationship: Identifiable, Sendable {
+  let id: String
+  let label: String
 }
 
 private struct FocusedMapUnavailableState {

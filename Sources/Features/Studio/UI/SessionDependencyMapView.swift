@@ -55,7 +55,7 @@ struct SessionDependencyMapView: View {
 
   var body: some View {
     ScrollView([.horizontal, .vertical]) {
-      HStack(alignment: .top, spacing: compact ? 14 : 20) {
+      HStack(alignment: .top, spacing: compact ? 18 : 34) {
         ForEach(laneOrder, id: \.rawValue) { kind in
           laneView(
             kind: kind,
@@ -63,35 +63,46 @@ struct SessionDependencyMapView: View {
           )
         }
       }
-      .padding(compact ? 10 : 14)
+      .padding(compact ? 12 : 18)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .overlayPreferenceValue(SessionMapNodeAnchorPreferenceKey.self) { anchors in
+      .backgroundPreferenceValue(SessionMapNodeFramePreferenceKey.self) { anchors in
         GeometryReader { proxy in
+          let nodeFrames = resolvedNodeFrames(
+            anchors: anchors,
+            proxy: proxy
+          )
+
           Canvas { context, _ in
-            for edge in map.edges {
-              guard let fromAnchor = anchors[edge.fromKey],
-                let toAnchor = anchors[edge.toKey]
+            for edge in edgeDrawOrder {
+              guard let fromFrame = nodeFrames[edge.fromKey],
+                let toFrame = nodeFrames[edge.toKey]
               else {
                 continue
               }
 
-              let fromPoint = proxy[fromAnchor]
-              let toPoint = proxy[toAnchor]
-              let controlX = (fromPoint.x + toPoint.x) / 2
-
-              var path = Path()
-              path.move(to: fromPoint)
-              path.addCurve(
-                to: toPoint,
-                control1: CGPoint(x: controlX, y: fromPoint.y),
-                control2: CGPoint(x: controlX, y: toPoint.y)
+              let route = SessionMapEdgeRouter.route(
+                from: fromFrame,
+                to: toFrame,
+                avoiding:
+                  nodeFrames
+                  .filter { key, _ in key != edge.fromKey && key != edge.toKey }
+                  .map(\.value),
+                compact: compact
               )
 
+              let color = edgeColor(edge)
+              let highlighted = isHighlightedEdge(edge)
               context.stroke(
-                path,
-                with: .color(.secondary.opacity(compact ? 0.28 : 0.34)),
-                lineWidth: compact ? 1.0 : 1.4
+                route.path,
+                with: .color(color),
+                style: StrokeStyle(
+                  lineWidth: highlighted ? (compact ? 1.8 : 2.4) : (compact ? 1.0 : 1.35),
+                  lineCap: .round,
+                  lineJoin: .round
+                )
               )
+
+              context.fill(route.arrowPath, with: .color(color))
             }
           }
           .allowsHitTesting(false)
@@ -172,16 +183,80 @@ struct SessionDependencyMapView: View {
         RoundedRectangle(cornerRadius: compact ? 8 : 10)
           .strokeBorder(cardBorderColor(node: node), lineWidth: highlightedNodeKey == node.key ? 2 : 1)
       )
-      .anchorPreference(key: SessionMapNodeAnchorPreferenceKey.self, value: .center) {
+      .anchorPreference(key: SessionMapNodeFramePreferenceKey.self, value: .bounds) {
         [node.key: $0]
       }
     }
     .buttonStyle(.plain)
     .accessibilityLabel(nodeAccessibilityLabel(node))
+    .help(nodeAccessibilityLabel(node))
   }
 
   private func nodes(for kind: WorkspaceSessionMapNodeKind) -> [WorkspaceSessionMapNode] {
     map.nodes.filter { $0.kind == kind }
+  }
+
+  private var edgeDrawOrder: [WorkspaceSessionMapEdge] {
+    map.edges.sorted { lhs, rhs in
+      let lhsHighlighted = isHighlightedEdge(lhs)
+      let rhsHighlighted = isHighlightedEdge(rhs)
+
+      if lhsHighlighted != rhsHighlighted {
+        return !lhsHighlighted && rhsHighlighted
+      }
+
+      if lhs.fromKey != rhs.fromKey {
+        return lhs.fromKey < rhs.fromKey
+      }
+
+      if lhs.toKey != rhs.toKey {
+        return lhs.toKey < rhs.toKey
+      }
+
+      return lhs.reason < rhs.reason
+    }
+  }
+
+  private func resolvedNodeFrames(
+    anchors: [String: Anchor<CGRect>],
+    proxy: GeometryProxy
+  ) -> [String: CGRect] {
+    Dictionary(
+      uniqueKeysWithValues: anchors.map { key, anchor in
+        (key, proxy[anchor])
+      }
+    )
+  }
+
+  private func isHighlightedEdge(_ edge: WorkspaceSessionMapEdge) -> Bool {
+    guard let highlightedNodeKey else {
+      return false
+    }
+
+    return edge.fromKey == highlightedNodeKey || edge.toKey == highlightedNodeKey
+  }
+
+  private func edgeColor(_ edge: WorkspaceSessionMapEdge) -> Color {
+    guard highlightedNodeKey != nil else {
+      return .secondary.opacity(compact ? 0.32 : 0.4)
+    }
+
+    if isHighlightedEdge(edge) {
+      return .blue.opacity(0.72)
+    }
+
+    return .secondary.opacity(compact ? 0.14 : 0.18)
+  }
+
+  private func isNodeConnectedToHighlight(_ node: WorkspaceSessionMapNode) -> Bool {
+    guard let highlightedNodeKey, highlightedNodeKey != node.key else {
+      return false
+    }
+
+    return map.edges.contains { edge in
+      (edge.fromKey == highlightedNodeKey && edge.toKey == node.key)
+        || (edge.toKey == highlightedNodeKey && edge.fromKey == node.key)
+    }
   }
 
   private func scopeBadge(_ scope: WorkspaceSourceScope) -> some View {
@@ -219,12 +294,20 @@ struct SessionDependencyMapView: View {
 
   private func cardBackground(node: WorkspaceSessionMapNode) -> some View {
     RoundedRectangle(cornerRadius: compact ? 8 : 10)
-      .fill(node.isMissing ? Color.red.opacity(0.08) : Color.secondary.opacity(0.08))
+      .fill(.background)
+      .overlay {
+        RoundedRectangle(cornerRadius: compact ? 8 : 10)
+          .fill(cardTintColor(node: node))
+      }
   }
 
   private func cardBorderColor(node: WorkspaceSessionMapNode) -> Color {
     if highlightedNodeKey == node.key {
       return .blue
+    }
+
+    if isNodeConnectedToHighlight(node) {
+      return .blue.opacity(0.48)
     }
 
     if node.isMissing {
@@ -233,14 +316,241 @@ struct SessionDependencyMapView: View {
 
     return .secondary.opacity(0.3)
   }
+
+  private func cardTintColor(node: WorkspaceSessionMapNode) -> Color {
+    if node.isMissing {
+      return .red.opacity(0.08)
+    }
+
+    if highlightedNodeKey == node.key || isNodeConnectedToHighlight(node) {
+      return .blue.opacity(0.07)
+    }
+
+    return .secondary.opacity(0.08)
+  }
 }
 
-private struct SessionMapNodeAnchorPreferenceKey: PreferenceKey {
-  static let defaultValue: [String: Anchor<CGPoint>] = [:]
+private struct SessionMapEdgeRoute {
+  let arrowPath: Path
+  let path: Path
+}
+
+private enum SessionMapEdgeRouter {
+  static func route(
+    from sourceFrame: CGRect,
+    to targetFrame: CGRect,
+    avoiding obstacleFrames: [CGRect],
+    compact: Bool
+  ) -> SessionMapEdgeRoute {
+    let clearance = compact ? 10.0 : 14.0
+    let direction: CGFloat = targetFrame.midX >= sourceFrame.midX ? 1 : -1
+    let start = CGPoint(
+      x: direction > 0 ? sourceFrame.maxX : sourceFrame.minX,
+      y: sourceFrame.midY
+    )
+    let end = CGPoint(
+      x: direction > 0 ? targetFrame.minX : targetFrame.maxX,
+      y: targetFrame.midY
+    )
+    let startOut = CGPoint(x: start.x + clearance * direction, y: start.y)
+    let endIn = CGPoint(x: end.x - clearance * direction, y: end.y)
+    let midX = (startOut.x + endIn.x) / 2
+    let directPoints = normalized([
+      start,
+      startOut,
+      CGPoint(x: midX, y: start.y),
+      CGPoint(x: midX, y: end.y),
+      endIn,
+      end,
+    ])
+    let inflatedObstacles = obstacleFrames.map {
+      $0.insetBy(dx: -clearance, dy: -clearance)
+    }
+
+    if isClear(points: directPoints, obstacles: inflatedObstacles) {
+      return route(from: directPoints, compact: compact)
+    }
+
+    let relevantObstacles = inflatedObstacles.filter { obstacle in
+      horizontalRangesOverlap(
+        min(startOut.x, endIn.x)...max(startOut.x, endIn.x),
+        obstacle.minX...obstacle.maxX
+      )
+    }
+    let detourCandidates = detourYValues(
+      for: relevantObstacles.isEmpty ? inflatedObstacles : relevantObstacles,
+      clearance: clearance
+    )
+
+    for detourY in detourCandidates {
+      let detourPoints = normalized([
+        start,
+        startOut,
+        CGPoint(x: startOut.x, y: detourY),
+        CGPoint(x: endIn.x, y: detourY),
+        endIn,
+        end,
+      ])
+
+      if isClear(points: detourPoints, obstacles: inflatedObstacles) {
+        return route(from: detourPoints, compact: compact)
+      }
+    }
+
+    return route(from: directPoints, compact: compact)
+  }
+
+  private static func route(
+    from points: [CGPoint],
+    compact: Bool
+  ) -> SessionMapEdgeRoute {
+    var path = Path()
+
+    if let firstPoint = points.first {
+      path.move(to: firstPoint)
+
+      for point in points.dropFirst() {
+        path.addLine(to: point)
+      }
+    }
+
+    return SessionMapEdgeRoute(
+      arrowPath: arrowPath(for: points, size: compact ? 5.0 : 6.5),
+      path: path
+    )
+  }
+
+  private static func arrowPath(
+    for points: [CGPoint],
+    size: CGFloat
+  ) -> Path {
+    guard let end = points.last,
+      let start = points.dropLast().last(where: { distance(from: $0, to: end) > 0.1 })
+    else {
+      return Path()
+    }
+
+    let angle = atan2(end.y - start.y, end.x - start.x)
+    let sideAngle = CGFloat.pi / 7
+    let firstWing = CGPoint(
+      x: end.x - size * cos(angle - sideAngle),
+      y: end.y - size * sin(angle - sideAngle)
+    )
+    let secondWing = CGPoint(
+      x: end.x - size * cos(angle + sideAngle),
+      y: end.y - size * sin(angle + sideAngle)
+    )
+
+    var path = Path()
+    path.move(to: end)
+    path.addLine(to: firstWing)
+    path.addLine(to: secondWing)
+    path.closeSubpath()
+
+    return path
+  }
+
+  private static func detourYValues(
+    for obstacles: [CGRect],
+    clearance: CGFloat
+  ) -> [CGFloat] {
+    guard !obstacles.isEmpty else {
+      return []
+    }
+
+    let upperY = max(4, obstacles.map(\.minY).min() ?? 4 - clearance)
+    let lowerY = (obstacles.map(\.maxY).max() ?? 0) + clearance
+
+    return [
+      upperY - clearance,
+      lowerY,
+    ]
+  }
+
+  private static func isClear(
+    points: [CGPoint],
+    obstacles: [CGRect]
+  ) -> Bool {
+    zip(points, points.dropFirst()).allSatisfy { start, end in
+      !obstacles.contains { obstacle in
+        segmentIntersects(
+          start: start,
+          end: end,
+          rect: obstacle
+        )
+      }
+    }
+  }
+
+  private static func segmentIntersects(
+    start: CGPoint,
+    end: CGPoint,
+    rect: CGRect
+  ) -> Bool {
+    if abs(start.x - end.x) < 0.1 {
+      return start.x >= rect.minX
+        && start.x <= rect.maxX
+        && verticalRangesOverlap(
+          min(start.y, end.y)...max(start.y, end.y),
+          rect.minY...rect.maxY
+        )
+    }
+
+    if abs(start.y - end.y) < 0.1 {
+      return start.y >= rect.minY
+        && start.y <= rect.maxY
+        && horizontalRangesOverlap(
+          min(start.x, end.x)...max(start.x, end.x),
+          rect.minX...rect.maxX
+        )
+    }
+
+    return rect.contains(start) || rect.contains(end)
+  }
+
+  private static func horizontalRangesOverlap(
+    _ lhs: ClosedRange<CGFloat>,
+    _ rhs: ClosedRange<CGFloat>
+  ) -> Bool {
+    lhs.lowerBound <= rhs.upperBound && rhs.lowerBound <= lhs.upperBound
+  }
+
+  private static func verticalRangesOverlap(
+    _ lhs: ClosedRange<CGFloat>,
+    _ rhs: ClosedRange<CGFloat>
+  ) -> Bool {
+    lhs.lowerBound <= rhs.upperBound && rhs.lowerBound <= lhs.upperBound
+  }
+
+  private static func normalized(
+    _ points: [CGPoint]
+  ) -> [CGPoint] {
+    points.reduce(into: []) { result, point in
+      guard let lastPoint = result.last else {
+        result.append(point)
+        return
+      }
+
+      if distance(from: lastPoint, to: point) > 0.1 {
+        result.append(point)
+      }
+    }
+  }
+
+  private static func distance(
+    from lhs: CGPoint,
+    to rhs: CGPoint
+  ) -> CGFloat {
+    hypot(lhs.x - rhs.x, lhs.y - rhs.y)
+  }
+}
+
+private struct SessionMapNodeFramePreferenceKey: PreferenceKey {
+  static let defaultValue: [String: Anchor<CGRect>] = [:]
 
   static func reduce(
-    value: inout [String: Anchor<CGPoint>],
-    nextValue: () -> [String: Anchor<CGPoint>]
+    value: inout [String: Anchor<CGRect>],
+    nextValue: () -> [String: Anchor<CGRect>]
   ) {
     value.merge(nextValue(), uniquingKeysWith: { _, rhs in rhs })
   }

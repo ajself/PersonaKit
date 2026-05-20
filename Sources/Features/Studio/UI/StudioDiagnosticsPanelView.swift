@@ -5,11 +5,10 @@ import SwiftUI
 /// Diagnostics panel with validation issue search and navigation helpers.
 struct StudioDiagnosticsPanelView: View {
   let workspaceStore: WorkspaceStore
-  @Binding var selection: SidebarItem?
-  @Binding var selectedLibraryItemID: String?
   @Binding var searchText: String
   @Binding var isInspectorPresented: Bool
   @Binding var inspectorMode: StudioInspectorMode
+  let onNavigate: (StudioNavigationTarget) -> Void
 
   @State private var selectedIssueFilterID = "all"
 
@@ -46,9 +45,12 @@ struct StudioDiagnosticsPanelView: View {
               StudioValidationReportOverviewView(
                 report: report,
                 onNavigateToArea: { row in
-                  selection = row.sidebarItem
-                  selectedLibraryItemID = nil
-                  searchText = ""
+                  onNavigate(
+                    StudioNavigationTarget(
+                      sidebarItem: row.sidebarItem,
+                      searchText: ""
+                    )
+                  )
                 }
               )
             } else {
@@ -67,9 +69,7 @@ struct StudioDiagnosticsPanelView: View {
                   issues: issues,
                   onNavigateToIssue: { issue in
                     let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
-                    selection = navigationTarget.sidebarItem
-                    selectedLibraryItemID = navigationTarget.selectedLibraryItemID
-                    searchText = navigationTarget.searchText
+                    onNavigate(navigationTarget)
                   },
                   onRevealIssueFile: { issue in
                     guard let filePath = issue.filePath else {
@@ -92,9 +92,12 @@ struct StudioDiagnosticsPanelView: View {
         helpTopic: StudioHelpCatalog.topic(for: SidebarItem.validationResults),
         mode: $inspectorMode,
         onNavigateHelpLink: { link in
-          selection = link.destination
-          selectedLibraryItemID = nil
-          searchText = link.searchText ?? ""
+          onNavigate(
+            StudioNavigationTarget(
+              sidebarItem: link.destination,
+              searchText: link.searchText ?? ""
+            )
+          )
         }
       ) {
         StudioValidationStatusInspectorView(
@@ -329,21 +332,15 @@ private struct StudioValidationStatusInspectorView: View {
   }
 }
 
-struct DiagnosticsNavigationTarget: Equatable, Sendable {
-  let sidebarItem: SidebarItem
-  let selectedLibraryItemID: String?
-  let searchText: String
-}
-
 enum StudioDiagnosticsNavigationResolver {
   static func navigationTarget(
     for issue: WorkspaceValidationIssue
-  ) -> DiagnosticsNavigationTarget {
+  ) -> StudioNavigationTarget {
     let sidebarItem = sidebarItem(for: issue.entityType)
     let selectedLibraryItemID = issue.entityId ?? inferredEntityID(for: issue)
 
     if let selectedLibraryItemID {
-      return DiagnosticsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: sidebarItem,
         selectedLibraryItemID: selectedLibraryItemID,
         searchText: selectedLibraryItemID
@@ -351,16 +348,14 @@ enum StudioDiagnosticsNavigationResolver {
     }
 
     if let filePath = issue.filePath {
-      return DiagnosticsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: sidebarItem,
-        selectedLibraryItemID: nil,
         searchText: filePath
       )
     }
 
-    return DiagnosticsNavigationTarget(
+    return StudioNavigationTarget(
       sidebarItem: sidebarItem,
-      selectedLibraryItemID: nil,
       searchText: issue.message
     )
   }

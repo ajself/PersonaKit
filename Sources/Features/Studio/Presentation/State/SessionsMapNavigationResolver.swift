@@ -5,7 +5,7 @@ enum SessionsMapNavigationResolver {
   static func navigationTarget(
     for node: WorkspaceSessionMapNode,
     selectedSessionID: String?
-  ) -> SessionsNavigationTarget? {
+  ) -> StudioNavigationTarget? {
     switch node.kind {
     case .session:
       guard
@@ -15,59 +15,59 @@ enum SessionsMapNavigationResolver {
         return nil
       }
 
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .sessions,
-        selectedLibraryItemID: nil,
-        searchText: selectedSessionID
+        selectedSessionID: selectedSessionID,
+        searchText: ""
       )
 
     case .persona:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .personas,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .directive:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .directives,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .kit:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .kits,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .intent:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .intents,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .skill:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .skills,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .essential:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .essentials,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
 
     case .reference:
-      return SessionsNavigationTarget(
+      return StudioNavigationTarget(
         sidebarItem: .references,
         selectedLibraryItemID: node.id,
-        searchText: node.id
+        searchText: ""
       )
     }
   }

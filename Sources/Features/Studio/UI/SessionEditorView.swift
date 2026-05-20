@@ -15,7 +15,6 @@ struct SessionEditorView: View {
   let onCancel: () -> Void
   let onSave: @Sendable (WorkspaceSessionDraft) async -> String?
   let onRefreshMap: (WorkspaceSessionDraft) -> Void
-  let onSelectMapNode: (WorkspaceSessionMapNode) -> Void
 
   @State private var id: String
   @State private var personaID: String
@@ -38,8 +37,7 @@ struct SessionEditorView: View {
     scopeByNodeKey: [String: WorkspaceSourceScope],
     onCancel: @escaping () -> Void,
     onSave: @escaping @Sendable (WorkspaceSessionDraft) async -> String?,
-    onRefreshMap: @escaping (WorkspaceSessionDraft) -> Void,
-    onSelectMapNode: @escaping (WorkspaceSessionMapNode) -> Void
+    onRefreshMap: @escaping (WorkspaceSessionDraft) -> Void
   ) {
     self.title = title
     self.personaIDs = personaIDs
@@ -52,7 +50,6 @@ struct SessionEditorView: View {
     self.onCancel = onCancel
     self.onSave = onSave
     self.onRefreshMap = onRefreshMap
-    self.onSelectMapNode = onSelectMapNode
 
     let resolvedPersonaID = Self.resolvedSelection(
       requestedID: initialDraft.personaId,
@@ -159,7 +156,6 @@ struct SessionEditorView: View {
           compact: true,
           onSelectNode: { node in
             highlightedNodeKey = node.key
-            onSelectMapNode(node)
           }
         )
         .frame(minHeight: 180)

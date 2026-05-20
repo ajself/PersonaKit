@@ -44,7 +44,8 @@ struct SessionsMapNavigationResolverTests {
 
     #expect(target.sidebarItem == .sessions)
     #expect(target.selectedLibraryItemID == nil)
-    #expect(target.searchText == "session-a")
+    #expect(target.selectedSessionID == "session-a")
+    #expect(target.searchText == "")
   }
 
   @Test
@@ -61,7 +62,8 @@ struct SessionsMapNavigationResolverTests {
 
     #expect(target.sidebarItem == .references)
     #expect(target.selectedLibraryItemID == "swift-style-guide-reference")
-    #expect(target.searchText == "swift-style-guide-reference")
+    #expect(target.selectedSessionID == nil)
+    #expect(target.searchText == "")
   }
 
   private func makeNode(
