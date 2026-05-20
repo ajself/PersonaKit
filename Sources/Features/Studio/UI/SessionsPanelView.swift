@@ -3,23 +3,16 @@ import ContextWorkspaceCore
 import StudioFoundation
 import SwiftUI
 
-/// Navigation request emitted from the sessions map to jump into another Studio panel.
-struct SessionsNavigationTarget {
-  let sidebarItem: SidebarItem
-  let selectedLibraryItemID: String?
-  let searchText: String
-}
-
 /// Sessions feature panel with list CRUD, preview/export workflows, and dependency maps.
 struct SessionsPanelView: View {
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
+  @Binding var selectedSessionID: String?
   @Binding var isInspectorPresented: Bool
   @Binding var inspectorMode: StudioInspectorMode
-  let onNavigate: (SessionsNavigationTarget) -> Void
+  let onNavigate: (StudioNavigationTarget) -> Void
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
-  @State private var selectedSessionID: String?
   @State private var detailMode = SessionsDetailMode.preview
   @State private var detailModeTransitionTask: Task<Void, Never>?
   @SceneStorage("studio.sessions.detailMode")
@@ -153,18 +146,6 @@ struct SessionsPanelView: View {
         onRefreshMap: { draft in
           workspaceStore.refreshDraftSessionMap(for: draft)
         },
-        onSelectMapNode: { node in
-          guard
-            let target = SessionsMapNavigationResolver.navigationTarget(
-              for: node,
-              selectedSessionID: presentation.originalSessionID
-            )
-          else {
-            return
-          }
-
-          onNavigate(target)
-        }
       )
     }
     .alert(
@@ -306,24 +287,11 @@ struct SessionsPanelView: View {
         snapshot: workspaceStore.snapshot,
         onNavigateToDiagnostics: {
           onNavigate(
-            SessionsNavigationTarget(
+            StudioNavigationTarget(
               sidebarItem: .validationResults,
-              selectedLibraryItemID: nil,
               searchText: ""
             )
           )
-        },
-        onSelectNode: { node in
-          guard
-            let target = SessionsMapNavigationResolver.navigationTarget(
-              for: node,
-              selectedSessionID: selectedSession.id
-            )
-          else {
-            return
-          }
-
-          onNavigate(target)
         }
       )
     }

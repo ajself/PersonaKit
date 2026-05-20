@@ -10,7 +10,6 @@ struct SessionsMapTabView: View {
   let isLoadingSessionMap: Bool
   let snapshot: WorkspaceSnapshot
   let onNavigateToDiagnostics: () -> Void
-  let onSelectNode: (WorkspaceSessionMapNode) -> Void
 
   @State private var highlightedNodeKey: String?
 
@@ -39,7 +38,6 @@ struct SessionsMapTabView: View {
             compact: false,
             onSelectNode: { node in
               highlightedNodeKey = node.key
-              onSelectNode(node)
             }
           )
           .frame(minHeight: 320)

@@ -12,7 +12,8 @@ public struct StudioRootView: View {
   private var recentWorkspacesStorageValue = "[]"
   @State private var selection: SidebarItem?
   @State private var selectedLibraryItemID: String?
-  @State private var searchText = ""
+  @State private var selectedSessionID: String?
+  @State private var searchTextBySidebarItem: [SidebarItem: String] = [:]
   @State private var recentWorkspaceAccess = StudioRecentWorkspaceAccess()
   @State private var sidebarVisibility = NavigationSplitViewVisibility.all
   @SceneStorage("studio.inspector.isPresented")
@@ -213,7 +214,8 @@ public struct StudioRootView: View {
     case .sessions:
       SessionsPanelView(
         workspaceStore: workspaceStore,
-        searchText: $searchText,
+        searchText: searchTextBinding(for: .sessions),
+        selectedSessionID: $selectedSessionID,
         isInspectorPresented: $isInspectorPresented,
         inspectorMode: inspectorModeBinding,
         onNavigate: { target in
@@ -227,7 +229,7 @@ public struct StudioRootView: View {
     case .relationshipMap:
       WorkspaceRelationshipMapPanelView(
         workspaceStore: workspaceStore,
-        searchText: $searchText,
+        searchText: searchTextBinding(for: .relationshipMap),
         isInspectorPresented: $isInspectorPresented,
         inspectorMode: inspectorModeBinding,
         onNavigate: { target in
@@ -249,7 +251,7 @@ public struct StudioRootView: View {
         workspaceStore: workspaceStore,
         selection: activeSelection,
         items: libraryItems(for: activeSelection),
-        searchText: $searchText,
+        searchText: searchTextBinding(for: activeSelection),
         selectedLibraryItemID: $selectedLibraryItemID,
         isInspectorPresented: $isInspectorPresented,
         inspectorMode: inspectorModeBinding,
@@ -261,11 +263,12 @@ public struct StudioRootView: View {
     case .validationResults:
       StudioDiagnosticsPanelView(
         workspaceStore: workspaceStore,
-        selection: $selection,
-        selectedLibraryItemID: $selectedLibraryItemID,
-        searchText: $searchText,
+        searchText: searchTextBinding(for: .validationResults),
         isInspectorPresented: $isInspectorPresented,
-        inspectorMode: inspectorModeBinding
+        inspectorMode: inspectorModeBinding,
+        onNavigate: { target in
+          applyNavigationTarget(target)
+        }
       )
     }
   }
@@ -307,25 +310,26 @@ public struct StudioRootView: View {
     }
   }
 
-  private func applyNavigationTarget(_ target: SessionsNavigationTarget) {
+  private func applyNavigationTarget(_ target: StudioNavigationTarget) {
     var state = StudioRootNavigationState(
       selection: selection,
       selectedLibraryItemID: selectedLibraryItemID,
-      searchText: searchText
+      selectedSessionID: selectedSessionID,
+      searchTextBySidebarItem: searchTextBySidebarItem
     )
 
     state.apply(target)
 
     selection = state.selection
     selectedLibraryItemID = state.selectedLibraryItemID
-    searchText = state.searchText
+    selectedSessionID = state.selectedSessionID
+    searchTextBySidebarItem = state.searchTextBySidebarItem
   }
 
   private func applyHelpLink(_ link: StudioHelpLink) {
     applyNavigationTarget(
-      SessionsNavigationTarget(
+      StudioNavigationTarget(
         sidebarItem: link.destination,
-        selectedLibraryItemID: nil,
         searchText: link.searchText ?? ""
       )
     )
@@ -339,7 +343,20 @@ public struct StudioRootView: View {
   private func navigateToWorkspaceSection(_ sidebarItem: SidebarItem) {
     selection = sidebarItem
     selectedLibraryItemID = nil
-    searchText = ""
+    searchTextBySidebarItem[sidebarItem] = ""
+  }
+
+  private func searchTextBinding(
+    for sidebarItem: SidebarItem
+  ) -> Binding<String> {
+    Binding(
+      get: {
+        searchTextBySidebarItem[sidebarItem, default: ""]
+      },
+      set: { searchText in
+        searchTextBySidebarItem[sidebarItem] = searchText
+      }
+    )
   }
 
   private func revealLoadedWorkspace() {
