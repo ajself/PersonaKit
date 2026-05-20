@@ -12,7 +12,7 @@ struct RawJSONEditorMinimalFormView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Edit a minimal subset of fields. Raw JSON remains the full editor.")
+      Text("Edit common fields for this item.")
         .font(.footnote)
         .foregroundStyle(.secondary)
 

@@ -1,7 +1,7 @@
 import ContextWorkspaceCore
 
-/// Package-scoped list action state for Sessions CRUD controls.
-struct SessionsListActionState {
+/// Package-scoped action state for Sessions list and detail controls.
+struct SessionsActionState {
   let canCreate: Bool
   let canEdit: Bool
   let canReveal: Bool

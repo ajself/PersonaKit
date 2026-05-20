@@ -1,7 +1,9 @@
 import ContextCore
 import ContextWorkspaceCore
+import StudioFoundation
 
 enum StudioLibraryEditAction: Equatable, Sendable {
+  case inlineForm
   case markdown
   case rawJSON
 }
@@ -19,6 +21,7 @@ struct StudioLibraryActionBarState {
   init(
     selection: SidebarItem,
     selectedItem: WorkspaceListItem?,
+    entityType: WorkspaceLibraryEntityType?,
     isLoadingLibraryEditor: Bool
   ) {
     let isProjectSelection = selectedItem?.sourceScope == .project
@@ -34,7 +37,13 @@ struct StudioLibraryActionBarState {
       .references,
       .skills,
       .intents:
-      editAction = .rawJSON
+      if isProjectSelection,
+        entityType?.supportsMinimalForm == true
+      {
+        editAction = .inlineForm
+      } else {
+        editAction = .rawJSON
+      }
 
     default:
       editAction = nil

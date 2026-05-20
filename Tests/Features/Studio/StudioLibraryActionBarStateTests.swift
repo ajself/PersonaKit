@@ -7,14 +7,15 @@ import Testing
 
 struct StudioLibraryActionBarStateTests {
   @Test
-  func personasProjectSelectionUsesRawJSONEditAndDisablesCopy() {
+  func personasProjectSelectionUsesInlineFormEditAndDisablesCopy() {
     let state = StudioLibraryActionBarState(
       selection: .personas,
       selectedItem: makeItem(scope: .project),
+      entityType: .persona,
       isLoadingLibraryEditor: false
     )
 
-    #expect(state.editAction == .rawJSON)
+    #expect(state.editAction == .inlineForm)
     #expect(state.showsCreateAction)
     #expect(state.canCreate)
     #expect(state.canReveal)
@@ -28,6 +29,7 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .personas,
       selectedItem: makeItem(scope: .global),
+      entityType: .persona,
       isLoadingLibraryEditor: false
     )
 
@@ -44,6 +46,7 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .essentials,
       selectedItem: makeItem(scope: .project),
+      entityType: nil,
       isLoadingLibraryEditor: false
     )
 
@@ -60,6 +63,7 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .essentials,
       selectedItem: makeItem(scope: .global),
+      entityType: nil,
       isLoadingLibraryEditor: false
     )
 
@@ -76,10 +80,11 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .personas,
       selectedItem: makeItem(scope: .project),
+      entityType: .persona,
       isLoadingLibraryEditor: true
     )
 
-    #expect(state.editAction == .rawJSON)
+    #expect(state.editAction == .inlineForm)
     #expect(state.showsCreateAction)
     #expect(!state.canCreate)
     #expect(state.canReveal)
@@ -93,6 +98,7 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .references,
       selectedItem: makeItem(scope: .project),
+      entityType: .reference,
       isLoadingLibraryEditor: false
     )
 
@@ -109,10 +115,11 @@ struct StudioLibraryActionBarStateTests {
     let state = StudioLibraryActionBarState(
       selection: .directives,
       selectedItem: makeItem(scope: .project),
+      entityType: .directive,
       isLoadingLibraryEditor: false
     )
 
-    #expect(state.editAction == .rawJSON)
+    #expect(state.editAction == .inlineForm)
     #expect(!state.showsCreateAction)
     #expect(!state.canCreate)
   }
