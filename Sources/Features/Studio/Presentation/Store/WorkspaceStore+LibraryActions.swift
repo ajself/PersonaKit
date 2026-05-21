@@ -19,6 +19,23 @@ extension WorkspaceStore {
     )
   }
 
+  /// Creates a prefilled raw JSON presentation for new library item creation.
+  func newLibraryEditorPresentation(
+    entityType: WorkspaceLibraryEntityType
+  ) -> WorkspaceLibraryEditorPresentation? {
+    libraryFeatureModel.newLibraryEditorPresentation(
+      entityType: entityType,
+      workspaceURL: workspaceURL
+    )
+  }
+
+  /// Creates a prefilled markdown presentation for new essential creation.
+  func newEssentialEditorPresentation() -> WorkspaceEssentialEditorPresentation? {
+    libraryFeatureModel.newEssentialEditorPresentation(
+      workspaceURL: workspaceURL
+    )
+  }
+
   /// Loads raw JSON for a selected project-scoped library item.
   func openLibraryEditor(
     selectedItem: WorkspaceListItem?,

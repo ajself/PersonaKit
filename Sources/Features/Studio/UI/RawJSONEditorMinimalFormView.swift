@@ -7,6 +7,7 @@ struct RawJSONEditorMinimalFormView: View {
   let formSyncErrorMessage: String?
   let idBinding: Binding<String>
   let primaryTextBinding: Binding<String>
+  let secondaryTextBinding: Binding<String>
   let firstArrayLinesBinding: Binding<String>
   let secondArrayLinesBinding: Binding<String>
 
@@ -28,6 +29,21 @@ struct RawJSONEditorMinimalFormView: View {
 
         TextField(formDescriptor.primaryFieldLabel, text: primaryTextBinding)
           .textFieldStyle(.roundedBorder)
+
+        VStack(alignment: .leading, spacing: 6) {
+          Text(formDescriptor.secondaryFieldLabel)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+          TextEditor(text: secondaryTextBinding)
+            .font(.body.monospaced())
+            .frame(minHeight: 72)
+            .padding(6)
+            .background(
+              RoundedRectangle(cornerRadius: 6)
+                .fill(.background)
+            )
+        }
 
         multiLineListField(
           title: formDescriptor.firstArrayLabel,

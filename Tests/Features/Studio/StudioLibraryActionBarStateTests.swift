@@ -42,7 +42,7 @@ struct StudioLibraryActionBarStateTests {
   }
 
   @Test
-  func essentialsProjectSelectionUsesMarkdownEdit() {
+  func essentialsProjectSelectionUsesMarkdownEditAndShowsCreateAction() {
     let state = StudioLibraryActionBarState(
       selection: .essentials,
       selectedItem: makeItem(scope: .project),
@@ -51,8 +51,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .markdown)
-    #expect(!state.showsCreateAction)
-    #expect(!state.canCreate)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
     #expect(state.canReveal)
     #expect(state.canEdit)
     #expect(!state.canCopyToProject)
@@ -68,8 +68,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .markdown)
-    #expect(!state.showsCreateAction)
-    #expect(!state.canCreate)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
     #expect(state.canReveal)
     #expect(!state.canEdit)
     #expect(state.canCopyToProject)
@@ -103,15 +103,15 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .rawJSON)
-    #expect(!state.showsCreateAction)
-    #expect(!state.canCreate)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
     #expect(state.canReveal)
     #expect(state.canEdit)
     #expect(!state.canCopyToProject)
   }
 
   @Test
-  func directivesSelectionHidesCreateAction() {
+  func directivesSelectionShowsCreateAction() {
     let state = StudioLibraryActionBarState(
       selection: .directives,
       selectedItem: makeItem(scope: .project),
@@ -120,8 +120,8 @@ struct StudioLibraryActionBarStateTests {
     )
 
     #expect(state.editAction == .inlineForm)
-    #expect(!state.showsCreateAction)
-    #expect(!state.canCreate)
+    #expect(state.showsCreateAction)
+    #expect(state.canCreate)
   }
 
   private func makeItem(

@@ -66,7 +66,8 @@ extension WorkspaceLibraryFeatureModel {
         fileURL: projectEssential.fileURL.standardizedFileURL,
         itemID: projectEssential.id,
         markdown: markdown,
-        workspaceURL: requestWorkspaceURL
+        workspaceURL: requestWorkspaceURL,
+        isCreatingNewItem: false
       )
     } catch {
       guard

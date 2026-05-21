@@ -7,9 +7,14 @@ extension WorkspaceLibraryFeatureModel {
     presentation: WorkspaceLibraryEditorPresentation
   ) async -> String? {
     do {
+      let itemID = try itemIDForValidation(
+        rawJSON,
+        presentation: presentation
+      )
+
       try await operationRunner.validateLibraryItemRawJSON(
         rawJSON,
-        itemID: presentation.itemID,
+        itemID: itemID,
         entityType: presentation.entityType
       )
 
@@ -17,5 +22,16 @@ extension WorkspaceLibraryFeatureModel {
     } catch {
       return error.localizedDescription
     }
+  }
+
+  private func itemIDForValidation(
+    _ rawJSON: String,
+    presentation: WorkspaceLibraryEditorPresentation
+  ) throws -> String {
+    guard presentation.isCreatingNewItem else {
+      return presentation.itemID
+    }
+
+    return try WorkspaceLibraryCreateSupport.itemID(rawJSON: rawJSON)
   }
 }

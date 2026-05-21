@@ -37,6 +37,16 @@ extension WorkspaceLibraryFeatureModel {
       return message
     }
 
+    if presentation.isCreatingNewItem {
+      return await saveNewEssentialMarkdown(
+        markdown,
+        snapshot: snapshot,
+        currentWorkspaceURL: standardizedCurrentWorkspaceURL,
+        currentWorkspaceURLProvider: currentWorkspaceURLProvider,
+        onWorkspaceMutation: onWorkspaceMutation
+      )
+    }
+
     guard
       let projectEssential = WorkspaceSnapshotLookup.projectEssentialItem(
         snapshot: snapshot,
@@ -86,6 +96,81 @@ extension WorkspaceLibraryFeatureModel {
         completeRequest(
           requestID: requestID,
           expectedWorkspaceURL: standardizedCurrentWorkspaceURL,
+          currentWorkspaceURL: currentWorkspaceURLProvider()
+        )
+      else {
+        return nil
+      }
+
+      setAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return error.localizedDescription
+    }
+  }
+
+  private func saveNewEssentialMarkdown(
+    _ markdown: String,
+    snapshot: WorkspaceSnapshot,
+    currentWorkspaceURL: URL,
+    currentWorkspaceURLProvider: @MainActor () -> URL?,
+    onWorkspaceMutation: @MainActor () -> Void
+  ) async -> String? {
+    let newItemID = WorkspaceLibraryCreateSupport.essentialItemID(markdown: markdown)
+
+    guard !newItemID.isEmpty else {
+      let message = "Essential title is required before saving."
+
+      setAction(
+        message: message,
+        isError: true
+      )
+      return message
+    }
+
+    guard WorkspaceSnapshotLookup.essentialItem(snapshot: snapshot, itemID: newItemID) == nil else {
+      let message = "Essential id \"\(newItemID)\" already exists."
+
+      setAction(
+        message: message,
+        isError: true
+      )
+      return message
+    }
+
+    let requestID = beginRequest()
+
+    do {
+      try await operationRunner.saveEssentialMarkdown(
+        workspaceURL: currentWorkspaceURL,
+        itemID: newItemID,
+        markdown: markdown
+      )
+
+      guard
+        completeRequest(
+          requestID: requestID,
+          expectedWorkspaceURL: currentWorkspaceURL,
+          currentWorkspaceURL: currentWorkspaceURLProvider()
+        )
+      else {
+        return nil
+      }
+
+      setAction(
+        message: "Created \(newItemID).",
+        isError: false
+      )
+
+      onWorkspaceMutation()
+      return nil
+    } catch {
+      guard
+        completeRequest(
+          requestID: requestID,
+          expectedWorkspaceURL: currentWorkspaceURL,
           currentWorkspaceURL: currentWorkspaceURLProvider()
         )
       else {

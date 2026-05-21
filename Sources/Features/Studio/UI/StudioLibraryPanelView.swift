@@ -46,7 +46,7 @@ struct StudioLibraryPanelView: View {
           searchText: $searchText,
           searchPrompt: "Search \(selection.title)",
           onNew: {
-            openPersonaEditor()
+            openNewItemEditor()
           }
         )
 
@@ -192,14 +192,16 @@ struct StudioLibraryPanelView: View {
     }
     .sheet(item: $markdownEditorPresentation) { presentation in
       MarkdownEditorView(
-        title: "Edit \(presentation.itemID)",
+        title: presentation.isCreatingNewItem ? "New Essential" : "Edit \(presentation.itemID)",
         initialMarkdown: presentation.markdown,
         onCancel: {
           markdownEditorPresentation = nil
         },
-        onRevealInFinder: {
-          workspaceStore.revealInFinder(fileURL: presentation.fileURL)
-        },
+        onRevealInFinder: presentation.isCreatingNewItem
+          ? nil
+          : {
+            workspaceStore.revealInFinder(fileURL: presentation.fileURL)
+          },
         onSave: { markdown in
           let saveError = await workspaceStore.saveEssentialEditorMarkdown(
             markdown,
@@ -208,7 +210,10 @@ struct StudioLibraryPanelView: View {
 
           if saveError == nil {
             await MainActor.run {
-              selectedLibraryItemID = presentation.itemID
+              selectedLibraryItemID =
+                presentation.isCreatingNewItem
+                ? WorkspaceLibraryCreateSupport.essentialItemID(markdown: markdown)
+                : presentation.itemID
             }
           }
 
@@ -218,15 +223,19 @@ struct StudioLibraryPanelView: View {
     }
     .sheet(item: $rawJSONEditorPresentation) { presentation in
       RawJSONEditorView(
-        title: "Edit \(presentation.itemID)",
+        title: presentation.isCreatingNewItem
+          ? "New \(presentation.entityType.displayName)"
+          : "Edit \(presentation.itemID)",
         entityType: presentation.entityType,
         initialRawJSON: presentation.rawJSON,
         onCancel: {
           rawJSONEditorPresentation = nil
         },
-        onRevealInFinder: {
-          workspaceStore.revealInFinder(fileURL: presentation.fileURL)
-        },
+        onRevealInFinder: presentation.isCreatingNewItem
+          ? nil
+          : {
+            workspaceStore.revealInFinder(fileURL: presentation.fileURL)
+          },
         onValidate: { rawJSON in
           await workspaceStore.validateLibraryEditorRawJSON(
             rawJSON,
@@ -241,7 +250,10 @@ struct StudioLibraryPanelView: View {
 
           if saveError == nil {
             await MainActor.run {
-              selectedLibraryItemID = presentation.itemID
+              selectedLibraryItemID =
+                presentation.isCreatingNewItem
+                ? (try? WorkspaceLibraryCreateSupport.itemID(rawJSON: rawJSON))
+                : presentation.itemID
             }
           }
 
@@ -385,6 +397,29 @@ struct StudioLibraryPanelView: View {
       knownKits: workspaceStore.snapshot.kits,
       knownSkills: workspaceStore.snapshot.skills
     )
+  }
+
+  private func openNewItemEditor() {
+    switch selection {
+    case .personas:
+      openPersonaEditor()
+    case .essentials:
+      markdownEditorPresentation = workspaceStore.newEssentialEditorPresentation()
+    case .directives,
+      .kits,
+      .intents,
+      .references,
+      .skills:
+      guard let entityType = editableEntityTypeForSelection() else {
+        return
+      }
+
+      rawJSONEditorPresentation = workspaceStore.newLibraryEditorPresentation(
+        entityType: entityType
+      )
+    default:
+      break
+    }
   }
 
   private func copySelectedGlobalItemToProject(
