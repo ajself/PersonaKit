@@ -1,205 +1,170 @@
-AGENTS.md
+# AGENTS.md
 
-Purpose: Define how AI agents should interact with PersonaKit (CLI and MCP), and what they are explicitly not allowed to do.
+## Purpose
 
-This file is written for both humans and AI agents. It is a binding behavioral contract.
+This file defines repo-local policy for AI assistants working in PersonaKit.
+It is binding for agent behavior in this repository.
 
-⸻
+`AGENTS.md` governs repo work. PersonaKit contracts govern explicit
+PersonaKit-powered sessions and product/runtime behavior; they are not
+automatic restrictions on every Codex, editor-agent, review, documentation, or
+maintenance session.
 
-Role of AI Agents in This Repo
+PersonaKit V1 remains narrow: it resolves deterministic operating contracts and
+can launch one explicitly configured adapter through `personakit run`.
+PersonaKit is not an autonomous agent, planner, memory system, workflow engine,
+task manager, or orchestration layer.
 
-AI agents (Codex, ChatGPT, editor agents, etc.) are assistants, not decision-makers.
+## Default Agent Role
 
-They are expected to:
-	•	read PersonaKit configuration and packs
-	•	follow Personas, Kits, and Directives exactly
-	•	propose changes as diffs or patches
-	•	stop when constraints or stop points are reached
+AI agents are assistants, not product decision-makers.
 
-Agents may interact with PersonaKit via:
-• the [Swift CLI](./README.md#first-five-minutes)
-• the [PersonaKit MCP server](./README.md#mcp) (agent-invoked, read-only)
+Agents may, when asked by a maintainer:
 
-In both cases, PersonaKit resolves an operating contract, not an autonomous execution engine. For V1, the CLI may launch one explicitly requested external agent through `personakit run`. MCP access does not authorize action.
+- inspect files, manifests, docs, tests, and configuration
+- form small plans for bounded work
+- make focused edits
+- run bounded build, test, validation, and inspection commands
+- summarize results, risks, and follow-up options
 
-Reference:
-• [First Five Minutes](./README.md#first-five-minutes)
-• [MCP](./README.md#mcp)
+A direct maintainer request authorizes bounded repo work unless it conflicts
+with this file, sandbox/tool permissions, or an explicitly active PersonaKit
+contract.
 
-They are not expected to:
-	•	invent plans
-	•	broaden scope
-	•	refactor for taste
-	•	execute commands autonomously
+Agents must not:
 
-⸻
+- invent product scope
+- silently broaden the requested task
+- refactor unrelated code for taste
+- treat suggestions or MCP context as permission to act beyond the user's
+  request
+- act as if they own product decisions that need maintainer judgment
 
-Ground Rules (Hard Constraints)
+If product intent is unclear, ask a scoped question before proceeding.
 
-Agents must follow these rules at all times:
-	1.	Execution is narrowly bounded
-	•	Outside the V1 `personakit run` path, do not add code that runs shell commands, subprocesses, or tools
-	•	The only allowed execution path in V1 is `personakit run`, and it is limited to resolving PersonaKit context deterministically, assembling a runtime payload, invoking one configured agent adapter, and returning the adapter exit status
-	•	Do not introduce general workflow execution, long-running agent loops, platform-runtime behavior, or arbitrary tool invocation
-	•	Do not introduce `Process`, `NSTask`, `system()`, or equivalents outside the narrow `personakit run` launcher path
-	•	Do not attempt to use MCP Tools to perform execution (PersonaKit MCP exposes only read-only Resources, Prompts, and context tools).
-	•	Do not request or simulate command execution via MCP prompts or tools.
-	2.	V1 run guardrails
-	•	Do not add more than one supported adapter without maintainer approval
-	•	Do not add orchestration patterns such as lead-worker, RPI, or multi-agent control flows
-	•	Do not add persistence, memory, or session continuation to `personakit run`
-	•	Do not redesign Studio as part of V1 run work
-	•	Do not reintroduce legacy task-management or orchestration concepts
-	3.	No autonomous planning
-	•	Do not invent steps beyond what is defined in a Directive
-	•	If something is unclear, ask for clarification
-	4.	No scope expansion
-	•	Do not refactor unrelated code
-	•	Do not introduce new abstractions unless explicitly requested
-	5.	One approved lane/worktree per milestone by default
-	•	Default to one approved execution lane and one worktree per milestone or explicitly approved slice
-	•	Do not create packet-, task-, or story-specific branches or worktrees unless a maintainer explicitly approves extra isolation
-	•	Treat packets, tasks, and stories as scope tracked in docs and commits, not as branch or worktree requests by default
-	6.	Determinism is required
-	•	Output must be stable across runs
-	•	Sort by id where ordering matters
-	•	Do not add timestamps, UUIDs, or environment-specific data
-	7.	Persona activation is explicit
-	•	Do not operate as multiple active personas at the same time
-	•	When persona assignment changes, reload PersonaKit grounding before continuing
-	•	PersonaKit grounding must happen before external skill selection
-	•	Only skills authorized by the resolved PersonaKit contract may be used
-	•	Undeclared host-local or external skills are unauthorized by default
-	•	On skill mismatch, stop and re-ground rather than improvising
-	•	Delegated agents must receive one authoritative persona assignment for their lane
-	•	Review personas are not the same thing as active execution identity
-	8.	Use Conventional Commits
-	•	When creating a git commit, use Conventional Commit format: `type(scope): summary` when a clear scope exists, otherwise `type: summary`
-	•	Do not invent repo-specific commit formats or rely on memory for commit style
-	9.	Human review is mandatory at stop points
-	•	If a Directive or IntentTemplate indicates a stop point or review requirement, stop and wait
-	10. MCP usage is read-only
-	   • Treat all MCP Resources as immutable context
-	   • Prompts return assembled context only; they do not imply permission to act
-	   • Never attempt to write back to the PersonaKit root via MCP
+## Ordinary Repo Work
 
-Authority Order
+Ordinary repo work includes code review, documentation review, product-quality
+review, GitHub triage, tests, maintenance, release-readiness inspection, and
+focused implementation requested by a maintainer.
 
-Within this repo, use this order:
-	1.	`AGENTS.md`
-	2.	PersonaKit
-	3.	skills
-	4.	tools
+For ordinary repo work:
 
-Implications:
-	•	PersonaKit may activate a mode of work, but it must not override repo-local policy in `AGENTS.md`.
-	•	Skills may guide procedure, but they must not override PersonaKit authorization.
-	•	Tools must remain subordinate to repo and contract rules even when directly available.
+- host-local agent skills and tools are allowed when requested by the
+  maintainer
+- agents may run bounded repo commands needed to inspect, verify, or complete
+  the requested work
+- review requests stay read-only unless fixes are explicitly approved
+- edits should be small, reviewable, and limited to the requested surface
+- existing project commands and conventions should be preferred over new
+  workflows
 
-⸻
+Agent-side command usage is different from PersonaKit product execution
+behavior. Agents may run bounded repo commands while working in this repository;
+PersonaKit itself must not gain broad execution capabilities outside the narrow
+`personakit run` launcher path.
 
-How Agents Should Use PersonaKit
+## When PersonaKit Grounding Applies
 
-Agents should treat PersonaKit as the source of truth for the active operating contract once repo-local behavior is grounded in `AGENTS.md`.
+PersonaKit grounding is required when the task explicitly uses or modifies:
 
-When working on this repo, agents should:
-	1.	Identify the active Persona
-	2.	Identify the active Kit(s)
-	3.	Identify the active Directive
-	4.	Use only the skills allowed by the Persona
-	5.	Treat the resolved persona as the single active operating contract until explicitly reassigned
-	•	Runtime grounding includes PersonaKit’s built-in persona-activation contract even when no authored override file exists
-	•	Runtime grounding also includes PersonaKit’s built-in `skill-authorization-contract` unless a project-local override replaces it
-	6.	Follow all constraints and non-goals verbatim
+- PersonaKit sessions, personas, kits, directives, skills, essentials, or
+  `.personakit` content
+- contract resolution, skill authorization, stop points, or contract provenance
+- MCP grounding behavior
+- `personakit run` behavior, runtime payloads, adapter authorization, or adapter
+  launch behavior
+- behavior that depends on a resolved PersonaKit contract
 
-When using the MCP server specifically:
-• Prefer reading [Resources](./README.md#mcp) for raw context (personas, kits, directives, essentials)
-• Prefer MCP context tools for structured grounding, validation, recommendations, and provenance
-• Prefer [Prompts](./README.md#mcp) for resolved session views (export, graph)
-• Do not mix MCP-derived context with ad-hoc assumptions
+If a PersonaKit session is explicitly activated, its constraints govern the work
+until the maintainer reassigns or clears that session. If validation fails for
+the relevant PersonaKit contract, stop and ask before proceeding.
 
-If PersonaKit validation fails, agents should not proceed.
+Examples:
 
-When implementing or reviewing `personakit run` specifically:
-• Treat it as a narrow launcher, not a general automation surface
-• Keep execution-light behavior everywhere outside that one command
-• Preserve the boundary between contract resolution and external agent execution
+| Request | PersonaKit grounding? |
+| --- | --- |
+| "Use product-quality-review on this repo" | No |
+| "Fix a typo in README" | No |
+| "Operate under session `solo-dev-v1`" | Yes |
+| "Modify `personakit run` payload behavior" | Yes |
+| "Review MCP contract resolution" | Yes |
 
-⸻
+## Product Boundaries
 
-Expected Agent Outputs
+Keep PersonaKit V1 narrow, deterministic, and inspectable.
 
-Agents should prefer:
-	•	small, reviewable diffs
-	•	explicit explanations of changes
-	•	clear mapping between changes and Directive steps
-	•	explicit persona reassignment rather than blended multi-persona behavior
-	•	Conventional Commit messages for any authorized commit
+`personakit run` is the only approved V1 launcher path. It is limited to:
 
-Agents should avoid:
-	•	rewriting large sections of code
-	•	introducing speculative improvements
-	•	silently changing behavior
-	•	treating MCP prompts as authorization to act without review
+- resolving PersonaKit context deterministically
+- assembling an inspectable runtime payload
+- invoking one configured agent adapter
+- returning the adapter exit status
 
-⸻
+Do not add, without explicit maintainer approval:
 
-Interaction Model
+- general workflow execution
+- arbitrary shell, subprocess, tool, or MCP-driven execution
+- long-running autonomous loops
+- memory, persistence, or session continuation for `personakit run`
+- lead-worker, RPI, multi-agent, or orchestration control flows
+- additional supported adapters
+- legacy task-management or workflow-platform concepts
 
-Agents should assume a human-in-the-loop workflow:
-	•	Propose changes
-	•	Wait for review or confirmation
-	•	Iterate based on feedback
+Determinism is required. Output must be stable across runs. Sort by id where
+ordering matters. Do not add timestamps, UUIDs, or environment-specific data
+unless the maintainer explicitly asks for them or the product surface already
+requires them.
 
-Agents should never assume they are operating autonomously.
+## MCP Rules
 
-⸻
+PersonaKit MCP is read-only context and provenance.
 
-Local-Only Closeout Protocol (complete worktree)
+MCP resources, prompts, and tools do not authorize:
 
-When the user requests `complete worktree`, agents must use the repository
-workflow command:
+- writes to the PersonaKit root or repository
+- command execution
+- workflow orchestration
+- autonomous planning or autonomous work
 
-• `make core-complete-worktree`
+Do not use MCP as a write path, command-execution channel, or substitute for
+maintainer approval.
 
-Hard rule:
-	•	Never delete a lane branch or worktree before verifying that `main`
-	contains the lane commits (ancestor verification is mandatory).
+## Git, Worktrees, And Closeout
 
-⸻
+Use Conventional Commits when creating commits:
 
-Questions & Uncertainty
+- `type(scope): summary` when a clear scope exists
+- `type: summary` otherwise
 
-If an agent encounters ambiguity:
-	•	Ask a clear, scoped question
-	•	Do not guess
-	•	Do not “fill in” missing requirements
+Do not create extra branches or worktrees unless the maintainer asks for them.
+Treat packets, tasks, and stories as docs/commit scope, not as branch or
+worktree requests by default.
 
-Example:
+When the user requests `complete worktree`, use the repository workflow command:
 
-“The Directive does not specify whether API behavior may change. Should this change be behavior-preserving only?”
+```bash
+make core-complete-worktree
+```
 
-⸻
+Never delete a lane branch or worktree before verifying that `main` contains the
+lane commits. Ancestor verification is mandatory.
 
-Why This File Exists
+## Questions And Approval Gates
 
-Without explicit guardrails, AI agents tend to:
-	•	over-generalize
-	•	over-refactor
-	•	optimize prematurely
+Ask before:
 
-[AGENTS.md](./AGENTS.md) exists to prevent that.
+- destructive commands or data deletion
+- dependency installation
+- credential, signing, notarization, or release configuration changes
+- public behavior or public API changes
+- adding adapters
+- broad network work
+- commits, pushes, tags, releases, or pull requests
+- expanding the requested scope
 
-PersonaKit is designed to keep humans in control while still benefiting from AI assistance.
+Stop at explicit review points in an active PersonaKit directive, intent
+template, or maintainer instruction.
 
-⸻
-
-Summary (for agents)
-	•	`AGENTS.md` is the final local authority; PersonaKit resolves the active operating contract within that authority
-	•	Use CLI outputs and MCP [Resources](./README.md#mcp) / [Prompts](./README.md#mcp) as authoritative context
-	•	MCP is read-only; its Resources, Prompts, and context tools never authorize execution or writes
-	•	The only V1 execution exception is the narrow `personakit run` launcher path
-	•	Do not expand scope or invent steps
-	•	Stop at explicit review points
-
-If you are unsure, ask.
+When requirements are ambiguous, ask a clear, scoped question. Do not guess or
+fill in missing product requirements.
