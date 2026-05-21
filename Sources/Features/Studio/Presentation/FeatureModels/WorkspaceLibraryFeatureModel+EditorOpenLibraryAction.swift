@@ -77,7 +77,8 @@ extension WorkspaceLibraryFeatureModel {
         entityType: entityType,
         fileURL: projectItem.fileURL.standardizedFileURL,
         rawJSON: rawJSON,
-        workspaceURL: requestWorkspaceURL
+        workspaceURL: requestWorkspaceURL,
+        isCreatingNewItem: false
       )
     } catch {
       guard

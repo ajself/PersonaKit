@@ -107,6 +107,7 @@ struct RawJSONEditorView: View {
           formSyncErrorMessage: formSyncErrorMessage,
           idBinding: idBinding,
           primaryTextBinding: primaryTextBinding,
+          secondaryTextBinding: secondaryTextBinding,
           firstArrayLinesBinding: firstArrayLinesBinding,
           secondArrayLinesBinding: secondArrayLinesBinding
         )
@@ -211,6 +212,16 @@ struct RawJSONEditorView: View {
       get: { formState.primaryText },
       set: { updatedText in
         formState.primaryText = updatedText
+        syncRawJSONFromFormState()
+      }
+    )
+  }
+
+  private var secondaryTextBinding: Binding<String> {
+    Binding(
+      get: { formState.secondaryText },
+      set: { updatedText in
+        formState.secondaryText = updatedText
         syncRawJSONFromFormState()
       }
     )

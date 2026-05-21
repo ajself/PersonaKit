@@ -49,7 +49,14 @@ struct StudioLibraryActionBarState {
       editAction = nil
     }
 
-    showsCreateAction = selection == .personas
+    showsCreateAction =
+      selection == .personas
+      || selection == .directives
+      || selection == .kits
+      || selection == .intents
+      || selection == .essentials
+      || selection == .references
+      || selection == .skills
     canCreate = showsCreateAction && !isLoadingLibraryEditor
     canReveal = selectedItem != nil
     canEdit = editAction != nil && isProjectSelection && !isLoadingLibraryEditor

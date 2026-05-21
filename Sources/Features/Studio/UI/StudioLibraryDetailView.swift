@@ -437,6 +437,7 @@ struct StudioLibraryDetailView: View {
             formSyncErrorMessage: formSyncErrorMessage,
             idBinding: idBinding,
             primaryTextBinding: primaryTextBinding,
+            secondaryTextBinding: secondaryTextBinding,
             firstArrayLinesBinding: firstArrayLinesBinding,
             secondArrayLinesBinding: secondArrayLinesBinding
           )
@@ -508,7 +509,8 @@ struct StudioLibraryDetailView: View {
       entityType: entityType,
       fileURL: selectedItem.fileURL.standardizedFileURL,
       rawJSON: draftRawJSON,
-      workspaceURL: workspaceURL
+      workspaceURL: workspaceURL,
+      isCreatingNewItem: false
     )
   }
 
@@ -757,6 +759,16 @@ struct StudioLibraryDetailView: View {
       get: { formState.primaryText },
       set: { updatedText in
         formState.primaryText = updatedText
+        syncDraftFromFormState()
+      }
+    )
+  }
+
+  private var secondaryTextBinding: Binding<String> {
+    Binding(
+      get: { formState.secondaryText },
+      set: { updatedText in
+        formState.secondaryText = updatedText
         syncDraftFromFormState()
       }
     )

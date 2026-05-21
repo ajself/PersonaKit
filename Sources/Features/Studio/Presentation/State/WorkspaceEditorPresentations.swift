@@ -10,9 +10,26 @@ struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {
   let fileURL: URL
   let rawJSON: String
   let workspaceURL: URL
+  let isCreatingNewItem: Bool
+
+  init(
+    itemID: String,
+    entityType: WorkspaceLibraryEntityType,
+    fileURL: URL,
+    rawJSON: String,
+    workspaceURL: URL,
+    isCreatingNewItem: Bool = false
+  ) {
+    self.itemID = itemID
+    self.entityType = entityType
+    self.fileURL = fileURL
+    self.rawJSON = rawJSON
+    self.workspaceURL = workspaceURL
+    self.isCreatingNewItem = isCreatingNewItem
+  }
 
   var id: String {
-    "\(workspaceURL.path())::\(entityType.rawValue)::\(itemID)"
+    "\(workspaceURL.path())::\(entityType.rawValue)::\(itemID)::\(isCreatingNewItem)"
   }
 }
 
@@ -22,9 +39,24 @@ struct WorkspaceEssentialEditorPresentation: Equatable, Identifiable, Sendable {
   let itemID: String
   let markdown: String
   let workspaceURL: URL
+  let isCreatingNewItem: Bool
+
+  init(
+    fileURL: URL,
+    itemID: String,
+    markdown: String,
+    workspaceURL: URL,
+    isCreatingNewItem: Bool = false
+  ) {
+    self.fileURL = fileURL
+    self.itemID = itemID
+    self.markdown = markdown
+    self.workspaceURL = workspaceURL
+    self.isCreatingNewItem = isCreatingNewItem
+  }
 
   var id: String {
-    "\(workspaceURL.path())::\(itemID)"
+    "\(workspaceURL.path())::\(itemID)::\(isCreatingNewItem)"
   }
 }
 

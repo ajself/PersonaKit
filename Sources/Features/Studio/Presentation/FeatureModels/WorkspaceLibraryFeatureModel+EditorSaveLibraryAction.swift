@@ -37,6 +37,17 @@ extension WorkspaceLibraryFeatureModel {
       return message
     }
 
+    if presentation.isCreatingNewItem {
+      return await saveNewLibraryEditorRawJSON(
+        rawJSON,
+        presentation: presentation,
+        snapshot: snapshot,
+        currentWorkspaceURL: standardizedCurrentWorkspaceURL,
+        currentWorkspaceURLProvider: currentWorkspaceURLProvider,
+        onWorkspaceMutation: onWorkspaceMutation
+      )
+    }
+
     guard
       let projectItem = WorkspaceSnapshotLookup.projectLibraryItem(
         snapshot: snapshot,
@@ -88,6 +99,93 @@ extension WorkspaceLibraryFeatureModel {
         completeRequest(
           requestID: requestID,
           expectedWorkspaceURL: standardizedCurrentWorkspaceURL,
+          currentWorkspaceURL: currentWorkspaceURLProvider()
+        )
+      else {
+        return nil
+      }
+
+      setAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+
+      return error.localizedDescription
+    }
+  }
+
+  private func saveNewLibraryEditorRawJSON(
+    _ rawJSON: String,
+    presentation: WorkspaceLibraryEditorPresentation,
+    snapshot: WorkspaceSnapshot,
+    currentWorkspaceURL: URL,
+    currentWorkspaceURLProvider: @MainActor () -> URL?,
+    onWorkspaceMutation: @MainActor () -> Void
+  ) async -> String? {
+    let newItemID: String
+
+    do {
+      newItemID = try WorkspaceLibraryCreateSupport.validateNewLibraryItem(
+        rawJSON: rawJSON,
+        entityType: presentation.entityType
+      )
+    } catch {
+      setAction(
+        message: error.localizedDescription,
+        isError: true
+      )
+      return error.localizedDescription
+    }
+
+    guard
+      WorkspaceSnapshotLookup.libraryItem(
+        snapshot: snapshot,
+        itemID: newItemID,
+        entityType: presentation.entityType
+      ) == nil
+    else {
+      let message =
+        "\(presentation.entityType.displayName) id \"\(newItemID)\" already exists."
+
+      setAction(
+        message: message,
+        isError: true
+      )
+      return message
+    }
+
+    let requestID = beginRequest()
+
+    do {
+      try await operationRunner.saveLibraryItemRawJSON(
+        workspaceURL: currentWorkspaceURL,
+        itemID: newItemID,
+        rawJSON: rawJSON,
+        entityType: presentation.entityType
+      )
+
+      guard
+        completeRequest(
+          requestID: requestID,
+          expectedWorkspaceURL: currentWorkspaceURL,
+          currentWorkspaceURL: currentWorkspaceURLProvider()
+        )
+      else {
+        return nil
+      }
+
+      setAction(
+        message: "Created \(newItemID).",
+        isError: false
+      )
+
+      onWorkspaceMutation()
+      return nil
+    } catch {
+      guard
+        completeRequest(
+          requestID: requestID,
+          expectedWorkspaceURL: currentWorkspaceURL,
           currentWorkspaceURL: currentWorkspaceURLProvider()
         )
       else {

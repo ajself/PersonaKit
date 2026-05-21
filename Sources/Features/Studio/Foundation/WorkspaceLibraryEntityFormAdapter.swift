@@ -6,6 +6,8 @@ import Foundation
 public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
   public let primaryFieldKey: String
   public let primaryFieldLabel: String
+  public let secondaryFieldKey: String
+  public let secondaryFieldLabel: String
   public let firstArrayKey: String
   public let firstArrayLabel: String
   public let secondArrayKey: String
@@ -14,6 +16,8 @@ public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
   public init(
     primaryFieldKey: String,
     primaryFieldLabel: String,
+    secondaryFieldKey: String,
+    secondaryFieldLabel: String,
     firstArrayKey: String,
     firstArrayLabel: String,
     secondArrayKey: String,
@@ -21,6 +25,8 @@ public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
   ) {
     self.primaryFieldKey = primaryFieldKey
     self.primaryFieldLabel = primaryFieldLabel
+    self.secondaryFieldKey = secondaryFieldKey
+    self.secondaryFieldLabel = secondaryFieldLabel
     self.firstArrayKey = firstArrayKey
     self.firstArrayLabel = firstArrayLabel
     self.secondArrayKey = secondArrayKey
@@ -39,6 +45,8 @@ extension WorkspaceLibraryEntityType {
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",
         primaryFieldLabel: "Name",
+        secondaryFieldKey: "summary",
+        secondaryFieldLabel: "Summary",
         firstArrayKey: "defaultKitIds",
         firstArrayLabel: "Default Kit IDs",
         secondArrayKey: "allowedSkillIds",
@@ -48,6 +56,8 @@ extension WorkspaceLibraryEntityType {
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "title",
         primaryFieldLabel: "Title",
+        secondaryFieldKey: "goal",
+        secondaryFieldLabel: "Goal",
         firstArrayKey: "requiresIntentTemplateIds",
         firstArrayLabel: "Required Intent Template IDs",
         secondArrayKey: "requiresSkillIds",
@@ -57,6 +67,8 @@ extension WorkspaceLibraryEntityType {
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",
         primaryFieldLabel: "Name",
+        secondaryFieldKey: "summary",
+        secondaryFieldLabel: "Summary",
         firstArrayKey: "essentialIds",
         firstArrayLabel: "Essential IDs",
         secondArrayKey: "skillIds",
@@ -66,6 +78,8 @@ extension WorkspaceLibraryEntityType {
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",
         primaryFieldLabel: "Name",
+        secondaryFieldKey: "description",
+        secondaryFieldLabel: "Description",
         firstArrayKey: "includesEssentialIds",
         firstArrayLabel: "Included Essential IDs",
         secondArrayKey: "requiresSkillIds",
@@ -77,6 +91,8 @@ extension WorkspaceLibraryEntityType {
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",
         primaryFieldLabel: "Name",
+        secondaryFieldKey: "description",
+        secondaryFieldLabel: "Description",
         firstArrayKey: "providedBy",
         firstArrayLabel: "Provided By",
         secondArrayKey: "notes",
@@ -90,17 +106,20 @@ extension WorkspaceLibraryEntityType {
 public struct WorkspaceLibraryEntityFormState: Equatable, Sendable {
   public var id: String
   public var primaryText: String
+  public var secondaryText: String
   public var firstArrayLines: String
   public var secondArrayLines: String
 
   public init(
     id: String,
     primaryText: String,
+    secondaryText: String,
     firstArrayLines: String,
     secondArrayLines: String
   ) {
     self.id = id
     self.primaryText = primaryText
+    self.secondaryText = secondaryText
     self.firstArrayLines = firstArrayLines
     self.secondArrayLines = secondArrayLines
   }
@@ -108,6 +127,7 @@ public struct WorkspaceLibraryEntityFormState: Equatable, Sendable {
   public static let empty = WorkspaceLibraryEntityFormState(
     id: "",
     primaryText: "",
+    secondaryText: "",
     firstArrayLines: "",
     secondArrayLines: ""
   )
@@ -145,6 +165,7 @@ public struct WorkspaceLibraryEntityFormAdapter: Sendable {
     return WorkspaceLibraryEntityFormState(
       id: stringValue(forKey: "id", in: object),
       primaryText: stringValue(forKey: descriptor.primaryFieldKey, in: object),
+      secondaryText: stringValue(forKey: descriptor.secondaryFieldKey, in: object),
       firstArrayLines: stringArrayValue(forKey: descriptor.firstArrayKey, in: object).joined(
         separator: "\n"
       ),
@@ -162,6 +183,7 @@ public struct WorkspaceLibraryEntityFormAdapter: Sendable {
 
     object["id"] = formState.id
     object[descriptor.primaryFieldKey] = formState.primaryText
+    object[descriptor.secondaryFieldKey] = formState.secondaryText
     object[descriptor.firstArrayKey] = normalizedStringLines(formState.firstArrayLines)
     object[descriptor.secondArrayKey] = normalizedStringLines(formState.secondArrayLines)
 

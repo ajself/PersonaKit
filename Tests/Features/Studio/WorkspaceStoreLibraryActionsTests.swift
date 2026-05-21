@@ -128,6 +128,269 @@ struct WorkspaceStoreLibraryActionsTests {
   }
 
   @Test
+  func saveNewLibraryEditorRawJSONUsesEnteredIDAndReloadsWorkspace() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let state = MutableBooleanState(value: false)
+
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [],
+          directives: [],
+          kits: state.value
+            ? [
+              WorkspaceListItem(
+                id: "kit-new",
+                displayName: "Kit New",
+                fileURL: URL(fileURLWithPath: "/kits/kit-new.kit.json"),
+                sourceScope: .project
+              )
+            ]
+            : [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: WorkspaceStoreStubLibraryEntityManager(
+        loadRawJSONHandler: { _ in "{}" },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { workspaceURL, itemID, rawJSON, entityType in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(itemID == "kit-new")
+          #expect(entityType == .kit)
+          #expect(rawJSON.contains("\"id\" : \"kit-new\""))
+          state.value = true
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.kits.isEmpty
+    }
+
+    let presentation = store.newLibraryEditorPresentation(entityType: .kit)
+    #expect(presentation?.isCreatingNewItem == true)
+
+    let saveError = await store.saveLibraryEditorRawJSON(
+      """
+      {
+        "essentialIds" : [],
+        "id" : "kit-new",
+        "name" : "Kit New",
+        "summary" : "Summary",
+        "version" : "1.0"
+      }
+      """,
+      presentation: presentation!
+    )
+
+    #expect(saveError == nil)
+
+    await waitFor {
+      store.snapshot.kits.contains { item in
+        item.id == "kit-new"
+      }
+    }
+
+    #expect(store.libraryActionMessage == "Created kit-new.")
+    #expect(!store.libraryActionIsError)
+  }
+
+  @Test
+  func saveNewLibraryEditorRawJSONRejectsMissingSummaryBeforeSave() async {
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: WorkspaceStoreStubLibraryEntityManager(
+        loadRawJSONHandler: { _ in "{}" },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in
+          Issue.record("saveRawJSON should not run when required create fields are empty.")
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
+
+    store.workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let presentation = store.newLibraryEditorPresentation(entityType: .kit)
+
+    let saveError = await store.saveLibraryEditorRawJSON(
+      """
+      {
+        "essentialIds" : [],
+        "id" : "kit-new",
+        "name" : "Kit New",
+        "summary" : "",
+        "version" : "1.0"
+      }
+      """,
+      presentation: presentation!
+    )
+
+    #expect(saveError == "Kit summary is required before saving.")
+    #expect(store.libraryActionIsError)
+  }
+
+  @Test
+  func saveNewLibraryEditorRawJSONRejectsMissingSecondaryFieldsBeforeSave() async {
+    let validationCases: [
+      (entityType: WorkspaceLibraryEntityType, rawJSON: String, expectedError: String)
+    ] = [
+      (
+        .directive,
+        """
+        {
+          "acceptanceCriteria" : [],
+          "goal" : "",
+          "id" : "directive-new",
+          "requiresIntentTemplateIds" : [],
+          "requiresSkillIds" : [],
+          "steps" : [],
+          "title" : "Directive New",
+          "verification" : [],
+          "version" : "1.0"
+        }
+        """,
+        "Directive goal is required before saving."
+      ),
+      (
+        .intent,
+        """
+        {
+          "description" : "",
+          "id" : "intent-new",
+          "includesEssentialIds" : [],
+          "name" : "Intent New",
+          "parameters" : [],
+          "requiresSkillIds" : [],
+          "risk" : {
+            "level" : "medium",
+            "notes" : [],
+            "requiresHumanReview" : false
+          },
+          "version" : "1.0"
+        }
+        """,
+        "Intent description is required before saving."
+      ),
+      (
+        .skill,
+        """
+        {
+          "description" : "",
+          "id" : "skill-new",
+          "name" : "Skill New",
+          "notes" : [],
+          "providedBy" : [],
+          "risk" : {
+            "level" : "medium",
+            "notes" : [],
+            "requiresHumanReview" : false
+          },
+          "version" : "1.0"
+        }
+        """,
+        "Skill description is required before saving."
+      )
+    ]
+
+    for validationCase in validationCases {
+      let store = createValidationStore()
+      store.workspaceURL = URL(fileURLWithPath: "/Workspace")
+      let presentation = store.newLibraryEditorPresentation(entityType: validationCase.entityType)
+
+      let saveError = await store.saveLibraryEditorRawJSON(
+        validationCase.rawJSON,
+        presentation: presentation!
+      )
+
+      #expect(saveError == validationCase.expectedError)
+      #expect(store.libraryActionIsError)
+    }
+  }
+
+  @Test
+  func saveNewEssentialMarkdownUsesHeadingIDAndReloadsWorkspace() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let state = MutableBooleanState(value: false)
+
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: state.value
+            ? [
+              WorkspaceListItem(
+                id: "team-standards",
+                displayName: "team-standards",
+                fileURL: URL(fileURLWithPath: "/essentials/team-standards.md"),
+                sourceScope: .project
+              )
+            ]
+            : []
+        )
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      essentialManager: WorkspaceStoreStubEssentialManager(
+        loadMarkdownHandler: { _ in "" },
+        saveMarkdownHandler: { workspaceURL, itemID, markdown in
+          #expect(workspaceURL.path() == "/Workspace")
+          #expect(itemID == "team-standards")
+          #expect(markdown.contains("# Team Standards"))
+          state.value = true
+        },
+        copyGlobalEssentialToProjectHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.essentials.isEmpty
+    }
+
+    let presentation = store.newEssentialEditorPresentation()
+    #expect(presentation?.isCreatingNewItem == true)
+
+    let saveError = await store.saveEssentialEditorMarkdown(
+      "# Team Standards\n\nKeep changes reviewable.\n",
+      presentation: presentation!
+    )
+
+    #expect(saveError == nil)
+
+    await waitFor {
+      store.snapshot.essentials.contains { item in
+        item.id == "team-standards"
+      }
+    }
+
+    #expect(store.libraryActionMessage == "Created team-standards.")
+    #expect(!store.libraryActionIsError)
+  }
+
+  @Test
   func createPersonaRejectsDuplicateIDBeforeSave() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
 
@@ -1146,5 +1409,24 @@ struct WorkspaceStoreLibraryActionsTests {
     #expect(presentation == nil)
     #expect(store.libraryActionIsError)
     #expect(store.libraryActionMessage?.contains("not a project essential") == true)
+  }
+
+  private func createValidationStore() -> WorkspaceStore {
+    WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      libraryEntityManager: WorkspaceStoreStubLibraryEntityManager(
+        loadRawJSONHandler: { _ in "{}" },
+        validateRawJSONHandler: { _, _, _ in },
+        saveRawJSONHandler: { _, _, _, _ in
+          Issue.record("saveRawJSON should not run when required create fields are empty.")
+        },
+        copyGlobalItemToProjectHandler: { _, _, _ in }
+      )
+    )
   }
 }
