@@ -157,6 +157,8 @@ struct SessionsMapTabView: View {
       return "persona \(sourceId) lists skill \"\(missingId)\" in both allowed and forbidden sets."
     case .unauthorizedSkillId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
+    case .invalidSession(let sourceId, _, let message):
+      return "Session \(sourceId) could not be loaded: \(message)"
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
     case .missingReferenceId(let sourceType, let sourceId, let field, let missingId):
@@ -180,6 +182,8 @@ struct SessionsMapTabView: View {
       return "persona:\(sourceId)"
     case .unauthorizedSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"
+    case .invalidSession:
+      return nil
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"
     case .missingReferenceId(_, _, _, let missingID):

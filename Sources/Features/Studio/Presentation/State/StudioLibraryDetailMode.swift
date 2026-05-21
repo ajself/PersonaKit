@@ -7,11 +7,17 @@ enum StudioLibraryDetailMode: String, CaseIterable, Sendable {
   case json
 
   var title: String {
+    title(for: nil)
+  }
+
+  func title(
+    for selection: SidebarItem?
+  ) -> String {
     switch self {
     case .edit:
       return "Edit"
     case .json:
-      return "JSON"
+      return selection == .essentials ? "Preview" : "JSON"
     }
   }
 }
@@ -22,8 +28,15 @@ enum StudioLibraryDetailModeResolver {
     selectedItem: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?
   ) -> [StudioLibraryDetailMode] {
+    if selection == .essentials {
+      guard selectedItem?.sourceScope == .project else {
+        return [.json]
+      }
+
+      return [.edit, .json]
+    }
+
     guard
-      selection != .essentials,
       selectedItem?.sourceScope == .project,
       let entityType,
       entityType.supportsMinimalForm

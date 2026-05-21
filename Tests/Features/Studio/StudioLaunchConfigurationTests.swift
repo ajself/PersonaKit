@@ -103,6 +103,18 @@ struct StudioLaunchConfigurationTests {
   }
 
   @Test
+  func relationshipMapGeometryFileURLUsesEnvironmentOverride() {
+    let url = StudioLaunchConfiguration.relationshipMapGeometryFileURL(
+      environment: [
+        StudioLaunchConfiguration.relationshipMapGeometryFileEnvironmentKey:
+          "/tmp/personakit-review/relationship-map.geometry.json"
+      ]
+    )
+
+    #expect(url?.path == "/tmp/personakit-review/relationship-map.geometry.json")
+  }
+
+  @Test
   func initialSectionDefaultsToSessions() {
     #expect(
       StudioLaunchConfiguration.initialSection(

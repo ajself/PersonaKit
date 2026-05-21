@@ -125,6 +125,14 @@ struct StudioHelpCatalogTests {
     #expect(skills.commonMistakes.contains { $0.contains("unauthorized by default") })
   }
 
+  @Test
+  func relationshipMapHelpDocumentsRetainedFocusMode() throws {
+    let relationshipMap = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.relationshipMap))
+
+    #expect(relationshipMap.keyFields.contains { $0.contains("Focus Selected Session") })
+    #expect(relationshipMap.examples.contains { $0.contains("enable focus mode") })
+  }
+
   private func trimmed(
     _ value: String
   ) -> String {

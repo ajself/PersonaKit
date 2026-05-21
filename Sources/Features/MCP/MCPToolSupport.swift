@@ -136,6 +136,9 @@ enum MCPInternalSupport {
     if case .missingEssentialFile(_, _, _, let missingId, let expectedPath) = error {
       parts.append("missingId=\(missingId)")
       parts.append("expectedPath=\(expectedPath)")
+    } else if case .invalidSession(let sessionId, let expectedPath, _) = error {
+      parts.append("sessionId=\(sessionId)")
+      parts.append("expectedPath=\(expectedPath)")
     } else if case .missingKitId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
     } else if case .missingIntentId(_, _, _, let missingId) = error {

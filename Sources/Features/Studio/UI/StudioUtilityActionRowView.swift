@@ -78,6 +78,7 @@ struct StudioUtilityActionRowView: View {
     .controlSize(controlSize)
     .disabled(!action.isEnabled)
     .accessibilityLabel(action.title)
+    .accessibilityIdentifier(action.id)
   }
 
   private func secondaryActionButton(
@@ -92,6 +93,7 @@ struct StudioUtilityActionRowView: View {
     .controlSize(controlSize)
     .disabled(!action.isEnabled)
     .accessibilityLabel(action.title)
+    .accessibilityIdentifier(action.id)
   }
 
   private func adaptiveLabel(_ action: StudioUtilityActionItem) -> some View {

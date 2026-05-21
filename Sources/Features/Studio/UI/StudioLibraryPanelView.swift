@@ -112,6 +112,20 @@ struct StudioLibraryPanelView: View {
             )
           }
         },
+        onSaveMarkdown: { markdown, presentation in
+          let saveError = await workspaceStore.saveEssentialEditorMarkdown(
+            markdown,
+            presentation: presentation
+          )
+
+          if saveError == nil {
+            await MainActor.run {
+              selectedLibraryItemID = presentation.itemID
+            }
+          }
+
+          return saveError
+        },
         onValidate: { rawJSON, presentation in
           await workspaceStore.validateLibraryEditorRawJSON(
             rawJSON,

@@ -213,6 +213,7 @@ public enum ResolverError: Error, Equatable {
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
   case unauthorizedSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
+  case invalidSession(sessionId: String, expectedPath: String, message: String)
   case missingEssentialFile(
     sourceType: ResolverEntityType,
     sourceId: String,
@@ -240,6 +241,8 @@ public enum ResolverError: Error, Equatable {
       return .persona
     case .unauthorizedSkillId(let sourceType, _, _, _):
       return sourceType
+    case .invalidSession:
+      return .sessionDefinition
     case .missingEssentialFile(let sourceType, _, _, _, _):
       return sourceType
     }
@@ -264,6 +267,8 @@ public enum ResolverError: Error, Equatable {
       return sourceId
     case .unauthorizedSkillId(_, let sourceId, _, _):
       return sourceId
+    case .invalidSession(let sessionId, _, _):
+      return sessionId
     case .missingEssentialFile(_, let sourceId, _, _, _):
       return sourceId
     }
@@ -288,6 +293,8 @@ public enum ResolverError: Error, Equatable {
       return field
     case .unauthorizedSkillId(_, _, let field, _):
       return field
+    case .invalidSession:
+      return "session"
     case .missingEssentialFile(_, _, let field, _, _):
       return field
     }
@@ -312,6 +319,8 @@ public enum ResolverError: Error, Equatable {
       return missingId
     case .unauthorizedSkillId(_, _, _, let missingId):
       return missingId
+    case .invalidSession(let sessionId, _, _):
+      return sessionId
     case .missingEssentialFile(_, _, _, let missingId, _):
       return missingId
     }
@@ -336,6 +345,8 @@ public enum ResolverError: Error, Equatable {
       return "Skill id appears in both allowedSkillIds and forbiddenSkillIds."
     case .unauthorizedSkillId:
       return "Skill is not authorized by the resolved persona contract."
+    case .invalidSession(_, let expectedPath, let message):
+      return "Invalid session file at \(expectedPath): \(message)"
     case .missingEssentialFile(_, _, _, _, let expectedPath):
       return "Missing essential file at \(expectedPath)."
     }

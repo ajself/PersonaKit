@@ -4,6 +4,7 @@ import SwiftUI
 struct StudioSearchField: View {
   @Binding var text: String
   let prompt: String
+  var accessibilityIdentifier: String? = nil
 
   var body: some View {
     HStack(spacing: 6) {
@@ -15,6 +16,11 @@ struct StudioSearchField: View {
         .textFieldStyle(.plain)
         .lineLimit(1)
         .accessibilityLabel(prompt)
+        .modifier(
+          StudioOptionalAccessibilityIdentifier(
+            identifier: accessibilityIdentifier
+          )
+        )
 
       if !text.isEmpty {
         Button {
@@ -40,5 +46,19 @@ struct StudioSearchField: View {
       RoundedRectangle(cornerRadius: 8)
         .stroke(.quaternary.opacity(0.6), lineWidth: 1)
     )
+  }
+}
+
+private struct StudioOptionalAccessibilityIdentifier: ViewModifier {
+  let identifier: String?
+
+  func body(
+    content: Content
+  ) -> some View {
+    if let identifier {
+      content.accessibilityIdentifier(identifier)
+    } else {
+      content
+    }
   }
 }

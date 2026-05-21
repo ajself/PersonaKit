@@ -8,16 +8,17 @@ enum SessionsMapNavigationResolver {
   ) -> StudioNavigationTarget? {
     switch node.kind {
     case .session:
-      guard
-        let selectedSessionID,
-        selectedSessionID != "active-session"
+      let sessionID = node.id == "active-session" ? selectedSessionID : node.id
+
+      guard let sessionID,
+        sessionID != "active-session"
       else {
         return nil
       }
 
       return StudioNavigationTarget(
         sidebarItem: .sessions,
-        selectedSessionID: selectedSessionID,
+        selectedSessionID: sessionID,
         searchText: ""
       )
 

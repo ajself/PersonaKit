@@ -10,6 +10,8 @@ public enum StudioLaunchConfiguration {
     "PERSONAKIT_STUDIO_INITIAL_WORKSPACE_PATH"
   public static let globalScopePathEnvironmentKey =
     "PERSONAKIT_STUDIO_GLOBAL_SCOPE_PATH"
+  public static let relationshipMapGeometryFileEnvironmentKey =
+    "PERSONAKIT_STUDIO_REVIEW_GEOMETRY_FILE"
   public static let userDefaultsSuiteNameEnvironmentKey =
     "PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME"
 
@@ -73,6 +75,23 @@ public enum StudioLaunchConfiguration {
     return URL(
       fileURLWithPath: (trimmedPath as NSString).expandingTildeInPath,
       isDirectory: true
+    )
+    .standardizedFileURL
+  }
+
+  public static func relationshipMapGeometryFileURL(
+    environment: [String: String] = ProcessInfo.processInfo.environment
+  ) -> URL? {
+    guard
+      let trimmedPath = environment[relationshipMapGeometryFileEnvironmentKey]?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !trimmedPath.isEmpty
+    else {
+      return nil
+    }
+
+    return URL(
+      fileURLWithPath: (trimmedPath as NSString).expandingTildeInPath
     )
     .standardizedFileURL
   }
