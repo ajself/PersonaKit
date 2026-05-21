@@ -1,0 +1,20 @@
+{
+  "id": "deployment-runner",
+  "version": "1.0",
+  "name": "Deployment Runner",
+  "description": "Run release or deployment commands.",
+  "providedBy": [
+    "ci"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Deployment is outside review scope."
+    ]
+  },
+  "notes": [
+    "Included as a forbidden skill example."
+  ]
+}
+

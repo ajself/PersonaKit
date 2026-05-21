@@ -1,0 +1,42 @@
+{
+  "id": "bounded-cli-fix",
+  "version": "1.0",
+  "title": "Make a bounded CLI fix",
+  "goal": "Complete one requested CLI fix without broadening PersonaKit into orchestration or unrelated refactoring.",
+  "steps": [
+    {
+      "text": "Read the active contract and identify the target command or output."
+    },
+    {
+      "text": "Make the smallest implementation or documentation change that satisfies the request."
+    },
+    {
+      "text": "Stop for review if the request requires a new adapter, arbitrary command execution, persistence, or task orchestration.",
+      "requiresReview": true
+    },
+    {
+      "text": "Verify the change and summarize the result."
+    }
+  ],
+  "acceptanceCriteria": [
+    "The change is limited to the requested CLI behavior",
+    "Output ordering remains deterministic",
+    "No new autonomous execution behavior is introduced",
+    "Verification steps are reported"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "command",
+      "text": "personakit validate --root .personakit"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "opencode-cli"
+  ]
+}
+

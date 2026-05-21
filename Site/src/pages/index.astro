@@ -1,0 +1,187 @@
+---
+import { getCollection } from "astro:content";
+import CardGrid from "../components/CardGrid.astro";
+import Callout from "../components/Callout.astro";
+import DiagramPanel from "../components/DiagramPanel.astro";
+import Hero from "../components/Hero.astro";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import { sitePath } from "../utils/sitePath";
+
+const examples = (await getCollection("examples"))
+  .filter((example) => example.data.routeSlug !== "when-not-to-use")
+  .sort((left, right) => left.data.order - right.data.order);
+
+const exampleCards = examples.map((example) => ({
+  description: example.data.description,
+  href: sitePath(`examples/${example.data.routeSlug}/`),
+  label: "Open example",
+  title: example.data.title,
+  tone: "fit" as const,
+}));
+---
+
+<SiteLayout
+  title="PersonaKit Runbook"
+  description="PersonaKit resolves reusable operating contracts for AI coding work."
+>
+  <Hero
+    eyebrow="Operating contracts for AI coding work"
+    title="PersonaKit prepares the agent before the agent works."
+    lede="Resolve role, rules, required context, stop points, and capability authorization into one inspectable contract."
+    actions={[
+      { href: sitePath("start-here/"), label: "Start the five-minute path" },
+      { href: sitePath("decision-guide/"), label: "Decide if it fits" },
+    ]}
+  />
+
+  <main>
+    <section>
+      <div class="grid three">
+        <article class="card">
+          <h3>Use It For</h3>
+          <p>Repeated AI work modes where role, durable rules, stop points, and allowed capabilities need to be stable.</p>
+        </article>
+        <article class="card">
+          <h3>Do Not Use It For</h3>
+          <p>Agent memory, task tracking, deployment, secret handling, CI, or long-running orchestration.</p>
+        </article>
+        <article class="card">
+          <h3>Core Distinction</h3>
+          <p>PersonaKit decides what is in bounds. Slash skills perform local procedures.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Five-Minute Path</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>Run The Demo</h3>
+          <pre><code>cd Site/public/examples/swift-cli-maintenance
+personakit validate --root personakit-root
+personakit contract --root personakit-root --session cli-maintenance
+personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
+        </article>
+        <article class="card">
+          <h3>What To Notice</h3>
+          <ul>
+            <li>The session resolves deterministically.</li>
+            <li>OpenCode is authorized for the session.</li>
+            <li>Deployment and autonomous loops are forbidden.</li>
+            <li>The payload is visible before launch.</li>
+          </ul>
+          <a class="button-link" href={sitePath("start-here/")}>Open full walkthrough</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>The Contract Model</h2>
+      <DiagramPanel
+        src={sitePath("diagrams/personakit-operating-contract.svg")}
+        alt="Persona, kits, directive, essentials, and skill authorization resolving into an operating contract for an agent."
+      />
+    </section>
+
+    <section>
+      <h2>Product Suite</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Best For</th>
+            <th>Boundary</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CLI</td>
+            <td>Validate, inspect, export, dry-run, and launch one supported V1 adapter.</td>
+            <td>Not a general workflow runner.</td>
+          </tr>
+          <tr>
+            <td>MCP</td>
+            <td>Read-only grounding, recommendation, contract resolution, trace, graph, and export.</td>
+            <td>Not authorization to mutate files or run tools.</td>
+          </tr>
+          <tr>
+            <td>Studio / Mac app</td>
+            <td>Admin surface for sessions, personas, directives, kits, skills, essentials, references, validation, and relationship maps.</td>
+            <td>Useful, but not the V1 release bar.</td>
+          </tr>
+          <tr>
+            <td>Pack format</td>
+            <td>Inspectable project or global PersonaKit configuration.</td>
+            <td>Not hidden memory.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>PersonaKit vs Slash Skills</h2>
+      <DiagramPanel
+        src={sitePath("diagrams/personakit-vs-slash-skills.svg")}
+        alt="PersonaKit compared with slash skills."
+      />
+      <Callout>
+        <p><strong>Rule of thumb:</strong> PersonaKit authorizes the work boundary. Slash skills perform local procedures.</p>
+      </Callout>
+    </section>
+
+    <section class="band">
+      <h2>Decision Guide</h2>
+      <DiagramPanel
+        src={sitePath("diagrams/decision-tree.svg")}
+        alt="Decision tree for whether a workflow should use PersonaKit."
+      />
+      <p><a class="button-link" href={sitePath("decision-guide/")}>Open the full decision guide</a></p>
+    </section>
+
+    <section>
+      <h2>Example Projects</h2>
+      <CardGrid cards={exampleCards} />
+    </section>
+
+    <section>
+      <h2>Where Not To Use It</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Use Instead</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Open-ended ideation</td>
+            <td>Chat, notes, design doc</td>
+            <td>The boundary is not known yet.</td>
+          </tr>
+          <tr>
+            <td>Formatter invocation</td>
+            <td>Editor command or slash skill</td>
+            <td>No durable operating contract is needed.</td>
+          </tr>
+          <tr>
+            <td>Deployment</td>
+            <td>CI/CD</td>
+            <td>Execution and approvals belong elsewhere.</td>
+          </tr>
+          <tr>
+            <td>Secret retrieval</td>
+            <td>Secret manager</td>
+            <td>PersonaKit is not a vault.</td>
+          </tr>
+          <tr>
+            <td>Long-running agent loop</td>
+            <td>Dedicated orchestration system</td>
+            <td>V1 excludes memory, persistence, and multi-agent control.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><a class="button-link" href={sitePath("examples/when-not-to-use/")}>Open anti-pattern examples</a></p>
+    </section>
+  </main>
+</SiteLayout>

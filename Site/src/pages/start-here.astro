@@ -1,0 +1,54 @@
+---
+import Callout from "../components/Callout.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+---
+
+<ContentLayout
+  title="Start Here"
+  eyebrow="Five-minute path"
+  description="Run a tiny PersonaKit example and inspect the resolved operating contract before any agent work begins."
+>
+  <p>PersonaKit does not make the code change in this walkthrough. It resolves the operating contract that an agent would receive before making the change.</p>
+
+  <h2>1. Validate The Example Root</h2>
+  <pre><code>cd Site/public/examples/swift-cli-maintenance
+personakit validate --root personakit-root</code></pre>
+
+  <p>Expected shape:</p>
+  <pre><code>Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0</code></pre>
+
+  <h2>2. Inspect The Resolved Contract</h2>
+  <pre><code>personakit contract --root personakit-root --session cli-maintenance</code></pre>
+
+  <p>Look for:</p>
+  <ul>
+    <li><code>personaId</code>: <code>cli-maintainer</code></li>
+    <li><code>directiveId</code>: <code>bounded-cli-fix</code></li>
+    <li><code>isAuthorized</code>: <code>true</code></li>
+    <li><code>authorizedSkillIds</code>: <code>opencode-cli</code></li>
+    <li><code>forbiddenSkillIds</code>: <code>autonomous-agent-loop</code>, <code>deployment-runner</code></li>
+  </ul>
+
+  <h2>3. Preview The Runtime Payload</h2>
+  <pre><code>personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
+
+  <p>Read the output as a reviewer. Confirm it names the session, includes persona responsibilities, includes directive steps, includes essentials, and places task text after the resolved context.</p>
+
+  <Callout tone="good">
+    <p>This is the core PersonaKit experience: the agent starts from a resolved contract instead of loose prompt memory.</p>
+  </Callout>
+
+  <h2>What You Proved</h2>
+  <ul>
+    <li>PersonaKit can load authored project context.</li>
+    <li>PersonaKit can validate its shape.</li>
+    <li>A named session resolves to concrete boundaries.</li>
+    <li>Authorized and forbidden capabilities are visible before work starts.</li>
+    <li>The runtime payload can be inspected before launch.</li>
+  </ul>
+
+  <h2>Next Step</h2>
+  <p>After you understand contract resolution, try authoring compact PersonaKit content with dry-runs and validation.</p>
+  <p><a class="button-link" href={sitePath("examples/pack-authoring/")}>Open Pack Authoring</a></p>
+</ContentLayout>

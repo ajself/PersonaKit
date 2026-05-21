@@ -1,0 +1,84 @@
+---
+import { sitePath } from "../utils/sitePath";
+
+const links = [
+  { href: sitePath(), label: "Home" },
+  { href: sitePath("start-here/"), label: "Start Here" },
+  { href: sitePath("decision-guide/"), label: "Decision Guide" },
+  { href: sitePath("examples/"), label: "Examples" },
+  { href: sitePath("matrix/"), label: "Matrix" },
+];
+---
+
+<header class="site-header">
+  <nav class="shell" aria-label="Primary navigation">
+    <a class="brand" href={sitePath()}>PersonaKit</a>
+    <div class="links">
+      {
+        links.map((link) => (
+          <a href={link.href}>{link.label}</a>
+        ))
+      }
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 62px;
+  }
+
+  .brand {
+    color: var(--ink);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .links a {
+    min-height: 34px;
+    padding: 6px 9px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--ink);
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    border-color: var(--line);
+    color: var(--blue);
+    background: #fff;
+  }
+
+  @media (max-width: 700px) {
+    nav {
+      align-items: flex-start;
+      flex-direction: column;
+      padding-block: 12px;
+    }
+
+    .links {
+      justify-content: flex-start;
+    }
+  }
+</style>

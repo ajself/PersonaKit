@@ -1,0 +1,6 @@
+{
+  "id": "mcp-grounding",
+  "personaId": "mcp-grounded-agent",
+  "directiveId": "resolve-before-tools"
+}
+

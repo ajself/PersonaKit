@@ -1,0 +1,10 @@
+{
+  "id": "review-guardrails",
+  "version": "1.0",
+  "name": "Review Guardrails",
+  "summary": "Rules for repeatable behavior-preserving review sessions.",
+  "essentialIds": [
+    "review-boundaries"
+  ]
+}
+

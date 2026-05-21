@@ -1,0 +1,20 @@
+{
+  "id": "code-editing",
+  "version": "1.0",
+  "name": "Code Editing",
+  "description": "Modify repository files to implement a change.",
+  "providedBy": [
+    "coding-agent"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Code editing is intentionally forbidden in this review session."
+    ]
+  },
+  "notes": [
+    "Included as a forbidden skill example."
+  ]
+}
+

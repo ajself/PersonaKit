@@ -1,0 +1,35 @@
+---
+interface Card {
+  description: string;
+  href?: string;
+  label?: string;
+  title: string;
+  tone?: "fit" | "caution" | "avoid";
+}
+
+interface Props {
+  cards: Card[];
+  columns?: "two" | "three";
+}
+
+const {
+  cards,
+  columns = "three",
+} = Astro.props;
+---
+
+<div class:list={["grid", columns]}>
+  {
+    cards.map((card) => (
+      <article class="card">
+        <h3 class={card.tone}>{card.title}</h3>
+        <p>{card.description}</p>
+        {
+          card.href && (
+            <a class="button-link" href={card.href}>{card.label ?? "Open"}</a>
+          )
+        }
+      </article>
+    ))
+  }
+</div>

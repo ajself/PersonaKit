@@ -1,0 +1,20 @@
+{
+  "id": "autonomous-agent-loop",
+  "version": "1.0",
+  "name": "Autonomous Agent Loop",
+  "description": "Let an agent plan, continue, and execute multiple steps without explicit human review.",
+  "providedBy": [
+    "external-agent"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "PersonaKit V1 explicitly excludes autonomous loops and orchestration."
+    ]
+  },
+  "notes": [
+    "Included as a forbidden skill example."
+  ]
+}
+

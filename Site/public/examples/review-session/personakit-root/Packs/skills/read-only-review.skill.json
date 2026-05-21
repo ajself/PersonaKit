@@ -1,0 +1,20 @@
+{
+  "id": "read-only-review",
+  "version": "1.0",
+  "name": "Read-Only Review",
+  "description": "Inspect supplied artifacts and provide review findings without mutating files.",
+  "providedBy": [
+    "agent-review"
+  ],
+  "risk": {
+    "level": "low",
+    "requiresHumanReview": false,
+    "notes": [
+      "This capability supports review output only."
+    ]
+  },
+  "notes": [
+    "Use a separate implementation session for code edits."
+  ]
+}
+

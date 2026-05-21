@@ -1,0 +1,25 @@
+---
+import { getCollection } from "astro:content";
+import CardGrid from "../../components/CardGrid.astro";
+import ContentLayout from "../../layouts/ContentLayout.astro";
+import { sitePath } from "../../utils/sitePath";
+
+const examples = (await getCollection("examples"))
+  .sort((left, right) => left.data.order - right.data.order);
+
+const cards = examples.map((example) => ({
+  description: example.data.description,
+  href: sitePath(`examples/${example.data.routeSlug}/`),
+  label: "Open example",
+  title: example.data.title,
+  tone: example.data.kind === "guidance" ? "avoid" as const : "fit" as const,
+}));
+---
+
+<ContentLayout
+  title="Examples"
+  eyebrow="Runnable contracts"
+  description="Contract examples and anti-pattern guidance for PersonaKit's current scope."
+>
+  <CardGrid cards={cards} columns="two" />
+</ContentLayout>

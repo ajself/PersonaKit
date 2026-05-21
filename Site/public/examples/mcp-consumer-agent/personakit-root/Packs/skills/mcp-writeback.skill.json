@@ -1,0 +1,20 @@
+{
+  "id": "mcp-writeback",
+  "version": "1.0",
+  "name": "MCP Writeback",
+  "description": "Attempt to write files or mutate PersonaKit context through MCP.",
+  "providedBy": [
+    "mcp-client"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "PersonaKit MCP is intentionally read-only."
+    ]
+  },
+  "notes": [
+    "Included as a forbidden skill example."
+  ]
+}
+

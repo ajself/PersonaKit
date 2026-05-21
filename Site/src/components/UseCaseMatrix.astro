@@ -1,0 +1,45 @@
+---
+import { useCaseMatrix } from "../data/useCaseMatrix";
+---
+
+<table>
+  <thead>
+    <tr>
+      <th>Use Case</th>
+      <th>Fit</th>
+      <th>Primary Value</th>
+      <th>Preferred Surface</th>
+      <th>Alternative</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      useCaseMatrix.map((row) => (
+        <tr>
+          <td>{row.useCase}</td>
+          <td><span class={row.fit.toLowerCase()}>{row.fit}</span></td>
+          <td>{row.primaryValue}</td>
+          <td>{row.surface}</td>
+          <td>{row.alternative}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<style>
+  .high {
+    color: var(--green);
+    font-weight: 750;
+  }
+
+  .medium {
+    color: var(--amber);
+    font-weight: 750;
+  }
+
+  .low {
+    color: var(--red);
+    font-weight: 750;
+  }
+</style>

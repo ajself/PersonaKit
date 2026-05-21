@@ -1,0 +1,65 @@
+---
+import { getCollection, render } from "astro:content";
+import Callout from "../../components/Callout.astro";
+import ExampleSummary from "../../components/ExampleSummary.astro";
+import ContentLayout from "../../layouts/ContentLayout.astro";
+import { sitePath } from "../../utils/sitePath";
+
+export async function getStaticPaths() {
+  const examples = await getCollection("examples");
+
+  return examples.map((example) => ({
+    params: {
+      slug: example.data.routeSlug,
+    },
+    props: {
+      example,
+    },
+  }));
+}
+
+const {
+  example,
+} = Astro.props;
+
+const {
+  Content,
+} = await render(example);
+
+const isContractExample = example.data.kind === "contract";
+const rootHref = isContractExample && example.data.rootPath
+  ? sitePath(`${example.data.rootPath}/`)
+  : "";
+---
+
+<ContentLayout
+  title={example.data.title}
+  eyebrow="Example"
+  description={example.data.description}
+>
+  {
+    isContractExample && example.data.directive && example.data.persona && (
+      <ExampleSummary
+        authorizedSkills={example.data.authorizedSkills}
+        directive={example.data.directive}
+        forbiddenSkills={example.data.forbiddenSkills}
+        kits={example.data.kits}
+        persona={example.data.persona}
+      />
+    )
+  }
+
+  {
+    rootHref && (
+      <Callout tone="good">
+        <p>
+          The sample root is published as <code>personakit-root</code> so it remains visible on static hosts.
+          In a real project, copy or rename it to <code>.personakit</code>.
+        </p>
+        <p><a class="button-link" href={rootHref}>Browse static root</a></p>
+      </Callout>
+    )
+  }
+
+  <Content />
+</ContentLayout>
