@@ -16,6 +16,83 @@ struct WorkspaceRelationshipMapBuilderTests {
   }
 
   @Test
+  func relationshipMapIncludesSessionNodesAndEdges() throws {
+    let (workspaceURL, _) = try makeWorkspaceWithProjectFixture()
+
+    let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
+    let map = try builder.build(workspaceURL: workspaceURL)
+
+    let sessionNode = try #require(
+      map.nodes.first { $0.key == "session:senior-swiftui-engineer_apply-style" }
+    )
+
+    #expect(sessionNode.id == "senior-swiftui-engineer_apply-style")
+    #expect(sessionNode.kind == .session)
+
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "session:senior-swiftui-engineer_apply-style",
+          toKey: "persona:senior-swiftui-engineer",
+          reason: "session.personaId"
+        )
+      )
+    )
+
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "session:senior-swiftui-engineer_apply-style",
+          toKey: "directive:apply-style",
+          reason: "session.directiveId"
+        )
+      )
+    )
+  }
+
+  @Test
+  func relationshipMapReportsInvalidSessionWithoutDroppingValidGraph() throws {
+    let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
+    let brokenSessionURL = projectScopeURL.appendingPathComponent("Sessions/broken.session.json")
+    try Data("{not-json".utf8).write(to: brokenSessionURL, options: [.atomic])
+
+    let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
+    let map = try builder.build(workspaceURL: workspaceURL)
+
+    #expect(
+      map.nodes.contains { $0.key == "session:senior-swiftui-engineer_apply-style" }
+    )
+    #expect(
+      map.edges.contains(
+        WorkspaceSessionMapEdge(
+          fromKey: "persona:senior-swiftui-engineer",
+          toKey: "kit:swift-style",
+          reason: "persona.defaultKitIds"
+        )
+      )
+    )
+
+    let invalidSessionError = try #require(
+      map.resolutionErrors.first { error in
+        if case .invalidSession(let sourceId, _, _) = error {
+          return sourceId == "broken"
+        }
+
+        return false
+      }
+    )
+
+    #expect(invalidSessionError.sourceType == .sessionDefinition)
+    #expect(invalidSessionError.sourceId == "broken")
+    #expect(invalidSessionError.field == "session")
+    #expect(invalidSessionError.missingId == "broken")
+    #expect(
+      invalidSessionError.message
+        == "Invalid session file at Sessions/broken.session.json: Failed to decode session file for broken."
+    )
+  }
+
+  @Test
   func relationshipMapPrefersProjectEntitiesOverGlobalScope() throws {
     let (workspaceURL, _, globalScopeURL) = try makeWorkspaceWithProjectAndGlobalFixtures()
 

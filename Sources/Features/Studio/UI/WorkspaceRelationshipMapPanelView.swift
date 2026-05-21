@@ -2,7 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Workspace-wide relationship map panel with filtering and session focus mode.
+/// Workspace-wide relationship map panel with filtering, session focus mode, and node inspection.
 struct WorkspaceRelationshipMapPanelView: View {
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
@@ -16,8 +16,10 @@ struct WorkspaceRelationshipMapPanelView: View {
   @State private var selectedScopeFilter: RelationshipScopeFilter = .all
   @State private var selectedNodeKinds: Set<WorkspaceSessionMapNodeKind> = Set(Self.defaultNodeKinds)
   @State private var highlightedNodeKey: String?
+  @State private var layoutState = RelationshipMapLayoutState()
 
   private static let defaultNodeKinds: [WorkspaceSessionMapNodeKind] = [
+    .session,
     .persona,
     .directive,
     .kit,
@@ -28,6 +30,7 @@ struct WorkspaceRelationshipMapPanelView: View {
   ]
 
   private let nodeKindOrder: [WorkspaceSessionMapNodeKind] = [
+    .session,
     .persona,
     .directive,
     .kit,
@@ -40,6 +43,7 @@ struct WorkspaceRelationshipMapPanelView: View {
   var body: some View {
     let filteredMap = filteredWorkspaceMap()
     let selectedNode = selectedNode(in: filteredMap)
+    let filteredMapNodeKeysToken = nodeKeysToken(for: filteredMap)
 
     VStack(alignment: .leading, spacing: 12) {
       headerView
@@ -113,9 +117,13 @@ struct WorkspaceRelationshipMapPanelView: View {
       workspaceStore.refreshWorkspaceRelationshipMap()
       refreshFocusSessionMapIfNeeded()
     }
+    .onChange(of: filteredMapNodeKeysToken) { _, _ in
+      pruneLayoutOffsets(in: filteredWorkspaceMap())
+    }
     .onChange(of: workspaceIdentityToken) { _, _ in
       selectedSessionContextID = nil
       highlightedNodeKey = nil
+      layoutState.reset()
       workspaceStore.refreshWorkspaceRelationshipMap()
       refreshFocusSessionMapIfNeeded()
     }
@@ -169,26 +177,47 @@ struct WorkspaceRelationshipMapPanelView: View {
     HStack(spacing: 8) {
       StudioSearchField(
         text: $searchText,
-        prompt: "Search Relationship Map"
+        prompt: "Search Relationship Map",
+        accessibilityIdentifier: RelationshipMapAutomationIdentifier.searchField
       )
       .frame(minWidth: 180, idealWidth: 240, maxWidth: 280)
 
       StudioUtilityActionRowView(
         primaryAction: refreshUtilityAction,
-        secondaryActions: []
+        secondaryActions: secondaryHeaderActions
       )
     }
   }
 
   private var refreshUtilityAction: StudioUtilityActionItem {
     StudioUtilityActionItem(
-      id: "relationship-map-refresh",
+      id: RelationshipMapAutomationIdentifier.refresh,
       title: "Refresh",
       systemImage: "arrow.clockwise",
       isEnabled: workspaceStore.workspaceURL != nil && !workspaceStore.isLoadingWorkspaceRelationshipMap,
       action: {
         workspaceStore.refreshWorkspaceRelationshipMap()
         refreshFocusSessionMapIfNeeded()
+      }
+    )
+  }
+
+  private var secondaryHeaderActions: [StudioUtilityActionItem] {
+    guard layoutState.hasManualOffsets else {
+      return []
+    }
+
+    return [resetLayoutUtilityAction]
+  }
+
+  private var resetLayoutUtilityAction: StudioUtilityActionItem {
+    StudioUtilityActionItem(
+      id: RelationshipMapAutomationIdentifier.resetLayout,
+      title: "Reset Layout",
+      systemImage: "arrow.uturn.backward",
+      isEnabled: layoutState.hasManualOffsets,
+      action: {
+        layoutState.reset()
       }
     )
   }
@@ -239,6 +268,7 @@ struct WorkspaceRelationshipMapPanelView: View {
       Toggle("Focus Selected Session", isOn: $focusModeEnabled)
         .toggleStyle(.checkbox)
         .disabled(workspaceStore.snapshot.sessions.isEmpty)
+        .accessibilityIdentifier(RelationshipMapAutomationIdentifier.focusSelectedSession)
 
       Picker("Session", selection: $selectedSessionContextID) {
         Text("None")
@@ -272,7 +302,18 @@ struct WorkspaceRelationshipMapPanelView: View {
         scopeByNodeKey: scopeByNodeKey,
         highlightedNodeKey: highlightedNodeKey,
         compact: false,
-        showsSessionLane: false,
+        allowsNodeDragging: true,
+        nodeOffsetsByKey: Binding(
+          get: {
+            layoutState.nodeOffsetsByKey
+          },
+          set: { updatedOffsets in
+            layoutState = RelationshipMapLayoutState(
+              nodeOffsetsByKey: updatedOffsets
+            )
+          }
+        ),
+        showsSessionLane: true,
         showsEmptyLanes: false,
         onSelectNode: { node in
           highlightedNodeKey = node.key
@@ -422,6 +463,25 @@ struct WorkspaceRelationshipMapPanelView: View {
 
   private var workspaceIdentityToken: String? {
     workspaceStore.workspaceURL?.standardizedFileURL.path
+  }
+
+  private func nodeKeysToken(
+    for map: WorkspaceSessionMap?
+  ) -> String {
+    map?.nodes.map(\.key).sorted().joined(separator: "|") ?? ""
+  }
+
+  private func pruneLayoutOffsets(
+    in map: WorkspaceSessionMap?
+  ) {
+    guard let map else {
+      layoutState.reset()
+      return
+    }
+
+    layoutState.pruneOffsets(
+      validNodeKeys: Set(map.nodes.map(\.key))
+    )
   }
 
   private func selectedNode(
@@ -670,6 +730,8 @@ struct WorkspaceRelationshipMapPanelView: View {
       return "persona \(sourceId) lists skill \"\(missingId)\" in both allowed and forbidden sets."
     case .unauthorizedSkillId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
+    case .invalidSession(let sourceId, _, let message):
+      return "Session \(sourceId) could not be loaded: \(message)"
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
     case .missingReferenceId(let sourceType, let sourceId, let field, let missingId):
@@ -693,6 +755,8 @@ struct WorkspaceRelationshipMapPanelView: View {
       return "persona:\(sourceId)"
     case .unauthorizedSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"
+    case .invalidSession:
+      return nil
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"
     case .missingReferenceId(_, _, _, let missingID):

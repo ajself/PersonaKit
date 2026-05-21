@@ -59,9 +59,12 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     let essentialIDsByScope = loadEssentialIDsByScope(scopes: scopes)
+    let sessionLoadResult = try loadSessions(scopes: scopes)
     let graph = buildGraph(
       registry: registry,
       scopes: scopes,
+      sessions: sessionLoadResult.sessions,
+      sessionErrors: sessionLoadResult.errors,
       essentialIDs: Set(essentialIDsByScope.keys)
     )
 
@@ -88,15 +91,174 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     return parts.joined(separator: " ")
   }
 
+  private func loadSessions(
+    scopes: ScopeSet
+  ) throws -> WorkspaceRelationshipMapSessionLoadResult {
+    let sessionIDs = try SessionFileLoader.discoveredSessionIDs(scopes: scopes)
+    var errors: [ResolverError] = []
+    var sessions: [SessionFile] = []
+
+    for sessionID in sessionIDs {
+      do {
+        let session = try SessionFileLoader.load(
+          scopes: scopes,
+          sessionId: sessionID
+        )
+        sessions.append(session)
+      } catch {
+        errors.append(
+          .invalidSession(
+            sessionId: sessionID,
+            expectedPath: "Sessions/\(sessionID).session.json",
+            message: sessionLoadMessage(error)
+          )
+        )
+      }
+    }
+
+    return WorkspaceRelationshipMapSessionLoadResult(
+      errors: errors,
+      sessions: sessions
+    )
+  }
+
+  private func sessionLoadMessage(
+    _ error: Error
+  ) -> String {
+    if let sessionError = error as? SessionFileError {
+      switch sessionError {
+      case .notFound(let sessionId, let expectedPath):
+        return "Session file not found for \(sessionId). Expected \(expectedPath)."
+      case .decodeFailed(let sessionId, _):
+        return "Failed to decode session file for \(sessionId)."
+      case .idMismatch(let sessionId, let actualId, let path):
+        return "Session id mismatch in \(path). Expected \(sessionId), got \(actualId)."
+      case .invalidSessionId:
+        return "Session id is required."
+      case .invalidSessionPath(let path):
+        return "Invalid session file path: \(path)"
+      }
+    }
+
+    return "Failed to load session."
+  }
+
   private func buildGraph(
     registry: Registry,
     scopes: ScopeSet,
+    sessions: [SessionFile],
+    sessionErrors: [ResolverError],
     essentialIDs: Set<String>
   ) -> WorkspaceRelationshipMapGraph {
     var nodeStateByKey: [String: MutableMapNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
-    var errors: [ResolverError] = []
-    var errorKeys: Set<ResolverErrorKey> = []
+    var errors = sessionErrors
+    var errorKeys = Set(sessionErrors.map(ResolverErrorKey.init))
+
+    for session in sessions.sorted(by: { $0.id < $1.id }) {
+      upsertNode(
+        in: &nodeStateByKey,
+        kind: .session,
+        id: session.id,
+        displayName: session.id,
+        isMissing: false
+      )
+
+      let sessionNodeKey = makeNodeKey(kind: .session, id: session.id)
+      let personaNodeKey = makeNodeKey(kind: .persona, id: session.personaId)
+      let directiveNodeKey = makeNodeKey(kind: .directive, id: session.directiveId)
+      let persona = registry.personasById[session.personaId]
+      let directive = registry.directivesById[session.directiveId]
+
+      upsertNode(
+        in: &nodeStateByKey,
+        kind: .persona,
+        id: session.personaId,
+        displayName: persona?.name ?? session.personaId,
+        isMissing: persona == nil
+      )
+
+      edgeKeys.insert(
+        WorkspaceSessionMapEdgeKey(
+          fromKey: sessionNodeKey,
+          toKey: personaNodeKey,
+          reason: "session.personaId"
+        )
+      )
+
+      if persona == nil {
+        appendUniqueError(
+          .missingPersona(
+            field: "personaId",
+            id: session.personaId
+          ),
+          errors: &errors,
+          errorKeys: &errorKeys
+        )
+      }
+
+      upsertNode(
+        in: &nodeStateByKey,
+        kind: .directive,
+        id: session.directiveId,
+        displayName: directive?.title ?? session.directiveId,
+        isMissing: directive == nil
+      )
+
+      edgeKeys.insert(
+        WorkspaceSessionMapEdgeKey(
+          fromKey: sessionNodeKey,
+          toKey: directiveNodeKey,
+          reason: "session.directiveId"
+        )
+      )
+
+      if directive == nil {
+        appendUniqueError(
+          .missingDirective(
+            field: "directiveId",
+            id: session.directiveId
+          ),
+          errors: &errors,
+          errorKeys: &errorKeys
+        )
+      }
+
+      for kitID in uniqueSorted(session.kitOverrides ?? []) {
+        let kit = registry.kitsById[kitID]
+        let kitNodeKey = makeNodeKey(kind: .kit, id: kitID)
+
+        upsertNode(
+          in: &nodeStateByKey,
+          kind: .kit,
+          id: kitID,
+          displayName: kit?.name ?? kitID,
+          isMissing: kit == nil,
+          badge: "override"
+        )
+
+        edgeKeys.insert(
+          WorkspaceSessionMapEdgeKey(
+            fromKey: sessionNodeKey,
+            toKey: kitNodeKey,
+            reason: "session.kitOverrides"
+          )
+        )
+
+        if kit == nil {
+          appendUniqueError(
+            .missingKitId(
+              sourceType: .sessionDefinition,
+              sourceId: session.id,
+              field: "kitOverrides",
+              missingId: kitID
+            ),
+            errors: &errors,
+            errorKeys: &errorKeys
+          )
+        }
+      }
+    }
 
     for persona in registry.personas.sorted(by: { $0.id < $1.id }) {
       upsertNode(
@@ -783,6 +945,11 @@ private struct WorkspaceRelationshipMapGraph {
   let nodes: [WorkspaceSessionMapNode]
   let edges: [WorkspaceSessionMapEdge]
   let resolutionErrors: [ResolverError]
+}
+
+private struct WorkspaceRelationshipMapSessionLoadResult {
+  let errors: [ResolverError]
+  let sessions: [SessionFile]
 }
 
 private struct ResolverErrorKey: Hashable {

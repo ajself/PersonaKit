@@ -49,6 +49,23 @@ struct SessionsMapNavigationResolverTests {
   }
 
   @Test
+  func concreteSessionNodeNavigatesToItsOwnSessionID() throws {
+    let target = try #require(
+      SessionsMapNavigationResolver.navigationTarget(
+        for: makeNode(
+          id: "session-a",
+          kind: .session
+        ),
+        selectedSessionID: nil
+      )
+    )
+
+    #expect(target.sidebarItem == .sessions)
+    #expect(target.selectedSessionID == "session-a")
+    #expect(target.searchText == "")
+  }
+
+  @Test
   func referenceNodeNavigatesToReferencesLibrary() throws {
     let target = try #require(
       SessionsMapNavigationResolver.navigationTarget(
