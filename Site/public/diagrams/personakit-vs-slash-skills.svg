@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="420" viewBox="0 0 1160 420" role="img" aria-labelledby="title desc">
+  <title id="title">PersonaKit compared with slash skills</title>
+  <desc id="desc">PersonaKit is a contract layer before work; slash skills are local procedural helpers during work.</desc>
+  <rect width="1160" height="420" fill="#ffffff"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#1f2428">
+    <text x="46" y="56" font-size="31" font-weight="700">PersonaKit and slash skills solve different problems</text>
+    <g transform="translate(58 110)">
+      <rect x="0" y="0" width="480" height="244" rx="8" fill="#eef4f7" stroke="#9fb7c6" stroke-width="2"/>
+      <text x="28" y="44" font-size="24" font-weight="700">PersonaKit</text>
+      <text x="28" y="82" font-size="18">Before work starts</text>
+      <line x1="28" y1="100" x2="452" y2="100" stroke="#c8d5dd"/>
+      <text x="28" y="135" font-size="17">Resolves role, rules, stop points, and authorized capabilities.</text>
+      <text x="28" y="175" font-size="17">Portable across CLI, MCP, and Studio contexts.</text>
+      <text x="28" y="215" font-size="17">Best question: is this in bounds?</text>
+    </g>
+    <g transform="translate(622 110)">
+      <rect x="0" y="0" width="480" height="244" rx="8" fill="#fff4df" stroke="#d4b36f" stroke-width="2"/>
+      <text x="28" y="44" font-size="24" font-weight="700">Slash Skills</text>
+      <text x="28" y="82" font-size="18">During work</text>
+      <line x1="28" y1="100" x2="452" y2="100" stroke="#dfcca6"/>
+      <text x="28" y="135" font-size="17">Invoke host-specific helpers, prompts, or procedures.</text>
+      <text x="28" y="175" font-size="17">Useful but tied to one assistant, editor, or runtime.</text>
+      <text x="28" y="215" font-size="17">Best question: how do I perform this action?</text>
+    </g>
+  </g>
+</svg>
+

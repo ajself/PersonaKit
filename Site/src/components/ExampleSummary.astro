@@ -1,0 +1,48 @@
+---
+interface Props {
+  authorizedSkills: string[];
+  directive: string;
+  forbiddenSkills: string[];
+  kits: string[];
+  persona: string;
+}
+
+const {
+  authorizedSkills,
+  directive,
+  forbiddenSkills,
+  kits,
+  persona,
+} = Astro.props;
+---
+
+<table>
+  <tbody>
+    <tr>
+      <th>Persona</th>
+      <td>{persona}</td>
+    </tr>
+    <tr>
+      <th>Directive</th>
+      <td>{directive}</td>
+    </tr>
+    <tr>
+      <th>Kits</th>
+      <td>{kits.join(", ")}</td>
+    </tr>
+    <tr>
+      <th>Authorized Skills</th>
+      <td>{authorizedSkills.join(", ")}</td>
+    </tr>
+    <tr>
+      <th>Forbidden Skills</th>
+      <td>{forbiddenSkills.join(", ")}</td>
+    </tr>
+  </tbody>
+</table>
+
+<style>
+  th {
+    width: 190px;
+  }
+</style>

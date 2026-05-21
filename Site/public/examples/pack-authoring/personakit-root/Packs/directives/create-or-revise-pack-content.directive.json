@@ -1,0 +1,45 @@
+{
+  "id": "create-or-revise-pack-content",
+  "version": "1.0",
+  "title": "Create or revise compact pack content",
+  "goal": "Create or revise one bounded piece of PersonaKit content without expanding product scope or bloating recurring context.",
+  "steps": [
+    {
+      "text": "Inspect the existing PersonaKit root before proposing new content."
+    },
+    {
+      "text": "Classify the request as persona, directive, kit, essential, skill, intent, reference, or session."
+    },
+    {
+      "text": "Ask only high-impact shaping questions when the target entity or boundary is unclear.",
+      "requiresReview": true
+    },
+    {
+      "text": "Dry-run the appropriate personakit create command before writing."
+    },
+    {
+      "text": "Write only the approved compact content."
+    },
+    {
+      "text": "Validate the root and report the result."
+    }
+  ],
+  "acceptanceCriteria": [
+    "The created or revised content has one clear purpose",
+    "Existing entities are reused when they fit",
+    "Dry-run output is inspected before writing",
+    "Essentials remain compact unless long-form policy is explicitly requested",
+    "PersonaKit V1 product scope is not expanded",
+    "Validation succeeds after authoring"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "personakit validate --root .personakit"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "personakit-create"
+  ]
+}

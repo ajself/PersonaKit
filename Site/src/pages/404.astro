@@ -1,0 +1,16 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+---
+
+<ContentLayout
+  title="Page Not Found"
+  eyebrow="404"
+  description="That page is not part of the PersonaKit runbook site."
+>
+  <p>Try the home page or the decision guide.</p>
+  <p>
+    <a class="button-link" href={sitePath()}>Home</a>
+    <a class="button-link" href={sitePath("decision-guide/")}>Decision Guide</a>
+  </p>
+</ContentLayout>

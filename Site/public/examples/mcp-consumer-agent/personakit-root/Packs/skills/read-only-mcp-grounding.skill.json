@@ -1,0 +1,20 @@
+{
+  "id": "read-only-mcp-grounding",
+  "version": "1.0",
+  "name": "Read-Only MCP Grounding",
+  "description": "Use PersonaKit MCP resources and context tools to inspect and resolve operating contracts.",
+  "providedBy": [
+    "personakit-mcp"
+  ],
+  "risk": {
+    "level": "low",
+    "requiresHumanReview": false,
+    "notes": [
+      "PersonaKit MCP is a read-only grounding surface."
+    ]
+  },
+  "notes": [
+    "This skill does not authorize file mutation, shell execution, or tool orchestration."
+  ]
+}
+

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="430" viewBox="0 0 1160 430" role="img" aria-labelledby="title desc">
+  <title id="title">PersonaKit operating contract flow</title>
+  <desc id="desc">Persona, kits, directive, essentials, and skill authorization resolve into an operating contract for an agent.</desc>
+  <rect width="1160" height="430" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#4c5964"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" fill="#1f2428">
+    <text x="42" y="54" font-size="31" font-weight="700">PersonaKit resolves the contract before the agent works</text>
+    <g transform="translate(44 100)">
+      <rect x="0" y="0" width="170" height="82" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
+      <text x="20" y="34" font-weight="700">Persona</text>
+      <text x="20" y="60" font-size="14" fill="#606a73">who acts</text>
+    </g>
+    <g transform="translate(44 202)">
+      <rect x="0" y="0" width="170" height="82" rx="8" fill="#edf7ef" stroke="#9bc3a8"/>
+      <text x="20" y="34" font-weight="700">Kits</text>
+      <text x="20" y="60" font-size="14" fill="#606a73">how work happens</text>
+    </g>
+    <g transform="translate(44 304)">
+      <rect x="0" y="0" width="170" height="82" rx="8" fill="#fff4df" stroke="#d4b36f"/>
+      <text x="20" y="34" font-weight="700">Directive</text>
+      <text x="20" y="60" font-size="14" fill="#606a73">what work mode</text>
+    </g>
+    <g transform="translate(302 152)">
+      <rect x="0" y="0" width="190" height="82" rx="8" fill="#f3f0f7" stroke="#b7a7c8"/>
+      <text x="20" y="34" font-weight="700">Essentials</text>
+      <text x="20" y="60" font-size="14" fill="#606a73">always included</text>
+    </g>
+    <g transform="translate(302 254)">
+      <rect x="0" y="0" width="190" height="82" rx="8" fill="#f7eeee" stroke="#d19a9a"/>
+      <text x="20" y="34" font-weight="700">Skill Auth</text>
+      <text x="20" y="60" font-size="14" fill="#606a73">capability boundary</text>
+    </g>
+    <path d="M214 141 C252 142 259 164 302 183" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M214 243 C250 241 260 222 302 202" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M214 345 C260 341 264 302 302 295" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M492 193 C555 192 578 206 638 214" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M492 295 C552 293 581 251 638 239" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <g transform="translate(638 150)">
+      <rect x="0" y="0" width="230" height="150" rx="8" fill="#f5f7fa" stroke="#aeb8c2" stroke-width="2"/>
+      <text x="24" y="38" font-size="22" font-weight="700">Operating Contract</text>
+      <text x="24" y="72" font-size="15" fill="#606a73">deterministic</text>
+      <text x="24" y="98" font-size="15" fill="#606a73">inspectable</text>
+      <text x="24" y="124" font-size="15" fill="#606a73">bounded</text>
+    </g>
+    <path d="M868 225 L990 225" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <g transform="translate(990 162)">
+      <rect x="0" y="0" width="130" height="126" rx="8" fill="#eef1f4" stroke="#aeb8c2"/>
+      <text x="22" y="42" font-weight="700">Agent</text>
+      <text x="22" y="72" font-size="14" fill="#606a73">does the</text>
+      <text x="22" y="94" font-size="14" fill="#606a73">actual work</text>
+    </g>
+  </g>
+</svg>
+

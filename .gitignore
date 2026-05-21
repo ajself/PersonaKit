@@ -83,3 +83,8 @@ Artifacts/
 .appops/
 .codex/
 Config/Release.local.mk
+
+### Astro site ###
+Site/.astro/
+Site/dist/
+Site/node_modules/

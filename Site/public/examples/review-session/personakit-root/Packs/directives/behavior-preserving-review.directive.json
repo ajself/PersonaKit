@@ -1,0 +1,38 @@
+{
+  "id": "behavior-preserving-review",
+  "version": "1.0",
+  "title": "Review for behavior preservation",
+  "goal": "Review a proposed change for behavioral risk, missing verification, and scope expansion without making edits.",
+  "steps": [
+    {
+      "text": "Read the active review contract."
+    },
+    {
+      "text": "Inspect the proposed change or supplied diff."
+    },
+    {
+      "text": "List findings first, ordered by severity and grounded in evidence."
+    },
+    {
+      "text": "Stop and request an implementation session if a fix is required.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Findings are specific and evidence-based",
+    "Behavioral risk is separated from style preference",
+    "Missing verification is called out",
+    "No code edits are performed"
+  ],
+  "verification": [
+    {
+      "kind": "manual-review",
+      "text": "Confirm findings map to the supplied diff or artifact."
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "read-only-review"
+  ]
+}
+

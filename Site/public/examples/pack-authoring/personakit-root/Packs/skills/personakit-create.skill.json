@@ -1,0 +1,19 @@
+{
+  "id": "personakit-create",
+  "version": "1.0",
+  "name": "PersonaKit Create",
+  "description": "Use personakit create commands to dry-run and author PersonaKit entities.",
+  "providedBy": [
+    "personakit-cli"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Dry-run output should be inspected before files are written."
+    ]
+  },
+  "notes": [
+    "This skill authorizes bounded PersonaKit entity authoring, not autonomous product design."
+  ]
+}

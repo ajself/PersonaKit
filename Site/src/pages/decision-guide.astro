@@ -1,0 +1,106 @@
+---
+import Callout from "../components/Callout.astro";
+import DiagramPanel from "../components/DiagramPanel.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+---
+
+<ContentLayout
+  title="Decision Guide"
+  eyebrow="Use or skip"
+  description="Decide whether a workflow should use PersonaKit, a slash skill, direct chat, CI/CD, or another tool."
+>
+  <DiagramPanel
+    src={sitePath("diagrams/decision-tree.svg")}
+    alt="Decision tree for whether a workflow should use PersonaKit."
+  />
+
+  <h2>Use PersonaKit When</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Signal</th>
+        <th>Why It Matters</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>The task pattern repeats</td>
+        <td>A session saves repeated setup.</td>
+      </tr>
+      <tr>
+        <td>Role matters</td>
+        <td>Personas define responsibilities, values, and non-goals.</td>
+      </tr>
+      <tr>
+        <td>The work needs durable rules</td>
+        <td>Essentials and kits keep constraints out of chat memory.</td>
+      </tr>
+      <tr>
+        <td>Capability boundaries matter</td>
+        <td>Skills make allowed and forbidden capabilities visible.</td>
+      </tr>
+      <tr>
+        <td>Stop points matter</td>
+        <td>Directives can say when the agent must stop for review.</td>
+      </tr>
+      <tr>
+        <td>Reusable pack authoring</td>
+        <td>A session can keep entity creation compact, dry-run first, and validated.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Skip PersonaKit When</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Workflow</th>
+        <th>Better Fit</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Open-ended ideation</td>
+        <td>Chat, notes, design doc</td>
+        <td>The boundary is not known yet.</td>
+      </tr>
+      <tr>
+        <td>Ticket tracking</td>
+        <td>Issue tracker</td>
+        <td>PersonaKit sessions are not mutable tasks.</td>
+      </tr>
+      <tr>
+        <td>CI or deployment</td>
+        <td>CI/CD system</td>
+        <td>PersonaKit is not an execution platform.</td>
+      </tr>
+      <tr>
+        <td>Formatter invocation</td>
+        <td>Editor command or slash skill</td>
+        <td>No durable operating contract is needed.</td>
+      </tr>
+      <tr>
+        <td>Long-running agent loop</td>
+        <td>Dedicated orchestration system</td>
+        <td>V1 excludes memory, persistence, and multi-agent control.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout>
+    <p>Use a slash skill when you need a local helper. Use PersonaKit when you need to decide whether that helper is authorized in the active work mode.</p>
+  </Callout>
+
+  <h2>Adoption Pattern</h2>
+  <ol>
+    <li>Pick one repeated work mode.</li>
+    <li>Write one persona.</li>
+    <li>Write one directive.</li>
+    <li>Add one kit with the rules that shape the work.</li>
+    <li>Declare only the skills that matter to the boundary.</li>
+    <li>Create one session.</li>
+    <li>Validate, export, and dry-run.</li>
+  </ol>
+</ContentLayout>

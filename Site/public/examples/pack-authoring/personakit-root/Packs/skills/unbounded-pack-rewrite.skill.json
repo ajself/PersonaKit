@@ -1,0 +1,19 @@
+{
+  "id": "unbounded-pack-rewrite",
+  "version": "1.0",
+  "name": "Unbounded Pack Rewrite",
+  "description": "Rewrite broad PersonaKit pack content without a narrow requested target.",
+  "providedBy": [
+    "external-agent"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Broad rewrites create review risk and recurring context bloat."
+    ]
+  },
+  "notes": [
+    "Included as a forbidden skill example."
+  ]
+}

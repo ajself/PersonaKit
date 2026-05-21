@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="560" viewBox="0 0 1160 560" role="img" aria-labelledby="title desc">
+  <title id="title">PersonaKit decision tree</title>
+  <desc id="desc">A decision tree for whether a workflow should use PersonaKit.</desc>
+  <rect width="1160" height="560" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#4c5964"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#1f2428">
+    <text x="44" y="56" font-size="31" font-weight="700">Should this workflow use PersonaKit?</text>
+    <g transform="translate(425 96)">
+      <rect width="310" height="76" rx="8" fill="#eef4f7" stroke="#9fb7c6" stroke-width="2"/>
+      <text x="24" y="33" font-size="18" font-weight="700">Is this a repeated AI work mode?</text>
+      <text x="24" y="57" font-size="14" fill="#606a73">A reusable session should pay for itself.</text>
+    </g>
+    <path d="M425 134 L245 210" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M735 134 L915 210" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <g transform="translate(80 210)">
+      <rect width="330" height="86" rx="8" fill="#f7eeee" stroke="#d19a9a" stroke-width="2"/>
+      <text x="24" y="36" font-size="18" font-weight="700" fill="#a13b3b">No: use a lighter tool</text>
+      <text x="24" y="62" font-size="15" fill="#606a73">Direct chat, slash skill, script, or notes.</text>
+    </g>
+    <g transform="translate(750 210)">
+      <rect width="330" height="86" rx="8" fill="#edf7ef" stroke="#8cb99d" stroke-width="2"/>
+      <text x="24" y="36" font-size="18" font-weight="700" fill="#2f7d4c">Yes: continue</text>
+      <text x="24" y="62" font-size="15" fill="#606a73">Now check role and boundaries.</text>
+    </g>
+    <path d="M915 296 L735 352" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <g transform="translate(425 344)">
+      <rect width="310" height="76" rx="8" fill="#fff4df" stroke="#d4b36f" stroke-width="2"/>
+      <text x="24" y="33" font-size="18" font-weight="700">Do role or capabilities matter?</text>
+      <text x="24" y="57" font-size="14" fill="#606a73">Persona and skills should change outcomes.</text>
+    </g>
+    <path d="M425 382 L245 458" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <path d="M735 382 L915 458" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+    <g transform="translate(80 458)">
+      <rect width="330" height="76" rx="8" fill="#fff4df" stroke="#d4b36f" stroke-width="2"/>
+      <text x="24" y="32" font-size="18" font-weight="700" fill="#9b6a16">Maybe: use a prompt template</text>
+      <text x="24" y="56" font-size="15" fill="#606a73">PersonaKit may be more structure than needed.</text>
+    </g>
+    <g transform="translate(750 458)">
+      <rect width="330" height="76" rx="8" fill="#edf7ef" stroke="#8cb99d" stroke-width="2"/>
+      <text x="24" y="32" font-size="18" font-weight="700" fill="#2f7d4c">Yes: use PersonaKit</text>
+      <text x="24" y="56" font-size="15" fill="#606a73">Resolve, inspect, then let the agent work.</text>
+    </g>
+  </g>
+</svg>
+

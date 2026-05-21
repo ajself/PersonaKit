@@ -1,0 +1,41 @@
+{
+  "id": "resolve-before-tools",
+  "version": "1.0",
+  "title": "Resolve PersonaKit before tool selection",
+  "goal": "Use PersonaKit MCP to resolve the active contract before choosing any host-local skills or tools.",
+  "steps": [
+    {
+      "text": "Read the PersonaKit catalog start resource."
+    },
+    {
+      "text": "Resolve or recommend the correct session."
+    },
+    {
+      "text": "Resolve the contract and verify requested skills against authorization."
+    },
+    {
+      "text": "Trace the session when provenance matters."
+    },
+    {
+      "text": "Stop for review if any required skill is unauthorized or undeclared.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Contract resolution happens before host-local tool selection",
+    "MCP is treated as read-only context",
+    "Unauthorized capability needs cause a stop",
+    "The final answer names the resolved session and relevant constraints"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "personakit validate --root .personakit"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "read-only-mcp-grounding"
+  ]
+}
+

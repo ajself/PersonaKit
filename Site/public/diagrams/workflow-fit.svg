@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="470" viewBox="0 0 1160 470" role="img" aria-labelledby="title desc">
+  <title id="title">PersonaKit workflow fit chart</title>
+  <desc id="desc">A chart showing high-fit, conditional-fit, and poor-fit PersonaKit workflows.</desc>
+  <rect width="1160" height="470" fill="#ffffff"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#1f2428">
+    <text x="46" y="58" font-size="31" font-weight="700">Workflow fit</text>
+    <text x="46" y="88" font-size="17" fill="#606a73">The more repeatable the boundary, the more PersonaKit helps.</text>
+    <g transform="translate(58 135)">
+      <rect x="0" y="0" width="320" height="250" rx="8" fill="#edf7ef" stroke="#8cb99d" stroke-width="2"/>
+      <text x="24" y="42" font-size="23" font-weight="700" fill="#2f7d4c">High fit</text>
+      <text x="24" y="82" font-size="16">Repeated AI work modes</text>
+      <text x="24" y="116" font-size="16">Explicit role boundaries</text>
+      <text x="24" y="150" font-size="16">Authorized capability gates</text>
+      <text x="24" y="184" font-size="16">Human review stop points</text>
+      <text x="24" y="218" font-size="16">Dry-run payload inspection</text>
+    </g>
+    <g transform="translate(420 135)">
+      <rect x="0" y="0" width="320" height="250" rx="8" fill="#fff4df" stroke="#d4b36f" stroke-width="2"/>
+      <text x="24" y="42" font-size="23" font-weight="700" fill="#9b6a16">Conditional</text>
+      <text x="24" y="82" font-size="16">Exploration becoming scoped</text>
+      <text x="24" y="116" font-size="16">Occasional external agent launch</text>
+      <text x="24" y="150" font-size="16">One-off review that may repeat</text>
+      <text x="24" y="184" font-size="16">Shared standards still forming</text>
+      <text x="24" y="218" font-size="16">Use when a stable session emerges</text>
+    </g>
+    <g transform="translate(782 135)">
+      <rect x="0" y="0" width="320" height="250" rx="8" fill="#f7eeee" stroke="#d19a9a" stroke-width="2"/>
+      <text x="24" y="42" font-size="23" font-weight="700" fill="#a13b3b">Poor fit</text>
+      <text x="24" y="82" font-size="16">CI/CD execution</text>
+      <text x="24" y="116" font-size="16">Task tracking or memory</text>
+      <text x="24" y="150" font-size="16">Multi-agent orchestration</text>
+      <text x="24" y="184" font-size="16">Secret retrieval</text>
+      <text x="24" y="218" font-size="16">One-off helper commands</text>
+    </g>
+  </g>
+</svg>
+

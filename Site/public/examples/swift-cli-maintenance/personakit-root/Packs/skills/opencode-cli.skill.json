@@ -1,0 +1,20 @@
+{
+  "id": "opencode-cli",
+  "version": "1.0",
+  "name": "OpenCode CLI",
+  "description": "Use the local OpenCode CLI outside PersonaKit after PersonaKit resolves the operating contract.",
+  "providedBy": [
+    "opencode"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "PersonaKit resolves context; OpenCode performs the requested work."
+    ]
+  },
+  "notes": [
+    "This skill authorizes one bounded adapter capability, not a general agent loop."
+  ]
+}
+
