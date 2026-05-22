@@ -177,6 +177,50 @@ struct WorkspaceRelationshipMapBuilderTests {
   }
 
   @Test
+  func relationshipMapReportsEssentialsDirectoryReadFailures() throws {
+    let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
+    let essentialsURL = projectScopeURL.appendingPathComponent("Packs/essentials")
+    let dependencies = WorkspaceRelationshipMapBuilderDependencies(
+      directoryExists: { url in
+        var isDirectory: ObjCBool = false
+
+        return FileManager.default.fileExists(atPath: url.path(), isDirectory: &isDirectory)
+          && isDirectory.boolValue
+      },
+      contentsOfDirectory: { url in
+        if url.standardizedFileURL == essentialsURL.standardizedFileURL {
+          throw NSError(
+            domain: "WorkspaceRelationshipMapBuilderTests",
+            code: 1
+          )
+        }
+
+        return try FileManager.default.contentsOfDirectory(
+          at: url,
+          includingPropertiesForKeys: nil,
+          options: [.skipsHiddenFiles]
+        )
+      },
+      defaultGlobalScopeURL: { nil },
+      fileExists: { url in
+        FileManager.default.fileExists(atPath: url.path())
+      }
+    )
+    let builder = WorkspaceRelationshipMapBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: workspaceURL)
+      Issue.record("Expected relationship map build to throw.")
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message.contains("Failed to read directory"))
+      #expect(error.message.contains("Packs/essentials"))
+    }
+  }
+
+  @Test
   func relationshipMapTreatsBuiltInEssentialReferencesAsResolved() throws {
     let (workspaceURL, projectScopeURL) = try makeWorkspaceWithProjectFixture()
     let kitURL = projectScopeURL.appendingPathComponent("Packs/kits/swift-style.kit.json")

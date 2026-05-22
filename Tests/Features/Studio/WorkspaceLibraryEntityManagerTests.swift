@@ -100,6 +100,31 @@ struct WorkspaceLibraryEntityManagerTests {
   }
 
   @Test
+  func destinationFileURLRejectsUnsafeItemID() throws {
+    let manager = WorkspaceLibraryEntityManager(
+      schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),
+      dependencies: .live()
+    )
+    let workspaceURL = try makeTempDirectory()
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    try FileManager.default.createDirectory(
+      at: packsURL,
+      withIntermediateDirectories: true
+    )
+
+    do {
+      _ = try manager.destinationFileURL(
+        workspaceURL: workspaceURL,
+        itemID: "../persona-a",
+        entityType: .persona
+      )
+      Issue.record("Expected destinationFileURL to throw.")
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message.contains("is not valid"))
+    }
+  }
+
+  @Test
   func copyGlobalItemToProjectWritesProjectFile() throws {
     let workspaceURL = try makeTempDirectory()
     let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")

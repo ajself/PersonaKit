@@ -58,7 +58,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       )
     }
 
-    let essentialIDsByScope = loadEssentialIDsByScope(scopes: scopes)
+    let essentialIDsByScope = try loadEssentialIDsByScope(scopes: scopes)
     let sessionLoadResult = try loadSessions(scopes: scopes)
     let graph = buildGraph(
       registry: registry,
@@ -786,7 +786,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     )
   }
 
-  private func loadEssentialIDsByScope(scopes: ScopeSet) -> [String: URL] {
+  private func loadEssentialIDsByScope(scopes: ScopeSet) throws -> [String: URL] {
     var urlsByEssentialID: [String: URL] = [:]
 
     for root in scopes.loadOrder {
@@ -801,7 +801,10 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       do {
         files = try dependencies.contentsOfDirectory(essentialsDirectoryURL)
       } catch {
-        continue
+        throw WorkspaceSnapshotBuildError(
+          message:
+            "Failed to read directory \(essentialsDirectoryURL.path()): \(error.localizedDescription)"
+        )
       }
 
       for fileURL in files.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
