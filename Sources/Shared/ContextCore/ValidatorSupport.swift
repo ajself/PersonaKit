@@ -7,6 +7,11 @@ struct ValidatorBootstrapResult {
   let hasSchemaErrors: Bool
 }
 
+private struct ValidatorFileIDList {
+  let ids: [String]
+  let errors: [ValidationError]
+}
+
 enum ValidatorBootstrap {
   static func prepare(
     scopes: ScopeSet,
@@ -33,9 +38,15 @@ enum ValidatorBootstrap {
       )
     }
 
+    let essentials = ValidatorSupport.listEssentialIds(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+    errors.append(contentsOf: essentials.errors)
+
     return ValidatorBootstrapResult(
       registry: registry,
-      essentialIds: ValidatorSupport.listEssentialIds(scopes: scopes, fileManager: fileManager),
+      essentialIds: essentials.ids,
       errors: errors,
       hasSchemaErrors: !schemaErrors.isEmpty
     )
@@ -178,64 +189,131 @@ enum ValidatorSupport {
     }
   }
 
-  static func listEssentialIds(
+  fileprivate static func listEssentialIds(
     scopes: ScopeSet,
     fileManager: FileManager
-  ) -> [String] {
+  ) -> ValidatorFileIDList {
     var ids: Set<String> = []
+    var errors: [ValidationError] = []
 
     for root in scopes.loadOrder {
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       var isDirectory: ObjCBool = false
 
-      guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+      let essentialsExists = fileManager.fileExists(
+        atPath: essentialsURL.path,
+        isDirectory: &isDirectory
+      )
+
+      guard essentialsExists else {
         continue
       }
 
-      if let files = try? fileManager.contentsOfDirectory(
-        at: essentialsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      ) {
+      guard isDirectory.boolValue else {
+        errors.append(
+          directoryValidationError(
+            entityType: .essentials,
+            relativePath: "Packs/essentials",
+            message: "Expected directory."
+          )
+        )
+
+        continue
+      }
+
+      do {
+        let files = try fileManager.contentsOfDirectory(
+          at: essentialsURL,
+          includingPropertiesForKeys: nil,
+          options: [.skipsHiddenFiles]
+        )
+
         for file in files where file.pathExtension == "md" {
           ids.insert(file.deletingPathExtension().lastPathComponent)
         }
+      } catch {
+        errors.append(
+          directoryValidationError(
+            entityType: .essentials,
+            relativePath: "Packs/essentials",
+            message: "Failed to read directory: \(error.localizedDescription)"
+          )
+        )
       }
     }
 
-    return ids.sorted()
+    return ValidatorFileIDList(ids: ids.sorted(), errors: errors)
   }
 
-  static func listReferenceIds(
+  fileprivate static func listReferenceIds(
     scopes: ScopeSet,
     fileManager: FileManager
-  ) -> [String] {
+  ) -> ValidatorFileIDList {
     var ids: Set<String> = []
+    var errors: [ValidationError] = []
 
     for root in scopes.loadOrder {
       let referencesURL = PersonaKitDirectory.referencesURL(root: root)
       var isDirectory: ObjCBool = false
 
-      guard fileManager.fileExists(atPath: referencesURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+      let referencesExists = fileManager.fileExists(
+        atPath: referencesURL.path,
+        isDirectory: &isDirectory
+      )
+
+      guard referencesExists else {
         continue
       }
 
-      if let files = try? fileManager.contentsOfDirectory(
-        at: referencesURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      ) {
+      guard isDirectory.boolValue else {
+        errors.append(
+          directoryValidationError(
+            entityType: .reference,
+            relativePath: "Packs/references",
+            message: "Expected directory."
+          )
+        )
+
+        continue
+      }
+
+      do {
+        let files = try fileManager.contentsOfDirectory(
+          at: referencesURL,
+          includingPropertiesForKeys: nil,
+          options: [.skipsHiddenFiles]
+        )
+
         for file in files where file.lastPathComponent.hasSuffix(".reference.json") {
           let fileName = file.deletingPathExtension().lastPathComponent
           ids.insert((fileName as NSString).deletingPathExtension)
         }
+      } catch {
+        errors.append(
+          directoryValidationError(
+            entityType: .reference,
+            relativePath: "Packs/references",
+            message: "Failed to read directory: \(error.localizedDescription)"
+          )
+        )
       }
     }
 
-    return ids.sorted()
+    return ValidatorFileIDList(ids: ids.sorted(), errors: errors)
+  }
+
+  private static func directoryValidationError(
+    entityType: ValidationEntityType,
+    relativePath: String,
+    message: String
+  ) -> ValidationError {
+    ValidationError(
+      entityType: entityType,
+      entityId: nil,
+      field: "file",
+      missingId: nil,
+      expectedPath: relativePath,
+      message: message
+    )
   }
 }

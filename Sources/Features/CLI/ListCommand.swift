@@ -94,17 +94,31 @@ struct ListCommand {
     for root in scopes.loadOrder {
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       var isDirectory: ObjCBool = false
-      guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+
+      let essentialsExists = fileManager.fileExists(
+        atPath: essentialsURL.path,
+        isDirectory: &isDirectory
+      )
+
+      guard essentialsExists else {
         continue
       }
 
-      let files = try fileManager.contentsOfDirectory(
-        at: essentialsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
+      guard isDirectory.boolValue else {
+        throw CLIError.failure("Essentials path is not a directory: \(essentialsURL.path)")
+      }
+
+      let files: [URL]
+      do {
+        files = try fileManager.contentsOfDirectory(
+          at: essentialsURL,
+          includingPropertiesForKeys: nil,
+          options: [.skipsHiddenFiles]
+        )
+      } catch {
+        throw CLIError.failure("Failed to read essentials directory: \(error.localizedDescription)")
+      }
+
       for file in files where file.pathExtension == "md" {
         ids.insert(file.deletingPathExtension().lastPathComponent)
       }

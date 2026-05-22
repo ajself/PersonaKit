@@ -47,6 +47,32 @@ struct CLICreateCommandTests {
   }
 
   @Test
+  func createPersonaJSONFailurePreservesValidationMessage() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "persona",
+        "--root",
+        root.path,
+        "--json",
+      ])
+    }
+
+    #expect(status == 1)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let error = try #require(object["error"] as? String)
+
+    #expect(error.contains("Missing required fields: --id/--name, --name, --summary."))
+    #expect(!error.contains("ArgumentParser.ValidationError error"))
+  }
+
+  @Test
   func createPersonaInteractivePromptsAndWritesFile() throws {
     let root = try makeWritableFixtureRoot()
     let interactiveIO = makeInteractiveIO(
