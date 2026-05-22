@@ -2,6 +2,12 @@ import ContextCore
 import Foundation
 import MCP
 
+struct MCPResolvedSessionInput {
+  let personaId: String
+  let directiveId: String
+  let kitOverrides: [String]
+}
+
 enum MCPInternalSupport {
   static func parameterConstraintSummary(_ constraint: IntentTemplate.ParameterConstraint) -> String {
     "\(constraint.kind):" + constraint.parameterNames.joined(separator: ",")
@@ -107,6 +113,47 @@ enum MCPInternalSupport {
       kitOverrides: kitOverrides
     )
     return output + "\n"
+  }
+
+  static func resolveSessionInput(
+    scopes: ScopeSet,
+    selection: MCPSessionSelection
+  ) throws -> MCPResolvedSessionInput {
+    if let sessionId = selection.sessionId {
+      do {
+        let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
+
+        return MCPResolvedSessionInput(
+          personaId: session.personaId,
+          directiveId: session.directiveId,
+          kitOverrides: session.kitOverrides ?? []
+        )
+      } catch let error as SessionFileError {
+        throw MCPError.invalidParams(
+          withRecoveryHint(
+            error.localizedDescription,
+            hint: "Read personakit://catalog/sessions to list valid ids, then retry with one session id."
+          )
+        )
+      }
+    }
+
+    guard let personaId = selection.personaId,
+      let directiveId = selection.directiveId
+    else {
+      throw MCPError.invalidParams(
+        withRecoveryHint(
+          "Missing required session selection arguments.",
+          hint: "Provide sessionId, or personaId and directiveId with optional kits."
+        )
+      )
+    }
+
+    return MCPResolvedSessionInput(
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: selection.kitOverrides
+    )
   }
 
   static func formatExportError(_ error: ExportError) -> String {

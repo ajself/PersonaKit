@@ -76,6 +76,54 @@ struct MCPCatalogResourceTests {
   }
 
   @Test
+  func listResourcesRejectsEssentialPathWhenItIsAFile() throws {
+    let root = try makeRootWithPackFile(relativePath: "essentials")
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    do {
+      _ = try service.listResources()
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("Packs/essentials"))
+      #expect(message.contains("not a directory"))
+    }
+  }
+
+  @Test
+  func catalogEssentialsRejectsEssentialPathWhenItIsAFile() throws {
+    let root = try makeRootWithPackFile(relativePath: "essentials")
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    do {
+      _ = try service.readCatalogResource(type: .essentials)
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("Packs/essentials"))
+      #expect(message.contains("not a directory"))
+    }
+  }
+
+  @Test
+  func catalogIndexRejectsEssentialPathWhenItIsAFile() throws {
+    let root = try makeRootWithPackFile(relativePath: "essentials")
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    do {
+      _ = try service.readCatalogResource(type: .index)
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("Packs/essentials"))
+      #expect(message.contains("not a directory"))
+    }
+  }
+
+  @Test
   func listedPackResourceReadsWhenFilenameDiffersFromEntityId() throws {
     let root = try makeTempDirectory().appendingPathComponent(".personakit")
     try copyFixtureKit(to: root)
@@ -164,6 +212,54 @@ struct MCPCatalogResourceTests {
     #expect(first["id"] as? String == "senior-swiftui-engineer_apply-style")
     #expect(first["personaId"] as? String == "senior-swiftui-engineer")
     #expect(first["directiveId"] as? String == "apply-style")
+  }
+
+  @Test
+  func catalogSessionsRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeRootWithSessionsFile()
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    do {
+      _ = try service.readCatalogResource(type: .sessions)
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("Session discovery path is not a directory: Sessions."))
+    }
+  }
+
+  @Test
+  func catalogIndexRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeRootWithSessionsFile()
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    do {
+      _ = try service.readCatalogResource(type: .index)
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("Session discovery path is not a directory: Sessions."))
+    }
+  }
+
+  @Test
+  func catalogSessionsAllowsMissingSessionsDirectory() throws {
+    let root = try makeTempDirectory().appendingPathComponent(".personakit")
+    try FileManager.default.createDirectory(
+      at: root.appendingPathComponent("Packs"),
+      withIntermediateDirectories: true
+    )
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
+
+    let text = try service.readCatalogResource(type: .sessions)
+    let data = try #require(text.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let sessions = try #require(object["sessions"] as? [[String: Any]])
+
+    #expect(sessions.isEmpty)
   }
 
   @Test
@@ -352,6 +448,37 @@ private func emptyRegistry() -> Registry {
     referencesById: [:],
     skillsById: [:]
   )
+}
+
+private func makeRootWithPackFile(relativePath: String) throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent(".personakit")
+  let packsURL = root.appendingPathComponent("Packs")
+
+  try FileManager.default.createDirectory(
+    at: packsURL,
+    withIntermediateDirectories: true
+  )
+  try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent(relativePath))
+
+  return root
+}
+
+private func makeRootWithSessionsFile() throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent(".personakit")
+
+  try FileManager.default.createDirectory(
+    at: root.appendingPathComponent("Packs"),
+    withIntermediateDirectories: true
+  )
+  try Data("not a directory".utf8).write(to: root.appendingPathComponent("Sessions"))
+
+  return root
+}
+
+private func errorMessage(_ error: any Error) -> String {
+  let localized = (error as NSError).localizedDescription
+
+  return localized.isEmpty ? String(describing: error) : localized
 }
 
 private func mutateJSONFile<T: Codable>(

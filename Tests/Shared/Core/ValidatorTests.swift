@@ -480,6 +480,30 @@ struct ValidatorTests {
   }
 
   @Test
+  func validateRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    let sessionsURL = root.appendingPathComponent("Sessions")
+    try FileManager.default.removeItem(at: sessionsURL)
+    try Data("not a directory".utf8).write(to: sessionsURL)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .session,
+          entityId: nil,
+          field: "sessionFile",
+          missingId: nil,
+          expectedPath: "Sessions",
+          message: "Session discovery path is not a directory: Sessions."
+        )
+      )
+    )
+  }
+
+  @Test
   func validateIntentParameterConstraintRequiresMultipleParameters() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)

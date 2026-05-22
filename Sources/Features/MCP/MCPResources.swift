@@ -463,10 +463,17 @@ enum MCPResourceFileSupport {
     for root in scopes.loadOrder {
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       var isDirectory: ObjCBool = false
-      guard fileManager.fileExists(atPath: essentialsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+      let essentialsExists = fileManager.fileExists(
+        atPath: essentialsURL.path,
+        isDirectory: &isDirectory
+      )
+
+      guard essentialsExists else {
         continue
+      }
+
+      guard isDirectory.boolValue else {
+        throw MCPError.internalError("Packs/essentials is not a directory.")
       }
 
       let files: [URL]
@@ -477,7 +484,15 @@ enum MCPResourceFileSupport {
           options: [.skipsHiddenFiles]
         )
       } catch {
-        throw MCPError.internalError("Failed to read Packs/essentials directory.")
+        let message = fileSystemErrorMessage(
+          error,
+          relativePath: "Packs/essentials",
+          absolutePath: essentialsURL.path,
+          rootPath: root.path
+        )
+        throw MCPError.internalError(
+          "Failed to read Packs/essentials directory: \(message)"
+        )
       }
 
       for file in files where file.pathExtension == "md" {
@@ -501,6 +516,8 @@ enum MCPResourceFileSupport {
           kitOverrides: session.kitOverrides ?? []
         )
       }
+    } catch let error as SessionFileError {
+      throw MCPError.internalError(error.localizedDescription)
     } catch {
       throw MCPError.internalError("Failed to load session files.")
     }
@@ -576,6 +593,24 @@ enum MCPResourceFileSupport {
     }
 
     return nil
+  }
+
+  private static func fileSystemErrorMessage(
+    _ error: Error,
+    relativePath: String,
+    absolutePath: String,
+    rootPath: String
+  ) -> String {
+    var message = error.localizedDescription
+      .replacingOccurrences(of: absolutePath, with: relativePath)
+      .replacingOccurrences(of: rootPath, with: ".")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if message.isEmpty {
+      message = "File system read failed."
+    }
+
+    return message
   }
 
   private static func decodedEntityID(fileURL: URL) -> String? {

@@ -72,6 +72,29 @@ struct MCPToolTests {
   }
 
   @Test
+  func validateToolRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeMCPRootWithSessionsFile()
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_validate",
+      arguments: [:]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let errors = try #require(object["errors"] as? [String])
+
+    #expect(object["ok"] as? Bool == false)
+    #expect(errors.count == 1)
+    #expect(
+      errors.first
+        == "session sessionFile: Session discovery path is not a directory: Sessions. expectedPath=Sessions"
+    )
+  }
+
+  @Test
   func bestGuidanceToolReportsScopeAndCommands() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
@@ -124,6 +147,26 @@ struct MCPToolTests {
   }
 
   @Test
+  func toolCallExportAcceptsSessionID() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_export",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
   func toolCallGraphMatchesFixture() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
@@ -146,6 +189,48 @@ struct MCPToolTests {
     let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
 
     #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func toolCallGraphAcceptsSessionID() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_graph",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/graph_senior-swiftui-engineer_apply-style.txt")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func toolCallRejectsMixedSessionIDAndPersonaInputs() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    do {
+      _ = try service.callTool(
+        name: "personakit_export",
+        arguments: [
+          "sessionId": "senior-swiftui-engineer_apply-style",
+          "personaId": "senior-swiftui-engineer",
+          "directiveId": "apply-style",
+        ]
+      )
+      #expect(Bool(false))
+    } catch {
+      let message = errorMessage(error)
+      #expect(message.contains("sessionId"))
+      #expect(message.contains("cannot be combined"))
+    }
   }
 
   @Test
@@ -504,6 +589,32 @@ struct MCPToolTests {
   }
 
   @Test
+  func resolveReferencesToolAcceptsSessionIDWithReferenceInputs() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_references",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style",
+        "targetPaths": ["Sources/FooView.swift"],
+        "referenceTags": ["swiftui"],
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
+
+    #expect(
+      matchedReferences.map { $0["id"] as? String } == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+      ]
+    )
+  }
+
+  @Test
   func explainIntentToolIncludesParameterConstraints() throws {
     let root = try makeTempDirectory().appendingPathComponent("FixtureKit")
     try copyFixtureKit(to: root)
@@ -569,4 +680,20 @@ private func jsonObject(_ text: String) -> [String: Any]? {
   }
 
   return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+}
+
+private func errorMessage(_ error: any Error) -> String {
+  let localized = (error as NSError).localizedDescription
+
+  return localized.isEmpty ? String(describing: error) : localized
+}
+
+private func makeMCPRootWithSessionsFile() throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+  try copyFixtureKit(to: root)
+  let sessionsURL = root.appendingPathComponent("Sessions")
+  try FileManager.default.removeItem(at: sessionsURL)
+  try Data("not a directory".utf8).write(to: sessionsURL)
+
+  return root
 }

@@ -221,6 +221,8 @@ enum ValidatorWorkstreamValidator {
           message = "Workstream node session id \"\(sessionId)\" failed to resolve: \(error.localizedDescription)"
         case .decodeFailed:
           message = "Workstream node session id \"\(sessionId)\" failed to decode."
+        case .discoveryPathNotDirectory, .discoveryReadFailed:
+          message = "Workstream node session id \"\(sessionId)\" failed to resolve: \(error.localizedDescription)"
         case .invalidSessionId, .invalidSessionPath:
           message = "Workstream node session id \"\(sessionId)\" failed to resolve."
         }
