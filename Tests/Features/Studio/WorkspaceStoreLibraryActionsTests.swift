@@ -246,9 +246,7 @@ struct WorkspaceStoreLibraryActionsTests {
 
   @Test
   func saveNewLibraryEditorRawJSONRejectsMissingSecondaryFieldsBeforeSave() async {
-    let validationCases: [
-      (entityType: WorkspaceLibraryEntityType, rawJSON: String, expectedError: String)
-    ] = [
+    let validationCases: [(entityType: WorkspaceLibraryEntityType, rawJSON: String, expectedError: String)] = [
       (
         .directive,
         """
@@ -304,7 +302,7 @@ struct WorkspaceStoreLibraryActionsTests {
         }
         """,
         "Skill description is required before saving."
-      )
+      ),
     ]
 
     for validationCase in validationCases {
@@ -501,6 +499,7 @@ struct WorkspaceStoreLibraryActionsTests {
   func staleCreatePersonaResultIsIgnoredAfterWorkspaceReload() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let saveGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
@@ -516,7 +515,9 @@ struct WorkspaceStoreLibraryActionsTests {
         validateRawJSONHandler: { _, _, _ in },
         saveRawJSONHandler: { workspaceURL, _, _, _ in
           if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = saveGate.markStarted()
+            saveGate.waitUntilReleased()
+            saveGate.markFinished()
           }
         },
         copyGlobalItemToProjectHandler: { _, _, _ in }
@@ -542,10 +543,14 @@ struct WorkspaceStoreLibraryActionsTests {
       )
     }
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      saveGate.hasStarted
+    }
 
     store.workspaceURL = secondWorkspaceURL
     store.loadWorkspace()
+
+    saveGate.release()
 
     let saveResult = await saveTask.value
 
@@ -558,6 +563,7 @@ struct WorkspaceStoreLibraryActionsTests {
   @Test
   func newerLibraryEditorLoadResultWinsWhenRequestsOverlap() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let loadGate = BlockingCallGate()
     let firstItem = WorkspaceListItem(
       id: "persona-a",
       displayName: "Persona A",
@@ -592,7 +598,10 @@ struct WorkspaceStoreLibraryActionsTests {
       libraryEntityManager: WorkspaceStoreStubLibraryEntityManager(
         loadRawJSONHandler: { fileURL in
           if fileURL.lastPathComponent == "persona-a.persona.json" {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = loadGate.markStarted()
+            loadGate.waitUntilReleased()
+            loadGate.markFinished()
+
             return #"{"id":"persona-a"}"#
           }
 
@@ -617,7 +626,10 @@ struct WorkspaceStoreLibraryActionsTests {
         entityType: .persona
       )
     }
-    try? await Task.sleep(for: .milliseconds(20))
+
+    await waitFor {
+      loadGate.hasStarted
+    }
 
     let secondTask = Task {
       await store.openLibraryEditor(
@@ -625,6 +637,12 @@ struct WorkspaceStoreLibraryActionsTests {
         entityType: .persona
       )
     }
+
+    await waitFor {
+      store.libraryFeatureModel.state.requestID == 2
+    }
+
+    loadGate.release()
 
     let secondResult = await secondTask.value
     #expect(secondResult?.itemID == "persona-b")
@@ -639,6 +657,7 @@ struct WorkspaceStoreLibraryActionsTests {
   func staleLibrarySaveResultIsIgnoredAfterWorkspaceReload() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let saveGate = BlockingCallGate()
     let projectItem = WorkspaceListItem(
       id: "persona-a",
       displayName: "Persona A",
@@ -675,7 +694,9 @@ struct WorkspaceStoreLibraryActionsTests {
         validateRawJSONHandler: { _, _, _ in },
         saveRawJSONHandler: { workspaceURL, _, _, _ in
           if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = saveGate.markStarted()
+            saveGate.waitUntilReleased()
+            saveGate.markFinished()
           }
         },
         copyGlobalItemToProjectHandler: { _, _, _ in }
@@ -696,10 +717,14 @@ struct WorkspaceStoreLibraryActionsTests {
       )
     }
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      saveGate.hasStarted
+    }
 
     store.workspaceURL = secondWorkspaceURL
     store.loadWorkspace()
+
+    saveGate.release()
 
     let saveResult = await saveTask.value
 
@@ -1230,6 +1255,7 @@ struct WorkspaceStoreLibraryActionsTests {
   func staleEssentialSaveResultIsIgnoredAfterWorkspaceReload() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let saveGate = BlockingCallGate()
     let projectEssential = WorkspaceListItem(
       id: "essential-a",
       displayName: "Essential A",
@@ -1264,7 +1290,9 @@ struct WorkspaceStoreLibraryActionsTests {
         },
         saveMarkdownHandler: { workspaceURL, _, _ in
           if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            Thread.sleep(forTimeInterval: 0.3)
+            _ = saveGate.markStarted()
+            saveGate.waitUntilReleased()
+            saveGate.markFinished()
           }
         },
         copyGlobalEssentialToProjectHandler: { _, _ in }
@@ -1285,10 +1313,14 @@ struct WorkspaceStoreLibraryActionsTests {
       )
     }
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      saveGate.hasStarted
+    }
 
     store.workspaceURL = secondWorkspaceURL
     store.loadWorkspace()
+
+    saveGate.release()
 
     let saveResult = await saveTask.value
 

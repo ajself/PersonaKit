@@ -30,8 +30,8 @@ public protocol WorkspaceLibraryEntityManaging: Sendable {
   ) throws
 }
 
-public extension WorkspaceLibraryEntityManaging {
-  func destinationFileURL(
+extension WorkspaceLibraryEntityManaging {
+  public func destinationFileURL(
     workspaceURL: URL,
     itemID: String,
     entityType: WorkspaceLibraryEntityType
@@ -112,7 +112,8 @@ public struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sen
       directoryExists: dependencies.directoryExists
     )
 
-    return projectScopeURL
+    return
+      projectScopeURL
       .appendingPathComponent("Packs/\(entityType.directoryName)")
       .appendingPathComponent("\(WorkspaceEntityIDPolicy.normalized(itemID))\(entityType.fileSuffix)")
   }

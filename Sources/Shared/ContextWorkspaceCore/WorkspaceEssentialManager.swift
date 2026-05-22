@@ -21,8 +21,8 @@ public protocol WorkspaceEssentialManaging: Sendable {
   ) throws
 }
 
-public extension WorkspaceEssentialManaging {
-  func destinationFileURL(
+extension WorkspaceEssentialManaging {
+  public func destinationFileURL(
     workspaceURL: URL,
     itemID: String
   ) throws -> URL {
@@ -78,7 +78,8 @@ public struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
       directoryExists: dependencies.directoryExists
     )
 
-    return projectScopeURL
+    return
+      projectScopeURL
       .appendingPathComponent("Packs/essentials")
       .appendingPathComponent("\(normalizedItemID).md")
   }

@@ -112,7 +112,7 @@ clean:
 build: cli-build
 
 format-check:
-	swift format lint -r Sources Tests
+	swift format lint --strict -r Sources Tests
 
 studio-build: studio-doctor
 	$(XCODEBUILDMCP) macos build \
@@ -317,6 +317,7 @@ public-v1-check:
 	swift run personakit run --help
 	rm -rf /tmp/personakit-public-v1-check
 	mkdir -p /tmp/personakit-public-v1-check
+	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | rg .
 	diff -qr .personakit Examples/public-starter/.personakit
 	swift run personakit validate --root .personakit
 	swift run personakit validate --root Fixtures/internal-agent-root/.personakit

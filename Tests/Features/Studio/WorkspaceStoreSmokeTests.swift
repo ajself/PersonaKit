@@ -13,13 +13,16 @@ struct WorkspaceStoreSmokeTests {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let expectedSnapshot = makeSnapshot(id: "project-persona")
     let expectedValidation = makeValidation(entityID: "project-persona")
+    let validationGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
         expectedSnapshot
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        Thread.sleep(forTimeInterval: 0.3)
+        _ = validationGate.markStarted()
+        validationGate.waitUntilReleased()
+        validationGate.markFinished()
 
         return expectedValidation
       }
@@ -35,6 +38,8 @@ struct WorkspaceStoreSmokeTests {
     #expect(store.validation.summary == "Validating workspace...")
     #expect(store.validation.issues.isEmpty)
 
+    validationGate.release()
+
     await waitFor {
       store.validation.issues.first?.entityId == "project-persona"
     }
@@ -44,11 +49,15 @@ struct WorkspaceStoreSmokeTests {
   func newerLoadResultWinsWhenLoadsOverlap() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let loadGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { workspaceURL in
         if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-          Thread.sleep(forTimeInterval: 0.3)
+          _ = loadGate.markStarted()
+          loadGate.waitUntilReleased()
+          loadGate.markFinished()
+
           return makeSnapshot(id: "persona-a")
         }
 
@@ -65,16 +74,23 @@ struct WorkspaceStoreSmokeTests {
     store.workspaceURL = firstWorkspaceURL
     store.loadWorkspace()
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      loadGate.hasStarted
+    }
 
     store.workspaceURL = secondWorkspaceURL
     store.loadWorkspace()
+
+    loadGate.release()
 
     await waitFor {
       store.snapshot.personas.first?.id == "persona-b"
     }
 
-    try? await Task.sleep(for: .milliseconds(350))
+    await waitFor {
+      loadGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.snapshot.personas.first?.id == "persona-b")
   }
@@ -83,6 +99,7 @@ struct WorkspaceStoreSmokeTests {
   func newerValidationResultWinsWhenValidationsOverlap() async {
     let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
     let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let validationGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
@@ -90,7 +107,10 @@ struct WorkspaceStoreSmokeTests {
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { workspaceURL in
         if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-          Thread.sleep(forTimeInterval: 0.3)
+          _ = validationGate.markStarted()
+          validationGate.waitUntilReleased()
+          validationGate.markFinished()
+
           return makeValidation(entityID: "persona-a")
         }
 
@@ -101,16 +121,23 @@ struct WorkspaceStoreSmokeTests {
     store.workspaceURL = firstWorkspaceURL
     store.validateWorkspace()
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      validationGate.hasStarted
+    }
 
     store.workspaceURL = secondWorkspaceURL
     store.validateWorkspace()
+
+    validationGate.release()
 
     await waitFor {
       store.validation.issues.first?.entityId == "persona-b"
     }
 
-    try? await Task.sleep(for: .milliseconds(350))
+    await waitFor {
+      validationGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.validation.issues.first?.entityId == "persona-b")
   }
@@ -129,6 +156,12 @@ struct WorkspaceStoreSmokeTests {
     store.workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
 
     #expect(store.workspaceURL?.path() == "/Workspace")
+  }
+
+  private func yieldTasks(_ iterations: Int = 50) async {
+    for _ in 0..<iterations {
+      await Task.yield()
+    }
   }
 
   @Test

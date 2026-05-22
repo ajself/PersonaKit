@@ -295,11 +295,13 @@ struct SessionDependencyMapView: View {
         return
       }
 
-      guard let updatedOffset = dragInteractionState.updatedOffset(
-        for: nodeKey,
-        currentOffset: nodeOffsetsByKey[nodeKey] ?? .zero,
-        translation: value.translation
-      ) else {
+      guard
+        let updatedOffset = dragInteractionState.updatedOffset(
+          for: nodeKey,
+          currentOffset: nodeOffsetsByKey[nodeKey] ?? .zero,
+          translation: value.translation
+        )
+      else {
         return
       }
 
@@ -310,11 +312,13 @@ struct SessionDependencyMapView: View {
         return
       }
 
-      guard let finalOffset = dragInteractionState.endedOffset(
-        for: nodeKey,
-        currentOffset: nodeOffsetsByKey[nodeKey] ?? .zero,
-        translation: value.translation
-      ) else {
+      guard
+        let finalOffset = dragInteractionState.endedOffset(
+          for: nodeKey,
+          currentOffset: nodeOffsetsByKey[nodeKey] ?? .zero,
+          translation: value.translation
+        )
+      else {
         return
       }
 
