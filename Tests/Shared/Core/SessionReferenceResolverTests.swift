@@ -74,6 +74,47 @@ struct SessionReferenceResolverTests {
     #expect(resolved.sourceRefType == .path)
     #expect(resolved.sessionId == "reviewable")
   }
+
+  @Test
+  func rejectsScopeRelativeSessionSymlinkOutsideSessions() throws {
+    let root = try makeTempDirectory()
+    let project = root.appendingPathComponent("project/.personakit")
+    let sessionsDirectory = project.appendingPathComponent("Sessions")
+    let outsideURL = try makeTempDirectory().appendingPathComponent("linked.session.json")
+    let symlinkURL = sessionsDirectory.appendingPathComponent("linked.session.json")
+    let escapedJSON = """
+      {
+        "id": "linked",
+        "personaId": "escaped-persona",
+        "directiveId": "escaped-directive"
+      }
+      """
+
+    try FileManager.default.createDirectory(
+      at: sessionsDirectory,
+      withIntermediateDirectories: true
+    )
+    try Data(escapedJSON.utf8).write(to: outsideURL, options: .atomic)
+    try FileManager.default.createSymbolicLink(
+      at: symlinkURL,
+      withDestinationURL: outsideURL
+    )
+
+    do {
+      _ = try SessionReferenceResolver.resolve(
+        scopes: ScopeSet(projectScopeURL: project, globalScopeURL: nil),
+        sessionRef: "Sessions/linked.session.json"
+      )
+      #expect(Bool(false))
+    } catch let error as SessionReferenceError {
+      if case .pathOutsideScopes(let ref) = error {
+        #expect(ref == "Sessions/linked.session.json")
+        return
+      }
+
+      #expect(Bool(false))
+    }
+  }
 }
 
 private func writeSessionFile(

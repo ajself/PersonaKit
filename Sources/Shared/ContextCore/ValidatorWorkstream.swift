@@ -183,7 +183,7 @@ enum ValidatorWorkstreamValidator {
           entityId: directiveId,
           field: "workstream.entrySessionId",
           missingId: workstream.entrySessionId,
-          expectedPath: "Sessions/\(workstream.entrySessionId).session.json",
+          expectedPath: SessionFileLoader.expectedPath(for: workstream.entrySessionId),
           message: "Workstream entry session id \"\(workstream.entrySessionId)\" must be declared in workstream nodes."
         )
       )
@@ -198,7 +198,7 @@ enum ValidatorWorkstreamValidator {
           entityId: directiveId,
           field: "workstream.requiredCloseoutSessionId",
           missingId: requiredCloseoutSessionId,
-          expectedPath: "Sessions/\(requiredCloseoutSessionId).session.json",
+          expectedPath: SessionFileLoader.expectedPath(for: requiredCloseoutSessionId),
           message: "Required closeout session id \"\(requiredCloseoutSessionId)\" must be declared in workstream nodes."
         )
       )
@@ -231,7 +231,7 @@ enum ValidatorWorkstreamValidator {
             entityId: directiveId,
             field: "workstream.nodes.sessionId",
             missingId: sessionId,
-            expectedPath: "Sessions/\(sessionId).session.json",
+            expectedPath: SessionFileLoader.expectedPath(for: sessionId),
             message: message
           )
         )
@@ -242,7 +242,7 @@ enum ValidatorWorkstreamValidator {
             entityId: directiveId,
             field: "workstream.nodes.sessionId",
             missingId: sessionId,
-            expectedPath: "Sessions/\(sessionId).session.json",
+            expectedPath: SessionFileLoader.expectedPath(for: sessionId),
             message: "Workstream node session id \"\(sessionId)\" failed to resolve."
           )
         )
@@ -257,7 +257,7 @@ enum ValidatorWorkstreamValidator {
             entityId: directiveId,
             field: "workstream.edges.fromSessionId",
             missingId: edge.fromSessionId,
-            expectedPath: "Sessions/\(edge.fromSessionId).session.json",
+            expectedPath: SessionFileLoader.expectedPath(for: edge.fromSessionId),
             message: "Workstream edge source session id \"\(edge.fromSessionId)\" must be declared in workstream nodes."
           )
         )
@@ -270,7 +270,7 @@ enum ValidatorWorkstreamValidator {
             entityId: directiveId,
             field: "workstream.edges.toSessionId",
             missingId: edge.toSessionId,
-            expectedPath: "Sessions/\(edge.toSessionId).session.json",
+            expectedPath: SessionFileLoader.expectedPath(for: edge.toSessionId),
             message: "Workstream edge target session id \"\(edge.toSessionId)\" must be declared in workstream nodes."
           )
         )
@@ -292,7 +292,7 @@ enum ValidatorWorkstreamValidator {
           entityId: directiveId,
           field: "workstream.requiredCloseoutSessionId",
           missingId: requiredCloseoutSessionId,
-          expectedPath: "Sessions/\(requiredCloseoutSessionId).session.json",
+          expectedPath: SessionFileLoader.expectedPath(for: requiredCloseoutSessionId),
           message:
             "Required closeout session id \"\(requiredCloseoutSessionId)\" is not reachable from entry session id \"\(workstream.entrySessionId)\"."
         )

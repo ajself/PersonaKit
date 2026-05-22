@@ -11,7 +11,11 @@ enum SystemEssentials {
   ]
 
   static func expectedPath(for essentialId: String) -> String {
-    "Packs/essentials/\(essentialId).md"
+    PersonaKitPathSafety.expectedPath(
+      baseRelativePath: "Packs/essentials",
+      segment: essentialId,
+      suffix: ".md"
+    )
   }
 
   static func builtInContent(for essentialId: String) -> String? {
@@ -182,13 +186,22 @@ public enum PersonaKitEssentialResolver {
     scopes: ScopeSet,
     fileExists: (URL) -> Bool
   ) -> URL? {
-    let expectedPath = SystemEssentials.expectedPath(for: essentialId)
-
     for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(expectedPath)
+      let essentialsURL = root.appendingPathComponent("Packs/essentials", isDirectory: true)
 
-      if fileExists(fileURL) {
-        return fileURL
+      guard
+        let fileURL = PersonaKitPathSafety.containedFileURL(
+          root: root,
+          baseRelativePath: "Packs/essentials",
+          segment: essentialId,
+          suffix: ".md"
+        )
+      else {
+        return nil
+      }
+
+      if fileExists(fileURL), PersonaKitPathSafety.canonicalContains(fileURL, in: essentialsURL) {
+        return fileURL.standardizedFileURL
       }
     }
 
@@ -214,12 +227,23 @@ public enum PersonaKitEssentialResolver {
       return nil
     }
 
-    let fileURL = rootURL.appendingPathComponent(SystemEssentials.expectedPath(for: essentialId))
+    guard
+      let fileURL = PersonaKitPathSafety.containedFileURL(
+        root: rootURL,
+        baseRelativePath: "Packs/essentials",
+        segment: essentialId,
+        suffix: ".md"
+      )
+    else {
+      return nil
+    }
 
-    if fileExists(fileURL) {
+    let essentialsURL = rootURL.appendingPathComponent("Packs/essentials", isDirectory: true)
+
+    if fileExists(fileURL), PersonaKitPathSafety.canonicalContains(fileURL, in: essentialsURL) {
       return ResolvedEssential(
         id: essentialId,
-        url: fileURL,
+        url: fileURL.standardizedFileURL,
         content: nil,
         source: .file
       )

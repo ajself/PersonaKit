@@ -271,7 +271,7 @@ struct SchemaValidator {
 private indirect enum SchemaNode {
   case object(properties: [String: SchemaNode], required: Set<String>)
   case array(items: SchemaNode)
-  case string
+  case string(enumValues: Set<String>?)
   case boolean
   case number
   case integer
@@ -303,7 +303,8 @@ private indirect enum SchemaNode {
 
       self = .array(items: items)
     case "string":
-      self = .string
+      let enumValues = dictionary["enum"] as? [String]
+      self = .string(enumValues: enumValues.map(Set.init))
     case "boolean":
       self = .boolean
     case "number":
@@ -389,18 +390,32 @@ private indirect enum SchemaNode {
           errors: &errors
         )
       }
-    case .string:
-      if value is String {
+    case .string(let enumValues):
+      guard let string = value as? String else {
+        errors.append(
+          typeError(
+            relativePath: relativePath,
+            schemaName: schemaName,
+            path: path,
+            expected: "string",
+            actual: value
+          )
+        )
+
         return
       }
 
+      guard let enumValues, !enumValues.contains(string) else {
+        return
+      }
+
+      let allowedValues = enumValues.sorted().map { "\"\($0)\"" }.joined(separator: ", ")
       errors.append(
-        typeError(
+        SchemaValidationError(
           relativePath: relativePath,
           schemaName: schemaName,
-          path: path,
-          expected: "string",
-          actual: value
+          message: "Value \"\(string)\" must be one of \(allowedValues).",
+          instanceLocation: path.isEmpty ? "/" : path
         )
       )
     case .boolean:

@@ -118,7 +118,7 @@ enum ValidatorSupport {
     case .invalidSessionId, .invalidSessionPath:
       field = "sessionFile"
       missingId = sessionId
-      expectedPath = "Sessions/\(sessionId).session.json"
+      expectedPath = SessionFileLoader.expectedPath(for: sessionId)
     }
 
     return ValidationError(

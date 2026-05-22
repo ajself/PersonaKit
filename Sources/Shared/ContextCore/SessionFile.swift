@@ -47,6 +47,36 @@ public enum SessionFileError: LocalizedError {
 
 /// Loads session files from project/global scope roots.
 public struct SessionFileLoader {
+  static func expectedPath(for sessionId: String) -> String {
+    PersonaKitPathSafety.expectedPath(
+      baseRelativePath: "Sessions",
+      segment: sessionId,
+      suffix: ".session.json"
+    )
+  }
+
+  static func resolvedFileURL(
+    root: URL,
+    sessionId: String
+  ) -> URL? {
+    PersonaKitPathSafety.containedFileURL(
+      root: root,
+      baseRelativePath: "Sessions",
+      segment: sessionId,
+      suffix: ".session.json"
+    )
+  }
+
+  static func isContainedSessionFile(
+    _ fileURL: URL,
+    root: URL
+  ) -> Bool {
+    let sessionsURL = root.appendingPathComponent("Sessions", isDirectory: true)
+
+    return PersonaKitPathSafety.canonicalContains(sessionsURL, in: root)
+      && PersonaKitPathSafety.canonicalContains(fileURL, in: sessionsURL)
+  }
+
   /// Discovers session ids from merged scopes using resolution-order precedence.
   ///
   /// This is filename-based and does not decode session contents.
@@ -112,7 +142,12 @@ public struct SessionFileLoader {
     var fileURLsByID: [String: URL] = [:]
 
     for root in scopes.resolutionOrder {
-      let sessionsURL = root.appendingPathComponent("Sessions")
+      let sessionsURL = root.appendingPathComponent("Sessions", isDirectory: true)
+
+      guard PersonaKitPathSafety.canonicalContains(sessionsURL, in: root) else {
+        continue
+      }
+
       var isDirectory: ObjCBool = false
       guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
         isDirectory.boolValue
@@ -132,6 +167,10 @@ public struct SessionFileLoader {
         .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
       for fileURL in sessionFiles {
+        guard isContainedSessionFile(fileURL, root: root) else {
+          continue
+        }
+
         let sessionID =
           fileURL
           .deletingPathExtension()
@@ -168,10 +207,16 @@ public struct SessionFileLoader {
       throw SessionFileError.invalidSessionId
     }
 
-    let relativePath = "Sessions/\(trimmedId).session.json"
+    let relativePath = expectedPath(for: trimmedId)
+
+    guard PersonaKitPathSafety.isSafePathSegment(trimmedId) else {
+      throw SessionFileError.invalidSessionPath(relativePath)
+    }
 
     for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(relativePath)
+      guard let fileURL = resolvedFileURL(root: root, sessionId: trimmedId) else {
+        throw SessionFileError.invalidSessionPath(relativePath)
+      }
 
       if fileManager.fileExists(atPath: fileURL.path) {
         return try loadSessionFile(
@@ -204,8 +249,13 @@ public struct SessionFileLoader {
       throw SessionFileError.invalidSessionId
     }
 
-    let relativePath = "Sessions/\(trimmedId).session.json"
-    let fileURL = root.appendingPathComponent(relativePath)
+    let relativePath = expectedPath(for: trimmedId)
+
+    guard
+      let fileURL = resolvedFileURL(root: root, sessionId: trimmedId)
+    else {
+      throw SessionFileError.invalidSessionPath(relativePath)
+    }
 
     guard fileManager.fileExists(atPath: fileURL.path) else {
       throw SessionFileError.notFound(trimmedId, relativePath)
@@ -254,6 +304,23 @@ public struct SessionFileLoader {
       fileURL: standardized,
       sessionId: sessionId,
       relativePath: standardized.path
+    )
+  }
+
+  static func load(
+    fileURL: URL,
+    root: URL,
+    fileManager: FileManager = .default
+  ) throws -> SessionFile {
+    let standardized = fileURL.standardizedFileURL
+
+    guard isContainedSessionFile(standardized, root: root) else {
+      throw SessionFileError.invalidSessionPath(standardized.path)
+    }
+
+    return try load(
+      fileURL: standardized,
+      fileManager: fileManager
     )
   }
 

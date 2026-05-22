@@ -35,6 +35,31 @@ struct SessionFileLoaderTests {
   }
 
   @Test
+  func rejectsUnsafeSessionPathSegments() throws {
+    let root = try makeTempDirectory()
+    let unsafeIds = [
+      ".",
+      "..",
+      "nested/name",
+      "nested\\name",
+    ]
+
+    for unsafeId in unsafeIds {
+      do {
+        _ = try SessionFileLoader.load(root: root, sessionId: unsafeId)
+        #expect(Bool(false))
+      } catch let error as SessionFileError {
+        if case .invalidSessionPath(let path) = error {
+          #expect(path == "Sessions/<invalid>.session.json")
+          continue
+        }
+
+        #expect(Bool(false))
+      }
+    }
+  }
+
+  @Test
   func reportsMissingSessionFile() throws {
     let root = try makeTempDirectory()
 
@@ -47,6 +72,74 @@ struct SessionFileLoaderTests {
         #expect(expectedPath == "Sessions/missing.session.json")
         return
       }
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
+  func rejectsEscapingSessionIDWithoutReadingEscapedFile() throws {
+    let root = try makeTempDirectory()
+    let escapedURL = root.appendingPathComponent("escaped.session.json")
+    let escapedJSON = """
+      {
+        "id": "../escaped",
+        "personaId": "escaped-persona",
+        "directiveId": "escaped-directive"
+      }
+      """
+
+    try Data(escapedJSON.utf8).write(to: escapedURL, options: .atomic)
+
+    do {
+      _ = try SessionFileLoader.load(root: root, sessionId: "../escaped")
+      #expect(Bool(false))
+    } catch let error as SessionFileError {
+      if case .invalidSessionPath(let path) = error {
+        #expect(path == "Sessions/<invalid>.session.json")
+        return
+      }
+
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
+  func rejectsEscapingSessionSymlinkWithoutReadingTarget() throws {
+    let root = try makeTempDirectory()
+    let sessionsDirectory = root.appendingPathComponent("Sessions")
+    let outsideURL = try makeTempDirectory().appendingPathComponent("linked.session.json")
+    let symlinkURL = sessionsDirectory.appendingPathComponent("linked.session.json")
+    let escapedJSON = """
+      {
+        "id": "linked",
+        "personaId": "escaped-persona",
+        "directiveId": "escaped-directive"
+      }
+      """
+
+    try FileManager.default.createDirectory(
+      at: sessionsDirectory,
+      withIntermediateDirectories: true
+    )
+    try Data(escapedJSON.utf8).write(to: outsideURL, options: .atomic)
+    try FileManager.default.createSymbolicLink(
+      at: symlinkURL,
+      withDestinationURL: outsideURL
+    )
+
+    #expect(
+      try SessionFileLoader.discoveredSessionIDs(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil)).isEmpty
+    )
+
+    do {
+      _ = try SessionFileLoader.load(root: root, sessionId: "linked")
+      #expect(Bool(false))
+    } catch let error as SessionFileError {
+      if case .invalidSessionPath(let path) = error {
+        #expect(path == "Sessions/linked.session.json")
+        return
+      }
+
       #expect(Bool(false))
     }
   }

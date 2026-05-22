@@ -88,10 +88,12 @@ public enum SessionReferenceResolver {
       sessionId: sessionId,
       fileManager: fileManager
     )
-    let relativePath = "Sessions/\(sessionId).session.json"
 
     for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(relativePath).standardizedFileURL
+      guard let fileURL = SessionFileLoader.resolvedFileURL(root: root, sessionId: sessionId) else {
+        continue
+      }
+
       if fileManager.fileExists(atPath: fileURL.path) {
         return ResolvedSessionReference(
           sourceRefType: .id,
@@ -130,7 +132,11 @@ public enum SessionReferenceResolver {
         throw SessionReferenceError.pathOutsideScopes(sessionRef)
       }
 
-      let session = try SessionFileLoader.load(fileURL: candidate, fileManager: fileManager)
+      let session = try SessionFileLoader.load(
+        fileURL: candidate,
+        root: scopeRoot,
+        fileManager: fileManager
+      )
       return ResolvedSessionReference(
         sourceRefType: .path,
         sessionId: session.id,
@@ -175,11 +181,8 @@ public enum SessionReferenceResolver {
     fileURL: URL,
     scopes: ScopeSet
   ) -> URL? {
-    let standardizedPath = fileURL.standardizedFileURL.path
-
     for root in scopes.resolutionOrder {
-      let rootPath = root.standardizedFileURL.path
-      if standardizedPath == rootPath || standardizedPath.hasPrefix(rootPath + "/") {
+      if SessionFileLoader.isContainedSessionFile(fileURL, root: root) {
         return root
       }
     }

@@ -162,4 +162,45 @@ struct ExporterTests {
       }
     }
   }
+
+  @Test
+  func referenceExpansionRejectsEscapingReferenceIDWithoutReadingEscapedFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    let leakedURL = root.appendingPathComponent("Packs/leaked-reference.md")
+    let referencesURL = root.appendingPathComponent("Packs/references")
+
+    try FileManager.default.createDirectory(
+      at: referencesURL,
+      withIntermediateDirectories: true
+    )
+    try "# Leaked\n\nDo not read.\n".write(
+      to: leakedURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let match = ResolvedReferenceMatch(
+      id: "../leaked-reference",
+      name: "Leaked",
+      summary: "Escaping reference body",
+      sources: [],
+      matchedRules: []
+    )
+
+    do {
+      _ = try ReferenceSupport.loadExpandedDocuments(
+        matches: [match],
+        scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+      )
+      #expect(Bool(false))
+    } catch let error as ReferenceResolutionError {
+      if case .missingBody(let id, let expectedPath) = error {
+        #expect(id == "../leaked-reference")
+        #expect(expectedPath == "Packs/references/<invalid>.md")
+        return
+      }
+
+      #expect(Bool(false))
+    }
+  }
 }
