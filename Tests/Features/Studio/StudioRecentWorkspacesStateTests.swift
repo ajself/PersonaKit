@@ -1,3 +1,4 @@
+import ContextWorkspaceCore
 import Foundation
 import Testing
 
@@ -122,5 +123,84 @@ struct StudioRecentWorkspacesStateTests {
         "/Workspace/3",
       ]
     )
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorRecordsPickerWorkspaceAndStopsRecentAccess() async {
+    let selectedWorkspaceURL = URL(fileURLWithPath: "/PickedWorkspace")
+    let recentAccess = StudioRecentWorkspaceAccessRecorder()
+    var storageValue = "[]"
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { workspaceURL in
+        #expect(workspaceURL.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL)
+        return WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspacePicker: WorkspaceStoreStubWorkspacePicker(
+        selectedURL: selectedWorkspaceURL
+      )
+    )
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
+      workspaceStore: store,
+      recentWorkspacesStorageValue: &storageValue,
+      recentWorkspaceAccess: recentAccess,
+      bookmarkDataProvider: { _ in Data([4, 5, 6]) }
+    )
+
+    await waitFor {
+      store.workspaceURL?.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL
+    }
+
+    let workspaces = StudioRecentWorkspacesState.workspaces(from: storageValue)
+
+    #expect(recentAccess.stopCount == 1)
+    #expect(workspaces.map(\.path) == ["/PickedWorkspace"])
+    #expect(workspaces.first?.bookmarkData == Data([4, 5, 6]))
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorSkipsRecentChangesWhenPickerReturnsSameWorkspace() {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let recentAccess = StudioRecentWorkspaceAccessRecorder()
+    var storageValue = "[]"
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspacePicker: WorkspaceStoreStubWorkspacePicker(
+        selectedURL: workspaceURL
+      )
+    )
+    store.workspaceURL = workspaceURL
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
+      workspaceStore: store,
+      recentWorkspacesStorageValue: &storageValue,
+      recentWorkspaceAccess: recentAccess,
+      bookmarkDataProvider: { _ in Data([4, 5, 6]) }
+    )
+
+    #expect(recentAccess.stopCount == 0)
+    #expect(StudioRecentWorkspacesState.workspaces(from: storageValue).isEmpty)
+  }
+}
+
+private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAccessing {
+  private(set) var stopCount = 0
+
+  func url(for workspace: StudioRecentWorkspace) -> URL {
+    workspace.url
+  }
+
+  func stop() {
+    stopCount += 1
   }
 }

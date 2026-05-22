@@ -2,6 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import Foundation
 import StudioFoundation
+import Synchronization
 import Testing
 
 @testable import StudioFeatures
@@ -155,7 +156,8 @@ struct WorkspaceStoreSessionActionsTests {
 
     let savedSessionID = try await store.saveSession(
       draft: expectedDraft,
-      originalSessionID: "session-old"
+      originalSessionID: "session-old",
+      expectedWorkspaceURL: workspaceURL
     )
 
     #expect(savedSessionID == "session-a")
@@ -167,7 +169,23 @@ struct WorkspaceStoreSessionActionsTests {
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot.empty
+        WorkspaceSnapshot(
+          sessions: [
+            WorkspaceSessionListItem(
+              id: "session-delete",
+              personaId: "persona-a",
+              directiveId: "directive-a",
+              fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-delete.session.json"),
+              sourceScope: .project
+            )
+          ],
+          personas: [],
+          directives: [],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
         WorkspaceValidationSnapshot(summary: "ok", issues: [])
@@ -192,8 +210,155 @@ struct WorkspaceStoreSessionActionsTests {
     )
 
     store.workspaceURL = workspaceURL
+    store.loadWorkspace()
 
-    try await store.deleteSession(sessionID: "session-delete")
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-delete"
+    }
+
+    try await store.deleteSession(
+      sessionID: "session-delete",
+      expectedWorkspaceURL: workspaceURL,
+      expectedSessionFileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-delete.session.json")
+    )
+  }
+
+  @Test
+  func saveSessionRejectsExpectedWorkspaceMismatchBeforeMutating() async throws {
+    let recorder = SessionMutationRecorder()
+    let currentWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
+    let staleWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
+    let expectedDraft = WorkspaceSessionDraft(
+      id: "session-a",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      kitOverrides: []
+    )
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot(
+          sessions: [],
+          personas: [
+            WorkspaceListItem(
+              id: "persona-a",
+              displayName: "Persona A",
+              fileURL: URL(fileURLWithPath: "/persona-a.persona.json"),
+              sourceScope: .project
+            )
+          ],
+          directives: [
+            WorkspaceListItem(
+              id: "directive-a",
+              displayName: "Directive A",
+              fileURL: URL(fileURLWithPath: "/directive-a.directive.json"),
+              sourceScope: .project
+            )
+          ],
+          kits: [],
+          skills: [],
+          intents: [],
+          essentials: []
+        )
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: WorkspaceStoreStubSessionManager(
+        loadDraftHandler: { _ in
+          expectedDraft
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          recorder.recordSave()
+          return "session-a"
+        },
+        deleteSessionHandler: { _, _ in }
+      )
+    )
+
+    store.workspaceURL = currentWorkspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.personas.first?.id == "persona-a"
+    }
+
+    await #expect(throws: WorkspaceSnapshotBuildError.self) {
+      try await store.saveSession(
+        draft: expectedDraft,
+        originalSessionID: nil,
+        expectedWorkspaceURL: staleWorkspaceURL
+      )
+    }
+    #expect(recorder.saveCount == 0)
+  }
+
+  @Test
+  func deleteSessionRejectsStaleSessionFileBeforeMutating() async throws {
+    let recorder = SessionMutationRecorder()
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let currentSessionFileURL = URL(
+      fileURLWithPath: "/Workspace/.personakit/Sessions/session-delete.session.json"
+    )
+    let staleSessionFileURL = URL(
+      fileURLWithPath: "/Workspace/.personakit/Sessions/session-delete-old.session.json"
+    )
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-delete",
+          personaId: "persona-a",
+          directiveId: "directive-a",
+          fileURL: currentSessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: [],
+      intents: [],
+      essentials: []
+    )
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: WorkspaceStoreStubSessionManager(
+        loadDraftHandler: { _ in
+          WorkspaceSessionDraft(
+            id: "",
+            personaId: "",
+            directiveId: "",
+            kitOverrides: []
+          )
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          "unused"
+        },
+        deleteSessionHandler: { _, _ in
+          recorder.recordDelete()
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-delete"
+    }
+
+    await #expect(throws: WorkspaceSnapshotBuildError.self) {
+      try await store.deleteSession(
+        sessionID: "session-delete",
+        expectedWorkspaceURL: workspaceURL,
+        expectedSessionFileURL: staleSessionFileURL
+      )
+    }
+    #expect(recorder.deleteCount == 0)
   }
 
   @Test
@@ -864,5 +1029,34 @@ struct WorkspaceStoreSessionActionsTests {
     let didExport = try await store.exportSessionPreviewWithSavePanel()
 
     #expect(!didExport)
+  }
+}
+
+private final class SessionMutationRecorder: Sendable {
+  private struct State: Sendable {
+    var deleteCount = 0
+    var saveCount = 0
+  }
+
+  private let state = Mutex(State())
+
+  var deleteCount: Int {
+    state.withLock { $0.deleteCount }
+  }
+
+  var saveCount: Int {
+    state.withLock { $0.saveCount }
+  }
+
+  func recordDelete() {
+    state.withLock { state in
+      state.deleteCount += 1
+    }
+  }
+
+  func recordSave() {
+    state.withLock { state in
+      state.saveCount += 1
+    }
   }
 }

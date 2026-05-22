@@ -18,7 +18,7 @@ struct SessionsPanelView: View {
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
   @State private var sessionEditorPresentation: SessionEditorPresentation?
-  @State private var pendingSessionDeletion: WorkspaceSessionListItem?
+  @State private var pendingSessionDeletion: SessionDeletionPresentation?
   @State private var isLoadingSessionDraft = false
   @State private var sessionActionErrorMessage: String?
   @State private var sessionPreviewActionMessage: String?
@@ -41,10 +41,17 @@ struct SessionsPanelView: View {
         sessionActionErrorMessage: sessionActionErrorMessage,
         actionState: listActionState,
         onNewSession: {
+          guard let workspaceURL = workspaceStore.workspaceURL?.standardizedFileURL else {
+            sessionActionErrorMessage = "No workspace is currently selected."
+            return
+          }
+
           sessionEditorPresentation = SessionEditorPresentation(
             title: "New Session",
             originalSessionID: nil,
-            draft: workspaceStore.defaultSessionDraft()
+            originalSessionFileURL: nil,
+            draft: workspaceStore.defaultSessionDraft(),
+            workspaceURL: workspaceURL
           )
         }
       )
@@ -107,6 +114,9 @@ struct SessionsPanelView: View {
     .onChange(of: detailMode) { _, _ in
       scheduleDetailModeTransition(for: detailMode)
     }
+    .onChange(of: workspaceStore.workspaceURL) { _, _ in
+      clearSessionPresentations()
+    }
     .onAppear {
       detailMode = SessionsPanelLayoutState.resolvedDetailMode(
         persistedRawValue: persistedDetailModeRawValue
@@ -140,7 +150,7 @@ struct SessionsPanelView: View {
         onSave: { draft in
           await saveSessionDraft(
             draft,
-            originalSessionID: presentation.originalSessionID
+            presentation: presentation
           )
         },
         onRefreshMap: { draft in
@@ -161,16 +171,16 @@ struct SessionsPanelView: View {
         }
       ),
       presenting: pendingSessionDeletion
-    ) { session in
+    ) { presentation in
       Button("Delete", role: .destructive) {
-        deleteSession(session)
+        deleteSession(presentation)
       }
 
       Button("Cancel", role: .cancel) {
         pendingSessionDeletion = nil
       }
-    } message: { session in
-      Text("Delete session \"\(session.id)\" from project scope?")
+    } message: { presentation in
+      Text("Delete session \"\(presentation.session.id)\" from project scope?")
     }
   }
 
@@ -708,6 +718,11 @@ struct SessionsPanelView: View {
       return
     }
 
+    guard let requestWorkspaceURL = workspaceStore.workspaceURL?.standardizedFileURL else {
+      sessionActionErrorMessage = "No workspace is currently selected."
+      return
+    }
+
     isLoadingSessionDraft = true
     sessionActionErrorMessage = nil
 
@@ -716,21 +731,31 @@ struct SessionsPanelView: View {
         let draft = try await workspaceStore.loadSessionDraft(for: selectedSession)
 
         await MainActor.run {
+          guard workspaceStore.workspaceURL?.standardizedFileURL == requestWorkspaceURL else {
+            isLoadingSessionDraft = false
+            return
+          }
+
           let originalSessionID: String?
+          let originalSessionFileURL: URL?
           let title: String
 
           if selectedSession.sourceScope == .project {
             originalSessionID = selectedSession.id
+            originalSessionFileURL = selectedSession.fileURL.standardizedFileURL
             title = "Edit Session"
           } else {
             originalSessionID = nil
+            originalSessionFileURL = nil
             title = "Copy Session to Project"
           }
 
           sessionEditorPresentation = SessionEditorPresentation(
             title: title,
             originalSessionID: originalSessionID,
-            draft: draft
+            originalSessionFileURL: originalSessionFileURL,
+            draft: draft,
+            workspaceURL: requestWorkspaceURL
           )
           isLoadingSessionDraft = false
         }
@@ -755,20 +780,32 @@ struct SessionsPanelView: View {
       return
     }
 
-    pendingSessionDeletion = selectedSession
+    guard let workspaceURL = workspaceStore.workspaceURL?.standardizedFileURL else {
+      sessionActionErrorMessage = "No workspace is currently selected."
+      return
+    }
+
+    pendingSessionDeletion = SessionDeletionPresentation(
+      session: selectedSession,
+      workspaceURL: workspaceURL
+    )
     sessionActionErrorMessage = nil
   }
 
-  private func deleteSession(_ session: WorkspaceSessionListItem) {
+  private func deleteSession(_ presentation: SessionDeletionPresentation) {
     pendingSessionDeletion = nil
     sessionActionErrorMessage = nil
 
     Task {
       do {
-        try await workspaceStore.deleteSession(sessionID: session.id)
+        try await workspaceStore.deleteSession(
+          sessionID: presentation.session.id,
+          expectedWorkspaceURL: presentation.workspaceURL,
+          expectedSessionFileURL: presentation.session.fileURL
+        )
 
         await MainActor.run {
-          if selectedSessionID == session.id {
+          if selectedSessionID == presentation.session.id {
             selectedSessionID = nil
           }
         }
@@ -782,12 +819,14 @@ struct SessionsPanelView: View {
 
   private func saveSessionDraft(
     _ draft: WorkspaceSessionDraft,
-    originalSessionID: String?
+    presentation: SessionEditorPresentation
   ) async -> String? {
     do {
       let savedSessionID = try await workspaceStore.saveSession(
         draft: draft,
-        originalSessionID: originalSessionID
+        originalSessionID: presentation.originalSessionID,
+        expectedWorkspaceURL: presentation.workspaceURL,
+        expectedOriginalSessionFileURL: presentation.originalSessionFileURL
       )
       selectedSessionID = savedSessionID
       sessionActionErrorMessage = nil
@@ -903,6 +942,15 @@ struct SessionsPanelView: View {
     }
   }
 
+  private func clearSessionPresentations() {
+    sessionEditorPresentation = nil
+    pendingSessionDeletion = nil
+    isLoadingSessionDraft = false
+    sessionActionErrorMessage = nil
+    sessionPreviewActionMessage = nil
+    workspaceStore.clearDraftSessionMap()
+  }
+
 }
 
 private struct SessionsInspectorView: View {
@@ -1016,9 +1064,31 @@ private struct SessionsInspectorView: View {
 private struct SessionEditorPresentation: Identifiable {
   let title: String
   let originalSessionID: String?
+  let originalSessionFileURL: URL?
   let draft: WorkspaceSessionDraft
+  let workspaceURL: URL
 
   var id: String {
-    "\(title)::\(originalSessionID ?? "new")"
+    [
+      workspaceURL.path(),
+      title,
+      originalSessionID ?? "new",
+      originalSessionFileURL?.path() ?? "",
+    ]
+    .joined(separator: "::")
+  }
+}
+
+private struct SessionDeletionPresentation: Identifiable {
+  let session: WorkspaceSessionListItem
+  let workspaceURL: URL
+
+  var id: String {
+    [
+      workspaceURL.path(),
+      session.id,
+      session.fileURL.standardizedFileURL.path(),
+    ]
+    .joined(separator: "::")
   }
 }
