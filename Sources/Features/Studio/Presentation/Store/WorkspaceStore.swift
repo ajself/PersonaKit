@@ -148,6 +148,7 @@ public final class WorkspaceStore {
   let sessionEditorFeatureModel: WorkspaceSessionEditorFeatureModel
   let sessionFeatureModel: WorkspaceSessionFeatureModel
   let validationFeatureModel: WorkspaceValidationFeatureModel
+  let recentWorkspaceAccess = StudioRecentWorkspaceAccess()
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),

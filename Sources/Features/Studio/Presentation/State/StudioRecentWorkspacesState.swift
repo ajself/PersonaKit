@@ -173,7 +173,12 @@ enum StudioRecentWorkspacesState {
 }
 
 @MainActor
-final class StudioRecentWorkspaceAccess {
+protocol StudioRecentWorkspaceAccessing: AnyObject {
+  func url(for workspace: StudioRecentWorkspace) -> URL
+  func stop()
+}
+
+final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
   private var accessedURL: URL?
 
   func url(for workspace: StudioRecentWorkspace) -> URL {

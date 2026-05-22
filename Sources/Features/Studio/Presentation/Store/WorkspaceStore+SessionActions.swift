@@ -1,5 +1,6 @@
 import ContextCore
 import ContextWorkspaceCore
+import Foundation
 import StudioFoundation
 
 extension WorkspaceStore {
@@ -22,22 +23,33 @@ extension WorkspaceStore {
   /// Saves a session draft to project scope and refreshes workspace data.
   func saveSession(
     draft: WorkspaceSessionDraft,
-    originalSessionID: String?
+    originalSessionID: String?,
+    expectedWorkspaceURL: URL? = nil,
+    expectedOriginalSessionFileURL: URL? = nil
   ) async throws -> String {
     try await sessionEditorFeatureModel.saveSession(
       draft: draft,
       originalSessionID: originalSessionID,
       snapshot: snapshot,
       workspaceURL: workspaceURL,
+      expectedWorkspaceURL: expectedWorkspaceURL,
+      expectedOriginalSessionFileURL: expectedOriginalSessionFileURL,
       onWorkspaceMutation: { self.loadWorkspace() }
     )
   }
 
   /// Deletes a project-scoped session file and refreshes workspace data.
-  func deleteSession(sessionID: String) async throws {
+  func deleteSession(
+    sessionID: String,
+    expectedWorkspaceURL: URL? = nil,
+    expectedSessionFileURL: URL? = nil
+  ) async throws {
     try await sessionEditorFeatureModel.deleteSession(
       sessionID: sessionID,
       workspaceURL: workspaceURL,
+      snapshot: snapshot,
+      expectedWorkspaceURL: expectedWorkspaceURL,
+      expectedSessionFileURL: expectedSessionFileURL,
       onWorkspaceMutation: { self.loadWorkspace() }
     )
   }

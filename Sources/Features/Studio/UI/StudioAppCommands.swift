@@ -2,6 +2,11 @@ import SwiftUI
 
 public struct StudioAppCommands: Commands {
   let workspaceStore: WorkspaceStore
+  @AppStorage(
+    StudioRecentWorkspacesState.storageKey,
+    store: StudioLaunchConfiguration.userDefaults()
+  )
+  private var recentWorkspacesStorageValue = "[]"
 
   public init(workspaceStore: WorkspaceStore) {
     self.workspaceStore = workspaceStore
@@ -12,7 +17,11 @@ public struct StudioAppCommands: Commands {
 
     CommandGroup(after: .newItem) {
       Button("Open Workspace…") {
-        workspaceStore.openWorkspacePicker()
+        StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
+          workspaceStore: workspaceStore,
+          recentWorkspacesStorageValue: &recentWorkspacesStorageValue,
+          recentWorkspaceAccess: workspaceStore.recentWorkspaceAccess
+        )
       }
       .keyboardShortcut("o", modifiers: [.command])
     }
