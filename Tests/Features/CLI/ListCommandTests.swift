@@ -30,6 +30,45 @@ struct ListCommandTests {
   }
 
   @Test
+  func cliListPersonasRejectsPackPathWhenItIsAFile() throws {
+    let root = try makeRootWithPackFile(relativePath: "personas")
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "list",
+        "--root",
+        root.path,
+        "personas",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("Packs/personas"))
+    #expect(stderrOutput.contains("Expected directory."))
+  }
+
+  @Test
+  func cliListEssentialsRejectsEssentialPathWhenItIsAFile() throws {
+    let root = try makeRootWithPackFile(relativePath: "essentials")
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "list",
+        "--root",
+        root.path,
+        "essentials",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("Essentials path is not a directory"))
+  }
+
+  @Test
   func listReferences() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
@@ -107,6 +146,18 @@ struct ListCommandTests {
 
     #expect(output == expected)
   }
+}
+
+private func makeRootWithPackFile(relativePath: String) throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+  let packsURL = root.appendingPathComponent("Packs")
+  try FileManager.default.createDirectory(
+    at: packsURL,
+    withIntermediateDirectories: true
+  )
+  try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent(relativePath))
+
+  return root
 }
 
 private func writeSession(root: URL, session: SessionFile) throws {

@@ -80,15 +80,28 @@ public struct Registry: Sendable {
       let packsURL = PersonaKitDirectory.packsURL(root: root)
       var isDirectory: ObjCBool = false
 
-      guard fileManager.fileExists(atPath: packsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+      let packsExists = fileManager.fileExists(atPath: packsURL.path, isDirectory: &isDirectory)
+
+      guard packsExists else {
         errors.append(
           RegistryError(
             relativePath: "Packs",
             entityType: .packsRoot,
             id: nil,
             message: "Missing Packs directory."
+          )
+        )
+
+        continue
+      }
+
+      guard isDirectory.boolValue else {
+        errors.append(
+          RegistryError(
+            relativePath: "Packs",
+            entityType: .packsRoot,
+            id: nil,
+            message: "Expected directory."
           )
         )
 
@@ -220,9 +233,22 @@ private func loadEntities<T: Decodable & EntityWithID>(
   var results: [String: T] = [:]
   var isDirectory: ObjCBool = false
 
-  guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory),
-    isDirectory.boolValue
-  else {
+  let directoryExists = fileManager.fileExists(atPath: directory.path, isDirectory: &isDirectory)
+
+  guard directoryExists else {
+    return results
+  }
+
+  guard isDirectory.boolValue else {
+    errors.append(
+      RegistryError(
+        relativePath: relativePath(for: directory, root: root),
+        entityType: entityType,
+        id: nil,
+        message: "Expected directory."
+      )
+    )
+
     return results
   }
 

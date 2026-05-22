@@ -1243,12 +1243,26 @@ private enum CreateCommandHelpers {
       throw error
     } catch {
       if jsonOutput {
-        emitJSON(CreateFailureEnvelope(error: error.localizedDescription))
+        emitJSON(CreateFailureEnvelope(error: errorMessage(for: error)))
         throw ExitCode.failure
       }
 
       throw error
     }
+  }
+
+  static func errorMessage(for error: Error) -> String {
+    if let validationError = error as? ArgumentParser.ValidationError {
+      return validationError.message
+    }
+
+    if let localizedError = error as? LocalizedError,
+      let errorDescription = localizedError.errorDescription
+    {
+      return errorDescription
+    }
+
+    return error.localizedDescription
   }
 
   static func resolveWritableRoot(rootPath: String?) throws -> URL {

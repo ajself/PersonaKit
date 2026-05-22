@@ -426,6 +426,60 @@ struct ValidatorTests {
   }
 
   @Test
+  func validateRejectsPackEntityPathWhenItIsAFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    let packsURL = root.appendingPathComponent("Packs")
+    try FileManager.default.createDirectory(
+      at: packsURL,
+      withIntermediateDirectories: true
+    )
+    try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent("personas"))
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.counts == .zero)
+    #expect(
+      result.errors == [
+        ValidationError(
+          entityType: .persona,
+          entityId: nil,
+          field: "file",
+          missingId: nil,
+          expectedPath: "Packs/personas",
+          message: "Expected directory."
+        )
+      ]
+    )
+  }
+
+  @Test
+  func validateRejectsEssentialPathWhenItIsAFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    let packsURL = root.appendingPathComponent("Packs")
+    try FileManager.default.createDirectory(
+      at: packsURL,
+      withIntermediateDirectories: true
+    )
+    try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent("essentials"))
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.counts == .zero)
+    #expect(
+      result.errors == [
+        ValidationError(
+          entityType: .essentials,
+          entityId: nil,
+          field: "file",
+          missingId: nil,
+          expectedPath: "Packs/essentials",
+          message: "Expected directory."
+        )
+      ]
+    )
+  }
+
+  @Test
   func validateIntentParameterConstraintRequiresMultipleParameters() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
