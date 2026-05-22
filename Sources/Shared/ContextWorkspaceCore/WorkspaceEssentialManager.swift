@@ -75,7 +75,8 @@ public struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
 
     let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
       workspaceURL,
-      directoryExists: dependencies.directoryExists
+      directoryExists: dependencies.directoryExists,
+      fileExists: dependencies.fileExists
     )
 
     return
@@ -127,17 +128,20 @@ public struct WorkspaceEssentialManager: WorkspaceEssentialManaging, Sendable {
 /// Injectable filesystem behavior for essentials markdown editing.
 public struct WorkspaceEssentialManagerDependencies: Sendable {
   public let directoryExists: @Sendable (URL) -> Bool
+  public let fileExists: @Sendable (URL) -> Bool
   public let createDirectory: @Sendable (URL) throws -> Void
   public let readData: @Sendable (URL) throws -> Data
   public let writeData: @Sendable (Data, URL) throws -> Void
 
   public init(
     directoryExists: @escaping @Sendable (URL) -> Bool,
+    fileExists: @escaping @Sendable (URL) -> Bool = { _ in false },
     createDirectory: @escaping @Sendable (URL) throws -> Void,
     readData: @escaping @Sendable (URL) throws -> Data,
     writeData: @escaping @Sendable (Data, URL) throws -> Void
   ) {
     self.directoryExists = directoryExists
+    self.fileExists = fileExists
     self.createDirectory = createDirectory
     self.readData = readData
     self.writeData = writeData
@@ -151,6 +155,9 @@ public struct WorkspaceEssentialManagerDependencies: Sendable {
 
         return fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory)
           && isDirectory.boolValue
+      },
+      fileExists: { url in
+        FileManager.default.fileExists(atPath: url.path())
       },
       createDirectory: { url in
         try FileManager.default.createDirectory(

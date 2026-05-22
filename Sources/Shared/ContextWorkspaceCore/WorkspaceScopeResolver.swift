@@ -4,12 +4,17 @@ import Foundation
 /// Resolves workspace roots used by Studio for project and global scope operations.
 public struct WorkspaceScopeResolver {
   public let directoryExists: @Sendable (URL) -> Bool
+  public let fileExists: @Sendable (URL) -> Bool
 
   /// Creates a resolver with an injected directory existence check.
   ///
   /// - Parameter directoryExists: Closure used to check whether a URL exists as a directory.
-  public init(directoryExists: @escaping @Sendable (URL) -> Bool) {
+  public init(
+    directoryExists: @escaping @Sendable (URL) -> Bool,
+    fileExists: @escaping @Sendable (URL) -> Bool = { _ in false }
+  ) {
     self.directoryExists = directoryExists
+    self.fileExists = fileExists
   }
 
   /// Resolves the default global PersonaKit scope (`~/.personakit`) when present.
@@ -47,6 +52,12 @@ public struct WorkspaceScopeResolver {
     let packsURL = PersonaKitDirectory.packsURL(root: projectScopeURL)
 
     guard directoryExists(packsURL) else {
+      if fileExists(packsURL) {
+        throw WorkspaceSnapshotBuildError(
+          message: "PersonaKit reserved path Packs exists but is not a directory."
+        )
+      }
+
       throw MissingPersonaKitDirectoryError(projectScopeURL: projectScopeURL)
     }
 

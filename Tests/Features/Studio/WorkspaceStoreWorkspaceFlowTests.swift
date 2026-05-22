@@ -250,6 +250,34 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
+  func loadWorkspaceDoesNotOfferInitializationForMalformedPacksPath() async throws {
+    let workspaceURL = try makeTempDirectory()
+    let personakitURL = workspaceURL.appendingPathComponent(".personakit")
+    let packsURL = personakitURL.appendingPathComponent("Packs")
+
+    try FileManager.default.createDirectory(
+      at: personakitURL,
+      withIntermediateDirectories: true
+    )
+    try Data("not a directory".utf8).write(to: packsURL, options: [.atomic])
+
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeURL: nil),
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      }
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.loadErrorMessage == "PersonaKit reserved path Packs exists but is not a directory."
+    }
+    #expect(!store.canInitializeWorkspaceStructure)
+  }
+
+  @Test
   func installOrUpdateCLIStoresResultAndRefreshesStatus() throws {
     let homeDirectoryURL = try FileManager.default.url(
       for: .itemReplacementDirectory,

@@ -111,7 +111,8 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
 
   private func scopeResolver() -> WorkspaceScopeResolver {
     WorkspaceScopeResolver(
-      directoryExists: dependencies.directoryExists
+      directoryExists: dependencies.directoryExists,
+      fileExists: dependencies.fileExists
     )
   }
 }

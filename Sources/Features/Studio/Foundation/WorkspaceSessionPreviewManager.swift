@@ -64,41 +64,37 @@ public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, S
   }
 
   private func resolveProjectScopeURL(_ workspaceURL: URL) throws -> URL {
-    let workspace = workspaceURL.standardizedFileURL
-    let projectScopeURL: URL
-
-    if workspace.lastPathComponent == ".personakit" {
-      projectScopeURL = workspace
-    } else {
-      projectScopeURL = workspace.appendingPathComponent(".personakit")
-    }
-
-    let packsURL = projectScopeURL.appendingPathComponent("Packs")
-
-    guard dependencies.directoryExists(packsURL) else {
+    do {
+      return try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
+        workspaceURL,
+        directoryExists: dependencies.directoryExists,
+        fileExists: dependencies.fileExists
+      )
+    } catch let error as MissingPersonaKitDirectoryError {
       throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(projectScopeURL.path())."
+        message: "Missing PersonaKit directory at \(error.projectScopeURL.path())."
       )
     }
-
-    return projectScopeURL
   }
 }
 
 /// Injectable filesystem/global-scope dependencies for preview generation and export.
 public struct WorkspaceSessionPreviewManagerDependencies: Sendable {
   public let directoryExists: @Sendable (URL) -> Bool
+  public let fileExists: @Sendable (URL) -> Bool
   public let defaultGlobalScopeURL: @Sendable () -> URL?
   public let createDirectory: @Sendable (URL) throws -> Void
   public let writeData: @Sendable (Data, URL) throws -> Void
 
   public init(
     directoryExists: @escaping @Sendable (URL) -> Bool,
+    fileExists: @escaping @Sendable (URL) -> Bool = { _ in false },
     defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
     createDirectory: @escaping @Sendable (URL) throws -> Void,
     writeData: @escaping @Sendable (Data, URL) throws -> Void
   ) {
     self.directoryExists = directoryExists
+    self.fileExists = fileExists
     self.defaultGlobalScopeURL = defaultGlobalScopeURL
     self.createDirectory = createDirectory
     self.writeData = writeData
@@ -112,6 +108,9 @@ public struct WorkspaceSessionPreviewManagerDependencies: Sendable {
 
         return fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory)
           && isDirectory.boolValue
+      },
+      fileExists: { url in
+        FileManager.default.fileExists(atPath: url.path())
       },
       defaultGlobalScopeURL: {
         let fileManager = FileManager.default

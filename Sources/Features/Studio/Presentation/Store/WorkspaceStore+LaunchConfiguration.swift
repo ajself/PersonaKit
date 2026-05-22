@@ -22,6 +22,7 @@ extension WorkspaceStore {
     let livePreviewDependencies = WorkspaceSessionPreviewManagerDependencies.live()
     let previewDependencies = WorkspaceSessionPreviewManagerDependencies(
       directoryExists: livePreviewDependencies.directoryExists,
+      fileExists: livePreviewDependencies.fileExists,
       defaultGlobalScopeURL: { globalScopeURL },
       createDirectory: livePreviewDependencies.createDirectory,
       writeData: livePreviewDependencies.writeData

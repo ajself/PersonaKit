@@ -118,6 +118,55 @@ struct WorkspaceSessionPreviewManagerTests {
   }
 
   @Test
+  func loadPreviewFailsWhenProjectPacksPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    let session = WorkspaceSessionListItem(
+      id: "session-a",
+      personaId: "unused",
+      directiveId: "unused",
+      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
+      sourceScope: .project
+    )
+    let manager = WorkspaceSessionPreviewManager(
+      sessionManager: StubPreviewSessionManager(
+        loadDraftHandler: { _ in
+          WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: []
+          )
+        }
+      ),
+      previewBuilder: StubPreviewBuilder { _, _, _, _, _, _ in
+        "unused"
+      },
+      dependencies: WorkspaceSessionPreviewManagerDependencies(
+        directoryExists: { _ in false },
+        fileExists: { url in
+          url.standardizedFileURL == packsURL.standardizedFileURL
+        },
+        defaultGlobalScopeURL: {
+          nil
+        },
+        createDirectory: { _ in },
+        writeData: { _, _ in }
+      )
+    )
+
+    do {
+      _ = try manager.loadPreview(
+        workspaceURL: workspaceURL,
+        session: session
+      )
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs exists but is not a directory.")
+    }
+  }
+
+  @Test
   func exportPreviewWritesMarkdownUsingInjectedDependencies() throws {
     let destinationURL = URL(fileURLWithPath: "/Exports/session-a.md")
     let previewText = "preview-body"
