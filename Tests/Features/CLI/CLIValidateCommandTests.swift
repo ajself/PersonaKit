@@ -41,6 +41,29 @@ struct CLIValidateCommandTests {
     #expect(stdoutOutput.contains("errors=1"))
     #expect(stdoutOutput.contains("essentials file: Expected directory. expectedPath=Packs/essentials"))
   }
+
+  @Test
+  func validateRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeValidateRootWithSessionsFile()
+
+    var status: Int32 = 0
+    let stdoutOutput = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "validate",
+        "--root",
+        root.path,
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stdoutOutput.contains("errors=1"))
+    #expect(
+      stdoutOutput.contains(
+        "session sessionFile: Session discovery path is not a directory: Sessions. expectedPath=Sessions"
+      )
+    )
+  }
 }
 
 private func makeValidateRootWithPackFile(relativePath: String) throws -> URL {
@@ -51,6 +74,16 @@ private func makeValidateRootWithPackFile(relativePath: String) throws -> URL {
     withIntermediateDirectories: true
   )
   try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent(relativePath))
+
+  return root
+}
+
+private func makeValidateRootWithSessionsFile() throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+  try copyFixtureKit(to: root)
+  let sessionsURL = root.appendingPathComponent("Sessions")
+  try FileManager.default.removeItem(at: sessionsURL)
+  try Data("not a directory".utf8).write(to: sessionsURL)
 
   return root
 }

@@ -24,6 +24,8 @@ public struct SessionFile: Codable, Sendable {
 public enum SessionFileError: LocalizedError {
   case notFound(String, String)
   case decodeFailed(String, String)
+  case discoveryPathNotDirectory(String)
+  case discoveryReadFailed(String, String)
   case idMismatch(String, String, String)
   case invalidSessionId
   case invalidSessionPath(String)
@@ -35,6 +37,10 @@ public enum SessionFileError: LocalizedError {
       return "Session file not found for \(sessionId). Expected \(expectedPath)."
     case .decodeFailed(let sessionId, let message):
       return "Failed to decode session file for \(sessionId): \(message)"
+    case .discoveryPathNotDirectory(let relativePath):
+      return "Session discovery path is not a directory: \(relativePath)."
+    case .discoveryReadFailed(let relativePath, let message):
+      return "Failed to read session discovery path \(relativePath): \(message)"
     case .idMismatch(let sessionId, let actualId, let path):
       return "Session id mismatch in \(path). Expected \(sessionId), got \(actualId)."
     case .invalidSessionId:
@@ -149,17 +155,37 @@ public struct SessionFileLoader {
       }
 
       var isDirectory: ObjCBool = false
-      guard fileManager.fileExists(atPath: sessionsURL.path, isDirectory: &isDirectory),
-        isDirectory.boolValue
-      else {
+      let sessionsExists = fileManager.fileExists(
+        atPath: sessionsURL.path,
+        isDirectory: &isDirectory
+      )
+
+      guard sessionsExists else {
         continue
       }
 
-      let files = try fileManager.contentsOfDirectory(
-        at: sessionsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
+      guard isDirectory.boolValue else {
+        throw SessionFileError.discoveryPathNotDirectory("Sessions")
+      }
+
+      let files: [URL]
+      do {
+        files = try fileManager.contentsOfDirectory(
+          at: sessionsURL,
+          includingPropertiesForKeys: nil,
+          options: [.skipsHiddenFiles]
+        )
+      } catch {
+        throw SessionFileError.discoveryReadFailed(
+          "Sessions",
+          fileSystemErrorMessage(
+            error,
+            relativePath: "Sessions",
+            absolutePath: sessionsURL.path,
+            rootPath: root.path
+          )
+        )
+      }
 
       let sessionFiles =
         files
@@ -186,6 +212,24 @@ public struct SessionFileLoader {
     }
 
     return fileURLsByID
+  }
+
+  private static func fileSystemErrorMessage(
+    _ error: Error,
+    relativePath: String,
+    absolutePath: String,
+    rootPath: String
+  ) -> String {
+    var message = error.localizedDescription
+      .replacingOccurrences(of: absolutePath, with: relativePath)
+      .replacingOccurrences(of: rootPath, with: ".")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if message.isEmpty {
+      message = "File system read failed."
+    }
+
+    return message
   }
 
   /// Loads a session by id from the first matching root in resolution order.

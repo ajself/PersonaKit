@@ -145,6 +145,50 @@ struct SessionFileLoaderTests {
   }
 
   @Test
+  func discoveredSessionIDsRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeTempDirectory()
+    let sessionsURL = root.appendingPathComponent("Sessions")
+
+    try Data("not a directory".utf8).write(to: sessionsURL, options: .atomic)
+
+    do {
+      _ = try SessionFileLoader.discoveredSessionIDs(
+        scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+      )
+      #expect(Bool(false))
+    } catch let error as SessionFileError {
+      if case .discoveryPathNotDirectory(let relativePath) = error {
+        #expect(relativePath == "Sessions")
+        return
+      }
+
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
+  func listRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeTempDirectory()
+    let sessionsURL = root.appendingPathComponent("Sessions")
+
+    try Data("not a directory".utf8).write(to: sessionsURL, options: .atomic)
+
+    do {
+      _ = try SessionFileLoader.list(
+        scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+      )
+      #expect(Bool(false))
+    } catch let error as SessionFileError {
+      if case .discoveryPathNotDirectory(let relativePath) = error {
+        #expect(relativePath == "Sessions")
+        return
+      }
+
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
   func reportsDecodeFailureForInvalidJSON() throws {
     let root = try makeTempDirectory()
     let sessionsDirectory = root.appendingPathComponent("Sessions")

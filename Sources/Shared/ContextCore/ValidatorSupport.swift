@@ -126,6 +126,10 @@ enum ValidatorSupport {
       field = "id"
       missingId = sessionId
       expectedPath = "Sessions/\(sessionId).session.json"
+    case .discoveryPathNotDirectory(let path), .discoveryReadFailed(let path, _):
+      field = "sessionFile"
+      missingId = sessionId
+      expectedPath = path
     case .invalidSessionId, .invalidSessionPath:
       field = "sessionFile"
       missingId = sessionId
@@ -137,6 +141,26 @@ enum ValidatorSupport {
       entityId: sessionId,
       field: field,
       missingId: missingId,
+      expectedPath: expectedPath,
+      message: error.localizedDescription
+    )
+  }
+
+  static func sessionDiscoveryValidationError(for error: SessionFileError) -> ValidationError {
+    let expectedPath: String?
+
+    switch error {
+    case .discoveryPathNotDirectory(let path), .discoveryReadFailed(let path, _):
+      expectedPath = path
+    case .notFound, .decodeFailed, .idMismatch, .invalidSessionId, .invalidSessionPath:
+      expectedPath = nil
+    }
+
+    return ValidationError(
+      entityType: .session,
+      entityId: nil,
+      field: "sessionFile",
+      missingId: nil,
       expectedPath: expectedPath,
       message: error.localizedDescription
     )

@@ -146,6 +146,25 @@ struct ListCommandTests {
 
     #expect(output == expected)
   }
+
+  @Test
+  func cliListSessionsRejectsSessionsPathWhenItIsAFile() throws {
+    let root = try makeRootWithSessionsFile()
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "list",
+        "--root",
+        root.path,
+        "sessions",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("Session discovery path is not a directory: Sessions."))
+  }
 }
 
 private func makeRootWithPackFile(relativePath: String) throws -> URL {
@@ -156,6 +175,18 @@ private func makeRootWithPackFile(relativePath: String) throws -> URL {
     withIntermediateDirectories: true
   )
   try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent(relativePath))
+
+  return root
+}
+
+private func makeRootWithSessionsFile() throws -> URL {
+  let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+
+  try FileManager.default.createDirectory(
+    at: root.appendingPathComponent("Packs"),
+    withIntermediateDirectories: true
+  )
+  try Data("not a directory".utf8).write(to: root.appendingPathComponent("Sessions"))
 
   return root
 }

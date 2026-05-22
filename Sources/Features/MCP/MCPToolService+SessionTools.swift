@@ -18,11 +18,16 @@ extension MCPToolService {
 
   func exportTool(input: MCPToolArguments) throws -> String {
     do {
+      let sessionInput = try MCPInternalSupport.resolveSessionInput(
+        scopes: scopes,
+        selection: input.selection
+      )
+
       return try MCPInternalSupport.exportOutput(
         scopes: scopes,
-        personaId: input.personaId,
-        directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides,
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides,
         targetPaths: input.targetPaths,
         referenceTags: input.referenceTags
       )
@@ -33,11 +38,16 @@ extension MCPToolService {
 
   func resolveReferencesTool(input: MCPToolArguments) throws -> String {
     do {
+      let sessionInput = try MCPInternalSupport.resolveSessionInput(
+        scopes: scopes,
+        selection: input.selection
+      )
+
       let result = try WorkflowReferenceResolver.resolve(
         scopes: scopes,
-        personaId: input.personaId,
-        directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides,
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides,
         input: ReferenceSelectionInput(
           targetPaths: input.targetPaths,
           referenceTags: input.referenceTags
@@ -86,11 +96,16 @@ extension MCPToolService {
 
   func graphTool(input: MCPToolArguments) throws -> String {
     do {
+      let sessionInput = try MCPInternalSupport.resolveSessionInput(
+        scopes: scopes,
+        selection: input.selection
+      )
+
       return try MCPInternalSupport.graphOutput(
         scopes: scopes,
-        personaId: input.personaId,
-        directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides
       )
     } catch let error as RegistryLoadError {
       throw MCPError.invalidParams(MCPInternalSupport.formatRegistryErrors(error.errors))

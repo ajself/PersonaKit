@@ -131,6 +131,10 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         return "Session file not found for \(sessionId). Expected \(expectedPath)."
       case .decodeFailed(let sessionId, _):
         return "Failed to decode session file for \(sessionId)."
+      case .discoveryPathNotDirectory(let path):
+        return "Session discovery path is not a directory: \(path)."
+      case .discoveryReadFailed(let path, let message):
+        return "Failed to read session discovery path \(path): \(message)"
       case .idMismatch(let sessionId, let actualId, let path):
         return "Session id mismatch in \(path). Expected \(sessionId), got \(actualId)."
       case .invalidSessionId:

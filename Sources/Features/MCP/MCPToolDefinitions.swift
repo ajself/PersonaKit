@@ -87,6 +87,10 @@ enum MCPToolName: String, CaseIterable {
       ]
     case .graph:
       let properties: Value = [
+        "sessionId": [
+          "type": "string",
+          "description": "Optional session id. Cannot be combined with personaId, directiveId, or kits.",
+        ],
         "personaId": [
           "type": "string",
           "description": "Persona id",
@@ -106,11 +110,14 @@ enum MCPToolName: String, CaseIterable {
       return [
         "type": "object",
         "properties": properties,
-        "required": ["personaId", "directiveId"],
         "additionalProperties": false,
       ]
     case .export, .resolveReferences:
       let properties: Value = [
+        "sessionId": [
+          "type": "string",
+          "description": "Optional session id. Cannot be combined with personaId, directiveId, or kits.",
+        ],
         "personaId": [
           "type": "string",
           "description": "Persona id",
@@ -144,7 +151,6 @@ enum MCPToolName: String, CaseIterable {
       return [
         "type": "object",
         "properties": properties,
-        "required": ["personaId", "directiveId"],
         "additionalProperties": false,
       ]
     case .explainEntity:

@@ -50,6 +50,53 @@ struct MCPPromptTests {
   }
 
   @Test
+  func promptArgumentsRejectSessionIdMixedWithPersonaSelection() {
+    let args: [String: Value] = [
+      "sessionId": .string("senior-swiftui-engineer_apply-style"),
+      "personaId": .string("senior-swiftui-engineer"),
+      "directiveId": .string("apply-style"),
+    ]
+
+    do {
+      _ = try MCPPromptArgumentParser.parse(args)
+      #expect(Bool(false))
+    } catch let error as MCPPromptArgumentError {
+      #expect(
+        error
+          == .invalidValue(
+            "sessionId",
+            "cannot be combined with personaId, directiveId, or kits"
+          )
+      )
+    } catch {
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
+  func promptArgumentsRejectSessionIdMixedWithKits() {
+    let args: [String: Value] = [
+      "sessionId": .string("senior-swiftui-engineer_apply-style"),
+      "kits": .string("swift-style"),
+    ]
+
+    do {
+      _ = try MCPPromptArgumentParser.parse(args)
+      #expect(Bool(false))
+    } catch let error as MCPPromptArgumentError {
+      #expect(
+        error
+          == .invalidValue(
+            "sessionId",
+            "cannot be combined with personaId, directiveId, or kits"
+          )
+      )
+    } catch {
+      #expect(Bool(false))
+    }
+  }
+
+  @Test
   func promptArgumentsRejectNonStringKits() {
     let args: [String: Value] = [
       "personaId": .string("senior-swiftui-engineer"),

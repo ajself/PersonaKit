@@ -20,16 +20,18 @@ enum MCPPromptName: String, CaseIterable {
     switch self {
     case .sessionExport:
       return [
-        .init(name: "personaId", description: "Persona id", required: true),
-        .init(name: "directiveId", description: "Directive id", required: true),
+        .init(name: "sessionId", description: "Optional session id"),
+        .init(name: "personaId", description: "Persona id"),
+        .init(name: "directiveId", description: "Directive id"),
         .init(name: "kits", description: "Comma-separated kit ids"),
         .init(name: "targetPaths", description: "Comma-separated target file paths"),
         .init(name: "referenceTags", description: "Comma-separated reference tags"),
       ]
     case .sessionGraph:
       return [
-        .init(name: "personaId", description: "Persona id", required: true),
-        .init(name: "directiveId", description: "Directive id", required: true),
+        .init(name: "sessionId", description: "Optional session id"),
+        .init(name: "personaId", description: "Persona id"),
+        .init(name: "directiveId", description: "Directive id"),
         .init(name: "kits", description: "Comma-separated kit ids"),
       ]
     }
@@ -38,17 +40,41 @@ enum MCPPromptName: String, CaseIterable {
 
 /// Parsed and normalized prompt input arguments.
 struct MCPPromptArguments: Equatable {
-  let personaId: String
-  let directiveId: String
-  let kitOverrides: [String]
+  let selection: MCPSessionSelection
   let targetPaths: [String]
   let referenceTags: [String]
+
+  var sessionId: String? {
+    selection.sessionId
+  }
+
+  var personaId: String? {
+    selection.personaId
+  }
+
+  var directiveId: String? {
+    selection.directiveId
+  }
+
+  var kitOverrides: [String] {
+    selection.kitOverrides
+  }
 }
 
 /// Prompt argument parsing failures returned as MCP invalid-params errors.
 enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
   case missing(String)
   case invalidType(String)
+  case invalidValue(String, String)
+
+  init(_ error: MCPSessionSelectionError) {
+    switch error {
+    case .missing(let name):
+      self = .missing(name)
+    case .invalidValue(let name, let message):
+      self = .invalidValue(name, message)
+    }
+  }
 
   var errorDescription: String? {
     switch self {
@@ -56,6 +82,8 @@ enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
       return "Missing required argument: \(name)"
     case .invalidType(let name):
       return "Invalid argument type for \(name); expected string."
+    case .invalidValue(let name, let message):
+      return "Invalid value for \(name): \(message)"
     }
   }
 }
@@ -64,8 +92,9 @@ enum MCPPromptArgumentError: Error, LocalizedError, Equatable {
 enum MCPPromptArgumentParser {
   /// Parses required persona/directive values and optional kit overrides.
   static func parse(_ arguments: [String: Value]?) throws -> MCPPromptArguments {
-    let personaId = try requireString(arguments, name: "personaId")
-    let directiveId = try requireString(arguments, name: "directiveId")
+    let sessionId = try parseOptionalString(arguments, name: "sessionId")
+    let personaId = try parseOptionalString(arguments, name: "personaId")
+    let directiveId = try parseOptionalString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseCSV(arguments?["targetPaths"], fieldName: "targetPaths")
     let referenceTags = try parseCSV(
@@ -73,18 +102,29 @@ enum MCPPromptArgumentParser {
       fieldName: "referenceTags"
     )
 
+    let selection: MCPSessionSelection
+
+    do {
+      selection = try MCPSessionSelection.validate(
+        sessionId: sessionId,
+        personaId: personaId,
+        directiveId: directiveId,
+        kitOverrides: kitOverrides
+      )
+    } catch let error as MCPSessionSelectionError {
+      throw MCPPromptArgumentError(error)
+    }
+
     return MCPPromptArguments(
-      personaId: personaId,
-      directiveId: directiveId,
-      kitOverrides: kitOverrides,
+      selection: selection,
       targetPaths: targetPaths,
       referenceTags: referenceTags
     )
   }
 
-  private static func requireString(_ arguments: [String: Value]?, name: String) throws -> String {
+  private static func parseOptionalString(_ arguments: [String: Value]?, name: String) throws -> String? {
     guard let value = arguments?[name] else {
-      throw MCPPromptArgumentError.missing(name)
+      return nil
     }
 
     guard let stringValue = value.stringValue else {
@@ -93,11 +133,7 @@ enum MCPPromptArgumentParser {
 
     let trimmed = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    guard !trimmed.isEmpty else {
-      throw MCPPromptArgumentError.missing(name)
-    }
-
-    return trimmed
+    return trimmed.isEmpty ? nil : trimmed
   }
 
   private static func parseKitOverrides(_ value: Value?) throws -> [String] {
@@ -171,11 +207,16 @@ struct MCPPromptService: Sendable {
 
   private func exportPrompt(input: MCPPromptArguments) throws -> String {
     do {
+      let sessionInput = try MCPInternalSupport.resolveSessionInput(
+        scopes: scopes,
+        selection: input.selection
+      )
+
       return try MCPInternalSupport.exportOutput(
         scopes: scopes,
-        personaId: input.personaId,
-        directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides,
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides,
         targetPaths: input.targetPaths,
         referenceTags: input.referenceTags
       )
@@ -186,11 +227,16 @@ struct MCPPromptService: Sendable {
 
   private func graphPrompt(input: MCPPromptArguments) throws -> String {
     do {
+      let sessionInput = try MCPInternalSupport.resolveSessionInput(
+        scopes: scopes,
+        selection: input.selection
+      )
+
       return try MCPInternalSupport.graphOutput(
         scopes: scopes,
-        personaId: input.personaId,
-        directiveId: input.directiveId,
-        kitOverrides: input.kitOverrides
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides
       )
     } catch let error as RegistryLoadError {
       throw MCPError.invalidParams(MCPInternalSupport.formatRegistryErrors(error.errors))

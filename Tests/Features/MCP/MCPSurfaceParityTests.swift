@@ -33,6 +33,31 @@ struct MCPSurfaceParityTests {
   }
 
   @Test
+  func exportPromptWithSessionIDMatchesExportToolOutput() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let promptService = MCPPromptService(scopes: scopes)
+    let toolService = MCPToolService(scopes: scopes)
+
+    let promptResult = try promptService.getPrompt(
+      name: "personakit.session.export",
+      arguments: [
+        "sessionId": .string("senior-swiftui-engineer_apply-style")
+      ]
+    )
+    let toolResult = try toolService.callTool(
+      name: "personakit_export",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let promptText = try #require(firstPromptText(promptResult))
+    let toolText = try #require(firstToolText(toolResult))
+
+    #expect(normalizedTrailingNewline(promptText) == normalizedTrailingNewline(toolText))
+  }
+
+  @Test
   func graphPromptMatchesGraphToolOutput() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let promptService = MCPPromptService(scopes: scopes)
@@ -50,6 +75,31 @@ struct MCPSurfaceParityTests {
       arguments: [
         "personaId": "senior-swiftui-engineer",
         "directiveId": "apply-style",
+      ]
+    )
+
+    let promptText = try #require(firstPromptText(promptResult))
+    let toolText = try #require(firstToolText(toolResult))
+
+    #expect(normalizedTrailingNewline(promptText) == normalizedTrailingNewline(toolText))
+  }
+
+  @Test
+  func graphPromptWithSessionIDMatchesGraphToolOutput() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let promptService = MCPPromptService(scopes: scopes)
+    let toolService = MCPToolService(scopes: scopes)
+
+    let promptResult = try promptService.getPrompt(
+      name: "personakit.session.graph",
+      arguments: [
+        "sessionId": .string("senior-swiftui-engineer_apply-style")
+      ]
+    )
+    let toolResult = try toolService.callTool(
+      name: "personakit_graph",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
       ]
     )
 

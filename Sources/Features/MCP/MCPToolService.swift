@@ -91,7 +91,7 @@ struct MCPToolService: Sendable {
       throw MCPError.invalidParams(
         MCPInternalSupport.withRecoveryHint(
           error.localizedDescription,
-          hint: "Provide personaId and directiveId as non-empty strings, plus optional kits."
+          hint: "Provide sessionId, or personaId and directiveId as non-empty strings plus optional kits."
         )
       )
     }

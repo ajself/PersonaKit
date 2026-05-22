@@ -3,11 +3,68 @@ import MCP
 
 /// Parsed and normalized session arguments for export/graph tool calls.
 struct MCPToolArguments: Equatable {
-  let personaId: String
-  let directiveId: String
-  let kitOverrides: [String]
+  let selection: MCPSessionSelection
   let targetPaths: [String]
   let referenceTags: [String]
+
+  var sessionId: String? {
+    selection.sessionId
+  }
+
+  var personaId: String? {
+    selection.personaId
+  }
+
+  var directiveId: String? {
+    selection.directiveId
+  }
+
+  var kitOverrides: [String] {
+    selection.kitOverrides
+  }
+}
+
+struct MCPSessionSelection: Equatable {
+  let sessionId: String?
+  let personaId: String?
+  let directiveId: String?
+  let kitOverrides: [String]
+
+  static func validate(
+    sessionId: String?,
+    personaId: String?,
+    directiveId: String?,
+    kitOverrides: [String]
+  ) throws -> MCPSessionSelection {
+    if sessionId != nil {
+      if personaId != nil || directiveId != nil || !kitOverrides.isEmpty {
+        throw MCPSessionSelectionError.invalidValue(
+          "sessionId",
+          "cannot be combined with personaId, directiveId, or kits"
+        )
+      }
+    } else {
+      guard personaId != nil else {
+        throw MCPSessionSelectionError.missing("personaId")
+      }
+
+      guard directiveId != nil else {
+        throw MCPSessionSelectionError.missing("directiveId")
+      }
+    }
+
+    return MCPSessionSelection(
+      sessionId: sessionId,
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: kitOverrides
+    )
+  }
+}
+
+enum MCPSessionSelectionError: Error, Equatable {
+  case missing(String)
+  case invalidValue(String, String)
 }
 
 struct MCPEntityArguments: Equatable {
@@ -48,6 +105,15 @@ enum MCPToolArgumentError: Error, LocalizedError, Equatable {
   case invalidType(String)
   case invalidValue(String, String)
 
+  init(_ error: MCPSessionSelectionError) {
+    switch error {
+    case .missing(let name):
+      self = .missing(name)
+    case .invalidValue(let name, let message):
+      self = .invalidValue(name, message)
+    }
+  }
+
   var errorDescription: String? {
     switch self {
     case .missing(let name):
@@ -71,18 +137,31 @@ enum MCPToolArgumentError: Error, LocalizedError, Equatable {
 enum MCPToolArgumentParser {
   /// Parses and validates common session arguments for MCP tool calls.
   static func parseSession(_ arguments: [String: Value]?) throws -> MCPToolArguments {
-    let personaId = try requireString(arguments, name: "personaId")
-    let directiveId = try requireString(arguments, name: "directiveId")
+    let sessionId = try parseOptionalString(arguments, name: "sessionId")
+    let personaId = try parseOptionalString(arguments, name: "personaId")
+    let directiveId = try parseOptionalString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseStringList(arguments?["targetPaths"], fieldName: "targetPaths")
     let referenceTags = try parseStringList(
       arguments?["referenceTags"],
       fieldName: "referenceTags"
     )
+
+    let selection: MCPSessionSelection
+
+    do {
+      selection = try MCPSessionSelection.validate(
+        sessionId: sessionId,
+        personaId: personaId,
+        directiveId: directiveId,
+        kitOverrides: kitOverrides
+      )
+    } catch let error as MCPSessionSelectionError {
+      throw MCPToolArgumentError(error)
+    }
+
     return MCPToolArguments(
-      personaId: personaId,
-      directiveId: directiveId,
-      kitOverrides: kitOverrides,
+      selection: selection,
       targetPaths: targetPaths,
       referenceTags: referenceTags
     )

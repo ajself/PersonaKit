@@ -493,10 +493,17 @@ enum ValidatorReferenceChecker {
       }
     }
 
-    let sessionIds = try SessionFileLoader.discoveredSessionIDs(
-      scopes: scopes,
-      fileManager: fileManager
-    )
+    let sessionIds: [String]
+
+    do {
+      sessionIds = try SessionFileLoader.discoveredSessionIDs(
+        scopes: scopes,
+        fileManager: fileManager
+      )
+    } catch let error as SessionFileError {
+      errors.append(ValidatorSupport.sessionDiscoveryValidationError(for: error))
+      return errors
+    }
 
     for sessionId in sessionIds {
       try ValidatorSupport.checkCancellation()
