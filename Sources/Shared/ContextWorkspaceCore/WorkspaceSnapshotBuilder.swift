@@ -98,6 +98,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       let sessionsURL = PersonaKitDirectory.sessionsURL(root: root)
       let files = try listFiles(
         in: sessionsURL,
+        relativePath: "Sessions",
         pathSuffix: ".session.json"
       )
       let sourceScope = sourceScope(for: root, scopes: scopes)
@@ -132,6 +133,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       let essentialsURL = root.appendingPathComponent("Packs/essentials")
       let files = try listFiles(
         in: essentialsURL,
+        relativePath: "Packs/essentials",
         pathSuffix: ".md"
       )
       let sourceScope = sourceScope(for: root, scopes: scopes)
@@ -165,6 +167,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       let directoryURL = root.appendingPathComponent("Packs/\(T.directoryName)")
       let files = try listFiles(
         in: directoryURL,
+        relativePath: "Packs/\(T.directoryName)",
         pathSuffix: T.fileSuffix
       )
       let sourceScope = sourceScope(for: root, scopes: scopes)
@@ -208,11 +211,18 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
 
   private func listFiles(
     in directoryURL: URL,
+    relativePath: String,
     pathSuffix: String
   ) throws -> [URL] {
     try checkCancellation()
 
     guard dependencies.directoryExists(directoryURL) else {
+      if dependencies.fileExists(directoryURL) {
+        throw WorkspaceSnapshotBuildError(
+          message: "PersonaKit reserved path \(relativePath) exists but is not a directory."
+        )
+      }
+
       return []
     }
 
@@ -271,7 +281,8 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
 
   private func scopeResolver() -> WorkspaceScopeResolver {
     WorkspaceScopeResolver(
-      directoryExists: dependencies.directoryExists
+      directoryExists: dependencies.directoryExists,
+      fileExists: dependencies.fileExists
     )
   }
 }
@@ -279,6 +290,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
 /// Injectable IO and validation hooks for snapshot builder behavior.
 public struct WorkspaceSnapshotBuilderDependencies: Sendable {
   let directoryExists: @Sendable (URL) -> Bool
+  let fileExists: @Sendable (URL) -> Bool
   let contentsOfDirectory: @Sendable (URL) throws -> [URL]
   let readData: @Sendable (URL) throws -> Data
   let defaultGlobalScopeURL: @Sendable () -> URL?
@@ -287,12 +299,14 @@ public struct WorkspaceSnapshotBuilderDependencies: Sendable {
   /// Creates snapshot builder dependencies with caller-provided IO behavior.
   public init(
     directoryExists: @escaping @Sendable (URL) -> Bool,
+    fileExists: @escaping @Sendable (URL) -> Bool = { _ in false },
     contentsOfDirectory: @escaping @Sendable (URL) throws -> [URL],
     readData: @escaping @Sendable (URL) throws -> Data,
     defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
     validateRegistry: @escaping @Sendable (ScopeSet) throws -> Void
   ) {
     self.directoryExists = directoryExists
+    self.fileExists = fileExists
     self.contentsOfDirectory = contentsOfDirectory
     self.readData = readData
     self.defaultGlobalScopeURL = defaultGlobalScopeURL
@@ -307,6 +321,9 @@ public struct WorkspaceSnapshotBuilderDependencies: Sendable {
           url,
           fileManager: .default
         )
+      },
+      fileExists: { url in
+        FileManager.default.fileExists(atPath: url.path())
       },
       contentsOfDirectory: { url in
         let fileManager = FileManager.default

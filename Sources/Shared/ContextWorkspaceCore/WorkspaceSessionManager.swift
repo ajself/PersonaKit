@@ -134,7 +134,8 @@ public struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
 
     let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
       workspaceURL,
-      directoryExists: dependencies.directoryExists
+      directoryExists: dependencies.directoryExists,
+      fileExists: dependencies.fileExists
     )
     let sessionsDirectory = projectScopeURL.appendingPathComponent("Sessions")
 
@@ -180,7 +181,8 @@ public struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
 
     let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
       workspaceURL,
-      directoryExists: dependencies.directoryExists
+      directoryExists: dependencies.directoryExists,
+      fileExists: dependencies.fileExists
     )
     let sessionsDirectory = projectScopeURL.appendingPathComponent("Sessions")
 

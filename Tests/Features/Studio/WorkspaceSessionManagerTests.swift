@@ -1,3 +1,4 @@
+import ContextWorkspaceCore
 import Foundation
 import StudioFoundation
 import Testing
@@ -71,6 +72,40 @@ struct WorkspaceSessionManagerTests {
     #expect(sessionJSON?["personaId"] as? String == "persona-a")
     #expect(sessionJSON?["directiveId"] as? String == "directive-a")
     #expect(sessionJSON?["kitOverrides"] as? [String] == ["kit-a", "kit-b"])
+  }
+
+  @Test
+  func saveFailsWhenProjectPacksPathIsFile() throws {
+    let workspaceURL = try makeTempDirectory()
+    let personakitURL = workspaceURL.appendingPathComponent(".personakit")
+    let packsURL = personakitURL.appendingPathComponent("Packs")
+
+    try FileManager.default.createDirectory(
+      at: personakitURL,
+      withIntermediateDirectories: true
+    )
+    try Data("not a directory".utf8).write(to: packsURL, options: [.atomic])
+
+    let manager = WorkspaceSessionManager()
+
+    do {
+      _ = try manager.saveSession(
+        workspaceURL: workspaceURL,
+        draft: WorkspaceSessionDraft(
+          id: "session-a",
+          personaId: "persona-a",
+          directiveId: "directive-a",
+          kitOverrides: []
+        ),
+        originalSessionID: nil,
+        validPersonaIDs: Set(["persona-a"]),
+        validDirectiveIDs: Set(["directive-a"]),
+        validKitIDs: []
+      )
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs exists but is not a directory.")
+    }
   }
 
   @Test

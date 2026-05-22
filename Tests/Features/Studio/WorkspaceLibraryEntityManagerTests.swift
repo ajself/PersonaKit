@@ -69,6 +69,41 @@ struct WorkspaceLibraryEntityManagerTests {
   }
 
   @Test
+  func saveRawJSONFailsWhenProjectPacksPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    let manager = WorkspaceLibraryEntityManager(
+      schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),
+      dependencies: WorkspaceLibraryEntityManagerDependencies(
+        directoryExists: { _ in false },
+        fileExists: { url in
+          url.standardizedFileURL == packsURL.standardizedFileURL
+        },
+        createDirectory: { _ in },
+        readData: { _ in Data() },
+        writeData: { _, _ in }
+      )
+    )
+
+    do {
+      try manager.saveRawJSON(
+        workspaceURL: workspaceURL,
+        itemID: "persona-a",
+        rawJSON:
+          """
+            {
+              "id": "persona-a"
+            }
+          """,
+        entityType: .persona
+      )
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs exists but is not a directory.")
+    }
+  }
+
+  @Test
   func saveRawJSONRejectsUnsafeItemID() throws {
     let manager = WorkspaceLibraryEntityManager(
       schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),

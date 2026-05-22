@@ -179,6 +179,110 @@ struct WorkspaceSnapshotBuilderTests {
   }
 
   @Test
+  func snapshotFailsWhenProjectPacksPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    let dependencies = try makeDependencies(
+      directories: [],
+      files: [packsURL],
+      directoryContents: [:],
+      fileData: [:]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: workspaceURL)
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs exists but is not a directory.")
+    }
+  }
+
+  @Test
+  func snapshotFailsWhenSessionsPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let dependencies = try makeDependencies(
+      directories: [
+        PersonaKitDirectory.packsURL(root: projectScopeURL)
+      ],
+      files: [
+        PersonaKitDirectory.sessionsURL(root: projectScopeURL)
+      ],
+      directoryContents: [:],
+      fileData: [:]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: workspaceURL)
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Sessions exists but is not a directory.")
+    }
+  }
+
+  @Test
+  func snapshotFailsWhenEssentialsPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let dependencies = try makeDependencies(
+      directories: [
+        PersonaKitDirectory.packsURL(root: projectScopeURL)
+      ],
+      files: [
+        projectScopeURL.appendingPathComponent("Packs/essentials")
+      ],
+      directoryContents: [:],
+      fileData: [:]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: workspaceURL)
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs/essentials exists but is not a directory.")
+    }
+  }
+
+  @Test
+  func snapshotFailsWhenEntityPackPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let dependencies = try makeDependencies(
+      directories: [
+        PersonaKitDirectory.packsURL(root: projectScopeURL)
+      ],
+      files: [
+        projectScopeURL.appendingPathComponent("Packs/personas")
+      ],
+      directoryContents: [:],
+      fileData: [:]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: workspaceURL)
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs/personas exists but is not a directory.")
+    }
+  }
+
+  @Test
   func snapshotLoadsDirectiveWorkstreamMetadata() throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
@@ -239,10 +343,12 @@ struct WorkspaceSnapshotBuilderTests {
 
   private func makeDependencies(
     directories: [URL],
+    files: [URL] = [],
     directoryContents: [URL: [URL]],
     fileData: [URL: Data]
   ) throws -> WorkspaceSnapshotBuilderDependencies {
     let normalizedDirectories = Set(directories.map(\.standardizedFileURL))
+    let normalizedFiles = Set(files.map(\.standardizedFileURL))
     let normalizedDirectoryContents = Dictionary(
       uniqueKeysWithValues: directoryContents.map { key, value in
         (key.standardizedFileURL, value.map(\.standardizedFileURL))
@@ -257,6 +363,10 @@ struct WorkspaceSnapshotBuilderTests {
     return WorkspaceSnapshotBuilderDependencies(
       directoryExists: { url in
         normalizedDirectories.contains(url.standardizedFileURL)
+      },
+      fileExists: { url in
+        normalizedDirectories.contains(url.standardizedFileURL)
+          || normalizedFiles.contains(url.standardizedFileURL)
       },
       contentsOfDirectory: { url in
         normalizedDirectoryContents[url.standardizedFileURL] ?? []

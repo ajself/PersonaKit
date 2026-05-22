@@ -46,6 +46,31 @@ struct WorkspaceEssentialManagerTests {
   }
 
   @Test
+  func saveMarkdownFailsWhenProjectPacksPathIsFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")
+    let manager = WorkspaceEssentialManager(
+      dependencies: makeDependencies(
+        directoryExists: { _ in false },
+        fileExists: { url in
+          url.standardizedFileURL == packsURL.standardizedFileURL
+        }
+      )
+    )
+
+    do {
+      try manager.saveMarkdown(
+        workspaceURL: workspaceURL,
+        itemID: "essential-a",
+        markdown: "# Essential A\n"
+      )
+      Issue.record("Expected saveMarkdown to throw.")
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message == "PersonaKit reserved path Packs exists but is not a directory.")
+    }
+  }
+
+  @Test
   func saveMarkdownWrapsWriteFailures() throws {
     let manager = WorkspaceEssentialManager(
       dependencies: makeDependencies(
@@ -195,12 +220,14 @@ private enum WorkspaceEssentialManagerTestError: LocalizedError {
 
 private func makeDependencies(
   directoryExists: @escaping @Sendable (URL) -> Bool = { _ in true },
+  fileExists: @escaping @Sendable (URL) -> Bool = { _ in false },
   createDirectory: @escaping @Sendable (URL) throws -> Void = { _ in },
   readData: @escaping @Sendable (URL) throws -> Data = { _ in Data("# Default\n".utf8) },
   writeData: @escaping @Sendable (Data, URL) throws -> Void = { _, _ in }
 ) -> WorkspaceEssentialManagerDependencies {
   WorkspaceEssentialManagerDependencies(
     directoryExists: directoryExists,
+    fileExists: fileExists,
     createDirectory: createDirectory,
     readData: readData,
     writeData: writeData
