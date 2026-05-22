@@ -107,6 +107,15 @@ public struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sen
     itemID: String,
     entityType: WorkspaceLibraryEntityType
   ) throws -> URL {
+    let normalizedItemID = WorkspaceEntityIDPolicy.normalized(itemID)
+
+    guard WorkspaceEntityIDPolicy.isValid(normalizedItemID) else {
+      throw WorkspaceSnapshotBuildError(
+        message:
+          "Entity id \"\(normalizedItemID)\" is not valid. Use letters, numbers, hyphen, underscore, or period."
+      )
+    }
+
     let projectScopeURL = try WorkspaceProjectScopeResolver.resolveProjectScopeURL(
       workspaceURL,
       directoryExists: dependencies.directoryExists
@@ -115,7 +124,7 @@ public struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sen
     return
       projectScopeURL
       .appendingPathComponent("Packs/\(entityType.directoryName)")
-      .appendingPathComponent("\(WorkspaceEntityIDPolicy.normalized(itemID))\(entityType.fileSuffix)")
+      .appendingPathComponent("\(normalizedItemID)\(entityType.fileSuffix)")
   }
 
   public func saveRawJSON(
