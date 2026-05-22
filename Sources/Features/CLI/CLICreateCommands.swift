@@ -452,7 +452,8 @@ struct CreateDirectiveCommand: ParsableCommand {
       let combinedSteps = resolvedSteps + resolvedReviewSteps
       let finalSteps = combinedSteps.isEmpty ? defaultDraft.steps : combinedSteps
       let finalAcceptance = resolvedAcceptance.isEmpty ? defaultDraft.acceptanceCriteria : resolvedAcceptance
-      let finalVerification = (resolvedVerifyCommands + resolvedVerifyManual).isEmpty
+      let finalVerification =
+        (resolvedVerifyCommands + resolvedVerifyManual).isEmpty
         ? defaultDraft.verification
         : (resolvedVerifyCommands + resolvedVerifyManual)
       let resolvedIntentIDs = prompter.promptCSVIfNeeded(
@@ -629,7 +630,8 @@ struct CreateIntentCommand: ParsableCommand {
         label: "Risk notes (comma-separated)",
         hint: nil
       )
-      let resolvedRequiresReview = prompter.isInteractive && !requiresHumanReview
+      let resolvedRequiresReview =
+        prompter.isInteractive && !requiresHumanReview
         ? prompter.promptYesNo(label: "Requires human review", defaultValue: false)
         : requiresHumanReview
 
@@ -774,7 +776,8 @@ struct CreateSkillCommand: ParsableCommand {
         label: "Notes (comma-separated)",
         hint: nil
       )
-      let resolvedRequiresReview = prompter.isInteractive && !requiresHumanReview
+      let resolvedRequiresReview =
+        prompter.isInteractive && !requiresHumanReview
         ? prompter.promptYesNo(label: "Requires human review", defaultValue: false)
         : requiresHumanReview
 
@@ -1486,7 +1489,8 @@ private enum CreateCommandHelpers {
       return []
     }
 
-    return value
+    return
+      value
       .split(separator: ",")
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
       .filter { !$0.isEmpty }

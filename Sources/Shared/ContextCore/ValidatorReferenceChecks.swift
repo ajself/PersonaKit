@@ -332,7 +332,8 @@ enum ValidatorReferenceChecker {
         includingPropertiesForKeys: nil,
         options: [.skipsHiddenFiles]
       )
-      let sortedFiles = files
+      let sortedFiles =
+        files
         .filter { $0.lastPathComponent.hasSuffix(".reference.json") }
         .sorted { $0.lastPathComponent < $1.lastPathComponent }
 

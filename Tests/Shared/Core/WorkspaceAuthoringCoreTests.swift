@@ -12,8 +12,14 @@ struct WorkspaceAuthoringCoreTests {
     let globalHome = tempDirectory.appendingPathComponent("Home")
     let globalRoot = globalHome.appendingPathComponent(".personakit")
 
-    try FileManager.default.createDirectory(at: projectRoot.appendingPathComponent("Packs"), withIntermediateDirectories: true)
-    try FileManager.default.createDirectory(at: globalRoot.appendingPathComponent("Packs"), withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(
+      at: projectRoot.appendingPathComponent("Packs"),
+      withIntermediateDirectories: true
+    )
+    try FileManager.default.createDirectory(
+      at: globalRoot.appendingPathComponent("Packs"),
+      withIntermediateDirectories: true
+    )
 
     let resolver = WorkspaceWritableRootResolver(
       scopeRootResolver: ScopeRootResolver(

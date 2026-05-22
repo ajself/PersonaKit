@@ -121,10 +121,12 @@ public enum SessionReferenceResolver {
         continue
       }
 
-      guard let scopeRoot = matchingScopeRoot(
-        fileURL: candidate,
-        scopes: scopes
-      ) else {
+      guard
+        let scopeRoot = matchingScopeRoot(
+          fileURL: candidate,
+          scopes: scopes
+        )
+      else {
         throw SessionReferenceError.pathOutsideScopes(sessionRef)
       }
 

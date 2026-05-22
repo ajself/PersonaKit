@@ -33,13 +33,17 @@ struct WorkspaceStoreWorkspaceFlowTests {
   @Test
   func validateWorkspaceIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let validationGate = BlockingCallGate()
 
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
         WorkspaceSnapshot.empty
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        Thread.sleep(forTimeInterval: 0.3)
+        _ = validationGate.markStarted()
+        validationGate.waitUntilReleased()
+        validationGate.markFinished()
+
         return makeValidation(entityID: "persona-a")
       }
     )
@@ -47,7 +51,9 @@ struct WorkspaceStoreWorkspaceFlowTests {
     store.workspaceURL = workspaceURL
     store.validateWorkspace()
 
-    try? await Task.sleep(for: .milliseconds(20))
+    await waitFor {
+      validationGate.hasStarted
+    }
 
     store.workspaceURL = nil
     store.validateWorkspace()
@@ -55,7 +61,12 @@ struct WorkspaceStoreWorkspaceFlowTests {
     #expect(store.validation == .empty)
     #expect(store.validationErrorMessage == nil)
 
-    try? await Task.sleep(for: .milliseconds(350))
+    validationGate.release()
+
+    await waitFor {
+      validationGate.hasFinished
+    }
+    await yieldTasks()
 
     #expect(store.validation == .empty)
     #expect(store.validationErrorMessage == nil)
@@ -250,7 +261,8 @@ struct WorkspaceStoreWorkspaceFlowTests {
     let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
       "Bundle/PersonaKit_ContextCore.bundle"
     )
-    let bundledSupportMarkerURL = bundledSupportBundleURL
+    let bundledSupportMarkerURL =
+      bundledSupportBundleURL
       .appendingPathComponent("Contents/Resources/marker.txt")
     try FileManager.default.createDirectory(
       at: bundledCLIURL.deletingLastPathComponent(),
@@ -303,7 +315,8 @@ struct WorkspaceStoreWorkspaceFlowTests {
     let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
       "Bundle/PersonaKit_ContextCore.bundle"
     )
-    let bundledSupportMarkerURL = bundledSupportBundleURL
+    let bundledSupportMarkerURL =
+      bundledSupportBundleURL
       .appendingPathComponent("Contents/Resources/marker.txt")
     try FileManager.default.createDirectory(
       at: bundledCLIURL.deletingLastPathComponent(),
@@ -333,4 +346,9 @@ struct WorkspaceStoreWorkspaceFlowTests {
     #expect(store.installStatus.openCodeMCPCommandPath == bundledCLIURL.path())
   }
 
+  private func yieldTasks(_ iterations: Int = 50) async {
+    for _ in 0..<iterations {
+      await Task.yield()
+    }
+  }
 }

@@ -554,7 +554,8 @@ private func makeSupportBundle(
   at url: URL,
   marker: String
 ) throws -> URL {
-  let markerURL = url
+  let markerURL =
+    url
     .appendingPathComponent("Contents/Resources/marker.txt")
     .standardizedFileURL
   try writeText(marker, to: markerURL)

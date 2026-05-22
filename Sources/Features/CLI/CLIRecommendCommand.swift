@@ -201,7 +201,8 @@ struct RecommendCommand: ParsableCommand {
       return value
     }
 
-    let escaped = value
+    let escaped =
+      value
       .replacingOccurrences(of: "\\", with: "\\\\")
       .replacingOccurrences(of: "\"", with: "\\\"")
 

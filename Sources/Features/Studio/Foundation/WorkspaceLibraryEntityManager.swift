@@ -2,4 +2,5 @@ import ContextWorkspaceCore
 
 public typealias WorkspaceLibraryEntityManaging = ContextWorkspaceCore.WorkspaceLibraryEntityManaging
 public typealias WorkspaceLibraryEntityManager = ContextWorkspaceCore.WorkspaceLibraryEntityManager
-public typealias WorkspaceLibraryEntityManagerDependencies = ContextWorkspaceCore.WorkspaceLibraryEntityManagerDependencies
+public typealias WorkspaceLibraryEntityManagerDependencies = ContextWorkspaceCore
+  .WorkspaceLibraryEntityManagerDependencies

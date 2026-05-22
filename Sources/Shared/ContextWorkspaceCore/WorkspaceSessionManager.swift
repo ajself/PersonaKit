@@ -84,8 +84,8 @@ public protocol WorkspaceSessionManaging: Sendable {
   ) throws
 }
 
-public extension WorkspaceSessionManaging {
-  func destinationFileURL(
+extension WorkspaceSessionManaging {
+  public func destinationFileURL(
     workspaceURL: URL,
     sessionID: String
   ) throws -> URL {

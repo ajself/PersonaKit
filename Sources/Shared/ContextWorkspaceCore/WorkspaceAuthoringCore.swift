@@ -57,7 +57,8 @@ public struct WorkspaceWritableRootResolver: Sendable {
 
     guard let scopes = scopeRootResolver.locate() else {
       throw WorkspaceSnapshotBuildError(
-        message: "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+        message:
+          "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
       )
     }
 
@@ -70,7 +71,8 @@ public struct WorkspaceWritableRootResolver: Sendable {
     }
 
     throw WorkspaceSnapshotBuildError(
-      message: "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
+      message:
+        "No PersonaKit scope found. Provide --root <path> or create .personakit in this project or ~/.personakit."
     )
   }
 
