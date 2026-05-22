@@ -264,7 +264,7 @@ enum SessionContractComponentResolver {
 
     for kit in resolvedKits {
       for essentialId in kit.essentialIds {
-        let expectedPath = "Packs/essentials/\(essentialId).md"
+        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
 
         if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
           errors.append(
@@ -285,7 +285,7 @@ enum SessionContractComponentResolver {
     if directive != nil {
       for intent in resolvedIntents {
         for essentialId in intent.includesEssentialIds {
-          let expectedPath = "Packs/essentials/\(essentialId).md"
+          let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
 
           if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
             errors.append(

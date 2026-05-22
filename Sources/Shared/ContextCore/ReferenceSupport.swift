@@ -130,18 +130,50 @@ public enum ReferenceSupport {
     scopes: ScopeSet,
     fileManager: FileManager = .default
   ) -> URL? {
-    let relativePath = referenceBodyRelativePath(id: id)
     for root in scopes.resolutionOrder {
-      let fileURL = root.appendingPathComponent(relativePath)
-      if fileManager.fileExists(atPath: fileURL.path) {
+      if let fileURL = resolveReferenceBodyURL(id: id, root: root, fileManager: fileManager) {
         return fileURL
       }
     }
+
     return nil
   }
 
   public static func referenceBodyRelativePath(id: String) -> String {
-    "Packs/references/\(id).md"
+    PersonaKitPathSafety.expectedPath(
+      baseRelativePath: "Packs/references",
+      segment: id,
+      suffix: ".md"
+    )
+  }
+
+  static func resolveReferenceBodyURL(
+    id: String,
+    root: URL,
+    fileManager: FileManager = .default
+  ) -> URL? {
+    let referencesURL = root.appendingPathComponent("Packs/references", isDirectory: true)
+
+    guard
+      let fileURL = PersonaKitPathSafety.containedFileURL(
+        root: root,
+        baseRelativePath: "Packs/references",
+        segment: id,
+        suffix: ".md"
+      )
+    else {
+      return nil
+    }
+
+    guard fileManager.fileExists(atPath: fileURL.path) else {
+      return nil
+    }
+
+    guard PersonaKitPathSafety.canonicalContains(fileURL, in: referencesURL) else {
+      return nil
+    }
+
+    return fileURL.standardizedFileURL
   }
 
   private static func matchRule(

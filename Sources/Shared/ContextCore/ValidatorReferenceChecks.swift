@@ -107,8 +107,40 @@ enum ValidatorReferenceChecker {
       }
 
       for essentialId in kit.essentialIds {
-        let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
+
+        if !PersonaKitPathSafety.isSafePathSegment(essentialId) {
+          errors.append(
+            unsafePathSegmentError(
+              entityType: .kit,
+              entityId: kit.id,
+              field: "essentialIds",
+              value: essentialId,
+              expectedPath: expectedPath,
+              kind: "essential id"
+            )
+          )
+        } else if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+          if hasEscapingPath(
+            scopes: scopes,
+            baseRelativePath: "Packs/essentials",
+            segment: essentialId,
+            suffix: ".md",
+            fileManager: fileManager
+          ) {
+            errors.append(
+              unsafeResolvedPathError(
+                entityType: .kit,
+                entityId: kit.id,
+                field: "essentialIds",
+                value: essentialId,
+                expectedPath: expectedPath,
+                kind: "essential file"
+              )
+            )
+            continue
+          }
+
           errors.append(
             ValidationError(
               entityType: .kit,
@@ -210,8 +242,40 @@ enum ValidatorReferenceChecker {
       let knownParameterNames = Set(intent.parameters.map(\.name))
 
       for essentialId in intent.includesEssentialIds {
-        let expectedPath = "Packs/essentials/\(essentialId).md"
-        if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
+
+        if !PersonaKitPathSafety.isSafePathSegment(essentialId) {
+          errors.append(
+            unsafePathSegmentError(
+              entityType: .intent,
+              entityId: intent.id,
+              field: "includesEssentialIds",
+              value: essentialId,
+              expectedPath: expectedPath,
+              kind: "essential id"
+            )
+          )
+        } else if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
+          if hasEscapingPath(
+            scopes: scopes,
+            baseRelativePath: "Packs/essentials",
+            segment: essentialId,
+            suffix: ".md",
+            fileManager: fileManager
+          ) {
+            errors.append(
+              unsafeResolvedPathError(
+                entityType: .intent,
+                entityId: intent.id,
+                field: "includesEssentialIds",
+                value: essentialId,
+                expectedPath: expectedPath,
+                kind: "essential file"
+              )
+            )
+            continue
+          }
+
           errors.append(
             ValidationError(
               entityType: .intent,
@@ -343,9 +407,43 @@ enum ValidatorReferenceChecker {
         let data = try Data(contentsOf: fileURL)
         let reference = try decoder.decode(Reference.self, from: data)
         let expectedPath = ReferenceSupport.referenceBodyRelativePath(id: reference.id)
-        let bodyURL = root.appendingPathComponent(expectedPath)
 
-        if !fileManager.fileExists(atPath: bodyURL.path) {
+        if !PersonaKitPathSafety.isSafePathSegment(reference.id) {
+          errors.append(
+            unsafePathSegmentError(
+              entityType: .reference,
+              entityId: reference.id,
+              field: "body",
+              value: reference.id,
+              expectedPath: expectedPath,
+              kind: "reference id"
+            )
+          )
+        } else if ReferenceSupport.resolveReferenceBodyURL(
+          id: reference.id,
+          root: root,
+          fileManager: fileManager
+        ) == nil {
+          if hasEscapingPath(
+            root: root,
+            baseRelativePath: "Packs/references",
+            segment: reference.id,
+            suffix: ".md",
+            fileManager: fileManager
+          ) {
+            errors.append(
+              unsafeResolvedPathError(
+                entityType: .reference,
+                entityId: reference.id,
+                field: "body",
+                value: reference.id,
+                expectedPath: expectedPath,
+                kind: "reference body"
+              )
+            )
+            continue
+          }
+
           errors.append(
             ValidationError(
               entityType: .reference,
@@ -445,4 +543,88 @@ enum ValidatorReferenceChecker {
 
     return errors
   }
+}
+
+private func unsafePathSegmentError(
+  entityType: ValidationEntityType,
+  entityId: String?,
+  field: String,
+  value: String,
+  expectedPath: String,
+  kind: String
+) -> ValidationError {
+  ValidationError(
+    entityType: entityType,
+    entityId: entityId,
+    field: field,
+    missingId: value,
+    expectedPath: expectedPath,
+    message: "Unsafe \(kind) path segment \"\(value)\"."
+  )
+}
+
+private func unsafeResolvedPathError(
+  entityType: ValidationEntityType,
+  entityId: String?,
+  field: String,
+  value: String,
+  expectedPath: String,
+  kind: String
+) -> ValidationError {
+  ValidationError(
+    entityType: entityType,
+    entityId: entityId,
+    field: field,
+    missingId: value,
+    expectedPath: expectedPath,
+    message: "Unsafe \(kind) path for id \"\(value)\"."
+  )
+}
+
+private func hasEscapingPath(
+  scopes: ScopeSet,
+  baseRelativePath: String,
+  segment: String,
+  suffix: String,
+  fileManager: FileManager
+) -> Bool {
+  scopes.resolutionOrder.contains { root in
+    hasEscapingPath(
+      root: root,
+      baseRelativePath: baseRelativePath,
+      segment: segment,
+      suffix: suffix,
+      fileManager: fileManager
+    )
+  }
+}
+
+private func hasEscapingPath(
+  root: URL,
+  baseRelativePath: String,
+  segment: String,
+  suffix: String,
+  fileManager: FileManager
+) -> Bool {
+  guard
+    let uncheckedURL = PersonaKitPathSafety.fileURL(
+      root: root,
+      baseRelativePath: baseRelativePath,
+      segment: segment,
+      suffix: suffix
+    )
+  else {
+    return false
+  }
+
+  guard fileManager.fileExists(atPath: uncheckedURL.path) else {
+    return false
+  }
+
+  return PersonaKitPathSafety.containedFileURL(
+    root: root,
+    baseRelativePath: baseRelativePath,
+    segment: segment,
+    suffix: suffix
+  ) == nil
 }

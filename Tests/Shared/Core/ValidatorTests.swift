@@ -53,6 +53,265 @@ struct ValidatorTests {
   }
 
   @Test
+  func validateRejectsEscapingKitEssentialIDWithoutAcceptingEscapedFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try FileManager.default.removeItem(
+      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
+    )
+    try "# Escaped\n".write(
+      to: root.appendingPathComponent("Packs/escaped-essential.md"),
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let kitURL = root.appendingPathComponent("Packs/kits/swiftui-style.kit.json")
+    let kit = try JSONDecoder().decode(Kit.self, from: Data(contentsOf: kitURL))
+    let updatedKit = Kit(
+      id: kit.id,
+      version: kit.version,
+      name: kit.name,
+      summary: kit.summary,
+      essentialIds: ["../escaped-essential"],
+      referenceIds: kit.referenceIds,
+      intentTemplateIds: kit.intentTemplateIds,
+      skillIds: kit.skillIds
+    )
+
+    try encodeSortedJSON(updatedKit).write(to: kitURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .kit,
+          entityId: "swiftui-style",
+          field: "essentialIds",
+          missingId: "../escaped-essential",
+          expectedPath: "Packs/essentials/<invalid>.md",
+          message: "Unsafe essential id path segment \"../escaped-essential\"."
+        )
+      )
+    )
+  }
+
+  @Test
+  func validateRejectsEscapingIntentEssentialIDWithoutAcceptingEscapedFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try FileManager.default.removeItem(
+      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
+    )
+    try "# Escaped\n".write(
+      to: root.appendingPathComponent("Packs/escaped-intent-essential.md"),
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
+    let intent = try JSONDecoder().decode(IntentTemplate.self, from: Data(contentsOf: intentURL))
+    let updatedIntent = IntentTemplate(
+      id: intent.id,
+      version: intent.version,
+      name: intent.name,
+      description: intent.description,
+      parameters: intent.parameters,
+      parameterConstraints: intent.parameterConstraints,
+      includesEssentialIds: ["../escaped-intent-essential"],
+      requiresSkillIds: intent.requiresSkillIds,
+      referenceIds: intent.referenceIds,
+      risk: intent.risk
+    )
+
+    try encodeSortedJSON(updatedIntent).write(to: intentURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .intent,
+          entityId: "swift-refactor-safe",
+          field: "includesEssentialIds",
+          missingId: "../escaped-intent-essential",
+          expectedPath: "Packs/essentials/<invalid>.md",
+          message: "Unsafe essential id path segment \"../escaped-intent-essential\"."
+        )
+      )
+    )
+  }
+
+  @Test
+  func validateRejectsEscapingReferenceBodyIDWithoutAcceptingEscapedFile() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try "# Escaped reference\n".write(
+      to: root.appendingPathComponent("Packs/escaped-reference.md"),
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let referenceURL = root.appendingPathComponent("Packs/references/escaped-reference.reference.json")
+    let reference = Reference(
+      id: "../escaped-reference",
+      version: "1.0",
+      name: "Escaped Reference",
+      summary: "Reference with escaping body id.",
+      triggerRules: [
+        ReferenceTriggerRule(referenceTags: ["escaped"])
+      ]
+    )
+    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .reference,
+          entityId: "../escaped-reference",
+          field: "body",
+          missingId: "../escaped-reference",
+          expectedPath: "Packs/references/<invalid>.md",
+          message: "Unsafe reference id path segment \"../escaped-reference\"."
+        )
+      )
+    )
+  }
+
+  @Test
+  func validateRejectsEscapingReferenceBodySymlink() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+
+    let outsideURL = try makeTempDirectory().appendingPathComponent("linked-reference.md")
+    try "# Outside reference\n".write(
+      to: outsideURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let symlinkURL = root.appendingPathComponent("Packs/references/linked-reference.md")
+    try FileManager.default.createSymbolicLink(
+      at: symlinkURL,
+      withDestinationURL: outsideURL
+    )
+
+    let referenceURL = root.appendingPathComponent("Packs/references/linked-reference.reference.json")
+    let reference = Reference(
+      id: "linked-reference",
+      version: "1.0",
+      name: "Linked Reference",
+      summary: "Reference body escapes through a symlink.",
+      triggerRules: [
+        ReferenceTriggerRule(referenceTags: ["linked"])
+      ]
+    )
+    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .reference,
+          entityId: "linked-reference",
+          field: "body",
+          missingId: "linked-reference",
+          expectedPath: "Packs/references/linked-reference.md",
+          message: "Unsafe reference body path for id \"linked-reference\"."
+        )
+      )
+    )
+  }
+
+  @Test
+  func validateRejectsBackslashReferenceBodyID() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+
+    let referenceURL = root.appendingPathComponent("Packs/references/backslash-reference.reference.json")
+    let reference = Reference(
+      id: "nested\\reference",
+      version: "1.0",
+      name: "Backslash Reference",
+      summary: "Reference body id contains a path separator.",
+      triggerRules: [
+        ReferenceTriggerRule(referenceTags: ["backslash"])
+      ]
+    )
+    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .reference,
+          entityId: "nested\\reference",
+          field: "body",
+          missingId: "nested\\reference",
+          expectedPath: "Packs/references/<invalid>.md",
+          message: "Unsafe reference id path segment \"nested\\reference\"."
+        )
+      )
+    )
+  }
+
+  @Test
+  func validateRejectsEscapingEssentialSymlink() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try FileManager.default.removeItem(
+      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
+    )
+
+    let outsideURL = try makeTempDirectory().appendingPathComponent("outside-essential.md")
+    try "# Outside\n".write(
+      to: outsideURL,
+      atomically: true,
+      encoding: .utf8
+    )
+
+    let symlinkURL = root.appendingPathComponent("Packs/essentials/linked-essential.md")
+    try FileManager.default.createSymbolicLink(
+      at: symlinkURL,
+      withDestinationURL: outsideURL
+    )
+
+    let kitURL = root.appendingPathComponent("Packs/kits/swiftui-style.kit.json")
+    let kit = try JSONDecoder().decode(Kit.self, from: Data(contentsOf: kitURL))
+    let updatedKit = Kit(
+      id: kit.id,
+      version: kit.version,
+      name: kit.name,
+      summary: kit.summary,
+      essentialIds: ["linked-essential"],
+      referenceIds: kit.referenceIds,
+      intentTemplateIds: kit.intentTemplateIds,
+      skillIds: kit.skillIds
+    )
+
+    try encodeSortedJSON(updatedKit).write(to: kitURL, options: .atomic)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains(
+        ValidationError(
+          entityType: .kit,
+          entityId: "swiftui-style",
+          field: "essentialIds",
+          missingId: "linked-essential",
+          expectedPath: "Packs/essentials/linked-essential.md",
+          message: "Unsafe essential file path for id \"linked-essential\"."
+        )
+      )
+    )
+  }
+
+  @Test
   func validateUnknownKitId() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
@@ -422,6 +681,71 @@ struct ValidatorTests {
     let result = try Validator.validate(root: root)
 
     #expect(hasDirectiveWorkstreamError(result, field: "workstream.edges", text: "Duplicate workstream edge"))
+  }
+
+  @Test
+  func validateDirectiveWorkstreamFailsWhenEdgeKindIsUnsupported() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: [
+        .init(
+          fromSessionId: "senior-swiftui-engineer_apply-style",
+          toSessionId: "style-followup",
+          kind: "side-quest"
+        )
+      ]
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let result = try Validator.validate(root: root)
+
+    #expect(
+      result.errors.contains { error in
+        error.entityType == .directive
+          && error.field == "schema"
+          && error.expectedPath == "Packs/directives/apply-style.directive.json"
+          && error.message.contains("Value \"side-quest\" must be one of")
+          && error.message.contains("location=/workstream/edges/0/kind")
+      }
+    )
+  }
+
+  @Test
+  func schemaValidatorReportsWorkstreamEdgeKindEnumPath() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let workstream = makeValidFixtureWorkstream()
+    let updatedWorkstream = Directive.Workstream(
+      id: workstream.id,
+      phase: workstream.phase,
+      entrySessionId: workstream.entrySessionId,
+      requiredCloseoutSessionId: workstream.requiredCloseoutSessionId,
+      nodes: workstream.nodes,
+      edges: [
+        .init(
+          fromSessionId: "senior-swiftui-engineer_apply-style",
+          toSessionId: "style-followup",
+          kind: "side-quest"
+        )
+      ]
+    )
+    try writeApplyStyleDirective(root: root, workstream: updatedWorkstream)
+
+    let directiveURL = root.appendingPathComponent("Packs/directives/apply-style.directive.json")
+    let errors = SchemaValidator.validate(
+      jsonData: try Data(contentsOf: directiveURL),
+      schemaName: "directive.schema.json",
+      relativePath: "Packs/directives/apply-style.directive.json"
+    )
+
+    #expect(errors.count == 1)
+    #expect(errors.first?.instanceLocation == "/workstream/edges/0/kind")
+    #expect(errors.first?.message.contains("Value \"side-quest\" must be one of") == true)
   }
 
   @Test
