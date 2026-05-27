@@ -69,6 +69,5 @@ swift run personakit run --root Examples/public-starter/.personakit --session so
 ## Related Docs
 
 - [README](./README.md)
-- [V1 Direction](./Docs/V1_DIRECTION.md)
 - [MCP Guide](./Docs/mcp.md)
 - [Agent Rules](./AGENTS.md)

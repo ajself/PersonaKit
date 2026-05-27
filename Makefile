@@ -360,8 +360,8 @@ public-v1-check: swiftpm-prepare
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-v1-check/non-empty
 	! $(SWIFT_RUN) personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-v1-check/legacy-rejection.txt 2>&1
 	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-v1-check/legacy-rejection.txt
-	! rg -n "AJ|Orbit|Taskboard|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md"
-	rg -n "memory|orchestration" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md" || true
+	! rg -n "AJ|Orbit|Taskboard|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md
+	rg -n "memory|orchestration" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md || true
 
 core-complete-worktree:
 	./Scripts/complete-worktree.sh \
