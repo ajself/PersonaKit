@@ -204,7 +204,7 @@ More detail: [Docs/mcp.md](./Docs/mcp.md).
 
 ## Studio Status
 
-Studio is available in the repository for administration workflows, but CLI readiness is the V1 open-source release bar. Studio packaging and notarization are not release blockers for this public pass.
+Studio is available in the repository for administration workflows, but the current repo path is the CLI/MCP V1 spine plus optional local review.
 
 Use `make studio-review` for the optional Studio review loop. It builds the app, launches deterministic demo workspaces, and captures screenshots under `.build/studio-review/` for human inspection. The Make targets keep Xcode output under hidden build directories such as `.build/XcodeDerivedData`.
 
@@ -236,7 +236,7 @@ Use `make public-v1-check` before public-facing changes.
 
 ## Contributing
 
-PersonaKit welcomes focused contributions that preserve the V1 boundaries. Start with [CONTRIBUTING.md](./CONTRIBUTING.md), and report security issues through the private process in [SECURITY.md](./SECURITY.md).
+PersonaKit work should preserve the V1 boundaries above. Keep changes focused, deterministic, and covered by `make public-v1-check` when public behavior or examples change.
 
 ## For Agents Working In This Repo
 
