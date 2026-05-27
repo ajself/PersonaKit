@@ -55,4 +55,3 @@ swift run personakit mcp --help
 ## Related Docs
 
 - [Repository Overview](../README.md)
-- [V1 Direction](./V1_DIRECTION.md)

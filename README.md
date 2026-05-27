@@ -231,11 +231,8 @@ PersonaKit activates the contract. Another tool performs the work.
 
 ## Repository Status
 
-This repository is being actively simplified around the V1 direction.
-
-- `Docs/V1_DIRECTION.md` is the active product direction.
-- `Docs/PUBLIC_V1_RELEASE_CHECKLIST.md` tracks the public release readiness pass.
-- Older exploratory directions that do not support V1 should be treated as non-authoritative or removed.
+This repository is focused on the V1 `personakit run` path described above.
+Use `make public-v1-check` before public-facing changes.
 
 ## Contributing
 

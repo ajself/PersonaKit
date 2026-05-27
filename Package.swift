@@ -119,10 +119,6 @@ let package = Package(
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       path: "Tests",
-      exclude: [
-        "Fixtures",
-        "Features/Studio/__Snapshots__",
-      ],
       swiftSettings: [
         .enableExperimentalFeature("Testing")
       ]
