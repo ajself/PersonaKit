@@ -10,12 +10,35 @@ persona_id="senior-swiftui-engineer"
 directive_id="apply-style"
 session_id="senior-swiftui-engineer_apply-style"
 
-validate_tmp_root="${PERSONAKIT_VALIDATE_TMP_ROOT:-${TMPDIR:-/tmp}}"
+validate_user="${USER:-unknown}"
+validate_tmp_root="${PERSONAKIT_VALIDATE_TMP_ROOT:-/tmp/personakit-$validate_user-validate}"
 work_dir="${validate_tmp_root}/personakit-validate"
 cleanup_on_success="true"
+# Keep SwiftPM writes out of user caches and the repo tree so sandboxed
+# validation is reproducible and scope-discovery tests use isolated roots.
+swiftpm_cache_root="${PERSONAKIT_SWIFTPM_CACHE_ROOT:-$validate_tmp_root/swiftpm}"
+swiftpm_tmp_dir="${PERSONAKIT_SWIFTPM_TMPDIR:-$swiftpm_cache_root/tmp}"
+export CLANG_MODULE_CACHE_PATH="$swiftpm_cache_root/clang-module-cache"
+export TMPDIR="$swiftpm_tmp_dir"
+swiftpm_flags=(
+  --cache-path "$swiftpm_cache_root/cache"
+  --config-path "$swiftpm_cache_root/configuration"
+  --security-path "$swiftpm_cache_root/security"
+  --manifest-cache local
+  --disable-sandbox
+  -Xswiftc -module-cache-path
+  -Xswiftc "$swiftpm_cache_root/module-cache"
+  -Xcc "-fmodules-cache-path=$swiftpm_cache_root/clang-module-cache"
+)
 
 rm -rf "$work_dir"
-mkdir -p "$work_dir"
+mkdir -p "$work_dir" \
+  "$swiftpm_cache_root/cache" \
+  "$swiftpm_cache_root/clang-module-cache" \
+  "$swiftpm_cache_root/configuration" \
+  "$swiftpm_cache_root/module-cache" \
+  "$swiftpm_cache_root/security" \
+  "$swiftpm_tmp_dir"
 
 cleanup() {
   if [[ "$cleanup_on_success" == "true" ]]; then
@@ -66,14 +89,14 @@ if [[ -s "$unchecked_matches_file" ]]; then
 fi
 
 echo "Running swift test..."
-swift test
+swift test "${swiftpm_flags[@]}"
 
 echo "Validating kit..."
-swift run personakit validate --root "$kit_root"
+swift run "${swiftpm_flags[@]}" personakit validate --root "$kit_root"
 
 echo "Checking export determinism..."
-swift run personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-1.md"
-swift run personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-2.md"
+swift run "${swiftpm_flags[@]}" personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-1.md"
+swift run "${swiftpm_flags[@]}" personakit export --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/export-2.md"
 if ! cmp -s "$work_dir/export-1.md" "$work_dir/export-2.md"; then
   echo "Export output is not deterministic."
   diff -u "$work_dir/export-1.md" "$work_dir/export-2.md" || true
@@ -82,8 +105,8 @@ if ! cmp -s "$work_dir/export-1.md" "$work_dir/export-2.md"; then
 fi
 
 echo "Checking export determinism (session)..."
-swift run personakit export --root "$kit_root" --session "$session_id" > "$work_dir/export-session-1.md"
-swift run personakit export --root "$kit_root" --session "$session_id" > "$work_dir/export-session-2.md"
+swift run "${swiftpm_flags[@]}" personakit export --root "$kit_root" --session "$session_id" > "$work_dir/export-session-1.md"
+swift run "${swiftpm_flags[@]}" personakit export --root "$kit_root" --session "$session_id" > "$work_dir/export-session-2.md"
 if ! cmp -s "$work_dir/export-session-1.md" "$work_dir/export-session-2.md"; then
   echo "Export session output is not deterministic."
   diff -u "$work_dir/export-session-1.md" "$work_dir/export-session-2.md" || true
@@ -92,8 +115,8 @@ if ! cmp -s "$work_dir/export-session-1.md" "$work_dir/export-session-2.md"; the
 fi
 
 echo "Checking graph determinism..."
-swift run personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-1.txt"
-swift run personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-2.txt"
+swift run "${swiftpm_flags[@]}" personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-1.txt"
+swift run "${swiftpm_flags[@]}" personakit graph --root "$kit_root" --persona "$persona_id" --directive "$directive_id" > "$work_dir/graph-2.txt"
 if ! cmp -s "$work_dir/graph-1.txt" "$work_dir/graph-2.txt"; then
   echo "Graph output is not deterministic."
   diff -u "$work_dir/graph-1.txt" "$work_dir/graph-2.txt" || true
@@ -102,8 +125,8 @@ if ! cmp -s "$work_dir/graph-1.txt" "$work_dir/graph-2.txt"; then
 fi
 
 echo "Checking graph determinism (session)..."
-swift run personakit graph --root "$kit_root" --session "$session_id" > "$work_dir/graph-session-1.txt"
-swift run personakit graph --root "$kit_root" --session "$session_id" > "$work_dir/graph-session-2.txt"
+swift run "${swiftpm_flags[@]}" personakit graph --root "$kit_root" --session "$session_id" > "$work_dir/graph-session-1.txt"
+swift run "${swiftpm_flags[@]}" personakit graph --root "$kit_root" --session "$session_id" > "$work_dir/graph-session-2.txt"
 if ! cmp -s "$work_dir/graph-session-1.txt" "$work_dir/graph-session-2.txt"; then
   echo "Graph session output is not deterministic."
   diff -u "$work_dir/graph-session-1.txt" "$work_dir/graph-session-2.txt" || true
