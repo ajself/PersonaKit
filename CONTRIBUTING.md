@@ -1,9 +1,5 @@
 # Contributing
 
-Status: Active
-Owner: Maintainers
-Last Reviewed: 2026-05-12
-
 ## Why This Exists
 
 PersonaKit is intentionally narrow for V1. Contributions should make the CLI-first operating-contract workflow clearer, safer, or easier to trust.

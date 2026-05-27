@@ -1,9 +1,5 @@
 # PersonaKit MCP Guide
 
-Status: Active
-Owner: Maintainers
-Last Reviewed: 2026-04-25
-
 ## Why This Exists
 
 PersonaKit MCP gives AI tools a read-only way to discover and resolve PersonaKit operating contracts.

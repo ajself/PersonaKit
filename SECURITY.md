@@ -1,9 +1,5 @@
 # Security Policy
 
-Status: Active
-Owner: Maintainers
-Last Reviewed: 2026-05-12
-
 ## Supported Versions
 
 PersonaKit is preparing its first public V1. Until a `1.0.0` release exists, security fixes are handled on `main`.
