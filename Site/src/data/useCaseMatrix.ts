@@ -38,7 +38,7 @@ export const useCaseMatrix: UseCaseRow[] = [
     useCase: "Release readiness review",
   },
   {
-    alternative: "CONTRIBUTING docs only",
+    alternative: "Repo policy docs only",
     fit: "High",
     primaryValue: "Shared rules prevent repeated prompt setup",
     surface: "Pack format plus CLI validate",

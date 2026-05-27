@@ -45,7 +45,7 @@ If product intent is unclear, ask a scoped question before proceeding.
 ## Ordinary Repo Work
 
 Ordinary repo work includes code review, documentation review, product-quality
-review, GitHub triage, tests, maintenance, release-readiness inspection, and
+review, GitHub triage, tests, maintenance, repo-readiness inspection, and
 focused implementation requested by a maintainer.
 
 For ordinary repo work:
@@ -130,7 +130,7 @@ MCP resources, prompts, and tools do not authorize:
 Do not use MCP as a write path, command-execution channel, or substitute for
 maintainer approval.
 
-## Git, Worktrees, And Closeout
+## Git And Closeout
 
 Use Conventional Commits when creating commits:
 
@@ -140,15 +140,6 @@ Use Conventional Commits when creating commits:
 Do not create extra branches or worktrees unless the maintainer asks for them.
 Treat packets, tasks, and stories as docs/commit scope, not as branch or
 worktree requests by default.
-
-When the user requests `complete worktree`, use the repository workflow command:
-
-```bash
-make core-complete-worktree
-```
-
-Never delete a lane branch or worktree before verifying that `main` contains the
-lane commits. Ancestor verification is mandatory.
 
 ## Questions And Approval Gates
 
