@@ -373,4 +373,4 @@ core-complete-worktree:
 core-zip:
 	@mkdir -p "$(dir $(ZIP_NAME))"
 	@rm -f "$(ZIP_NAME)"
-	git ls-files | zip -q -@ "$(ZIP_NAME)"
+	git ls-files -z | xargs -0 zip -q "$(ZIP_NAME)"
