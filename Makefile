@@ -7,7 +7,7 @@ APP_NAME ?= PersonaKit
 CONFIGURATION ?= Debug
 SWIFT_CONFIGURATION ?= debug
 DERIVED_DATA_PATH ?= .build/XcodeDerivedData
-ZIP_NAME ?= PersonaKit.zip
+ZIP_NAME ?= .build/PersonaKit.zip
 INSTALL_BIN_DIR ?= /usr/local/bin
 CLI_PRODUCT_NAME ?= personakit
 CLI_COMPLETION_SOURCE ?= $(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)
@@ -371,12 +371,6 @@ core-complete-worktree:
 		$(if $(filter 1 true yes,$(COMPLETE_WORKTREE_NO_CLEANUP)),--no-cleanup,)
 
 core-zip:
-	zip -r $(ZIP_NAME) . \
-		-x "*.git/*" \
-		-x "__MACOSX/*" \
-		-x "*.DS_Store" \
-		-x "*/.DS_Store" \
-		-x "._*" \
-		-x ".build/*" \
-		-x "*.swiftpm/*" \
-		-x "*/DerivedData/*"
+	@mkdir -p "$(dir $(ZIP_NAME))"
+	@rm -f "$(ZIP_NAME)"
+	git ls-files | zip -q -@ "$(ZIP_NAME)"
