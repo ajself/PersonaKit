@@ -279,12 +279,7 @@ struct WorkspaceStoreWorkspaceFlowTests {
 
   @Test
   func installOrUpdateCLIStoresResultAndRefreshesStatus() throws {
-    let homeDirectoryURL = try FileManager.default.url(
-      for: .itemReplacementDirectory,
-      in: .userDomainMask,
-      appropriateFor: FileManager.default.temporaryDirectory,
-      create: true
-    )
+    let homeDirectoryURL = try makeTempDirectory()
     let bundledCLIURL = homeDirectoryURL.appendingPathComponent("Bundle/PersonaKitCLI")
     let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
       "Bundle/PersonaKit_ContextCore.bundle"
@@ -333,12 +328,7 @@ struct WorkspaceStoreWorkspaceFlowTests {
 
   @Test
   func installOrUpdateOpenCodeMCPStoresResultAndRefreshesStatus() throws {
-    let homeDirectoryURL = try FileManager.default.url(
-      for: .itemReplacementDirectory,
-      in: .userDomainMask,
-      appropriateFor: FileManager.default.temporaryDirectory,
-      create: true
-    )
+    let homeDirectoryURL = try makeTempDirectory()
     let bundledCLIURL = homeDirectoryURL.appendingPathComponent("Bundle/PersonaKitCLI")
     let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
       "Bundle/PersonaKit_ContextCore.bundle"

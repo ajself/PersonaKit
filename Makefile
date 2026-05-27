@@ -27,19 +27,30 @@ APP_SIGN_IDENTITY ?=
 INSTALLER_SIGN_IDENTITY ?=
 NOTARY_KEYCHAIN_PROFILE ?=
 TEST_FILTER ?=
+SWIFT ?= swift
 
 -include $(RELEASE_LOCAL_CONFIG)
 
 VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
+# Keep SwiftPM cache/temp writes out of user caches and the repo tree. This
+# lets sandboxed validation run without making scope-discovery tests see the
+# checkout's own .personakit while walking upward from temporary directories.
+SWIFTPM_CACHE_ROOT ?= $(VALIDATE_TMPDIR)/swiftpm
+SWIFTPM_TMPDIR ?= $(SWIFTPM_CACHE_ROOT)/tmp
+SWIFTPM_FLAGS ?= --cache-path $(SWIFTPM_CACHE_ROOT)/cache --config-path $(SWIFTPM_CACHE_ROOT)/configuration --security-path $(SWIFTPM_CACHE_ROOT)/security --manifest-cache local --disable-sandbox -Xswiftc -module-cache-path -Xswiftc $(SWIFTPM_CACHE_ROOT)/module-cache -Xcc -fmodules-cache-path=$(SWIFTPM_CACHE_ROOT)/clang-module-cache
+SWIFTPM_ENV ?= CLANG_MODULE_CACHE_PATH=$(SWIFTPM_CACHE_ROOT)/clang-module-cache TMPDIR=$(SWIFTPM_TMPDIR)
+SWIFT_BUILD ?= $(SWIFTPM_ENV) $(SWIFT) build $(SWIFTPM_FLAGS)
+SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
+SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS)
 
 COMPLETE_WORKTREE_BRANCH ?=
 COMPLETE_WORKTREE_PATH ?=
 COMPLETE_WORKTREE_MAIN ?= main
 COMPLETE_WORKTREE_NO_CLEANUP ?= 0
 
-.PHONY: help studio-doctor clean build test format-check \
+.PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
 	core-validate-repo core-complete-worktree core-zip public-v1-check \
 	cli-build cli-install cli-install-zsh-completion cli-test \
 	studio-build studio-run studio-test studio-review studio-vqa \
@@ -102,7 +113,7 @@ studio-doctor:
 
 clean:
 	@echo "Removing SwiftPM build products..."
-	@swift package clean
+	@$(SWIFT) package clean
 	@echo "Removing Xcode derived data..."
 	@rm -rf "$(DERIVED_DATA_PATH)"
 	@echo "Removing packaging artifacts..."
@@ -110,6 +121,14 @@ clean:
 	@echo "clean: OK"
 
 build: cli-build
+
+swiftpm-prepare:
+	@mkdir -p "$(SWIFTPM_CACHE_ROOT)/cache" \
+		"$(SWIFTPM_CACHE_ROOT)/clang-module-cache" \
+		"$(SWIFTPM_CACHE_ROOT)/configuration" \
+		"$(SWIFTPM_CACHE_ROOT)/module-cache" \
+		"$(SWIFTPM_CACHE_ROOT)/security" \
+		"$(SWIFTPM_TMPDIR)"
 
 format-check:
 	swift format lint --strict -r Sources Tests
@@ -121,11 +140,11 @@ studio-build: studio-doctor
 		--configuration "$(CONFIGURATION)" \
 		--derived-data-path "$(DERIVED_DATA_PATH)"
 
-cli-build:
-	swift build -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
+cli-build: swiftpm-prepare
+	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
 
 cli-install: cli-build
-	@bin_dir="$$(swift build -c $(SWIFT_CONFIGURATION) --show-bin-path)"; \
+	@bin_dir="$$($(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --show-bin-path)"; \
 	install -d "$(INSTALL_BIN_DIR)"; \
 	install -m 755 "$$bin_dir/$(CLI_PRODUCT_NAME)" "$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"; \
 	for bundle in "$$bin_dir"/*.bundle; do \
@@ -163,8 +182,8 @@ studio-review:
 
 studio-vqa: studio-review
 
-test:
-	swift test $(if $(TEST_FILTER),--filter $(TEST_FILTER),)
+test: swiftpm-prepare
+	$(SWIFT_TEST) $(if $(TEST_FILTER),--filter "$(TEST_FILTER)",)
 
 studio-test: studio-doctor
 	@$(XCODEBUILDMCP) macos stop --app-name "$(APP_NAME)" >/dev/null 2>&1 || true
@@ -175,8 +194,8 @@ studio-test: studio-doctor
 		-derivedDataPath "$(DERIVED_DATA_PATH)" \
 		test
 
-cli-test:
-	swift test --filter $(if $(TEST_FILTER),$(TEST_FILTER),CLI)
+cli-test: swiftpm-prepare
+	$(SWIFT_TEST) --filter "$(if $(TEST_FILTER),$(TEST_FILTER),CLI)"
 
 studio-pkg-preflight: studio-doctor
 	@if ! command -v productbuild >/dev/null 2>&1; then \
@@ -308,38 +327,38 @@ studio-verify-pkg:
 
 studio-release-pkg: studio-pkg-preflight studio-archive-release studio-export-release studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg
 
-core-validate-repo:
+core-validate-repo: swiftpm-prepare
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
-public-v1-check:
-	swift test
-	swift run personakit --help
-	swift run personakit run --help
+public-v1-check: swiftpm-prepare
+	$(SWIFT_TEST)
+	$(SWIFT_RUN) personakit --help
+	$(SWIFT_RUN) personakit run --help
 	rm -rf /tmp/personakit-public-v1-check
 	mkdir -p /tmp/personakit-public-v1-check
 	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | rg .
 	diff -qr .personakit Examples/public-starter/.personakit
-	swift run personakit validate --root .personakit
-	swift run personakit validate --root Fixtures/internal-agent-root/.personakit
-	swift run personakit validate --root Fixtures/kit-root
-	swift run personakit validate --root Examples/public-starter/.personakit
-	swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev-v1 > /tmp/personakit-public-v1-check/example-contract.json
+	$(SWIFT_RUN) personakit validate --root .personakit
+	$(SWIFT_RUN) personakit validate --root Fixtures/internal-agent-root/.personakit
+	$(SWIFT_RUN) personakit validate --root Fixtures/kit-root
+	$(SWIFT_RUN) personakit validate --root Examples/public-starter/.personakit
+	$(SWIFT_RUN) personakit contract --root Examples/public-starter/.personakit --session solo-dev-v1 > /tmp/personakit-public-v1-check/example-contract.json
 	rg '"sessionId" : "solo-dev-v1"' /tmp/personakit-public-v1-check/example-contract.json
 	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-v1-check/example-contract.json
-	swift run personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/example-dry-run.md
+	$(SWIFT_RUN) personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/example-dry-run.md
 	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/example-dry-run.md
 	rg '## Task' /tmp/personakit-public-v1-check/example-dry-run.md
-	swift run personakit init /tmp/personakit-public-v1-check/.personakit
-	swift run personakit validate --root /tmp/personakit-public-v1-check/.personakit
-	swift run personakit run --root /tmp/personakit-public-v1-check/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/init-dry-run.md
+	$(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/.personakit
+	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-v1-check/.personakit
+	$(SWIFT_RUN) personakit run --root /tmp/personakit-public-v1-check/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/init-dry-run.md
 	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/init-dry-run.md
 	rg '## Task' /tmp/personakit-public-v1-check/init-dry-run.md
 	mkdir -p /tmp/personakit-public-v1-check/non-empty
 	printf "occupied\n" > /tmp/personakit-public-v1-check/non-empty/README.md
-	! swift run personakit init /tmp/personakit-public-v1-check/non-empty
-	swift run personakit init /tmp/personakit-public-v1-check/non-empty --force
-	swift run personakit validate --root /tmp/personakit-public-v1-check/non-empty
-	! swift run personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-v1-check/legacy-rejection.txt 2>&1
+	! $(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/non-empty
+	$(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/non-empty --force
+	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-v1-check/non-empty
+	! $(SWIFT_RUN) personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-v1-check/legacy-rejection.txt 2>&1
 	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-v1-check/legacy-rejection.txt
 	! rg -n "AJ|Orbit|Taskboard|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md"
 	rg -n "memory|orchestration" .personakit README.md Docs Examples CONTRIBUTING.md SECURITY.md CHANGELOG.md AGENTS.md -g "!Docs/PUBLIC_V1_RELEASE_CHECKLIST.md" || true
