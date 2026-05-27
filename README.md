@@ -206,7 +206,7 @@ More detail: [Docs/mcp.md](./Docs/mcp.md).
 
 Studio is available in the repository for administration workflows, but CLI readiness is the V1 open-source release bar. Studio packaging and notarization are not release blockers for this public pass.
 
-Use `make studio-review` for the optional Studio review loop. It builds the app, launches deterministic demo workspaces, and captures screenshots under `Artifacts/studio-review/` for human inspection.
+Use `make studio-review` for the optional Studio review loop. It builds the app, launches deterministic demo workspaces, and captures screenshots under `.build/studio-review/` for human inspection. The Make targets keep Xcode output under hidden build directories such as `.build/XcodeDerivedData`.
 
 ## Product Boundaries
 

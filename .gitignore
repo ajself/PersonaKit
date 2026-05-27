@@ -79,7 +79,6 @@ default.profraw
 .idea/
 .vscode/
 .workunits/
-Artifacts/
 .appops/
 .codex/
 Config/Release.local.mk
