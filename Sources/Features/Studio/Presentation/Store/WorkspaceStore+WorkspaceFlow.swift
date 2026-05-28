@@ -2,6 +2,26 @@ import ContextCore
 import Foundation
 
 extension WorkspaceStore {
+  var recentWorkspaces: [StudioRecentWorkspace] {
+    _ = recentWorkspacesRevision
+
+    return recentWorkspacesFeatureModel.workspaces
+  }
+
+  func configureRecentWorkspaces(
+    storage: any StudioRecentWorkspacesPersisting,
+    recentWorkspaceAccess: any StudioRecentWorkspaceAccessing,
+    bookmarkDataProvider: @escaping (URL) -> Data? =
+      StudioRecentWorkspacesState.securityScopedBookmarkData
+  ) {
+    recentWorkspacesFeatureModel = StudioRecentWorkspacesFeatureModel(
+      storage: storage,
+      recentWorkspaceAccess: recentWorkspaceAccess,
+      bookmarkDataProvider: bookmarkDataProvider
+    )
+    recentWorkspacesRevision &+= 1
+  }
+
   /// Loads a workspace passed through launch configuration. This is used by UI tests
   /// to exercise workspace-backed flows without going through the system open panel.
   public func loadLaunchWorkspaceIfNeeded(
@@ -33,6 +53,65 @@ extension WorkspaceStore {
 
     workspaceURL = selectedURL
     loadWorkspace()
+  }
+
+  func openWorkspacePickerAndRecordRecent() {
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: self)
+  }
+
+  func openRecentWorkspace(_ workspace: StudioRecentWorkspace) {
+    StudioWorkspaceOpenCoordinator.openRecentWorkspace(
+      workspace,
+      workspaceStore: self
+    )
+  }
+
+  func removeRecentWorkspace(_ workspace: StudioRecentWorkspace) {
+    guard recentWorkspacesFeatureModel.remove(workspace) else {
+      return
+    }
+
+    recentWorkspacesRevision &+= 1
+  }
+
+  @discardableResult
+  func recordRecentWorkspace(
+    workspaceURL: URL,
+    bookmarkData: Data? = nil
+  ) -> Bool {
+    guard
+      recentWorkspacesFeatureModel.recordWorkspace(
+        at: workspaceURL,
+        bookmarkData: bookmarkData
+      )
+    else {
+      return false
+    }
+
+    recentWorkspacesRevision &+= 1
+    return true
+  }
+
+  @discardableResult
+  func recordCurrentWorkspaceIfLoaded() -> Bool {
+    guard
+      recentWorkspacesFeatureModel.recordCurrentWorkspaceIfLoaded(
+        workspaceURL: workspaceURL
+      )
+    else {
+      return false
+    }
+
+    recentWorkspacesRevision &+= 1
+    return true
+  }
+
+  func url(forRecentWorkspace workspace: StudioRecentWorkspace) -> URL {
+    recentWorkspacesFeatureModel.url(for: workspace)
+  }
+
+  func stopRecentWorkspaceAccess() {
+    recentWorkspacesFeatureModel.stopAccess()
   }
 
   func refreshInstallStatus() {

@@ -5,11 +5,6 @@ import SwiftUI
 /// Root Studio split view with sidebar navigation, session editing, and diagnostics.
 public struct StudioRootView: View {
   let workspaceStore: WorkspaceStore
-  @AppStorage(
-    StudioRecentWorkspacesState.storageKey,
-    store: StudioLaunchConfiguration.userDefaults()
-  )
-  private var recentWorkspacesStorageValue = "[]"
   @State private var selection: SidebarItem?
   @State private var selectedLibraryItemID: String?
   @State private var selectedSessionID: String?
@@ -169,7 +164,7 @@ public struct StudioRootView: View {
   }
 
   private var recentWorkspaces: [StudioRecentWorkspace] {
-    StudioRecentWorkspacesState.workspaces(from: recentWorkspacesStorageValue)
+    workspaceStore.recentWorkspaces
   }
 
   private var shouldShowInspectorToggle: Bool {
@@ -367,34 +362,19 @@ public struct StudioRootView: View {
   }
 
   private func openWorkspaceFromPicker() {
-    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
-      workspaceStore: workspaceStore,
-      recentWorkspacesStorageValue: &recentWorkspacesStorageValue,
-      recentWorkspaceAccess: workspaceStore.recentWorkspaceAccess
-    )
+    workspaceStore.openWorkspacePickerAndRecordRecent()
   }
 
   private func openRecentWorkspace(_ workspace: StudioRecentWorkspace) {
-    StudioWorkspaceOpenCoordinator.openRecentWorkspace(
-      workspace,
-      workspaceStore: workspaceStore,
-      recentWorkspacesStorageValue: &recentWorkspacesStorageValue,
-      recentWorkspaceAccess: workspaceStore.recentWorkspaceAccess
-    )
+    workspaceStore.openRecentWorkspace(workspace)
   }
 
   private func removeRecentWorkspace(_ workspace: StudioRecentWorkspace) {
-    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
-      removing: workspace,
-      from: recentWorkspacesStorageValue
-    )
+    workspaceStore.removeRecentWorkspace(workspace)
   }
 
   private func recordCurrentWorkspaceIfLoaded() {
-    StudioWorkspaceOpenCoordinator.recordCurrentWorkspaceIfLoaded(
-      workspaceStore: workspaceStore,
-      recentWorkspacesStorageValue: &recentWorkspacesStorageValue
-    )
+    workspaceStore.recordCurrentWorkspaceIfLoaded()
   }
 }
 

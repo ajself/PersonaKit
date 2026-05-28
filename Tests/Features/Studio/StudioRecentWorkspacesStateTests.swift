@@ -147,7 +147,7 @@ struct StudioRecentWorkspacesStateTests {
   func workspaceOpenCoordinatorRecordsPickerWorkspaceAndStopsRecentAccess() async {
     let selectedWorkspaceURL = URL(fileURLWithPath: "/PickedWorkspace")
     let recentAccess = StudioRecentWorkspaceAccessRecorder()
-    var storageValue = "[]"
+    let storage = StudioRecentWorkspacesStorageRecorder()
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { workspaceURL in
         #expect(workspaceURL.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL)
@@ -160,23 +160,25 @@ struct StudioRecentWorkspacesStateTests {
         selectedURL: selectedWorkspaceURL
       )
     )
-
-    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
-      workspaceStore: store,
-      recentWorkspacesStorageValue: &storageValue,
+    store.configureRecentWorkspaces(
+      storage: storage,
       recentWorkspaceAccess: recentAccess,
       bookmarkDataProvider: { _ in Data([4, 5, 6]) }
     )
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: store)
 
     await waitFor {
       store.workspaceURL?.standardizedFileURL == selectedWorkspaceURL.standardizedFileURL
     }
 
-    let workspaces = StudioRecentWorkspacesState.workspaces(from: storageValue)
-
     #expect(recentAccess.stopCount == 1)
-    #expect(workspaces.map(\.path) == ["/PickedWorkspace"])
-    #expect(workspaces.first?.bookmarkData == Data([4, 5, 6]))
+    #expect(store.recentWorkspaces.map(\.path) == ["/PickedWorkspace"])
+    #expect(store.recentWorkspaces.first?.bookmarkData == Data([4, 5, 6]))
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storage.storageValue).map(\.path)
+        == ["/PickedWorkspace"]
+    )
   }
 
   @Test
@@ -184,7 +186,7 @@ struct StudioRecentWorkspacesStateTests {
   func workspaceOpenCoordinatorSkipsRecentChangesWhenPickerReturnsSameWorkspace() {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let recentAccess = StudioRecentWorkspaceAccessRecorder()
-    var storageValue = "[]"
+    let storage = StudioRecentWorkspacesStorageRecorder()
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
         WorkspaceSnapshot.empty
@@ -196,17 +198,63 @@ struct StudioRecentWorkspacesStateTests {
         selectedURL: workspaceURL
       )
     )
-    store.workspaceURL = workspaceURL
-
-    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(
-      workspaceStore: store,
-      recentWorkspacesStorageValue: &storageValue,
+    store.configureRecentWorkspaces(
+      storage: storage,
       recentWorkspaceAccess: recentAccess,
       bookmarkDataProvider: { _ in Data([4, 5, 6]) }
     )
+    store.workspaceURL = workspaceURL
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: store)
 
     #expect(recentAccess.stopCount == 0)
-    #expect(StudioRecentWorkspacesState.workspaces(from: storageValue).isEmpty)
+    #expect(store.recentWorkspaces.isEmpty)
+    #expect(StudioRecentWorkspacesState.workspaces(from: storage.storageValue).isEmpty)
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorOpensRecentWorkspaceThroughStoreOwner() async {
+    let recentAccess = StudioRecentWorkspaceAccessRecorder()
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    let expectedWorkspaceURL = URL(
+      fileURLWithPath: "/RecentWorkspace",
+      isDirectory: true
+    )
+    .standardizedFileURL
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { workspaceURL in
+        #expect(workspaceURL.standardizedFileURL == expectedWorkspaceURL)
+        return WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      }
+    )
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: recentAccess
+    )
+    let recentWorkspace = StudioRecentWorkspace(
+      path: "/RecentWorkspace",
+      bookmarkData: Data([7, 8, 9])
+    )
+
+    StudioWorkspaceOpenCoordinator.openRecentWorkspace(
+      recentWorkspace,
+      workspaceStore: store
+    )
+
+    await waitFor {
+      store.workspaceURL?.standardizedFileURL == expectedWorkspaceURL
+    }
+
+    #expect(recentAccess.requestedWorkspaces == [recentWorkspace])
+    #expect(store.recentWorkspaces == [recentWorkspace])
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storage.storageValue)
+        == [recentWorkspace]
+    )
   }
 
   @Test
@@ -237,13 +285,24 @@ struct StudioRecentWorkspacesStateTests {
 
 private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAccessing {
   private(set) var stopCount = 0
+  private(set) var requestedWorkspaces: [StudioRecentWorkspace] = []
 
   func url(for workspace: StudioRecentWorkspace) -> URL {
-    workspace.url
+    requestedWorkspaces.append(workspace)
+
+    return workspace.url
   }
 
   func stop() {
     stopCount += 1
+  }
+}
+
+private final class StudioRecentWorkspacesStorageRecorder: StudioRecentWorkspacesPersisting {
+  var storageValue: String
+
+  init(storageValue: String = "[]") {
+    self.storageValue = storageValue
   }
 }
 
