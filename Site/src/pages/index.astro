@@ -8,180 +8,169 @@ import SiteLayout from "../layouts/SiteLayout.astro";
 import { sitePath } from "../utils/sitePath";
 
 const examples = (await getCollection("examples"))
-  .filter((example) => example.data.routeSlug !== "when-not-to-use")
+  .filter((example) => example.data.kind === "contract")
   .sort((left, right) => left.data.order - right.data.order);
 
 const exampleCards = examples.map((example) => ({
   description: example.data.description,
   href: sitePath(`examples/${example.data.routeSlug}/`),
-  label: "Open example",
+  label: "Study example",
   title: example.data.title,
   tone: "fit" as const,
 }));
 ---
 
 <SiteLayout
-  title="PersonaKit Runbook"
-  description="PersonaKit resolves reusable operating contracts for AI coding work."
+  title="PersonaKit"
+  description="PersonaKit resolves operating contracts for practical AI coding workflows."
 >
   <Hero
-    eyebrow="Operating contracts for AI coding work"
-    title="PersonaKit prepares the agent before the agent works."
-    lede="Resolve role, rules, required context, stop points, and capability authorization into one inspectable contract."
+    eyebrow="AI coding operating contracts"
+    title="PersonaKit makes repeated agent setup inspectable."
+    lede="Turn recurring coding work into a durable contract for role, rules, context, stop points, and allowed capabilities before any agent acts."
     actions={[
-      { href: sitePath("start-here/"), label: "Start the five-minute path" },
-      { href: sitePath("decision-guide/"), label: "Decide if it fits" },
+      { href: sitePath("learn/"), label: "Learn where it fits" },
+      { href: sitePath("start-here/"), label: "Run the first contract" },
     ]}
   />
 
   <main>
     <section>
+      <h2>The Practical Problem</h2>
       <div class="grid three">
         <article class="card">
-          <h3>Use It For</h3>
-          <p>Repeated AI work modes where role, durable rules, stop points, and allowed capabilities need to be stable.</p>
+          <h3>Setup Lives In Chat</h3>
+          <p>Repeated work modes keep getting rebuilt as long prompts, remembered caveats, and "please be careful" reminders.</p>
         </article>
         <article class="card">
-          <h3>Do Not Use It For</h3>
-          <p>Agent memory, task tracking, deployment, secret handling, CI, or long-running orchestration.</p>
+          <h3>Tools Need Boundaries</h3>
+          <p>Prompts, skills, MCP clients, harnesses, and agents each help, but none of them alone defines the operating contract.</p>
         </article>
         <article class="card">
-          <h3>Core Distinction</h3>
-          <p>PersonaKit decides what is in bounds. Slash skills perform local procedures.</p>
+          <h3>Review Needs Proof</h3>
+          <p>Before launching work, you should be able to inspect who the agent is, what rules apply, and which capabilities are allowed.</p>
         </article>
       </div>
     </section>
 
+    <section class="band">
+      <h2>Where PersonaKit Fits</h2>
+      <div class="fit-stack">
+        <article>
+          <h3>Prompt</h3>
+          <p>Expresses the task.</p>
+        </article>
+        <article>
+          <h3>Skill</h3>
+          <p>Performs a local procedure.</p>
+        </article>
+        <article>
+          <h3>Harness</h3>
+          <p>Wraps a model or tool runtime.</p>
+        </article>
+        <article>
+          <h3>MCP</h3>
+          <p>Exposes context and provenance.</p>
+        </article>
+        <article class="highlight">
+          <h3>PersonaKit</h3>
+          <p>Resolves the operating contract that governs all of it.</p>
+        </article>
+        <article>
+          <h3>Agent</h3>
+          <p>Receives context and does the work.</p>
+        </article>
+      </div>
+      <p><a class="button-link" href={sitePath("learn/")}>Open the learning map</a></p>
+    </section>
+
     <section>
-      <h2>Five-Minute Path</h2>
+      <h2>Run One Contract</h2>
       <div class="grid two">
         <article class="card">
-          <h3>Run The Demo</h3>
+          <h3>Try The Demo</h3>
           <pre><code>cd Site/public/examples/swift-cli-maintenance
 personakit validate --root personakit-root
 personakit contract --root personakit-root --session cli-maintenance
 personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
         </article>
         <article class="card">
-          <h3>What To Notice</h3>
+          <h3>What It Proves</h3>
           <ul>
+            <li>The authored root is valid.</li>
             <li>The session resolves deterministically.</li>
-            <li>OpenCode is authorized for the session.</li>
+            <li>OpenCode is authorized for this work mode.</li>
             <li>Deployment and autonomous loops are forbidden.</li>
-            <li>The payload is visible before launch.</li>
+            <li>The runtime payload is visible before launch.</li>
           </ul>
-          <a class="button-link" href={sitePath("start-here/")}>Open full walkthrough</a>
+          <a class="button-link" href={sitePath("start-here/")}>Follow the walkthrough</a>
         </article>
       </div>
     </section>
 
-    <section class="band">
-      <h2>The Contract Model</h2>
+    <section>
+      <h2>Think In Contracts</h2>
       <DiagramPanel
         src={sitePath("diagrams/personakit-operating-contract.svg")}
         alt="Persona, kits, directive, essentials, and skill authorization resolving into an operating contract for an agent."
       />
-    </section>
-
-    <section>
-      <h2>Product Suite</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Surface</th>
-            <th>Best For</th>
-            <th>Boundary</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>CLI</td>
-            <td>Validate, inspect, export, dry-run, and launch one supported V1 adapter.</td>
-            <td>Not a general workflow runner.</td>
-          </tr>
-          <tr>
-            <td>MCP</td>
-            <td>Read-only grounding, recommendation, contract resolution, trace, graph, and export.</td>
-            <td>Not authorization to mutate files or run tools.</td>
-          </tr>
-          <tr>
-            <td>Studio / Mac app</td>
-            <td>Admin surface for sessions, personas, directives, kits, skills, essentials, references, validation, and relationship maps.</td>
-            <td>Useful, but not the V1 release bar.</td>
-          </tr>
-          <tr>
-            <td>Pack format</td>
-            <td>Inspectable project or global PersonaKit configuration.</td>
-            <td>Not hidden memory.</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>PersonaKit vs Slash Skills</h2>
-      <DiagramPanel
-        src={sitePath("diagrams/personakit-vs-slash-skills.svg")}
-        alt="PersonaKit compared with slash skills."
-      />
       <Callout>
-        <p><strong>Rule of thumb:</strong> PersonaKit authorizes the work boundary. Slash skills perform local procedures.</p>
+        <p><strong>PersonaKit is not the worker.</strong> It prepares the contract. Your coding agent, harness, or supported adapter performs the work.</p>
       </Callout>
     </section>
 
-    <section class="band">
-      <h2>Decision Guide</h2>
-      <DiagramPanel
-        src={sitePath("diagrams/decision-tree.svg")}
-        alt="Decision tree for whether a workflow should use PersonaKit."
-      />
-      <p><a class="button-link" href={sitePath("decision-guide/")}>Open the full decision guide</a></p>
-    </section>
-
     <section>
-      <h2>Example Projects</h2>
+      <h2>Learn By Example</h2>
       <CardGrid cards={exampleCards} />
     </section>
 
-    <section>
-      <h2>Where Not To Use It</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Workflow</th>
-            <th>Use Instead</th>
-            <th>Why</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Open-ended ideation</td>
-            <td>Chat, notes, design doc</td>
-            <td>The boundary is not known yet.</td>
-          </tr>
-          <tr>
-            <td>Formatter invocation</td>
-            <td>Editor command or slash skill</td>
-            <td>No durable operating contract is needed.</td>
-          </tr>
-          <tr>
-            <td>Deployment</td>
-            <td>CI/CD</td>
-            <td>Execution and approvals belong elsewhere.</td>
-          </tr>
-          <tr>
-            <td>Secret retrieval</td>
-            <td>Secret manager</td>
-            <td>PersonaKit is not a vault.</td>
-          </tr>
-          <tr>
-            <td>Long-running agent loop</td>
-            <td>Dedicated orchestration system</td>
-            <td>V1 excludes memory, persistence, and multi-agent control.</td>
-          </tr>
-        </tbody>
-      </table>
-      <p><a class="button-link" href={sitePath("examples/when-not-to-use/")}>Open anti-pattern examples</a></p>
+    <section class="band">
+      <h2>Use It When The Work Mode Repeats</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>Good Fit</h3>
+          <p>Code review, bounded implementation, pack authoring, release checks, and MCP-aware grounding where the same boundaries should survive across sessions.</p>
+        </article>
+        <article class="card">
+          <h3>Bad Fit</h3>
+          <p>Open-ended ideation, deployment, secret retrieval, generic task tracking, formatter invocations, and long-running autonomous orchestration.</p>
+        </article>
+      </div>
+      <p><a class="button-link" href={sitePath("when-to-use/")}>Open the fit guide</a></p>
     </section>
   </main>
 </SiteLayout>
+
+<style>
+  .fit-stack {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin: 18px 0 22px;
+  }
+
+  .fit-stack article {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .fit-stack .highlight {
+    border-color: #8db3c9;
+    background: #eef6fa;
+  }
+
+  @media (max-width: 960px) {
+    .fit-stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 520px) {
+    .fit-stack {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

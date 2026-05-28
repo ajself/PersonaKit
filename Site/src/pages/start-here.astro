@@ -6,10 +6,10 @@ import { sitePath } from "../utils/sitePath";
 
 <ContentLayout
   title="Start Here"
-  eyebrow="Five-minute path"
-  description="Run a tiny PersonaKit example and inspect the resolved operating contract before any agent work begins."
+  eyebrow="First contract"
+  description="Run a tiny PersonaKit example and learn what each command proves before agent work begins."
 >
-  <p>PersonaKit does not make the code change in this walkthrough. It resolves the operating contract that an agent would receive before making the change.</p>
+  <p>This walkthrough does not ask PersonaKit to make a code change. It asks PersonaKit to prove the operating contract that an agent would receive before making a change.</p>
 
   <h2>1. Validate The Example Root</h2>
   <pre><code>cd Site/public/examples/swift-cli-maintenance
@@ -17,6 +17,8 @@ personakit validate --root personakit-root</code></pre>
 
   <p>Expected shape:</p>
   <pre><code>Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0</code></pre>
+
+  <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, essential, and session can be loaded before any agent work starts.</p>
 
   <h2>2. Inspect The Resolved Contract</h2>
   <pre><code>personakit contract --root personakit-root --session cli-maintenance</code></pre>
@@ -30,14 +32,68 @@ personakit validate --root personakit-root</code></pre>
     <li><code>forbiddenSkillIds</code>: <code>autonomous-agent-loop</code>, <code>deployment-runner</code></li>
   </ul>
 
+  <p>What this proves: the named session resolves to one role, one directive, an applied kit, and an explicit capability boundary. PersonaKit is no longer relying on prompt memory or implied intent.</p>
+
   <h2>3. Preview The Runtime Payload</h2>
   <pre><code>personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
 
-  <p>Read the output as a reviewer. Confirm it names the session, includes persona responsibilities, includes directive steps, includes essentials, and places task text after the resolved context.</p>
+  <p>What this proves: the payload that would be handed to the supported adapter is visible before launch. The task text appears after the resolved context, so the agent starts from the operating contract first.</p>
+
+  <h2>How To Read The Payload</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Section</th>
+        <th>What To Check</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Resolution</td>
+        <td>The session, persona, directive, and kits match the work mode you intended.</td>
+      </tr>
+      <tr>
+        <td>Persona</td>
+        <td>The role has the right responsibilities, values, and non-goals.</td>
+      </tr>
+      <tr>
+        <td>Skill Contract</td>
+        <td>The needed capability is authorized and dangerous capabilities are forbidden.</td>
+      </tr>
+      <tr>
+        <td>Applied Kits</td>
+        <td>The durable rules that shape this work mode are included.</td>
+      </tr>
+      <tr>
+        <td>Essentials</td>
+        <td>Required grounding is present, including built-in PersonaKit contracts.</td>
+      </tr>
+      <tr>
+        <td>Directive</td>
+        <td>The steps, stop points, acceptance criteria, and verification fit the task.</td>
+      </tr>
+      <tr>
+        <td>Task</td>
+        <td>The specific request is last, after the resolved contract.</td>
+      </tr>
+    </tbody>
+  </table>
 
   <Callout tone="good">
-    <p>This is the core PersonaKit experience: the agent starts from a resolved contract instead of loose prompt memory.</p>
+    <p>This is the core PersonaKit experience: the worker receives a resolved contract instead of a loose prompt with repeated reminders.</p>
   </Callout>
+
+  <h2>Built-In Contracts You Will See</h2>
+  <div class="grid two">
+    <article class="card">
+      <h3>Persona Activation</h3>
+      <p>PersonaKit treats persona assignment as an operating contract, not a tone preset. One active persona governs the lane until it is explicitly replaced.</p>
+    </article>
+    <article class="card">
+      <h3>Skill Authorization</h3>
+      <p>External skills and host-local capabilities are unauthorized by default unless the resolved contract declares them.</p>
+    </article>
+  </div>
 
   <h2>What You Proved</h2>
   <ul>
@@ -49,6 +105,9 @@ personakit validate --root personakit-root</code></pre>
   </ul>
 
   <h2>Next Step</h2>
-  <p>After you understand contract resolution, try authoring compact PersonaKit content with dry-runs and validation.</p>
-  <p><a class="button-link" href={sitePath("examples/pack-authoring/")}>Open Pack Authoring</a></p>
+  <p>Now that you have seen a resolved contract, learn how prompts, skills, harnesses, MCP, and agents fit around it.</p>
+  <p>
+    <a class="button-link" href={sitePath("learn/")}>Open Learn PersonaKit</a>
+    <a class="button-link" href={sitePath("examples/pack-authoring/")}>Study Pack Authoring</a>
+  </p>
 </ContentLayout>

@@ -1,0 +1,192 @@
+---
+import Callout from "../components/Callout.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+---
+
+<ContentLayout
+  title="Learn PersonaKit"
+  eyebrow="Mental map"
+  description="Place PersonaKit among prompts, skills, harnesses, MCP, CLI tools, and coding agents."
+>
+  <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts or skills. It does not. PersonaKit is the operating-contract layer that says which role, rules, context, stop points, and capabilities apply before a model-backed worker starts.</p>
+
+  <div class="learning-map">
+    <a href="#map">Map the layers</a>
+    <a href="#contract">Read the contract</a>
+    <a href="#prompt-to-contract">Turn a prompt into a contract</a>
+    <a href="#handoff">Hand off to an agent</a>
+  </div>
+
+  <h2 id="map">Map The Layers</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Plain Job</th>
+        <th>PersonaKit Relationship</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Prompt</td>
+        <td>A one-time expression of intent.</td>
+        <td>PersonaKit keeps durable rules out of the prompt so the task text can stay small.</td>
+      </tr>
+      <tr>
+        <td>Saved prompt</td>
+        <td>Reusable text that still has to be copied or remembered.</td>
+        <td>PersonaKit turns repeated setup into structured, inspectable project context.</td>
+      </tr>
+      <tr>
+        <td>Skill</td>
+        <td>A local procedure, helper, or capability.</td>
+        <td>PersonaKit can declare whether that capability is allowed or forbidden for a work mode.</td>
+      </tr>
+      <tr>
+        <td>Harness</td>
+        <td>The wrapper that calls models, tools, or agent runtimes.</td>
+        <td>PersonaKit produces the contract a harness can pass into the worker.</td>
+      </tr>
+      <tr>
+        <td>MCP</td>
+        <td>A protocol surface for context, tools, prompts, and provenance.</td>
+        <td>PersonaKit MCP exposes read-only grounding so clients can resolve contracts before action.</td>
+      </tr>
+      <tr>
+        <td>CLI</td>
+        <td>The practical local interface for validation, inspection, export, and launch.</td>
+        <td>PersonaKit CLI proves the contract before the supported adapter runs.</td>
+      </tr>
+      <tr>
+        <td>Agent</td>
+        <td>The worker that reads context and performs the task.</td>
+        <td>PersonaKit prepares the agent. It does not become the agent.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout>
+    <p><strong>Working definition:</strong> PersonaKit resolves an operating contract for repeated AI coding work.</p>
+  </Callout>
+
+  <h2 id="contract">Read The Contract</h2>
+  <p>A resolved contract answers the questions that usually get scattered through chat history.</p>
+
+  <div class="grid two">
+    <article class="card">
+      <h3>Who Is Working?</h3>
+      <p>The persona defines responsibilities, values, and non-goals.</p>
+    </article>
+    <article class="card">
+      <h3>What Kind Of Work?</h3>
+      <p>The directive defines steps, acceptance criteria, verification, and stop points.</p>
+    </article>
+    <article class="card">
+      <h3>Which Rules Apply?</h3>
+      <p>Kits and essentials carry durable project guidance into the resolved payload.</p>
+    </article>
+    <article class="card">
+      <h3>Which Capabilities Are Allowed?</h3>
+      <p>Skill authorization makes allowed and forbidden capabilities visible before work begins.</p>
+    </article>
+  </div>
+
+  <h2 id="prompt-to-contract">Turn A Prompt Into A Contract</h2>
+  <p>Start with a loose prompt:</p>
+
+  <pre><code>Review this bugfix carefully. Stay read-only. Watch for behavior changes and missing tests. Do not edit code unless I approve a fix.</code></pre>
+
+  <p>PersonaKit asks which parts are durable enough to become reusable structure:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Prompt Fragment</th>
+        <th>Contract Piece</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Review this bugfix carefully.</td>
+        <td>Persona: behavior reviewer.</td>
+      </tr>
+      <tr>
+        <td>Stay read-only.</td>
+        <td>Skill boundary: authorize review, forbid editing.</td>
+      </tr>
+      <tr>
+        <td>Watch for behavior changes and missing tests.</td>
+        <td>Directive: review steps and acceptance criteria.</td>
+      </tr>
+      <tr>
+        <td>Do not edit code unless I approve a fix.</td>
+        <td>Stop point: implementation requires human approval.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The next prompt can shrink because the contract carries the repeated setup:</p>
+
+  <pre><code>Operate under behavior-review. Review the current diff and report findings.</code></pre>
+
+  <p><a class="button-link" href={sitePath("examples/review-session/")}>Study the review-session example</a></p>
+
+  <h2 id="handoff">Hand Off To An Agent</h2>
+  <p>The practical loop is small and inspectable:</p>
+
+  <ol>
+    <li>Validate the authored PersonaKit root.</li>
+    <li>Resolve the session contract.</li>
+    <li>Inspect or export the context.</li>
+    <li>Dry-run a runtime payload only when the session authorizes the selected adapter.</li>
+    <li>For read-only review sessions, export the grounding instead of launching a worker.</li>
+  </ol>
+
+  <pre><code>personakit validate --root .personakit
+personakit contract --root .personakit --session behavior-review
+personakit export --root .personakit --session behavior-review</code></pre>
+
+  <Callout tone="good">
+    <p>That is the craft: make the boundary durable, inspect it, and only launch a worker when the contract authorizes that lane.</p>
+  </Callout>
+</ContentLayout>
+
+<style>
+  .learning-map {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 24px 0 36px;
+  }
+
+  .learning-map a {
+    display: flex;
+    align-items: center;
+    min-height: 54px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    background: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .learning-map a:hover {
+    border-color: #9fb7c6;
+    color: var(--blue);
+  }
+
+  @media (max-width: 840px) {
+    .learning-map {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 520px) {
+    .learning-map {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

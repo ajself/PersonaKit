@@ -5,6 +5,7 @@ import ContentLayout from "../../layouts/ContentLayout.astro";
 import { sitePath } from "../../utils/sitePath";
 
 const examples = (await getCollection("examples"))
+  .filter((example) => example.data.kind === "contract")
   .sort((left, right) => left.data.order - right.data.order);
 
 const cards = examples.map((example) => ({
@@ -12,14 +13,16 @@ const cards = examples.map((example) => ({
   href: sitePath(`examples/${example.data.routeSlug}/`),
   label: "Open example",
   title: example.data.title,
-  tone: example.data.kind === "guidance" ? "avoid" as const : "fit" as const,
+  tone: "fit" as const,
 }));
 ---
 
 <ContentLayout
   title="Examples"
-  eyebrow="Runnable contracts"
-  description="Contract examples and anti-pattern guidance for PersonaKit's current scope."
+  eyebrow="Learning contracts"
+  description="Runnable PersonaKit roots that show practical operating contracts for real AI coding workflows."
 >
+  <p>Each example teaches a different boundary. Start with the page text, inspect the summary, then browse the static root if you want to see the authored source.</p>
+
   <CardGrid cards={cards} columns="two" />
 </ContentLayout>

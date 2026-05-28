@@ -1,6 +1,6 @@
 ---
 title: "CLI Maintenance"
-description: "Bounded implementation with one authorized adapter and forbidden high-risk capabilities."
+description: "The happy path for bounded implementation with one authorized adapter and clear stop points."
 kind: "contract"
 routeSlug: "cli-maintenance"
 persona: "cli-maintainer"
@@ -16,7 +16,9 @@ rootPath: "/examples/swift-cli-maintenance/personakit-root"
 order: 1
 ---
 
-This example is the happy path for PersonaKit V1: one repeated coding work mode, one active persona, one directive, one authorized adapter capability, and explicit forbidden capabilities.
+This example is the happy path for PersonaKit V1. It shows how a small implementation lane can authorize one adapter capability while forbidding deployment and autonomous loops.
+
+Use this when a practical coding task repeats often enough that the same role, stop points, and verification should be visible every time.
 
 ## Runnable Commands
 
@@ -39,7 +41,10 @@ Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills
 - `opencode-cli` is authorized for this session.
 - `deployment-runner` and `autonomous-agent-loop` are forbidden.
 - The dry-run payload includes the task only after the resolved context.
+- The directive stops before new adapters, arbitrary command execution, persistence, or orchestration.
 
 ## Why This Is Better Than A Prompt Snippet
 
 A prompt snippet can say "be careful." This contract says who the agent is acting as, what kind of work this is, which skill is authorized, which skills are forbidden, and when review is mandatory.
+
+The prompt can stay small because the durable boundary now lives in PersonaKit.

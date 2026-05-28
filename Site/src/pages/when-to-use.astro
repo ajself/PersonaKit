@@ -1,0 +1,97 @@
+---
+import Callout from "../components/Callout.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+---
+
+<ContentLayout
+  title="When To Use PersonaKit"
+  eyebrow="Practical fit"
+  description="Use PersonaKit when the operating contract matters more than a one-off prompt."
+>
+  <p>PersonaKit is useful when the same kind of AI coding work repeats and the boundary matters. It is too much ceremony when you only need a one-off instruction, a formatter, a deployment system, or open-ended thinking.</p>
+
+  <h2>Use PersonaKit When</h2>
+  <div class="grid two">
+    <article class="card">
+      <h3>Review Mode Must Stay Read-Only</h3>
+      <p>A reviewer should find defects, risks, and missing validation without becoming the implementer.</p>
+      <a class="button-link" href={sitePath("examples/review-session/")}>Study review session</a>
+    </article>
+    <article class="card">
+      <h3>Bounded Implementation Repeats</h3>
+      <p>A common fix lane needs the same role, stop points, adapter authorization, and verification every time.</p>
+      <a class="button-link" href={sitePath("examples/cli-maintenance/")}>Study CLI maintenance</a>
+    </article>
+    <article class="card">
+      <h3>Agents Need Grounding Before Tools</h3>
+      <p>MCP-aware clients should resolve the contract before choosing host-local skills or tools.</p>
+      <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Study MCP grounding</a>
+    </article>
+    <article class="card">
+      <h3>Pack Authoring Needs Guardrails</h3>
+      <p>Creating PersonaKit content should stay compact, dry-run first, reuse existing pieces, and validate afterward.</p>
+      <a class="button-link" href={sitePath("examples/pack-authoring/")}>Study pack authoring</a>
+    </article>
+  </div>
+
+  <h2>Skip PersonaKit When</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Workflow</th>
+        <th>Use Instead</th>
+        <th>Why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Open-ended product thinking</td>
+        <td>Chat, notes, whiteboard, or design doc</td>
+        <td>The boundary is not known yet.</td>
+      </tr>
+      <tr>
+        <td>One-off helper prompt</td>
+        <td>Prompt, saved prompt, or slash skill</td>
+        <td>No durable operating contract is needed.</td>
+      </tr>
+      <tr>
+        <td>Formatter invocation</td>
+        <td>Editor command, script, or formatter</td>
+        <td>The procedure is mechanical and does not need role authorization.</td>
+      </tr>
+      <tr>
+        <td>Deployment</td>
+        <td>CI/CD with approvals and audit logs</td>
+        <td>PersonaKit may forbid deployment in a session; it should not perform deployment.</td>
+      </tr>
+      <tr>
+        <td>Secret retrieval</td>
+        <td>Secret manager</td>
+        <td>PersonaKit is not a vault or permission broker.</td>
+      </tr>
+      <tr>
+        <td>Long-running autonomous work</td>
+        <td>Dedicated orchestration system</td>
+        <td>V1 excludes memory, persistence, continuation, and multi-agent control.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout>
+    <p><strong>Short version:</strong> use PersonaKit when a repeated AI coding lane needs a durable boundary that humans can inspect before work starts.</p>
+  </Callout>
+
+  <h2>Adoption Pattern</h2>
+  <ol>
+    <li>Pick one repeated work mode.</li>
+    <li>Write one persona for who is acting.</li>
+    <li>Write one directive for the work type, stop points, and validation.</li>
+    <li>Add one kit for durable rules.</li>
+    <li>Declare only the skills that matter to the boundary.</li>
+    <li>Create one session.</li>
+    <li>Validate, inspect the contract, and dry-run before launch.</li>
+  </ol>
+
+  <p><a class="button-link" href={sitePath("learn/")}>Learn the model</a></p>
+</ContentLayout>
