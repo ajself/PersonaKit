@@ -154,13 +154,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     sessionErrors: [ResolverError],
     essentialIDs: Set<String>
   ) -> WorkspaceRelationshipMapGraph {
-    var nodeStateByKey: [String: MutableMapNode] = [:]
+    var nodeStateByKey: [String: WorkspaceSessionMapMutableNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
     var errors = sessionErrors
     var errorKeys = Set(sessionErrors.map(ResolverErrorKey.init))
 
     for session in sessions.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .session,
         id: session.id,
@@ -168,13 +168,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         isMissing: false
       )
 
-      let sessionNodeKey = makeNodeKey(kind: .session, id: session.id)
-      let personaNodeKey = makeNodeKey(kind: .persona, id: session.personaId)
-      let directiveNodeKey = makeNodeKey(kind: .directive, id: session.directiveId)
+      let sessionNodeKey = workspaceSessionMapNodeKey(kind: .session, id: session.id)
+      let personaNodeKey = workspaceSessionMapNodeKey(kind: .persona, id: session.personaId)
+      let directiveNodeKey = workspaceSessionMapNodeKey(kind: .directive, id: session.directiveId)
       let persona = registry.personasById[session.personaId]
       let directive = registry.directivesById[session.directiveId]
 
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .persona,
         id: session.personaId,
@@ -201,7 +201,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         )
       }
 
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .directive,
         id: session.directiveId,
@@ -228,11 +228,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         )
       }
 
-      for kitID in uniqueSorted(session.kitOverrides ?? []) {
+      for kitID in sortedUniqueWorkspaceSessionMapValues(session.kitOverrides ?? []) {
         let kit = registry.kitsById[kitID]
-        let kitNodeKey = makeNodeKey(kind: .kit, id: kitID)
+        let kitNodeKey = workspaceSessionMapNodeKey(kind: .kit, id: kitID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .kit,
           id: kitID,
@@ -265,7 +265,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for persona in registry.personas.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .persona,
         id: persona.id,
@@ -273,13 +273,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         isMissing: false
       )
 
-      let personaNodeKey = makeNodeKey(kind: .persona, id: persona.id)
+      let personaNodeKey = workspaceSessionMapNodeKey(kind: .persona, id: persona.id)
 
-      for kitID in uniqueSorted(persona.defaultKitIds) {
+      for kitID in sortedUniqueWorkspaceSessionMapValues(persona.defaultKitIds) {
         let kit = registry.kitsById[kitID]
-        let kitNodeKey = makeNodeKey(kind: .kit, id: kitID)
+        let kitNodeKey = workspaceSessionMapNodeKey(kind: .kit, id: kitID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .kit,
           id: kitID,
@@ -312,7 +312,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for directive in registry.directives.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .directive,
         id: directive.id,
@@ -320,13 +320,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         isMissing: false
       )
 
-      let directiveNodeKey = makeNodeKey(kind: .directive, id: directive.id)
+      let directiveNodeKey = workspaceSessionMapNodeKey(kind: .directive, id: directive.id)
 
-      for intentID in uniqueSorted(directive.requiresIntentTemplateIds) {
+      for intentID in sortedUniqueWorkspaceSessionMapValues(directive.requiresIntentTemplateIds) {
         let intent = registry.intentTemplatesById[intentID]
-        let intentNodeKey = makeNodeKey(kind: .intent, id: intentID)
+        let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intentID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .intent,
           id: intentID,
@@ -357,11 +357,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for skillID in uniqueSorted(directive.requiresSkillIds) {
+      for skillID in sortedUniqueWorkspaceSessionMapValues(directive.requiresSkillIds) {
         let skill = registry.skillsById[skillID]
-        let skillNodeKey = makeNodeKey(kind: .skill, id: skillID)
+        let skillNodeKey = workspaceSessionMapNodeKey(kind: .skill, id: skillID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .skill,
           id: skillID,
@@ -392,11 +392,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for referenceID in uniqueSorted(directive.referenceIds ?? []) {
+      for referenceID in sortedUniqueWorkspaceSessionMapValues(directive.referenceIds ?? []) {
         let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = makeNodeKey(kind: .reference, id: referenceID)
+        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .reference,
           id: referenceID,
@@ -428,7 +428,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for kit in registry.kits.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .kit,
         id: kit.id,
@@ -436,13 +436,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         isMissing: false
       )
 
-      let kitNodeKey = makeNodeKey(kind: .kit, id: kit.id)
+      let kitNodeKey = workspaceSessionMapNodeKey(kind: .kit, id: kit.id)
 
-      for intentID in uniqueSorted(kit.intentTemplateIds ?? []) {
+      for intentID in sortedUniqueWorkspaceSessionMapValues(kit.intentTemplateIds ?? []) {
         let intent = registry.intentTemplatesById[intentID]
-        let intentNodeKey = makeNodeKey(kind: .intent, id: intentID)
+        let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intentID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .intent,
           id: intentID,
@@ -472,11 +472,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for skillID in uniqueSorted(kit.skillIds ?? []) {
+      for skillID in sortedUniqueWorkspaceSessionMapValues(kit.skillIds ?? []) {
         let skill = registry.skillsById[skillID]
-        let skillNodeKey = makeNodeKey(kind: .skill, id: skillID)
+        let skillNodeKey = workspaceSessionMapNodeKey(kind: .skill, id: skillID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .skill,
           id: skillID,
@@ -506,11 +506,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for referenceID in uniqueSorted(kit.referenceIds ?? []) {
+      for referenceID in sortedUniqueWorkspaceSessionMapValues(kit.referenceIds ?? []) {
         let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = makeNodeKey(kind: .reference, id: referenceID)
+        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .reference,
           id: referenceID,
@@ -540,11 +540,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for essentialID in uniqueSorted(kit.essentialIds) {
-        let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
+      for essentialID in sortedUniqueWorkspaceSessionMapValues(kit.essentialIds) {
+        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
         let exists = resolveEssential(essentialID, scopes: scopes) != nil
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .essential,
           id: essentialID,
@@ -577,7 +577,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for intent in registry.intentTemplates.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .intent,
         id: intent.id,
@@ -585,13 +585,13 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         isMissing: false
       )
 
-      let intentNodeKey = makeNodeKey(kind: .intent, id: intent.id)
+      let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intent.id)
 
-      for skillID in uniqueSorted(intent.requiresSkillIds) {
+      for skillID in sortedUniqueWorkspaceSessionMapValues(intent.requiresSkillIds) {
         let skill = registry.skillsById[skillID]
-        let skillNodeKey = makeNodeKey(kind: .skill, id: skillID)
+        let skillNodeKey = workspaceSessionMapNodeKey(kind: .skill, id: skillID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .skill,
           id: skillID,
@@ -622,11 +622,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for essentialID in uniqueSorted(intent.includesEssentialIds) {
-        let essentialNodeKey = makeNodeKey(kind: .essential, id: essentialID)
+      for essentialID in sortedUniqueWorkspaceSessionMapValues(intent.includesEssentialIds) {
+        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
         let exists = resolveEssential(essentialID, scopes: scopes) != nil
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .essential,
           id: essentialID,
@@ -658,11 +658,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for referenceID in uniqueSorted(intent.referenceIds ?? []) {
+      for referenceID in sortedUniqueWorkspaceSessionMapValues(intent.referenceIds ?? []) {
         let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = makeNodeKey(kind: .reference, id: referenceID)
+        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
 
-        upsertNode(
+        upsertWorkspaceSessionMapNode(
           in: &nodeStateByKey,
           kind: .reference,
           id: referenceID,
@@ -694,7 +694,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for skill in registry.skills.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .skill,
         id: skill.id,
@@ -704,7 +704,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for reference in registry.references.sorted(by: { $0.id < $1.id }) {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .reference,
         id: reference.id,
@@ -714,7 +714,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     }
 
     for essentialID in essentialIDs.sorted() {
-      upsertNode(
+      upsertWorkspaceSessionMapNode(
         in: &nodeStateByKey,
         kind: .essential,
         id: essentialID,
@@ -723,65 +723,11 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       )
     }
 
-    let nodes = nodeStateByKey.values
-      .map {
-        WorkspaceSessionMapNode(
-          key: $0.key,
-          id: $0.id,
-          displayName: $0.displayName,
-          kind: $0.kind,
-          isMissing: $0.isMissing,
-          badges: $0.badges.sorted()
-        )
-      }
-      .sorted { lhs, rhs in
-        if lhs.kind.sortOrder != rhs.kind.sortOrder {
-          return lhs.kind.sortOrder < rhs.kind.sortOrder
-        }
-
-        if lhs.id != rhs.id {
-          return lhs.id < rhs.id
-        }
-
-        return lhs.key < rhs.key
-      }
-
-    let nodeByKey = Dictionary(uniqueKeysWithValues: nodes.map { ($0.key, $0) })
-
-    let edges =
-      edgeKeys
-      .map {
-        WorkspaceSessionMapEdge(
-          fromKey: $0.fromKey,
-          toKey: $0.toKey,
-          reason: $0.reason
-        )
-      }
-      .sorted { lhs, rhs in
-        let lhsFrom = nodeByKey[lhs.fromKey]
-        let rhsFrom = nodeByKey[rhs.fromKey]
-
-        if lhsFrom?.kind.sortOrder != rhsFrom?.kind.sortOrder {
-          return (lhsFrom?.kind.sortOrder ?? Int.max) < (rhsFrom?.kind.sortOrder ?? Int.max)
-        }
-
-        if lhsFrom?.id != rhsFrom?.id {
-          return (lhsFrom?.id ?? lhs.fromKey) < (rhsFrom?.id ?? rhs.fromKey)
-        }
-
-        let lhsTo = nodeByKey[lhs.toKey]
-        let rhsTo = nodeByKey[rhs.toKey]
-
-        if lhsTo?.kind.sortOrder != rhsTo?.kind.sortOrder {
-          return (lhsTo?.kind.sortOrder ?? Int.max) < (rhsTo?.kind.sortOrder ?? Int.max)
-        }
-
-        if lhsTo?.id != rhsTo?.id {
-          return (lhsTo?.id ?? lhs.toKey) < (rhsTo?.id ?? rhs.toKey)
-        }
-
-        return lhs.reason < rhs.reason
-      }
+    let nodes = sortedWorkspaceSessionMapNodes(from: nodeStateByKey)
+    let edges = sortedWorkspaceSessionMapEdges(
+      from: edgeKeys,
+      nodes: nodes
+    )
 
     return WorkspaceRelationshipMapGraph(
       nodes: nodes,
@@ -848,56 +794,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
 
     errors.append(error)
     errorKeys.insert(key)
-  }
-
-  private func makeNodeKey(
-    kind: WorkspaceSessionMapNodeKind,
-    id: String
-  ) -> String {
-    "\(kind.rawValue):\(id)"
-  }
-
-  private func upsertNode(
-    in nodeStateByKey: inout [String: MutableMapNode],
-    kind: WorkspaceSessionMapNodeKind,
-    id: String,
-    displayName: String,
-    isMissing: Bool,
-    badge: String? = nil
-  ) {
-    let key = makeNodeKey(kind: kind, id: id)
-
-    if var existing = nodeStateByKey[key] {
-      existing.isMissing = existing.isMissing || isMissing
-
-      if existing.displayName == existing.id,
-        displayName != id
-      {
-        existing.displayName = displayName
-      }
-
-      if let badge {
-        existing.badges.insert(badge)
-      }
-
-      nodeStateByKey[key] = existing
-      return
-    }
-
-    var badges: Set<String> = []
-
-    if let badge {
-      badges.insert(badge)
-    }
-
-    nodeStateByKey[key] = MutableMapNode(
-      key: key,
-      id: id,
-      displayName: displayName,
-      kind: kind,
-      isMissing: isMissing,
-      badges: badges
-    )
   }
 
   private func scopeResolver() -> WorkspaceScopeResolver {
@@ -974,23 +870,4 @@ private struct ResolverErrorKey: Hashable {
     missingID = error.missingId
     message = error.message
   }
-}
-
-private struct MutableMapNode {
-  let key: String
-  let id: String
-  var displayName: String
-  let kind: WorkspaceSessionMapNodeKind
-  var isMissing: Bool
-  var badges: Set<String>
-}
-
-private struct WorkspaceSessionMapEdgeKey: Hashable {
-  let fromKey: String
-  let toKey: String
-  let reason: String
-}
-
-private func uniqueSorted(_ values: [String]) -> [String] {
-  Set(values).sorted()
 }
