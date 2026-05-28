@@ -3,10 +3,7 @@ import Foundation
 @MainActor
 enum StudioWorkspaceOpenCoordinator {
   static func openWorkspaceFromPicker(
-    workspaceStore: WorkspaceStore,
-    recentWorkspacesStorageValue: inout String,
-    recentWorkspaceAccess: StudioRecentWorkspaceAccessing,
-    bookmarkDataProvider: (URL) -> Data? = StudioRecentWorkspacesState.securityScopedBookmarkData
+    workspaceStore: WorkspaceStore
   ) {
     let previousWorkspaceURL = workspaceStore.workspaceURL?.standardizedFileURL
 
@@ -16,44 +13,27 @@ enum StudioWorkspaceOpenCoordinator {
       return
     }
 
-    recentWorkspaceAccess.stop()
-    recordCurrentWorkspaceIfLoaded(
-      workspaceStore: workspaceStore,
-      recentWorkspacesStorageValue: &recentWorkspacesStorageValue,
-      bookmarkDataProvider: bookmarkDataProvider
-    )
+    workspaceStore.stopRecentWorkspaceAccess()
+    workspaceStore.recordCurrentWorkspaceIfLoaded()
   }
 
   static func openRecentWorkspace(
     _ workspace: StudioRecentWorkspace,
-    workspaceStore: WorkspaceStore,
-    recentWorkspacesStorageValue: inout String,
-    recentWorkspaceAccess: StudioRecentWorkspaceAccessing
+    workspaceStore: WorkspaceStore
   ) {
-    let workspaceURL = recentWorkspaceAccess.url(for: workspace)
+    let workspaceURL = workspaceStore.url(forRecentWorkspace: workspace)
 
     workspaceStore.workspaceURL = workspaceURL
     workspaceStore.loadWorkspace()
-    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
-      adding: workspaceURL,
-      bookmarkData: workspace.bookmarkData,
-      to: recentWorkspacesStorageValue
+    workspaceStore.recordRecentWorkspace(
+      workspaceURL: workspaceURL,
+      bookmarkData: workspace.bookmarkData
     )
   }
 
   static func recordCurrentWorkspaceIfLoaded(
-    workspaceStore: WorkspaceStore,
-    recentWorkspacesStorageValue: inout String,
-    bookmarkDataProvider: (URL) -> Data? = StudioRecentWorkspacesState.securityScopedBookmarkData
+    workspaceStore: WorkspaceStore
   ) {
-    guard let workspaceURL = workspaceStore.workspaceURL else {
-      return
-    }
-
-    recentWorkspacesStorageValue = StudioRecentWorkspacesState.storageValue(
-      adding: workspaceURL,
-      bookmarkData: bookmarkDataProvider(workspaceURL),
-      to: recentWorkspacesStorageValue
-    )
+    workspaceStore.recordCurrentWorkspaceIfLoaded()
   }
 }

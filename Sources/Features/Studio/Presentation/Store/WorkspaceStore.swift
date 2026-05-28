@@ -50,6 +50,8 @@ public final class WorkspaceStore {
   private(set) var snapshotRevision = 0
   // Keeps @Observable views subscribed when async validation mutates nested feature state.
   private var validationRevision = 0
+  // Keeps @Observable views subscribed when the recent-workspace owner persists changes.
+  var recentWorkspacesRevision = 0
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var installStatus: WorkspaceInstallStatus
@@ -148,7 +150,7 @@ public final class WorkspaceStore {
   let sessionEditorFeatureModel: WorkspaceSessionEditorFeatureModel
   let sessionFeatureModel: WorkspaceSessionFeatureModel
   let validationFeatureModel: WorkspaceValidationFeatureModel
-  let recentWorkspaceAccess = StudioRecentWorkspaceAccess()
+  var recentWorkspacesFeatureModel: StudioRecentWorkspacesFeatureModel
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -216,6 +218,7 @@ public final class WorkspaceStore {
     self.validationFeatureModel = WorkspaceValidationFeatureModel(
       operationRunner: operationRunner
     )
+    self.recentWorkspacesFeatureModel = StudioRecentWorkspacesFeatureModel()
     self.validationFeatureModel.onChange = { [weak self] in
       self?.validationRevision &+= 1
     }

@@ -10,6 +10,11 @@ protocol StudioRecentWorkspaceSecurityScopeResolving {
   func stopAccessing(_ url: URL)
 }
 
+@MainActor
+protocol StudioRecentWorkspacesPersisting: AnyObject {
+  var storageValue: String { get set }
+}
+
 struct StudioRecentWorkspaceBookmarkClient: StudioRecentWorkspaceBookmarking {
   func bookmarkData(for workspaceURL: URL) -> Data? {
     try? workspaceURL.bookmarkData(
@@ -39,6 +44,30 @@ struct StudioRecentWorkspaceSecurityScopeClient: StudioRecentWorkspaceSecuritySc
 
   func stopAccessing(_ url: URL) {
     url.stopAccessingSecurityScopedResource()
+  }
+}
+
+@MainActor
+final class StudioRecentWorkspacesUserDefaultsStorage: StudioRecentWorkspacesPersisting {
+  private let key: String
+  private let userDefaults: UserDefaults
+
+  init(
+    userDefaults: UserDefaults = StudioLaunchConfiguration.userDefaults(),
+    key: String = StudioRecentWorkspacesState.storageKey
+  ) {
+    self.key = key
+    self.userDefaults = userDefaults
+  }
+
+  var storageValue: String {
+    get {
+      userDefaults.string(forKey: key) ?? "[]"
+    }
+
+    set {
+      userDefaults.set(newValue, forKey: key)
+    }
   }
 }
 
@@ -263,6 +292,86 @@ final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
     }
 
     accessedURL = nil
+  }
+}
+
+@MainActor
+final class StudioRecentWorkspacesFeatureModel {
+  private let bookmarkDataProvider: (URL) -> Data?
+  private let recentWorkspaceAccess: any StudioRecentWorkspaceAccessing
+  private let storage: any StudioRecentWorkspacesPersisting
+  private var storageValue: String
+
+  init(
+    storage: any StudioRecentWorkspacesPersisting = StudioRecentWorkspacesUserDefaultsStorage(),
+    recentWorkspaceAccess: any StudioRecentWorkspaceAccessing = StudioRecentWorkspaceAccess(),
+    bookmarkDataProvider: @escaping (URL) -> Data? =
+      StudioRecentWorkspacesState.securityScopedBookmarkData
+  ) {
+    self.bookmarkDataProvider = bookmarkDataProvider
+    self.recentWorkspaceAccess = recentWorkspaceAccess
+    self.storage = storage
+    self.storageValue = storage.storageValue
+  }
+
+  var workspaces: [StudioRecentWorkspace] {
+    StudioRecentWorkspacesState.workspaces(from: storageValue)
+  }
+
+  @discardableResult
+  func recordWorkspace(
+    at workspaceURL: URL,
+    bookmarkData: Data? = nil
+  ) -> Bool {
+    updateStorageValue(
+      StudioRecentWorkspacesState.storageValue(
+        adding: workspaceURL,
+        bookmarkData: bookmarkData,
+        to: storageValue
+      )
+    )
+  }
+
+  @discardableResult
+  func recordCurrentWorkspaceIfLoaded(
+    workspaceURL: URL?
+  ) -> Bool {
+    guard let workspaceURL else {
+      return false
+    }
+
+    return recordWorkspace(
+      at: workspaceURL,
+      bookmarkData: bookmarkDataProvider(workspaceURL)
+    )
+  }
+
+  @discardableResult
+  func remove(_ workspace: StudioRecentWorkspace) -> Bool {
+    updateStorageValue(
+      StudioRecentWorkspacesState.storageValue(
+        removing: workspace,
+        from: storageValue
+      )
+    )
+  }
+
+  func url(for workspace: StudioRecentWorkspace) -> URL {
+    recentWorkspaceAccess.url(for: workspace)
+  }
+
+  func stopAccess() {
+    recentWorkspaceAccess.stop()
+  }
+
+  private func updateStorageValue(_ newValue: String) -> Bool {
+    guard newValue != storageValue else {
+      return false
+    }
+
+    storageValue = newValue
+    storage.storageValue = newValue
+    return true
   }
 }
 
