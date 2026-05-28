@@ -3,28 +3,30 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="${STUDIO_REVIEW_OUTPUT_DIR:-$REPO_ROOT/.build/studio-review}"
+REVIEW_HOME="$OUTPUT_DIR/home"
 VALID_WORKSPACE="${STUDIO_REVIEW_WORKSPACE:-$REPO_ROOT/Fixtures/studio-demo-workspace}"
 INVALID_WORKSPACE="${STUDIO_REVIEW_INVALID_WORKSPACE:-$REPO_ROOT/Fixtures/studio-demo-invalid-workspace}"
 DEFAULTS_SUITE="${STUDIO_REVIEW_DEFAULTS_SUITE:-PersonaKitStudioReview}"
+APP_NAME="${STUDIO_REVIEW_APP_NAME:-PersonaKitStudio}"
 MAX_WINDOW_WIDTH="${STUDIO_REVIEW_MAX_WINDOW_WIDTH:-1180}"
 MAX_WINDOW_HEIGHT="${STUDIO_REVIEW_MAX_WINDOW_HEIGHT:-820}"
 RELATIONSHIP_GEOMETRY_FILE="$OUTPUT_DIR/relationship-map-current.geometry.json"
 
 cleanup() {
-  osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
-  defaults delete "$DEFAULTS_SUITE" >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
+  HOME="$REVIEW_HOME" defaults delete "$DEFAULTS_SUITE" >/dev/null 2>&1 || true
 }
 
 trap cleanup EXIT
 
 mkdir -p "$OUTPUT_DIR"
-mkdir -p "$OUTPUT_DIR/home"
+mkdir -p "$REVIEW_HOME"
 mkdir -p "$OUTPUT_DIR/empty-global/.personakit/Packs"
 find "$OUTPUT_DIR" -maxdepth 1 \
   \( -name "*.png" -o -name "*.log" -o -name "*.accessibility.txt" -o -name "*.bounds.txt" -o -name "*.geometry.json" -o -name "review-notes.md" \) \
   -delete
-defaults delete "$DEFAULTS_SUITE" >/dev/null 2>&1 || true
-defaults write "$DEFAULTS_SUITE" \
+HOME="$REVIEW_HOME" defaults delete "$DEFAULTS_SUITE" >/dev/null 2>&1 || true
+HOME="$REVIEW_HOME" defaults write "$DEFAULTS_SUITE" \
   "studio.recentWorkspaces.v1" \
   -string "[\"$VALID_WORKSPACE\",\"$INVALID_WORKSPACE\"]"
 
@@ -37,19 +39,19 @@ capture_state() {
   local name="$1"
   shift
 
-  osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
   sleep 1
-  rm -rf "$OUTPUT_DIR/home/Library/Saved Application State"
+  rm -rf "$REVIEW_HOME/Library/Saved Application State"
 
-  printf "Launching PersonaKitStudio for %s\n" "$name" > "$OUTPUT_DIR/$name.log"
+  printf "Launching %s for %s\n" "$APP_NAME" "$name" > "$OUTPUT_DIR/$name.log"
 
   if [ "${STUDIO_REVIEW_NO_AUTO_ACTIVATE:-0}" = "1" ]; then
-    HOME="$OUTPUT_DIR/home" \
+    HOME="$REVIEW_HOME" \
       PERSONAKIT_STUDIO_GLOBAL_SCOPE_PATH="$OUTPUT_DIR/empty-global/.personakit" \
       PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME="$DEFAULTS_SUITE" \
       "$STUDIO_EXECUTABLE" --no-auto-activate "$@" >> "$OUTPUT_DIR/$name.log" 2>&1 &
   else
-    HOME="$OUTPUT_DIR/home" \
+    HOME="$REVIEW_HOME" \
       PERSONAKIT_STUDIO_GLOBAL_SCOPE_PATH="$OUTPUT_DIR/empty-global/.personakit" \
       PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME="$DEFAULTS_SUITE" \
       "$STUDIO_EXECUTABLE" "$@" >> "$OUTPUT_DIR/$name.log" 2>&1 &
@@ -58,26 +60,29 @@ capture_state() {
   local pid="$!"
 
   sleep "${STUDIO_REVIEW_CAPTURE_DELAY:-4}"
-  osascript -e 'tell application "PersonaKitStudio" to activate' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to activate" >/dev/null 2>&1 || true
   sleep 1
 
-  capture_running_window "$name"
+  capture_running_window "$name" "$pid"
   kill "$pid" >/dev/null 2>&1 || true
   wait "$pid" >/dev/null 2>&1 || true
-  osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
 }
 
 capture_running_window() {
   local name="$1"
+  local pid="${2:?missing launched Studio process id}"
 
   local window_bounds=""
   local attempt
 
   for attempt in {1..10}; do
-    if window_bounds="$(osascript <<'APPLESCRIPT'
+    if window_bounds="$(osascript <<APPLESCRIPT
 tell application "System Events"
-  tell process "PersonaKitStudio"
-    if not (exists window 1) then error "PersonaKitStudio window 1 not found"
+  set matchingProcesses to every process whose unix id is $pid
+  if matchingProcesses is {} then error "$APP_NAME process $pid not found"
+  tell item 1 of matchingProcesses
+    if not (exists window 1) then error "$APP_NAME window 1 not found"
     set windowPosition to position of window 1
     set windowSize to size of window 1
     return (item 1 of windowPosition as text) & "," & (item 2 of windowPosition as text) & "," & (item 1 of windowSize as text) & "," & (item 2 of windowSize as text)
@@ -92,14 +97,26 @@ APPLESCRIPT
   done
 
   if [ -z "$window_bounds" ]; then
-    echo "error: PersonaKitStudio window 1 not found for $name" >&2
+    local process_state="unknown"
+
+    if [ -n "$pid" ]; then
+      if kill -0 "$pid" >/dev/null 2>&1; then
+        process_state="running"
+      else
+        process_state="not running"
+      fi
+    fi
+
+    echo "error: $APP_NAME window 1 not found for $name" >&2
+    echo "error: review log: $OUTPUT_DIR/$name.log" >&2
+    echo "error: launched process state: $process_state" >&2
     exit 1
   fi
 
   printf "%s\n" "$window_bounds" > "$OUTPUT_DIR/$name.bounds.txt"
   require_window_fits "$name" "$window_bounds"
   screencapture -x -R "$window_bounds" "$OUTPUT_DIR/$name.png"
-  osascript > "$OUTPUT_DIR/$name.accessibility.txt" 2>&1 <<'APPLESCRIPT' || true
+  osascript > "$OUTPUT_DIR/$name.accessibility.txt" 2>&1 <<APPLESCRIPT || true
 on describeElement(elementRef, indent)
   tell application "System Events"
     set roleText to "missing role"
@@ -147,8 +164,10 @@ end describeElement
 
 with timeout of 10 seconds
   tell application "System Events"
-    tell process "PersonaKitStudio"
-      if not (exists window 1) then error "PersonaKitStudio window 1 not found"
+    set matchingProcesses to every process whose unix id is $pid
+    if matchingProcesses is {} then error "$APP_NAME process $pid not found"
+    tell item 1 of matchingProcesses
+      if not (exists window 1) then error "$APP_NAME window 1 not found"
       return my describeElement(window 1, "")
     end tell
   end tell
@@ -346,6 +365,7 @@ require_window_fits() {
 
 element_center_by_identifier() {
   local identifier="$1"
+  local pid="$2"
 
   osascript <<APPLESCRIPT
 on findElementByIdentifier(elementRef, targetIdentifier)
@@ -369,8 +389,10 @@ end findElementByIdentifier
 
 with timeout of 10 seconds
   tell application "System Events"
-    tell process "PersonaKitStudio"
-      if not (exists window 1) then error "PersonaKitStudio window 1 not found"
+    set matchingProcesses to every process whose unix id is $pid
+    if matchingProcesses is {} then error "$APP_NAME process $pid not found"
+    tell item 1 of matchingProcesses
+      if not (exists window 1) then error "$APP_NAME window 1 not found"
       set matchedElement to my findElementByIdentifier(window 1, "$identifier")
       if matchedElement is missing value then error "AXIdentifier not found: $identifier"
 
@@ -388,6 +410,7 @@ APPLESCRIPT
 
 press_element_by_identifier() {
   local identifier="$1"
+  local pid="$2"
 
   osascript >/dev/null <<APPLESCRIPT
 on findElementByIdentifier(elementRef, targetIdentifier)
@@ -411,8 +434,10 @@ end findElementByIdentifier
 
 with timeout of 10 seconds
   tell application "System Events"
-    tell process "PersonaKitStudio"
-      if not (exists window 1) then error "PersonaKitStudio window 1 not found"
+    set matchingProcesses to every process whose unix id is $pid
+    if matchingProcesses is {} then error "$APP_NAME process $pid not found"
+    tell item 1 of matchingProcesses
+      if not (exists window 1) then error "$APP_NAME window 1 not found"
       set matchedElement to my findElementByIdentifier(window 1, "$identifier")
       if matchedElement is missing value then error "AXIdentifier not found: $identifier"
       perform action "AXPress" of matchedElement
@@ -492,11 +517,12 @@ drag_element_by_identifier() {
   local identifier="$1"
   local delta_x="$2"
   local delta_y="$3"
+  local pid="$4"
   local center
   local from_x
   local from_y
 
-  center="$(element_center_by_identifier "$identifier")"
+  center="$(element_center_by_identifier "$identifier" "$pid")"
   IFS="," read -r from_x from_y <<< "$center"
 
   drag_between_points \
@@ -512,15 +538,15 @@ capture_relationship_map_drag_review() {
   persona_identifier="$(relationship_map_node_identifier "persona:solo-developer")"
   directive_identifier="$(relationship_map_node_identifier "directive:small-cli-change")"
 
-  osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
   sleep 1
-  rm -rf "$OUTPUT_DIR/home/Library/Saved Application State"
+  rm -rf "$REVIEW_HOME/Library/Saved Application State"
   rm -f "$RELATIONSHIP_GEOMETRY_FILE"
 
-  printf "Launching PersonaKitStudio for relationship map drag review\n" \
+  printf "Launching %s for relationship map drag review\n" "$APP_NAME" \
     > "$OUTPUT_DIR/07-relationship-map-drag-baseline.log"
 
-  HOME="$OUTPUT_DIR/home" \
+  HOME="$REVIEW_HOME" \
     PERSONAKIT_STUDIO_GLOBAL_SCOPE_PATH="$OUTPUT_DIR/empty-global/.personakit" \
     PERSONAKIT_STUDIO_REVIEW_GEOMETRY_FILE="$RELATIONSHIP_GEOMETRY_FILE" \
     PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME="$DEFAULTS_SUITE" \
@@ -532,10 +558,10 @@ capture_relationship_map_drag_review() {
   local pid="$!"
 
   sleep "${STUDIO_REVIEW_CAPTURE_DELAY:-4}"
-  osascript -e 'tell application "PersonaKitStudio" to activate' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to activate" >/dev/null 2>&1 || true
   sleep 1
 
-  capture_running_window "07-relationship-map-drag-baseline"
+  capture_running_window "07-relationship-map-drag-baseline" "$pid"
   copy_relationship_geometry "07-relationship-map-drag-baseline"
   cp "$OUTPUT_DIR/07-relationship-map-drag-baseline.log" \
     "$OUTPUT_DIR/08-relationship-map-drag-persona.log"
@@ -545,25 +571,27 @@ capture_relationship_map_drag_review() {
   drag_element_by_identifier \
     "$persona_identifier" \
     0 \
-    300
+    300 \
+    "$pid"
   sleep 1
-  capture_running_window "08-relationship-map-drag-persona"
+  capture_running_window "08-relationship-map-drag-persona" "$pid"
   copy_relationship_geometry "08-relationship-map-drag-persona"
 
-  press_element_by_identifier "relationship-map-reset-layout"
+  press_element_by_identifier "relationship-map-reset-layout" "$pid"
   sleep 1
 
   drag_element_by_identifier \
     "$directive_identifier" \
     0 \
-    300
+    300 \
+    "$pid"
   sleep 1
-  capture_running_window "09-relationship-map-drag-directive"
+  capture_running_window "09-relationship-map-drag-directive" "$pid"
   copy_relationship_geometry "09-relationship-map-drag-directive"
 
   kill "$pid" >/dev/null 2>&1 || true
   wait "$pid" >/dev/null 2>&1 || true
-  osascript -e 'tell application "PersonaKitStudio" to quit' >/dev/null 2>&1 || true
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
 }
 
 capture_state "01-no-workspace"
