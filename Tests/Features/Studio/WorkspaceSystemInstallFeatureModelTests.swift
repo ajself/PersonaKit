@@ -131,6 +131,38 @@ struct WorkspaceSystemInstallFeatureModelTests {
   }
 
   @Test
+  func installCLIUsesInjectedInstallFileSystem() throws {
+    let homeDirectoryURL = URL(fileURLWithPath: "/StudioHome")
+    let bundledCLIURL = URL(fileURLWithPath: "/Bundle/PersonaKitCLI")
+    let bundledSupportBundleURL = URL(fileURLWithPath: "/Bundle/PersonaKit_ContextCore.bundle")
+    let fileSystem = WorkspaceSystemInstallRecordingFileSystem()
+    let model = makeModel(
+      homeDirectoryURL: homeDirectoryURL,
+      bundledCLIURL: bundledCLIURL,
+      bundledCLISupportBundleURL: bundledSupportBundleURL,
+      installFileSystem: fileSystem
+    )
+
+    let result = model.installOrUpdateCLI()
+
+    #expect(result.outcome == .installed)
+    #expect(
+      fileSystem.operations == [
+        "exists:/StudioHome/.local/bin/personakit",
+        "exists:/StudioHome/.local/bin/PersonaKit_ContextCore.bundle",
+        "createDirectory:/StudioHome/.local/bin/",
+        "exists:/StudioHome/.local/bin/.personakit-install.tmp",
+        "exists:/StudioHome/.local/bin/.personakit-install.bundle.tmp",
+        "copy:/Bundle/PersonaKitCLI->/StudioHome/.local/bin/.personakit-install.tmp",
+        "copy:/Bundle/PersonaKit_ContextCore.bundle->/StudioHome/.local/bin/.personakit-install.bundle.tmp",
+        "setExecutable:/StudioHome/.local/bin/.personakit-install.tmp",
+        "move:/StudioHome/.local/bin/.personakit-install.tmp->/StudioHome/.local/bin/personakit",
+        "move:/StudioHome/.local/bin/.personakit-install.bundle.tmp->/StudioHome/.local/bin/PersonaKit_ContextCore.bundle",
+      ]
+    )
+  }
+
+  @Test
   func installOpenCodeMCPCreatesNewGlobalConfig() throws {
     let homeDirectoryURL = try makeInstallTempDirectory()
     let bundledCLIURL = try makeExecutableFile(
@@ -318,6 +350,37 @@ struct WorkspaceSystemInstallFeatureModelTests {
   }
 
   @Test
+  func installOpenCodeMCPUsesInjectedConfigFileAccess() throws {
+    let homeDirectoryURL = URL(fileURLWithPath: "/StudioHome")
+    let bundledCLIURL = URL(fileURLWithPath: "/Bundle/PersonaKitCLI")
+    let bundledSupportBundleURL = URL(fileURLWithPath: "/Bundle/PersonaKit_ContextCore.bundle")
+    let fileSystem = WorkspaceSystemInstallRecordingFileSystem()
+    let configFile = WorkspaceSystemInstallRecordingOpenCodeConfigFile()
+    let model = makeModel(
+      homeDirectoryURL: homeDirectoryURL,
+      bundledCLIURL: bundledCLIURL,
+      bundledCLISupportBundleURL: bundledSupportBundleURL,
+      installFileSystem: fileSystem,
+      openCodeConfigFile: configFile
+    )
+
+    let result = model.installOrUpdateOpenCodeMCP()
+
+    let writtenConfig = try #require(configFile.writtenConfig)
+    let configObject = try #require(
+      JSONSerialization.jsonObject(with: writtenConfig.data) as? [String: Any]
+    )
+    let mcp = try #require(configObject["mcp"] as? [String: Any])
+    let personakit = try #require(mcp["personakit"] as? [String: Any])
+    let command = try #require(personakit["command"] as? [String])
+
+    #expect(result.outcome == .installed)
+    #expect(writtenConfig.url.path() == "/StudioHome/.config/opencode/opencode.json")
+    #expect(command == ["/Bundle/PersonaKitCLI", "mcp"])
+    #expect(fileSystem.operations.contains("createDirectory:/StudioHome/.config/opencode/"))
+  }
+
+  @Test
   func refreshInstallStatusReportsCurrentCLIAndMCPState() throws {
     let homeDirectoryURL = try makeInstallTempDirectory()
     let bundledCLIURL = try makeExecutableFile(
@@ -451,7 +514,11 @@ struct WorkspaceSystemInstallFeatureModelTests {
   private func makeModel(
     homeDirectoryURL: URL,
     bundledCLIURL: URL?,
-    bundledCLISupportBundleURL: URL?
+    bundledCLISupportBundleURL: URL?,
+    installFileSystem: any WorkspaceInstallFileOperating =
+      WorkspaceInstallFileSystemClient(),
+    openCodeConfigFile: any OpenCodeConfigurationFileAccessing =
+      OpenCodeConfigurationFileClient()
   ) -> WorkspaceSystemFeatureModel {
     WorkspaceSystemFeatureModel(
       workspacePicker: WorkspaceSystemInstallStubWorkspacePicker(),
@@ -465,8 +532,110 @@ struct WorkspaceSystemInstallFeatureModelTests {
         rootHomeDirectoryURL: homeDirectoryURL,
         resolvedBundledCLIURL: bundledCLIURL,
         resolvedBundledCLISupportBundleURL: bundledCLISupportBundleURL
-      )
+      ),
+      installFileSystem: installFileSystem,
+      openCodeConfigFile: openCodeConfigFile
     )
+  }
+}
+
+private final class WorkspaceSystemInstallRecordingFileSystem: WorkspaceInstallFileOperating {
+  private(set) var operations: [String] = []
+  var existingPaths: Set<String> = []
+  var executablePaths: Set<String> = []
+
+  @MainActor
+  func copyItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws {
+    operations.append("copy:\(sourceURL.path())->\(destinationURL.path())")
+    existingPaths.insert(destinationURL.path())
+  }
+
+  @MainActor
+  func createDirectory(at url: URL) throws {
+    operations.append("createDirectory:\(url.path())")
+    existingPaths.insert(url.path())
+  }
+
+  @MainActor
+  func fileExists(at url: URL) -> Bool {
+    operations.append("exists:\(url.path())")
+    return existingPaths.contains(url.path())
+  }
+
+  @MainActor
+  func isExecutableFile(at url: URL) -> Bool {
+    operations.append("executable:\(url.path())")
+    return executablePaths.contains(url.path())
+  }
+
+  @MainActor
+  func moveItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws {
+    operations.append("move:\(sourceURL.path())->\(destinationURL.path())")
+    existingPaths.remove(sourceURL.path())
+    existingPaths.insert(destinationURL.path())
+
+    if executablePaths.remove(sourceURL.path()) != nil {
+      executablePaths.insert(destinationURL.path())
+    }
+  }
+
+  @MainActor
+  func removeItem(at url: URL) throws {
+    operations.append("remove:\(url.path())")
+    existingPaths.remove(url.path())
+    executablePaths.remove(url.path())
+  }
+
+  @MainActor
+  func replaceItem(
+    at targetURL: URL,
+    with sourceURL: URL
+  ) throws {
+    operations.append("replace:\(sourceURL.path())->\(targetURL.path())")
+    existingPaths.remove(sourceURL.path())
+    existingPaths.insert(targetURL.path())
+
+    if executablePaths.remove(sourceURL.path()) != nil {
+      executablePaths.insert(targetURL.path())
+    }
+  }
+
+  @MainActor
+  func setExecutableFile(at url: URL) throws {
+    operations.append("setExecutable:\(url.path())")
+    executablePaths.insert(url.path())
+  }
+}
+
+private final class WorkspaceSystemInstallRecordingOpenCodeConfigFile:
+  OpenCodeConfigurationFileAccessing
+{
+  private(set) var writtenConfig: (data: Data, url: URL)?
+  var existingConfigData: [String: Data] = [:]
+
+  @MainActor
+  func configExists(at url: URL) -> Bool {
+    existingConfigData[url.path()] != nil
+  }
+
+  @MainActor
+  func readConfigData(at url: URL) throws -> Data {
+    existingConfigData[url.path()] ?? Data()
+  }
+
+  @MainActor
+  func writeConfigData(
+    _ data: Data,
+    to url: URL
+  ) throws {
+    writtenConfig = (data, url.standardizedFileURL)
+    existingConfigData[url.path()] = data
   }
 }
 

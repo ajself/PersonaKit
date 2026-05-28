@@ -1,5 +1,47 @@
 import Foundation
 
+protocol StudioRecentWorkspaceBookmarking {
+  func bookmarkData(for workspaceURL: URL) -> Data?
+}
+
+protocol StudioRecentWorkspaceSecurityScopeResolving {
+  func resolveURL(from bookmarkData: Data) -> URL?
+  func startAccessing(_ url: URL) -> Bool
+  func stopAccessing(_ url: URL)
+}
+
+struct StudioRecentWorkspaceBookmarkClient: StudioRecentWorkspaceBookmarking {
+  func bookmarkData(for workspaceURL: URL) -> Data? {
+    try? workspaceURL.bookmarkData(
+      options: [.withSecurityScope],
+      includingResourceValuesForKeys: nil,
+      relativeTo: nil
+    )
+  }
+}
+
+struct StudioRecentWorkspaceSecurityScopeClient: StudioRecentWorkspaceSecurityScopeResolving {
+  func resolveURL(from bookmarkData: Data) -> URL? {
+    var isStale = false
+
+    return try? URL(
+      resolvingBookmarkData: bookmarkData,
+      options: [.withSecurityScope],
+      relativeTo: nil,
+      bookmarkDataIsStale: &isStale
+    )
+    .standardizedFileURL
+  }
+
+  func startAccessing(_ url: URL) -> Bool {
+    url.startAccessingSecurityScopedResource()
+  }
+
+  func stopAccessing(_ url: URL) {
+    url.stopAccessingSecurityScopedResource()
+  }
+}
+
 struct StudioRecentWorkspace: Equatable, Identifiable, Sendable {
   let path: String
   let bookmarkData: Data?
@@ -92,11 +134,17 @@ enum StudioRecentWorkspacesState {
   }
 
   static func securityScopedBookmarkData(for workspaceURL: URL) -> Data? {
-    try? workspaceURL.bookmarkData(
-      options: [.withSecurityScope],
-      includingResourceValuesForKeys: nil,
-      relativeTo: nil
+    securityScopedBookmarkData(
+      for: workspaceURL,
+      bookmarkClient: StudioRecentWorkspaceBookmarkClient()
     )
+  }
+
+  static func securityScopedBookmarkData(
+    for workspaceURL: URL,
+    bookmarkClient: any StudioRecentWorkspaceBookmarking
+  ) -> Data? {
+    bookmarkClient.bookmarkData(for: workspaceURL)
   }
 
   private static func storedWorkspaces(from data: Data) -> [StoredWorkspace]? {
@@ -179,7 +227,15 @@ protocol StudioRecentWorkspaceAccessing: AnyObject {
 }
 
 final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
+  private let securityScopeClient: any StudioRecentWorkspaceSecurityScopeResolving
   private var accessedURL: URL?
+
+  init(
+    securityScopeClient: any StudioRecentWorkspaceSecurityScopeResolving =
+      StudioRecentWorkspaceSecurityScopeClient()
+  ) {
+    self.securityScopeClient = securityScopeClient
+  }
 
   func url(for workspace: StudioRecentWorkspace) -> URL {
     stop()
@@ -188,21 +244,13 @@ final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
       return workspace.url
     }
 
-    var isStale = false
-
     guard
-      let url = try? URL(
-        resolvingBookmarkData: bookmarkData,
-        options: [.withSecurityScope],
-        relativeTo: nil,
-        bookmarkDataIsStale: &isStale
-      )
-      .standardizedFileURL
+      let url = securityScopeClient.resolveURL(from: bookmarkData)
     else {
       return workspace.url
     }
 
-    if url.startAccessingSecurityScopedResource() {
+    if securityScopeClient.startAccessing(url) {
       accessedURL = url
     }
 
@@ -210,7 +258,10 @@ final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
   }
 
   func stop() {
-    accessedURL?.stopAccessingSecurityScopedResource()
+    if let accessedURL {
+      securityScopeClient.stopAccessing(accessedURL)
+    }
+
     accessedURL = nil
   }
 }

@@ -103,6 +103,23 @@ struct StudioRecentWorkspacesStateTests {
   }
 
   @Test
+  func securityScopedBookmarkDataUsesInjectedBookmarkClient() {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace/A")
+    let bookmarkData = Data([8, 9, 10])
+    let bookmarkClient = StudioRecentWorkspaceBookmarkRecorder(
+      bookmarkData: bookmarkData
+    )
+
+    let resolvedData = StudioRecentWorkspacesState.securityScopedBookmarkData(
+      for: workspaceURL,
+      bookmarkClient: bookmarkClient
+    )
+
+    #expect(resolvedData == bookmarkData)
+    #expect(bookmarkClient.requestedURLs == [workspaceURL])
+  }
+
+  @Test
   func addingWorkspaceKeepsOnlyMaximumRecentPaths() {
     var storageValue = "[]"
 
@@ -191,6 +208,31 @@ struct StudioRecentWorkspacesStateTests {
     #expect(recentAccess.stopCount == 0)
     #expect(StudioRecentWorkspacesState.workspaces(from: storageValue).isEmpty)
   }
+
+  @Test
+  @MainActor
+  func recentWorkspaceAccessUsesInjectedSecurityScopeClient() {
+    let bookmarkData = Data([1, 2, 3])
+    let resolvedURL = URL(fileURLWithPath: "/ResolvedWorkspace")
+    let securityScopeClient = StudioRecentWorkspaceSecurityScopeRecorder(
+      resolvedURL: resolvedURL,
+      shouldStartAccess: true
+    )
+    let access = StudioRecentWorkspaceAccess(securityScopeClient: securityScopeClient)
+
+    let url = access.url(
+      for: StudioRecentWorkspace(
+        path: "/FallbackWorkspace",
+        bookmarkData: bookmarkData
+      )
+    )
+    access.stop()
+
+    #expect(url == resolvedURL.standardizedFileURL)
+    #expect(securityScopeClient.resolvedBookmarkData == [bookmarkData])
+    #expect(securityScopeClient.startedURLs == [resolvedURL.standardizedFileURL])
+    #expect(securityScopeClient.stoppedURLs == [resolvedURL.standardizedFileURL])
+  }
 }
 
 private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAccessing {
@@ -202,5 +244,51 @@ private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAc
 
   func stop() {
     stopCount += 1
+  }
+}
+
+private final class StudioRecentWorkspaceBookmarkRecorder: StudioRecentWorkspaceBookmarking {
+  private let bookmarkData: Data?
+  private(set) var requestedURLs: [URL] = []
+
+  init(bookmarkData: Data?) {
+    self.bookmarkData = bookmarkData
+  }
+
+  func bookmarkData(for workspaceURL: URL) -> Data? {
+    requestedURLs.append(workspaceURL)
+    return bookmarkData
+  }
+}
+
+private final class StudioRecentWorkspaceSecurityScopeRecorder:
+  StudioRecentWorkspaceSecurityScopeResolving
+{
+  private let resolvedURL: URL?
+  private let shouldStartAccess: Bool
+  private(set) var resolvedBookmarkData: [Data] = []
+  private(set) var startedURLs: [URL] = []
+  private(set) var stoppedURLs: [URL] = []
+
+  init(
+    resolvedURL: URL?,
+    shouldStartAccess: Bool
+  ) {
+    self.resolvedURL = resolvedURL?.standardizedFileURL
+    self.shouldStartAccess = shouldStartAccess
+  }
+
+  func resolveURL(from bookmarkData: Data) -> URL? {
+    resolvedBookmarkData.append(bookmarkData)
+    return resolvedURL
+  }
+
+  func startAccessing(_ url: URL) -> Bool {
+    startedURLs.append(url.standardizedFileURL)
+    return shouldStartAccess
+  }
+
+  func stopAccessing(_ url: URL) {
+    stoppedURLs.append(url.standardizedFileURL)
   }
 }

@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import StudioFeatures
@@ -50,6 +51,21 @@ struct StudioLaunchConfigurationTests {
       StudioLaunchConfiguration.shouldAutoActivate(
         environment: [key: "0"],
         arguments: ["PersonaKitStudio"]
+      )
+    )
+  }
+
+  @Test
+  func shouldAutoActivateReadsInjectedLaunchEnvironment() {
+    let key = StudioLaunchConfiguration.disableAutoActivateEnvironmentKey
+    let launchEnvironment = StubStudioLaunchEnvironment(
+      environment: [key: "yes"],
+      arguments: ["PersonaKitStudio"]
+    )
+
+    #expect(
+      !StudioLaunchConfiguration.shouldAutoActivate(
+        launchEnvironment: launchEnvironment
       )
     )
   }
@@ -171,5 +187,33 @@ struct StudioLaunchConfigurationTests {
     )
 
     #expect(defaults != .standard)
+  }
+
+  @Test
+  func userDefaultsUsesInjectedResolver() {
+    let key = StudioLaunchConfiguration.userDefaultsSuiteNameEnvironmentKey
+    let resolver = RecordingStudioUserDefaultsResolver()
+
+    let defaults = StudioLaunchConfiguration.userDefaults(
+      environment: [key: "PersonaKitStudioInjectedDefaults"],
+      userDefaultsResolver: resolver
+    )
+
+    #expect(defaults == .standard)
+    #expect(resolver.requestedSuiteNames == ["PersonaKitStudioInjectedDefaults"])
+  }
+}
+
+private struct StubStudioLaunchEnvironment: StudioLaunchEnvironmentReading {
+  let environment: [String: String]
+  let arguments: [String]
+}
+
+private final class RecordingStudioUserDefaultsResolver: StudioUserDefaultsResolving {
+  private(set) var requestedSuiteNames: [String?] = []
+
+  func userDefaults(suiteName: String?) -> UserDefaults? {
+    requestedSuiteNames.append(suiteName)
+    return nil
   }
 }

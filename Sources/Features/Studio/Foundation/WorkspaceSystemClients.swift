@@ -26,6 +26,57 @@ public protocol FileRevealing {
   func reveal(_ url: URL)
 }
 
+/// Performs install-related file operations for Studio.
+public protocol WorkspaceInstallFileOperating {
+  @MainActor
+  func copyItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws
+
+  @MainActor
+  func createDirectory(at url: URL) throws
+
+  @MainActor
+  func fileExists(at url: URL) -> Bool
+
+  @MainActor
+  func isExecutableFile(at url: URL) -> Bool
+
+  @MainActor
+  func moveItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws
+
+  @MainActor
+  func removeItem(at url: URL) throws
+
+  @MainActor
+  func replaceItem(
+    at targetURL: URL,
+    with sourceURL: URL
+  ) throws
+
+  @MainActor
+  func setExecutableFile(at url: URL) throws
+}
+
+/// Reads and writes OpenCode configuration files for Studio install actions.
+public protocol OpenCodeConfigurationFileAccessing {
+  @MainActor
+  func configExists(at url: URL) -> Bool
+
+  @MainActor
+  func readConfigData(at url: URL) throws -> Data
+
+  @MainActor
+  func writeConfigData(
+    _ data: Data,
+    to url: URL
+  ) throws
+}
+
 /// macOS open-panel implementation for workspace selection.
 public struct WorkspacePickerClient: WorkspacePicking {
   public init() {}
@@ -94,5 +145,108 @@ public struct FileRevealerClient: FileRevealing {
   @MainActor
   public func reveal(_ url: URL) {
     NSWorkspace.shared.activateFileViewerSelecting([url])
+  }
+}
+
+/// FileManager-backed install file client.
+public struct WorkspaceInstallFileSystemClient: WorkspaceInstallFileOperating {
+  private let fileManager: FileManager
+
+  public init(fileManager: FileManager = .default) {
+    self.fileManager = fileManager
+  }
+
+  @MainActor
+  public func copyItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws {
+    try fileManager.copyItem(
+      at: sourceURL,
+      to: destinationURL
+    )
+  }
+
+  @MainActor
+  public func createDirectory(at url: URL) throws {
+    try fileManager.createDirectory(
+      at: url,
+      withIntermediateDirectories: true
+    )
+  }
+
+  @MainActor
+  public func fileExists(at url: URL) -> Bool {
+    fileManager.fileExists(atPath: url.path())
+  }
+
+  @MainActor
+  public func isExecutableFile(at url: URL) -> Bool {
+    fileManager.isExecutableFile(atPath: url.path())
+  }
+
+  @MainActor
+  public func moveItem(
+    at sourceURL: URL,
+    to destinationURL: URL
+  ) throws {
+    try fileManager.moveItem(
+      at: sourceURL,
+      to: destinationURL
+    )
+  }
+
+  @MainActor
+  public func removeItem(at url: URL) throws {
+    try fileManager.removeItem(at: url)
+  }
+
+  @MainActor
+  public func replaceItem(
+    at targetURL: URL,
+    with sourceURL: URL
+  ) throws {
+    _ = try fileManager.replaceItemAt(
+      targetURL,
+      withItemAt: sourceURL
+    )
+  }
+
+  @MainActor
+  public func setExecutableFile(at url: URL) throws {
+    try fileManager.setAttributes(
+      [.posixPermissions: 0o755],
+      ofItemAtPath: url.path()
+    )
+  }
+}
+
+/// Data-backed OpenCode configuration file client.
+public struct OpenCodeConfigurationFileClient: OpenCodeConfigurationFileAccessing {
+  private let fileManager: FileManager
+
+  public init(fileManager: FileManager = .default) {
+    self.fileManager = fileManager
+  }
+
+  @MainActor
+  public func configExists(at url: URL) -> Bool {
+    fileManager.fileExists(atPath: url.path())
+  }
+
+  @MainActor
+  public func readConfigData(at url: URL) throws -> Data {
+    try Data(contentsOf: url)
+  }
+
+  @MainActor
+  public func writeConfigData(
+    _ data: Data,
+    to url: URL
+  ) throws {
+    try data.write(
+      to: url,
+      options: Data.WritingOptions.atomic
+    )
   }
 }
