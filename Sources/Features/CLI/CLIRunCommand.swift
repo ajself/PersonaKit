@@ -201,6 +201,12 @@ struct OpenCodeAgentAdapter {
       throw Self.launchFailure()
     }
 
+    // EXCEPTION(FOSA): Unique private payload filenames prevent concurrent
+    // `personakit run` launches from colliding.
+    // Default rule: deterministic public output should avoid UUIDs and
+    // environment-specific data.
+    // Tradeoff: runtime temp-file names are nondeterministic, but deleted after
+    // launch and not part of public output.
     let payloadURL =
       temporaryDirectory
       .appendingPathComponent("personakit-run-\(UUID().uuidString)")

@@ -80,7 +80,10 @@ if [[ ${#unchecked_search_roots[@]} -eq 0 ]]; then
   exit 1
 fi
 
-rg -n --no-heading "@unchecked[[:space:]]+Sendable" "${unchecked_search_roots[@]}" >"$unchecked_matches_file" || true
+rg -n --no-heading \
+  --glob '*.swift' \
+  "@unchecked[[:space:]]+Sendable" \
+  "${unchecked_search_roots[@]}" >"$unchecked_matches_file" || true
 
 if [[ -s "$unchecked_matches_file" ]]; then
   echo "@unchecked Sendable is not allowed in this repository."
