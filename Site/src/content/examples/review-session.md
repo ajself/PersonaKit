@@ -1,6 +1,6 @@
 ---
 title: "Review Session"
-description: "A non-executing review persona that produces findings without becoming the implementer."
+description: "A read-only review contract that produces findings without becoming the implementer."
 kind: "contract"
 routeSlug: "review-session"
 persona: "behavior-reviewer"
@@ -16,7 +16,9 @@ rootPath: "/examples/review-session/personakit-root"
 order: 3
 ---
 
-This example is intentionally non-executing. It shows how PersonaKit can define a review identity without authorizing code editing or external adapter launch.
+This example is intentionally non-executing. It shows how PersonaKit can define a review identity without authorizing code editing, deployment, or external adapter launch.
+
+Use this when the important boundary is separation of authority: the reviewer can identify defects, but cannot quietly become the fixer.
 
 ## Runnable Commands
 
@@ -39,6 +41,7 @@ Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills
 - `read-only-review` is authorized.
 - `code-editing` and `deployment-runner` are forbidden.
 - The directive requires stopping if implementation is needed.
+- The export path produces human-readable grounding without launching an agent.
 
 ## Why This Matters
 

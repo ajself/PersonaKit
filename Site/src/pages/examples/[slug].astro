@@ -26,8 +26,7 @@ const {
   Content,
 } = await render(example);
 
-const isContractExample = example.data.kind === "contract";
-const rootHref = isContractExample && example.data.rootPath
+const rootHref = example.data.rootPath
   ? sitePath(`${example.data.rootPath}/`)
   : "";
 ---
@@ -37,17 +36,13 @@ const rootHref = isContractExample && example.data.rootPath
   eyebrow="Example"
   description={example.data.description}
 >
-  {
-    isContractExample && example.data.directive && example.data.persona && (
-      <ExampleSummary
-        authorizedSkills={example.data.authorizedSkills}
-        directive={example.data.directive}
-        forbiddenSkills={example.data.forbiddenSkills}
-        kits={example.data.kits}
-        persona={example.data.persona}
-      />
-    )
-  }
+  <ExampleSummary
+    authorizedSkills={example.data.authorizedSkills}
+    directive={example.data.directive}
+    forbiddenSkills={example.data.forbiddenSkills}
+    kits={example.data.kits}
+    persona={example.data.persona}
+  />
 
   {
     rootHref && (

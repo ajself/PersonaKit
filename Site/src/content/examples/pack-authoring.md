@@ -45,6 +45,7 @@ Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills
 - The directive requires dry-run before writing, then validation.
 - The essential says to keep essentials compact unless long-form policy is explicitly requested.
 - The create dry-run targets a temporary copy so the published sample root stays unchanged.
+- The session keeps product-scope decisions out of a mechanical authoring pass.
 
 ## Practical Prompt
 
