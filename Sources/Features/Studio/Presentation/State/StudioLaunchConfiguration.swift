@@ -1,5 +1,39 @@
 import Foundation
 
+public protocol StudioLaunchEnvironmentReading {
+  var arguments: [String] { get }
+  var environment: [String: String] { get }
+}
+
+public protocol StudioUserDefaultsResolving {
+  func userDefaults(suiteName: String?) -> UserDefaults?
+}
+
+public struct StudioLaunchEnvironmentClient: StudioLaunchEnvironmentReading {
+  public let arguments: [String]
+  public let environment: [String: String]
+
+  public init(
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    arguments: [String] = ProcessInfo.processInfo.arguments
+  ) {
+    self.arguments = arguments
+    self.environment = environment
+  }
+}
+
+public struct StudioUserDefaultsClient: StudioUserDefaultsResolving {
+  public init() {}
+
+  public func userDefaults(suiteName: String?) -> UserDefaults? {
+    guard let suiteName else {
+      return .standard
+    }
+
+    return UserDefaults(suiteName: suiteName)
+  }
+}
+
 /// Launch-time configuration shared by Studio app entry points and tests.
 public enum StudioLaunchConfiguration {
   public static let disableAutoActivateEnvironmentKey =
@@ -16,8 +50,17 @@ public enum StudioLaunchConfiguration {
     "PERSONAKIT_STUDIO_USER_DEFAULTS_SUITE_NAME"
 
   public static func shouldAutoActivate(
-    environment: [String: String] = ProcessInfo.processInfo.environment,
-    arguments: [String] = ProcessInfo.processInfo.arguments
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient()
+  ) -> Bool {
+    shouldAutoActivate(
+      environment: launchEnvironment.environment,
+      arguments: launchEnvironment.arguments
+    )
+  }
+
+  public static func shouldAutoActivate(
+    environment: [String: String],
+    arguments: [String]
   ) -> Bool {
     if arguments.contains("--no-auto-activate") {
       return false
@@ -40,8 +83,17 @@ public enum StudioLaunchConfiguration {
   }
 
   public static func launchWorkspaceURL(
-    environment: [String: String] = ProcessInfo.processInfo.environment,
-    arguments: [String] = ProcessInfo.processInfo.arguments
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient()
+  ) -> URL? {
+    launchWorkspaceURL(
+      environment: launchEnvironment.environment,
+      arguments: launchEnvironment.arguments
+    )
+  }
+
+  public static func launchWorkspaceURL(
+    environment: [String: String],
+    arguments: [String]
   ) -> URL? {
     let rawPath =
       launchWorkspacePath(from: arguments)
@@ -62,7 +114,13 @@ public enum StudioLaunchConfiguration {
   }
 
   public static func globalScopeURL(
-    environment: [String: String] = ProcessInfo.processInfo.environment
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient()
+  ) -> URL? {
+    globalScopeURL(environment: launchEnvironment.environment)
+  }
+
+  public static func globalScopeURL(
+    environment: [String: String]
   ) -> URL? {
     guard
       let trimmedPath = environment[globalScopePathEnvironmentKey]?
@@ -80,7 +138,13 @@ public enum StudioLaunchConfiguration {
   }
 
   public static func relationshipMapGeometryFileURL(
-    environment: [String: String] = ProcessInfo.processInfo.environment
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient()
+  ) -> URL? {
+    relationshipMapGeometryFileURL(environment: launchEnvironment.environment)
+  }
+
+  public static func relationshipMapGeometryFileURL(
+    environment: [String: String]
   ) -> URL? {
     guard
       let trimmedPath = environment[relationshipMapGeometryFileEnvironmentKey]?
@@ -97,8 +161,17 @@ public enum StudioLaunchConfiguration {
   }
 
   public static func initialSection(
-    environment: [String: String] = ProcessInfo.processInfo.environment,
-    arguments: [String] = ProcessInfo.processInfo.arguments
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient()
+  ) -> StudioLaunchSection {
+    initialSection(
+      environment: launchEnvironment.environment,
+      arguments: launchEnvironment.arguments
+    )
+  }
+
+  public static func initialSection(
+    environment: [String: String],
+    arguments: [String]
   ) -> StudioLaunchSection {
     let rawSection =
       argumentValue(for: "--section", in: arguments)
@@ -115,16 +188,23 @@ public enum StudioLaunchConfiguration {
   }
 
   public static func userDefaults(
-    environment: [String: String] = ProcessInfo.processInfo.environment
+    launchEnvironment: any StudioLaunchEnvironmentReading = StudioLaunchEnvironmentClient(),
+    userDefaultsResolver: any StudioUserDefaultsResolving = StudioUserDefaultsClient()
   ) -> UserDefaults {
-    guard
-      let suiteName = userDefaultsSuiteName(environment: environment),
-      let defaults = UserDefaults(suiteName: suiteName)
-    else {
-      return .standard
-    }
+    userDefaults(
+      environment: launchEnvironment.environment,
+      userDefaultsResolver: userDefaultsResolver
+    )
+  }
 
-    return defaults
+  public static func userDefaults(
+    environment: [String: String],
+    userDefaultsResolver: any StudioUserDefaultsResolving = StudioUserDefaultsClient()
+  ) -> UserDefaults {
+    userDefaultsResolver.userDefaults(
+      suiteName: userDefaultsSuiteName(environment: environment)
+    )
+      ?? .standard
   }
 
   private static func launchWorkspacePath(from arguments: [String]) -> String? {

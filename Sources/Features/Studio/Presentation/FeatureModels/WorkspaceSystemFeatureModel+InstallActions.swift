@@ -12,14 +12,21 @@ extension WorkspaceSystemFeatureModel {
 
   func refreshInstallStatus() -> WorkspaceInstallStatus {
     let installEnvironment = installEnvironmentStatus()
+    let installFileSystem = installFileSystemClient()
+    let openCodeConfigFile = openCodeConfigFileClient()
     let bundledCLIURL = installEnvironment.bundledCLIURL()
     let installedCLIURL = installedCLIURL(
-      homeDirectoryURL: installEnvironment.homeDirectoryURL()
+      homeDirectoryURL: installEnvironment.homeDirectoryURL(),
+      installFileSystem: installFileSystem
     )
     let openCodeConfigURL = openCodeConfigURL(
-      homeDirectoryURL: installEnvironment.homeDirectoryURL()
+      homeDirectoryURL: installEnvironment.homeDirectoryURL(),
+      openCodeConfigFile: openCodeConfigFile
     )
-    let openCodeMCPCommandPath = openCodeMCPCommandPath(configURL: openCodeConfigURL)
+    let openCodeMCPCommandPath = openCodeMCPCommandPath(
+      configURL: openCodeConfigURL,
+      openCodeConfigFile: openCodeConfigFile
+    )
 
     return WorkspaceInstallStatus(
       bundledCLIURL: bundledCLIURL,
@@ -31,6 +38,7 @@ extension WorkspaceSystemFeatureModel {
 
   func installOrUpdateCLI() -> StudioInstallResult {
     let installEnvironment = installEnvironmentStatus()
+    let installFileSystem = installFileSystemClient()
     guard let bundledCLIURL = installEnvironment.bundledCLIURL() else {
       return StudioInstallResult(
         outcome: .failed,
@@ -50,52 +58,58 @@ extension WorkspaceSystemFeatureModel {
     let supportBundleTargetURL = cliSupportBundleInstallURL(
       homeDirectoryURL: installEnvironment.homeDirectoryURL()
     )
-    let fileManager = FileManager.default
-    let hadInstalledBinary = fileManager.fileExists(atPath: targetURL.path())
-    let hadInstalledSupportBundle = fileManager.fileExists(atPath: supportBundleTargetURL.path())
+    let hadInstalledBinary = installFileSystem.fileExists(at: targetURL)
+    let hadInstalledSupportBundle = installFileSystem.fileExists(at: supportBundleTargetURL)
     let hadInstalledCLI = hadInstalledBinary || hadInstalledSupportBundle
 
     do {
-      try fileManager.createDirectory(
-        at: targetURL.deletingLastPathComponent(),
-        withIntermediateDirectories: true
-      )
+      try installFileSystem.createDirectory(at: targetURL.deletingLastPathComponent())
 
       let temporaryURL = targetURL.deletingLastPathComponent()
         .appendingPathComponent(".personakit-install.tmp")
       let temporarySupportBundleURL = targetURL.deletingLastPathComponent()
         .appendingPathComponent(".personakit-install.bundle.tmp")
 
-      if fileManager.fileExists(atPath: temporaryURL.path()) {
-        try fileManager.removeItem(at: temporaryURL)
-      }
-      if fileManager.fileExists(atPath: temporarySupportBundleURL.path()) {
-        try fileManager.removeItem(at: temporarySupportBundleURL)
+      if installFileSystem.fileExists(at: temporaryURL) {
+        try installFileSystem.removeItem(at: temporaryURL)
       }
 
-      try fileManager.copyItem(at: bundledCLIURL, to: temporaryURL)
-      try fileManager.copyItem(at: bundledSupportBundleURL, to: temporarySupportBundleURL)
-      try fileManager.setAttributes(
-        [.posixPermissions: 0o755],
-        ofItemAtPath: temporaryURL.path()
+      if installFileSystem.fileExists(at: temporarySupportBundleURL) {
+        try installFileSystem.removeItem(at: temporarySupportBundleURL)
+      }
+
+      try installFileSystem.copyItem(
+        at: bundledCLIURL,
+        to: temporaryURL
       )
+      try installFileSystem.copyItem(
+        at: bundledSupportBundleURL,
+        to: temporarySupportBundleURL
+      )
+      try installFileSystem.setExecutableFile(at: temporaryURL)
 
       if hadInstalledBinary {
-        _ = try fileManager.replaceItemAt(
-          targetURL,
-          withItemAt: temporaryURL
+        try installFileSystem.replaceItem(
+          at: targetURL,
+          with: temporaryURL
         )
       } else {
-        try fileManager.moveItem(at: temporaryURL, to: targetURL)
+        try installFileSystem.moveItem(
+          at: temporaryURL,
+          to: targetURL
+        )
       }
 
       if hadInstalledSupportBundle {
-        _ = try fileManager.replaceItemAt(
-          supportBundleTargetURL,
-          withItemAt: temporarySupportBundleURL
+        try installFileSystem.replaceItem(
+          at: supportBundleTargetURL,
+          with: temporarySupportBundleURL
         )
       } else {
-        try fileManager.moveItem(at: temporarySupportBundleURL, to: supportBundleTargetURL)
+        try installFileSystem.moveItem(
+          at: temporarySupportBundleURL,
+          to: supportBundleTargetURL
+        )
       }
     } catch {
       return StudioInstallResult(
@@ -123,6 +137,7 @@ extension WorkspaceSystemFeatureModel {
 
   func installOrUpdateOpenCodeMCP() -> StudioInstallResult {
     let installEnvironment = installEnvironmentStatus()
+    let openCodeConfigFile = openCodeConfigFileClient()
     let status = refreshInstallStatus()
     guard
       let resolvedCLIURL = status.installedCLIURL
@@ -136,11 +151,10 @@ extension WorkspaceSystemFeatureModel {
     }
 
     let configURL = status.openCodeConfigURL
-    let fileManager = FileManager.default
     let mcpEntry = makeOpenCodeMCPEntry(commandPath: resolvedCLIURL.path())
     let manualSnippet = makeManualMergeSnippet(commandPath: resolvedCLIURL.path())
     let hadExistingEntry = status.openCodeMCPCommandPath != nil
-    let configExists = fileManager.fileExists(atPath: configURL.path())
+    let configExists = openCodeConfigFile.configExists(at: configURL)
 
     if configExists, configURL.lastPathComponent == Self.openCodeJSONCFilename {
       return StudioInstallResult(
@@ -156,14 +170,13 @@ extension WorkspaceSystemFeatureModel {
     }
 
     do {
-      try fileManager.createDirectory(
-        at: configURL.deletingLastPathComponent(),
-        withIntermediateDirectories: true
+      try installFileSystemClient().createDirectory(
+        at: configURL.deletingLastPathComponent()
       )
 
       var configuration = try readOpenCodeConfiguration(
-        fileManager: fileManager,
-        configURL: configURL
+        configURL: configURL,
+        openCodeConfigFile: openCodeConfigFile
       )
 
       if configuration["$schema"] == nil {
@@ -192,9 +205,9 @@ extension WorkspaceSystemFeatureModel {
         withJSONObject: configuration,
         options: [.prettyPrinted, .sortedKeys]
       )
-      try encodedConfiguration.write(
-        to: configURL,
-        options: Data.WritingOptions.atomic
+      try openCodeConfigFile.writeConfigData(
+        encodedConfiguration,
+        to: configURL
       )
     } catch let error as OpenCodeConfigError {
       return StudioInstallResult(
@@ -244,13 +257,16 @@ extension WorkspaceSystemFeatureModel {
       .standardizedFileURL
   }
 
-  private func installedCLIURL(homeDirectoryURL: URL) -> URL? {
+  private func installedCLIURL(
+    homeDirectoryURL: URL,
+    installFileSystem: any WorkspaceInstallFileOperating
+  ) -> URL? {
     let url = cliInstallURL(homeDirectoryURL: homeDirectoryURL)
     let supportBundleURL = cliSupportBundleInstallURL(homeDirectoryURL: homeDirectoryURL)
 
     guard
-      FileManager.default.isExecutableFile(atPath: url.path()),
-      FileManager.default.fileExists(atPath: supportBundleURL.path())
+      installFileSystem.isExecutableFile(at: url),
+      installFileSystem.fileExists(at: supportBundleURL)
     else {
       return nil
     }
@@ -258,31 +274,36 @@ extension WorkspaceSystemFeatureModel {
     return url
   }
 
-  private func openCodeConfigURL(homeDirectoryURL: URL) -> URL {
+  private func openCodeConfigURL(
+    homeDirectoryURL: URL,
+    openCodeConfigFile: any OpenCodeConfigurationFileAccessing
+  ) -> URL {
     let directoryURL =
       homeDirectoryURL
       .appendingPathComponent(Self.openCodeDirectorySubpath)
       .standardizedFileURL
     let jsoncURL = directoryURL.appendingPathComponent(Self.openCodeJSONCFilename)
     let jsonURL = directoryURL.appendingPathComponent(Self.openCodeJSONFilename)
-    let fileManager = FileManager.default
 
-    if fileManager.fileExists(atPath: jsoncURL.path()) {
+    if openCodeConfigFile.configExists(at: jsoncURL) {
       return jsoncURL
     }
 
-    if fileManager.fileExists(atPath: jsonURL.path()) {
+    if openCodeConfigFile.configExists(at: jsonURL) {
       return jsonURL
     }
 
     return jsonURL
   }
 
-  private func openCodeMCPCommandPath(configURL: URL) -> String? {
+  private func openCodeMCPCommandPath(
+    configURL: URL,
+    openCodeConfigFile: any OpenCodeConfigurationFileAccessing
+  ) -> String? {
     guard
       let configuration = try? readOpenCodeConfiguration(
-        fileManager: .default,
-        configURL: configURL
+        configURL: configURL,
+        openCodeConfigFile: openCodeConfigFile
       ),
       let mcp = configuration["mcp"] as? [String: Any],
       let personakit = mcp[Self.personakitMCPName] as? [String: Any],
@@ -337,14 +358,14 @@ extension WorkspaceSystemFeatureModel {
   }
 
   private func readOpenCodeConfiguration(
-    fileManager: FileManager,
-    configURL: URL
+    configURL: URL,
+    openCodeConfigFile: any OpenCodeConfigurationFileAccessing
   ) throws -> [String: Any] {
-    guard fileManager.fileExists(atPath: configURL.path()) else {
+    guard openCodeConfigFile.configExists(at: configURL) else {
       return [:]
     }
 
-    let data = try Data(contentsOf: configURL)
+    let data = try openCodeConfigFile.readConfigData(at: configURL)
     let rawText = String(decoding: data, as: UTF8.self)
     let normalizedText = try normalizeJSONC(rawText)
 
