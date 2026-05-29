@@ -1,92 +1,97 @@
 # PersonaKit
 
-PersonaKit eliminates repeated prompt setup before using AI coding tools.
+PersonaKit turns repeated AI coding setup into reusable operating contracts.
 
-PersonaKit is for solo developers who want one reusable operating contract and one inspectable handoff for their coding tool:
+A session bundles role, rules, references, stop points, and capability
+boundaries into exportable Markdown:
 
 ```bash
 personakit export --session <id> --copy
 ```
 
-PersonaKit is not an agent, planner, memory system, task manager, or orchestration layer. It resolves a known contract; your coding agent does the work.
+PersonaKit prepares, validates, inspects, and exports the contract. Your coding
+agent does the work.
 
-PersonaKit is released under the MIT license.
+PersonaKit is not an agent, launcher, workflow engine, task manager, memory
+system, or orchestration layer.
 
-## First Five Minutes
+For a guided overview, examples, and conceptual documentation, use the
+[PersonaKit website](https://ajself.github.io/PersonaKit/).
 
-### Requirements
+## What PersonaKit Does
 
-PersonaKit currently builds with:
+Use PersonaKit when the same AI coding setup keeps appearing in prompts:
 
-- macOS 26 SDK
-- Swift tools 6.2
-- Xcode 26 or newer
+- "Act as this kind of engineer."
+- "Follow these project rules."
+- "Use these references."
+- "Do not deploy, persist state, or broaden scope."
+- "Stop here for review."
 
-### 1. Build The CLI
+Instead of rebuilding that setup in chat, define a session once, validate it,
+inspect the resolved contract, and export handoff context when a coding agent
+needs it.
 
-From the repository root:
+## Quick Start
+
+The Makefile is the repo command surface:
 
 ```bash
-swift build --product personakit
+make help
 ```
 
-For local development, run commands through SwiftPM:
+Build the CLI:
 
 ```bash
-swift run personakit --help
+make build
 ```
 
-To install the CLI locally:
+Install the CLI locally:
 
 ```bash
 make cli-install INSTALL_BIN_DIR="$HOME/.local/bin"
 ```
 
-Make sure the install directory is on your `PATH`.
-
-### 2. Validate The Public Starter
-
-This repository includes a minimal public PersonaKit root at `Examples/public-starter/.personakit`.
-See [Examples](./Examples/) for why the starter keeps the real `.personakit`
-project shape.
+Make sure the install directory is on your `PATH`, then check the CLI:
 
 ```bash
-swift run personakit validate --root Examples/public-starter/.personakit
+personakit --help
 ```
 
-### 3. Inspect The Contract
+Validate the public starter root:
 
 ```bash
-swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev
+personakit validate --root Examples/public-starter/.personakit
 ```
 
-Use this before handing context to another tool when you want to inspect the resolved persona, directive, kits, skill authorization, and stop points.
-
-### 4. Export The Handoff Context
+Inspect the resolved contract:
 
 ```bash
-swift run personakit export --root Examples/public-starter/.personakit --session solo-dev
+personakit contract --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-The export command prints the resolved operating contract as Markdown so you can review it or hand it to your coding tool.
-
-### 5. Copy The Handoff Context
+Export the handoff context as Markdown:
 
 ```bash
-swift run personakit export --root Examples/public-starter/.personakit --session solo-dev --copy
+personakit export --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-Paste the copied context into the coding tool you use for the actual work.
-
-When you are unsure which session fits a task:
+Copy the handoff context for your coding agent:
 
 ```bash
-swift run personakit recommend --root Examples/public-starter/.personakit --goal "Make a small, reviewable CLI improvement"
+personakit export --root Examples/public-starter/.personakit --session solo-dev --copy
 ```
 
-## Create Your Own Root
+Ask for a session recommendation when the right session is not obvious:
 
-PersonaKit expects content under `.personakit/` in a project, and may also use `~/.personakit/` for global content.
+```bash
+personakit recommend --root Examples/public-starter/.personakit --goal "Make a small, reviewable CLI improvement"
+```
+
+## Create A Root
+
+PersonaKit authored content usually lives in `.personakit/` inside a project.
+Global content may live in `~/.personakit/`.
 
 ```text
 .project/
@@ -101,49 +106,36 @@ PersonaKit expects content under `.personakit/` in a project, and may also use `
     Sessions/
 ```
 
-To create starter content in a new or throwaway project:
+Create starter content:
 
 ```bash
 mkdir -p /tmp/personakit-demo
-swift run personakit init /tmp/personakit-demo/.personakit
-swift run personakit validate --root /tmp/personakit-demo/.personakit
-swift run personakit export --root /tmp/personakit-demo/.personakit --session solo-dev --copy
+personakit init /tmp/personakit-demo/.personakit
+personakit validate --root /tmp/personakit-demo/.personakit
+personakit export --root /tmp/personakit-demo/.personakit --session solo-dev --copy
 ```
 
-`personakit init` refuses to replace a non-empty destination by default. Use `--force` only when you intentionally want to replace an existing starter root:
+`personakit init` refuses to replace a non-empty destination by default. Use
+`--force` only when you intentionally want to replace an existing starter root:
 
 ```bash
-swift run personakit init /tmp/personakit-demo/.personakit --force
+personakit init /tmp/personakit-demo/.personakit --force
 ```
 
-## How It Works
-
-Think in one sentence:
-
-> PersonaKit resolves a reusable operating contract so an AI agent can start work already grounded.
-
-The core model is:
+## Core Model
 
 ```text
-Persona (who)
-+ Kits (how)
-+ Directive (what kind of work)
-+ Essentials (must-include grounding)
-+ Skill authorization
-= Resolved operating contract
+Persona + Directive + Kits + Essentials + Skill authorization = Operating contract
 ```
 
-PersonaKit helps you define and reuse:
+- **Persona**: who the agent should act as.
+- **Directive**: what kind of work is being done.
+- **Kits**: reusable guardrails and defaults.
+- **Essentials**: required Markdown grounding and references.
+- **Skills**: capability metadata used for authorization.
+- **Session**: the named entry point that ties the pieces together.
 
-- **Persona** — who is doing the work
-- **Kits** — how that role works
-- **Directive** — what kind of work is being done
-- **Essentials** — rules and references that must be present
-- **Session** — a named entry point to a resolved operating contract
-
-A session is the practical entry point. It gives a stable name to the contract you want to reuse.
-
-Example:
+Example session:
 
 ```json
 {
@@ -153,93 +145,91 @@ Example:
 }
 ```
 
-## CLI Surface
+Skills describe capabilities and risk. They are not commands PersonaKit runs.
 
-Primary path:
+## Command Surface
+
+Validate, inspect, and export:
 
 ```text
 personakit validate
 personakit contract --session <id>
 personakit export --session <id>
 personakit export --session <id> --copy
+personakit export --session <id> --output <path>
 ```
 
-Authoring, inspection, and integration:
+Author PersonaKit content:
 
 ```text
 personakit init <path>
 personakit create <subcommand>
+```
+
+Discover and visualize:
+
+```text
 personakit guidance
 personakit recommend --goal "<task>"
-personakit export --session <id> --output <path>
-personakit resolve-references --session <id>
 personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
+personakit resolve-references --session <id>
+```
+
+Integrate with MCP clients:
+
+```text
 personakit mcp
 ```
 
-Deterministic contract resolution and export are the primary product direction. If a feature does not directly support validation, inspection, handoff context, or read-only MCP grounding, it is out of scope for PersonaKit.
+PersonaKit should stay focused on validation, deterministic resolution,
+inspection, export, and read-only grounding.
 
-## MCP
+## Studio And MCP
 
-PersonaKit includes a read-only MCP server so compatible tools can read PersonaKit context directly.
+PersonaKit Studio is a local GUI for managing packs and sessions. Use it when
+you want a visual administration surface alongside the CLI and MCP flows.
+
+For repository development, `make studio-review` builds Studio, opens
+deterministic demo workspaces, and captures screenshots under
+`.build/studio-review/` for human inspection.
+
+PersonaKit MCP is read-only grounding and provenance:
 
 ```bash
 personakit mcp
 ```
 
-MCP is an integration surface, not the core product story. Focus on deterministic contract resolution and exported handoff context.
-
-For unfamiliar MCP clients and AI agents, start with:
-
-1. Read `personakit://catalog/start`.
-2. Read `personakit://catalog/sessions` or call `personakit_recommend_session`.
-3. Call `personakit_resolve_contract` for the selected session.
-4. Call `personakit_trace_session` when you need provenance for persona, directive, kits, skills, essentials, and references.
-5. Read raw pack or essential resources only as needed.
-
-PersonaKit MCP is read-only grounding. It does not authorize execution, write files, run shell commands, add orchestration, add memory, or perform autonomous planning.
+MCP does not authorize execution, file writes, shell commands, workflow
+orchestration, memory, or autonomous planning.
 
 More detail: [Docs/mcp.md](./Docs/mcp.md).
 
-## Studio Status
+## Repository Work
 
-Studio is available in the repository as a GUI for managing PersonaKit packs and sessions. Use it when you want a local visual administration surface alongside the CLI and MCP flows.
+Run the public verification gate before public-facing changes:
 
-Use `make studio-review` to build the app, launch deterministic demo workspaces, and capture screenshots under `.build/studio-review/` for human inspection. The Make targets keep Xcode output under hidden build directories such as `.build/XcodeDerivedData`.
+```bash
+make public-check
+```
 
-## Product Boundaries
+Run the package tests:
 
-PersonaKit should remain:
+```bash
+make test
+```
 
-- boring over clever
-- explicit over inferred
-- deterministic over magical
-- local workflow first
-- one sharp workflow over many partial ones
-- inspectable through contract and export flows
+Check formatting:
 
-PersonaKit is deliberately not:
+```bash
+make format-check
+```
 
-- an agent
-- a workflow engine
-- a remote execution platform
-- a task management product
-- a replacement for your coding agent
+For AI assistants working in this repository, [AGENTS.md](./AGENTS.md) is the
+repo-local authority for behavior, scope, and approval boundaries.
 
-PersonaKit activates the contract. Another tool performs the work.
+## License
 
-## Repository Status
-
-This repository is focused on the contract and export paths described above.
-Use `make public-check` before public-facing changes.
-
-## Contributing
-
-PersonaKit work should preserve the boundaries above. Keep changes focused, deterministic, and covered by `make public-check` when public behavior or examples change.
-
-## For Agents Working In This Repo
-
-`AGENTS.md` is binding for agent behavior in this repository. Use it as the local authority for repo rules and execution boundaries.
+PersonaKit is released under the MIT license.
 
 PersonaKit wins by being narrow, predictable, and useful.
