@@ -27,6 +27,7 @@ jobs:
       - name: Build Astro site
         uses: withastro/action@v6
         with:
+          build-cmd: npm run build:github-pages
           node-version: 22
           path: Site
 

@@ -1,7 +1,10 @@
 import { defineConfig } from "astro/config";
 
+const site = process.env.PERSONAKIT_SITE_URL ?? "https://ajself.github.io";
+const base = process.env.PERSONAKIT_SITE_BASE ?? "/";
+
 export default defineConfig({
-  site: "https://ajself.github.io",
-  base: "/PersonaKit",
+  site,
+  base,
   output: "static",
 });
