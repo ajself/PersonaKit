@@ -29,7 +29,7 @@
     "Existing entities are reused when they fit",
     "Dry-run output is inspected before writing",
     "Essentials remain compact unless long-form policy is explicitly requested",
-    "PersonaKit V1 product scope is not expanded",
+    "Product scope is not expanded",
     "Validation succeeds after authoring"
   ],
   "verification": [

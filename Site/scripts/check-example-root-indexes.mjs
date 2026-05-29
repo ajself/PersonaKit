@@ -24,8 +24,28 @@ function indexHrefs(indexPath) {
 
   return [...html.matchAll(/href="([^"]+)"/g)]
     .map((match) => match[1])
+    .map((href) => href.replace(/^\.\//, ""))
     .filter((href) => !href.startsWith("http"))
+    .filter((href) => !href.startsWith("../"))
     .sort();
+}
+
+function checkInlineScripts(indexPath) {
+  const html = fs.readFileSync(indexPath, "utf8");
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+
+  for (const [scriptTag, script] of scripts) {
+    try {
+      new Function(script);
+    } catch (error) {
+      return {
+        error: error.message,
+        script: scriptTag.slice(0, 80),
+      };
+    }
+  }
+
+  return null;
 }
 
 const failures = [];
@@ -42,11 +62,13 @@ for (const exampleName of fs.readdirSync(examplesDirectory).sort()) {
   const actual = fs.existsSync(indexPath) ? indexHrefs(indexPath) : [];
   const missing = expected.filter((file) => !actual.includes(file));
   const stale = actual.filter((href) => !expected.includes(href));
+  const scriptFailure = fs.existsSync(indexPath) ? checkInlineScripts(indexPath) : null;
 
-  if (missing.length || stale.length) {
+  if (missing.length || stale.length || scriptFailure) {
     failures.push({
       exampleName,
       missing,
+      scriptFailure,
       stale,
     });
   }

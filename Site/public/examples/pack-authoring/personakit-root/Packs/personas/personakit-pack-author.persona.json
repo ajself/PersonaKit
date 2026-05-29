@@ -17,7 +17,7 @@
   ],
   "nonGoals": [
     "autonomous pack generation",
-    "public V1 product scope expansion",
+    "product scope expansion",
     "unbounded pack rewrites"
   ],
   "defaultKitIds": [
