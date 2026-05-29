@@ -105,42 +105,35 @@ personakit export --root .personakit --session behavior-review`;
   <h2 id="compose">Compose The Pieces</h2>
   <p>PersonaKit contracts are assembled from reusable parts. Operators should not have to copy the same careful-review paragraph into every prompt or maintain several nearly identical skills just to change a boundary.</p>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Piece</th>
-        <th>Reusable Job</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Persona</td>
-        <td>Who is acting.</td>
-      </tr>
-      <tr>
-        <td>Directive</td>
-        <td>What kind of work this is.</td>
-      </tr>
-      <tr>
-        <td>Kit</td>
-        <td>Rules that should travel across related sessions.</td>
-      </tr>
-      <tr>
-        <td>Essentials</td>
-        <td>Required grounding that belongs in the resolved payload.</td>
-      </tr>
-      <tr>
-        <td>Skills</td>
-        <td>Capabilities that may be authorized or forbidden for this lane.</td>
-      </tr>
-      <tr>
-        <td>Session</td>
-        <td>The composed lane that selects the pieces to resolve together.</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="grid three compose-grid">
+    <article class="card">
+      <h3>Persona</h3>
+      <p>Who is acting.</p>
+    </article>
+    <article class="card">
+      <h3>Directive</h3>
+      <p>What kind of work this is.</p>
+    </article>
+    <article class="card">
+      <h3>Kit</h3>
+      <p>Rules that should travel across related sessions.</p>
+    </article>
+    <article class="card">
+      <h3>Essentials</h3>
+      <p>Required grounding that belongs in the resolved payload.</p>
+    </article>
+    <article class="card">
+      <h3>Skills</h3>
+      <p>Capabilities that may be authorized or forbidden for this lane.</p>
+    </article>
+    <article class="card">
+      <h3>Session</h3>
+      <p>The composed lane that selects the pieces to resolve together.</p>
+    </article>
+  </div>
 
-  <p>Review work is a good example of the pattern:</p>
+  <h3 class="composition-heading">Review Composition Example</h3>
+  <p class="composition-intro">Review work shows why the pieces stay separate:</p>
 
   <table>
     <thead>
@@ -251,6 +244,18 @@ personakit export --root .personakit --session behavior-review`;
   .learning-map a:hover {
     border-color: #9fb7c6;
     color: var(--blue);
+  }
+
+  .compose-grid {
+    margin: 18px 0 30px;
+  }
+
+  .composition-heading {
+    margin: 0 0 8px;
+  }
+
+  .composition-intro {
+    margin-bottom: 14px;
   }
 
   @media (max-width: 840px) {

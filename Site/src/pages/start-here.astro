@@ -42,6 +42,10 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
   <h2>1. Validate The Example Root</h2>
   <Code code={validateCommands} lang="bash" theme="github-dark" />
 
+  <Callout>
+    <p>In these static examples, <code>personakit-root</code> stands in for the <code>.personakit</code> folder you would usually keep in a real project. Treat that folder as authored project source: commit the roles, rules, capabilities, and stop points so they can be reviewed with the code they govern. Keep secrets and local credentials out.</p>
+  </Callout>
+
   <p>Expected shape:</p>
   <Code code={validationShape} lang="text" theme="github-dark" />
 
@@ -121,7 +125,7 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
   <p><strong>PersonaKit Studio</strong> uses this same resolved-contract model for visual inspection and pack maintenance, but this guide keeps the CLI and static example root as the primary practical path.</p>
 
   <h2>Next Step</h2>
-  <p>Now that you have seen a resolved contract, learn how prompts, skills, harnesses, MCP, and agents fit around it.</p>
+  <p>Now that you have seen a resolved contract, learn how the pieces compose, then copy the closest example root into your project.</p>
   <p>
     <a class="button-link" href={sitePath("learn/")}>Open Learn PersonaKit</a>
     <a class="button-link" href={sitePath("examples/pack-authoring/")}>Study Pack Authoring</a>

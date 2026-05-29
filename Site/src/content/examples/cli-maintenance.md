@@ -28,6 +28,12 @@ Fix this small CLI bug. Be careful, do not deploy anything, do not start a long-
 
 PersonaKit keeps that repeated caution out of the task prompt and puts it in the session contract where it can be inspected.
 
+## Key Contract Signal
+
+```text
+authorizedSkillIds: opencode-cli
+```
+
 ## Runnable Commands
 
 ```bash

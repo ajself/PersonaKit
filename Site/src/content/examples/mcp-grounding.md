@@ -24,6 +24,12 @@ The important boundary: MCP is read-only grounding. It does not authorize file m
 
 An MCP-aware agent might otherwise treat "PersonaKit context is available" as permission to choose tools, mutate files, or launch a worker. This contract says the opposite: resolve context first, then stop unless the needed capability is explicitly authorized.
 
+## Key Contract Signal
+
+```text
+authorizedSkillIds: read-only-mcp-grounding
+```
+
 ## Runnable Commands
 
 ```bash
