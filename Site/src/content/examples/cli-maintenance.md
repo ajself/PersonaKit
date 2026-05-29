@@ -1,6 +1,8 @@
 ---
 title: "CLI Maintenance"
 description: "The happy path for bounded implementation with one authorized adapter and clear stop points."
+chooserTitle: "Bounded Implementation"
+chooserDescription: "Use CLI Maintenance when one adapter is allowed and deployment or autonomous loops must stay forbidden."
 kind: "contract"
 routeSlug: "cli-maintenance"
 persona: "cli-maintainer"
@@ -14,6 +16,19 @@ forbiddenSkills:
   - "deployment-runner"
 rootPath: "/examples/swift-cli-maintenance/personakit-root"
 order: 1
+sourceFiles:
+  - label: "Session"
+    path: "Sessions/cli-maintenance.session.json"
+  - label: "Persona"
+    path: "Packs/personas/cli-maintainer.persona.json"
+  - label: "Directive"
+    path: "Packs/directives/bounded-cli-fix.directive.json"
+  - label: "Kit"
+    path: "Packs/kits/cli-maintenance-guardrails.kit.json"
+  - label: "Authorized Skill"
+    path: "Packs/skills/opencode-cli.skill.json"
+  - label: "Forbidden Skill"
+    path: "Packs/skills/deployment-runner.skill.json"
 ---
 
 This example is the happy path for a bounded PersonaKit implementation lane. It shows how one adapter capability can be authorized while deployment and autonomous loops are forbidden.

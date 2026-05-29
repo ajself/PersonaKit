@@ -1,6 +1,8 @@
 ---
 title: "Review Session"
 description: "A read-only review contract that produces findings without becoming the implementer."
+chooserTitle: "Read-Only Review"
+chooserDescription: "Use Review Session when the reviewer should produce findings without becoming the implementer."
 kind: "contract"
 routeSlug: "review-session"
 persona: "behavior-reviewer"
@@ -14,6 +16,19 @@ forbiddenSkills:
   - "deployment-runner"
 rootPath: "/examples/review-session/personakit-root"
 order: 3
+sourceFiles:
+  - label: "Session"
+    path: "Sessions/behavior-review.session.json"
+  - label: "Persona"
+    path: "Packs/personas/behavior-reviewer.persona.json"
+  - label: "Directive"
+    path: "Packs/directives/behavior-preserving-review.directive.json"
+  - label: "Kit"
+    path: "Packs/kits/review-guardrails.kit.json"
+  - label: "Authorized Skill"
+    path: "Packs/skills/read-only-review.skill.json"
+  - label: "Forbidden Skill"
+    path: "Packs/skills/code-editing.skill.json"
 ---
 
 This example is intentionally non-executing. It shows how PersonaKit can define a review identity without authorizing code editing, deployment, or external adapter launch.
