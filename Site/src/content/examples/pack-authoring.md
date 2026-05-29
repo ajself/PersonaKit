@@ -55,4 +55,4 @@ Operate under pack-authoring. Create a Staff code-quality review session for thi
 
 ## Why This Belongs In PersonaKit
 
-Manual JSON editing is fine for one-off pack changes. PersonaKit helps when the authoring pattern repeats and the project needs the same constraints each time: classify first, reuse existing entities, ask only high-impact shaping questions, dry-run before writing, validate after writing, and do not expand PersonaKit V1 scope while authoring packs.
+Manual JSON editing is fine for one-off pack changes. PersonaKit helps when the authoring pattern repeats and the project needs the same constraints each time: classify first, reuse existing entities, ask only high-impact shaping questions, dry-run before writing, validate after writing, and keep product-scope decisions out of the authoring pass.

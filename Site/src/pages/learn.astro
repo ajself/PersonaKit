@@ -1,7 +1,16 @@
 ---
+import { Code } from "astro:components";
 import Callout from "../components/Callout.astro";
 import ContentLayout from "../layouts/ContentLayout.astro";
 import { sitePath } from "../utils/sitePath";
+
+const loosePrompt = "Review this bugfix carefully. Stay read-only. Watch for behavior changes and missing tests. Do not edit code unless I approve a fix.";
+
+const contractPrompt = "Operate under behavior-review. Review the current diff and report findings.";
+
+const handoffCommands = `personakit validate --root .personakit
+personakit contract --root .personakit --session behavior-review
+personakit export --root .personakit --session behavior-review`;
 ---
 
 <ContentLayout
@@ -95,7 +104,7 @@ import { sitePath } from "../utils/sitePath";
   <h2 id="prompt-to-contract">Turn A Prompt Into A Contract</h2>
   <p>Start with a loose prompt:</p>
 
-  <pre><code>Review this bugfix carefully. Stay read-only. Watch for behavior changes and missing tests. Do not edit code unless I approve a fix.</code></pre>
+  <Code code={loosePrompt} lang="text" theme="github-dark" />
 
   <p>PersonaKit asks which parts are durable enough to become reusable structure:</p>
 
@@ -128,7 +137,7 @@ import { sitePath } from "../utils/sitePath";
 
   <p>The next prompt can shrink because the contract carries the repeated setup:</p>
 
-  <pre><code>Operate under behavior-review. Review the current diff and report findings.</code></pre>
+  <Code code={contractPrompt} lang="text" theme="github-dark" />
 
   <p><a class="button-link" href={sitePath("examples/review-session/")}>Study the review-session example</a></p>
 
@@ -143,9 +152,7 @@ import { sitePath } from "../utils/sitePath";
     <li>For read-only review sessions, export the grounding instead of launching a worker.</li>
   </ol>
 
-  <pre><code>personakit validate --root .personakit
-personakit contract --root .personakit --session behavior-review
-personakit export --root .personakit --session behavior-review</code></pre>
+  <Code code={handoffCommands} lang="bash" theme="github-dark" />
 
   <Callout tone="good">
     <p>That is the craft: make the boundary durable, inspect it, and only launch a worker when the contract authorizes that lane.</p>

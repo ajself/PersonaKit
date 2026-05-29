@@ -20,11 +20,14 @@ const {
 <style>
   figure {
     margin: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
   }
 
   img {
     display: block;
-    width: 100%;
+    width: max(100%, 760px);
     min-height: 240px;
     border: 1px solid var(--line);
     border-radius: 8px;

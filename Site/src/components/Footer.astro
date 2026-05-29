@@ -1,0 +1,129 @@
+---
+import { sitePath } from "../utils/sitePath";
+
+const links = [
+  { href: sitePath("start-here/"), label: "Start Here" },
+  { href: sitePath("examples/"), label: "Examples" },
+  { href: "https://github.com/ajself/PersonaKit", label: "GitHub" },
+  { href: "https://iknowonlynothing.com/", label: "By AJ Self" },
+];
+---
+
+<footer class="site-footer">
+  <div class="shell footer-inner">
+    <div class="footer-brand">
+      <span class="footer-mark" aria-hidden="true">
+        <img class="footer-icon" src={sitePath("brand/personakit-mark.svg")} alt="" />
+      </span>
+      <div>
+        <strong>PersonaKit</strong>
+        <p>Session-start contracts for practical AI coding work.</p>
+      </div>
+    </div>
+    <div class="footer-navigation">
+      <nav class="footer-links" aria-label="Footer navigation">
+        {
+          links.map((link, index) => (
+            <>
+              {index > 0 && <span aria-hidden="true">&middot;</span>}
+              <a href={link.href}>{link.label}</a>
+            </>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    background: #fff;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 28px;
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .footer-brand strong {
+    display: block;
+    line-height: 1.2;
+  }
+
+  .footer-brand p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .footer-mark {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--accent);
+  }
+
+  .footer-icon {
+    display: block;
+    width: 19px;
+    height: 25px;
+  }
+
+  .footer-navigation {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .footer-links a,
+  .footer-links span {
+    color: var(--ink);
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  .footer-links a,
+  .footer-links span {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .footer-links a:hover {
+    color: var(--blue);
+  }
+
+  @media (max-width: 700px) {
+    .footer-inner {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .footer-navigation {
+      justify-items: start;
+    }
+
+    .footer-links {
+      justify-content: flex-start;
+    }
+  }
+</style>

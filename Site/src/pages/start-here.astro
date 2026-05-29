@@ -1,7 +1,17 @@
 ---
+import { Code } from "astro:components";
 import Callout from "../components/Callout.astro";
 import ContentLayout from "../layouts/ContentLayout.astro";
 import { sitePath } from "../utils/sitePath";
+
+const validateCommands = `cd Site/public/examples/swift-cli-maintenance
+personakit validate --root personakit-root`;
+
+const validationShape = "Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0";
+
+const contractCommand = "personakit contract --root personakit-root --session cli-maintenance";
+
+const dryRunCommand = `personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."`;
 ---
 
 <ContentLayout
@@ -12,16 +22,15 @@ import { sitePath } from "../utils/sitePath";
   <p>This walkthrough does not ask PersonaKit to make a code change. It asks PersonaKit to prove the operating contract that an agent would receive before making a change.</p>
 
   <h2>1. Validate The Example Root</h2>
-  <pre><code>cd Site/public/examples/swift-cli-maintenance
-personakit validate --root personakit-root</code></pre>
+  <Code code={validateCommands} lang="bash" theme="github-dark" />
 
   <p>Expected shape:</p>
-  <pre><code>Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0</code></pre>
+  <Code code={validationShape} lang="text" theme="github-dark" />
 
   <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, essential, and session can be loaded before any agent work starts.</p>
 
   <h2>2. Inspect The Resolved Contract</h2>
-  <pre><code>personakit contract --root personakit-root --session cli-maintenance</code></pre>
+  <Code code={contractCommand} lang="bash" theme="github-dark" />
 
   <p>Look for:</p>
   <ul>
@@ -35,7 +44,7 @@ personakit validate --root personakit-root</code></pre>
   <p>What this proves: the named session resolves to one role, one directive, an applied kit, and an explicit capability boundary. PersonaKit is no longer relying on prompt memory or implied intent.</p>
 
   <h2>3. Preview The Runtime Payload</h2>
-  <pre><code>personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
+  <Code code={dryRunCommand} lang="bash" theme="github-dark" />
 
   <p>What this proves: the payload that would be handed to the supported adapter is visible before launch. The task text appears after the resolved context, so the agent starts from the operating contract first.</p>
 

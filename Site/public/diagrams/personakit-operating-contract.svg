@@ -1,58 +1,90 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="430" viewBox="0 0 1160 430" role="img" aria-labelledby="title desc">
-  <title id="title">PersonaKit operating contract flow</title>
-  <desc id="desc">Persona, kits, directive, essentials, and skill authorization resolve into an operating contract for an agent.</desc>
-  <rect width="1160" height="430" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="640" viewBox="0 0 1160 640" role="img" aria-labelledby="title desc">
+  <title id="title">PersonaKit session contract resolution</title>
+  <desc id="desc">PersonaKit resolves a session from a persona and directive into required context, skill authorization, and an operating contract before the session becomes active.</desc>
+  <rect width="1160" height="640" fill="#ffffff"/>
   <defs>
     <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
       <path d="M2,2 L10,6 L2,10 Z" fill="#4c5964"/>
     </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#202428" flood-opacity="0.10"/>
+    </filter>
   </defs>
-  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" fill="#1f2428">
-    <text x="42" y="54" font-size="31" font-weight="700">PersonaKit resolves the contract before the agent works</text>
-    <g transform="translate(44 100)">
-      <rect x="0" y="0" width="170" height="82" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
-      <text x="20" y="34" font-weight="700">Persona</text>
-      <text x="20" y="60" font-size="14" fill="#606a73">who acts</text>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" fill="#202428">
+    <text x="42" y="58" font-size="31" font-weight="750">PersonaKit resolves one session contract before work starts</text>
+    <text x="42" y="90" font-size="16" fill="#606a73">Pair a persona with a directive, gather required context, then hand the resolved contract to the worker.</text>
+
+    <g transform="translate(70 132)" filter="url(#shadow)">
+      <rect x="0" y="0" width="300" height="116" rx="12" fill="#eef4f7" stroke="#9fb7c6"/>
+      <text x="24" y="40" font-size="20" font-weight="750">1. Define Session</text>
+      <text x="24" y="72" font-size="15" fill="#4c5964">Associate a Persona</text>
+      <text x="24" y="94" font-size="15" fill="#4c5964">with a Directive.</text>
     </g>
-    <g transform="translate(44 202)">
-      <rect x="0" y="0" width="170" height="82" rx="8" fill="#edf7ef" stroke="#9bc3a8"/>
-      <text x="20" y="34" font-weight="700">Kits</text>
-      <text x="20" y="60" font-size="14" fill="#606a73">how work happens</text>
+
+    <path d="M220 248 L220 278" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <g transform="translate(70 278)">
+      <rect x="0" y="0" width="300" height="218" rx="12" fill="#f7f9fb" stroke="#d9dee4"/>
+      <text x="24" y="38" font-size="20" font-weight="750">2. Reusable Inputs</text>
+      <g transform="translate(24 62)">
+        <rect x="0" y="0" width="252" height="42" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
+        <text x="16" y="26" font-size="16" font-weight="750">Persona</text>
+        <text x="236" y="26" font-size="14" fill="#606a73" text-anchor="end">role and default kits</text>
+      </g>
+      <g transform="translate(24 114)">
+        <rect x="0" y="0" width="252" height="42" rx="8" fill="#fff4df" stroke="#d4b36f"/>
+        <text x="16" y="26" font-size="16" font-weight="750">Directive</text>
+        <text x="236" y="26" font-size="14" fill="#606a73" text-anchor="end">goal, steps, checks</text>
+      </g>
+      <g transform="translate(24 166)">
+        <rect x="0" y="0" width="252" height="42" rx="8" fill="#edf7ef" stroke="#9bc3a8"/>
+        <text x="16" y="26" font-size="16" font-weight="750">Kits</text>
+        <text x="236" y="26" font-size="14" fill="#606a73" text-anchor="end">reusable guardrails</text>
+      </g>
     </g>
-    <g transform="translate(44 304)">
-      <rect x="0" y="0" width="170" height="82" rx="8" fill="#fff4df" stroke="#d4b36f"/>
-      <text x="20" y="34" font-weight="700">Directive</text>
-      <text x="20" y="60" font-size="14" fill="#606a73">what work mode</text>
+
+    <path d="M370 387 L440 387" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <g transform="translate(440 224)">
+      <rect x="0" y="0" width="300" height="326" rx="12" fill="#f7f9fb" stroke="#d9dee4"/>
+      <text x="24" y="38" font-size="20" font-weight="750">3. Required Context</text>
+      <text x="24" y="64" font-size="14" fill="#606a73">resolved from selected inputs</text>
+      <g transform="translate(24 92)">
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f3f0f7" stroke="#b7a7c8"/>
+        <text x="16" y="28" font-size="16" font-weight="750">Intent templates</text>
+      </g>
+      <g transform="translate(24 148)">
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
+        <text x="16" y="28" font-size="16" font-weight="750">Essentials</text>
+      </g>
+      <g transform="translate(24 204)">
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f7eeee" stroke="#d19a9a"/>
+        <text x="16" y="28" font-size="16" font-weight="750">Skill authorization</text>
+      </g>
+      <g transform="translate(24 260)">
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f5f7fa" stroke="#aeb8c2"/>
+        <text x="16" y="28" font-size="16" font-weight="750">References</text>
+      </g>
     </g>
-    <g transform="translate(302 152)">
-      <rect x="0" y="0" width="190" height="82" rx="8" fill="#f3f0f7" stroke="#b7a7c8"/>
-      <text x="20" y="34" font-weight="700">Essentials</text>
-      <text x="20" y="60" font-size="14" fill="#606a73">always included</text>
+
+    <path d="M740 387 L806 387" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <g transform="translate(806 254)" filter="url(#shadow)">
+      <rect x="0" y="0" width="284" height="190" rx="12" fill="#eef6fa" stroke="#8db3c9" stroke-width="2"/>
+      <text x="24" y="42" font-size="22" font-weight="750">Operating Contract</text>
+      <text x="24" y="78" font-size="15" fill="#4c5964">deterministic</text>
+      <text x="24" y="104" font-size="15" fill="#4c5964">inspectable</text>
+      <text x="24" y="130" font-size="15" fill="#4c5964">bounded</text>
+      <text x="24" y="156" font-size="15" fill="#4c5964">ready before launch</text>
     </g>
-    <g transform="translate(302 254)">
-      <rect x="0" y="0" width="190" height="82" rx="8" fill="#f7eeee" stroke="#d19a9a"/>
-      <text x="20" y="34" font-weight="700">Skill Auth</text>
-      <text x="20" y="60" font-size="14" fill="#606a73">capability boundary</text>
-    </g>
-    <path d="M214 141 C252 142 259 164 302 183" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <path d="M214 243 C250 241 260 222 302 202" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <path d="M214 345 C260 341 264 302 302 295" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <path d="M492 193 C555 192 578 206 638 214" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <path d="M492 295 C552 293 581 251 638 239" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <g transform="translate(638 150)">
-      <rect x="0" y="0" width="230" height="150" rx="8" fill="#f5f7fa" stroke="#aeb8c2" stroke-width="2"/>
-      <text x="24" y="38" font-size="22" font-weight="700">Operating Contract</text>
-      <text x="24" y="72" font-size="15" fill="#606a73">deterministic</text>
-      <text x="24" y="98" font-size="15" fill="#606a73">inspectable</text>
-      <text x="24" y="124" font-size="15" fill="#606a73">bounded</text>
-    </g>
-    <path d="M868 225 L990 225" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
-    <g transform="translate(990 162)">
-      <rect x="0" y="0" width="130" height="126" rx="8" fill="#eef1f4" stroke="#aeb8c2"/>
-      <text x="22" y="42" font-weight="700">Agent</text>
-      <text x="22" y="72" font-size="14" fill="#606a73">does the</text>
-      <text x="22" y="94" font-size="14" fill="#606a73">actual work</text>
+
+    <path d="M948 444 L948 498" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <g transform="translate(806 498)">
+      <rect x="0" y="0" width="284" height="92" rx="10" fill="#eef1f4" stroke="#aeb8c2"/>
+      <text x="24" y="30" font-size="18" font-weight="750">Session Active</text>
+      <text x="24" y="54" font-size="14" fill="#606a73">agent receives the contract</text>
+      <text x="24" y="76" font-size="14" fill="#606a73">skills/tools stay inside it</text>
     </g>
   </g>
 </svg>
-

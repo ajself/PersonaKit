@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { Code } from "astro:components";
 import CardGrid from "../components/CardGrid.astro";
 import Callout from "../components/Callout.astro";
 import DiagramPanel from "../components/DiagramPanel.astro";
@@ -14,10 +15,15 @@ const examples = (await getCollection("examples"))
 const exampleCards = examples.map((example) => ({
   description: example.data.description,
   href: sitePath(`examples/${example.data.routeSlug}/`),
-  label: "Study example",
+  label: "Open example",
   title: example.data.title,
   tone: "fit" as const,
 }));
+
+const demoCommands = `cd Site/public/examples/swift-cli-maintenance
+personakit validate --root personakit-root
+personakit contract --root personakit-root --session cli-maintenance
+personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."`;
 ---
 
 <SiteLayout
@@ -25,28 +31,28 @@ const exampleCards = examples.map((example) => ({
   description="PersonaKit resolves operating contracts for practical AI coding workflows."
 >
   <Hero
-    eyebrow="AI coding operating contracts"
-    title="PersonaKit makes repeated agent setup inspectable."
-    lede="Turn recurring coding work into a durable contract for role, rules, context, stop points, and allowed capabilities before any agent acts."
+    title="PersonaKit makes repeated agent setup inspectable and repeatable."
+    lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, and allowed capabilities before any agent acts."
     actions={[
-      { href: sitePath("learn/"), label: "Learn where it fits" },
-      { href: sitePath("start-here/"), label: "Run the first contract" },
+      { href: sitePath("start-here/"), label: "Start Here" },
+      { href: sitePath("examples/"), label: "Browse examples" },
     ]}
   />
 
   <main>
     <section>
       <h2>The Practical Problem</h2>
-      <div class="grid three">
-        <article class="card">
+      <p class="section-lede">The repeated pain is not that agents lack instructions. It is that the durable operating rules keep living in places people cannot inspect.</p>
+      <div class="problem-list">
+        <article>
           <h3>Setup Lives In Chat</h3>
           <p>Repeated work modes keep getting rebuilt as long prompts, remembered caveats, and "please be careful" reminders.</p>
         </article>
-        <article class="card">
+        <article>
           <h3>Tools Need Boundaries</h3>
           <p>Prompts, skills, MCP clients, harnesses, and agents each help, but none of them alone defines the operating contract.</p>
         </article>
-        <article class="card">
+        <article>
           <h3>Review Needs Proof</h3>
           <p>Before launching work, you should be able to inspect who the agent is, what rules apply, and which capabilities are allowed.</p>
         </article>
@@ -54,34 +60,43 @@ const exampleCards = examples.map((example) => ({
     </section>
 
     <section class="band">
-      <h2>Where PersonaKit Fits</h2>
-      <div class="fit-stack">
-        <article>
-          <h3>Prompt</h3>
-          <p>Expresses the task.</p>
+      <h2>How The Pieces Fit</h2>
+      <p class="section-lede">PersonaKit is the session-start resolver. Prompts describe the task, reusable PersonaKit content defines the contract, and skills/tools are used later under that contract.</p>
+      <div class="contract-flow" aria-label="Session prompt, PersonaKit contract resolution, and agent work stages">
+        <article class="flow-stage">
+          <p class="stage-kicker">1. Start The Session</p>
+          <h3>Prompt + Session</h3>
+          <p>The user asks for work and chooses the PersonaKit session that should govern it.</p>
+          <div class="flow-tags" aria-label="Session inputs">
+            <span>prompt</span>
+            <span>session id</span>
+          </div>
         </article>
-        <article>
-          <h3>Skill</h3>
-          <p>Performs a local procedure.</p>
-        </article>
-        <article>
-          <h3>Harness</h3>
-          <p>Wraps a model or tool runtime.</p>
-        </article>
-        <article>
-          <h3>MCP</h3>
-          <p>Exposes context and provenance.</p>
-        </article>
-        <article class="highlight">
+        <span class="flow-arrow" aria-hidden="true"></span>
+        <article class="flow-stage persona-stage">
+          <p class="stage-kicker">2. Resolve The Contract</p>
           <h3>PersonaKit</h3>
-          <p>Resolves the operating contract that governs all of it.</p>
+          <p>Combines persona, directive, kits, intents, essentials, references, and skill authorization into one inspectable contract.</p>
+          <div class="flow-tags" aria-label="Resolved contract parts">
+            <span>role</span>
+            <span>rules</span>
+            <span>allowed skills</span>
+            <span>stop points</span>
+          </div>
         </article>
-        <article>
-          <h3>Agent</h3>
-          <p>Receives context and does the work.</p>
+        <span class="flow-arrow" aria-hidden="true"></span>
+        <article class="flow-stage">
+          <p class="stage-kicker">3. Work Under It</p>
+          <h3>Agent + Skills</h3>
+          <p>The harness or adapter hands the contract to the worker. Skills and tools are used during the session inside those boundaries.</p>
+          <div class="flow-tags" aria-label="Worker surfaces">
+            <span>adapter</span>
+            <span>skills</span>
+            <span>tools</span>
+          </div>
         </article>
       </div>
-      <p><a class="button-link" href={sitePath("learn/")}>Open the learning map</a></p>
+      <p class="section-action"><a class="button-link" href={sitePath("learn/")}>Open the learning map</a></p>
     </section>
 
     <section>
@@ -89,10 +104,7 @@ const exampleCards = examples.map((example) => ({
       <div class="grid two">
         <article class="card">
           <h3>Try The Demo</h3>
-          <pre><code>cd Site/public/examples/swift-cli-maintenance
-personakit validate --root personakit-root
-personakit contract --root personakit-root --session cli-maintenance
-personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."</code></pre>
+          <Code code={demoCommands} lang="bash" theme="github-dark" />
         </article>
         <article class="card">
           <h3>What It Proves</h3>
@@ -103,7 +115,7 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
             <li>Deployment and autonomous loops are forbidden.</li>
             <li>The runtime payload is visible before launch.</li>
           </ul>
-          <a class="button-link" href={sitePath("start-here/")}>Follow the walkthrough</a>
+          <a class="button-link" href={sitePath("start-here/")}>Run the first contract</a>
         </article>
       </div>
     </section>
@@ -112,7 +124,7 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
       <h2>Think In Contracts</h2>
       <DiagramPanel
         src={sitePath("diagrams/personakit-operating-contract.svg")}
-        alt="Persona, kits, directive, essentials, and skill authorization resolving into an operating contract for an agent."
+        alt="Session, persona, directive, kits, intents, essentials, references, and skill authorization resolving into an operating contract for an agent."
       />
       <Callout>
         <p><strong>PersonaKit is not the worker.</strong> It prepares the contract. Your coding agent, harness, or supported adapter performs the work.</p>
@@ -120,7 +132,8 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
     </section>
 
     <section>
-      <h2>Learn By Example</h2>
+      <h2>Reference Examples</h2>
+      <p class="section-lede">After the Start Here guide, use these roots as practical patterns for recurring work modes.</p>
       <CardGrid cards={exampleCards} />
     </section>
 
@@ -129,48 +142,145 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
       <div class="grid two">
         <article class="card">
           <h3>Good Fit</h3>
-          <p>Code review, bounded implementation, pack authoring, release checks, and MCP-aware grounding where the same boundaries should survive across sessions.</p>
+          <p>Use it at the start of a repeated session when a prompt plus skills is not enough: role, rules, allowed capabilities, stop points, and proof need to be inspectable before work begins.</p>
         </article>
         <article class="card">
           <h3>Bad Fit</h3>
-          <p>Open-ended ideation, deployment, secret retrieval, generic task tracking, formatter invocations, and long-running autonomous orchestration.</p>
+          <p>Skip it when you only need a one-off prompt, a skill or tool inside an already-running conversation, a place to track tasks, or exploratory planning before the work mode is clear.</p>
         </article>
       </div>
-      <p><a class="button-link" href={sitePath("when-to-use/")}>Open the fit guide</a></p>
+      <p class="section-action"><a class="button-link" href={sitePath("when-to-use/")}>Check fit before authoring</a></p>
     </section>
   </main>
 </SiteLayout>
 
 <style>
-  .fit-stack {
+  .problem-list {
     display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    margin: 18px 0 22px;
+    gap: 0;
+    max-width: 860px;
+    margin: 18px 0 0;
+    border-top: 1px solid var(--line);
   }
 
-  .fit-stack article {
+  .problem-list article {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .problem-list article:last-child {
+    border-bottom: 0;
+  }
+
+  .problem-list h3 {
+    margin-bottom: 6px;
+  }
+
+  .problem-list p {
+    max-width: 720px;
+    color: var(--muted);
+  }
+
+  .section-lede {
+    max-width: 760px;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  .section-action {
+    margin: 0;
+  }
+
+  .section-action .button-link {
+    margin-top: 18px;
+  }
+
+  .contract-flow {
+    display: grid;
+    align-items: center;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.08fr) auto minmax(0, 1fr);
+    margin: 24px 0 22px;
+  }
+
+  .flow-stage {
     min-width: 0;
-    padding: 14px;
+    min-height: 100%;
+    padding: 18px;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: #fff;
+    box-shadow: 0 10px 24px rgb(32 36 40 / 5%);
   }
 
-  .fit-stack .highlight {
+  .flow-stage h3 {
+    margin-bottom: 8px;
+  }
+
+  .flow-stage p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .stage-kicker {
+    margin-bottom: 8px;
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+
+  .flow-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 16px;
+  }
+
+  .flow-tags span {
+    padding: 4px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #f7f9fb;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  .flow-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    width: 22px;
+    height: 22px;
+    color: var(--blue);
+    font-weight: 850;
+    line-height: 1;
+  }
+
+  .flow-arrow::before {
+    content: "→";
+    font-size: 22px;
+  }
+
+  .persona-stage {
     border-color: #8db3c9;
     background: #eef6fa;
   }
 
   @media (max-width: 960px) {
-    .fit-stack {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 520px) {
-    .fit-stack {
+    .contract-flow {
       grid-template-columns: 1fr;
+    }
+
+    .flow-arrow {
+      justify-self: start;
+      margin-left: 18px;
+    }
+
+    .flow-arrow::before {
+      content: "↓";
+      font-size: 20px;
     }
   }
 </style>

@@ -1,4 +1,5 @@
 ---
+import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
 
 interface Props {
@@ -25,6 +26,7 @@ const pageTitle = title === "PersonaKit" ? title : `${title} - PersonaKit`;
   <body>
     <Nav />
     <slot />
+    <Footer />
   </body>
 </html>
 
@@ -158,6 +160,10 @@ const pageTitle = title === "PersonaKit" ? title : `${title} - PersonaKit`;
     padding: 32px max(24px, calc(50vw - 560px));
     background: var(--band);
     border-block: 1px solid var(--line);
+  }
+
+  .band > h2:first-child {
+    margin-top: 0;
   }
 
   .button-link {

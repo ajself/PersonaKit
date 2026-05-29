@@ -16,7 +16,7 @@ rootPath: "/examples/swift-cli-maintenance/personakit-root"
 order: 1
 ---
 
-This example is the happy path for PersonaKit V1. It shows how a small implementation lane can authorize one adapter capability while forbidding deployment and autonomous loops.
+This example is the happy path for a bounded PersonaKit implementation lane. It shows how one adapter capability can be authorized while deployment and autonomous loops are forbidden.
 
 Use this when a practical coding task repeats often enough that the same role, stop points, and verification should be visible every time.
 
