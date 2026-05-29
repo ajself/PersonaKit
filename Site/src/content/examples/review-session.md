@@ -31,7 +31,7 @@ sourceFiles:
     path: "Packs/skills/code-editing.skill.json"
 ---
 
-This example is intentionally non-executing. It shows how PersonaKit can define a review identity without authorizing code editing, deployment, or external adapter launch.
+This example is intentionally non-executing. It shows how PersonaKit can define a review identity without authorizing code editing, deployment, or tool-driven follow-up work.
 
 Use this when the important boundary is separation of authority: the reviewer can identify defects, but cannot quietly become the fixer.
 

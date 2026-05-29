@@ -23,11 +23,10 @@
     "cli-maintenance-guardrails"
   ],
   "allowedSkillIds": [
-    "opencode-cli"
+    "code-editing"
   ],
   "forbiddenSkillIds": [
     "deployment-runner",
     "autonomous-agent-loop"
   ]
 }
-

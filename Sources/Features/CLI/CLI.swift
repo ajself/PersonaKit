@@ -74,7 +74,6 @@ struct PersonaKitCommand: ParsableCommand {
       ListCLICommand.self,
       GraphCommand.self,
       MCPCommand.self,
-      RunCommand.self,
     ]
   )
 }

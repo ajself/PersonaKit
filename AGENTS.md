@@ -16,9 +16,9 @@ features, state owners, IO boundaries, concurrency, validation, and approved
 exceptions.
 
 PersonaKit remains narrow: it resolves deterministic operating contracts and
-can launch one explicitly configured adapter through `personakit run`.
-PersonaKit is not an autonomous agent, planner, memory system, workflow engine,
-task manager, or orchestration layer.
+exports inspectable handoff context for coding tools. PersonaKit is not an
+autonomous agent, planner, memory system, workflow engine, task manager,
+launcher, or orchestration layer.
 
 ## Default Agent Role
 
@@ -64,10 +64,9 @@ For ordinary repo work:
 - existing project commands and conventions should be preferred over new
   workflows
 
-Agent-side command usage is different from PersonaKit product execution
-behavior. Agents may run bounded repo commands while working in this repository;
-PersonaKit itself must not gain broad execution capabilities outside the narrow
-`personakit run` launcher path.
+Agent-side command usage is different from PersonaKit product behavior. Agents
+may run bounded repo commands while working in this repository; PersonaKit
+itself must not gain command-launch, proxy, or orchestration behavior.
 
 ## When PersonaKit Grounding Applies
 
@@ -77,8 +76,7 @@ PersonaKit grounding is required when the task explicitly uses or modifies:
   `.personakit` content
 - contract resolution, skill authorization, stop points, or contract provenance
 - MCP grounding behavior
-- `personakit run` behavior, runtime payloads, adapter authorization, or adapter
-  launch behavior
+- contract export behavior, handoff context, or skill authorization
 - behavior that depends on a resolved PersonaKit contract
 
 If a PersonaKit session is explicitly activated, its constraints govern the work
@@ -92,28 +90,27 @@ Examples:
 | "Use product-quality-review on this repo" | No |
 | "Fix a typo in README" | No |
 | "Operate under session `solo-dev`" | Yes |
-| "Modify `personakit run` payload behavior" | Yes |
+| "Modify `personakit export` output behavior" | Yes |
 | "Review MCP contract resolution" | Yes |
 
 ## Product Boundaries
 
 Keep PersonaKit narrow, deterministic, and inspectable.
 
-`personakit run` is the only approved launcher path. It is limited to:
+PersonaKit is limited to:
 
 - resolving PersonaKit context deterministically
-- assembling an inspectable runtime payload
-- invoking one configured agent adapter
-- returning the adapter exit status
+- assembling inspectable contract and export output
+- serving read-only MCP grounding
 
 Do not add, without explicit maintainer approval:
 
 - general workflow execution
 - arbitrary shell, subprocess, tool, or MCP-driven execution
+- agent launchers, adapter proxying, or command pass-through
 - long-running autonomous loops
-- memory, persistence, or session continuation for `personakit run`
+- memory, persistence, or session continuation
 - lead-worker, RPI, multi-agent, or orchestration control flows
-- additional supported adapters
 - legacy task-management or workflow-platform concepts
 
 Determinism is required. Output must be stable across runs. Sort by id where
@@ -154,7 +151,7 @@ Ask before:
 - dependency installation
 - credential, signing, notarization, or release configuration changes
 - public behavior or public API changes
-- adding adapters
+- adding execution, proxy, or command-launch surfaces
 - broad network work
 - commits, pushes, tags, releases, or pull requests
 - expanding the requested scope

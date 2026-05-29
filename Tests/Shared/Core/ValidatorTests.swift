@@ -21,7 +21,7 @@ struct ValidatorTests {
           directives: 1,
           intents: 0,
           references: 0,
-          skills: 2,
+          skills: 0,
           essentials: 1
         )
     )
@@ -32,7 +32,7 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/run-boundaries.md")
+    let missingURL = root.appendingPathComponent("Packs/essentials/contract-boundaries.md")
     try FileManager.default.removeItem(at: missingURL)
     try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev.session.json"))
 
@@ -44,9 +44,9 @@ struct ValidatorTests {
           entityType: .kit,
           entityId: "cli-guardrails",
           field: "essentialIds",
-          missingId: "run-boundaries",
-          expectedPath: "Packs/essentials/run-boundaries.md",
-          message: "Missing essential file at Packs/essentials/run-boundaries.md."
+          missingId: "contract-boundaries",
+          expectedPath: "Packs/essentials/contract-boundaries.md",
+          message: "Missing essential file at Packs/essentials/contract-boundaries.md."
         )
       ]
     )

@@ -23,7 +23,7 @@ const exampleCards = examples.map((example) => ({
 const demoCommands = `cd Site/public/examples/swift-cli-maintenance
 personakit validate --root personakit-root
 personakit contract --root personakit-root --session cli-maintenance
-personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."`;
+personakit export --root personakit-root --session cli-maintenance`;
 ---
 
 <SiteLayout
@@ -54,7 +54,7 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
         </article>
         <article>
           <h3>Review Needs Proof</h3>
-          <p>Before launching work, you should be able to inspect who the agent is, what rules apply, and which capabilities are allowed.</p>
+          <p>Before work starts, you should be able to inspect who the agent is, what rules apply, and which capabilities are allowed.</p>
         </article>
       </div>
     </section>
@@ -88,15 +88,15 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
         <article class="flow-stage">
           <p class="stage-kicker">3. Work Under It</p>
           <h3>Agent + Skills</h3>
-          <p>The harness or adapter hands the contract to the worker. Skills and tools are used during the session inside those boundaries.</p>
+          <p>The user or harness hands the exported contract to the worker. Skills and tools are used during the session inside those boundaries.</p>
           <div class="flow-tags" aria-label="Worker surfaces">
-            <span>adapter</span>
+            <span>harness</span>
             <span>skills</span>
             <span>tools</span>
           </div>
         </article>
       </div>
-      <p class="section-note"><strong>PersonaKit Studio</strong> sits on the same contract model as a visual inspection and pack-maintenance surface. The CLI and static example roots remain the primary path for running and verifying contracts.</p>
+      <p class="section-note"><strong>PersonaKit Studio</strong> sits on the same contract model as a visual inspection and pack-maintenance surface. The CLI and static example roots remain the primary path for validating, inspecting, and exporting contracts.</p>
       <p class="section-action"><a class="button-link" href={sitePath("learn/")}>Open the learning map</a></p>
     </section>
 
@@ -112,9 +112,9 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
           <ul>
             <li>The authored root is valid.</li>
             <li>The session resolves deterministically.</li>
-            <li>OpenCode is authorized for this work mode.</li>
+            <li>Code editing is authorized for this work mode.</li>
             <li>Deployment and autonomous loops are forbidden.</li>
-            <li>The runtime payload is visible before launch.</li>
+            <li>The handoff context is visible before work starts.</li>
           </ul>
           <a class="button-link" href={sitePath("start-here/")}>Run the first contract</a>
         </article>
@@ -128,7 +128,7 @@ personakit run --root personakit-root --session cli-maintenance --agent opencode
         alt="Session, persona, directive, kits, intents, essentials, references, and skill authorization resolving into an operating contract for an agent."
       />
       <Callout>
-        <p><strong>PersonaKit is not the worker.</strong> It prepares the contract. Your coding agent, harness, or supported adapter performs the work.</p>
+        <p><strong>PersonaKit is not the worker.</strong> It prepares the contract. Your coding agent or harness performs the work.</p>
       </Callout>
     </section>
 

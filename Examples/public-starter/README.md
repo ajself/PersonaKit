@@ -21,32 +21,31 @@ Inspect the resolved contract:
 swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-Preview the runtime payload without launching an agent:
+Export handoff context:
 
 ```bash
-swift run personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement."
+swift run personakit export --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-Launch the configured adapter:
+Copy handoff context:
 
 ```bash
-swift run personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode -- "Make a small, reviewable CLI improvement."
+swift run personakit export --root Examples/public-starter/.personakit --session solo-dev --copy
 ```
 
-OpenCode must be installed and available on `PATH` for non-dry-run launches.
+Paste the copied context into the coding tool you use for the actual work.
 
-## Expected Dry-Run Shape
+## Expected Export Shape
 
-The dry-run output starts with a deterministic runtime payload:
+The export output starts with deterministic contract context:
 
 ```text
-# PersonaKit Runtime Payload
+PersonaKit-Output-Version: 1
 
-## Resolution
-- session: solo-dev
-- persona: solo-developer
-- directive: small-cli-change
-- kits: [cli-guardrails]
+# Persona
+Name: Solo Developer
+Id: solo-developer
 ```
 
-The payload then includes the resolved operating contract followed by the task text.
+The output then includes the resolved skill contract, essentials, directive, and
+any matched references.

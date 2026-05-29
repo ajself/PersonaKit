@@ -186,12 +186,8 @@ enum StarterKitManifest {
           "defaultKitIds": [
             "cli-guardrails"
           ],
-          "allowedSkillIds": [
-            "opencode-cli"
-          ],
-          "forbiddenSkillIds": [
-            "autonomous-agent-loop"
-          ]
+          "allowedSkillIds": [],
+          "forbiddenSkillIds": []
         }
 
         """.utf8Data
@@ -206,7 +202,7 @@ enum StarterKitManifest {
           "name": "CLI Guardrails",
           "summary": "Guardrails for narrow PersonaKit CLI work.",
           "essentialIds": [
-            "run-boundaries"
+            "contract-boundaries"
           ]
         }
 
@@ -229,7 +225,7 @@ enum StarterKitManifest {
               "text": "Make the smallest implementation or documentation update that satisfies the task."
             },
             {
-              "text": "Stop for review if the task requires new execution behavior, a new adapter, persistence, or orchestration.",
+              "text": "Stop for review if the task requires new execution behavior, persistence, or orchestration.",
               "requiresReview": true
             },
             {
@@ -253,69 +249,15 @@ enum StarterKitManifest {
             }
           ],
           "requiresIntentTemplateIds": [],
-          "requiresSkillIds": [
-            "opencode-cli"
-          ]
+          "requiresSkillIds": []
         }
 
         """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/skills/opencode-cli.skill.json",
+      relativePath: "Packs/essentials/contract-boundaries.md",
       contents:
-        """
-        {
-          "id": "opencode-cli",
-          "version": "1.0",
-          "name": "OpenCode CLI",
-          "description": "Use the local OpenCode CLI outside PersonaKit after PersonaKit resolves the operating contract.",
-          "providedBy": [
-            "opencode"
-          ],
-          "risk": {
-            "level": "medium",
-            "requiresHumanReview": true,
-            "notes": [
-              "PersonaKit resolves context; OpenCode performs the requested work."
-            ]
-          },
-          "notes": [
-            "PersonaKit supports one explicitly selected agent adapter."
-          ]
-        }
-
-        """.utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/skills/autonomous-agent-loop.skill.json",
-      contents:
-        """
-        {
-          "id": "autonomous-agent-loop",
-          "version": "1.0",
-          "name": "Autonomous Agent Loop",
-          "description": "Long-running autonomous planning or execution loop.",
-          "providedBy": [
-            "unsupported"
-          ],
-          "risk": {
-            "level": "high",
-            "requiresHumanReview": true,
-            "notes": [
-              "Out of scope for PersonaKit."
-            ]
-          },
-          "notes": [
-            "Included only so the example can explicitly forbid this capability."
-          ]
-        }
-
-        """.utf8Data
-    ),
-    StarterFile(
-      relativePath: "Packs/essentials/run-boundaries.md",
-      contents:
-        "# Run Boundaries\n\nPersonaKit resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before running work.\n- Use dry-run output to inspect the runtime payload before launching an agent.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
+        "# Contract Boundaries\n\nPersonaKit resolves a deterministic operating contract and exports handoff context for another coding tool.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before handing context to another tool.\n- Use `personakit contract` to inspect structured resolution output.\n- Use `personakit export` to produce handoff context.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
         .utf8Data
     ),
     StarterFile(

@@ -24,7 +24,7 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .essentials)
 
-    let expected = "run-boundaries"
+    let expected = "contract-boundaries"
 
     #expect(output == expected)
   }

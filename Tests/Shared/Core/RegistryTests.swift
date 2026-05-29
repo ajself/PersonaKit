@@ -16,7 +16,7 @@ struct RegistryTests {
     #expect(registry.kits.map(\.id) == ["cli-guardrails"])
     #expect(registry.directives.map(\.id) == ["small-cli-change"])
     #expect(registry.intentTemplates.map(\.id) == [])
-    #expect(registry.skills.map(\.id) == ["autonomous-agent-loop", "opencode-cli"])
+    #expect(registry.skills.map(\.id) == [])
   }
 
   @Test

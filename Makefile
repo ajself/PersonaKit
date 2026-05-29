@@ -165,7 +165,7 @@ core-validate-repo: swiftpm-prepare
 public-check: swiftpm-prepare
 	$(SWIFT_TEST)
 	$(SWIFT_RUN) personakit --help
-	$(SWIFT_RUN) personakit run --help
+	$(SWIFT_RUN) personakit export --help
 	rm -rf /tmp/personakit-public-check
 	mkdir -p /tmp/personakit-public-check
 	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | rg .
@@ -177,21 +177,23 @@ public-check: swiftpm-prepare
 	$(SWIFT_RUN) personakit contract --root Examples/public-starter/.personakit --session solo-dev > /tmp/personakit-public-check/example-contract.json
 	rg '"sessionId" : "solo-dev"' /tmp/personakit-public-check/example-contract.json
 	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-check/example-contract.json
-	$(SWIFT_RUN) personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-check/example-dry-run.md
-	rg 'session: solo-dev' /tmp/personakit-public-check/example-dry-run.md
-	rg '## Task' /tmp/personakit-public-check/example-dry-run.md
+	$(SWIFT_RUN) personakit export --root Examples/public-starter/.personakit --session solo-dev > /tmp/personakit-public-check/example-export.md
+	rg 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/example-export.md
+	rg '# Persona' /tmp/personakit-public-check/example-export.md
+	rg '# Skill Contract' /tmp/personakit-public-check/example-export.md
+	rg '# Directive' /tmp/personakit-public-check/example-export.md
 	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/.personakit
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/.personakit
-	$(SWIFT_RUN) personakit run --root /tmp/personakit-public-check/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-check/init-dry-run.md
-	rg 'session: solo-dev' /tmp/personakit-public-check/init-dry-run.md
-	rg '## Task' /tmp/personakit-public-check/init-dry-run.md
+	$(SWIFT_RUN) personakit export --root /tmp/personakit-public-check/.personakit --session solo-dev > /tmp/personakit-public-check/init-export.md
+	rg 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/init-export.md
+	rg '# Persona' /tmp/personakit-public-check/init-export.md
+	rg '# Skill Contract' /tmp/personakit-public-check/init-export.md
+	rg '# Directive' /tmp/personakit-public-check/init-export.md
 	mkdir -p /tmp/personakit-public-check/non-empty
 	printf "occupied\n" > /tmp/personakit-public-check/non-empty/README.md
 	! $(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty
 	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty --force
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/non-empty
-	! $(SWIFT_RUN) personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-check/legacy-rejection.txt 2>&1
-	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-check/legacy-rejection.txt
 	! rg -n "AJ|Orbit|Taskboard|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples AGENTS.md
 	rg -n "memory|orchestration" .personakit README.md Docs Examples AGENTS.md || true
 

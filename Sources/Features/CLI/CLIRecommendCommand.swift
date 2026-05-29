@@ -140,7 +140,7 @@ struct RecommendCommand: ParsableCommand {
       lines.append("   next:")
       lines.append("     \(baseCommand(for: .contract)) --session \(recommendation.sessionId)")
       lines.append(
-        "     \(baseCommand(for: .run)) --session \(recommendation.sessionId) --agent <agent> -- \"<task>\""
+        "     \(baseCommand(for: .export)) --session \(recommendation.sessionId) --copy"
       )
     }
 
@@ -212,6 +212,6 @@ struct RecommendCommand: ParsableCommand {
 
 private enum Subcommand: String {
   case contract
+  case export
   case list
-  case run
 }

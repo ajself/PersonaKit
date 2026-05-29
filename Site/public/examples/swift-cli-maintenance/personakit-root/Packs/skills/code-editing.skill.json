@@ -1,0 +1,19 @@
+{
+  "id": "code-editing",
+  "version": "1.0",
+  "name": "Code Editing",
+  "description": "Use a coding tool outside PersonaKit after PersonaKit resolves the operating contract.",
+  "providedBy": [
+    "coding-tool"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "PersonaKit resolves context; the coding tool performs the requested work."
+    ]
+  },
+  "notes": [
+    "This skill records one bounded external capability, not a launcher or general agent loop."
+  ]
+}

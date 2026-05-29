@@ -2,10 +2,10 @@
 
 PersonaKit eliminates repeated prompt setup before using AI coding tools.
 
-PersonaKit is for solo developers who want one reusable operating contract, one inspectable runtime payload, and one bounded agent launch:
+PersonaKit is for solo developers who want one reusable operating contract and one inspectable handoff for their coding tool:
 
 ```bash
-personakit run --session <id> --agent opencode -- "<task>"
+personakit export --session <id> --copy
 ```
 
 PersonaKit is not an agent, planner, memory system, task manager, or orchestration layer. It resolves a known contract; your coding agent does the work.
@@ -21,7 +21,6 @@ PersonaKit currently builds with:
 - macOS 26 SDK
 - Swift tools 6.2
 - Xcode 26 or newer
-- OpenCode on `PATH` only when using `personakit run --agent opencode` without `--dry-run`
 
 ### 1. Build The CLI
 
@@ -61,23 +60,23 @@ swift run personakit validate --root Examples/public-starter/.personakit
 swift run personakit contract --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-Use this before launching work when you want to inspect the resolved persona, directive, kits, skill authorization, and stop points.
+Use this before handing context to another tool when you want to inspect the resolved persona, directive, kits, skill authorization, and stop points.
 
-### 4. Dry-Run The Runtime Payload
-
-```bash
-swift run personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement."
-```
-
-The dry-run prints the exact payload PersonaKit would send to the supported adapter.
-
-### 5. Launch The Supported Adapter
+### 4. Export The Handoff Context
 
 ```bash
-swift run personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode -- "Make a small, reviewable CLI improvement."
+swift run personakit export --root Examples/public-starter/.personakit --session solo-dev
 ```
 
-For the current implementation, `opencode` is the only supported agent adapter. The selected session must authorize a skill whose `providedBy` includes `opencode`.
+The export command prints the resolved operating contract as Markdown so you can review it or hand it to your coding tool.
+
+### 5. Copy The Handoff Context
+
+```bash
+swift run personakit export --root Examples/public-starter/.personakit --session solo-dev --copy
+```
+
+Paste the copied context into the coding tool you use for the actual work.
 
 When you are unsure which session fits a task:
 
@@ -108,7 +107,7 @@ To create starter content in a new or throwaway project:
 mkdir -p /tmp/personakit-demo
 swift run personakit init /tmp/personakit-demo/.personakit
 swift run personakit validate --root /tmp/personakit-demo/.personakit
-swift run personakit run --root /tmp/personakit-demo/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement."
+swift run personakit export --root /tmp/personakit-demo/.personakit --session solo-dev --copy
 ```
 
 `personakit init` refuses to replace a non-empty destination by default. Use `--force` only when you intentionally want to replace an existing starter root:
@@ -161,8 +160,8 @@ Primary path:
 ```text
 personakit validate
 personakit contract --session <id>
-personakit run --session <id> --agent opencode --dry-run -- "<task>"
-personakit run --session <id> --agent opencode -- "<task>"
+personakit export --session <id>
+personakit export --session <id> --copy
 ```
 
 Authoring, inspection, and integration:
@@ -172,15 +171,14 @@ personakit init <path>
 personakit create <subcommand>
 personakit guidance
 personakit recommend --goal "<task>"
-personakit export --session <id>
-personakit export --session <id> --copy
+personakit export --session <id> --output <path>
 personakit resolve-references --session <id>
 personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
 personakit mcp
 ```
 
-`run` is the primary product direction. If a feature does not directly support deterministic contract resolution, dry-run inspection, or the bounded adapter launch, it is out of scope for PersonaKit.
+Deterministic contract resolution and export are the primary product direction. If a feature does not directly support validation, inspection, handoff context, or read-only MCP grounding, it is out of scope for PersonaKit.
 
 ## MCP
 
@@ -190,7 +188,7 @@ PersonaKit includes a read-only MCP server so compatible tools can read PersonaK
 personakit mcp
 ```
 
-MCP is an integration surface, not the core product story. Focus on deterministic contract resolution and the `run` workflow.
+MCP is an integration surface, not the core product story. Focus on deterministic contract resolution and exported handoff context.
 
 For unfamiliar MCP clients and AI agents, start with:
 
@@ -219,7 +217,7 @@ PersonaKit should remain:
 - deterministic over magical
 - local workflow first
 - one sharp workflow over many partial ones
-- inspectable through export and dry-run flows
+- inspectable through contract and export flows
 
 PersonaKit is deliberately not:
 
@@ -233,7 +231,7 @@ PersonaKit activates the contract. Another tool performs the work.
 
 ## Repository Status
 
-This repository is focused on the `personakit run` path described above.
+This repository is focused on the contract and export paths described above.
 Use `make public-check` before public-facing changes.
 
 ## Contributing

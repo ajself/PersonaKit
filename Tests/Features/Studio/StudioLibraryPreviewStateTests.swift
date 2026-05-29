@@ -49,16 +49,16 @@ struct StudioLibraryPreviewStateTests {
     let state = StudioLibraryPreviewState(
       selection: .skills,
       item: WorkspaceListItem(
-        id: "opencode-cli",
-        displayName: "OpenCode CLI",
-        fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Packs/skills/opencode-cli.skill.json"),
+        id: "code-editing",
+        displayName: "Code Editing",
+        fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Packs/skills/code-editing.skill.json"),
         sourceScope: .project,
         skillMetadata: WorkspaceSkillMetadata(
-          description: "Allows OpenCode to perform bounded code edits from resolved PersonaKit context.",
-          providedBy: ["opencode"],
+          description: "Allows a coding tool to perform bounded code edits from resolved PersonaKit context.",
+          providedBy: ["coding-tool"],
           riskLevel: "medium",
           requiresHumanReview: true,
-          notes: ["PersonaKit resolves context; OpenCode performs work."]
+          notes: ["PersonaKit resolves context; the coding tool performs work."]
         )
       ),
       workspaceURL: URL(fileURLWithPath: "/Workspace")
@@ -66,13 +66,13 @@ struct StudioLibraryPreviewStateTests {
 
     #expect(
       state.skillCapabilityLine
-        == "Allows OpenCode to perform bounded code edits from resolved PersonaKit context."
+        == "Allows a coding tool to perform bounded code edits from resolved PersonaKit context."
     )
     #expect(state.skillBoundaryLine == "Capability boundary, not a runnable command.")
-    #expect(state.skillProviderLine == "opencode")
+    #expect(state.skillProviderLine == "coding-tool")
     #expect(state.skillRiskLine == "medium")
     #expect(state.skillReviewLine == "Required")
-    #expect(state.skillNotesLine == "PersonaKit resolves context; OpenCode performs work.")
-    #expect(state.accessibilitySummary.contains("provided by opencode"))
+    #expect(state.skillNotesLine == "PersonaKit resolves context; the coding tool performs work.")
+    #expect(state.accessibilitySummary.contains("provided by coding-tool"))
   }
 }

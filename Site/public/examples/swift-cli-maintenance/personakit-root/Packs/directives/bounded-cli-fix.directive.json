@@ -11,7 +11,7 @@
       "text": "Make the smallest implementation or documentation change that satisfies the request."
     },
     {
-      "text": "Stop for review if the request requires a new adapter, arbitrary command execution, persistence, or task orchestration.",
+      "text": "Stop for review if the request requires arbitrary command execution, persistence, or task orchestration.",
       "requiresReview": true
     },
     {
@@ -36,7 +36,6 @@
   ],
   "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
-    "opencode-cli"
+    "code-editing"
   ]
 }
-

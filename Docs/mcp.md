@@ -4,7 +4,7 @@
 
 PersonaKit MCP gives AI tools a read-only way to discover and resolve PersonaKit operating contracts.
 
-It is for grounding, inspection, and provenance. It is not an execution lane. For execution, use `personakit run`.
+It is for grounding, inspection, and provenance. It is not an execution lane. For handoff context, use `personakit export`.
 
 ## What To Do
 
