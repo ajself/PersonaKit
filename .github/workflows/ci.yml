@@ -48,5 +48,5 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Run public V1 check
-        run: make public-v1-check
+      - name: Run public check
+        run: make public-check

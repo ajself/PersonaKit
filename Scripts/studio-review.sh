@@ -27,7 +27,7 @@ find "$OUTPUT_DIR" -maxdepth 1 \
   -delete
 HOME="$REVIEW_HOME" defaults delete "$DEFAULTS_SUITE" >/dev/null 2>&1 || true
 HOME="$REVIEW_HOME" defaults write "$DEFAULTS_SUITE" \
-  "studio.recentWorkspaces.v1" \
+  "studio.recentWorkspaces" \
   -string "[\"$VALID_WORKSPACE\",\"$INVALID_WORKSPACE\"]"
 
 cd "$REPO_ROOT"
@@ -682,7 +682,7 @@ require_accessibility_text_count "$OUTPUT_DIR/01-no-workspace.accessibility.txt"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Workspace Status"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Inspector"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Help"
-require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "solo-dev-v1"
+require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "solo-dev"
 require_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Search Sessions"
 require_accessibility_text_count "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "description=Hide Sidebar" 1
 reject_accessibility_text "$OUTPUT_DIR/02-loaded-public-workspace.accessibility.txt" "Session Inspector"

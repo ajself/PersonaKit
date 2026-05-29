@@ -53,7 +53,7 @@ PersonaKit is not only a SwiftUI app. Apply FOSA by surface:
 | MCP | Deterministic read-only resource, prompt, and tool context. No writes or command execution. |
 | Shared Context Core | Deterministic value types, resolvers, validators, loaders, and explicit file-system parameters. |
 | Shared Workspace Core | Deterministic workspace managers/builders with explicit IO seams and stable ordering. |
-| Site/docs/examples | Product explanation and release artifacts; preserve public V1 behavior and deterministic examples. |
+| Site/docs/examples | Product explanation and release artifacts; preserve public behavior and deterministic examples. |
 
 When a surface is outside SwiftUI, enforce FOSA's underlying rules: one owner for
 mutable data, named mutation paths, IO at explicit boundaries, deterministic

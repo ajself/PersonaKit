@@ -2,7 +2,7 @@
   "id": "small-cli-change",
   "version": "1.0",
   "title": "Make a small CLI change",
-  "goal": "Complete one bounded CLI improvement without expanding PersonaKit's V1 scope.",
+  "goal": "Complete one bounded CLI improvement without expanding PersonaKit's supported scope.",
   "steps": [
     {
       "text": "Read the active contract and identify the requested change."

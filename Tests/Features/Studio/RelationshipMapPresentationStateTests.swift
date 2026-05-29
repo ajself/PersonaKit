@@ -18,9 +18,9 @@ struct StudioRelationshipMapPresentationStateTests {
           badges: []
         ),
         WorkspaceSessionMapNode(
-          key: "kit:v1-cli-guardrails",
-          id: "v1-cli-guardrails",
-          displayName: "V1 CLI Guardrails",
+          key: "kit:cli-guardrails",
+          id: "cli-guardrails",
+          displayName: "CLI Guardrails",
           kind: .kit,
           isMissing: false,
           badges: []
@@ -53,9 +53,9 @@ struct StudioRelationshipMapPresentationStateTests {
           badges: []
         ),
         WorkspaceSessionMapNode(
-          key: "kit:v1-cli-guardrails",
-          id: "v1-cli-guardrails",
-          displayName: "V1 CLI Guardrails",
+          key: "kit:cli-guardrails",
+          id: "cli-guardrails",
+          displayName: "CLI Guardrails",
           kind: .kit,
           isMissing: false,
           badges: []
@@ -64,12 +64,12 @@ struct StudioRelationshipMapPresentationStateTests {
       edges: [
         WorkspaceSessionMapEdge(
           fromKey: "persona:solo-developer",
-          toKey: "kit:v1-cli-guardrails",
+          toKey: "kit:cli-guardrails",
           reason: "persona.defaultKitIds"
         ),
         WorkspaceSessionMapEdge(
           fromKey: "persona:solo-developer",
-          toKey: "kit:v1-cli-guardrails",
+          toKey: "kit:cli-guardrails",
           reason: "persona.defaultKitIds"
         ),
       ],
@@ -79,7 +79,7 @@ struct StudioRelationshipMapPresentationStateTests {
 
     #expect(
       RelationshipMapPresentationState.relationshipSummaries(map: map) == [
-        "solo-developer -> default kit -> v1-cli-guardrails"
+        "solo-developer -> default kit -> cli-guardrails"
       ]
     )
   }
@@ -117,7 +117,7 @@ struct StudioRelationshipMapPresentationStateTests {
   func layoutStatePrunesOffsetsForHiddenNodes() {
     var layoutState = RelationshipMapLayoutState(
       nodeOffsetsByKey: [
-        "kit:v1-cli-guardrails": CGSize(
+        "kit:cli-guardrails": CGSize(
           width: 10,
           height: 20
         ),
@@ -300,13 +300,13 @@ struct StudioRelationshipMapPresentationStateTests {
     let routes = RelationshipMapRouteGeometry.routeRecords(
       edges: [
         WorkspaceSessionMapEdge(
-          fromKey: "session:solo-dev-v1",
+          fromKey: "session:solo-dev",
           toKey: "persona:solo-developer",
           reason: "session.personaId"
         ),
         WorkspaceSessionMapEdge(
           fromKey: "persona:solo-developer",
-          toKey: "kit:v1-cli-guardrails",
+          toKey: "kit:cli-guardrails",
           reason: "persona.defaultKitIds"
         ),
       ],
@@ -350,7 +350,7 @@ struct StudioRelationshipMapPresentationStateTests {
     let routes = RelationshipMapRouteGeometry.routeRecords(
       edges: [
         WorkspaceSessionMapEdge(
-          fromKey: "session:solo-dev-v1",
+          fromKey: "session:solo-dev",
           toKey: "directive:small-cli-change",
           reason: "session.directiveId"
         ),
@@ -569,7 +569,7 @@ struct StudioRelationshipMapPresentationStateTests {
         width: 170,
         height: 64
       ),
-      "kit:v1-cli-guardrails": CGRect(
+      "kit:cli-guardrails": CGRect(
         x: 600,
         y: 40,
         width: 180,
@@ -581,7 +581,7 @@ struct StudioRelationshipMapPresentationStateTests {
         width: 170,
         height: 62
       ),
-      "session:solo-dev-v1": CGRect(
+      "session:solo-dev": CGRect(
         x: 0,
         y: 80,
         width: 150,

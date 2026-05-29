@@ -30,7 +30,7 @@ SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
 SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
-	core-validate-repo core-zip public-v1-check \
+	core-validate-repo core-zip public-check \
 	cli-build cli-install cli-install-zsh-completion cli-test \
 	studio-build studio-run studio-test studio-review
 
@@ -47,7 +47,7 @@ help:
 	@printf "  %-28s %s\n" "format-check" "Lint Sources and Tests with swift-format."
 	@printf "  %-28s %s\n" "core-validate-repo" "Run deterministic repo validation."
 	@printf "  %-28s %s\n" "core-zip" "Create a project zip archive."
-	@printf "  %-28s %s\n" "public-v1-check" "Run public V1 README and starter verification."
+	@printf "  %-28s %s\n" "public-check" "Run public README and starter verification."
 	@echo ""
 	@echo "CLI surface:"
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
@@ -55,11 +55,11 @@ help:
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@echo ""
-	@echo "Studio surface (optional; not part of the V1 release bar):"
+	@echo "Studio app:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-run" "Build and run the Studio app with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-test" "Run Studio Xcode tests only (requires WORKSPACE_PATH)."
-	@printf "  %-28s %s\n" "studio-review" "Build Studio and capture optional review screenshots."
+	@printf "  %-28s %s\n" "studio-review" "Build Studio and capture review screenshots."
 
 studio-doctor:
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
@@ -162,36 +162,36 @@ cli-test: swiftpm-prepare
 core-validate-repo: swiftpm-prepare
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
-public-v1-check: swiftpm-prepare
+public-check: swiftpm-prepare
 	$(SWIFT_TEST)
 	$(SWIFT_RUN) personakit --help
 	$(SWIFT_RUN) personakit run --help
-	rm -rf /tmp/personakit-public-v1-check
-	mkdir -p /tmp/personakit-public-v1-check
+	rm -rf /tmp/personakit-public-check
+	mkdir -p /tmp/personakit-public-check
 	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | rg .
 	diff -qr .personakit Examples/public-starter/.personakit
 	$(SWIFT_RUN) personakit validate --root .personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/internal-agent-root/.personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/kit-root
 	$(SWIFT_RUN) personakit validate --root Examples/public-starter/.personakit
-	$(SWIFT_RUN) personakit contract --root Examples/public-starter/.personakit --session solo-dev-v1 > /tmp/personakit-public-v1-check/example-contract.json
-	rg '"sessionId" : "solo-dev-v1"' /tmp/personakit-public-v1-check/example-contract.json
-	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-v1-check/example-contract.json
-	$(SWIFT_RUN) personakit run --root Examples/public-starter/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/example-dry-run.md
-	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/example-dry-run.md
-	rg '## Task' /tmp/personakit-public-v1-check/example-dry-run.md
-	$(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/.personakit
-	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-v1-check/.personakit
-	$(SWIFT_RUN) personakit run --root /tmp/personakit-public-v1-check/.personakit --session solo-dev-v1 --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-v1-check/init-dry-run.md
-	rg 'session: solo-dev-v1' /tmp/personakit-public-v1-check/init-dry-run.md
-	rg '## Task' /tmp/personakit-public-v1-check/init-dry-run.md
-	mkdir -p /tmp/personakit-public-v1-check/non-empty
-	printf "occupied\n" > /tmp/personakit-public-v1-check/non-empty/README.md
-	! $(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/non-empty
-	$(SWIFT_RUN) personakit init /tmp/personakit-public-v1-check/non-empty --force
-	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-v1-check/non-empty
-	! $(SWIFT_RUN) personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-v1-check/legacy-rejection.txt 2>&1
-	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-v1-check/legacy-rejection.txt
+	$(SWIFT_RUN) personakit contract --root Examples/public-starter/.personakit --session solo-dev > /tmp/personakit-public-check/example-contract.json
+	rg '"sessionId" : "solo-dev"' /tmp/personakit-public-check/example-contract.json
+	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-check/example-contract.json
+	$(SWIFT_RUN) personakit run --root Examples/public-starter/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-check/example-dry-run.md
+	rg 'session: solo-dev' /tmp/personakit-public-check/example-dry-run.md
+	rg '## Task' /tmp/personakit-public-check/example-dry-run.md
+	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/.personakit
+	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/.personakit
+	$(SWIFT_RUN) personakit run --root /tmp/personakit-public-check/.personakit --session solo-dev --agent opencode --dry-run -- "Make a small, reviewable CLI improvement." > /tmp/personakit-public-check/init-dry-run.md
+	rg 'session: solo-dev' /tmp/personakit-public-check/init-dry-run.md
+	rg '## Task' /tmp/personakit-public-check/init-dry-run.md
+	mkdir -p /tmp/personakit-public-check/non-empty
+	printf "occupied\n" > /tmp/personakit-public-check/non-empty/README.md
+	! $(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty
+	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty --force
+	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/non-empty
+	! $(SWIFT_RUN) personakit run --root Fixtures/kit-root --session senior-swiftui-engineer_apply-style --agent opencode --dry-run -- "Verify fixture compatibility." > /tmp/personakit-public-check/legacy-rejection.txt 2>&1
+	rg 'run agent `opencode` is not authorized' /tmp/personakit-public-check/legacy-rejection.txt
 	! rg -n "AJ|Orbit|Taskboard|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples AGENTS.md
 	rg -n "memory|orchestration" .personakit README.md Docs Examples AGENTS.md || true
 
