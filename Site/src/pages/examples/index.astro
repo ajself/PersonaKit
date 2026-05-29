@@ -8,11 +8,34 @@ const examples = (await getCollection("examples"))
   .filter((example) => example.data.kind === "contract")
   .sort((left, right) => left.data.order - right.data.order);
 
+const useCaseBySlug: Record<string, { description: string; label: string; title: string }> = {
+  "cli-maintenance": {
+    description: "Use CLI Maintenance when one adapter is allowed and deployment or autonomous loops must stay forbidden.",
+    label: "Open CLI Maintenance",
+    title: "Bounded Implementation",
+  },
+  "review-session": {
+    description: "Use Review Session when the reviewer should produce findings without becoming the implementer.",
+    label: "Open Review Session",
+    title: "Read-Only Review",
+  },
+  "mcp-grounding": {
+    description: "Use MCP Grounding when a client should resolve PersonaKit context before choosing host-local tools.",
+    label: "Open MCP Grounding",
+    title: "MCP Grounding",
+  },
+  "pack-authoring": {
+    description: "Use Pack Authoring when you are creating or revising reusable PersonaKit pieces.",
+    label: "Open Pack Authoring",
+    title: "Pack Authoring",
+  },
+};
+
 const cards = examples.map((example) => ({
-  description: example.data.description,
+  description: useCaseBySlug[example.data.routeSlug]?.description ?? example.data.description,
   href: sitePath(`examples/${example.data.routeSlug}/`),
-  label: "Open example",
-  title: example.data.title,
+  label: useCaseBySlug[example.data.routeSlug]?.label ?? "Open example",
+  title: useCaseBySlug[example.data.routeSlug]?.title ?? example.data.title,
   tone: "fit" as const,
 }));
 ---
@@ -24,5 +47,6 @@ const cards = examples.map((example) => ({
 >
   <p>Each example teaches a different boundary. Start with the page text, inspect the summary, then browse the static root if you want to see the authored source.</p>
 
+  <h2>Choose The Closest Root</h2>
   <CardGrid cards={cards} columns="two" />
 </ContentLayout>

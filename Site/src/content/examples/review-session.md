@@ -24,6 +24,12 @@ Use this when the important boundary is separation of authority: the reviewer ca
 
 The reviewer reports confirmed defects, risks, and missing validation. If a fix is needed, implementation waits for explicit approval and a separate work mode.
 
+## Key Contract Signal
+
+```text
+forbiddenSkillIds: code-editing, deployment-runner
+```
+
 ## Runnable Commands
 
 ```bash

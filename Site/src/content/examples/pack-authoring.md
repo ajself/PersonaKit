@@ -26,6 +26,12 @@ The point is not to make PersonaKit an autonomous pack generator. The point is t
 
 This is also where reusable pieces get created or revised so future sessions can compose them instead of copying prompt paragraphs into a single oversized instruction.
 
+## Key Contract Signal
+
+```text
+authorizedSkillIds: personakit-create
+```
+
 ## Runnable Commands
 
 ```bash
