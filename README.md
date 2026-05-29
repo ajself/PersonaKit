@@ -94,7 +94,7 @@ PersonaKit authored content usually lives in `.personakit/` inside a project.
 Global content may live in `~/.personakit/`.
 
 ```text
-.project/
+FooBarProject/
   .personakit/
     Packs/
       personas/
