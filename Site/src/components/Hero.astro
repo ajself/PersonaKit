@@ -4,7 +4,7 @@ interface Props {
     href: string;
     label: string;
   }>;
-  eyebrow: string;
+  eyebrow?: string;
   lede: string;
   title: string;
 }
@@ -19,7 +19,7 @@ const {
 
 <section class="hero">
   <div class="shell">
-    <p class="pill">{eyebrow}</p>
+    {eyebrow && <p class="pill">{eyebrow}</p>}
     <h1>{title}</h1>
     <p class="lede">{lede}</p>
     {

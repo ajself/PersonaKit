@@ -9,29 +9,29 @@ import { sitePath } from "../utils/sitePath";
   eyebrow="Practical fit"
   description="Use PersonaKit when the operating contract matters more than a one-off prompt."
 >
-  <p>PersonaKit is useful when the same kind of AI coding work repeats and the boundary matters. It is too much ceremony when you only need a one-off instruction, a formatter, a deployment system, or open-ended thinking.</p>
+  <p>PersonaKit is useful when the same kind of AI coding session repeats and the starting contract matters. It usually runs before the work begins; prompts describe the immediate task, and skills or tools are used later inside the conversation.</p>
 
   <h2>Use PersonaKit When</h2>
   <div class="grid two">
     <article class="card">
       <h3>Review Mode Must Stay Read-Only</h3>
       <p>A reviewer should find defects, risks, and missing validation without becoming the implementer.</p>
-      <a class="button-link" href={sitePath("examples/review-session/")}>Study review session</a>
+      <a class="button-link" href={sitePath("examples/review-session/")}>Open review session</a>
     </article>
     <article class="card">
       <h3>Bounded Implementation Repeats</h3>
       <p>A common fix lane needs the same role, stop points, adapter authorization, and verification every time.</p>
-      <a class="button-link" href={sitePath("examples/cli-maintenance/")}>Study CLI maintenance</a>
+      <a class="button-link" href={sitePath("examples/cli-maintenance/")}>Open CLI maintenance</a>
     </article>
     <article class="card">
       <h3>Agents Need Grounding Before Tools</h3>
       <p>MCP-aware clients should resolve the contract before choosing host-local skills or tools.</p>
-      <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Study MCP grounding</a>
+      <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Open MCP grounding</a>
     </article>
     <article class="card">
       <h3>Pack Authoring Needs Guardrails</h3>
       <p>Creating PersonaKit content should stay compact, dry-run first, reuse existing pieces, and validate afterward.</p>
-      <a class="button-link" href={sitePath("examples/pack-authoring/")}>Study pack authoring</a>
+      <a class="button-link" href={sitePath("examples/pack-authoring/")}>Open pack authoring</a>
     </article>
   </div>
 
@@ -51,9 +51,14 @@ import { sitePath } from "../utils/sitePath";
         <td>The boundary is not known yet.</td>
       </tr>
       <tr>
-        <td>One-off helper prompt</td>
+        <td>One-off prompt</td>
         <td>Prompt, saved prompt, or slash skill</td>
         <td>No durable operating contract is needed.</td>
+      </tr>
+      <tr>
+        <td>Skill use during a session</td>
+        <td>Host skill, tool, or MCP client</td>
+        <td>The session is already underway; use the capability directly inside the active boundary.</td>
       </tr>
       <tr>
         <td>Formatter invocation</td>
@@ -73,7 +78,7 @@ import { sitePath } from "../utils/sitePath";
       <tr>
         <td>Long-running autonomous work</td>
         <td>Dedicated orchestration system</td>
-        <td>V1 excludes memory, persistence, continuation, and multi-agent control.</td>
+        <td>PersonaKit is not a memory system, continuation engine, or multi-agent controller.</td>
       </tr>
     </tbody>
   </table>
