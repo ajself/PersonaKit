@@ -7,6 +7,20 @@ const links = [
   { href: sitePath("when-to-use/"), label: "When To Use" },
   { href: sitePath("examples/"), label: "Examples" },
 ];
+
+const currentPath = Astro.url.pathname.endsWith("/")
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+
+function normalizePath(path: string): string {
+  return path.endsWith("/") ? path : `${path}/`;
+}
+
+function isActivePath(href: string): boolean {
+  const linkPath = normalizePath(href);
+
+  return currentPath === linkPath || currentPath.startsWith(linkPath);
+}
 ---
 
 <header class="site-header">
@@ -19,9 +33,20 @@ const links = [
     </a>
     <div class="links">
       {
-        links.map((link) => (
-          <a href={link.href}>{link.label}</a>
-        ))
+        links.map((link) => {
+          const isActive = isActivePath(link.href);
+          const isCurrentPage = currentPath === normalizePath(link.href);
+
+          return (
+            <a
+              aria-current={isCurrentPage ? "page" : undefined}
+              class:list={{ active: isActive }}
+              href={link.href}
+            >
+              {link.label}
+            </a>
+          );
+        })
       }
       <a class="repo-link" href="https://github.com/ajself/PersonaKit" aria-label="PersonaKit on GitHub">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
@@ -111,6 +136,12 @@ const links = [
     border-color: var(--line);
     color: var(--blue);
     background: #fff;
+  }
+
+  .links a.active {
+    border-color: #b8ccd8;
+    color: var(--blue);
+    background: #f3f8fb;
   }
 
   @media (max-width: 700px) {

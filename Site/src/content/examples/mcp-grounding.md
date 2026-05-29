@@ -1,6 +1,8 @@
 ---
 title: "MCP Grounding"
 description: "How MCP-aware agents should resolve PersonaKit context before choosing host-local tools."
+chooserTitle: "MCP Grounding"
+chooserDescription: "Use MCP Grounding when a client should resolve PersonaKit context before choosing host-local tools."
 kind: "contract"
 routeSlug: "mcp-grounding"
 persona: "mcp-grounded-agent"
@@ -14,6 +16,19 @@ forbiddenSkills:
   - "mcp-writeback"
 rootPath: "/examples/mcp-consumer-agent/personakit-root"
 order: 2
+sourceFiles:
+  - label: "Session"
+    path: "Sessions/mcp-grounding.session.json"
+  - label: "Persona"
+    path: "Packs/personas/mcp-grounded-agent.persona.json"
+  - label: "Directive"
+    path: "Packs/directives/resolve-before-tools.directive.json"
+  - label: "Kit"
+    path: "Packs/kits/mcp-grounding-guardrails.kit.json"
+  - label: "Authorized Skill"
+    path: "Packs/skills/read-only-mcp-grounding.skill.json"
+  - label: "Forbidden Skill"
+    path: "Packs/skills/mcp-writeback.skill.json"
 ---
 
 This example shows how PersonaKit fits when an agent can access the PersonaKit MCP server. The agent should ground itself first, then choose tools only if the resolved contract allows them.

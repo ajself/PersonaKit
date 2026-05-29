@@ -29,6 +29,20 @@ const {
 const rootHref = example.data.rootPath
   ? sitePath(`${example.data.rootPath}/index.html`)
   : "";
+
+const adoptionSteps = [
+  "Copy the closest example root into your project.",
+  "Rename the copied folder to .personakit.",
+  "Revise the session, persona, directive, kits, and skills for your lane.",
+  "Run personakit validate before relying on the root.",
+  "Inspect the resolved contract before exporting or dry-running a payload.",
+];
+
+const sourceFiles = example.data.sourceFiles.map((sourceFile) => ({
+  href: sitePath(`${example.data.rootPath}/${sourceFile.path}`),
+  label: sourceFile.label,
+  path: sourceFile.path,
+}));
 ---
 
 <ContentLayout
@@ -49,12 +63,60 @@ const rootHref = example.data.rootPath
       <Callout tone="good">
         <p>
           The sample root is published as <code>personakit-root</code> so it remains visible on static hosts.
-          In a real project, copy or rename it to <code>.personakit</code>.
+          In a real project, copy or rename it to <code>.personakit</code>. Treat that folder as authored project source: commit the roles, rules, capabilities, and stop points with the code they govern, while keeping secrets and local credentials out.
         </p>
         <p><a class="button-link" href={rootHref}>Browse static root</a></p>
       </Callout>
     )
   }
 
+  <h2>Adopt This Root</h2>
+  <ol>
+    {adoptionSteps.map((step) => <li>{step}</li>)}
+  </ol>
+
+  <h2>Inspect The Contract Pieces</h2>
+  <p>Start with the session file; it shows which persona, directive, kits, and skills compose this lane.</p>
+  <div class="source-links">
+    {
+      sourceFiles.map((sourceFile) => (
+        <a class="source-link" href={sourceFile.href}>
+          <span>{sourceFile.label}</span>
+          <code>{sourceFile.path}</code>
+        </a>
+      ))
+    }
+  </div>
+
   <Content />
 </ContentLayout>
+
+<style>
+  .source-links {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 28px;
+  }
+
+  .source-link {
+    display: grid;
+    gap: 3px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .source-link:hover {
+    border-color: #9fb7c6;
+  }
+
+  .source-link span {
+    font-weight: 700;
+  }
+
+  .source-link code {
+    overflow-wrap: anywhere;
+  }
+</style>

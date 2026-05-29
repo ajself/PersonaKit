@@ -1,6 +1,8 @@
 ---
 title: "Pack Authoring"
 description: "A compact authoring contract for creating PersonaKit content with dry-runs, reuse, and validation."
+chooserTitle: "Pack Authoring"
+chooserDescription: "Use Pack Authoring when you are creating or revising reusable PersonaKit pieces."
 kind: "contract"
 routeSlug: "pack-authoring"
 persona: "personakit-pack-author"
@@ -14,6 +16,19 @@ forbiddenSkills:
   - "unbounded-pack-rewrite"
 rootPath: "/examples/pack-authoring/personakit-root"
 order: 4
+sourceFiles:
+  - label: "Session"
+    path: "Sessions/pack-authoring.session.json"
+  - label: "Persona"
+    path: "Packs/personas/personakit-pack-author.persona.json"
+  - label: "Directive"
+    path: "Packs/directives/create-or-revise-pack-content.directive.json"
+  - label: "Kit"
+    path: "Packs/kits/pack-authoring-guardrails.kit.json"
+  - label: "Authorized Skill"
+    path: "Packs/skills/personakit-create.skill.json"
+  - label: "Forbidden Skill"
+    path: "Packs/skills/unbounded-pack-rewrite.skill.json"
 ---
 
 This example shows PersonaKit being used to author PersonaKit content. `personakit create` is the mechanical authoring layer. The session is the reusable judgment layer.

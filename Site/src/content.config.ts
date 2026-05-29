@@ -11,6 +11,8 @@ const examples = defineCollection({
   }),
   schema: z.object({
     authorizedSkills: nonEmptyStringArray,
+    chooserDescription: z.string(),
+    chooserTitle: z.string(),
     description: z.string(),
     directive: z.string(),
     forbiddenSkills: z.array(z.string()).default([]),
@@ -20,6 +22,10 @@ const examples = defineCollection({
     persona: z.string(),
     rootPath: z.string().min(1),
     routeSlug: z.string(),
+    sourceFiles: z.array(z.object({
+      label: z.string(),
+      path: z.string().min(1),
+    })).min(1),
     title: z.string(),
   }),
 });
