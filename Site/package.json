@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "astro build",
+    "build:github-pages": "npm run check && PERSONAKIT_SITE_BASE=/PersonaKit astro build",
+    "check": "node scripts/generate-example-root-indexes.mjs --check && node scripts/check-example-root-indexes.mjs",
     "dev": "astro dev",
-    "prebuild": "node scripts/check-example-root-indexes.mjs",
+    "generate:example-root-indexes": "node scripts/generate-example-root-indexes.mjs",
+    "prebuild": "node scripts/generate-example-root-indexes.mjs && node scripts/check-example-root-indexes.mjs",
     "preview": "astro preview"
   },
   "devDependencies": {

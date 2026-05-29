@@ -10,4 +10,4 @@ Dry-run before writing, then validate.
 
 Keep essentials compact unless long-form policy is explicitly requested.
 
-Do not expand PersonaKit V1 scope while authoring packs. Do not add orchestration, memory, persistence, deployment behavior, or autonomous multi-agent control.
+Keep product-scope decisions out of pack authoring. Do not add orchestration, memory, persistence, deployment behavior, or autonomous multi-agent control.

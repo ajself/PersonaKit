@@ -4,21 +4,686 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CLI Maintenance PersonaKit Root</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --accent: #2e6f95;
+        --band: #f5f7fa;
+        --blue: #325d8a;
+        --ink: #202428;
+        --line: #d9dee4;
+        --muted: #606a73;
+        --paper: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .root-nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+      }
+
+      .root-nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        width: min(1120px, calc(100vw - 48px));
+        min-height: 62px;
+        margin: 0 auto;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--ink);
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--accent);
+      }
+
+      .brand-icon {
+        display: block;
+        width: 16px;
+        height: 21px;
+      }
+
+      .root-nav a {
+        color: var(--ink);
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .root-nav a:hover,
+      .root-nav a:focus {
+        color: var(--blue);
+        text-decoration: none;
+      }
+
+      .root-nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .root-nav-links a {
+        min-height: 34px;
+        padding: 6px 9px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+      }
+
+      .root-nav-links a:hover,
+      .root-nav-links a:focus {
+        border-color: var(--line);
+        background: #ffffff;
+      }
+
+      .repo-link {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-color: var(--line) !important;
+      }
+
+      .repo-link svg {
+        display: block;
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+      }
+
+      main {
+        width: min(980px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        margin: 0 0 12px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .breadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .breadcrumb a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+
+      .breadcrumb a:hover,
+      .breadcrumb a:focus {
+        text-decoration: underline;
+      }
+
+      h1 {
+        max-width: 780px;
+        margin: 0 0 14px;
+        font-size: clamp(34px, 6vw, 54px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      p {
+        max-width: 760px;
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      code {
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: #eef1f4;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.94em;
+      }
+
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 22px 0 30px;
+      }
+
+      .pills span {
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--band);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .note {
+        margin: 0 0 32px;
+        padding: 16px 18px;
+        border-left: 4px solid var(--accent);
+        background: #f1f6f8;
+      }
+
+      .note p {
+        margin: 0;
+        color: var(--ink);
+        font-size: 16px;
+      }
+
+      .file-group {
+        margin: 30px 0 0;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      .file-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .file-row {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      .file-row[open] {
+        border-color: var(--blue);
+        background: #fbfcfd;
+      }
+
+      .file-row summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 16px;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .file-row summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .file-row:hover {
+        border-color: var(--blue);
+        background: #fbfcfd;
+      }
+
+      .file-main,
+      .file-row small {
+        display: block;
+      }
+
+      .file-row strong {
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .file-row small {
+        margin-top: 2px;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      .file-actions {
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        gap: 10px;
+      }
+
+      .file-type {
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .file-preview {
+        max-width: 100%;
+        min-width: 0;
+        padding: 0 16px 16px;
+      }
+
+      .preview-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 0 8px;
+      }
+
+      .preview-actions a {
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .file-preview pre {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 14px;
+        border-radius: 8px;
+        background: #202428;
+        color: #f5f7fa;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        white-space: pre;
+      }
+
+      .file-preview code {
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+      }
+
+      .token-key {
+        color: #79b8ff;
+      }
+
+      .token-string {
+        color: #9ecbff;
+      }
+
+      .token-number,
+      .token-literal {
+        color: #f97583;
+      }
+
+      .token-heading {
+        color: #b392f0;
+        font-weight: 750;
+      }
+
+      .token-marker {
+        color: #79b8ff;
+      }
+
+      .token-inline-code {
+        color: #9ecbff;
+      }
+
+      .file-preview .error {
+        background: #f1f6f8;
+        color: var(--ink);
+      }
+
+      @media (max-width: 700px) {
+        .root-nav-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          width: min(100% - 32px, 1120px);
+          padding-block: 12px;
+        }
+
+        .root-nav-links {
+          justify-content: flex-start;
+        }
+
+        main {
+          width: min(100% - 32px, 980px);
+        }
+      }
+    </style>
   </head>
   <body>
+    <header class="root-nav">
+      <nav class="root-nav-inner" aria-label="Primary navigation">
+        <a class="brand" href="../../../" aria-label="PersonaKit home">
+          <span class="brand-mark" aria-hidden="true">
+            <img class="brand-icon" src="../../../brand/personakit-mark.svg" alt="" />
+          </span>
+          <span>PersonaKit</span>
+        </a>
+        <div class="root-nav-links">
+          <a href="../../../start-here/">Start Here</a>
+          <a href="../../../examples/">Examples</a>
+          <a class="repo-link" href="https://github.com/ajself/PersonaKit" aria-label="PersonaKit on GitHub">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M12 1C5.923 1 1 5.923 1 12c0 4.867 3.149 8.979 7.521 10.436.55.096.756-.233.756-.522 0-.262-.013-1.128-.013-2.049-2.764.509-3.479-.674-3.699-1.292-.124-.317-.66-1.293-1.127-1.554-.385-.207-.936-.715-.014-.729.866-.014 1.485.797 1.691 1.128.99 1.663 2.571 1.196 3.204.907.096-.715.385-1.196.701-1.471-2.448-.275-5.005-1.224-5.005-5.432 0-1.196.426-2.186 1.128-2.956-.111-.275-.496-1.402.11-2.915 0 0 .921-.288 3.024 1.128A10.193 10.193 0 0 1 12 6.308c.936 0 1.871.123 2.75.371 2.104-1.43 3.025-1.128 3.025-1.128.605 1.513.221 2.64.111 2.915.701.77 1.127 1.747 1.127 2.956 0 4.222-2.571 5.157-5.019 5.432.399.344.743 1.004.743 2.035 0 1.471-.014 2.654-.014 3.025 0 .289.206.632.756.522C19.851 20.979 23 16.854 23 12c0-6.077-4.922-11-11-11Z"/>
+            </svg>
+          </a>
+        </div>
+      </nav>
+    </header>
     <main>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="../../../examples/">Examples</a>
+        <span aria-hidden="true">/</span>
+        <a href="../../../examples/cli-maintenance/">CLI Maintenance example</a>
+        <span aria-hidden="true">/</span>
+        <span>Sample root</span>
+      </nav>
+      <p class="eyebrow">Inspectable sample root</p>
       <h1>CLI Maintenance PersonaKit Root</h1>
-      <p>This is a static, inspectable sample root. In a real project, copy this folder and rename it to <code>.personakit</code>.</p>
-      <ul>
-        <li><a href="Sessions/cli-maintenance.session.json">Sessions/cli-maintenance.session.json</a></li>
-        <li><a href="Packs/personas/cli-maintainer.persona.json">Packs/personas/cli-maintainer.persona.json</a></li>
-        <li><a href="Packs/directives/bounded-cli-fix.directive.json">Packs/directives/bounded-cli-fix.directive.json</a></li>
-        <li><a href="Packs/kits/cli-maintenance-guardrails.kit.json">Packs/kits/cli-maintenance-guardrails.kit.json</a></li>
-        <li><a href="Packs/essentials/deterministic-cli-work.md">Packs/essentials/deterministic-cli-work.md</a></li>
-        <li><a href="Packs/skills/autonomous-agent-loop.skill.json">Packs/skills/autonomous-agent-loop.skill.json</a></li>
-        <li><a href="Packs/skills/deployment-runner.skill.json">Packs/skills/deployment-runner.skill.json</a></li>
-        <li><a href="Packs/skills/opencode-cli.skill.json">Packs/skills/opencode-cli.skill.json</a></li>
-      </ul>
+      <p>The happy path for bounded implementation with one authorized adapter and clear stop points.</p>
+      <div class="pills"><span>Persona: cli-maintainer</span><span>Directive: bounded-cli-fix</span><span>Kit: cli-maintenance-guardrails</span></div>
+      <aside class="note">
+        <p>This is a browsable PersonaKit root. Open these files to see the session, persona, directive, kit, skills, and essentials that make the contract work. In your own project, this content usually lives in <code>.personakit</code>.</p>
+      </aside>
+
+        <section class="file-group">
+          <h2>Sessions</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Sessions/cli-maintenance.session.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>CLI Maintenance</strong>
+                    <small>Sessions/cli-maintenance.session.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Sessions/cli-maintenance.session.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
+        <section class="file-group">
+          <h2>Personas</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Packs/personas/cli-maintainer.persona.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>CLI Maintainer</strong>
+                    <small>Packs/personas/cli-maintainer.persona.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/personas/cli-maintainer.persona.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
+        <section class="file-group">
+          <h2>Directives</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Packs/directives/bounded-cli-fix.directive.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>Bounded CLI Fix</strong>
+                    <small>Packs/directives/bounded-cli-fix.directive.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/directives/bounded-cli-fix.directive.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
+        <section class="file-group">
+          <h2>Kits</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Packs/kits/cli-maintenance-guardrails.kit.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>CLI Maintenance Guardrails</strong>
+                    <small>Packs/kits/cli-maintenance-guardrails.kit.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/kits/cli-maintenance-guardrails.kit.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
+        <section class="file-group">
+          <h2>Essentials</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Packs/essentials/deterministic-cli-work.md">
+                <summary>
+                  <span class="file-main">
+                    <strong>Deterministic CLI Work</strong>
+                    <small>Packs/essentials/deterministic-cli-work.md</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">MD</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/essentials/deterministic-cli-work.md">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="md"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
+        <section class="file-group">
+          <h2>Skills</h2>
+          <div class="file-list">
+
+              <details class="file-row" data-file="Packs/skills/autonomous-agent-loop.skill.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>Autonomous Agent Loop</strong>
+                    <small>Packs/skills/autonomous-agent-loop.skill.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/skills/autonomous-agent-loop.skill.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+              <details class="file-row" data-file="Packs/skills/deployment-runner.skill.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>Deployment Runner</strong>
+                    <small>Packs/skills/deployment-runner.skill.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/skills/deployment-runner.skill.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+              <details class="file-row" data-file="Packs/skills/opencode-cli.skill.json">
+                <summary>
+                  <span class="file-main">
+                    <strong>Opencode CLI</strong>
+                    <small>Packs/skills/opencode-cli.skill.json</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">JSON</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="./Packs/skills/opencode-cli.skill.json">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
+                </div>
+              </details>
+
+          </div>
+        </section>
+
     </main>
+    <script>
+      for (const row of document.querySelectorAll(".file-row")) {
+        row.addEventListener("toggle", () => {
+          if (!row.open || row.dataset.loaded === "true") {
+            return;
+          }
+
+          const file = row.dataset.file;
+          const pre = row.querySelector("pre");
+          const code = row.querySelector("code");
+
+          fetch(`./${file}`)
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`Could not load ${file}`);
+              }
+
+              return response.text();
+            })
+            .then((text) => {
+              row.dataset.loaded = "true";
+
+              if (file.endsWith(".json")) {
+                pre.dataset.language = "json";
+                code.innerHTML = highlightJson(JSON.stringify(JSON.parse(text), null, 2));
+              } else if (file.endsWith(".md")) {
+                pre.dataset.language = "md";
+                code.innerHTML = highlightMarkdown(text);
+              } else {
+                code.textContent = text;
+              }
+            })
+            .catch((error) => {
+              pre.classList.add("error");
+              code.textContent = error.message;
+            });
+        });
+      }
+
+      const tokenClasses = {"key":"token-key","string":"token-string","number":"token-number","literal":"token-literal"};
+
+      function escapeForHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\"", "&quot;");
+      }
+
+      function tokenSpan(className, value) {
+        return `<span class="${className}">${escapeForHtml(value)}</span>`;
+      }
+
+      function highlightJson(json) {
+        return json.replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g, (match, stringToken, keySuffix, literalToken) => {
+          if (stringToken && keySuffix) {
+            return `${tokenSpan(tokenClasses.key, stringToken)}${escapeForHtml(keySuffix)}`;
+          }
+
+          if (stringToken) {
+            return tokenSpan(tokenClasses.string, stringToken);
+          }
+
+          if (literalToken) {
+            return tokenSpan(tokenClasses.literal, literalToken);
+          }
+
+          return tokenSpan(tokenClasses.number, match);
+        });
+      }
+
+      function highlightMarkdown(markdown) {
+        const inlineCodePattern = new RegExp("\x60([^\x60]+)\x60", "g");
+
+        return markdown.split("\n").map((line) => {
+          const escaped = escapeForHtml(line);
+
+          if (line.startsWith("#")) {
+            return `<span class="token-heading">${escaped}</span>`;
+          }
+
+          return escaped
+            .replace(/^(\s*[-*])\s/, '<span class="token-marker">$1</span> ')
+            .replace(inlineCodePattern, '<span class="token-inline-code">&#96;$1&#96;</span>');
+        }).join("\n");
+      }
+    </script>
   </body>
 </html>

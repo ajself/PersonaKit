@@ -1,9 +1,269 @@
-<!doctype html>
+import fs from "node:fs";
+import path from "node:path";
+
+const examplesDirectory = path.join(process.cwd(), "public", "examples");
+const contentExamplesDirectory = path.join(process.cwd(), "src", "content", "examples");
+const checkOnly = process.argv.includes("--check");
+const acronymWords = new Set([
+  "cli",
+  "json",
+  "mcp",
+  "md",
+]);
+const groupOrder = [
+  "Sessions",
+  "Personas",
+  "Directives",
+  "Kits",
+  "Essentials",
+  "Skills",
+  "Other",
+];
+
+function titleCase(value) {
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((word) => `${word[0].toUpperCase()}${word.slice(1)}`)
+    .join(" ");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;");
+}
+
+function scriptJson(value) {
+  return JSON.stringify(value).replaceAll("</", "<\\/");
+}
+
+function listFiles(directory, root = directory) {
+  return fs.readdirSync(directory, {
+    withFileTypes: true,
+  }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      return listFiles(entryPath, root);
+    }
+
+    const relativePath = path.relative(root, entryPath);
+
+    return relativePath === "index.html" ? [] : [relativePath];
+  }).sort();
+}
+
+function parseFrontmatter(markdown) {
+  const match = markdown.match(/^---\n([\s\S]*?)\n---/);
+
+  if (!match) {
+    return {};
+  }
+
+  const frontmatter = {};
+  let activeList = null;
+
+  for (const rawLine of match[1].split("\n")) {
+    const line = rawLine.trimEnd();
+    const listItem = line.match(/^\s+-\s+"?([^"]+)"?$/);
+
+    if (activeList && listItem) {
+      frontmatter[activeList].push(listItem[1]);
+      continue;
+    }
+
+    activeList = null;
+
+    const pair = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+
+    if (!pair) {
+      continue;
+    }
+
+    const [, key, rawValue] = pair;
+    const value = rawValue.trim();
+
+    if (!value) {
+      frontmatter[key] = [];
+      activeList = key;
+      continue;
+    }
+
+    frontmatter[key] = value.replace(/^"|"$/g, "");
+  }
+
+  return frontmatter;
+}
+
+function loadExampleMetadata() {
+  const examples = new Map();
+
+  if (!fs.existsSync(contentExamplesDirectory)) {
+    return examples;
+  }
+
+  for (const entry of fs.readdirSync(contentExamplesDirectory).sort()) {
+    if (!entry.endsWith(".md")) {
+      continue;
+    }
+
+    const markdown = fs.readFileSync(path.join(contentExamplesDirectory, entry), "utf8");
+    const frontmatter = parseFrontmatter(markdown);
+
+    if (!frontmatter.rootPath) {
+      continue;
+    }
+
+    const exampleRoot = frontmatter.rootPath
+      .replace(/^\/examples\//, "")
+      .replace(/\/personakit-root$/, "");
+
+    examples.set(exampleRoot, frontmatter);
+  }
+
+  return examples;
+}
+
+function groupName(file) {
+  const parts = file.split("/");
+
+  if (parts[0] === "Sessions") {
+    return "Sessions";
+  }
+
+  if (parts[0] === "Packs" && parts[1]) {
+    return titleCase(parts[1]);
+  }
+
+  return "Other";
+}
+
+function fileLabel(file) {
+  const name = path.basename(file);
+
+  return name
+    .replace(/\.(json|md)$/, "")
+    .replace(/\.(persona|directive|kit|skill|session)$/, "")
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => acronymWords.has(part)
+      ? part.toUpperCase()
+      : part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function fileHref(file) {
+  return `./${file}`;
+}
+
+function rootDepth(exampleName) {
+  return exampleName.split("/").length + 2;
+}
+
+function relativeToSiteRoot(exampleName, target = "") {
+  return `${"../".repeat(rootDepth(exampleName))}${target}`;
+}
+
+function examplePageHref(metadata, exampleName) {
+  return metadata.routeSlug
+    ? relativeToSiteRoot(exampleName, `examples/${metadata.routeSlug}/`)
+    : relativeToSiteRoot(exampleName, "examples/");
+}
+
+function examplePageLabel(metadata) {
+  return metadata.title
+    ? `${metadata.title} example`
+    : "Example";
+}
+
+function assetPath(exampleName, target) {
+  return relativeToSiteRoot(exampleName, target);
+}
+
+function renderFileGroups(files) {
+  const groups = new Map();
+
+  for (const file of files) {
+    const group = groupName(file);
+    const entries = groups.get(group) ?? [];
+
+    entries.push(file);
+    groups.set(group, entries);
+  }
+
+  return [...groups.entries()].sort(([left], [right]) => {
+    const leftIndex = groupIndex(left);
+    const rightIndex = groupIndex(right);
+
+    if (leftIndex === rightIndex) {
+      return left.localeCompare(right);
+    }
+
+    return leftIndex - rightIndex;
+  }).map(([group, entries]) => `
+        <section class="file-group">
+          <h2>${escapeHtml(group)}</h2>
+          <div class="file-list">
+            ${entries.map((file) => `
+              <details class="file-row" data-file="${escapeHtml(file)}">
+                <summary>
+                  <span class="file-main">
+                    <strong>${escapeHtml(fileLabel(file))}</strong>
+                    <small>${escapeHtml(file)}</small>
+                  </span>
+                  <span class="file-actions">
+                    <span class="file-type">${escapeHtml(path.extname(file).slice(1).toUpperCase())}</span>
+                  </span>
+                </summary>
+                <div class="file-preview">
+                  <div class="preview-actions">
+                    <a href="${escapeHtml(fileHref(file))}">Open raw file</a>
+                  </div>
+                  <pre class="code-preview" data-language="${escapeHtml(path.extname(file).slice(1))}"><code>Loading...</code></pre>
+                </div>
+              </details>
+            `).join("")}
+          </div>
+        </section>
+      `).join("");
+}
+
+function groupIndex(group) {
+  const index = groupOrder.indexOf(group);
+
+  return index === -1 ? groupOrder.indexOf("Other") : index;
+}
+
+function renderMetadataPills(metadata) {
+  const pills = [
+    metadata.persona ? `Persona: ${metadata.persona}` : null,
+    metadata.directive ? `Directive: ${metadata.directive}` : null,
+    Array.isArray(metadata.kits) ? `Kit: ${metadata.kits.join(", ")}` : null,
+  ].filter(Boolean);
+
+  return pills.map((pill) => `<span>${escapeHtml(pill)}</span>`).join("");
+}
+
+function renderIndex({
+  exampleName,
+  files,
+  metadata,
+}) {
+  const title = metadata.title
+    ? `${metadata.title} PersonaKit Root`
+    : `${titleCase(exampleName)} PersonaKit Root`;
+  const description = metadata.description
+    ?? "A static, inspectable PersonaKit sample root.";
+
+  return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Review Session PersonaKit Root</title>
+    <title>${escapeHtml(title)}</title>
     <style>
       :root {
         color-scheme: light;
@@ -378,15 +638,15 @@
   <body>
     <header class="root-nav">
       <nav class="root-nav-inner" aria-label="Primary navigation">
-        <a class="brand" href="../../../" aria-label="PersonaKit home">
+        <a class="brand" href="${escapeHtml(relativeToSiteRoot(exampleName))}" aria-label="PersonaKit home">
           <span class="brand-mark" aria-hidden="true">
-            <img class="brand-icon" src="../../../brand/personakit-mark.svg" alt="" />
+            <img class="brand-icon" src="${escapeHtml(assetPath(exampleName, "brand/personakit-mark.svg"))}" alt="" />
           </span>
           <span>PersonaKit</span>
         </a>
         <div class="root-nav-links">
-          <a href="../../../start-here/">Start Here</a>
-          <a href="../../../examples/">Examples</a>
+          <a href="${escapeHtml(relativeToSiteRoot(exampleName, "start-here/"))}">Start Here</a>
+          <a href="${escapeHtml(relativeToSiteRoot(exampleName, "examples/"))}">Examples</a>
           <a class="repo-link" href="https://github.com/ajself/PersonaKit" aria-label="PersonaKit on GitHub">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
               <path d="M12 1C5.923 1 1 5.923 1 12c0 4.867 3.149 8.979 7.521 10.436.55.096.756-.233.756-.522 0-.262-.013-1.128-.013-2.049-2.764.509-3.479-.674-3.699-1.292-.124-.317-.66-1.293-1.127-1.554-.385-.207-.936-.715-.014-.729.866-.014 1.485.797 1.691 1.128.99 1.663 2.571 1.196 3.204.907.096-.715.385-1.196.701-1.471-2.448-.275-5.005-1.224-5.005-5.432 0-1.196.426-2.186 1.128-2.956-.111-.275-.496-1.402.11-2.915 0 0 .921-.288 3.024 1.128A10.193 10.193 0 0 1 12 6.308c.936 0 1.871.123 2.75.371 2.104-1.43 3.025-1.128 3.025-1.128.605 1.513.221 2.64.111 2.915.701.77 1.127 1.747 1.127 2.956 0 4.222-2.571 5.157-5.019 5.432.399.344.743 1.004.743 2.035 0 1.471-.014 2.654-.014 3.025 0 .289.206.632.756.522C19.851 20.979 23 16.854 23 12c0-6.077-4.922-11-11-11Z"/>
@@ -397,206 +657,20 @@
     </header>
     <main>
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="../../../examples/">Examples</a>
+        <a href="${escapeHtml(relativeToSiteRoot(exampleName, "examples/"))}">Examples</a>
         <span aria-hidden="true">/</span>
-        <a href="../../../examples/review-session/">Review Session example</a>
+        <a href="${escapeHtml(examplePageHref(metadata, exampleName))}">${escapeHtml(examplePageLabel(metadata))}</a>
         <span aria-hidden="true">/</span>
         <span>Sample root</span>
       </nav>
       <p class="eyebrow">Inspectable sample root</p>
-      <h1>Review Session PersonaKit Root</h1>
-      <p>A read-only review contract that produces findings without becoming the implementer.</p>
-      <div class="pills"><span>Persona: behavior-reviewer</span><span>Directive: behavior-preserving-review</span><span>Kit: review-guardrails</span></div>
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(description)}</p>
+      <div class="pills">${renderMetadataPills(metadata)}</div>
       <aside class="note">
         <p>This is a browsable PersonaKit root. Open these files to see the session, persona, directive, kit, skills, and essentials that make the contract work. In your own project, this content usually lives in <code>.personakit</code>.</p>
       </aside>
-
-        <section class="file-group">
-          <h2>Sessions</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Sessions/behavior-review.session.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Behavior Review</strong>
-                    <small>Sessions/behavior-review.session.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Sessions/behavior-review.session.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
-        <section class="file-group">
-          <h2>Personas</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Packs/personas/behavior-reviewer.persona.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Behavior Reviewer</strong>
-                    <small>Packs/personas/behavior-reviewer.persona.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/personas/behavior-reviewer.persona.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
-        <section class="file-group">
-          <h2>Directives</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Packs/directives/behavior-preserving-review.directive.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Behavior Preserving Review</strong>
-                    <small>Packs/directives/behavior-preserving-review.directive.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/directives/behavior-preserving-review.directive.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
-        <section class="file-group">
-          <h2>Kits</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Packs/kits/review-guardrails.kit.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Review Guardrails</strong>
-                    <small>Packs/kits/review-guardrails.kit.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/kits/review-guardrails.kit.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
-        <section class="file-group">
-          <h2>Essentials</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Packs/essentials/review-boundaries.md">
-                <summary>
-                  <span class="file-main">
-                    <strong>Review Boundaries</strong>
-                    <small>Packs/essentials/review-boundaries.md</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">MD</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/essentials/review-boundaries.md">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="md"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
-        <section class="file-group">
-          <h2>Skills</h2>
-          <div class="file-list">
-
-              <details class="file-row" data-file="Packs/skills/code-editing.skill.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Code Editing</strong>
-                    <small>Packs/skills/code-editing.skill.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/skills/code-editing.skill.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-              <details class="file-row" data-file="Packs/skills/deployment-runner.skill.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Deployment Runner</strong>
-                    <small>Packs/skills/deployment-runner.skill.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/skills/deployment-runner.skill.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-              <details class="file-row" data-file="Packs/skills/read-only-review.skill.json">
-                <summary>
-                  <span class="file-main">
-                    <strong>Read Only Review</strong>
-                    <small>Packs/skills/read-only-review.skill.json</small>
-                  </span>
-                  <span class="file-actions">
-                    <span class="file-type">JSON</span>
-                  </span>
-                </summary>
-                <div class="file-preview">
-                  <div class="preview-actions">
-                    <a href="./Packs/skills/read-only-review.skill.json">Open raw file</a>
-                  </div>
-                  <pre class="code-preview" data-language="json"><code>Loading...</code></pre>
-                </div>
-              </details>
-
-          </div>
-        </section>
-
+      ${renderFileGroups(files)}
     </main>
     <script>
       for (const row of document.querySelectorAll(".file-row")) {
@@ -609,10 +683,10 @@
           const pre = row.querySelector("pre");
           const code = row.querySelector("code");
 
-          fetch(`./${file}`)
+          fetch(\`./\${file}\`)
             .then((response) => {
               if (!response.ok) {
-                throw new Error(`Could not load ${file}`);
+                throw new Error(\`Could not load \${file}\`);
               }
 
               return response.text();
@@ -637,24 +711,29 @@
         });
       }
 
-      const tokenClasses = {"key":"token-key","string":"token-string","number":"token-number","literal":"token-literal"};
+      const tokenClasses = ${scriptJson({
+        key: "token-key",
+        string: "token-string",
+        number: "token-number",
+        literal: "token-literal",
+      })};
 
       function escapeForHtml(value) {
         return String(value)
           .replaceAll("&", "&amp;")
           .replaceAll("<", "&lt;")
           .replaceAll(">", "&gt;")
-          .replaceAll("\"", "&quot;");
+          .replaceAll("\\\"", "&quot;");
       }
 
       function tokenSpan(className, value) {
-        return `<span class="${className}">${escapeForHtml(value)}</span>`;
+        return \`<span class="\${className}">\${escapeForHtml(value)}</span>\`;
       }
 
       function highlightJson(json) {
-        return json.replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g, (match, stringToken, keySuffix, literalToken) => {
+        return json.replace(/("(?:\\\\.|[^"\\\\])*")(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?/g, (match, stringToken, keySuffix, literalToken) => {
           if (stringToken && keySuffix) {
-            return `${tokenSpan(tokenClasses.key, stringToken)}${escapeForHtml(keySuffix)}`;
+            return \`\${tokenSpan(tokenClasses.key, stringToken)}\${escapeForHtml(keySuffix)}\`;
           }
 
           if (stringToken) {
@@ -670,20 +749,63 @@
       }
 
       function highlightMarkdown(markdown) {
-        const inlineCodePattern = new RegExp("\x60([^\x60]+)\x60", "g");
+        const inlineCodePattern = new RegExp("\\x60([^\\x60]+)\\x60", "g");
 
-        return markdown.split("\n").map((line) => {
+        return markdown.split("\\n").map((line) => {
           const escaped = escapeForHtml(line);
 
           if (line.startsWith("#")) {
-            return `<span class="token-heading">${escaped}</span>`;
+            return \`<span class="token-heading">\${escaped}</span>\`;
           }
 
           return escaped
-            .replace(/^(\s*[-*])\s/, '<span class="token-marker">$1</span> ')
+            .replace(/^(\\s*[-*])\\s/, '<span class="token-marker">$1</span> ')
             .replace(inlineCodePattern, '<span class="token-inline-code">&#96;$1&#96;</span>');
-        }).join("\n");
+        }).join("\\n");
       }
     </script>
   </body>
 </html>
+`;
+}
+
+const metadataByExample = loadExampleMetadata();
+const staleIndexes = [];
+
+for (const exampleName of fs.readdirSync(examplesDirectory).sort()) {
+  const rootDirectory = path.join(examplesDirectory, exampleName, "personakit-root");
+
+  if (!fs.existsSync(rootDirectory)) {
+    continue;
+  }
+
+  const files = listFiles(rootDirectory);
+  const metadata = metadataByExample.get(exampleName) ?? {};
+  const indexPath = path.join(rootDirectory, "index.html");
+  const html = renderIndex({
+    exampleName,
+    files,
+    metadata,
+  }).replace(/[ \t]+$/gm, "");
+
+  if (checkOnly) {
+    const existingHtml = fs.existsSync(indexPath)
+      ? fs.readFileSync(indexPath, "utf8")
+      : "";
+
+    if (existingHtml !== html) {
+      staleIndexes.push(path.relative(process.cwd(), indexPath));
+    }
+
+    continue;
+  }
+
+  fs.writeFileSync(indexPath, html);
+}
+
+if (staleIndexes.length) {
+  console.error("Generated example root indexes are stale:");
+  console.error(staleIndexes.map((filePath) => `- ${filePath}`).join("\n"));
+  console.error("Run `npm run generate:example-root-indexes` from Site/ and commit the result.");
+  process.exit(1);
+}

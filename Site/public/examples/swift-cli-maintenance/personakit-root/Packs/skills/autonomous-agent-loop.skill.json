@@ -10,11 +10,10 @@
     "level": "high",
     "requiresHumanReview": true,
     "notes": [
-      "PersonaKit V1 explicitly excludes autonomous loops and orchestration."
+      "PersonaKit is not an autonomous loop or orchestration system."
     ]
   },
   "notes": [
     "Included as a forbidden skill example."
   ]
 }
-

@@ -2,7 +2,7 @@
   "id": "product-scope-expansion",
   "version": "1.0",
   "name": "Product Scope Expansion",
-  "description": "Broaden PersonaKit's public V1 product goals while authoring pack content.",
+  "description": "Broaden PersonaKit's product goals while authoring pack content.",
   "providedBy": [
     "external-agent"
   ],
