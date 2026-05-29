@@ -20,6 +20,12 @@ This example shows PersonaKit being used to author PersonaKit content. `personak
 
 The point is not to make PersonaKit an autonomous pack generator. The point is to keep repeated authoring work compact, scoped, dry-run first, and validated before it becomes durable project context.
 
+## Mechanical Authoring, Reusable Judgment
+
+`personakit create` can produce the file shape, but the session decides the lane: reuse existing entities where possible, avoid product-scope expansion, dry-run before writing, and validate before treating the result as project context.
+
+This is also where reusable pieces get created or revised so future sessions can compose them instead of copying prompt paragraphs into a single oversized instruction.
+
 ## Runnable Commands
 
 ```bash

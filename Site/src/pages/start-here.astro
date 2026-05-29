@@ -11,6 +11,24 @@ const validationShape = "Validation summary: personas=1 kits=1 directives=1 inte
 
 const contractCommand = "personakit contract --root personakit-root --session cli-maintenance";
 
+const contractExcerpt = `{
+  "sessionId" : "cli-maintenance",
+  "personaId" : "cli-maintainer",
+  "directiveId" : "bounded-cli-fix",
+  "authorizedSkillIds" : [
+    "opencode-cli"
+  ],
+  "forbiddenSkillIds" : [
+    "autonomous-agent-loop",
+    "deployment-runner"
+  ],
+  "injectedContractIds" : [
+    "persona-activation-contract",
+    "skill-authorization-contract"
+  ],
+  "isAuthorized" : true
+}`;
+
 const dryRunCommand = `personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."`;
 ---
 
@@ -32,18 +50,14 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
   <h2>2. Inspect The Resolved Contract</h2>
   <Code code={contractCommand} lang="bash" theme="github-dark" />
 
-  <p>Look for:</p>
-  <ul>
-    <li><code>personaId</code>: <code>cli-maintainer</code></li>
-    <li><code>directiveId</code>: <code>bounded-cli-fix</code></li>
-    <li><code>isAuthorized</code>: <code>true</code></li>
-    <li><code>authorizedSkillIds</code>: <code>opencode-cli</code></li>
-    <li><code>forbiddenSkillIds</code>: <code>autonomous-agent-loop</code>, <code>deployment-runner</code></li>
-  </ul>
+  <p>The output is longer than this, but these are the first fields to care about:</p>
+  <Code code={contractExcerpt} lang="json" theme="github-dark" />
 
-  <p>What this proves: the named session resolves to one role, one directive, an applied kit, and an explicit capability boundary. PersonaKit is no longer relying on prompt memory or implied intent.</p>
+  <p>What this proves: the named session resolves to one role, one directive, injected built-in contracts, and an explicit capability boundary. PersonaKit is no longer relying on prompt memory or implied intent.</p>
 
-  <p><strong>PersonaKit Studio</strong> uses this same resolved-contract model for visual inspection and pack maintenance, but this guide keeps the CLI and static example root as the primary practical path.</p>
+  <Callout>
+    <p>Those fields are composed pieces. The session chooses the persona, directive, and skill boundary, then PersonaKit assembles them into one contract so the repeated rules do not have to be pasted into every prompt.</p>
+  </Callout>
 
   <h2>3. Preview The Runtime Payload</h2>
   <Code code={dryRunCommand} lang="bash" theme="github-dark" />
@@ -94,26 +108,17 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
     <p>This is the core PersonaKit experience: the worker receives a resolved contract instead of a loose prompt with repeated reminders.</p>
   </Callout>
 
-  <h2>Built-In Contracts You Will See</h2>
-  <div class="grid two">
-    <article class="card">
-      <h3>Persona Activation</h3>
-      <p>PersonaKit treats persona assignment as an operating contract, not a tone preset. One active persona governs the lane until it is explicitly replaced.</p>
-    </article>
-    <article class="card">
-      <h3>Skill Authorization</h3>
-      <p>External skills and host-local capabilities are unauthorized by default unless the resolved contract declares them.</p>
-    </article>
-  </div>
-
   <h2>What You Proved</h2>
   <ul>
     <li>PersonaKit can load authored project context.</li>
     <li>PersonaKit can validate its shape.</li>
     <li>A named session resolves to concrete boundaries.</li>
+    <li>Built-in persona activation and skill authorization contracts are injected.</li>
     <li>Authorized and forbidden capabilities are visible before work starts.</li>
     <li>The runtime payload can be inspected before launch.</li>
   </ul>
+
+  <p><strong>PersonaKit Studio</strong> uses this same resolved-contract model for visual inspection and pack maintenance, but this guide keeps the CLI and static example root as the primary practical path.</p>
 
   <h2>Next Step</h2>
   <p>Now that you have seen a resolved contract, learn how prompts, skills, harnesses, MCP, and agents fit around it.</p>

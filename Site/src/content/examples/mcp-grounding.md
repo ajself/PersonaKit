@@ -20,6 +20,10 @@ This example shows how PersonaKit fits when an agent can access the PersonaKit M
 
 The important boundary: MCP is read-only grounding. It does not authorize file mutation, command execution, agent launch, or workflow orchestration.
 
+## Unsafe Interpretation This Prevents
+
+An MCP-aware agent might otherwise treat "PersonaKit context is available" as permission to choose tools, mutate files, or launch a worker. This contract says the opposite: resolve context first, then stop unless the needed capability is explicitly authorized.
+
 ## Runnable Commands
 
 ```bash

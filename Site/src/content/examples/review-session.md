@@ -20,6 +20,10 @@ This example is intentionally non-executing. It shows how PersonaKit can define 
 
 Use this when the important boundary is separation of authority: the reviewer can identify defects, but cannot quietly become the fixer.
 
+## Authority Split
+
+The reviewer reports confirmed defects, risks, and missing validation. If a fix is needed, implementation waits for explicit approval and a separate work mode.
+
 ## Runnable Commands
 
 ```bash
