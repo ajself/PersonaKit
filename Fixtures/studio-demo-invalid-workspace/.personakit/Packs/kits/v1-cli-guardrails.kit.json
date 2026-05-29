@@ -1,9 +1,0 @@
-{
-  "id": "v1-cli-guardrails",
-  "version": "1.0",
-  "name": "V1 CLI Guardrails",
-  "summary": "Guardrails for narrow PersonaKit V1 CLI work.",
-  "essentialIds": [
-    "v1-boundaries"
-  ]
-}

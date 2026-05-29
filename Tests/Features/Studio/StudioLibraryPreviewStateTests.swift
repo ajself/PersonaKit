@@ -35,13 +35,13 @@ struct StudioLibraryPreviewStateTests {
         displayName: "Make a small CLI change",
         fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Packs/directives/small-cli-change.directive.json"),
         sourceScope: .project,
-        workstreamId: "v1",
+        workstreamId: "starter",
         workstreamPhase: "review"
       ),
       workspaceURL: URL(fileURLWithPath: "/Workspace")
     )
 
-    #expect(state.workstreamLine == "workstream: v1 · phase: review")
+    #expect(state.workstreamLine == "workstream: starter · phase: review")
   }
 
   @Test

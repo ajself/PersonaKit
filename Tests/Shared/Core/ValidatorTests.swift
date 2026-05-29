@@ -32,9 +32,9 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/v1-boundaries.md")
+    let missingURL = root.appendingPathComponent("Packs/essentials/run-boundaries.md")
     try FileManager.default.removeItem(at: missingURL)
-    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev-v1.session.json"))
+    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev.session.json"))
 
     let result = try Validator.validate(root: root)
 
@@ -42,11 +42,11 @@ struct ValidatorTests {
       result.errors == [
         ValidationError(
           entityType: .kit,
-          entityId: "v1-cli-guardrails",
+          entityId: "cli-guardrails",
           field: "essentialIds",
-          missingId: "v1-boundaries",
-          expectedPath: "Packs/essentials/v1-boundaries.md",
-          message: "Missing essential file at Packs/essentials/v1-boundaries.md."
+          missingId: "run-boundaries",
+          expectedPath: "Packs/essentials/run-boundaries.md",
+          message: "Missing essential file at Packs/essentials/run-boundaries.md."
         )
       ]
     )
@@ -335,7 +335,7 @@ struct ValidatorTests {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     try encoder.encode(updatedPersona).write(to: personaURL)
-    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev-v1.session.json"))
+    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev.session.json"))
 
     let result = try Validator.validate(root: root)
 

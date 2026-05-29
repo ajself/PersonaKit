@@ -184,7 +184,7 @@ enum StarterKitManifest {
             "multi-agent control flows"
           ],
           "defaultKitIds": [
-            "v1-cli-guardrails"
+            "cli-guardrails"
           ],
           "allowedSkillIds": [
             "opencode-cli"
@@ -197,16 +197,16 @@ enum StarterKitManifest {
         """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/kits/v1-cli-guardrails.kit.json",
+      relativePath: "Packs/kits/cli-guardrails.kit.json",
       contents:
         """
         {
-          "id": "v1-cli-guardrails",
+          "id": "cli-guardrails",
           "version": "1.0",
-          "name": "V1 CLI Guardrails",
-          "summary": "Guardrails for narrow PersonaKit V1 CLI work.",
+          "name": "CLI Guardrails",
+          "summary": "Guardrails for narrow PersonaKit CLI work.",
           "essentialIds": [
-            "v1-boundaries"
+            "run-boundaries"
           ]
         }
 
@@ -220,7 +220,7 @@ enum StarterKitManifest {
           "id": "small-cli-change",
           "version": "1.0",
           "title": "Make a small CLI change",
-          "goal": "Complete one bounded CLI improvement without expanding PersonaKit's V1 scope.",
+          "goal": "Complete one bounded CLI improvement without expanding PersonaKit's supported scope.",
           "steps": [
             {
               "text": "Read the active contract and identify the requested change."
@@ -280,7 +280,7 @@ enum StarterKitManifest {
             ]
           },
           "notes": [
-            "PersonaKit V1 supports one explicitly selected agent adapter."
+            "PersonaKit supports one explicitly selected agent adapter."
           ]
         }
 
@@ -302,7 +302,7 @@ enum StarterKitManifest {
             "level": "high",
             "requiresHumanReview": true,
             "notes": [
-              "Out of scope for PersonaKit V1."
+              "Out of scope for PersonaKit."
             ]
           },
           "notes": [
@@ -313,17 +313,17 @@ enum StarterKitManifest {
         """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/essentials/v1-boundaries.md",
+      relativePath: "Packs/essentials/run-boundaries.md",
       contents:
-        "# V1 Boundaries\n\nPersonaKit V1 resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before running work.\n- Use dry-run output to inspect the runtime payload before launching an agent.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
+        "# Run Boundaries\n\nPersonaKit resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before running work.\n- Use dry-run output to inspect the runtime payload before launching an agent.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
         .utf8Data
     ),
     StarterFile(
-      relativePath: "Sessions/solo-dev-v1.session.json",
+      relativePath: "Sessions/solo-dev.session.json",
       contents:
         """
         {
-          "id": "solo-dev-v1",
+          "id": "solo-dev",
           "personaId": "solo-developer",
           "directiveId": "small-cli-change"
         }

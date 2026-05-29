@@ -15,7 +15,7 @@ For architecture-relevant work, agents must read
 features, state owners, IO boundaries, concurrency, validation, and approved
 exceptions.
 
-PersonaKit V1 remains narrow: it resolves deterministic operating contracts and
+PersonaKit remains narrow: it resolves deterministic operating contracts and
 can launch one explicitly configured adapter through `personakit run`.
 PersonaKit is not an autonomous agent, planner, memory system, workflow engine,
 task manager, or orchestration layer.
@@ -91,15 +91,15 @@ Examples:
 | --- | --- |
 | "Use product-quality-review on this repo" | No |
 | "Fix a typo in README" | No |
-| "Operate under session `solo-dev-v1`" | Yes |
+| "Operate under session `solo-dev`" | Yes |
 | "Modify `personakit run` payload behavior" | Yes |
 | "Review MCP contract resolution" | Yes |
 
 ## Product Boundaries
 
-Keep PersonaKit V1 narrow, deterministic, and inspectable.
+Keep PersonaKit narrow, deterministic, and inspectable.
 
-`personakit run` is the only approved V1 launcher path. It is limited to:
+`personakit run` is the only approved launcher path. It is limited to:
 
 - resolving PersonaKit context deterministically
 - assembling an inspectable runtime payload

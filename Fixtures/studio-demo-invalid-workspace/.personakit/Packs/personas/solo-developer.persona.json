@@ -20,7 +20,7 @@
     "multi-agent control flows"
   ],
   "defaultKitIds": [
-    "v1-cli-guardrails"
+    "cli-guardrails"
   ],
   "allowedSkillIds": [
     "opencode-cli"

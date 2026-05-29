@@ -24,7 +24,7 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .essentials)
 
-    let expected = "v1-boundaries"
+    let expected = "run-boundaries"
 
     #expect(output == expected)
   }
@@ -90,15 +90,15 @@ struct ListCommandTests {
         id: "review-swiftui",
         personaId: "solo-developer",
         directiveId: "small-cli-change",
-        kitOverrides: ["v1-cli-guardrails"]
+        kitOverrides: ["cli-guardrails"]
       )
     )
 
     let output = try ListCommand.list(root: root, entityType: .sessions)
 
     let expected = [
-      "review-swiftui — solo-developer / small-cli-change [kits: v1-cli-guardrails]",
-      "solo-dev-v1 — solo-developer / small-cli-change",
+      "review-swiftui — solo-developer / small-cli-change [kits: cli-guardrails]",
+      "solo-dev — solo-developer / small-cli-change",
     ].joined(separator: "\n")
 
     #expect(output == expected)
@@ -141,7 +141,7 @@ struct ListCommandTests {
 
     let expected = [
       "shared-review — solo-developer / small-cli-change",
-      "solo-dev-v1 — solo-developer / small-cli-change",
+      "solo-dev — solo-developer / small-cli-change",
     ].joined(separator: "\n")
 
     #expect(output == expected)

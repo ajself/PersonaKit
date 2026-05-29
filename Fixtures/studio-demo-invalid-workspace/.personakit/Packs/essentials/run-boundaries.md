@@ -1,6 +1,6 @@
-# V1 Boundaries
+# Run Boundaries
 
-PersonaKit V1 resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.
+PersonaKit resolves a deterministic operating contract and launches one explicitly selected supported agent adapter.
 
 Stay inside these boundaries:
 
