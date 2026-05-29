@@ -10,6 +10,11 @@ PersonaKit-powered sessions and product/runtime behavior; they are not
 automatic restrictions on every Codex, editor-agent, review, documentation, or
 maintenance session.
 
+For architecture-relevant work, agents must read
+`Docs/ArchitectureDefaults.md`. It defines the repo-local FOSA defaults for
+features, state owners, IO boundaries, concurrency, validation, and approved
+exceptions.
+
 PersonaKit V1 remains narrow: it resolves deterministic operating contracts and
 can launch one explicitly configured adapter through `personakit run`.
 PersonaKit is not an autonomous agent, planner, memory system, workflow engine,
