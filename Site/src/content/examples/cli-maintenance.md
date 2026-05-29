@@ -20,6 +20,14 @@ This example is the happy path for a bounded PersonaKit implementation lane. It 
 
 Use this when a practical coding task repeats often enough that the same role, stop points, and verification should be visible every time.
 
+## Prompt This Replaces
+
+```text
+Fix this small CLI bug. Be careful, do not deploy anything, do not start a long-running agent loop, and show me what would happen before you run it.
+```
+
+PersonaKit keeps that repeated caution out of the task prompt and puts it in the session contract where it can be inspected.
+
 ## Runnable Commands
 
 ```bash

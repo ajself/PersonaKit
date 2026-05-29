@@ -23,6 +23,7 @@ personakit export --root .personakit --session behavior-review`;
   <div class="learning-map">
     <a href="#map">Map the layers</a>
     <a href="#contract">Read the contract</a>
+    <a href="#compose">Compose the pieces</a>
     <a href="#prompt-to-contract">Turn a prompt into a contract</a>
     <a href="#handoff">Hand off to an agent</a>
   </div>
@@ -101,6 +102,73 @@ personakit export --root .personakit --session behavior-review`;
     </article>
   </div>
 
+  <h2 id="compose">Compose The Pieces</h2>
+  <p>PersonaKit contracts are assembled from reusable parts. Operators should not have to copy the same careful-review paragraph into every prompt or maintain several nearly identical skills just to change a boundary.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Piece</th>
+        <th>Reusable Job</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Persona</td>
+        <td>Who is acting.</td>
+      </tr>
+      <tr>
+        <td>Directive</td>
+        <td>What kind of work this is.</td>
+      </tr>
+      <tr>
+        <td>Kit</td>
+        <td>Rules that should travel across related sessions.</td>
+      </tr>
+      <tr>
+        <td>Essentials</td>
+        <td>Required grounding that belongs in the resolved payload.</td>
+      </tr>
+      <tr>
+        <td>Skills</td>
+        <td>Capabilities that may be authorized or forbidden for this lane.</td>
+      </tr>
+      <tr>
+        <td>Session</td>
+        <td>The composed lane that selects the pieces to resolve together.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Review work is a good example of the pattern:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Composition</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>behavior-reviewer</code> + <code>behavior-preserving-review</code></td>
+        <td>The existing read-only review lane reports findings without becoming the implementer.</td>
+      </tr>
+      <tr>
+        <td>Same reviewer + a different directive and session</td>
+        <td>A conceptual implementation-after-approval lane could be separate instead of mutating the read-only lane.</td>
+      </tr>
+      <tr>
+        <td>Shared review kit or essential</td>
+        <td>Review discipline can travel across lanes without being pasted into each task prompt.</td>
+      </tr>
+      <tr>
+        <td>Same skill catalog, different sessions</td>
+        <td>A capability can stay reusable while authorization is decided by the resolved contract.</td>
+      </tr>
+    </tbody>
+  </table>
+
   <h2 id="prompt-to-contract">Turn A Prompt Into A Contract</h2>
   <p>Start with a loose prompt:</p>
 
@@ -163,7 +231,7 @@ personakit export --root .personakit --session behavior-review`;
   .learning-map {
     display: grid;
     gap: 10px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     margin: 24px 0 36px;
   }
 
