@@ -35,7 +35,7 @@ struct CLIRecommendCommandTests {
     )
     #expect(
       output.contains(
-        "personakit run --root \(root.path) --session senior-swiftui-engineer_apply-style --agent <agent> -- \"<task>\""
+        "personakit export --root \(root.path) --session senior-swiftui-engineer_apply-style --copy"
       )
     )
   }

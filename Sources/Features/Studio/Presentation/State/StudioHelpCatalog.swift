@@ -278,7 +278,7 @@ enum StudioHelpCatalog {
           "A Skill is not a runnable command. It declares a capability, who provides it, and its risk so PersonaKit can decide whether a resolved session may use that capability.",
         keyFields: [
           "Use the id as the stable capability name referenced by personas, kits, directives, and intents.",
-          "Use providedBy to map the capability to an external provider or adapter, such as opencode.",
+          "Use providedBy to name the external tool or environment associated with the capability.",
           "Document risk so the agent can translate authorization into ordinary operating judgment.",
           "Personas allow or forbid skills; kits, directives, and intents can require them.",
         ],
@@ -289,7 +289,7 @@ enum StudioHelpCatalog {
           "Forgetting that undeclared host-local skills are unauthorized by default.",
         ],
         examples: [
-          "Example: opencode-cli declares that OpenCode can perform code-editing work outside PersonaKit. A session may launch opencode only if the active persona authorizes a skill whose providedBy includes opencode."
+          "Example: code-editing declares that a coding tool may perform edits after PersonaKit exports the resolved operating contract. PersonaKit records the capability boundary; it does not launch the tool."
         ],
         nextStepText:
           "Confirm the selected skill reads like a capability boundary, then verify references resolve in map/validation before exporting session context.",

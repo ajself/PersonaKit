@@ -156,7 +156,7 @@ Exception rules:
 - Document Swift exceptions with `EXCEPTION(FOSA)` at the code site.
 - Document documentation-only or planning exceptions in the tracker closeout.
 - Include the default rule, reason, and tradeoff.
-- Broad architecture, public behavior, adapter, workflow, memory, or
+- Broad architecture, public behavior, execution, workflow, memory, or
   orchestration exceptions require maintainer approval before editing.
 
 ## Enforcement Checklist

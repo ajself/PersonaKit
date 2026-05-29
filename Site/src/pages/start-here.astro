@@ -16,7 +16,7 @@ const contractExcerpt = `{
   "personaId" : "cli-maintainer",
   "directiveId" : "bounded-cli-fix",
   "authorizedSkillIds" : [
-    "opencode-cli"
+    "code-editing"
   ],
   "forbiddenSkillIds" : [
     "autonomous-agent-loop",
@@ -29,7 +29,7 @@ const contractExcerpt = `{
   "isAuthorized" : true
 }`;
 
-const dryRunCommand = `personakit run --root personakit-root --session cli-maintenance --agent opencode --dry-run -- "Fix parser help text."`;
+const exportCommand = "personakit export --root personakit-root --session cli-maintenance";
 ---
 
 <ContentLayout
@@ -63,10 +63,10 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
     <p>Those fields are composed pieces. The session chooses the persona, directive, and skill boundary, then PersonaKit assembles them into one contract so the repeated rules do not have to be pasted into every prompt.</p>
   </Callout>
 
-  <h2>3. Preview The Runtime Payload</h2>
-  <Code code={dryRunCommand} lang="bash" theme="github-dark" />
+  <h2>3. Export The Handoff Context</h2>
+  <Code code={exportCommand} lang="bash" theme="github-dark" />
 
-  <p>What this proves: the payload that would be handed to the supported adapter is visible before launch. The task text appears after the resolved context, so the agent starts from the operating contract first.</p>
+  <p>What this proves: the resolved operating contract can be exported as inspectable handoff context before any coding tool starts work.</p>
 
   <h2>How To Read The Payload</h2>
   <table>
@@ -102,8 +102,8 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
         <td>The steps, stop points, acceptance criteria, and verification fit the task.</td>
       </tr>
       <tr>
-        <td>Task</td>
-        <td>The specific request is last, after the resolved contract.</td>
+        <td>Handoff Context</td>
+        <td>The exported Markdown is ready to copy into the coding tool you use for the actual work.</td>
       </tr>
     </tbody>
   </table>
@@ -119,7 +119,7 @@ const dryRunCommand = `personakit run --root personakit-root --session cli-maint
     <li>A named session resolves to concrete boundaries.</li>
     <li>Built-in persona activation and skill authorization contracts are injected.</li>
     <li>Authorized and forbidden capabilities are visible before work starts.</li>
-    <li>The runtime payload can be inspected before launch.</li>
+    <li>The exported handoff context can be inspected before work starts.</li>
   </ul>
 
   <p><strong>PersonaKit Studio</strong> uses this same resolved-contract model for visual inspection and pack maintenance, but this guide keeps the CLI and static example root as the primary practical path.</p>

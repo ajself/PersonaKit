@@ -25,7 +25,7 @@ personakit export --root .personakit --session behavior-review`;
     <a href="#contract">Read the contract</a>
     <a href="#compose">Compose the pieces</a>
     <a href="#prompt-to-contract">Turn a prompt into a contract</a>
-    <a href="#handoff">Hand off to an agent</a>
+    <a href="#handoff">Export handoff context</a>
   </div>
 
   <h2 id="map">Map The Layers</h2>
@@ -65,8 +65,8 @@ personakit export --root .personakit --session behavior-review`;
       </tr>
       <tr>
         <td>CLI</td>
-        <td>The practical local interface for validation, inspection, export, and launch.</td>
-        <td>PersonaKit CLI proves the contract before the supported adapter runs.</td>
+        <td>The practical local interface for validation, inspection, and export.</td>
+        <td>PersonaKit CLI proves the contract before another coding tool starts work.</td>
       </tr>
       <tr>
         <td>Agent</td>
@@ -202,21 +202,20 @@ personakit export --root .personakit --session behavior-review`;
 
   <p><a class="button-link" href={sitePath("examples/review-session/")}>Study the review-session example</a></p>
 
-  <h2 id="handoff">Hand Off To An Agent</h2>
+  <h2 id="handoff">Export Handoff Context</h2>
   <p>The practical loop is small and inspectable:</p>
 
   <ol>
     <li>Validate the authored PersonaKit root.</li>
     <li>Resolve the session contract.</li>
     <li>Inspect or export the context.</li>
-    <li>Dry-run a runtime payload only when the session authorizes the selected adapter.</li>
-    <li>For read-only review sessions, export the grounding instead of launching a worker.</li>
+    <li>Copy the exported grounding into the coding tool you use for the actual work.</li>
   </ol>
 
   <Code code={handoffCommands} lang="bash" theme="github-dark" />
 
   <Callout tone="good">
-    <p>That is the craft: make the boundary durable, inspect it, and only launch a worker when the contract authorizes that lane.</p>
+    <p>That is the craft: make the boundary durable, inspect it, and hand off only the context the contract resolved.</p>
   </Callout>
 </ContentLayout>
 

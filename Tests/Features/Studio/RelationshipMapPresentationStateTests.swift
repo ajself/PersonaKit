@@ -279,18 +279,18 @@ struct StudioRelationshipMapPresentationStateTests {
 
     let visualFrames = RelationshipMapLayoutState.visualFrames(
       [
-        "directive:opencode-cli": directiveFrame,
+        "directive:code-editing": directiveFrame,
         "persona:solo-developer": personaFrame,
       ],
       offsetsByNodeKey: [
-        "directive:opencode-cli": CGSize(
+        "directive:code-editing": CGSize(
           width: 0,
           height: -40
         )
       ]
     )
 
-    #expect(visualFrames["directive:opencode-cli"]?.midY == directiveFrame.midY - 40)
+    #expect(visualFrames["directive:code-editing"]?.midY == directiveFrame.midY - 40)
     #expect(visualFrames["persona:solo-developer"] == personaFrame)
   }
 
@@ -356,7 +356,7 @@ struct StudioRelationshipMapPresentationStateTests {
         ),
         WorkspaceSessionMapEdge(
           fromKey: "directive:small-cli-change",
-          toKey: "skill:opencode-cli",
+          toKey: "skill:code-editing",
           reason: "directive.requiredSkillIds"
         ),
       ],
@@ -406,7 +406,7 @@ struct StudioRelationshipMapPresentationStateTests {
         ),
         WorkspaceSessionMapEdge(
           fromKey: "directive:small-cli-change",
-          toKey: "skill:opencode-cli",
+          toKey: "skill:code-editing",
           reason: "directive.requiredSkillIds"
         ),
       ],
@@ -475,8 +475,8 @@ struct StudioRelationshipMapPresentationStateTests {
   @Test
   func automationIdentifierKeepsDistinctNodeKindsDistinct() {
     #expect(
-      RelationshipMapAutomationIdentifier.node(key: "directive:opencode-cli")
-        != RelationshipMapAutomationIdentifier.node(key: "skill:opencode-cli")
+      RelationshipMapAutomationIdentifier.node(key: "directive:code-editing")
+        != RelationshipMapAutomationIdentifier.node(key: "skill:code-editing")
     )
   }
 
@@ -593,7 +593,7 @@ struct StudioRelationshipMapPresentationStateTests {
         width: 180,
         height: 62
       ),
-      "skill:opencode-cli": CGRect(
+      "skill:code-editing": CGRect(
         x: 820,
         y: 160,
         width: 180,

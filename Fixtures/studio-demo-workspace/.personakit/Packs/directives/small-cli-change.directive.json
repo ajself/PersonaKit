@@ -11,7 +11,7 @@
       "text": "Make the smallest implementation or documentation update that satisfies the task."
     },
     {
-      "text": "Stop for review if the task requires new execution behavior, a new adapter, persistence, or orchestration.",
+      "text": "Stop for review if the task requires new execution behavior, persistence, or orchestration.",
       "requiresReview": true
     },
     {
@@ -35,7 +35,5 @@
     }
   ],
   "requiresIntentTemplateIds": [],
-  "requiresSkillIds": [
-    "opencode-cli"
-  ]
+  "requiresSkillIds": []
 }

@@ -6,7 +6,7 @@
 - Keep changes small, reviewable, and scoped to the active task.
 - Avoid large refactors unless the active contract explicitly calls for them.
 - Do not add new dependencies without explicit approval.
-- `personakit run` is the only built-in execution lane.
-- No execution happens outside the narrow `personakit run` launcher path.
+- `personakit contract` and `personakit export` are the built-in handoff lanes.
+- PersonaKit does not launch agents or execute workflow steps.
 - `graph` is an inspection surface for dependency shape, not a planning tool.
 - Studio is a local administration surface, not the primary product path.
