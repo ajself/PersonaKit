@@ -32,8 +32,8 @@ personakit export --root .personakit --session behavior-review`;
       </li>
       <li>
         <h3>Continue Into The Workday</h3>
-        <p>Use that same ReleaseDesk project for review, approved follow-up, docs, and a host handoff.</p>
-        <a class="button-link path-action" href={sitePath("releasedesk-workday/")}>Continue after foundation</a>
+        <p>Use that same ReleaseDesk project for review, approved follow-up, docs, and a host handoff. Return here after the foundation lab, or use the next-step card at the end of that tutorial.</p>
+        <span class="path-next">Next after foundation</span>
       </li>
     </ol>
   </section>
@@ -314,6 +314,19 @@ personakit export --root .personakit --session behavior-review`;
   }
 
   .path-action {
+    font-weight: 750;
+  }
+
+  .path-next {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 1px solid #d6e2e8;
+    border-radius: 8px;
+    color: #46636f;
+    background: #f7fbfd;
+    font-size: 0.92rem;
     font-weight: 750;
   }
 
