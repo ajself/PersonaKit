@@ -1,0 +1,18 @@
+{
+  "id": "release-runner",
+  "version": "1.0",
+  "name": "Release Runner",
+  "description": "Create tags, publish artifacts, deploy, notarize, or modify release credentials.",
+  "providedBy": [
+    "release tooling"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Can create public release effects."
+    ]
+  },
+  "notes": []
+}
+

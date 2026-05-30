@@ -125,9 +125,25 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
   <p><strong>PersonaKit Studio</strong> uses this same resolved-contract model for visual inspection and pack maintenance, but this guide keeps the CLI and static example root as the primary practical path.</p>
 
   <h2>Next Step</h2>
-  <p>Now that you have seen a resolved contract, learn how the pieces compose, then copy the closest example root into your project.</p>
-  <p>
-    <a class="button-link" href={sitePath("learn/")}>Open Learn PersonaKit</a>
-    <a class="button-link" href={sitePath("examples/pack-authoring/")}>Study Pack Authoring</a>
+  <p>Now that you have seen a resolved contract, learn how the pieces compose before choosing a root to adapt.</p>
+  <p class="action-row">
+    <a class="button-link primary-next" href={sitePath("learn/")}>Continue to Learn PersonaKit</a>
   </p>
 </ContentLayout>
+
+<style>
+  .action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .primary-next {
+    border-color: #8db3c9;
+    background: #eef6fa;
+    color: var(--blue);
+    font-weight: 750;
+  }
+</style>

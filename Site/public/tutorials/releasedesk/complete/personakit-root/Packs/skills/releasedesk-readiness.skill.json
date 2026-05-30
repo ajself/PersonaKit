@@ -1,0 +1,19 @@
+{
+  "id": "releasedesk-readiness",
+  "version": "1.0",
+  "name": "ReleaseDesk Readiness Skill",
+  "description": "Use the local ReleaseDesk readiness skill to diagnose readiness behavior and, when implementation is authorized, guide the fix.",
+  "providedBy": [
+    "host-local skill"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Can guide product behavior changes, but does not authorize edits by itself."
+    ]
+  },
+  "notes": [
+    "PersonaKit declares whether this host-local skill is allowed in a session; the host remains responsible for using the skill."
+  ]
+}

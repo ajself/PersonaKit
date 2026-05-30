@@ -20,7 +20,25 @@ personakit export --root .personakit --session behavior-review`;
 >
   <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts or skills. It does not. PersonaKit is the operating-contract layer that says which role, rules, context, stop points, and capabilities apply before a model-backed worker starts.</p>
 
-  <div class="learning-map">
+  <section class="learning-path" aria-labelledby="releasedesk-path-heading">
+    <p class="path-label">Recommended path</p>
+    <h2 id="releasedesk-path-heading">Learn With ReleaseDesk</h2>
+    <p>ReleaseDesk is the sample product: a tiny release-readiness dashboard with a real bug, a local readiness skill, and a completed PersonaKit root. Start by building its foundation, then continue with the same project through a normal engineering workday.</p>
+    <ol class="path-steps">
+      <li>
+        <h3>Build The ReleaseDesk Foundation</h3>
+        <p>Fix the readiness bug, then add PersonaKit only when agent boundaries become useful.</p>
+        <a class="button-link path-action" href={sitePath("week-with-personakit/")}>Start the product lab</a>
+      </li>
+      <li>
+        <h3>Continue Into The Workday</h3>
+        <p>Use that same ReleaseDesk project for review, approved follow-up, docs, and a host handoff.</p>
+        <a class="button-link path-action" href={sitePath("releasedesk-workday/")}>Continue after foundation</a>
+      </li>
+    </ol>
+  </section>
+
+  <div class="learning-map" aria-label="Learning sections">
     <a href="#map">Map the layers</a>
     <a href="#contract">Read the contract</a>
     <a href="#compose">Compose the pieces</a>
@@ -217,9 +235,88 @@ personakit export --root .personakit --session behavior-review`;
   <Callout tone="good">
     <p>That is the craft: make the boundary durable, inspect it, and hand off only the context the contract resolved.</p>
   </Callout>
+
+  <p class="action-row">
+    <a class="button-link primary-path" href={sitePath("week-with-personakit/")}>Start the ReleaseDesk tutorial</a>
+  </p>
 </ContentLayout>
 
 <style>
+  .learning-path {
+    margin: 26px 0 34px;
+    padding: 24px;
+    border: 1px solid #dbe9ef;
+    border-radius: 8px;
+    background: #f7fbfd;
+  }
+
+  .learning-path h2 {
+    margin: 2px 0 8px;
+  }
+
+  .learning-path > p:last-of-type {
+    max-width: 760px;
+    color: var(--muted);
+  }
+
+  .path-label {
+    margin: 0;
+    color: #46636f;
+    font-size: 0.78rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .path-steps {
+    counter-reset: release-path;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .path-steps li {
+    counter-increment: release-path;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .path-steps h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .path-steps h3::before {
+    content: counter(release-path);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #eef6fa;
+    color: var(--blue);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .path-steps p {
+    margin: 0 0 14px;
+    color: var(--muted);
+  }
+
+  .path-action {
+    font-weight: 750;
+  }
+
   .learning-map {
     display: grid;
     gap: 10px;
@@ -257,7 +354,25 @@ personakit export --root .personakit --session behavior-review`;
     margin-bottom: 14px;
   }
 
+  .action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .primary-path {
+    border-color: #8db3c9;
+    background: #eef6fa;
+    color: var(--blue);
+    font-weight: 750;
+  }
+
   @media (max-width: 840px) {
+    .path-steps {
+      grid-template-columns: 1fr;
+    }
+
     .learning-map {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

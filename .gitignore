@@ -87,3 +87,7 @@ Config/Release.local.mk
 Site/.astro/
 Site/dist/
 Site/node_modules/
+
+### Local planning notes ###
+# Tracker documents useful for n+1 agent sessions, but ephemeral in total.
+.plans/

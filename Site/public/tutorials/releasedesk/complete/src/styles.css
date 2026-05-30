@@ -1,0 +1,195 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7f8;
+  --border: #d6dde2;
+  --danger: #a33b3b;
+  --ink: #202428;
+  --muted: #5f6b75;
+  --ok: #2f7d4c;
+  --panel: #ffffff;
+  --warn: #9b6a16;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  width: min(980px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 42px 0;
+}
+
+.hero {
+  margin-bottom: 24px;
+}
+
+.eyebrow,
+.task-area {
+  margin: 0 0 6px;
+  color: #2e6f95;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: clamp(34px, 8vw, 60px);
+  line-height: 1;
+}
+
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.release-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.release-meta span {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.summary-panel,
+.task-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.summary-panel {
+  display: grid;
+  align-items: center;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.readiness {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.readiness.ready {
+  color: var(--ok);
+}
+
+.readiness.blocked {
+  color: var(--danger);
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+select {
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.task-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.task-card,
+.empty-state {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.task-card {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-left-width: 5px;
+}
+
+.task-card.done {
+  border-left-color: var(--ok);
+}
+
+.task-card.blocked {
+  border-left-color: var(--danger);
+}
+
+.task-card.todo {
+  border-left-color: var(--warn);
+}
+
+.task-card h3 {
+  margin-bottom: 4px;
+}
+
+.task-card p:last-child,
+.empty-state p:last-child {
+  margin-bottom: 0;
+}
+
+.empty-state {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.empty-state h3 {
+  color: var(--ink);
+}
+
+.blocker {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.task-meta {
+  display: grid;
+  align-content: start;
+  justify-items: end;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.task-meta strong {
+  color: var(--ink);
+}
+
+@media (max-width: 700px) {
+  .summary-panel,
+  .task-card {
+    grid-template-columns: 1fr;
+  }
+
+  .task-meta {
+    justify-items: start;
+  }
+}
+

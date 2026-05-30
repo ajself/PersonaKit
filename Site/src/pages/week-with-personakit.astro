@@ -1,0 +1,651 @@
+---
+import Callout from "../components/Callout.astro";
+import TutorialBlock from "../components/TutorialBlock.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+
+const starterHref = sitePath("tutorials/releasedesk/starter/index.html");
+const completeHref = sitePath("tutorials/releasedesk/complete/index.html");
+const completeRootHref = sitePath("tutorials/releasedesk/complete/personakit-root/index.html");
+const starterSkillHref = sitePath("tutorials/releasedesk/starter/host-skills/releasedesk-readiness/index.html");
+const completeSkillHref = sitePath("tutorials/releasedesk/complete/host-skills/releasedesk-readiness/index.html");
+
+const setupCommands = `rm -rf /tmp/releasedesk-lab
+cp -R Site/public/tutorials/releasedesk/starter /tmp/releasedesk-lab
+cd /tmp/releasedesk-lab
+open index.html
+node test/run-tests.mjs`;
+
+const expectedFailure = `not ok - blocked security review keeps release from ready
+AssertionError [ERR_ASSERTION]: true !== false`;
+
+const skillFirstPrompt = `Use the ReleaseDesk readiness skill to diagnose the failing readiness test.
+Run node test/run-tests.mjs.
+Do not edit files yet.
+Return the suspected rule, evidence from the release data, and the smallest safe fix.`;
+
+const skillDiagnosis = `Diagnosis
+- The release has a required security task: "Complete security review".
+- That task is blocked and its status is not "done".
+- The readiness summary still reports ready, so the bug is in readiness logic, not release data.
+
+Smallest safe fix
+- In src/releaseRules.js, count every required task whose status is not "done".`;
+
+const implementationLaneCommands = `personakit init .personakit
+
+personakit create skill --root .personakit \\
+  --id code-editing \\
+  --name "Code Editing" \\
+  --description "Make focused source changes inside the approved scope." \\
+  --provided-by "host coding agent" \\
+  --risk-level medium \\
+  --requires-human-review \\
+  --risk-note "Can change project behavior."
+
+personakit create skill --root .personakit \\
+  --id releasedesk-readiness \\
+  --name "ReleaseDesk Readiness Skill" \\
+  --description "Use the local ReleaseDesk readiness skill to diagnose readiness behavior and, when implementation is authorized, guide the fix." \\
+  --provided-by "host-local skill" \\
+  --risk-level medium \\
+  --requires-human-review \\
+  --risk-note "Can guide product behavior changes, but does not authorize edits by itself."
+
+personakit create skill --root .personakit \\
+  --id deployment-runner \\
+  --name "Deployment Runner" \\
+  --description "Publish, deploy, tag, notarize, or release software." \\
+  --provided-by "release tooling" \\
+  --risk-level high \\
+  --requires-human-review \\
+  --risk-note "Can create public or irreversible release effects."
+
+personakit create essential --root .personakit --force \\
+  --id contract-boundaries \\
+  --title "Contract Boundaries" \\
+  --body "Stay inside the approved task. Keep changes small. Validate before closeout. Stop before deployment, credential changes, or new execution behavior."
+
+personakit create kit --root .personakit --force \\
+  --id product-guardrails \\
+  --name "Product Guardrails" \\
+  --summary "Shared ReleaseDesk boundaries for focused product work." \\
+  --essential contract-boundaries`;
+
+const implementationSessionCommands = `personakit create persona --root .personakit --force \\
+  --id product-implementer \\
+  --name "Product Implementer" \\
+  --summary "Implements small approved product changes with explicit validation." \\
+  --responsibility "Resolve the active contract before editing." \\
+  --responsibility "Keep implementation scoped to the requested behavior." \\
+  --value "small diffs" \\
+  --value "human approval before release actions" \\
+  --non-goal "deployment" \\
+  --default-kit product-guardrails \\
+  --allow-skill code-editing \\
+  --allow-skill releasedesk-readiness \\
+  --forbid-skill deployment-runner
+
+personakit create directive --root .personakit \\
+  --id small-product-change \\
+  --title "Small Product Change" \\
+  --goal "Complete one bounded implementation change without expanding the work mode." \\
+  --step "Read the active contract and identify the requested behavior." \\
+  --step "Make the smallest change that satisfies the task." \\
+  --review-step "Stop if the task requires release behavior, credentials, or new execution surfaces." \\
+  --acceptance "The change stays inside the requested scope." \\
+  --acceptance "Validation commands are reported." \\
+  --verify-command "node test/run-tests.mjs" \\
+  --skill code-editing \\
+  --skill releasedesk-readiness
+
+personakit create session --root .personakit \\
+  --id implementation-lane \\
+  --persona product-implementer \\
+  --directive small-product-change
+
+personakit contract --root .personakit --session implementation-lane`;
+
+const implementationPrompt = "Operate under implementation-lane. Use the ReleaseDesk readiness skill to fix the readiness bug so blocked required security work prevents a ready-to-ship state. Run node test/run-tests.mjs and stop before any release action.";
+
+const releaseRulesFix = `export function readinessSummary(tasks) {
+  const required = requiredTasks(tasks);
+  const incompleteRequired = required.filter((task) => task.status !== "done");
+
+  return {
+    blockedCount: blockedTasks(tasks).length,
+    incompleteRequiredCount: incompleteRequired.length,
+    isReady: incompleteRequired.length === 0,
+    requiredCount: required.length,
+  };
+}`;
+
+const reviewLaneCommands = `personakit create skill --root .personakit \\
+  --id code-review \\
+  --name "Code Review" \\
+  --description "Inspect code and report findings without editing files." \\
+  --provided-by "host coding agent" \\
+  --risk-level low \\
+  --note "Review findings do not authorize implementation."
+
+personakit create persona --root .personakit \\
+  --id behavior-reviewer \\
+  --name "Behavior Reviewer" \\
+  --summary "Reviews behavior, scope, and validation without becoming the implementer." \\
+  --responsibility "Report confirmed issues before suggestions." \\
+  --value "findings first" \\
+  --value "read-only review" \\
+  --non-goal "code editing" \\
+  --default-kit product-guardrails \\
+  --allow-skill code-review \\
+  --forbid-skill code-editing \\
+  --forbid-skill releasedesk-readiness \\
+  --forbid-skill deployment-runner
+
+personakit create directive --root .personakit \\
+  --id read-only-review \\
+  --title "Read-Only Review" \\
+  --goal "Review the current change without editing code." \\
+  --step "Inspect the diff and surrounding behavior." \\
+  --step "Report confirmed issues before suggestions." \\
+  --review-step "Stop before making fixes or staging files." \\
+  --acceptance "Findings are ordered by severity." \\
+  --verify-manual "Explain what was inspected and what remains unverified." \\
+  --skill code-review
+
+personakit create session --root .personakit \\
+  --id review-lane \\
+  --persona behavior-reviewer \\
+  --directive read-only-review`;
+
+const reviewPrompt = "Operate under review-lane. Review the readiness fix for behavior regressions and missing validation. Do not edit files.";
+
+const approvedFixPrompt = "Operate under implementation-lane. Add a useful empty state when a filter has no matching ReleaseDesk tasks. Do not change readiness rules.";
+
+const docsLaneCommands = `personakit create skill --root .personakit \\
+  --id docs-editing \\
+  --name "Docs Editing" \\
+  --description "Update documentation and static learning content." \\
+  --provided-by "host coding agent" \\
+  --risk-level medium \\
+  --note "Can change public explanation but not product behavior."
+
+personakit create skill --root .personakit \\
+  --id release-runner \\
+  --name "Release Runner" \\
+  --description "Create tags, publish artifacts, deploy, notarize, or modify release credentials." \\
+  --provided-by "release tooling" \\
+  --risk-level high \\
+  --requires-human-review \\
+  --risk-note "Can create public release effects."
+
+personakit create persona --root .personakit \\
+  --id docs-maintainer \\
+  --name "Docs Maintainer" \\
+  --summary "Improves public learning content while avoiding release actions." \\
+  --responsibility "Make public copy clearer and more actionable." \\
+  --value "practical examples" \\
+  --non-goal "publishing releases" \\
+  --default-kit product-guardrails \\
+  --allow-skill docs-editing \\
+  --forbid-skill release-runner
+
+personakit create directive --root .personakit \\
+  --id docs-readiness \\
+  --title "Docs Readiness" \\
+  --goal "Improve ReleaseDesk docs or inspect release readiness without publishing anything." \\
+  --step "Identify the user-facing confusion to resolve." \\
+  --step "Make the narrow docs change or report readiness gaps." \\
+  --review-step "Stop before tags, deployments, notarization, credentials, or public release steps." \\
+  --acceptance "Public claims remain inside the product boundary." \\
+  --verify-command "node test/run-tests.mjs" \\
+  --skill docs-editing
+
+personakit create session --root .personakit \\
+  --id docs-readiness \\
+  --persona docs-maintainer \\
+  --directive docs-readiness`;
+
+const handoffLaneCommands = `personakit create skill --root .personakit \\
+  --id mcp-grounding \\
+  --name "MCP Grounding" \\
+  --description "Resolve read-only PersonaKit context before selecting host-local tools." \\
+  --provided-by "PersonaKit MCP client" \\
+  --risk-level low \\
+  --note "Grounding provides context and provenance, not execution authority."
+
+personakit create skill --root .personakit \\
+  --id worker-delegation \\
+  --name "Worker Delegation" \\
+  --description "Assign work to hidden helper workers." \\
+  --provided-by "agent harness" \\
+  --risk-level high \\
+  --requires-human-review \\
+  --risk-note "Can make work happen outside the human's direct view."
+
+personakit create persona --root .personakit \\
+  --id contract-grounded-agent \\
+  --name "Contract-Grounded Agent" \\
+  --summary "Resolves PersonaKit context before choosing tools or passing work onward." \\
+  --responsibility "Resolve the active contract before selecting tools." \\
+  --responsibility "Pass the relevant boundary with any assigned task." \\
+  --responsibility "Stop when a needed capability is missing or forbidden." \\
+  --value "ground first" \\
+  --non-goal "subagent orchestration" \\
+  --default-kit product-guardrails \\
+  --allow-skill mcp-grounding \\
+  --forbid-skill worker-delegation
+
+personakit create directive --root .personakit \\
+  --id resolve-before-tools \\
+  --title "Resolve Before Tools" \\
+  --goal "Resolve PersonaKit context before any tool choice or worker handoff." \\
+  --step "Resolve the requested session and inspect authorization." \\
+  --step "Use only capabilities authorized by the resolved contract." \\
+  --review-step "Stop before assigning worker tasks or acting outside the exported boundary." \\
+  --acceptance "The resolved boundary is visible before work starts." \\
+  --verify-manual "Report the resolved session and authorization boundary." \\
+  --skill mcp-grounding
+
+personakit create session --root .personakit \\
+  --id grounded-handoff \\
+  --persona contract-grounded-agent \\
+  --directive resolve-before-tools`;
+
+const finalCommands = `personakit validate --root .personakit
+personakit list --root .personakit sessions
+personakit recommend --root .personakit --goal "Review this diff without editing files"`;
+---
+
+<ContentLayout
+  title="Build Agent Boundaries Around ReleaseDesk"
+  eyebrow="Sample-project tutorial"
+  description="Work on a tiny release-readiness dashboard, then add PersonaKit contracts when the product work needs safer agent boundaries."
+>
+  <p>ReleaseDesk is a small dashboard for a team preparing a public software release. It tracks required tasks, blockers, owners, and whether the release is ready to ship. The starter app looks plausible, but it has a serious bug: it can say the release is ready even when a required security review is blocked.</p>
+
+  <p>You will fix that product bug, review the change, add a filtered-list empty state, and prepare docs/release-readiness guidance. PersonaKit enters only when the work starts needing durable boundaries for agents.</p>
+
+  <p class="action-row">
+    <a class="button-link" href={starterHref}>Open starter app</a>
+    <span class="materials-links">
+      Materials:
+      <a href={starterSkillHref}>readiness skill</a>
+      <span aria-hidden="true">/</span>
+      <a href={completeHref}>completed app</a>
+      <span aria-hidden="true">/</span>
+      <a href={completeRootHref}>completed root</a>
+    </span>
+  </p>
+
+  <h2>What You'll Build</h2>
+  <div class="grid three tutorial-grid">
+    <article class="card">
+      <h3>The Product</h3>
+      <p>A dependency-free ReleaseDesk dashboard with release metadata, readiness summary, task filters, blocker display, and a useful empty state.</p>
+    </article>
+    <article class="card">
+      <h3>The Host Skill</h3>
+      <p>A local ReleaseDesk readiness skill that gives an agent a reusable procedure for investigating the failing rule and guiding an approved fix.</p>
+    </article>
+    <article class="card">
+      <h3>The Operating Contracts</h3>
+      <p>Four work modes that make the approved job, skill access, validation, and stop points visible.</p>
+    </article>
+  </div>
+
+  <h2>1. Get The Starter App Running</h2>
+  <p>Work from a copy so the tutorial can create a local <code>.personakit</code> root without changing the published starter materials.</p>
+
+  <TutorialBlock
+    code={setupCommands}
+    kind="terminal"
+    label="Terminal setup"
+    lang="bash"
+  />
+
+  <p>The app opens, but the test should fail. That failure is the first real reason to ask an agent for help.</p>
+
+  <TutorialBlock code={expectedFailure} kind="output" lang="text" />
+
+  <Callout tone="warn">
+    <p><strong>Product problem first:</strong> before creating any PersonaKit content, you have a visible dashboard and a failing release-readiness rule.</p>
+  </Callout>
+
+  <h2>2. Try A Skill First</h2>
+  <p>A skill is the right first instinct. ReleaseDesk has a repeated procedure: inspect the release data, inspect the readiness rules, run the test, identify the smallest safe fix, and report validation.</p>
+
+  <p>Open the host-local skill in the starter project and read it like a procedure card. In a real agent tool, you would paste the skill text, attach the skill file, or invoke the host's skill mechanism before giving the task.</p>
+
+  <TutorialBlock
+    code="host-skills/releasedesk-readiness/SKILL.md"
+    kind="code"
+    label="Skill file"
+    lang="text"
+  />
+
+  <p>For this first pass, use the skill as shared instructions and keep the job diagnostic. The point is to learn what the skill can clarify before any edits are authorized.</p>
+
+  <TutorialBlock code={skillFirstPrompt} kind="agent" lang="text" />
+
+  <p>The useful result is not a code change yet. It is a grounded diagnosis:</p>
+
+  <TutorialBlock
+    code={skillDiagnosis}
+    kind="output"
+    label="Likely diagnosis"
+    lang="text"
+  />
+
+  <p>The skill gives the agent a repeatable product procedure and keeps the task focused on ReleaseDesk instead of generic debugging.</p>
+
+  <Callout>
+    <p><strong>What the skill does well:</strong> it teaches a host agent how to perform one local capability. It is procedure, not the whole operating contract.</p>
+  </Callout>
+
+  <h2>3. Where The Skill Gets Awkward</h2>
+  <p>After diagnosis, the team needs more than a procedure. The same ReleaseDesk skill is helpful for implementation, but it should not quietly become authority to edit, review, release, or carry the task into another work mode.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Question</th>
+        <th>Skill Alone</th>
+        <th>PersonaKit Contract</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Is this implementation or review?</td>
+        <td>The skill can include a mode, but the active role is still implied by the prompt.</td>
+        <td>The session resolves one persona and directive before work starts.</td>
+      </tr>
+      <tr>
+        <td>May the agent edit files?</td>
+        <td>The answer depends on the current prompt and surrounding conversation.</td>
+        <td>The contract can allow the skill in implementation and forbid it in review.</td>
+      </tr>
+      <tr>
+        <td>What if the task continues later outside the original conversation?</td>
+        <td>The boundary has to be restated or carried by convention.</td>
+        <td>The exported contract gives the host a boundary to carry with the task.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout tone="good">
+    <p><strong>Complement, not replacement:</strong> the skill tells a capable agent how to do ReleaseDesk readiness work. PersonaKit says whether that skill is allowed for this session at all.</p>
+  </Callout>
+
+  <h2>4. Add A Bounded Implementation Lane</h2>
+  <p>Now the human approves the fix. The agent needs to edit code and use the readiness skill, but it must not release software, touch credentials, or expand the task. Start by declaring the shared capability and guardrail pieces.</p>
+
+  <TutorialBlock
+    code={implementationLaneCommands}
+    kind="terminal"
+    label="Terminal setup"
+    lang="bash"
+  />
+
+  <p>Now create the persona, directive, and session for this specific kind of work.</p>
+
+  <TutorialBlock
+    code={implementationSessionCommands}
+    kind="terminal"
+    lang="bash"
+    previewContext="implementation-lane"
+  >
+    <p><strong>Work mode:</strong> approved implementation for a bounded ReleaseDesk behavior change.</p>
+    <ul>
+      <li><strong>Allowed:</strong> code editing and the ReleaseDesk readiness skill.</li>
+      <li><strong>Forbidden:</strong> deployment, release actions, tags, and credentials.</li>
+      <li><strong>Validation:</strong> <code>node test/run-tests.mjs</code>.</li>
+    </ul>
+  </TutorialBlock>
+
+  <p>The task prompt can stay focused on the diagnosed product bug because the contract carries the repeated boundary.</p>
+
+  <TutorialBlock code={implementationPrompt} kind="agent" lang="text" />
+
+  <p>The fix belongs in <code>src/releaseRules.js</code>. The readiness summary should treat every incomplete required task as release-blocking, including security work.</p>
+
+  <TutorialBlock code={releaseRulesFix} kind="code" label="Code change" lang="js" />
+
+  <p>Run the test again after the fix:</p>
+
+  <TutorialBlock code="node test/run-tests.mjs" kind="terminal" lang="bash" />
+
+  <h2>5. Add Review Only When Review Is A Different Job</h2>
+  <p>After implementation, you need skepticism. Reusing the implementation skill and asking it to be careful blurs authority: the skill is optimized for readiness repair, not independent review. Create a read-only lane instead.</p>
+
+  <TutorialBlock
+    code={reviewLaneCommands}
+    kind="terminal"
+    lang="bash"
+    previewContext="review-lane"
+  >
+    <p><strong>Work mode:</strong> read-only review of the current ReleaseDesk change.</p>
+    <ul>
+      <li><strong>Allowed:</strong> code review and findings-first reporting.</li>
+      <li><strong>Forbidden:</strong> code editing and readiness repair.</li>
+      <li><strong>Closeout:</strong> report findings, suggestions, and validation gaps.</li>
+    </ul>
+  </TutorialBlock>
+
+  <TutorialBlock code={reviewPrompt} kind="agent" lang="text" />
+
+  <Callout>
+    <p><strong>Boundary learned:</strong> a review finding is not permission to use the readiness skill to fix it. Review and implementation are different operating contracts, even when both inspect the same product behavior.</p>
+  </Callout>
+
+  <h2>6. Use Approval To Add The Empty State</h2>
+  <p>The dashboard has another product gap: choosing an area with no tasks leaves the list blank. That is a small approved fix, so reuse the implementation lane with a narrower prompt rather than creating a new durable contract.</p>
+
+  <TutorialBlock code={approvedFixPrompt} kind="agent" lang="text" />
+
+  <p>In the completed app, choosing <code>Design</code> shows a clear empty state instead of a silent blank list.</p>
+
+  <h2>7. Add A Docs And Release-Readiness Lane</h2>
+  <p>ReleaseDesk also needs public-facing explanation and release-readiness notes. That work can change docs, but it still must not publish, tag, deploy, notarize, or modify credentials.</p>
+
+  <TutorialBlock
+    code={docsLaneCommands}
+    kind="terminal"
+    lang="bash"
+    previewContext="docs-readiness"
+  >
+    <p><strong>Work mode:</strong> docs and release-readiness explanation without publishing anything.</p>
+    <ul>
+      <li><strong>Allowed:</strong> docs editing and public learning-content cleanup.</li>
+      <li><strong>Forbidden:</strong> tags, publishing, deployment, notarization, and credentials.</li>
+      <li><strong>Validation:</strong> report site/readiness validation status.</li>
+    </ul>
+  </TutorialBlock>
+
+  <p>This lane exists because docs and release-readiness work has a different risk profile from implementation. It is not just "code editing, but wordier."</p>
+
+  <h2>8. Add A Grounded Handoff Lane</h2>
+  <p>Some host systems can pass tasks into places the human does not directly watch. PersonaKit should not become that system. It can define the boundary the host must carry with the task.</p>
+
+  <TutorialBlock
+    code={handoffLaneCommands}
+    kind="terminal"
+    lang="bash"
+    previewContext="grounded-handoff"
+  >
+    <p><strong>Work mode:</strong> resolve and export a boundary before a host receives scoped work.</p>
+    <ul>
+      <li><strong>Allowed:</strong> MCP grounding and boundary export.</li>
+      <li><strong>Forbidden:</strong> worker delegation and release actions.</li>
+      <li><strong>Closeout:</strong> report the resolved session and authorization boundary.</li>
+    </ul>
+  </TutorialBlock>
+
+  <Callout tone="good">
+    <p><strong>PersonaKit is not the handoff system.</strong> It is the contract the host must respect.</p>
+  </Callout>
+
+  <p>The rule is simple: resolve before tool choice, pass the relevant boundary with assigned work, and stop when a needed capability is missing or forbidden.</p>
+
+  <h2>9. Compare The Finished Materials</h2>
+  <p>The completed project includes the fixed app, the host-local skill, and a public <code>personakit-root</code> that mirrors what you built locally.</p>
+
+  <TutorialBlock code={finalCommands} kind="terminal" lang="bash" />
+
+  <table>
+    <thead>
+      <tr>
+        <th>Piece</th>
+        <th>Job</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>host-skills/releasedesk-readiness/SKILL.md</code></td>
+        <td>Reusable procedure for a host agent working on ReleaseDesk readiness.</td>
+      </tr>
+      <tr>
+        <td><code>releasedesk-readiness</code></td>
+        <td>PersonaKit declaration that makes the host-local skill visible in the contract.</td>
+      </tr>
+      <tr>
+        <td><code>implementation-lane</code></td>
+        <td>Session that allows implementation and the readiness skill for approved fixes.</td>
+      </tr>
+      <tr>
+        <td><code>review-lane</code></td>
+        <td>Session that forbids implementation and the readiness skill so review stays read-only.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Session</th>
+        <th>Product Situation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>implementation-lane</code></td>
+        <td>Fix readiness logic or an approved dashboard behavior.</td>
+      </tr>
+      <tr>
+        <td><code>review-lane</code></td>
+        <td>Inspect the change without editing files.</td>
+      </tr>
+      <tr>
+        <td><code>docs-readiness</code></td>
+        <td>Improve explanation or readiness notes without release actions.</td>
+      </tr>
+      <tr>
+        <td><code>grounded-handoff</code></td>
+        <td>Resolve boundaries before tool choice or host handoff.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout>
+    <p>The point is not to make more PersonaKit files or replace useful skills. The point is to turn repeated product-work boundaries into something a human can inspect before an agent acts.</p>
+  </Callout>
+
+  <section class="next-step" aria-labelledby="next-step-heading">
+    <div class="next-step-copy">
+      <p class="next-label">Next step</p>
+      <h2 id="next-step-heading">Run the ReleaseDesk workday</h2>
+      <p>Now that the foundation is in place, follow the same product through a normal engineering day: review pressure, approved fixes, docs cleanup, and handoff boundaries.</p>
+    </div>
+    <div class="next-step-actions">
+      <a class="button-link primary-next" href={sitePath("releasedesk-workday/")}>Continue to the workday</a>
+    </div>
+  </section>
+</ContentLayout>
+
+<style>
+  .tutorial-grid {
+    margin: 18px 0 20px;
+  }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .materials-links {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .materials-links a {
+    color: inherit;
+    font-weight: 650;
+  }
+
+  :global(.content-body .astro-code) {
+    max-width: 100%;
+    overflow-x: auto !important;
+  }
+
+  :global(.content-body table) {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .next-step {
+    background: #f7fbfd;
+    border: 1px solid #dbe9ef;
+    border-radius: 8px;
+    margin-top: 26px;
+    padding: 24px;
+  }
+
+  .next-step h2 {
+    font-size: 1.45rem;
+    margin: 2px 0 8px;
+  }
+
+  .next-step p {
+    margin: 0;
+  }
+
+  .next-step-copy {
+    max-width: 62ch;
+  }
+
+  .next-label {
+    color: #46636f;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .next-step-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    justify-content: space-between;
+    margin-top: 24px;
+  }
+
+  .primary-next {
+    font-weight: 700;
+  }
+
+  @media (max-width: 860px) {
+    .next-step {
+      padding: 18px;
+    }
+
+    .next-step-actions {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 14px;
+    }
+  }
+</style>

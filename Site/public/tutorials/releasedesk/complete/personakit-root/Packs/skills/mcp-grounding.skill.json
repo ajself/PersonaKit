@@ -1,0 +1,18 @@
+{
+  "id": "mcp-grounding",
+  "version": "1.0",
+  "name": "MCP Grounding",
+  "description": "Resolve read-only PersonaKit context before selecting host-local tools.",
+  "providedBy": [
+    "PersonaKit MCP client"
+  ],
+  "risk": {
+    "level": "low",
+    "requiresHumanReview": false,
+    "notes": []
+  },
+  "notes": [
+    "Grounding provides context and provenance, not execution authority."
+  ]
+}
+

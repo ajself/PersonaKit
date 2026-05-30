@@ -1,0 +1,18 @@
+{
+  "id": "docs-editing",
+  "version": "1.0",
+  "name": "Docs Editing",
+  "description": "Update documentation and static learning content.",
+  "providedBy": [
+    "host coding agent"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": false,
+    "notes": []
+  },
+  "notes": [
+    "Can change public explanation but not product behavior."
+  ]
+}
+

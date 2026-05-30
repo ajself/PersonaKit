@@ -1,0 +1,18 @@
+{
+  "id": "code-review",
+  "version": "1.0",
+  "name": "Code Review",
+  "description": "Inspect code and report findings without editing files.",
+  "providedBy": [
+    "host coding agent"
+  ],
+  "risk": {
+    "level": "low",
+    "requiresHumanReview": false,
+    "notes": []
+  },
+  "notes": [
+    "Review findings do not authorize implementation."
+  ]
+}
+
