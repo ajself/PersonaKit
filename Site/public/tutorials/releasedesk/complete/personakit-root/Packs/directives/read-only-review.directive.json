@@ -1,0 +1,33 @@
+{
+  "id": "read-only-review",
+  "version": "1.0",
+  "title": "Read-Only Review",
+  "goal": "Review the current change without editing code.",
+  "steps": [
+    {
+      "text": "Inspect the diff and surrounding behavior."
+    },
+    {
+      "text": "Report confirmed issues before suggestions."
+    },
+    {
+      "text": "Stop before making fixes or staging files.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Findings are ordered by severity.",
+    "Suggestions are separated from confirmed defects."
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Explain what was inspected and what remains unverified."
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "code-review"
+  ]
+}
+

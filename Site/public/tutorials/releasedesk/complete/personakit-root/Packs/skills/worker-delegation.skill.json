@@ -1,0 +1,17 @@
+{
+  "id": "worker-delegation",
+  "version": "1.0",
+  "name": "Worker Delegation",
+  "description": "Assign work to hidden helper workers.",
+  "providedBy": [
+    "agent harness"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Can make work happen outside the human's direct view."
+    ]
+  },
+  "notes": []
+}

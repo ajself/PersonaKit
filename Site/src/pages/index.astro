@@ -35,7 +35,6 @@ personakit export --root personakit-root --session cli-maintenance`;
     lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, and allowed capabilities before any agent acts."
     actions={[
       { href: sitePath("start-here/"), label: "Start Here" },
-      { href: sitePath("examples/"), label: "Browse examples" },
     ]}
   />
 
@@ -88,7 +87,7 @@ personakit export --root personakit-root --session cli-maintenance`;
         <article class="flow-stage">
           <p class="stage-kicker">3. Work Under It</p>
           <h3>Agent + Skills</h3>
-          <p>The user or harness hands the exported contract to the worker. Skills and tools are used during the session inside those boundaries.</p>
+          <p>The user or harness passes the exported contract into the coding agent or host surface. Skills and tools are used during the session inside those boundaries.</p>
           <div class="flow-tags" aria-label="Worker surfaces">
             <span>harness</span>
             <span>skills</span>
@@ -97,7 +96,9 @@ personakit export --root personakit-root --session cli-maintenance`;
         </article>
       </div>
       <p class="section-note"><strong>PersonaKit Studio</strong> sits on the same contract model as a visual inspection and pack-maintenance surface. The CLI and static example roots remain the primary path for validating, inspecting, and exporting contracts.</p>
-      <p class="section-action"><a class="button-link" href={sitePath("learn/")}>Open the learning map</a></p>
+      <p class="section-action guided-action">
+        <a class="button-link primary-path" href={sitePath("week-with-personakit/")}>Start the ReleaseDesk tutorial</a>
+      </p>
     </section>
 
     <section>
@@ -133,7 +134,7 @@ personakit export --root personakit-root --session cli-maintenance`;
     </section>
 
     <section>
-      <h2>Reference Examples</h2>
+      <h2>Example Roots</h2>
       <p class="section-lede">After the Start Here guide, use these roots as practical patterns for recurring work modes.</p>
       <CardGrid cards={exampleCards} />
     </section>
@@ -192,6 +193,13 @@ personakit export --root personakit-root --session cli-maintenance`;
     margin: 0;
   }
 
+  .guided-action {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
   .section-note {
     max-width: 760px;
     margin: 0 0 18px;
@@ -200,6 +208,17 @@ personakit export --root personakit-root --session cli-maintenance`;
 
   .section-action .button-link {
     margin-top: 18px;
+  }
+
+  .guided-action .button-link {
+    margin-top: 0;
+  }
+
+  .primary-path {
+    border-color: #8db3c9;
+    background: #eef6fa;
+    color: var(--blue);
+    font-weight: 750;
   }
 
   .contract-flow {

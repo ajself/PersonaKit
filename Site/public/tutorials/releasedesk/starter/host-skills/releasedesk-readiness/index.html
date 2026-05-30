@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ReleaseDesk Readiness Skill</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --border: #d6dde2;
+        --ink: #202428;
+        --muted: #5f6b75;
+        --panel: #ffffff;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #f4f7f8;
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(900px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 42px 0;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(34px, 8vw, 54px);
+        line-height: 1;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0 0 14px;
+        color: var(--muted);
+      }
+
+      section {
+        margin-top: 20px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      ul,
+      ol {
+        margin-bottom: 0;
+        padding-left: 20px;
+      }
+
+      code {
+        border-radius: 5px;
+        background: #eef3f6;
+        padding: 2px 5px;
+      }
+
+      a {
+        color: #325d8a;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>ReleaseDesk Readiness Skill</h1>
+      <p>A host-local procedure for diagnosing ReleaseDesk readiness behavior and guiding an approved fix.</p>
+
+      <section>
+        <h2>What It Does</h2>
+        <p>This skill helps a host agent inspect release data, inspect readiness rules, run the test, and report the smallest safe fix. It does not authorize edits by itself.</p>
+      </section>
+
+      <section>
+        <h2>Steps</h2>
+        <ol>
+          <li>Inspect <code>data/release.json</code>.</li>
+          <li>Inspect <code>src/releaseRules.js</code>.</li>
+          <li>Run <code>node test/run-tests.mjs</code>.</li>
+          <li>For diagnosis only, stop with evidence and the smallest safe fix.</li>
+          <li>For approved implementation, make the smallest readiness change and rerun the test.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Guardrails</h2>
+        <ul>
+          <li>Do not edit files unless implementation is explicitly approved.</li>
+          <li>Do not publish, tag, deploy, notarize, or modify credentials.</li>
+          <li>Do not change release data just to make a test pass.</li>
+        </ul>
+      </section>
+
+      <p><a href="./SKILL.md">Open raw SKILL.md</a></p>
+    </main>
+  </body>
+</html>

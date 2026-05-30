@@ -1,0 +1,56 @@
+{
+  "release": {
+    "name": "ReleaseDesk 1.4",
+    "date": "2026-06-12",
+    "owner": "Maya Chen"
+  },
+  "tasks": [
+    {
+      "id": "notes",
+      "title": "Publish release notes draft",
+      "area": "docs",
+      "owner": "Riley",
+      "required": true,
+      "status": "done",
+      "summary": "Customer-facing notes explain the dashboard filter changes."
+    },
+    {
+      "id": "qa-smoke",
+      "title": "Run dashboard smoke test",
+      "area": "qa",
+      "owner": "Sam",
+      "required": true,
+      "status": "done",
+      "summary": "Core dashboard loads, filters tasks, and reports readiness."
+    },
+    {
+      "id": "security-review",
+      "title": "Complete security review",
+      "area": "security",
+      "owner": "Priya",
+      "required": true,
+      "status": "blocked",
+      "summary": "Security review must sign off before a public release.",
+      "blocker": "Waiting for dependency disclosure notes."
+    },
+    {
+      "id": "support-briefing",
+      "title": "Brief support team",
+      "area": "support",
+      "owner": "Ari",
+      "required": false,
+      "status": "todo",
+      "summary": "Support needs the customer-facing summary before launch."
+    },
+    {
+      "id": "rollback-plan",
+      "title": "Confirm rollback plan",
+      "area": "release",
+      "owner": "Maya",
+      "required": true,
+      "status": "done",
+      "summary": "Rollback owner and checklist are ready."
+    }
+  ]
+}
+

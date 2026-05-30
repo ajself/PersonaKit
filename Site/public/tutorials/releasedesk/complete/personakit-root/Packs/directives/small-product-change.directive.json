@@ -1,0 +1,36 @@
+{
+  "id": "small-product-change",
+  "version": "1.0",
+  "title": "Small Product Change",
+  "goal": "Complete one bounded implementation change without expanding the work mode.",
+  "steps": [
+    {
+      "text": "Read the active contract and identify the requested behavior."
+    },
+    {
+      "text": "Make the smallest change that satisfies the task."
+    },
+    {
+      "text": "Stop if the task requires release behavior, credentials, or new execution surfaces.",
+      "requiresReview": true
+    },
+    {
+      "text": "Verify the change and summarize validation."
+    }
+  ],
+  "acceptanceCriteria": [
+    "The change stays inside the requested scope.",
+    "Validation commands are reported."
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "node test/run-tests.mjs"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "code-editing",
+    "releasedesk-readiness"
+  ]
+}

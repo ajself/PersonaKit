@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ReleaseDesk Starter</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Release readiness</p>
+        <h1 data-release-name>ReleaseDesk</h1>
+        <p>Track the work that must be true before a public release can ship.</p>
+        <div class="release-meta">
+          <span>Release date: <strong data-release-date></strong></span>
+          <span>Owner: <strong data-release-owner></strong></span>
+        </div>
+      </section>
+
+      <section class="summary-panel" aria-label="Release readiness summary">
+        <div>
+          <p class="readiness" data-readiness>Checking readiness...</p>
+          <p data-readiness-detail></p>
+        </div>
+        <label>
+          Area
+          <select data-area-filter>
+            <option value="all">All areas</option>
+            <option value="docs">Docs</option>
+            <option value="qa">QA</option>
+            <option value="security">Security</option>
+            <option value="support">Support</option>
+            <option value="release">Release</option>
+            <option value="design">Design</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="task-panel">
+        <h2>Launch tasks</h2>
+        <div class="task-list" data-task-list></div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
+

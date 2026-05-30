@@ -1,0 +1,265 @@
+---
+import Callout from "../components/Callout.astro";
+import TutorialBlock from "../components/TutorialBlock.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+
+const foundationHref = sitePath("week-with-personakit/");
+const completeHref = sitePath("tutorials/releasedesk/complete/index.html");
+const skillHref = sitePath("tutorials/releasedesk/complete/host-skills/releasedesk-readiness/index.html");
+const rootHref = sitePath("tutorials/releasedesk/complete/personakit-root/index.html");
+
+const morningSetup = `cd Site/public/tutorials/releasedesk/complete
+open index.html
+personakit validate --root personakit-root
+personakit list --root personakit-root sessions`;
+
+const implementationCheck = `personakit contract --root personakit-root --session implementation-lane`;
+
+const implementationPrompt = `Operate under implementation-lane.
+Use the ReleaseDesk readiness skill to fix the reported readiness regression.
+Run node test/run-tests.mjs.
+Stop before release actions, credentials, tags, or deployment.`;
+
+const reviewCheck = `personakit contract --root personakit-root --session review-lane`;
+
+const reviewPrompt = `Operate under review-lane.
+Review the readiness fix for behavior regressions and missing validation.
+Do not edit files.`;
+
+const emptyStatePrompt = `Operate under implementation-lane.
+Add a useful empty state when a filter has no matching ReleaseDesk tasks.
+Do not change readiness rules.
+Run node test/run-tests.mjs.`;
+
+const docsCheck = `personakit contract --root personakit-root --session docs-readiness`;
+
+const docsPrompt = `Operate under docs-readiness.
+Improve the release-readiness notes so the filter empty state and blocked security review are clear.
+Do not tag, publish, deploy, notarize, or modify credentials.`;
+
+const handoffCheck = `personakit contract --root personakit-root --session grounded-handoff
+personakit export --root personakit-root --session grounded-handoff`;
+
+const handoffPrompt = `Operate under grounded-handoff.
+Resolve the boundary before a host receives a scoped readiness task.
+Carry the exported boundary with the task.
+Stop if the next step needs a forbidden capability.`;
+---
+
+<ContentLayout
+  title="A ReleaseDesk Workday With Agents"
+  eyebrow="Continuation lab"
+  description="Follow one engineer through repeated ReleaseDesk agent sessions where the product stays the same, but the operating contract changes."
+>
+  <p>ReleaseDesk is already built enough to be useful. The dashboard exists, the readiness skill exists, and the completed PersonaKit root has four sessions. Now the same product moves through an ordinary engineering day: reports arrive, fixes need review, small follow-ups get approved, docs need a pass, and a host may need to receive a scoped task with its boundary attached.</p>
+
+  <p>This page continues the foundation lab by repeating the same question in different situations: what contract should govern the next agent interaction?</p>
+
+  <p class="action-row">
+    <a class="button-link" href={foundationHref}>Review the foundation lab</a>
+    <span class="materials-links">
+      Materials:
+      <a href={completeHref}>ReleaseDesk</a>
+      <span aria-hidden="true">/</span>
+      <a href={skillHref}>readiness skill</a>
+      <span aria-hidden="true">/</span>
+      <a href={rootHref}>completed root</a>
+    </span>
+  </p>
+
+  <h2>Morning Setup</h2>
+  <p>Start from the completed sample so the day is about choosing boundaries, not authoring more files.</p>
+
+  <TutorialBlock
+    code={morningSetup}
+    kind="terminal"
+    label="Terminal setup"
+    lang="bash"
+  />
+
+  <Callout>
+    <p><strong>Workday rule:</strong> do not ask "which prompt sounds careful?" Ask which work mode is actually active.</p>
+  </Callout>
+
+  <h2>How To Read Each Interaction</h2>
+  <p>Think of the day as happening at one desk. The ReleaseDesk project stays open. When you run <code>personakit contract</code> in a terminal block, it previews the boundary for the next request: the active role, allowed skills, forbidden actions, and validation that matters.</p>
+
+  <p>You do not need to paste the full contract every time. The prompt block is what you bring to your coding agent, and the session name is the compact handle for the contract. If you are unsure whether to keep going in the same agent thread, ask: "Should this be a fresh agent session?" The answer is usually no when the boundary is clear, and yes when you want review to shake off implementation momentum.</p>
+
+  <h2>First Report: Readiness Regression</h2>
+  <p>A teammate reports that ReleaseDesk says a release is ready even when a required security review is blocked. This is implementation work: the agent may use the readiness skill and edit the app, but release actions stay forbidden.</p>
+
+  <TutorialBlock
+    code={implementationCheck}
+    kind="terminal"
+    lang="bash"
+    previewContext="implementation-lane"
+  >
+    <p><strong>Work mode:</strong> approved implementation for a bounded ReleaseDesk behavior change.</p>
+    <ul>
+      <li><strong>Allowed:</strong> code editing and the ReleaseDesk readiness skill.</li>
+      <li><strong>Forbidden:</strong> deployment, release actions, tags, and credentials.</li>
+      <li><strong>Validation:</strong> <code>node test/run-tests.mjs</code>.</li>
+    </ul>
+  </TutorialBlock>
+  <TutorialBlock code={implementationPrompt} kind="agent" lang="text" />
+
+  <p>The useful habit is small: resolve the implementation lane before the prompt leaves your hands. The skill is valuable ReleaseDesk procedure, and the session makes its allowed use visible.</p>
+
+  <h2>Second Pass: Review Without Becoming The Fixer</h2>
+  <p>After the fix, the next job is skepticism. It is tempting to reuse the same readiness skill because it knows the product area, but that skill is repair-shaped. Review should inspect behavior without turning into implementation.</p>
+
+  <TutorialBlock
+    code={reviewCheck}
+    kind="terminal"
+    lang="bash"
+    previewContext="review-lane"
+  >
+    <p><strong>Work mode:</strong> read-only review of the current ReleaseDesk change.</p>
+    <ul>
+      <li><strong>Allowed:</strong> code review and findings-first reporting.</li>
+      <li><strong>Forbidden:</strong> code editing and readiness repair.</li>
+      <li><strong>Closeout:</strong> report findings, suggestions, and validation gaps.</li>
+    </ul>
+  </TutorialBlock>
+  <TutorialBlock code={reviewPrompt} kind="agent" lang="text" />
+
+  <Callout tone="good">
+    <p><strong>Reinforcement:</strong> the same product area can need a different contract. The review lane authorizes review and forbids the readiness repair skill.</p>
+  </Callout>
+
+  <h2>Approved Follow-Up: Empty State</h2>
+  <p>The review is done, and the team approves a small follow-up: when a filter has no matching tasks, the dashboard should say so instead of looking empty. This is implementation again, and the lane still fits, so you can reuse the same checked boundary and narrow the product surface in the prompt.</p>
+
+  <TutorialBlock code={emptyStatePrompt} kind="agent" lang="text" />
+
+  <p>Reusing <code>implementation-lane</code> is the point. You do not create a new PersonaKit session for every tiny issue. You reuse the existing lane when the ReleaseDesk surface, role, stop points, allowed capabilities, and validation still fit.</p>
+
+  <h2>Later That Day: Docs And Release Readiness</h2>
+  <p>Later, the release owner asks for clearer notes. Docs can change, but publishing and release mechanics are still out of bounds. That is a different work mode from product implementation.</p>
+
+  <TutorialBlock
+    code={docsCheck}
+    kind="terminal"
+    lang="bash"
+    previewContext="docs-readiness"
+  >
+    <p><strong>Work mode:</strong> docs and release-readiness explanation without publishing anything.</p>
+    <ul>
+      <li><strong>Allowed:</strong> docs editing and public learning-content cleanup.</li>
+      <li><strong>Forbidden:</strong> tags, publishing, deployment, notarization, and credentials.</li>
+      <li><strong>Validation:</strong> report site/readiness validation status.</li>
+    </ul>
+  </TutorialBlock>
+  <TutorialBlock code={docsPrompt} kind="agent" lang="text" />
+
+  <p>This is where the daily value starts to compound: the engineer does not need to rewrite the release safety lecture. The docs lane already carries the stop points.</p>
+
+  <h2>End Of Day: Host Handoff</h2>
+  <p>Near the end of the day, a host may need to receive a scoped readiness task outside the human's immediate view. PersonaKit should not become that host. It can export the boundary the host must preserve with the task.</p>
+
+  <TutorialBlock
+    code={handoffCheck}
+    kind="terminal"
+    lang="bash"
+    previewContext="grounded-handoff"
+  >
+    <p><strong>Work mode:</strong> resolve and export a boundary before a host receives scoped work.</p>
+    <ul>
+      <li><strong>Allowed:</strong> MCP grounding and boundary export.</li>
+      <li><strong>Forbidden:</strong> worker delegation and release actions.</li>
+      <li><strong>Closeout:</strong> report the resolved session and authorization boundary.</li>
+    </ul>
+  </TutorialBlock>
+  <TutorialBlock code={handoffPrompt} kind="agent" lang="text" />
+
+  <Callout tone="good">
+    <p><strong>PersonaKit is not the handoff system.</strong> It is the contract the host must respect.</p>
+  </Callout>
+
+  <h2>The Pattern</h2>
+  <p>The product did not change very much across the day. The operating mode did.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Pressure</th>
+        <th>Session</th>
+        <th>Allowed</th>
+        <th>Still Forbidden</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Regression report</td>
+        <td><code>implementation-lane</code></td>
+        <td>Readiness skill, code editing</td>
+        <td>Release actions</td>
+      </tr>
+      <tr>
+        <td>Fix review</td>
+        <td><code>review-lane</code></td>
+        <td>Read-only review</td>
+        <td>Code editing, readiness repair</td>
+      </tr>
+      <tr>
+        <td>Approved empty state</td>
+        <td><code>implementation-lane</code></td>
+        <td>Scoped UI fix</td>
+        <td>Readiness-rule drift</td>
+      </tr>
+      <tr>
+        <td>Release notes</td>
+        <td><code>docs-readiness</code></td>
+        <td>Docs edits</td>
+        <td>Tags, publishing, credentials</td>
+      </tr>
+      <tr>
+        <td>Host handoff</td>
+        <td><code>grounded-handoff</code></td>
+        <td>Boundary export</td>
+        <td>Forbidden capabilities</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <Callout>
+    <p>The daily win is not a bigger prompt. It is a smaller prompt backed by a contract the human can inspect before the agent acts.</p>
+  </Callout>
+
+  <p class="action-row">
+    <a class="button-link" href={foundationHref}>Back to the foundation lab</a>
+  </p>
+</ContentLayout>
+
+<style>
+  .action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .materials-links {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .materials-links a {
+    color: inherit;
+    font-weight: 650;
+  }
+
+  :global(.content-body .astro-code) {
+    max-width: 100%;
+    overflow-x: auto !important;
+  }
+
+  :global(.content-body table) {
+    display: block;
+    overflow-x: auto;
+  }
+</style>

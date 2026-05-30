@@ -1,0 +1,20 @@
+{
+  "id": "code-editing",
+  "version": "1.0",
+  "name": "Code Editing",
+  "description": "Make focused source changes inside the approved scope.",
+  "providedBy": [
+    "host coding agent"
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "Can change project behavior."
+    ]
+  },
+  "notes": [
+    "Use only after the session authorizes implementation."
+  ]
+}
+

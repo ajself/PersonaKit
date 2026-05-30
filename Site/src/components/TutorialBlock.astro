@@ -1,0 +1,154 @@
+---
+import { Code } from "astro:components";
+
+interface Props {
+  code: string;
+  kind?: "agent" | "code" | "output" | "terminal";
+  label?: string;
+  lang?: string;
+  previewContext?: string;
+  previewTitle?: string;
+}
+
+const {
+  code,
+  kind = "code",
+  label,
+  lang = "text",
+  previewContext,
+  previewTitle = "Boundary preview",
+} = Astro.props;
+
+const labels = {
+  agent: "Agent prompt",
+  code: "Code",
+  output: "Expected output",
+  terminal: "Terminal check",
+};
+
+const resolvedLabel = label ?? labels[kind];
+const theme = kind === "agent" ? "github-light" : "github-dark";
+const hasPreview = Astro.slots.has("default");
+const previewLabel = previewContext ? `${previewTitle} for ${previewContext}` : previewTitle;
+---
+
+<figure class:list={["tutorial-block", kind]}>
+  <figcaption class="tutorial-label">
+    {kind === "terminal" && <span class="shell-cue" aria-hidden="true">$</span>}
+    <span>{resolvedLabel}</span>
+  </figcaption>
+  <Code code={code} lang={lang} theme={theme} />
+  {
+    hasPreview && (
+      <details class="contract-preview">
+        <summary aria-label={previewLabel}>{previewTitle}</summary>
+        <div class="preview-body">
+          <slot />
+        </div>
+      </details>
+    )
+  }
+</figure>
+
+<style>
+  .tutorial-block {
+    margin: 18px 0;
+  }
+
+  .tutorial-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-bottom: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    background: #edf2f6;
+    color: #3f4d56;
+    font-size: 0.78rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .shell-cue {
+    color: var(--accent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .tutorial-block :global(.astro-code) {
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto !important;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .agent .tutorial-label {
+    background: #f7fbfd;
+    color: var(--blue);
+  }
+
+  .agent :global(.astro-code) {
+    border: 1px solid var(--line);
+    border-top: 0;
+    background: #fbfdff !important;
+  }
+
+  .output .tutorial-label {
+    background: #fff7e8;
+    color: var(--amber);
+  }
+
+  .contract-preview {
+    margin-top: 10px;
+    border: 1px solid #dbe9ef;
+    border-radius: 8px;
+    background: #f7fbfd;
+  }
+
+  .contract-preview summary {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    list-style: none;
+    padding: 9px 12px;
+    color: #52636c;
+    font-size: 0.86rem;
+    font-weight: 650;
+  }
+
+  .contract-preview summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .contract-preview summary::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-color: transparent transparent transparent currentColor;
+    border-style: solid;
+    border-width: 4px 0 4px 6px;
+    transform-origin: center;
+    transition: transform 120ms ease;
+  }
+
+  .contract-preview[open] summary::before {
+    transform: rotate(90deg);
+  }
+
+  .preview-body {
+    padding: 0 14px 14px;
+  }
+
+  .preview-body :global(p:last-child),
+  .preview-body :global(ul:last-child) {
+    margin-bottom: 0;
+  }
+</style>

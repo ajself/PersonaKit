@@ -1,0 +1,32 @@
+{
+  "id": "resolve-before-tools",
+  "version": "1.0",
+  "title": "Resolve Before Tools",
+  "goal": "Resolve PersonaKit context before any tool choice or worker handoff.",
+  "steps": [
+    {
+      "text": "Resolve the requested session and inspect authorization."
+    },
+    {
+      "text": "Use only capabilities authorized by the resolved contract."
+    },
+    {
+      "text": "Stop before using a forbidden worker handoff or performing actions outside the exported boundary.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "The resolved boundary is visible before work starts.",
+    "Missing or forbidden capabilities cause a stop."
+  ],
+  "verification": [
+    {
+      "kind": "manual",
+      "text": "Report the resolved session and authorization boundary."
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "mcp-grounding"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "grounded-handoff",
+  "personaId": "contract-grounded-agent",
+  "directiveId": "resolve-before-tools"
+}
+

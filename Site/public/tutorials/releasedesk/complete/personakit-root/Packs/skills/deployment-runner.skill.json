@@ -1,0 +1,18 @@
+{
+  "id": "deployment-runner",
+  "version": "1.0",
+  "name": "Deployment Runner",
+  "description": "Publish, deploy, tag, notarize, or release software.",
+  "providedBy": [
+    "host shell or release system"
+  ],
+  "risk": {
+    "level": "high",
+    "requiresHumanReview": true,
+    "notes": [
+      "Can create public or irreversible release effects."
+    ]
+  },
+  "notes": []
+}
+

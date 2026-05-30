@@ -1,0 +1,33 @@
+{
+  "id": "docs-readiness",
+  "version": "1.0",
+  "title": "Docs Readiness",
+  "goal": "Improve public documentation or inspect release readiness without publishing anything.",
+  "steps": [
+    {
+      "text": "Identify the user-facing confusion to resolve."
+    },
+    {
+      "text": "Make the narrow docs change or report readiness gaps."
+    },
+    {
+      "text": "Stop before tags, deployments, notarization, credentials, or public release steps.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Public claims remain within PersonaKit boundaries.",
+    "Validation status is reported."
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "make public-check"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": [
+    "docs-editing"
+  ]
+}
+
