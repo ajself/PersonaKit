@@ -21,6 +21,8 @@ allowed, which actions are forbidden, and when the agent must stop.
 
 For a guided overview, examples, and conceptual documentation, use the
 [PersonaKit website](https://ajself.github.io/PersonaKit/).
+The site includes a host-skill example for resolving PersonaKit sessions from
+autocomplete-friendly agent surfaces.
 
 ## What PersonaKit Does
 

@@ -7,6 +7,7 @@ import { sitePath } from "../utils/sitePath";
 const starterHref = sitePath("tutorials/releasedesk/starter/index.html");
 const completeHref = sitePath("tutorials/releasedesk/complete/index.html");
 const completeRootHref = sitePath("tutorials/releasedesk/complete/personakit-root/index.html");
+const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
 const starterSkillHref = sitePath("tutorials/releasedesk/starter/host-skills/releasedesk-readiness/index.html");
 const completeSkillHref = sitePath("tutorials/releasedesk/complete/host-skills/releasedesk-readiness/index.html");
 
@@ -382,6 +383,8 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   <Callout tone="good">
     <p><strong>Complement, not replacement:</strong> the skill tells a capable agent how to do ReleaseDesk readiness work. PersonaKit says whether that skill is allowed for this session at all.</p>
   </Callout>
+
+  <p>The same pattern can be used for PersonaKit itself: a host skill can make grounding easy to invoke, while PersonaKit still defines the actual operating boundary. <a href={groundingSkillHref}>Open the PersonaKit grounding skill example</a>.</p>
 
   <h2>4. Add A Bounded Implementation Lane</h2>
   <p>Now the operator approves the fix. The agent needs to edit code and use the readiness skill, but it must not release software, touch credentials, or expand the task. Start by declaring the shared capability and guardrail pieces.</p>

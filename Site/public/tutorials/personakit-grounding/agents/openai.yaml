@@ -1,0 +1,7 @@
+interface:
+  display_name: "PersonaKit Grounding"
+  short_description: "Resolve PK before agent work."
+  default_prompt: "Use $personakit-grounding to resolve the requested PersonaKit session before acting."
+
+policy:
+  allow_implicit_invocation: true

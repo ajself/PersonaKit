@@ -8,6 +8,9 @@ const loosePrompt = "Review this bugfix carefully. Stay read-only. Watch for beh
 
 const contractPrompt = "Operate under behavior-review. Review the current diff and report findings.";
 
+const groundingSkillPrompt = "Use $personakit-grounding to resolve the requested PersonaKit session before acting.";
+const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
+
 const handoffCommands = `personakit validate --root .personakit
 personakit contract --root .personakit --session behavior-review
 personakit export --root .personakit --session behavior-review`;
@@ -42,6 +45,7 @@ personakit export --root .personakit --session behavior-review`;
 
   <div class="learning-map" aria-label="Learning sections">
     <a href="#map">Map the layers</a>
+    <a href="#host-skill-front-door">Use a host skill</a>
     <a href="#contract">Read the contract</a>
     <a href="#compose">Compose the pieces</a>
     <a href="#prompt-to-contract">Turn a prompt into a contract</a>
@@ -99,6 +103,13 @@ personakit export --root .personakit --session behavior-review`;
   <Callout>
     <p><strong>Working definition:</strong> PersonaKit resolves an operating contract for repeated AI coding work so authority does not have to live in chat memory.</p>
   </Callout>
+
+  <h2 id="host-skill-front-door">Use A Host Skill As The Front Door</h2>
+  <p>If your agent host supports skills, a small grounding skill can make PersonaKit easier to invoke through autocomplete, fuzzy search, or a command palette. The host skill is only the front door: it resolves the PersonaKit contract before action, and PersonaKit remains the authority for what is allowed.</p>
+
+  <Code code={groundingSkillPrompt} lang="text" theme="github-dark" />
+
+  <p><a class="button-link" href={groundingSkillHref}>Open the PersonaKit grounding skill example</a></p>
 
   <h2 id="contract">Read The Contract</h2>
   <p>A resolved contract answers the questions that usually get scattered through chat history.</p>

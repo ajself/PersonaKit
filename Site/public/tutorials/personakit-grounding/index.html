@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PersonaKit Grounding Skill</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --border: #d6dde2;
+        --ink: #202428;
+        --muted: #5f6b75;
+        --panel: #ffffff;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #f4f7f8;
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(900px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 42px 0;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+
+      nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--ink);
+        background: #ffffff;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        color: #325d8a;
+        border-color: #9fb7c6;
+      }
+
+      .primary-nav {
+        border-color: #9fb7c6;
+        color: #325d8a;
+        background: #eef6fa;
+      }
+
+      .nav-icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+        stroke: currentColor;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(34px, 8vw, 54px);
+        line-height: 1;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0 0 14px;
+        color: var(--muted);
+      }
+
+      pre {
+        overflow-x: auto;
+        margin: 12px 0 0;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #f7fafb;
+      }
+
+      section {
+        margin-top: 20px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      ul,
+      ol {
+        margin-bottom: 0;
+        padding-left: 20px;
+      }
+
+      code {
+        border-radius: 5px;
+        background: #eef3f6;
+        padding: 2px 5px;
+      }
+
+      pre code {
+        padding: 0;
+        background: transparent;
+      }
+
+      a {
+        color: #325d8a;
+      }
+
+      .host-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .host-card {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fbfdfe;
+      }
+
+      .host-card h3 {
+        margin: 0 0 8px;
+        font-size: 17px;
+      }
+
+      .host-card pre {
+        font-size: 0.8125rem;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 720px) {
+        .host-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav aria-label="Tutorial navigation">
+        <a class="primary-nav" href="../../learn/">
+          <svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="m12 19-7-7 7-7"></path>
+          </svg>
+          Back to Learn
+        </a>
+        <a href="../../when-to-use/">When To Use</a>
+        <a href="../../">PersonaKit Home</a>
+      </nav>
+
+      <h1>PersonaKit Grounding Skill</h1>
+      <p>A host-local skill that resolves PersonaKit sessions before an agent chooses tools, skills, or files.</p>
+
+      <section>
+        <h2>What It Does</h2>
+        <p>This skill gives the host an autocomplete-friendly way to ground agent work in PersonaKit. It resolves or recommends the active contract through MCP or CLI before reading raw PersonaKit files.</p>
+      </section>
+
+      <section>
+        <h2>Boundary</h2>
+        <ul>
+          <li>The host skill improves discovery and invocation.</li>
+          <li>PersonaKit remains the source of contract authority.</li>
+          <li>Available host skills are not automatically authorized.</li>
+          <li>Missing or forbidden capabilities cause a stop.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Host Examples</h2>
+
+        <div class="host-grid">
+          <div class="host-card">
+            <h3>Codex</h3>
+            <p>Install as a Codex skill and invoke it by name from chat or skill autocomplete.</p>
+            <pre><code>~/.codex/skills/personakit-grounding/SKILL.md
+Use $personakit-grounding to resolve the requested PersonaKit session before acting.</code></pre>
+            <p><a href="./SKILL.md">Open Codex skill example</a></p>
+          </div>
+
+          <div class="host-card">
+            <h3>Claude Code</h3>
+            <p>Install as a project skill, then invoke it from the slash-command menu.</p>
+            <pre><code>.claude/skills/personakit-grounding/SKILL.md
+/personakit-grounding</code></pre>
+            <p><a href="./hosts/claude/SKILL.md">Open Claude example</a></p>
+          </div>
+
+          <div class="host-card">
+            <h3>OpenCode</h3>
+            <p>Install as an OpenCode skill. It can also discover Claude-compatible skill paths in supported setups.</p>
+            <pre><code>.opencode/skills/personakit-grounding/SKILL.md
+skill({ name: "personakit-grounding" })</code></pre>
+            <p><a href="./hosts/opencode/SKILL.md">Open OpenCode example</a></p>
+          </div>
+
+          <div class="host-card">
+            <h3>Cursor</h3>
+            <p>Use a custom command as the front door. It is reusable workflow text, not a PersonaKit authorization source.</p>
+            <pre><code>.cursor/commands/personakit-grounding.md
+/personakit-grounding</code></pre>
+            <p><a href="./hosts/cursor/personakit-grounding.md">Open Cursor example</a></p>
+          </div>
+
+          <div class="host-card">
+            <h3>GitHub Copilot IDE Chat</h3>
+            <p>Use a prompt file for one-shot grounding in supported IDEs. Keep durable authority in the resolved PersonaKit contract.</p>
+            <pre><code>.github/prompts/personakit-grounding.prompt.md
+/personakit-grounding</code></pre>
+            <p><a href="./hosts/copilot/personakit-grounding.prompt.md">Open Copilot example</a></p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Files</h2>
+        <ul>
+          <li><a href="./SKILL.md">Open raw SKILL.md</a></li>
+          <li><a href="./agents/openai.yaml">Open agents/openai.yaml</a></li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

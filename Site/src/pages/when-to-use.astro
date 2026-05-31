@@ -2,6 +2,8 @@
 import Callout from "../components/Callout.astro";
 import ContentLayout from "../layouts/ContentLayout.astro";
 import { sitePath } from "../utils/sitePath";
+
+const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
 ---
 
 <ContentLayout
@@ -25,8 +27,11 @@ import { sitePath } from "../utils/sitePath";
     </article>
     <article class="card">
       <h3>Agents Need Grounding Before Tools</h3>
-      <p>MCP-aware clients should resolve the contract before choosing host-local skills or tools, because availability is not authorization.</p>
-      <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Open MCP grounding</a>
+      <p>MCP-aware clients or host grounding skills should resolve the contract before choosing host-local skills or tools, because availability is not authorization.</p>
+      <p class="card-actions">
+        <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Open MCP grounding</a>
+        <a class="button-link" href={groundingSkillHref}>Open host skill example</a>
+      </p>
     </article>
     <article class="card">
       <h3>Pack Authoring Needs Guardrails</h3>
@@ -102,3 +107,11 @@ import { sitePath } from "../utils/sitePath";
 
   <p><a class="button-link" href={sitePath("learn/")}>Learn the model</a></p>
 </ContentLayout>
+
+<style>
+  .card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>
