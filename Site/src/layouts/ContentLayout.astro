@@ -27,11 +27,12 @@ const {
 
 <style>
   .content-page {
+    width: min(920px, calc(100vw - 48px));
     padding: 48px 0 72px;
   }
 
   .content-body {
-    max-width: 880px;
+    max-width: none;
     margin-top: 32px;
   }
 
@@ -41,5 +42,11 @@ const {
     font-weight: 750;
     text-transform: uppercase;
     font-size: 13px;
+  }
+
+  @media (max-width: 840px) {
+    .content-page {
+      width: min(920px, calc(100vw - 32px));
+    }
   }
 </style>
