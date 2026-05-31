@@ -18,7 +18,9 @@ personakit export --root .personakit --session behavior-review`;
   eyebrow="Mental map"
   description="Place PersonaKit among prompts, skills, harnesses, MCP, CLI tools, and coding agents."
 >
-  <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts or skills. It does not. PersonaKit is the operating-contract layer that says which role, rules, context, stop points, and capabilities apply before a model-backed worker starts.</p>
+  <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts, skills, memory, or compression. It does not. PersonaKit is the operating-contract layer that says which role, rules, context, stop points, allowed capabilities, and forbidden actions apply before a model-backed worker starts.</p>
+
+  <p>That matters more as agents get better. A capable agent with good memory and useful skills can still do the wrong extra thing unless the active work mode is visible before the work begins.</p>
 
   <section class="learning-path" aria-labelledby="releasedesk-path-heading">
     <p class="path-label">Recommended path</p>
@@ -69,7 +71,7 @@ personakit export --root .personakit --session behavior-review`;
       <tr>
         <td>Skill</td>
         <td>A local procedure, helper, or capability.</td>
-        <td>PersonaKit can declare whether that capability is allowed or forbidden for a work mode.</td>
+        <td>Host skills teach procedures; PersonaKit declares whether those procedures are allowed or forbidden for a work mode.</td>
       </tr>
       <tr>
         <td>Harness</td>
@@ -95,7 +97,7 @@ personakit export --root .personakit --session behavior-review`;
   </table>
 
   <Callout>
-    <p><strong>Working definition:</strong> PersonaKit resolves an operating contract for repeated AI coding work.</p>
+    <p><strong>Working definition:</strong> PersonaKit resolves an operating contract for repeated AI coding work so authority does not have to live in chat memory.</p>
   </Callout>
 
   <h2 id="contract">Read The Contract</h2>
@@ -213,7 +215,7 @@ personakit export --root .personakit --session behavior-review`;
       </tr>
       <tr>
         <td>Do not edit code unless I approve a fix.</td>
-        <td>Stop point: implementation requires human approval.</td>
+        <td>Stop point: implementation requires operator approval.</td>
       </tr>
     </tbody>
   </table>

@@ -10,7 +10,7 @@
   ],
   "values": [
     "ground first",
-    "human-visible boundaries"
+    "operator-visible boundaries"
   ],
   "nonGoals": [
     "subagent orchestration"

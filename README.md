@@ -15,6 +15,10 @@ agent does the work.
 PersonaKit is not an agent, launcher, workflow engine, task manager, memory
 system, or orchestration layer.
 
+PersonaKit is not trying to be better memory or a bigger prompt. It is the
+contract layer that says which work mode is active, which capabilities are
+allowed, which actions are forbidden, and when the agent must stop.
+
 For a guided overview, examples, and conceptual documentation, use the
 [PersonaKit website](https://ajself.github.io/PersonaKit/).
 
@@ -193,7 +197,7 @@ you want a visual administration surface alongside the CLI and MCP flows.
 
 For repository development, `make studio-review` builds Studio, opens
 deterministic demo workspaces, and captures screenshots under
-`.build/studio-review/` for human inspection.
+`.build/studio-review/` for operator inspection.
 
 PersonaKit MCP is read-only grounding and provenance:
 

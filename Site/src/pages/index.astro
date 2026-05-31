@@ -32,7 +32,7 @@ personakit export --root personakit-root --session cli-maintenance`;
 >
   <Hero
     title="PersonaKit makes repeated agent setup inspectable and repeatable."
-    lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, and allowed capabilities before any agent acts."
+    lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, allowed capabilities, and forbidden actions before any agent acts."
     actions={[
       { href: sitePath("start-here/"), label: "Start Here" },
     ]}
@@ -41,31 +41,31 @@ personakit export --root personakit-root --session cli-maintenance`;
   <main>
     <section>
       <h2>The Practical Problem</h2>
-      <p class="section-lede">The repeated pain is not that agents lack instructions. It is that the durable operating rules keep living in places people cannot inspect.</p>
+      <p class="section-lede">The repeated pain is not that agents lack instructions. It is that capable agents, memories, skills, and compressed chat history still need an operator-visible boundary for the work they are about to do.</p>
       <div class="problem-list">
         <article>
           <h3>Setup Lives In Chat</h3>
-          <p>Repeated work modes keep getting rebuilt as long prompts, remembered caveats, and "please be careful" reminders.</p>
+          <p>Repeated work modes keep getting rebuilt as long prompts, remembered caveats, and "please be careful, but do not do that other thing" reminders.</p>
         </article>
         <article>
-          <h3>Tools Need Boundaries</h3>
-          <p>Prompts, skills, MCP clients, harnesses, and agents each help, but none of them alone defines the operating contract.</p>
+          <h3>Capabilities Need Authority</h3>
+          <p>Host skills and tools can teach useful procedures, but availability is not the same as authorization for the active work mode.</p>
         </article>
         <article>
-          <h3>Review Needs Proof</h3>
-          <p>Before work starts, you should be able to inspect who the agent is, what rules apply, and which capabilities are allowed.</p>
+          <h3>Review Can Drift</h3>
+          <p>A review request can quietly become implementation unless the role, allowed capabilities, forbidden actions, and stop points are inspectable before work starts.</p>
         </article>
       </div>
     </section>
 
     <section class="band">
       <h2>How The Pieces Fit</h2>
-      <p class="section-lede">PersonaKit is the session-start resolver. Prompts describe the task, reusable PersonaKit content defines the contract, and skills/tools are used later under that contract.</p>
+      <p class="section-lede">PersonaKit is the session-start resolver. Prompts describe the task, reusable PersonaKit content defines the contract, and skills/tools are used later only inside that resolved boundary.</p>
       <div class="contract-flow" aria-label="Session prompt, PersonaKit contract resolution, and agent work stages">
         <article class="flow-stage">
           <p class="stage-kicker">1. Start The Session</p>
           <h3>Prompt + Session</h3>
-          <p>The user asks for work and chooses the PersonaKit session that should govern it.</p>
+          <p>The operator asks for work and chooses the PersonaKit session that should govern it.</p>
           <div class="flow-tags" aria-label="Session inputs">
             <span>prompt</span>
             <span>session id</span>
@@ -87,7 +87,7 @@ personakit export --root personakit-root --session cli-maintenance`;
         <article class="flow-stage">
           <p class="stage-kicker">3. Work Under It</p>
           <h3>Agent + Skills</h3>
-          <p>The user or harness passes the exported contract into the coding agent or host surface. Skills and tools are used during the session inside those boundaries.</p>
+          <p>The person at the controls or the harness passes the exported contract into the coding agent or host surface. Skills and tools can help, but only when the contract authorizes them.</p>
           <div class="flow-tags" aria-label="Worker surfaces">
             <span>harness</span>
             <span>skills</span>

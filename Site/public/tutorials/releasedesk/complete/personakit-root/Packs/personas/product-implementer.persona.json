@@ -11,7 +11,7 @@
   "values": [
     "small diffs",
     "deterministic behavior",
-    "human approval before release actions"
+    "operator approval before release actions"
   ],
   "nonGoals": [
     "deployment",

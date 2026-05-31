@@ -79,7 +79,7 @@ const implementationSessionCommands = `personakit create persona --root .persona
   --responsibility "Resolve the active contract before editing." \\
   --responsibility "Keep implementation scoped to the requested behavior." \\
   --value "small diffs" \\
-  --value "human approval before release actions" \\
+  --value "operator approval before release actions" \\
   --non-goal "deployment" \\
   --default-kit product-guardrails \\
   --allow-skill code-editing \\
@@ -160,6 +160,12 @@ personakit create session --root .personakit \\
 
 const reviewPrompt = "Operate under review-lane. Review the readiness fix for behavior regressions and missing validation. Do not edit files.";
 
+const reviewStopCase = `A readiness issue is found under review-lane.
+- Report it as a finding.
+- Do not invoke the ReleaseDesk readiness repair skill.
+- Do not edit files.
+- Ask for approval before switching back to implementation-lane.`;
+
 const approvedFixPrompt = "Operate under implementation-lane. Add a useful empty state when a filter has no matching ReleaseDesk tasks. Do not change readiness rules.";
 
 const docsLaneCommands = `personakit create skill --root .personakit \\
@@ -221,7 +227,7 @@ personakit create skill --root .personakit \\
   --provided-by "agent harness" \\
   --risk-level high \\
   --requires-human-review \\
-  --risk-note "Can make work happen outside the human's direct view."
+  --risk-note "Can make work happen outside the operator's direct view."
 
 personakit create persona --root .personakit \\
   --id contract-grounded-agent \\
@@ -313,7 +319,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   </Callout>
 
   <h2>2. Try A Skill First</h2>
-  <p>A skill is the right first instinct. ReleaseDesk has a repeated procedure: inspect the release data, inspect the readiness rules, run the test, identify the smallest safe fix, and report validation.</p>
+  <p>A skill is the right first instinct. ReleaseDesk has a repeated procedure: inspect the release data, inspect the readiness rules, run the test, identify the smallest safe fix, and report validation. That procedure is useful; it just is not authority by itself.</p>
 
   <p>Open the host-local skill in the starter project and read it like a procedure card. In a real agent tool, you would paste the skill text, attach the skill file, or invoke the host's skill mechanism before giving the task.</p>
 
@@ -337,14 +343,14 @@ personakit recommend --root .personakit --goal "Review this diff without editing
     lang="text"
   />
 
-  <p>The skill gives the agent a repeatable product procedure and keeps the task focused on ReleaseDesk instead of generic debugging.</p>
+  <p>The skill gives the agent a repeatable product procedure and keeps the task focused on ReleaseDesk instead of generic debugging. It answers "how should I investigate this?" but not "am I allowed to fix it right now?"</p>
 
   <Callout>
-    <p><strong>What the skill does well:</strong> it teaches a host agent how to perform one local capability. It is procedure, not the whole operating contract.</p>
+    <p><strong>What the skill does well:</strong> it teaches a host agent how to perform one local capability. PersonaKit's job starts where procedure stops: deciding whether the current lane authorizes that capability.</p>
   </Callout>
 
   <h2>3. Where The Skill Gets Awkward</h2>
-  <p>After diagnosis, the team needs more than a procedure. The same ReleaseDesk skill is helpful for implementation, but it should not quietly become authority to edit, review, release, or carry the task into another work mode.</p>
+  <p>After diagnosis, the team needs more than a procedure. The same ReleaseDesk skill is helpful for implementation, but it should not quietly become authority to edit, review, release, or carry the task into another work mode. This is the gap PersonaKit fills: not more context, but visible permission boundaries.</p>
 
   <table>
     <thead>
@@ -357,7 +363,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
     <tbody>
       <tr>
         <td>Is this implementation or review?</td>
-        <td>The skill can include a mode, but the active role is still implied by the prompt.</td>
+        <td>The skill can describe a procedure, but the active role is still implied by the prompt.</td>
         <td>The session resolves one persona and directive before work starts.</td>
       </tr>
       <tr>
@@ -366,9 +372,9 @@ personakit recommend --root .personakit --goal "Review this diff without editing
         <td>The contract can allow the skill in implementation and forbid it in review.</td>
       </tr>
       <tr>
-        <td>What if the task continues later outside the original conversation?</td>
-        <td>The boundary has to be restated or carried by convention.</td>
-        <td>The exported contract gives the host a boundary to carry with the task.</td>
+        <td>May the host use every available skill?</td>
+        <td>The skill exists, so the agent may treat it as fair game.</td>
+        <td>The contract distinguishes available capabilities from authorized capabilities.</td>
       </tr>
     </tbody>
   </table>
@@ -378,7 +384,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   </Callout>
 
   <h2>4. Add A Bounded Implementation Lane</h2>
-  <p>Now the human approves the fix. The agent needs to edit code and use the readiness skill, but it must not release software, touch credentials, or expand the task. Start by declaring the shared capability and guardrail pieces.</p>
+  <p>Now the operator approves the fix. The agent needs to edit code and use the readiness skill, but it must not release software, touch credentials, or expand the task. Start by declaring the shared capability and guardrail pieces.</p>
 
   <TutorialBlock
     code={implementationLaneCommands}
@@ -416,7 +422,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   <TutorialBlock code="node test/run-tests.mjs" kind="terminal" lang="bash" />
 
   <h2>5. Add Review Only When Review Is A Different Job</h2>
-  <p>After implementation, you need skepticism. Reusing the implementation skill and asking it to be careful blurs authority: the skill is optimized for readiness repair, not independent review. Create a read-only lane instead.</p>
+  <p>After implementation, you need skepticism. Reusing the implementation skill and asking it to be careful blurs authority: the skill is optimized for readiness repair, not independent review. Create a read-only lane instead so the same product area can be inspected under a different contract.</p>
 
   <TutorialBlock
     code={reviewLaneCommands}
@@ -433,6 +439,15 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   </TutorialBlock>
 
   <TutorialBlock code={reviewPrompt} kind="agent" lang="text" />
+
+  <p>If the reviewer finds a readiness issue, the contract still holds. A finding is evidence, not permission to switch modes.</p>
+
+  <TutorialBlock
+    code={reviewStopCase}
+    kind="output"
+    label="Stop case"
+    lang="text"
+  />
 
   <Callout>
     <p><strong>Boundary learned:</strong> a review finding is not permission to use the readiness skill to fix it. Review and implementation are different operating contracts, even when both inspect the same product behavior.</p>
@@ -465,7 +480,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   <p>This lane exists because docs and release-readiness work has a different risk profile from implementation. It is not just "code editing, but wordier."</p>
 
   <h2>8. Add A Grounded Handoff Lane</h2>
-  <p>Some host systems can pass tasks into places the human does not directly watch. PersonaKit should not become that system. It can define the boundary the host must carry with the task.</p>
+  <p>Some host systems can choose tools or pass tasks into places the operator does not directly watch. PersonaKit should not become that system. It can define the boundary the host must resolve before tool choice and carry with the task.</p>
 
   <TutorialBlock
     code={handoffLaneCommands}
@@ -482,10 +497,10 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   </TutorialBlock>
 
   <Callout tone="good">
-    <p><strong>PersonaKit is not the handoff system.</strong> It is the contract the host must respect.</p>
+    <p><strong>PersonaKit is not the handoff system.</strong> It is the contract the host must respect before choosing tools, invoking skills, or passing work onward.</p>
   </Callout>
 
-  <p>The rule is simple: resolve before tool choice, pass the relevant boundary with assigned work, and stop when a needed capability is missing or forbidden.</p>
+  <p>The rule is simple: resolve before tool choice, use only authorized capabilities, pass the relevant boundary with assigned work, and stop when a needed capability is missing or forbidden.</p>
 
   <h2>9. Compare The Finished Materials</h2>
   <p>The completed project includes the fixed app, the host-local skill, and a public <code>personakit-root</code> that mirrors what you built locally.</p>
@@ -547,7 +562,7 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   </table>
 
   <Callout>
-    <p>The point is not to make more PersonaKit files or replace useful skills. The point is to turn repeated product-work boundaries into something a human can inspect before an agent acts.</p>
+    <p>The point is not to make more PersonaKit files or replace useful skills. The point is to turn repeated product-work boundaries into something a person can inspect before an agent acts, even when the agent already has memory, compression, and strong local procedures.</p>
   </Callout>
 
   <section class="next-step" aria-labelledby="next-step-heading">

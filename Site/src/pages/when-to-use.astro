@@ -9,7 +9,7 @@ import { sitePath } from "../utils/sitePath";
   eyebrow="Practical fit"
   description="Use PersonaKit when the operating contract matters more than a one-off prompt."
 >
-  <p>PersonaKit is useful when the same kind of AI coding session repeats and the starting contract matters. It usually runs before the work begins; prompts describe the immediate task, and skills or tools are used later inside the conversation.</p>
+  <p>PersonaKit is useful when the same kind of AI coding session repeats and the starting contract matters. It usually runs before the work begins; prompts describe the immediate task, and skills or tools are used later only inside the active boundary.</p>
 
   <h2>Use PersonaKit When</h2>
   <div class="grid two">
@@ -20,12 +20,12 @@ import { sitePath } from "../utils/sitePath";
     </article>
     <article class="card">
       <h3>Bounded Implementation Repeats</h3>
-      <p>A common fix lane needs the same role, stop points, capability boundaries, and verification every time.</p>
+      <p>A common fix lane needs the same role, allowed capabilities, forbidden actions, stop points, and verification every time.</p>
       <a class="button-link" href={sitePath("examples/cli-maintenance/")}>Open CLI maintenance</a>
     </article>
     <article class="card">
       <h3>Agents Need Grounding Before Tools</h3>
-      <p>MCP-aware clients should resolve the contract before choosing host-local skills or tools.</p>
+      <p>MCP-aware clients should resolve the contract before choosing host-local skills or tools, because availability is not authorization.</p>
       <a class="button-link" href={sitePath("examples/mcp-grounding/")}>Open MCP grounding</a>
     </article>
     <article class="card">
@@ -84,7 +84,7 @@ import { sitePath } from "../utils/sitePath";
   </table>
 
   <Callout>
-    <p><strong>Short version:</strong> use PersonaKit when a repeated AI coding lane needs a durable boundary that humans can inspect before work starts.</p>
+    <p><strong>Short version:</strong> use PersonaKit when a repeated AI coding lane needs a durable boundary that people can inspect before work starts: what is allowed, what is forbidden, and when the agent must stop.</p>
   </Callout>
 
   <h2>Adoption Pattern</h2>

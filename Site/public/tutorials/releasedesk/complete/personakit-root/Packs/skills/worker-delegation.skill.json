@@ -10,7 +10,7 @@
     "level": "high",
     "requiresHumanReview": true,
     "notes": [
-      "Can make work happen outside the human's direct view."
+      "Can make work happen outside the operator's direct view."
     ]
   },
   "notes": []
