@@ -125,12 +125,13 @@ personakit init /tmp/personakit-demo/.personakit --force
 ## Core Model
 
 ```text
-Persona + Directive + Kits + Essentials + Skill authorization = Operating contract
+Persona + Directive + Kits + Intents + Essentials + Skill authorization = Operating contract
 ```
 
 - **Persona**: who the agent should act as.
 - **Directive**: what kind of work is being done.
 - **Kits**: reusable guardrails and defaults.
+- **Intents**: reusable work patterns and decision rails required by kits or directives.
 - **Essentials**: required Markdown grounding and references.
 - **Skills**: capability metadata used for authorization.
 - **Session**: the named entry point that ties the pieces together.
