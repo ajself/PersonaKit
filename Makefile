@@ -173,34 +173,34 @@ endif
 	$(SWIFT_RUN) personakit export --help
 	rm -rf /tmp/personakit-public-check
 	mkdir -p /tmp/personakit-public-check
-	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | rg .
+	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | grep .
 	diff -qr .personakit Examples/public-starter/.personakit
 	$(SWIFT_RUN) personakit validate --root .personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/internal-agent-root/.personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/kit-root
 	$(SWIFT_RUN) personakit validate --root Examples/public-starter/.personakit
 	$(SWIFT_RUN) personakit contract --root Examples/public-starter/.personakit --session solo-dev > /tmp/personakit-public-check/example-contract.json
-	rg '"sessionId" : "solo-dev"' /tmp/personakit-public-check/example-contract.json
-	rg '"authorizedSkillIds" : \[' /tmp/personakit-public-check/example-contract.json
+	grep -F '"sessionId" : "solo-dev"' /tmp/personakit-public-check/example-contract.json
+	grep -F '"authorizedSkillIds" : [' /tmp/personakit-public-check/example-contract.json
 	$(SWIFT_RUN) personakit export --root Examples/public-starter/.personakit --session solo-dev > /tmp/personakit-public-check/example-export.md
-	rg 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/example-export.md
-	rg '# Persona' /tmp/personakit-public-check/example-export.md
-	rg '# Skill Contract' /tmp/personakit-public-check/example-export.md
-	rg '# Directive' /tmp/personakit-public-check/example-export.md
+	grep -F 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/example-export.md
+	grep -F '# Persona' /tmp/personakit-public-check/example-export.md
+	grep -F '# Skill Contract' /tmp/personakit-public-check/example-export.md
+	grep -F '# Directive' /tmp/personakit-public-check/example-export.md
 	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/.personakit
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/.personakit
 	$(SWIFT_RUN) personakit export --root /tmp/personakit-public-check/.personakit --session solo-dev > /tmp/personakit-public-check/init-export.md
-	rg 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/init-export.md
-	rg '# Persona' /tmp/personakit-public-check/init-export.md
-	rg '# Skill Contract' /tmp/personakit-public-check/init-export.md
-	rg '# Directive' /tmp/personakit-public-check/init-export.md
+	grep -F 'PersonaKit-Output-Version: 1' /tmp/personakit-public-check/init-export.md
+	grep -F '# Persona' /tmp/personakit-public-check/init-export.md
+	grep -F '# Skill Contract' /tmp/personakit-public-check/init-export.md
+	grep -F '# Directive' /tmp/personakit-public-check/init-export.md
 	mkdir -p /tmp/personakit-public-check/non-empty
 	printf "occupied\n" > /tmp/personakit-public-check/non-empty/README.md
 	! $(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty
 	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty --force
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/non-empty
-	! rg -n "A[J]|O[r]bit|T[ask]board|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples AGENTS.md
-	rg -n "memory|orchestration" .personakit README.md Docs Examples AGENTS.md || true
+	! grep -REn "A[J]|O[r]bit|T[ask]board|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples AGENTS.md
+	grep -REn "memory|orchestration" .personakit README.md Docs Examples AGENTS.md || true
 
 core-zip:
 	@mkdir -p "$(dir $(ZIP_NAME))"
