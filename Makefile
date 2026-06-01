@@ -56,7 +56,7 @@ help:
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@echo ""
 	@echo "Studio app:"
-	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with XcodeBuildMCP."
+	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with xcodebuild."
 	@printf "  %-28s %s\n" "studio-run" "Build and run the Studio app with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-test" "Run Studio Xcode tests only (requires WORKSPACE_PATH)."
 	@printf "  %-28s %s\n" "studio-review" "Build Studio and capture review screenshots."
@@ -98,11 +98,12 @@ format-check:
 	swift format lint --strict -r Sources Tests
 
 studio-build: studio-doctor
-	$(XCODEBUILDMCP) macos build \
-		--workspace-path "$(WORKSPACE_PATH)" \
-		--scheme "$(STUDIO_SCHEME)" \
-		--configuration "$(CONFIGURATION)" \
-		--derived-data-path "$(DERIVED_DATA_PATH)"
+	xcodebuild \
+		-workspace "$(WORKSPACE_PATH)" \
+		-scheme "$(STUDIO_SCHEME)" \
+		-configuration "$(CONFIGURATION)" \
+		-derivedDataPath "$(DERIVED_DATA_PATH)" \
+		build
 
 cli-build: swiftpm-prepare
 	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
