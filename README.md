@@ -137,7 +137,7 @@ Persona + Directive + Kits + Intents + Essentials + Skill authorization = Operat
 - **Persona**: who the agent should act as.
 - **Directive**: what kind of work is being done.
 - **Kits**: reusable guardrails and defaults.
-- **Intents**: reusable work patterns and decision rails required by kits or directives.
+- **Intents**: reusable work patterns and decision rails included by kits or required by directives.
 - **Essentials**: required Markdown grounding and references.
 - **Skills**: capability metadata used for authorization.
 - **Session**: the named entry point that ties the pieces together.

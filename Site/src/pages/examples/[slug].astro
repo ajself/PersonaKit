@@ -33,7 +33,7 @@ const rootHref = example.data.rootPath
 const adoptionSteps = [
   "Copy the closest example root into your project.",
   "Rename the copied folder to .personakit.",
-  "Revise the session, persona, directive, kits, and skills for your lane.",
+  "Revise the session, persona, directive, kits, intents, and skills for your lane.",
   "Run personakit validate before relying on the root.",
   "Inspect the resolved contract before exporting handoff context.",
 ];
@@ -76,7 +76,7 @@ const sourceFiles = example.data.sourceFiles.map((sourceFile) => ({
   </ol>
 
   <h2>Inspect The Contract Pieces</h2>
-  <p>Start with the session file; it shows which persona, directive, kits, and skills compose this lane.</p>
+  <p>Start with the session file; it shows the entry point, and the resolved graph shows the full set of contract pieces.</p>
   <div class="source-links">
     {
       sourceFiles.map((sourceFile) => (

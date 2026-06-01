@@ -10,7 +10,7 @@ enum MCPPromptName: String, CaseIterable {
   var description: String {
     switch self {
     case .sessionExport:
-      return "Assemble Persona+Kits+Directive into a single Markdown prompt."
+      return "Assemble a resolved PersonaKit contract into Markdown."
     case .sessionGraph:
       return "Print a readable dependency graph for a session."
     }
