@@ -34,9 +34,9 @@ Use PersonaKit when the same AI coding setup keeps appearing in prompts:
 - "Do not deploy, persist state, or broaden scope."
 - "Stop here for review."
 
-Instead of rebuilding that setup in chat, define a session once, validate it,
-inspect the resolved contract, and export handoff context when a coding agent
-needs it.
+Instead of rebuilding that setup in chat, define a session once. PersonaKit
+then composes the reusable pieces, validates the authored content, inspects the
+resolved contract, and exports handoff context when a coding agent needs it.
 
 ## Quick Start
 
@@ -141,6 +141,14 @@ Persona + Directive + Kits + Intents + Essentials + Skill authorization = Operat
 - **Essentials**: required Markdown grounding and references.
 - **Skills**: capability metadata used for authorization.
 - **Session**: the named entry point that ties the pieces together.
+
+Sessions are the situational work modes. Broad repo guidance such as
+`AGENTS.md` can still describe the project's default operating rules; a
+PersonaKit session selects the active contract for this specific handoff.
+
+Authored PersonaKit JSON files are checked against JSON schemas and carry
+explicit version fields. That keeps packs reviewable as project source and lets
+the CLI validate structure before a contract is exported.
 
 Example session:
 

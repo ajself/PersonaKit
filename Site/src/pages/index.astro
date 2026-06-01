@@ -32,7 +32,7 @@ personakit export --root personakit-root --session cli-maintenance`;
 >
   <Hero
     title="PersonaKit makes repeated agent setup inspectable and repeatable."
-    lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, allowed capabilities, and forbidden actions before any agent acts."
+    lede="Turn recurring coding work into a deterministic session contract for role, rules, context, stop points, allowed capabilities, and forbidden actions before handoff."
     actions={[
       { href: sitePath("start-here/"), label: "Start Here" },
     ]}
@@ -60,7 +60,7 @@ personakit export --root personakit-root --session cli-maintenance`;
 
     <section class="band">
       <h2>How The Pieces Fit</h2>
-      <p class="section-lede">PersonaKit is the session-start resolver. Prompts describe the task, reusable PersonaKit content defines the contract, and skills/tools are used later only inside that resolved boundary.</p>
+      <p class="section-lede">PersonaKit is the session-start resolver. Prompts describe the task, reusable PersonaKit content defines the pieces, and PersonaKit composes them into a resolved boundary for the handoff.</p>
       <div class="contract-flow" aria-label="Session prompt, PersonaKit contract resolution, and agent work stages">
         <article class="flow-stage">
           <p class="stage-kicker">1. Start The Session</p>
@@ -75,7 +75,7 @@ personakit export --root personakit-root --session cli-maintenance`;
         <article class="flow-stage persona-stage">
           <p class="stage-kicker">2. Resolve The Contract</p>
           <h3>PersonaKit</h3>
-          <p>Combines persona, directive, kits, intents, essentials, references, and skill authorization into one inspectable contract.</p>
+          <p>Deterministically composes persona, directive, kits, intents, essentials, references, and skill authorization into one inspectable contract.</p>
           <div class="flow-tags" aria-label="Resolved contract parts">
             <span>role</span>
             <span>rules</span>

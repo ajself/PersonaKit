@@ -21,7 +21,7 @@ personakit export --root .personakit --session behavior-review`;
   eyebrow="Mental map"
   description="Place PersonaKit among prompts, skills, harnesses, MCP, CLI tools, and coding agents."
 >
-  <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts, skills, memory, or compression. It does not. PersonaKit is the operating-contract layer that says which role, rules, context, stop points, allowed capabilities, and forbidden actions apply before a model-backed worker starts.</p>
+  <p>PersonaKit makes the most sense when you stop asking whether it replaces prompts, skills, memory, or compression. It does not. PersonaKit composes schema-backed project context into a resolved contract for the role, rules, stop points, allowed capabilities, and forbidden actions of a specific handoff.</p>
 
   <p>That matters more as agents get better. A capable agent with good memory and useful skills can still do the wrong extra thing unless the active work mode is visible before the work begins.</p>
 
@@ -70,7 +70,7 @@ personakit export --root .personakit --session behavior-review`;
       <tr>
         <td>Saved prompt</td>
         <td>Reusable text that still has to be copied or remembered.</td>
-        <td>PersonaKit turns repeated setup into structured, inspectable project context.</td>
+        <td>PersonaKit turns repeated setup into structured, inspectable, schema-backed project context.</td>
       </tr>
       <tr>
         <td>Skill</td>
@@ -80,7 +80,7 @@ personakit export --root .personakit --session behavior-review`;
       <tr>
         <td>Harness</td>
         <td>The wrapper that calls models, tools, or agent runtimes.</td>
-        <td>PersonaKit produces the contract a harness can pass into the worker.</td>
+        <td>PersonaKit deterministically produces the contract a harness can pass into the worker.</td>
       </tr>
       <tr>
         <td>MCP</td>
@@ -102,6 +102,10 @@ personakit export --root .personakit --session behavior-review`;
 
   <Callout>
     <p><strong>Working definition:</strong> PersonaKit resolves an operating contract for repeated AI coding work so authority does not have to live in chat memory.</p>
+  </Callout>
+
+  <Callout>
+    <p><strong>Repo instructions and PersonaKit fit together:</strong> broad files such as AGENTS.md describe the default project rules. PersonaKit sessions select the situational work mode for a specific handoff.</p>
   </Callout>
 
   <h2 id="host-skill-front-door">Use A Host Skill As The Front Door</h2>
@@ -134,7 +138,7 @@ personakit export --root .personakit --session behavior-review`;
   </div>
 
   <h2 id="compose">Compose The Pieces</h2>
-  <p>PersonaKit contracts are assembled from reusable parts. Operators should not have to copy the same careful-review paragraph into every prompt or maintain several nearly identical skills just to change a boundary.</p>
+  <p>You define a session as the entry point. PersonaKit composes reusable parts into the resolved contract. Operators should not have to copy the same careful-review paragraph into every prompt or maintain several nearly identical skills just to change a boundary.</p>
 
   <div class="grid three compose-grid">
     <article class="card">
