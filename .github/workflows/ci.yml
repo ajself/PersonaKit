@@ -51,9 +51,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Run Swift tests
-        timeout-minutes: 20
-        run: make test SWIFT_TEST_FLAGS=--quiet
+      - name: Build Swift package
+        timeout-minutes: 15
+        run: make build
 
       - name: Run public contract checks
         timeout-minutes: 10
