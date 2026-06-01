@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -37,10 +37,11 @@ jobs:
   swift:
     name: Swift
     runs-on: macos-26
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Show Swift version
         run: swift --version
@@ -48,5 +49,10 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Run public check
-        run: make public-check
+      - name: Run Swift tests
+        timeout-minutes: 10
+        run: make test SWIFT_TEST_FLAGS=--quiet
+
+      - name: Run public contract checks
+        timeout-minutes: 10
+        run: make public-check PUBLIC_CHECK_TEST=0

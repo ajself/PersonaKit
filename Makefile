@@ -24,10 +24,12 @@ VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
 SWIFTPM_CACHE_ROOT ?= $(VALIDATE_TMPDIR)/swiftpm
 SWIFTPM_TMPDIR ?= $(SWIFTPM_CACHE_ROOT)/tmp
 SWIFTPM_FLAGS ?= --cache-path $(SWIFTPM_CACHE_ROOT)/cache --config-path $(SWIFTPM_CACHE_ROOT)/configuration --security-path $(SWIFTPM_CACHE_ROOT)/security --manifest-cache local --disable-sandbox -Xswiftc -module-cache-path -Xswiftc $(SWIFTPM_CACHE_ROOT)/module-cache -Xcc -fmodules-cache-path=$(SWIFTPM_CACHE_ROOT)/clang-module-cache
+PUBLIC_CHECK_TEST ?= 1
+SWIFT_TEST_FLAGS ?=
 SWIFTPM_ENV ?= CLANG_MODULE_CACHE_PATH=$(SWIFTPM_CACHE_ROOT)/clang-module-cache TMPDIR=$(SWIFTPM_TMPDIR)
 SWIFT_BUILD ?= $(SWIFTPM_ENV) $(SWIFT) build $(SWIFTPM_FLAGS)
 SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
-SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS)
+SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
 	core-validate-repo core-zip public-check \
@@ -164,7 +166,9 @@ core-validate-repo: swiftpm-prepare
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
 public-check: swiftpm-prepare
+ifeq ($(PUBLIC_CHECK_TEST),1)
 	$(SWIFT_TEST)
+endif
 	$(SWIFT_RUN) personakit --help
 	$(SWIFT_RUN) personakit export --help
 	rm -rf /tmp/personakit-public-check
