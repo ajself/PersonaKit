@@ -15,6 +15,31 @@ ZSH_COMPLETION_DIR ?= $(HOME)/.zsh/completions
 TEST_FILTER ?=
 SWIFT ?= swift
 
+# --- macOS installer release lane ----------------------------------------
+# Signing identities + the notary keychain profile come from
+# Config/Release.local.mk (gitignored). Never commit those values.
+RELEASE_LOCAL_CONFIG ?= Config/Release.local.mk
+RELEASE_SWIFT_CONFIGURATION ?= release
+# NOTE: must not collide (case-insensitively) with SwiftPM's .build/release,
+# which the companion CLI build populates; otherwise the archive/export are clobbered.
+PKG_BUILD_DIR ?= .build/macos-release
+PKG_ARCHIVE_PATH ?= $(PKG_BUILD_DIR)/$(APP_NAME).xcarchive
+PKG_EXPORT_PATH ?= $(PKG_BUILD_DIR)/export
+PKG_OUTPUT_PATH ?= $(PKG_BUILD_DIR)/$(APP_NAME).pkg
+PKG_STAGE_ROOT ?= $(PKG_BUILD_DIR)/pkgroot
+PKG_COMPONENT_PLIST ?= $(PKG_BUILD_DIR)/component.plist
+PKG_ARCHS ?= arm64 x86_64
+PKG_IDENTIFIER ?= com.ajself.PersonaKit
+PKG_VERSION ?= 1.0.0
+APP_INSTALL_LOCATION ?= /Applications
+CLI_INSTALL_LOCATION ?= /usr/local/bin
+CLI_SUPPORT_BUNDLE_NAME ?= PersonaKit_ContextCore.bundle
+APP_SIGN_IDENTITY ?=
+INSTALLER_SIGN_IDENTITY ?=
+NOTARY_KEYCHAIN_PROFILE ?=
+
+-include $(RELEASE_LOCAL_CONFIG)
+
 VALIDATE_AGENT ?= local
 VALIDATE_USER ?= $(if $(USER),$(USER),unknown)
 VALIDATE_TMPDIR ?= /tmp/personakit-$(VALIDATE_USER)-$(VALIDATE_AGENT)
@@ -34,7 +59,10 @@ SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
 	core-validate-repo core-zip public-check \
 	cli-build cli-install cli-install-zsh-completion cli-test \
-	studio-build studio-run studio-test studio-review
+	studio-build studio-run studio-test studio-review \
+	studio-pkg-preflight studio-archive-release studio-export-release \
+	studio-verify-app studio-pkg-app studio-pkg \
+	studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -62,6 +90,10 @@ help:
 	@printf "  %-28s %s\n" "studio-run" "Build and run the Studio app with XcodeBuildMCP."
 	@printf "  %-28s %s\n" "studio-test" "Run Studio Xcode tests only (requires WORKSPACE_PATH)."
 	@printf "  %-28s %s\n" "studio-review" "Build Studio and capture review screenshots."
+	@echo ""
+	@echo "Studio release (signed installer; reads $(RELEASE_LOCAL_CONFIG)):"
+	@printf "  %-28s %s\n" "studio-pkg" "Archive, sign, harden-verify, and build the signed .pkg (no notarization)."
+	@printf "  %-28s %s\n" "studio-release-pkg" "Full archive -> sign -> package -> notarize -> staple -> verify."
 
 studio-doctor:
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
@@ -206,3 +238,203 @@ core-zip:
 	@mkdir -p "$(dir $(ZIP_NAME))"
 	@rm -f "$(ZIP_NAME)"
 	git ls-files -z | xargs -0 zip -q "$(ZIP_NAME)"
+
+# --- macOS installer release lane -----------------------------------------
+# Release targets build the Release configuration regardless of the default.
+studio-archive-release studio-export-release studio-verify-app studio-pkg-app studio-pkg studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg: CONFIGURATION = Release
+
+studio-pkg-preflight:
+	@if ! command -v xcodebuild >/dev/null 2>&1; then \
+		echo "error: xcodebuild is required. Install Xcode and Command Line Tools."; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(WORKSPACE_PATH)" ]; then \
+		echo "error: workspace not found at $(WORKSPACE_PATH)"; \
+		exit 1; \
+	fi
+	@if ! command -v pkgbuild >/dev/null 2>&1; then \
+		echo "error: pkgbuild is required."; \
+		exit 1; \
+	fi
+	@if ! command -v $(SWIFT) >/dev/null 2>&1; then \
+		echo "error: $(SWIFT) is required to build the companion CLI."; \
+		exit 1; \
+	fi
+	@if ! xcrun --find notarytool >/dev/null 2>&1; then \
+		echo "error: notarytool is required via xcrun."; \
+		exit 1; \
+	fi
+	@if ! xcrun --find stapler >/dev/null 2>&1; then \
+		echo "error: stapler is required via xcrun."; \
+		exit 1; \
+	fi
+	@if [ -z "$(APP_SIGN_IDENTITY)" ]; then \
+		echo "error: APP_SIGN_IDENTITY is required (set it in $(RELEASE_LOCAL_CONFIG))."; \
+		exit 1; \
+	fi
+	@echo "studio-pkg-preflight: OK"
+
+studio-archive-release: studio-pkg-preflight
+	@mkdir -p "$(dir $(PKG_ARCHIVE_PATH))"
+	xcodebuild archive \
+		-workspace "$(WORKSPACE_PATH)" \
+		-scheme "$(STUDIO_SCHEME)" \
+		-configuration "$(CONFIGURATION)" \
+		-destination "generic/platform=macOS" \
+		-archivePath "$(PKG_ARCHIVE_PATH)" \
+		CODE_SIGN_STYLE=Manual \
+		CODE_SIGN_IDENTITY="$(APP_SIGN_IDENTITY)" \
+		OTHER_CODE_SIGN_FLAGS="--timestamp" \
+		ONLY_ACTIVE_ARCH=NO \
+		ARCHS="$(PKG_ARCHS)"
+
+studio-export-release:
+	@if [ ! -d "$(PKG_ARCHIVE_PATH)" ]; then \
+		echo "error: archive not found at $(PKG_ARCHIVE_PATH)"; \
+		echo "hint: run 'make studio-archive-release' first"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(PKG_ARCHIVE_PATH)/Products/Applications/$(APP_NAME).app" ]; then \
+		echo "error: archived app not found in $(PKG_ARCHIVE_PATH)/Products/Applications"; \
+		exit 1; \
+	fi
+	@mkdir -p "$(PKG_BUILD_DIR)"
+	@rm -rf "$(PKG_EXPORT_PATH)"
+	@mkdir -p "$(PKG_EXPORT_PATH)"
+	@ditto --norsrc --noqtn "$(PKG_ARCHIVE_PATH)/Products/Applications/$(APP_NAME).app" "$(PKG_EXPORT_PATH)/$(APP_NAME).app"
+	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
+		echo "error: exported app not found at $(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
+		exit 1; \
+	fi
+
+# Harden gate: the signed app must use the hardened runtime, carry a secure
+# timestamp, and must not ship the debug get-task-allow entitlement.
+studio-verify-app:
+	@set -e; \
+	app="$(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
+	if [ ! -d "$$app" ]; then \
+		echo "error: exported app not found at $$app"; \
+		echo "hint: run 'make studio-export-release' first"; \
+		exit 1; \
+	fi; \
+	details="$$(codesign -dvv "$$app" 2>&1)"; \
+	if ! printf '%s' "$$details" | grep -qi 'flags=[^ ]*runtime'; then \
+		echo "error: $$app is not signed with the hardened runtime."; \
+		exit 1; \
+	fi; \
+	if ! printf '%s' "$$details" | grep -q 'Timestamp='; then \
+		echo "error: $$app does not carry a secure timestamp."; \
+		exit 1; \
+	fi; \
+	ents="$$(codesign -d --entitlements :- "$$app" 2>/dev/null || true)"; \
+	if printf '%s' "$$ents" | grep -A1 'get-task-allow' | grep -qi '<true/>'; then \
+		echo "error: $$app ships com.apple.security.get-task-allow=true; not a distribution build."; \
+		exit 1; \
+	fi; \
+	echo "studio-verify-app: hardened runtime + secure timestamp OK, no get-task-allow."
+
+studio-pkg-app:
+	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
+		echo "error: exported app not found at $(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
+		echo "hint: run 'make studio-export-release' first"; \
+		exit 1; \
+	fi
+	@if [ -z "$(INSTALLER_SIGN_IDENTITY)" ]; then \
+		echo "error: INSTALLER_SIGN_IDENTITY is required (set it in $(RELEASE_LOCAL_CONFIG))."; \
+		exit 1; \
+	fi
+	@if [ -z "$(APP_SIGN_IDENTITY)" ]; then \
+		echo "error: APP_SIGN_IDENTITY is required (set it in $(RELEASE_LOCAL_CONFIG))."; \
+		exit 1; \
+	fi
+	@echo "Building companion CLI ($(CLI_PRODUCT_NAME)) for release..."
+	$(SWIFT) build -c $(RELEASE_SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
+	@mkdir -p "$(dir $(PKG_OUTPUT_PATH))"
+	@rm -rf "$(PKG_STAGE_ROOT)"
+	@mkdir -p "$(PKG_STAGE_ROOT)$(APP_INSTALL_LOCATION)"
+	@mkdir -p "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)"
+	@ditto --norsrc --noqtn "$(PKG_EXPORT_PATH)/$(APP_NAME).app" "$(PKG_STAGE_ROOT)$(APP_INSTALL_LOCATION)/$(APP_NAME).app"
+	@set -e; \
+	bin_dir="$$($(SWIFT) build -c $(RELEASE_SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME) --show-bin-path)"; \
+	cli="$$bin_dir/$(CLI_PRODUCT_NAME)"; \
+	bundle="$$bin_dir/$(CLI_SUPPORT_BUNDLE_NAME)"; \
+	if [ ! -x "$$cli" ]; then echo "error: built CLI not found at $$cli"; exit 1; fi; \
+	codesign --force --options runtime --timestamp --sign "$(APP_SIGN_IDENTITY)" "$$cli"; \
+	codesign --verify --strict "$$cli"; \
+	if ! codesign -dvv "$$cli" 2>&1 | grep -qi 'flags=[^ ]*runtime'; then \
+		echo "error: companion CLI is not signed with the hardened runtime."; \
+		exit 1; \
+	fi; \
+	ditto --norsrc --noqtn "$$cli" "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)/$(CLI_PRODUCT_NAME)"; \
+	if [ -d "$$bundle" ]; then \
+		ditto --norsrc --noqtn "$$bundle" "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)/$(CLI_SUPPORT_BUNDLE_NAME)"; \
+	else \
+		echo "warning: resource bundle $(CLI_SUPPORT_BUNDLE_NAME) not found at $$bundle; skipping"; \
+	fi
+	@xattr -cr "$(PKG_STAGE_ROOT)"
+	@find "$(PKG_STAGE_ROOT)" -name '._*' -delete
+	@pkgbuild --analyze --root "$(PKG_STAGE_ROOT)" "$(PKG_COMPONENT_PLIST)"
+	@set -e; \
+	i=0; \
+	while /usr/libexec/PlistBuddy -c "Print :$$i:BundleIsRelocatable" "$(PKG_COMPONENT_PLIST)" >/dev/null 2>&1; do \
+		/usr/libexec/PlistBuddy -c "Set :$$i:BundleIsRelocatable false" "$(PKG_COMPONENT_PLIST)"; \
+		/usr/libexec/PlistBuddy -c "Set :$$i:BundleHasStrictIdentifier true" "$(PKG_COMPONENT_PLIST)"; \
+		/usr/libexec/PlistBuddy -c "Set :$$i:BundleOverwriteAction upgrade" "$(PKG_COMPONENT_PLIST)"; \
+		i=$$((i + 1)); \
+	done; \
+	echo "studio-pkg-app: configured $$i bundle component(s) as non-relocatable."
+	@rm -f "$(PKG_OUTPUT_PATH)"
+	pkgbuild \
+		--root "$(PKG_STAGE_ROOT)" \
+		--identifier "$(PKG_IDENTIFIER)" \
+		--version "$(PKG_VERSION)" \
+		--install-location "/" \
+		--component-plist "$(PKG_COMPONENT_PLIST)" \
+		--sign "$(INSTALLER_SIGN_IDENTITY)" \
+		--timestamp \
+		"$(PKG_OUTPUT_PATH)"
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		exit 1; \
+	fi
+	@echo "studio-pkg-app: built $(PKG_OUTPUT_PATH)"
+
+# Build + sign + package without contacting Apple. Produces a signed but
+# un-notarized .pkg, handy for local install testing.
+studio-pkg: studio-pkg-preflight studio-archive-release studio-export-release studio-verify-app studio-pkg-app
+	@echo "studio-pkg: signed installer ready at $(PKG_OUTPUT_PATH) (not yet notarized)."
+
+studio-notarize-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		echo "hint: run 'make studio-pkg' first"; \
+		exit 1; \
+	fi
+	@if [ -z "$(NOTARY_KEYCHAIN_PROFILE)" ]; then \
+		echo "error: NOTARY_KEYCHAIN_PROFILE is required (set it in $(RELEASE_LOCAL_CONFIG))."; \
+		echo "hint: create it once with 'xcrun notarytool store-credentials'"; \
+		exit 1; \
+	fi
+	xcrun notarytool submit "$(PKG_OUTPUT_PATH)" \
+		--keychain-profile "$(NOTARY_KEYCHAIN_PROFILE)" \
+		--wait
+
+studio-staple-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		exit 1; \
+	fi
+	xcrun stapler staple "$(PKG_OUTPUT_PATH)"
+
+studio-verify-pkg:
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		exit 1; \
+	fi
+	pkgutil --check-signature "$(PKG_OUTPUT_PATH)"
+	xcrun stapler validate "$(PKG_OUTPUT_PATH)"
+	spctl -a -t install -vv "$(PKG_OUTPUT_PATH)"
+	@echo "studio-verify-pkg: signature and stapling look good."
+
+studio-release-pkg: studio-pkg-preflight studio-archive-release studio-export-release studio-verify-app studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg
+	@echo "studio-release-pkg: notarized installer ready at $(PKG_OUTPUT_PATH)."
