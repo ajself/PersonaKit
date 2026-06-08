@@ -38,6 +38,17 @@ APP_SIGN_IDENTITY ?=
 INSTALLER_SIGN_IDENTITY ?=
 NOTARY_KEYCHAIN_PROFILE ?=
 
+# GitHub release publishing. RELEASE_VERSION drives the installer version and
+# the release tag. At the 1.0 junction, bump it (or PKG_VERSION) and keep it in
+# sync with the other two version surfaces:
+#   - MARKETING_VERSION in PersonaKit/PersonaKit.xcodeproj (app)
+#   - PersonaKitVersion.current in Sources/Features/CLI/PersonaKitVersion.swift (CLI/MCP)
+GH ?= gh
+RELEASE_VERSION ?= $(PKG_VERSION)
+RELEASE_TAG ?= v$(RELEASE_VERSION)
+RELEASE_TITLE ?= PersonaKit $(RELEASE_VERSION)
+PKG_CHECKSUM_PATH ?= $(PKG_OUTPUT_PATH).sha256
+
 -include $(RELEASE_LOCAL_CONFIG)
 
 VALIDATE_AGENT ?= local
@@ -62,7 +73,8 @@ SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
 	studio-verify-app studio-pkg-app studio-pkg \
-	studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg
+	studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg \
+	studio-gh-release studio-publish-release
 
 help:
 	@echo "PersonaKit Makefile Commands"
@@ -94,6 +106,8 @@ help:
 	@echo "Studio release (signed installer; reads $(RELEASE_LOCAL_CONFIG)):"
 	@printf "  %-28s %s\n" "studio-pkg" "Archive, sign, harden-verify, and build the signed .pkg (no notarization)."
 	@printf "  %-28s %s\n" "studio-release-pkg" "Full archive -> sign -> package -> notarize -> staple -> verify."
+	@printf "  %-28s %s\n" "studio-publish-release" "One shot: studio-release-pkg + checksum + DRAFT a GitHub release."
+	@printf "  %-28s %s\n" "studio-gh-release" "Checksum an existing notarized .pkg and DRAFT a GitHub release."
 
 studio-doctor:
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
@@ -438,3 +452,36 @@ studio-verify-pkg:
 
 studio-release-pkg: studio-pkg-preflight studio-archive-release studio-export-release studio-verify-app studio-pkg-app studio-notarize-pkg studio-staple-pkg studio-verify-pkg
 	@echo "studio-release-pkg: notarized installer ready at $(PKG_OUTPUT_PATH)."
+
+# Checksum a notarized .pkg and DRAFT a GitHub release for it. Always a draft:
+# nothing goes public (and no tag is pushed) until you publish it on GitHub.
+studio-gh-release:
+	@command -v $(GH) >/dev/null 2>&1 || { \
+		echo "error: GitHub CLI ($(GH)) is required (brew install gh)."; \
+		exit 1; \
+	}
+	@$(GH) auth status >/dev/null 2>&1 || { \
+		echo "error: GitHub CLI is not authenticated; run '$(GH) auth login' first."; \
+		exit 1; \
+	}
+	@if [ ! -f "$(PKG_OUTPUT_PATH)" ]; then \
+		echo "error: installer package not found at $(PKG_OUTPUT_PATH)"; \
+		echo "hint: run 'make studio-release-pkg' first"; \
+		exit 1; \
+	fi
+	@xcrun stapler validate "$(PKG_OUTPUT_PATH)" >/dev/null 2>&1 || { \
+		echo "error: $(PKG_OUTPUT_PATH) is not notarized/stapled; run 'make studio-release-pkg' first."; \
+		exit 1; \
+	}
+	@cd "$(dir $(PKG_OUTPUT_PATH))" && shasum -a 256 "$(notdir $(PKG_OUTPUT_PATH))" > "$(notdir $(PKG_CHECKSUM_PATH))"
+	@echo "Drafting GitHub release $(RELEASE_TAG) (DRAFT only; nothing published)..."
+	$(GH) release create "$(RELEASE_TAG)" \
+		"$(PKG_OUTPUT_PATH)" "$(PKG_CHECKSUM_PATH)" \
+		--draft \
+		--title "$(RELEASE_TITLE)" \
+		--generate-notes
+	@echo "studio-gh-release: draft $(RELEASE_TAG) created. Review and publish it on GitHub."
+
+# One shot: build + notarize, then draft a GitHub release with the .pkg + checksum.
+studio-publish-release: studio-release-pkg studio-gh-release
+	@echo "studio-publish-release: draft $(RELEASE_TAG) ready for review (nothing published yet)."
