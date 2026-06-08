@@ -62,6 +62,7 @@ struct PersonaKitCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "personakit",
     abstract: "Reusable operating contracts for AI coding work.",
+    version: PersonaKitVersion.current,
     subcommands: [
       InitCommand.self,
       CreateCommand.self,
