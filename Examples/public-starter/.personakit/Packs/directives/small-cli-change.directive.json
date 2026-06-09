@@ -35,5 +35,8 @@
     }
   ],
   "requiresIntentTemplateIds": [],
-  "requiresSkillIds": []
+  "requiresSkillIds": [],
+  "referenceIds": [
+    "cli-change-checklist"
+  ]
 }

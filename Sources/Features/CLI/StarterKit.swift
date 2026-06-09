@@ -249,10 +249,42 @@ enum StarterKitManifest {
             }
           ],
           "requiresIntentTemplateIds": [],
-          "requiresSkillIds": []
+          "requiresSkillIds": [],
+          "referenceIds": [
+            "cli-change-checklist"
+          ]
         }
 
         """.utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/cli-change-checklist.reference.json",
+      contents:
+        """
+        {
+          "id": "cli-change-checklist",
+          "version": "1.0",
+          "name": "CLI Change Checklist",
+          "summary": "Triggered checklist for small CLI changes. Edit the companion .md body, or author your own with `personakit create reference`.",
+          "triggerRules": [
+            {
+              "pathGlobs": [
+                "**/*.swift"
+              ],
+              "referenceTags": [
+                "cli"
+              ]
+            }
+          ]
+        }
+
+        """.utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/references/cli-change-checklist.md",
+      contents:
+        "# CLI Change Checklist\n\nThis reference body is surfaced when its trigger rules match (see `cli-change-checklist.reference.json`). A reference is a `.reference.json` metadata file paired with this `.md` body.\n\n- Confirm the change stays inside the requested CLI task.\n- Keep output ordering deterministic.\n- Add or update tests alongside the change.\n- Run `personakit validate` before handing off.\n\nReplace this checklist with your own guidance, or scaffold new references with `personakit create reference`.\n"
+        .utf8Data
     ),
     StarterFile(
       relativePath: "Packs/essentials/contract-boundaries.md",

@@ -75,7 +75,7 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .references)
 
-    let expected = ""
+    let expected = "cli-change-checklist — CLI Change Checklist"
 
     #expect(output == expected)
   }

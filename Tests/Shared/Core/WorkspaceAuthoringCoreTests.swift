@@ -119,4 +119,39 @@ struct WorkspaceAuthoringCoreTests {
     let skillRisk = try #require(skillObject["risk"] as? [String: Any])
     #expect(skillRisk["level"] as? String == "low")
   }
+
+  @Test
+  func referenceDraftBuilderRejectsEmptyTriggerRules() {
+    let builder = WorkspaceReferenceDraftBuilder()
+    let draft = WorkspaceReferenceDraft(
+      id: "swift-style-guide",
+      name: "Swift Style Guide",
+      summary: "Deeper Swift rationale.",
+      pathGlobs: [],
+      referenceTags: []
+    )
+
+    #expect(throws: (any Error).self) {
+      _ = try builder.buildRawJSON(draft: draft)
+    }
+  }
+
+  @Test
+  func referenceDraftBuilderEmitsTriggerRules() throws {
+    let json = try WorkspaceReferenceDraftBuilder().buildRawJSON(
+      draft: WorkspaceReferenceDraft(
+        id: "swift-style-guide",
+        name: "Swift Style Guide",
+        summary: "Deeper Swift rationale.",
+        pathGlobs: ["**/*.swift"],
+        referenceTags: ["swift"]
+      )
+    )
+
+    let object = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    #expect(object["id"] as? String == "swift-style-guide")
+    let triggerRules = try #require(object["triggerRules"] as? [[String: Any]])
+    #expect(triggerRules.count == 1)
+    #expect(triggerRules.first?["pathGlobs"] as? [String] == ["**/*.swift"])
+  }
 }

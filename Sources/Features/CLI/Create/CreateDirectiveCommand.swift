@@ -42,6 +42,9 @@ struct CreateDirectiveCommand: ParsableCommand {
   @Option(name: .customLong("skill"), help: "Required skill id.")
   var skillIDs: [String] = []
 
+  @Option(name: .customLong("reference"), help: "Attached reference id.")
+  var referenceIDs: [String] = []
+
   func run() throws {
     try CreateCommandHelpers.runWithJSONErrors(jsonOutput: shared.jsonOutput) {
       let rootURL = try CreateCommandHelpers.resolveWritableRoot(rootPath: shared.rootPath)
@@ -125,6 +128,14 @@ struct CreateDirectiveCommand: ParsableCommand {
           values: references.skillIDs
         )
       )
+      let resolvedReferenceIDs = prompter.promptCSVIfNeeded(
+        values: referenceIDs,
+        label: "Attached reference ids (comma-separated)",
+        hint: CreateCommandHelpers.referenceHint(
+          label: "Known references",
+          values: references.referenceIDs
+        )
+      )
 
       try CreateCommandHelpers.requireFields(
         [
@@ -145,18 +156,21 @@ struct CreateDirectiveCommand: ParsableCommand {
         acceptanceCriteria: finalAcceptance,
         verification: finalVerification,
         requiresIntentTemplateIds: resolvedIntentIDs,
-        requiresSkillIds: resolvedSkillIDs
+        requiresSkillIds: resolvedSkillIDs,
+        referenceIds: resolvedReferenceIDs
       )
       let builder = WorkspaceDirectiveDraftBuilder()
       let rawJSON = try builder.buildRawJSON(
         draft: draft,
         knownIntentIDs: references.intentIDs,
-        knownSkillIDs: references.skillIDs
+        knownSkillIDs: references.skillIDs,
+        knownReferenceIDs: references.referenceIDs
       )
       let validation = builder.validate(
         draft: draft,
         knownIntentIDs: references.intentIDs,
-        knownSkillIDs: references.skillIDs
+        knownSkillIDs: references.skillIDs,
+        knownReferenceIDs: references.referenceIDs
       )
       let manager = WorkspaceLibraryEntityManager()
       let destinationURL = try manager.destinationFileURL(

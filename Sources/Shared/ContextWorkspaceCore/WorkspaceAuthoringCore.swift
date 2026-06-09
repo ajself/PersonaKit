@@ -205,6 +205,7 @@ public struct WorkspaceDirectiveDraft: Sendable {
   public var verification: [Directive.VerificationItem]
   public var requiresIntentTemplateIds: [String]
   public var requiresSkillIds: [String]
+  public var referenceIds: [String]
 
   public init(
     id: String,
@@ -214,7 +215,8 @@ public struct WorkspaceDirectiveDraft: Sendable {
     acceptanceCriteria: [String],
     verification: [Directive.VerificationItem],
     requiresIntentTemplateIds: [String],
-    requiresSkillIds: [String]
+    requiresSkillIds: [String],
+    referenceIds: [String] = []
   ) {
     self.id = id
     self.title = title
@@ -224,6 +226,7 @@ public struct WorkspaceDirectiveDraft: Sendable {
     self.verification = verification
     self.requiresIntentTemplateIds = requiresIntentTemplateIds
     self.requiresSkillIds = requiresSkillIds
+    self.referenceIds = referenceIds
   }
 }
 
@@ -404,7 +407,8 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
   public func validate(
     draft: WorkspaceDirectiveDraft,
     knownIntentIDs: Set<String> = [],
-    knownSkillIDs: Set<String> = []
+    knownSkillIDs: Set<String> = [],
+    knownReferenceIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
     var errors: [String] = []
@@ -428,18 +432,25 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
     }
 
+    let unknownReferenceIDs = normalized.referenceIds.filter { !knownReferenceIDs.contains($0) }
+    if !unknownReferenceIDs.isEmpty {
+      warnings.append("Unknown reference ids: \(unknownReferenceIDs.joined(separator: ", ")).")
+    }
+
     return WorkspaceCreateValidation(errors: errors, warnings: warnings)
   }
 
   public func buildRawJSON(
     draft: WorkspaceDirectiveDraft,
     knownIntentIDs: Set<String> = [],
-    knownSkillIDs: Set<String> = []
+    knownSkillIDs: Set<String> = [],
+    knownReferenceIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
       knownIntentIDs: knownIntentIDs,
-      knownSkillIDs: knownSkillIDs
+      knownSkillIDs: knownSkillIDs,
+      knownReferenceIDs: knownReferenceIDs
     )
 
     guard validation.errors.isEmpty else {
@@ -456,7 +467,8 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       acceptanceCriteria: normalized.acceptanceCriteria,
       verification: normalized.verification,
       requiresIntentTemplateIds: normalized.requiresIntentTemplateIds,
-      requiresSkillIds: normalized.requiresSkillIds
+      requiresSkillIds: normalized.requiresSkillIds,
+      referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds
     )
 
     return try WorkspaceAuthoringJSON.encode(directive)
@@ -485,7 +497,8 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
         }
         .filter { !$0.kind.isEmpty && !$0.text.isEmpty },
       requiresIntentTemplateIds: normalizedIDs(draft.requiresIntentTemplateIds),
-      requiresSkillIds: normalizedIDs(draft.requiresSkillIds)
+      requiresSkillIds: normalizedIDs(draft.requiresSkillIds),
+      referenceIds: normalizedIDs(draft.referenceIds)
     )
   }
 }
@@ -672,6 +685,106 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       requiresHumanReview: draft.requiresHumanReview,
       riskNotes: normalizedTextItems(draft.riskNotes),
       notes: normalizedTextItems(draft.notes)
+    )
+  }
+}
+
+public struct WorkspaceReferenceDraft: Equatable, Sendable {
+  public var id: String
+  public var name: String
+  public var summary: String
+  public var pathGlobs: [String]
+  public var referenceTags: [String]
+
+  public init(
+    id: String,
+    name: String,
+    summary: String,
+    pathGlobs: [String],
+    referenceTags: [String]
+  ) {
+    self.id = id
+    self.name = name
+    self.summary = summary
+    self.pathGlobs = pathGlobs
+    self.referenceTags = referenceTags
+  }
+}
+
+public struct WorkspaceReferenceDraftBuilder: Sendable {
+  public init() {}
+
+  public func defaultDraft(template: WorkspaceCreationTemplate) -> WorkspaceReferenceDraft {
+    WorkspaceReferenceDraft(id: "", name: "", summary: "", pathGlobs: [], referenceTags: [])
+  }
+
+  public func suggestedID(from name: String) -> String {
+    WorkspaceEntityIDSuggester.suggestedID(from: name)
+  }
+
+  public func validate(
+    draft: WorkspaceReferenceDraft
+  ) -> WorkspaceCreateValidation {
+    let normalized = normalizedDraft(draft)
+    var errors: [String] = []
+
+    validateCoreFields(
+      id: normalized.id,
+      displayName: "Reference",
+      name: normalized.name,
+      summary: normalized.summary,
+      errors: &errors
+    )
+
+    // The entity validator rejects a reference with no trigger rules, so refuse
+    // to build one here too — keep buildRawJSON from emitting JSON that
+    // `personakit validate` would immediately fail.
+    if normalized.pathGlobs.isEmpty, normalized.referenceTags.isEmpty {
+      errors.append("Reference must declare at least one path glob or reference tag.")
+    }
+
+    return WorkspaceCreateValidation(errors: errors, warnings: [])
+  }
+
+  public func buildRawJSON(
+    draft: WorkspaceReferenceDraft
+  ) throws -> String {
+    let validation = validate(draft: draft)
+
+    guard validation.errors.isEmpty else {
+      throw WorkspaceSnapshotBuildError(message: validation.errors.joined(separator: " "))
+    }
+
+    let normalized = normalizedDraft(draft)
+    let triggerRules: [ReferenceTriggerRule]
+    if normalized.pathGlobs.isEmpty, normalized.referenceTags.isEmpty {
+      triggerRules = []
+    } else {
+      triggerRules = [
+        ReferenceTriggerRule(
+          pathGlobs: normalized.pathGlobs.isEmpty ? nil : normalized.pathGlobs,
+          referenceTags: normalized.referenceTags.isEmpty ? nil : normalized.referenceTags
+        )
+      ]
+    }
+    let reference = Reference(
+      id: normalized.id,
+      version: "1.0",
+      name: normalized.name,
+      summary: normalized.summary,
+      triggerRules: triggerRules
+    )
+
+    return try WorkspaceAuthoringJSON.encode(reference)
+  }
+
+  private func normalizedDraft(_ draft: WorkspaceReferenceDraft) -> WorkspaceReferenceDraft {
+    WorkspaceReferenceDraft(
+      id: WorkspaceEntityIDPolicy.normalized(draft.id),
+      name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
+      summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
+      pathGlobs: normalizedTextItems(draft.pathGlobs),
+      referenceTags: normalizedTextItems(draft.referenceTags)
     )
   }
 }

@@ -264,6 +264,138 @@ struct CLICreateCommandTests {
     #expect(!output.contains("Unknown essential ids"))
   }
 
+  @Test
+  func createReferenceWritesJSONAndMarkdownBody() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    _ = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "reference",
+        "--root",
+        root.path,
+        "--name",
+        "Swift Style Guide",
+        "--summary",
+        "Deeper Swift rationale.",
+        "--path-glob",
+        "**/*.swift",
+        "--reference-tag",
+        "swift",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let jsonURL = root.appendingPathComponent("Packs/references/swift-style-guide.reference.json")
+    let bodyURL = root.appendingPathComponent("Packs/references/swift-style-guide.md")
+    #expect(FileManager.default.fileExists(atPath: bodyURL.path))
+
+    let rawJSON = try String(contentsOf: jsonURL, encoding: .utf8)
+    let data = try #require(rawJSON.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    #expect(object["id"] as? String == "swift-style-guide")
+    let triggerRules = try #require(object["triggerRules"] as? [[String: Any]])
+    #expect(triggerRules.first?["pathGlobs"] as? [String] == ["**/*.swift"])
+    #expect(triggerRules.first?["referenceTags"] as? [String] == ["swift"])
+  }
+
+  @Test
+  func createReferenceWithoutTriggerFailsWithGuidance() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "reference",
+        "--root",
+        root.path,
+        "--name",
+        "Swift Style Guide",
+        "--summary",
+        "Deeper Swift rationale.",
+        "--json",
+      ])
+    }
+
+    #expect(status == 1)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let error = try #require(object["error"] as? String)
+    #expect(error.contains("--path-glob/--reference-tag"))
+  }
+
+  @Test
+  func createReferenceRefusesToClobberExistingBodyWithoutForce() throws {
+    let root = try makeWritableFixtureRoot()
+    let referencesDir = root.appendingPathComponent("Packs/references")
+    try FileManager.default.createDirectory(at: referencesDir, withIntermediateDirectories: true)
+    let bodyURL = referencesDir.appendingPathComponent("swift-style-guide.md")
+    try "hand-authored body".write(to: bodyURL, atomically: true, encoding: .utf8)
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "reference",
+        "--root",
+        root.path,
+        "--name",
+        "Swift Style Guide",
+        "--summary",
+        "Deeper Swift rationale.",
+        "--path-glob",
+        "**/*.swift",
+        "--json",
+      ])
+    }
+
+    #expect(status == 1)
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let error = try #require(object["error"] as? String)
+    #expect(error.contains("Refusing to overwrite existing file"))
+    #expect(try String(contentsOf: bodyURL, encoding: .utf8) == "hand-authored body")
+  }
+
+  @Test
+  func createDirectiveWithReferenceEmitsReferenceIds() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "directive",
+        "--root",
+        root.path,
+        "--title",
+        "Apply Style",
+        "--goal",
+        "Apply the repo style contract.",
+        "--reference",
+        "swift-style-guide",
+        "--dry-run",
+        "--json",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let renderedContent = try #require(object["renderedContent"] as? String)
+    #expect(renderedContent.contains("\"referenceIds\""))
+    #expect(renderedContent.contains("\"swift-style-guide\""))
+  }
+
   private func makeWritableFixtureRoot() throws -> URL {
     let tempDirectory = try makeTempDirectory()
     let root = tempDirectory.appendingPathComponent(".personakit")

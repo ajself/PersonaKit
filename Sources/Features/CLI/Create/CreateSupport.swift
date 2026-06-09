@@ -10,6 +10,7 @@ struct CreateReferenceData {
   let skillIDs: Set<String>
   let intentIDs: Set<String>
   let essentialIDs: Set<String>
+  let referenceIDs: Set<String>
 }
 
 struct CreateResultEnvelope: Encodable {
@@ -242,7 +243,8 @@ enum CreateCommandHelpers {
       kitIDs: Set(registry.kits.map(\.id)),
       skillIDs: Set(registry.skills.map(\.id)),
       intentIDs: Set(registry.intentTemplates.map(\.id)),
-      essentialIDs: essentials
+      essentialIDs: essentials,
+      referenceIDs: Set(registry.references.map(\.id))
     )
   }
 
