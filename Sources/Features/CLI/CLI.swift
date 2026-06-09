@@ -49,8 +49,11 @@ struct PersonaKitCLI {
       } catch let exitCode as ExitCode {
         return exitCode.rawValue
       } catch {
+        // Use ArgumentParser's own formatting so parse errors (e.g. an invalid
+        // subcommand argument) surface their clear message rather than a generic
+        // `localizedDescription`.
         var stderrStream = StandardError()
-        stderrStream.write("Error: \(error.localizedDescription)\n")
+        stderrStream.write("Error: \(PersonaKitCommand.message(for: error))\n")
         return 1
       }
     }
@@ -73,6 +76,7 @@ struct PersonaKitCommand: ParsableCommand {
       ExportCommand.self,
       ResolveReferencesCommand.self,
       ListCLICommand.self,
+      SchemaCLICommand.self,
       GraphCommand.self,
       MCPCommand.self,
     ]

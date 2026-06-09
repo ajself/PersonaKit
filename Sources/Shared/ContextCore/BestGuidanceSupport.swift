@@ -97,6 +97,7 @@ public enum BestGuidanceSupport {
         "Guidance is advisory and does not select or authorize an operating contract.",
         "Resolve a PersonaKit contract before selecting external skills or acting on a task.",
         "New here? Run `personakit init <path>` for a worked example of every entity, then edit, `personakit validate`, and `personakit export` (or `contract`).",
+        "Authoring JSON by hand? Run `personakit schema <entity>` (persona, kit, directive, intent, reference, skill) to see required fields and exact property names.",
       ]
     )
   }

@@ -32,20 +32,36 @@ struct SchemaValidationError: Error, Equatable {
 
 /// Validates PersonaKit pack JSON files against bundled JSON schemas.
 struct SchemaValidator {
-  /// Maps a pack directory and file suffix to its schema filename.
-  private struct SchemaMapping {
+  /// Maps an authored-JSON entity type, pack directory, and file suffix to its schema filename.
+  struct SchemaMapping {
+    let entity: String
     let directory: String
     let suffix: String
     let schemaName: String
   }
 
-  private static let mappings: [SchemaMapping] = [
-    SchemaMapping(directory: "personas", suffix: ".persona.json", schemaName: "persona.schema.json"),
-    SchemaMapping(directory: "kits", suffix: ".kit.json", schemaName: "kit.schema.json"),
-    SchemaMapping(directory: "directives", suffix: ".directive.json", schemaName: "directive.schema.json"),
-    SchemaMapping(directory: "intents", suffix: ".intent.json", schemaName: "intentTemplate.schema.json"),
-    SchemaMapping(directory: "references", suffix: ".reference.json", schemaName: "reference.schema.json"),
-    SchemaMapping(directory: "skills", suffix: ".skill.json", schemaName: "skill.schema.json"),
+  static let mappings: [SchemaMapping] = [
+    SchemaMapping(entity: "persona", directory: "personas", suffix: ".persona.json", schemaName: "persona.schema.json"),
+    SchemaMapping(entity: "kit", directory: "kits", suffix: ".kit.json", schemaName: "kit.schema.json"),
+    SchemaMapping(
+      entity: "directive",
+      directory: "directives",
+      suffix: ".directive.json",
+      schemaName: "directive.schema.json"
+    ),
+    SchemaMapping(
+      entity: "intent",
+      directory: "intents",
+      suffix: ".intent.json",
+      schemaName: "intentTemplate.schema.json"
+    ),
+    SchemaMapping(
+      entity: "reference",
+      directory: "references",
+      suffix: ".reference.json",
+      schemaName: "reference.schema.json"
+    ),
+    SchemaMapping(entity: "skill", directory: "skills", suffix: ".skill.json", schemaName: "skill.schema.json"),
   ]
 
   /// Validates all known schema-mapped entities for each root in load order.
