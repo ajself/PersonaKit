@@ -102,7 +102,14 @@ struct GuidanceCommand: ParsableCommand {
 struct InitCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "init",
-    abstract: "Initialize a PersonaKit root without replacing non-empty destinations unless --force is set."
+    abstract: "Initialize a PersonaKit root without replacing non-empty destinations unless --force is set.",
+    discussion: """
+      Scaffolds a complete, validating worked example of every entity type \
+      (persona, kit, directive, reference, essential, session) that you can \
+      adapt instead of authoring from scratch. After init: edit the files \
+      under Packs/, run `personakit validate`, then `personakit export` (or \
+      `personakit contract`) to produce handoff context.
+      """
   )
 
   @Flag(name: .customLong("force"), help: "Replace an existing non-empty destination.")
