@@ -202,7 +202,22 @@ cli-install: version-check cli-build
 		bundle_name="$$(basename "$$bundle")"; \
 		rm -rf "$(INSTALL_BIN_DIR)/$$bundle_name"; \
 		ditto "$$bundle" "$(INSTALL_BIN_DIR)/$$bundle_name"; \
-	done
+	done; \
+	installed="$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"; \
+	resolved="$$(command -v $(CLI_PRODUCT_NAME) 2>/dev/null || true)"; \
+	if [ -z "$$resolved" ]; then \
+		echo "cli-install: warning: $(CLI_PRODUCT_NAME) is not on PATH; add $(INSTALL_BIN_DIR) to PATH."; \
+	elif [ "$$resolved" != "$$installed" ]; then \
+		echo "cli-install: warning: PATH resolves $(CLI_PRODUCT_NAME) to $$resolved,"; \
+		echo "  not the just-installed $$installed — a copy earlier on PATH is shadowing this install."; \
+	else \
+		ver="$$("$$resolved" --version 2>/dev/null || true)"; \
+		if [ "$$ver" != "$(RELEASE_VERSION)" ]; then \
+			echo "cli-install: warning: $$resolved reports version '$$ver', expected $(RELEASE_VERSION)."; \
+		else \
+			echo "cli-install: OK ($$resolved -> $$ver)"; \
+		fi; \
+	fi
 
 cli-install-zsh-completion:
 	@if [ ! -x "$(CLI_COMPLETION_SOURCE)" ]; then \
