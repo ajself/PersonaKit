@@ -49,6 +49,11 @@ RELEASE_TAG ?= v$(RELEASE_VERSION)
 RELEASE_TITLE ?= PersonaKit $(RELEASE_VERSION)
 PKG_CHECKSUM_PATH ?= $(PKG_OUTPUT_PATH).sha256
 
+# Version drift guard. `version-check` asserts the code/app version surfaces
+# agree with RELEASE_VERSION before the CLI is installed or a release is built.
+CLI_VERSION_FILE ?= Sources/Features/CLI/PersonaKitVersion.swift
+APP_PROJECT_PBXPROJ ?= PersonaKit/PersonaKit.xcodeproj/project.pbxproj
+
 -include $(RELEASE_LOCAL_CONFIG)
 
 VALIDATE_AGENT ?= local
@@ -69,7 +74,7 @@ SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
 	core-validate-repo core-zip public-check \
-	cli-build cli-install cli-install-zsh-completion cli-test \
+	cli-build cli-install cli-install-zsh-completion cli-test version-check \
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
 	studio-verify-app studio-pkg-app studio-pkg \
@@ -96,6 +101,7 @@ help:
 	@printf "  %-28s %s\n" "cli-install" "Install the SwiftPM CLI executable into INSTALL_BIN_DIR."
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
+	@printf "  %-28s %s\n" "version-check" "Assert version surfaces match RELEASE_VERSION (runs before install/release)."
 	@echo ""
 	@echo "Studio app:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with xcodebuild."
@@ -156,7 +162,38 @@ studio-build: studio-doctor
 cli-build: swiftpm-prepare
 	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
 
-cli-install: cli-build
+# Fail fast if the CLI/app version surfaces have drifted from RELEASE_VERSION.
+# Guards against shipping a binary whose --version lies (the stale-install
+# failure mode). Keep PersonaKitVersion.current and MARKETING_VERSION in sync
+# with RELEASE_VERSION (see the version block above).
+version-check:
+	@cli_ver="$$(sed -n 's/.*static let current = "\([^"]*\)".*/\1/p' "$(CLI_VERSION_FILE)" | head -1)"; \
+	if [ -z "$$cli_ver" ]; then \
+		echo "version-check: could not read PersonaKitVersion.current from $(CLI_VERSION_FILE)"; \
+		exit 1; \
+	fi; \
+	if [ "$$cli_ver" != "$(RELEASE_VERSION)" ]; then \
+		echo "version-check: drift detected"; \
+		echo "  PersonaKitVersion.current = $$cli_ver"; \
+		echo "  RELEASE_VERSION           = $(RELEASE_VERSION)"; \
+		echo "  fix: set 'static let current = \"$(RELEASE_VERSION)\"' in $(CLI_VERSION_FILE)"; \
+		exit 1; \
+	fi; \
+	rel_mm="$$(printf '%s' "$(RELEASE_VERSION)" | cut -d. -f1-2)"; \
+	if [ -f "$(APP_PROJECT_PBXPROJ)" ]; then \
+		for mkt in $$(sed -n 's/.*MARKETING_VERSION = \([0-9.]*\);.*/\1/p' "$(APP_PROJECT_PBXPROJ)" | sort -u); do \
+			if [ "$$mkt" != "$(RELEASE_VERSION)" ] && [ "$$mkt" != "$$rel_mm" ]; then \
+				echo "version-check: drift detected"; \
+				echo "  MARKETING_VERSION = $$mkt"; \
+				echo "  RELEASE_VERSION   = $(RELEASE_VERSION)"; \
+				echo "  fix: set MARKETING_VERSION to $$rel_mm (or $(RELEASE_VERSION)) in $(APP_PROJECT_PBXPROJ)"; \
+				exit 1; \
+			fi; \
+		done; \
+	fi; \
+	echo "version-check: OK ($(RELEASE_VERSION))"
+
+cli-install: version-check cli-build
 	@bin_dir="$$($(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --show-bin-path)"; \
 	install -d "$(INSTALL_BIN_DIR)"; \
 	install -m 755 "$$bin_dir/$(CLI_PRODUCT_NAME)" "$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"; \
@@ -257,7 +294,7 @@ core-zip:
 # Release targets build the Release configuration regardless of the default.
 studio-archive-release studio-export-release studio-verify-app studio-pkg-app studio-pkg studio-notarize-pkg studio-staple-pkg studio-verify-pkg studio-release-pkg: CONFIGURATION = Release
 
-studio-pkg-preflight:
+studio-pkg-preflight: version-check
 	@if ! command -v xcodebuild >/dev/null 2>&1; then \
 		echo "error: xcodebuild is required. Install Xcode and Command Line Tools."; \
 		exit 1; \
