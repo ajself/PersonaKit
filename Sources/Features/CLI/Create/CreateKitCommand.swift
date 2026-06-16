@@ -24,6 +24,12 @@ struct CreateKitCommand: ParsableCommand {
   @Option(name: .customLong("essential"), help: "Essential id.")
   var essentialIDs: [String] = []
 
+  @Option(name: .customLong("reference"), help: "Attached reference id.")
+  var referenceIDs: [String] = []
+
+  @Option(name: .customLong("intent"), help: "Included intent template id.")
+  var intentIDs: [String] = []
+
   @Option(name: .customLong("skill"), help: "Skill id.")
   var skillIDs: [String] = []
 
@@ -59,6 +65,22 @@ struct CreateKitCommand: ParsableCommand {
           values: references.essentialIDs
         )
       )
+      let resolvedReferenceIDs = prompter.promptCSVIfNeeded(
+        values: referenceIDs,
+        label: "Reference ids (comma-separated)",
+        hint: CreateCommandHelpers.referenceHint(
+          label: "Known references",
+          values: references.referenceIDs
+        )
+      )
+      let resolvedIntentIDs = prompter.promptCSVIfNeeded(
+        values: intentIDs,
+        label: "Intent template ids (comma-separated)",
+        hint: CreateCommandHelpers.referenceHint(
+          label: "Known intents",
+          values: references.intentIDs
+        )
+      )
       let resolvedSkillIDs = prompter.promptCSVIfNeeded(
         values: skillIDs,
         label: "Skill ids (comma-separated)",
@@ -84,17 +106,23 @@ struct CreateKitCommand: ParsableCommand {
         name: resolvedName,
         summary: resolvedSummary,
         essentialIds: resolvedEssentialIDs,
+        referenceIds: resolvedReferenceIDs,
+        intentTemplateIds: resolvedIntentIDs,
         skillIds: resolvedSkillIDs
       )
       let builder = WorkspaceKitDraftBuilder()
       let rawJSON = try builder.buildRawJSON(
         draft: draft,
         knownEssentialIDs: references.essentialIDs,
+        knownReferenceIDs: references.referenceIDs,
+        knownIntentIDs: references.intentIDs,
         knownSkillIDs: references.skillIDs
       )
       let validation = builder.validate(
         draft: draft,
         knownEssentialIDs: references.essentialIDs,
+        knownReferenceIDs: references.referenceIDs,
+        knownIntentIDs: references.intentIDs,
         knownSkillIDs: references.skillIDs
       )
       let manager = WorkspaceLibraryEntityManager()

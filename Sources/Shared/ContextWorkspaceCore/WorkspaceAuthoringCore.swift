@@ -179,6 +179,8 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
   public var name: String
   public var summary: String
   public var essentialIds: [String]
+  public var referenceIds: [String]
+  public var intentTemplateIds: [String]
   public var skillIds: [String]
 
   public init(
@@ -186,12 +188,16 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
     name: String,
     summary: String,
     essentialIds: [String],
+    referenceIds: [String] = [],
+    intentTemplateIds: [String] = [],
     skillIds: [String]
   ) {
     self.id = id
     self.name = name
     self.summary = summary
     self.essentialIds = essentialIds
+    self.referenceIds = referenceIds
+    self.intentTemplateIds = intentTemplateIds
     self.skillIds = skillIds
   }
 }
@@ -304,6 +310,8 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: "",
       summary: "",
       essentialIds: [],
+      referenceIds: [],
+      intentTemplateIds: [],
       skillIds: []
     )
   }
@@ -315,6 +323,8 @@ public struct WorkspaceKitDraftBuilder: Sendable {
   public func validate(
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
+    knownReferenceIDs: Set<String> = [],
+    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
@@ -334,6 +344,16 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       warnings.append("Unknown essential ids: \(unknownEssentialIDs.joined(separator: ", ")).")
     }
 
+    let unknownReferenceIDs = normalized.referenceIds.filter { !knownReferenceIDs.contains($0) }
+    if !unknownReferenceIDs.isEmpty {
+      warnings.append("Unknown reference ids: \(unknownReferenceIDs.joined(separator: ", ")).")
+    }
+
+    let unknownIntentIDs = normalized.intentTemplateIds.filter { !knownIntentIDs.contains($0) }
+    if !unknownIntentIDs.isEmpty {
+      warnings.append("Unknown intent ids: \(unknownIntentIDs.joined(separator: ", ")).")
+    }
+
     let unknownSkillIDs = normalized.skillIds.filter { !knownSkillIDs.contains($0) }
     if !unknownSkillIDs.isEmpty {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
@@ -345,11 +365,15 @@ public struct WorkspaceKitDraftBuilder: Sendable {
   public func buildRawJSON(
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
+    knownReferenceIDs: Set<String> = [],
+    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
       knownEssentialIDs: knownEssentialIDs,
+      knownReferenceIDs: knownReferenceIDs,
+      knownIntentIDs: knownIntentIDs,
       knownSkillIDs: knownSkillIDs
     )
 
@@ -364,7 +388,8 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: normalized.name,
       summary: normalized.summary,
       essentialIds: normalized.essentialIds,
-      intentTemplateIds: nil,
+      referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds,
+      intentTemplateIds: normalized.intentTemplateIds.isEmpty ? nil : normalized.intentTemplateIds,
       skillIds: normalized.skillIds.isEmpty ? nil : normalized.skillIds
     )
 
@@ -377,6 +402,8 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
       summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
       essentialIds: normalizedIDs(draft.essentialIds),
+      referenceIds: normalizedIDs(draft.referenceIds),
+      intentTemplateIds: normalizedIDs(draft.intentTemplateIds),
       skillIds: normalizedIDs(draft.skillIds)
     )
   }

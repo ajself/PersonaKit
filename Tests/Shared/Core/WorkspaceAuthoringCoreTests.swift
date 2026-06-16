@@ -121,6 +121,48 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
+  func kitDraftBuilderEmitsReferenceAndIntentIds() throws {
+    let kitJSON = try WorkspaceKitDraftBuilder().buildRawJSON(
+      draft: WorkspaceKitDraft(
+        id: "review-guardrails",
+        name: "Review Guardrails",
+        summary: "Shared review context.",
+        essentialIds: ["review-boundaries"],
+        referenceIds: ["review-checklist"],
+        intentTemplateIds: ["behavior-preserving-review"],
+        skillIds: ["read-only-review"]
+      )
+    )
+
+    let kitObject = try #require(
+      JSONSerialization.jsonObject(with: Data(kitJSON.utf8)) as? [String: Any]
+    )
+    #expect(kitObject["referenceIds"] as? [String] == ["review-checklist"])
+    #expect(kitObject["intentTemplateIds"] as? [String] == ["behavior-preserving-review"])
+  }
+
+  @Test
+  func kitDraftBuilderWarnsOnUnknownReferenceAndIntentIds() {
+    let validation = WorkspaceKitDraftBuilder().validate(
+      draft: WorkspaceKitDraft(
+        id: "review-guardrails",
+        name: "Review Guardrails",
+        summary: "Shared review context.",
+        essentialIds: [],
+        referenceIds: ["missing-reference"],
+        intentTemplateIds: ["missing-intent"],
+        skillIds: []
+      ),
+      knownReferenceIDs: [],
+      knownIntentIDs: []
+    )
+
+    #expect(validation.errors.isEmpty)
+    #expect(validation.warnings.contains("Unknown reference ids: missing-reference."))
+    #expect(validation.warnings.contains("Unknown intent ids: missing-intent."))
+  }
+
+  @Test
   func referenceDraftBuilderRejectsEmptyTriggerRules() {
     let builder = WorkspaceReferenceDraftBuilder()
     let draft = WorkspaceReferenceDraft(
