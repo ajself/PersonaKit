@@ -6,6 +6,9 @@
   "providedBy": [
     "autonomous-agent-loop"
   ],
+  "capabilities": [
+    "autonomous-loop"
+  ],
   "risk": {
     "level": "high",
     "requiresHumanReview": true,

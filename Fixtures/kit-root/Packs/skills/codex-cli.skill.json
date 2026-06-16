@@ -6,6 +6,10 @@
   "providedBy": [
     "codex-cli"
   ],
+  "capabilities": [
+    "edit-files",
+    "run-commands"
+  ],
   "risk": {
     "level": "medium",
     "requiresHumanReview": false,
