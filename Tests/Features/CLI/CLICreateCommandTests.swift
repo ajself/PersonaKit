@@ -396,6 +396,51 @@ struct CLICreateCommandTests {
     #expect(renderedContent.contains("\"swift-style-guide\""))
   }
 
+  @Test
+  func createDirectiveInlineReviewMarkerKeepsStepOrder() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "directive",
+        "--root",
+        root.path,
+        "--title",
+        "Ordered",
+        "--goal",
+        "Check ordering.",
+        "--step",
+        "First normal step.",
+        "--step",
+        "review: Stop and review before the write.",
+        "--step",
+        "Final normal step.",
+        "--dry-run",
+        "--json",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let renderedContent = try #require(object["renderedContent"] as? String)
+    let rendered = try #require(
+      JSONSerialization.jsonObject(with: Data(renderedContent.utf8)) as? [String: Any]
+    )
+    let steps = try #require(rendered["steps"] as? [[String: Any]])
+
+    #expect(steps.count == 3)
+    #expect(steps[0]["text"] as? String == "First normal step.")
+    #expect(steps[0]["requiresReview"] == nil)
+    #expect(steps[1]["text"] as? String == "Stop and review before the write.")
+    #expect(steps[1]["requiresReview"] as? Bool == true)
+    #expect(steps[2]["text"] as? String == "Final normal step.")
+  }
+
   private func makeWritableFixtureRoot() throws -> URL {
     let tempDirectory = try makeTempDirectory()
     let root = tempDirectory.appendingPathComponent(".personakit")

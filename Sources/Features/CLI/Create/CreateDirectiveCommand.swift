@@ -21,10 +21,13 @@ struct CreateDirectiveCommand: ParsableCommand {
   @Option(name: .customLong("goal"), help: "Directive goal.")
   var goal: String?
 
-  @Option(name: .customLong("step"), help: "Normal step text.")
+  @Option(
+    name: .customLong("step"),
+    help: "Step text. Prefix with \"review:\" to gate the step for review in place."
+  )
   var steps: [String] = []
 
-  @Option(name: .customLong("review-step"), help: "Review-gated step text.")
+  @Option(name: .customLong("review-step"), help: "Review-gated step, appended after --step entries.")
   var reviewSteps: [String] = []
 
   @Option(name: .customLong("acceptance"), help: "Acceptance criteria item.")
@@ -69,15 +72,15 @@ struct CreateDirectiveCommand: ParsableCommand {
         resolvedGoal = prompter.promptRequired("Directive goal")
       }
 
-      var resolvedSteps = CreateCommandHelpers.trimmedItems(steps).map {
-        Directive.Step(text: $0, requiresReview: nil)
+      var resolvedSteps = CreateCommandHelpers.trimmedItems(steps).compactMap {
+        CreateCommandHelpers.parseOrderedStep($0)
       }
       var resolvedReviewSteps = CreateCommandHelpers.trimmedItems(reviewSteps).map {
         Directive.Step(text: $0, requiresReview: true)
       }
       if prompter.isInteractive, resolvedSteps.isEmpty {
-        resolvedSteps = prompter.promptRepeatedText("Step")
-          .map { Directive.Step(text: $0, requiresReview: nil) }
+        resolvedSteps = CreateCommandHelpers.trimmedItems(prompter.promptRepeatedText("Step"))
+          .compactMap { CreateCommandHelpers.parseOrderedStep($0) }
       }
       if prompter.isInteractive, resolvedReviewSteps.isEmpty {
         resolvedReviewSteps = prompter.promptRepeatedText("Review step")

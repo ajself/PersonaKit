@@ -469,6 +469,26 @@ enum CreateCommandHelpers {
       .filter { !$0.isEmpty }
   }
 
+  /// Inline marker that gates a `--step` for review while preserving its position.
+  static let reviewStepMarker = "review:"
+
+  /// Parses a `--step` value into an ordered directive step, honoring a leading
+  /// `review:` marker that gates the step for review without moving it to the end.
+  ///
+  /// - Parameter raw: Raw step text, already trimmed of surrounding whitespace.
+  /// - Returns: A step with `requiresReview` set when the marker is present, or
+  ///   `nil` when the remaining text is empty.
+  static func parseOrderedStep(_ raw: String) -> Directive.Step? {
+    if raw.lowercased().hasPrefix(reviewStepMarker) {
+      let text = String(raw.dropFirst(reviewStepMarker.count))
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+      return text.isEmpty ? nil : Directive.Step(text: text, requiresReview: true)
+    }
+
+    return Directive.Step(text: raw, requiresReview: nil)
+  }
+
   static func normalizedID(_ value: String?) -> String {
     let trimmed = trimmed(value)
 
