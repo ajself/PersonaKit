@@ -22,6 +22,19 @@
         "type": "string"
       }
     },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read-only-inspection",
+          "edit-files",
+          "run-commands",
+          "network-access",
+          "autonomous-loop"
+        ]
+      }
+    },
     "risk": {
       "type": "object",
       "properties": {

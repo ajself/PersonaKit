@@ -335,6 +335,7 @@ public struct Skill: Codable, Sendable {
   public let name: String
   public let description: String
   public let providedBy: [String]
+  public let capabilities: [String]?
   public let risk: Risk
   public let notes: [String]
 
@@ -344,6 +345,7 @@ public struct Skill: Codable, Sendable {
     name: String,
     description: String,
     providedBy: [String],
+    capabilities: [String]? = nil,
     risk: Risk,
     notes: [String]
   ) {
@@ -352,6 +354,7 @@ public struct Skill: Codable, Sendable {
     self.name = name
     self.description = description
     self.providedBy = providedBy
+    self.capabilities = capabilities
     self.risk = risk
     self.notes = notes
   }

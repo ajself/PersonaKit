@@ -130,6 +130,7 @@ extension MCPToolService {
             name: skill.name,
             description: skill.description,
             providedBy: MCPInternalSupport.uniqueSorted(skill.providedBy),
+            capabilities: MCPInternalSupport.uniqueSorted(skill.capabilities ?? []),
             riskLevel: skill.risk.level,
             requiresHumanReview: skill.risk.requiresHumanReview,
             notesCount: skill.notes.count

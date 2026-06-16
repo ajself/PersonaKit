@@ -163,6 +163,47 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
+  func skillDraftBuilderEmitsSortedDedupedCapabilities() throws {
+    let skillJSON = try WorkspaceSkillDraftBuilder().buildRawJSON(
+      draft: WorkspaceSkillDraft(
+        id: "reviewer",
+        name: "Reviewer",
+        description: "Reads and reports.",
+        providedBy: ["Claude Code"],
+        capabilities: ["run-commands", "read-only-inspection", "read-only-inspection"],
+        riskLevel: "low",
+        requiresHumanReview: false,
+        riskNotes: [],
+        notes: []
+      )
+    )
+
+    let object = try #require(
+      JSONSerialization.jsonObject(with: Data(skillJSON.utf8)) as? [String: Any]
+    )
+    #expect(object["capabilities"] as? [String] == ["read-only-inspection", "run-commands"])
+  }
+
+  @Test
+  func skillDraftBuilderRejectsUnknownCapability() {
+    let validation = WorkspaceSkillDraftBuilder().validate(
+      draft: WorkspaceSkillDraft(
+        id: "reviewer",
+        name: "Reviewer",
+        description: "Reads and reports.",
+        providedBy: [],
+        capabilities: ["file-editing"],
+        riskLevel: "low",
+        requiresHumanReview: false,
+        riskNotes: [],
+        notes: []
+      )
+    )
+
+    #expect(validation.errors.contains { $0.contains("Unknown capabilities: file-editing") })
+  }
+
+  @Test
   func referenceDraftBuilderRejectsEmptyTriggerRules() {
     let builder = WorkspaceReferenceDraftBuilder()
     let draft = WorkspaceReferenceDraft(

@@ -100,6 +100,7 @@ enum MCPToolPayloads {
     let name: String
     let description: String
     let providedBy: [String]
+    let capabilities: [String]
     let riskLevel: String
     let requiresHumanReview: Bool
     let notesCount: Int

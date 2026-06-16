@@ -103,7 +103,7 @@ When you author or read packs, these are the building blocks:
 | **Intent** | A reusable work pattern / decision rail, included by kits or required by directives | `Packs/intents/` |
 | **Essential** | Required Markdown grounding (style guides, boundaries) | `Packs/essentials/` |
 | **Reference** | Trigger-gated Markdown surfaced for matching paths/tags | `Packs/references/` |
-| **Skill** | Capability metadata used for authorization (not a command PersonaKit runs) | `Packs/skills/` |
+| **Skill** | Capability metadata used for authorization (not a command PersonaKit runs); `providedBy` names the concrete host tool, `capabilities` describes what it does in host-neutral terms | `Packs/skills/` |
 | **Session** | The named entry point tying persona + directive + overrides together | `Sessions/` |
 
 Rough rule of thumb: reach for a **directive step** when something is part of the
@@ -159,6 +159,13 @@ that says "Agent guidance (for Codex)" or names a specific CLI tool does not tra
 to a different host and will mislead an agent running elsewhere. Describe
 *capabilities and constraints*, not specific tools, in anything meant to be reused
 across hosts.
+
+For skills specifically, put the concrete tool in `providedBy` (e.g.
+`["Claude Code"]`) and describe what the skill does with the host-neutral
+`capabilities` vocabulary: `read-only-inspection`, `edit-files`, `run-commands`,
+`network-access`, `autonomous-loop`. The vocabulary is closed and schema-enforced,
+so a portable capability declaration travels between hosts without drift. Author it
+with `personakit create skill --capability <value>`.
 
 ## Related Docs
 

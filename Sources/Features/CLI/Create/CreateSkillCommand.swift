@@ -21,8 +21,14 @@ struct CreateSkillCommand: ParsableCommand {
   @Option(name: .customLong("description"), help: "Skill description.")
   var skillDescription: String?
 
-  @Option(name: .customLong("provided-by"), help: "Provider description.")
+  @Option(name: .customLong("provided-by"), help: "Provider description (the concrete host tool).")
   var providedBy: [String] = []
+
+  @Option(
+    name: .customLong("capability"),
+    help: "Host-neutral capability: \(SkillCapability.vocabulary.joined(separator: ", "))."
+  )
+  var capabilities: [String] = []
 
   @Option(name: .customLong("risk-level"), help: "Risk level: low, medium, or high.")
   var riskLevel: String?
@@ -64,6 +70,14 @@ struct CreateSkillCommand: ParsableCommand {
         label: "Provided by (comma-separated)",
         hint: nil
       )
+      let resolvedCapabilities = prompter.promptCSVIfNeeded(
+        values: capabilities,
+        label: "Capabilities (comma-separated)",
+        hint: CreateCommandHelpers.referenceHint(
+          label: "Allowed capabilities",
+          values: Set(SkillCapability.vocabulary)
+        )
+      )
       var resolvedRiskLevel = CreateCommandHelpers.trimmed(riskLevel)
       if resolvedRiskLevel.isEmpty {
         resolvedRiskLevel = "medium"
@@ -104,6 +118,7 @@ struct CreateSkillCommand: ParsableCommand {
         name: resolvedName,
         description: resolvedDescription,
         providedBy: resolvedProvidedBy,
+        capabilities: resolvedCapabilities,
         riskLevel: resolvedRiskLevel,
         requiresHumanReview: resolvedRequiresReview,
         riskNotes: resolvedRiskNotes,

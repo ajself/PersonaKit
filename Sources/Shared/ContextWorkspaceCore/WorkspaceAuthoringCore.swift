@@ -275,6 +275,7 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
   public var name: String
   public var description: String
   public var providedBy: [String]
+  public var capabilities: [String]
   public var riskLevel: String
   public var requiresHumanReview: Bool
   public var riskNotes: [String]
@@ -285,6 +286,7 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     name: String,
     description: String,
     providedBy: [String],
+    capabilities: [String] = [],
     riskLevel: String,
     requiresHumanReview: Bool,
     riskNotes: [String],
@@ -294,6 +296,7 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     self.name = name
     self.description = description
     self.providedBy = providedBy
+    self.capabilities = capabilities
     self.riskLevel = riskLevel
     self.requiresHumanReview = requiresHumanReview
     self.riskNotes = riskNotes
@@ -647,6 +650,7 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       name: "",
       description: "",
       providedBy: [],
+      capabilities: [],
       riskLevel: "medium",
       requiresHumanReview: false,
       riskNotes: [],
@@ -672,6 +676,14 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       errors: &errors
     )
 
+    let unknownCapabilities = normalized.capabilities.filter { !SkillCapability.isKnown($0) }
+    if !unknownCapabilities.isEmpty {
+      errors.append(
+        "Unknown capabilities: \(unknownCapabilities.joined(separator: ", ")). "
+          + "Allowed: \(SkillCapability.vocabulary.joined(separator: ", "))."
+      )
+    }
+
     return WorkspaceCreateValidation(errors: errors, warnings: [])
   }
 
@@ -691,6 +703,7 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       name: normalized.name,
       description: normalized.description,
       providedBy: normalized.providedBy,
+      capabilities: normalized.capabilities.isEmpty ? nil : normalized.capabilities,
       risk: Skill.Risk(
         level: normalized.riskLevel,
         requiresHumanReview: normalized.requiresHumanReview,
@@ -708,6 +721,7 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
       description: draft.description.trimmingCharacters(in: .whitespacesAndNewlines),
       providedBy: normalizedTextItems(draft.providedBy),
+      capabilities: Array(Set(normalizedTextItems(draft.capabilities))).sorted(),
       riskLevel: draft.riskLevel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
       requiresHumanReview: draft.requiresHumanReview,
       riskNotes: normalizedTextItems(draft.riskNotes),
