@@ -79,6 +79,14 @@ struct ListCommand {
     try SessionFileLoader.list(scopes: scopes, fileManager: fileManager).map(\.id)
   }
 
+  /// Discovers markdown essential IDs from the resolved scope load order.
+  static func essentialIDs(
+    scopes: ScopeSet,
+    fileManager: FileManager = .default
+  ) throws -> [String] {
+    try listEssentials(scopes: scopes, fileManager: fileManager)
+  }
+
   /// Formats an identifier and optional display name for human-readable output.
   private static func formatLine(id: String, name: String?) -> String {
     let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

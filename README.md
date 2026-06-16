@@ -192,6 +192,8 @@ personakit guidance
 personakit recommend --goal "<task>"
 personakit list personas|kits|directives|intents|skills|essentials|sessions
 personakit graph --session <id>
+personakit refs <id>
+personakit orphans
 personakit resolve-references --session <id>
 ```
 

@@ -78,6 +78,8 @@ struct PersonaKitCommand: ParsableCommand {
       ListCLICommand.self,
       SchemaCLICommand.self,
       GraphCommand.self,
+      RefsCommand.self,
+      OrphansCommand.self,
       MCPCommand.self,
     ]
   )

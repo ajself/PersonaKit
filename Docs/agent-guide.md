@@ -114,6 +114,11 @@ Author with `personakit create <entity>` (`persona`, `kit`, `directive`, `intent
 `reference`, `skill`, `session`, `essential`). Use `--dry-run` to preview, and
 `personakit schema <entity>` to see required fields before hand-editing JSON.
 
+When cleaning up a pack, trace relationships instead of grepping by hand:
+`personakit refs <id>` shows what an entity references and what references it
+(both directions), and `personakit orphans` lists entities nothing references
+(sessions are entry points and excluded).
+
 ## Two Facts That Are Easy To Get Wrong
 
 - **`kitOverrides` on a session *merges*, it does not replace.** Despite the name,
