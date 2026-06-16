@@ -24,6 +24,10 @@ For a guided overview, examples, and conceptual documentation, use the
 The site includes a host-skill example for resolving PersonaKit sessions from
 autocomplete-friendly agent surfaces.
 
+If you are an AI coding agent encountering PersonaKit for the first time, read
+[Docs/agent-guide.md](./Docs/agent-guide.md): how to orient (`personakit guidance`),
+which surface to use, and what PersonaKit deliberately leaves to your host.
+
 ## What PersonaKit Does
 
 Use PersonaKit when the same AI coding setup keeps appearing in prompts:

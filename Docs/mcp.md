@@ -188,3 +188,4 @@ swift run personakit mcp --help
 ## Related Docs
 
 - [Repository Overview](../README.md)
+- [PersonaKit For Agents](./agent-guide.md)
