@@ -80,6 +80,18 @@ struct ReferenceGraphTests {
   }
 
   @Test
+  func directlyInvocableTypesAreSessionsPersonasAndDirectives() {
+    #expect(ReferenceEntityType.session.isDirectlyInvocable)
+    #expect(ReferenceEntityType.persona.isDirectlyInvocable)
+    #expect(ReferenceEntityType.directive.isDirectlyInvocable)
+    #expect(!ReferenceEntityType.kit.isDirectlyInvocable)
+    #expect(!ReferenceEntityType.intent.isDirectlyInvocable)
+    #expect(!ReferenceEntityType.reference.isDirectlyInvocable)
+    #expect(!ReferenceEntityType.skill.isDirectlyInvocable)
+    #expect(!ReferenceEntityType.essential.isDirectlyInvocable)
+  }
+
+  @Test
   func nodesWithIdMatchAcrossTypes() {
     let graph = makeGraph()
 

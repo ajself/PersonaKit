@@ -116,8 +116,12 @@ Author with `personakit create <entity>` (`persona`, `kit`, `directive`, `intent
 
 When cleaning up a pack, trace relationships instead of grepping by hand:
 `personakit refs <id>` shows what an entity references and what references it
-(both directions), and `personakit orphans` lists entities nothing references
-(sessions are entry points and excluded).
+(both directions), and `personakit orphans` lists entities nothing references.
+Sessions are entry points and excluded. Personas and directives are listed but
+flagged, because they remain invocable directly (`--persona` / `--directive`) —
+an unreferenced one is not necessarily dead, so review before removing. Skills,
+essentials, references, intents, and kits only matter when referenced, so an
+unreferenced one there is a safe removal candidate.
 
 ## Two Facts That Are Easy To Get Wrong
 

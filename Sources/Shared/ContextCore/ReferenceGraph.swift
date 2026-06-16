@@ -27,6 +27,21 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     case .essential: return 7
     }
   }
+
+  /// Whether this entity can be invoked directly from the CLI without being
+  /// referenced by another entity (`--session`, `--persona`, `--directive`).
+  ///
+  /// Such entities are legitimate entry points, so an unreferenced one is not
+  /// necessarily dead. Sessions are excluded from orphan reporting entirely;
+  /// personas and directives are reported but flagged as still-invocable.
+  public var isDirectlyInvocable: Bool {
+    switch self {
+    case .session, .persona, .directive:
+      return true
+    case .kit, .intent, .reference, .skill, .essential:
+      return false
+    }
+  }
 }
 
 /// A single typed entity in the reference graph.
@@ -156,8 +171,4 @@ public struct ReferenceGraph: Sendable {
       .filter { $0.type != .session && !referenced.contains($0) }
       .sorted()
   }
-}
-
-private func < (lhs: (ReferenceNode, String), rhs: (ReferenceNode, String)) -> Bool {
-  lhs.0 == rhs.0 ? lhs.1 < rhs.1 : lhs.0 < rhs.0
 }
