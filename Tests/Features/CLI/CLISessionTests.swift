@@ -70,6 +70,42 @@ struct CLISessionTests {
   }
 
   @Test
+  func exportStatsWriteToStderrAndLeaveStdoutClean() throws {
+    let root = fixtureKitRootURL()
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    var status: Int32 = 0
+    var stdoutOutput = ""
+    let stderrOutput = captureStderr {
+      stdoutOutput = captureStdout {
+        status = PersonaKitCLI().run(arguments: [
+          "personakit",
+          "export",
+          "--root",
+          root.path,
+          "--session",
+          "senior-swiftui-engineer_apply-style",
+          "--stats",
+        ])
+      }
+    }
+
+    #expect(status == 0)
+    #expect(stdoutOutput == expected + "\n")
+    #expect(stderrOutput.contains("Export stats:"))
+    #expect(stderrOutput.contains("sections."))
+  }
+
+  @Test
+  func exportStatsSummaryCountsLinesBytesAndSections() {
+    let summary = ExportCommand.statsSummary(for: "# Persona\nrole line\n# Directive\ngoal\n")
+
+    #expect(summary == "Export stats: 5 lines, 37 bytes, 2 sections.")
+  }
+
+  @Test
   func graphViaSessionMatchesGoldenFile() throws {
     let root = fixtureKitRootURL()
     let fixtureURL = fixturesRootURL()

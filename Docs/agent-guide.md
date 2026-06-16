@@ -81,7 +81,9 @@ is read-only by design.
    `personakit recommend --goal "<task>"`.
 3. Resolve the contract: `personakit contract --session <id>`.
 4. Export handoff context when you need it as Markdown:
-   `personakit export --session <id>` (add `--copy` or `--output <path>`).
+   `personakit export --session <id>` (add `--copy` or `--output <path>`). Add
+   `--stats` to print a size summary (lines / bytes / sections) to stderr when you
+   need to budget the payload — it leaves the exported Markdown on stdout untouched.
 5. Inspect provenance if a constraint surprises you:
    `personakit graph --session <id>`.
 

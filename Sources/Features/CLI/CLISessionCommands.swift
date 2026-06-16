@@ -106,6 +106,9 @@ struct ExportCommand: ParsableCommand {
   @Option(name: .customLong("output"), help: "Write output to a file path.")
   var outputPath: String?
 
+  @Flag(name: .customLong("stats"), help: "Print a size summary of the resolved export to stderr.")
+  var showStats = false
+
   mutating func validate() throws {
     try session.validate(mode: .export)
   }
@@ -142,6 +145,11 @@ struct ExportCommand: ParsableCommand {
       } else {
         print(output)
       }
+
+      if showStats {
+        var stderrStream = StandardError()
+        stderrStream.write(Self.statsSummary(for: output) + "\n")
+      }
     } catch let error as ExportError {
       var stderrStream = StandardError()
       switch error {
@@ -159,6 +167,18 @@ struct ExportCommand: ParsableCommand {
       }
       throw ExitCode.failure
     }
+  }
+
+  /// Builds a deterministic one-line size summary for a resolved export payload.
+  static func statsSummary(for output: String) -> String {
+    let lineCount = output.isEmpty ? 0 : output.split(separator: "\n", omittingEmptySubsequences: false).count
+    let byteCount = output.utf8.count
+    let sectionCount = output
+      .split(separator: "\n", omittingEmptySubsequences: false)
+      .filter { $0.hasPrefix("# ") }
+      .count
+
+    return "Export stats: \(lineCount) lines, \(byteCount) bytes, \(sectionCount) sections."
   }
 }
 
