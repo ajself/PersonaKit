@@ -51,6 +51,19 @@
       "items": {
         "type": "string"
       }
+    },
+    "forbiddenCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read-only-inspection",
+          "edit-files",
+          "run-commands",
+          "network-access",
+          "autonomous-loop"
+        ]
+      }
     }
   },
   "required": [

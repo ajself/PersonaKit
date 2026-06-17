@@ -155,6 +155,8 @@ struct SessionsMapTabView: View {
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing skill \"\(missingId)\"."
     case .conflictingPersonaSkillId(let sourceId, _, let missingId):
       return "persona \(sourceId) lists skill \"\(missingId)\" in both allowed and forbidden sets."
+    case .conflictingPersonaSkillCapability(let sourceId, _, let skillId, let capability):
+      return "persona \(sourceId) authorizes skill \"\(skillId)\" with forbidden capability \"\(capability)\"."
     case .unauthorizedSkillId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
     case .invalidSession(let sourceId, _, let message):
@@ -179,6 +181,8 @@ struct SessionsMapTabView: View {
     case .missingSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"
     case .conflictingPersonaSkillId(let sourceId, _, _):
+      return "persona:\(sourceId)"
+    case .conflictingPersonaSkillCapability(let sourceId, _, _, _):
       return "persona:\(sourceId)"
     case .unauthorizedSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"

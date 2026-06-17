@@ -291,7 +291,8 @@ public enum SessionContractResolver {
       persona: components.persona,
       requiredSkillReferences: components.requiredSkillReferences,
       declaredSkillIds: Set(registry.skillsById.keys),
-      requestedSkillIds: requestedSkillIds
+      requestedSkillIds: requestedSkillIds,
+      skillCapabilitiesById: registry.skillsById.mapValues { Set($0.capabilities ?? []) }
     )
 
     let injectedContractIds = components.essentials

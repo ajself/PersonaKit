@@ -5,12 +5,26 @@ enum SessionContractSkillAuthorizationEvaluator {
     persona: Persona,
     requiredSkillReferences: [SessionContractRequiredSkillReference],
     declaredSkillIds: Set<String>,
-    requestedSkillIds: [String]
+    requestedSkillIds: [String],
+    skillCapabilitiesById: [String: Set<String>] = [:]
   ) -> (contract: ResolvedSkillAuthorization, errors: [ResolverError]) {
     let allowedSkillIds = sortedUniqueValues(persona.allowedSkillIds)
     let forbiddenSkillIds = sortedUniqueValues(persona.forbiddenSkillIds)
     let conflictingPersonaSkillIds = allowedSkillIds.filter { forbiddenSkillIds.contains($0) }
-    let authorizedSkillIds = allowedSkillIds.filter { !forbiddenSkillIds.contains($0) }
+    let idAuthorizedSkillIds = allowedSkillIds.filter { !forbiddenSkillIds.contains($0) }
+
+    // Capability-level forbids: an id-authorized skill whose declared capability the
+    // persona forbids via forbiddenCapabilities. Surfaces the read-only-stance contradiction.
+    let forbiddenCapabilities = Set(persona.forbiddenCapabilities ?? [])
+    let capabilityConflicts: [(skillId: String, capability: String)] =
+      forbiddenCapabilities.isEmpty
+      ? []
+      : idAuthorizedSkillIds.flatMap { skillId in
+        (skillCapabilitiesById[skillId] ?? []).intersection(forbiddenCapabilities).sorted()
+          .map { (skillId, $0) }
+      }
+    let capabilityForbiddenSkillIds = sortedUniqueValues(capabilityConflicts.map(\.skillId))
+    let authorizedSkillIds = idAuthorizedSkillIds.filter { !capabilityForbiddenSkillIds.contains($0) }
     let requiredSkillIds = sortedUniqueValues(requiredSkillReferences.map(\.skillId))
 
     let unauthorizedRequiredReferences = requiredSkillReferences.filter { reference in
@@ -28,6 +42,12 @@ enum SessionContractSkillAuthorizationEvaluator {
     var failureReasons: [String] = conflictingPersonaSkillIds.map { skillId in
       "persona \(persona.id) lists \(skillId) in both allowedSkillIds and forbiddenSkillIds"
     }
+
+    failureReasons.append(
+      contentsOf: capabilityConflicts.map { conflict in
+        "persona \(persona.id) authorizes skill \(conflict.skillId) with capability \(conflict.capability) forbidden by forbiddenCapabilities"
+      }
+    )
 
     failureReasons.append(
       contentsOf: unauthorizedRequiredReferences.map { reference in
@@ -55,6 +75,14 @@ enum SessionContractSkillAuthorizationEvaluator {
           missingId: skillId
         )
       }
+      + capabilityConflicts.map { conflict in
+        ResolverError.conflictingPersonaSkillCapability(
+          sourceId: persona.id,
+          field: "forbiddenCapabilities",
+          skillId: conflict.skillId,
+          capability: conflict.capability
+        )
+      }
       + unauthorizedRequiredReferences.map { reference in
         ResolverError.unauthorizedSkillId(
           sourceType: reference.sourceType,
@@ -76,6 +104,7 @@ enum SessionContractSkillAuthorizationEvaluator {
       unauthorizedRequestedSkillIds: unauthorizedRequestedSkillIds,
       isAuthorized:
         conflictingPersonaSkillIds.isEmpty
+        && capabilityForbiddenSkillIds.isEmpty
         && unauthorizedRequiredSkillIds.isEmpty
         && undeclaredRequestedSkillIds.isEmpty
         && unauthorizedRequestedSkillIds.isEmpty,

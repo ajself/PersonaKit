@@ -11,6 +11,7 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
   public var defaultKitIds: [String]
   public var allowedSkillIds: [String]
   public var forbiddenSkillIds: [String]
+  public var forbiddenCapabilities: [String]
 
   public init(
     id: String,
@@ -21,7 +22,8 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     nonGoals: [String],
     defaultKitIds: [String],
     allowedSkillIds: [String],
-    forbiddenSkillIds: [String]
+    forbiddenSkillIds: [String],
+    forbiddenCapabilities: [String] = []
   ) {
     self.id = id
     self.name = name
@@ -32,6 +34,7 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     self.defaultKitIds = defaultKitIds
     self.allowedSkillIds = allowedSkillIds
     self.forbiddenSkillIds = forbiddenSkillIds
+    self.forbiddenCapabilities = forbiddenCapabilities
   }
 
   public static let empty = WorkspacePersonaDraft(
@@ -43,7 +46,8 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     nonGoals: [],
     defaultKitIds: [],
     allowedSkillIds: [],
-    forbiddenSkillIds: []
+    forbiddenSkillIds: [],
+    forbiddenCapabilities: []
   )
 }
 

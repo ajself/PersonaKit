@@ -212,6 +212,12 @@ public enum ResolverError: Error, Equatable {
   case missingReferenceId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
+  case conflictingPersonaSkillCapability(
+    sourceId: String,
+    field: String,
+    skillId: String,
+    capability: String
+  )
   case unauthorizedSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case invalidSession(sessionId: String, expectedPath: String, message: String)
   case missingEssentialFile(
@@ -239,6 +245,8 @@ public enum ResolverError: Error, Equatable {
       return sourceType
     case .conflictingPersonaSkillId:
       return .persona
+    case .conflictingPersonaSkillCapability:
+      return .persona
     case .unauthorizedSkillId(let sourceType, _, _, _):
       return sourceType
     case .invalidSession:
@@ -264,6 +272,8 @@ public enum ResolverError: Error, Equatable {
     case .missingSkillId(_, let sourceId, _, _):
       return sourceId
     case .conflictingPersonaSkillId(let sourceId, _, _):
+      return sourceId
+    case .conflictingPersonaSkillCapability(let sourceId, _, _, _):
       return sourceId
     case .unauthorizedSkillId(_, let sourceId, _, _):
       return sourceId
@@ -291,6 +301,8 @@ public enum ResolverError: Error, Equatable {
       return field
     case .conflictingPersonaSkillId(_, let field, _):
       return field
+    case .conflictingPersonaSkillCapability(_, let field, _, _):
+      return field
     case .unauthorizedSkillId(_, _, let field, _):
       return field
     case .invalidSession:
@@ -317,6 +329,8 @@ public enum ResolverError: Error, Equatable {
       return missingId
     case .conflictingPersonaSkillId(_, _, let missingId):
       return missingId
+    case .conflictingPersonaSkillCapability(_, _, let skillId, _):
+      return skillId
     case .unauthorizedSkillId(_, _, _, let missingId):
       return missingId
     case .invalidSession(let sessionId, _, _):
@@ -343,6 +357,8 @@ public enum ResolverError: Error, Equatable {
       return "Missing skill id."
     case .conflictingPersonaSkillId:
       return "Skill id appears in both allowedSkillIds and forbiddenSkillIds."
+    case .conflictingPersonaSkillCapability(_, _, let skillId, let capability):
+      return "Skill \(skillId) provides capability \(capability) forbidden by the persona's forbiddenCapabilities."
     case .unauthorizedSkillId:
       return "Skill is not authorized by the resolved persona contract."
     case .invalidSession(_, let expectedPath, let message):

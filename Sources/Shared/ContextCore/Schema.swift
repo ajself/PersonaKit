@@ -12,6 +12,7 @@ public struct Persona: Codable, Sendable {
   public let defaultKitIds: [String]
   public let allowedSkillIds: [String]
   public let forbiddenSkillIds: [String]
+  public let forbiddenCapabilities: [String]?
 
   public init(
     id: String,
@@ -23,7 +24,8 @@ public struct Persona: Codable, Sendable {
     nonGoals: [String],
     defaultKitIds: [String],
     allowedSkillIds: [String],
-    forbiddenSkillIds: [String]
+    forbiddenSkillIds: [String],
+    forbiddenCapabilities: [String]? = nil
   ) {
     self.id = id
     self.version = version
@@ -35,6 +37,7 @@ public struct Persona: Codable, Sendable {
     self.defaultKitIds = defaultKitIds
     self.allowedSkillIds = allowedSkillIds
     self.forbiddenSkillIds = forbiddenSkillIds
+    self.forbiddenCapabilities = forbiddenCapabilities
   }
 }
 

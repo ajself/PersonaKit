@@ -188,4 +188,47 @@ struct WorkspacePersonaDraftBuilderTests {
       #expect(Bool(false))
     }
   }
+
+  @Test
+  func buildRawJSONEmitsForbiddenCapabilitiesSortedAndDeduped() throws {
+    let json = try WorkspacePersonaDraftBuilder().buildRawJSON(
+      draft: WorkspacePersonaDraft(
+        id: "ro",
+        name: "RO",
+        summary: "Read-only reviewer.",
+        responsibilities: [],
+        values: [],
+        nonGoals: [],
+        defaultKitIds: [],
+        allowedSkillIds: [],
+        forbiddenSkillIds: [],
+        forbiddenCapabilities: ["run-commands", "edit-files", "edit-files"]
+      )
+    )
+    let dictionary = try #require(
+      JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
+    )
+    #expect(dictionary["forbiddenCapabilities"] as? [String] == ["edit-files", "run-commands"])
+  }
+
+  @Test
+  func validateRejectsUnknownForbiddenCapability() {
+    let validation = WorkspacePersonaDraftBuilder().validate(
+      draft: WorkspacePersonaDraft(
+        id: "ro",
+        name: "RO",
+        summary: "x",
+        responsibilities: [],
+        values: [],
+        nonGoals: [],
+        defaultKitIds: [],
+        allowedSkillIds: [],
+        forbiddenSkillIds: [],
+        forbiddenCapabilities: ["file-editing"]
+      )
+    )
+
+    #expect(!validation.isValid)
+    #expect(validation.errors.contains { $0.contains("Unknown forbidden capabilities: file-editing") })
+  }
 }

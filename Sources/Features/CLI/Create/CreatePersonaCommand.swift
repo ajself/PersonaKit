@@ -39,6 +39,12 @@ struct CreatePersonaCommand: ParsableCommand {
   @Option(name: .customLong("forbid-skill"), help: "Forbidden skill id.")
   var forbiddenSkillIDs: [String] = []
 
+  @Option(
+    name: .customLong("forbid-capability"),
+    help: "Forbidden host-neutral capability: \(SkillCapability.vocabulary.joined(separator: ", "))."
+  )
+  var forbiddenCapabilities: [String] = []
+
   func run() throws {
     try CreateCommandHelpers.runWithJSONErrors(jsonOutput: shared.jsonOutput) {
       let rootURL = try CreateCommandHelpers.resolveWritableRoot(rootPath: shared.rootPath)
@@ -105,6 +111,14 @@ struct CreatePersonaCommand: ParsableCommand {
           values: references.skillIDs
         )
       )
+      let resolvedForbiddenCapabilities = prompter.promptCSVIfNeeded(
+        values: forbiddenCapabilities,
+        label: "Forbidden capabilities (comma-separated)",
+        hint: CreateCommandHelpers.referenceHint(
+          label: "Allowed capabilities",
+          values: Set(SkillCapability.vocabulary)
+        )
+      )
 
       try CreateCommandHelpers.requireFields(
         [
@@ -126,7 +140,8 @@ struct CreatePersonaCommand: ParsableCommand {
         nonGoals: resolvedNonGoals,
         defaultKitIds: resolvedDefaultKitIDs,
         allowedSkillIds: resolvedAllowedSkillIDs,
-        forbiddenSkillIds: resolvedForbiddenSkillIDs
+        forbiddenSkillIds: resolvedForbiddenSkillIDs,
+        forbiddenCapabilities: resolvedForbiddenCapabilities
       )
       let builder = WorkspacePersonaDraftBuilder()
       let rawJSON = try builder.buildRawJSON(

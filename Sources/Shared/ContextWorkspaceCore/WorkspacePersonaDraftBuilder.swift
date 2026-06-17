@@ -26,7 +26,8 @@ public struct WorkspacePersonaDraftBuilder: Sendable {
       nonGoals: normalizedTextItems(draft.nonGoals),
       defaultKitIds: normalizedIDItems(draft.defaultKitIds),
       allowedSkillIds: normalizedIDItems(draft.allowedSkillIds),
-      forbiddenSkillIds: normalizedIDItems(draft.forbiddenSkillIds)
+      forbiddenSkillIds: normalizedIDItems(draft.forbiddenSkillIds),
+      forbiddenCapabilities: Array(Set(normalizedTextItems(draft.forbiddenCapabilities))).sorted()
     )
   }
 
@@ -89,6 +90,15 @@ public struct WorkspacePersonaDraftBuilder: Sendable {
       )
     }
 
+    let unknownCapabilities = normalized.forbiddenCapabilities.filter { !SkillCapability.isKnown($0) }
+
+    if !unknownCapabilities.isEmpty {
+      errors.append(
+        "Unknown forbidden capabilities: \(unknownCapabilities.joined(separator: ", ")). "
+          + "Allowed: \(SkillCapability.vocabulary.joined(separator: ", "))."
+      )
+    }
+
     return WorkspacePersonaDraftValidation(
       errors: errors,
       warnings: warnings
@@ -126,7 +136,9 @@ public struct WorkspacePersonaDraftBuilder: Sendable {
       nonGoals: normalized.nonGoals,
       defaultKitIds: normalized.defaultKitIds,
       allowedSkillIds: normalized.allowedSkillIds,
-      forbiddenSkillIds: normalized.forbiddenSkillIds
+      forbiddenSkillIds: normalized.forbiddenSkillIds,
+      forbiddenCapabilities: normalized.forbiddenCapabilities.isEmpty
+        ? nil : normalized.forbiddenCapabilities
     )
 
     return try WorkspaceAuthoringJSON.encode(document)

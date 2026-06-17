@@ -167,6 +167,14 @@ For skills specifically, put the concrete tool in `providedBy` (e.g.
 so a portable capability declaration travels between hosts without drift. Author it
 with `personakit create skill --capability <value>`.
 
+A persona can declare `forbiddenCapabilities` from the same vocabulary
+(`personakit create persona --forbid-capability <value>`). Resolution then flags a
+contradiction when the persona authorizes a skill whose capability it forbids — for
+example a read-only reviewer authorizing an `edit-files` skill: that skill is dropped
+from the authorized set, the contract reports `isAuthorized: false` with a reason, and
+`validate` surfaces the conflict. This is a capability-level generalization of
+`forbiddenSkillIds`.
+
 ## Related Docs
 
 - [Repository Overview](../README.md)

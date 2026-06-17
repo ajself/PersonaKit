@@ -19,6 +19,20 @@ struct SkillCapabilityTests {
   }
 
   @Test
+  func personaForbiddenCapabilitiesMatchesSchemaEnum() throws {
+    let json = try #require(PersonaKitSchema.json(for: "persona"))
+    let object = try #require(
+      JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
+    )
+    let properties = try #require(object["properties"] as? [String: Any])
+    let forbidden = try #require(properties["forbiddenCapabilities"] as? [String: Any])
+    let items = try #require(forbidden["items"] as? [String: Any])
+    let schemaEnum = try #require(items["enum"] as? [String])
+
+    #expect(Set(schemaEnum) == Set(SkillCapability.vocabulary))
+  }
+
+  @Test
   func isKnownRecognizesVocabularyAndRejectsOthers() {
     #expect(SkillCapability.isKnown("read-only-inspection"))
     #expect(SkillCapability.isKnown("edit-files"))

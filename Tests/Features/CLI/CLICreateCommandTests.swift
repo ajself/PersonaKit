@@ -86,6 +86,7 @@ struct CLICreateCommandTests {
         "",
         "",
         "",
+        "",
         "y",
       ]
     )
