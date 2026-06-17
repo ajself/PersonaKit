@@ -63,6 +63,10 @@ For ordinary repo work:
 - edits should be small, reviewable, and limited to the requested surface
 - existing project commands and conventions should be preferred over new
   workflows
+- run the test suite with `make test` (or `swift test --no-parallel`), never a
+  bare `swift test`: the CLI tests capture stdout via process-global fd
+  redirection, which races against the parallel test runner and intermittently
+  fails with a JSON-decode error
 
 Agent-side command usage is different from PersonaKit product behavior. Agents
 may run bounded repo commands while working in this repository; PersonaKit

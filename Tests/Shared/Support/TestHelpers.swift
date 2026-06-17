@@ -1,8 +1,22 @@
 import Darwin
 import Foundation
 
-private let stdoutCaptureLock = NSLock()
-private let stderrCaptureLock = NSLock()
+// A single shared lock guards BOTH stdout and stderr capture. Capture redirects
+// the process-global STDOUT/STDERR file descriptors via dup2, so two overlapping
+// captures would race on the shared fds. This lock prevents that.
+//
+// Note: the lock alone does NOT make capture safe under a parallel test run — the
+// swift-testing runner writes per-test progress to stdout, and that output (from
+// *other* tests, not under this lock) lands in a capture's pipe and corrupts it.
+// The actual fix for that is running tests serially; see `--no-parallel` in the
+// Makefile's SWIFT_TEST_FLAGS. This lock remains as defense-in-depth for anyone
+// who runs the suite in parallel anyway.
+//
+// It must be recursive: some tests legitimately nest a capture inside another
+// (e.g. captureStderr { captureStdout { ... } } to swallow stdout while capturing
+// stderr). A plain NSLock would self-deadlock on the inner acquire; a recursive
+// lock lets the same thread re-enter while still excluding all other threads.
+private let captureLock = NSRecursiveLock()
 
 func makeTempDirectory() throws -> URL {
   let base = FileManager.default.temporaryDirectory
@@ -85,8 +99,8 @@ func normalizedTrailingNewline(_ value: String) -> String {
 }
 
 func captureStdout(_ work: () -> Void) -> String {
-  stdoutCaptureLock.lock()
-  defer { stdoutCaptureLock.unlock() }
+  captureLock.lock()
+  defer { captureLock.unlock() }
 
   let pipe = Pipe()
   let stdoutFd = dup(STDOUT_FILENO)
@@ -103,8 +117,8 @@ func captureStdout(_ work: () -> Void) -> String {
 }
 
 func captureStderr(_ work: () -> Void) -> String {
-  stderrCaptureLock.lock()
-  defer { stderrCaptureLock.unlock() }
+  captureLock.lock()
+  defer { captureLock.unlock() }
 
   let pipe = Pipe()
   let stderrFd = dup(STDERR_FILENO)

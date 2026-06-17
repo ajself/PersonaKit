@@ -66,7 +66,13 @@ SWIFTPM_CACHE_ROOT ?= $(VALIDATE_TMPDIR)/swiftpm
 SWIFTPM_TMPDIR ?= $(SWIFTPM_CACHE_ROOT)/tmp
 SWIFTPM_FLAGS ?= --cache-path $(SWIFTPM_CACHE_ROOT)/cache --config-path $(SWIFTPM_CACHE_ROOT)/configuration --security-path $(SWIFTPM_CACHE_ROOT)/security --manifest-cache local --disable-sandbox -Xswiftc -module-cache-path -Xswiftc $(SWIFTPM_CACHE_ROOT)/module-cache -Xcc -fmodules-cache-path=$(SWIFTPM_CACHE_ROOT)/clang-module-cache
 PUBLIC_CHECK_TEST ?= 1
-SWIFT_TEST_FLAGS ?=
+# --no-parallel: the swift-testing runner writes per-test progress to stdout, and
+# the CLI capture helpers (captureStdout/captureStderr) redirect the process-global
+# stdout/stderr fds. Under parallel execution the runner's progress for other tests
+# lands in a capture's pipe and corrupts it (intermittent "JSON text did not start
+# with array or object"). Serializing the run removes the cross-test fd contention.
+# Bonus: it is also faster wall-clock for this suite (no worker-spawn overhead).
+SWIFT_TEST_FLAGS ?= --no-parallel
 SWIFTPM_ENV ?= CLANG_MODULE_CACHE_PATH=$(SWIFTPM_CACHE_ROOT)/clang-module-cache TMPDIR=$(SWIFTPM_TMPDIR)
 SWIFT_BUILD ?= $(SWIFTPM_ENV) $(SWIFT) build $(SWIFTPM_FLAGS)
 SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)

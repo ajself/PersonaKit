@@ -92,7 +92,11 @@ if [[ -s "$unchecked_matches_file" ]]; then
 fi
 
 echo "Running swift test..."
-swift test "${swiftpm_flags[@]}"
+# --no-parallel: the CLI capture helpers redirect the process-global stdout/stderr
+# fds, which races against the swift-testing runner's stdout progress output under
+# parallel execution and intermittently corrupts captured JSON. Serial run avoids
+# it (and is faster for this suite). Mirrors SWIFT_TEST_FLAGS in the Makefile.
+swift test --no-parallel "${swiftpm_flags[@]}"
 
 echo "Validating kit..."
 swift run "${swiftpm_flags[@]}" personakit validate --root "$kit_root"

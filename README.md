@@ -240,6 +240,13 @@ Run the package tests:
 make test
 ```
 
+Use `make test` rather than a bare `swift test`: the CLI tests capture stdout/stderr
+by redirecting process-global file descriptors, which races against the test
+runner's own output under parallel execution. `make test` passes `--no-parallel`
+(see `SWIFT_TEST_FLAGS` in the [Makefile](./Makefile)) to keep runs deterministic.
+A bare `swift test` will intermittently fail with a JSON-decode error; add
+`--no-parallel` if you must run it directly.
+
 Check formatting:
 
 ```bash

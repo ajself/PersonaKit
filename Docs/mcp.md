@@ -180,7 +180,7 @@ If a contract does not authorize a needed skill, stop and re-ground instead of i
 Use these checks after MCP behavior changes:
 
 ```bash
-swift test --filter MCP
+swift test --no-parallel --filter MCP
 swift run personakit validate
 swift run personakit mcp --help
 ```
