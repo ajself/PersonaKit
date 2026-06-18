@@ -43,6 +43,26 @@ struct CLIValidateCommandTests {
   }
 
   @Test
+  func validateReportsResolvedScopesForExplicitRoot() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+
+    var status: Int32 = 0
+    let stdoutOutput = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "validate",
+        "--root",
+        root.path,
+      ])
+    }
+
+    #expect(status == 0)
+    #expect(stdoutOutput.contains("Resolved scopes (project-only): project=\(root.path) global=(none)"))
+    #expect(stdoutOutput.contains("Validation summary:"))
+  }
+
+  @Test
   func validateRejectsSessionsPathWhenItIsAFile() throws {
     let root = try makeValidateRootWithSessionsFile()
 

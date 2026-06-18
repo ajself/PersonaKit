@@ -33,6 +33,24 @@ public struct ScopeSet: Equatable, Sendable {
     uniqueRoots([projectScopeURL, globalScopeURL].compactMap { $0 })
   }
 
+  /// One-line, deterministic description of which scope roots were resolved.
+  ///
+  /// Reports the resolution mode (`project-only`, `global-only`, `merged`, or
+  /// `none`) followed by the project and global roots, so an agent can tell which
+  /// roots a command loaded without re-deriving scope discovery.
+  public var humanSummary: String {
+    switch (projectScopeURL?.path, globalScopeURL?.path) {
+    case let (project?, global?):
+      return "Resolved scopes (merged): project=\(project) global=\(global)"
+    case let (project?, nil):
+      return "Resolved scopes (project-only): project=\(project) global=(none)"
+    case let (nil, global?):
+      return "Resolved scopes (global-only): project=(none) global=\(global)"
+    case (nil, nil):
+      return "Resolved scopes (none): no PersonaKit roots resolved"
+    }
+  }
+
   /// Removes duplicate roots while preserving first-seen order.
   ///
   /// Dedupe compares canonicalized filesystem paths so symlink aliases collapse to

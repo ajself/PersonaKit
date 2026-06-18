@@ -142,6 +142,7 @@ struct ValidateCommand: ParsableCommand {
   func run() throws {
     let scopes = try CLIHelpers.resolveScopes(options: scope)
     let result = try Validator.validate(scopes: scopes)
+    print(scopes.humanSummary)
     print(result.summary)
     if !result.errors.isEmpty {
       for error in result.errors {
