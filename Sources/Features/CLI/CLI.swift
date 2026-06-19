@@ -83,6 +83,22 @@ struct PersonaKitCommand: ParsableCommand {
       MCPCommand.self,
     ]
   )
+
+  /// Orients a cold agent that runs bare `personakit` with no subcommand.
+  ///
+  /// Intentionally static and scope-free so it works from any directory, including
+  /// outside a `.personakit` root. It points at `guidance` (scope-aware grounding)
+  /// and `--help` (the full command surface) rather than resolving scope itself.
+  func run() throws {
+    print(
+      """
+      PersonaKit provides reusable operating contracts that ground AI coding agents before they act.
+
+      Run `personakit guidance` to orient against the current scope.
+      Run `personakit --help` to see all commands.
+      """
+    )
+  }
 }
 
 /// Prints best-effort guidance for agent grounding and scope verification.
