@@ -227,6 +227,53 @@ struct CLIMCPScopeResolutionTests {
     let output = try #require(firstText(result))
     #expect(output.contains("architectural-editor"))
   }
+
+  /// Guards that `personakit contract` (CLI) and the `personakit_resolve_contract`
+  /// MCP tool emit byte-identical JSON for equivalent inputs. Parity holds today only
+  /// by construction (both call `SessionContractResolver.snapshot(from:scopes:)` and
+  /// encode with `[.prettyPrinted, .sortedKeys]`); this pins it so a future divergence
+  /// on either surface fails the suite. Equivalent scopes: CLI `--root X` and MCP
+  /// `ScopeSet(projectScopeURL: X, globalScopeURL: nil)` both resolve project-only.
+  @Test
+  func contractCLIAndMCPToolEmitByteIdenticalJSON() throws {
+    let root = fixtureKitRootURL()
+    let sessionId = "senior-swiftui-engineer_apply-style"
+    let requestedSkillIds = ["codex-cli", "missing-skill"]
+
+    var status: Int32 = 0
+    let cliOutput = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "contract",
+        "--root",
+        root.path,
+        "--session",
+        sessionId,
+        "--check-skills",
+        requestedSkillIds.joined(separator: ","),
+      ])
+    }
+    #expect(status == 0)
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+    let result = try service.callTool(
+      name: "personakit_resolve_contract",
+      arguments: [
+        "sessionId": .string(sessionId),
+        "requestedSkillIds": .array(requestedSkillIds.map { .string($0) }),
+      ]
+    )
+    let mcpOutput = try #require(firstText(result))
+
+    // Normalize only the trailing newline: CLI emits via `print` (adds one), the MCP
+    // tool returns the raw encoded text. Everything else must match byte-for-byte.
+    func trimmingTrailingNewline(_ value: String) -> String {
+      value.hasSuffix("\n") ? String(value.dropLast()) : value
+    }
+
+    #expect(trimmingTrailingNewline(cliOutput) == trimmingTrailingNewline(mcpOutput))
+  }
 }
 
 private func makeScopeOptions(
