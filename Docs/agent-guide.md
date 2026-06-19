@@ -179,6 +179,25 @@ from the authorized set, the contract reports `isAuthorized: false` with a reaso
 `validate` surfaces the conflict. This is a capability-level generalization of
 `forbiddenSkillIds`.
 
+### Canonical Pack JSON Style
+
+`personakit create` emits every pack file through one deterministic formatter
+(Foundation's `JSONEncoder` with `[.prettyPrinted, .sortedKeys]`), so generated
+files always share the same shape. When you hand-author or hand-edit a pack, match
+that shape exactly — otherwise the next `create` (or a regeneration) reflows the file
+and your diff fills with formatting churn. The format is:
+
+- **Keys alphabetized** within every object (the `.sortedKeys` order), not authoring
+  or schema order.
+- **Two-space indentation**, one level per nesting depth.
+- **A space on both sides of the colon**: `"id" : "value"`, not `"id": "value"`.
+- **A trailing newline** at end of file.
+
+The simplest way to stay canonical is to not hand-format at all: write the fields,
+then run the file back through the emitter (regenerate it with `personakit create
+… --force`, or paste the values into a fresh `create`) so the formatter — not your
+editor — owns the byte layout.
+
 ## Related Docs
 
 - [Repository Overview](../README.md)
