@@ -23,6 +23,23 @@ struct PersonaKitInitTests {
   }
 
   @Test
+  func groundingSkillEntryMatchesSiteTutorialSource() throws {
+    // The grounding SKILL.md is embedded inline in the manifest (the binary cannot
+    // read Site/ at runtime). Guard that the embedded copy stays byte-identical to
+    // the host-neutral tutorial source so drift becomes a build failure, not a
+    // silent divergence.
+    let entry = try #require(
+      StarterKitManifest.entries.first { $0.relativePath == "personakit-grounding/SKILL.md" }
+    )
+
+    let siteSourceURL = repoRootURL()
+      .appendingPathComponent("Site/public/tutorials/personakit-grounding/SKILL.md")
+    let siteSource = try Data(contentsOf: siteSourceURL)
+
+    #expect(entry.contents == siteSource)
+  }
+
+  @Test
   func initAllowsEmptyExistingDestination() throws {
     let destination = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)

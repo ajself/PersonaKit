@@ -142,6 +142,11 @@ struct InitCommand: ParsableCommand {
 
   func run() throws {
     try PersonaKitInitializer().run(destination: path, force: force)
+    print(
+      "Scaffolded a host-neutral personakit-grounding/SKILL.md. "
+        + "Per-host variants live under hosts/{claude,copilot,cursor,opencode} "
+        + "in the PersonaKit grounding tutorial."
+    )
   }
 }
 
