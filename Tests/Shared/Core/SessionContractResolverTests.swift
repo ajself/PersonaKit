@@ -19,8 +19,12 @@ struct SessionContractResolverTests {
         "autonomous-agent-loop",
       ]
     )
-    let snapshot = SessionContractResolver.snapshot(from: result)
+    let snapshot = SessionContractResolver.snapshot(from: result, scopes: scopes)
 
+    #expect(snapshot.scope.mode == "project-only")
+    #expect(snapshot.scope.projectRoot == fixtureKitRootURL().standardizedFileURL.path)
+    #expect(snapshot.scope.globalRoot == nil)
+    #expect(snapshot.scope.resolutionOrder == [fixtureKitRootURL().standardizedFileURL.path])
     #expect(snapshot.personaId == "senior-swiftui-engineer")
     #expect(snapshot.directiveId == "apply-style")
     #expect(snapshot.kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
@@ -98,5 +102,39 @@ struct SessionContractResolverTests {
     } catch {
       Issue.record("Unexpected error: \(error)")
     }
+  }
+
+  @Test
+  func contractScopeSnapshotReportsClosedModeVocabularyAndPrecedence() {
+    let project = URL(fileURLWithPath: "/tmp/project/.personakit")
+    let global = URL(fileURLWithPath: "/tmp/global/.personakit")
+
+    let merged = ResolvedContractScopeSnapshot(
+      scopes: ScopeSet(projectScopeURL: project, globalScopeURL: global)
+    )
+    #expect(merged.mode == "merged")
+    #expect(merged.projectRoot == project.path)
+    #expect(merged.globalRoot == global.path)
+    #expect(merged.loadOrder == [global.path, project.path])
+    #expect(merged.resolutionOrder == [project.path, global.path])
+
+    let projectOnly = ResolvedContractScopeSnapshot(
+      scopes: ScopeSet(projectScopeURL: project, globalScopeURL: nil)
+    )
+    #expect(projectOnly.mode == "project-only")
+    #expect(projectOnly.globalRoot == nil)
+
+    let globalOnly = ResolvedContractScopeSnapshot(
+      scopes: ScopeSet(projectScopeURL: nil, globalScopeURL: global)
+    )
+    #expect(globalOnly.mode == "global-only")
+    #expect(globalOnly.projectRoot == nil)
+
+    let none = ResolvedContractScopeSnapshot(
+      scopes: ScopeSet(projectScopeURL: nil, globalScopeURL: nil)
+    )
+    #expect(none.mode == "none")
+    #expect(none.loadOrder.isEmpty)
+    #expect(none.resolutionOrder.isEmpty)
   }
 }

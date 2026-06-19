@@ -33,22 +33,32 @@ public struct ScopeSet: Equatable, Sendable {
     uniqueRoots([projectScopeURL, globalScopeURL].compactMap { $0 })
   }
 
+  /// Resolution mode from a closed vocabulary describing which roots are present.
+  ///
+  /// One of `project-only`, `global-only`, `merged`, or `none`. Machine consumers
+  /// can branch on this without inferring state from which root fields are nil.
+  public var mode: String {
+    switch (projectScopeURL, globalScopeURL) {
+    case (.some, .some): return "merged"
+    case (.some, .none): return "project-only"
+    case (.none, .some): return "global-only"
+    case (.none, .none): return "none"
+    }
+  }
+
   /// One-line, deterministic description of which scope roots were resolved.
   ///
-  /// Reports the resolution mode (`project-only`, `global-only`, `merged`, or
-  /// `none`) followed by the project and global roots, so an agent can tell which
-  /// roots a command loaded without re-deriving scope discovery.
+  /// Reports the resolution `mode` followed by the project and global roots, so an
+  /// agent can tell which roots a command loaded without re-deriving scope discovery.
   public var humanSummary: String {
-    switch (projectScopeURL?.path, globalScopeURL?.path) {
-    case let (project?, global?):
-      return "Resolved scopes (merged): project=\(project) global=\(global)"
-    case let (project?, nil):
-      return "Resolved scopes (project-only): project=\(project) global=(none)"
-    case let (nil, global?):
-      return "Resolved scopes (global-only): project=(none) global=\(global)"
-    case (nil, nil):
+    guard !isEmpty else {
       return "Resolved scopes (none): no PersonaKit roots resolved"
     }
+
+    let project = projectScopeURL?.path ?? "(none)"
+    let global = globalScopeURL?.path ?? "(none)"
+
+    return "Resolved scopes (\(mode)): project=\(project) global=\(global)"
   }
 
   /// Removes duplicate roots while preserving first-seen order.

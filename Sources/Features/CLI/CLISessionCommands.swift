@@ -74,7 +74,7 @@ struct ContractCommand: ParsableCommand {
 
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let data = try encoder.encode(SessionContractResolver.snapshot(from: result))
+    let data = try encoder.encode(SessionContractResolver.snapshot(from: result, scopes: scopes))
 
     guard let output = String(data: data, encoding: .utf8) else {
       throw CLIError.failure("Failed to encode contract output.")

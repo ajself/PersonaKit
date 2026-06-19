@@ -134,8 +134,49 @@ public struct ResolvedContractReferenceSnapshot: Codable, Equatable, Sendable {
   }
 }
 
+/// Scope provenance recorded alongside a resolved contract.
+///
+/// Lets a consumer tell which roots produced the contract (project vs global vs
+/// merged) without re-deriving scope discovery. `mode` is the closed-vocabulary
+/// quick read; `resolutionOrder` states precedence (project beats global); the
+/// roots are ground truth for verifying the intended scope was loaded.
+public struct ResolvedContractScopeSnapshot: Codable, Equatable, Sendable {
+  /// Resolution mode: `project-only`, `global-only`, `merged`, or `none`.
+  public let mode: String
+  public let projectRoot: String?
+  public let globalRoot: String?
+  public let loadOrder: [String]
+  public let resolutionOrder: [String]
+
+  public init(
+    mode: String,
+    projectRoot: String?,
+    globalRoot: String?,
+    loadOrder: [String],
+    resolutionOrder: [String]
+  ) {
+    self.mode = mode
+    self.projectRoot = projectRoot
+    self.globalRoot = globalRoot
+    self.loadOrder = loadOrder
+    self.resolutionOrder = resolutionOrder
+  }
+
+  /// Builds the snapshot from an already-resolved scope set.
+  public init(scopes: ScopeSet) {
+    self.init(
+      mode: scopes.mode,
+      projectRoot: scopes.projectScopeURL?.path,
+      globalRoot: scopes.globalScopeURL?.path,
+      loadOrder: scopes.loadOrder.map(\.path),
+      resolutionOrder: scopes.resolutionOrder.map(\.path)
+    )
+  }
+}
+
 /// Stable encoded snapshot returned by CLI and MCP contract resolution surfaces.
 public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
+  public let scope: ResolvedContractScopeSnapshot
   public let sessionId: String?
   public let personaId: String
   public let directiveId: String?
@@ -154,6 +195,7 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
   public let failureReasons: [String]
 
   public init(
+    scope: ResolvedContractScopeSnapshot,
     sessionId: String?,
     personaId: String,
     directiveId: String?,
@@ -171,6 +213,7 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
     isAuthorized: Bool,
     failureReasons: [String]
   ) {
+    self.scope = scope
     self.sessionId = sessionId
     self.personaId = personaId
     self.directiveId = directiveId
@@ -192,8 +235,12 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
 
 /// Resolves PersonaKit contract state without treating skill-authorization failures as hard errors.
 public enum SessionContractResolver {
-  public static func snapshot(from result: SessionContractResult) -> ResolvedContractSnapshot {
+  public static func snapshot(
+    from result: SessionContractResult,
+    scopes: ScopeSet
+  ) -> ResolvedContractSnapshot {
     ResolvedContractSnapshot(
+      scope: ResolvedContractScopeSnapshot(scopes: scopes),
       sessionId: result.sessionId,
       personaId: result.persona.id,
       directiveId: result.directive?.id,

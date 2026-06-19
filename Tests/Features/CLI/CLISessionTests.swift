@@ -156,6 +156,11 @@ struct CLISessionTests {
     #expect(object["authorizedSkillIds"] as? [String] == ["codex-cli"])
     #expect(object["undeclaredRequestedSkillIds"] as? [String] == ["missing-skill"])
     #expect(object["isAuthorized"] as? Bool == false)
+
+    let scope = try #require(object["scope"] as? [String: Any])
+    #expect(scope["mode"] as? String == "project-only")
+    #expect(scope["projectRoot"] as? String == root.standardizedFileURL.path)
+    #expect(scope["resolutionOrder"] as? [String] == [root.standardizedFileURL.path])
   }
 
   @Test

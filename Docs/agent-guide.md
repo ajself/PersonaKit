@@ -79,7 +79,11 @@ is read-only by design.
 1. `personakit guidance` (CLI) or read `personakit://catalog/start` (MCP) — orient.
 2. List or recommend a session: `personakit list sessions`, or
    `personakit recommend --goal "<task>"`.
-3. Resolve the contract: `personakit contract --session <id>`.
+3. Resolve the contract: `personakit contract --session <id>`. The JSON carries a
+   `scope` block recording where it came from: `mode` (`project-only`,
+   `global-only`, `merged`, or `none`), the `projectRoot`/`globalRoot` paths, and
+   `loadOrder`/`resolutionOrder` (resolution is project-first, so project wins on
+   conflicts). Check it to confirm you resolved against the roots you intended.
 4. Export handoff context when you need it as Markdown:
    `personakit export --session <id>` (add `--copy` or `--output <path>`). Add
    `--stats` to print a size summary (lines / bytes / sections) to stderr when you

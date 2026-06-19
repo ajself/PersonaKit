@@ -88,7 +88,9 @@ extension MCPToolService {
         )
       }
 
-      return try MCPInternalSupport.encodeToolJSON(SessionContractResolver.snapshot(from: result))
+      return try MCPInternalSupport.encodeToolJSON(
+        SessionContractResolver.snapshot(from: result, scopes: scopes)
+      )
     } catch let error as ResolverResolutionError {
       throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(error.errors))
     }
