@@ -6,6 +6,9 @@
   "providedBy": [
     "coding-agent"
   ],
+  "capabilities": [
+    "edit-files"
+  ],
   "risk": {
     "level": "medium",
     "requiresHumanReview": true,

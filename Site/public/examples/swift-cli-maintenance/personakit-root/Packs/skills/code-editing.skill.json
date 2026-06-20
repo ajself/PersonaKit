@@ -6,6 +6,9 @@
   "providedBy": [
     "coding-tool"
   ],
+  "capabilities": [
+    "edit-files"
+  ],
   "risk": {
     "level": "medium",
     "requiresHumanReview": true,

@@ -6,6 +6,9 @@
   "providedBy": [
     "ci"
   ],
+  "capabilities": [
+    "run-commands"
+  ],
   "risk": {
     "level": "high",
     "requiresHumanReview": true,

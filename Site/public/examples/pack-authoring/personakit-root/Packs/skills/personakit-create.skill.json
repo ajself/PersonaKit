@@ -6,6 +6,10 @@
   "providedBy": [
     "personakit-cli"
   ],
+  "capabilities": [
+    "edit-files",
+    "run-commands"
+  ],
   "risk": {
     "level": "medium",
     "requiresHumanReview": true,

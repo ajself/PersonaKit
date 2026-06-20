@@ -6,6 +6,9 @@
   "providedBy": [
     "mcp-client"
   ],
+  "capabilities": [
+    "edit-files"
+  ],
   "risk": {
     "level": "high",
     "requiresHumanReview": true,

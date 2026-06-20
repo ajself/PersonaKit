@@ -6,6 +6,9 @@
   "providedBy": [
     "external-agent"
   ],
+  "capabilities": [
+    "autonomous-loop"
+  ],
   "risk": {
     "level": "high",
     "requiresHumanReview": true,

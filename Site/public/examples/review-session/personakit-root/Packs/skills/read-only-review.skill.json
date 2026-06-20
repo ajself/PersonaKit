@@ -6,6 +6,9 @@
   "providedBy": [
     "agent-review"
   ],
+  "capabilities": [
+    "read-only-inspection"
+  ],
   "risk": {
     "level": "low",
     "requiresHumanReview": false,
