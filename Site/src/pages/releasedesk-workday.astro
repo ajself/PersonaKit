@@ -12,7 +12,9 @@ const rootHref = sitePath("tutorials/releasedesk/complete/personakit-root/index.
 const morningSetup = `cd Site/public/tutorials/releasedesk/complete
 open index.html
 personakit validate --root personakit-root
-personakit list --root personakit-root sessions`;
+personakit list --root personakit-root sessions
+personakit refs --root personakit-root code-editing
+personakit orphans --root personakit-root`;
 
 const implementationCheck = `personakit contract --root personakit-root --session implementation-lane`;
 
@@ -77,6 +79,8 @@ Stop if the next step needs a forbidden capability.`;
     label="Terminal setup"
     lang="bash"
   />
+
+  <p>The two trace commands are an optional pack health check before the day starts: <code>personakit refs &lt;id&gt;</code> shows what references an entity (here, which roles and directives reach for <code>code-editing</code>), and <code>personakit orphans</code> lists entities nothing points at.</p>
 
   <Callout>
     <p><strong>Workday rule:</strong> do not ask "which prompt sounds careful?" Ask which work mode is actually active.</p>
@@ -173,6 +177,8 @@ Stop if the next step needs a forbidden capability.`;
     </ul>
   </TutorialBlock>
   <TutorialBlock code={handoffPrompt} kind="agent" lang="text" />
+
+  <p>Add <code>--stats</code> to the export to print a size summary (lines, bytes, sections) to stderr, so you can see how much grounding the host is about to receive.</p>
 
   <Callout tone="good">
     <p><strong>PersonaKit is not the handoff system.</strong> It is the contract the host must respect.</p>

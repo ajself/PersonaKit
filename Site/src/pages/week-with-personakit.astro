@@ -261,6 +261,8 @@ personakit create session --root .personakit \\
 
 const finalCommands = `personakit validate --root .personakit
 personakit list --root .personakit sessions
+personakit refs --root .personakit code-editing
+personakit orphans --root .personakit
 personakit recommend --root .personakit --goal "Review this diff without editing files"`;
 ---
 
@@ -509,6 +511,8 @@ personakit recommend --root .personakit --goal "Review this diff without editing
   <p>The completed project includes the fixed app, the host-local skill, and a public <code>personakit-root</code> that mirrors what you built locally.</p>
 
   <TutorialBlock code={finalCommands} kind="terminal" lang="bash" />
+
+  <p>Beyond validation, <code>personakit refs &lt;id&gt;</code> traces what an entity references and what references it, and <code>personakit orphans</code> lists entities nothing points at. Both are quick ways to check the pack hangs together.</p>
 
   <table>
     <thead>

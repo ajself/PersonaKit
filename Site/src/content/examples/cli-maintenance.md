@@ -58,6 +58,8 @@ personakit contract --root personakit-root --session cli-maintenance
 personakit export --root personakit-root --session cli-maintenance
 ```
 
+Add `--stats` to the export command to print a size summary (lines, bytes, sections) to stderr before handoff.
+
 ## Expected Validation Shape
 
 ```text

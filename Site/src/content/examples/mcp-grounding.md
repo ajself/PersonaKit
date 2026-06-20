@@ -51,7 +51,10 @@ authorizedSkillIds: read-only-mcp-grounding
 cd Site/public/examples/mcp-consumer-agent
 personakit validate --root personakit-root
 personakit contract --root personakit-root --session mcp-grounding
+personakit refs --root personakit-root read-only-mcp-grounding
 ```
+
+`personakit refs` makes the provenance concrete: it shows the persona and directive that reach for `read-only-mcp-grounding`, so you can confirm the grounding skill is wired into the session before trusting it.
 
 ## Expected Validation Shape
 

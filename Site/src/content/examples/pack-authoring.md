@@ -39,6 +39,8 @@ The point is not to make PersonaKit an autonomous pack generator. The point is t
 
 `personakit create` can produce the file shape, but the session decides the lane: reuse existing entities where possible, avoid product-scope expansion, dry-run before writing, and validate before treating the result as project context.
 
+The create subcommands also compose the richer shapes you would otherwise hand-edit: `create kit --reference <id> --intent <id>` attaches references and intent templates to a kit, and `create persona --forbid-capability <value>` records a host-neutral capability boundary (for example `edit-files` or `run-commands`).
+
 This is also where reusable pieces get created or revised so future sessions can compose them instead of copying prompt paragraphs into a single oversized instruction.
 
 ## Key Contract Signal

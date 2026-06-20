@@ -39,6 +39,8 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
 >
   <p>This walkthrough does not ask PersonaKit to make a code change. It asks PersonaKit to prove the operating contract that an agent would receive before making a change.</p>
 
+  <p>New to the CLI? Run <code>personakit</code> with no arguments to orient: it points you to <code>personakit guidance</code> for the current scope and <code>personakit --help</code> for the full command list.</p>
+
   <h2>1. Validate The Example Root</h2>
   <Code code={validateCommands} lang="bash" theme="github-dark" />
 
@@ -48,6 +50,8 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
 
   <p>Expected shape:</p>
   <Code code={validationShape} lang="text" theme="github-dark" />
+
+  <p>Validate and contract also print a leading line naming the resolved scopes. Here it reports project-only, because <code>--root</code> pins a single root and skips global library discovery.</p>
 
   <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, essential, and session can be loaded before any agent work starts.</p>
 
@@ -67,6 +71,8 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
   <Code code={exportCommand} lang="bash" theme="github-dark" />
 
   <p>What this proves: the resolved operating contract can be exported as inspectable handoff context before any coding tool starts work.</p>
+
+  <p>Add <code>--stats</code> to print a size summary of the resolved export (lines, bytes, sections) to stderr, which helps spot context bloat before handoff.</p>
 
   <h2>How To Read The Payload</h2>
   <table>
