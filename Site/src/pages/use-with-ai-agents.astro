@@ -1,0 +1,85 @@
+---
+import { Code } from "astro:components";
+import Callout from "../components/Callout.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+
+const registerCommand = `claude mcp add personakit --scope user -- "$(which personakit)" mcp`;
+
+const verifyCommand = "claude mcp list";
+
+const groundCommand = "personakit guidance";
+
+const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
+
+const breadcrumbSnippet = `## PersonaKit
+
+This project uses PersonaKit for operating contracts. Before starting work,
+run \`personakit guidance\` (or read \`personakit://catalog/start\` when the
+PersonaKit MCP server is connected) to resolve the active session contract:
+role, rules, allowed capabilities, forbidden actions, and stop points.`;
+---
+
+<ContentLayout
+  title="Use With AI Agents"
+  eyebrow="Adoption"
+  description="Put PersonaKit in an agent's toolbox so it can discover and resolve the active contract on its own, in every session."
+>
+  <p>PersonaKit prepares the contract; your coding agent does the work. This page connects the two so an agent can discover PersonaKit on its own and resolve the active contract before it starts, instead of waiting for you to paste setup into chat.</p>
+
+  <p>It assumes you already have a PersonaKit root. If you do not, run <code>personakit init &lt;path&gt;</code> first, or follow the <a href={sitePath("start-here/")}>Start Here</a> walkthrough.</p>
+
+  <Callout>
+    <p><strong>A contract is a map, not a locked door.</strong> It marks the cleared space an agent can work in and the edge where it should re-ground or ask. Lead with that map and the boundary, not raw file access.</p>
+  </Callout>
+
+  <h2 id="register">1. Register The MCP Server</h2>
+  <p>The read-only MCP server is the fastest path. Register it once and the agent reaches PersonaKit live, with nothing pasted into the prompt. For Claude Code, one command registers it at user scope, so it is available in every project:</p>
+
+  <Code code={registerCommand} lang="bash" theme="github-dark" />
+
+  <p>Confirm it connected:</p>
+
+  <Code code={verifyCommand} lang="bash" theme="github-dark" />
+
+  <p>You should see <code>personakit</code> listed as connected. Other hosts use the same stdio server (<code>personakit mcp</code>) with their own config format; the per-host table for Cursor, GitHub Copilot, Codex, VS Code, and OpenCode lives in the MCP guide.</p>
+
+  <p><a class="button-link" href="https://github.com/ajself/PersonaKit/blob/main/Docs/mcp.md">Open the per-host MCP setup table</a></p>
+
+  <Callout>
+    <p>No MCP server connected is a supported path, not a failure. PersonaKit does not auto-connect anywhere. With no server, the same grounding is one CLI call away: <code>personakit guidance</code>.</p>
+  </Callout>
+
+  <h2 id="grounding-skill">2. Add A Grounding Skill</h2>
+  <p>The MCP server gives the agent access. A small host skill gives it the instinct to reach for PersonaKit at the right moment: resolve the active contract before choosing tools, skills, or files. The skill is only the front door; PersonaKit remains the authority for what is allowed.</p>
+
+  <p><code>personakit init</code> scaffolds a host-neutral <code>personakit-grounding/SKILL.md</code>. Per-host variants for Claude Code, Cursor, GitHub Copilot, and OpenCode are in the grounding tutorial. Copy the variant for your host into the directory it discovers skills from. For Claude Code that is <code>.claude/skills/</code>.</p>
+
+  <Callout>
+    <p>PersonaKit never writes into a host config directory for you. You copy the variant in deliberately, so nothing mutates your agent setup behind your back.</p>
+  </Callout>
+
+  <p><a class="button-link" href={groundingSkillHref}>Open the grounding skill examples</a></p>
+
+  <h2 id="cold-agent">3. Point A Cold Agent At PersonaKit</h2>
+  <p>An agent that does not know PersonaKit exists will not look for it. If your project keeps an <code>AGENTS.md</code>, a short breadcrumb tells a cold agent where to orient. This snippet is opt-in; PersonaKit does not scaffold it into your repo.</p>
+
+  <Code code={breadcrumbSnippet} lang="markdown" theme="github-dark" />
+
+  <h2 id="what-happens">What The Agent Does Once Connected</h2>
+  <p>With the server connected and the contract resolved, the agent follows a small, inspectable loop:</p>
+
+  <ol>
+    <li>Orient: read <code>personakit://catalog/start</code>, or run <code>personakit guidance</code> with no MCP server.</li>
+    <li>Resolve: recommend or select a session, then resolve its contract.</li>
+    <li>Respect the map: work inside the cleared space; at a stop point or an unauthorized capability, re-ground or ask instead of improvising.</li>
+  </ol>
+
+  <Code code={groundCommand} lang="bash" theme="github-dark" />
+
+  <Callout tone="good">
+    <p>That is the adoption goal: the agent reaches for PersonaKit on its own, grounds in the resolved contract, and treats a boundary as a marked edge — a place to re-ground or ask, not to barrel through or stop dead.</p>
+  </Callout>
+
+  <p>Agents consuming PersonaKit from any host can go deeper in the <a href="https://github.com/ajself/PersonaKit/blob/main/Docs/agent-guide.md">agent guide</a>.</p>
+</ContentLayout>

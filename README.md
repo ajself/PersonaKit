@@ -206,6 +206,59 @@ personakit mcp
 PersonaKit should stay focused on validation, deterministic resolution,
 inspection, export, and read-only grounding.
 
+## Use With AI Agents
+
+The quickest way to put PersonaKit in an agent's toolbox is the read-only MCP
+server. Register it once and the agent can discover and resolve contracts live,
+in every session, without pasting anything into the prompt.
+
+Claude Code, one command (user scope, available in every project):
+
+```bash
+claude mcp add personakit --scope user -- "$(which personakit)" mcp
+```
+
+Confirm it connected:
+
+```bash
+claude mcp list
+```
+
+For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio
+shape, use the per-host config table in [Docs/mcp.md](./Docs/mcp.md).
+
+Once connected, an agent grounds itself by reading `personakit://catalog/start`,
+then resolving a session. With no MCP server connected, the same grounding is
+one CLI call away: `personakit guidance`. A resolved contract is not a locked
+door — it is a map: the cleared space to work in, and the marked edge where the
+agent re-grounds or asks rather than barreling through or stopping dead.
+
+### Add A Grounding Skill (optional)
+
+The MCP server gives the agent access. A small host skill gives it the instinct
+to reach for PersonaKit at the right moment: resolve the active contract before
+choosing tools, skills, or files. `personakit init` scaffolds a host-neutral
+`personakit-grounding/SKILL.md`; per-host variants (Claude Code, Cursor,
+Copilot, OpenCode) live in the grounding tutorial on the
+[PersonaKit website](https://ajself.github.io/PersonaKit/). Copy the variant for
+your host into the directory it discovers skills from — for Claude Code that is
+`.claude/skills/`. PersonaKit never writes into a host config directory for you.
+
+### Point A Cold Agent At PersonaKit (optional)
+
+An agent that does not know PersonaKit exists will not look for it. If your
+project keeps an `AGENTS.md`, a short breadcrumb tells a cold agent where to
+orient. This snippet is opt-in; PersonaKit does not scaffold it into your repo:
+
+```markdown
+## PersonaKit
+
+This project uses PersonaKit for operating contracts. Before starting work,
+run `personakit guidance` (or read `personakit://catalog/start` when the
+PersonaKit MCP server is connected) to resolve the active session contract:
+role, rules, allowed capabilities, forbidden actions, and stop points.
+```
+
 ## Studio And MCP
 
 PersonaKit Studio is a local GUI for managing packs and sessions. Use it when
