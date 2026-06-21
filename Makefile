@@ -379,8 +379,10 @@ studio-export-release:
 		exit 1; \
 	fi
 
-# Harden gate: the signed app must use the hardened runtime, carry a secure
-# timestamp, and must not ship the debug get-task-allow entitlement.
+# Harden gate: hardened runtime, secure timestamp, and the exact distribution
+# entitlement set the global-library grant needs. bookmarks.app-scope must stay
+# ABSENT on purpose: the security-scoped bookmark resolves across relaunches
+# without it, and asserting its absence keeps the signing surface from drifting.
 studio-verify-app:
 	@set -e; \
 	app="$(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
@@ -399,11 +401,24 @@ studio-verify-app:
 		exit 1; \
 	fi; \
 	ents="$$(codesign -d --entitlements :- "$$app" 2>/dev/null || true)"; \
-	if printf '%s' "$$ents" | grep -A1 'get-task-allow' | grep -qi '<true/>'; then \
+	norm="$$(printf '%s' "$$ents" | tr -d ' \t\n\r')"; \
+	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.app-sandbox</key><true/>'; then \
+		echo "error: $$app is not sandboxed (com.apple.security.app-sandbox must be true)."; \
+		exit 1; \
+	fi; \
+	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.files.user-selected.read-write</key><true/>'; then \
+		echo "error: $$app is missing com.apple.security.files.user-selected.read-write; the global-library grant would break."; \
+		exit 1; \
+	fi; \
+	if printf '%s' "$$norm" | grep -q '<key>com.apple.security.get-task-allow</key><true/>'; then \
 		echo "error: $$app ships com.apple.security.get-task-allow=true; not a distribution build."; \
 		exit 1; \
 	fi; \
-	echo "studio-verify-app: hardened runtime + secure timestamp OK, no get-task-allow."
+	if printf '%s' "$$norm" | grep -q 'com.apple.security.files.bookmarks.app-scope'; then \
+		echo "error: $$app declares com.apple.security.files.bookmarks.app-scope; S4 requires it stay absent (security-scoped bookmarks resolve without it)."; \
+		exit 1; \
+	fi; \
+	echo "studio-verify-app: hardened runtime + secure timestamp OK; sandbox on, user-selected read-write present, no get-task-allow, no app-scope bookmarks."
 
 studio-pkg-app:
 	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
