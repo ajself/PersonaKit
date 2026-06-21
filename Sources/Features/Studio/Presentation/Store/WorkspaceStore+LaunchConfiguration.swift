@@ -6,12 +6,32 @@ extension WorkspaceStore {
   public static func launchConfigured(
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) -> WorkspaceStore {
+    launchConfigured(
+      environment: environment,
+      globalLibraryAccess: StudioGlobalLibraryAccess(
+        userDefaults: StudioLaunchConfiguration.userDefaults(environment: environment)
+      )
+    )
+  }
+
+  /// Launch precedence for the initial global scope: environment override →
+  /// persisted bookmark grant → none (fall back to the live default).
+  static func launchConfigured(
+    environment: [String: String],
+    globalLibraryAccess: StudioGlobalLibraryAccess
+  ) -> WorkspaceStore {
+    let initialURL =
+      StudioLaunchConfiguration.globalScopeURL(environment: environment)
+      ?? globalLibraryAccess.resolveGrantedURL()
     let provider = WorkspaceGlobalScopeProvider(
-      initialURL: StudioLaunchConfiguration.globalScopeURL(environment: environment),
+      initialURL: initialURL,
       fallback: { WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default) }
     )
 
-    return WorkspaceStore(globalScopeProvider: provider)
+    return WorkspaceStore(
+      globalScopeProvider: provider,
+      globalLibraryAccess: globalLibraryAccess
+    )
   }
 
   /// Builds a store whose snapshot/validation/preview/maps read the global library

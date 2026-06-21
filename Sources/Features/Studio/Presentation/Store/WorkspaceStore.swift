@@ -154,6 +154,9 @@ public final class WorkspaceStore {
   // Backs the late-bindable global scope read by this store's builders/validator.
   // Non-nil only on the launch-configured path; `setGlobalScope` is a no-op without it.
   let globalScopeProvider: WorkspaceGlobalScopeProvider?
+  // Persists/resolves the app-wide global-library grant across launches. Non-nil only on
+  // the launch-configured path; the grant flow (S3) persists through it.
+  let globalLibraryAccess: StudioGlobalLibraryAccess?
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -172,9 +175,11 @@ public final class WorkspaceStore {
     fileRevealer: any FileRevealing = FileRevealerClient(),
     installEnvironment: any WorkspaceInstallEnvironmentProviding =
       WorkspaceInstallEnvironmentClient(),
-    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil
+    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
+    globalLibraryAccess: StudioGlobalLibraryAccess? = nil
   ) {
     self.globalScopeProvider = globalScopeProvider
+    self.globalLibraryAccess = globalLibraryAccess
 
     let resolvedEssentialManager =
       essentialManager
