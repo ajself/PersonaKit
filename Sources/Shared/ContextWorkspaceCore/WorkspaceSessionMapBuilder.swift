@@ -4,30 +4,48 @@ import Foundation
 /// Builds deterministic session dependency map payloads for Studio map surfaces.
 public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
   private let dependencies: WorkspaceSessionMapBuilderDependencies
-  private let globalScopeURL: URL?
+  private let globalScope: @Sendable () -> URL?
 
   public init(globalScopeURL: URL? = nil) {
     let dependencies = WorkspaceSessionMapBuilderDependencies.live()
-    self.dependencies = dependencies
-
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
   }
 
   public init(
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceSessionMapBuilderDependencies
   ) {
-    self.dependencies = dependencies
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
+  }
 
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+  /// Reads the global scope through a late-bindable provider, resolved at build time
+  /// rather than frozen at `init`.
+  public init(globalScopeProvider: @escaping @Sendable () -> URL?) {
+    self.init(
+      globalScopeProvider: globalScopeProvider,
+      dependencies: .live()
+    )
+  }
+
+  /// Designated late-bindable provider init with injected dependencies.
+  init(
+    globalScopeProvider: @escaping @Sendable () -> URL?,
+    dependencies: WorkspaceSessionMapBuilderDependencies
+  ) {
+    self.dependencies = dependencies
+    self.globalScope = globalScopeProvider
   }
 
   public func build(
@@ -39,7 +57,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
     let scopes = ScopeSet(
       projectScopeURL: projectScopeURL,
-      globalScopeURL: globalScopeURL
+      globalScopeURL: globalScope()
     )
 
     let registry: Registry

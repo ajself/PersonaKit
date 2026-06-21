@@ -90,6 +90,39 @@ func copyFixtureKit(to destination: URL) throws {
   try FileManager.default.copyItem(at: fixtureKitRootURL(), to: destination)
 }
 
+/// Builds a project workspace whose session references a persona and directive that
+/// live **only** in a separate global scope (the project copy of each is removed).
+///
+/// Project-scope-only validation reports both references as missing — the exact
+/// false-positive Studio shows when sandboxed away from `~/.personakit`. Merged with
+/// the returned global scope, the references resolve and validation is clean.
+func makeGlobalOnlyReferenceWorkspace() throws -> (
+  workspaceURL: URL,
+  projectScopeURL: URL,
+  globalScopeURL: URL
+) {
+  let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
+  let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+
+  try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+  try copyFixtureKit(to: projectScopeURL)
+  try FileManager.default.removeItem(
+    at: projectScopeURL.appendingPathComponent(
+      "Packs/personas/senior-swiftui-engineer.persona.json"
+    )
+  )
+  try FileManager.default.removeItem(
+    at: projectScopeURL.appendingPathComponent(
+      "Packs/directives/apply-style.directive.json"
+    )
+  )
+
+  let globalScopeURL = try makeTempDirectory().appendingPathComponent(".personakit")
+  try copyFixtureKit(to: globalScopeURL)
+
+  return (workspaceURL, projectScopeURL, globalScopeURL)
+}
+
 func normalizedTrailingNewline(_ value: String) -> String {
   var trimmed = value
   while trimmed.last == "\n" {

@@ -9,37 +9,55 @@ public protocol WorkspaceRelationshipMapBuilding: Sendable {
 /// Builds deterministic workspace-wide dependency maps from PersonaKit packs.
 public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding, Sendable {
   private let dependencies: WorkspaceRelationshipMapBuilderDependencies
-  private let globalScopeURL: URL?
+  private let globalScope: @Sendable () -> URL?
 
   public init(globalScopeURL: URL? = nil) {
     let dependencies = WorkspaceRelationshipMapBuilderDependencies.live()
-    self.dependencies = dependencies
-
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
   }
 
   public init(
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceRelationshipMapBuilderDependencies
   ) {
-    self.dependencies = dependencies
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
+  }
 
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+  /// Reads the global scope through a late-bindable provider, resolved at build time
+  /// rather than frozen at `init`.
+  public init(globalScopeProvider: @escaping @Sendable () -> URL?) {
+    self.init(
+      globalScopeProvider: globalScopeProvider,
+      dependencies: .live()
+    )
+  }
+
+  /// Designated late-bindable provider init with injected dependencies.
+  init(
+    globalScopeProvider: @escaping @Sendable () -> URL?,
+    dependencies: WorkspaceRelationshipMapBuilderDependencies
+  ) {
+    self.dependencies = dependencies
+    self.globalScope = globalScopeProvider
   }
 
   public func build(workspaceURL: URL) throws -> WorkspaceSessionMap {
     let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
     let scopes = ScopeSet(
       projectScopeURL: projectScopeURL,
-      globalScopeURL: globalScopeURL
+      globalScopeURL: globalScope()
     )
 
     let registry: Registry

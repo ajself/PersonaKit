@@ -6,40 +6,42 @@ extension WorkspaceStore {
   public static func launchConfigured(
     environment: [String: String] = ProcessInfo.processInfo.environment
   ) -> WorkspaceStore {
-    guard
-      let globalScopeURL = StudioLaunchConfiguration.globalScopeURL(
-        environment: environment
-      )
-    else {
-      return WorkspaceStore()
-    }
+    let provider = WorkspaceGlobalScopeProvider(
+      initialURL: StudioLaunchConfiguration.globalScopeURL(environment: environment),
+      fallback: { WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default) }
+    )
 
-    return WorkspaceStore(globalScopeURL: globalScopeURL)
+    return WorkspaceStore(globalScopeProvider: provider)
   }
 
-  public convenience init(globalScopeURL: URL) {
+  /// Builds a store whose snapshot/validation/preview/maps read the global library
+  /// through a late-bindable provider, so a post-launch grant can be applied via
+  /// ``setGlobalScope(_:)`` without rebuilding the store.
+  public convenience init(globalScopeProvider: WorkspaceGlobalScopeProvider) {
+    let scope: @Sendable () -> URL? = { globalScopeProvider.current() }
     let sessionManager = WorkspaceSessionManager()
     let livePreviewDependencies = WorkspaceSessionPreviewManagerDependencies.live()
     let previewDependencies = WorkspaceSessionPreviewManagerDependencies(
       directoryExists: livePreviewDependencies.directoryExists,
       fileExists: livePreviewDependencies.fileExists,
-      defaultGlobalScopeURL: { globalScopeURL },
+      defaultGlobalScopeURL: scope,
       createDirectory: livePreviewDependencies.createDirectory,
       writeData: livePreviewDependencies.writeData
     )
 
     self.init(
-      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeURL: globalScopeURL),
-      workspaceValidator: WorkspaceValidator(globalScopeURL: globalScopeURL),
+      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeProvider: scope),
+      workspaceValidator: WorkspaceValidator(globalScopeProvider: scope),
       sessionManager: sessionManager,
       sessionPreviewManager: WorkspaceSessionPreviewManager(
         sessionManager: sessionManager,
         dependencies: previewDependencies
       ),
-      sessionMapBuilder: WorkspaceSessionMapBuilder(globalScopeURL: globalScopeURL),
+      sessionMapBuilder: WorkspaceSessionMapBuilder(globalScopeProvider: scope),
       workspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilder(
-        globalScopeURL: globalScopeURL
-      )
+        globalScopeProvider: scope
+      ),
+      globalScopeProvider: globalScopeProvider
     )
   }
 }

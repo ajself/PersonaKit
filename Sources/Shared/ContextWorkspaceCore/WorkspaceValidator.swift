@@ -4,18 +4,18 @@ import Foundation
 /// Public validation bridge between Studio and PersonaKit validator internals.
 public struct WorkspaceValidator: WorkspaceValidating, Sendable {
   private let dependencies: WorkspaceValidatorDependencies
-  private let globalScopeURL: URL?
+  private let globalScope: @Sendable () -> URL?
 
   /// Creates a workspace validator with live filesystem behavior.
   public init(globalScopeURL: URL? = nil) {
     let dependencies = WorkspaceValidatorDependencies.live()
-    self.dependencies = dependencies
-
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
   }
 
   /// Creates a workspace validator with injected dependencies (for tests).
@@ -23,13 +23,31 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceValidatorDependencies
   ) {
-    self.dependencies = dependencies
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
+  }
 
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+  /// Creates a workspace validator reading the global scope through a late-bindable
+  /// provider, resolved at validation time rather than frozen at `init`.
+  public init(globalScopeProvider: @escaping @Sendable () -> URL?) {
+    self.init(
+      globalScopeProvider: globalScopeProvider,
+      dependencies: .live()
+    )
+  }
+
+  /// Designated late-bindable provider init with injected dependencies.
+  init(
+    globalScopeProvider: @escaping @Sendable () -> URL?,
+    dependencies: WorkspaceValidatorDependencies
+  ) {
+    self.dependencies = dependencies
+    self.globalScope = globalScopeProvider
   }
 
   /// Validates project/global scopes for a selected workspace.
@@ -39,7 +57,7 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
   /// - Throws: ``WorkspaceSnapshotBuildError`` when `.personakit/Packs` is missing.
   public func validate(workspaceURL: URL) throws -> WorkspaceValidationSnapshot {
     let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
-    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScopeURL)
+    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScope())
     let result = try dependencies.validateScopes(scopes)
 
     return WorkspaceValidationSnapshot(

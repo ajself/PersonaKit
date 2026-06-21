@@ -151,6 +151,9 @@ public final class WorkspaceStore {
   let sessionFeatureModel: WorkspaceSessionFeatureModel
   let validationFeatureModel: WorkspaceValidationFeatureModel
   var recentWorkspacesFeatureModel: StudioRecentWorkspacesFeatureModel
+  // Backs the late-bindable global scope read by this store's builders/validator.
+  // Non-nil only on the launch-configured path; `setGlobalScope` is a no-op without it.
+  let globalScopeProvider: WorkspaceGlobalScopeProvider?
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -168,8 +171,11 @@ public final class WorkspaceStore {
     pasteboardWriter: any PasteboardWriting = PasteboardClient(),
     fileRevealer: any FileRevealing = FileRevealerClient(),
     installEnvironment: any WorkspaceInstallEnvironmentProviding =
-      WorkspaceInstallEnvironmentClient()
+      WorkspaceInstallEnvironmentClient(),
+    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil
   ) {
+    self.globalScopeProvider = globalScopeProvider
+
     let resolvedEssentialManager =
       essentialManager
       ?? WorkspaceEssentialManager()

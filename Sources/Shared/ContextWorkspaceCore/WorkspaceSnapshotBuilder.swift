@@ -4,20 +4,20 @@ import Foundation
 /// Loads deterministic, read-only Studio lists from PersonaKit project/global scopes.
 public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
   private let dependencies: WorkspaceSnapshotBuilderDependencies
-  private let globalScopeURL: URL?
+  private let globalScope: @Sendable () -> URL?
 
   /// Creates a snapshot builder.
   ///
   /// - Parameter globalScopeURL: Optional global scope override. Defaults to `~/.personakit` if present.
   public init(globalScopeURL: URL? = nil) {
     let dependencies = WorkspaceSnapshotBuilderDependencies.live()
-    self.dependencies = dependencies
-
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
   }
 
   /// Creates a snapshot builder with injected dependencies (for tests).
@@ -25,13 +25,31 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
     globalScopeURL: URL? = nil,
     dependencies: WorkspaceSnapshotBuilderDependencies
   ) {
-    self.dependencies = dependencies
+    self.init(
+      globalScopeProvider: makeGlobalScopeProvider(
+        explicit: globalScopeURL,
+        default: dependencies.defaultGlobalScopeURL
+      ),
+      dependencies: dependencies
+    )
+  }
 
-    if let globalScopeURL {
-      self.globalScopeURL = globalScopeURL.standardizedFileURL
-    } else {
-      self.globalScopeURL = dependencies.defaultGlobalScopeURL()
-    }
+  /// Creates a snapshot builder reading the global scope through a late-bindable
+  /// provider, resolved at build time rather than frozen at `init`.
+  public init(globalScopeProvider: @escaping @Sendable () -> URL?) {
+    self.init(
+      globalScopeProvider: globalScopeProvider,
+      dependencies: .live()
+    )
+  }
+
+  /// Designated late-bindable provider init with injected dependencies.
+  init(
+    globalScopeProvider: @escaping @Sendable () -> URL?,
+    dependencies: WorkspaceSnapshotBuilderDependencies
+  ) {
+    self.dependencies = dependencies
+    self.globalScope = globalScopeProvider
   }
 
   /// Builds a workspace snapshot for Studio list rendering.
@@ -44,7 +62,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
     try checkCancellation()
 
     let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
-    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScopeURL)
+    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScope())
 
     do {
       try dependencies.validateRegistry(scopes)

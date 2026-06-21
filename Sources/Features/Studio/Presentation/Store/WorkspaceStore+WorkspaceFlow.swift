@@ -151,6 +151,19 @@ extension WorkspaceStore {
     }
   }
 
+  /// Applies a user-granted global library scope (or clears it with `nil`) and reloads
+  /// the open workspace so snapshot, validation, and maps re-resolve against it.
+  ///
+  /// No-op when this store was not launch-configured with a late-bindable provider.
+  public func setGlobalScope(_ url: URL?) {
+    guard let globalScopeProvider else {
+      return
+    }
+
+    globalScopeProvider.setURL(url)
+    loadWorkspace()
+  }
+
   /// Reloads workspace data into the current snapshot and error state.
   func loadWorkspace() {
     libraryFeatureModel.invalidateRequests()
