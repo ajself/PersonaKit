@@ -340,6 +340,28 @@ public enum ResolverError: Error, Equatable {
     }
   }
 
+  /// `true` when the failure is an unresolved reference to a shared entity or file
+  /// that a not-yet-connected scope (e.g. the global library) could still satisfy —
+  /// as opposed to an authorization conflict or a malformed session file, which no
+  /// additional scope can fix.
+  public var isUnresolvedReference: Bool {
+    switch self {
+    case .missingPersona,
+      .missingDirective,
+      .missingKitId,
+      .missingIntentId,
+      .missingReferenceId,
+      .missingSkillId,
+      .missingEssentialFile:
+      return true
+    case .conflictingPersonaSkillId,
+      .conflictingPersonaSkillCapability,
+      .unauthorizedSkillId,
+      .invalidSession:
+      return false
+    }
+  }
+
   /// Human-readable error message used in CLI and MCP output.
   public var message: String {
     switch self {

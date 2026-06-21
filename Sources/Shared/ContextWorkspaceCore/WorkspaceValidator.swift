@@ -76,7 +76,8 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       field: error.field,
       filePath: resolveFilePath(error.expectedPath, scopes: scopes),
       message: error.message,
-      severity: .error
+      severity: .error,
+      referencesUnresolvedID: error.referencesUnresolvedID
     )
   }
 

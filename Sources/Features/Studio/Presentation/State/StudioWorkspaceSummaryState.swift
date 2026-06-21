@@ -62,11 +62,26 @@ struct StudioWorkspaceSummaryState: Equatable, Sendable {
     workspaceURL: URL,
     snapshot: WorkspaceSnapshot,
     validation: WorkspaceValidationSnapshot,
-    validationErrorMessage: String?
+    validationErrorMessage: String?,
+    globalLibraryConnected: Bool = true
   ) {
     workspacePath = workspaceURL.standardizedFileURL.path()
+    // While the global library is disconnected, fold unresolved-reference issues out of
+    // the headline count so it matches the Validation Results panel (which shows the
+    // Connect banner instead of those false errors).
+    let countedValidation: WorkspaceValidationSnapshot
+
+    if globalLibraryConnected {
+      countedValidation = validation
+    } else {
+      countedValidation = WorkspaceValidationSnapshot(
+        summary: validation.summary,
+        issues: validation.issues.filter { !$0.referencesUnresolvedID }
+      )
+    }
+
     validationStatus = StudioWorkspaceValidationStatus.status(
-      validation: validation,
+      validation: countedValidation,
       validationErrorMessage: validationErrorMessage
     )
     counts = [

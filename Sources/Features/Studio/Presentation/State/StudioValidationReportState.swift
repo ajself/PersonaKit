@@ -42,21 +42,49 @@ struct StudioValidationReportState: Equatable, Sendable {
   let areaRows: [StudioValidationAreaRow]
   let omittedAreaTitles: [String]
   let issues: [WorkspaceValidationIssue]
+  /// Reference-missing issues hidden from the displayed list because the global library
+  /// is not connected; they cannot be verified, so the panel surfaces a single Connect
+  /// prompt instead of reporting each as a hard error.
+  let suppressedGlobalReferenceIssues: [WorkspaceValidationIssue]
 
   init(
     snapshot: WorkspaceSnapshot,
     validation: WorkspaceValidationSnapshot,
-    validationErrorMessage: String?
+    validationErrorMessage: String?,
+    globalLibraryConnected: Bool = true
   ) {
+    // While the global library is disconnected, unresolved references to shared entities
+    // can't be verified — fold them into the Connect prompt instead of showing them as
+    // errors. Once connected (or in scopes where global is always readable) every issue
+    // is shown as-is.
+    let displayedIssues: [WorkspaceValidationIssue]
+
+    if globalLibraryConnected {
+      displayedIssues = validation.issues
+      suppressedGlobalReferenceIssues = []
+    } else {
+      displayedIssues = validation.issues.filter { !$0.referencesUnresolvedID }
+      suppressedGlobalReferenceIssues = validation.issues.filter(\.referencesUnresolvedID)
+    }
+
     status = StudioWorkspaceValidationStatus.status(
-      validation: validation,
+      validation: WorkspaceValidationSnapshot(
+        summary: validation.summary,
+        issues: displayedIssues
+      ),
       validationErrorMessage: validationErrorMessage
     )
-    issues = validation.issues
+    issues = displayedIssues
 
-    let rows = Self.allAreaRows(snapshot: snapshot, issues: validation.issues)
+    let rows = Self.allAreaRows(snapshot: snapshot, issues: displayedIssues)
     areaRows = rows.filter { $0.count > 0 }
     omittedAreaTitles = rows.filter { $0.count == 0 }.map(\.title)
+  }
+
+  /// `true` when the global library is disconnected and at least one reference-missing
+  /// issue was folded away — the panel should show the single Connect prompt.
+  var showsGlobalLibraryBanner: Bool {
+    !suppressedGlobalReferenceIssues.isEmpty
   }
 
   var statusHeadline: String {

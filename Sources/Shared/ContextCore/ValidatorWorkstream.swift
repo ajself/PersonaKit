@@ -213,10 +213,15 @@ enum ValidatorWorkstreamValidator {
         )
       } catch let error as SessionFileError {
         let message: String
+        // A node session absent from every connected scope is a cross-scope reference
+        // the global library could still satisfy; the other failures are malformed
+        // files no extra scope can fix.
+        var referencesUnresolvedID = false
 
         switch error {
         case .notFound:
           message = "Missing session file for workstream node id \"\(sessionId)\"."
+          referencesUnresolvedID = true
         case .idMismatch:
           message = "Workstream node session id \"\(sessionId)\" failed to resolve: \(error.localizedDescription)"
         case .decodeFailed:
@@ -234,7 +239,8 @@ enum ValidatorWorkstreamValidator {
             field: "workstream.nodes.sessionId",
             missingId: sessionId,
             expectedPath: SessionFileLoader.expectedPath(for: sessionId),
-            message: message
+            message: message,
+            referencesUnresolvedID: referencesUnresolvedID
           )
         )
       } catch {

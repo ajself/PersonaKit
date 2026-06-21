@@ -122,6 +122,61 @@ struct StudioValidationReportStateTests {
   }
 
   @Test
+  func disconnectedGlobalLibraryFoldsReferenceIssuesIntoBanner() {
+    let report = StudioValidationReportState(
+      snapshot: snapshot(),
+      validation: WorkspaceValidationSnapshot(
+        summary: "Validation summary: errors=2",
+        issues: [referenceMissingIssue(), structuralIssue()]
+      ),
+      validationErrorMessage: nil,
+      globalLibraryConnected: false
+    )
+
+    // The unresolved reference is folded into the banner; the structural error stays.
+    #expect(report.showsGlobalLibraryBanner)
+    #expect(report.suppressedGlobalReferenceIssues.map(\.field) == ["personaId"])
+    #expect(report.issues.map(\.field) == ["schema"])
+    #expect(report.issueCountText == "1 issue")
+    #expect(report.affectedFilesText == "1 affected file")
+  }
+
+  @Test
+  func disconnectedGlobalLibraryWithOnlyReferenceIssuesReadsCleanBehindBanner() {
+    let report = StudioValidationReportState(
+      snapshot: snapshot(),
+      validation: WorkspaceValidationSnapshot(
+        summary: "Validation summary: errors=1",
+        issues: [referenceMissingIssue()]
+      ),
+      validationErrorMessage: nil,
+      globalLibraryConnected: false
+    )
+
+    #expect(report.showsGlobalLibraryBanner)
+    #expect(report.issues.isEmpty)
+    #expect(report.statusHeadline == "No validation issues reported")
+  }
+
+  @Test
+  func connectedGlobalLibraryShowsReferenceIssuesAsRealErrors() {
+    let report = StudioValidationReportState(
+      snapshot: snapshot(),
+      validation: WorkspaceValidationSnapshot(
+        summary: "Validation summary: errors=2",
+        issues: [referenceMissingIssue(), structuralIssue()]
+      ),
+      validationErrorMessage: nil,
+      globalLibraryConnected: true
+    )
+
+    #expect(!report.showsGlobalLibraryBanner)
+    #expect(report.suppressedGlobalReferenceIssues.isEmpty)
+    #expect(report.issues.count == 2)
+    #expect(report.statusHeadline == "2 issues need review")
+  }
+
+  @Test
   func issueGroupUsesEntityAwareNavigationLabels() throws {
     let entityGroup = try #require(
       StudioDiagnosticsIssueGrouping.groups(for: sessionIssues()).first
@@ -190,6 +245,30 @@ struct StudioValidationReportStateTests {
       displayName: id,
       fileURL: URL(fileURLWithPath: "/Workspace/.personakit/\(path)"),
       sourceScope: .project
+    )
+  }
+
+  private func referenceMissingIssue() -> WorkspaceValidationIssue {
+    WorkspaceValidationIssue(
+      entityType: .session,
+      entityId: "session-0",
+      field: "personaId",
+      filePath: "Packs/Sessions/session-0.session.json",
+      message: "Session personaId references missing persona id \"persona-z\".",
+      severity: .error,
+      referencesUnresolvedID: true
+    )
+  }
+
+  private func structuralIssue() -> WorkspaceValidationIssue {
+    WorkspaceValidationIssue(
+      entityType: .session,
+      entityId: "session-0",
+      field: "schema",
+      filePath: "Packs/Sessions/session-0.session.json",
+      message: "Failed to decode session JSON.",
+      severity: .error,
+      referencesUnresolvedID: false
     )
   }
 

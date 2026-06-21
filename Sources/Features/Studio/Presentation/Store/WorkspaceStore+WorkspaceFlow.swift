@@ -1,4 +1,5 @@
 import ContextCore
+import ContextWorkspaceCore
 import Foundation
 
 extension WorkspaceStore {
@@ -149,6 +150,40 @@ extension WorkspaceStore {
         "Failed to initialize PersonaKit structure: \(error.localizedDescription)"
       canInitializeWorkspaceStructure = false
     }
+  }
+
+  /// `true` when the global PersonaKit library is currently readable — either through a
+  /// user grant applied to this store's provider, or (in unsandboxed builds) the live
+  /// `~/.personakit` default. While `false`, unresolved shared-entity references can't be
+  /// verified, so Studio surfaces the Connect prompt instead of per-reference errors.
+  var isGlobalLibraryConnected: Bool {
+    if let globalScopeProvider {
+      return globalScopeProvider.current() != nil
+    }
+
+    return WorkspaceScopeResolver.defaultGlobalScopeURL() != nil
+  }
+
+  /// Presents the global-library folder picker, persists the grant for future launches,
+  /// applies it to the live provider, and revalidates the open workspace. A picked folder
+  /// without a `Packs/` directory is accepted but flagged with a non-blocking warning —
+  /// connecting a wrong or empty root leaves any genuine breakage visible as real errors.
+  func connectGlobalLibrary() {
+    globalLibraryConnectWarning = nil
+
+    guard let pickedURL = globalLibraryPicker.pickGlobalLibraryURL() else {
+      return
+    }
+
+    let grantedURL = pickedURL.standardizedFileURL
+    globalLibraryAccess?.persist(grantedURL: grantedURL)
+
+    if !WorkspaceScopeResolver.directoryExists(PersonaKitDirectory.packsURL(root: grantedURL)) {
+      globalLibraryConnectWarning =
+        "The selected folder has no Packs directory, so it may not be a PersonaKit library."
+    }
+
+    setGlobalScope(grantedURL)
   }
 
   /// Applies a user-granted global library scope (or clears it with `nil`) and reloads

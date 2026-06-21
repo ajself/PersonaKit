@@ -101,7 +101,8 @@ enum ValidatorSupport {
       field: error.field,
       missingId: error.missingId,
       expectedPath: expectedPath,
-      message: error.message
+      message: error.message,
+      referencesUnresolvedID: error.isUnresolvedReference
     )
   }
 

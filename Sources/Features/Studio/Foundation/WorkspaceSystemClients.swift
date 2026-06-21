@@ -8,6 +8,12 @@ public protocol WorkspacePicking {
   func pickWorkspaceURL() -> URL?
 }
 
+/// Picks the global PersonaKit library folder to grant Studio read access to.
+public protocol GlobalLibraryDirectoryPicking {
+  @MainActor
+  func pickGlobalLibraryURL() -> URL?
+}
+
 /// Picks a markdown export destination for session preview output.
 public protocol PreviewExportDestinationPicking {
   @MainActor
@@ -90,6 +96,33 @@ public struct WorkspacePickerClient: WorkspacePicking {
     panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
     panel.message = "Choose a folder to use as the PersonaKit workspace."
     panel.prompt = "Open Workspace"
+
+    guard panel.runModal() == .OK else {
+      return nil
+    }
+
+    return panel.url
+  }
+}
+
+/// macOS open-panel implementation for granting the global PersonaKit library.
+///
+/// Defaults to `~/.personakit` but accepts any folder, mirroring the project-workspace
+/// open-panel pattern. The folder is sanity-checked for a `Packs/` directory by the
+/// caller (a non-blocking warning), not here.
+public struct GlobalLibraryDirectoryPickerClient: GlobalLibraryDirectoryPicking {
+  public init() {}
+
+  @MainActor
+  public func pickGlobalLibraryURL() -> URL? {
+    let panel = NSOpenPanel()
+    panel.canChooseDirectories = true
+    panel.canChooseFiles = false
+    panel.allowsMultipleSelection = false
+    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent(".personakit")
+    panel.message = "Choose the global PersonaKit library folder to connect."
+    panel.prompt = "Connect Library"
 
     guard panel.runModal() == .OK else {
       return nil

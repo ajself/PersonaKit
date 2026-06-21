@@ -46,7 +46,8 @@ struct ValidatorTests {
           field: "essentialIds",
           missingId: "contract-boundaries",
           expectedPath: "Packs/essentials/contract-boundaries.md",
-          message: "Missing essential file at Packs/essentials/contract-boundaries.md."
+          message: "Missing essential file at Packs/essentials/contract-boundaries.md.",
+          referencesUnresolvedID: true
         )
       ]
     )
@@ -347,7 +348,8 @@ struct ValidatorTests {
           field: "defaultKitIds",
           missingId: "unknown-kit",
           expectedPath: nil,
-          message: "Missing kit id \"unknown-kit\"."
+          message: "Missing kit id \"unknown-kit\".",
+          referencesUnresolvedID: true
         )
       ]
     )

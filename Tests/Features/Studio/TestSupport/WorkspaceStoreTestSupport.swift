@@ -324,6 +324,15 @@ struct WorkspaceStoreStubWorkspacePicker: WorkspacePicking {
   }
 }
 
+struct WorkspaceStoreStubGlobalLibraryPicker: GlobalLibraryDirectoryPicking {
+  let selectedURL: URL?
+
+  @MainActor
+  func pickGlobalLibraryURL() -> URL? {
+    selectedURL
+  }
+}
+
 struct WorkspaceStoreStubPreviewExportDestinationPicker: PreviewExportDestinationPicking {
   let destinationURL: URL?
 

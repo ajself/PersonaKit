@@ -80,7 +80,8 @@ public enum WorkspaceSessionDiagnostics {
             field: "personaId",
             filePath: fileURL.path(),
             message: "Session personaId references missing persona id \"\(document.personaId)\".",
-            severity: .error
+            severity: .error,
+            referencesUnresolvedID: true
           )
         )
       }
@@ -93,7 +94,8 @@ public enum WorkspaceSessionDiagnostics {
             field: "directiveId",
             filePath: fileURL.path(),
             message: "Session directiveId references missing directive id \"\(document.directiveId)\".",
-            severity: .error
+            severity: .error,
+            referencesUnresolvedID: true
           )
         )
       }
@@ -114,7 +116,8 @@ public enum WorkspaceSessionDiagnostics {
             field: "kitOverrides",
             filePath: fileURL.path(),
             message: "Session kitOverrides references missing kit id \"\(kitID)\".",
-            severity: .error
+            severity: .error,
+            referencesUnresolvedID: true
           )
         )
       }

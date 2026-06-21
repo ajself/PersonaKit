@@ -28,6 +28,8 @@ extension WorkspaceStore {
       fallback: { WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default) }
     )
 
+    // Route through the provider-wiring convenience init so the builders/validator read
+    // the late-bindable box — otherwise the grant updates the box but nothing reads it.
     return WorkspaceStore(
       globalScopeProvider: provider,
       globalLibraryAccess: globalLibraryAccess
@@ -37,7 +39,11 @@ extension WorkspaceStore {
   /// Builds a store whose snapshot/validation/preview/maps read the global library
   /// through a late-bindable provider, so a post-launch grant can be applied via
   /// ``setGlobalScope(_:)`` without rebuilding the store.
-  public convenience init(globalScopeProvider: WorkspaceGlobalScopeProvider) {
+  public convenience init(
+    globalScopeProvider: WorkspaceGlobalScopeProvider,
+    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
+    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
+  ) {
     let scope: @Sendable () -> URL? = { globalScopeProvider.current() }
     let sessionManager = WorkspaceSessionManager()
     let livePreviewDependencies = WorkspaceSessionPreviewManagerDependencies.live()
@@ -61,7 +67,9 @@ extension WorkspaceStore {
       workspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilder(
         globalScopeProvider: scope
       ),
-      globalScopeProvider: globalScopeProvider
+      globalScopeProvider: globalScopeProvider,
+      globalLibraryAccess: globalLibraryAccess,
+      globalLibraryPicker: globalLibraryPicker
     )
   }
 }

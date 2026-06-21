@@ -135,6 +135,17 @@ struct WorkspaceSessionDiagnosticsTests {
     #expect(hasMissingPersonaIssue)
     #expect(hasMissingDirectiveIssue)
     #expect(hasMissingKitIssue)
+
+    // Reference issues are tagged for the global-library banner; structural ones are not.
+    let referenceFields = Set(
+      issues.filter(\.referencesUnresolvedID).map(\.field)
+    )
+    #expect(referenceFields == ["personaId", "directiveId", "kitOverrides"])
+    #expect(
+      issues
+        .filter { $0.field == "json" || $0.field == "id" }
+        .allSatisfy { !$0.referencesUnresolvedID }
+    )
   }
 
   @Test

@@ -88,6 +88,53 @@ struct StudioWorkspaceSummaryStateTests {
   }
 
   @Test
+  func summaryFoldsReferenceIssuesOutOfCountWhenGlobalLibraryDisconnected() {
+    let validation = WorkspaceValidationSnapshot(
+      summary: "Validation summary: errors=2",
+      issues: [
+        WorkspaceValidationIssue(
+          entityType: .session,
+          entityId: "session-a",
+          field: "personaId",
+          filePath: nil,
+          message: "Session personaId references missing persona id \"persona-z\".",
+          severity: .error,
+          referencesUnresolvedID: true
+        ),
+        WorkspaceValidationIssue(
+          entityType: .session,
+          entityId: "session-a",
+          field: "json",
+          filePath: nil,
+          message: "Failed to decode session JSON.",
+          severity: .error,
+          referencesUnresolvedID: false
+        ),
+      ]
+    )
+
+    // Disconnected: the headline count matches the panel (structural error only).
+    let disconnected = StudioWorkspaceSummaryState(
+      workspaceURL: URL(fileURLWithPath: "/Workspace"),
+      snapshot: .empty,
+      validation: validation,
+      validationErrorMessage: nil,
+      globalLibraryConnected: false
+    )
+    #expect(disconnected.validationStatus == .issues(1))
+
+    // Connected: both issues count as real errors.
+    let connected = StudioWorkspaceSummaryState(
+      workspaceURL: URL(fileURLWithPath: "/Workspace"),
+      snapshot: .empty,
+      validation: validation,
+      validationErrorMessage: nil,
+      globalLibraryConnected: true
+    )
+    #expect(connected.validationStatus == .issues(2))
+  }
+
+  @Test
   func validationStatusPreservesNotRunAndFailedStates() {
     #expect(
       StudioWorkspaceValidationStatus.status(

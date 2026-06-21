@@ -94,6 +94,55 @@ struct WorkspaceValidatorTests {
   }
 
   @Test
+  func validatePropagatesUnresolvedReferenceDiscriminator() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectPacksURL = PersonaKitDirectory.packsURL(
+      root: workspaceURL.appendingPathComponent(".personakit")
+    )
+
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { url in
+        url.standardizedFileURL == projectPacksURL.standardizedFileURL
+      },
+      fileExists: { _ in false },
+      defaultGlobalScopeURL: { nil },
+      validateScopes: { _ in
+        ValidationResult(
+          counts: .zero,
+          errors: [
+            ValidationError(
+              entityType: .persona,
+              entityId: "p",
+              field: "defaultKitIds",
+              missingId: "missing-kit",
+              expectedPath: nil,
+              message: "Missing kit id \"missing-kit\".",
+              referencesUnresolvedID: true
+            ),
+            ValidationError(
+              entityType: .persona,
+              entityId: "p",
+              field: "schema",
+              missingId: nil,
+              expectedPath: nil,
+              message: "Malformed persona JSON."
+            ),
+          ]
+        )
+      }
+    )
+
+    let validator = WorkspaceValidator(globalScopeURL: nil, dependencies: dependencies)
+    let snapshot = try validator.validate(workspaceURL: workspaceURL)
+
+    let byField = Dictionary(
+      uniqueKeysWithValues: snapshot.issues.map { ($0.field, $0.referencesUnresolvedID) }
+    )
+    #expect(byField["defaultKitIds"] == true)
+    #expect(byField["schema"] == false)
+  }
+
+  @Test
   func validateFailsWhenProjectPersonaKitDirectoryIsMissing() throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
 

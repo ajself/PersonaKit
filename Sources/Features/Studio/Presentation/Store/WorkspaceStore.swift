@@ -157,6 +157,11 @@ public final class WorkspaceStore {
   // Persists/resolves the app-wide global-library grant across launches. Non-nil only on
   // the launch-configured path; the grant flow (S3) persists through it.
   let globalLibraryAccess: StudioGlobalLibraryAccess?
+  // Picks the folder to grant as the global library when the user taps Connect (S3).
+  let globalLibraryPicker: any GlobalLibraryDirectoryPicking
+  // Non-blocking notice shown after a grant whose folder doesn't look like a PersonaKit
+  // root (no `Packs/`); cleared on the next connect attempt.
+  var globalLibraryConnectWarning: String?
 
   public init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -176,10 +181,12 @@ public final class WorkspaceStore {
     installEnvironment: any WorkspaceInstallEnvironmentProviding =
       WorkspaceInstallEnvironmentClient(),
     globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
-    globalLibraryAccess: StudioGlobalLibraryAccess? = nil
+    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
+    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
   ) {
     self.globalScopeProvider = globalScopeProvider
     self.globalLibraryAccess = globalLibraryAccess
+    self.globalLibraryPicker = globalLibraryPicker
 
     let resolvedEssentialManager =
       essentialManager

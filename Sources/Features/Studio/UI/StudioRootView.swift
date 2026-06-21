@@ -279,7 +279,8 @@ public struct StudioRootView: View {
       workspaceURL: workspaceURL,
       snapshot: workspaceStore.snapshot,
       validation: workspaceStore.validation,
-      validationErrorMessage: workspaceStore.validationErrorMessage
+      validationErrorMessage: workspaceStore.validationErrorMessage,
+      globalLibraryConnected: workspaceStore.isGlobalLibraryConnected
     )
   }
 

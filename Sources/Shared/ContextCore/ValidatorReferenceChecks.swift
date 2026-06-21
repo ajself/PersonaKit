@@ -20,7 +20,8 @@ enum ValidatorReferenceChecker {
               field: "defaultKitIds",
               missingId: kitId,
               expectedPath: nil,
-              message: "Missing kit id \"\(kitId)\"."
+              message: "Missing kit id \"\(kitId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -35,7 +36,8 @@ enum ValidatorReferenceChecker {
               field: "allowedSkillIds",
               missingId: skillId,
               expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\"."
+              message: "Missing skill id \"\(skillId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -50,7 +52,8 @@ enum ValidatorReferenceChecker {
               field: "forbiddenSkillIds",
               missingId: skillId,
               expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\"."
+              message: "Missing skill id \"\(skillId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -85,7 +88,8 @@ enum ValidatorReferenceChecker {
               field: "intentTemplateIds",
               missingId: intentId,
               expectedPath: nil,
-              message: "Missing intent template id \"\(intentId)\"."
+              message: "Missing intent template id \"\(intentId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -100,7 +104,8 @@ enum ValidatorReferenceChecker {
               field: "skillIds",
               missingId: skillId,
               expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\"."
+              message: "Missing skill id \"\(skillId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -148,7 +153,8 @@ enum ValidatorReferenceChecker {
               field: "essentialIds",
               missingId: essentialId,
               expectedPath: expectedPath,
-              message: "Missing essential file at \(expectedPath)."
+              message: "Missing essential file at \(expectedPath).",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -163,7 +169,8 @@ enum ValidatorReferenceChecker {
               field: "referenceIds",
               missingId: referenceId,
               expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\"."
+              message: "Missing reference id \"\(referenceId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -182,7 +189,8 @@ enum ValidatorReferenceChecker {
               field: "requiresIntentTemplateIds",
               missingId: intentId,
               expectedPath: nil,
-              message: "Missing intent template id \"\(intentId)\"."
+              message: "Missing intent template id \"\(intentId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -197,7 +205,8 @@ enum ValidatorReferenceChecker {
               field: "requiresSkillIds",
               missingId: skillId,
               expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\"."
+              message: "Missing skill id \"\(skillId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -212,7 +221,8 @@ enum ValidatorReferenceChecker {
               field: "referenceIds",
               missingId: referenceId,
               expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\"."
+              message: "Missing reference id \"\(referenceId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -283,7 +293,8 @@ enum ValidatorReferenceChecker {
               field: "includesEssentialIds",
               missingId: essentialId,
               expectedPath: expectedPath,
-              message: "Missing essential file at \(expectedPath)."
+              message: "Missing essential file at \(expectedPath).",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -298,7 +309,8 @@ enum ValidatorReferenceChecker {
               field: "requiresSkillIds",
               missingId: skillId,
               expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\"."
+              message: "Missing skill id \"\(skillId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
@@ -313,7 +325,8 @@ enum ValidatorReferenceChecker {
               field: "referenceIds",
               missingId: referenceId,
               expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\"."
+              message: "Missing reference id \"\(referenceId)\".",
+              referencesUnresolvedID: true
             )
           )
         }
