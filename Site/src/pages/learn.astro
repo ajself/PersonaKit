@@ -141,11 +141,11 @@ personakit export --root .personakit --session behavior-review`;
   <p>You define a session as the entry point. PersonaKit composes reusable parts into the resolved contract. Operators should not have to copy the same careful-review paragraph into every prompt or maintain several nearly identical skills just to change a boundary.</p>
 
   <div class="grid three compose-grid">
-    <article class="card">
+    <article class="card" id="persona">
       <h3>Persona</h3>
       <p>Who is acting.</p>
     </article>
-    <article class="card">
+    <article class="card" id="directive">
       <h3>Directive</h3>
       <p>What kind of work this is.</p>
     </article>
@@ -161,7 +161,7 @@ personakit export --root .personakit --session behavior-review`;
       <h3>Essentials</h3>
       <p>Required grounding that belongs in the resolved payload.</p>
     </article>
-    <article class="card">
+    <article class="card" id="skills">
       <h3>Skills</h3>
       <p>Capabilities that may be authorized or forbidden for this lane.</p>
     </article>
