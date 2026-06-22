@@ -90,14 +90,14 @@ personakit export --root personakit-root --session cli-maintenance`;
             <h3>The boundary erodes</h3>
             <p>You asked for a code review. The agent found something obvious and fixed it while it was there. You wanted findings; you got a diff.</p>
           </div>
-          <p class="scenario-fix"><strong>With PersonaKit:</strong> the review session declares implementation forbidden, and that is visible before work starts.</p>
+          <p class="scenario-fix"><strong>With PersonaKit:</strong> the review session declares implementation forbidden, and that is visible before work starts. <a href={sitePath("examples/review-session/")}>See the contract &rarr;</a></p>
         </article>
         <article class="scenario">
           <div class="scenario-body">
             <h3>The setup disappears</h3>
             <p>The first ten minutes go to explaining the rules: leave the CLI output alone, flag any public API change, stop before pushing. Next session, same rules, same typing. The work mode lived in chat, and chat ended.</p>
           </div>
-          <p class="scenario-fix"><strong>With PersonaKit:</strong> the rules live in the repo, and the session starts with the contract already resolved.</p>
+          <p class="scenario-fix"><strong>With PersonaKit:</strong> the rules live in the repo, and the session starts with the contract already resolved. <a href={sitePath("examples/cli-maintenance/")}>See the contract &rarr;</a></p>
         </article>
         <article class="scenario">
           <div class="scenario-body">
@@ -111,7 +111,7 @@ personakit export --root personakit-root --session cli-maintenance`;
             <h3>The capable agent does the wrong extra thing</h3>
             <p>The agent has git, file editing, and bash. For this session, only file reading was appropriate. Nothing said so, and it did what it could rather than what you meant.</p>
           </div>
-          <p class="scenario-fix"><strong>With PersonaKit:</strong> the contract declares what is authorized, not just what is available, so the agent knows the boundary before it starts.</p>
+          <p class="scenario-fix"><strong>With PersonaKit:</strong> the contract declares what is authorized, not just what is available, so the agent knows the boundary before it starts. <a href={sitePath("examples/mcp-grounding/")}>See the contract &rarr;</a></p>
         </article>
       </div>
     </section>
@@ -180,6 +180,7 @@ personakit export --root personakit-root --session cli-maintenance`;
           <a class="button-link" href={sitePath("start-here/")}>Run the first contract</a>
         </article>
       </div>
+      <p class="section-note">These commands assume a clone of the PersonaKit repo, where the example root lives under <code>Site/public/examples</code>. In your own project, point <code>--root</code> at your <code>.personakit</code> folder.</p>
     </section>
 
     <section>
@@ -189,7 +190,7 @@ personakit export --root personakit-root --session cli-maintenance`;
         alt="Session, persona, directive, kits, intents, essentials, references, and skill authorization resolving into an operating contract for an agent."
       />
       <Callout>
-        <p><strong>PersonaKit is not the worker.</strong> It prepares the contract. Your coding agent or harness performs the work.</p>
+        <p><strong>Same inputs, same contract, every time.</strong> Resolution is deterministic, so the boundary the agent receives is one you can review before any work happens.</p>
       </Callout>
     </section>
 
@@ -369,6 +370,12 @@ personakit export --root personakit-root --session cli-maintenance`;
 
   .scenario-fix strong {
     color: var(--blue);
+  }
+
+  .scenario-fix a {
+    color: var(--accent);
+    font-weight: 650;
+    white-space: nowrap;
   }
 
   .principle {
