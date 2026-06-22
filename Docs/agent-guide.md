@@ -1,10 +1,16 @@
 # PersonaKit For Agents
 
+You have capabilities the current task may not call for. You can edit files, run
+commands, reach the network, maybe loop on your own. For a given session only
+some of that is appropriate, and nothing in the file tree tells you which. A tool
+being available is not the same as being authorized. PersonaKit resolves that
+boundary into a contract you read before you act.
+
 ## Why This Exists
 
 This guide is for an AI coding agent encountering PersonaKit in a project for the
 first time. It tells you what PersonaKit is, how to orient yourself, which surface
-to use, and — just as important — what PersonaKit deliberately does *not* do, so
+to use, and, just as important, what PersonaKit deliberately does *not* do, so
 you don't waste effort building workarounds for responsibilities that belong
 elsewhere.
 

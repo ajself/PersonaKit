@@ -2,9 +2,9 @@
 
 ## Why This Exists
 
-PersonaKit MCP gives AI tools a read-only way to discover and resolve PersonaKit operating contracts.
+PersonaKit MCP lets an agent resolve the active operating contract before it picks tools, skills, or files: who is acting, what is allowed, what is forbidden, and when to stop.
 
-It is for grounding, inspection, and provenance. It is not an execution lane. For handoff context, use `personakit export`.
+Connecting a server makes context available; the contract decides whether it should be used this session. The MCP surface is read-only grounding, not an execution lane. For handoff context, use `personakit export`.
 
 ## What To Do
 
