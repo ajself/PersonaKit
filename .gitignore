@@ -91,3 +91,7 @@ Site/node_modules/
 ### Local planning notes ###
 # Tracker documents useful for n+1 agent sessions, but ephemeral in total.
 .plans/
+
+### Local agent tooling ###
+# Claude Code per-user settings and preview/launch helpers; never shared.
+.claude/
