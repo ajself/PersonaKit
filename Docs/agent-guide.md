@@ -23,9 +23,9 @@ is about *consuming* PersonaKit from any host.
 **A PersonaKit contract is authoritative intent. Enforcement is the host or
 sandbox.**
 
-PersonaKit resolves a deterministic operating contract — who to act as, what work
+PersonaKit resolves a deterministic operating contract (who to act as, what work
 mode is active, which capabilities are allowed, which are forbidden, and where to
-stop — and exports it as inspectable text. PersonaKit does not run anything, watch
+stop) and exports it as inspectable text. PersonaKit does not run anything, watch
 anything, or enforce anything. It states what *should* be true; your host decides
 what actually happens.
 
@@ -35,10 +35,10 @@ the contract describes intent; you and your host carry it out.
 ## Orient Yourself First
 
 Do not start by guessing what exists. PersonaKit content can come from a project
-`.personakit/` directory, a global `~/.personakit/`, or both merged together — and
+`.personakit/` directory, a global `~/.personakit/`, or both merged together, and
 you usually cannot tell which from the file tree alone. Ask the tool.
 
-**CLI — run this first:**
+**CLI, run this first:**
 
 ```bash
 personakit guidance
@@ -50,13 +50,13 @@ risks (e.g. "current directory contains a project `.personakit` not in the loade
 scope set"), suggested next actions, and suggested commands. This is the "start
 here" command. Treat it as your map before you trust anything else.
 
-If `guidance` reports a scope mismatch — the most common surprise — control which
+If `guidance` reports a scope mismatch, the most common surprise, control which
 root loads with `--root <path>` (or disable discovery with `--no-project` /
 `--no-global`). These scope flags work on every command, so once you know the
 intended root you can pin it explicitly: `personakit validate --root <path>`,
 `personakit contract --root <path> --session <id>`, and so on.
 
-**MCP — read this first:**
+**MCP, read this first:**
 
 ```text
 personakit://catalog/start
@@ -71,10 +71,10 @@ first." From there: `personakit://catalog/sessions` (or call
 Both surfaces expose the same deterministic engine. Use whichever your host has
 connected:
 
-- If a PersonaKit **MCP server is connected**, prefer it — `personakit://catalog/*`
+- If a PersonaKit **MCP server is connected**, prefer it: `personakit://catalog/*`
   resources and the `personakit_*` tools give you structured grounding without
   shelling out.
-- If **no MCP server is connected** (the common case in a fresh host — PersonaKit
+- If **no MCP server is connected** (the common case in a fresh host, where PersonaKit
   does not auto-connect anywhere), use the **CLI**. Start with `personakit guidance`.
 
 Neither surface authorizes execution, writes, or orchestration. MCP in particular
@@ -82,7 +82,7 @@ is read-only by design.
 
 ## The Normal Flow
 
-1. `personakit guidance` (CLI) or read `personakit://catalog/start` (MCP) — orient.
+1. `personakit guidance` (CLI) or read `personakit://catalog/start` (MCP) to orient.
 2. List or recommend a session: `personakit list sessions`, or
    `personakit recommend --goal "<task>"`.
 3. Resolve the contract: `personakit contract --session <id>`. The JSON carries a
@@ -93,13 +93,13 @@ is read-only by design.
 4. Export handoff context when you need it as Markdown:
    `personakit export --session <id>` (add `--copy` or `--output <path>`). Add
    `--stats` to print a size summary (lines / bytes / sections) to stderr when you
-   need to budget the payload — it leaves the exported Markdown on stdout untouched.
+   need to budget the payload; it leaves the exported Markdown on stdout untouched.
 5. Inspect provenance if a constraint surprises you:
    `personakit graph --session <id>`.
 
 If validation fails for the relevant contract, stop and re-ground rather than
 improvising. If a contract does not authorize a skill you need, stop and
-re-ground — do not grant yourself the capability.
+re-ground; do not grant yourself the capability.
 
 ## Which Entity Is Which
 
@@ -128,15 +128,14 @@ When cleaning up a pack, trace relationships instead of grepping by hand:
 `personakit refs <id>` shows what an entity references and what references it
 (both directions), and `personakit orphans` lists entities nothing references.
 Sessions are entry points and excluded. Personas and directives are listed but
-flagged, because they remain invocable directly (`--persona` / `--directive`) —
-an unreferenced one is not necessarily dead, so review before removing. Skills,
+flagged, because they remain invocable directly (`--persona` / `--directive`), so an unreferenced one is not necessarily dead, so review before removing. Skills,
 essentials, references, intents, and kits only matter when referenced, so an
 unreferenced one there is a safe removal candidate.
 
 ## Two Facts That Are Easy To Get Wrong
 
 - **`kitOverrides` on a session *merges*, it does not replace.** Despite the name,
-  a session's `kitOverrides` are unioned with the persona's `defaultKitIds` — the
+  a session's `kitOverrides` are unioned with the persona's `defaultKitIds`, so the
   resolved kit set is both, deduplicated. There is no way to *subtract* a default
   kit via overrides.
 - **`version` on every entity is reviewable metadata, not behavior.** PersonaKit
@@ -147,18 +146,18 @@ unreferenced one there is a safe removal candidate.
 
 PersonaKit is narrow on purpose. It is not an agent, launcher, workflow engine,
 task manager, memory system, or orchestration layer. If you find yourself wanting
-PersonaKit to do one of the following, the responsibility lives elsewhere — do not
+PersonaKit to do one of the following, the responsibility lives elsewhere, so do not
 build a workaround inside the contract:
 
 | You need… | PersonaKit's role | Where it actually lives |
 | --- | --- | --- |
-| Unattended / headless behavior at a stop point (abort, skip, defer when no human is present) | Declares the stop point and exports it under "Stop Points". That is the contract. | **Your host runner** decides what to do at each exported stop point. PersonaKit does not provide an `onNoReviewer`-style flag, by design — that is a runtime decision, not contract intent. |
-| Where output / deliverables go; tracked vs. scratch; gitignore-awareness | None — output is described in directive steps as intent, not modeled as a target | **Host or project convention.** Pick a location (e.g. a gitignored scratch dir) yourself; this is the agent's responsibility, not a PersonaKit concept. |
+| Unattended / headless behavior at a stop point (abort, skip, defer when no human is present) | Declares the stop point and exports it under "Stop Points". That is the contract. | **Your host runner** decides what to do at each exported stop point. PersonaKit does not provide an `onNoReviewer`-style flag, by design; that is a runtime decision, not contract intent. |
+| Where output / deliverables go; tracked vs. scratch; gitignore-awareness | None; output is described in directive steps as intent, not modeled as a target | **Host or project convention.** Pick a location (e.g. a gitignored scratch dir) yourself; this is the agent's responsibility, not a PersonaKit concept. |
 | Loops, multi-agent control flow, persistence, memory, task state | None | **Host or an external system.** |
-| Running a skill, shell command, or tool | None — skills are capability *metadata* for authorization | **Your host.** PersonaKit authorizes; it never executes. |
+| Running a skill, shell command, or tool | None; skills are capability *metadata* for authorization | **Your host.** PersonaKit authorizes; it never executes. |
 
 A stop point in an exported contract is a real instruction: stop and get review.
-In an unattended run with no reviewer, *that is a host decision* — the safe default
+In an unattended run with no reviewer, *that is a host decision*: the safe default
 is to halt the mutating work, not to invent a contract field that pretends to
 decide for you.
 
@@ -179,8 +178,7 @@ with `personakit create skill --capability <value>`.
 
 A persona can declare `forbiddenCapabilities` from the same vocabulary
 (`personakit create persona --forbid-capability <value>`). Resolution then flags a
-contradiction when the persona authorizes a skill whose capability it forbids — for
-example a read-only reviewer authorizing an `edit-files` skill: that skill is dropped
+contradiction when the persona authorizes a skill whose capability it forbids. For example, a read-only reviewer authorizing an `edit-files` skill: that skill is dropped
 from the authorized set, the contract reports `isAuthorized: false` with a reason, and
 `validate` surfaces the conflict. This is a capability-level generalization of
 `forbiddenSkillIds`.
@@ -190,7 +188,7 @@ from the authorized set, the contract reports `isAuthorized: false` with a reaso
 `personakit create` emits every pack file through one deterministic formatter
 (Foundation's `JSONEncoder` with `[.prettyPrinted, .sortedKeys]`), so generated
 files always share the same shape. When you hand-author or hand-edit a pack, match
-that shape exactly — otherwise the next `create` (or a regeneration) reflows the file
+that shape exactly; otherwise the next `create` (or a regeneration) reflows the file
 and your diff fills with formatting churn. The format is:
 
 - **Keys alphabetized** within every object (the `.sortedKeys` order), not authoring
@@ -201,11 +199,11 @@ and your diff fills with formatting churn. The format is:
 
 The simplest way to stay canonical is to not hand-format at all: write the fields,
 then run the file back through the emitter (regenerate it with `personakit create
-… --force`, or paste the values into a fresh `create`) so the formatter — not your
-editor — owns the byte layout.
+… --force`, or paste the values into a fresh `create`) so the formatter, not your
+editor, owns the byte layout.
 
 ## Related Docs
 
 - [Repository Overview](../README.md)
 - [PersonaKit MCP Guide](./mcp.md)
-- [AGENTS.md](../AGENTS.md) — policy for agents working *in* this repository
+- [AGENTS.md](../AGENTS.md), policy for agents working *in* this repository
