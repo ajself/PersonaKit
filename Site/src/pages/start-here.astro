@@ -30,6 +30,11 @@ const contractExcerpt = `{
 }`;
 
 const exportCommand = "personakit export --root personakit-root --session cli-maintenance";
+
+const fastPathCommands = `cd Site/public/examples/swift-cli-maintenance
+personakit validate --root personakit-root
+personakit contract --root personakit-root --session cli-maintenance
+personakit export --root personakit-root --session cli-maintenance`;
 ---
 
 <ContentLayout
@@ -38,6 +43,14 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
   description="Run a tiny PersonaKit example and learn what each command proves before agent work begins."
 >
   <p>This walkthrough does not ask PersonaKit to make a code change. It asks PersonaKit to prove the operating contract that an agent would receive before making a change.</p>
+
+  <section class="fast-path" aria-labelledby="fast-path-heading">
+    <p class="fast-path-label">The 30-second version</p>
+    <h2 id="fast-path-heading">Run it now, read the why after</h2>
+    <p>You told the agent to stay read-only and it edited anyway. Here is that boundary made into a contract you can run:</p>
+    <Code code={fastPathCommands} lang="bash" theme="github-dark" />
+    <p>That resolves one contract: code editing authorized, deployment and autonomous loops forbidden, all visible before any work. The rest of this page explains what each command proves, then the schema behind it.</p>
+  </section>
 
   <p>New to the CLI? Run <code>personakit</code> with no arguments to orient: it points you to <code>personakit guidance</code> for the current scope and <code>personakit --help</code> for the full command list.</p>
 
@@ -138,6 +151,27 @@ const exportCommand = "personakit export --root personakit-root --session cli-ma
 </ContentLayout>
 
 <style>
+  .fast-path {
+    margin: 22px 0 30px;
+    padding: 22px 24px;
+    border: 1px solid #dbe9ef;
+    border-radius: 8px;
+    background: #f7fbfd;
+  }
+
+  .fast-path-label {
+    margin: 0 0 4px;
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .fast-path h2 {
+    margin: 0 0 12px;
+  }
+
   .action-row {
     display: flex;
     align-items: center;
