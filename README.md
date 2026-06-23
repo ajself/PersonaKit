@@ -225,7 +225,7 @@ For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio shap
 
 Once connected, an agent grounds itself by reading `personakit://catalog/start`, then resolving a session. With no MCP
 server connected, the same grounding is one CLI call away: `personakit guidance`. A resolved contract is not a locked
-door — it is a map: the cleared space to work in, and the marked edge where the agent re-grounds or asks rather than
+door; it is a map: the cleared space to work in, and the marked edge where the agent re-grounds or asks rather than
 barreling through or stopping dead.
 
 ### Add A Grounding Skill (optional)
@@ -234,7 +234,7 @@ The MCP server gives the agent access. A small host skill gives it the instinct 
 moment: resolve the active contract before choosing tools, skills, or files. `personakit init` scaffolds a host-neutral
 `personakit-grounding/SKILL.md`; per-host variants (Claude Code, Cursor, Copilot, OpenCode) live in the grounding
 tutorial on the [PersonaKit website](https://ajself.github.io/PersonaKit/). Copy the variant for your host into the
-directory it discovers skills from — for Claude Code that is `.claude/skills/`. PersonaKit never writes into a host
+directory it discovers skills from. For Claude Code that is `.claude/skills/`. PersonaKit never writes into a host
 config directory for you.
 
 ### Point A Cold Agent At PersonaKit (optional)
