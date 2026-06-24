@@ -30,7 +30,14 @@ PKG_STAGE_ROOT ?= $(PKG_BUILD_DIR)/pkgroot
 PKG_COMPONENT_PLIST ?= $(PKG_BUILD_DIR)/component.plist
 PKG_ARCHS ?= arm64 x86_64
 PKG_IDENTIFIER ?= com.ajself.PersonaKit
-PKG_VERSION ?= 1.0.0
+# VERSION is the single knob for cutting a release. It drives the installer
+# version, the git tag, the release title, and the version-check expectation.
+# It defaults to the version baked into the committed CLI source (the source of
+# truth read by version-check), so non-release targets always track the shipped
+# version with no hand-editing here. To cut the next release, bump the source
+# with `make version-bump VERSION=1.1.0`, commit, then `make studio-publish-release`.
+VERSION ?= $(shell sed -n 's/.*static let current = "\([^"]*\)".*/\1/p' "$(CLI_VERSION_FILE)" 2>/dev/null | head -1)
+PKG_VERSION ?= $(VERSION)
 APP_INSTALL_LOCATION ?= /Applications
 CLI_INSTALL_LOCATION ?= /usr/local/bin
 CLI_SUPPORT_BUNDLE_NAME ?= PersonaKit_ContextCore.bundle
@@ -38,9 +45,9 @@ APP_SIGN_IDENTITY ?=
 INSTALLER_SIGN_IDENTITY ?=
 NOTARY_KEYCHAIN_PROFILE ?=
 
-# GitHub release publishing. RELEASE_VERSION drives the installer version and
-# the release tag. At the 1.0 junction, bump it (or PKG_VERSION) and keep it in
-# sync with the other two version surfaces:
+# GitHub release publishing. RELEASE_VERSION flows from VERSION (see above) and
+# drives the release tag and title. `make version-bump VERSION=x.y.z` keeps the
+# two code surfaces in sync so version-check passes:
 #   - MARKETING_VERSION in PersonaKit/PersonaKit.xcodeproj (app)
 #   - PersonaKitVersion.current in Sources/Features/CLI/PersonaKitVersion.swift (CLI/MCP)
 GH ?= gh
@@ -80,7 +87,7 @@ SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
 	core-validate-repo core-zip public-check \
-	cli-build cli-install cli-install-zsh-completion cli-test version-check \
+	cli-build cli-install cli-install-zsh-completion cli-test version-check version-bump \
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
 	studio-verify-app studio-pkg-app studio-pkg \
@@ -108,6 +115,7 @@ help:
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@printf "  %-28s %s\n" "version-check" "Assert version surfaces match RELEASE_VERSION (runs before install/release)."
+	@printf "  %-28s %s\n" "version-bump" "Set both code version surfaces to VERSION=x.y.z (run before a release)."
 	@echo ""
 	@echo "Studio app:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with xcodebuild."
@@ -118,7 +126,7 @@ help:
 	@echo "Studio release (signed installer; reads $(RELEASE_LOCAL_CONFIG)):"
 	@printf "  %-28s %s\n" "studio-pkg" "Archive, sign, harden-verify, and build the signed .pkg (no notarization)."
 	@printf "  %-28s %s\n" "studio-release-pkg" "Full archive -> sign -> package -> notarize -> staple -> verify."
-	@printf "  %-28s %s\n" "studio-publish-release" "One shot: studio-release-pkg + checksum + DRAFT a GitHub release."
+	@printf "  %-28s %s\n" "studio-publish-release" "One shot: studio-release-pkg + checksum + DRAFT a release (set VERSION=x.y.z)."
 	@printf "  %-28s %s\n" "studio-gh-release" "Checksum an existing notarized .pkg and DRAFT a GitHub release."
 
 studio-doctor:
@@ -167,6 +175,39 @@ studio-build: studio-doctor
 
 cli-build: swiftpm-prepare
 	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
+
+# Rewrite the two code version surfaces to VERSION so a release can be cut with
+# one knob. Run `make version-bump VERSION=1.1.0`, review the diff, commit, then
+# `make studio-publish-release VERSION=1.1.0`. Sets MARKETING_VERSION to the
+# major.minor (the Apple convention this project uses) and the CLI to the full
+# semver; version-check accepts both.
+version-bump:
+	@if [ "$(origin VERSION)" = "file" ] || [ "$(origin VERSION)" = "default" ]; then \
+		echo "version-bump: VERSION is required (it defaults to the current $(VERSION))."; \
+		echo "usage: make version-bump VERSION=1.1.0"; \
+		exit 1; \
+	fi
+	@case "$(VERSION)" in \
+		*.*.*) ;; \
+		*) echo "version-bump: VERSION must be semver x.y.z (got '$(VERSION)')"; \
+			echo "usage: make version-bump VERSION=1.1.0"; exit 1;; \
+	esac
+	@printf '%s' "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
+		echo "version-bump: VERSION must be semver x.y.z (got '$(VERSION)')"; \
+		exit 1; \
+	}
+	@if [ ! -f "$(CLI_VERSION_FILE)" ]; then \
+		echo "version-bump: $(CLI_VERSION_FILE) not found"; exit 1; \
+	fi
+	@if [ ! -f "$(APP_PROJECT_PBXPROJ)" ]; then \
+		echo "version-bump: $(APP_PROJECT_PBXPROJ) not found"; exit 1; \
+	fi
+	@rel_mm="$$(printf '%s' "$(VERSION)" | cut -d. -f1-2)"; \
+	sed -i '' 's/static let current = "[^"]*"/static let current = "$(VERSION)"/' "$(CLI_VERSION_FILE)"; \
+	sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $$rel_mm;/" "$(APP_PROJECT_PBXPROJ)"; \
+	echo "version-bump: set CLI current=$(VERSION), MARKETING_VERSION=$$rel_mm"
+	@$(MAKE) --no-print-directory version-check VERSION=$(VERSION)
+	@echo "version-bump: review the diff and commit, then run 'make studio-publish-release VERSION=$(VERSION)'."
 
 # Fail fast if the CLI/app version surfaces have drifted from RELEASE_VERSION.
 # Guards against shipping a binary whose --version lies (the stale-install
@@ -549,9 +590,24 @@ studio-gh-release:
 		echo "error: $(PKG_OUTPUT_PATH) is not notarized/stapled; run 'make studio-release-pkg' first."; \
 		exit 1; \
 	}
+	@published="$$($(GH) release list --limit 100 --json tagName,isDraft \
+		--jq 'map(select(.tagName == "$(RELEASE_TAG)" and .isDraft == false)) | length')"; \
+	if [ "$$published" != "0" ]; then \
+		echo "error: a published release already exists for $(RELEASE_TAG)."; \
+		echo "hint: bump the version first, e.g. 'make version-bump VERSION=1.1.0',"; \
+		echo "      commit, then re-run with VERSION=1.1.0."; \
+		exit 1; \
+	fi; \
+	draft="$$($(GH) release list --limit 100 --json tagName,isDraft \
+		--jq 'map(select(.tagName == "$(RELEASE_TAG)" and .isDraft == true)) | length')"; \
+	if [ "$$draft" != "0" ]; then \
+		echo "error: a draft release already exists for $(RELEASE_TAG); drafting again would duplicate it."; \
+		echo "hint: delete the old draft first ('gh release list' to find it), then re-run."; \
+		exit 1; \
+	fi
 	@cd "$(dir $(PKG_OUTPUT_PATH))" && shasum -a 256 "$(notdir $(PKG_OUTPUT_PATH))" > "$(notdir $(PKG_CHECKSUM_PATH))"
 	@echo "Drafting GitHub release $(RELEASE_TAG) (DRAFT only; nothing published)..."
-	$(GH) release create "$(RELEASE_TAG)" \
+	@$(GH) release create "$(RELEASE_TAG)" \
 		"$(PKG_OUTPUT_PATH)" "$(PKG_CHECKSUM_PATH)" \
 		--draft \
 		--title "$(RELEASE_TITLE)" \
