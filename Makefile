@@ -424,9 +424,10 @@ studio-export-release:
 	fi
 
 # Harden gate: hardened runtime, secure timestamp, and the exact distribution
-# entitlement set the global-library grant needs. bookmarks.app-scope must stay
-# ABSENT on purpose: the security-scoped bookmark resolves across relaunches
-# without it, and asserting its absence keeps the signing surface from drifting.
+# entitlement set the global-library grant needs. bookmarks.app-scope must be
+# PRESENT: an app-scoped security bookmark only resolves on a later launch with
+# it, so without it the persisted global-library grant silently fails after the
+# app relaunches. Asserting it keeps the signing surface from drifting.
 studio-verify-app:
 	@set -e; \
 	app="$(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
@@ -458,11 +459,11 @@ studio-verify-app:
 		echo "error: $$app ships com.apple.security.get-task-allow=true; not a distribution build."; \
 		exit 1; \
 	fi; \
-	if printf '%s' "$$norm" | grep -q 'com.apple.security.files.bookmarks.app-scope'; then \
-		echo "error: $$app declares com.apple.security.files.bookmarks.app-scope; S4 requires it stay absent (security-scoped bookmarks resolve without it)."; \
+	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.files.bookmarks.app-scope</key><true/>'; then \
+		echo "error: $$app is missing com.apple.security.files.bookmarks.app-scope; the persisted global-library grant would not survive a relaunch."; \
 		exit 1; \
 	fi; \
-	echo "studio-verify-app: hardened runtime + secure timestamp OK; sandbox on, user-selected read-write present, no get-task-allow, no app-scope bookmarks."
+	echo "studio-verify-app: hardened runtime + secure timestamp OK; sandbox on, user-selected read-write present, app-scope bookmarks present, no get-task-allow."
 
 studio-pkg-app:
 	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \
