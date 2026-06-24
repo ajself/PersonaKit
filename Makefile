@@ -278,7 +278,10 @@ endif
 	rm -rf /tmp/personakit-public-check
 	mkdir -p /tmp/personakit-public-check
 	! find .personakit Examples/public-starter/.personakit \( -name .DS_Store -o -name '._*' \) -print | grep .
-	diff -qr .personakit Examples/public-starter/.personakit
+# Compare file content, not directory structure: git diff --no-index ignores
+# empty dirs (git cannot track them), so a stray empty dir left by tooling does
+# not spuriously fail the mirror check. Plain diff -qr fails on such a dir.
+	git diff --no-index .personakit Examples/public-starter/.personakit
 	$(SWIFT_RUN) personakit validate --root .personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/internal-agent-root/.personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/kit-root
