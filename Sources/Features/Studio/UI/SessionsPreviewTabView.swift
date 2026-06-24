@@ -6,6 +6,8 @@ struct SessionsPreviewTabView: View {
   let sessionPreview: String
   let sessionPreviewErrorMessage: String?
   let isLoadingSessionPreview: Bool
+  let isGlobalLibraryConnected: Bool
+  let onConnectGlobalLibrary: () -> Void
 
   var body: some View {
     Group {
@@ -20,11 +22,28 @@ struct SessionsPreviewTabView: View {
         }
       } else if let sessionPreviewErrorMessage {
         stateContainer {
-          ContentUnavailableView(
-            "Preview Failed",
-            systemImage: "exclamationmark.triangle",
-            description: Text(sessionPreviewErrorMessage)
-          )
+          // A disconnected shared library is the overwhelmingly common cause of a preview
+          // failure, so offer the fix right here instead of making the user discover the
+          // Connect action buried in Validation Results. If connecting does not resolve it,
+          // the refreshed preview falls through to the raw error below.
+          if !isGlobalLibraryConnected {
+            ContentUnavailableView {
+              Label("Shared Library Not Connected", systemImage: "link.badge.plus")
+            } description: {
+              Text(
+                "This session uses personas, directives, or kits from your shared library (~/.personakit). Connect it to preview them."
+              )
+            } actions: {
+              Button("Connect Shared Library…", action: onConnectGlobalLibrary)
+                .buttonStyle(.borderedProminent)
+            }
+          } else {
+            ContentUnavailableView(
+              "Preview Failed",
+              systemImage: "exclamationmark.triangle",
+              description: Text(sessionPreviewErrorMessage)
+            )
+          }
         }
       } else if sessionPreview.isEmpty {
         stateContainer {

@@ -107,6 +107,10 @@ struct SessionsPanelView: View {
       }
     }
     .onChange(of: workspaceStore.snapshotRevision) { _, _ in
+      // Reload the preview when workspace data changes (e.g. after connecting the shared
+      // library) so the in-place Connect prompt resolves without re-selecting the session.
+      refreshSelectedSessionPreview(forceReload: true)
+
       if detailMode == .map {
         refreshSelectedSessionMap()
       }
@@ -285,7 +289,11 @@ struct SessionsPanelView: View {
       SessionsPreviewTabView(
         sessionPreview: workspaceStore.sessionPreview,
         sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
-        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview
+        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview,
+        isGlobalLibraryConnected: workspaceStore.isGlobalLibraryConnected,
+        onConnectGlobalLibrary: {
+          workspaceStore.connectGlobalLibrary()
+        }
       )
 
     case .map:
