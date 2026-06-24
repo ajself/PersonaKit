@@ -45,34 +45,40 @@ struct WorkspaceRelationshipMapPanelView: View {
     let selectedNode = selectedNode(in: filteredMap)
     let filteredMapNodeKeysToken = nodeKeysToken(for: filteredMap)
 
-    VStack(alignment: .leading, spacing: 12) {
-      headerView
+    // Root as a ScrollView so content insets below the window toolbar — a plain VStack
+    // detail underlaps the unified toolbar and hides the header (see StudioDiagnosticsPanelView).
+    ScrollView {
+      VStack(alignment: .leading, spacing: 12) {
+        headerView
 
-      filterControls
+        filterControls
 
-      if workspaceStore.isLoadingWorkspaceRelationshipMap {
-        loadingView
-      } else if let errorMessage = workspaceStore.workspaceRelationshipMapErrorMessage {
-        ContentUnavailableView(
-          "Relationship Map Failed",
-          systemImage: "exclamationmark.triangle",
-          description: Text(errorMessage)
-        )
-      } else if let focusUnavailableState = focusedMapUnavailableState {
-        ContentUnavailableView(
-          focusUnavailableState.title,
-          systemImage: focusUnavailableState.systemImage,
-          description: Text(focusUnavailableState.description)
-        )
-      } else if let filteredMap {
-        mapView(filteredMap)
-      } else {
-        ContentUnavailableView(
-          "No Relationship Map",
-          systemImage: "point.3.filled.connected.trianglepath.dotted",
-          description: Text("Load a workspace to inspect cross-entity relationships.")
-        )
+        if workspaceStore.isLoadingWorkspaceRelationshipMap {
+          loadingView
+        } else if let errorMessage = workspaceStore.workspaceRelationshipMapErrorMessage {
+          ContentUnavailableView(
+            "Relationship Map Failed",
+            systemImage: "exclamationmark.triangle",
+            description: Text(errorMessage)
+          )
+        } else if let focusUnavailableState = focusedMapUnavailableState {
+          ContentUnavailableView(
+            focusUnavailableState.title,
+            systemImage: focusUnavailableState.systemImage,
+            description: Text(focusUnavailableState.description)
+          )
+        } else if let filteredMap {
+          mapView(filteredMap)
+        } else {
+          ContentUnavailableView(
+            "No Relationship Map",
+            systemImage: "point.3.filled.connected.trianglepath.dotted",
+            description: Text("Load a workspace to inspect cross-entity relationships.")
+          )
+        }
       }
+      .frame(maxWidth: .infinity, alignment: .topLeading)
+      .padding()
     }
     .inspector(isPresented: $isInspectorPresented) {
       StudioContextInspectorView(
@@ -108,7 +114,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       .inspectorColumnWidth(min: 190, ideal: 270, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .padding()
     .onAppear {
       workspaceStore.refreshWorkspaceRelationshipMap()
       refreshFocusSessionMapIfNeeded()

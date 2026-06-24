@@ -24,83 +24,83 @@ struct StudioDiagnosticsPanelView: View {
       searchText: searchText
     )
 
-    VStack(alignment: .leading, spacing: 12) {
-      StudioDiagnosticsHeaderView(
-        report: report,
-        searchText: $searchText,
-        onValidateWorkspace: {
-          workspaceStore.validateWorkspace()
-        }
-      )
-
-      if report.showsGlobalLibraryBanner {
-        StudioGlobalLibraryBannerView(
-          onConnect: {
-            workspaceStore.connectGlobalLibrary()
+    // Root as a ScrollView so its content insets below the window toolbar. A plain
+    // VStack detail underlaps the unified toolbar, hiding the header (and the global
+    // library Connect banner) behind it; a scroll container reserves that safe area.
+    ScrollView {
+      VStack(alignment: .leading, spacing: 14) {
+        StudioDiagnosticsHeaderView(
+          report: report,
+          searchText: $searchText,
+          onValidateWorkspace: {
+            workspaceStore.validateWorkspace()
           }
         )
-      }
 
-      if let warning = workspaceStore.globalLibraryConnectWarning {
-        Label(warning, systemImage: "exclamationmark.triangle")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .accessibilityLabel("Global library warning: \(warning)")
-      }
-
-      if let validationErrorMessage = workspaceStore.validationErrorMessage {
-        ContentUnavailableView(
-          "Validation Failed",
-          systemImage: "exclamationmark.triangle",
-          description: Text(validationErrorMessage)
-        )
-      } else {
-        ScrollView {
-          VStack(alignment: .leading, spacing: 14) {
-            if report.issues.isEmpty {
-              StudioValidationReportOverviewView(
-                report: report,
-                onNavigateToArea: { row in
-                  onNavigate(
-                    StudioNavigationTarget(
-                      sidebarItem: row.sidebarItem,
-                      searchText: ""
-                    )
-                  )
-                }
-              )
-            } else {
-              StudioValidationIssueFilterBarView(
-                options: report.issueFilterOptions,
-                selectedIssueFilterID: $selectedIssueFilterID
-              )
-
-              StudioValidationIssueStatsView(report: report)
-
-              if issues.isEmpty {
-                ContentUnavailableView.search
-                  .frame(maxWidth: .infinity, minHeight: 180)
-              } else {
-                StudioDiagnosticsIssueListView(
-                  issues: issues,
-                  onNavigateToIssue: { issue in
-                    let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
-                    onNavigate(navigationTarget)
-                  },
-                  onRevealIssueFile: { issue in
-                    guard let filePath = issue.filePath else {
-                      return
-                    }
-
-                    workspaceStore.revealValidationIssueInFinder(filePath: filePath)
-                  }
-                )
-              }
+        if report.showsGlobalLibraryBanner {
+          StudioGlobalLibraryBannerView(
+            onConnect: {
+              workspaceStore.connectGlobalLibrary()
             }
+          )
+        }
+
+        if let warning = workspaceStore.globalLibraryConnectWarning {
+          Label(warning, systemImage: "exclamationmark.triangle")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("Global library warning: \(warning)")
+        }
+
+        if let validationErrorMessage = workspaceStore.validationErrorMessage {
+          ContentUnavailableView(
+            "Validation Failed",
+            systemImage: "exclamationmark.triangle",
+            description: Text(validationErrorMessage)
+          )
+        } else if report.issues.isEmpty {
+          StudioValidationReportOverviewView(
+            report: report,
+            onNavigateToArea: { row in
+              onNavigate(
+                StudioNavigationTarget(
+                  sidebarItem: row.sidebarItem,
+                  searchText: ""
+                )
+              )
+            }
+          )
+        } else {
+          StudioValidationIssueFilterBarView(
+            options: report.issueFilterOptions,
+            selectedIssueFilterID: $selectedIssueFilterID
+          )
+
+          StudioValidationIssueStatsView(report: report)
+
+          if issues.isEmpty {
+            ContentUnavailableView.search
+              .frame(maxWidth: .infinity, minHeight: 180)
+          } else {
+            StudioDiagnosticsIssueListView(
+              issues: issues,
+              onNavigateToIssue: { issue in
+                let navigationTarget = StudioDiagnosticsNavigationResolver.navigationTarget(for: issue)
+                onNavigate(navigationTarget)
+              },
+              onRevealIssueFile: { issue in
+                guard let filePath = issue.filePath else {
+                  return
+                }
+
+                workspaceStore.revealValidationIssueInFinder(filePath: filePath)
+              }
+            )
           }
-          .frame(maxWidth: .infinity, alignment: .topLeading)
         }
       }
+      .frame(maxWidth: .infinity, alignment: .topLeading)
+      .padding()
     }
     .inspector(isPresented: $isInspectorPresented) {
       StudioContextInspectorView(
@@ -124,7 +124,6 @@ struct StudioDiagnosticsPanelView: View {
       .inspectorColumnWidth(min: 190, ideal: 270, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .padding()
     .onChange(of: report.issueFilterOptions.map(\.id)) { _, filterIDs in
       if !filterIDs.contains(selectedIssueFilterID) {
         selectedIssueFilterID = "all"
