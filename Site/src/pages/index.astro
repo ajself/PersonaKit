@@ -34,7 +34,8 @@ personakit export --root personakit-root --session cli-maintenance`;
     title="You told the agent to stay read-only. It edited anyway."
     lede="PersonaKit writes the boundary down as a contract you can read before the agent starts."
     actions={[
-      { href: sitePath("start-here/"), label: "Start Here" },
+      { href: sitePath("start-here/"), label: "Start Here", primary: true },
+      { href: sitePath("install/"), label: "Install" },
     ]}
   />
 

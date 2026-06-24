@@ -1,0 +1,189 @@
+---
+import { Code } from "astro:components";
+import Callout from "../components/Callout.astro";
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { sitePath } from "../utils/sitePath";
+
+const releaseLatest = "https://github.com/ajself/PersonaKit/releases/latest";
+
+const verifyCommands = `# From the folder you downloaded into
+shasum -a 256 -c PersonaKit.pkg.sha256`;
+
+const sourceCommands = `git clone https://github.com/ajself/PersonaKit.git
+cd PersonaKit
+make build
+make cli-install INSTALL_BIN_DIR="$HOME/.local/bin"`;
+
+const verifyCli = "personakit --help";
+---
+
+<ContentLayout
+  title="Install PersonaKit"
+  eyebrow="Get PersonaKit"
+  description="Two ways to get PersonaKit on your Mac: the signed installer for the app and CLI together, or build the CLI from source."
+>
+  <p>The walkthroughs on this site run the <code>personakit</code> CLI. Pick one of the paths below to get it on your <code>PATH</code>, then head to <a href={sitePath("start-here/")}>Start Here</a> to run your first contract.</p>
+
+  <section class="paths" aria-label="The two install paths at a glance">
+    <article class="path">
+      <p class="path-kicker">Recommended</p>
+      <h3>Download the installer</h3>
+      <p>One signed, notarized <code>.pkg</code> that installs PersonaKit Studio <em>and</em> the <code>personakit</code> CLI.</p>
+      <p class="path-meta">macOS 26.2 or later</p>
+    </article>
+    <article class="path">
+      <p class="path-kicker">CLI only</p>
+      <h3>Build from source</h3>
+      <p>Compile and install just the <code>personakit</code> CLI. No app, works in any bin directory you choose.</p>
+      <p class="path-meta">macOS 26+ with the Swift 6.2 toolchain</p>
+    </article>
+  </section>
+
+  <h2 id="installer">1. Download The Installer</h2>
+  <p>This is the simplest path and the one most people want. The installer is signed with a Developer ID and notarized by Apple, so Gatekeeper opens it without a detour.</p>
+
+  <p class="action-row">
+    <a class="button-link download-cta" href={releaseLatest}>Download the latest release</a>
+    <span class="cta-note">Grab <code>PersonaKit.pkg</code> from the release assets.</span>
+  </p>
+
+  <p>Open the downloaded <code>PersonaKit.pkg</code> and follow the installer. It places:</p>
+  <ul>
+    <li><strong>PersonaKit Studio</strong> in <code>/Applications</code> &mdash; the visual contract-inspection app.</li>
+    <li><strong>The <code>personakit</code> CLI</strong> in <code>/usr/local/bin</code>, which is already on the default macOS <code>PATH</code>.</li>
+  </ul>
+
+  <Callout>
+    <p>Installing the <code>.pkg</code> gives you both surfaces at once. You do not need to build anything to use the CLI &mdash; open a new terminal after installing and <code>personakit</code> is ready.</p>
+  </Callout>
+
+  <h3>Verify it works</h3>
+  <Code code={verifyCli} lang="bash" theme="github-dark" />
+  <p>If the command prints the help text, the CLI is installed and on your <code>PATH</code>. You are ready for <a href={sitePath("start-here/")}>Start Here</a>.</p>
+
+  <h3>Check the download (optional)</h3>
+  <p>Each release ships a <code>PersonaKit.pkg.sha256</code> checksum next to the installer. Download both into the same folder, then confirm the file matches:</p>
+  <Code code={verifyCommands} lang="bash" theme="github-dark" />
+  <p>An <code>OK</code> line means the file is intact and untampered.</p>
+
+  <h2 id="source">2. Build The CLI From Source</h2>
+  <p>Choose this if you only want the CLI, want to install it somewhere other than <code>/usr/local/bin</code>, or are working on PersonaKit itself. It needs <strong>macOS 26 or later</strong> with the <strong>Swift 6.2 toolchain</strong> (Xcode 26).</p>
+
+  <Code code={sourceCommands} lang="bash" theme="github-dark" />
+
+  <p>The <code>Makefile</code> is the repo command surface; run <code>make help</code> to see every target. <code>make cli-install</code> installs to <code>INSTALL_BIN_DIR</code> &mdash; point it wherever you keep local binaries.</p>
+
+  <Callout tone="warn">
+    <p>Make sure <code>INSTALL_BIN_DIR</code> is on your <code>PATH</code>. <code>make cli-install</code> warns if the just-installed binary is not the one your shell resolves &mdash; a common sign that an earlier copy is shadowing it.</p>
+  </Callout>
+
+  <p>Confirm the install the same way:</p>
+  <Code code={verifyCli} lang="bash" theme="github-dark" />
+
+  <h2>Which Should I Use?</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>You want&hellip;</th>
+        <th>Use</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>The app and CLI, the quick way</td>
+        <td>The installer</td>
+      </tr>
+      <tr>
+        <td>Just the CLI, in a custom location</td>
+        <td>Build from source</td>
+      </tr>
+      <tr>
+        <td>To work on PersonaKit itself</td>
+        <td>Build from source</td>
+      </tr>
+      <tr>
+        <td>To stay on a pinned version</td>
+        <td>The installer for a specific <a href={releaseLatest}>release</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Next Step</h2>
+  <p>With the CLI installed, run a real contract end to end. The walkthrough follows a bundled example that lives in the repo, so to run it exactly you'll want a <a href="https://github.com/ajself/PersonaKit">clone</a> too &mdash; or scaffold your own root with <code>personakit init &lt;dir&gt;</code> and follow along against that.</p>
+  <p class="action-row">
+    <a class="button-link primary-next" href={sitePath("start-here/")}>Continue to Start Here</a>
+  </p>
+</ContentLayout>
+
+<style>
+  .paths {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 24px 0 8px;
+  }
+
+  .path {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+
+  .path h3 {
+    margin: 8px 0;
+  }
+
+  .path p {
+    max-width: none;
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .path-kicker {
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .path-meta {
+    margin-top: 10px !important;
+    font-size: 14px;
+  }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .download-cta {
+    border-color: #8db3c9;
+    background: #eef6fa;
+    color: var(--blue);
+    font-weight: 750;
+  }
+
+  .cta-note {
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .primary-next {
+    border-color: #8db3c9;
+    background: #eef6fa;
+    color: var(--blue);
+    font-weight: 750;
+  }
+
+  @media (max-width: 700px) {
+    .paths {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

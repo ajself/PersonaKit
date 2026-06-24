@@ -201,6 +201,18 @@ const ogImageURL = new URL(sitePath("brand/personakit-og.png"), Astro.site);
     color: var(--blue);
   }
 
+  .button-link.primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .button-link.primary:hover {
+    border-color: var(--accent);
+    color: #fff;
+    filter: brightness(0.94);
+  }
+
   .lede {
     max-width: 820px;
     color: var(--muted);

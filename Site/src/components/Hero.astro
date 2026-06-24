@@ -3,6 +3,7 @@ interface Props {
   actions?: Array<{
     href: string;
     label: string;
+    primary?: boolean;
   }>;
   eyebrow?: string;
   lede: string;
@@ -27,7 +28,7 @@ const {
         <div class="actions">
           {
             actions.map((action) => (
-              <a class="button-link" href={action.href}>{action.label}</a>
+              <a class:list={["button-link", { primary: action.primary }]} href={action.href}>{action.label}</a>
             ))
           }
         </div>

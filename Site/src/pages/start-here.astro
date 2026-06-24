@@ -44,6 +44,15 @@ personakit export --root personakit-root --session cli-maintenance`;
 >
   <p>This walkthrough does not ask PersonaKit to make a code change. It asks PersonaKit to prove the operating contract that an agent would receive before making a change.</p>
 
+  <div class="before">
+    <p class="before-label">Before you begin</p>
+    <p>This walkthrough runs against a bundled example root, so you need two things:</p>
+    <ol>
+      <li>The <code>personakit</code> CLI on your <code>PATH</code> &mdash; see <a href={sitePath("install/")}>Install PersonaKit</a>.</li>
+      <li>The example root. If you cloned <a href="https://github.com/ajself/PersonaKit">the repo</a>, it already lives at <code>Site/public/examples/swift-cli-maintenance</code> (the path used below). If you installed only the CLI, run <code>personakit init &lt;dir&gt;</code> to scaffold your own validating root, then point <code>--root</code> at it instead &mdash; the commands are the same, though your contract's specifics will differ from the example shown here.</li>
+    </ol>
+  </div>
+
   <section class="fast-path" aria-labelledby="fast-path-heading">
     <p class="fast-path-label">The 30-second version</p>
     <h2 id="fast-path-heading">Run it now, read the why after</h2>
@@ -58,7 +67,7 @@ personakit export --root personakit-root --session cli-maintenance`;
   <Code code={validateCommands} lang="bash" theme="github-dark" />
 
   <Callout>
-    <p>These commands assume a clone of the PersonaKit repo, where the example lives under <code>Site/public/examples</code>; <code>personakit-root</code> stands in for the <code>.personakit</code> folder you would usually keep in a real project. Treat that folder as authored project source: commit the roles, rules, capabilities, and stop points so they can be reviewed with the code they govern. Keep secrets and local credentials out.</p>
+    <p>Here <code>personakit-root</code> stands in for the <code>.personakit</code> folder you would usually keep in a real project. Treat that folder as authored project source: commit the roles, rules, capabilities, and stop points so they can be reviewed with the code they govern. Keep secrets and local credentials out.</p>
   </Callout>
 
   <p>Expected shape:</p>
@@ -151,6 +160,37 @@ personakit export --root personakit-root --session cli-maintenance`;
 </ContentLayout>
 
 <style>
+  .before {
+    margin: 16px 0 0;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--band);
+    font-size: 15px;
+  }
+
+  .before-label {
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .before p {
+    margin: 0 0 8px;
+  }
+
+  .before ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .before li {
+    margin: 4px 0;
+  }
+
   .fast-path {
     margin: 22px 0 30px;
     padding: 22px 24px;
