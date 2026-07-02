@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "checks.schema.json",
+  "title": "ChecksManifest",
+  "type": "object",
+  "properties": {
+    "sessionId": {
+      "type": "string"
+    },
+    "personaId": {
+      "type": "string"
+    },
+    "directiveId": {
+      "type": "string"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mandate": {
+            "type": "string"
+          },
+          "maxClass": {
+            "type": "string",
+            "enum": [
+              "hook",
+              "command",
+              "review"
+            ]
+          },
+          "rule": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "capability-deny",
+                  "command",
+                  "review"
+                ]
+              },
+              "deniedCapability": {
+                "type": "string"
+              },
+              "deniedActionClasses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "command": {
+                "type": "string"
+              },
+              "criterion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "sourceType": {
+                "type": "string"
+              },
+              "sourceId": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sourceType",
+              "sourceId",
+              "field"
+            ]
+          },
+          "hostNotes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mandate",
+          "maxClass",
+          "rule",
+          "source",
+          "hostNotes"
+        ]
+      }
+    },
+    "unrepresentedMandates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mandate": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "sourceType": {
+                "type": "string"
+              },
+              "sourceId": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sourceType",
+              "sourceId",
+              "field"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mandate",
+          "source",
+          "reason"
+        ]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "hookCount": {
+          "type": "integer"
+        },
+        "commandCount": {
+          "type": "integer"
+        },
+        "reviewCount": {
+          "type": "integer"
+        },
+        "unrepresentedCount": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hookCount",
+        "commandCount",
+        "reviewCount",
+        "unrepresentedCount"
+      ]
+    }
+  },
+  "required": [
+    "personaId",
+    "checks",
+    "unrepresentedMandates",
+    "summary"
+  ]
+}

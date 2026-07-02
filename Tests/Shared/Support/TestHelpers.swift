@@ -82,6 +82,10 @@ func internalAgentRootURL() -> URL {
   fixturesRootURL().appendingPathComponent("internal-agent-root/.personakit")
 }
 
+func readOnlyFixtureRootURL() -> URL {
+  fixturesRootURL().appendingPathComponent("read-only-root")
+}
+
 func publicStarterRootURL() -> URL {
   repoRootURL().appendingPathComponent("Examples/public-starter/.personakit")
 }

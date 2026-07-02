@@ -84,12 +84,12 @@ struct SessionSelection: ParsableArguments {
       throw ArgumentParser.ValidationError("\(mode.commandName) requires --persona <id>.")
     }
 
-    if mode == .contract,
+    if mode == .contract || mode == .checks,
       directiveId == nil
     {
       guard kitIds.isEmpty else {
         throw ArgumentParser.ValidationError(
-          "contract allows --kits only when --directive is also provided."
+          "\(mode.commandName) allows --kits only when --directive is also provided."
         )
       }
       return
@@ -238,6 +238,7 @@ enum CLICompletions {
 /// Command mode used for session selection validation messaging.
 enum SessionMode {
   case contract
+  case checks
   case export
   case graph
   case resolveReferences
@@ -247,6 +248,8 @@ enum SessionMode {
     switch self {
     case .contract:
       return "contract"
+    case .checks:
+      return "checks"
     case .export:
       return "export"
     case .graph:

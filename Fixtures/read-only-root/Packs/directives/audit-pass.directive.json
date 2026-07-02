@@ -1,0 +1,31 @@
+{
+  "id": "audit-pass",
+  "version": "1.0",
+  "title": "Read-only audit pass",
+  "goal": "Audit the change and report findings without editing it.",
+  "steps": [
+    {
+      "text": "Inspect the diff and the surrounding code."
+    },
+    {
+      "text": "Report confirmed issues before suggestions.",
+      "requiresReview": true
+    }
+  ],
+  "acceptanceCriteria": [
+    "Findings reported with file and line references",
+    "No source files were modified"
+  ],
+  "verification": [
+    {
+      "kind": "command",
+      "text": "swift test"
+    },
+    {
+      "kind": "manual",
+      "text": "No unrelated refactors introduced"
+    }
+  ],
+  "requiresIntentTemplateIds": [],
+  "requiresSkillIds": []
+}

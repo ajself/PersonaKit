@@ -1,0 +1,6 @@
+{
+  "id": "read-only-auditor_audit-pass",
+  "personaId": "read-only-auditor",
+  "directiveId": "audit-pass",
+  "kitOverrides": []
+}
