@@ -47,12 +47,12 @@ struct ResolverTests {
       session.essentials.first(where: { $0.id == SystemEssentials.personaActivationContractId })
     )
     #expect(contract.source == .systemBuiltIn)
-    #expect(contract.content?.contains("operating contract") == true)
+    #expect(contract.content?.contains("One active operating persona") == true)
     let skillContract = try #require(
       session.essentials.first(where: { $0.id == SystemEssentials.skillAuthorizationContractId })
     )
     #expect(skillContract.source == .systemBuiltIn)
-    #expect(skillContract.content?.contains("grounding happens before external skill selection") == true)
+    #expect(skillContract.content?.contains("Only PersonaKit-declared skills are authorized") == true)
   }
 
   @Test
@@ -266,7 +266,7 @@ struct ResolverTests {
       session.essentials.first(where: { $0.id == SystemEssentials.personaActivationContractId })
     )
     #expect(contract.source == .systemBuiltIn)
-    #expect(contract.content?.contains("operating contract") == true)
+    #expect(contract.content?.contains("One active operating persona") == true)
     #expect(contract.url.standardizedFileURL.path != globalOverrideURL.standardizedFileURL.path)
   }
 }

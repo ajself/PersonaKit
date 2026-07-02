@@ -234,16 +234,9 @@ public struct SessionExporter {
 
     appendLine()
     appendLine("# Skill Contract")
-    appendListSection(
-      title: "Allowed Skills",
-      items: skillAuthorization.allowedSkillIds,
-      appendLine: appendLine
-    )
-    appendListSection(
-      title: "Forbidden Skills",
-      items: skillAuthorization.forbiddenSkillIds,
-      appendLine: appendLine
-    )
+    // Allowed/Forbidden are the persona inputs already shown under `# Persona`;
+    // this section reports only the resolution outcome (what was authorized,
+    // required, and any required-but-unauthorized gap).
     appendListSection(
       title: "Authorized Skills",
       items: skillAuthorization.authorizedSkillIds,
