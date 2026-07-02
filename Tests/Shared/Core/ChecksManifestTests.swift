@@ -225,6 +225,20 @@ struct ChecksManifestTests {
   }
 
   @Test
+  func hookCheckLooksUpDenyingCheckByActionClassHostNeutrally() {
+    let manifest = ChecksManifestDeriver.derive(
+      sessionId: nil,
+      persona: persona(forbiddenCapabilities: ["edit-files", "run-commands"]),
+      directive: nil
+    )
+
+    #expect(manifest.hookCheck(denying: "file-mutation")?.id == "capability-deny.edit-files")
+    #expect(manifest.hookCheck(denying: "command-execution")?.id == "capability-deny.run-commands")
+    #expect(manifest.hookCheck(denying: "network-egress") == nil)
+    #expect(manifest.hookCheck(denying: "inspection") == nil)
+  }
+
+  @Test
   func emptyContractYieldsEmptyManifest() {
     let manifest = ChecksManifestDeriver.derive(
       sessionId: nil,

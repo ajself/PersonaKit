@@ -74,6 +74,8 @@ struct PersonaKitCommand: ParsableCommand {
       RecommendCommand.self,
       ContractCommand.self,
       ChecksCommand.self,
+      EnforceCommand.self,
+      HookCheckCommand.self,
       ExportCommand.self,
       ResolveReferencesCommand.self,
       ListCLICommand.self,

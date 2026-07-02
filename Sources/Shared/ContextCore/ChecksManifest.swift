@@ -187,6 +187,18 @@ public struct ChecksManifest: Codable, Equatable, Sendable {
     self.unrepresentedMandates = unrepresentedMandates
     self.summary = summary
   }
+
+  /// Returns the class-1 hook check that forbids a host-neutral action class, if any.
+  ///
+  /// Host-neutral by design: it knows nothing about concrete host tools. A host adapter maps
+  /// its own tool vocabulary to an action class, then asks the manifest here — keeping the
+  /// deny decision in the neutral core and host knowledge in the adapter.
+  public func hookCheck(denying actionClass: String) -> DerivedCheck? {
+    checks.first { check in
+      check.maxClass == CheckClass.hook.rawValue
+        && (check.rule.deniedActionClasses ?? []).contains(actionClass)
+    }
+  }
 }
 
 /// Derives a deterministic ``ChecksManifest`` from an already-resolved session contract.
