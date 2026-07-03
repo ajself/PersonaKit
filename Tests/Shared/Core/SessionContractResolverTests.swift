@@ -66,11 +66,6 @@ struct SessionContractResolverTests {
       result.essentials.map(\.id) == [
         "persona-activation-contract",
         "skill-authorization-contract",
-        "environment",
-        "non-goals",
-        "swift-style-guide",
-        "swiftui-style-guide",
-        "tools-and-constraints",
       ]
     )
   }

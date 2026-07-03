@@ -9,6 +9,7 @@ public struct Persona: Codable, Sendable {
   public let responsibilities: [String]
   public let values: [String]
   public let nonGoals: [String]
+  public let environment: [String]?
   public let defaultKitIds: [String]
   public let allowedSkillIds: [String]
   public let forbiddenSkillIds: [String]
@@ -22,6 +23,7 @@ public struct Persona: Codable, Sendable {
     responsibilities: [String],
     values: [String],
     nonGoals: [String],
+    environment: [String]? = nil,
     defaultKitIds: [String],
     allowedSkillIds: [String],
     forbiddenSkillIds: [String],
@@ -34,6 +36,7 @@ public struct Persona: Codable, Sendable {
     self.responsibilities = responsibilities
     self.values = values
     self.nonGoals = nonGoals
+    self.environment = environment
     self.defaultKitIds = defaultKitIds
     self.allowedSkillIds = allowedSkillIds
     self.forbiddenSkillIds = forbiddenSkillIds

@@ -1,0 +1,9 @@
+{
+  "id": "contract-boundaries",
+  "version": "1.0",
+  "name": "Contract Boundaries",
+  "description": "PersonaKit product boundaries and the inspection lanes for handing context to another coding tool.",
+  "triggerRules": [
+    {}
+  ]
+}

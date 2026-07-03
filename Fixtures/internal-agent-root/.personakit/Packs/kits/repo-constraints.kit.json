@@ -3,9 +3,9 @@
   "version": "1.0",
   "name": "Repository Constraints Kit",
   "summary": "Local operating defaults and product boundaries for this repository.",
-  "essentialIds": [
+  "essentialIds": [],
+  "skillIds": [
     "architecture-defaults",
-    "non-goals",
     "tools-and-constraints"
   ]
 }

@@ -46,7 +46,7 @@ struct ExporterTests {
   }
 
   @Test
-  func exportOmitsEmbeddedTopLevelEssentialHeadings() throws {
+  func exportOmitsEmbeddedTopLevelHeadingsInExpandedBodies() throws {
     let root = fixtureKitRootURL()
 
     let output = try SessionExporter.export(
@@ -57,8 +57,11 @@ struct ExporterTests {
       sessionId: "senior-swiftui-engineer_apply-style"
     )
 
-    #expect(output.contains("## environment\n\n- Platform: macOS"))
-    #expect(!output.contains("## environment\n# Environment"))
+    // The always-on `tools-and-constraints` grounding skill inlines its body in
+    // `# Expanded Skills`; its embedded top-level heading is dropped since the
+    // `## <id>` header already labels the block.
+    #expect(output.contains("- rule[0]: always-on\n\n- No large refactors"))
+    #expect(!output.contains("always-on\n\n# Tools & Constraints"))
     #expect(!output.contains("## persona-activation-contract\n# Persona Activation Contract"))
   }
 
@@ -89,7 +92,7 @@ struct ExporterTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/tools-and-constraints.md")
+    let missingURL = root.appendingPathComponent("Packs/skills/tools-and-constraints.md")
     try FileManager.default.removeItem(at: missingURL)
 
     do {

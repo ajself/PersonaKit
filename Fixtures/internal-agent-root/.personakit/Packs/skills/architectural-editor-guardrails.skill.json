@@ -1,0 +1,9 @@
+{
+  "id": "architectural-editor-guardrails",
+  "version": "1.0",
+  "name": "Architectural Editor Guardrails",
+  "description": "Review-first architectural role, invariants, and prompt-review requirements for Swift 6 strict-concurrency SwiftUI work.",
+  "triggerRules": [
+    {}
+  ]
+}

@@ -15,7 +15,12 @@
   ],
   "nonGoals": [
     "architecture rewrites",
-    "introducing new frameworks without approval"
+    "introducing new frameworks without approval",
+    "execution inside PersonaKit"
+  ],
+  "environment": [
+    "Platform: macOS",
+    "Language: Swift"
   ],
   "defaultKitIds": [
     "swift-style",

@@ -17,24 +17,18 @@ Kit overrides: none
 
 ## Kits → Essentials
 repo-constraints
-  - essential:environment
-  - essential:non-goals
-  - essential:tools-and-constraints
 swift-style
-  - essential:non-goals
-  - essential:swift-style-guide
-  - essential:tools-and-constraints
 swiftui-style
-  - essential:non-goals
-  - essential:swiftui-style-guide
-  - essential:tools-and-constraints
 
 ## Kits → Skills
 repo-constraints
+  - skill:tools-and-constraints
 swift-style
   - skill:swift-style-guide-reference
+  - skill:tools-and-constraints
 swiftui-style
   - skill:swiftui-style-guide-reference
+  - skill:tools-and-constraints
 
 ## Directive → Skills
 - skill:codex-cli
@@ -57,13 +51,9 @@ Authorized: true
 Essentials:
 - persona-activation-contract
 - skill-authorization-contract
-- environment
-- non-goals
-- swift-style-guide
-- swiftui-style-guide
-- tools-and-constraints
 Grounding Skills:
 - swift-style-guide-reference
 - swiftui-style-guide-reference
+- tools-and-constraints
 Skills:
 - codex-cli

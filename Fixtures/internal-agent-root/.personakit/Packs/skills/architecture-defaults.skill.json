@@ -1,0 +1,9 @@
+{
+  "id": "architecture-defaults",
+  "version": "1.0",
+  "name": "Repository Architecture Defaults",
+  "description": "Default implementation shape, deviation rule, and target layout for repository features.",
+  "triggerRules": [
+    {}
+  ]
+}

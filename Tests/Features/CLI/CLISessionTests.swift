@@ -192,6 +192,7 @@ struct CLISessionTests {
       matchedGroundingSkills.map { $0["id"] as? String } == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
+        "tools-and-constraints",
       ]
     )
   }

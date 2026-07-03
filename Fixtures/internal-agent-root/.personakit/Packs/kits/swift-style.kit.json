@@ -3,9 +3,7 @@
   "version": "1.0",
   "name": "Swift Style Kit",
   "summary": "Swift language style and conventions.",
-  "essentialIds": [
-    "swift-style-guide"
-  ],
+  "essentialIds": [],
   "skillIds": [
     "swift-style-guide-reference"
   ]

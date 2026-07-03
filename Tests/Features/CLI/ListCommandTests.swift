@@ -24,7 +24,9 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .essentials)
 
-    let expected = "contract-boundaries"
+    // The starter no longer authors essential files; contract-boundaries is now
+    // an always-on grounding skill.
+    let expected = ""
 
     #expect(output == expected)
   }
@@ -75,7 +77,10 @@ struct ListCommandTests {
 
     let output = try ListCommand.list(root: root, entityType: .skills)
 
-    let expected = "cli-change-checklist — CLI Change Checklist"
+    let expected = """
+      cli-change-checklist — CLI Change Checklist
+      contract-boundaries — Contract Boundaries
+      """
 
     #expect(output == expected)
   }

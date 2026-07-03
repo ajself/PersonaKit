@@ -29,7 +29,7 @@ struct CLIChecksTests {
     #expect(manifest.checks.map(\.maxClass) == ["command", "review", "review"])
     #expect(
       manifest.summary
-        == ChecksManifestSummary(hookCount: 0, commandCount: 1, reviewCount: 2, unrepresentedCount: 2)
+        == ChecksManifestSummary(hookCount: 0, commandCount: 1, reviewCount: 2, unrepresentedCount: 3)
     )
   }
 

@@ -3,9 +3,7 @@
   "version": "1.0",
   "name": "SwiftUI Style Kit",
   "summary": "SwiftUI-specific style and accessibility rules.",
-  "essentialIds": [
-    "swiftui-style-guide"
-  ],
+  "essentialIds": [],
   "skillIds": [
     "swiftui-style-guide-reference"
   ]

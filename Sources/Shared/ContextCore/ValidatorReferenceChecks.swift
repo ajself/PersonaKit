@@ -276,7 +276,14 @@ enum ValidatorReferenceChecker {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
           }
 
-          if pathGlobs.allSatisfy(\.isEmpty) && skillTags.allSatisfy(\.isEmpty) {
+          // A rule with no declared path/tag arrays is an intentional always-on
+          // rule and is valid. Only flag a rule that declares arrays whose every
+          // entry is blank, which is a useless (mistaken) condition.
+          let declaresConditions = !pathGlobs.isEmpty || !skillTags.isEmpty
+          let hasUsableCondition =
+            pathGlobs.contains { !$0.isEmpty } || skillTags.contains { !$0.isEmpty }
+
+          if declaresConditions && !hasUsableCondition {
             errors.append(
               ValidationError(
                 entityType: .skill,
@@ -284,7 +291,7 @@ enum ValidatorReferenceChecker {
                 field: "triggerRules[\(ruleIndex)]",
                 missingId: nil,
                 expectedPath: nil,
-                message: "Trigger rule must declare at least one non-empty pathGlobs or skillTags value."
+                message: "Trigger rule declares only blank pathGlobs or skillTags values; leave both unset for an always-on rule or provide a non-blank condition."
               )
             )
           }

@@ -365,7 +365,7 @@ struct ChecksManifestTests {
     )
     #expect(
       manifest.summary
-        == ChecksManifestSummary(hookCount: 0, commandCount: 1, reviewCount: 2, unrepresentedCount: 2)
+        == ChecksManifestSummary(hookCount: 0, commandCount: 1, reviewCount: 2, unrepresentedCount: 3)
     )
   }
 }

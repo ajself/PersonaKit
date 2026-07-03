@@ -19,8 +19,8 @@ struct ValidatorTests {
           personas: 1,
           kits: 1,
           directives: 1,
-          skills: 1,
-          essentials: 1
+          skills: 2,
+          essentials: 0
         )
     )
   }
@@ -30,8 +30,24 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/contract-boundaries.md")
-    try FileManager.default.removeItem(at: missingURL)
+    // The starter no longer authors essentials, so point a kit's essentialIds at
+    // an id that has no essential file to exercise the missing-essential path.
+    let kitURL = root.appendingPathComponent("Packs/kits/cli-guardrails.kit.json")
+    let orphanKit = """
+      {
+        "id": "cli-guardrails",
+        "version": "1.0",
+        "name": "CLI Guardrails",
+        "summary": "Guardrails for narrow PersonaKit CLI work.",
+        "essentialIds": [
+          "contract-boundaries"
+        ],
+        "skillIds": [
+          "contract-boundaries"
+        ]
+      }
+      """
+    try Data(orphanKit.utf8).write(to: kitURL, options: .atomic)
     try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev.session.json"))
 
     let result = try Validator.validate(root: root)

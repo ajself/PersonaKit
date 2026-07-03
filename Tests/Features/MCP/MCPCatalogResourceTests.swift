@@ -42,8 +42,8 @@ struct MCPCatalogResourceTests {
     #expect(counts["personas"] == 1)
     #expect(counts["kits"] == 3)
     #expect(counts["directives"] == 1)
-    #expect(counts["skills"] == 4)
-    #expect(counts["essentials"] == 7)
+    #expect(counts["skills"] == 5)
+    #expect(counts["essentials"] == 2)
     #expect(counts["sessions"] == 1)
 
     let resources = try #require(object["resources"] as? [[String: Any]])

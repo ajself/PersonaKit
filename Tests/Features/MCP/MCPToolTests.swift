@@ -464,17 +464,18 @@ struct MCPToolTests {
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
     let availableGroundingSkillIds = try #require(resolved["availableGroundingSkillIds"] as? [String])
-    #expect(availableGroundingSkillIds == ["swift-style-guide-reference", "swiftui-style-guide-reference"])
+    #expect(
+      availableGroundingSkillIds == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+        "tools-and-constraints",
+      ]
+    )
     let essentialIds = try #require(resolved["essentialIds"] as? [String])
     #expect(
       essentialIds == [
         "persona-activation-contract",
         "skill-authorization-contract",
-        "environment",
-        "non-goals",
-        "swift-style-guide",
-        "swiftui-style-guide",
-        "tools-and-constraints",
       ]
     )
     let edges = try #require(object["edges"] as? [String: Any])
@@ -588,6 +589,7 @@ struct MCPToolTests {
       matchedGroundingSkills.map { $0["id"] as? String } == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
+        "tools-and-constraints",
       ]
     )
   }
@@ -614,6 +616,7 @@ struct MCPToolTests {
       matchedGroundingSkills.map { $0["id"] as? String } == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
+        "tools-and-constraints",
       ]
     )
   }

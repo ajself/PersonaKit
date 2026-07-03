@@ -55,7 +55,7 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "skill:codex-cli" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
-    #expect(map.nodes.contains(where: { $0.key == "essential:swift-style-guide" }))
+    #expect(map.nodes.contains(where: { $0.key == "skill:tools-and-constraints" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:swift-style-guide-reference" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:swiftui-style-guide-reference" }))
 

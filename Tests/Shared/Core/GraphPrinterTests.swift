@@ -65,9 +65,7 @@ struct GraphPrinterTests {
         "version": "1.0",
         "name": "Extra Kit",
         "summary": "Additional kit for testing.",
-        "essentialIds": [
-          "environment"
-        ]
+        "essentialIds": []
       }
       """
     guard let extraKitData = extraKit.data(using: .utf8) else {

@@ -201,7 +201,8 @@ enum StarterKitManifest {
           "version": "1.0",
           "name": "CLI Guardrails",
           "summary": "Guardrails for narrow PersonaKit CLI work.",
-          "essentialIds": [
+          "essentialIds": [],
+          "skillIds": [
             "contract-boundaries"
           ]
         }
@@ -285,7 +286,23 @@ enum StarterKitManifest {
         .utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/essentials/contract-boundaries.md",
+      relativePath: "Packs/skills/contract-boundaries.skill.json",
+      contents:
+        """
+        {
+          "id": "contract-boundaries",
+          "version": "1.0",
+          "name": "Contract Boundaries",
+          "description": "PersonaKit product boundaries and the inspection lanes for handing context to another coding tool.",
+          "triggerRules": [
+            {}
+          ]
+        }
+
+        """.utf8Data
+    ),
+    StarterFile(
+      relativePath: "Packs/skills/contract-boundaries.md",
       contents:
         "# Contract Boundaries\n\nPersonaKit resolves a deterministic operating contract and exports handoff context for another coding tool.\n\nStay inside these boundaries:\n\n- Use sessions as stable entry points.\n- Validate authored PersonaKit data before handing context to another tool.\n- Use `personakit contract` to inspect structured resolution output.\n- Use `personakit export` to produce handoff context.\n- Do not add workflow orchestration, memory, persistence, or multi-agent control flow.\n- Stop for human review before adding new execution behavior.\n"
         .utf8Data

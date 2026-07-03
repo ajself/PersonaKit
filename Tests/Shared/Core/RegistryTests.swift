@@ -15,7 +15,7 @@ struct RegistryTests {
     #expect(registry.personas.map(\.id) == ["solo-developer"])
     #expect(registry.kits.map(\.id) == ["cli-guardrails"])
     #expect(registry.directives.map(\.id) == ["small-cli-change"])
-    #expect(registry.skills.map(\.id) == ["cli-change-checklist"])
+    #expect(registry.skills.map(\.id) == ["cli-change-checklist", "contract-boundaries"])
   }
 
   @Test

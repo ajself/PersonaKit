@@ -57,6 +57,11 @@ public enum GroundingSkillSupport {
       parts.append("skillTags=" + skillTags.joined(separator: ", "))
     }
 
+    // A rule with no path or tag conditions matches unconditionally.
+    if parts.isEmpty {
+      return "always-on"
+    }
+
     return parts.joined(separator: " + ")
   }
 
@@ -64,10 +69,9 @@ public enum GroundingSkillSupport {
     availableGroundingSkills: [ResolvedGroundingSkill],
     input: SkillTriggerSelectionInput
   ) -> [ResolvedGroundingSkillMatch] {
-    guard !input.isEmpty else {
-      return []
-    }
-
+    // No early-return on empty input: a no-condition rule (empty pathGlobs AND
+    // empty skillTags) is always-on and must expand even with no trigger input,
+    // while path/tag rules still return nil without matching input below.
     return availableGroundingSkills.compactMap { groundingSkill in
       let matchedRules = groundingSkill.triggerRules.enumerated().compactMap { index, rule in
         matchRule(

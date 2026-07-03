@@ -1,0 +1,9 @@
+{
+  "id": "tools-and-constraints",
+  "version": "1.0",
+  "name": "Tools & Constraints",
+  "description": "PersonaKit handoff lanes, inspection surfaces, and change-scope constraints for this repository.",
+  "triggerRules": [
+    {}
+  ]
+}

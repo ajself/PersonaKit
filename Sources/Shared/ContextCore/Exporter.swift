@@ -201,6 +201,11 @@ public struct SessionExporter {
     }
 
     appendListSection(
+      title: "Environment",
+      items: persona.environment ?? [],
+      appendLine: appendLine
+    )
+    appendListSection(
       title: "Responsibilities",
       items: persona.responsibilities,
       appendLine: appendLine
@@ -324,7 +329,8 @@ public struct SessionExporter {
           if !rule.matchedSkillTags.isEmpty {
             ruleDetails.append("skillTags=\(rule.matchedSkillTags.joined(separator: ", "))")
           }
-          appendLine("- rule[\(rule.ruleIndex)]: \(ruleDetails.joined(separator: " + "))")
+          let ruleSummary = ruleDetails.isEmpty ? "always-on" : ruleDetails.joined(separator: " + ")
+          appendLine("- rule[\(rule.ruleIndex)]: \(ruleSummary)")
         }
         appendLine()
         output.append(normalizeIncludedMarkdownBody(groundingSkill.content))

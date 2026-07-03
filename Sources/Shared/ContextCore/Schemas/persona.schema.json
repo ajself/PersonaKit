@@ -34,6 +34,12 @@
         "type": "string"
       }
     },
+    "environment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "defaultKitIds": {
       "type": "array",
       "items": {

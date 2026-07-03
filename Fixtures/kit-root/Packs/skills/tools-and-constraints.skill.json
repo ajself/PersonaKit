@@ -1,0 +1,9 @@
+{
+  "id": "tools-and-constraints",
+  "version": "1.0",
+  "name": "Tools & Constraints",
+  "description": "Repository change-size and dependency constraints for scoped work.",
+  "triggerRules": [
+    {}
+  ]
+}

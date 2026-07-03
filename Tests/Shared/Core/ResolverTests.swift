@@ -29,17 +29,13 @@ struct ResolverTests {
       session.availableGroundingSkills.map(\.id) == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
+        "tools-and-constraints",
       ]
     )
     #expect(
       session.essentials.map { $0.id } == [
         "persona-activation-contract",
         "skill-authorization-contract",
-        "environment",
-        "non-goals",
-        "swift-style-guide",
-        "swiftui-style-guide",
-        "tools-and-constraints",
       ]
     )
     let contract = try #require(
@@ -108,8 +104,25 @@ struct ResolverTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
-    let missingURL = root.appendingPathComponent("Packs/essentials/swiftui-style-guide.md")
-    try FileManager.default.removeItem(at: missingURL)
+    // The essential mechanism stays post-4a even though the tested roots no
+    // longer author essential files: a kit that references an essential whose
+    // file is absent must still fail resolution.
+    let kitURL = root.appendingPathComponent("Packs/kits/repo-constraints.kit.json")
+    let orphanKit = """
+      {
+        "id": "repo-constraints",
+        "version": "1.0",
+        "name": "Repository Constraints Kit",
+        "summary": "Rules specific to this codebase.",
+        "essentialIds": [
+          "orphan-essential"
+        ],
+        "skillIds": [
+          "tools-and-constraints"
+        ]
+      }
+      """
+    try Data(orphanKit.utf8).write(to: kitURL, options: .atomic)
 
     let registry = try Registry.load(root: root)
     let definition = SessionDefinition(
@@ -126,10 +139,10 @@ struct ResolverTests {
         error.errors == [
           .missingEssentialFile(
             sourceType: .kit,
-            sourceId: "swiftui-style",
+            sourceId: "repo-constraints",
             field: "essentialIds",
-            missingId: "swiftui-style-guide",
-            expectedPath: "Packs/essentials/swiftui-style-guide.md"
+            missingId: "orphan-essential",
+            expectedPath: "Packs/essentials/orphan-essential.md"
           )
         ]
       )
@@ -159,11 +172,6 @@ struct ResolverTests {
       session.essentials.map { $0.id } == [
         "persona-activation-contract",
         "skill-authorization-contract",
-        "environment",
-        "non-goals",
-        "swift-style-guide",
-        "swiftui-style-guide",
-        "tools-and-constraints",
       ]
     )
   }

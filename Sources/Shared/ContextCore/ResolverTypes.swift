@@ -94,10 +94,6 @@ public struct SkillTriggerSelectionInput: Equatable, Sendable {
     self.targetPaths = Set(targetPaths.map(normalizeSkillTriggerTargetPath)).sorted()
     self.skillTags = Set(skillTags.map(normalizeSkillTag)).sorted()
   }
-
-  public var isEmpty: Bool {
-    targetPaths.isEmpty && skillTags.isEmpty
-  }
 }
 
 /// Deterministic reason explaining how a single trigger rule matched.

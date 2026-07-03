@@ -22,7 +22,10 @@
     "large implementation patches without explicit request",
     "silent product-intent redesign",
     "scope expansion beyond architectural review intent",
-    "optimizing for speed over invariants"
+    "optimizing for speed over invariants",
+    "memory systems or multi-session continuation",
+    "workflow orchestration or autonomous agent loops",
+    "broad platform behavior beyond deterministic contract resolution and export"
   ],
   "defaultKitIds": [
     "architectural-editor-core",
