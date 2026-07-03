@@ -208,7 +208,7 @@ struct WorkspaceLibraryEntityManagerTests {
   }
 
   @Test
-  func saveRawJSONWritesToProjectScopeReferencePath() throws {
+  func saveRawJSONWritesToProjectScopeSkillPath() throws {
     let manager = WorkspaceLibraryEntityManager(
       schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),
       dependencies: .live()
@@ -229,12 +229,12 @@ struct WorkspaceLibraryEntityManagerTests {
             "id": "swift-style-guide-reference"
           }
         """,
-      entityType: .reference
+      entityType: .skill
     )
 
     let destinationURL =
       workspaceURL
-      .appendingPathComponent(".personakit/Packs/references/swift-style-guide-reference.reference.json")
+      .appendingPathComponent(".personakit/Packs/skills/swift-style-guide-reference.skill.json")
 
     #expect(FileManager.default.fileExists(atPath: destinationURL.path()))
   }

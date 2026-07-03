@@ -291,12 +291,6 @@ struct StudioValidationReportState: Equatable, Sendable {
       entityType: .essentials,
       count: { $0.essentials.count }
     ),
-    StudioValidationAreaDefinition(
-      title: "References",
-      sidebarItem: .references,
-      entityType: .reference,
-      count: { $0.references.count }
-    ),
   ]
 
   private static func joinedList(_ values: [String]) -> String {

@@ -6,7 +6,6 @@ public enum ValidationEntityType: String, Sendable {
   case persona
   case kit
   case directive
-  case reference
   case skill
   case essentials
 
@@ -21,12 +20,10 @@ public enum ValidationEntityType: String, Sendable {
       return 2
     case .directive:
       return 3
-    case .reference:
-      return 4
     case .skill:
-      return 5
+      return 4
     case .essentials:
-      return 6
+      return 5
     }
   }
 }
@@ -93,7 +90,6 @@ public struct ValidationCounts: Equatable, Sendable {
   public let personas: Int
   public let kits: Int
   public let directives: Int
-  public let references: Int
   public let skills: Int
   public let essentials: Int
 
@@ -101,14 +97,12 @@ public struct ValidationCounts: Equatable, Sendable {
     personas: Int,
     kits: Int,
     directives: Int,
-    references: Int,
     skills: Int,
     essentials: Int
   ) {
     self.personas = personas
     self.kits = kits
     self.directives = directives
-    self.references = references
     self.skills = skills
     self.essentials = essentials
   }
@@ -117,7 +111,6 @@ public struct ValidationCounts: Equatable, Sendable {
     personas: 0,
     kits: 0,
     directives: 0,
-    references: 0,
     skills: 0,
     essentials: 0
   )
@@ -131,7 +124,7 @@ public struct ValidationResult: Equatable, Sendable {
   /// Human-readable summary string used in user-facing output.
   public var summary: String {
     return
-      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) references=\(counts.references) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
+      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
   }
 
   /// Creates a validation result and sorts errors for stable output.

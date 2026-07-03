@@ -36,7 +36,7 @@ public struct WorkspaceLibraryEntityFormDescriptor: Sendable {
 
 extension WorkspaceLibraryEntityType {
   public var supportsMinimalForm: Bool {
-    self != .reference
+    true
   }
 
   var minimalFormDescriptor: WorkspaceLibraryEntityFormDescriptor {
@@ -53,15 +53,17 @@ extension WorkspaceLibraryEntityType {
         secondArrayLabel: "Allowed Skill IDs"
       )
     case .directive:
+      // Grounding attaches through requiresSkillIds now that referenceIds is gone;
+      // the minimal form surfaces that alongside acceptanceCriteria.
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "title",
         primaryFieldLabel: "Title",
         secondaryFieldKey: "goal",
         secondaryFieldLabel: "Goal",
-        firstArrayKey: "referenceIds",
-        firstArrayLabel: "Reference IDs",
-        secondArrayKey: "requiresSkillIds",
-        secondArrayLabel: "Required Skill IDs"
+        firstArrayKey: "requiresSkillIds",
+        firstArrayLabel: "Required Skill IDs",
+        secondArrayKey: "acceptanceCriteria",
+        secondArrayLabel: "Acceptance Criteria"
       )
     case .kit:
       return WorkspaceLibraryEntityFormDescriptor(
@@ -74,8 +76,6 @@ extension WorkspaceLibraryEntityType {
         secondArrayKey: "skillIds",
         secondArrayLabel: "Skill IDs"
       )
-    case .reference:
-      preconditionFailure("Reference entities use raw JSON editing only.")
     case .skill:
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",

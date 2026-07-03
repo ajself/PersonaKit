@@ -6,7 +6,6 @@ enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case essentials
   case kits
   case personas
-  case references
   case relationshipMap
   case sessionEditor
   case sessions

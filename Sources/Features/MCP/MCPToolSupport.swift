@@ -74,7 +74,7 @@ enum MCPInternalSupport {
     directiveId: String,
     kitOverrides: [String],
     targetPaths: [String] = [],
-    referenceTags: [String] = []
+    skillTags: [String] = []
   ) throws -> String {
     let output = try SessionExporter.export(
       scopes: scopes,
@@ -82,7 +82,7 @@ enum MCPInternalSupport {
       directiveId: directiveId,
       kitOverrides: kitOverrides,
       targetPaths: targetPaths,
-      referenceTags: referenceTags
+      skillTags: skillTags
     )
     return output + "\n"
   }
@@ -184,8 +184,6 @@ enum MCPInternalSupport {
       parts.append("expectedPath=\(expectedPath)")
     } else if case .missingKitId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
-    } else if case .missingReferenceId(_, _, _, let missingId) = error {
-      parts.append("missingId=\(missingId)")
     } else if case .missingSkillId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
     } else if case .missingPersona(_, let missingId) = error {
@@ -228,12 +226,6 @@ enum MCPInternalSupport {
       catalogType = "kits"
     case .session:
       catalogType = "sessions"
-    case .reference:
-      return withRecoveryHint(
-        "reference not found: \(id)",
-        hint:
-          "Use personakit_trace_session or personakit_resolve_references for the active workflow to discover available reference ids, then retry."
-      )
     case .skill:
       catalogType = "skills"
     case .essential:

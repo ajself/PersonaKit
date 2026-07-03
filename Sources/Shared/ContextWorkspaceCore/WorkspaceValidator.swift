@@ -91,8 +91,6 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       return .kit
     case .directive:
       return .directive
-    case .reference:
-      return .reference
     case .skill:
       return .skill
     case .essentials:

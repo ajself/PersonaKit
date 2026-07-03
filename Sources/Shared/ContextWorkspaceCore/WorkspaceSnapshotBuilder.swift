@@ -83,7 +83,6 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       directives: try loadEntityItems(scopes: scopes, type: Directive.self),
       kits: try loadEntityItems(scopes: scopes, type: Kit.self),
       skills: try loadEntityItems(scopes: scopes, type: Skill.self),
-      references: try loadEntityItems(scopes: scopes, type: Reference.self),
       essentials: try loadEssentialItems(scopes: scopes)
     )
   }
@@ -219,10 +218,10 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
 
     return WorkspaceSkillMetadata(
       description: skill.description,
-      providedBy: skill.providedBy.sorted(),
-      riskLevel: skill.risk.level,
-      requiresHumanReview: skill.risk.requiresHumanReview,
-      notes: skill.risk.notes + skill.notes
+      providedBy: (skill.providedBy ?? []).sorted(),
+      riskLevel: skill.risk?.level ?? "",
+      requiresHumanReview: skill.risk?.requiresHumanReview ?? false,
+      notes: (skill.risk?.notes ?? []) + (skill.notes ?? [])
     )
   }
 
@@ -422,16 +421,6 @@ extension Kit: WorkspaceEntityDocument {
 extension Skill: WorkspaceEntityDocument {
   static let directoryName = "skills"
   static let fileSuffix = ".skill.json"
-
-  var workspaceDisplayName: String {
-    name
-  }
-}
-
-
-extension Reference: WorkspaceEntityDocument {
-  static let directoryName = "references"
-  static let fileSuffix = ".reference.json"
 
   var workspaceDisplayName: String {
     name

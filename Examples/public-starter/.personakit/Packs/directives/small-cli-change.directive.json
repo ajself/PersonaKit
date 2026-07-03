@@ -34,8 +34,7 @@
       "text": "swift run personakit validate"
     }
   ],
-  "requiresSkillIds": [],
-  "referenceIds": [
+  "requiresSkillIds": [
     "cli-change-checklist"
   ]
 }

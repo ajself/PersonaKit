@@ -2,13 +2,13 @@
   "id": "cli-change-checklist",
   "version": "1.0",
   "name": "CLI Change Checklist",
-  "summary": "Triggered checklist for small CLI changes. Edit the companion .md body, or author your own with `personakit create reference`.",
+  "description": "Triggered checklist for small CLI changes. Edit the companion .md body, or author your own with `personakit create skill`.",
   "triggerRules": [
     {
       "pathGlobs": [
         "**/*.swift"
       ],
-      "referenceTags": [
+      "skillTags": [
         "cli"
       ]
     }

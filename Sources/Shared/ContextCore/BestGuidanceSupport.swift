@@ -27,7 +27,6 @@ public enum BestGuidanceSupport {
     public let personas: Int
     public let kits: Int
     public let directives: Int
-    public let references: Int
     public let skills: Int
     public let essentials: Int
     public let sessions: Int
@@ -53,7 +52,6 @@ public enum BestGuidanceSupport {
       personas: validation.result?.counts.personas ?? 0,
       kits: validation.result?.counts.kits ?? 0,
       directives: validation.result?.counts.directives ?? 0,
-      references: validation.result?.counts.references ?? 0,
       skills: validation.result?.counts.skills ?? 0,
       essentials: validation.result?.counts.essentials ?? 0,
       sessions: sessions.value.count,

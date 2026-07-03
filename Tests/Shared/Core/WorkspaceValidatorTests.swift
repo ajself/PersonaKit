@@ -41,7 +41,6 @@ struct WorkspaceValidatorTests {
             personas: 1,
             kits: 1,
             directives: 0,
-            references: 0,
             skills: 0,
             essentials: 0
           ),

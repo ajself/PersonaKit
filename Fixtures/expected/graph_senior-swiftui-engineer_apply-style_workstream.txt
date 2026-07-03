@@ -29,24 +29,17 @@ swiftui-style
   - essential:swiftui-style-guide
   - essential:tools-and-constraints
 
-## Kits → References
-repo-constraints
-swift-style
-  - reference:swift-style-guide-reference
-swiftui-style
-  - reference:swiftui-style-guide-reference
-
 ## Kits → Skills
 repo-constraints
 swift-style
+  - skill:swift-style-guide-reference
 swiftui-style
-
-## Directive → References
-- reference:swift-style-guide-reference
-- reference:swiftui-style-guide-reference
+  - skill:swiftui-style-guide-reference
 
 ## Directive → Skills
 - skill:codex-cli
+- skill:swift-style-guide-reference
+- skill:swiftui-style-guide-reference
 
 ## Skill Contract
 Allowed Skills:
@@ -82,9 +75,8 @@ Essentials:
 - swift-style-guide
 - swiftui-style-guide
 - tools-and-constraints
-References:
+Grounding Skills:
 - swift-style-guide-reference
 - swiftui-style-guide-reference
 Skills:
 - codex-cli
-

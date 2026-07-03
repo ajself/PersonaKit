@@ -29,39 +29,39 @@ extension MCPToolService {
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
         targetPaths: input.targetPaths,
-        referenceTags: input.referenceTags
+        skillTags: input.skillTags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))
     }
   }
 
-  func resolveReferencesTool(input: MCPToolArguments) throws -> String {
+  func resolveGroundingSkillsTool(input: MCPToolArguments) throws -> String {
     do {
       let sessionInput = try MCPInternalSupport.resolveSessionInput(
         scopes: scopes,
         selection: input.selection
       )
 
-      let result = try WorkflowReferenceResolver.resolve(
+      let result = try WorkflowGroundingSkillResolver.resolve(
         scopes: scopes,
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
-        input: ReferenceSelectionInput(
+        input: SkillTriggerSelectionInput(
           targetPaths: input.targetPaths,
-          referenceTags: input.referenceTags
+          skillTags: input.skillTags
         )
       )
       return try MCPInternalSupport.encodeToolJSON(result)
-    } catch let error as ReferenceLookupError {
+    } catch let error as GroundingSkillLookupError {
       switch error {
       case .validationFailed(let result):
         let lines = [result.summary] + result.errors.map { $0.lineDescription() }
         throw MCPError.invalidParams(lines.joined(separator: "\n"))
       case .resolutionFailed(let resolutionError):
         throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(resolutionError.errors))
-      case .referenceResolutionFailed(let resolutionError):
+      case .groundingSkillResolutionFailed(let resolutionError):
         throw MCPError.invalidParams("Error: \(resolutionError.message)")
       }
     }
@@ -189,12 +189,6 @@ extension MCPToolService {
         targetIds: MCPInternalSupport.uniqueSorted($0.skillIds ?? [])
       )
     }
-    let kitToReferences = appliedKits.map {
-      MCPToolPayloads.SessionTraceEdgeMap(
-        sourceId: $0.id,
-        targetIds: MCPInternalSupport.uniqueSorted($0.referenceIds ?? [])
-      )
-    }
     let systemEssentialIds = resolved.essentials
       .filter { $0.source == .systemBuiltIn }
       .map(\.id)
@@ -212,7 +206,7 @@ extension MCPToolService {
           directiveId: resolved.directive.id,
           kitIds: resolved.kits.map(\.id).sorted(),
           essentialIds: resolved.essentials.map(\.id),
-          availableReferenceIds: resolved.availableReferences.map(\.id).sorted(),
+          availableGroundingSkillIds: resolved.availableGroundingSkills.map(\.id).sorted(),
           skillIds: resolved.skills.map(\.id).sorted(),
           skillAuthorization: MCPToolPayloads.SessionTraceSkillAuthorization(
             allowedSkillIds: resolved.skillAuthorization.allowedSkillIds,
@@ -226,10 +220,8 @@ extension MCPToolService {
         edges: MCPToolPayloads.SessionTraceEdges(
           personaDefaultKitIds: MCPInternalSupport.uniqueSorted(resolved.persona.defaultKitIds),
           sessionKitOverrideIds: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
-          directiveReferenceIds: MCPInternalSupport.uniqueSorted(resolved.directive.referenceIds ?? []),
           directiveSkillIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresSkillIds),
           kitToEssentials: kitToEssentials,
-          kitToReferences: kitToReferences,
           kitToSkills: kitToSkills,
           systemEssentialIds: systemEssentialIds
         ),

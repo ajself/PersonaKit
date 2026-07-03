@@ -26,7 +26,7 @@ struct ResolverTests {
     )
     #expect(session.skills.map { $0.id } == ["codex-cli"])
     #expect(
-      session.availableReferences.map(\.id) == [
+      session.availableGroundingSkills.map(\.id) == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
       ]
@@ -153,7 +153,7 @@ struct ResolverTests {
     #expect(session.kits.map { $0.id } == session.kits.map { $0.id }.sorted())
     #expect(session.skills.map { $0.id } == session.skills.map { $0.id }.sorted())
     #expect(
-      session.availableReferences.map(\.id) == session.availableReferences.map(\.id).sorted()
+      session.availableGroundingSkills.map(\.id) == session.availableGroundingSkills.map(\.id).sorted()
     )
     #expect(
       session.essentials.map { $0.id } == [

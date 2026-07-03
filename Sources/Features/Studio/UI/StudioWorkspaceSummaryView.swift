@@ -237,8 +237,6 @@ enum StudioWorkspaceSummaryNavigationResolver {
       return .skills
     case "essentials":
       return .essentials
-    case "references":
-      return .references
     default:
       return nil
     }

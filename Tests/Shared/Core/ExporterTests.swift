@@ -115,15 +115,15 @@ struct ExporterTests {
       directiveId: "apply-style",
       kitOverrides: [],
       targetPaths: ["Sources/FooView.swift"],
-      referenceTags: ["swiftui"]
+      skillTags: ["swiftui"]
     )
 
-    #expect(output.contains("# Available References"))
-    #expect(output.contains("# Expanded References"))
+    #expect(output.contains("# Available Skills"))
+    #expect(output.contains("# Expanded Skills"))
     #expect(output.contains("## swift-style-guide-reference"))
     #expect(output.contains("rule[0]: paths=**/*.swift => Sources/FooView.swift"))
     #expect(output.contains("## swiftui-style-guide-reference"))
-    #expect(output.contains("rule[0]: referenceTags=swiftui"))
+    #expect(output.contains("rule[0]: skillTags=swiftui"))
     #expect(output.contains("Extended SwiftUI ownership and composition guidance"))
   }
 
@@ -132,7 +132,7 @@ struct ExporterTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
-    let missingURL = root.appendingPathComponent("Packs/references/swiftui-style-guide-reference.md")
+    let missingURL = root.appendingPathComponent("Packs/skills/swiftui-style-guide-reference.md")
     try FileManager.default.removeItem(at: missingURL)
 
     do {
@@ -142,7 +142,7 @@ struct ExporterTests {
         directiveId: "apply-style",
         kitOverrides: [],
         targetPaths: ["Sources/FooView.swift"],
-        referenceTags: ["swiftui"]
+        skillTags: ["swiftui"]
       )
       #expect(Bool(false))
     } catch let error as ExportError {
@@ -150,13 +150,13 @@ struct ExporterTests {
       case .validationFailed(let result):
         #expect(
           result.errors.contains { validationError in
-            validationError.entityType == ValidationEntityType.reference
+            validationError.entityType == ValidationEntityType.skill
               && validationError.field == "body"
-              && validationError.expectedPath == "Packs/references/swiftui-style-guide-reference.md"
+              && validationError.expectedPath == "Packs/skills/swiftui-style-guide-reference.md"
           }
         )
       case .readFailed(let message):
-        #expect(message.contains("Packs/references/swiftui-style-guide-reference.md"))
+        #expect(message.contains("Packs/skills/swiftui-style-guide-reference.md"))
       default:
         #expect(Bool(false))
       }
@@ -164,13 +164,13 @@ struct ExporterTests {
   }
 
   @Test
-  func referenceExpansionRejectsEscapingReferenceIDWithoutReadingEscapedFile() throws {
+  func groundingSkillExpansionRejectsEscapingIDWithoutReadingEscapedFile() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     let leakedURL = root.appendingPathComponent("Packs/leaked-reference.md")
-    let referencesURL = root.appendingPathComponent("Packs/references")
+    let skillsURL = root.appendingPathComponent("Packs/skills")
 
     try FileManager.default.createDirectory(
-      at: referencesURL,
+      at: skillsURL,
       withIntermediateDirectories: true
     )
     try "# Leaked\n\nDo not read.\n".write(
@@ -179,24 +179,24 @@ struct ExporterTests {
       encoding: .utf8
     )
 
-    let match = ResolvedReferenceMatch(
+    let match = ResolvedGroundingSkillMatch(
       id: "../leaked-reference",
       name: "Leaked",
-      summary: "Escaping reference body",
+      description: "Escaping grounding-skill body",
       sources: [],
       matchedRules: []
     )
 
     do {
-      _ = try ReferenceSupport.loadExpandedDocuments(
+      _ = try GroundingSkillSupport.loadExpandedDocuments(
         matches: [match],
         scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil)
       )
       #expect(Bool(false))
-    } catch let error as ReferenceResolutionError {
+    } catch let error as GroundingSkillResolutionError {
       if case .missingBody(let id, let expectedPath) = error {
         #expect(id == "../leaked-reference")
-        #expect(expectedPath == "Packs/references/<invalid>.md")
+        #expect(expectedPath == "Packs/skills/<invalid>.md")
         return
       }
 

@@ -77,7 +77,7 @@ struct PersonaKitCommand: ParsableCommand {
       EnforceCommand.self,
       HookCheckCommand.self,
       ExportCommand.self,
-      ResolveReferencesCommand.self,
+      ResolveGroundingSkillsCommand.self,
       ListCLICommand.self,
       SchemaCLICommand.self,
       GraphCommand.self,
@@ -130,7 +130,7 @@ struct InitCommand: ParsableCommand {
     abstract: "Initialize a PersonaKit root without replacing non-empty destinations unless --force is set.",
     discussion: """
       Scaffolds a complete, validating worked example of every entity type \
-      (persona, kit, directive, reference, essential, session) that you can \
+      (persona, kit, directive, skill, essential, session) that you can \
       adapt instead of authoring from scratch. After init: edit the files \
       under Packs/, run `personakit validate`, then `personakit export` (or \
       `personakit contract`) to produce handoff context.

@@ -27,7 +27,6 @@ struct WorkspaceInitializerTests {
       workspaceURL.appendingPathComponent(".personakit/Packs/personas"),
       workspaceURL.appendingPathComponent(".personakit/Packs/directives"),
       workspaceURL.appendingPathComponent(".personakit/Packs/kits"),
-      workspaceURL.appendingPathComponent(".personakit/Packs/references"),
       workspaceURL.appendingPathComponent(".personakit/Packs/skills"),
       workspaceURL.appendingPathComponent(".personakit/Packs/essentials"),
       workspaceURL.appendingPathComponent(".personakit/Sessions"),

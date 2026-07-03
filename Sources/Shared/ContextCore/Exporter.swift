@@ -31,7 +31,7 @@ public struct SessionExporter {
     kitOverrides: [String],
     sessionId: String? = nil,
     targetPaths: [String] = [],
-    referenceTags: [String] = [],
+    skillTags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     try export(
@@ -41,7 +41,7 @@ public struct SessionExporter {
       kitOverrides: kitOverrides,
       sessionId: sessionId,
       targetPaths: targetPaths,
-      referenceTags: referenceTags,
+      skillTags: skillTags,
       fileManager: fileManager
     )
   }
@@ -63,7 +63,7 @@ public struct SessionExporter {
     kitOverrides: [String],
     sessionId: String? = nil,
     targetPaths: [String] = [],
-    referenceTags: [String] = [],
+    skillTags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
     let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
@@ -92,23 +92,23 @@ public struct SessionExporter {
     }
 
     let essentials = try loadEssentials(session.essentials, fileManager: fileManager)
-    let referenceInput = ReferenceSelectionInput(
+    let triggerInput = SkillTriggerSelectionInput(
       targetPaths: targetPaths,
-      referenceTags: referenceTags
+      skillTags: skillTags
     )
-    let matchedReferences = ReferenceSupport.resolveMatches(
-      availableReferences: session.availableReferences,
-      input: referenceInput
+    let matchedGroundingSkills = GroundingSkillSupport.resolveMatches(
+      availableGroundingSkills: session.availableGroundingSkills,
+      input: triggerInput
     )
-    let expandedReferences: [ExpandedReferenceDocument]
+    let expandedGroundingSkills: [ExpandedGroundingSkillDocument]
 
     do {
-      expandedReferences = try ReferenceSupport.loadExpandedDocuments(
-        matches: matchedReferences,
+      expandedGroundingSkills = try GroundingSkillSupport.loadExpandedDocuments(
+        matches: matchedGroundingSkills,
         scopes: scopes,
         fileManager: fileManager
       )
-    } catch let error as ReferenceResolutionError {
+    } catch let error as GroundingSkillResolutionError {
       throw ExportError.readFailed(error.message)
     }
 
@@ -118,8 +118,8 @@ public struct SessionExporter {
       kits: session.kits.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
       essentials: essentials,
-      availableReferences: session.availableReferences.sorted { $0.id < $1.id },
-      expandedReferences: expandedReferences,
+      availableGroundingSkills: session.availableGroundingSkills.sorted { $0.id < $1.id },
+      expandedGroundingSkills: expandedGroundingSkills,
       skillAuthorization: session.skillAuthorization,
       sessionId: sessionId
     )
@@ -178,8 +178,8 @@ public struct SessionExporter {
     kits: [Kit],
     skills: [Skill],
     essentials: [ResolvedEssential],
-    availableReferences: [ResolvedReference],
-    expandedReferences: [ExpandedReferenceDocument],
+    availableGroundingSkills: [ResolvedGroundingSkill],
+    expandedGroundingSkills: [ExpandedGroundingSkillDocument],
     skillAuthorization: ResolvedSkillAuthorization,
     sessionId: String?
   ) -> String {
@@ -274,18 +274,18 @@ public struct SessionExporter {
     }
 
     appendLine()
-    appendLine("# Available References")
+    appendLine("# Available Skills")
 
-    if availableReferences.isEmpty {
+    if availableGroundingSkills.isEmpty {
       appendLine("- none")
     } else {
-      for reference in availableReferences {
-        appendLine("## \(reference.id)")
-        appendLine("Name: \(reference.name)")
-        appendLine("Summary: \(reference.summary)")
-        appendLine("Triggers: \(ReferenceSupport.triggerSummary(for: reference))")
+      for groundingSkill in availableGroundingSkills {
+        appendLine("## \(groundingSkill.id)")
+        appendLine("Name: \(groundingSkill.name)")
+        appendLine("Description: \(groundingSkill.description)")
+        appendLine("Triggers: \(GroundingSkillSupport.triggerSummary(for: groundingSkill))")
         appendLine("Sources:")
-        for source in reference.sources {
+        for source in groundingSkill.sources {
           appendLine("- \(source.sourceType.rawValue):\(source.sourceId) [\(source.field)]")
         }
       }
@@ -305,30 +305,30 @@ public struct SessionExporter {
       }
     }
 
-    if !expandedReferences.isEmpty {
+    if !expandedGroundingSkills.isEmpty {
       appendLine()
-      appendLine("# Expanded References")
+      appendLine("# Expanded Skills")
 
-      for (index, reference) in expandedReferences.enumerated() {
-        appendLine("## \(reference.id)")
-        appendLine("Name: \(reference.title)")
-        appendLine("Summary: \(reference.match.summary)")
+      for (index, groundingSkill) in expandedGroundingSkills.enumerated() {
+        appendLine("## \(groundingSkill.id)")
+        appendLine("Name: \(groundingSkill.title)")
+        appendLine("Description: \(groundingSkill.match.description)")
         appendLine("Matched Triggers:")
-        for rule in reference.match.matchedRules {
+        for rule in groundingSkill.match.matchedRules {
           var ruleDetails: [String] = []
           if !rule.matchedPathGlobs.isEmpty {
             ruleDetails.append(
               "paths=\(rule.matchedPathGlobs.joined(separator: ", ")) => \(rule.matchedPaths.joined(separator: ", "))"
             )
           }
-          if !rule.matchedReferenceTags.isEmpty {
-            ruleDetails.append("referenceTags=\(rule.matchedReferenceTags.joined(separator: ", "))")
+          if !rule.matchedSkillTags.isEmpty {
+            ruleDetails.append("skillTags=\(rule.matchedSkillTags.joined(separator: ", "))")
           }
           appendLine("- rule[\(rule.ruleIndex)]: \(ruleDetails.joined(separator: " + "))")
         }
         appendLine()
-        output.append(normalizeIncludedMarkdownBody(reference.content))
-        if index < expandedReferences.count - 1 {
+        output.append(normalizeIncludedMarkdownBody(groundingSkill.content))
+        if index < expandedGroundingSkills.count - 1 {
           appendLine()
         }
       }
@@ -428,29 +428,31 @@ public struct SessionExporter {
       appendLine("Id: \(skill.id)")
       appendLine("Description: \(skill.description)")
 
-      if !skill.providedBy.isEmpty {
+      if let providedBy = skill.providedBy, !providedBy.isEmpty {
         appendLine()
         appendLine("Provided By:")
-        for provider in skill.providedBy {
+        for provider in providedBy {
           appendLine("- \(provider)")
         }
       }
 
-      appendLine()
-      appendLine("Risk:")
-      appendLine("- Level: \(skill.risk.level)")
-      appendLine("- Requires human review: \(skill.risk.requiresHumanReview)")
-      if !skill.risk.notes.isEmpty {
-        appendLine("- Notes:")
-        for note in skill.risk.notes {
-          appendLine("  - \(note)")
+      if let risk = skill.risk {
+        appendLine()
+        appendLine("Risk:")
+        appendLine("- Level: \(risk.level)")
+        appendLine("- Requires human review: \(risk.requiresHumanReview)")
+        if !risk.notes.isEmpty {
+          appendLine("- Notes:")
+          for note in risk.notes {
+            appendLine("  - \(note)")
+          }
         }
       }
 
-      if !skill.notes.isEmpty {
+      if let notes = skill.notes, !notes.isEmpty {
         appendLine()
         appendLine("Notes:")
-        for note in skill.notes {
+        for note in notes {
           appendLine("- \(note)")
         }
       }

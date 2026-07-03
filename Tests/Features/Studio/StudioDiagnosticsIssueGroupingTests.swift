@@ -40,19 +40,19 @@ struct StudioDiagnosticsIssueGroupingTests {
   func groupingKeepsFileLevelIssuesSeparateWhenEntityIDIsMissing() throws {
     let issues = [
       WorkspaceValidationIssue(
-        entityType: .reference,
+        entityType: .skill,
         entityId: nil,
         field: "body",
-        filePath: "Packs/references/a.md",
-        message: "Missing reference body.",
+        filePath: "Packs/skills/a.md",
+        message: "Missing grounding skill body.",
         severity: .error
       ),
       WorkspaceValidationIssue(
-        entityType: .reference,
+        entityType: .skill,
         entityId: nil,
         field: "body",
-        filePath: "Packs/references/b.md",
-        message: "Missing reference body.",
+        filePath: "Packs/skills/b.md",
+        message: "Missing grounding skill body.",
         severity: .error
       ),
     ]
@@ -61,8 +61,8 @@ struct StudioDiagnosticsIssueGroupingTests {
 
     #expect(
       groups.map(\.title) == [
-        "Reference Packs/references/a.md",
-        "Reference Packs/references/b.md",
+        "Skill Packs/skills/a.md",
+        "Skill Packs/skills/b.md",
       ]
     )
   }

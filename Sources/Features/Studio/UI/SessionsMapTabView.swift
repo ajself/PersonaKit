@@ -102,10 +102,6 @@ struct SessionsMapTabView: View {
       scopes["essential:\(essential.id)"] = essential.sourceScope
     }
 
-    for reference in snapshot.references {
-      scopes["reference:\(reference.id)"] = reference.sourceScope
-    }
-
     scopes["session:active-session"] = selectedSession.sourceScope
 
     return scopes
@@ -158,8 +154,6 @@ struct SessionsMapTabView: View {
       return "Session \(sourceId) could not be loaded: \(message)"
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
-    case .missingReferenceId(let sourceType, let sourceId, let field, let missingId):
-      return "\(sourceType.rawValue) \(sourceId) \(field) references missing reference \"\(missingId)\"."
     }
   }
 
@@ -183,8 +177,6 @@ struct SessionsMapTabView: View {
       return nil
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"
-    case .missingReferenceId(_, _, _, let missingID):
-      return "reference:\(missingID)"
     }
   }
 }

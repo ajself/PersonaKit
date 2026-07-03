@@ -266,7 +266,7 @@ struct CLICreateCommandTests {
   }
 
   @Test
-  func createReferenceWritesJSONAndMarkdownBody() throws {
+  func createGroundingSkillWritesJSONAndMarkdownBody() throws {
     let root = try makeWritableFixtureRoot()
 
     var status: Int32 = 0
@@ -274,24 +274,24 @@ struct CLICreateCommandTests {
       status = PersonaKitCLI().run(arguments: [
         "personakit",
         "create",
-        "reference",
+        "skill",
         "--root",
         root.path,
         "--name",
         "Swift Style Guide",
-        "--summary",
+        "--description",
         "Deeper Swift rationale.",
         "--path-glob",
         "**/*.swift",
-        "--reference-tag",
+        "--skill-tag",
         "swift",
       ])
     }
 
     #expect(status == 0)
 
-    let jsonURL = root.appendingPathComponent("Packs/references/swift-style-guide.reference.json")
-    let bodyURL = root.appendingPathComponent("Packs/references/swift-style-guide.md")
+    let jsonURL = root.appendingPathComponent("Packs/skills/swift-style-guide.skill.json")
+    let bodyURL = root.appendingPathComponent("Packs/skills/swift-style-guide.md")
     #expect(FileManager.default.fileExists(atPath: bodyURL.path))
 
     let rawJSON = try String(contentsOf: jsonURL, encoding: .utf8)
@@ -300,43 +300,78 @@ struct CLICreateCommandTests {
     #expect(object["id"] as? String == "swift-style-guide")
     let triggerRules = try #require(object["triggerRules"] as? [[String: Any]])
     #expect(triggerRules.first?["pathGlobs"] as? [String] == ["**/*.swift"])
-    #expect(triggerRules.first?["referenceTags"] as? [String] == ["swift"])
+    #expect(triggerRules.first?["skillTags"] as? [String] == ["swift"])
   }
 
   @Test
-  func createReferenceWithoutTriggerFailsWithGuidance() throws {
+  func createSkillBodyWithoutTriggerFailsWithGuidance() throws {
     let root = try makeWritableFixtureRoot()
 
     var status: Int32 = 0
-    let output = captureStdout {
+    let stderrOutput = captureStderr {
       status = PersonaKitCLI().run(arguments: [
         "personakit",
         "create",
-        "reference",
+        "skill",
         "--root",
         root.path,
         "--name",
-        "Swift Style Guide",
-        "--summary",
-        "Deeper Swift rationale.",
-        "--json",
+        "Orphan Body",
+        "--description",
+        "Body with no trigger.",
+        "--body",
+        "# Never surfaced",
       ])
     }
 
     #expect(status == 1)
-
-    let data = try #require(output.data(using: .utf8))
-    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
-    let error = try #require(object["error"] as? String)
-    #expect(error.contains("--path-glob/--reference-tag"))
+    #expect(stderrOutput.contains("--path-glob"))
+    #expect(stderrOutput.contains("--skill-tag"))
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: root.appendingPathComponent("Packs/skills/orphan-body.skill.json").path
+      )
+    )
   }
 
   @Test
-  func createReferenceRefusesToClobberExistingBodyWithoutForce() throws {
+  func createSkillRejectsCapabilitiesCombinedWithTriggers() throws {
     let root = try makeWritableFixtureRoot()
-    let referencesDir = root.appendingPathComponent("Packs/references")
-    try FileManager.default.createDirectory(at: referencesDir, withIntermediateDirectories: true)
-    let bodyURL = referencesDir.appendingPathComponent("swift-style-guide.md")
+
+    var status: Int32 = 0
+    let stderrOutput = captureStderr {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "skill",
+        "--root",
+        root.path,
+        "--name",
+        "Hybrid Skill",
+        "--description",
+        "Declares both a capability and a trigger.",
+        "--capability",
+        "edit-files",
+        "--path-glob",
+        "**/*.swift",
+      ])
+    }
+
+    #expect(status == 1)
+    #expect(stderrOutput.contains("grounding skill") || stderrOutput.contains("tool skill"))
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: root.appendingPathComponent("Packs/skills/hybrid-skill.skill.json").path
+      )
+    )
+  }
+
+  @Test
+  func createGroundingSkillRefusesToClobberExistingBodyWithoutForce() throws {
+    let root = try makeWritableFixtureRoot()
+    let skillsDir = root.appendingPathComponent("Packs/skills")
+    try FileManager.default.createDirectory(at: skillsDir, withIntermediateDirectories: true)
+    let bodyURL = skillsDir.appendingPathComponent("swift-style-guide.md")
     try "hand-authored body".write(to: bodyURL, atomically: true, encoding: .utf8)
 
     var status: Int32 = 0
@@ -344,12 +379,12 @@ struct CLICreateCommandTests {
       status = PersonaKitCLI().run(arguments: [
         "personakit",
         "create",
-        "reference",
+        "skill",
         "--root",
         root.path,
         "--name",
         "Swift Style Guide",
-        "--summary",
+        "--description",
         "Deeper Swift rationale.",
         "--path-glob",
         "**/*.swift",
@@ -366,7 +401,7 @@ struct CLICreateCommandTests {
   }
 
   @Test
-  func createDirectiveWithReferenceEmitsReferenceIds() throws {
+  func createDirectiveWithSkillEmitsRequiresSkillIds() throws {
     let root = try makeWritableFixtureRoot()
 
     var status: Int32 = 0
@@ -381,7 +416,7 @@ struct CLICreateCommandTests {
         "Apply Style",
         "--goal",
         "Apply the repo style contract.",
-        "--reference",
+        "--skill",
         "swift-style-guide",
         "--dry-run",
         "--json",
@@ -393,7 +428,7 @@ struct CLICreateCommandTests {
     let data = try #require(output.data(using: .utf8))
     let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
     let renderedContent = try #require(object["renderedContent"] as? String)
-    #expect(renderedContent.contains("\"referenceIds\""))
+    #expect(renderedContent.contains("\"requiresSkillIds\""))
     #expect(renderedContent.contains("\"swift-style-guide\""))
   }
 

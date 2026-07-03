@@ -22,7 +22,7 @@ struct MCPToolTests {
         "personakit_graph",
         "personakit_recommend_session",
         "personakit_resolve_contract",
-        "personakit_resolve_references",
+        "personakit_resolve_grounding_skills",
         "personakit_resolve_session_ref",
         "personakit_trace_session",
         "personakit_validate",
@@ -55,8 +55,8 @@ struct MCPToolTests {
         .contains("provenance review") == true
     )
     #expect(
-      descriptions["personakit_resolve_references"]?
-        .contains("target paths or reference tags") == true
+      descriptions["personakit_resolve_grounding_skills"]?
+        .contains("target paths or skill tags") == true
     )
     #expect(
       descriptions["personakit_export"]?
@@ -463,8 +463,8 @@ struct MCPToolTests {
     let resolved = try #require(object["resolved"] as? [String: Any])
     let kitIds = try #require(resolved["kitIds"] as? [String])
     #expect(kitIds == ["repo-constraints", "swift-style", "swiftui-style"])
-    let availableReferenceIds = try #require(resolved["availableReferenceIds"] as? [String])
-    #expect(availableReferenceIds == ["swift-style-guide-reference", "swiftui-style-guide-reference"])
+    let availableGroundingSkillIds = try #require(resolved["availableGroundingSkillIds"] as? [String])
+    #expect(availableGroundingSkillIds == ["swift-style-guide-reference", "swiftui-style-guide-reference"])
     let essentialIds = try #require(resolved["essentialIds"] as? [String])
     #expect(
       essentialIds == [
@@ -551,18 +551,18 @@ struct MCPToolTests {
     let result = try service.callTool(
       name: "personakit_explain_entity",
       arguments: [
-        "entityType": "reference",
+        "entityType": "skill",
         "id": "swiftui-style-guide-reference",
       ]
     )
 
     let output = try #require(firstText(result))
     let object = try #require(jsonObject(output))
-    #expect(object["entityType"] as? String == "reference")
+    #expect(object["entityType"] as? String == "skill")
 
     let data = try #require(object["data"] as? [String: Any])
     let triggerSummaries = try #require(data["triggerSummaries"] as? [String])
-    #expect(triggerSummaries == ["referenceTags=swiftui", "paths=**/*View.swift, **/Views/**/*.swift"])
+    #expect(triggerSummaries == ["skillTags=swiftui", "paths=**/*View.swift, **/Views/**/*.swift"])
   }
 
   @Test
@@ -571,21 +571,21 @@ struct MCPToolTests {
     let service = MCPToolService(scopes: scopes)
 
     let result = try service.callTool(
-      name: "personakit_resolve_references",
+      name: "personakit_resolve_grounding_skills",
       arguments: [
         "personaId": "senior-swiftui-engineer",
         "directiveId": "apply-style",
         "targetPaths": ["Sources/FooView.swift"],
-        "referenceTags": ["swiftui"],
+        "skillTags": ["swiftui"],
       ]
     )
 
     let output = try #require(firstText(result))
     let object = try #require(jsonObject(output))
-    let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
+    let matchedGroundingSkills = try #require(object["matchedGroundingSkills"] as? [[String: Any]])
 
     #expect(
-      matchedReferences.map { $0["id"] as? String } == [
+      matchedGroundingSkills.map { $0["id"] as? String } == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
       ]
@@ -598,20 +598,20 @@ struct MCPToolTests {
     let service = MCPToolService(scopes: scopes)
 
     let result = try service.callTool(
-      name: "personakit_resolve_references",
+      name: "personakit_resolve_grounding_skills",
       arguments: [
         "sessionId": "senior-swiftui-engineer_apply-style",
         "targetPaths": ["Sources/FooView.swift"],
-        "referenceTags": ["swiftui"],
+        "skillTags": ["swiftui"],
       ]
     )
 
     let output = try #require(firstText(result))
     let object = try #require(jsonObject(output))
-    let matchedReferences = try #require(object["matchedReferences"] as? [[String: Any]])
+    let matchedGroundingSkills = try #require(object["matchedGroundingSkills"] as? [[String: Any]])
 
     #expect(
-      matchedReferences.map { $0["id"] as? String } == [
+      matchedGroundingSkills.map { $0["id"] as? String } == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
       ]

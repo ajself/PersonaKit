@@ -10,7 +10,7 @@ enum MCPToolName: String, CaseIterable {
   case graph = "personakit_graph"
   case recommendSession = "personakit_recommend_session"
   case resolveSessionRef = "personakit_resolve_session_ref"
-  case resolveReferences = "personakit_resolve_references"
+  case resolveGroundingSkills = "personakit_resolve_grounding_skills"
   case traceSession = "personakit_trace_session"
   case validate = "personakit_validate"
 
@@ -33,9 +33,9 @@ enum MCPToolName: String, CaseIterable {
       return "Recommend sessions for a natural-language task when the correct session id is not known."
     case .resolveSessionRef:
       return "Resolve a session reference supplied as either a session id or a session-file path."
-    case .resolveReferences:
+    case .resolveGroundingSkills:
       return
-        "Resolve triggered references for explicit target paths or reference tags after the active contract is known."
+        "Resolve triggered grounding skills for explicit target paths or skill tags after the active contract is known."
     case .traceSession:
       return
         "Trace a resolved session into persona/directive/kits/skills/essentials edges for provenance review."
@@ -112,7 +112,7 @@ enum MCPToolName: String, CaseIterable {
         "properties": properties,
         "additionalProperties": false,
       ]
-    case .export, .resolveReferences:
+    case .export, .resolveGroundingSkills:
       let properties: Value = [
         "sessionId": [
           "type": "string",
@@ -135,14 +135,14 @@ enum MCPToolName: String, CaseIterable {
         ],
         "targetPaths": [
           "type": "array",
-          "description": "Optional target file paths used when evaluating references.",
+          "description": "Optional target file paths used when evaluating grounding skills.",
           "items": [
             "type": "string"
           ],
         ],
-        "referenceTags": [
+        "skillTags": [
           "type": "array",
-          "description": "Optional reference tags used when evaluating references.",
+          "description": "Optional skill tags used when evaluating grounding skills.",
           "items": [
             "type": "string"
           ],
@@ -248,7 +248,6 @@ enum MCPEntityType: String, CaseIterable {
   case directive
   case kit
   case session
-  case reference
   case skill
   case essential
 }

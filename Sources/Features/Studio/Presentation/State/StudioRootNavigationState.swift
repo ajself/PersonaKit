@@ -53,7 +53,6 @@ extension SidebarItem {
       .directives,
       .kits,
       .essentials,
-      .references,
       .skills:
       return true
     case .sessions,

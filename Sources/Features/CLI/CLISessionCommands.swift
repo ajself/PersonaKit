@@ -5,15 +5,15 @@ import Foundation
 struct ReferenceTriggerOptions: ParsableArguments {
   @Option(
     name: .customLong("target-path"),
-    help: "Target file path used when evaluating available references."
+    help: "Target file path used when evaluating available grounding skills."
   )
   var targetPaths: [String] = []
 
   @Option(
-    name: .customLong("reference-tag"),
-    help: "Reference tag used when evaluating available references."
+    name: .customLong("skill-tag"),
+    help: "Skill tag used when evaluating available grounding skills."
   )
-  var referenceTags: [String] = []
+  var skillTags: [String] = []
 }
 
 /// Resolves and prints the structured PersonaKit operating contract.
@@ -130,7 +130,7 @@ struct ExportCommand: ParsableCommand {
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
         targetPaths: referenceTriggers.targetPaths,
-        referenceTags: referenceTriggers.referenceTags
+        skillTags: referenceTriggers.skillTags
       )
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
@@ -183,9 +183,9 @@ struct ExportCommand: ParsableCommand {
 }
 
 /// Resolves triggered workflow references for inspection/debugging.
-struct ResolveReferencesCommand: ParsableCommand {
+struct ResolveGroundingSkillsCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
-    commandName: "resolve-references",
+    commandName: "resolve-grounding-skills",
     abstract: "Resolve triggered references for a session prompt."
   )
 
@@ -199,7 +199,7 @@ struct ResolveReferencesCommand: ParsableCommand {
   var referenceTriggers: ReferenceTriggerOptions
 
   mutating func validate() throws {
-    try session.validate(mode: .resolveReferences)
+    try session.validate(mode: .resolveGroundingSkills)
   }
 
   func run() throws {
@@ -210,14 +210,14 @@ struct ResolveReferencesCommand: ParsableCommand {
         from: session,
         scopes: scopes
       )
-      let result = try WorkflowReferenceResolver.resolve(
+      let result = try WorkflowGroundingSkillResolver.resolve(
         scopes: scopes,
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
-        input: ReferenceSelectionInput(
+        input: SkillTriggerSelectionInput(
           targetPaths: referenceTriggers.targetPaths,
-          referenceTags: referenceTriggers.referenceTags
+          skillTags: referenceTriggers.skillTags
         )
       )
 
@@ -226,11 +226,11 @@ struct ResolveReferencesCommand: ParsableCommand {
       let data = try encoder.encode(result)
 
       guard let output = String(data: data, encoding: .utf8) else {
-        throw CLIError.failure("Failed to encode reference resolution output.")
+        throw CLIError.failure("Failed to encode grounding skill resolution output.")
       }
 
       print(output)
-    } catch let error as ReferenceLookupError {
+    } catch let error as GroundingSkillLookupError {
       var stderrStream = StandardError()
       switch error {
       case .validationFailed(let result):
@@ -242,7 +242,7 @@ struct ResolveReferencesCommand: ParsableCommand {
         for resolutionError in resolutionError.errors {
           stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
         }
-      case .referenceResolutionFailed(let resolutionError):
+      case .groundingSkillResolutionFailed(let resolutionError):
         stderrStream.write("Error: \(resolutionError.message)\n")
       }
       throw ExitCode.failure

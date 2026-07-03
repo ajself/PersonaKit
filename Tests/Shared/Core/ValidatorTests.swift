@@ -19,8 +19,7 @@ struct ValidatorTests {
           personas: 1,
           kits: 1,
           directives: 1,
-          references: 1,
-          skills: 0,
+          skills: 1,
           essentials: 1
         )
     )
@@ -73,7 +72,6 @@ struct ValidatorTests {
       name: kit.name,
       summary: kit.summary,
       essentialIds: ["../escaped-essential"],
-      referenceIds: kit.referenceIds,
       skillIds: kit.skillIds
     )
 
@@ -105,29 +103,29 @@ struct ValidatorTests {
       encoding: .utf8
     )
 
-    let referenceURL = root.appendingPathComponent("Packs/references/escaped-reference.reference.json")
-    let reference = Reference(
+    let skillURL = root.appendingPathComponent("Packs/skills/escaped-reference.skill.json")
+    let skill = Skill(
       id: "../escaped-reference",
       version: "1.0",
       name: "Escaped Reference",
-      summary: "Reference with escaping body id.",
+      description: "Grounding skill with escaping body id.",
       triggerRules: [
-        ReferenceTriggerRule(referenceTags: ["escaped"])
+        SkillTriggerRule(skillTags: ["escaped"])
       ]
     )
-    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+    try encodeSortedJSON(skill).write(to: skillURL, options: .atomic)
 
     let result = try Validator.validate(root: root)
 
     #expect(
       result.errors.contains(
         ValidationError(
-          entityType: .reference,
+          entityType: .skill,
           entityId: "../escaped-reference",
           field: "body",
           missingId: "../escaped-reference",
-          expectedPath: "Packs/references/<invalid>.md",
-          message: "Unsafe reference id path segment \"../escaped-reference\"."
+          expectedPath: "Packs/skills/<invalid>.md",
+          message: "Unsafe skill id path segment \"../escaped-reference\"."
         )
       )
     )
@@ -145,35 +143,35 @@ struct ValidatorTests {
       encoding: .utf8
     )
 
-    let symlinkURL = root.appendingPathComponent("Packs/references/linked-reference.md")
+    let symlinkURL = root.appendingPathComponent("Packs/skills/linked-reference.md")
     try FileManager.default.createSymbolicLink(
       at: symlinkURL,
       withDestinationURL: outsideURL
     )
 
-    let referenceURL = root.appendingPathComponent("Packs/references/linked-reference.reference.json")
-    let reference = Reference(
+    let skillURL = root.appendingPathComponent("Packs/skills/linked-reference.skill.json")
+    let skill = Skill(
       id: "linked-reference",
       version: "1.0",
       name: "Linked Reference",
-      summary: "Reference body escapes through a symlink.",
+      description: "Grounding skill body escapes through a symlink.",
       triggerRules: [
-        ReferenceTriggerRule(referenceTags: ["linked"])
+        SkillTriggerRule(skillTags: ["linked"])
       ]
     )
-    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+    try encodeSortedJSON(skill).write(to: skillURL, options: .atomic)
 
     let result = try Validator.validate(root: root)
 
     #expect(
       result.errors.contains(
         ValidationError(
-          entityType: .reference,
+          entityType: .skill,
           entityId: "linked-reference",
           field: "body",
           missingId: "linked-reference",
-          expectedPath: "Packs/references/linked-reference.md",
-          message: "Unsafe reference body path for id \"linked-reference\"."
+          expectedPath: "Packs/skills/linked-reference.md",
+          message: "Unsafe grounding-skill body path for id \"linked-reference\"."
         )
       )
     )
@@ -184,29 +182,29 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
-    let referenceURL = root.appendingPathComponent("Packs/references/backslash-reference.reference.json")
-    let reference = Reference(
+    let skillURL = root.appendingPathComponent("Packs/skills/backslash-reference.skill.json")
+    let skill = Skill(
       id: "nested\\reference",
       version: "1.0",
       name: "Backslash Reference",
-      summary: "Reference body id contains a path separator.",
+      description: "Grounding skill body id contains a path separator.",
       triggerRules: [
-        ReferenceTriggerRule(referenceTags: ["backslash"])
+        SkillTriggerRule(skillTags: ["backslash"])
       ]
     )
-    try encodeSortedJSON(reference).write(to: referenceURL, options: .atomic)
+    try encodeSortedJSON(skill).write(to: skillURL, options: .atomic)
 
     let result = try Validator.validate(root: root)
 
     #expect(
       result.errors.contains(
         ValidationError(
-          entityType: .reference,
+          entityType: .skill,
           entityId: "nested\\reference",
           field: "body",
           missingId: "nested\\reference",
-          expectedPath: "Packs/references/<invalid>.md",
-          message: "Unsafe reference id path segment \"nested\\reference\"."
+          expectedPath: "Packs/skills/<invalid>.md",
+          message: "Unsafe skill id path segment \"nested\\reference\"."
         )
       )
     )
@@ -241,7 +239,6 @@ struct ValidatorTests {
       name: kit.name,
       summary: kit.summary,
       essentialIds: ["linked-essential"],
-      referenceIds: kit.referenceIds,
       skillIds: kit.skillIds
     )
 
@@ -333,13 +330,13 @@ struct ValidatorTests {
 
     // A schema-invalid entity must yield exactly its schema error: when any schema
     // error exists, all reference/skill checks are suppressed so a dangling id does
-    // not add cascade noise. `referenceIds: null` is schema-invalid (array expected)
+    // not add cascade noise. `parameters: null` is schema-invalid (array expected)
     // yet still decodes, and `requiresSkillIds` points at a missing skill that would
     // otherwise raise its own error.
     let directiveURL = root.appendingPathComponent("Packs/directives/apply-style.directive.json")
     let data = try Data(contentsOf: directiveURL)
     var object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    object?["referenceIds"] = NSNull()
+    object?["parameters"] = NSNull()
     object?["requiresSkillIds"] = ["missing-skill"]
 
     let updatedData = try JSONSerialization.data(

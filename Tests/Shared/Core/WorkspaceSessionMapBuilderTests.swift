@@ -56,8 +56,8 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:swift-style-guide" }))
-    #expect(map.nodes.contains(where: { $0.key == "reference:swift-style-guide-reference" }))
-    #expect(map.nodes.contains(where: { $0.key == "reference:swiftui-style-guide-reference" }))
+    #expect(map.nodes.contains(where: { $0.key == "skill:swift-style-guide-reference" }))
+    #expect(map.nodes.contains(where: { $0.key == "skill:swiftui-style-guide-reference" }))
 
     #expect(
       map.edges.contains(
@@ -90,8 +90,8 @@ struct WorkspaceSessionMapBuilderTests {
       map.edges.contains(
         WorkspaceSessionMapEdge(
           fromKey: "directive:apply-style",
-          toKey: "reference:swift-style-guide-reference",
-          reason: "directive.referenceIds"
+          toKey: "skill:swift-style-guide-reference",
+          reason: "directive.requiresSkillIds"
         )
       )
     )
@@ -117,7 +117,6 @@ struct WorkspaceSessionMapBuilderTests {
           "persona-activation-contract",
           "skill-authorization-contract",
         ],
-        referenceIds: kit.referenceIds,
         skillIds: kit.skillIds
       )
     }
@@ -142,7 +141,7 @@ struct WorkspaceSessionMapBuilderTests {
   }
 
   @Test
-  func mapIncludesMissingReferenceNodesAndResolutionErrors() throws {
+  func mapIncludesMissingNodesAndResolutionErrors() throws {
     let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
     let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
 
@@ -179,8 +178,7 @@ struct WorkspaceSessionMapBuilderTests {
         steps: directive.steps,
         acceptanceCriteria: directive.acceptanceCriteria,
         verification: directive.verification,
-        requiresSkillIds: ["missing-skill"],
-        referenceIds: ["missing-reference"]
+        requiresSkillIds: ["missing-skill"]
       )
     }
 
@@ -213,7 +211,6 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "kit:missing-kit" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "skill:missing-skill" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "essential:missing-essential-doc" && $0.isMissing }))
-    #expect(map.nodes.contains(where: { $0.key == "reference:missing-reference" && $0.isMissing }))
   }
 
   @Test

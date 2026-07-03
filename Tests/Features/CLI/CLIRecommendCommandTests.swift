@@ -26,7 +26,7 @@ struct CLIRecommendCommandTests {
     #expect(output.contains("persona: Senior SwiftUI Engineer (senior-swiftui-engineer)"))
     #expect(output.contains("directive: Apply Swift + SwiftUI style guides (apply-style)"))
     #expect(output.contains("skills: codex-cli"))
-    #expect(output.contains("references: swift-style-guide-reference, swiftui-style-guide-reference"))
+    #expect(output.contains("grounding skills: swift-style-guide-reference, swiftui-style-guide-reference"))
     #expect(output.contains("stop points: Avoid unrelated refactors."))
     #expect(
       output.contains(

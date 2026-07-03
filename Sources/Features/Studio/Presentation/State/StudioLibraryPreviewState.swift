@@ -178,8 +178,6 @@ extension SidebarItem {
       return "Kit"
     case .essentials:
       return "Essential"
-    case .references:
-      return "Reference"
     case .skills:
       return "Skill"
     case .relationshipMap:

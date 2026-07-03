@@ -2,10 +2,10 @@
   "id": "swiftui-style-guide-reference",
   "version": "1.0",
   "name": "SwiftUI Style Guide Reference",
-  "summary": "Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.",
+  "description": "Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.",
   "triggerRules": [
     {
-      "referenceTags": [
+      "skillTags": [
         "swiftui"
       ]
     },

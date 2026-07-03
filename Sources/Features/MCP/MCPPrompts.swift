@@ -25,7 +25,7 @@ enum MCPPromptName: String, CaseIterable {
         .init(name: "directiveId", description: "Directive id"),
         .init(name: "kits", description: "Comma-separated kit ids"),
         .init(name: "targetPaths", description: "Comma-separated target file paths"),
-        .init(name: "referenceTags", description: "Comma-separated reference tags"),
+        .init(name: "skillTags", description: "Comma-separated skill tags"),
       ]
     case .sessionGraph:
       return [
@@ -42,7 +42,7 @@ enum MCPPromptName: String, CaseIterable {
 struct MCPPromptArguments: Equatable {
   let selection: MCPSessionSelection
   let targetPaths: [String]
-  let referenceTags: [String]
+  let skillTags: [String]
 
   var sessionId: String? {
     selection.sessionId
@@ -97,9 +97,9 @@ enum MCPPromptArgumentParser {
     let directiveId = try parseOptionalString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseCSV(arguments?["targetPaths"], fieldName: "targetPaths")
-    let referenceTags = try parseCSV(
-      arguments?["referenceTags"],
-      fieldName: "referenceTags"
+    let skillTags = try parseCSV(
+      arguments?["skillTags"],
+      fieldName: "skillTags"
     )
 
     let selection: MCPSessionSelection
@@ -118,7 +118,7 @@ enum MCPPromptArgumentParser {
     return MCPPromptArguments(
       selection: selection,
       targetPaths: targetPaths,
-      referenceTags: referenceTags
+      skillTags: skillTags
     )
   }
 
@@ -218,7 +218,7 @@ struct MCPPromptService: Sendable {
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
         targetPaths: input.targetPaths,
-        referenceTags: input.referenceTags
+        skillTags: input.skillTags
       )
     } catch let error as ExportError {
       throw MCPError.invalidParams(MCPInternalSupport.formatExportError(error))

@@ -49,16 +49,6 @@ enum WorkspaceLibraryCreateSupport {
           skillIds: nil
         )
       )
-    case .reference:
-      return try WorkspaceAuthoringJSON.encode(
-        Reference(
-          id: "",
-          version: "1.0",
-          name: "",
-          summary: "",
-          triggerRules: []
-        )
-      )
     case .skill:
       return try WorkspaceAuthoringJSON.encode(
         Skill(
@@ -105,31 +95,17 @@ enum WorkspaceLibraryCreateSupport {
       )
     }
 
-    switch entityType {
-    case .reference:
-      try requireStringField(
-        "name",
-        label: "Reference name",
-        in: object
-      )
-      try requireStringField(
-        "summary",
-        label: "Reference summary",
-        in: object
-      )
-    default:
-      let descriptor = WorkspaceLibraryEntityFormAdapter(entityType: entityType).descriptor
-      try requireStringField(
-        descriptor.primaryFieldKey,
-        label: "\(entityType.displayName) \(descriptor.primaryFieldLabel.lowercased())",
-        in: object
-      )
-      try requireStringField(
-        descriptor.secondaryFieldKey,
-        label: "\(entityType.displayName) \(descriptor.secondaryFieldLabel.lowercased())",
-        in: object
-      )
-    }
+    let descriptor = WorkspaceLibraryEntityFormAdapter(entityType: entityType).descriptor
+    try requireStringField(
+      descriptor.primaryFieldKey,
+      label: "\(entityType.displayName) \(descriptor.primaryFieldLabel.lowercased())",
+      in: object
+    )
+    try requireStringField(
+      descriptor.secondaryFieldKey,
+      label: "\(entityType.displayName) \(descriptor.secondaryFieldLabel.lowercased())",
+      in: object
+    )
 
     return itemID
   }

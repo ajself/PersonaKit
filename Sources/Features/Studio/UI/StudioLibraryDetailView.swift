@@ -212,7 +212,6 @@ struct StudioLibraryDetailView: View {
     case .personas,
       .directives,
       .kits,
-      .references,
       .skills:
       guard selectedItem?.sourceScope == .project,
         entityType?.supportsMinimalForm == true
@@ -233,7 +232,6 @@ struct StudioLibraryDetailView: View {
     case .personas,
       .directives,
       .kits,
-      .references,
       .skills:
       return entityType != nil
     default:

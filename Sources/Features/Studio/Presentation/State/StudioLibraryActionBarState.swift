@@ -34,7 +34,6 @@ struct StudioLibraryActionBarState {
     case .personas,
       .directives,
       .kits,
-      .references,
       .skills:
       if isProjectSelection,
         entityType?.supportsMinimalForm == true
@@ -53,7 +52,6 @@ struct StudioLibraryActionBarState {
       || selection == .directives
       || selection == .kits
       || selection == .essentials
-      || selection == .references
       || selection == .skills
     canCreate = showsCreateAction && !isLoadingLibraryEditor
     canReveal = selectedItem != nil

@@ -29,12 +29,8 @@ enum RelationshipMapPresentationState {
       return "default kit"
     case "directive.requiresSkillIds":
       return "directive requires skill"
-    case "directive.referenceIds":
-      return "directive reference"
     case "kit.skillIds":
       return "kit skill"
-    case "kit.referenceIds":
-      return "kit reference"
     case "kit.essentialIds":
       return "kit essential"
     default:

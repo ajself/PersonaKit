@@ -46,7 +46,7 @@ public struct Resolver {
       directive: resolvedDirective,
       kits: contract.kits,
       essentials: contract.essentials,
-      availableReferences: contract.availableReferences,
+      availableGroundingSkills: contract.availableGroundingSkills,
       skills: contract.skills,
       skillAuthorization: contract.skillAuthorization
     )

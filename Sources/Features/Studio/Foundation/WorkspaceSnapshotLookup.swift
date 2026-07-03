@@ -53,8 +53,6 @@ package enum WorkspaceSnapshotLookup {
       return snapshot.directives
     case .kit:
       return snapshot.kits
-    case .reference:
-      return snapshot.references
     case .skill:
       return snapshot.skills
     }
@@ -120,7 +118,6 @@ package enum WorkspaceSnapshotLookup {
     allItems.append(contentsOf: snapshot.directives)
     allItems.append(contentsOf: snapshot.kits)
     allItems.append(contentsOf: snapshot.skills)
-    allItems.append(contentsOf: snapshot.references)
     allItems.append(contentsOf: snapshot.essentials)
 
     let libraryFileURLs = allItems.map { item in

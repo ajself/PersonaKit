@@ -317,8 +317,6 @@ struct StudioLibraryPanelView: View {
       return .directive
     case .kits:
       return .kit
-    case .references:
-      return .reference
     case .skills:
       return .skill
     default:
@@ -405,7 +403,6 @@ struct StudioLibraryPanelView: View {
       markdownEditorPresentation = workspaceStore.newEssentialEditorPresentation()
     case .directives,
       .kits,
-      .references,
       .skills:
       guard let entityType = editableEntityTypeForSelection() else {
         return

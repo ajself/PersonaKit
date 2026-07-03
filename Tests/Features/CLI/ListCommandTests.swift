@@ -69,11 +69,11 @@ struct ListCommandTests {
   }
 
   @Test
-  func listReferences() throws {
+  func listSkills() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
 
-    let output = try ListCommand.list(root: root, entityType: .references)
+    let output = try ListCommand.list(root: root, entityType: .skills)
 
     let expected = "cli-change-checklist — CLI Change Checklist"
 

@@ -63,8 +63,6 @@ extension WorkspaceValidationEntityType {
       return "Kit"
     case .directive:
       return "Directive"
-    case .reference:
-      return "Reference"
     case .skill:
       return "Skill"
     case .essentials:

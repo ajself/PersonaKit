@@ -13,7 +13,6 @@ enum SchemaEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
   case persona
   case kit
   case directive
-  case reference
   case skill
 }
 

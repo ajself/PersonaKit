@@ -120,12 +120,12 @@ struct MCPPromptTests {
       "personaId": .string("senior-swiftui-engineer"),
       "directiveId": .string("apply-style"),
       "targetPaths": .string(" Sources/FooView.swift , Views/BarView.swift "),
-      "referenceTags": .string(" swiftui , "),
+      "skillTags": .string(" swiftui , "),
     ]
 
     let parsed = try MCPPromptArgumentParser.parse(args)
 
     #expect(parsed.targetPaths == ["Sources/FooView.swift", "Views/BarView.swift"])
-    #expect(parsed.referenceTags == ["swiftui"])
+    #expect(parsed.skillTags == ["swiftui"])
   }
 }

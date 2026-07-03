@@ -40,21 +40,21 @@ Authorized: true
 - Swift Style Kit (swift-style)
 - SwiftUI Style Kit (swiftui-style)
 
-# Available References
+# Available Skills
 ## swift-style-guide-reference
 Name: Swift Style Guide Reference
-Summary: Extended Swift style examples and rationale for deeper language-structure decisions.
+Description: Extended Swift style examples and rationale for deeper language-structure decisions.
 Triggers: paths=**/*.swift
 Sources:
-- kit:swift-style [referenceIds]
-- directive:apply-style [referenceIds]
+- kit:swift-style [skillIds]
+- directive:apply-style [requiresSkillIds]
 ## swiftui-style-guide-reference
 Name: SwiftUI Style Guide Reference
-Summary: Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.
-Triggers: referenceTags=swiftui | paths=**/*View.swift, **/Views/**/*.swift
+Description: Extended SwiftUI architecture, ownership, and composition guidance for UI feature work.
+Triggers: skillTags=swiftui | paths=**/*View.swift, **/Views/**/*.swift
 Sources:
-- kit:swiftui-style [referenceIds]
-- directive:apply-style [referenceIds]
+- kit:swiftui-style [skillIds]
+- directive:apply-style [requiresSkillIds]
 
 # Essentials
 ## persona-activation-contract

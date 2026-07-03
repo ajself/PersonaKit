@@ -49,12 +49,6 @@ struct SchemaValidator {
       suffix: ".directive.json",
       schemaName: "directive.schema.json"
     ),
-    SchemaMapping(
-      entity: "reference",
-      directory: "references",
-      suffix: ".reference.json",
-      schemaName: "reference.schema.json"
-    ),
     SchemaMapping(entity: "skill", directory: "skills", suffix: ".skill.json", schemaName: "skill.schema.json"),
   ]
 

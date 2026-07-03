@@ -143,22 +143,6 @@ enum ValidatorReferenceChecker {
           )
         }
       }
-
-      for referenceId in kit.referenceIds ?? [] {
-        if registry.referencesById[referenceId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .kit,
-              entityId: kit.id,
-              field: "referenceIds",
-              missingId: referenceId,
-              expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
     }
 
     for directive in registry.directives {
@@ -174,22 +158,6 @@ enum ValidatorReferenceChecker {
               missingId: skillId,
               expectedPath: nil,
               message: "Missing skill id \"\(skillId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
-      for referenceId in directive.referenceIds ?? [] {
-        if registry.referencesById[referenceId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .directive,
-              entityId: directive.id,
-              field: "referenceIds",
-              missingId: referenceId,
-              expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\".",
               referencesUnresolvedID: true
             )
           )
@@ -218,63 +186,71 @@ enum ValidatorReferenceChecker {
     for root in scopes.loadOrder {
       try ValidatorSupport.checkCancellation()
 
-      let referencesURL = PersonaKitDirectory.referencesURL(root: root)
+      let skillsURL = PersonaKitDirectory.skillsURL(root: root)
       var isDirectory: ObjCBool = false
 
-      guard fileManager.fileExists(atPath: referencesURL.path, isDirectory: &isDirectory),
+      guard fileManager.fileExists(atPath: skillsURL.path, isDirectory: &isDirectory),
         isDirectory.boolValue
       else {
         continue
       }
 
       let files = try fileManager.contentsOfDirectory(
-        at: referencesURL,
+        at: skillsURL,
         includingPropertiesForKeys: nil,
         options: [.skipsHiddenFiles]
       )
       let sortedFiles =
         files
-        .filter { $0.lastPathComponent.hasSuffix(".reference.json") }
+        .filter { $0.lastPathComponent.hasSuffix(".skill.json") }
         .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
       for fileURL in sortedFiles {
         try ValidatorSupport.checkCancellation()
 
         let data = try Data(contentsOf: fileURL)
-        let reference = try decoder.decode(Reference.self, from: data)
-        let expectedPath = ReferenceSupport.referenceBodyRelativePath(id: reference.id)
+        let skill = try decoder.decode(Skill.self, from: data)
 
-        if !PersonaKitPathSafety.isSafePathSegment(reference.id) {
+        // Body and trigger validation applies only to grounding skills (former
+        // references): a tool-awareness skill carries neither and needs neither.
+        guard skill.isGrounding else {
+          continue
+        }
+
+        let triggerRules = skill.triggerRules ?? []
+        let expectedPath = GroundingSkillSupport.groundingSkillBodyRelativePath(id: skill.id)
+
+        if !PersonaKitPathSafety.isSafePathSegment(skill.id) {
           errors.append(
             unsafePathSegmentError(
-              entityType: .reference,
-              entityId: reference.id,
+              entityType: .skill,
+              entityId: skill.id,
               field: "body",
-              value: reference.id,
+              value: skill.id,
               expectedPath: expectedPath,
-              kind: "reference id"
+              kind: "skill id"
             )
           )
-        } else if ReferenceSupport.resolveReferenceBodyURL(
-          id: reference.id,
+        } else if GroundingSkillSupport.resolveGroundingSkillBodyURL(
+          id: skill.id,
           root: root,
           fileManager: fileManager
         ) == nil {
           if hasEscapingPath(
             root: root,
-            baseRelativePath: "Packs/references",
-            segment: reference.id,
+            baseRelativePath: "Packs/skills",
+            segment: skill.id,
             suffix: ".md",
             fileManager: fileManager
           ) {
             errors.append(
               unsafeResolvedPathError(
-                entityType: .reference,
-                entityId: reference.id,
+                entityType: .skill,
+                entityId: skill.id,
                 field: "body",
-                value: reference.id,
+                value: skill.id,
                 expectedPath: expectedPath,
-                kind: "reference body"
+                kind: "grounding-skill body"
               )
             )
             continue
@@ -282,46 +258,33 @@ enum ValidatorReferenceChecker {
 
           errors.append(
             ValidationError(
-              entityType: .reference,
-              entityId: reference.id,
+              entityType: .skill,
+              entityId: skill.id,
               field: "body",
-              missingId: reference.id,
+              missingId: skill.id,
               expectedPath: expectedPath,
-              message: "Missing reference body at \(expectedPath)."
+              message: "Missing grounding-skill body at \(expectedPath)."
             )
           )
         }
 
-        if reference.triggerRules.isEmpty {
-          errors.append(
-            ValidationError(
-              entityType: .reference,
-              entityId: reference.id,
-              field: "triggerRules",
-              missingId: nil,
-              expectedPath: nil,
-              message: "Reference must declare at least one trigger rule."
-            )
-          )
-        }
-
-        for (ruleIndex, triggerRule) in reference.triggerRules.enumerated() {
+        for (ruleIndex, triggerRule) in triggerRules.enumerated() {
           let pathGlobs = (triggerRule.pathGlobs ?? []).map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
           }
-          let referenceTags = (triggerRule.referenceTags ?? []).map {
+          let skillTags = (triggerRule.skillTags ?? []).map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines)
           }
 
-          if pathGlobs.allSatisfy(\.isEmpty) && referenceTags.allSatisfy(\.isEmpty) {
+          if pathGlobs.allSatisfy(\.isEmpty) && skillTags.allSatisfy(\.isEmpty) {
             errors.append(
               ValidationError(
-                entityType: .reference,
-                entityId: reference.id,
+                entityType: .skill,
+                entityId: skill.id,
                 field: "triggerRules[\(ruleIndex)]",
                 missingId: nil,
                 expectedPath: nil,
-                message: "Trigger rule must declare at least one non-empty pathGlobs or referenceTags value."
+                message: "Trigger rule must declare at least one non-empty pathGlobs or skillTags value."
               )
             )
           }

@@ -38,9 +38,7 @@
     }
   ],
   "requiresSkillIds": [
-    "codex-cli"
-  ],
-  "referenceIds": [
+    "codex-cli",
     "swift-style-guide-reference",
     "swiftui-style-guide-reference"
   ],

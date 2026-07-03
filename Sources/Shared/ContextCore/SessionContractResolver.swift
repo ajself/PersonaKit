@@ -65,7 +65,7 @@ public struct SessionContractResult: Sendable {
   public let directive: Directive?
   public let kits: [Kit]
   public let essentials: [ResolvedEssential]
-  public let availableReferences: [ResolvedReference]
+  public let availableGroundingSkills: [ResolvedGroundingSkill]
   public let skills: [Skill]
   public let injectedContractIds: [String]
   public let skillAuthorization: ResolvedSkillAuthorization
@@ -77,7 +77,7 @@ public struct SessionContractResult: Sendable {
     directive: Directive?,
     kits: [Kit],
     essentials: [ResolvedEssential],
-    availableReferences: [ResolvedReference],
+    availableGroundingSkills: [ResolvedGroundingSkill],
     skills: [Skill],
     injectedContractIds: [String],
     skillAuthorization: ResolvedSkillAuthorization,
@@ -88,7 +88,7 @@ public struct SessionContractResult: Sendable {
     self.directive = directive
     self.kits = kits
     self.essentials = essentials
-    self.availableReferences = availableReferences
+    self.availableGroundingSkills = availableGroundingSkills
     self.skills = skills
     self.injectedContractIds = injectedContractIds
     self.skillAuthorization = skillAuthorization
@@ -96,7 +96,7 @@ public struct SessionContractResult: Sendable {
   }
 }
 
-public struct ResolvedContractReferenceSourceSnapshot: Codable, Equatable, Sendable {
+public struct ResolvedContractGroundingSkillSourceSnapshot: Codable, Equatable, Sendable {
   public let sourceType: String
   public let sourceId: String
   public let field: String
@@ -112,21 +112,21 @@ public struct ResolvedContractReferenceSourceSnapshot: Codable, Equatable, Senda
   }
 }
 
-public struct ResolvedContractReferenceSnapshot: Codable, Equatable, Sendable {
+public struct ResolvedContractGroundingSkillSnapshot: Codable, Equatable, Sendable {
   public let id: String
   public let name: String
-  public let summary: String
-  public let sources: [ResolvedContractReferenceSourceSnapshot]
+  public let description: String
+  public let sources: [ResolvedContractGroundingSkillSourceSnapshot]
 
   public init(
     id: String,
     name: String,
-    summary: String,
-    sources: [ResolvedContractReferenceSourceSnapshot]
+    description: String,
+    sources: [ResolvedContractGroundingSkillSourceSnapshot]
   ) {
     self.id = id
     self.name = name
-    self.summary = summary
+    self.description = description
     self.sources = sources
   }
 }
@@ -179,7 +179,7 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
   public let directiveId: String?
   public let kitIds: [String]
   public let injectedContractIds: [String]
-  public let availableReferences: [ResolvedContractReferenceSnapshot]
+  public let availableGroundingSkills: [ResolvedContractGroundingSkillSnapshot]
   public let allowedSkillIds: [String]
   public let forbiddenSkillIds: [String]
   public let authorizedSkillIds: [String]
@@ -198,7 +198,7 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
     directiveId: String?,
     kitIds: [String],
     injectedContractIds: [String],
-    availableReferences: [ResolvedContractReferenceSnapshot],
+    availableGroundingSkills: [ResolvedContractGroundingSkillSnapshot],
     allowedSkillIds: [String],
     forbiddenSkillIds: [String],
     authorizedSkillIds: [String],
@@ -216,7 +216,7 @@ public struct ResolvedContractSnapshot: Codable, Equatable, Sendable {
     self.directiveId = directiveId
     self.kitIds = kitIds
     self.injectedContractIds = injectedContractIds
-    self.availableReferences = availableReferences
+    self.availableGroundingSkills = availableGroundingSkills
     self.allowedSkillIds = allowedSkillIds
     self.forbiddenSkillIds = forbiddenSkillIds
     self.authorizedSkillIds = authorizedSkillIds
@@ -243,13 +243,13 @@ public enum SessionContractResolver {
       directiveId: result.directive?.id,
       kitIds: result.kits.map(\.id).sorted(),
       injectedContractIds: result.injectedContractIds,
-      availableReferences: result.availableReferences.map {
-        ResolvedContractReferenceSnapshot(
+      availableGroundingSkills: result.availableGroundingSkills.map {
+        ResolvedContractGroundingSkillSnapshot(
           id: $0.id,
           name: $0.name,
-          summary: $0.summary,
+          description: $0.description,
           sources: $0.sources.map {
-            ResolvedContractReferenceSourceSnapshot(
+            ResolvedContractGroundingSkillSourceSnapshot(
               sourceType: $0.sourceType.rawValue,
               sourceId: $0.sourceId,
               field: $0.field
@@ -349,7 +349,7 @@ public enum SessionContractResolver {
       directive: components.directive,
       kits: components.kits.sorted { $0.id < $1.id },
       essentials: SystemEssentials.sortResolvedEssentialsForResolvedOutput(components.essentials),
-      availableReferences: components.availableReferences.sorted { $0.id < $1.id },
+      availableGroundingSkills: components.availableGroundingSkills.sorted { $0.id < $1.id },
       skills: components.skills.sorted { $0.id < $1.id },
       injectedContractIds: SystemEssentials.sortEssentialIdsForResolvedOutput(injectedContractIds),
       skillAuthorization: authorization.contract,

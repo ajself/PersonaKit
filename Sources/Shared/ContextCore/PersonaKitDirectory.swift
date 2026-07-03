@@ -25,8 +25,8 @@ public struct PersonaKitDirectory {
   ///
   /// - Parameter root: PersonaKit root directory URL.
   /// - Returns: URL for the `Packs/references` directory under `root`.
-  public static func referencesURL(root: URL) -> URL {
-    packsURL(root: root).appendingPathComponent("references")
+  public static func skillsURL(root: URL) -> URL {
+    packsURL(root: root).appendingPathComponent("skills")
   }
 
   /// Returns whether `root/Packs` exists and is a directory.

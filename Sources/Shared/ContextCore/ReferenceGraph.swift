@@ -5,7 +5,6 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
   case persona
   case kit
   case directive
-  case reference
   case skill
   case essential
   case session
@@ -20,9 +19,8 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     case .persona: return 1
     case .kit: return 2
     case .directive: return 3
-    case .reference: return 4
-    case .skill: return 5
-    case .essential: return 6
+    case .skill: return 4
+    case .essential: return 5
     }
   }
 
@@ -36,7 +34,7 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     switch self {
     case .session, .persona, .directive:
       return true
-    case .kit, .reference, .skill, .essential:
+    case .kit, .skill, .essential:
       return false
     }
   }
@@ -94,7 +92,6 @@ public struct ReferenceGraph: Sendable {
     for persona in registry.personas { nodes.insert(node(.persona, persona.id)) }
     for kit in registry.kits { nodes.insert(node(.kit, kit.id)) }
     for directive in registry.directives { nodes.insert(node(.directive, directive.id)) }
-    for reference in registry.references { nodes.insert(node(.reference, reference.id)) }
     for skill in registry.skills { nodes.insert(node(.skill, skill.id)) }
     for essentialId in essentialIds { nodes.insert(node(.essential, essentialId)) }
     for session in sessions { nodes.insert(node(.session, session.id)) }
@@ -115,14 +112,12 @@ public struct ReferenceGraph: Sendable {
     for kit in registry.kits {
       let from = node(.kit, kit.id)
       link(from, .essential, kit.essentialIds, "essentialIds")
-      link(from, .reference, kit.referenceIds ?? [], "referenceIds")
       link(from, .skill, kit.skillIds ?? [], "skillIds")
     }
 
     for directive in registry.directives {
       let from = node(.directive, directive.id)
       link(from, .skill, directive.requiresSkillIds, "requiresSkillIds")
-      link(from, .reference, directive.referenceIds ?? [], "referenceIds")
     }
 
     for session in sessions {

@@ -179,7 +179,6 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
   public var name: String
   public var summary: String
   public var essentialIds: [String]
-  public var referenceIds: [String]
   public var skillIds: [String]
 
   public init(
@@ -187,14 +186,12 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
     name: String,
     summary: String,
     essentialIds: [String],
-    referenceIds: [String] = [],
     skillIds: [String]
   ) {
     self.id = id
     self.name = name
     self.summary = summary
     self.essentialIds = essentialIds
-    self.referenceIds = referenceIds
     self.skillIds = skillIds
   }
 }
@@ -207,7 +204,6 @@ public struct WorkspaceDirectiveDraft: Sendable {
   public var acceptanceCriteria: [String]
   public var verification: [Directive.VerificationItem]
   public var requiresSkillIds: [String]
-  public var referenceIds: [String]
 
   public init(
     id: String,
@@ -216,8 +212,7 @@ public struct WorkspaceDirectiveDraft: Sendable {
     steps: [Directive.Step],
     acceptanceCriteria: [String],
     verification: [Directive.VerificationItem],
-    requiresSkillIds: [String],
-    referenceIds: [String] = []
+    requiresSkillIds: [String]
   ) {
     self.id = id
     self.title = title
@@ -226,7 +221,6 @@ public struct WorkspaceDirectiveDraft: Sendable {
     self.acceptanceCriteria = acceptanceCriteria
     self.verification = verification
     self.requiresSkillIds = requiresSkillIds
-    self.referenceIds = referenceIds
   }
 }
 
@@ -240,6 +234,8 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
   public var requiresHumanReview: Bool
   public var riskNotes: [String]
   public var notes: [String]
+  public var pathGlobs: [String]
+  public var skillTags: [String]
 
   public init(
     id: String,
@@ -250,7 +246,9 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     riskLevel: String,
     requiresHumanReview: Bool,
     riskNotes: [String],
-    notes: [String]
+    notes: [String],
+    pathGlobs: [String] = [],
+    skillTags: [String] = []
   ) {
     self.id = id
     self.name = name
@@ -261,6 +259,8 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     self.requiresHumanReview = requiresHumanReview
     self.riskNotes = riskNotes
     self.notes = notes
+    self.pathGlobs = pathGlobs
+    self.skillTags = skillTags
   }
 }
 
@@ -273,7 +273,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: "",
       summary: "",
       essentialIds: [],
-      referenceIds: [],
       skillIds: []
     )
   }
@@ -285,7 +284,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
   public func validate(
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
-    knownReferenceIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
@@ -305,11 +303,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       warnings.append("Unknown essential ids: \(unknownEssentialIDs.joined(separator: ", ")).")
     }
 
-    let unknownReferenceIDs = normalized.referenceIds.filter { !knownReferenceIDs.contains($0) }
-    if !unknownReferenceIDs.isEmpty {
-      warnings.append("Unknown reference ids: \(unknownReferenceIDs.joined(separator: ", ")).")
-    }
-
     let unknownSkillIDs = normalized.skillIds.filter { !knownSkillIDs.contains($0) }
     if !unknownSkillIDs.isEmpty {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
@@ -321,13 +314,11 @@ public struct WorkspaceKitDraftBuilder: Sendable {
   public func buildRawJSON(
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
-    knownReferenceIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
       knownEssentialIDs: knownEssentialIDs,
-      knownReferenceIDs: knownReferenceIDs,
       knownSkillIDs: knownSkillIDs
     )
 
@@ -342,7 +333,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: normalized.name,
       summary: normalized.summary,
       essentialIds: normalized.essentialIds,
-      referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds,
       skillIds: normalized.skillIds.isEmpty ? nil : normalized.skillIds
     )
 
@@ -355,7 +345,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
       summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
       essentialIds: normalizedIDs(draft.essentialIds),
-      referenceIds: normalizedIDs(draft.referenceIds),
       skillIds: normalizedIDs(draft.skillIds)
     )
   }
@@ -384,8 +373,7 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
 
   public func validate(
     draft: WorkspaceDirectiveDraft,
-    knownSkillIDs: Set<String> = [],
-    knownReferenceIDs: Set<String> = []
+    knownSkillIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
     var errors: [String] = []
@@ -404,23 +392,16 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
     }
 
-    let unknownReferenceIDs = normalized.referenceIds.filter { !knownReferenceIDs.contains($0) }
-    if !unknownReferenceIDs.isEmpty {
-      warnings.append("Unknown reference ids: \(unknownReferenceIDs.joined(separator: ", ")).")
-    }
-
     return WorkspaceCreateValidation(errors: errors, warnings: warnings)
   }
 
   public func buildRawJSON(
     draft: WorkspaceDirectiveDraft,
-    knownSkillIDs: Set<String> = [],
-    knownReferenceIDs: Set<String> = []
+    knownSkillIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
-      knownSkillIDs: knownSkillIDs,
-      knownReferenceIDs: knownReferenceIDs
+      knownSkillIDs: knownSkillIDs
     )
 
     guard validation.errors.isEmpty else {
@@ -436,8 +417,7 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       steps: normalized.steps,
       acceptanceCriteria: normalized.acceptanceCriteria,
       verification: normalized.verification,
-      requiresSkillIds: normalized.requiresSkillIds,
-      referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds
+      requiresSkillIds: normalized.requiresSkillIds
     )
 
     return try WorkspaceAuthoringJSON.encode(directive)
@@ -465,8 +445,7 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
           )
         }
         .filter { !$0.kind.isEmpty && !$0.text.isEmpty },
-      requiresSkillIds: normalizedIDs(draft.requiresSkillIds),
-      referenceIds: normalizedIDs(draft.referenceIds)
+      requiresSkillIds: normalizedIDs(draft.requiresSkillIds)
     )
   }
 }
@@ -484,7 +463,9 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       riskLevel: "medium",
       requiresHumanReview: false,
       riskNotes: [],
-      notes: []
+      notes: [],
+      pathGlobs: [],
+      skillTags: []
     )
   }
 
@@ -514,6 +495,18 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       )
     }
 
+    // Grounding and tool skills are distinct natures: runtime `Skill.isGrounding`
+    // requires trigger rules AND no capabilities. Declaring both would make the
+    // trigger rules (and any body) dead weight, so reject the combination at the
+    // authoring boundary rather than emit an entity no code path expands.
+    let hasTriggers = !normalized.pathGlobs.isEmpty || !normalized.skillTags.isEmpty
+    if hasTriggers, !normalized.capabilities.isEmpty {
+      errors.append(
+        "A skill is either a grounding skill (trigger rules + body) or a tool skill "
+          + "(capabilities), not both. Remove the capabilities or the trigger rules."
+      )
+    }
+
     return WorkspaceCreateValidation(errors: errors, warnings: [])
   }
 
@@ -527,6 +520,17 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
     }
 
     let normalized = normalizedDraft(draft)
+    let triggerRules: [SkillTriggerRule]?
+    if normalized.pathGlobs.isEmpty, normalized.skillTags.isEmpty {
+      triggerRules = nil
+    } else {
+      triggerRules = [
+        SkillTriggerRule(
+          pathGlobs: normalized.pathGlobs.isEmpty ? nil : normalized.pathGlobs,
+          skillTags: normalized.skillTags.isEmpty ? nil : normalized.skillTags
+        )
+      ]
+    }
     let skill = Skill(
       id: normalized.id,
       version: "1.0",
@@ -534,6 +538,7 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       description: normalized.description,
       providedBy: normalized.providedBy,
       capabilities: normalized.capabilities.isEmpty ? nil : normalized.capabilities,
+      triggerRules: triggerRules,
       risk: Skill.Risk(
         level: normalized.riskLevel,
         requiresHumanReview: normalized.requiresHumanReview,
@@ -555,107 +560,9 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       riskLevel: draft.riskLevel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
       requiresHumanReview: draft.requiresHumanReview,
       riskNotes: normalizedTextItems(draft.riskNotes),
-      notes: normalizedTextItems(draft.notes)
-    )
-  }
-}
-
-public struct WorkspaceReferenceDraft: Equatable, Sendable {
-  public var id: String
-  public var name: String
-  public var summary: String
-  public var pathGlobs: [String]
-  public var referenceTags: [String]
-
-  public init(
-    id: String,
-    name: String,
-    summary: String,
-    pathGlobs: [String],
-    referenceTags: [String]
-  ) {
-    self.id = id
-    self.name = name
-    self.summary = summary
-    self.pathGlobs = pathGlobs
-    self.referenceTags = referenceTags
-  }
-}
-
-public struct WorkspaceReferenceDraftBuilder: Sendable {
-  public init() {}
-
-  public func defaultDraft(template: WorkspaceCreationTemplate) -> WorkspaceReferenceDraft {
-    WorkspaceReferenceDraft(id: "", name: "", summary: "", pathGlobs: [], referenceTags: [])
-  }
-
-  public func suggestedID(from name: String) -> String {
-    WorkspaceEntityIDSuggester.suggestedID(from: name)
-  }
-
-  public func validate(
-    draft: WorkspaceReferenceDraft
-  ) -> WorkspaceCreateValidation {
-    let normalized = normalizedDraft(draft)
-    var errors: [String] = []
-
-    validateCoreFields(
-      id: normalized.id,
-      displayName: "Reference",
-      name: normalized.name,
-      summary: normalized.summary,
-      errors: &errors
-    )
-
-    // The entity validator rejects a reference with no trigger rules, so refuse
-    // to build one here too — keep buildRawJSON from emitting JSON that
-    // `personakit validate` would immediately fail.
-    if normalized.pathGlobs.isEmpty, normalized.referenceTags.isEmpty {
-      errors.append("Reference must declare at least one path glob or reference tag.")
-    }
-
-    return WorkspaceCreateValidation(errors: errors, warnings: [])
-  }
-
-  public func buildRawJSON(
-    draft: WorkspaceReferenceDraft
-  ) throws -> String {
-    let validation = validate(draft: draft)
-
-    guard validation.errors.isEmpty else {
-      throw WorkspaceSnapshotBuildError(message: validation.errors.joined(separator: " "))
-    }
-
-    let normalized = normalizedDraft(draft)
-    let triggerRules: [ReferenceTriggerRule]
-    if normalized.pathGlobs.isEmpty, normalized.referenceTags.isEmpty {
-      triggerRules = []
-    } else {
-      triggerRules = [
-        ReferenceTriggerRule(
-          pathGlobs: normalized.pathGlobs.isEmpty ? nil : normalized.pathGlobs,
-          referenceTags: normalized.referenceTags.isEmpty ? nil : normalized.referenceTags
-        )
-      ]
-    }
-    let reference = Reference(
-      id: normalized.id,
-      version: "1.0",
-      name: normalized.name,
-      summary: normalized.summary,
-      triggerRules: triggerRules
-    )
-
-    return try WorkspaceAuthoringJSON.encode(reference)
-  }
-
-  private func normalizedDraft(_ draft: WorkspaceReferenceDraft) -> WorkspaceReferenceDraft {
-    WorkspaceReferenceDraft(
-      id: WorkspaceEntityIDPolicy.normalized(draft.id),
-      name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
-      summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
+      notes: normalizedTextItems(draft.notes),
       pathGlobs: normalizedTextItems(draft.pathGlobs),
-      referenceTags: normalizedTextItems(draft.referenceTags)
+      skillTags: normalizedTextItems(draft.skillTags)
     )
   }
 }

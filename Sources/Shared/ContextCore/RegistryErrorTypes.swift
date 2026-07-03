@@ -6,7 +6,6 @@ public enum RegistryEntityType: String, Sendable {
   case persona
   case kit
   case directive
-  case reference
   case skill
 
   /// Stable sort priority used for deterministic error output.
@@ -20,10 +19,8 @@ public enum RegistryEntityType: String, Sendable {
       return 2
     case .directive:
       return 3
-    case .reference:
-      return 4
     case .skill:
-      return 5
+      return 4
     }
   }
 }

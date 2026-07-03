@@ -235,7 +235,6 @@ struct WorkspaceRelationshipMapBuilderTests {
           "persona-activation-contract",
           "skill-authorization-contract",
         ],
-        referenceIds: kit.referenceIds,
         skillIds: kit.skillIds
       )
     }
@@ -261,24 +260,24 @@ struct WorkspaceRelationshipMapBuilderTests {
   }
 
   @Test
-  func relationshipMapIncludesReferenceNodesAndDirectiveEdges() throws {
+  func relationshipMapIncludesGroundingSkillNodesAndDirectiveEdges() throws {
     let (workspaceURL, _) = try makeWorkspaceWithProjectFixture()
 
     let builder = WorkspaceRelationshipMapBuilder(globalScopeURL: nil)
     let map = try builder.build(workspaceURL: workspaceURL)
 
-    let referenceNode = try #require(
-      map.nodes.first(where: { $0.key == "reference:swift-style-guide-reference" })
+    let groundingSkillNode = try #require(
+      map.nodes.first(where: { $0.key == "skill:swift-style-guide-reference" })
     )
-    #expect(referenceNode.displayName == "Swift Style Guide Reference")
-    #expect(!referenceNode.isMissing)
+    #expect(groundingSkillNode.displayName == "Swift Style Guide Reference")
+    #expect(!groundingSkillNode.isMissing)
 
     #expect(
       map.edges.contains(
         WorkspaceSessionMapEdge(
           fromKey: "directive:apply-style",
-          toKey: "reference:swift-style-guide-reference",
-          reason: "directive.referenceIds"
+          toKey: "skill:swift-style-guide-reference",
+          reason: "directive.requiresSkillIds"
         )
       )
     )

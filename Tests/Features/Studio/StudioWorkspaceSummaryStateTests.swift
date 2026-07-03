@@ -60,7 +60,6 @@ struct StudioWorkspaceSummaryStateTests {
         "kits",
         "skills",
         "essentials",
-        "references",
       ]
     )
     #expect(state.accessibilitySummary.contains("Sessions 1"))
@@ -158,7 +157,6 @@ struct StudioWorkspaceSummaryStateTests {
       (StudioWorkspaceCount(id: "kits", title: "Kits", count: 1), .kits),
       (StudioWorkspaceCount(id: "skills", title: "Skills", count: 1), .skills),
       (StudioWorkspaceCount(id: "essentials", title: "Essentials", count: 1), .essentials),
-      (StudioWorkspaceCount(id: "references", title: "References", count: 1), .references),
     ]
 
     for (count, sidebarItem) in countDestinations {

@@ -5,37 +5,37 @@ import Testing
 
 struct StudioDiagnosticsNavigationResolverTests {
   @Test
-  func referenceIssuesRouteToReferencesSidebar() {
+  func groundingSkillIssuesRouteToSkillsSidebar() {
     let target = StudioDiagnosticsNavigationResolver.navigationTarget(
       for: WorkspaceValidationIssue(
-        entityType: .reference,
+        entityType: .skill,
         entityId: "swift-style-guide-reference",
-        field: "referenceIds",
-        filePath: "Packs/references/swift-style-guide-reference.reference.json",
-        message: "Missing reference id.",
+        field: "requiresSkillIds",
+        filePath: "Packs/skills/swift-style-guide-reference.skill.json",
+        message: "Missing skill id.",
         severity: .error
       )
     )
 
-    #expect(target.sidebarItem == .references)
+    #expect(target.sidebarItem == .skills)
     #expect(target.selectedLibraryItemID == "swift-style-guide-reference")
     #expect(target.searchText == "swift-style-guide-reference")
   }
 
   @Test
-  func referenceMarkdownIssuesInferReferenceIDFromBodyPath() {
+  func groundingSkillJSONIssuesInferSkillIDFromPath() {
     let target = StudioDiagnosticsNavigationResolver.navigationTarget(
       for: WorkspaceValidationIssue(
-        entityType: .reference,
+        entityType: .skill,
         entityId: nil,
         field: "body",
-        filePath: "Packs/references/swiftui-style-guide-reference.md",
-        message: "Missing reference body.",
+        filePath: "Packs/skills/swiftui-style-guide-reference.skill.json",
+        message: "Missing grounding skill body.",
         severity: .error
       )
     )
 
-    #expect(target.sidebarItem == .references)
+    #expect(target.sidebarItem == .skills)
     #expect(target.selectedLibraryItemID == "swiftui-style-guide-reference")
     #expect(target.searchText == "swiftui-style-guide-reference")
   }

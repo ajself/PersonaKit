@@ -25,7 +25,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     .kit,
     .skill,
     .essential,
-    .reference,
   ]
 
   private let nodeKindOrder: [WorkspaceSessionMapNodeKind] = [
@@ -35,7 +34,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     .kit,
     .skill,
     .essential,
-    .reference,
   ]
 
   var body: some View {
@@ -429,10 +427,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       scopes["essential:\(essential.id)"] = essential.sourceScope
     }
 
-    for reference in workspaceStore.snapshot.references {
-      scopes["reference:\(reference.id)"] = reference.sourceScope
-    }
-
     return scopes
   }
 
@@ -450,7 +444,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       snapshot.kits.map { "kit:\($0.id)::\($0.sourceScope.rawValue)" },
       snapshot.skills.map { "skill:\($0.id)::\($0.sourceScope.rawValue)" },
       snapshot.essentials.map { "essential:\($0.id)::\($0.sourceScope.rawValue)" },
-      snapshot.references.map { "reference:\($0.id)::\($0.sourceScope.rawValue)" },
     ]
     .flatMap { $0 }
     .sorted()
@@ -732,8 +725,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       return "Session \(sourceId) could not be loaded: \(message)"
     case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
-    case .missingReferenceId(let sourceType, let sourceId, let field, let missingId):
-      return "\(sourceType.rawValue) \(sourceId) \(field) references missing reference \"\(missingId)\"."
     }
   }
 
@@ -757,8 +748,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       return nil
     case .missingEssentialFile(_, _, _, let missingID, _):
       return "essential:\(missingID)"
-    case .missingReferenceId(_, _, _, let missingID):
-      return "reference:\(missingID)"
     }
   }
 
@@ -1007,8 +996,6 @@ extension WorkspaceSessionMapNodeKind {
       return "Skill"
     case .essential:
       return "Essential"
-    case .reference:
-      return "Reference"
     }
   }
 }

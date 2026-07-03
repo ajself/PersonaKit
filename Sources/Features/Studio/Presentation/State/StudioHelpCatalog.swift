@@ -57,38 +57,7 @@ enum StudioHelpCatalog {
         nextStepText: "Confirm essentials are referenced by kits or personas used in your active sessions.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
-          StudioHelpLink(label: "Go to References", destination: .references, searchText: nil),
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-        ]
-      )
-
-    case .references:
-      return StudioHelpTopic(
-        id: .references,
-        title: "References Help",
-        shortHint: "References are first-class pack entities with deterministic trigger rules.",
-        purpose:
-          "References define reusable supporting material that sessions can expose without folding those documents into Essentials.",
-        keyFields: [
-          "Keep ids and filenames stable so reference links stay deterministic.",
-          "Use clear summaries and trigger rules that match the intended source files or tags.",
-          "Treat reference bodies as authored pack documents under `Packs/references`.",
-        ],
-        commonMistakes: [
-          "Storing references in Essentials just because they are markdown files.",
-          "Writing vague trigger rules that do not map cleanly to the intended surface area.",
-          "Changing ids casually and breaking directive or kit links.",
-        ],
-        examples: [
-          "Example reference: a SwiftUI style guide with trigger rules for `*View.swift` files and the `swiftui` reference tag."
-        ],
-        nextStepText:
-          "Confirm references resolve from the right directives or kits, then inspect the Relationship Map for clean source edges.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
-          StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
-          StudioHelpLink(label: "Go to Relationship Map", destination: .relationshipMap, searchText: nil),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
         ]
       )
 
@@ -321,8 +290,6 @@ extension SidebarItem {
       return .kits
     case .essentials:
       return .essentials
-    case .references:
-      return .references
     case .skills:
       return .skills
     case .relationshipMap:

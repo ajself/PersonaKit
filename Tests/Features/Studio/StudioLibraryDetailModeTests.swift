@@ -52,14 +52,14 @@ struct StudioLibraryDetailModeTests {
   }
 
   @Test
-  func referenceUsesJSONOnly() {
+  func projectSkillUsesEditAndJSON() {
     let modes = StudioLibraryDetailModeResolver.availableModes(
-      selection: .references,
+      selection: .skills,
       selectedItem: makeItem(scope: .project),
-      entityType: .reference
+      entityType: .skill
     )
 
-    #expect(modes == [.json])
+    #expect(modes == [.edit, .json])
   }
 
   @Test

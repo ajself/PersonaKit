@@ -248,8 +248,7 @@ enum StarterKitManifest {
               "text": "swift run personakit validate"
             }
           ],
-          "requiresSkillIds": [],
-          "referenceIds": [
+          "requiresSkillIds": [
             "cli-change-checklist"
           ]
         }
@@ -257,20 +256,20 @@ enum StarterKitManifest {
         """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/references/cli-change-checklist.reference.json",
+      relativePath: "Packs/skills/cli-change-checklist.skill.json",
       contents:
         """
         {
           "id": "cli-change-checklist",
           "version": "1.0",
           "name": "CLI Change Checklist",
-          "summary": "Triggered checklist for small CLI changes. Edit the companion .md body, or author your own with `personakit create reference`.",
+          "description": "Triggered checklist for small CLI changes. Edit the companion .md body, or author your own with `personakit create skill`.",
           "triggerRules": [
             {
               "pathGlobs": [
                 "**/*.swift"
               ],
-              "referenceTags": [
+              "skillTags": [
                 "cli"
               ]
             }
@@ -280,9 +279,9 @@ enum StarterKitManifest {
         """.utf8Data
     ),
     StarterFile(
-      relativePath: "Packs/references/cli-change-checklist.md",
+      relativePath: "Packs/skills/cli-change-checklist.md",
       contents:
-        "# CLI Change Checklist\n\nThis reference body is surfaced when its trigger rules match (see `cli-change-checklist.reference.json`). A reference is a `.reference.json` metadata file paired with this `.md` body.\n\n- Confirm the change stays inside the requested CLI task.\n- Keep output ordering deterministic.\n- Add or update tests alongside the change.\n- Run `personakit validate` before handing off.\n\nReplace this checklist with your own guidance, or scaffold new references with `personakit create reference`.\n"
+        "# CLI Change Checklist\n\nThis grounding skill body is surfaced when its trigger rules match (see `cli-change-checklist.skill.json`). A grounding skill is a `.skill.json` metadata file with trigger rules paired with this `.md` body.\n\n- Confirm the change stays inside the requested CLI task.\n- Keep output ordering deterministic.\n- Add or update tests alongside the change.\n- Run `personakit validate` before handing off.\n\nReplace this checklist with your own guidance, or scaffold new grounding skills with `personakit create skill`.\n"
         .utf8Data
     ),
     StarterFile(

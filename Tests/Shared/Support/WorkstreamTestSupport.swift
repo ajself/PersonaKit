@@ -97,7 +97,6 @@ func writeDirective(
     acceptanceCriteria: templateDirective.acceptanceCriteria,
     verification: templateDirective.verification,
     requiresSkillIds: templateDirective.requiresSkillIds,
-    referenceIds: templateDirective.referenceIds,
     workstream: workstream,
     parameters: templateDirective.parameters,
     risk: templateDirective.risk

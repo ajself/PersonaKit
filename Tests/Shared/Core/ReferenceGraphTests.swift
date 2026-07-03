@@ -42,7 +42,6 @@ struct ReferenceGraphTests {
       personasById: ["p": persona],
       kitsById: ["k": kit],
       directivesById: [:],
-      referencesById: [:],
       skillsById: ["used-skill": skill("used-skill"), "lonely-skill": skill("lonely-skill")]
     )
 
@@ -83,7 +82,6 @@ struct ReferenceGraphTests {
     #expect(ReferenceEntityType.persona.isDirectlyInvocable)
     #expect(ReferenceEntityType.directive.isDirectlyInvocable)
     #expect(!ReferenceEntityType.kit.isDirectlyInvocable)
-    #expect(!ReferenceEntityType.reference.isDirectlyInvocable)
     #expect(!ReferenceEntityType.skill.isDirectlyInvocable)
     #expect(!ReferenceEntityType.essential.isDirectlyInvocable)
   }

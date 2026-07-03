@@ -48,7 +48,6 @@ public struct Kit: Codable, Sendable {
   public let name: String
   public let summary: String
   public let essentialIds: [String]
-  public let referenceIds: [String]?
   public let skillIds: [String]?
 
   public init(
@@ -57,7 +56,6 @@ public struct Kit: Codable, Sendable {
     name: String,
     summary: String,
     essentialIds: [String],
-    referenceIds: [String]? = nil,
     skillIds: [String]?
   ) {
     self.id = id
@@ -65,7 +63,6 @@ public struct Kit: Codable, Sendable {
     self.name = name
     self.summary = summary
     self.essentialIds = essentialIds
-    self.referenceIds = referenceIds
     self.skillIds = skillIds
   }
 }
@@ -228,7 +225,6 @@ public struct Directive: Codable, Sendable {
   public let acceptanceCriteria: [String]
   public let verification: [VerificationItem]
   public let requiresSkillIds: [String]
-  public let referenceIds: [String]?
   public let workstream: Workstream?
   public let parameters: [Parameter]
   public let risk: Risk?
@@ -242,7 +238,6 @@ public struct Directive: Codable, Sendable {
     acceptanceCriteria: [String],
     verification: [VerificationItem],
     requiresSkillIds: [String],
-    referenceIds: [String]? = nil,
     workstream: Workstream? = nil,
     parameters: [Parameter] = [],
     risk: Risk? = nil
@@ -255,7 +250,6 @@ public struct Directive: Codable, Sendable {
     self.acceptanceCriteria = acceptanceCriteria
     self.verification = verification
     self.requiresSkillIds = requiresSkillIds
-    self.referenceIds = referenceIds
     self.workstream = workstream
     self.parameters = parameters
     self.risk = risk
@@ -270,7 +264,6 @@ public struct Directive: Codable, Sendable {
     case acceptanceCriteria
     case verification
     case requiresSkillIds
-    case referenceIds
     case workstream
     case parameters
     case risk
@@ -286,7 +279,6 @@ public struct Directive: Codable, Sendable {
     self.acceptanceCriteria = try container.decode([String].self, forKey: .acceptanceCriteria)
     self.verification = try container.decode([VerificationItem].self, forKey: .verification)
     self.requiresSkillIds = try container.decode([String].self, forKey: .requiresSkillIds)
-    self.referenceIds = try container.decodeIfPresent([String].self, forKey: .referenceIds)
     self.workstream = try container.decodeIfPresent(Workstream.self, forKey: .workstream)
     self.parameters = try container.decodeIfPresent([Parameter].self, forKey: .parameters) ?? []
     self.risk = try container.decodeIfPresent(Risk.self, forKey: .risk)
@@ -316,20 +308,24 @@ public struct Skill: Codable, Sendable {
   public let version: String
   public let name: String
   public let description: String
-  public let providedBy: [String]
+  public let providedBy: [String]?
   public let capabilities: [String]?
-  public let risk: Risk
-  public let notes: [String]
+  /// On-demand trigger rules. Present on grounding skills (folded former
+  /// references); absent on tool-awareness skills.
+  public let triggerRules: [SkillTriggerRule]?
+  public let risk: Risk?
+  public let notes: [String]?
 
   public init(
     id: String,
     version: String,
     name: String,
     description: String,
-    providedBy: [String],
+    providedBy: [String]? = nil,
     capabilities: [String]? = nil,
-    risk: Risk,
-    notes: [String]
+    triggerRules: [SkillTriggerRule]? = nil,
+    risk: Risk? = nil,
+    notes: [String]? = nil
   ) {
     self.id = id
     self.version = version
@@ -337,45 +333,34 @@ public struct Skill: Codable, Sendable {
     self.description = description
     self.providedBy = providedBy
     self.capabilities = capabilities
+    self.triggerRules = triggerRules
     self.risk = risk
     self.notes = notes
   }
-}
 
-/// Deterministic trigger rule for on-demand reference expansion.
-public struct ReferenceTriggerRule: Codable, Equatable, Sendable {
-  public let pathGlobs: [String]?
-  public let referenceTags: [String]?
-
-  public init(
-    pathGlobs: [String]? = nil,
-    referenceTags: [String]? = nil
-  ) {
-    self.pathGlobs = pathGlobs
-    self.referenceTags = referenceTags
+  /// A grounding skill carries on-demand trigger rules and an expandable body
+  /// (former reference). Tool-awareness skills declare capabilities and remain
+  /// subject to skill authorization.
+  ///
+  /// Fails safe toward authorization: a skill only counts as grounding when it
+  /// has trigger rules *and* declares no capabilities, so a capability-bearing
+  /// tool skill is never routed around the authorization gate.
+  public var isGrounding: Bool {
+    !(triggerRules ?? []).isEmpty && (capabilities ?? []).isEmpty
   }
 }
 
-/// Reference definition loaded from `Packs/references/*.reference.json`.
-public struct Reference: Codable, Equatable, Sendable {
-  public let id: String
-  public let version: String
-  public let name: String
-  public let summary: String
-  public let triggerRules: [ReferenceTriggerRule]
+/// Deterministic trigger rule for on-demand grounding-skill expansion.
+public struct SkillTriggerRule: Codable, Equatable, Sendable {
+  public let pathGlobs: [String]?
+  public let skillTags: [String]?
 
   public init(
-    id: String,
-    version: String,
-    name: String,
-    summary: String,
-    triggerRules: [ReferenceTriggerRule]
+    pathGlobs: [String]? = nil,
+    skillTags: [String]? = nil
   ) {
-    self.id = id
-    self.version = version
-    self.name = name
-    self.summary = summary
-    self.triggerRules = triggerRules
+    self.pathGlobs = pathGlobs
+    self.skillTags = skillTags
   }
 }
 

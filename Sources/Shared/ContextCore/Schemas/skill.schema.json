@@ -35,6 +35,27 @@
         ]
       }
     },
+    "triggerRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pathGlobs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skillTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": []
+      }
+    },
     "risk": {
       "type": "object",
       "properties": {
@@ -68,9 +89,6 @@
     "id",
     "version",
     "name",
-    "description",
-    "providedBy",
-    "risk",
-    "notes"
+    "description"
   ]
 }

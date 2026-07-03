@@ -119,7 +119,7 @@ struct RecommendCommand: ParsableCommand {
         session: session
       )
       let authorizedSkills = contract.skillAuthorization.authorizedSkillIds
-      let referenceIds = contract.availableReferences.map(\.id).sorted()
+      let groundingSkillIds = contract.availableGroundingSkills.map(\.id).sorted()
       let kitIds = contract.kits.map(\.id).sorted()
       let stopPoints = directive.steps
         .filter { $0.requiresReview == true }
@@ -135,7 +135,7 @@ struct RecommendCommand: ParsableCommand {
       lines.append("   kits: \(displayList(kitIds))")
       lines.append("   why: matched goal terms \(displayList(recommendation.matchedGoalTerms))")
       lines.append("   skills: \(displayList(authorizedSkills))")
-      lines.append("   references: \(displayList(referenceIds))")
+      lines.append("   grounding skills: \(displayList(groundingSkillIds))")
       lines.append("   stop points: \(displayList(stopPoints))")
       lines.append("   next:")
       lines.append("     \(baseCommand(for: .contract)) --session \(recommendation.sessionId)")

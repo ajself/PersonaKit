@@ -102,14 +102,13 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
-  func kitDraftBuilderEmitsReferenceIds() throws {
+  func kitDraftBuilderEmitsSkillIds() throws {
     let kitJSON = try WorkspaceKitDraftBuilder().buildRawJSON(
       draft: WorkspaceKitDraft(
         id: "review-guardrails",
         name: "Review Guardrails",
         summary: "Shared review context.",
         essentialIds: ["review-boundaries"],
-        referenceIds: ["review-checklist"],
         skillIds: ["read-only-review"]
       )
     )
@@ -117,25 +116,24 @@ struct WorkspaceAuthoringCoreTests {
     let kitObject = try #require(
       JSONSerialization.jsonObject(with: Data(kitJSON.utf8)) as? [String: Any]
     )
-    #expect(kitObject["referenceIds"] as? [String] == ["review-checklist"])
+    #expect(kitObject["skillIds"] as? [String] == ["read-only-review"])
   }
 
   @Test
-  func kitDraftBuilderWarnsOnUnknownReferenceIds() {
+  func kitDraftBuilderWarnsOnUnknownSkillIds() {
     let validation = WorkspaceKitDraftBuilder().validate(
       draft: WorkspaceKitDraft(
         id: "review-guardrails",
         name: "Review Guardrails",
         summary: "Shared review context.",
         essentialIds: [],
-        referenceIds: ["missing-reference"],
-        skillIds: []
+        skillIds: ["missing-skill"]
       ),
-      knownReferenceIDs: []
+      knownSkillIDs: []
     )
 
     #expect(validation.errors.isEmpty)
-    #expect(validation.warnings.contains("Unknown reference ids: missing-reference."))
+    #expect(validation.warnings.contains("Unknown skill ids: missing-skill."))
   }
 
   @Test
@@ -180,30 +178,40 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
-  func referenceDraftBuilderRejectsEmptyTriggerRules() {
-    let builder = WorkspaceReferenceDraftBuilder()
-    let draft = WorkspaceReferenceDraft(
-      id: "swift-style-guide",
-      name: "Swift Style Guide",
-      summary: "Deeper Swift rationale.",
-      pathGlobs: [],
-      referenceTags: []
+  func skillDraftBuilderOmitsTriggerRulesWhenNoGroundingHints() throws {
+    let json = try WorkspaceSkillDraftBuilder().buildRawJSON(
+      draft: WorkspaceSkillDraft(
+        id: "swift-style-guide",
+        name: "Swift Style Guide",
+        description: "Deeper Swift rationale.",
+        providedBy: [],
+        riskLevel: "low",
+        requiresHumanReview: false,
+        riskNotes: [],
+        notes: [],
+        pathGlobs: [],
+        skillTags: []
+      )
     )
 
-    #expect(throws: (any Error).self) {
-      _ = try builder.buildRawJSON(draft: draft)
-    }
+    let object = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    #expect(object["triggerRules"] == nil)
   }
 
   @Test
-  func referenceDraftBuilderEmitsTriggerRules() throws {
-    let json = try WorkspaceReferenceDraftBuilder().buildRawJSON(
-      draft: WorkspaceReferenceDraft(
+  func skillDraftBuilderEmitsTriggerRules() throws {
+    let json = try WorkspaceSkillDraftBuilder().buildRawJSON(
+      draft: WorkspaceSkillDraft(
         id: "swift-style-guide",
         name: "Swift Style Guide",
-        summary: "Deeper Swift rationale.",
+        description: "Deeper Swift rationale.",
+        providedBy: [],
+        riskLevel: "low",
+        requiresHumanReview: false,
+        riskNotes: [],
+        notes: [],
         pathGlobs: ["**/*.swift"],
-        referenceTags: ["swift"]
+        skillTags: ["swift"]
       )
     )
 
@@ -212,5 +220,6 @@ struct WorkspaceAuthoringCoreTests {
     let triggerRules = try #require(object["triggerRules"] as? [[String: Any]])
     #expect(triggerRules.count == 1)
     #expect(triggerRules.first?["pathGlobs"] as? [String] == ["**/*.swift"])
+    #expect(triggerRules.first?["skillTags"] as? [String] == ["swift"])
   }
 }

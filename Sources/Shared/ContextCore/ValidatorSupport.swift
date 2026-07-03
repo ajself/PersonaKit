@@ -175,8 +175,6 @@ enum ValidatorSupport {
       return .kit
     case .directive:
       return .directive
-    case .reference:
-      return .reference
     case .skill:
       return .skill
     case .packsRoot:
@@ -193,9 +191,6 @@ enum ValidatorSupport {
     }
     if schemaPath.contains("/directives/") || schemaPath.hasSuffix(".directive.json") {
       return .directive
-    }
-    if schemaPath.contains("/references/") || schemaPath.hasSuffix(".reference.json") {
-      return .reference
     }
     if schemaPath.contains("/skills/") || schemaPath.hasSuffix(".skill.json") {
       return .skill
@@ -256,63 +251,6 @@ enum ValidatorSupport {
           directoryValidationError(
             entityType: .essentials,
             relativePath: "Packs/essentials",
-            message: "Failed to read directory: \(error.localizedDescription)"
-          )
-        )
-      }
-    }
-
-    return ValidatorFileIDList(ids: ids.sorted(), errors: errors)
-  }
-
-  fileprivate static func listReferenceIds(
-    scopes: ScopeSet,
-    fileManager: FileManager
-  ) -> ValidatorFileIDList {
-    var ids: Set<String> = []
-    var errors: [ValidationError] = []
-
-    for root in scopes.loadOrder {
-      let referencesURL = PersonaKitDirectory.referencesURL(root: root)
-      var isDirectory: ObjCBool = false
-
-      let referencesExists = fileManager.fileExists(
-        atPath: referencesURL.path,
-        isDirectory: &isDirectory
-      )
-
-      guard referencesExists else {
-        continue
-      }
-
-      guard isDirectory.boolValue else {
-        errors.append(
-          directoryValidationError(
-            entityType: .reference,
-            relativePath: "Packs/references",
-            message: "Expected directory."
-          )
-        )
-
-        continue
-      }
-
-      do {
-        let files = try fileManager.contentsOfDirectory(
-          at: referencesURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
-
-        for file in files where file.lastPathComponent.hasSuffix(".reference.json") {
-          let fileName = file.deletingPathExtension().lastPathComponent
-          ids.insert((fileName as NSString).deletingPathExtension)
-        }
-      } catch {
-        errors.append(
-          directoryValidationError(
-            entityType: .reference,
-            relativePath: "Packs/references",
             message: "Failed to read directory: \(error.localizedDescription)"
           )
         )

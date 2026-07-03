@@ -7,11 +7,11 @@ struct SessionContractRequiredSkillReference: Sendable {
   let skillId: String
 }
 
-struct SessionContractReferenceDeclaration: Sendable {
+struct SessionContractGroundingSkillDeclaration: Sendable {
   let sourceType: ResolverEntityType
   let sourceId: String
   let field: String
-  let referenceId: String
+  let skillId: String
 }
 
 struct SessionContractComponents {
@@ -19,7 +19,7 @@ struct SessionContractComponents {
   let directive: Directive?
   let kits: [Kit]
   let essentials: [ResolvedEssential]
-  let availableReferences: [ResolvedReference]
+  let availableGroundingSkills: [ResolvedGroundingSkill]
   let skills: [Skill]
   let requiredSkillReferences: [SessionContractRequiredSkillReference]
 }
@@ -83,96 +83,63 @@ enum SessionContractComponentResolver {
     let resolvedKits = kitIds.compactMap { registry.kitsById[$0] }
 
     var requiredSkillReferences: [SessionContractRequiredSkillReference] = []
-    var referenceDeclarations: [SessionContractReferenceDeclaration] = []
+    var groundingSkillDeclarations: [SessionContractGroundingSkillDeclaration] = []
 
-    if let resolvedDirective = directive {
-      for kit in resolvedKits {
-        for skillId in kit.skillIds ?? [] {
-          if registry.skillsById[skillId] == nil {
-            errors.append(
-              .missingSkillId(
-                sourceType: .kit,
-                sourceId: kit.id,
-                field: "skillIds",
-                missingId: skillId
-              )
-            )
-          }
-
-          requiredSkillReferences.append(
-            SessionContractRequiredSkillReference(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "skillIds",
-              skillId: skillId
-            )
+    // Route each attached skill by nature: grounding skills (former references —
+    // trigger rules, no capabilities) become always-available grounding and skip
+    // authorization; tool-awareness skills stay required and authorization-gated.
+    func routeSkill(
+      _ skillId: String,
+      sourceType: ResolverEntityType,
+      sourceId: String,
+      field: String
+    ) {
+      guard let skill = registry.skillsById[skillId] else {
+        errors.append(
+          .missingSkillId(
+            sourceType: sourceType,
+            sourceId: sourceId,
+            field: field,
+            missingId: skillId
           )
-        }
-
-        for referenceId in kit.referenceIds ?? [] {
-          if registry.referencesById[referenceId] == nil {
-            errors.append(
-              .missingReferenceId(
-                sourceType: .kit,
-                sourceId: kit.id,
-                field: "referenceIds",
-                missingId: referenceId
-              )
-            )
-          }
-
-          referenceDeclarations.append(
-            SessionContractReferenceDeclaration(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "referenceIds",
-              referenceId: referenceId
-            )
-          )
-        }
+        )
+        return
       }
 
-      for skillId in resolvedDirective.requiresSkillIds {
-        if registry.skillsById[skillId] == nil {
-          errors.append(
-            .missingSkillId(
-              sourceType: .directive,
-              sourceId: resolvedDirective.id,
-              field: "requiresSkillIds",
-              missingId: skillId
-            )
+      if skill.isGrounding {
+        groundingSkillDeclarations.append(
+          SessionContractGroundingSkillDeclaration(
+            sourceType: sourceType,
+            sourceId: sourceId,
+            field: field,
+            skillId: skillId
           )
-        }
-
+        )
+      } else {
         requiredSkillReferences.append(
           SessionContractRequiredSkillReference(
-            sourceType: .directive,
-            sourceId: resolvedDirective.id,
-            field: "requiresSkillIds",
+            sourceType: sourceType,
+            sourceId: sourceId,
+            field: field,
             skillId: skillId
           )
         )
       }
+    }
 
-      for referenceId in resolvedDirective.referenceIds ?? [] {
-        if registry.referencesById[referenceId] == nil {
-          errors.append(
-            .missingReferenceId(
-              sourceType: .directive,
-              sourceId: resolvedDirective.id,
-              field: "referenceIds",
-              missingId: referenceId
-            )
-          )
+    if let resolvedDirective = directive {
+      for kit in resolvedKits {
+        for skillId in kit.skillIds ?? [] {
+          routeSkill(skillId, sourceType: .kit, sourceId: kit.id, field: "skillIds")
         }
+      }
 
-        referenceDeclarations.append(
-          SessionContractReferenceDeclaration(
-            sourceType: .directive,
-            sourceId: resolvedDirective.id,
-            field: "referenceIds",
-            referenceId: referenceId
-          )
+      for skillId in resolvedDirective.requiresSkillIds {
+        routeSkill(
+          skillId,
+          sourceType: .directive,
+          sourceId: resolvedDirective.id,
+          field: "requiresSkillIds"
         )
       }
     }
@@ -215,8 +182,8 @@ enum SessionContractComponentResolver {
         fileManager: fileManager
       )
     }
-    let availableReferences = resolveAvailableReferences(
-      declarations: referenceDeclarations,
+    let availableGroundingSkills = resolveAvailableGroundingSkills(
+      declarations: groundingSkillDeclarations,
       registry: registry
     )
 
@@ -225,7 +192,7 @@ enum SessionContractComponentResolver {
       directive: directive,
       kits: resolvedKits,
       essentials: resolvedEssentials,
-      availableReferences: availableReferences,
+      availableGroundingSkills: availableGroundingSkills,
       skills: resolvedSkills,
       requiredSkillReferences: requiredSkillReferences
     )
@@ -236,25 +203,27 @@ private func uniqueSorted(_ values: [String]) -> [String] {
   Set(values).sorted()
 }
 
-private func resolveAvailableReferences(
-  declarations: [SessionContractReferenceDeclaration],
+private func resolveAvailableGroundingSkills(
+  declarations: [SessionContractGroundingSkillDeclaration],
   registry: Registry
-) -> [ResolvedReference] {
-  let groupedDeclarations = Dictionary(grouping: declarations, by: \.referenceId)
+) -> [ResolvedGroundingSkill] {
+  let groupedDeclarations = Dictionary(grouping: declarations, by: \.skillId)
 
-  return groupedDeclarations.keys.sorted().compactMap { referenceId in
-    guard let reference = registry.referencesById[referenceId] else {
+  return groupedDeclarations.keys.sorted().compactMap { skillId in
+    guard let skill = registry.skillsById[skillId] else {
       return nil
     }
 
-    let sources = (groupedDeclarations[referenceId] ?? [])
+    var seenSources: Set<String> = []
+    let sources = (groupedDeclarations[skillId] ?? [])
       .map {
-        ResolvedReferenceSource(
+        ResolvedGroundingSkillSource(
           sourceType: $0.sourceType,
           sourceId: $0.sourceId,
           field: $0.field
         )
       }
+      .filter { seenSources.insert("\($0.sourceType.rawValue)|\($0.sourceId)|\($0.field)").inserted }
       .sorted {
         if $0.sourceType.sortOrder != $1.sourceType.sortOrder {
           return $0.sourceType.sortOrder < $1.sourceType.sortOrder
@@ -267,11 +236,11 @@ private func resolveAvailableReferences(
         return $0.field < $1.field
       }
 
-    return ResolvedReference(
-      id: reference.id,
-      name: reference.name,
-      summary: reference.summary,
-      triggerRules: reference.triggerRules,
+    return ResolvedGroundingSkill(
+      id: skill.id,
+      name: skill.name,
+      description: skill.description,
+      triggerRules: skill.triggerRules ?? [],
       sources: sources
     )
   }

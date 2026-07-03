@@ -94,15 +94,15 @@ struct StudioLibraryActionBarStateTests {
   }
 
   @Test
-  func referencesProjectSelectionUsesRawJSONEdit() {
+  func skillsProjectSelectionUsesInlineFormEdit() {
     let state = StudioLibraryActionBarState(
-      selection: .references,
+      selection: .skills,
       selectedItem: makeItem(scope: .project),
-      entityType: .reference,
+      entityType: .skill,
       isLoadingLibraryEditor: false
     )
 
-    #expect(state.editAction == .rawJSON)
+    #expect(state.editAction == .inlineForm)
     #expect(state.showsCreateAction)
     #expect(state.canCreate)
     #expect(state.canReveal)

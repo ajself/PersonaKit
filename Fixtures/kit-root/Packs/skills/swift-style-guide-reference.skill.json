@@ -2,7 +2,7 @@
   "id": "swift-style-guide-reference",
   "version": "1.0",
   "name": "Swift Style Guide Reference",
-  "summary": "Extended Swift style examples and rationale for deeper language-structure decisions.",
+  "description": "Extended Swift style examples and rationale for deeper language-structure decisions.",
   "triggerRules": [
     {
       "pathGlobs": [

@@ -18,11 +18,11 @@ struct WorkspaceSnapshotBuilderTests {
     let projectPersonaURL = projectScopeURL.appendingPathComponent(
       "Packs/personas/senior-swiftui-engineer.persona.json"
     )
-    let globalReferenceURL = globalScopeURL.appendingPathComponent(
-      "Packs/references/swift-style-guide-reference.reference.json"
+    let globalGroundingSkillURL = globalScopeURL.appendingPathComponent(
+      "Packs/skills/swift-style-guide-reference.skill.json"
     )
-    let projectReferenceURL = projectScopeURL.appendingPathComponent(
-      "Packs/references/swift-style-guide-reference.reference.json"
+    let projectGroundingSkillURL = projectScopeURL.appendingPathComponent(
+      "Packs/skills/swift-style-guide-reference.skill.json"
     )
     let globalSkillURL = globalScopeURL.appendingPathComponent("Packs/skills/global-only-skill.skill.json")
 
@@ -75,22 +75,22 @@ struct WorkspaceSnapshotBuilderTests {
       ),
       notes: []
     )
-    let globalReference = Reference(
+    let globalGroundingSkill = Skill(
       id: "swift-style-guide-reference",
       version: "1.0",
       name: "Global Swift Style Guide Reference",
-      summary: "Global",
+      description: "Global",
       triggerRules: [
-        ReferenceTriggerRule(pathGlobs: ["**/*.swift"])
+        SkillTriggerRule(pathGlobs: ["**/*.swift"])
       ]
     )
-    let projectReference = Reference(
+    let projectGroundingSkill = Skill(
       id: "swift-style-guide-reference",
       version: "1.0",
       name: "Project Swift Style Guide Reference",
-      summary: "Project",
+      description: "Project",
       triggerRules: [
-        ReferenceTriggerRule(pathGlobs: ["**/*.swift"])
+        SkillTriggerRule(pathGlobs: ["**/*.swift"])
       ]
     )
 
@@ -102,8 +102,7 @@ struct WorkspaceSnapshotBuilderTests {
         PersonaKitDirectory.sessionsURL(root: globalScopeURL),
         projectScopeURL.appendingPathComponent("Packs/personas"),
         globalScopeURL.appendingPathComponent("Packs/personas"),
-        projectScopeURL.appendingPathComponent("Packs/references"),
-        globalScopeURL.appendingPathComponent("Packs/references"),
+        projectScopeURL.appendingPathComponent("Packs/skills"),
         globalScopeURL.appendingPathComponent("Packs/skills"),
       ],
       directoryContents: [
@@ -111,17 +110,16 @@ struct WorkspaceSnapshotBuilderTests {
         PersonaKitDirectory.sessionsURL(root: projectScopeURL): [projectSessionURL],
         globalScopeURL.appendingPathComponent("Packs/personas"): [globalPersonaURL],
         projectScopeURL.appendingPathComponent("Packs/personas"): [projectPersonaURL],
-        globalScopeURL.appendingPathComponent("Packs/references"): [globalReferenceURL],
-        projectScopeURL.appendingPathComponent("Packs/references"): [projectReferenceURL],
-        globalScopeURL.appendingPathComponent("Packs/skills"): [globalSkillURL],
+        globalScopeURL.appendingPathComponent("Packs/skills"): [globalGroundingSkillURL, globalSkillURL],
+        projectScopeURL.appendingPathComponent("Packs/skills"): [projectGroundingSkillURL],
       ],
       fileData: [
         globalSessionURL: try encode(globalSession),
         projectSessionURL: try encode(projectSession),
         globalPersonaURL: try encode(globalPersona),
         projectPersonaURL: try encode(projectPersona),
-        globalReferenceURL: try encode(globalReference),
-        projectReferenceURL: try encode(projectReference),
+        globalGroundingSkillURL: try encode(globalGroundingSkill),
+        projectGroundingSkillURL: try encode(projectGroundingSkill),
         globalSkillURL: try encode(globalOnlySkill),
       ]
     )
@@ -144,11 +142,11 @@ struct WorkspaceSnapshotBuilderTests {
     #expect(globalSkill.skillMetadata?.riskLevel == "low")
     #expect(globalSkill.skillMetadata?.requiresHumanReview == false)
 
-    let reference = try #require(
-      snapshot.references.first(where: { $0.id == "swift-style-guide-reference" })
+    let groundingSkill = try #require(
+      snapshot.skills.first(where: { $0.id == "swift-style-guide-reference" })
     )
-    #expect(reference.sourceScope == .project)
-    #expect(reference.displayName == "Project Swift Style Guide Reference")
+    #expect(groundingSkill.sourceScope == .project)
+    #expect(groundingSkill.displayName == "Project Swift Style Guide Reference")
 
     let session = try #require(
       snapshot.sessions.first(where: { $0.id == "shared-session" })

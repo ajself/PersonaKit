@@ -176,7 +176,7 @@ struct WorkspaceLibraryEntityFormAdapterTests {
   }
 
   @Test
-  func directiveFormRoundTripsReferenceIDsAndPreservesFoldedFields() throws {
+  func directiveFormRoundTripsRequiredSkillIDsAndPreservesFoldedFields() throws {
     let adapter = WorkspaceLibraryEntityFormAdapter(entityType: .directive)
     let rawJSON = """
       {
@@ -190,10 +190,9 @@ struct WorkspaceLibraryEntityFormAdapterTests {
             "type" : "string[]"
           }
         ],
-        "referenceIds" : [
+        "requiresSkillIds" : [
           "swift-style-guide-reference"
         ],
-        "requiresSkillIds" : [],
         "risk" : {
           "level" : "medium",
           "notes" : [],
@@ -206,7 +205,7 @@ struct WorkspaceLibraryEntityFormAdapterTests {
       }
       """
 
-    // The directive form's first array field maps to referenceIds.
+    // The directive form's first array field maps to requiresSkillIds.
     let formState = try adapter.parseFormState(from: rawJSON)
     #expect(formState.firstArrayLines == "swift-style-guide-reference")
 
@@ -223,7 +222,7 @@ struct WorkspaceLibraryEntityFormAdapterTests {
 
     let dictionary = try jsonDictionary(from: updatedRawJSON)
     #expect(
-      dictionary["referenceIds"] as? [String] == [
+      dictionary["requiresSkillIds"] as? [String] == [
         "swift-style-guide-reference",
         "swiftui-style-guide-reference",
       ]

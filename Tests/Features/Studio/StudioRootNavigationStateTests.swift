@@ -12,7 +12,6 @@ struct StudioRootNavigationStateTests {
       .directives,
       .kits,
       .essentials,
-      .references,
       .skills,
       .relationshipMap,
       .validationResults,

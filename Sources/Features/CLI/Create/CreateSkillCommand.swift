@@ -42,8 +42,24 @@ struct CreateSkillCommand: ParsableCommand {
   @Option(name: .customLong("note"), help: "Skill note.")
   var notes: [String] = []
 
+  @Option(name: .customLong("path-glob"), help: "Grounding trigger path glob (e.g. \"**/*.swift\").")
+  var pathGlobs: [String] = []
+
+  @Option(name: .customLong("skill-tag"), help: "Grounding trigger skill tag.")
+  var skillTags: [String] = []
+
+  @Option(name: .customLong("body"), help: "Grounding skill body markdown text.")
+  var body: String?
+
+  @Flag(name: .customLong("stdin-body"), help: "Read the grounding skill body from stdin.")
+  var stdinBody = false
+
   func run() throws {
     try CreateCommandHelpers.runWithJSONErrors(jsonOutput: shared.jsonOutput) {
+      if stdinBody, body != nil {
+        throw CLIError.failure("--body and --stdin-body cannot be used together.")
+      }
+
       let rootURL = try CreateCommandHelpers.resolveWritableRoot(rootPath: shared.rootPath)
       let prompter = CreatePrompter()
 
@@ -102,6 +118,26 @@ struct CreateSkillCommand: ParsableCommand {
         ? prompter.promptYesNo(label: "Requires human review", defaultValue: false)
         : requiresHumanReview
 
+      // Grounding triggers are optional; a plain tool skill declares none. When
+      // present, the skill also carries an expandable markdown body written
+      // alongside the JSON at Packs/skills/<id>.md.
+      var resolvedBody = CreateCommandHelpers.trimmed(body)
+      if stdinBody {
+        resolvedBody = CreateCommandHelpers.trimmed(try CLIEnvironment.current.interactiveIO.readStdinToEnd())
+      }
+      let isGrounding = !pathGlobs.isEmpty || !skillTags.isEmpty
+
+      // A body only ever surfaces through a matching trigger, so a body supplied
+      // without any --path-glob/--skill-tag would be silently dropped. Fail loudly
+      // instead (the folded former `create reference` enforced the same rule).
+      if body != nil || stdinBody, !isGrounding {
+        throw CLIError.failure(
+          "A grounding-skill body requires at least one trigger. Add --path-glob and/or --skill-tag, "
+            + "e.g. personakit create skill --name \"Swift Style\" --description \"...\" "
+            + "--path-glob \"**/*.swift\" --body \"...\"."
+        )
+      }
+
       try CreateCommandHelpers.requireFields(
         [
           resolvedID.isEmpty ? "--id/--name" : nil,
@@ -122,20 +158,44 @@ struct CreateSkillCommand: ParsableCommand {
         riskLevel: resolvedRiskLevel,
         requiresHumanReview: resolvedRequiresReview,
         riskNotes: resolvedRiskNotes,
-        notes: resolvedNotes
+        notes: resolvedNotes,
+        pathGlobs: pathGlobs,
+        skillTags: skillTags
       )
       let builder = WorkspaceSkillDraftBuilder()
       let rawJSON = try builder.buildRawJSON(draft: draft)
       let validation = builder.validate(draft: draft)
       let manager = WorkspaceLibraryEntityManager()
+      let normalizedID = CreateCommandHelpers.normalizedID(draft.id)
       let destinationURL = try manager.destinationFileURL(
         workspaceURL: rootURL,
         itemID: draft.id,
         entityType: .skill
       )
+
+      let bodyURL =
+        destinationURL
+        .deletingLastPathComponent()
+        .appendingPathComponent("\(normalizedID).md")
+      let markdown =
+        isGrounding
+        ? WorkspaceEssentialDraftBuilder.buildMarkdown(
+          title: resolvedName,
+          body: resolvedBody.isEmpty ? resolvedDescription : resolvedBody,
+          template: shared.resolvedTemplate
+        )
+        : nil
+
+      // completeCreation only guards the JSON destination; the companion .md
+      // body is a second file, so guard it here under the same --force contract
+      // (and before any write) to avoid silently clobbering a hand-authored body.
+      if markdown != nil, !shared.dryRun {
+        _ = try CreateCommandHelpers.prepareWrite(destinationURL: bodyURL, force: shared.force)
+      }
+
       try CreateCommandHelpers.completeCreation(
         entityType: "skill",
-        entityID: CreateCommandHelpers.normalizedID(draft.id),
+        entityID: normalizedID,
         destinationURL: destinationURL,
         warnings: validation.warnings,
         renderedContent: rawJSON,
@@ -150,6 +210,9 @@ struct CreateSkillCommand: ParsableCommand {
           rawJSON: rawJSON,
           entityType: .skill
         )
+        if let markdown {
+          try Data(markdown.utf8).write(to: bodyURL, options: [.atomic])
+        }
       }
     }
   }

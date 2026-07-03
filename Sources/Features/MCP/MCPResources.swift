@@ -256,7 +256,7 @@ extension MCPResourceService {
         MCPCatalogPayloads.StartFlow(
           goal: "Resolve optional references for target files or tags.",
           steps: [
-            "personakit_resolve_references",
+            "personakit_resolve_grounding_skills",
             "read_resource",
           ]
         ),
@@ -305,7 +305,7 @@ extension MCPResourceService {
           use: "Use to audit how session constraints and dependencies were assembled."
         ),
         MCPCatalogPayloads.StartEntry(
-          id: "personakit_resolve_references",
+          id: "personakit_resolve_grounding_skills",
           use: "Use to select triggered references for explicit target paths or tags."
         ),
         MCPCatalogPayloads.StartEntry(

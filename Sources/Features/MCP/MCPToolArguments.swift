@@ -5,7 +5,7 @@ import MCP
 struct MCPToolArguments: Equatable {
   let selection: MCPSessionSelection
   let targetPaths: [String]
-  let referenceTags: [String]
+  let skillTags: [String]
 
   var sessionId: String? {
     selection.sessionId
@@ -142,9 +142,9 @@ enum MCPToolArgumentParser {
     let directiveId = try parseOptionalString(arguments, name: "directiveId")
     let kitOverrides = try parseKitOverrides(arguments?["kits"])
     let targetPaths = try parseStringList(arguments?["targetPaths"], fieldName: "targetPaths")
-    let referenceTags = try parseStringList(
-      arguments?["referenceTags"],
-      fieldName: "referenceTags"
+    let skillTags = try parseStringList(
+      arguments?["skillTags"],
+      fieldName: "skillTags"
     )
 
     let selection: MCPSessionSelection
@@ -163,7 +163,7 @@ enum MCPToolArgumentParser {
     return MCPToolArguments(
       selection: selection,
       targetPaths: targetPaths,
-      referenceTags: referenceTags
+      skillTags: skillTags
     )
   }
 

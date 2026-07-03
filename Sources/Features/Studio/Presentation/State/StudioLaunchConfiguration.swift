@@ -247,7 +247,6 @@ public enum StudioLaunchSection: String, Sendable {
   case essentials
   case kits
   case personas
-  case references
   case relationshipMap = "relationship-map"
   case sessions
   case skills

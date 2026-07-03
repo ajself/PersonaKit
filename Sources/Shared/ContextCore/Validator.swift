@@ -39,7 +39,6 @@ public struct Validator {
       personas: registry.personasById.count,
       kits: registry.kitsById.count,
       directives: registry.directivesById.count,
-      references: registry.referencesById.count,
       skills: registry.skillsById.count,
       essentials: bootstrap.essentialIds.count
     )

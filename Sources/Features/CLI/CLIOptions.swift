@@ -241,7 +241,7 @@ enum SessionMode {
   case checks
   case export
   case graph
-  case resolveReferences
+  case resolveGroundingSkills
 
   /// Command name string used in validation errors.
   var commandName: String {
@@ -254,8 +254,8 @@ enum SessionMode {
       return "export"
     case .graph:
       return "graph"
-    case .resolveReferences:
-      return "resolve-references"
+    case .resolveGroundingSkills:
+      return "resolve-grounding-skills"
     }
   }
 }

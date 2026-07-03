@@ -375,39 +375,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         }
       }
 
-      for referenceID in sortedUniqueWorkspaceSessionMapValues(directive.referenceIds ?? []) {
-        let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .reference,
-          id: referenceID,
-          displayName: reference?.name ?? referenceID,
-          isMissing: reference == nil
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: directiveNodeKey,
-            toKey: referenceNodeKey,
-            reason: "directive.referenceIds"
-          )
-        )
-
-        if reference == nil {
-          appendUniqueError(
-            .missingReferenceId(
-              sourceType: .directive,
-              sourceId: directive.id,
-              field: "referenceIds",
-              missingId: referenceID
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
     }
 
     for kit in registry.kits.sorted(by: { $0.id < $1.id }) {
@@ -448,40 +415,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
               sourceId: kit.id,
               field: "skillIds",
               missingId: skillID
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
-
-      for referenceID in sortedUniqueWorkspaceSessionMapValues(kit.referenceIds ?? []) {
-        let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .reference,
-          id: referenceID,
-          displayName: reference?.name ?? referenceID,
-          isMissing: reference == nil
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: kitNodeKey,
-            toKey: referenceNodeKey,
-            reason: "kit.referenceIds"
-          )
-        )
-
-        if reference == nil {
-          appendUniqueError(
-            .missingReferenceId(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "referenceIds",
-              missingId: referenceID
             ),
             errors: &errors,
             errorKeys: &errorKeys
@@ -531,16 +464,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         kind: .skill,
         id: skill.id,
         displayName: skill.name,
-        isMissing: false
-      )
-    }
-
-    for reference in registry.references.sorted(by: { $0.id < $1.id }) {
-      upsertWorkspaceSessionMapNode(
-        in: &nodeStateByKey,
-        kind: .reference,
-        id: reference.id,
-        displayName: reference.name,
         isMissing: false
       )
     }

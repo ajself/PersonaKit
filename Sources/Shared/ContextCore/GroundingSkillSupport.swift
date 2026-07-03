@@ -1,32 +1,32 @@
 import Foundation
 
-/// Error produced while resolving or expanding reference bodies.
-public enum ReferenceResolutionError: Error, Equatable {
+/// Error produced while resolving or expanding grounding-skill bodies.
+public enum GroundingSkillResolutionError: Error, Equatable {
   case missingBody(id: String, expectedPath: String)
   case readFailed(id: String)
 
   public var message: String {
     switch self {
     case .missingBody(_, let expectedPath):
-      return "Missing reference body at \(expectedPath)."
+      return "Missing grounding-skill body at \(expectedPath)."
     case .readFailed(let id):
-      return "Failed to read reference body: \(id)."
+      return "Failed to read grounding-skill body: \(id)."
     }
   }
 }
 
-/// Fully loaded reference body for export-time expansion.
-public struct ExpandedReferenceDocument: Equatable, Sendable {
+/// Fully loaded grounding-skill body for export-time expansion.
+public struct ExpandedGroundingSkillDocument: Equatable, Sendable {
   public let id: String
   public let title: String
   public let content: String
-  public let match: ResolvedReferenceMatch
+  public let match: ResolvedGroundingSkillMatch
 
   public init(
     id: String,
     title: String,
     content: String,
-    match: ResolvedReferenceMatch
+    match: ResolvedGroundingSkillMatch
   ) {
     self.id = id
     self.title = title
@@ -35,16 +35,16 @@ public struct ExpandedReferenceDocument: Equatable, Sendable {
   }
 }
 
-/// Deterministic reference evaluation helpers shared by export, CLI, and MCP surfaces.
-public enum ReferenceSupport {
-  public static func triggerSummary(for reference: ResolvedReference) -> String {
-    let summaries = reference.triggerRules.enumerated().map { _, rule in
+/// Deterministic grounding-skill trigger evaluation shared by export, CLI, and MCP surfaces.
+public enum GroundingSkillSupport {
+  public static func triggerSummary(for groundingSkill: ResolvedGroundingSkill) -> String {
+    let summaries = groundingSkill.triggerRules.map { rule in
       triggerSummary(for: rule)
     }
     return summaries.joined(separator: " | ")
   }
 
-  public static func triggerSummary(for rule: ReferenceTriggerRule) -> String {
+  public static func triggerSummary(for rule: SkillTriggerRule) -> String {
     var parts: [String] = []
 
     let pathGlobs = uniqueSorted(rule.pathGlobs ?? [])
@@ -52,24 +52,24 @@ public enum ReferenceSupport {
       parts.append("paths=" + pathGlobs.joined(separator: ", "))
     }
 
-    let referenceTags = uniqueSorted(rule.referenceTags ?? [])
-    if !referenceTags.isEmpty {
-      parts.append("referenceTags=" + referenceTags.joined(separator: ", "))
+    let skillTags = uniqueSorted(rule.skillTags ?? [])
+    if !skillTags.isEmpty {
+      parts.append("skillTags=" + skillTags.joined(separator: ", "))
     }
 
     return parts.joined(separator: " + ")
   }
 
   public static func resolveMatches(
-    availableReferences: [ResolvedReference],
-    input: ReferenceSelectionInput
-  ) -> [ResolvedReferenceMatch] {
+    availableGroundingSkills: [ResolvedGroundingSkill],
+    input: SkillTriggerSelectionInput
+  ) -> [ResolvedGroundingSkillMatch] {
     guard !input.isEmpty else {
       return []
     }
 
-    return availableReferences.compactMap { reference in
-      let matchedRules = reference.triggerRules.enumerated().compactMap { index, rule in
+    return availableGroundingSkills.compactMap { groundingSkill in
+      let matchedRules = groundingSkill.triggerRules.enumerated().compactMap { index, rule in
         matchRule(
           rule,
           ruleIndex: index,
@@ -81,26 +81,26 @@ public enum ReferenceSupport {
         return nil
       }
 
-      return ResolvedReferenceMatch(
-        id: reference.id,
-        name: reference.name,
-        summary: reference.summary,
-        sources: reference.sources,
+      return ResolvedGroundingSkillMatch(
+        id: groundingSkill.id,
+        name: groundingSkill.name,
+        description: groundingSkill.description,
+        sources: groundingSkill.sources,
         matchedRules: matchedRules
       )
     }
   }
 
   public static func loadExpandedDocuments(
-    matches: [ResolvedReferenceMatch],
+    matches: [ResolvedGroundingSkillMatch],
     scopes: ScopeSet,
     fileManager: FileManager = .default
-  ) throws -> [ExpandedReferenceDocument] {
+  ) throws -> [ExpandedGroundingSkillDocument] {
     return try matches.map { match in
-      let expectedPath = referenceBodyRelativePath(id: match.id)
-      guard let bodyURL = resolveReferenceBodyURL(id: match.id, scopes: scopes, fileManager: fileManager)
+      let expectedPath = groundingSkillBodyRelativePath(id: match.id)
+      guard let bodyURL = resolveGroundingSkillBodyURL(id: match.id, scopes: scopes, fileManager: fileManager)
       else {
-        throw ReferenceResolutionError.missingBody(id: match.id, expectedPath: expectedPath)
+        throw GroundingSkillResolutionError.missingBody(id: match.id, expectedPath: expectedPath)
       }
 
       let text: String
@@ -108,7 +108,7 @@ public enum ReferenceSupport {
       do {
         text = try String(contentsOf: bodyURL, encoding: .utf8)
       } catch {
-        throw ReferenceResolutionError.readFailed(id: match.id)
+        throw GroundingSkillResolutionError.readFailed(id: match.id)
       }
 
       var normalizedText = text
@@ -116,7 +116,7 @@ public enum ReferenceSupport {
         normalizedText.append("\n")
       }
 
-      return ExpandedReferenceDocument(
+      return ExpandedGroundingSkillDocument(
         id: match.id,
         title: match.name,
         content: normalizedText,
@@ -125,13 +125,13 @@ public enum ReferenceSupport {
     }
   }
 
-  public static func resolveReferenceBodyURL(
+  public static func resolveGroundingSkillBodyURL(
     id: String,
     scopes: ScopeSet,
     fileManager: FileManager = .default
   ) -> URL? {
     for root in scopes.resolutionOrder {
-      if let fileURL = resolveReferenceBodyURL(id: id, root: root, fileManager: fileManager) {
+      if let fileURL = resolveGroundingSkillBodyURL(id: id, root: root, fileManager: fileManager) {
         return fileURL
       }
     }
@@ -139,25 +139,25 @@ public enum ReferenceSupport {
     return nil
   }
 
-  public static func referenceBodyRelativePath(id: String) -> String {
+  public static func groundingSkillBodyRelativePath(id: String) -> String {
     PersonaKitPathSafety.expectedPath(
-      baseRelativePath: "Packs/references",
+      baseRelativePath: "Packs/skills",
       segment: id,
       suffix: ".md"
     )
   }
 
-  static func resolveReferenceBodyURL(
+  static func resolveGroundingSkillBodyURL(
     id: String,
     root: URL,
     fileManager: FileManager = .default
   ) -> URL? {
-    let referencesURL = root.appendingPathComponent("Packs/references", isDirectory: true)
+    let skillsURL = root.appendingPathComponent("Packs/skills", isDirectory: true)
 
     guard
       let fileURL = PersonaKitPathSafety.containedFileURL(
         root: root,
-        baseRelativePath: "Packs/references",
+        baseRelativePath: "Packs/skills",
         segment: id,
         suffix: ".md"
       )
@@ -169,7 +169,7 @@ public enum ReferenceSupport {
       return nil
     }
 
-    guard PersonaKitPathSafety.canonicalContains(fileURL, in: referencesURL) else {
+    guard PersonaKitPathSafety.canonicalContains(fileURL, in: skillsURL) else {
       return nil
     }
 
@@ -177,16 +177,16 @@ public enum ReferenceSupport {
   }
 
   private static func matchRule(
-    _ rule: ReferenceTriggerRule,
+    _ rule: SkillTriggerRule,
     ruleIndex: Int,
-    input: ReferenceSelectionInput
-  ) -> ResolvedReferenceMatchRule? {
+    input: SkillTriggerSelectionInput
+  ) -> ResolvedGroundingSkillMatchRule? {
     let pathGlobs = uniqueSorted(rule.pathGlobs ?? [])
-    let referenceTags = uniqueSorted((rule.referenceTags ?? []).map { $0.lowercased() })
+    let skillTags = uniqueSorted((rule.skillTags ?? []).map { $0.lowercased() })
 
     var matchedPathGlobs: [String] = []
     var matchedPaths: [String] = []
-    var matchedReferenceTags: [String] = []
+    var matchedSkillTags: [String] = []
 
     if !pathGlobs.isEmpty {
       for pathGlob in pathGlobs {
@@ -204,18 +204,18 @@ public enum ReferenceSupport {
       }
     }
 
-    if !referenceTags.isEmpty {
-      matchedReferenceTags = referenceTags.filter { input.referenceTags.contains($0) }
-      if matchedReferenceTags.isEmpty {
+    if !skillTags.isEmpty {
+      matchedSkillTags = skillTags.filter { input.skillTags.contains($0) }
+      if matchedSkillTags.isEmpty {
         return nil
       }
     }
 
-    return ResolvedReferenceMatchRule(
+    return ResolvedGroundingSkillMatchRule(
       ruleIndex: ruleIndex,
       matchedPathGlobs: matchedPathGlobs,
       matchedPaths: uniqueSorted(matchedPaths),
-      matchedReferenceTags: matchedReferenceTags
+      matchedSkillTags: matchedSkillTags
     )
   }
 }

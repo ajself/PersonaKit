@@ -252,26 +252,6 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
         )
       }
 
-      for referenceID in sortedUniqueWorkspaceSessionMapValues(kit.referenceIds ?? []) {
-        let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .reference,
-          id: referenceID,
-          displayName: reference?.name ?? referenceID,
-          isMissing: reference == nil
-        )
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: kitNodeKey,
-            toKey: referenceNodeKey,
-            reason: "kit.referenceIds"
-          )
-        )
-      }
-
       for essentialID in sortedUniqueWorkspaceSessionMapValues(kit.essentialIds) {
         authoredEssentialIDs.insert(essentialID)
         let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
@@ -316,25 +296,6 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
         )
       }
 
-      for referenceID in sortedUniqueWorkspaceSessionMapValues(directive.referenceIds ?? []) {
-        let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .reference,
-          id: referenceID,
-          displayName: reference?.name ?? referenceID,
-          isMissing: reference == nil
-        )
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: directiveNodeKey,
-            toKey: referenceNodeKey,
-            reason: "directive.referenceIds"
-          )
-        )
-      }
     }
 
     if let resolvedSession {

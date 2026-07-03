@@ -42,8 +42,8 @@ public struct ResolvedEssential: Equatable, Sendable {
   }
 }
 
-/// Source edge for a reference declared by a resolved session component.
-public struct ResolvedReferenceSource: Codable, Equatable, Sendable {
+/// Source edge for a grounding skill declared by a resolved session component.
+public struct ResolvedGroundingSkillSource: Codable, Equatable, Sendable {
   public let sourceType: ResolverEntityType
   public let sourceId: String
   public let field: String
@@ -59,85 +59,85 @@ public struct ResolvedReferenceSource: Codable, Equatable, Sendable {
   }
 }
 
-/// Reference metadata made available to a resolved session without inlining its body.
-public struct ResolvedReference: Codable, Equatable, Sendable {
+/// Grounding-skill metadata made available to a resolved session without inlining its body.
+public struct ResolvedGroundingSkill: Codable, Equatable, Sendable {
   public let id: String
   public let name: String
-  public let summary: String
-  public let triggerRules: [ReferenceTriggerRule]
-  public let sources: [ResolvedReferenceSource]
+  public let description: String
+  public let triggerRules: [SkillTriggerRule]
+  public let sources: [ResolvedGroundingSkillSource]
 
   public init(
     id: String,
     name: String,
-    summary: String,
-    triggerRules: [ReferenceTriggerRule],
-    sources: [ResolvedReferenceSource]
+    description: String,
+    triggerRules: [SkillTriggerRule],
+    sources: [ResolvedGroundingSkillSource]
   ) {
     self.id = id
     self.name = name
-    self.summary = summary
+    self.description = description
     self.triggerRules = triggerRules
     self.sources = sources
   }
 }
 
-/// Deterministic trigger inputs supplied by callers when evaluating references.
-public struct ReferenceSelectionInput: Equatable, Sendable {
+/// Deterministic trigger inputs supplied by callers when evaluating grounding skills.
+public struct SkillTriggerSelectionInput: Equatable, Sendable {
   public let targetPaths: [String]
-  public let referenceTags: [String]
+  public let skillTags: [String]
 
   public init(
     targetPaths: [String],
-    referenceTags: [String]
+    skillTags: [String]
   ) {
-    self.targetPaths = Set(targetPaths.map(normalizeReferenceTargetPath)).sorted()
-    self.referenceTags = Set(referenceTags.map(normalizeReferenceTag)).sorted()
+    self.targetPaths = Set(targetPaths.map(normalizeSkillTriggerTargetPath)).sorted()
+    self.skillTags = Set(skillTags.map(normalizeSkillTag)).sorted()
   }
 
   public var isEmpty: Bool {
-    targetPaths.isEmpty && referenceTags.isEmpty
+    targetPaths.isEmpty && skillTags.isEmpty
   }
 }
 
 /// Deterministic reason explaining how a single trigger rule matched.
-public struct ResolvedReferenceMatchRule: Codable, Equatable, Sendable {
+public struct ResolvedGroundingSkillMatchRule: Codable, Equatable, Sendable {
   public let ruleIndex: Int
   public let matchedPathGlobs: [String]
   public let matchedPaths: [String]
-  public let matchedReferenceTags: [String]
+  public let matchedSkillTags: [String]
 
   public init(
     ruleIndex: Int,
     matchedPathGlobs: [String],
     matchedPaths: [String],
-    matchedReferenceTags: [String]
+    matchedSkillTags: [String]
   ) {
     self.ruleIndex = ruleIndex
     self.matchedPathGlobs = matchedPathGlobs
     self.matchedPaths = matchedPaths
-    self.matchedReferenceTags = matchedReferenceTags
+    self.matchedSkillTags = matchedSkillTags
   }
 }
 
-/// Reference selected for expansion, with deterministic match reasons.
-public struct ResolvedReferenceMatch: Codable, Equatable, Sendable {
+/// Grounding skill selected for expansion, with deterministic match reasons.
+public struct ResolvedGroundingSkillMatch: Codable, Equatable, Sendable {
   public let id: String
   public let name: String
-  public let summary: String
-  public let sources: [ResolvedReferenceSource]
-  public let matchedRules: [ResolvedReferenceMatchRule]
+  public let description: String
+  public let sources: [ResolvedGroundingSkillSource]
+  public let matchedRules: [ResolvedGroundingSkillMatchRule]
 
   public init(
     id: String,
     name: String,
-    summary: String,
-    sources: [ResolvedReferenceSource],
-    matchedRules: [ResolvedReferenceMatchRule]
+    description: String,
+    sources: [ResolvedGroundingSkillSource],
+    matchedRules: [ResolvedGroundingSkillMatchRule]
   ) {
     self.id = id
     self.name = name
-    self.summary = summary
+    self.description = description
     self.sources = sources
     self.matchedRules = matchedRules
   }
@@ -149,7 +149,7 @@ public struct ResolvedSession: Sendable {
   public let directive: Directive
   public let kits: [Kit]
   public let essentials: [ResolvedEssential]
-  public let availableReferences: [ResolvedReference]
+  public let availableGroundingSkills: [ResolvedGroundingSkill]
   public let skills: [Skill]
   public let skillAuthorization: ResolvedSkillAuthorization
 
@@ -158,7 +158,7 @@ public struct ResolvedSession: Sendable {
     directive: Directive,
     kits: [Kit],
     essentials: [ResolvedEssential],
-    availableReferences: [ResolvedReference],
+    availableGroundingSkills: [ResolvedGroundingSkill],
     skills: [Skill],
     skillAuthorization: ResolvedSkillAuthorization
   ) {
@@ -166,7 +166,7 @@ public struct ResolvedSession: Sendable {
     self.directive = directive
     self.kits = kits
     self.essentials = essentials
-    self.availableReferences = availableReferences
+    self.availableGroundingSkills = availableGroundingSkills
     self.skills = skills
     self.skillAuthorization = skillAuthorization
   }
@@ -202,7 +202,6 @@ public enum ResolverError: Error, Equatable {
   case missingPersona(field: String, id: String)
   case missingDirective(field: String, id: String)
   case missingKitId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
-  case missingReferenceId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillCapability(
@@ -230,8 +229,6 @@ public enum ResolverError: Error, Equatable {
       return .sessionDefinition
     case .missingKitId(let sourceType, _, _, _):
       return sourceType
-    case .missingReferenceId(let sourceType, _, _, _):
-      return sourceType
     case .missingSkillId(let sourceType, _, _, _):
       return sourceType
     case .conflictingPersonaSkillId:
@@ -255,8 +252,6 @@ public enum ResolverError: Error, Equatable {
     case .missingDirective:
       return "session"
     case .missingKitId(_, let sourceId, _, _):
-      return sourceId
-    case .missingReferenceId(_, let sourceId, _, _):
       return sourceId
     case .missingSkillId(_, let sourceId, _, _):
       return sourceId
@@ -282,8 +277,6 @@ public enum ResolverError: Error, Equatable {
       return field
     case .missingKitId(_, _, let field, _):
       return field
-    case .missingReferenceId(_, _, let field, _):
-      return field
     case .missingSkillId(_, _, let field, _):
       return field
     case .conflictingPersonaSkillId(_, let field, _):
@@ -307,8 +300,6 @@ public enum ResolverError: Error, Equatable {
     case .missingDirective(_, let id):
       return id
     case .missingKitId(_, _, _, let missingId):
-      return missingId
-    case .missingReferenceId(_, _, _, let missingId):
       return missingId
     case .missingSkillId(_, _, _, let missingId):
       return missingId
@@ -334,7 +325,6 @@ public enum ResolverError: Error, Equatable {
     case .missingPersona,
       .missingDirective,
       .missingKitId,
-      .missingReferenceId,
       .missingSkillId,
       .missingEssentialFile:
       return true
@@ -355,8 +345,6 @@ public enum ResolverError: Error, Equatable {
       return "Missing directive id."
     case .missingKitId:
       return "Missing kit id."
-    case .missingReferenceId:
-      return "Missing reference id."
     case .missingSkillId:
       return "Missing skill id."
     case .conflictingPersonaSkillId:
@@ -373,7 +361,7 @@ public enum ResolverError: Error, Equatable {
   }
 }
 
-private func normalizeReferenceTargetPath(_ path: String) -> String {
+private func normalizeSkillTriggerTargetPath(_ path: String) -> String {
   let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
   let normalized = trimmed.replacingOccurrences(of: "\\", with: "/")
   if normalized.hasPrefix("./") {
@@ -382,7 +370,7 @@ private func normalizeReferenceTargetPath(_ path: String) -> String {
   return normalized
 }
 
-private func normalizeReferenceTag(_ tag: String) -> String {
+private func normalizeSkillTag(_ tag: String) -> String {
   tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 }
 

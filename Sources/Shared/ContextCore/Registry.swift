@@ -5,7 +5,6 @@ public struct Registry: Sendable {
   public let personasById: [String: Persona]
   public let kitsById: [String: Kit]
   public let directivesById: [String: Directive]
-  public let referencesById: [String: Reference]
   public let skillsById: [String: Skill]
 
   public var personas: [Persona] {
@@ -18,10 +17,6 @@ public struct Registry: Sendable {
 
   public var directives: [Directive] {
     directivesById.sorted { $0.key < $1.key }.map { $0.value }
-  }
-
-  public var references: [Reference] {
-    referencesById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
   public var skills: [Skill] {
@@ -67,7 +62,6 @@ public struct Registry: Sendable {
     var personasById: [String: Persona] = [:]
     var kitsById: [String: Kit] = [:]
     var directivesById: [String: Directive] = [:]
-    var referencesById: [String: Reference] = [:]
     var skillsById: [String: Skill] = [:]
 
     for root in roots {
@@ -132,16 +126,6 @@ public struct Registry: Sendable {
         errors: &errors
       )
 
-      let references: [String: Reference] = loadEntities(
-        root: root,
-        directory: packsURL.appendingPathComponent("references"),
-        suffix: ".reference.json",
-        entityType: .reference,
-        decoder: decoder,
-        fileManager: fileManager,
-        errors: &errors
-      )
-
       let skills: [String: Skill] = loadEntities(
         root: root,
         directory: packsURL.appendingPathComponent("skills"),
@@ -164,10 +148,6 @@ public struct Registry: Sendable {
         directivesById[id] = directive
       }
 
-      for (id, reference) in references {
-        referencesById[id] = reference
-      }
-
       for (id, skill) in skills {
         skillsById[id] = skill
       }
@@ -181,7 +161,6 @@ public struct Registry: Sendable {
       personasById: personasById,
       kitsById: kitsById,
       directivesById: directivesById,
-      referencesById: referencesById,
       skillsById: skillsById
     )
   }
@@ -195,7 +174,6 @@ private protocol EntityWithID {
 extension Persona: EntityWithID {}
 extension Kit: EntityWithID {}
 extension Directive: EntityWithID {}
-extension Reference: EntityWithID {}
 extension Skill: EntityWithID {}
 
 /// Loads entity JSON files for a single pack directory and validates duplicate ids.

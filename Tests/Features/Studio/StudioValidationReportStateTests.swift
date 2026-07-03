@@ -33,7 +33,7 @@ struct StudioValidationReportStateTests {
         "Essentials",
       ]
     )
-    #expect(report.omittedAreaSummary == "No references in this workspace")
+    #expect(report.omittedAreaSummary == nil)
   }
 
   @Test
@@ -188,10 +188,10 @@ struct StudioValidationReportStateTests {
       StudioDiagnosticsIssueGrouping.groups(
         for: [
           WorkspaceValidationIssue(
-            entityType: .reference,
+            entityType: .skill,
             entityId: nil,
             field: "body",
-            filePath: "Packs/references/a.md",
+            filePath: "Packs/skills/a.md",
             message: "Missing body.",
             severity: .error
           )
@@ -228,7 +228,6 @@ struct StudioValidationReportStateTests {
         item(id: "skill-a", path: "Packs/skills/skill-a.skill.json"),
         item(id: "skill-b", path: "Packs/skills/skill-b.skill.json"),
       ],
-      references: [],
       essentials: [
         item(id: "essential-a", path: "Packs/essentials/essential-a.md")
       ]

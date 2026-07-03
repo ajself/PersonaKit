@@ -9,7 +9,6 @@ public enum WorkspaceSessionMapNodeKind: String, Codable, Sendable {
   case kit
   case skill
   case essential
-  case reference
 
   var sortOrder: Int {
     switch self {
@@ -25,8 +24,6 @@ public enum WorkspaceSessionMapNodeKind: String, Codable, Sendable {
       return 4
     case .essential:
       return 5
-    case .reference:
-      return 6
     }
   }
 }
