@@ -18,20 +18,6 @@ struct ListCommandTests {
   }
 
   @Test
-  func listEssentials() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
-
-    let output = try ListCommand.list(root: root, entityType: .essentials)
-
-    // The starter no longer authors essential files; contract-boundaries is now
-    // an always-on grounding skill.
-    let expected = ""
-
-    #expect(output == expected)
-  }
-
-  @Test
   func cliListPersonasRejectsPackPathWhenItIsAFile() throws {
     let root = try makeRootWithPackFile(relativePath: "personas")
 
@@ -49,25 +35,6 @@ struct ListCommandTests {
     #expect(status == 1)
     #expect(stderrOutput.contains("Packs/personas"))
     #expect(stderrOutput.contains("Expected directory."))
-  }
-
-  @Test
-  func cliListEssentialsRejectsEssentialPathWhenItIsAFile() throws {
-    let root = try makeRootWithPackFile(relativePath: "essentials")
-
-    var status: Int32 = 0
-    let stderrOutput = captureStderr {
-      status = PersonaKitCLI().run(arguments: [
-        "personakit",
-        "list",
-        "--root",
-        root.path,
-        "essentials",
-      ])
-    }
-
-    #expect(status == 1)
-    #expect(stderrOutput.contains("Essentials path is not a directory"))
   }
 
   @Test

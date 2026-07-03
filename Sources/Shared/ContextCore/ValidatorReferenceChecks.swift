@@ -94,55 +94,6 @@ enum ValidatorReferenceChecker {
           )
         }
       }
-
-      for essentialId in kit.essentialIds {
-        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
-
-        if !PersonaKitPathSafety.isSafePathSegment(essentialId) {
-          errors.append(
-            unsafePathSegmentError(
-              entityType: .kit,
-              entityId: kit.id,
-              field: "essentialIds",
-              value: essentialId,
-              expectedPath: expectedPath,
-              kind: "essential id"
-            )
-          )
-        } else if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-          if hasEscapingPath(
-            scopes: scopes,
-            baseRelativePath: "Packs/essentials",
-            segment: essentialId,
-            suffix: ".md",
-            fileManager: fileManager
-          ) {
-            errors.append(
-              unsafeResolvedPathError(
-                entityType: .kit,
-                entityId: kit.id,
-                field: "essentialIds",
-                value: essentialId,
-                expectedPath: expectedPath,
-                kind: "essential file"
-              )
-            )
-            continue
-          }
-
-          errors.append(
-            ValidationError(
-              entityType: .kit,
-              entityId: kit.id,
-              field: "essentialIds",
-              missingId: essentialId,
-              expectedPath: expectedPath,
-              message: "Missing essential file at \(expectedPath).",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
     }
 
     for directive in registry.directives {
@@ -392,24 +343,6 @@ private func unsafeResolvedPathError(
     expectedPath: expectedPath,
     message: "Unsafe \(kind) path for id \"\(value)\"."
   )
-}
-
-private func hasEscapingPath(
-  scopes: ScopeSet,
-  baseRelativePath: String,
-  segment: String,
-  suffix: String,
-  fileManager: FileManager
-) -> Bool {
-  scopes.resolutionOrder.contains { root in
-    hasEscapingPath(
-      root: root,
-      baseRelativePath: baseRelativePath,
-      segment: segment,
-      suffix: suffix,
-      fileManager: fileManager
-    )
-  }
 }
 
 private func hasEscapingPath(

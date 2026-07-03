@@ -90,7 +90,6 @@ struct StudioWorkspaceSummaryState: Equatable, Sendable {
       StudioWorkspaceCount(id: "directives", title: "Directives", count: snapshot.directives.count),
       StudioWorkspaceCount(id: "kits", title: "Kits", count: snapshot.kits.count),
       StudioWorkspaceCount(id: "skills", title: "Skills", count: snapshot.skills.count),
-      StudioWorkspaceCount(id: "essentials", title: "Essentials", count: snapshot.essentials.count),
     ]
   }
 

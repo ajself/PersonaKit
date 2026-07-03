@@ -429,8 +429,6 @@ enum StudioDiagnosticsNavigationResolver {
       return .directives
     case .skill:
       return .skills
-    case .essentials:
-      return .essentials
     }
   }
 
@@ -454,8 +452,6 @@ enum StudioDiagnosticsNavigationResolver {
       return removingSuffix(".directive.json", from: lastPathComponent)
     case .skill:
       return removingSuffix(".skill.json", from: lastPathComponent)
-    case .essentials:
-      return removingSuffix(".md", from: lastPathComponent)
     }
   }
 

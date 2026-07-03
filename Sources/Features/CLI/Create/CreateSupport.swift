@@ -8,7 +8,6 @@ struct CreateReferenceData {
   let directiveIDs: Set<String>
   let kitIDs: Set<String>
   let skillIDs: Set<String>
-  let essentialIDs: Set<String>
 }
 
 struct CreateResultEnvelope: Encodable {
@@ -234,13 +233,11 @@ enum CreateCommandHelpers {
       throw CLIError.failure(details)
     }
 
-    let essentials = try discoverEssentialIDs(rootURL: rootURL)
     return CreateReferenceData(
       personaIDs: Set(registry.personas.map(\.id)),
       directiveIDs: Set(registry.directives.map(\.id)),
       kitIDs: Set(registry.kits.map(\.id)),
-      skillIDs: Set(registry.skills.map(\.id)),
-      essentialIDs: essentials
+      skillIDs: Set(registry.skills.map(\.id))
     )
   }
 
@@ -479,32 +476,6 @@ enum CreateCommandHelpers {
     return nil
   }
 
-  private static func discoverEssentialIDs(rootURL: URL) throws -> Set<String> {
-    let essentialsDirectory = rootURL.appendingPathComponent("Packs/essentials")
-    var isDirectory: ObjCBool = false
-
-    guard FileManager.default.fileExists(atPath: essentialsDirectory.path, isDirectory: &isDirectory) else {
-      return []
-    }
-
-    guard isDirectory.boolValue else {
-      throw CLIError.failure("Essentials path is not a directory: \(essentialsDirectory.path)")
-    }
-
-    let files = try FileManager.default.contentsOfDirectory(
-      at: essentialsDirectory,
-      includingPropertiesForKeys: nil,
-      options: [.skipsHiddenFiles]
-    )
-
-    return Set(
-      files
-        .filter { $0.lastPathComponent.hasSuffix(".md") }
-        .map { $0.deletingPathExtension().lastPathComponent }
-    )
-    .union(builtInEssentialIDs)
-  }
-
   private static func resolveReferenceScopes(
     for rootURL: URL
   ) -> ScopeSet {
@@ -522,9 +493,4 @@ enum CreateCommandHelpers {
       globalScopeURL: globalScopeURL == standardizedRootURL ? nil : globalScopeURL
     )
   }
-
-  private static let builtInEssentialIDs: Set<String> = [
-    "persona-activation-contract",
-    "skill-authorization-contract",
-  ]
 }

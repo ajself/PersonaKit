@@ -291,33 +291,6 @@ struct MCPToolTests {
   }
 
   @Test
-  func explainEntityToolResolvesBuiltInEssentials() throws {
-    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
-    let service = MCPToolService(scopes: scopes)
-
-    let result = try service.callTool(
-      name: "personakit_explain_entity",
-      arguments: [
-        "entityType": "essential",
-        "id": "skill-authorization-contract",
-      ]
-    )
-
-    let output = try #require(firstText(result))
-    let object = try #require(jsonObject(output))
-    let data = try #require(object["data"] as? [String: Any])
-
-    #expect(object["entityType"] as? String == "essential")
-    #expect(object["id"] as? String == "skill-authorization-contract")
-    #expect(
-      (data["resolvedPath"] as? String)?
-        .hasSuffix("Packs/essentials/skill-authorization-contract.md") == true
-    )
-    #expect((data["lineCount"] as? Int ?? 0) > 0)
-    #expect((data["byteCount"] as? Int ?? 0) > 0)
-  }
-
-  @Test
   func compareEntitiesToolReportsDeterministicDifferences() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
@@ -337,31 +310,6 @@ struct MCPToolTests {
     #expect(object["entityType"] as? String == "skill")
     let scalarDifferences = try #require(object["scalarDifferences"] as? [[String: Any]])
     #expect(!scalarDifferences.isEmpty)
-  }
-
-  @Test
-  func compareEntitiesToolResolvesBuiltInEssentials() throws {
-    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
-    let service = MCPToolService(scopes: scopes)
-
-    let result = try service.callTool(
-      name: "personakit_compare_entities",
-      arguments: [
-        "entityType": "essential",
-        "leftId": "persona-activation-contract",
-        "rightId": "skill-authorization-contract",
-      ]
-    )
-
-    let output = try #require(firstText(result))
-    let object = try #require(jsonObject(output))
-
-    #expect(object["entityType"] as? String == "essential")
-    #expect(object["leftId"] as? String == "persona-activation-contract")
-    #expect(object["rightId"] as? String == "skill-authorization-contract")
-
-    let scalarDifferences = try #require(object["scalarDifferences"] as? [[String: Any]])
-    #expect(scalarDifferences.contains { ($0["field"] as? String) == "id" })
   }
 
   @Test
@@ -471,16 +419,6 @@ struct MCPToolTests {
         "tools-and-constraints",
       ]
     )
-    let essentialIds = try #require(resolved["essentialIds"] as? [String])
-    #expect(
-      essentialIds == [
-        "persona-activation-contract",
-        "skill-authorization-contract",
-      ]
-    )
-    let edges = try #require(object["edges"] as? [String: Any])
-    let systemEssentialIds = try #require(edges["systemEssentialIds"] as? [String])
-    #expect(systemEssentialIds == ["persona-activation-contract", "skill-authorization-contract"])
     let skillAuthorization = try #require(resolved["skillAuthorization"] as? [String: Any])
     #expect(skillAuthorization["allowedSkillIds"] as? [String] == ["codex-cli"])
     #expect(skillAuthorization["authorizedSkillIds"] as? [String] == ["codex-cli"])

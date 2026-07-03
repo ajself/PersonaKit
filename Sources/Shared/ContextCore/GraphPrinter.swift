@@ -25,27 +25,17 @@ public struct GraphPrinter {
     }
     let appliedKitLines = appliedKits.map { "- \(formatLine(id: $0.id, name: $0.name))" }
     let directiveSkillLines = uniqueSorted(directive.requiresSkillIds).map { "- skill:\($0)" }
-    let kitsToEssentialsLines = appliedKits.flatMap { kit -> [String] in
-      var lines: [String] = [kit.id]
-      let essentials = uniqueSorted(kit.essentialIds)
-      lines.append(contentsOf: essentials.map { "  - essential:\($0)" })
-      return lines
-    }
     let kitsToSkillLines = appliedKits.flatMap { kit -> [String] in
       var lines: [String] = [kit.id]
       let skills = uniqueSorted(kit.skillIds ?? [])
       lines.append(contentsOf: skills.map { "  - skill:\($0)" })
       return lines
     }
-    let resolvedEssentialLines =
-      SystemEssentials
-      .sortEssentialIdsForResolvedOutput(resolvedSession.essentials.map(\.id))
-      .map { "- \($0)" }
     let resolvedGroundingSkillLines =
       resolvedSession.availableGroundingSkills.map(\.id).sorted().map { "- \($0)" }
     let resolvedSkillLines = resolvedSession.skills.map { $0.id }.sorted().map { "- \($0)" }
     var lines = [String]()
-    var finalLines = ["Essentials:"]
+    var finalLines = ["Grounding Skills:"]
 
     lines.append("PersonaKit-Graph-Version: 1")
     lines.append("")
@@ -56,7 +46,6 @@ public struct GraphPrinter {
 
     appendSection("## Persona default kits", body: defaultKitLines, to: &lines)
     appendSection("## Applied kits (after overrides)", body: appliedKitLines, to: &lines)
-    appendSection("## Kits \u{2192} Essentials", body: kitsToEssentialsLines, to: &lines)
     appendSection("## Kits \u{2192} Skills", body: kitsToSkillLines, to: &lines)
     appendSection("## Directive \u{2192} Skills", body: directiveSkillLines, to: &lines)
     appendSection(
@@ -72,8 +61,6 @@ public struct GraphPrinter {
       )
     }
 
-    finalLines.append(contentsOf: resolvedEssentialLines)
-    finalLines.append("Grounding Skills:")
     finalLines.append(contentsOf: resolvedGroundingSkillLines)
     finalLines.append("Skills:")
     finalLines.append(contentsOf: resolvedSkillLines)

@@ -244,7 +244,6 @@ public enum StudioLaunchConfiguration {
 
 public enum StudioLaunchSection: String, Sendable {
   case directives
-  case essentials
   case kits
   case personas
   case relationshipMap = "relationship-map"

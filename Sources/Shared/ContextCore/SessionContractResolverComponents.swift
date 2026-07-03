@@ -18,7 +18,6 @@ struct SessionContractComponents {
   let persona: Persona
   let directive: Directive?
   let kits: [Kit]
-  let essentials: [ResolvedEssential]
   let availableGroundingSkills: [ResolvedGroundingSkill]
   let skills: [Skill]
   let requiredSkillReferences: [SessionContractRequiredSkillReference]
@@ -144,44 +143,12 @@ enum SessionContractComponentResolver {
       }
     }
 
-    var essentialIds: [String] = []
-
-    for kit in resolvedKits {
-      for essentialId in kit.essentialIds {
-        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
-
-        if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-          errors.append(
-            .missingEssentialFile(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "essentialIds",
-              missingId: essentialId,
-              expectedPath: expectedPath
-            )
-          )
-        }
-
-        essentialIds.append(essentialId)
-      }
-    }
-
-    essentialIds.append(contentsOf: SystemEssentials.injectedEssentialIds)
-
     if !errors.isEmpty {
       throw ResolverResolutionError(errors: errors)
     }
 
     let uniqueSkillIds = uniqueSorted(requiredSkillReferences.map(\.skillId))
     let resolvedSkills = uniqueSkillIds.compactMap { registry.skillsById[$0] }
-    let uniqueEssentialIds = uniqueSorted(essentialIds)
-    let resolvedEssentials = uniqueEssentialIds.compactMap { essentialId -> ResolvedEssential? in
-      resolveReferencedEssential(
-        essentialId,
-        scopes: scopes,
-        fileManager: fileManager
-      )
-    }
     let availableGroundingSkills = resolveAvailableGroundingSkills(
       declarations: groundingSkillDeclarations,
       registry: registry
@@ -191,7 +158,6 @@ enum SessionContractComponentResolver {
       persona: resolvedPersona,
       directive: directive,
       kits: resolvedKits,
-      essentials: resolvedEssentials,
       availableGroundingSkills: availableGroundingSkills,
       skills: resolvedSkills,
       requiredSkillReferences: requiredSkillReferences

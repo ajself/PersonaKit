@@ -79,13 +79,12 @@ struct WorkspaceLibraryEntityFormAdapterTests {
         id: "kit-new",
         primaryText: "Kit New",
         secondaryText: "Shared guidance for new work.",
-        firstArrayLines: "essential-a",
+        firstArrayLines: "skill-a",
         secondArrayLines: "skill-a"
       ),
       to:
         """
         {
-          "essentialIds" : [],
           "id" : "",
           "name" : "",
           "summary" : "",

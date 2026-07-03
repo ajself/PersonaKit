@@ -179,7 +179,7 @@ struct CreateSkillCommand: ParsableCommand {
         .appendingPathComponent("\(normalizedID).md")
       let markdown =
         isGrounding
-        ? WorkspaceEssentialDraftBuilder.buildMarkdown(
+        ? Self.buildGroundingMarkdown(
           title: resolvedName,
           body: resolvedBody.isEmpty ? resolvedDescription : resolvedBody,
           template: shared.resolvedTemplate
@@ -215,5 +215,32 @@ struct CreateSkillCommand: ParsableCommand {
         }
       }
     }
+  }
+
+  /// Renders the expandable markdown body written alongside a grounding skill's JSON.
+  private static func buildGroundingMarkdown(
+    title: String,
+    body: String?,
+    template: WorkspaceCreationTemplate
+  ) -> String {
+    let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedBody = body?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let defaultBody: String
+    switch template {
+    case .starter:
+      defaultBody = "TODO: add grounding guidance."
+    case .minimal:
+      defaultBody = ""
+    }
+
+    var sections = ["# \(trimmedTitle)"]
+
+    let finalBody = trimmedBody ?? defaultBody
+    if !finalBody.isEmpty {
+      sections.append(finalBody)
+    }
+
+    return sections.joined(separator: "\n\n") + "\n"
   }
 }

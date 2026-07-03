@@ -56,7 +56,6 @@ struct SessionDependencyMapView: View {
     .directive,
     .kit,
     .skill,
-    .essential,
   ]
 
   var body: some View {
@@ -534,8 +533,6 @@ extension WorkspaceSessionMapNodeKind {
       return "Kits"
     case .skill:
       return "Skills"
-    case .essential:
-      return "Essentials"
     }
   }
 }

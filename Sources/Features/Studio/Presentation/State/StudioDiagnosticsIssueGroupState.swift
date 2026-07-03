@@ -65,8 +65,6 @@ extension WorkspaceValidationEntityType {
       return "Directive"
     case .skill:
       return "Skill"
-    case .essentials:
-      return "Essential"
     }
   }
 }

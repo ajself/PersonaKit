@@ -139,37 +139,6 @@ struct CLICreateCommandTests {
   }
 
   @Test
-  func createEssentialReadsBodyFromStdin() throws {
-    let root = try makeWritableFixtureRoot()
-    let interactiveIO = makeInteractiveIO(
-      lines: [],
-      isInteractive: false,
-      stdin: "Keep milestone slices honest."
-    )
-
-    var status: Int32 = 0
-    _ = captureStdout {
-      status = PersonaKitCLI(interactiveIO: interactiveIO).run(arguments: [
-        "personakit",
-        "create",
-        "essential",
-        "--root",
-        root.path,
-        "--title",
-        "Planning Guardrails",
-        "--stdin-body",
-      ])
-    }
-
-    #expect(status == 0)
-
-    let essentialURL = root.appendingPathComponent("Packs/essentials/planning-guardrails.md")
-    let markdown = try String(contentsOf: essentialURL, encoding: .utf8)
-
-    #expect(markdown == "# Planning Guardrails\n\nKeep milestone slices honest.\n")
-  }
-
-  @Test
   func createSessionCanReferenceGlobalPersonaWhenWritingProjectRoot() throws {
     let tempDirectory = try makeTempDirectory()
     let projectContainer = tempDirectory.appendingPathComponent("Project")
@@ -237,32 +206,6 @@ struct CLICreateCommandTests {
     #expect(status == 0)
     #expect(output.contains("Dry run for persona \"senior-swiftui-engineer\""))
     #expect(output.contains("\"id\" : \"senior-swiftui-engineer\""))
-  }
-
-  @Test
-  func createKitBuiltInEssentialDoesNotWarnAsUnknown() throws {
-    let root = try makeWritableFixtureRoot()
-
-    var status: Int32 = 0
-    let output = captureStdout {
-      status = PersonaKitCLI().run(arguments: [
-        "personakit",
-        "create",
-        "kit",
-        "--root",
-        root.path,
-        "--name",
-        "Runtime Kit",
-        "--summary",
-        "Summary",
-        "--essential",
-        "persona-activation-contract",
-        "--dry-run",
-      ])
-    }
-
-    #expect(status == 0)
-    #expect(!output.contains("Unknown essential ids"))
   }
 
   @Test

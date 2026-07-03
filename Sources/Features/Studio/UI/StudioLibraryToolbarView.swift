@@ -2,7 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Toolbar for library and essentials list actions.
+/// Toolbar for library list actions.
 struct StudioLibraryToolbarView: View {
   let actionState: StudioLibraryActionBarState
   @Binding var searchText: String

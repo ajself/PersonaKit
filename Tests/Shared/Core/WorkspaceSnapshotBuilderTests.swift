@@ -227,33 +227,6 @@ struct WorkspaceSnapshotBuilderTests {
   }
 
   @Test
-  func snapshotFailsWhenEssentialsPathIsFile() throws {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
-    let dependencies = try makeDependencies(
-      directories: [
-        PersonaKitDirectory.packsURL(root: projectScopeURL)
-      ],
-      files: [
-        projectScopeURL.appendingPathComponent("Packs/essentials")
-      ],
-      directoryContents: [:],
-      fileData: [:]
-    )
-    let builder = WorkspaceSnapshotBuilder(
-      globalScopeURL: nil,
-      dependencies: dependencies
-    )
-
-    do {
-      _ = try builder.build(workspaceURL: workspaceURL)
-      #expect(Bool(false))
-    } catch let error as WorkspaceSnapshotBuildError {
-      #expect(error.message == "PersonaKit reserved path Packs/essentials exists but is not a directory.")
-    }
-  }
-
-  @Test
   func snapshotFailsWhenEntityPackPathIsFile() throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")

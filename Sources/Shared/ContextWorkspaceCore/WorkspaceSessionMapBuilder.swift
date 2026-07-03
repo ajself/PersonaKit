@@ -83,10 +83,9 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     )
 
     var resolutionErrors: [ResolverError] = []
-    var resolvedSession: ResolvedSession?
 
     do {
-      resolvedSession = try Resolver.resolve(
+      _ = try Resolver.resolve(
         definition: definition,
         registry: registry,
         scopes: scopes
@@ -97,9 +96,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
 
     let graph = buildGraph(
       definition: definition,
-      registry: registry,
-      scopes: scopes,
-      resolvedSession: resolvedSession
+      registry: registry
     )
 
     return WorkspaceSessionMap(
@@ -127,13 +124,10 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
 
   private func buildGraph(
     definition: SessionDefinition,
-    registry: Registry,
-    scopes: ScopeSet,
-    resolvedSession: ResolvedSession?
+    registry: Registry
   ) -> WorkspaceSessionMapGraph {
     var nodeStateByKey: [String: WorkspaceSessionMapMutableNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
-    var authoredEssentialIDs: Set<String> = []
 
     let sessionNodeKey = workspaceSessionMapNodeKey(kind: .session, id: "active-session")
     upsertWorkspaceSessionMapNode(
@@ -251,27 +245,6 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
           )
         )
       }
-
-      for essentialID in sortedUniqueWorkspaceSessionMapValues(kit.essentialIds) {
-        authoredEssentialIDs.insert(essentialID)
-        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
-        let essentialExists = resolveEssential(essentialID, scopes: scopes) != nil
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .essential,
-          id: essentialID,
-          displayName: essentialID,
-          isMissing: !essentialExists
-        )
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: kitNodeKey,
-            toKey: essentialNodeKey,
-            reason: "kit.essentialIds"
-          )
-        )
-      }
     }
 
     if let directive {
@@ -298,29 +271,6 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
 
     }
 
-    if let resolvedSession {
-      for essential in resolvedSession.essentials
-      where !authoredEssentialIDs.contains(essential.id) {
-        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essential.id)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .essential,
-          id: essential.id,
-          displayName: essential.id,
-          isMissing: false,
-          badge: essential.source == .systemBuiltIn ? "runtime" : nil
-        )
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: sessionNodeKey,
-            toKey: essentialNodeKey,
-            reason: "session.resolvedEssentials"
-          )
-        )
-      }
-    }
-
     let nodes = sortedWorkspaceSessionMapNodes(from: nodeStateByKey)
     let edges = sortedWorkspaceSessionMapEdges(
       from: edgeKeys,
@@ -330,17 +280,6 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     return WorkspaceSessionMapGraph(
       nodes: nodes,
       edges: edges
-    )
-  }
-
-  private func resolveEssential(
-    _ essentialID: String,
-    scopes: ScopeSet
-  ) -> ResolvedEssential? {
-    PersonaKitEssentialResolver.resolve(
-      essentialID,
-      scopes: scopes,
-      fileExists: dependencies.fileExists
     )
   }
 

@@ -29,8 +29,7 @@ struct StudioWorkspaceSummaryStateTests {
         ],
         directives: [],
         kits: [],
-        skills: [],
-        essentials: []
+        skills: []
       ),
       validation: WorkspaceValidationSnapshot(
         summary: "Validation summary: errors=1",
@@ -59,7 +58,6 @@ struct StudioWorkspaceSummaryStateTests {
         "directives",
         "kits",
         "skills",
-        "essentials",
       ]
     )
     #expect(state.accessibilitySummary.contains("Sessions 1"))
@@ -156,7 +154,6 @@ struct StudioWorkspaceSummaryStateTests {
       (StudioWorkspaceCount(id: "directives", title: "Directives", count: 1), .directives),
       (StudioWorkspaceCount(id: "kits", title: "Kits", count: 1), .kits),
       (StudioWorkspaceCount(id: "skills", title: "Skills", count: 1), .skills),
-      (StudioWorkspaceCount(id: "essentials", title: "Essentials", count: 1), .essentials),
     ]
 
     for (count, sidebarItem) in countDestinations {

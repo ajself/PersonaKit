@@ -64,7 +64,6 @@ public struct SessionContractResult: Sendable {
   public let persona: Persona
   public let directive: Directive?
   public let kits: [Kit]
-  public let essentials: [ResolvedEssential]
   public let availableGroundingSkills: [ResolvedGroundingSkill]
   public let skills: [Skill]
   public let injectedContractIds: [String]
@@ -76,7 +75,6 @@ public struct SessionContractResult: Sendable {
     persona: Persona,
     directive: Directive?,
     kits: [Kit],
-    essentials: [ResolvedEssential],
     availableGroundingSkills: [ResolvedGroundingSkill],
     skills: [Skill],
     injectedContractIds: [String],
@@ -87,7 +85,6 @@ public struct SessionContractResult: Sendable {
     self.persona = persona
     self.directive = directive
     self.kits = kits
-    self.essentials = essentials
     self.availableGroundingSkills = availableGroundingSkills
     self.skills = skills
     self.injectedContractIds = injectedContractIds
@@ -339,19 +336,14 @@ public enum SessionContractResolver {
       skillCapabilitiesById: registry.skillsById.mapValues { Set($0.capabilities ?? []) }
     )
 
-    let injectedContractIds = components.essentials
-      .filter { $0.source == .systemBuiltIn }
-      .map(\.id)
-
     return SessionContractResult(
       sessionId: sessionId,
       persona: components.persona,
       directive: components.directive,
       kits: components.kits.sorted { $0.id < $1.id },
-      essentials: SystemEssentials.sortResolvedEssentialsForResolvedOutput(components.essentials),
       availableGroundingSkills: components.availableGroundingSkills.sorted { $0.id < $1.id },
       skills: components.skills.sorted { $0.id < $1.id },
-      injectedContractIds: SystemEssentials.sortEssentialIdsForResolvedOutput(injectedContractIds),
+      injectedContractIds: SystemFramings.injectedContractIds,
       skillAuthorization: authorization.contract,
       authorizationErrors: authorization.errors
     )

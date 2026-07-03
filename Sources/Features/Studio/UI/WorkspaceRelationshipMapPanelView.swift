@@ -24,7 +24,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     .directive,
     .kit,
     .skill,
-    .essential,
   ]
 
   private let nodeKindOrder: [WorkspaceSessionMapNodeKind] = [
@@ -33,7 +32,6 @@ struct WorkspaceRelationshipMapPanelView: View {
     .directive,
     .kit,
     .skill,
-    .essential,
   ]
 
   var body: some View {
@@ -423,10 +421,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }
 
-    for essential in workspaceStore.snapshot.essentials {
-      scopes["essential:\(essential.id)"] = essential.sourceScope
-    }
-
     return scopes
   }
 
@@ -443,7 +437,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       snapshot.directives.map { "directive:\($0.id)::\($0.sourceScope.rawValue)" },
       snapshot.kits.map { "kit:\($0.id)::\($0.sourceScope.rawValue)" },
       snapshot.skills.map { "skill:\($0.id)::\($0.sourceScope.rawValue)" },
-      snapshot.essentials.map { "essential:\($0.id)::\($0.sourceScope.rawValue)" },
     ]
     .flatMap { $0 }
     .sorted()
@@ -723,8 +716,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
     case .invalidSession(let sourceId, _, let message):
       return "Session \(sourceId) could not be loaded: \(message)"
-    case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
-      return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
     }
   }
 
@@ -746,8 +737,6 @@ struct WorkspaceRelationshipMapPanelView: View {
       return "skill:\(missingID)"
     case .invalidSession:
       return nil
-    case .missingEssentialFile(_, _, _, let missingID, _):
-      return "essential:\(missingID)"
     }
   }
 
@@ -994,8 +983,6 @@ extension WorkspaceSessionMapNodeKind {
       return "Kit"
     case .skill:
       return "Skill"
-    case .essential:
-      return "Essential"
     }
   }
 }

@@ -17,7 +17,7 @@ enum StudioLibraryDetailMode: String, CaseIterable, Sendable {
     case .edit:
       return "Edit"
     case .json:
-      return selection == .essentials ? "Preview" : "JSON"
+      return "JSON"
     }
   }
 }
@@ -28,14 +28,6 @@ enum StudioLibraryDetailModeResolver {
     selectedItem: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?
   ) -> [StudioLibraryDetailMode] {
-    if selection == .essentials {
-      guard selectedItem?.sourceScope == .project else {
-        return [.json]
-      }
-
-      return [.edit, .json]
-    }
-
     guard
       selectedItem?.sourceScope == .project,
       let entityType,

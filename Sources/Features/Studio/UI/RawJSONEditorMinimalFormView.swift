@@ -50,10 +50,14 @@ struct RawJSONEditorMinimalFormView: View {
           text: firstArrayLinesBinding
         )
 
-        multiLineListField(
-          title: formDescriptor.secondArrayLabel,
-          text: secondArrayLinesBinding
-        )
+        // Entities with only one editable list reuse the same key for both
+        // array slots; hide the duplicate so a single field is shown.
+        if formDescriptor.secondArrayKey != formDescriptor.firstArrayKey {
+          multiLineListField(
+            title: formDescriptor.secondArrayLabel,
+            text: secondArrayLinesBinding
+          )
+        }
       }
       .disabled(formSyncErrorMessage != nil)
     }

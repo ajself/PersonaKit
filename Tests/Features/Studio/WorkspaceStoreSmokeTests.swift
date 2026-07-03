@@ -65,7 +65,7 @@ struct WorkspaceStoreSmokeTests {
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
         WorkspaceValidationSnapshot(
-          summary: "Validation summary: personas=0 kits=0 directives=0 references=0 skills=0 essentials=0 errors=0",
+          summary: "Validation summary: personas=0 kits=0 directives=0 skills=0 errors=0",
           issues: []
         )
       }

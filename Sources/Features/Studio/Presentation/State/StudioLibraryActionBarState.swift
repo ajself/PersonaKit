@@ -4,11 +4,10 @@ import StudioFoundation
 
 enum StudioLibraryEditAction: Equatable, Sendable {
   case inlineForm
-  case markdown
   case rawJSON
 }
 
-/// Consolidated action state for Studio library/essentials command bars.
+/// Consolidated action state for Studio library command bars.
 struct StudioLibraryActionBarState {
   let editAction: StudioLibraryEditAction?
   let canCreate: Bool
@@ -28,9 +27,6 @@ struct StudioLibraryActionBarState {
     let isGlobalSelection = selectedItem?.sourceScope == .global
 
     switch selection {
-    case .essentials:
-      editAction = .markdown
-
     case .personas,
       .directives,
       .kits,
@@ -51,7 +47,6 @@ struct StudioLibraryActionBarState {
       selection == .personas
       || selection == .directives
       || selection == .kits
-      || selection == .essentials
       || selection == .skills
     canCreate = showsCreateAction && !isLoadingLibraryEditor
     canReveal = selectedItem != nil

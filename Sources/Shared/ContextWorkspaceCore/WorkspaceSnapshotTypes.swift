@@ -44,7 +44,7 @@ public struct WorkspaceSkillMetadata: Equatable, Sendable {
   }
 }
 
-/// Read-only list item for personas, directives, kits, skills, and essentials.
+/// Read-only list item for personas, directives, kits, and skills.
 public struct WorkspaceListItem: Equatable, Sendable {
   public let id: String
   public let displayName: String
@@ -103,22 +103,19 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
   public let directives: [WorkspaceListItem]
   public let kits: [WorkspaceListItem]
   public let skills: [WorkspaceListItem]
-  public let essentials: [WorkspaceListItem]
 
   public init(
     sessions: [WorkspaceSessionListItem],
     personas: [WorkspaceListItem],
     directives: [WorkspaceListItem],
     kits: [WorkspaceListItem],
-    skills: [WorkspaceListItem],
-    essentials: [WorkspaceListItem]
+    skills: [WorkspaceListItem]
   ) {
     self.sessions = sessions
     self.personas = personas
     self.directives = directives
     self.kits = kits
     self.skills = skills
-    self.essentials = essentials
   }
 
   public static let empty = WorkspaceSnapshot(
@@ -126,8 +123,7 @@ public struct WorkspaceSnapshot: Equatable, Sendable {
     personas: [],
     directives: [],
     kits: [],
-    skills: [],
-    essentials: []
+    skills: []
   )
 }
 

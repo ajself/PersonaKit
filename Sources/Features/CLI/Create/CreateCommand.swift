@@ -11,7 +11,6 @@ struct CreateCommand: ParsableCommand {
       CreateDirectiveCommand.self,
       CreateSkillCommand.self,
       CreateSessionCommand.self,
-      CreateEssentialCommand.self,
     ]
   )
 }

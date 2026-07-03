@@ -7,7 +7,6 @@ public enum ValidationEntityType: String, Sendable {
   case kit
   case directive
   case skill
-  case essentials
 
   /// Stable sort priority used when ordering validation errors.
   public var sortOrder: Int {
@@ -22,8 +21,6 @@ public enum ValidationEntityType: String, Sendable {
       return 3
     case .skill:
       return 4
-    case .essentials:
-      return 5
     }
   }
 }
@@ -91,28 +88,24 @@ public struct ValidationCounts: Equatable, Sendable {
   public let kits: Int
   public let directives: Int
   public let skills: Int
-  public let essentials: Int
 
   public init(
     personas: Int,
     kits: Int,
     directives: Int,
-    skills: Int,
-    essentials: Int
+    skills: Int
   ) {
     self.personas = personas
     self.kits = kits
     self.directives = directives
     self.skills = skills
-    self.essentials = essentials
   }
 
   public static let zero = ValidationCounts(
     personas: 0,
     kits: 0,
     directives: 0,
-    skills: 0,
-    essentials: 0
+    skills: 0
   )
 }
 
@@ -124,7 +117,7 @@ public struct ValidationResult: Equatable, Sendable {
   /// Human-readable summary string used in user-facing output.
   public var summary: String {
     return
-      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) essentials=\(counts.essentials) errors=\(errors.count)"
+      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) errors=\(errors.count)"
   }
 
   /// Creates a validation result and sorts errors for stable output.

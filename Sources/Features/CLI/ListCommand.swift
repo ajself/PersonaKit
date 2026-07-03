@@ -8,7 +8,6 @@ enum ListEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
   case kits
   case directives
   case skills
-  case essentials
   case sessions
 }
 
@@ -57,8 +56,6 @@ struct ListCommand {
       lines = registry.directives.map { formatLine(id: $0.id, name: $0.title) }
     case .skills:
       lines = registry.skills.map { formatLine(id: $0.id, name: $0.name) }
-    case .essentials:
-      lines = try listEssentials(scopes: scopes, fileManager: fileManager)
     case .sessions:
       lines = try listSessions(scopes: scopes, fileManager: fileManager)
     }
@@ -73,14 +70,6 @@ struct ListCommand {
     try SessionFileLoader.list(scopes: scopes, fileManager: fileManager).map(\.id)
   }
 
-  /// Discovers markdown essential IDs from the resolved scope load order.
-  static func essentialIDs(
-    scopes: ScopeSet,
-    fileManager: FileManager = .default
-  ) throws -> [String] {
-    try listEssentials(scopes: scopes, fileManager: fileManager)
-  }
-
   /// Formats an identifier and optional display name for human-readable output.
   private static func formatLine(id: String, name: String?) -> String {
     let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -88,45 +77,6 @@ struct ListCommand {
       return id
     }
     return "\(id) — \(trimmedName)"
-  }
-
-  /// Discovers markdown essential IDs from the resolved scope load order.
-  private static func listEssentials(scopes: ScopeSet, fileManager: FileManager) throws -> [String] {
-    var ids: Set<String> = []
-    for root in scopes.loadOrder {
-      let essentialsURL = root.appendingPathComponent("Packs/essentials")
-      var isDirectory: ObjCBool = false
-
-      let essentialsExists = fileManager.fileExists(
-        atPath: essentialsURL.path,
-        isDirectory: &isDirectory
-      )
-
-      guard essentialsExists else {
-        continue
-      }
-
-      guard isDirectory.boolValue else {
-        throw CLIError.failure("Essentials path is not a directory: \(essentialsURL.path)")
-      }
-
-      let files: [URL]
-      do {
-        files = try fileManager.contentsOfDirectory(
-          at: essentialsURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
-      } catch {
-        throw CLIError.failure("Failed to read essentials directory: \(error.localizedDescription)")
-      }
-
-      for file in files where file.pathExtension == "md" {
-        ids.insert(file.deletingPathExtension().lastPathComponent)
-      }
-    }
-
-    return ids.sorted()
   }
 
   /// Discovers session files from the resolved scopes and renders stable summaries.

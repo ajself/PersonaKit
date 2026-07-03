@@ -19,93 +19,8 @@ struct ValidatorTests {
           personas: 1,
           kits: 1,
           directives: 1,
-          skills: 2,
-          essentials: 0
+          skills: 2
         )
-    )
-  }
-
-  @Test
-  func validateMissingEssentialFile() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try PersonaKitInitializer().run(destination: root.path)
-
-    // The starter no longer authors essentials, so point a kit's essentialIds at
-    // an id that has no essential file to exercise the missing-essential path.
-    let kitURL = root.appendingPathComponent("Packs/kits/cli-guardrails.kit.json")
-    let orphanKit = """
-      {
-        "id": "cli-guardrails",
-        "version": "1.0",
-        "name": "CLI Guardrails",
-        "summary": "Guardrails for narrow PersonaKit CLI work.",
-        "essentialIds": [
-          "contract-boundaries"
-        ],
-        "skillIds": [
-          "contract-boundaries"
-        ]
-      }
-      """
-    try Data(orphanKit.utf8).write(to: kitURL, options: .atomic)
-    try FileManager.default.removeItem(at: root.appendingPathComponent("Sessions/solo-dev.session.json"))
-
-    let result = try Validator.validate(root: root)
-
-    #expect(
-      result.errors == [
-        ValidationError(
-          entityType: .kit,
-          entityId: "cli-guardrails",
-          field: "essentialIds",
-          missingId: "contract-boundaries",
-          expectedPath: "Packs/essentials/contract-boundaries.md",
-          message: "Missing essential file at Packs/essentials/contract-boundaries.md.",
-          referencesUnresolvedID: true
-        )
-      ]
-    )
-  }
-
-  @Test
-  func validateRejectsEscapingKitEssentialIDWithoutAcceptingEscapedFile() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try copyFixtureKit(to: root)
-    try FileManager.default.removeItem(
-      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
-    )
-    try "# Escaped\n".write(
-      to: root.appendingPathComponent("Packs/escaped-essential.md"),
-      atomically: true,
-      encoding: .utf8
-    )
-
-    let kitURL = root.appendingPathComponent("Packs/kits/swiftui-style.kit.json")
-    let kit = try JSONDecoder().decode(Kit.self, from: Data(contentsOf: kitURL))
-    let updatedKit = Kit(
-      id: kit.id,
-      version: kit.version,
-      name: kit.name,
-      summary: kit.summary,
-      essentialIds: ["../escaped-essential"],
-      skillIds: kit.skillIds
-    )
-
-    try encodeSortedJSON(updatedKit).write(to: kitURL, options: .atomic)
-
-    let result = try Validator.validate(root: root)
-
-    #expect(
-      result.errors.contains(
-        ValidationError(
-          entityType: .kit,
-          entityId: "swiftui-style",
-          field: "essentialIds",
-          missingId: "../escaped-essential",
-          expectedPath: "Packs/essentials/<invalid>.md",
-          message: "Unsafe essential id path segment \"../escaped-essential\"."
-        )
-      )
     )
   }
 
@@ -227,56 +142,6 @@ struct ValidatorTests {
   }
 
   @Test
-  func validateRejectsEscapingEssentialSymlink() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try copyFixtureKit(to: root)
-    try FileManager.default.removeItem(
-      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
-    )
-
-    let outsideURL = try makeTempDirectory().appendingPathComponent("outside-essential.md")
-    try "# Outside\n".write(
-      to: outsideURL,
-      atomically: true,
-      encoding: .utf8
-    )
-
-    let symlinkURL = root.appendingPathComponent("Packs/essentials/linked-essential.md")
-    try FileManager.default.createSymbolicLink(
-      at: symlinkURL,
-      withDestinationURL: outsideURL
-    )
-
-    let kitURL = root.appendingPathComponent("Packs/kits/swiftui-style.kit.json")
-    let kit = try JSONDecoder().decode(Kit.self, from: Data(contentsOf: kitURL))
-    let updatedKit = Kit(
-      id: kit.id,
-      version: kit.version,
-      name: kit.name,
-      summary: kit.summary,
-      essentialIds: ["linked-essential"],
-      skillIds: kit.skillIds
-    )
-
-    try encodeSortedJSON(updatedKit).write(to: kitURL, options: .atomic)
-
-    let result = try Validator.validate(root: root)
-
-    #expect(
-      result.errors.contains(
-        ValidationError(
-          entityType: .kit,
-          entityId: "swiftui-style",
-          field: "essentialIds",
-          missingId: "linked-essential",
-          expectedPath: "Packs/essentials/linked-essential.md",
-          message: "Unsafe essential file path for id \"linked-essential\"."
-        )
-      )
-    )
-  }
-
-  @Test
   func validateUnknownKitId() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try PersonaKitInitializer().run(destination: root.path)
@@ -384,7 +249,7 @@ struct ValidatorTests {
     #expect(
       result.errors == [
         ValidationError(
-          entityType: .essentials,
+          entityType: .kit,
           entityId: nil,
           field: "file",
           missingId: nil,
@@ -416,33 +281,6 @@ struct ValidatorTests {
           field: "file",
           missingId: nil,
           expectedPath: "Packs/personas",
-          message: "Expected directory."
-        )
-      ]
-    )
-  }
-
-  @Test
-  func validateRejectsEssentialPathWhenItIsAFile() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    let packsURL = root.appendingPathComponent("Packs")
-    try FileManager.default.createDirectory(
-      at: packsURL,
-      withIntermediateDirectories: true
-    )
-    try Data("not a directory".utf8).write(to: packsURL.appendingPathComponent("essentials"))
-
-    let result = try Validator.validate(root: root)
-
-    #expect(result.counts == .zero)
-    #expect(
-      result.errors == [
-        ValidationError(
-          entityType: .essentials,
-          entityId: nil,
-          field: "file",
-          missingId: nil,
-          expectedPath: "Packs/essentials",
           message: "Expected directory."
         )
       ]

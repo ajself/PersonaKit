@@ -7,8 +7,8 @@ import Foundation
 /// These cases mirror ``SchemaValidator``'s schema mappings — the entities that
 /// are authored as JSON and validated against a bundled schema. It is
 /// deliberately not a copy of the create/list entity sets: there is no bundled
-/// `session` schema, `common.schema.json` is a shared `$ref` base rather than a
-/// user entity, and essentials are authored as markdown.
+/// `session` schema, and `common.schema.json` is a shared `$ref` base rather than
+/// a user entity.
 enum SchemaEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
   case persona
   case kit

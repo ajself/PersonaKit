@@ -36,31 +36,4 @@ extension WorkspaceLibraryFeatureModel {
       return nil
     }
   }
-
-  /// Creates a prefilled markdown editor presentation for new essential creation.
-  func newEssentialEditorPresentation(
-    workspaceURL: URL?
-  ) -> WorkspaceEssentialEditorPresentation? {
-    guard let workspaceURL = workspaceURL?.standardizedFileURL else {
-      setAction(
-        message: "No workspace is currently selected.",
-        isError: true
-      )
-      return nil
-    }
-
-    let title = "New Essential"
-
-    return WorkspaceEssentialEditorPresentation(
-      fileURL: WorkspaceLibraryCreateSupport.placeholderEssentialFileURL(workspaceURL: workspaceURL),
-      itemID: WorkspaceEssentialDraftBuilder.suggestedID(from: title),
-      markdown: WorkspaceEssentialDraftBuilder.buildMarkdown(
-        title: title,
-        body: nil,
-        template: .starter
-      ),
-      workspaceURL: workspaceURL,
-      isCreatingNewItem: true
-    )
-  }
 }

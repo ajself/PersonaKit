@@ -3,7 +3,6 @@ import SwiftUI
 /// Stable help-topic identifiers used by Studio panels and editors.
 enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case directives
-  case essentials
   case kits
   case personas
   case relationshipMap

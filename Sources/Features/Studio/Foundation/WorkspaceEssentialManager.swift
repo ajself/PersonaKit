@@ -1,5 +1,0 @@
-import ContextWorkspaceCore
-
-public typealias WorkspaceEssentialManaging = ContextWorkspaceCore.WorkspaceEssentialManaging
-public typealias WorkspaceEssentialManager = ContextWorkspaceCore.WorkspaceEssentialManager
-public typealias WorkspaceEssentialManagerDependencies = ContextWorkspaceCore.WorkspaceEssentialManagerDependencies

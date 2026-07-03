@@ -66,13 +66,16 @@ extension WorkspaceLibraryEntityType {
         secondArrayLabel: "Acceptance Criteria"
       )
     case .kit:
+      // A kit's only editable list is skillIds. The minimal form has two array
+      // slots; when both keys are equal the second slot is hidden so the kit
+      // surfaces Skill IDs once without writing a spurious JSON field.
       return WorkspaceLibraryEntityFormDescriptor(
         primaryFieldKey: "name",
         primaryFieldLabel: "Name",
         secondaryFieldKey: "summary",
         secondaryFieldLabel: "Summary",
-        firstArrayKey: "essentialIds",
-        firstArrayLabel: "Essential IDs",
+        firstArrayKey: "skillIds",
+        firstArrayLabel: "Skill IDs",
         secondArrayKey: "skillIds",
         secondArrayLabel: "Skill IDs"
       )

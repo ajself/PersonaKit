@@ -2,14 +2,8 @@ import Foundation
 
 struct ValidatorBootstrapResult {
   let registry: Registry?
-  let essentialIds: [String]
   let errors: [ValidationError]
   let hasSchemaErrors: Bool
-}
-
-private struct ValidatorFileIDList {
-  let ids: [String]
-  let errors: [ValidationError]
 }
 
 enum ValidatorBootstrap {
@@ -32,21 +26,13 @@ enum ValidatorBootstrap {
 
       return ValidatorBootstrapResult(
         registry: nil,
-        essentialIds: [],
         errors: errors,
         hasSchemaErrors: !schemaErrors.isEmpty
       )
     }
 
-    let essentials = ValidatorSupport.listEssentialIds(
-      scopes: scopes,
-      fileManager: fileManager
-    )
-    errors.append(contentsOf: essentials.errors)
-
     return ValidatorBootstrapResult(
       registry: registry,
-      essentialIds: essentials.ids,
       errors: errors,
       hasSchemaErrors: !schemaErrors.isEmpty
     )
@@ -87,20 +73,12 @@ enum ValidatorSupport {
     for error: ResolverError,
     sessionId: String
   ) -> ValidationError {
-    let expectedPath: String?
-
-    if case .missingEssentialFile(_, _, _, _, let path) = error {
-      expectedPath = path
-    } else {
-      expectedPath = nil
-    }
-
     return ValidationError(
       entityType: .session,
       entityId: sessionId,
       field: error.field,
       missingId: error.missingId,
-      expectedPath: expectedPath,
+      expectedPath: nil,
       message: error.message,
       referencesUnresolvedID: error.isUnresolvedReference
     )
@@ -178,7 +156,7 @@ enum ValidatorSupport {
     case .skill:
       return .skill
     case .packsRoot:
-      return .essentials
+      return .kit
     }
   }
 
@@ -195,83 +173,12 @@ enum ValidatorSupport {
     if schemaPath.contains("/skills/") || schemaPath.hasSuffix(".skill.json") {
       return .skill
     }
-    return .essentials
+    return .kit
   }
 
   static func checkCancellation() throws {
     if Task.isCancelled {
       throw CancellationError()
     }
-  }
-
-  fileprivate static func listEssentialIds(
-    scopes: ScopeSet,
-    fileManager: FileManager
-  ) -> ValidatorFileIDList {
-    var ids: Set<String> = []
-    var errors: [ValidationError] = []
-
-    for root in scopes.loadOrder {
-      let essentialsURL = root.appendingPathComponent("Packs/essentials")
-      var isDirectory: ObjCBool = false
-
-      let essentialsExists = fileManager.fileExists(
-        atPath: essentialsURL.path,
-        isDirectory: &isDirectory
-      )
-
-      guard essentialsExists else {
-        continue
-      }
-
-      guard isDirectory.boolValue else {
-        errors.append(
-          directoryValidationError(
-            entityType: .essentials,
-            relativePath: "Packs/essentials",
-            message: "Expected directory."
-          )
-        )
-
-        continue
-      }
-
-      do {
-        let files = try fileManager.contentsOfDirectory(
-          at: essentialsURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
-
-        for file in files where file.pathExtension == "md" {
-          ids.insert(file.deletingPathExtension().lastPathComponent)
-        }
-      } catch {
-        errors.append(
-          directoryValidationError(
-            entityType: .essentials,
-            relativePath: "Packs/essentials",
-            message: "Failed to read directory: \(error.localizedDescription)"
-          )
-        )
-      }
-    }
-
-    return ValidatorFileIDList(ids: ids.sorted(), errors: errors)
-  }
-
-  private static func directoryValidationError(
-    entityType: ValidationEntityType,
-    relativePath: String,
-    message: String
-  ) -> ValidationError {
-    ValidationError(
-      entityType: entityType,
-      entityId: nil,
-      field: "file",
-      missingId: nil,
-      expectedPath: relativePath,
-      message: message
-    )
   }
 }

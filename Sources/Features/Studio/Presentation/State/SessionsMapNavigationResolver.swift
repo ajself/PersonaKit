@@ -49,13 +49,6 @@ enum SessionsMapNavigationResolver {
         selectedLibraryItemID: node.id,
         searchText: ""
       )
-
-    case .essential:
-      return StudioNavigationTarget(
-        sidebarItem: .essentials,
-        selectedLibraryItemID: node.id,
-        searchText: ""
-      )
     }
   }
 }

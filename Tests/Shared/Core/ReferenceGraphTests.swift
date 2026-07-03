@@ -22,7 +22,6 @@ struct ReferenceGraphTests {
       version: "1.0",
       name: "K",
       summary: "",
-      essentialIds: [],
       skillIds: ["used-skill"]
     )
     func skill(_ id: String) -> Skill {
@@ -45,7 +44,7 @@ struct ReferenceGraphTests {
       skillsById: ["used-skill": skill("used-skill"), "lonely-skill": skill("lonely-skill")]
     )
 
-    return ReferenceGraph(registry: registry, essentialIds: [], sessions: [session])
+    return ReferenceGraph(registry: registry, sessions: [session])
   }
 
   @Test
@@ -83,7 +82,6 @@ struct ReferenceGraphTests {
     #expect(ReferenceEntityType.directive.isDirectlyInvocable)
     #expect(!ReferenceEntityType.kit.isDirectlyInvocable)
     #expect(!ReferenceEntityType.skill.isDirectlyInvocable)
-    #expect(!ReferenceEntityType.essential.isDirectlyInvocable)
   }
 
   @Test

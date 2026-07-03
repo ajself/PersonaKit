@@ -28,7 +28,6 @@ public enum BestGuidanceSupport {
     public let kits: Int
     public let directives: Int
     public let skills: Int
-    public let essentials: Int
     public let sessions: Int
     public let validationErrors: Int
   }
@@ -53,7 +52,6 @@ public enum BestGuidanceSupport {
       kits: validation.result?.counts.kits ?? 0,
       directives: validation.result?.counts.directives ?? 0,
       skills: validation.result?.counts.skills ?? 0,
-      essentials: validation.result?.counts.essentials ?? 0,
       sessions: sessions.value.count,
       validationErrors: validation.result?.errors.count ?? 1
     )

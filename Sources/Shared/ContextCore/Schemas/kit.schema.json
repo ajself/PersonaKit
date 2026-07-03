@@ -16,12 +16,6 @@
     "summary": {
       "type": "string"
     },
-    "essentialIds": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
     "skillIds": {
       "type": "array",
       "items": {
@@ -33,7 +27,6 @@
     "id",
     "version",
     "name",
-    "summary",
-    "essentialIds"
+    "summary"
   ]
 }

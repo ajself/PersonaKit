@@ -12,7 +12,6 @@ public enum WorkspaceValidationEntityType: String, Codable, Sendable {
   case kit
   case directive
   case skill
-  case essentials
 }
 
 /// Read-only validation issue rendered in Studio.

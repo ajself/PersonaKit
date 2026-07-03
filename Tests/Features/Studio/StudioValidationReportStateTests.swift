@@ -11,15 +11,15 @@ struct StudioValidationReportStateTests {
       snapshot: snapshot(),
       validation: WorkspaceValidationSnapshot(
         summary:
-          "Validation summary: personas=1 kits=1 directives=1 references=0 skills=2 essentials=1 errors=0",
+          "Validation summary: personas=1 kits=1 directives=1 skills=2 errors=0",
         issues: []
       ),
       validationErrorMessage: nil
     )
 
     #expect(report.statusHeadline == "No validation issues reported")
-    #expect(report.coverageLine == "Checked 1 session and 6 library/context items")
-    #expect(report.checkedItemsText == "7 checked")
+    #expect(report.coverageLine == "Checked 1 session and 5 library/context items")
+    #expect(report.checkedItemsText == "6 checked")
     #expect(report.showsCompletedStats)
     #expect(report.issueCountText == "0 issues")
     #expect(report.affectedFilesText == "0 affected files")
@@ -30,7 +30,6 @@ struct StudioValidationReportStateTests {
         "Directives",
         "Kits",
         "Skills",
-        "Essentials",
       ]
     )
     #expect(report.omittedAreaSummary == nil)
@@ -227,9 +226,6 @@ struct StudioValidationReportStateTests {
       skills: [
         item(id: "skill-a", path: "Packs/skills/skill-a.skill.json"),
         item(id: "skill-b", path: "Packs/skills/skill-b.skill.json"),
-      ],
-      essentials: [
-        item(id: "essential-a", path: "Packs/essentials/essential-a.md")
       ]
     )
   }

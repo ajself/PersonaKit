@@ -6,7 +6,6 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
   case kit
   case directive
   case skill
-  case essential
   case session
 
   public static func < (lhs: ReferenceEntityType, rhs: ReferenceEntityType) -> Bool {
@@ -20,7 +19,6 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     case .kit: return 2
     case .directive: return 3
     case .skill: return 4
-    case .essential: return 5
     }
   }
 
@@ -34,7 +32,7 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     switch self {
     case .session, .persona, .directive:
       return true
-    case .kit, .skill, .essential:
+    case .kit, .skill:
       return false
     }
   }
@@ -80,8 +78,8 @@ public struct ReferenceGraph: Sendable {
   /// Every directed reference edge between known nodes.
   public let edges: [ReferenceEdge]
 
-  /// Builds a graph from a loaded registry, the discovered essential ids, and sessions.
-  public init(registry: Registry, essentialIds: [String], sessions: [SessionFile]) {
+  /// Builds a graph from a loaded registry and sessions.
+  public init(registry: Registry, sessions: [SessionFile]) {
     var nodes: Set<ReferenceNode> = []
     var edges: [ReferenceEdge] = []
 
@@ -93,7 +91,6 @@ public struct ReferenceGraph: Sendable {
     for kit in registry.kits { nodes.insert(node(.kit, kit.id)) }
     for directive in registry.directives { nodes.insert(node(.directive, directive.id)) }
     for skill in registry.skills { nodes.insert(node(.skill, skill.id)) }
-    for essentialId in essentialIds { nodes.insert(node(.essential, essentialId)) }
     for session in sessions { nodes.insert(node(.session, session.id)) }
 
     func link(_ from: ReferenceNode, _ toType: ReferenceEntityType, _ ids: [String], _ field: String) {
@@ -111,7 +108,6 @@ public struct ReferenceGraph: Sendable {
 
     for kit in registry.kits {
       let from = node(.kit, kit.id)
-      link(from, .essential, kit.essentialIds, "essentialIds")
       link(from, .skill, kit.skillIds ?? [], "skillIds")
     }
 

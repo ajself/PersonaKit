@@ -15,11 +15,6 @@ Kit overrides: none
 - swift-style — Swift Style Kit
 - swiftui-style — SwiftUI Style Kit
 
-## Kits → Essentials
-repo-constraints
-swift-style
-swiftui-style
-
 ## Kits → Skills
 repo-constraints
   - skill:tools-and-constraints
@@ -48,9 +43,6 @@ Unauthorized Required Skills:
 Authorized: true
 
 ## Final resolved sets
-Essentials:
-- persona-activation-contract
-- skill-authorization-contract
 Grounding Skills:
 - swift-style-guide-reference
 - swiftui-style-guide-reference

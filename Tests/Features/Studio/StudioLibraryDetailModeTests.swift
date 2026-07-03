@@ -7,29 +7,6 @@ import Testing
 
 struct StudioLibraryDetailModeTests {
   @Test
-  func projectEssentialSupportsEditAndPreview() {
-    let modes = StudioLibraryDetailModeResolver.availableModes(
-      selection: .essentials,
-      selectedItem: makeItem(scope: .project),
-      entityType: nil
-    )
-
-    #expect(modes == [.edit, .json])
-    #expect(StudioLibraryDetailMode.json.title(for: .essentials) == "Preview")
-  }
-
-  @Test
-  func globalEssentialUsesPreviewOnly() {
-    let modes = StudioLibraryDetailModeResolver.availableModes(
-      selection: .essentials,
-      selectedItem: makeItem(scope: .global),
-      entityType: nil
-    )
-
-    #expect(modes == [.json])
-  }
-
-  @Test
   func projectPersonaSupportsEditAndJSON() {
     let modes = StudioLibraryDetailModeResolver.availableModes(
       selection: .personas,

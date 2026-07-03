@@ -178,20 +178,17 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
   public var id: String
   public var name: String
   public var summary: String
-  public var essentialIds: [String]
   public var skillIds: [String]
 
   public init(
     id: String,
     name: String,
     summary: String,
-    essentialIds: [String],
     skillIds: [String]
   ) {
     self.id = id
     self.name = name
     self.summary = summary
-    self.essentialIds = essentialIds
     self.skillIds = skillIds
   }
 }
@@ -272,7 +269,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       id: "",
       name: "",
       summary: "",
-      essentialIds: [],
       skillIds: []
     )
   }
@@ -283,7 +279,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
 
   public func validate(
     draft: WorkspaceKitDraft,
-    knownEssentialIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
@@ -298,11 +293,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       errors: &errors
     )
 
-    let unknownEssentialIDs = normalized.essentialIds.filter { !knownEssentialIDs.contains($0) }
-    if !unknownEssentialIDs.isEmpty {
-      warnings.append("Unknown essential ids: \(unknownEssentialIDs.joined(separator: ", ")).")
-    }
-
     let unknownSkillIDs = normalized.skillIds.filter { !knownSkillIDs.contains($0) }
     if !unknownSkillIDs.isEmpty {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
@@ -313,12 +303,10 @@ public struct WorkspaceKitDraftBuilder: Sendable {
 
   public func buildRawJSON(
     draft: WorkspaceKitDraft,
-    knownEssentialIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
-      knownEssentialIDs: knownEssentialIDs,
       knownSkillIDs: knownSkillIDs
     )
 
@@ -332,7 +320,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       version: "1.0",
       name: normalized.name,
       summary: normalized.summary,
-      essentialIds: normalized.essentialIds,
       skillIds: normalized.skillIds.isEmpty ? nil : normalized.skillIds
     )
 
@@ -344,7 +331,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       id: WorkspaceEntityIDPolicy.normalized(draft.id),
       name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
       summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
-      essentialIds: normalizedIDs(draft.essentialIds),
       skillIds: normalizedIDs(draft.skillIds)
     )
   }
@@ -564,38 +550,6 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       pathGlobs: normalizedTextItems(draft.pathGlobs),
       skillTags: normalizedTextItems(draft.skillTags)
     )
-  }
-}
-
-public enum WorkspaceEssentialDraftBuilder {
-  public static func suggestedID(from title: String) -> String {
-    WorkspaceEntityIDSuggester.suggestedID(from: title)
-  }
-
-  public static func buildMarkdown(
-    title: String,
-    body: String?,
-    template: WorkspaceCreationTemplate
-  ) -> String {
-    let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-    let trimmedBody = body?.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    let defaultBody: String
-    switch template {
-    case .starter:
-      defaultBody = "TODO: add essential guidance."
-    case .minimal:
-      defaultBody = ""
-    }
-
-    var sections = ["# \(trimmedTitle)"]
-
-    let finalBody = trimmedBody ?? defaultBody
-    if !finalBody.isEmpty {
-      sections.append(finalBody)
-    }
-
-    return sections.joined(separator: "\n\n") + "\n"
   }
 }
 

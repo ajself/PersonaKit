@@ -3,7 +3,7 @@ import ContextWorkspaceCore
 import StudioFoundation
 import SwiftUI
 
-/// Library and essentials panel with edit/copy/reveal workflows.
+/// Library panel with edit/copy/reveal workflows.
 struct StudioLibraryPanelView: View {
   let workspaceStore: WorkspaceStore
   let selection: SidebarItem
@@ -14,7 +14,6 @@ struct StudioLibraryPanelView: View {
   @Binding var inspectorMode: StudioInspectorMode
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
-  @State private var markdownEditorPresentation: WorkspaceEssentialEditorPresentation?
   @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
   @State private var personaEditorPresentation: PersonaEditorPresentation?
   @State private var detailMode = StudioLibraryDetailMode.edit
@@ -87,8 +86,6 @@ struct StudioLibraryPanelView: View {
         },
         onEditInSheet: {
           switch actionState.editAction {
-          case .markdown:
-            openMarkdownEditorForSelectedItem(selectedItem: selectedItem)
           case .rawJSON:
             openRawJSONEditorForSelectedItem(
               selectedItem: selectedItem,
@@ -100,31 +97,10 @@ struct StudioLibraryPanelView: View {
           }
         },
         onCopyToProject: {
-          switch selection {
-          case .essentials:
-            copySelectedGlobalEssentialToProject(
-              selectedItem: selectedItem
-            )
-          default:
-            copySelectedGlobalItemToProject(
-              selectedItem: selectedItem,
-              entityType: entityType
-            )
-          }
-        },
-        onSaveMarkdown: { markdown, presentation in
-          let saveError = await workspaceStore.saveEssentialEditorMarkdown(
-            markdown,
-            presentation: presentation
+          copySelectedGlobalItemToProject(
+            selectedItem: selectedItem,
+            entityType: entityType
           )
-
-          if saveError == nil {
-            await MainActor.run {
-              selectedLibraryItemID = presentation.itemID
-            }
-          }
-
-          return saveError
         },
         onValidate: { rawJSON, presentation in
           await workspaceStore.validateLibraryEditorRawJSON(
@@ -190,37 +166,6 @@ struct StudioLibraryPanelView: View {
         }
       )
     }
-    .sheet(item: $markdownEditorPresentation) { presentation in
-      MarkdownEditorView(
-        title: presentation.isCreatingNewItem ? "New Essential" : "Edit \(presentation.itemID)",
-        initialMarkdown: presentation.markdown,
-        onCancel: {
-          markdownEditorPresentation = nil
-        },
-        onRevealInFinder: presentation.isCreatingNewItem
-          ? nil
-          : {
-            workspaceStore.revealInFinder(fileURL: presentation.fileURL)
-          },
-        onSave: { markdown in
-          let saveError = await workspaceStore.saveEssentialEditorMarkdown(
-            markdown,
-            presentation: presentation
-          )
-
-          if saveError == nil {
-            await MainActor.run {
-              selectedLibraryItemID =
-                presentation.isCreatingNewItem
-                ? WorkspaceLibraryCreateSupport.essentialItemID(markdown: markdown)
-                : presentation.itemID
-            }
-          }
-
-          return saveError
-        }
-      )
-    }
     .sheet(item: $rawJSONEditorPresentation) { presentation in
       RawJSONEditorView(
         title: presentation.isCreatingNewItem
@@ -262,7 +207,6 @@ struct StudioLibraryPanelView: View {
       )
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
-      markdownEditorPresentation = nil
       personaEditorPresentation = nil
       rawJSONEditorPresentation = nil
     }
@@ -363,20 +307,6 @@ struct StudioLibraryPanelView: View {
     }
   }
 
-  private func openMarkdownEditorForSelectedItem(
-    selectedItem: WorkspaceListItem?
-  ) {
-    Task {
-      let presentation = await workspaceStore.openEssentialEditor(
-        selectedItem: selectedItem
-      )
-
-      await MainActor.run {
-        markdownEditorPresentation = presentation
-      }
-    }
-  }
-
   private func openPersonaEditor() {
     guard selection == .personas else {
       return
@@ -399,8 +329,6 @@ struct StudioLibraryPanelView: View {
     switch selection {
     case .personas:
       openPersonaEditor()
-    case .essentials:
-      markdownEditorPresentation = workspaceStore.newEssentialEditorPresentation()
     case .directives,
       .kits,
       .skills:
@@ -424,24 +352,6 @@ struct StudioLibraryPanelView: View {
       let didCopy = await workspaceStore.copySelectedGlobalLibraryItem(
         selectedItem: selectedItem,
         entityType: entityType
-      )
-
-      guard didCopy, let selectedItemID = selectedItem?.id else {
-        return
-      }
-
-      await MainActor.run {
-        selectedLibraryItemID = selectedItemID
-      }
-    }
-  }
-
-  private func copySelectedGlobalEssentialToProject(
-    selectedItem: WorkspaceListItem?
-  ) {
-    Task {
-      let didCopy = await workspaceStore.copySelectedGlobalEssentialToProject(
-        selectedItem: selectedItem
       )
 
       guard didCopy, let selectedItemID = selectedItem?.id else {

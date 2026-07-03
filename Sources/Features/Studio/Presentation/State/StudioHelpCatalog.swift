@@ -34,33 +34,6 @@ enum StudioHelpCatalog {
         ]
       )
 
-    case .essentials:
-      return StudioHelpTopic(
-        id: .essentials,
-        title: "Essentials Help",
-        shortHint: "Essentials are always-included rules and constraints.",
-        purpose:
-          "Essentials provide non-negotiable context that should be present across sessions regardless of directive specifics.",
-        keyFields: [
-          "Use concise titles and deterministic markdown content.",
-          "Keep file names and ids stable for session references.",
-          "Treat essentials as reusable ground rules, not task-specific prompts.",
-        ],
-        commonMistakes: [
-          "Putting one-off task steps into essentials.",
-          "Duplicating the same rule across multiple files.",
-          "Using unclear filenames that are hard to discover.",
-        ],
-        examples: [
-          "Example essential: \"All Swift edits must pass swift-format before commit.\""
-        ],
-        nextStepText: "Confirm essentials are referenced by kits or personas used in your active sessions.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
-          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-        ]
-      )
-
     case .kits:
       return StudioHelpTopic(
         id: .kits,
@@ -123,7 +96,7 @@ enum StudioHelpCatalog {
         title: "Relationship Map Help",
         shortHint: "Relationship Map shows cross-entity references and resolution health.",
         purpose:
-          "Use this panel to visualize dependencies between sessions, personas, directives, kits, skills, essentials, and references.",
+          "Use this panel to visualize dependencies between sessions, personas, directives, kits, and skills.",
         keyFields: [
           "Map Health summarizes whether references are fully resolved.",
           "Focus Selected Session narrows the graph to one session context.",
@@ -288,8 +261,6 @@ extension SidebarItem {
       return .directives
     case .kits:
       return .kits
-    case .essentials:
-      return .essentials
     case .skills:
       return .skills
     case .relationshipMap:

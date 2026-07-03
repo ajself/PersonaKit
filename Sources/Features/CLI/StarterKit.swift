@@ -201,7 +201,6 @@ enum StarterKitManifest {
           "version": "1.0",
           "name": "CLI Guardrails",
           "summary": "Guardrails for narrow PersonaKit CLI work.",
-          "essentialIds": [],
           "skillIds": [
             "contract-boundaries"
           ]

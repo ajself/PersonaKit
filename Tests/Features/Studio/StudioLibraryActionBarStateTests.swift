@@ -42,40 +42,6 @@ struct StudioLibraryActionBarStateTests {
   }
 
   @Test
-  func essentialsProjectSelectionUsesMarkdownEditAndShowsCreateAction() {
-    let state = StudioLibraryActionBarState(
-      selection: .essentials,
-      selectedItem: makeItem(scope: .project),
-      entityType: nil,
-      isLoadingLibraryEditor: false
-    )
-
-    #expect(state.editAction == .markdown)
-    #expect(state.showsCreateAction)
-    #expect(state.canCreate)
-    #expect(state.canReveal)
-    #expect(state.canEdit)
-    #expect(!state.canCopyToProject)
-  }
-
-  @Test
-  func essentialsGlobalSelectionEnablesCopyAndDisablesEdit() {
-    let state = StudioLibraryActionBarState(
-      selection: .essentials,
-      selectedItem: makeItem(scope: .global),
-      entityType: nil,
-      isLoadingLibraryEditor: false
-    )
-
-    #expect(state.editAction == .markdown)
-    #expect(state.showsCreateAction)
-    #expect(state.canCreate)
-    #expect(state.canReveal)
-    #expect(!state.canEdit)
-    #expect(state.canCopyToProject)
-  }
-
-  @Test
   func loadingDisablesEditAndCopyAcrossLibrarySelections() {
     let state = StudioLibraryActionBarState(
       selection: .personas,

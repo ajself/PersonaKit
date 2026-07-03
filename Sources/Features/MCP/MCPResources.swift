@@ -8,7 +8,7 @@ struct MCPResourceService: Sendable {
   let scopes: ScopeSet
 
   /// Lists available resources with deterministic URI ordering.
-  func listResources() throws -> [Resource] {
+  func listResources() -> [Resource] {
     var entries: [MCPResourceEntry] = []
 
     for catalog in MCPCatalogResourceType.allCases {
@@ -26,14 +26,6 @@ struct MCPResourceService: Sendable {
     }
     for skill in registry.skills {
       entries.append(entry(for: .pack(type: .skills, id: skill.id)))
-    }
-
-    let essentialIds = try MCPResourceFileSupport.listEssentialIds(
-      scopes: scopes,
-      fileManager: .default
-    )
-    for essentialId in essentialIds {
-      entries.append(entry(for: .essential(id: essentialId)))
     }
 
     return MCPResourceEntry.sorted(entries).map { entry in
@@ -55,33 +47,6 @@ struct MCPResourceService: Sendable {
     }
     if case .catalog(let type) = reference {
       let text = try readCatalogResource(type: type)
-      return Resource.Content.text(text, uri: reference.uri, mimeType: reference.mimeType)
-    }
-
-    if case .essential(let id) = reference {
-      guard
-        let resolved = PersonaKitEssentialResolver.resolve(
-          id,
-          scopes: scopes,
-          fileManager: .default
-        )
-      else {
-        throw MCPError.invalidParams(
-          "Resource not found for URI \(uri); expected \(reference.relativePath)"
-        )
-      }
-
-      let text: String
-      if let content = resolved.content {
-        text = content
-      } else {
-        do {
-          text = try String(contentsOf: resolved.url, encoding: .utf8)
-        } catch {
-          throw MCPError.internalError("Failed to read \(reference.relativePath).")
-        }
-      }
-
       return Resource.Content.text(text, uri: reference.uri, mimeType: reference.mimeType)
     }
 
@@ -156,15 +121,6 @@ extension MCPResourceService {
           ids: registry.skills.map(\.id)
         )
       )
-    case .essentials:
-      let ids = try MCPResourceFileSupport.listEssentialIds(scopes: scopes, fileManager: .default)
-      return try MCPCatalogSupport.encodeJSON(
-        MCPCatalogPayloads.List(
-          schemaVersion: 1,
-          type: type.rawValue,
-          ids: ids
-        )
-      )
     case .sessions:
       let sessions = try MCPResourceFileSupport.listSessionSummaries(
         scopes: scopes,
@@ -226,8 +182,8 @@ extension MCPResourceService {
         ),
         MCPCatalogPayloads.StartStep(
           order: 6,
-          action: "Read raw persona, kit, directive, skill, or essential resources only as needed.",
-          use: "personakit://packs/... and personakit://essentials/..."
+          action: "Read raw persona, kit, directive, or skill resources only as needed.",
+          use: "personakit://packs/..."
         ),
       ],
       commonFlows: [
@@ -282,10 +238,6 @@ extension MCPResourceService {
           id: "personakit://packs/<type>/<id>",
           use: "Read raw pack JSON for personas, kits, directives, and skills."
         ),
-        MCPCatalogPayloads.StartEntry(
-          id: "personakit://essentials/<id>",
-          use: "Read raw essential markdown included in resolved contracts."
-        ),
       ],
       toolMap: [
         MCPCatalogPayloads.StartEntry(
@@ -298,7 +250,7 @@ extension MCPResourceService {
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit_resolve_contract",
-          use: "Use before acting to resolve persona, directive, kits, essentials, and skill authorization."
+          use: "Use before acting to resolve persona, directive, kits, and skill authorization."
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit_trace_session",
@@ -333,7 +285,6 @@ extension MCPResourceService {
   }
 
   private func catalogIndexPayload() throws -> MCPCatalogPayloads.Index {
-    let essentials = try MCPResourceFileSupport.listEssentialIds(scopes: scopes, fileManager: .default)
     let sessions = try MCPResourceFileSupport.listSessionSummaries(
       scopes: scopes,
       fileManager: .default
@@ -341,7 +292,7 @@ extension MCPResourceService {
     let resources = MCPCatalogResourceType.allCases.map { type in
       MCPCatalogPayloads.IndexEntry(
         type: type.rawValue,
-        count: count(for: type, essentialsCount: essentials.count, sessionsCount: sessions.count),
+        count: count(for: type, sessionsCount: sessions.count),
         uri: MCPResourceReference.catalog(type: type).uri
       )
     }
@@ -356,7 +307,6 @@ extension MCPResourceService {
         "kits": registry.kits.count,
         "directives": registry.directives.count,
         "skills": registry.skills.count,
-        "essentials": essentials.count,
         "sessions": sessions.count,
         "guidance": 1,
       ],
@@ -382,7 +332,6 @@ extension MCPResourceService {
 
   private func count(
     for type: MCPCatalogResourceType,
-    essentialsCount: Int,
     sessionsCount: Int
   ) -> Int {
     switch type {
@@ -396,8 +345,6 @@ extension MCPResourceService {
       return registry.directives.count
     case .skills:
       return registry.skills.count
-    case .essentials:
-      return essentialsCount
     case .sessions:
       return sessionsCount
     }
@@ -439,56 +386,6 @@ extension MCPResourceService {
 }
 
 enum MCPResourceFileSupport {
-  static func listEssentialIds(scopes: ScopeSet, fileManager: FileManager) throws -> [String] {
-    var ids: Set<String> = []
-
-    if !scopes.isEmpty {
-      ids.formUnion(PersonaKitEssentialResolver.builtInEssentialIds)
-    }
-
-    for root in scopes.loadOrder {
-      let essentialsURL = root.appendingPathComponent("Packs/essentials")
-      var isDirectory: ObjCBool = false
-      let essentialsExists = fileManager.fileExists(
-        atPath: essentialsURL.path,
-        isDirectory: &isDirectory
-      )
-
-      guard essentialsExists else {
-        continue
-      }
-
-      guard isDirectory.boolValue else {
-        throw MCPError.internalError("Packs/essentials is not a directory.")
-      }
-
-      let files: [URL]
-      do {
-        files = try fileManager.contentsOfDirectory(
-          at: essentialsURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
-      } catch {
-        let message = fileSystemErrorMessage(
-          error,
-          relativePath: "Packs/essentials",
-          absolutePath: essentialsURL.path,
-          rootPath: root.path
-        )
-        throw MCPError.internalError(
-          "Failed to read Packs/essentials directory: \(message)"
-        )
-      }
-
-      for file in files where file.pathExtension == "md" {
-        ids.insert(file.deletingPathExtension().lastPathComponent)
-      }
-    }
-
-    return ids.sorted()
-  }
-
   static func listSessionSummaries(
     scopes: ScopeSet,
     fileManager: FileManager
@@ -579,24 +476,6 @@ enum MCPResourceFileSupport {
     }
 
     return nil
-  }
-
-  private static func fileSystemErrorMessage(
-    _ error: Error,
-    relativePath: String,
-    absolutePath: String,
-    rootPath: String
-  ) -> String {
-    var message = error.localizedDescription
-      .replacingOccurrences(of: absolutePath, with: relativePath)
-      .replacingOccurrences(of: rootPath, with: ".")
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-
-    if message.isEmpty {
-      message = "File system read failed."
-    }
-
-    return message
   }
 
   private static func decodedEntityID(fileURL: URL) -> String? {

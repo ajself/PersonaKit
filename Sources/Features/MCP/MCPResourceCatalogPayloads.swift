@@ -101,8 +101,6 @@ enum MCPCatalogSupport {
       return "List of directive ids available in the active scope set."
     case .skills:
       return "List of skill ids available in the active scope set."
-    case .essentials:
-      return "List of essential markdown ids available in the active scope set."
     case .sessions:
       return "Session summaries with persona, directive, and optional kit overrides."
     case .guidance:

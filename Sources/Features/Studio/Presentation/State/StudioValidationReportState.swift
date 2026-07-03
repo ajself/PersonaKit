@@ -22,12 +22,7 @@ struct StudioValidationAreaRow: Equatable, Sendable, Identifiable {
   }
 
   private var singularTitle: String {
-    switch entityType {
-    case .essentials:
-      return "essential"
-    default:
-      return entityType.rawValue
-    }
+    entityType.rawValue
   }
 }
 
@@ -284,12 +279,6 @@ struct StudioValidationReportState: Equatable, Sendable {
       sidebarItem: .skills,
       entityType: .skill,
       count: { $0.skills.count }
-    ),
-    StudioValidationAreaDefinition(
-      title: "Essentials",
-      sidebarItem: .essentials,
-      entityType: .essentials,
-      count: { $0.essentials.count }
     ),
   ]
 

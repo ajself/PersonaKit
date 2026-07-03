@@ -782,7 +782,6 @@ struct WorkspaceSessionFeatureModelMapTests {
         .empty
       },
       sessionManager: sessionManager,
-      essentialManager: StubEssentialManager(),
       libraryEntityManager: StubLibraryEntityManager(),
       sessionPreviewManager: sessionPreviewManager,
       sessionMapBuilder: sessionMapBuilder,
@@ -828,23 +827,6 @@ private struct StubSessionManager: WorkspaceSessionManaging, Sendable {
   func deleteSession(
     workspaceURL: URL,
     sessionID: String
-  ) throws {}
-}
-
-private struct StubEssentialManager: WorkspaceEssentialManaging, Sendable {
-  func loadMarkdown(fileURL: URL) throws -> String {
-    ""
-  }
-
-  func saveMarkdown(
-    workspaceURL: URL,
-    itemID: String,
-    markdown: String
-  ) throws {}
-
-  func copyGlobalEssentialToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem
   ) throws {}
 }
 

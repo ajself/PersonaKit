@@ -38,7 +38,7 @@ enum MCPToolName: String, CaseIterable {
         "Resolve triggered grounding skills for explicit target paths or skill tags after the active contract is known."
     case .traceSession:
       return
-        "Trace a resolved session into persona/directive/kits/skills/essentials edges for provenance review."
+        "Trace a resolved session into persona/directive/kits/skills edges for provenance review."
     case .validate:
       return "Validate PersonaKit packs and report errors."
     }
@@ -249,5 +249,4 @@ enum MCPEntityType: String, CaseIterable {
   case kit
   case session
   case skill
-  case essential
 }

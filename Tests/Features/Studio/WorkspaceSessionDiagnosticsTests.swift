@@ -93,8 +93,7 @@ struct WorkspaceSessionDiagnosticsTests {
           sourceScope: .project
         )
       ],
-      skills: [],
-      essentials: []
+      skills: []
     )
 
     let issues = WorkspaceSessionDiagnostics.validateSessions(
@@ -223,8 +222,7 @@ struct WorkspaceSessionDiagnosticsTests {
           sourceScope: .project
         )
       ],
-      skills: [],
-      essentials: []
+      skills: []
     )
 
     let issues = WorkspaceSessionDiagnostics.validateSessions(

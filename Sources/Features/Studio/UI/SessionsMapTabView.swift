@@ -98,10 +98,6 @@ struct SessionsMapTabView: View {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }
 
-    for essential in snapshot.essentials {
-      scopes["essential:\(essential.id)"] = essential.sourceScope
-    }
-
     scopes["session:active-session"] = selectedSession.sourceScope
 
     return scopes
@@ -152,8 +148,6 @@ struct SessionsMapTabView: View {
       return "\(sourceType.rawValue) \(sourceId) \(field) requires unauthorized skill \"\(missingId)\"."
     case .invalidSession(let sourceId, _, let message):
       return "Session \(sourceId) could not be loaded: \(message)"
-    case .missingEssentialFile(let sourceType, let sourceId, let field, let missingId, _):
-      return "\(sourceType.rawValue) \(sourceId) \(field) references missing essential \"\(missingId)\"."
     }
   }
 
@@ -175,8 +169,6 @@ struct SessionsMapTabView: View {
       return "skill:\(missingID)"
     case .invalidSession:
       return nil
-    case .missingEssentialFile(_, _, _, let missingID, _):
-      return "essential:\(missingID)"
     }
   }
 }

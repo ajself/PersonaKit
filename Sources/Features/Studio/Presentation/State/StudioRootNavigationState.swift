@@ -52,7 +52,6 @@ extension SidebarItem {
     case .personas,
       .directives,
       .kits,
-      .essentials,
       .skills:
       return true
     case .sessions,

@@ -45,7 +45,6 @@ enum WorkspaceLibraryCreateSupport {
           version: "1.0",
           name: "",
           summary: "",
-          essentialIds: [],
           skillIds: nil
         )
       )
@@ -110,42 +109,12 @@ enum WorkspaceLibraryCreateSupport {
     return itemID
   }
 
-  static func essentialItemID(
-    markdown: String
-  ) -> String {
-    for line in markdown.split(whereSeparator: \.isNewline) {
-      let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
-
-      guard trimmedLine.hasPrefix("#") else {
-        continue
-      }
-
-      let title =
-        trimmedLine
-        .drop(while: { $0 == "#" })
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-
-      return WorkspaceEssentialDraftBuilder.suggestedID(from: title)
-    }
-
-    return ""
-  }
-
   static func placeholderLibraryFileURL(
     workspaceURL: URL,
     entityType: WorkspaceLibraryEntityType
   ) -> URL {
     workspaceURL
       .appendingPathComponent("__new__\(entityType.fileSuffix)")
-      .standardizedFileURL
-  }
-
-  static func placeholderEssentialFileURL(
-    workspaceURL: URL
-  ) -> URL {
-    workspaceURL
-      .appendingPathComponent("__new__")
-      .appendingPathExtension("md")
       .standardizedFileURL
   }
 

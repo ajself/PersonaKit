@@ -76,14 +76,12 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       )
     }
 
-    let essentialIDsByScope = try loadEssentialIDsByScope(scopes: scopes)
     let sessionLoadResult = try loadSessions(scopes: scopes)
     let graph = buildGraph(
       registry: registry,
       scopes: scopes,
       sessions: sessionLoadResult.sessions,
-      sessionErrors: sessionLoadResult.errors,
-      essentialIDs: Set(essentialIDsByScope.keys)
+      sessionErrors: sessionLoadResult.errors
     )
 
     return WorkspaceSessionMap(
@@ -169,8 +167,7 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
     registry: Registry,
     scopes: ScopeSet,
     sessions: [SessionFile],
-    sessionErrors: [ResolverError],
-    essentialIDs: Set<String>
+    sessionErrors: [ResolverError]
   ) -> WorkspaceRelationshipMapGraph {
     var nodeStateByKey: [String: WorkspaceSessionMapMutableNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
@@ -421,41 +418,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
           )
         }
       }
-
-      for essentialID in sortedUniqueWorkspaceSessionMapValues(kit.essentialIds) {
-        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
-        let exists = resolveEssential(essentialID, scopes: scopes) != nil
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .essential,
-          id: essentialID,
-          displayName: essentialID,
-          isMissing: !exists
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: kitNodeKey,
-            toKey: essentialNodeKey,
-            reason: "kit.essentialIds"
-          )
-        )
-
-        if !exists {
-          appendUniqueError(
-            .missingEssentialFile(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "essentialIds",
-              missingId: essentialID,
-              expectedPath: PersonaKitEssentialResolver.expectedPath(for: essentialID)
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
     }
 
     for skill in registry.skills.sorted(by: { $0.id < $1.id }) {
@@ -464,16 +426,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
         kind: .skill,
         id: skill.id,
         displayName: skill.name,
-        isMissing: false
-      )
-    }
-
-    for essentialID in essentialIDs.sorted() {
-      upsertWorkspaceSessionMapNode(
-        in: &nodeStateByKey,
-        kind: .essential,
-        id: essentialID,
-        displayName: essentialID,
         isMissing: false
       )
     }
@@ -488,51 +440,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       nodes: nodes,
       edges: edges,
       resolutionErrors: ResolverResolutionError(errors: errors).errors
-    )
-  }
-
-  private func loadEssentialIDsByScope(scopes: ScopeSet) throws -> [String: URL] {
-    var urlsByEssentialID: [String: URL] = [:]
-
-    for root in scopes.loadOrder {
-      let essentialsDirectoryURL = root.appendingPathComponent("Packs/essentials")
-
-      guard dependencies.directoryExists(essentialsDirectoryURL) else {
-        continue
-      }
-
-      let files: [URL]
-
-      do {
-        files = try dependencies.contentsOfDirectory(essentialsDirectoryURL)
-      } catch {
-        throw WorkspaceSnapshotBuildError(
-          message:
-            "Failed to read directory \(essentialsDirectoryURL.path()): \(error.localizedDescription)"
-        )
-      }
-
-      for fileURL in files.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-        guard fileURL.pathExtension == "md" else {
-          continue
-        }
-
-        let essentialID = fileURL.deletingPathExtension().lastPathComponent
-        urlsByEssentialID[essentialID] = fileURL.standardizedFileURL
-      }
-    }
-
-    return urlsByEssentialID
-  }
-
-  private func resolveEssential(
-    _ essentialID: String,
-    scopes: ScopeSet
-  ) -> ResolvedEssential? {
-    PersonaKitEssentialResolver.resolve(
-      essentialID,
-      scopes: scopes,
-      fileExists: dependencies.fileExists
     )
   }
 
@@ -562,18 +469,15 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
 /// Injectable dependencies for workspace relationship map building.
 public struct WorkspaceRelationshipMapBuilderDependencies: Sendable {
   let directoryExists: @Sendable (URL) -> Bool
-  let contentsOfDirectory: @Sendable (URL) throws -> [URL]
   let defaultGlobalScopeURL: @Sendable () -> URL?
   let fileExists: @Sendable (URL) -> Bool
 
   public init(
     directoryExists: @escaping @Sendable (URL) -> Bool,
-    contentsOfDirectory: @escaping @Sendable (URL) throws -> [URL],
     defaultGlobalScopeURL: @escaping @Sendable () -> URL?,
     fileExists: @escaping @Sendable (URL) -> Bool
   ) {
     self.directoryExists = directoryExists
-    self.contentsOfDirectory = contentsOfDirectory
     self.defaultGlobalScopeURL = defaultGlobalScopeURL
     self.fileExists = fileExists
   }
@@ -582,13 +486,6 @@ public struct WorkspaceRelationshipMapBuilderDependencies: Sendable {
     WorkspaceRelationshipMapBuilderDependencies(
       directoryExists: { url in
         WorkspaceScopeResolver.directoryExists(url, fileManager: .default)
-      },
-      contentsOfDirectory: { url in
-        try FileManager.default.contentsOfDirectory(
-          at: url,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
       },
       defaultGlobalScopeURL: {
         WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default)

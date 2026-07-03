@@ -8,7 +8,7 @@ public enum ExportError: Error {
   /// Session resolution failed after loading validated entities.
   case resolutionFailed(ResolverResolutionError)
 
-  /// A referenced essential file could not be read or decoded.
+  /// A referenced grounding-skill body file could not be read or decoded.
   case readFailed(String)
 }
 
@@ -91,7 +91,6 @@ public struct SessionExporter {
       throw ExportError.resolutionFailed(error)
     }
 
-    let essentials = try loadEssentials(session.essentials, fileManager: fileManager)
     let triggerInput = SkillTriggerSelectionInput(
       targetPaths: targetPaths,
       skillTags: skillTags
@@ -117,58 +116,11 @@ public struct SessionExporter {
       directive: session.directive,
       kits: session.kits.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
-      essentials: essentials,
       availableGroundingSkills: session.availableGroundingSkills.sorted { $0.id < $1.id },
       expandedGroundingSkills: expandedGroundingSkills,
       skillAuthorization: session.skillAuthorization,
       sessionId: sessionId
     )
-  }
-
-  /// Loads and normalizes essential Markdown files referenced by a resolved session.
-  ///
-  /// This helper sorts by essential id and ensures each document ends with a newline.
-  private static func loadEssentials(
-    _ essentials: [ResolvedEssential],
-    fileManager: FileManager
-  ) throws -> [ResolvedEssential] {
-    return try SystemEssentials.sortResolvedEssentialsForResolvedOutput(essentials).map { essential in
-      if var content = essential.content {
-        if !content.hasSuffix("\n") {
-          content.append("\n")
-        }
-
-        return ResolvedEssential(
-          id: essential.id,
-          url: essential.url,
-          content: content,
-          source: essential.source
-        )
-      }
-
-      let data: Data
-
-      do {
-        data = try Data(contentsOf: essential.url)
-      } catch {
-        throw ExportError.readFailed("Failed to read essential: \(essential.id)")
-      }
-
-      guard var content = String(data: data, encoding: .utf8) else {
-        throw ExportError.readFailed("Failed to decode essential: \(essential.id)")
-      }
-
-      if !content.hasSuffix("\n") {
-        content.append("\n")
-      }
-
-      return ResolvedEssential(
-        id: essential.id,
-        url: essential.url,
-        content: content,
-        source: essential.source
-      )
-    }
   }
 
   /// Renders resolved session components into the canonical Markdown export format.
@@ -177,7 +129,6 @@ public struct SessionExporter {
     directive: Directive,
     kits: [Kit],
     skills: [Skill],
-    essentials: [ResolvedEssential],
     availableGroundingSkills: [ResolvedGroundingSkill],
     expandedGroundingSkills: [ExpandedGroundingSkillDocument],
     skillAuthorization: ResolvedSkillAuthorization,
@@ -199,6 +150,9 @@ public struct SessionExporter {
     if !persona.summary.isEmpty {
       appendLine("Summary: \(persona.summary)")
     }
+
+    appendLine()
+    appendLine("Activation Contract: \(SystemFramings.personaActivationFraming)")
 
     appendListSection(
       title: "Environment",
@@ -237,6 +191,7 @@ public struct SessionExporter {
 
     appendLine()
     appendLine("# Skill Contract")
+    appendLine("Authorization Contract: \(SystemFramings.skillAuthorizationFraming)")
     // Allowed/Forbidden are the persona inputs already shown under `# Persona`;
     // this section reports only the resolution outcome (what was authorized,
     // required, and any required-but-unauthorized gap).
@@ -293,20 +248,6 @@ public struct SessionExporter {
         for source in groundingSkill.sources {
           appendLine("- \(source.sourceType.rawValue):\(source.sourceId) [\(source.field)]")
         }
-      }
-    }
-
-    appendLine()
-    appendLine("# Essentials")
-
-    let orderedEssentials = SystemEssentials.sortResolvedEssentialsForResolvedOutput(essentials)
-
-    for (index, essential) in orderedEssentials.enumerated() {
-      appendLine("## \(essential.id)")
-      appendLine()
-      output.append(normalizeIncludedMarkdownBody(essential.content ?? ""))
-      if index < orderedEssentials.count - 1 {
-        appendLine()
       }
     }
 

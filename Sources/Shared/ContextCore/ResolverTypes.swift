@@ -17,31 +17,6 @@ public struct SessionDefinition {
   }
 }
 
-public enum ResolvedEssentialSource: String, Equatable, Sendable {
-  case file
-  case systemBuiltIn
-}
-
-/// Metadata for an essential referenced by a resolved session.
-public struct ResolvedEssential: Equatable, Sendable {
-  public let id: String
-  public let url: URL
-  public let content: String?
-  public let source: ResolvedEssentialSource
-
-  public init(
-    id: String,
-    url: URL,
-    content: String?,
-    source: ResolvedEssentialSource
-  ) {
-    self.id = id
-    self.url = url
-    self.content = content
-    self.source = source
-  }
-}
-
 /// Source edge for a grounding skill declared by a resolved session component.
 public struct ResolvedGroundingSkillSource: Codable, Equatable, Sendable {
   public let sourceType: ResolverEntityType
@@ -144,7 +119,6 @@ public struct ResolvedSession: Sendable {
   public let persona: Persona
   public let directive: Directive
   public let kits: [Kit]
-  public let essentials: [ResolvedEssential]
   public let availableGroundingSkills: [ResolvedGroundingSkill]
   public let skills: [Skill]
   public let skillAuthorization: ResolvedSkillAuthorization
@@ -153,7 +127,6 @@ public struct ResolvedSession: Sendable {
     persona: Persona,
     directive: Directive,
     kits: [Kit],
-    essentials: [ResolvedEssential],
     availableGroundingSkills: [ResolvedGroundingSkill],
     skills: [Skill],
     skillAuthorization: ResolvedSkillAuthorization
@@ -161,7 +134,6 @@ public struct ResolvedSession: Sendable {
     self.persona = persona
     self.directive = directive
     self.kits = kits
-    self.essentials = essentials
     self.availableGroundingSkills = availableGroundingSkills
     self.skills = skills
     self.skillAuthorization = skillAuthorization
@@ -208,13 +180,6 @@ public enum ResolverError: Error, Equatable {
   )
   case unauthorizedSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case invalidSession(sessionId: String, expectedPath: String, message: String)
-  case missingEssentialFile(
-    sourceType: ResolverEntityType,
-    sourceId: String,
-    field: String,
-    missingId: String,
-    expectedPath: String
-  )
 
   /// The entity type that referenced the missing dependency.
   public var sourceType: ResolverEntityType {
@@ -235,8 +200,6 @@ public enum ResolverError: Error, Equatable {
       return sourceType
     case .invalidSession:
       return .sessionDefinition
-    case .missingEssentialFile(let sourceType, _, _, _, _):
-      return sourceType
     }
   }
 
@@ -259,8 +222,6 @@ public enum ResolverError: Error, Equatable {
       return sourceId
     case .invalidSession(let sessionId, _, _):
       return sessionId
-    case .missingEssentialFile(_, let sourceId, _, _, _):
-      return sourceId
     }
   }
 
@@ -283,8 +244,6 @@ public enum ResolverError: Error, Equatable {
       return field
     case .invalidSession:
       return "session"
-    case .missingEssentialFile(_, _, let field, _, _):
-      return field
     }
   }
 
@@ -307,8 +266,6 @@ public enum ResolverError: Error, Equatable {
       return missingId
     case .invalidSession(let sessionId, _, _):
       return sessionId
-    case .missingEssentialFile(_, _, _, let missingId, _):
-      return missingId
     }
   }
 
@@ -321,8 +278,7 @@ public enum ResolverError: Error, Equatable {
     case .missingPersona,
       .missingDirective,
       .missingKitId,
-      .missingSkillId,
-      .missingEssentialFile:
+      .missingSkillId:
       return true
     case .conflictingPersonaSkillId,
       .conflictingPersonaSkillCapability,
@@ -351,8 +307,6 @@ public enum ResolverError: Error, Equatable {
       return "Skill is not authorized by the resolved persona contract."
     case .invalidSession(_, let expectedPath, let message):
       return "Invalid session file at \(expectedPath): \(message)"
-    case .missingEssentialFile(_, _, _, _, let expectedPath):
-      return "Missing essential file at \(expectedPath)."
     }
   }
 }

@@ -33,33 +33,6 @@ struct WorkspaceLibraryEditorPresentation: Equatable, Identifiable, Sendable {
   }
 }
 
-/// Markdown editor payload used by Studio essentials editing flows.
-struct WorkspaceEssentialEditorPresentation: Equatable, Identifiable, Sendable {
-  let fileURL: URL
-  let itemID: String
-  let markdown: String
-  let workspaceURL: URL
-  let isCreatingNewItem: Bool
-
-  init(
-    fileURL: URL,
-    itemID: String,
-    markdown: String,
-    workspaceURL: URL,
-    isCreatingNewItem: Bool = false
-  ) {
-    self.fileURL = fileURL
-    self.itemID = itemID
-    self.markdown = markdown
-    self.workspaceURL = workspaceURL
-    self.isCreatingNewItem = isCreatingNewItem
-  }
-
-  var id: String {
-    "\(workspaceURL.path())::\(itemID)::\(isCreatingNewItem)"
-  }
-}
-
 /// Persona editor payload used by Studio persona-creation workflows.
 struct PersonaEditorPresentation: Equatable, Identifiable, Sendable {
   let workspaceURL: URL

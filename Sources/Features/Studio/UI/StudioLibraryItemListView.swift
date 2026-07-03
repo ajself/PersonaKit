@@ -2,7 +2,7 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Library and essentials list rows with scope badges.
+/// Library list rows with scope badges.
 struct StudioLibraryItemListView: View {
   let visibleItems: [WorkspaceListItem]
   @Binding var selectedLibraryItemID: String?

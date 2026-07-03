@@ -16,7 +16,6 @@ struct StudioLibraryDetailView: View {
   let onRevealInFinder: (URL) -> Void
   let onEditInSheet: () -> Void
   let onCopyToProject: () -> Void
-  let onSaveMarkdown: @Sendable (String, WorkspaceEssentialEditorPresentation) async -> String?
   let onValidate: @Sendable (String, WorkspaceLibraryEditorPresentation) async -> String?
   let onSave: @Sendable (String, WorkspaceLibraryEditorPresentation) async -> String?
   let onSaveSucceeded: (String) -> Void
@@ -79,12 +78,7 @@ struct StudioLibraryDetailView: View {
   }
 
   private var emptyStateDescription: String {
-    switch selection {
-    case .essentials:
-      return "Preview the selected markdown source before editing."
-    default:
-      return "Preview the selected source before editing or copying."
-    }
+    "Preview the selected source before editing or copying."
   }
 
   private var previewRequestID: String {
@@ -164,18 +158,6 @@ struct StudioLibraryDetailView: View {
     case .inlineForm,
       nil:
       return nil
-    case .markdown:
-      guard selection != .essentials else {
-        return nil
-      }
-
-      return StudioUtilityActionItem(
-        id: "library-detail-edit-markdown",
-        title: "Edit",
-        systemImage: "pencil",
-        isEnabled: !isSavingInlineForm && !isValidatingInlineForm,
-        action: onEditInSheet
-      )
     case .rawJSON:
       return StudioUtilityActionItem(
         id: "library-detail-edit-json",
@@ -207,8 +189,6 @@ struct StudioLibraryDetailView: View {
 
   private var detailEditAction: StudioLibraryEditAction? {
     switch selection {
-    case .essentials:
-      return .markdown
     case .personas,
       .directives,
       .kits,
@@ -227,8 +207,6 @@ struct StudioLibraryDetailView: View {
 
   private var canCopySelectedItemToProject: Bool {
     switch selection {
-    case .essentials:
-      return true
     case .personas,
       .directives,
       .kits,
@@ -341,11 +319,7 @@ struct StudioLibraryDetailView: View {
     } else if effectiveDetailMode == .edit,
       inlineFormDraftIsReady
     {
-      if selection == .essentials {
-        inlineMarkdownPreview
-      } else {
-        inlineFormPreview
-      }
+      inlineFormPreview
     } else if effectiveDetailMode == .edit {
       stateContainer {
         VStack(alignment: .center, spacing: 10) {
@@ -355,51 +329,9 @@ struct StudioLibraryDetailView: View {
             .foregroundStyle(.secondary)
         }
       }
-    } else if selection == .essentials {
-      markdownPreview
     } else {
       sourcePreview
     }
-  }
-
-  private var markdownPreview: some View {
-    GeometryReader { proxy in
-      ScrollView {
-        Text(renderedMarkdown)
-          .font(.body)
-          .textSelection(.enabled)
-          .padding(16)
-          .frame(
-            minWidth: proxy.size.width,
-            minHeight: proxy.size.height,
-            alignment: .topLeading
-          )
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(previewPanelBackground)
-    .padding()
-  }
-
-  private var inlineMarkdownPreview: some View {
-    VStack(spacing: 0) {
-      TextEditor(text: inlineMarkdownBinding)
-        .font(.body.monospaced())
-        .scrollContentBackground(.hidden)
-        .padding(12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(previewPanelBackground)
-        .padding()
-
-      Divider()
-
-      inlineMarkdownFooter
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-  }
-
-  private var renderedMarkdown: AttributedString {
-    (try? AttributedString(markdown: previewText)) ?? AttributedString(previewText)
   }
 
   private var sourcePreview: some View {
@@ -510,24 +442,6 @@ struct StudioLibraryDetailView: View {
     )
   }
 
-  private var inlineMarkdownEditorPresentation: WorkspaceEssentialEditorPresentation? {
-    guard
-      let selectedItem,
-      selectedItem.sourceScope == .project,
-      selection == .essentials,
-      let workspaceURL = workspaceURL?.standardizedFileURL
-    else {
-      return nil
-    }
-
-    return WorkspaceEssentialEditorPresentation(
-      fileURL: selectedItem.fileURL.standardizedFileURL,
-      itemID: selectedItem.id,
-      markdown: draftRawJSON,
-      workspaceURL: workspaceURL
-    )
-  }
-
   private var isInlineFormDirty: Bool {
     StudioLibraryInlineFormDraftStateResolver.isDirty(
       effectiveMode: effectiveDetailMode,
@@ -558,26 +472,6 @@ struct StudioLibraryDetailView: View {
       VStack(alignment: .leading, spacing: 8) {
         inlineFooterMessage
         inlineFooterButtons
-      }
-    }
-    .padding(.horizontal, 16)
-    .padding(.vertical, 10)
-    .background(.quaternary.opacity(0.08))
-  }
-
-  private var inlineMarkdownFooter: some View {
-    ViewThatFits(in: .horizontal) {
-      HStack(spacing: 12) {
-        inlineFooterMessage
-
-        Spacer(minLength: 12)
-
-        inlineMarkdownFooterButtons
-      }
-
-      VStack(alignment: .leading, spacing: 8) {
-        inlineFooterMessage
-        inlineMarkdownFooterButtons
       }
     }
     .padding(.horizontal, 16)
@@ -616,21 +510,6 @@ struct StudioLibraryDetailView: View {
           || formSyncErrorMessage != nil
           || !isInlineFormDirty
       )
-    }
-    .controlSize(.small)
-  }
-
-  private var inlineMarkdownFooterButtons: some View {
-    HStack(spacing: 8) {
-      Button("Cancel", role: .cancel) {
-        cancelInlineForm()
-      }
-      .disabled(isSavingInlineForm)
-
-      Button(isSavingInlineForm ? "Saving..." : "Save") {
-        saveInlineMarkdown()
-      }
-      .disabled(isSavingInlineForm || !isInlineFormDirty)
     }
     .controlSize(.small)
   }
@@ -679,8 +558,7 @@ struct StudioLibraryDetailView: View {
 
     do {
       previewText = try Self.previewText(
-        for: selectedItem.fileURL,
-        selection: selection
+        for: selectedItem.fileURL
       )
     } catch {
       previewText = ""
@@ -695,17 +573,12 @@ struct StudioLibraryDetailView: View {
   }
 
   private static func previewText(
-    for fileURL: URL,
-    selection: SidebarItem
+    for fileURL: URL
   ) throws -> String {
     let rawText = try String(
       contentsOf: fileURL.standardizedFileURL,
       encoding: .utf8
     )
-
-    guard selection != .essentials else {
-      return rawText
-    }
 
     return prettyPrintedJSON(rawText) ?? rawText
   }
@@ -728,16 +601,6 @@ struct StudioLibraryDetailView: View {
     }
 
     return String(data: prettyData, encoding: .utf8)
-  }
-
-  private var inlineMarkdownBinding: Binding<String> {
-    Binding(
-      get: { draftRawJSON },
-      set: { updatedMarkdown in
-        draftRawJSON = updatedMarkdown
-        inlineMessage = nil
-      }
-    )
   }
 
   private var idBinding: Binding<String> {
@@ -908,32 +771,4 @@ struct StudioLibraryDetailView: View {
     }
   }
 
-  private func saveInlineMarkdown() {
-    guard let presentation = inlineMarkdownEditorPresentation else {
-      inlineMessage = "Markdown editing is unavailable for this item."
-      inlineMessageIsError = true
-      return
-    }
-
-    isSavingInlineForm = true
-    inlineMessage = nil
-
-    Task {
-      let saveError = await onSaveMarkdown(draftRawJSON, presentation)
-
-      await MainActor.run {
-        isSavingInlineForm = false
-
-        if let saveError {
-          inlineMessage = saveError
-          inlineMessageIsError = true
-        } else {
-          previewText = draftRawJSON
-          inlineMessage = "Saved \(presentation.itemID)."
-          inlineMessageIsError = false
-          onSaveSucceeded(presentation.itemID)
-        }
-      }
-    }
-  }
 }

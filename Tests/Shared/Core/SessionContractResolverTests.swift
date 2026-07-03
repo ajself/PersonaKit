@@ -63,7 +63,7 @@ struct SessionContractResolverTests {
     #expect(result.skillAuthorization.requiredSkillIds.isEmpty)
     #expect(result.skillAuthorization.authorizedSkillIds == ["codex-cli"])
     #expect(
-      result.essentials.map(\.id) == [
+      result.injectedContractIds == [
         "persona-activation-contract",
         "skill-authorization-contract",
       ]

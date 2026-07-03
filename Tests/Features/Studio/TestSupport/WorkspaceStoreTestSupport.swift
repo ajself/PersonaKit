@@ -125,8 +125,7 @@ func makeSnapshot(id: String) -> WorkspaceSnapshot {
     ],
     directives: [],
     kits: [],
-    skills: [],
-    essentials: []
+    skills: []
   )
 }
 
@@ -147,8 +146,7 @@ func makeSessionSnapshot(
     personas: [],
     directives: [],
     kits: [],
-    skills: [],
-    essentials: []
+    skills: []
   )
 }
 
@@ -172,7 +170,7 @@ func makeWorkspaceRelationshipMap(personaID: String) -> WorkspaceSessionMap {
 
 func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
   WorkspaceValidationSnapshot(
-    summary: "Validation summary: personas=1 kits=0 directives=0 references=0 skills=0 essentials=0 errors=1",
+    summary: "Validation summary: personas=1 kits=0 directives=0 skills=0 errors=1",
     issues: [
       WorkspaceValidationIssue(
         entityType: .persona,
@@ -285,31 +283,6 @@ struct WorkspaceStoreStubInstallEnvironment: WorkspaceInstallEnvironmentProvidin
   @MainActor
   func bundledCLISupportBundleURL() -> URL? {
     resolvedBundledCLISupportBundleURL?.standardizedFileURL
-  }
-}
-
-struct WorkspaceStoreStubEssentialManager: WorkspaceEssentialManaging, Sendable {
-  let loadMarkdownHandler: @Sendable (URL) throws -> String
-  let saveMarkdownHandler: @Sendable (URL, String, String) throws -> Void
-  let copyGlobalEssentialToProjectHandler: @Sendable (URL, WorkspaceListItem) throws -> Void
-
-  func loadMarkdown(fileURL: URL) throws -> String {
-    try loadMarkdownHandler(fileURL)
-  }
-
-  func saveMarkdown(
-    workspaceURL: URL,
-    itemID: String,
-    markdown: String
-  ) throws {
-    try saveMarkdownHandler(workspaceURL, itemID, markdown)
-  }
-
-  func copyGlobalEssentialToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem
-  ) throws {
-    try copyGlobalEssentialToProjectHandler(workspaceURL, item)
   }
 }
 

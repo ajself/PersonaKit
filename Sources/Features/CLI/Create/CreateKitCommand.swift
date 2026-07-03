@@ -21,9 +21,6 @@ struct CreateKitCommand: ParsableCommand {
   @Option(name: .customLong("summary"), help: "Kit summary.")
   var summary: String?
 
-  @Option(name: .customLong("essential"), help: "Essential id.")
-  var essentialIDs: [String] = []
-
   @Option(name: .customLong("skill"), help: "Skill id.")
   var skillIDs: [String] = []
 
@@ -51,14 +48,6 @@ struct CreateKitCommand: ParsableCommand {
         resolvedSummary = prompter.promptRequired("Kit summary")
       }
 
-      let resolvedEssentialIDs = prompter.promptCSVIfNeeded(
-        values: essentialIDs,
-        label: "Essential ids (comma-separated)",
-        hint: CreateCommandHelpers.referenceHint(
-          label: "Known essentials",
-          values: references.essentialIDs
-        )
-      )
       let resolvedSkillIDs = prompter.promptCSVIfNeeded(
         values: skillIDs,
         label: "Skill ids (comma-separated)",
@@ -83,18 +72,15 @@ struct CreateKitCommand: ParsableCommand {
         id: resolvedID,
         name: resolvedName,
         summary: resolvedSummary,
-        essentialIds: resolvedEssentialIDs,
         skillIds: resolvedSkillIDs
       )
       let builder = WorkspaceKitDraftBuilder()
       let rawJSON = try builder.buildRawJSON(
         draft: draft,
-        knownEssentialIDs: references.essentialIDs,
         knownSkillIDs: references.skillIDs
       )
       let validation = builder.validate(
         draft: draft,
-        knownEssentialIDs: references.essentialIDs,
         knownSkillIDs: references.skillIDs
       )
       let manager = WorkspaceLibraryEntityManager()

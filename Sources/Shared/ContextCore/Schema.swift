@@ -50,7 +50,6 @@ public struct Kit: Codable, Sendable {
   public let version: String
   public let name: String
   public let summary: String
-  public let essentialIds: [String]
   public let skillIds: [String]?
 
   public init(
@@ -58,14 +57,12 @@ public struct Kit: Codable, Sendable {
     version: String,
     name: String,
     summary: String,
-    essentialIds: [String],
     skillIds: [String]?
   ) {
     self.id = id
     self.version = version
     self.name = name
     self.summary = summary
-    self.essentialIds = essentialIds
     self.skillIds = skillIds
   }
 }
@@ -367,16 +364,3 @@ public struct SkillTriggerRule: Codable, Equatable, Sendable {
   }
 }
 
-/// In-memory essential markdown document content.
-public struct EssentialDocument: Sendable {
-  public let id: String
-  public let content: String
-
-  public init(
-    id: String,
-    content: String
-  ) {
-    self.id = id
-    self.content = content
-  }
-}

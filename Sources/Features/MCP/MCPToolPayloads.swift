@@ -7,7 +7,6 @@ enum MCPToolPayloads {
       let kits: Int
       let directives: Int
       let skills: Int
-      let essentials: Int
     }
 
     let ok: Bool
@@ -20,8 +19,7 @@ enum MCPToolPayloads {
         personas: result.counts.personas,
         kits: result.counts.kits,
         directives: result.counts.directives,
-        skills: result.counts.skills,
-        essentials: result.counts.essentials
+        skills: result.counts.skills
       )
       self.errors = result.errors.map { $0.lineDescription() }
     }
@@ -69,7 +67,6 @@ enum MCPToolPayloads {
   struct KitExplainData: Encodable {
     let name: String
     let summary: String
-    let essentialIds: [String]
     let skillIds: [String]
   }
 
@@ -91,12 +88,6 @@ enum MCPToolPayloads {
     let personaExists: Bool
     let directiveExists: Bool
     let missingKitOverrides: [String]
-  }
-
-  struct EssentialExplainData: Encodable {
-    let resolvedPath: String
-    let lineCount: Int
-    let byteCount: Int
   }
 
   struct EntityComparableSnapshot {
@@ -197,7 +188,6 @@ enum MCPToolPayloads {
     let personaId: String
     let directiveId: String
     let kitIds: [String]
-    let essentialIds: [String]
     let availableGroundingSkillIds: [String]
     let skillIds: [String]
     let skillAuthorization: SessionTraceSkillAuthorization
@@ -216,9 +206,7 @@ enum MCPToolPayloads {
     let personaDefaultKitIds: [String]
     let sessionKitOverrideIds: [String]
     let directiveSkillIds: [String]
-    let kitToEssentials: [SessionTraceEdgeMap]
     let kitToSkills: [SessionTraceEdgeMap]
-    let systemEssentialIds: [String]
   }
 
   struct SessionTraceEdgeMap: Encodable {

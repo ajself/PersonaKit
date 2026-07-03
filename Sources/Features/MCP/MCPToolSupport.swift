@@ -176,10 +176,7 @@ enum MCPInternalSupport {
       error.field + ":",
       error.message,
     ]
-    if case .missingEssentialFile(_, _, _, let missingId, let expectedPath) = error {
-      parts.append("missingId=\(missingId)")
-      parts.append("expectedPath=\(expectedPath)")
-    } else if case .invalidSession(let sessionId, let expectedPath, _) = error {
+    if case .invalidSession(let sessionId, let expectedPath, _) = error {
       parts.append("sessionId=\(sessionId)")
       parts.append("expectedPath=\(expectedPath)")
     } else if case .missingKitId(_, _, _, let missingId) = error {
@@ -228,8 +225,6 @@ enum MCPInternalSupport {
       catalogType = "sessions"
     case .skill:
       catalogType = "skills"
-    case .essential:
-      catalogType = "essentials"
     }
     return withRecoveryHint(
       "\(entityType.rawValue) not found: \(id)",
@@ -239,33 +234,6 @@ enum MCPInternalSupport {
 
   static func uniqueSorted(_ ids: [String]) -> [String] {
     return Set(ids).sorted()
-  }
-
-  static func resolveEssential(
-    id: String,
-    scopes: ScopeSet,
-    fileManager: FileManager
-  ) -> ResolvedEssential? {
-    PersonaKitEssentialResolver.resolve(
-      id,
-      scopes: scopes,
-      fileManager: fileManager
-    )
-  }
-
-  static func readEssentialText(
-    _ essential: ResolvedEssential,
-    id: String
-  ) throws -> String {
-    if let content = essential.content {
-      return content
-    }
-
-    do {
-      return try String(contentsOf: essential.url, encoding: .utf8)
-    } catch {
-      throw MCPError.internalError("Failed to read essential \(id).")
-    }
   }
 
   static func lineCount(_ text: String) -> Int {

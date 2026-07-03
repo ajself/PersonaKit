@@ -176,8 +176,6 @@ extension SidebarItem {
       return "Directive"
     case .kits:
       return "Kit"
-    case .essentials:
-      return "Essential"
     case .skills:
       return "Skill"
     case .relationshipMap:

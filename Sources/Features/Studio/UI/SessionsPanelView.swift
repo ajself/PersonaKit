@@ -673,10 +673,6 @@ struct SessionsPanelView: View {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }
 
-    for essential in workspaceStore.snapshot.essentials {
-      scopes["essential:\(essential.id)"] = essential.sourceScope
-    }
-
     return scopes
   }
 

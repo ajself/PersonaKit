@@ -13,7 +13,7 @@ struct WorkspaceValidatorTests {
     let globalScopeURL = URL(fileURLWithPath: "/Global/.personakit")
     let projectPersonaPath = "Packs/personas/senior-swiftui-engineer.persona.json"
     let globalKitPath = "Packs/kits/swift-style.kit.json"
-    let ambiguousPath = "Packs/essentials/non-goals.md"
+    let ambiguousPath = "Packs/skills/shared-note.skill.json"
     let projectPersonaURL = projectScopeURL.appendingPathComponent(projectPersonaPath)
     let globalKitURL = globalScopeURL.appendingPathComponent(globalKitPath)
     let projectAmbiguousURL = projectScopeURL.appendingPathComponent(ambiguousPath)
@@ -41,8 +41,7 @@ struct WorkspaceValidatorTests {
             personas: 1,
             kits: 1,
             directives: 0,
-            skills: 0,
-            essentials: 0
+            skills: 0
           ),
           errors: [
             ValidationError(
@@ -56,18 +55,18 @@ struct WorkspaceValidatorTests {
             ValidationError(
               entityType: .kit,
               entityId: "swift-style",
-              field: "essentialIds",
+              field: "skillIds",
               missingId: "swift-style-guide",
               expectedPath: globalKitPath,
-              message: "Missing essential file"
+              message: "Missing skill id"
             ),
             ValidationError(
-              entityType: .essentials,
-              entityId: "non-goals",
+              entityType: .skill,
+              entityId: "shared-note",
               field: "schema",
               missingId: nil,
               expectedPath: ambiguousPath,
-              message: "Ambiguous essentials path"
+              message: "Ambiguous skill path"
             ),
           ]
         )
@@ -87,7 +86,7 @@ struct WorkspaceValidatorTests {
     #expect(snapshot.issues[0].severity == WorkspaceValidationSeverity.error)
     #expect(snapshot.issues[1].entityType == WorkspaceValidationEntityType.kit)
     #expect(snapshot.issues[1].filePath == globalKitURL.path())
-    #expect(snapshot.issues[2].entityType == WorkspaceValidationEntityType.essentials)
+    #expect(snapshot.issues[2].entityType == WorkspaceValidationEntityType.skill)
     #expect(snapshot.issues[2].filePath == ambiguousPath)
   }
 

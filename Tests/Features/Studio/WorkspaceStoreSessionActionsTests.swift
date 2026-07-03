@@ -47,8 +47,7 @@ struct WorkspaceStoreSessionActionsTests {
             ),
           ],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -115,8 +114,7 @@ struct WorkspaceStoreSessionActionsTests {
               sourceScope: .project
             ),
           ],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -180,8 +178,7 @@ struct WorkspaceStoreSessionActionsTests {
           personas: [],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -252,8 +249,7 @@ struct WorkspaceStoreSessionActionsTests {
             )
           ],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -311,8 +307,7 @@ struct WorkspaceStoreSessionActionsTests {
       personas: [],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
@@ -558,8 +553,7 @@ struct WorkspaceStoreSessionActionsTests {
       personas: [],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
 
     let store = WorkspaceStore(
@@ -627,8 +621,7 @@ struct WorkspaceStoreSessionActionsTests {
       personas: [],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
 
     let store = WorkspaceStore(
@@ -715,8 +708,7 @@ struct WorkspaceStoreSessionActionsTests {
       personas: [],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
 
     let store = WorkspaceStore(

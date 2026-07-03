@@ -39,8 +39,7 @@ public struct Validator {
       personas: registry.personasById.count,
       kits: registry.kitsById.count,
       directives: registry.directivesById.count,
-      skills: registry.skillsById.count,
-      essentials: bootstrap.essentialIds.count
+      skills: registry.skillsById.count
     )
 
     if bootstrap.hasSchemaErrors {

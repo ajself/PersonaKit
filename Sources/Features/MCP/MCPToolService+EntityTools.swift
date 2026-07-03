@@ -66,7 +66,6 @@ extension MCPToolService {
           data: MCPToolPayloads.KitExplainData(
             name: kit.name,
             summary: kit.summary,
-            essentialIds: MCPInternalSupport.uniqueSorted(kit.essentialIds),
             skillIds: MCPInternalSupport.uniqueSorted(kit.skillIds ?? [])
           )
         )
@@ -111,30 +110,6 @@ extension MCPToolService {
             personaExists: personaExists,
             directiveExists: directiveExists,
             missingKitOverrides: missingKits
-          )
-        )
-      )
-    case .essential:
-      guard
-        let essential = MCPInternalSupport.resolveEssential(
-          id: input.id,
-          scopes: scopes,
-          fileManager: .default
-        )
-      else {
-        throw MCPError.invalidParams(
-          MCPInternalSupport.missingEntityMessage(entityType: .essential, id: input.id)
-        )
-      }
-      let text = try MCPInternalSupport.readEssentialText(essential, id: input.id)
-      return try MCPInternalSupport.encodeToolJSON(
-        MCPToolPayloads.ExplainPayload(
-          entityType: input.entityType.rawValue,
-          id: input.id,
-          data: MCPToolPayloads.EssentialExplainData(
-            resolvedPath: essential.url.path,
-            lineCount: MCPInternalSupport.lineCount(text),
-            byteCount: text.utf8.count
           )
         )
       )
@@ -314,7 +289,6 @@ extension MCPToolService {
           "version": kit.version,
         ],
         lists: [
-          "essentialIds": MCPInternalSupport.uniqueSorted(kit.essentialIds),
           "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? []),
         ]
       )
@@ -354,28 +328,6 @@ extension MCPToolService {
           "triggerSummaries": (skill.triggerRules ?? []).map(GroundingSkillSupport.triggerSummary(for:)),
           "notes": MCPInternalSupport.uniqueSorted(skill.notes ?? []),
         ]
-      )
-    case .essential:
-      guard
-        let essential = MCPInternalSupport.resolveEssential(
-          id: id,
-          scopes: scopes,
-          fileManager: .default
-        )
-      else {
-        throw MCPError.invalidParams(
-          MCPInternalSupport.missingEntityMessage(entityType: .essential, id: id)
-        )
-      }
-      let content = try MCPInternalSupport.readEssentialText(essential, id: id)
-      return MCPToolPayloads.EntityComparableSnapshot(
-        scalars: [
-          "id": id,
-          "resolvedPath": essential.url.path,
-          "lineCount": String(MCPInternalSupport.lineCount(content)),
-          "byteCount": String(content.utf8.count),
-        ],
-        lists: [:]
       )
     }
   }

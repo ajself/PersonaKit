@@ -4,24 +4,6 @@ import Foundation
 
 /// Package-scoped helpers for snapshot item lookup and diagnostics file resolution.
 package enum WorkspaceSnapshotLookup {
-  package static func essentialItem(
-    snapshot: WorkspaceSnapshot,
-    itemID: String
-  ) -> WorkspaceListItem? {
-    snapshot.essentials.first { item in
-      item.id == itemID
-    }
-  }
-
-  package static func projectEssentialItem(
-    snapshot: WorkspaceSnapshot,
-    itemID: String
-  ) -> WorkspaceListItem? {
-    snapshot.essentials.first { item in
-      item.id == itemID && item.sourceScope == .project
-    }
-  }
-
   package static func libraryItem(
     snapshot: WorkspaceSnapshot,
     itemID: String,
@@ -118,7 +100,6 @@ package enum WorkspaceSnapshotLookup {
     allItems.append(contentsOf: snapshot.directives)
     allItems.append(contentsOf: snapshot.kits)
     allItems.append(contentsOf: snapshot.skills)
-    allItems.append(contentsOf: snapshot.essentials)
 
     let libraryFileURLs = allItems.map { item in
       item.fileURL.standardizedFileURL

@@ -19,7 +19,7 @@ struct StudioWelcomeView: View {
     ),
     StudioWelcomeRow(
       title: "Trace Relationships",
-      detail: "Follow persona, directive, kit, skill, essential, and reference links.",
+      detail: "Follow persona, directive, kit, and skill links.",
       systemImage: "point.3.connected.trianglepath.dotted"
     ),
   ]

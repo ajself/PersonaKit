@@ -24,8 +24,7 @@ struct WorkspaceLoadFeatureModelTests {
       ],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
     let model = WorkspaceLoadFeatureModel(
       operationRunner: makeOperationRunner(
@@ -76,8 +75,7 @@ struct WorkspaceLoadFeatureModelTests {
       ],
       directives: [],
       kits: [],
-      skills: [],
-      essentials: []
+      skills: []
     )
     let model = WorkspaceLoadFeatureModel(
       operationRunner: makeOperationRunner(
@@ -333,23 +331,6 @@ private struct NoOpSessionManager: WorkspaceSessionManaging, Sendable {
   ) throws {}
 }
 
-private struct NoOpEssentialManager: WorkspaceEssentialManaging, Sendable {
-  func loadMarkdown(fileURL: URL) throws -> String {
-    ""
-  }
-
-  func saveMarkdown(
-    workspaceURL: URL,
-    itemID: String,
-    markdown: String
-  ) throws {}
-
-  func copyGlobalEssentialToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem
-  ) throws {}
-}
-
 private struct NoOpLibraryEntityManager: WorkspaceLibraryEntityManaging, Sendable {
   func loadRawJSON(fileURL: URL) throws -> String {
     "{}"
@@ -423,7 +404,6 @@ private func makeOperationRunner(
     snapshotBuilder: snapshotBuilder,
     workspaceValidator: NoOpWorkspaceValidator(),
     sessionManager: NoOpSessionManager(),
-    essentialManager: NoOpEssentialManager(),
     libraryEntityManager: NoOpLibraryEntityManager(),
     sessionPreviewManager: NoOpSessionPreviewManager(),
     sessionMapBuilder: NoOpSessionMapBuilder(),

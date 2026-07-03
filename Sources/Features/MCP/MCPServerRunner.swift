@@ -62,7 +62,7 @@ public struct MCPServerRunner: MCPServerRunning {
     )
 
     await server.withMethodHandler(ListResources.self) { _ in
-      let resources = try resourceService.listResources()
+      let resources = resourceService.listResources()
       return ListResources.Result(resources: resources, nextCursor: nil)
     }
 

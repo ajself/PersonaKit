@@ -12,7 +12,7 @@ struct MCPCatalogResourceTests {
     let registry = try Registry.load(scopes: scopes)
     let service = MCPResourceService(registry: registry, scopes: scopes)
 
-    let uris = try service.listResources().map(\.uri)
+    let uris = service.listResources().map(\.uri)
 
     #expect(uris == uris.sorted())
     #expect(uris.contains("personakit://catalog/index"))
@@ -43,83 +43,12 @@ struct MCPCatalogResourceTests {
     #expect(counts["kits"] == 3)
     #expect(counts["directives"] == 1)
     #expect(counts["skills"] == 5)
-    #expect(counts["essentials"] == 2)
     #expect(counts["sessions"] == 1)
 
     let resources = try #require(object["resources"] as? [[String: Any]])
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/guidance" })
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/index" })
     #expect(resources.contains { ($0["uri"] as? String) == "personakit://catalog/personas" })
-  }
-
-  @Test
-  func builtInEssentialsAreListedAndReadableResources() throws {
-    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
-    let registry = try Registry.load(scopes: scopes)
-    let service = MCPResourceService(registry: registry, scopes: scopes)
-
-    let uris = try service.listResources().map(\.uri)
-
-    #expect(uris.contains("personakit://essentials/persona-activation-contract"))
-    #expect(uris.contains("personakit://essentials/skill-authorization-contract"))
-
-    let personaContent = try service.readResource(
-      uri: "personakit://essentials/persona-activation-contract"
-    )
-    let skillContent = try service.readResource(
-      uri: "personakit://essentials/skill-authorization-contract"
-    )
-
-    #expect(resourceText(personaContent)?.contains("# Persona Activation Contract") == true)
-    #expect(resourceText(skillContent)?.contains("# Skill Authorization Contract") == true)
-  }
-
-  @Test
-  func listResourcesRejectsEssentialPathWhenItIsAFile() throws {
-    let root = try makeRootWithPackFile(relativePath: "essentials")
-    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
-    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
-
-    do {
-      _ = try service.listResources()
-      #expect(Bool(false))
-    } catch {
-      let message = errorMessage(error)
-      #expect(message.contains("Packs/essentials"))
-      #expect(message.contains("not a directory"))
-    }
-  }
-
-  @Test
-  func catalogEssentialsRejectsEssentialPathWhenItIsAFile() throws {
-    let root = try makeRootWithPackFile(relativePath: "essentials")
-    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
-    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
-
-    do {
-      _ = try service.readCatalogResource(type: .essentials)
-      #expect(Bool(false))
-    } catch {
-      let message = errorMessage(error)
-      #expect(message.contains("Packs/essentials"))
-      #expect(message.contains("not a directory"))
-    }
-  }
-
-  @Test
-  func catalogIndexRejectsEssentialPathWhenItIsAFile() throws {
-    let root = try makeRootWithPackFile(relativePath: "essentials")
-    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
-    let service = MCPResourceService(registry: emptyRegistry(), scopes: scopes)
-
-    do {
-      _ = try service.readCatalogResource(type: .index)
-      #expect(Bool(false))
-    } catch {
-      let message = errorMessage(error)
-      #expect(message.contains("Packs/essentials"))
-      #expect(message.contains("not a directory"))
-    }
   }
 
   @Test
@@ -135,7 +64,7 @@ struct MCPCatalogResourceTests {
     let registry = try Registry.load(scopes: scopes)
     let service = MCPResourceService(registry: registry, scopes: scopes)
     let resource = try #require(
-      try service.listResources().first { $0.uri == "personakit://packs/kits/swift-style" }
+      service.listResources().first { $0.uri == "personakit://packs/kits/swift-style" }
     )
 
     let content = try service.readResource(uri: resource.uri)
@@ -157,7 +86,7 @@ struct MCPCatalogResourceTests {
     let registry = try Registry.load(scopes: scopes)
     let service = MCPResourceService(registry: registry, scopes: scopes)
 
-    for resource in try service.listResources() {
+    for resource in service.listResources() {
       _ = try service.readResource(uri: resource.uri)
     }
   }
@@ -176,7 +105,6 @@ struct MCPCatalogResourceTests {
         version: kit.version,
         name: "Wrong Kit",
         summary: kit.summary,
-        essentialIds: kit.essentialIds,
         skillIds: kit.skillIds
       )
     }

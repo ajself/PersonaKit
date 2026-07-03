@@ -6,10 +6,9 @@ import Foundation
 enum ReferenceGraphLoader {
   static func load(scopes: ScopeSet) throws -> ReferenceGraph {
     let registry = try Registry.load(scopes: scopes)
-    let essentialIds = try ListCommand.essentialIDs(scopes: scopes)
     let sessions = try SessionFileLoader.list(scopes: scopes)
 
-    return ReferenceGraph(registry: registry, essentialIds: essentialIds, sessions: sessions)
+    return ReferenceGraph(registry: registry, sessions: sessions)
   }
 
   static func describe(_ node: ReferenceNode) -> String {

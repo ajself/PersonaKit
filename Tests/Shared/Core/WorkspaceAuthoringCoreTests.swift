@@ -69,17 +69,6 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
-  func essentialDraftBuilderStarterMarkdownIsDeterministic() {
-    let markdown = WorkspaceEssentialDraftBuilder.buildMarkdown(
-      title: "Planning Guardrails",
-      body: nil,
-      template: .starter
-    )
-
-    #expect(markdown == "# Planning Guardrails\n\nTODO: add essential guidance.\n")
-  }
-
-  @Test
   func skillRiskLevelsNormalizeToLowercase() throws {
     let skillJSON = try WorkspaceSkillDraftBuilder().buildRawJSON(
       draft: WorkspaceSkillDraft(
@@ -108,7 +97,6 @@ struct WorkspaceAuthoringCoreTests {
         id: "review-guardrails",
         name: "Review Guardrails",
         summary: "Shared review context.",
-        essentialIds: ["review-boundaries"],
         skillIds: ["read-only-review"]
       )
     )
@@ -126,7 +114,6 @@ struct WorkspaceAuthoringCoreTests {
         id: "review-guardrails",
         name: "Review Guardrails",
         summary: "Shared review context.",
-        essentialIds: [],
         skillIds: ["missing-skill"]
       ),
       knownSkillIDs: []

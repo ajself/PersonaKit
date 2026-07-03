@@ -82,8 +82,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       personas: try loadEntityItems(scopes: scopes, type: Persona.self),
       directives: try loadEntityItems(scopes: scopes, type: Directive.self),
       kits: try loadEntityItems(scopes: scopes, type: Kit.self),
-      skills: try loadEntityItems(scopes: scopes, type: Skill.self),
-      essentials: try loadEssentialItems(scopes: scopes)
+      skills: try loadEntityItems(scopes: scopes, type: Skill.self)
     )
   }
 
@@ -138,37 +137,6 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
     return recordsByID.keys.sorted().compactMap { recordsByID[$0] }
   }
 
-  private func loadEssentialItems(
-    scopes: ScopeSet
-  ) throws -> [WorkspaceListItem] {
-    var recordsByID: [String: WorkspaceListItem] = [:]
-
-    for root in scopes.loadOrder {
-      try checkCancellation()
-
-      let essentialsURL = root.appendingPathComponent("Packs/essentials")
-      let files = try listFiles(
-        in: essentialsURL,
-        relativePath: "Packs/essentials",
-        pathSuffix: ".md"
-      )
-      let sourceScope = sourceScope(for: root, scopes: scopes)
-
-      for fileURL in files {
-        try checkCancellation()
-
-        let id = fileURL.deletingPathExtension().lastPathComponent
-        recordsByID[id] = WorkspaceListItem(
-          id: id,
-          displayName: id,
-          fileURL: fileURL.standardizedFileURL,
-          sourceScope: sourceScope
-        )
-      }
-    }
-
-    return recordsByID.keys.sorted().compactMap { recordsByID[$0] }
-  }
 
   private func loadEntityItems<T: WorkspaceEntityDocument>(
     scopes: ScopeSet,

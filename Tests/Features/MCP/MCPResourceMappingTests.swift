@@ -19,18 +19,6 @@ struct MCPResourceMappingTests {
   }
 
   @Test
-  func essentialURIBuildsAndParses() throws {
-    let reference = MCPResourceReference.essential(id: "environment")
-
-    #expect(reference.uri == "personakit://essentials/environment")
-
-    let parsed = try MCPResourceReference.parse(uri: reference.uri)
-    #expect(parsed == reference)
-    #expect(parsed.relativePath == "Packs/essentials/environment.md")
-    #expect(parsed.mimeType == "text/markdown")
-  }
-
-  @Test
   func catalogURIBuildsAndParses() throws {
     let reference = MCPResourceReference.catalog(type: .index)
 
@@ -51,9 +39,9 @@ struct MCPResourceMappingTests {
         mimeType: "application/json"
       ),
       MCPResourceEntry(
-        uri: "personakit://essentials/environment",
-        name: "environment",
-        mimeType: "text/markdown"
+        uri: "personakit://catalog/index",
+        name: "index",
+        mimeType: "application/json"
       ),
       MCPResourceEntry(
         uri: "personakit://packs/kits/alpha",
@@ -66,7 +54,7 @@ struct MCPResourceMappingTests {
 
     #expect(
       sorted.map(\.uri) == [
-        "personakit://essentials/environment",
+        "personakit://catalog/index",
         "personakit://packs/kits/alpha",
         "personakit://packs/kits/beta",
       ]

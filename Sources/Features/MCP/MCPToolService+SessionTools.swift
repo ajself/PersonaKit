@@ -177,21 +177,12 @@ extension MCPToolService {
     }
 
     let appliedKits = resolved.kits.sorted { $0.id < $1.id }
-    let kitToEssentials = appliedKits.map {
-      MCPToolPayloads.SessionTraceEdgeMap(
-        sourceId: $0.id,
-        targetIds: MCPInternalSupport.uniqueSorted($0.essentialIds)
-      )
-    }
     let kitToSkills = appliedKits.map {
       MCPToolPayloads.SessionTraceEdgeMap(
         sourceId: $0.id,
         targetIds: MCPInternalSupport.uniqueSorted($0.skillIds ?? [])
       )
     }
-    let systemEssentialIds = resolved.essentials
-      .filter { $0.source == .systemBuiltIn }
-      .map(\.id)
 
     return try MCPInternalSupport.encodeToolJSON(
       MCPToolPayloads.SessionTracePayload(
@@ -205,7 +196,6 @@ extension MCPToolService {
           personaId: resolved.persona.id,
           directiveId: resolved.directive.id,
           kitIds: resolved.kits.map(\.id).sorted(),
-          essentialIds: resolved.essentials.map(\.id),
           availableGroundingSkillIds: resolved.availableGroundingSkills.map(\.id).sorted(),
           skillIds: resolved.skills.map(\.id).sorted(),
           skillAuthorization: MCPToolPayloads.SessionTraceSkillAuthorization(
@@ -221,9 +211,7 @@ extension MCPToolService {
           personaDefaultKitIds: MCPInternalSupport.uniqueSorted(resolved.persona.defaultKitIds),
           sessionKitOverrideIds: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
           directiveSkillIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresSkillIds),
-          kitToEssentials: kitToEssentials,
-          kitToSkills: kitToSkills,
-          systemEssentialIds: systemEssentialIds
+          kitToSkills: kitToSkills
         ),
         workstream: resolved.directive.workstream.map {
           MCPInternalSupport.sessionTraceWorkstream(

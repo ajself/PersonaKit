@@ -7,7 +7,7 @@ public struct Resolver {
   /// - Parameters:
   ///   - definition: Persona/directive ids and optional kit overrides.
   ///   - registry: In-memory entity registry loaded from disk.
-  ///   - scopes: Scope set used to resolve essential file locations.
+  ///   - scopes: Scope set used to resolve grounding-skill file locations.
   ///   - fileManager: File system interface used for file existence checks.
   /// - Returns: Fully resolved session entities.
   /// - Throws: ``ResolverResolutionError`` when references cannot be resolved.
@@ -45,7 +45,6 @@ public struct Resolver {
       persona: contract.persona,
       directive: resolvedDirective,
       kits: contract.kits,
-      essentials: contract.essentials,
       availableGroundingSkills: contract.availableGroundingSkills,
       skills: contract.skills,
       skillAuthorization: contract.skillAuthorization

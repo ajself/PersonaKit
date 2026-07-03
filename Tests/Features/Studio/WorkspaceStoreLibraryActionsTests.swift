@@ -42,8 +42,7 @@ struct WorkspaceStoreLibraryActionsTests {
                 fileURL: URL(fileURLWithPath: "/skills/skill-a.skill.json"),
                 sourceScope: .project
               )
-            ],
-            essentials: []
+            ]
           )
         }
 
@@ -66,8 +65,7 @@ struct WorkspaceStoreLibraryActionsTests {
               fileURL: URL(fileURLWithPath: "/skills/skill-a.skill.json"),
               sourceScope: .project
             )
-          ],
-          essentials: []
+          ]
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -146,8 +144,7 @@ struct WorkspaceStoreLibraryActionsTests {
               )
             ]
             : [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -180,7 +177,6 @@ struct WorkspaceStoreLibraryActionsTests {
     let saveError = await store.saveLibraryEditorRawJSON(
       """
       {
-        "essentialIds" : [],
         "id" : "kit-new",
         "name" : "Kit New",
         "summary" : "Summary",
@@ -227,7 +223,6 @@ struct WorkspaceStoreLibraryActionsTests {
     let saveError = await store.saveLibraryEditorRawJSON(
       """
       {
-        "essentialIds" : [],
         "id" : "kit-new",
         "name" : "Kit New",
         "summary" : "",
@@ -297,73 +292,6 @@ struct WorkspaceStoreLibraryActionsTests {
   }
 
   @Test
-  func saveNewEssentialMarkdownUsesHeadingIDAndReloadsWorkspace() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let state = MutableBooleanState(value: false)
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: state.value
-            ? [
-              WorkspaceListItem(
-                id: "team-standards",
-                displayName: "team-standards",
-                fileURL: URL(fileURLWithPath: "/essentials/team-standards.md"),
-                sourceScope: .project
-              )
-            ]
-            : []
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in "" },
-        saveMarkdownHandler: { workspaceURL, itemID, markdown in
-          #expect(workspaceURL.path() == "/Workspace")
-          #expect(itemID == "team-standards")
-          #expect(markdown.contains("# Team Standards"))
-          state.value = true
-        },
-        copyGlobalEssentialToProjectHandler: { _, _ in }
-      )
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.isEmpty
-    }
-
-    let presentation = store.newEssentialEditorPresentation()
-    #expect(presentation?.isCreatingNewItem == true)
-
-    let saveError = await store.saveEssentialEditorMarkdown(
-      "# Team Standards\n\nKeep changes reviewable.\n",
-      presentation: presentation!
-    )
-
-    #expect(saveError == nil)
-
-    await waitFor {
-      store.snapshot.essentials.contains { item in
-        item.id == "team-standards"
-      }
-    }
-
-    #expect(store.libraryActionMessage == "Created team-standards.")
-    #expect(!store.libraryActionIsError)
-  }
-
-  @Test
   func createPersonaRejectsDuplicateIDBeforeSave() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
 
@@ -381,8 +309,7 @@ struct WorkspaceStoreLibraryActionsTests {
           ],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -561,8 +488,7 @@ struct WorkspaceStoreLibraryActionsTests {
           ],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -652,8 +578,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [projectItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -729,8 +654,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [snapshotItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -786,8 +710,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [snapshotItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -839,8 +762,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [globalItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -896,8 +818,7 @@ struct WorkspaceStoreLibraryActionsTests {
             personas: [globalItem],
             directives: [],
             kits: [],
-            skills: [],
-            essentials: []
+            skills: []
           )
         }
 
@@ -959,8 +880,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [globalItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -1022,8 +942,7 @@ struct WorkspaceStoreLibraryActionsTests {
           personas: [projectItem],
           directives: [],
           kits: [],
-          skills: [],
-          essentials: []
+          skills: []
         )
       },
       workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
@@ -1055,352 +974,6 @@ struct WorkspaceStoreLibraryActionsTests {
 
     #expect(saveError?.contains("Workspace changed while this editor was open") == true)
     #expect(store.libraryActionIsError)
-  }
-
-  @Test
-  func copySelectedGlobalEssentialToProjectForwardsStandardizedWorkspaceURL() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
-    let globalEssential = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/essentials/essential-a.md"),
-      sourceScope: .global
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [globalEssential]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { _, _, _ in },
-        copyGlobalEssentialToProjectHandler: { workspaceURL, item in
-          #expect(workspaceURL.path() == "/Workspace")
-          #expect(item.id == "essential-a")
-        }
-      )
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let didCopy = await store.copySelectedGlobalEssentialToProject(
-      selectedItem: globalEssential
-    )
-
-    #expect(didCopy)
-    #expect(!store.libraryActionIsError)
-    #expect(store.libraryActionMessage?.contains("Copied essential-a to project scope.") == true)
-  }
-
-  @Test
-  func copySelectedGlobalEssentialToProjectRejectsItemOutsideCurrentSnapshot() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let selectedItem = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/OtherRoot/Packs/essentials/essential-a.md"),
-      sourceScope: .global
-    )
-    let snapshotItem = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/GlobalRoot/Packs/essentials/essential-a.md"),
-      sourceScope: .global
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [snapshotItem]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { _, _, _ in },
-        copyGlobalEssentialToProjectHandler: { _, _ in
-          Issue.record("copyGlobalEssentialToProject should not run when selected item is stale.")
-        }
-      )
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let didCopy = await store.copySelectedGlobalEssentialToProject(
-      selectedItem: selectedItem
-    )
-
-    #expect(!didCopy)
-    #expect(store.libraryActionIsError)
-    #expect(store.libraryActionMessage?.contains("not a global essential") == true)
-  }
-
-  @Test
-  func openEssentialEditorLoadsMarkdownForProjectItem() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let projectEssential = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/essentials/essential-a.md"),
-      sourceScope: .project
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [projectEssential]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { _, _, _ in },
-        copyGlobalEssentialToProjectHandler: { _, _ in }
-      )
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let presentation = await store.openEssentialEditor(
-      selectedItem: projectEssential
-    )
-
-    #expect(presentation?.itemID == "essential-a")
-    #expect(presentation?.markdown == "# Essential A\n")
-  }
-
-  @Test
-  func staleEssentialSaveResultIsIgnoredAfterWorkspaceReload() async {
-    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
-    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
-    let saveGate = BlockingCallGate()
-    let projectEssential = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/essentials/essential-a.md"),
-      sourceScope: .project
-    )
-    let presentation = WorkspaceEssentialEditorPresentation(
-      fileURL: projectEssential.fileURL,
-      itemID: "essential-a",
-      markdown: "# Essential A\n",
-      workspaceURL: firstWorkspaceURL
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [projectEssential]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { workspaceURL, _, _ in
-          if workspaceURL.standardizedFileURL == firstWorkspaceURL.standardizedFileURL {
-            _ = saveGate.markStarted()
-            saveGate.waitUntilReleased()
-            saveGate.markFinished()
-          }
-        },
-        copyGlobalEssentialToProjectHandler: { _, _ in }
-      )
-    )
-
-    store.workspaceURL = firstWorkspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let saveTask = Task {
-      await store.saveEssentialEditorMarkdown(
-        "# Updated\n",
-        presentation: presentation
-      )
-    }
-
-    await waitFor {
-      saveGate.hasStarted
-    }
-
-    store.workspaceURL = secondWorkspaceURL
-    store.loadWorkspace()
-
-    saveGate.release()
-
-    let saveResult = await saveTask.value
-
-    #expect(saveResult == nil)
-    #expect(store.libraryActionMessage == nil)
-    #expect(!store.isLoadingLibraryEditor)
-    #expect(store.workspaceURL?.standardizedFileURL == secondWorkspaceURL.standardizedFileURL)
-  }
-
-  @Test
-  func saveEssentialEditorMarkdownRejectsWorkspaceMismatch() async {
-    let firstWorkspaceURL = URL(fileURLWithPath: "/WorkspaceA")
-    let secondWorkspaceURL = URL(fileURLWithPath: "/WorkspaceB")
-    let projectEssential = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/essentials/essential-a.md"),
-      sourceScope: .project
-    )
-    let presentation = WorkspaceEssentialEditorPresentation(
-      fileURL: projectEssential.fileURL,
-      itemID: "essential-a",
-      markdown: "# Essential A\n",
-      workspaceURL: firstWorkspaceURL
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [projectEssential]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { _, _, _ in
-          Issue.record("saveMarkdown should not run for stale workspace presentation.")
-        },
-        copyGlobalEssentialToProjectHandler: { _, _ in }
-      )
-    )
-
-    store.workspaceURL = secondWorkspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let saveError = await store.saveEssentialEditorMarkdown(
-      "# Updated\n",
-      presentation: presentation
-    )
-
-    #expect(saveError?.contains("Workspace changed while this editor was open") == true)
-    #expect(store.libraryActionIsError)
-  }
-
-  @Test
-  func openEssentialEditorRejectsItemOutsideCurrentSnapshot() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let selectedItem = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/OtherRoot/Packs/essentials/essential-a.md"),
-      sourceScope: .project
-    )
-    let snapshotItem = WorkspaceListItem(
-      id: "essential-a",
-      displayName: "Essential A",
-      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Packs/essentials/essential-a.md"),
-      sourceScope: .project
-    )
-
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
-        WorkspaceSnapshot(
-          sessions: [],
-          personas: [],
-          directives: [],
-          kits: [],
-          skills: [],
-          essentials: [snapshotItem]
-        )
-      },
-      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
-        WorkspaceValidationSnapshot(summary: "ok", issues: [])
-      },
-      essentialManager: WorkspaceStoreStubEssentialManager(
-        loadMarkdownHandler: { _ in
-          "# Essential A\n"
-        },
-        saveMarkdownHandler: { _, _, _ in },
-        copyGlobalEssentialToProjectHandler: { _, _ in }
-      )
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      store.snapshot.essentials.count == 1
-    }
-
-    let presentation = await store.openEssentialEditor(selectedItem: selectedItem)
-
-    #expect(presentation == nil)
-    #expect(store.libraryActionIsError)
-    #expect(store.libraryActionMessage?.contains("not a project essential") == true)
   }
 
   private func createValidationStore() -> WorkspaceStore {

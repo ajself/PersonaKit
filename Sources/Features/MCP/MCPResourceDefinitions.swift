@@ -6,7 +6,6 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
   case invalidScheme(String)
   case unsupportedHost(String)
   case invalidPacksURI(String)
-  case invalidEssentialsURI(String)
   case invalidCatalogURI(String)
   case invalidSegment(String)
   case unknownPacksType(String)
@@ -22,8 +21,6 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
       return "Unsupported URI host: \(host)"
     case .invalidPacksURI(let uri):
       return "Invalid packs URI: \(uri)"
-    case .invalidEssentialsURI(let uri):
-      return "Invalid essentials URI: \(uri)"
     case .invalidCatalogURI(let uri):
       return "Invalid catalog URI: \(uri)"
     case .invalidSegment(let segment):
@@ -69,7 +66,6 @@ enum MCPCatalogResourceType: String, CaseIterable, Equatable {
   case kits
   case directives
   case skills
-  case essentials
   case sessions
   case guidance
   case api
@@ -79,18 +75,15 @@ enum MCPCatalogResourceType: String, CaseIterable, Equatable {
   }
 }
 
-/// Parsed resource reference describing a pack JSON or essential markdown file.
+/// Parsed resource reference describing a pack JSON file.
 enum MCPResourceReference: Equatable {
   case pack(type: MCPPackResourceType, id: String)
-  case essential(id: String)
   case catalog(type: MCPCatalogResourceType)
 
   var uri: String {
     switch self {
     case .pack(let type, let id):
       return "personakit://packs/\(type.rawValue)/\(MCPResourceURIComponents.encode(id))"
-    case .essential(let id):
-      return "personakit://essentials/\(MCPResourceURIComponents.encode(id))"
     case .catalog(let type):
       return "personakit://catalog/\(MCPResourceURIComponents.encode(type.rawValue))"
     }
@@ -100,8 +93,6 @@ enum MCPResourceReference: Equatable {
     switch self {
     case .pack(let type, let id):
       return "Packs/\(type.rawValue)/\(id)\(type.suffix)"
-    case .essential(let id):
-      return "Packs/essentials/\(id).md"
     case .catalog(let type):
       return "catalog/\(type.rawValue)"
     }
@@ -111,8 +102,6 @@ enum MCPResourceReference: Equatable {
     switch self {
     case .pack(let type, _):
       return type.mimeType
-    case .essential:
-      return "text/markdown"
     case .catalog(let type):
       return type.mimeType
     }
@@ -121,8 +110,6 @@ enum MCPResourceReference: Equatable {
   var name: String {
     switch self {
     case .pack(_, let id):
-      return id
-    case .essential(let id):
       return id
     case .catalog(let type):
       return "catalog-\(type.rawValue)"
@@ -157,15 +144,6 @@ enum MCPResourceReference: Equatable {
         throw MCPResourceURIError.unknownPacksType(typeSegment)
       }
       return .pack(type: type, id: idSegment)
-    }
-
-    if host == "essentials" {
-      guard segments.count == 1 else {
-        throw MCPResourceURIError.invalidEssentialsURI(uri)
-      }
-      let idSegment = segments[0]
-      try MCPResourceURIComponents.validate(segment: idSegment)
-      return .essential(id: idSegment)
     }
 
     if host == "catalog" {

@@ -167,7 +167,6 @@ public final class WorkspaceStore {
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
     sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
-    essentialManager: (any WorkspaceEssentialManaging)? = nil,
     libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
     sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
     sessionMapBuilder: (any WorkspaceSessionMapBuilding)? = nil,
@@ -188,10 +187,6 @@ public final class WorkspaceStore {
     self.globalLibraryAccess = globalLibraryAccess
     self.globalLibraryPicker = globalLibraryPicker
 
-    let resolvedEssentialManager =
-      essentialManager
-      ?? WorkspaceEssentialManager()
-
     let resolvedLibraryEntityManager =
       libraryEntityManager
       ?? WorkspaceLibraryEntityManager()
@@ -210,7 +205,6 @@ public final class WorkspaceStore {
       snapshotBuilder: snapshotBuilder,
       workspaceValidator: workspaceValidator,
       sessionManager: sessionManager,
-      essentialManager: resolvedEssentialManager,
       libraryEntityManager: resolvedLibraryEntityManager,
       sessionPreviewManager: resolvedSessionPreviewManager,
       sessionMapBuilder: resolvedSessionMapBuilder,

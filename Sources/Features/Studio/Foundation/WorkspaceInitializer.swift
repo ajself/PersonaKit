@@ -29,7 +29,6 @@ public struct WorkspaceInitializer {
       projectScopeURL.appendingPathComponent("Packs/directives"),
       projectScopeURL.appendingPathComponent("Packs/kits"),
       projectScopeURL.appendingPathComponent("Packs/skills"),
-      projectScopeURL.appendingPathComponent("Packs/essentials"),
       projectScopeURL.appendingPathComponent("Sessions"),
     ]
 

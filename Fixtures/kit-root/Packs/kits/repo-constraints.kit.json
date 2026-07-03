@@ -3,7 +3,6 @@
   "version": "1.0",
   "name": "Repository Constraints Kit",
   "summary": "Rules specific to this codebase.",
-  "essentialIds": [],
   "skillIds": [
     "tools-and-constraints"
   ]

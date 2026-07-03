@@ -7,7 +7,6 @@ package actor WorkspaceOperationRunner {
   private let snapshotBuilder: any WorkspaceSnapshotBuilding
   private let workspaceValidator: any WorkspaceValidating
   private let sessionManager: any WorkspaceSessionManaging
-  private let essentialManager: any WorkspaceEssentialManaging
   private let libraryEntityManager: any WorkspaceLibraryEntityManaging
   private let sessionPreviewManager: any WorkspaceSessionPreviewManaging
   private let sessionMapBuilder: any WorkspaceSessionMapBuilding
@@ -17,7 +16,6 @@ package actor WorkspaceOperationRunner {
     snapshotBuilder: any WorkspaceSnapshotBuilding,
     workspaceValidator: any WorkspaceValidating,
     sessionManager: any WorkspaceSessionManaging,
-    essentialManager: any WorkspaceEssentialManaging,
     libraryEntityManager: any WorkspaceLibraryEntityManaging,
     sessionPreviewManager: any WorkspaceSessionPreviewManaging,
     sessionMapBuilder: any WorkspaceSessionMapBuilding,
@@ -26,7 +24,6 @@ package actor WorkspaceOperationRunner {
     self.snapshotBuilder = snapshotBuilder
     self.workspaceValidator = workspaceValidator
     self.sessionManager = sessionManager
-    self.essentialManager = essentialManager
     self.libraryEntityManager = libraryEntityManager
     self.sessionPreviewManager = sessionPreviewManager
     self.sessionMapBuilder = sessionMapBuilder
@@ -86,32 +83,6 @@ package actor WorkspaceOperationRunner {
     try sessionManager.deleteSession(
       workspaceURL: workspaceURL,
       sessionID: sessionID
-    )
-  }
-
-  package func loadEssentialMarkdown(fileURL: URL) throws -> String {
-    try essentialManager.loadMarkdown(fileURL: fileURL)
-  }
-
-  package func saveEssentialMarkdown(
-    workspaceURL: URL,
-    itemID: String,
-    markdown: String
-  ) throws {
-    try essentialManager.saveMarkdown(
-      workspaceURL: workspaceURL,
-      itemID: itemID,
-      markdown: markdown
-    )
-  }
-
-  package func copyGlobalEssentialToProject(
-    workspaceURL: URL,
-    item: WorkspaceListItem
-  ) throws {
-    try essentialManager.copyGlobalEssentialToProject(
-      workspaceURL: workspaceURL,
-      item: item
     )
   }
 

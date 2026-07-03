@@ -53,8 +53,6 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "directive:apply-style" }))
     #expect(map.nodes.contains(where: { $0.key == "kit:swift-style" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:codex-cli" }))
-    #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
-    #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:tools-and-constraints" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:swift-style-guide-reference" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:swiftui-style-guide-reference" }))
@@ -71,73 +69,12 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(
       map.edges.contains(
         WorkspaceSessionMapEdge(
-          fromKey: "session:active-session",
-          toKey: "essential:persona-activation-contract",
-          reason: "session.resolvedEssentials"
-        )
-      )
-    )
-    #expect(
-      map.edges.contains(
-        WorkspaceSessionMapEdge(
-          fromKey: "session:active-session",
-          toKey: "essential:skill-authorization-contract",
-          reason: "session.resolvedEssentials"
-        )
-      )
-    )
-    #expect(
-      map.edges.contains(
-        WorkspaceSessionMapEdge(
           fromKey: "directive:apply-style",
           toKey: "skill:swift-style-guide-reference",
           reason: "directive.requiresSkillIds"
         )
       )
     )
-  }
-
-  @Test
-  func sessionMapTreatsBuiltInEssentialReferencesAsResolved() throws {
-    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
-    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
-
-    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
-    try copyFixtureKit(to: projectScopeURL)
-
-    let kitURL = projectScopeURL.appendingPathComponent("Packs/kits/swift-style.kit.json")
-
-    try mutateJSONFile(kitURL, as: Kit.self) { kit in
-      Kit(
-        id: kit.id,
-        version: kit.version,
-        name: kit.name,
-        summary: kit.summary,
-        essentialIds: kit.essentialIds + [
-          "persona-activation-contract",
-          "skill-authorization-contract",
-        ],
-        skillIds: kit.skillIds
-      )
-    }
-
-    let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
-    let map = try builder.build(
-      workspaceURL: workspaceURL,
-      personaId: "senior-swiftui-engineer",
-      directiveId: "apply-style",
-      kitOverrides: []
-    )
-
-    let personaContract = try #require(
-      map.nodes.first { $0.key == "essential:persona-activation-contract" }
-    )
-    let skillContract = try #require(
-      map.nodes.first { $0.key == "essential:skill-authorization-contract" }
-    )
-
-    #expect(!personaContract.isMissing)
-    #expect(!skillContract.isMissing)
   }
 
   @Test
@@ -182,27 +119,12 @@ struct WorkspaceSessionMapBuilderTests {
       )
     }
 
-    let missingEssentialKitURL = projectScopeURL.appendingPathComponent(
-      "Packs/kits/missing-essential.kit.json"
-    )
-    let missingEssentialKit = Kit(
-      id: "missing-essential",
-      version: "1.0",
-      name: "Missing Essential Kit",
-      summary: "Introduces missing essential references.",
-      essentialIds: ["missing-essential-doc"],
-      skillIds: nil
-    )
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(missingEssentialKit).write(to: missingEssentialKitURL, options: [.atomic])
-
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
     let map = try builder.build(
       workspaceURL: workspaceURL,
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
-      kitOverrides: ["missing-essential"]
+      kitOverrides: []
     )
 
     #expect(!map.isFullyResolved)
@@ -210,7 +132,6 @@ struct WorkspaceSessionMapBuilderTests {
 
     #expect(map.nodes.contains(where: { $0.key == "kit:missing-kit" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "skill:missing-skill" && $0.isMissing }))
-    #expect(map.nodes.contains(where: { $0.key == "essential:missing-essential-doc" && $0.isMissing }))
   }
 
   @Test
