@@ -112,9 +112,6 @@ Verification:
 - command: swift test
 - manual: Review diff for scope creep
 
-Stop Points:
-- Avoid unrelated refactors.
-
 Parameters:
 - targetFiles (string[], required)
 
@@ -124,6 +121,19 @@ Risk:
 - Notes:
   - No public API changes
   - No behavior changes
+
+# Boundaries
+Derived enforcement view: each guardrail tagged with the strongest enforcement class it can reach; a host that lacks the mechanism degrades it. PersonaKit enforces none of this by itself.
+Class 1 — hook (deterministic deny): none
+Class 2 — command (exit-code gate):
+- command.swift-test — `swift test` — directive:apply-style [verification]
+Class 3 — review (human or agent sign-off):
+- review.avoid-unrelated-refactors — Avoid unrelated refactors. — directive:apply-style [steps]
+- review.review-diff-for-scope-creep — Review diff for scope creep — directive:apply-style [verification]
+
+Not yet checkable (represented, not enforced):
+- architecture rewrites — persona:senior-swiftui-engineer [nonGoals]
+- introducing new frameworks without approval — persona:senior-swiftui-engineer [nonGoals]
 
 # Skill Awareness
 ## codex-cli

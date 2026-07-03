@@ -63,6 +63,28 @@ struct ExporterTests {
   }
 
   @Test
+  func exportPromotesChecksManifestAsBoundariesAndDropsStopPoints() throws {
+    let output = try SessionExporter.export(
+      root: fixtureKitRootURL(),
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: [],
+      sessionId: "senior-swiftui-engineer_apply-style"
+    )
+
+    #expect(output.contains("# Boundaries"))
+    #expect(
+      output.contains("- command.swift-test — `swift test` — directive:apply-style [verification]")
+    )
+    // Class-3 review gates own the requires-review steps; the redundant `Stop Points`
+    // block that only re-listed them is gone.
+    #expect(
+      output.contains("- review.avoid-unrelated-refactors — Avoid unrelated refactors. — directive:apply-style [steps]")
+    )
+    #expect(!output.contains("Stop Points:"))
+  }
+
+  @Test
   func exportFailsWhenValidationErrorsExist() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)

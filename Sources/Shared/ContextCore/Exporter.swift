@@ -366,13 +366,6 @@ public struct SessionExporter {
       }
     }
 
-    let stopPoints = directive.steps.filter { $0.requiresReview == true }.map { $0.text }
-    appendListSection(
-      title: "Stop Points",
-      items: stopPoints,
-      appendLine: appendLine
-    )
-
     if !directive.parameters.isEmpty {
       appendLine()
       appendLine("Parameters:")
@@ -418,6 +411,16 @@ public struct SessionExporter {
       for node in workstream.orderedNodes {
         appendLine("- \(node.phase): \(node.sessionId)")
       }
+    }
+
+    let checksManifest = ChecksManifestDeriver.derive(
+      sessionId: sessionId,
+      persona: persona,
+      directive: directive
+    )
+    appendLine()
+    for line in ChecksManifestMarkdownRenderer.boundariesLines(checksManifest) {
+      appendLine(line)
     }
 
     appendLine()
