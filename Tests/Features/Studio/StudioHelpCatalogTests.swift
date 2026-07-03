@@ -14,7 +14,6 @@ struct StudioHelpCatalogTests {
       .essentials,
       .references,
       .skills,
-      .intents,
       .relationshipMap,
       .validationResults,
     ]
@@ -78,7 +77,6 @@ struct StudioHelpCatalogTests {
       .essentials,
       .references,
       .skills,
-      .intents,
       .relationshipMap,
       .validationResults,
     ]

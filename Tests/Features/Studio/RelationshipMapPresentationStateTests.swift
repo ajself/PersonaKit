@@ -33,7 +33,7 @@ struct StudioRelationshipMapPresentationStateTests {
 
     let visibleKinds = RelationshipMapPresentationState.visibleLaneKinds(
       map: map,
-      laneOrder: [.session, .persona, .directive, .kit, .intent],
+      laneOrder: [.session, .persona, .directive, .kit],
       showsEmptyLanes: false
     )
 

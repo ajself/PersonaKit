@@ -239,8 +239,7 @@ public struct StudioRootView: View {
       .kits,
       .essentials,
       .references,
-      .skills,
-      .intents:
+      .skills:
       StudioLibraryPanelView(
         workspaceStore: workspaceStore,
         selection: activeSelection,
@@ -298,8 +297,6 @@ public struct StudioRootView: View {
       return workspaceStore.snapshot.references
     case .skills:
       return workspaceStore.snapshot.skills
-    case .intents:
-      return workspaceStore.snapshot.intents
     default:
       return []
     }
@@ -387,7 +384,6 @@ enum SidebarItem: Hashable {
   case essentials
   case references
   case skills
-  case intents
   case relationshipMap
   case validationResults
 
@@ -395,7 +391,6 @@ enum SidebarItem: Hashable {
     .personas,
     .directives,
     .kits,
-    .intents,
   ]
 
   static let contextItems: [SidebarItem] = [
@@ -420,8 +415,6 @@ enum SidebarItem: Hashable {
       return "References"
     case .skills:
       return "Skills"
-    case .intents:
-      return "Intents"
     case .relationshipMap:
       return "Relationship Map"
     case .validationResults:
@@ -445,8 +438,6 @@ enum SidebarItem: Hashable {
       return "book.closed"
     case .skills:
       return "hammer"
-    case .intents:
-      return "scope"
     case .relationshipMap:
       return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
@@ -463,7 +454,6 @@ enum SidebarItem: Hashable {
       .essentials,
       .references,
       .skills,
-      .intents,
       .relationshipMap,
       .validationResults:
       return true
@@ -476,8 +466,6 @@ enum SidebarItem: Hashable {
       self = .directives
     case .essentials:
       self = .essentials
-    case .intents:
-      self = .intents
     case .kits:
       self = .kits
     case .personas:

@@ -175,8 +175,6 @@ enum ValidatorSupport {
       return .kit
     case .directive:
       return .directive
-    case .intentTemplate:
-      return .intent
     case .reference:
       return .reference
     case .skill:
@@ -195,9 +193,6 @@ enum ValidatorSupport {
     }
     if schemaPath.contains("/directives/") || schemaPath.hasSuffix(".directive.json") {
       return .directive
-    }
-    if schemaPath.contains("/intents/") || schemaPath.hasSuffix(".intent.json") {
-      return .intent
     }
     if schemaPath.contains("/references/") || schemaPath.hasSuffix(".reference.json") {
       return .reference

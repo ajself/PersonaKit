@@ -115,12 +115,6 @@ Verification:
 Stop Points:
 - Avoid unrelated refactors.
 
-# Intent Templates
-## swift-refactor-safe
-Name: Swift Refactor (Safe)
-Id: swift-refactor-safe
-Description: Perform a small refactor without changing behavior.
-
 Parameters:
 - targetFiles (string[], required)
 
@@ -130,14 +124,6 @@ Risk:
 - Notes:
   - No public API changes
   - No behavior changes
-
-Required Skills:
-- codex-cli
-
-Included Essentials:
-- non-goals
-- swift-style-guide
-- tools-and-constraints
 
 # Skill Awareness
 ## codex-cli

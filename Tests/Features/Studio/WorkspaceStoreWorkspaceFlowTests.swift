@@ -123,7 +123,6 @@ struct WorkspaceStoreWorkspaceFlowTests {
       ],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
     let coreValidation = WorkspaceValidationSnapshot(
@@ -238,7 +237,6 @@ struct WorkspaceStoreWorkspaceFlowTests {
       workspaceURL.appendingPathComponent(".personakit/Packs/personas"),
       workspaceURL.appendingPathComponent(".personakit/Packs/directives"),
       workspaceURL.appendingPathComponent(".personakit/Packs/kits"),
-      workspaceURL.appendingPathComponent(".personakit/Packs/intents"),
       workspaceURL.appendingPathComponent(".personakit/Packs/references"),
       workspaceURL.appendingPathComponent(".personakit/Packs/skills"),
       workspaceURL.appendingPathComponent(".personakit/Packs/essentials"),

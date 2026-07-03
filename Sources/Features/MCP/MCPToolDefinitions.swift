@@ -38,7 +38,7 @@ enum MCPToolName: String, CaseIterable {
         "Resolve triggered references for explicit target paths or reference tags after the active contract is known."
     case .traceSession:
       return
-        "Trace a resolved session into persona/directive/kits/intents/skills/essentials edges for provenance review."
+        "Trace a resolved session into persona/directive/kits/skills/essentials edges for provenance review."
     case .validate:
       return "Validate PersonaKit packs and report errors."
     }
@@ -248,7 +248,6 @@ enum MCPEntityType: String, CaseIterable {
   case directive
   case kit
   case session
-  case intent
   case reference
   case skill
   case essential

@@ -50,12 +50,6 @@ struct SchemaValidator {
       schemaName: "directive.schema.json"
     ),
     SchemaMapping(
-      entity: "intent",
-      directory: "intents",
-      suffix: ".intent.json",
-      schemaName: "intentTemplate.schema.json"
-    ),
-    SchemaMapping(
       entity: "reference",
       directory: "references",
       suffix: ".reference.json",

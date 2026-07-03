@@ -9,10 +9,6 @@ struct MCPResolvedSessionInput {
 }
 
 enum MCPInternalSupport {
-  static func parameterConstraintSummary(_ constraint: IntentTemplate.ParameterConstraint) -> String {
-    "\(constraint.kind):" + constraint.parameterNames.joined(separator: ",")
-  }
-
   static func directiveExplainWorkstreamData(
     _ workstream: Directive.Workstream
   ) -> MCPToolPayloads.DirectiveExplainWorkstreamData {
@@ -188,8 +184,6 @@ enum MCPInternalSupport {
       parts.append("expectedPath=\(expectedPath)")
     } else if case .missingKitId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
-    } else if case .missingIntentId(_, _, _, let missingId) = error {
-      parts.append("missingId=\(missingId)")
     } else if case .missingReferenceId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
     } else if case .missingSkillId(_, _, _, let missingId) = error {
@@ -234,8 +228,6 @@ enum MCPInternalSupport {
       catalogType = "kits"
     case .session:
       catalogType = "sessions"
-    case .intent:
-      catalogType = "intents"
     case .reference:
       return withRecoveryHint(
         "reference not found: \(id)",

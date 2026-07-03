@@ -24,7 +24,6 @@ struct ResolverTests {
     #expect(
       session.kits.map { $0.id } == ["repo-constraints", "swift-style", "swiftui-style"]
     )
-    #expect(session.intents.map { $0.id } == ["swift-refactor-safe"])
     #expect(session.skills.map { $0.id } == ["codex-cli"])
     #expect(
       session.availableReferences.map(\.id) == [
@@ -152,7 +151,6 @@ struct ResolverTests {
     let session = try Resolver.resolve(definition: definition, registry: registry, rootURL: root)
 
     #expect(session.kits.map { $0.id } == session.kits.map { $0.id }.sorted())
-    #expect(session.intents.map { $0.id } == session.intents.map { $0.id }.sorted())
     #expect(session.skills.map { $0.id } == session.skills.map { $0.id }.sorted())
     #expect(
       session.availableReferences.map(\.id) == session.availableReferences.map(\.id).sorted()
@@ -184,7 +182,6 @@ struct ResolverTests {
       name: kit.name,
       summary: kit.summary,
       essentialIds: kit.essentialIds + [SystemEssentials.personaActivationContractId],
-      intentTemplateIds: kit.intentTemplateIds,
       skillIds: kit.skillIds
     )
 

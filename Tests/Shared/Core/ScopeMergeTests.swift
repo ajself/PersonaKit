@@ -282,7 +282,6 @@ private func writeDirective(
       \"steps\": [],
       \"acceptanceCriteria\": [],
       \"verification\": [],
-      \"requiresIntentTemplateIds\": [],
       \"requiresSkillIds\": []
     }
     """

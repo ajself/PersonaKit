@@ -183,12 +183,6 @@ extension MCPToolService {
         targetIds: MCPInternalSupport.uniqueSorted($0.essentialIds)
       )
     }
-    let kitToIntents = appliedKits.map {
-      MCPToolPayloads.SessionTraceEdgeMap(
-        sourceId: $0.id,
-        targetIds: MCPInternalSupport.uniqueSorted($0.intentTemplateIds ?? [])
-      )
-    }
     let kitToSkills = appliedKits.map {
       MCPToolPayloads.SessionTraceEdgeMap(
         sourceId: $0.id,
@@ -201,30 +195,6 @@ extension MCPToolService {
         targetIds: MCPInternalSupport.uniqueSorted($0.referenceIds ?? [])
       )
     }
-    let intentToEssentials = resolved.intents
-      .sorted { $0.id < $1.id }
-      .map {
-        MCPToolPayloads.SessionTraceEdgeMap(
-          sourceId: $0.id,
-          targetIds: MCPInternalSupport.uniqueSorted($0.includesEssentialIds)
-        )
-      }
-    let intentToReferences = resolved.intents
-      .sorted { $0.id < $1.id }
-      .map {
-        MCPToolPayloads.SessionTraceEdgeMap(
-          sourceId: $0.id,
-          targetIds: MCPInternalSupport.uniqueSorted($0.referenceIds ?? [])
-        )
-      }
-    let intentToSkills = resolved.intents
-      .sorted { $0.id < $1.id }
-      .map {
-        MCPToolPayloads.SessionTraceEdgeMap(
-          sourceId: $0.id,
-          targetIds: MCPInternalSupport.uniqueSorted($0.requiresSkillIds)
-        )
-      }
     let systemEssentialIds = resolved.essentials
       .filter { $0.source == .systemBuiltIn }
       .map(\.id)
@@ -243,7 +213,6 @@ extension MCPToolService {
           kitIds: resolved.kits.map(\.id).sorted(),
           essentialIds: resolved.essentials.map(\.id),
           availableReferenceIds: resolved.availableReferences.map(\.id).sorted(),
-          intentIds: resolved.intents.map(\.id).sorted(),
           skillIds: resolved.skills.map(\.id).sorted(),
           skillAuthorization: MCPToolPayloads.SessionTraceSkillAuthorization(
             allowedSkillIds: resolved.skillAuthorization.allowedSkillIds,
@@ -257,16 +226,11 @@ extension MCPToolService {
         edges: MCPToolPayloads.SessionTraceEdges(
           personaDefaultKitIds: MCPInternalSupport.uniqueSorted(resolved.persona.defaultKitIds),
           sessionKitOverrideIds: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? []),
-          directiveIntentIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresIntentTemplateIds),
           directiveReferenceIds: MCPInternalSupport.uniqueSorted(resolved.directive.referenceIds ?? []),
           directiveSkillIds: MCPInternalSupport.uniqueSorted(resolved.directive.requiresSkillIds),
           kitToEssentials: kitToEssentials,
           kitToReferences: kitToReferences,
-          kitToIntents: kitToIntents,
           kitToSkills: kitToSkills,
-          intentToEssentials: intentToEssentials,
-          intentToReferences: intentToReferences,
-          intentToSkills: intentToSkills,
           systemEssentialIds: systemEssentialIds
         ),
         workstream: resolved.directive.workstream.map {

@@ -111,7 +111,6 @@ struct WorkspaceLibraryEntityFormAdapterTests {
           "acceptanceCriteria" : [],
           "goal" : "Ship a focused change.",
           "id" : "directive-a",
-          "requiresIntentTemplateIds" : [],
           "requiresSkillIds" : [],
           "steps" : [],
           "title" : "Directive A",
@@ -136,7 +135,6 @@ struct WorkspaceLibraryEntityFormAdapterTests {
         {
           "goal" : "",
           "id" : "directive-a",
-          "requiresIntentTemplateIds" : [],
           "requiresSkillIds" : [],
           "title" : "Directive A",
           "version" : "1.0"
@@ -149,50 +147,7 @@ struct WorkspaceLibraryEntityFormAdapterTests {
   }
 
   @Test
-  func intentAndSkillFormStatesMapDescriptionField() throws {
-    let intentAdapter = WorkspaceLibraryEntityFormAdapter(entityType: .intent)
-    let intentFormState = try intentAdapter.parseFormState(
-      from:
-        """
-        {
-          "description" : "Describe the user request.",
-          "id" : "intent-a",
-          "includesEssentialIds" : [],
-          "name" : "Intent A",
-          "parameters" : [],
-          "requiresSkillIds" : [],
-          "risk" : {
-            "level" : "medium",
-            "notes" : [],
-            "requiresHumanReview" : false
-          },
-          "version" : "1.0"
-        }
-        """
-    )
-
-    #expect(intentFormState.secondaryText == "Describe the user request.")
-
-    let updatedIntentRawJSON = try intentAdapter.applyFormState(
-      WorkspaceLibraryEntityFormState(
-        id: "intent-a",
-        primaryText: "Intent A",
-        secondaryText: "Updated intent description.",
-        firstArrayLines: "",
-        secondArrayLines: ""
-      ),
-      to:
-        """
-        {
-          "description" : "",
-          "id" : "intent-a",
-          "includesEssentialIds" : [],
-          "name" : "Intent A",
-          "version" : "1.0"
-        }
-        """
-    )
-
+  func skillFormStateMapsDescriptionField() throws {
     let skillAdapter = WorkspaceLibraryEntityFormAdapter(entityType: .skill)
     let updatedSkillRawJSON = try skillAdapter.applyFormState(
       WorkspaceLibraryEntityFormState(
@@ -215,11 +170,68 @@ struct WorkspaceLibraryEntityFormAdapterTests {
         """
     )
 
-    let intentDictionary = try jsonDictionary(from: updatedIntentRawJSON)
     let skillDictionary = try jsonDictionary(from: updatedSkillRawJSON)
 
-    #expect(intentDictionary["description"] as? String == "Updated intent description.")
     #expect(skillDictionary["description"] as? String == "Updated skill description.")
+  }
+
+  @Test
+  func directiveFormRoundTripsReferenceIDsAndPreservesFoldedFields() throws {
+    let adapter = WorkspaceLibraryEntityFormAdapter(entityType: .directive)
+    let rawJSON = """
+      {
+        "acceptanceCriteria" : [],
+        "goal" : "Ship a focused change.",
+        "id" : "directive-a",
+        "parameters" : [
+          {
+            "name" : "targetFiles",
+            "required" : true,
+            "type" : "string[]"
+          }
+        ],
+        "referenceIds" : [
+          "swift-style-guide-reference"
+        ],
+        "requiresSkillIds" : [],
+        "risk" : {
+          "level" : "medium",
+          "notes" : [],
+          "requiresHumanReview" : true
+        },
+        "steps" : [],
+        "title" : "Directive A",
+        "verification" : [],
+        "version" : "1.0"
+      }
+      """
+
+    // The directive form's first array field maps to referenceIds.
+    let formState = try adapter.parseFormState(from: rawJSON)
+    #expect(formState.firstArrayLines == "swift-style-guide-reference")
+
+    let updatedRawJSON = try adapter.applyFormState(
+      WorkspaceLibraryEntityFormState(
+        id: "directive-a",
+        primaryText: "Directive A",
+        secondaryText: "Ship a focused change.",
+        firstArrayLines: "swift-style-guide-reference\nswiftui-style-guide-reference",
+        secondArrayLines: ""
+      ),
+      to: rawJSON
+    )
+
+    let dictionary = try jsonDictionary(from: updatedRawJSON)
+    #expect(
+      dictionary["referenceIds"] as? [String] == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+      ]
+    )
+    // Folded-in directive fields must survive a form round-trip (applyFormState
+    // merges into the existing JSON rather than reconstructing from form fields).
+    #expect(dictionary["parameters"] != nil)
+    #expect(dictionary["risk"] != nil)
   }
 
   @Test

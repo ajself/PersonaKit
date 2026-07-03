@@ -94,7 +94,6 @@ struct WorkspaceSessionDiagnosticsTests {
         )
       ],
       skills: [],
-      intents: [],
       essentials: []
     )
 
@@ -225,7 +224,6 @@ struct WorkspaceSessionDiagnosticsTests {
         )
       ],
       skills: [],
-      intents: [],
       essentials: []
     )
 

@@ -11,7 +11,6 @@ public enum WorkspaceValidationEntityType: String, Codable, Sendable {
   case persona
   case kit
   case directive
-  case intent
   case reference
   case skill
   case essentials

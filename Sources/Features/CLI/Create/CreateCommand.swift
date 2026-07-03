@@ -9,7 +9,6 @@ struct CreateCommand: ParsableCommand {
       CreatePersonaCommand.self,
       CreateKitCommand.self,
       CreateDirectiveCommand.self,
-      CreateIntentCommand.self,
       CreateReferenceCommand.self,
       CreateSkillCommand.self,
       CreateSessionCommand.self,

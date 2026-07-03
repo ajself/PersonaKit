@@ -321,8 +321,6 @@ struct StudioLibraryPanelView: View {
       return .reference
     case .skills:
       return .skill
-    case .intents:
-      return .intent
     default:
       return nil
     }
@@ -407,7 +405,6 @@ struct StudioLibraryPanelView: View {
       markdownEditorPresentation = workspaceStore.newEssentialEditorPresentation()
     case .directives,
       .kits,
-      .intents,
       .references,
       .skills:
       guard let entityType = editableEntityTypeForSelection() else {

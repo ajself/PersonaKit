@@ -48,7 +48,6 @@ struct WorkspaceStoreSessionActionsTests {
           ],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -117,7 +116,6 @@ struct WorkspaceStoreSessionActionsTests {
             ),
           ],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -183,7 +181,6 @@ struct WorkspaceStoreSessionActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -256,7 +253,6 @@ struct WorkspaceStoreSessionActionsTests {
           ],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -316,7 +312,6 @@ struct WorkspaceStoreSessionActionsTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
     let store = WorkspaceStore(
@@ -564,7 +559,6 @@ struct WorkspaceStoreSessionActionsTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
 
@@ -634,7 +628,6 @@ struct WorkspaceStoreSessionActionsTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
 
@@ -723,7 +716,6 @@ struct WorkspaceStoreSessionActionsTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
 

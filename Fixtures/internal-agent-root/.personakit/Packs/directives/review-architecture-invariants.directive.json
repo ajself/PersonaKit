@@ -34,7 +34,6 @@
       "text": "Confirm proposed changes preserve invariants and remain scoped"
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "codex-cli"
   ]

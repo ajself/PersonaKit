@@ -4,7 +4,6 @@ import SwiftUI
 enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case directives
   case essentials
-  case intents
   case kits
   case personas
   case references

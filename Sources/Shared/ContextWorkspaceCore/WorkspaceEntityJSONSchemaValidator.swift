@@ -6,7 +6,6 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
   case persona
   case kit
   case directive
-  case intent
   case reference
   case skill
 
@@ -19,8 +18,6 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "Kit"
     case .directive:
       return "Directive"
-    case .intent:
-      return "Intent"
     case .reference:
       return "Reference"
     case .skill:
@@ -37,8 +34,6 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "kits"
     case .directive:
       return "directives"
-    case .intent:
-      return "intents"
     case .reference:
       return "references"
     case .skill:
@@ -55,8 +50,6 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return ".kit.json"
     case .directive:
       return ".directive.json"
-    case .intent:
-      return ".intent.json"
     case .reference:
       return ".reference.json"
     case .skill:
@@ -72,8 +65,6 @@ public enum WorkspaceLibraryEntityType: String, CaseIterable, Sendable {
       return "kit.schema.json"
     case .directive:
       return "directive.schema.json"
-    case .intent:
-      return "intentTemplate.schema.json"
     case .reference:
       return "reference.schema.json"
     case .skill:

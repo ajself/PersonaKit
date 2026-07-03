@@ -27,26 +27,16 @@ enum RelationshipMapPresentationState {
       return "session kit override"
     case "persona.defaultKitIds":
       return "default kit"
-    case "directive.requiresIntentTemplateIds":
-      return "directive requires intent"
     case "directive.requiresSkillIds":
       return "directive requires skill"
     case "directive.referenceIds":
       return "directive reference"
-    case "kit.intentTemplateIds":
-      return "kit intent"
     case "kit.skillIds":
       return "kit skill"
     case "kit.referenceIds":
       return "kit reference"
     case "kit.essentialIds":
       return "kit essential"
-    case "intent.requiresSkillIds":
-      return "intent requires skill"
-    case "intent.includesEssentialIds":
-      return "intent essential"
-    case "intent.referenceIds":
-      return "intent reference"
     default:
       return reason
     }

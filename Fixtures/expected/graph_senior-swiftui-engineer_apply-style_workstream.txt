@@ -29,11 +29,6 @@ swiftui-style
   - essential:swiftui-style-guide
   - essential:tools-and-constraints
 
-## Kits → Intent templates
-repo-constraints
-swift-style
-swiftui-style
-
 ## Kits → References
 repo-constraints
 swift-style
@@ -46,18 +41,12 @@ repo-constraints
 swift-style
 swiftui-style
 
-## Directive → Intent templates
-- intent:swift-refactor-safe
-
 ## Directive → References
 - reference:swift-style-guide-reference
 - reference:swiftui-style-guide-reference
 
 ## Directive → Skills
 - skill:codex-cli
-
-## Intent templates → References
-swift-refactor-safe
 
 ## Skill Contract
 Allowed Skills:
@@ -96,7 +85,6 @@ Essentials:
 References:
 - swift-style-guide-reference
 - swiftui-style-guide-reference
-Intents:
-- swift-refactor-safe
 Skills:
 - codex-cli
+

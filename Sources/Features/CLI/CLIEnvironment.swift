@@ -271,8 +271,6 @@ enum CLIHelpers {
       parts.append("expectedPath=\(expectedPath)")
     } else if case .missingKitId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
-    } else if case .missingIntentId(_, _, _, let missingId) = error {
-      parts.append("missingId=\(missingId)")
     } else if case .missingReferenceId(_, _, _, let missingId) = error {
       parts.append("missingId=\(missingId)")
     } else if case .missingSkillId(_, _, _, let missingId) = error {

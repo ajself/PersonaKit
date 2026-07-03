@@ -41,7 +41,6 @@ enum MCPPackResourceType: String, CaseIterable, Equatable {
   case personas
   case kits
   case directives
-  case intents
   case skills
 
   var suffix: String {
@@ -52,8 +51,6 @@ enum MCPPackResourceType: String, CaseIterable, Equatable {
       return ".kit.json"
     case .directives:
       return ".directive.json"
-    case .intents:
-      return ".intent.json"
     case .skills:
       return ".skill.json"
     }
@@ -71,7 +68,6 @@ enum MCPCatalogResourceType: String, CaseIterable, Equatable {
   case personas
   case kits
   case directives
-  case intents
   case skills
   case essentials
   case sessions

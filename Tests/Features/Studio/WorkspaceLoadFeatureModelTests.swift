@@ -25,7 +25,6 @@ struct WorkspaceLoadFeatureModelTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
     let model = WorkspaceLoadFeatureModel(
@@ -78,7 +77,6 @@ struct WorkspaceLoadFeatureModelTests {
       directives: [],
       kits: [],
       skills: [],
-      intents: [],
       essentials: []
     )
     let model = WorkspaceLoadFeatureModel(

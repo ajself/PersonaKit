@@ -669,10 +669,6 @@ struct SessionsPanelView: View {
       scopes["kit:\(kit.id)"] = kit.sourceScope
     }
 
-    for intent in workspaceStore.snapshot.intents {
-      scopes["intent:\(intent.id)"] = intent.sourceScope
-    }
-
     for skill in workspaceStore.snapshot.skills {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }

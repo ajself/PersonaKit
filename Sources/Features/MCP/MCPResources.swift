@@ -24,9 +24,6 @@ struct MCPResourceService: Sendable {
     for directive in registry.directives {
       entries.append(entry(for: .pack(type: .directives, id: directive.id)))
     }
-    for intent in registry.intentTemplates {
-      entries.append(entry(for: .pack(type: .intents, id: intent.id)))
-    }
     for skill in registry.skills {
       entries.append(entry(for: .pack(type: .skills, id: skill.id)))
     }
@@ -149,14 +146,6 @@ extension MCPResourceService {
           schemaVersion: 1,
           type: type.rawValue,
           ids: registry.directives.map(\.id)
-        )
-      )
-    case .intents:
-      return try MCPCatalogSupport.encodeJSON(
-        MCPCatalogPayloads.List(
-          schemaVersion: 1,
-          type: type.rawValue,
-          ids: registry.intentTemplates.map(\.id)
         )
       )
     case .skills:
@@ -291,7 +280,7 @@ extension MCPResourceService {
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit://packs/<type>/<id>",
-          use: "Read raw pack JSON for personas, kits, directives, intents, and skills."
+          use: "Read raw pack JSON for personas, kits, directives, and skills."
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit://essentials/<id>",
@@ -366,7 +355,6 @@ extension MCPResourceService {
         "personas": registry.personas.count,
         "kits": registry.kits.count,
         "directives": registry.directives.count,
-        "intents": registry.intentTemplates.count,
         "skills": registry.skills.count,
         "essentials": essentials.count,
         "sessions": sessions.count,
@@ -406,8 +394,6 @@ extension MCPResourceService {
       return registry.kits.count
     case .directives:
       return registry.directives.count
-    case .intents:
-      return registry.intentTemplates.count
     case .skills:
       return registry.skills.count
     case .essentials:

@@ -28,12 +28,6 @@
         "type": "string"
       }
     },
-    "intentTemplateIds": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
     "skillIds": {
       "type": "array",
       "items": {

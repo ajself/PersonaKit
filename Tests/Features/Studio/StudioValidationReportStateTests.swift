@@ -11,7 +11,7 @@ struct StudioValidationReportStateTests {
       snapshot: snapshot(),
       validation: WorkspaceValidationSnapshot(
         summary:
-          "Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=2 essentials=1 errors=0",
+          "Validation summary: personas=1 kits=1 directives=1 references=0 skills=2 essentials=1 errors=0",
         issues: []
       ),
       validationErrorMessage: nil
@@ -33,7 +33,7 @@ struct StudioValidationReportStateTests {
         "Essentials",
       ]
     )
-    #expect(report.omittedAreaSummary == "No references or intents in this workspace")
+    #expect(report.omittedAreaSummary == "No references in this workspace")
   }
 
   @Test
@@ -228,7 +228,6 @@ struct StudioValidationReportStateTests {
         item(id: "skill-a", path: "Packs/skills/skill-a.skill.json"),
         item(id: "skill-b", path: "Packs/skills/skill-b.skill.json"),
       ],
-      intents: [],
       references: [],
       essentials: [
         item(id: "essential-a", path: "Packs/essentials/essential-a.md")

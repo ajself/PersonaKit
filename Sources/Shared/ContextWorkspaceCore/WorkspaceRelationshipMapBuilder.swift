@@ -340,41 +340,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
 
       let directiveNodeKey = workspaceSessionMapNodeKey(kind: .directive, id: directive.id)
 
-      for intentID in sortedUniqueWorkspaceSessionMapValues(directive.requiresIntentTemplateIds) {
-        let intent = registry.intentTemplatesById[intentID]
-        let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intentID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .intent,
-          id: intentID,
-          displayName: intent?.name ?? intentID,
-          isMissing: intent == nil,
-          badge: "required"
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: directiveNodeKey,
-            toKey: intentNodeKey,
-            reason: "directive.requiresIntentTemplateIds"
-          )
-        )
-
-        if intent == nil {
-          appendUniqueError(
-            .missingIntentId(
-              sourceType: .directive,
-              sourceId: directive.id,
-              field: "requiresIntentTemplateIds",
-              missingId: intentID
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
-
       for skillID in sortedUniqueWorkspaceSessionMapValues(directive.requiresSkillIds) {
         let skill = registry.skillsById[skillID]
         let skillNodeKey = workspaceSessionMapNodeKey(kind: .skill, id: skillID)
@@ -455,40 +420,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
       )
 
       let kitNodeKey = workspaceSessionMapNodeKey(kind: .kit, id: kit.id)
-
-      for intentID in sortedUniqueWorkspaceSessionMapValues(kit.intentTemplateIds ?? []) {
-        let intent = registry.intentTemplatesById[intentID]
-        let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intentID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .intent,
-          id: intentID,
-          displayName: intent?.name ?? intentID,
-          isMissing: intent == nil
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: kitNodeKey,
-            toKey: intentNodeKey,
-            reason: "kit.intentTemplateIds"
-          )
-        )
-
-        if intent == nil {
-          appendUniqueError(
-            .missingIntentId(
-              sourceType: .kit,
-              sourceId: kit.id,
-              field: "intentTemplateIds",
-              missingId: intentID
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
 
       for skillID in sortedUniqueWorkspaceSessionMapValues(kit.skillIds ?? []) {
         let skill = registry.skillsById[skillID]
@@ -586,123 +517,6 @@ public struct WorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding,
               field: "essentialIds",
               missingId: essentialID,
               expectedPath: PersonaKitEssentialResolver.expectedPath(for: essentialID)
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
-    }
-
-    for intent in registry.intentTemplates.sorted(by: { $0.id < $1.id }) {
-      upsertWorkspaceSessionMapNode(
-        in: &nodeStateByKey,
-        kind: .intent,
-        id: intent.id,
-        displayName: intent.name,
-        isMissing: false
-      )
-
-      let intentNodeKey = workspaceSessionMapNodeKey(kind: .intent, id: intent.id)
-
-      for skillID in sortedUniqueWorkspaceSessionMapValues(intent.requiresSkillIds) {
-        let skill = registry.skillsById[skillID]
-        let skillNodeKey = workspaceSessionMapNodeKey(kind: .skill, id: skillID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .skill,
-          id: skillID,
-          displayName: skill?.name ?? skillID,
-          isMissing: skill == nil,
-          badge: "required"
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: intentNodeKey,
-            toKey: skillNodeKey,
-            reason: "intent.requiresSkillIds"
-          )
-        )
-
-        if skill == nil {
-          appendUniqueError(
-            .missingSkillId(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "requiresSkillIds",
-              missingId: skillID
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
-
-      for essentialID in sortedUniqueWorkspaceSessionMapValues(intent.includesEssentialIds) {
-        let essentialNodeKey = workspaceSessionMapNodeKey(kind: .essential, id: essentialID)
-        let exists = resolveEssential(essentialID, scopes: scopes) != nil
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .essential,
-          id: essentialID,
-          displayName: essentialID,
-          isMissing: !exists,
-          badge: "required"
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: intentNodeKey,
-            toKey: essentialNodeKey,
-            reason: "intent.includesEssentialIds"
-          )
-        )
-
-        if !exists {
-          appendUniqueError(
-            .missingEssentialFile(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "includesEssentialIds",
-              missingId: essentialID,
-              expectedPath: PersonaKitEssentialResolver.expectedPath(for: essentialID)
-            ),
-            errors: &errors,
-            errorKeys: &errorKeys
-          )
-        }
-      }
-
-      for referenceID in sortedUniqueWorkspaceSessionMapValues(intent.referenceIds ?? []) {
-        let reference = registry.referencesById[referenceID]
-        let referenceNodeKey = workspaceSessionMapNodeKey(kind: .reference, id: referenceID)
-
-        upsertWorkspaceSessionMapNode(
-          in: &nodeStateByKey,
-          kind: .reference,
-          id: referenceID,
-          displayName: reference?.name ?? referenceID,
-          isMissing: reference == nil
-        )
-
-        edgeKeys.insert(
-          WorkspaceSessionMapEdgeKey(
-            fromKey: intentNodeKey,
-            toKey: referenceNodeKey,
-            reason: "intent.referenceIds"
-          )
-        )
-
-        if reference == nil {
-          appendUniqueError(
-            .missingReferenceId(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "referenceIds",
-              missingId: referenceID
             ),
             errors: &errors,
             errorKeys: &errorKeys

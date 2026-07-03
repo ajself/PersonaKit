@@ -27,7 +27,6 @@ public enum BestGuidanceSupport {
     public let personas: Int
     public let kits: Int
     public let directives: Int
-    public let intents: Int
     public let references: Int
     public let skills: Int
     public let essentials: Int
@@ -54,7 +53,6 @@ public enum BestGuidanceSupport {
       personas: validation.result?.counts.personas ?? 0,
       kits: validation.result?.counts.kits ?? 0,
       directives: validation.result?.counts.directives ?? 0,
-      intents: validation.result?.counts.intents ?? 0,
       references: validation.result?.counts.references ?? 0,
       skills: validation.result?.counts.skills ?? 0,
       essentials: validation.result?.counts.essentials ?? 0,
@@ -97,7 +95,7 @@ public enum BestGuidanceSupport {
         "Guidance is advisory and does not select or authorize an operating contract.",
         "Resolve a PersonaKit contract before selecting external skills or acting on a task.",
         "New here? Run `personakit init <path>` for a worked example of every entity, then edit, `personakit validate`, and `personakit export` (or `contract`).",
-        "Authoring JSON by hand? Run `personakit schema <entity>` (persona, kit, directive, intent, reference, skill) to see required fields and exact property names.",
+        "Authoring JSON by hand? Run `personakit schema <entity>` (persona, kit, directive, reference, skill) to see required fields and exact property names.",
       ]
     )
   }

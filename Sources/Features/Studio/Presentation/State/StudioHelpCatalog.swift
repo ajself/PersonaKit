@@ -77,45 +77,17 @@ enum StudioHelpCatalog {
         commonMistakes: [
           "Storing references in Essentials just because they are markdown files.",
           "Writing vague trigger rules that do not map cleanly to the intended surface area.",
-          "Changing ids casually and breaking directive, kit, or intent links.",
+          "Changing ids casually and breaking directive or kit links.",
         ],
         examples: [
           "Example reference: a SwiftUI style guide with trigger rules for `*View.swift` files and the `swiftui` reference tag."
         ],
         nextStepText:
-          "Confirm references resolve from the right directives, kits, or intents, then inspect the Relationship Map for clean source edges.",
+          "Confirm references resolve from the right directives or kits, then inspect the Relationship Map for clean source edges.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
           StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
           StudioHelpLink(label: "Go to Relationship Map", destination: .relationshipMap, searchText: nil),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
-        ]
-      )
-
-    case .intents:
-      return StudioHelpTopic(
-        id: .intents,
-        title: "Intents Help",
-        shortHint: "Intents define reusable work patterns and decision rails.",
-        purpose:
-          "Intents encode repeatable approaches so directives can rely on consistent professional judgment patterns.",
-        keyFields: [
-          "Use a clear id and focused intent title.",
-          "Capture decision boundaries and expected outputs.",
-          "Keep intent language reusable across directives.",
-        ],
-        commonMistakes: [
-          "Encoding one specific ticket instead of a reusable pattern.",
-          "Leaving expected deliverables implicit.",
-          "Overlapping heavily with directive content.",
-        ],
-        examples: [
-          "Example intent: \"When blocked by ambiguity, stop and request a single clarifying decision.\""
-        ],
-        nextStepText: "Reference intent ids from kits/directives, then validate workspace for missing links.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
-          StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
           StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
         ]
       )
@@ -182,7 +154,7 @@ enum StudioHelpCatalog {
         title: "Relationship Map Help",
         shortHint: "Relationship Map shows cross-entity references and resolution health.",
         purpose:
-          "Use this panel to visualize dependencies between sessions, personas, directives, kits, intents, skills, essentials, and references.",
+          "Use this panel to visualize dependencies between sessions, personas, directives, kits, skills, essentials, and references.",
         keyFields: [
           "Map Health summarizes whether references are fully resolved.",
           "Focus Selected Session narrows the graph to one session context.",
@@ -277,10 +249,10 @@ enum StudioHelpCatalog {
         purpose:
           "A Skill is not a runnable command. It declares a capability, who provides it, and its risk so PersonaKit can decide whether a resolved session may use that capability.",
         keyFields: [
-          "Use the id as the stable capability name referenced by personas, kits, directives, and intents.",
+          "Use the id as the stable capability name referenced by personas, kits, and directives.",
           "Use providedBy to name the external tool or environment associated with the capability.",
           "Document risk so the agent can translate authorization into ordinary operating judgment.",
-          "Personas allow or forbid skills; kits, directives, and intents can require them.",
+          "Personas allow or forbid skills; kits and directives can require them.",
         ],
         commonMistakes: [
           "Treating skills as slash commands, prompts, or executable automation.",
@@ -353,8 +325,6 @@ extension SidebarItem {
       return .references
     case .skills:
       return .skills
-    case .intents:
-      return .intents
     case .relationshipMap:
       return .relationshipMap
     case .validationResults:

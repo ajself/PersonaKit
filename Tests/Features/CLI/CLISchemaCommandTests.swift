@@ -50,8 +50,7 @@ struct CLISchemaCommandTests {
         "schema \(entityType.rawValue) should emit a JSON object"
       )
 
-      // Guards bundled-resource regressions for every entity, including the
-      // non-identity `intent` -> `intentTemplate.schema.json` mapping.
+      // Guards bundled-resource regressions for every supported schema entity.
       #expect(object["$schema"] != nil, "schema \(entityType.rawValue) should be a JSON Schema")
       #expect(object["type"] as? String == "object")
     }

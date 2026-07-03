@@ -59,7 +59,6 @@ struct SessionContractResolverTests {
 
     #expect(result.directive == nil)
     #expect(result.kits.map(\.id) == ["repo-constraints", "swift-style", "swiftui-style"])
-    #expect(result.intents.isEmpty)
     #expect(result.skills.isEmpty)
     #expect(result.skillAuthorization.requiredSkillIds.isEmpty)
     #expect(result.skillAuthorization.authorizedSkillIds == ["codex-cli"])

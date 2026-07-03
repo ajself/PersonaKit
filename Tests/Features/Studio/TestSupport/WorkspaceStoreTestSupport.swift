@@ -126,7 +126,6 @@ func makeSnapshot(id: String) -> WorkspaceSnapshot {
     directives: [],
     kits: [],
     skills: [],
-    intents: [],
     essentials: []
   )
 }
@@ -149,7 +148,6 @@ func makeSessionSnapshot(
     directives: [],
     kits: [],
     skills: [],
-    intents: [],
     essentials: []
   )
 }
@@ -174,7 +172,7 @@ func makeWorkspaceRelationshipMap(personaID: String) -> WorkspaceSessionMap {
 
 func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
   WorkspaceValidationSnapshot(
-    summary: "Validation summary: personas=1 kits=0 directives=0 intents=0 skills=0 essentials=0 errors=1",
+    summary: "Validation summary: personas=1 kits=0 directives=0 references=0 skills=0 essentials=0 errors=1",
     issues: [
       WorkspaceValidationIssue(
         entityType: .persona,

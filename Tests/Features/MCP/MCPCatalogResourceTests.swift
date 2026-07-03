@@ -42,7 +42,6 @@ struct MCPCatalogResourceTests {
     #expect(counts["personas"] == 1)
     #expect(counts["kits"] == 3)
     #expect(counts["directives"] == 1)
-    #expect(counts["intents"] == 1)
     #expect(counts["skills"] == 2)
     #expect(counts["essentials"] == 7)
     #expect(counts["sessions"] == 1)
@@ -179,7 +178,6 @@ struct MCPCatalogResourceTests {
         summary: kit.summary,
         essentialIds: kit.essentialIds,
         referenceIds: kit.referenceIds,
-        intentTemplateIds: kit.intentTemplateIds,
         skillIds: kit.skillIds
       )
     }
@@ -444,7 +442,6 @@ private func emptyRegistry() -> Registry {
     personasById: [:],
     kitsById: [:],
     directivesById: [:],
-    intentTemplatesById: [:],
     referencesById: [:],
     skillsById: [:]
   )

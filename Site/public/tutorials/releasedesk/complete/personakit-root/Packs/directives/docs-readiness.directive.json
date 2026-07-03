@@ -25,7 +25,6 @@
       "text": "make public-check"
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "docs-editing"
   ]

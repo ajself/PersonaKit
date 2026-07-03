@@ -99,8 +99,6 @@ enum MCPCatalogSupport {
       return "List of kit ids available in the active scope set."
     case .directives:
       return "List of directive ids available in the active scope set."
-    case .intents:
-      return "List of intent template ids available in the active scope set."
     case .skills:
       return "List of skill ids available in the active scope set."
     case .essentials:

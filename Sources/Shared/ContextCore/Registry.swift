@@ -5,7 +5,6 @@ public struct Registry: Sendable {
   public let personasById: [String: Persona]
   public let kitsById: [String: Kit]
   public let directivesById: [String: Directive]
-  public let intentTemplatesById: [String: IntentTemplate]
   public let referencesById: [String: Reference]
   public let skillsById: [String: Skill]
 
@@ -19,10 +18,6 @@ public struct Registry: Sendable {
 
   public var directives: [Directive] {
     directivesById.sorted { $0.key < $1.key }.map { $0.value }
-  }
-
-  public var intentTemplates: [IntentTemplate] {
-    intentTemplatesById.sorted { $0.key < $1.key }.map { $0.value }
   }
 
   public var references: [Reference] {
@@ -72,7 +67,6 @@ public struct Registry: Sendable {
     var personasById: [String: Persona] = [:]
     var kitsById: [String: Kit] = [:]
     var directivesById: [String: Directive] = [:]
-    var intentTemplatesById: [String: IntentTemplate] = [:]
     var referencesById: [String: Reference] = [:]
     var skillsById: [String: Skill] = [:]
 
@@ -138,16 +132,6 @@ public struct Registry: Sendable {
         errors: &errors
       )
 
-      let intents: [String: IntentTemplate] = loadEntities(
-        root: root,
-        directory: packsURL.appendingPathComponent("intents"),
-        suffix: ".intent.json",
-        entityType: .intentTemplate,
-        decoder: decoder,
-        fileManager: fileManager,
-        errors: &errors
-      )
-
       let references: [String: Reference] = loadEntities(
         root: root,
         directory: packsURL.appendingPathComponent("references"),
@@ -180,10 +164,6 @@ public struct Registry: Sendable {
         directivesById[id] = directive
       }
 
-      for (id, intent) in intents {
-        intentTemplatesById[id] = intent
-      }
-
       for (id, reference) in references {
         referencesById[id] = reference
       }
@@ -201,7 +181,6 @@ public struct Registry: Sendable {
       personasById: personasById,
       kitsById: kitsById,
       directivesById: directivesById,
-      intentTemplatesById: intentTemplatesById,
       referencesById: referencesById,
       skillsById: skillsById
     )
@@ -216,7 +195,6 @@ private protocol EntityWithID {
 extension Persona: EntityWithID {}
 extension Kit: EntityWithID {}
 extension Directive: EntityWithID {}
-extension IntentTemplate: EntityWithID {}
 extension Reference: EntityWithID {}
 extension Skill: EntityWithID {}
 

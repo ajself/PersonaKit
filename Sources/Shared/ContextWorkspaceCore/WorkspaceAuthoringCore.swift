@@ -180,7 +180,6 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
   public var summary: String
   public var essentialIds: [String]
   public var referenceIds: [String]
-  public var intentTemplateIds: [String]
   public var skillIds: [String]
 
   public init(
@@ -189,7 +188,6 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
     summary: String,
     essentialIds: [String],
     referenceIds: [String] = [],
-    intentTemplateIds: [String] = [],
     skillIds: [String]
   ) {
     self.id = id
@@ -197,7 +195,6 @@ public struct WorkspaceKitDraft: Equatable, Sendable {
     self.summary = summary
     self.essentialIds = essentialIds
     self.referenceIds = referenceIds
-    self.intentTemplateIds = intentTemplateIds
     self.skillIds = skillIds
   }
 }
@@ -209,7 +206,6 @@ public struct WorkspaceDirectiveDraft: Sendable {
   public var steps: [Directive.Step]
   public var acceptanceCriteria: [String]
   public var verification: [Directive.VerificationItem]
-  public var requiresIntentTemplateIds: [String]
   public var requiresSkillIds: [String]
   public var referenceIds: [String]
 
@@ -220,7 +216,6 @@ public struct WorkspaceDirectiveDraft: Sendable {
     steps: [Directive.Step],
     acceptanceCriteria: [String],
     verification: [Directive.VerificationItem],
-    requiresIntentTemplateIds: [String],
     requiresSkillIds: [String],
     referenceIds: [String] = []
   ) {
@@ -230,43 +225,8 @@ public struct WorkspaceDirectiveDraft: Sendable {
     self.steps = steps
     self.acceptanceCriteria = acceptanceCriteria
     self.verification = verification
-    self.requiresIntentTemplateIds = requiresIntentTemplateIds
     self.requiresSkillIds = requiresSkillIds
     self.referenceIds = referenceIds
-  }
-}
-
-public struct WorkspaceIntentDraft: Sendable {
-  public var id: String
-  public var name: String
-  public var description: String
-  public var parameters: [IntentTemplate.Parameter]
-  public var includesEssentialIds: [String]
-  public var requiresSkillIds: [String]
-  public var riskLevel: String
-  public var requiresHumanReview: Bool
-  public var riskNotes: [String]
-
-  public init(
-    id: String,
-    name: String,
-    description: String,
-    parameters: [IntentTemplate.Parameter],
-    includesEssentialIds: [String],
-    requiresSkillIds: [String],
-    riskLevel: String,
-    requiresHumanReview: Bool,
-    riskNotes: [String]
-  ) {
-    self.id = id
-    self.name = name
-    self.description = description
-    self.parameters = parameters
-    self.includesEssentialIds = includesEssentialIds
-    self.requiresSkillIds = requiresSkillIds
-    self.riskLevel = riskLevel
-    self.requiresHumanReview = requiresHumanReview
-    self.riskNotes = riskNotes
   }
 }
 
@@ -314,7 +274,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       summary: "",
       essentialIds: [],
       referenceIds: [],
-      intentTemplateIds: [],
       skillIds: []
     )
   }
@@ -327,7 +286,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
     knownReferenceIDs: Set<String> = [],
-    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
     let normalized = normalizedDraft(draft)
@@ -352,11 +310,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       warnings.append("Unknown reference ids: \(unknownReferenceIDs.joined(separator: ", ")).")
     }
 
-    let unknownIntentIDs = normalized.intentTemplateIds.filter { !knownIntentIDs.contains($0) }
-    if !unknownIntentIDs.isEmpty {
-      warnings.append("Unknown intent ids: \(unknownIntentIDs.joined(separator: ", ")).")
-    }
-
     let unknownSkillIDs = normalized.skillIds.filter { !knownSkillIDs.contains($0) }
     if !unknownSkillIDs.isEmpty {
       warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
@@ -369,14 +322,12 @@ public struct WorkspaceKitDraftBuilder: Sendable {
     draft: WorkspaceKitDraft,
     knownEssentialIDs: Set<String> = [],
     knownReferenceIDs: Set<String> = [],
-    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
       knownEssentialIDs: knownEssentialIDs,
       knownReferenceIDs: knownReferenceIDs,
-      knownIntentIDs: knownIntentIDs,
       knownSkillIDs: knownSkillIDs
     )
 
@@ -392,7 +343,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       summary: normalized.summary,
       essentialIds: normalized.essentialIds,
       referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds,
-      intentTemplateIds: normalized.intentTemplateIds.isEmpty ? nil : normalized.intentTemplateIds,
       skillIds: normalized.skillIds.isEmpty ? nil : normalized.skillIds
     )
 
@@ -406,7 +356,6 @@ public struct WorkspaceKitDraftBuilder: Sendable {
       summary: draft.summary.trimmingCharacters(in: .whitespacesAndNewlines),
       essentialIds: normalizedIDs(draft.essentialIds),
       referenceIds: normalizedIDs(draft.referenceIds),
-      intentTemplateIds: normalizedIDs(draft.intentTemplateIds),
       skillIds: normalizedIDs(draft.skillIds)
     )
   }
@@ -425,7 +374,6 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       steps: starter ? [Directive.Step(text: "TODO: add directive step.", requiresReview: nil)] : [],
       acceptanceCriteria: starter ? ["TODO: add acceptance criteria."] : [],
       verification: starter ? [Directive.VerificationItem(kind: "manual", text: "TODO: review directive output.")] : [],
-      requiresIntentTemplateIds: [],
       requiresSkillIds: []
     )
   }
@@ -436,7 +384,6 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
 
   public func validate(
     draft: WorkspaceDirectiveDraft,
-    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = [],
     knownReferenceIDs: Set<String> = []
   ) -> WorkspaceCreateValidation {
@@ -451,11 +398,6 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       summary: normalized.goal,
       errors: &errors
     )
-
-    let unknownIntentIDs = normalized.requiresIntentTemplateIds.filter { !knownIntentIDs.contains($0) }
-    if !unknownIntentIDs.isEmpty {
-      warnings.append("Unknown intent ids: \(unknownIntentIDs.joined(separator: ", ")).")
-    }
 
     let unknownSkillIDs = normalized.requiresSkillIds.filter { !knownSkillIDs.contains($0) }
     if !unknownSkillIDs.isEmpty {
@@ -472,13 +414,11 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
 
   public func buildRawJSON(
     draft: WorkspaceDirectiveDraft,
-    knownIntentIDs: Set<String> = [],
     knownSkillIDs: Set<String> = [],
     knownReferenceIDs: Set<String> = []
   ) throws -> String {
     let validation = validate(
       draft: draft,
-      knownIntentIDs: knownIntentIDs,
       knownSkillIDs: knownSkillIDs,
       knownReferenceIDs: knownReferenceIDs
     )
@@ -496,7 +436,6 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
       steps: normalized.steps,
       acceptanceCriteria: normalized.acceptanceCriteria,
       verification: normalized.verification,
-      requiresIntentTemplateIds: normalized.requiresIntentTemplateIds,
       requiresSkillIds: normalized.requiresSkillIds,
       referenceIds: normalized.referenceIds.isEmpty ? nil : normalized.referenceIds
     )
@@ -526,117 +465,8 @@ public struct WorkspaceDirectiveDraftBuilder: Sendable {
           )
         }
         .filter { !$0.kind.isEmpty && !$0.text.isEmpty },
-      requiresIntentTemplateIds: normalizedIDs(draft.requiresIntentTemplateIds),
       requiresSkillIds: normalizedIDs(draft.requiresSkillIds),
       referenceIds: normalizedIDs(draft.referenceIds)
-    )
-  }
-}
-
-public struct WorkspaceIntentDraftBuilder: Sendable {
-  public init() {}
-
-  public func defaultDraft(template: WorkspaceCreationTemplate) -> WorkspaceIntentDraft {
-    WorkspaceIntentDraft(
-      id: "",
-      name: "",
-      description: "",
-      parameters: [],
-      includesEssentialIds: [],
-      requiresSkillIds: [],
-      riskLevel: "medium",
-      requiresHumanReview: false,
-      riskNotes: []
-    )
-  }
-
-  public func suggestedID(from name: String) -> String {
-    WorkspaceEntityIDSuggester.suggestedID(from: name)
-  }
-
-  public func validate(
-    draft: WorkspaceIntentDraft,
-    knownEssentialIDs: Set<String> = [],
-    knownSkillIDs: Set<String> = []
-  ) -> WorkspaceCreateValidation {
-    let normalized = normalizedDraft(draft)
-    var errors: [String] = []
-    var warnings: [String] = []
-
-    validateCoreFields(
-      id: normalized.id,
-      displayName: "Intent",
-      name: normalized.name,
-      summary: normalized.description,
-      errors: &errors
-    )
-
-    let unknownEssentialIDs = normalized.includesEssentialIds.filter { !knownEssentialIDs.contains($0) }
-    if !unknownEssentialIDs.isEmpty {
-      warnings.append("Unknown essential ids: \(unknownEssentialIDs.joined(separator: ", ")).")
-    }
-
-    let unknownSkillIDs = normalized.requiresSkillIds.filter { !knownSkillIDs.contains($0) }
-    if !unknownSkillIDs.isEmpty {
-      warnings.append("Unknown skill ids: \(unknownSkillIDs.joined(separator: ", ")).")
-    }
-
-    return WorkspaceCreateValidation(errors: errors, warnings: warnings)
-  }
-
-  public func buildRawJSON(
-    draft: WorkspaceIntentDraft,
-    knownEssentialIDs: Set<String> = [],
-    knownSkillIDs: Set<String> = []
-  ) throws -> String {
-    let validation = validate(
-      draft: draft,
-      knownEssentialIDs: knownEssentialIDs,
-      knownSkillIDs: knownSkillIDs
-    )
-
-    guard validation.errors.isEmpty else {
-      throw WorkspaceSnapshotBuildError(message: validation.errors.joined(separator: " "))
-    }
-
-    let normalized = normalizedDraft(draft)
-    let intent = IntentTemplate(
-      id: normalized.id,
-      version: "1.0",
-      name: normalized.name,
-      description: normalized.description,
-      parameters: normalized.parameters,
-      includesEssentialIds: normalized.includesEssentialIds,
-      requiresSkillIds: normalized.requiresSkillIds,
-      risk: IntentTemplate.Risk(
-        level: normalized.riskLevel,
-        requiresHumanReview: normalized.requiresHumanReview,
-        notes: normalized.riskNotes
-      )
-    )
-
-    return try WorkspaceAuthoringJSON.encode(intent)
-  }
-
-  private func normalizedDraft(_ draft: WorkspaceIntentDraft) -> WorkspaceIntentDraft {
-    WorkspaceIntentDraft(
-      id: WorkspaceEntityIDPolicy.normalized(draft.id),
-      name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
-      description: draft.description.trimmingCharacters(in: .whitespacesAndNewlines),
-      parameters: draft.parameters
-        .map { parameter in
-          IntentTemplate.Parameter(
-            name: parameter.name.trimmingCharacters(in: .whitespacesAndNewlines),
-            type: parameter.type.trimmingCharacters(in: .whitespacesAndNewlines),
-            required: parameter.required
-          )
-        }
-        .filter { !$0.name.isEmpty && !$0.type.isEmpty },
-      includesEssentialIds: normalizedIDs(draft.includesEssentialIds),
-      requiresSkillIds: normalizedIDs(draft.requiresSkillIds),
-      riskLevel: draft.riskLevel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-      requiresHumanReview: draft.requiresHumanReview,
-      riskNotes: normalizedTextItems(draft.riskNotes)
     )
   }
 }

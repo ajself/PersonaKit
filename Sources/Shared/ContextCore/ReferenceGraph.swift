@@ -5,7 +5,6 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
   case persona
   case kit
   case directive
-  case intent
   case reference
   case skill
   case essential
@@ -21,10 +20,9 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     case .persona: return 1
     case .kit: return 2
     case .directive: return 3
-    case .intent: return 4
-    case .reference: return 5
-    case .skill: return 6
-    case .essential: return 7
+    case .reference: return 4
+    case .skill: return 5
+    case .essential: return 6
     }
   }
 
@@ -38,7 +36,7 @@ public enum ReferenceEntityType: String, Sendable, CaseIterable, Comparable {
     switch self {
     case .session, .persona, .directive:
       return true
-    case .kit, .intent, .reference, .skill, .essential:
+    case .kit, .reference, .skill, .essential:
       return false
     }
   }
@@ -96,7 +94,6 @@ public struct ReferenceGraph: Sendable {
     for persona in registry.personas { nodes.insert(node(.persona, persona.id)) }
     for kit in registry.kits { nodes.insert(node(.kit, kit.id)) }
     for directive in registry.directives { nodes.insert(node(.directive, directive.id)) }
-    for intent in registry.intentTemplates { nodes.insert(node(.intent, intent.id)) }
     for reference in registry.references { nodes.insert(node(.reference, reference.id)) }
     for skill in registry.skills { nodes.insert(node(.skill, skill.id)) }
     for essentialId in essentialIds { nodes.insert(node(.essential, essentialId)) }
@@ -119,22 +116,13 @@ public struct ReferenceGraph: Sendable {
       let from = node(.kit, kit.id)
       link(from, .essential, kit.essentialIds, "essentialIds")
       link(from, .reference, kit.referenceIds ?? [], "referenceIds")
-      link(from, .intent, kit.intentTemplateIds ?? [], "intentTemplateIds")
       link(from, .skill, kit.skillIds ?? [], "skillIds")
     }
 
     for directive in registry.directives {
       let from = node(.directive, directive.id)
-      link(from, .intent, directive.requiresIntentTemplateIds, "requiresIntentTemplateIds")
       link(from, .skill, directive.requiresSkillIds, "requiresSkillIds")
       link(from, .reference, directive.referenceIds ?? [], "referenceIds")
-    }
-
-    for intent in registry.intentTemplates {
-      let from = node(.intent, intent.id)
-      link(from, .essential, intent.includesEssentialIds, "includesEssentialIds")
-      link(from, .skill, intent.requiresSkillIds, "requiresSkillIds")
-      link(from, .reference, intent.referenceIds ?? [], "referenceIds")
     }
 
     for session in sessions {

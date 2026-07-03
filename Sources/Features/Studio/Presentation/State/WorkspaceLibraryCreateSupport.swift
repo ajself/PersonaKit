@@ -35,7 +35,6 @@ enum WorkspaceLibraryCreateSupport {
           verification: [
             Directive.VerificationItem(kind: "manual", text: "TODO: review directive output.")
           ],
-          requiresIntentTemplateIds: [],
           requiresSkillIds: []
         )
       )
@@ -47,25 +46,7 @@ enum WorkspaceLibraryCreateSupport {
           name: "",
           summary: "",
           essentialIds: [],
-          intentTemplateIds: nil,
           skillIds: nil
-        )
-      )
-    case .intent:
-      return try WorkspaceAuthoringJSON.encode(
-        IntentTemplate(
-          id: "",
-          version: "1.0",
-          name: "",
-          description: "",
-          parameters: [],
-          includesEssentialIds: [],
-          requiresSkillIds: [],
-          risk: IntentTemplate.Risk(
-            level: "medium",
-            requiresHumanReview: false,
-            notes: []
-          )
         )
       )
     case .reference:

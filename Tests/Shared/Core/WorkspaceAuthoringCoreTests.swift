@@ -80,20 +80,7 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
-  func intentAndSkillRiskLevelsNormalizeToLowercase() throws {
-    let intentJSON = try WorkspaceIntentDraftBuilder().buildRawJSON(
-      draft: WorkspaceIntentDraft(
-        id: "closeout-review",
-        name: "Closeout Review",
-        description: "Prepare the closeout packet.",
-        parameters: [],
-        includesEssentialIds: [],
-        requiresSkillIds: [],
-        riskLevel: "HIGH",
-        requiresHumanReview: true,
-        riskNotes: []
-      )
-    )
+  func skillRiskLevelsNormalizeToLowercase() throws {
     let skillJSON = try WorkspaceSkillDraftBuilder().buildRawJSON(
       draft: WorkspaceSkillDraft(
         id: "codex-cli",
@@ -107,12 +94,6 @@ struct WorkspaceAuthoringCoreTests {
       )
     )
 
-    let intentObject = try #require(
-      JSONSerialization.jsonObject(with: Data(intentJSON.utf8)) as? [String: Any]
-    )
-    let intentRisk = try #require(intentObject["risk"] as? [String: Any])
-    #expect(intentRisk["level"] as? String == "high")
-
     let skillObject = try #require(
       JSONSerialization.jsonObject(with: Data(skillJSON.utf8)) as? [String: Any]
     )
@@ -121,7 +102,7 @@ struct WorkspaceAuthoringCoreTests {
   }
 
   @Test
-  func kitDraftBuilderEmitsReferenceAndIntentIds() throws {
+  func kitDraftBuilderEmitsReferenceIds() throws {
     let kitJSON = try WorkspaceKitDraftBuilder().buildRawJSON(
       draft: WorkspaceKitDraft(
         id: "review-guardrails",
@@ -129,7 +110,6 @@ struct WorkspaceAuthoringCoreTests {
         summary: "Shared review context.",
         essentialIds: ["review-boundaries"],
         referenceIds: ["review-checklist"],
-        intentTemplateIds: ["behavior-preserving-review"],
         skillIds: ["read-only-review"]
       )
     )
@@ -138,11 +118,10 @@ struct WorkspaceAuthoringCoreTests {
       JSONSerialization.jsonObject(with: Data(kitJSON.utf8)) as? [String: Any]
     )
     #expect(kitObject["referenceIds"] as? [String] == ["review-checklist"])
-    #expect(kitObject["intentTemplateIds"] as? [String] == ["behavior-preserving-review"])
   }
 
   @Test
-  func kitDraftBuilderWarnsOnUnknownReferenceAndIntentIds() {
+  func kitDraftBuilderWarnsOnUnknownReferenceIds() {
     let validation = WorkspaceKitDraftBuilder().validate(
       draft: WorkspaceKitDraft(
         id: "review-guardrails",
@@ -150,16 +129,13 @@ struct WorkspaceAuthoringCoreTests {
         summary: "Shared review context.",
         essentialIds: [],
         referenceIds: ["missing-reference"],
-        intentTemplateIds: ["missing-intent"],
         skillIds: []
       ),
-      knownReferenceIDs: [],
-      knownIntentIDs: []
+      knownReferenceIDs: []
     )
 
     #expect(validation.errors.isEmpty)
     #expect(validation.warnings.contains("Unknown reference ids: missing-reference."))
-    #expect(validation.warnings.contains("Unknown intent ids: missing-intent."))
   }
 
   @Test

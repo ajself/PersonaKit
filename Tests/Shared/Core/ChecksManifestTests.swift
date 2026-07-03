@@ -39,7 +39,6 @@ struct ChecksManifestTests {
       steps: steps,
       acceptanceCriteria: [],
       verification: verification,
-      requiresIntentTemplateIds: [],
       requiresSkillIds: []
     )
   }

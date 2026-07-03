@@ -47,7 +47,6 @@ public struct Resolver {
       kits: contract.kits,
       essentials: contract.essentials,
       availableReferences: contract.availableReferences,
-      intents: contract.intents,
       skills: contract.skills,
       skillAuthorization: contract.skillAuthorization
     )

@@ -57,8 +57,6 @@ package enum WorkspaceSnapshotLookup {
       return snapshot.references
     case .skill:
       return snapshot.skills
-    case .intent:
-      return snapshot.intents
     }
   }
 
@@ -122,7 +120,6 @@ package enum WorkspaceSnapshotLookup {
     allItems.append(contentsOf: snapshot.directives)
     allItems.append(contentsOf: snapshot.kits)
     allItems.append(contentsOf: snapshot.skills)
-    allItems.append(contentsOf: snapshot.intents)
     allItems.append(contentsOf: snapshot.references)
     allItems.append(contentsOf: snapshot.essentials)
 

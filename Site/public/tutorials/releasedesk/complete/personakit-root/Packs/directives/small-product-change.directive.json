@@ -28,7 +28,6 @@
       "text": "node test/run-tests.mjs"
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "code-editing",
     "releasedesk-readiness"

@@ -248,7 +248,6 @@ enum StarterKitManifest {
               "text": "swift run personakit validate"
             }
           ],
-          "requiresIntentTemplateIds": [],
           "requiresSkillIds": [],
           "referenceIds": [
             "cli-change-checklist"

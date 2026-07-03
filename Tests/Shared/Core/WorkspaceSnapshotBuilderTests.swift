@@ -296,7 +296,6 @@ struct WorkspaceSnapshotBuilderTests {
       steps: [],
       acceptanceCriteria: [],
       verification: [],
-      requiresIntentTemplateIds: [],
       requiresSkillIds: [],
       workstream: Directive.Workstream(
         id: "style-workstream",

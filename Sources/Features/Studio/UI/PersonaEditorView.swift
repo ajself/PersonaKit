@@ -47,7 +47,7 @@ private enum PersonaHelpSection: String, Identifiable {
       return "Default kits provide shared standards and constraints this persona always carries."
     case .forbiddenSkillIDs:
       return
-        "Forbidden skills are hard denials. They block capabilities even when a kit, directive, or intent asks for them."
+        "Forbidden skills are hard denials. They block capabilities even when a kit or directive asks for them."
     case .nonGoals:
       return "Non-goals prevent scope creep. List work this persona should explicitly avoid."
     case .persona:

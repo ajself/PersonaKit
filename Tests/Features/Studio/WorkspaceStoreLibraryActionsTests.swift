@@ -43,7 +43,6 @@ struct WorkspaceStoreLibraryActionsTests {
                 sourceScope: .project
               )
             ],
-            intents: [],
             essentials: []
           )
         }
@@ -68,7 +67,6 @@ struct WorkspaceStoreLibraryActionsTests {
               sourceScope: .project
             )
           ],
-          intents: [],
           essentials: []
         )
       },
@@ -149,7 +147,6 @@ struct WorkspaceStoreLibraryActionsTests {
             ]
             : [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -254,7 +251,6 @@ struct WorkspaceStoreLibraryActionsTests {
           "acceptanceCriteria" : [],
           "goal" : "",
           "id" : "directive-new",
-          "requiresIntentTemplateIds" : [],
           "requiresSkillIds" : [],
           "steps" : [],
           "title" : "Directive New",
@@ -263,26 +259,6 @@ struct WorkspaceStoreLibraryActionsTests {
         }
         """,
         "Directive goal is required before saving."
-      ),
-      (
-        .intent,
-        """
-        {
-          "description" : "",
-          "id" : "intent-new",
-          "includesEssentialIds" : [],
-          "name" : "Intent New",
-          "parameters" : [],
-          "requiresSkillIds" : [],
-          "risk" : {
-            "level" : "medium",
-            "notes" : [],
-            "requiresHumanReview" : false
-          },
-          "version" : "1.0"
-        }
-        """,
-        "Intent description is required before saving."
       ),
       (
         .skill,
@@ -333,7 +309,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: state.value
             ? [
               WorkspaceListItem(
@@ -407,7 +382,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -588,7 +562,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -680,7 +653,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -758,7 +730,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -816,7 +787,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -870,7 +840,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -928,7 +897,6 @@ struct WorkspaceStoreLibraryActionsTests {
             directives: [],
             kits: [],
             skills: [],
-            intents: [],
             essentials: []
           )
         }
@@ -992,7 +960,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -1056,7 +1023,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: []
         )
       },
@@ -1109,7 +1075,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [globalEssential]
         )
       },
@@ -1168,7 +1133,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [snapshotItem]
         )
       },
@@ -1220,7 +1184,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [projectEssential]
         )
       },
@@ -1277,7 +1240,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [projectEssential]
         )
       },
@@ -1355,7 +1317,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [projectEssential]
         )
       },
@@ -1413,7 +1374,6 @@ struct WorkspaceStoreLibraryActionsTests {
           directives: [],
           kits: [],
           skills: [],
-          intents: [],
           essentials: [snapshotItem]
         )
       },

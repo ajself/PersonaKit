@@ -34,7 +34,6 @@
       "text": "personakit validate --root .personakit"
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "code-editing"
   ]

@@ -182,8 +182,6 @@ extension SidebarItem {
       return "Reference"
     case .skills:
       return "Skill"
-    case .intents:
-      return "Intent"
     case .relationshipMap:
       return "Relationship Map"
     case .validationResults:

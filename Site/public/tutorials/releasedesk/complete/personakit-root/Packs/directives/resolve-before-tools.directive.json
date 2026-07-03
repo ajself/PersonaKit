@@ -25,7 +25,6 @@
       "text": "Report the resolved session and authorization boundary."
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "mcp-grounding"
   ]

@@ -25,7 +25,6 @@
       "text": "Explain what was inspected and what remains unverified."
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "code-review"
   ]

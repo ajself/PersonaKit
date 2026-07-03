@@ -7,7 +7,6 @@ public enum WorkspaceSessionMapNodeKind: String, Codable, Sendable {
   case persona
   case directive
   case kit
-  case intent
   case skill
   case essential
   case reference
@@ -22,14 +21,12 @@ public enum WorkspaceSessionMapNodeKind: String, Codable, Sendable {
       return 2
     case .kit:
       return 3
-    case .intent:
-      return 4
     case .skill:
-      return 5
+      return 4
     case .essential:
-      return 6
+      return 5
     case .reference:
-      return 7
+      return 6
     }
   }
 }

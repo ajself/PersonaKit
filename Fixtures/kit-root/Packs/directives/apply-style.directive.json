@@ -37,14 +37,26 @@
       "text": "Review diff for scope creep"
     }
   ],
-  "requiresIntentTemplateIds": [
-    "swift-refactor-safe"
-  ],
   "requiresSkillIds": [
     "codex-cli"
   ],
   "referenceIds": [
     "swift-style-guide-reference",
     "swiftui-style-guide-reference"
-  ]
+  ],
+  "parameters": [
+    {
+      "name": "targetFiles",
+      "type": "string[]",
+      "required": true
+    }
+  ],
+  "risk": {
+    "level": "medium",
+    "requiresHumanReview": true,
+    "notes": [
+      "No public API changes",
+      "No behavior changes"
+    ]
+  }
 }

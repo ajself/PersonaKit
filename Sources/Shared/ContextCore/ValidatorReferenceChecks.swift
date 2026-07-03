@@ -79,22 +79,6 @@ enum ValidatorReferenceChecker {
     for kit in registry.kits {
       try ValidatorSupport.checkCancellation()
 
-      for intentId in kit.intentTemplateIds ?? [] {
-        if registry.intentTemplatesById[intentId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .kit,
-              entityId: kit.id,
-              field: "intentTemplateIds",
-              missingId: intentId,
-              expectedPath: nil,
-              message: "Missing intent template id \"\(intentId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
       for skillId in kit.skillIds ?? [] {
         if registry.skillsById[skillId] == nil {
           errors.append(
@@ -180,22 +164,6 @@ enum ValidatorReferenceChecker {
     for directive in registry.directives {
       try ValidatorSupport.checkCancellation()
 
-      for intentId in directive.requiresIntentTemplateIds {
-        if registry.intentTemplatesById[intentId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .directive,
-              entityId: directive.id,
-              field: "requiresIntentTemplateIds",
-              missingId: intentId,
-              expectedPath: nil,
-              message: "Missing intent template id \"\(intentId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
       for skillId in directive.requiresSkillIds {
         if registry.skillsById[skillId] == nil {
           errors.append(
@@ -245,151 +213,6 @@ enum ValidatorReferenceChecker {
         directives: registry.directives
       )
     )
-
-    for intent in registry.intentTemplates {
-      try ValidatorSupport.checkCancellation()
-
-      let knownParameterNames = Set(intent.parameters.map(\.name))
-
-      for essentialId in intent.includesEssentialIds {
-        let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
-
-        if !PersonaKitPathSafety.isSafePathSegment(essentialId) {
-          errors.append(
-            unsafePathSegmentError(
-              entityType: .intent,
-              entityId: intent.id,
-              field: "includesEssentialIds",
-              value: essentialId,
-              expectedPath: expectedPath,
-              kind: "essential id"
-            )
-          )
-        } else if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-          if hasEscapingPath(
-            scopes: scopes,
-            baseRelativePath: "Packs/essentials",
-            segment: essentialId,
-            suffix: ".md",
-            fileManager: fileManager
-          ) {
-            errors.append(
-              unsafeResolvedPathError(
-                entityType: .intent,
-                entityId: intent.id,
-                field: "includesEssentialIds",
-                value: essentialId,
-                expectedPath: expectedPath,
-                kind: "essential file"
-              )
-            )
-            continue
-          }
-
-          errors.append(
-            ValidationError(
-              entityType: .intent,
-              entityId: intent.id,
-              field: "includesEssentialIds",
-              missingId: essentialId,
-              expectedPath: expectedPath,
-              message: "Missing essential file at \(expectedPath).",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
-      for skillId in intent.requiresSkillIds {
-        if registry.skillsById[skillId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .intent,
-              entityId: intent.id,
-              field: "requiresSkillIds",
-              missingId: skillId,
-              expectedPath: nil,
-              message: "Missing skill id \"\(skillId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
-      for referenceId in intent.referenceIds ?? [] {
-        if registry.referencesById[referenceId] == nil {
-          errors.append(
-            ValidationError(
-              entityType: .intent,
-              entityId: intent.id,
-              field: "referenceIds",
-              missingId: referenceId,
-              expectedPath: nil,
-              message: "Missing reference id \"\(referenceId)\".",
-              referencesUnresolvedID: true
-            )
-          )
-        }
-      }
-
-      for constraint in intent.parameterConstraints ?? [] {
-        switch constraint.kind {
-        case "allDistinct":
-          if constraint.parameterNames.count < 2 {
-            errors.append(
-              ValidationError(
-                entityType: .intent,
-                entityId: intent.id,
-                field: "parameterConstraints",
-                missingId: nil,
-                expectedPath: nil,
-                message: "Constraint kind \"allDistinct\" must reference at least two parameter names."
-              )
-            )
-          }
-
-          let uniqueParameterNames = Set(constraint.parameterNames)
-          if uniqueParameterNames.count != constraint.parameterNames.count {
-            errors.append(
-              ValidationError(
-                entityType: .intent,
-                entityId: intent.id,
-                field: "parameterConstraints",
-                missingId: nil,
-                expectedPath: nil,
-                message: "Constraint kind \"allDistinct\" contains duplicate parameter names."
-              )
-            )
-          }
-        default:
-          errors.append(
-            ValidationError(
-              entityType: .intent,
-              entityId: intent.id,
-              field: "parameterConstraints",
-              missingId: nil,
-              expectedPath: nil,
-              message: "Unsupported parameter constraint kind \"\(constraint.kind)\"."
-            )
-          )
-        }
-
-        for parameterName in constraint.parameterNames {
-          if !knownParameterNames.contains(parameterName) {
-            errors.append(
-              ValidationError(
-                entityType: .intent,
-                entityId: intent.id,
-                field: "parameterConstraints",
-                missingId: parameterName,
-                expectedPath: nil,
-                message: "Constraint references missing parameter name \"\(parameterName)\"."
-              )
-            )
-          }
-        }
-      }
-    }
 
     let decoder = JSONDecoder()
     for root in scopes.loadOrder {

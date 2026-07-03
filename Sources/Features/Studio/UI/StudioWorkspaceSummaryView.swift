@@ -239,8 +239,6 @@ enum StudioWorkspaceSummaryNavigationResolver {
       return .essentials
     case "references":
       return .references
-    case "intents":
-      return .intents
     default:
       return nil
     }

@@ -55,7 +55,6 @@ struct SessionDependencyMapView: View {
     .persona,
     .directive,
     .kit,
-    .intent,
     .skill,
     .essential,
     .reference,
@@ -534,8 +533,6 @@ extension WorkspaceSessionMapNodeKind {
       return "Directive"
     case .kit:
       return "Kits"
-    case .intent:
-      return "Intents"
     case .skill:
       return "Skills"
     case .essential:

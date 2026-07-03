@@ -57,12 +57,6 @@
         ]
       }
     },
-    "requiresIntentTemplateIds": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
     "requiresSkillIds": {
       "type": "array",
       "items": {
@@ -74,6 +68,50 @@
       "items": {
         "type": "string"
       }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required"
+        ]
+      }
+    },
+    "risk": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string"
+        },
+        "requiresHumanReview": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "level",
+        "requiresHumanReview",
+        "notes"
+      ]
     },
     "workstream": {
       "type": "object",
@@ -153,7 +191,6 @@
     "steps",
     "acceptanceCriteria",
     "verification",
-    "requiresIntentTemplateIds",
     "requiresSkillIds"
   ]
 }

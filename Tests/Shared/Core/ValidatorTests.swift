@@ -19,7 +19,6 @@ struct ValidatorTests {
           personas: 1,
           kits: 1,
           directives: 1,
-          intents: 0,
           references: 1,
           skills: 0,
           essentials: 1
@@ -75,7 +74,6 @@ struct ValidatorTests {
       summary: kit.summary,
       essentialIds: ["../escaped-essential"],
       referenceIds: kit.referenceIds,
-      intentTemplateIds: kit.intentTemplateIds,
       skillIds: kit.skillIds
     )
 
@@ -92,52 +90,6 @@ struct ValidatorTests {
           missingId: "../escaped-essential",
           expectedPath: "Packs/essentials/<invalid>.md",
           message: "Unsafe essential id path segment \"../escaped-essential\"."
-        )
-      )
-    )
-  }
-
-  @Test
-  func validateRejectsEscapingIntentEssentialIDWithoutAcceptingEscapedFile() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try copyFixtureKit(to: root)
-    try FileManager.default.removeItem(
-      at: root.appendingPathComponent("Sessions/senior-swiftui-engineer_apply-style.session.json")
-    )
-    try "# Escaped\n".write(
-      to: root.appendingPathComponent("Packs/escaped-intent-essential.md"),
-      atomically: true,
-      encoding: .utf8
-    )
-
-    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
-    let intent = try JSONDecoder().decode(IntentTemplate.self, from: Data(contentsOf: intentURL))
-    let updatedIntent = IntentTemplate(
-      id: intent.id,
-      version: intent.version,
-      name: intent.name,
-      description: intent.description,
-      parameters: intent.parameters,
-      parameterConstraints: intent.parameterConstraints,
-      includesEssentialIds: ["../escaped-intent-essential"],
-      requiresSkillIds: intent.requiresSkillIds,
-      referenceIds: intent.referenceIds,
-      risk: intent.risk
-    )
-
-    try encodeSortedJSON(updatedIntent).write(to: intentURL, options: .atomic)
-
-    let result = try Validator.validate(root: root)
-
-    #expect(
-      result.errors.contains(
-        ValidationError(
-          entityType: .intent,
-          entityId: "swift-refactor-safe",
-          field: "includesEssentialIds",
-          missingId: "../escaped-intent-essential",
-          expectedPath: "Packs/essentials/<invalid>.md",
-          message: "Unsafe essential id path segment \"../escaped-intent-essential\"."
         )
       )
     )
@@ -290,7 +242,6 @@ struct ValidatorTests {
       summary: kit.summary,
       essentialIds: ["linked-essential"],
       referenceIds: kit.referenceIds,
-      intentTemplateIds: kit.intentTemplateIds,
       skillIds: kit.skillIds
     )
 
@@ -380,25 +331,29 @@ struct ValidatorTests {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
-    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
-    let data = try Data(contentsOf: intentURL)
+    // A schema-invalid entity must yield exactly its schema error: when any schema
+    // error exists, all reference/skill checks are suppressed so a dangling id does
+    // not add cascade noise. `referenceIds: null` is schema-invalid (array expected)
+    // yet still decodes, and `requiresSkillIds` points at a missing skill that would
+    // otherwise raise its own error.
+    let directiveURL = root.appendingPathComponent("Packs/directives/apply-style.directive.json")
+    let data = try Data(contentsOf: directiveURL)
     var object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    object?["parameterConstraints"] = NSNull()
+    object?["referenceIds"] = NSNull()
     object?["requiresSkillIds"] = ["missing-skill"]
 
     let updatedData = try JSONSerialization.data(
       withJSONObject: object ?? [:],
       options: [.prettyPrinted, .sortedKeys]
     )
-    try updatedData.write(to: intentURL)
+    try updatedData.write(to: directiveURL)
 
     let result = try Validator.validate(root: root)
 
     #expect(result.errors.count == 1)
-    #expect(result.errors.first?.entityType == .intent)
+    #expect(result.errors.first?.entityType == .directive)
     #expect(result.errors.first?.field == "schema")
-    #expect(result.errors.first?.expectedPath == "Packs/intents/swift-refactor-safe.intent.json")
-    #expect(result.errors.first?.message.contains("Schema intentTemplate.schema.json") == true)
+    #expect(result.errors.first?.expectedPath == "Packs/directives/apply-style.directive.json")
     #expect(result.errors.contains { $0.field == "requiresSkillIds" } == false)
   }
 
@@ -502,51 +457,6 @@ struct ValidatorTests {
           message: "Session discovery path is not a directory: Sessions."
         )
       )
-    )
-  }
-
-  @Test
-  func validateIntentParameterConstraintRequiresMultipleParameters() throws {
-    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
-    try copyFixtureKit(to: root)
-
-    let intentURL = root.appendingPathComponent("Packs/intents/swift-refactor-safe.intent.json")
-    let data = try Data(contentsOf: intentURL)
-    let intent = try JSONDecoder().decode(IntentTemplate.self, from: data)
-    let updatedIntent = IntentTemplate(
-      id: intent.id,
-      version: intent.version,
-      name: intent.name,
-      description: intent.description,
-      parameters: intent.parameters,
-      parameterConstraints: [
-        IntentTemplate.ParameterConstraint(
-          kind: "allDistinct",
-          parameterNames: ["targetFiles"]
-        )
-      ],
-      includesEssentialIds: intent.includesEssentialIds,
-      requiresSkillIds: intent.requiresSkillIds,
-      risk: intent.risk
-    )
-
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    try encoder.encode(updatedIntent).write(to: intentURL)
-
-    let result = try Validator.validate(root: root)
-
-    #expect(
-      result.errors == [
-        ValidationError(
-          entityType: .intent,
-          entityId: "swift-refactor-safe",
-          field: "parameterConstraints",
-          missingId: nil,
-          expectedPath: nil,
-          message: "Constraint kind \"allDistinct\" must reference at least two parameter names."
-        )
-      ]
     )
   }
 

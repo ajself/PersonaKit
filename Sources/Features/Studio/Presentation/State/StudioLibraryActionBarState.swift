@@ -35,8 +35,7 @@ struct StudioLibraryActionBarState {
       .directives,
       .kits,
       .references,
-      .skills,
-      .intents:
+      .skills:
       if isProjectSelection,
         entityType?.supportsMinimalForm == true
       {
@@ -53,7 +52,6 @@ struct StudioLibraryActionBarState {
       selection == .personas
       || selection == .directives
       || selection == .kits
-      || selection == .intents
       || selection == .essentials
       || selection == .references
       || selection == .skills

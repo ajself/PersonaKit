@@ -39,9 +39,6 @@ struct CreateDirectiveCommand: ParsableCommand {
   @Option(name: .customLong("verify-manual"), help: "Verification manual entry.")
   var verifyManual: [String] = []
 
-  @Option(name: .customLong("intent"), help: "Required intent id.")
-  var intentIDs: [String] = []
-
   @Option(name: .customLong("skill"), help: "Required skill id.")
   var skillIDs: [String] = []
 
@@ -115,14 +112,6 @@ struct CreateDirectiveCommand: ParsableCommand {
         (resolvedVerifyCommands + resolvedVerifyManual).isEmpty
         ? defaultDraft.verification
         : (resolvedVerifyCommands + resolvedVerifyManual)
-      let resolvedIntentIDs = prompter.promptCSVIfNeeded(
-        values: intentIDs,
-        label: "Required intent ids (comma-separated)",
-        hint: CreateCommandHelpers.referenceHint(
-          label: "Known intents",
-          values: references.intentIDs
-        )
-      )
       let resolvedSkillIDs = prompter.promptCSVIfNeeded(
         values: skillIDs,
         label: "Required skill ids (comma-separated)",
@@ -158,20 +147,17 @@ struct CreateDirectiveCommand: ParsableCommand {
         steps: finalSteps,
         acceptanceCriteria: finalAcceptance,
         verification: finalVerification,
-        requiresIntentTemplateIds: resolvedIntentIDs,
         requiresSkillIds: resolvedSkillIDs,
         referenceIds: resolvedReferenceIDs
       )
       let builder = WorkspaceDirectiveDraftBuilder()
       let rawJSON = try builder.buildRawJSON(
         draft: draft,
-        knownIntentIDs: references.intentIDs,
         knownSkillIDs: references.skillIDs,
         knownReferenceIDs: references.referenceIDs
       )
       let validation = builder.validate(
         draft: draft,
-        knownIntentIDs: references.intentIDs,
         knownSkillIDs: references.skillIDs,
         knownReferenceIDs: references.referenceIDs
       )

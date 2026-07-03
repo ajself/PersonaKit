@@ -58,8 +58,8 @@ extension WorkspaceLibraryEntityType {
         primaryFieldLabel: "Title",
         secondaryFieldKey: "goal",
         secondaryFieldLabel: "Goal",
-        firstArrayKey: "requiresIntentTemplateIds",
-        firstArrayLabel: "Required Intent Template IDs",
+        firstArrayKey: "referenceIds",
+        firstArrayLabel: "Reference IDs",
         secondArrayKey: "requiresSkillIds",
         secondArrayLabel: "Required Skill IDs"
       )
@@ -73,17 +73,6 @@ extension WorkspaceLibraryEntityType {
         firstArrayLabel: "Essential IDs",
         secondArrayKey: "skillIds",
         secondArrayLabel: "Skill IDs"
-      )
-    case .intent:
-      return WorkspaceLibraryEntityFormDescriptor(
-        primaryFieldKey: "name",
-        primaryFieldLabel: "Name",
-        secondaryFieldKey: "description",
-        secondaryFieldLabel: "Description",
-        firstArrayKey: "includesEssentialIds",
-        firstArrayLabel: "Included Essential IDs",
-        secondArrayKey: "requiresSkillIds",
-        secondArrayLabel: "Required Skill IDs"
       )
     case .reference:
       preconditionFailure("Reference entities use raw JSON editing only.")

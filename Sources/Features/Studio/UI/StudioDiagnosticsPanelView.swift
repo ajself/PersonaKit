@@ -427,8 +427,6 @@ enum StudioDiagnosticsNavigationResolver {
       return .kits
     case .directive:
       return .directives
-    case .intent:
-      return .intents
     case .reference:
       return .references
     case .skill:
@@ -456,8 +454,6 @@ enum StudioDiagnosticsNavigationResolver {
       return removingSuffix(".kit.json", from: lastPathComponent)
     case .directive:
       return removingSuffix(".directive.json", from: lastPathComponent)
-    case .intent:
-      return removingSuffix(".intent.json", from: lastPathComponent)
     case .reference:
       return removingSuffix(".reference.json", from: lastPathComponent)
         ?? removingSuffix(".md", from: lastPathComponent)

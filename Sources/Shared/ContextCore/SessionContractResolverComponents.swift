@@ -20,7 +20,6 @@ struct SessionContractComponents {
   let kits: [Kit]
   let essentials: [ResolvedEssential]
   let availableReferences: [ResolvedReference]
-  let intents: [IntentTemplate]
   let skills: [Skill]
   let requiredSkillReferences: [SessionContractRequiredSkillReference]
 }
@@ -83,27 +82,11 @@ enum SessionContractComponentResolver {
     let kitIds = uniqueSorted(resolvedPersona.defaultKitIds + overrideIds)
     let resolvedKits = kitIds.compactMap { registry.kitsById[$0] }
 
-    var intentIds: [String] = []
     var requiredSkillReferences: [SessionContractRequiredSkillReference] = []
     var referenceDeclarations: [SessionContractReferenceDeclaration] = []
 
     if let resolvedDirective = directive {
       for kit in resolvedKits {
-        for intentId in kit.intentTemplateIds ?? [] {
-          if registry.intentTemplatesById[intentId] == nil {
-            errors.append(
-              .missingIntentId(
-                sourceType: .kit,
-                sourceId: kit.id,
-                field: "intentTemplateIds",
-                missingId: intentId
-              )
-            )
-          }
-
-          intentIds.append(intentId)
-        }
-
         for skillId in kit.skillIds ?? [] {
           if registry.skillsById[skillId] == nil {
             errors.append(
@@ -147,21 +130,6 @@ enum SessionContractComponentResolver {
             )
           )
         }
-      }
-
-      for intentId in resolvedDirective.requiresIntentTemplateIds {
-        if registry.intentTemplatesById[intentId] == nil {
-          errors.append(
-            .missingIntentId(
-              sourceType: .directive,
-              sourceId: resolvedDirective.id,
-              field: "requiresIntentTemplateIds",
-              missingId: intentId
-            )
-          )
-        }
-
-        intentIds.append(intentId)
       }
 
       for skillId in resolvedDirective.requiresSkillIds {
@@ -209,57 +177,6 @@ enum SessionContractComponentResolver {
       }
     }
 
-    let uniqueIntentIds = uniqueSorted(intentIds)
-    let resolvedIntents = uniqueIntentIds.compactMap { registry.intentTemplatesById[$0] }
-
-    if directive != nil {
-      for intent in resolvedIntents {
-        for referenceId in intent.referenceIds ?? [] {
-          if registry.referencesById[referenceId] == nil {
-            errors.append(
-              .missingReferenceId(
-                sourceType: .intentTemplate,
-                sourceId: intent.id,
-                field: "referenceIds",
-                missingId: referenceId
-              )
-            )
-          }
-
-          referenceDeclarations.append(
-            SessionContractReferenceDeclaration(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "referenceIds",
-              referenceId: referenceId
-            )
-          )
-        }
-
-        for skillId in intent.requiresSkillIds {
-          if registry.skillsById[skillId] == nil {
-            errors.append(
-              .missingSkillId(
-                sourceType: .intentTemplate,
-                sourceId: intent.id,
-                field: "requiresSkillIds",
-                missingId: skillId
-              )
-            )
-          }
-
-          requiredSkillReferences.append(
-            SessionContractRequiredSkillReference(
-              sourceType: .intentTemplate,
-              sourceId: intent.id,
-              field: "requiresSkillIds",
-              skillId: skillId
-            )
-          )
-        }
-      }
-    }
-
     var essentialIds: [String] = []
 
     for kit in resolvedKits {
@@ -279,28 +196,6 @@ enum SessionContractComponentResolver {
         }
 
         essentialIds.append(essentialId)
-      }
-    }
-
-    if directive != nil {
-      for intent in resolvedIntents {
-        for essentialId in intent.includesEssentialIds {
-          let expectedPath = PersonaKitEssentialResolver.expectedPath(for: essentialId)
-
-          if resolveReferencedEssential(essentialId, scopes: scopes, fileManager: fileManager) == nil {
-            errors.append(
-              .missingEssentialFile(
-                sourceType: .intentTemplate,
-                sourceId: intent.id,
-                field: "includesEssentialIds",
-                missingId: essentialId,
-                expectedPath: expectedPath
-              )
-            )
-          }
-
-          essentialIds.append(essentialId)
-        }
       }
     }
 
@@ -331,7 +226,6 @@ enum SessionContractComponentResolver {
       kits: resolvedKits,
       essentials: resolvedEssentials,
       availableReferences: availableReferences,
-      intents: resolvedIntents,
       skills: resolvedSkills,
       requiredSkillReferences: requiredSkillReferences
     )

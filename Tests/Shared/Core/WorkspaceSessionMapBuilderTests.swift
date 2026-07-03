@@ -52,7 +52,6 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.nodes.contains(where: { $0.key == "persona:senior-swiftui-engineer" }))
     #expect(map.nodes.contains(where: { $0.key == "directive:apply-style" }))
     #expect(map.nodes.contains(where: { $0.key == "kit:swift-style" }))
-    #expect(map.nodes.contains(where: { $0.key == "intent:swift-refactor-safe" }))
     #expect(map.nodes.contains(where: { $0.key == "skill:codex-cli" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:persona-activation-contract" }))
     #expect(map.nodes.contains(where: { $0.key == "essential:skill-authorization-contract" }))
@@ -119,7 +118,6 @@ struct WorkspaceSessionMapBuilderTests {
           "skill-authorization-contract",
         ],
         referenceIds: kit.referenceIds,
-        intentTemplateIds: kit.intentTemplateIds,
         skillIds: kit.skillIds
       )
     }
@@ -181,7 +179,6 @@ struct WorkspaceSessionMapBuilderTests {
         steps: directive.steps,
         acceptanceCriteria: directive.acceptanceCriteria,
         verification: directive.verification,
-        requiresIntentTemplateIds: ["missing-intent"],
         requiresSkillIds: ["missing-skill"],
         referenceIds: ["missing-reference"]
       )
@@ -196,7 +193,6 @@ struct WorkspaceSessionMapBuilderTests {
       name: "Missing Essential Kit",
       summary: "Introduces missing essential references.",
       essentialIds: ["missing-essential-doc"],
-      intentTemplateIds: nil,
       skillIds: nil
     )
     let encoder = JSONEncoder()
@@ -215,7 +211,6 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(!map.resolutionErrors.isEmpty)
 
     #expect(map.nodes.contains(where: { $0.key == "kit:missing-kit" && $0.isMissing }))
-    #expect(map.nodes.contains(where: { $0.key == "intent:missing-intent" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "skill:missing-skill" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "essential:missing-essential-doc" && $0.isMissing }))
     #expect(map.nodes.contains(where: { $0.key == "reference:missing-reference" && $0.isMissing }))

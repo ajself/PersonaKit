@@ -96,10 +96,11 @@ func writeDirective(
     steps: templateDirective.steps,
     acceptanceCriteria: templateDirective.acceptanceCriteria,
     verification: templateDirective.verification,
-    requiresIntentTemplateIds: templateDirective.requiresIntentTemplateIds,
     requiresSkillIds: templateDirective.requiresSkillIds,
     referenceIds: templateDirective.referenceIds,
-    workstream: workstream
+    workstream: workstream,
+    parameters: templateDirective.parameters,
+    risk: templateDirective.risk
   )
 
   let targetURL = root.appendingPathComponent("Packs/directives/\(id).directive.json")

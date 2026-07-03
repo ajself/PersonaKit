@@ -116,7 +116,6 @@ public struct SessionExporter {
       persona: session.persona,
       directive: session.directive,
       kits: session.kits.sorted { $0.id < $1.id },
-      intents: session.intents.sorted { $0.id < $1.id },
       skills: session.skills.sorted { $0.id < $1.id },
       essentials: essentials,
       availableReferences: session.availableReferences.sorted { $0.id < $1.id },
@@ -177,7 +176,6 @@ public struct SessionExporter {
     persona: Persona,
     directive: Directive,
     kits: [Kit],
-    intents: [IntentTemplate],
     skills: [Skill],
     essentials: [ResolvedEssential],
     availableReferences: [ResolvedReference],
@@ -375,6 +373,28 @@ public struct SessionExporter {
       appendLine: appendLine
     )
 
+    if !directive.parameters.isEmpty {
+      appendLine()
+      appendLine("Parameters:")
+      for parameter in directive.parameters {
+        let requiredLabel = parameter.required ? "required" : "optional"
+        appendLine("- \(parameter.name) (\(parameter.type), \(requiredLabel))")
+      }
+    }
+
+    if let risk = directive.risk {
+      appendLine()
+      appendLine("Risk:")
+      appendLine("- Level: \(risk.level)")
+      appendLine("- Requires human review: \(risk.requiresHumanReview)")
+      if !risk.notes.isEmpty {
+        appendLine("- Notes:")
+        for note in risk.notes {
+          appendLine("  - \(note)")
+        }
+      }
+    }
+
     if let workstream = directive.workstream {
       appendLine()
       appendLine("# Workstream")
@@ -397,53 +417,6 @@ public struct SessionExporter {
       appendLine("Session Map:")
       for node in workstream.orderedNodes {
         appendLine("- \(node.phase): \(node.sessionId)")
-      }
-    }
-
-    appendLine()
-    appendLine("# Intent Templates")
-    for intent in intents {
-      appendLine("## \(intent.id)")
-      appendLine("Name: \(intent.name)")
-      appendLine("Id: \(intent.id)")
-      appendLine("Description: \(intent.description)")
-
-      if !intent.parameters.isEmpty {
-        appendLine()
-        appendLine("Parameters:")
-        for parameter in intent.parameters {
-          let requiredLabel = parameter.required ? "required" : "optional"
-          appendLine("- \(parameter.name) (\(parameter.type), \(requiredLabel))")
-        }
-      }
-
-      appendLine()
-      appendLine("Risk:")
-      appendLine("- Level: \(intent.risk.level)")
-      appendLine("- Requires human review: \(intent.risk.requiresHumanReview)")
-      if !intent.risk.notes.isEmpty {
-        appendLine("- Notes:")
-        for note in intent.risk.notes {
-          appendLine("  - \(note)")
-        }
-      }
-
-      let requiredSkills = intent.requiresSkillIds.sorted()
-      appendListSection(
-        title: "Required Skills",
-        items: requiredSkills,
-        appendLine: appendLine
-      )
-
-      let includedEssentials = intent.includesEssentialIds.sorted()
-      appendListSection(
-        title: "Included Essentials",
-        items: includedEssentials,
-        appendLine: appendLine
-      )
-
-      if intent.id != intents.last?.id {
-        appendLine()
       }
     }
 

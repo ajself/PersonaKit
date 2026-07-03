@@ -115,6 +115,16 @@ Verification:
 Stop Points:
 - Avoid unrelated refactors.
 
+Parameters:
+- targetFiles (string[], required)
+
+Risk:
+- Level: medium
+- Requires human review: true
+- Notes:
+  - No public API changes
+  - No behavior changes
+
 # Workstream
 Id: style-workstream
 Phase: planning
@@ -128,30 +138,6 @@ Session Map:
 - planning: senior-swiftui-engineer_apply-style
 - followup: style-followup
 - closeout: style-closeout
-
-# Intent Templates
-## swift-refactor-safe
-Name: Swift Refactor (Safe)
-Id: swift-refactor-safe
-Description: Perform a small refactor without changing behavior.
-
-Parameters:
-- targetFiles (string[], required)
-
-Risk:
-- Level: medium
-- Requires human review: true
-- Notes:
-  - No public API changes
-  - No behavior changes
-
-Required Skills:
-- codex-cli
-
-Included Essentials:
-- non-goals
-- swift-style-guide
-- tools-and-constraints
 
 # Skill Awareness
 ## codex-cli

@@ -7,7 +7,6 @@ enum ListEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
   case personas
   case kits
   case directives
-  case intents
   case references
   case skills
   case essentials
@@ -57,8 +56,6 @@ struct ListCommand {
       lines = registry.kits.map { formatLine(id: $0.id, name: $0.name) }
     case .directives:
       lines = registry.directives.map { formatLine(id: $0.id, name: $0.title) }
-    case .intents:
-      lines = registry.intentTemplates.map { formatLine(id: $0.id, name: $0.name) }
     case .references:
       lines = registry.references.map { formatLine(id: $0.id, name: $0.name) }
     case .skills:

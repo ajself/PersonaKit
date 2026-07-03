@@ -66,7 +66,6 @@ public struct SessionContractResult: Sendable {
   public let kits: [Kit]
   public let essentials: [ResolvedEssential]
   public let availableReferences: [ResolvedReference]
-  public let intents: [IntentTemplate]
   public let skills: [Skill]
   public let injectedContractIds: [String]
   public let skillAuthorization: ResolvedSkillAuthorization
@@ -79,7 +78,6 @@ public struct SessionContractResult: Sendable {
     kits: [Kit],
     essentials: [ResolvedEssential],
     availableReferences: [ResolvedReference],
-    intents: [IntentTemplate],
     skills: [Skill],
     injectedContractIds: [String],
     skillAuthorization: ResolvedSkillAuthorization,
@@ -91,7 +89,6 @@ public struct SessionContractResult: Sendable {
     self.kits = kits
     self.essentials = essentials
     self.availableReferences = availableReferences
-    self.intents = intents
     self.skills = skills
     self.injectedContractIds = injectedContractIds
     self.skillAuthorization = skillAuthorization
@@ -353,7 +350,6 @@ public enum SessionContractResolver {
       kits: components.kits.sorted { $0.id < $1.id },
       essentials: SystemEssentials.sortResolvedEssentialsForResolvedOutput(components.essentials),
       availableReferences: components.availableReferences.sorted { $0.id < $1.id },
-      intents: components.intents.sorted { $0.id < $1.id },
       skills: components.skills.sorted { $0.id < $1.id },
       injectedContractIds: SystemEssentials.sortEssentialIdsForResolvedOutput(injectedContractIds),
       skillAuthorization: authorization.contract,

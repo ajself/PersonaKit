@@ -93,9 +93,6 @@ struct SessionsMapTabView: View {
       scopes["kit:\(kit.id)"] = kit.sourceScope
     }
 
-    for intent in snapshot.intents {
-      scopes["intent:\(intent.id)"] = intent.sourceScope
-    }
 
     for skill in snapshot.skills {
       scopes["skill:\(skill.id)"] = skill.sourceScope
@@ -149,8 +146,6 @@ struct SessionsMapTabView: View {
       return "Session \(field) references missing directive \"\(id)\"."
     case .missingKitId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing kit \"\(missingId)\"."
-    case .missingIntentId(let sourceType, let sourceId, let field, let missingId):
-      return "\(sourceType.rawValue) \(sourceId) \(field) references missing intent \"\(missingId)\"."
     case .missingSkillId(let sourceType, let sourceId, let field, let missingId):
       return "\(sourceType.rawValue) \(sourceId) \(field) references missing skill \"\(missingId)\"."
     case .conflictingPersonaSkillId(let sourceId, _, let missingId):
@@ -176,8 +171,6 @@ struct SessionsMapTabView: View {
       return "directive:\(id)"
     case .missingKitId(_, _, _, let missingID):
       return "kit:\(missingID)"
-    case .missingIntentId(_, _, _, let missingID):
-      return "intent:\(missingID)"
     case .missingSkillId(_, _, _, let missingID):
       return "skill:\(missingID)"
     case .conflictingPersonaSkillId(let sourceId, _, _):

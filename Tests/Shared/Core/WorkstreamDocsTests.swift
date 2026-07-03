@@ -79,7 +79,6 @@ private func makeDirectiveFixture(
     steps: [],
     acceptanceCriteria: [],
     verification: [],
-    requiresIntentTemplateIds: [],
     requiresSkillIds: [],
     workstream: workstream
   )

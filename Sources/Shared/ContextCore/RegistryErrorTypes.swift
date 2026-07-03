@@ -6,7 +6,6 @@ public enum RegistryEntityType: String, Sendable {
   case persona
   case kit
   case directive
-  case intentTemplate
   case reference
   case skill
 
@@ -21,12 +20,10 @@ public enum RegistryEntityType: String, Sendable {
       return 2
     case .directive:
       return 3
-    case .intentTemplate:
-      return 4
     case .reference:
-      return 5
+      return 4
     case .skill:
-      return 6
+      return 5
     }
   }
 }

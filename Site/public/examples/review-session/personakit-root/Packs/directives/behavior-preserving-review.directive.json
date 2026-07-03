@@ -30,7 +30,6 @@
       "text": "Confirm findings map to the supplied diff or artifact."
     }
   ],
-  "requiresIntentTemplateIds": [],
   "requiresSkillIds": [
     "read-only-review"
   ]

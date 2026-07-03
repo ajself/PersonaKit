@@ -8,7 +8,6 @@ struct CreateReferenceData {
   let directiveIDs: Set<String>
   let kitIDs: Set<String>
   let skillIDs: Set<String>
-  let intentIDs: Set<String>
   let essentialIDs: Set<String>
   let referenceIDs: Set<String>
 }
@@ -242,7 +241,6 @@ enum CreateCommandHelpers {
       directiveIDs: Set(registry.directives.map(\.id)),
       kitIDs: Set(registry.kits.map(\.id)),
       skillIDs: Set(registry.skills.map(\.id)),
-      intentIDs: Set(registry.intentTemplates.map(\.id)),
       essentialIDs: essentials,
       referenceIDs: Set(registry.references.map(\.id))
     )
@@ -395,45 +393,6 @@ enum CreateCommandHelpers {
     }
 
     return "\(label): \(preview)"
-  }
-
-  static func parseIntentParameter(_ spec: String) throws -> IntentTemplate.Parameter {
-    let trimmed = trimmed(spec)
-    let components = trimmed.split(separator: ":", omittingEmptySubsequences: false)
-
-    guard components.count == 2 || components.count == 3 else {
-      throw CLIError.failure(
-        "Invalid parameter \"\(spec)\". Use name:type[:required]."
-      )
-    }
-
-    let name = String(components[0]).trimmingCharacters(in: .whitespacesAndNewlines)
-    let type = String(components[1]).trimmingCharacters(in: .whitespacesAndNewlines)
-
-    guard !name.isEmpty, !type.isEmpty else {
-      throw CLIError.failure(
-        "Invalid parameter \"\(spec)\". Use name:type[:required]."
-      )
-    }
-
-    let required: Bool
-    if components.count == 3 {
-      let flag = String(components[2]).trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-      switch flag {
-      case "required", "true", "yes":
-        required = true
-      case "", "optional", "false", "no":
-        required = false
-      default:
-        throw CLIError.failure(
-          "Invalid parameter \"\(spec)\". Third component must be \"required\" when present."
-        )
-      }
-    } else {
-      required = false
-    }
-
-    return IntentTemplate.Parameter(name: name, type: type, required: required)
   }
 
   static func validateRiskLevel(_ value: String) throws {

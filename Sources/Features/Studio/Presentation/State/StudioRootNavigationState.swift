@@ -54,8 +54,7 @@ extension SidebarItem {
       .kits,
       .essentials,
       .references,
-      .skills,
-      .intents:
+      .skills:
       return true
     case .sessions,
       .relationshipMap,

@@ -297,12 +297,6 @@ struct StudioValidationReportState: Equatable, Sendable {
       entityType: .reference,
       count: { $0.references.count }
     ),
-    StudioValidationAreaDefinition(
-      title: "Intents",
-      sidebarItem: .intents,
-      entityType: .intent,
-      count: { $0.intents.count }
-    ),
   ]
 
   private static func joinedList(_ values: [String]) -> String {

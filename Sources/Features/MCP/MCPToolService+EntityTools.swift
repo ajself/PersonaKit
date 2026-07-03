@@ -43,11 +43,13 @@ extension MCPToolService {
           data: MCPToolPayloads.DirectiveExplainData(
             title: directive.title,
             goal: directive.goal,
-            requiredIntentIds: MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+            parameters: directive.parameters.map(\.name).sorted(),
             referenceIds: MCPInternalSupport.uniqueSorted(directive.referenceIds ?? []),
             requiredSkillIds: MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
             stepsCount: directive.steps.count,
             reviewStepCount: reviewStepCount,
+            riskLevel: directive.risk?.level,
+            requiresHumanReview: directive.risk?.requiresHumanReview,
             workstream: directive.workstream.map(MCPInternalSupport.directiveExplainWorkstreamData)
           )
         )
@@ -67,30 +69,7 @@ extension MCPToolService {
             summary: kit.summary,
             essentialIds: MCPInternalSupport.uniqueSorted(kit.essentialIds),
             referenceIds: MCPInternalSupport.uniqueSorted(kit.referenceIds ?? []),
-            intentTemplateIds: MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
             skillIds: MCPInternalSupport.uniqueSorted(kit.skillIds ?? [])
-          )
-        )
-      )
-    case .intent:
-      guard let intent = registry.intentTemplatesById[input.id] else {
-        throw MCPError.invalidParams(
-          MCPInternalSupport.missingEntityMessage(entityType: .intent, id: input.id)
-        )
-      }
-      return try MCPInternalSupport.encodeToolJSON(
-        MCPToolPayloads.ExplainPayload(
-          entityType: input.entityType.rawValue,
-          id: input.id,
-          data: MCPToolPayloads.IntentExplainData(
-            name: intent.name,
-            description: intent.description,
-            parameterConstraints: intent.parameterConstraints?.map(MCPInternalSupport.parameterConstraintSummary) ?? [],
-            includesEssentialIds: MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
-            referenceIds: MCPInternalSupport.uniqueSorted(intent.referenceIds ?? []),
-            requiresSkillIds: MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
-            riskLevel: intent.risk.level,
-            requiresHumanReview: intent.risk.requiresHumanReview
           )
         )
       )
@@ -326,15 +305,20 @@ extension MCPToolService {
           MCPInternalSupport.missingEntityMessage(entityType: .directive, id: id)
         )
       }
+      var directiveScalars: [String: String] = [
+        "id": directive.id,
+        "title": directive.title,
+        "goal": directive.goal,
+        "version": directive.version,
+      ]
+      if let risk = directive.risk {
+        directiveScalars["riskLevel"] = risk.level
+        directiveScalars["requiresHumanReview"] = String(risk.requiresHumanReview)
+      }
       return MCPToolPayloads.EntityComparableSnapshot(
-        scalars: [
-          "id": directive.id,
-          "title": directive.title,
-          "goal": directive.goal,
-          "version": directive.version,
-        ],
+        scalars: directiveScalars,
         lists: [
-          "requiresIntentTemplateIds": MCPInternalSupport.uniqueSorted(directive.requiresIntentTemplateIds),
+          "parameters": MCPInternalSupport.uniqueSorted(directive.parameters.map(\.name)),
           "referenceIds": MCPInternalSupport.uniqueSorted(directive.referenceIds ?? []),
           "requiresSkillIds": MCPInternalSupport.uniqueSorted(directive.requiresSkillIds),
           "acceptanceCriteria": MCPInternalSupport.uniqueSorted(directive.acceptanceCriteria),
@@ -356,7 +340,6 @@ extension MCPToolService {
         lists: [
           "essentialIds": MCPInternalSupport.uniqueSorted(kit.essentialIds),
           "referenceIds": MCPInternalSupport.uniqueSorted(kit.referenceIds ?? []),
-          "intentTemplateIds": MCPInternalSupport.uniqueSorted(kit.intentTemplateIds ?? []),
           "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? []),
         ]
       )
@@ -370,30 +353,6 @@ extension MCPToolService {
         ],
         lists: [
           "kitOverrides": MCPInternalSupport.uniqueSorted(session.kitOverrides ?? [])
-        ]
-      )
-    case .intent:
-      guard let intent = registry.intentTemplatesById[id] else {
-        throw MCPError.invalidParams(
-          MCPInternalSupport.missingEntityMessage(entityType: .intent, id: id)
-        )
-      }
-      return MCPToolPayloads.EntityComparableSnapshot(
-        scalars: [
-          "id": intent.id,
-          "name": intent.name,
-          "description": intent.description,
-          "riskLevel": intent.risk.level,
-          "requiresHumanReview": String(intent.risk.requiresHumanReview),
-          "version": intent.version,
-        ],
-        lists: [
-          "parameterConstraints": MCPInternalSupport.uniqueSorted(
-            (intent.parameterConstraints ?? []).map(MCPInternalSupport.parameterConstraintSummary)
-          ),
-          "includesEssentialIds": MCPInternalSupport.uniqueSorted(intent.includesEssentialIds),
-          "referenceIds": MCPInternalSupport.uniqueSorted(intent.referenceIds ?? []),
-          "requiresSkillIds": MCPInternalSupport.uniqueSorted(intent.requiresSkillIds),
         ]
       )
     case .reference:

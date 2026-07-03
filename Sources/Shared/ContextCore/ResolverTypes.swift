@@ -150,7 +150,6 @@ public struct ResolvedSession: Sendable {
   public let kits: [Kit]
   public let essentials: [ResolvedEssential]
   public let availableReferences: [ResolvedReference]
-  public let intents: [IntentTemplate]
   public let skills: [Skill]
   public let skillAuthorization: ResolvedSkillAuthorization
 
@@ -160,7 +159,6 @@ public struct ResolvedSession: Sendable {
     kits: [Kit],
     essentials: [ResolvedEssential],
     availableReferences: [ResolvedReference],
-    intents: [IntentTemplate],
     skills: [Skill],
     skillAuthorization: ResolvedSkillAuthorization
   ) {
@@ -169,7 +167,6 @@ public struct ResolvedSession: Sendable {
     self.kits = kits
     self.essentials = essentials
     self.availableReferences = availableReferences
-    self.intents = intents
     self.skills = skills
     self.skillAuthorization = skillAuthorization
   }
@@ -181,7 +178,6 @@ public enum ResolverEntityType: String, Codable, Equatable, Sendable {
   case persona
   case kit
   case directive
-  case intentTemplate
   case skill
 
   /// Stable sort priority used for deterministic error ordering.
@@ -195,10 +191,8 @@ public enum ResolverEntityType: String, Codable, Equatable, Sendable {
       return 2
     case .directive:
       return 3
-    case .intentTemplate:
-      return 4
     case .skill:
-      return 5
+      return 4
     }
   }
 }
@@ -208,7 +202,6 @@ public enum ResolverError: Error, Equatable {
   case missingPersona(field: String, id: String)
   case missingDirective(field: String, id: String)
   case missingKitId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
-  case missingIntentId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingReferenceId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case missingSkillId(sourceType: ResolverEntityType, sourceId: String, field: String, missingId: String)
   case conflictingPersonaSkillId(sourceId: String, field: String, missingId: String)
@@ -237,8 +230,6 @@ public enum ResolverError: Error, Equatable {
       return .sessionDefinition
     case .missingKitId(let sourceType, _, _, _):
       return sourceType
-    case .missingIntentId(let sourceType, _, _, _):
-      return sourceType
     case .missingReferenceId(let sourceType, _, _, _):
       return sourceType
     case .missingSkillId(let sourceType, _, _, _):
@@ -264,8 +255,6 @@ public enum ResolverError: Error, Equatable {
     case .missingDirective:
       return "session"
     case .missingKitId(_, let sourceId, _, _):
-      return sourceId
-    case .missingIntentId(_, let sourceId, _, _):
       return sourceId
     case .missingReferenceId(_, let sourceId, _, _):
       return sourceId
@@ -293,8 +282,6 @@ public enum ResolverError: Error, Equatable {
       return field
     case .missingKitId(_, _, let field, _):
       return field
-    case .missingIntentId(_, _, let field, _):
-      return field
     case .missingReferenceId(_, _, let field, _):
       return field
     case .missingSkillId(_, _, let field, _):
@@ -320,8 +307,6 @@ public enum ResolverError: Error, Equatable {
     case .missingDirective(_, let id):
       return id
     case .missingKitId(_, _, _, let missingId):
-      return missingId
-    case .missingIntentId(_, _, _, let missingId):
       return missingId
     case .missingReferenceId(_, _, _, let missingId):
       return missingId
@@ -349,7 +334,6 @@ public enum ResolverError: Error, Equatable {
     case .missingPersona,
       .missingDirective,
       .missingKitId,
-      .missingIntentId,
       .missingReferenceId,
       .missingSkillId,
       .missingEssentialFile:
@@ -371,8 +355,6 @@ public enum ResolverError: Error, Equatable {
       return "Missing directive id."
     case .missingKitId:
       return "Missing kit id."
-    case .missingIntentId:
-      return "Missing intent template id."
     case .missingReferenceId:
       return "Missing reference id."
     case .missingSkillId:

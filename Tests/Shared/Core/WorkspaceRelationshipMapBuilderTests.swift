@@ -236,7 +236,6 @@ struct WorkspaceRelationshipMapBuilderTests {
           "skill-authorization-contract",
         ],
         referenceIds: kit.referenceIds,
-        intentTemplateIds: kit.intentTemplateIds,
         skillIds: kit.skillIds
       )
     }
