@@ -59,7 +59,7 @@ personakit refs --root personakit-root read-only-mcp-grounding
 ## Expected Validation Shape
 
 ```text
-Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0
+Validation summary: personas=1 kits=1 directives=1 skills=4 errors=0
 ```
 
 ## What To Inspect

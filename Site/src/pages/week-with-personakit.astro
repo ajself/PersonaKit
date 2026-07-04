@@ -62,16 +62,18 @@ personakit create skill --root .personakit \\
   --requires-human-review \\
   --risk-note "Can create public or irreversible release effects."
 
-personakit create essential --root .personakit --force \\
+personakit create skill --root .personakit --force \\
   --id contract-boundaries \\
-  --title "Contract Boundaries" \\
+  --name "Contract Boundaries" \\
+  --description "Stay inside the approved task and stop before release actions." \\
+  --always-on \\
   --body "Stay inside the approved task. Keep changes small. Validate before closeout. Stop before deployment, credential changes, or new execution behavior."
 
 personakit create kit --root .personakit --force \\
   --id product-guardrails \\
   --name "Product Guardrails" \\
   --summary "Shared ReleaseDesk boundaries for focused product work." \\
-  --essential contract-boundaries`;
+  --skill contract-boundaries`;
 
 const implementationSessionCommands = `personakit create persona --root .personakit --force \\
   --id product-implementer \\

@@ -3,7 +3,7 @@
   "version": "1.0",
   "name": "MCP Grounding Guardrails",
   "summary": "Rules for read-only PersonaKit MCP grounding.",
-  "essentialIds": [
+  "skillIds": [
     "mcp-read-only-grounding"
   ]
 }

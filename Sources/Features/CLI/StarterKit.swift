@@ -366,7 +366,7 @@ enum StarterKitManifest {
            - `personakit contract --root <root> --session <id>` for repo-local session grounding
            - `personakit export --session <id>`
            - `personakit validate`
-        4. Treat the resolved contract as authoritative for persona, directive, kits, essentials, skill authorization, stop points, and provenance.
+        4. Treat the resolved contract as authoritative for persona, directive, kits, skills, skill authorization, stop points, and provenance.
         5. Continue the user's requested work only after the contract resolves cleanly.
 
         ## Host Skill vs PersonaKit Skill

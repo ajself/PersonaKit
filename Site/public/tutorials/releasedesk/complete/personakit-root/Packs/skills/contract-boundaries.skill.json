@@ -1,0 +1,9 @@
+{
+  "id": "contract-boundaries",
+  "version": "1.0",
+  "name": "Contract Boundaries",
+  "description": "Shared ReleaseDesk boundaries: stay inside the resolved session and stop before release actions.",
+  "triggerRules": [
+    {}
+  ]
+}

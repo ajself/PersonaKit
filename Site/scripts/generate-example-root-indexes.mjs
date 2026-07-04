@@ -15,7 +15,6 @@ const groupOrder = [
   "Personas",
   "Directives",
   "Kits",
-  "Essentials",
   "Skills",
   "Other",
 ];
@@ -668,7 +667,7 @@ function renderIndex({
       <p>${escapeHtml(description)}</p>
       <div class="pills">${renderMetadataPills(metadata)}</div>
       <aside class="note">
-        <p>This is a browsable PersonaKit root. Open these files to see the session, persona, directive, kit, skills, and essentials that make the contract work. In your own project, this content usually lives in <code>.personakit</code>.</p>
+        <p>This is a browsable PersonaKit root. Open these files to see the session, persona, directive, kit, and skills that make the contract work. In your own project, this content usually lives in <code>.personakit</code>.</p>
       </aside>
       ${renderFileGroups(files)}
     </main>

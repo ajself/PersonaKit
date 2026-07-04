@@ -48,14 +48,14 @@ An unfamiliar MCP client or AI agent should follow this path:
 2. Read `personakit://catalog/sessions` or call `personakit_recommend_session`.
 3. Call `personakit_resolve_contract` for the selected session.
 4. Call `personakit_trace_session` when provenance matters.
-5. Read raw pack or essential resources only as needed.
+5. Read raw pack resources only as needed.
 
 The key tools are:
 
 - `personakit_recommend_session`: find a session for a natural-language task.
-- `personakit_resolve_contract`: resolve persona, directive, kits, intents, essentials, and skill authorization.
+- `personakit_resolve_contract`: resolve persona, directive, kits, skills, and skill authorization.
 - `personakit_trace_session`: audit where resolved constraints came from.
-- `personakit_resolve_references`: select triggered references for explicit paths or tags.
+- `personakit_resolve_grounding_skills`: select triggered grounding skills for explicit paths or tags.
 - `personakit_export`: assemble human-readable Markdown grounding.
 
 ## Client Setup Notes

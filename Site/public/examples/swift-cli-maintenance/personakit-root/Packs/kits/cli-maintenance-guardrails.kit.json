@@ -3,7 +3,7 @@
   "version": "1.0",
   "name": "CLI Maintenance Guardrails",
   "summary": "Rules for narrow, deterministic CLI maintenance work.",
-  "essentialIds": [
+  "skillIds": [
     "deterministic-cli-work"
   ]
 }

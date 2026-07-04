@@ -39,7 +39,7 @@ The point is not to make PersonaKit an autonomous pack generator. The point is t
 
 `personakit create` can produce the file shape, but the session decides the lane: reuse existing entities where possible, avoid product-scope expansion, dry-run before writing, and validate before treating the result as project context.
 
-The create subcommands also compose the richer shapes you would otherwise hand-edit: `create kit --reference <id> --intent <id>` attaches references and intent templates to a kit, and `create persona --forbid-capability <value>` records a host-neutral capability boundary (for example `edit-files` or `run-commands`).
+The create subcommands also compose the richer shapes you would otherwise hand-edit: `create kit --skill <id>` attaches grounding or tool skills to a kit, and `create persona --forbid-capability <value>` records a host-neutral capability boundary (for example `edit-files` or `run-commands`).
 
 This is also where reusable pieces get created or revised so future sessions can compose them instead of copying prompt paragraphs into a single oversized instruction.
 
@@ -63,7 +63,7 @@ personakit create persona --root "$demo_root/.personakit" --dry-run --id staff-c
 ## Expected Validation Shape
 
 ```text
-Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0
+Validation summary: personas=1 kits=1 directives=1 skills=4 errors=0
 ```
 
 ## What To Inspect
@@ -72,7 +72,7 @@ Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills
 - `personakit-create` is authorized for mechanical authoring.
 - `product-scope-expansion` and `unbounded-pack-rewrite` are forbidden.
 - The directive requires dry-run before writing, then validation.
-- The essential says to keep essentials compact unless long-form policy is explicitly requested.
+- The grounding skill says to keep grounding skills compact unless long-form policy is explicitly requested.
 - The create dry-run targets a temporary copy so the published sample root stays unchanged.
 - The session keeps product-scope decisions out of a mechanical authoring pass.
 

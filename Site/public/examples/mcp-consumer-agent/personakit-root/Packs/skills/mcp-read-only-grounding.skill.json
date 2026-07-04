@@ -1,0 +1,9 @@
+{
+  "id": "mcp-read-only-grounding",
+  "version": "1.0",
+  "name": "MCP Read-Only Grounding",
+  "description": "Read-only MCP grounding: context and provenance never authorize writes, execution, or agent launches.",
+  "triggerRules": [
+    {}
+  ]
+}

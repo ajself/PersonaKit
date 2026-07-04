@@ -1,0 +1,9 @@
+{
+  "id": "deterministic-cli-work",
+  "version": "1.0",
+  "name": "Deterministic CLI Work",
+  "description": "Deterministic CLI maintenance grounding: stable ordering, scoped changes, no new execution behavior.",
+  "triggerRules": [
+    {}
+  ]
+}

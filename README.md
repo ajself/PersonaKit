@@ -8,7 +8,7 @@ inspect, commit, and hand off: who is acting, what is allowed, what is forbidden
 Availability is not authorization. A tool being reachable does not mean it should run in this session. The contract
 decides.
 
-A session bundles role, rules, references, stop points, and capability boundaries into exportable Markdown:
+A session bundles role, rules, grounding, stop points, and capability boundaries into exportable Markdown:
 
 ```bash
 personakit export --session <id> --copy
@@ -110,9 +110,7 @@ FooBarProject/
       personas/
       kits/
       directives/
-      intents/
       skills/
-      essentials/
     Sessions/
 ```
 
@@ -135,15 +133,13 @@ personakit init /tmp/personakit-demo/.personakit --force
 ## Core Model
 
 ```text
-Persona + Directive + Kits + Intents + Essentials + Skill authorization = Operating contract
+Persona + Directive + Kits + Skills = Operating contract
 ```
 
 - **Persona**: who is acting.
 - **Directive**: what kind of work is being done, and when to stop.
 - **Kits**: rules that travel across related sessions.
-- **Intents**: reusable decision rails; patterns that belong in more than one lane.
-- **Essentials**: required Markdown grounding that always makes it into the contract.
-- **Skills**: capability metadata used for authorization.
+- **Skills**: capability metadata used for authorization, plus Markdown grounding that loads always-on or when its triggers match.
 - **Session**: the named entry point that ties the pieces together.
 
 Sessions are the situational work modes. Broad repo guidance such as `AGENTS.md` can still describe the project's
@@ -188,11 +184,11 @@ Discover and visualize:
 ```text
 personakit guidance
 personakit recommend --goal "<task>"
-personakit list personas|kits|directives|intents|skills|essentials|sessions
+personakit list personas|kits|directives|skills|sessions
 personakit graph --session <id>
 personakit refs <id>
 personakit orphans
-personakit resolve-references --session <id>
+personakit resolve-grounding-skills --session <id>
 ```
 
 Integrate with MCP clients:

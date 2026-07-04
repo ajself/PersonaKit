@@ -109,27 +109,24 @@ When you author or read packs, these are the building blocks:
 | --- | --- | --- |
 | **Persona** | Who should the agent act as? (responsibilities, values, non-goals, allowed/forbidden skills) | `Packs/personas/` |
 | **Directive** | What kind of work is this? (goal, ordered steps, stop points, acceptance, verification) | `Packs/directives/` |
-| **Kit** | Reusable guardrails/defaults bundled together (essentials, skills, references, intents) | `Packs/kits/` |
-| **Intent** | A reusable work pattern / decision rail, included by kits or required by directives | `Packs/intents/` |
-| **Essential** | Required Markdown grounding (style guides, boundaries) | `Packs/essentials/` |
-| **Reference** | Trigger-gated Markdown surfaced for matching paths/tags | `Packs/references/` |
-| **Skill** | Capability metadata used for authorization (not a command PersonaKit runs); `providedBy` names the concrete host tool, `capabilities` describes what it does in host-neutral terms | `Packs/skills/` |
+| **Kit** | Reusable guardrails/defaults bundled together (skills) | `Packs/kits/` |
+| **Skill** | Either capability metadata used for authorization (not a command PersonaKit runs; `providedBy` names the concrete host tool, `capabilities` describes what it does in host-neutral terms), or Markdown grounding (style guides, boundaries) surfaced always-on or when its path/tag triggers match | `Packs/skills/` |
 | **Session** | The named entry point tying persona + directive + overrides together | `Sessions/` |
 
 Rough rule of thumb: reach for a **directive step** when something is part of the
-sequence of *this* work; an **intent** when it's a reusable decision pattern across
-work; an **essential** when it's standing grounding that's always true.
+sequence of *this* work; a **grounding skill** when it's standing grounding —
+always-on, or trigger-gated to the paths and tags it applies to.
 
-Author with `personakit create <entity>` (`persona`, `kit`, `directive`, `intent`,
-`reference`, `skill`, `session`, `essential`). Use `--dry-run` to preview, and
+Author with `personakit create <entity>` (`persona`, `kit`, `directive`, `skill`,
+`session`). Use `--dry-run` to preview, and
 `personakit schema <entity>` to see required fields before hand-editing JSON.
 
 When cleaning up a pack, trace relationships instead of grepping by hand:
 `personakit refs <id>` shows what an entity references and what references it
 (both directions), and `personakit orphans` lists entities nothing references.
 Sessions are entry points and excluded. Personas and directives are listed but
-flagged, because they remain invocable directly (`--persona` / `--directive`), so an unreferenced one is not necessarily dead, so review before removing. Skills,
-essentials, references, intents, and kits only matter when referenced, so an
+flagged, because they remain invocable directly (`--persona` / `--directive`), so an unreferenced one is not necessarily dead, so review before removing. Skills
+and kits only matter when referenced, so an
 unreferenced one there is a safe removal candidate.
 
 ## Two Facts That Are Easy To Get Wrong
@@ -163,8 +160,8 @@ decide for you.
 
 ## Authoring Hygiene For Shared Content
 
-Keep host-specific guidance out of shared essentials and personas. An essential
-that says "Agent guidance (for Codex)" or names a specific CLI tool does not travel
+Keep host-specific guidance out of shared grounding skills and personas. A grounding
+skill that says "Agent guidance (for Codex)" or names a specific CLI tool does not travel
 to a different host and will mislead an agent running elsewhere. Describe
 *capabilities and constraints*, not specific tools, in anything meant to be reused
 across hosts.

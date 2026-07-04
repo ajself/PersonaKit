@@ -1,0 +1,9 @@
+{
+  "id": "compact-pack-authoring",
+  "version": "1.0",
+  "name": "Compact Pack Authoring",
+  "description": "Compact, bounded PersonaKit pack authoring: reuse before adding, dry-run then validate.",
+  "triggerRules": [
+    {}
+  ]
+}

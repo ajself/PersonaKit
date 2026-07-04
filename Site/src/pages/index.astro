@@ -139,7 +139,7 @@ personakit export --root personakit-root --session cli-maintenance`;
         <article class="flow-stage persona-stage">
           <p class="stage-kicker">2. Resolve The Contract</p>
           <h3>PersonaKit</h3>
-          <p>Deterministically composes persona, directive, kits, intents, essentials, references, and skill authorization into one inspectable contract.</p>
+          <p>Deterministically composes persona, directive, kits, skills, and skill authorization into one inspectable contract.</p>
           <div class="flow-tags" aria-label="Resolved contract parts">
             <span>role</span>
             <span>rules</span>
@@ -188,7 +188,7 @@ personakit export --root personakit-root --session cli-maintenance`;
       <h2>Think In Contracts</h2>
       <DiagramPanel
         src={sitePath("diagrams/personakit-operating-contract.svg")}
-        alt="Session, persona, directive, kits, intents, essentials, references, and skill authorization resolving into an operating contract for an agent."
+        alt="Session, persona, directive, kits, skills, and skill authorization resolving into an operating contract for an agent."
       />
       <Callout>
         <p><strong>Same inputs, same contract, every time.</strong> Resolution is deterministic, so the boundary the agent receives is one you can review before any work happens.</p>

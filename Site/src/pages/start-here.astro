@@ -7,7 +7,7 @@ import { sitePath } from "../utils/sitePath";
 const validateCommands = `cd Site/public/examples/swift-cli-maintenance
 personakit validate --root personakit-root`;
 
-const validationShape = "Validation summary: personas=1 kits=1 directives=1 intents=0 references=0 skills=3 essentials=1 errors=0";
+const validationShape = "Validation summary: personas=1 kits=1 directives=1 skills=4 errors=0";
 
 const contractCommand = "personakit contract --root personakit-root --session cli-maintenance";
 
@@ -75,7 +75,7 @@ personakit export --root personakit-root --session cli-maintenance`;
 
   <p>Validate and contract also print a leading line naming the resolved scopes. Here it reports project-only, because <code>--root</code> pins a single root and skips global library discovery.</p>
 
-  <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, essential, and session can be loaded before any agent work starts.</p>
+  <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, and session can be loaded before any agent work starts.</p>
 
   <h2>2. Inspect The Resolved Contract</h2>
   <Code code={contractCommand} lang="bash" theme="github-dark" />
@@ -122,8 +122,8 @@ personakit export --root personakit-root --session cli-maintenance`;
         <td>The durable rules that shape this work mode are included.</td>
       </tr>
       <tr>
-        <td>Essentials</td>
-        <td>Required grounding is present, including built-in PersonaKit contracts.</td>
+        <td>Grounding Skills</td>
+        <td>Always-on and triggered grounding is present, including built-in PersonaKit contracts.</td>
       </tr>
       <tr>
         <td>Directive</td>

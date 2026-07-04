@@ -45,25 +45,21 @@
 
     <path d="M370 387 L440 387" stroke="#4c5964" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
 
-    <g transform="translate(440 224)">
-      <rect x="0" y="0" width="300" height="326" rx="12" fill="#f7f9fb" stroke="#d9dee4"/>
+    <g transform="translate(440 252)">
+      <rect x="0" y="0" width="300" height="270" rx="12" fill="#f7f9fb" stroke="#d9dee4"/>
       <text x="24" y="38" font-size="20" font-weight="750">3. Required Context</text>
       <text x="24" y="64" font-size="14" fill="#606a73">resolved from selected inputs</text>
       <g transform="translate(24 92)">
-        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f3f0f7" stroke="#b7a7c8"/>
-        <text x="16" y="28" font-size="16" font-weight="750">Intent templates</text>
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
+        <text x="16" y="28" font-size="16" font-weight="750">Grounding skills</text>
       </g>
       <g transform="translate(24 148)">
-        <rect x="0" y="0" width="252" height="44" rx="8" fill="#eef4f7" stroke="#9fb7c6"/>
-        <text x="16" y="28" font-size="16" font-weight="750">Essentials</text>
-      </g>
-      <g transform="translate(24 204)">
         <rect x="0" y="0" width="252" height="44" rx="8" fill="#f7eeee" stroke="#d19a9a"/>
         <text x="16" y="28" font-size="16" font-weight="750">Skill authorization</text>
       </g>
-      <g transform="translate(24 260)">
-        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f5f7fa" stroke="#aeb8c2"/>
-        <text x="16" y="28" font-size="16" font-weight="750">References</text>
+      <g transform="translate(24 204)">
+        <rect x="0" y="0" width="252" height="44" rx="8" fill="#f3f0f7" stroke="#b7a7c8"/>
+        <text x="16" y="28" font-size="16" font-weight="750">Boundaries</text>
       </g>
     </g>
 

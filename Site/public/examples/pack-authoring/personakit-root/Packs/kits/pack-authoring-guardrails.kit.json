@@ -3,7 +3,7 @@
   "version": "1.0",
   "name": "Pack Authoring Guardrails",
   "summary": "Rules for compact, bounded PersonaKit pack authoring.",
-  "essentialIds": [
+  "skillIds": [
     "compact-pack-authoring"
   ]
 }

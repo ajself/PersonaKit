@@ -3,7 +3,7 @@
   "version": "1.0",
   "name": "Product Guardrails",
   "summary": "Shared ReleaseDesk boundaries for focused product work.",
-  "essentialIds": [
+  "skillIds": [
     "contract-boundaries"
   ]
 }

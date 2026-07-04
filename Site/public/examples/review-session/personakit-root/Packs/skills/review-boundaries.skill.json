@@ -1,0 +1,9 @@
+{
+  "id": "review-boundaries",
+  "version": "1.0",
+  "name": "Review Boundaries",
+  "description": "Read-only review grounding: lead with severity-ordered findings and never turn them into fixes.",
+  "triggerRules": [
+    {}
+  ]
+}
