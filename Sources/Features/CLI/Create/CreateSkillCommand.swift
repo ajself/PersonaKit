@@ -48,6 +48,12 @@ struct CreateSkillCommand: ParsableCommand {
   @Option(name: .customLong("skill-tag"), help: "Grounding trigger skill tag.")
   var skillTags: [String] = []
 
+  @Flag(
+    name: .customLong("always-on"),
+    help: "Author an always-on grounding skill that applies to every session (emits the empty trigger rule)."
+  )
+  var alwaysOn = false
+
   @Option(name: .customLong("body"), help: "Grounding skill body markdown text.")
   var body: String?
 
@@ -125,14 +131,16 @@ struct CreateSkillCommand: ParsableCommand {
       if stdinBody {
         resolvedBody = CreateCommandHelpers.trimmed(try CLIEnvironment.current.interactiveIO.readStdinToEnd())
       }
-      let isGrounding = !pathGlobs.isEmpty || !skillTags.isEmpty
+      // Always-on skills ground every session unconditionally, so they are
+      // grounding too (and carry an expandable body just like path/tag skills).
+      let isGrounding = !pathGlobs.isEmpty || !skillTags.isEmpty || alwaysOn
 
       // A body only ever surfaces through a matching trigger, so a body supplied
-      // without any --path-glob/--skill-tag would be silently dropped. Fail loudly
-      // instead (the folded former `create reference` enforced the same rule).
+      // without any --path-glob/--skill-tag/--always-on would be silently dropped.
+      // Fail loudly instead (the folded former `create reference` enforced the same rule).
       if body != nil || stdinBody, !isGrounding {
         throw CLIError.failure(
-          "A grounding-skill body requires at least one trigger. Add --path-glob and/or --skill-tag, "
+          "A grounding-skill body requires at least one trigger. Add --path-glob, --skill-tag, or --always-on, "
             + "e.g. personakit create skill --name \"Swift Style\" --description \"...\" "
             + "--path-glob \"**/*.swift\" --body \"...\"."
         )
@@ -160,7 +168,8 @@ struct CreateSkillCommand: ParsableCommand {
         riskNotes: resolvedRiskNotes,
         notes: resolvedNotes,
         pathGlobs: pathGlobs,
-        skillTags: skillTags
+        skillTags: skillTags,
+        alwaysOn: alwaysOn
       )
       let builder = WorkspaceSkillDraftBuilder()
       let rawJSON = try builder.buildRawJSON(draft: draft)

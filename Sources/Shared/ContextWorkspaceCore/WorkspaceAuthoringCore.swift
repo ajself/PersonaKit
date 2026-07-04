@@ -233,6 +233,11 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
   public var notes: [String]
   public var pathGlobs: [String]
   public var skillTags: [String]
+  /// Explicit "always-on" grounding signal. When set with no path/tag conditions,
+  /// the skill emits the unconditional empty trigger rule (`[{}]`) so it grounds
+  /// every session. Without it, a condition-less, capability-less draft stays a
+  /// tool-nature skill (`triggerRules = nil`), unchanged from prior behavior.
+  public var alwaysOn: Bool
 
   public init(
     id: String,
@@ -245,7 +250,8 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     riskNotes: [String],
     notes: [String],
     pathGlobs: [String] = [],
-    skillTags: [String] = []
+    skillTags: [String] = [],
+    alwaysOn: Bool = false
   ) {
     self.id = id
     self.name = name
@@ -258,6 +264,7 @@ public struct WorkspaceSkillDraft: Equatable, Sendable {
     self.notes = notes
     self.pathGlobs = pathGlobs
     self.skillTags = skillTags
+    self.alwaysOn = alwaysOn
   }
 }
 
@@ -451,7 +458,8 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       riskNotes: [],
       notes: [],
       pathGlobs: [],
-      skillTags: []
+      skillTags: [],
+      alwaysOn: false
     )
   }
 
@@ -484,12 +492,24 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
     // Grounding and tool skills are distinct natures: runtime `Skill.isGrounding`
     // requires trigger rules AND no capabilities. Declaring both would make the
     // trigger rules (and any body) dead weight, so reject the combination at the
-    // authoring boundary rather than emit an entity no code path expands.
-    let hasTriggers = !normalized.pathGlobs.isEmpty || !normalized.skillTags.isEmpty
+    // authoring boundary rather than emit an entity no code path expands. An
+    // always-on skill is grounding too, so it counts as having triggers.
+    let hasConditions = !normalized.pathGlobs.isEmpty || !normalized.skillTags.isEmpty
+    let hasTriggers = hasConditions || normalized.alwaysOn
     if hasTriggers, !normalized.capabilities.isEmpty {
       errors.append(
         "A skill is either a grounding skill (trigger rules + body) or a tool skill "
           + "(capabilities), not both. Remove the capabilities or the trigger rules."
+      )
+    }
+
+    // "Always-on" means the skill matches unconditionally; path/tag conditions
+    // contradict that. Force the author to pick one rather than silently drop
+    // the conditions in favor of the empty rule.
+    if normalized.alwaysOn, hasConditions {
+      errors.append(
+        "An always-on grounding skill matches every session unconditionally. "
+          + "Remove the path globs and skill tags, or drop the always-on flag."
       )
     }
 
@@ -508,7 +528,9 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
     let normalized = normalizedDraft(draft)
     let triggerRules: [SkillTriggerRule]?
     if normalized.pathGlobs.isEmpty, normalized.skillTags.isEmpty {
-      triggerRules = nil
+      // No path/tag conditions: emit the unconditional empty rule for an
+      // always-on grounding skill, otherwise leave it a tool-nature skill.
+      triggerRules = normalized.alwaysOn ? [SkillTriggerRule()] : nil
     } else {
       triggerRules = [
         SkillTriggerRule(
@@ -548,7 +570,8 @@ public struct WorkspaceSkillDraftBuilder: Sendable {
       riskNotes: normalizedTextItems(draft.riskNotes),
       notes: normalizedTextItems(draft.notes),
       pathGlobs: normalizedTextItems(draft.pathGlobs),
-      skillTags: normalizedTextItems(draft.skillTags)
+      skillTags: normalizedTextItems(draft.skillTags),
+      alwaysOn: draft.alwaysOn
     )
   }
 }

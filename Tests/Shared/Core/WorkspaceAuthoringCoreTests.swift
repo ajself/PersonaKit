@@ -209,4 +209,87 @@ struct WorkspaceAuthoringCoreTests {
     #expect(triggerRules.first?["pathGlobs"] as? [String] == ["**/*.swift"])
     #expect(triggerRules.first?["skillTags"] as? [String] == ["swift"])
   }
+
+  private static func alwaysOnDraft(
+    capabilities: [String] = [],
+    pathGlobs: [String] = [],
+    skillTags: [String] = []
+  ) -> WorkspaceSkillDraft {
+    WorkspaceSkillDraft(
+      id: "house-rules",
+      name: "House Rules",
+      description: "Always applies.",
+      providedBy: [],
+      capabilities: capabilities,
+      riskLevel: "low",
+      requiresHumanReview: false,
+      riskNotes: [],
+      notes: [],
+      pathGlobs: pathGlobs,
+      skillTags: skillTags,
+      alwaysOn: true
+    )
+  }
+
+  @Test
+  func skillDraftBuilderEmitsAlwaysOnEmptyTriggerRule() throws {
+    let json = try WorkspaceSkillDraftBuilder().buildRawJSON(draft: Self.alwaysOnDraft())
+
+    let object = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    let triggerRules = try #require(object["triggerRules"] as? [[String: Any]])
+    // The always-on grounding rule is the single empty rule `[{}]`.
+    #expect(triggerRules.count == 1)
+    #expect(triggerRules.first?.isEmpty == true)
+
+    // Cross-check the runtime nature: an empty rule with no capabilities grounds.
+    let skill = try JSONDecoder().decode(Skill.self, from: Data(json.utf8))
+    #expect(skill.isGrounding)
+
+    // The mutual-exclusion validation still passes for a well-formed always-on skill.
+    #expect(WorkspaceSkillDraftBuilder().validate(draft: Self.alwaysOnDraft()).isValid)
+  }
+
+  @Test
+  func skillDraftBuilderRejectsAlwaysOnWithCapabilities() {
+    let validation = WorkspaceSkillDraftBuilder().validate(
+      draft: Self.alwaysOnDraft(capabilities: ["edit-files"])
+    )
+
+    #expect(!validation.isValid)
+    #expect(validation.errors.contains { $0.contains("either a grounding skill") })
+  }
+
+  @Test
+  func skillDraftBuilderRejectsAlwaysOnWithPathOrTagConditions() {
+    let validation = WorkspaceSkillDraftBuilder().validate(
+      draft: Self.alwaysOnDraft(pathGlobs: ["**/*.swift"])
+    )
+
+    #expect(!validation.isValid)
+    #expect(validation.errors.contains { $0.contains("matches every session unconditionally") })
+  }
+
+  @Test
+  func skillDraftBuilderStillOmitsTriggerRulesForToolSkillWithoutAlwaysOn() throws {
+    // Guardrail: the unchanged tool-skill path (no conditions, no always-on) still
+    // collapses to a nil triggerRules (tool nature), exactly as before.
+    let json = try WorkspaceSkillDraftBuilder().buildRawJSON(
+      draft: WorkspaceSkillDraft(
+        id: "codex-cli",
+        name: "codex-cli",
+        description: "Use codex.",
+        providedBy: [],
+        capabilities: ["run-commands"],
+        riskLevel: "low",
+        requiresHumanReview: false,
+        riskNotes: [],
+        notes: []
+      )
+    )
+
+    let object = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    #expect(object["triggerRules"] == nil)
+    let skill = try JSONDecoder().decode(Skill.self, from: Data(json.utf8))
+    #expect(!skill.isGrounding)
+  }
 }
