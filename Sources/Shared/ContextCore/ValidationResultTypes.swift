@@ -114,16 +114,22 @@ public struct ValidationResult: Equatable, Sendable {
   public let counts: ValidationCounts
   public let errors: [ValidationError]
 
+  /// Non-fatal advisories that should not pass silently, e.g. a root that resolved
+  /// on disk but loaded zero entities. Warnings never affect the error count or exit
+  /// status; they exist so an empty scope cannot masquerade as a clean validation.
+  public let warnings: [String]
+
   /// Human-readable summary string used in user-facing output.
   public var summary: String {
     return
-      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) errors=\(errors.count)"
+      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) warnings=\(warnings.count) errors=\(errors.count)"
   }
 
   /// Creates a validation result and sorts errors for stable output.
-  public init(counts: ValidationCounts, errors: [ValidationError]) {
+  public init(counts: ValidationCounts, errors: [ValidationError], warnings: [String] = []) {
     self.counts = counts
     self.errors = ValidationResult.sort(errors: errors)
+    self.warnings = warnings
   }
 
   private static func sort(errors: [ValidationError]) -> [ValidationError] {

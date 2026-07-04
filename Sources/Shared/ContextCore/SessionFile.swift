@@ -170,11 +170,7 @@ public struct SessionFileLoader {
 
       let files: [URL]
       do {
-        files = try fileManager.contentsOfDirectory(
-          at: sessionsURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
+        files = try fileManager.personaKitDirectoryContents(at: sessionsURL)
       } catch {
         throw SessionFileError.discoveryReadFailed(
           "Sessions",

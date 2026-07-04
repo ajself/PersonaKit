@@ -99,11 +99,7 @@ struct SchemaValidator {
       let files: [URL]
 
       do {
-        files = try fileManager.contentsOfDirectory(
-          at: directoryURL,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
+        files = try fileManager.personaKitDirectoryContents(at: directoryURL)
       } catch {
         let relativePath = relativePath(for: directoryURL, root: root)
 

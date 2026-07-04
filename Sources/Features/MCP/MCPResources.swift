@@ -455,11 +455,7 @@ enum MCPResourceFileSupport {
     let files: [URL]
 
     do {
-      files = try fileManager.contentsOfDirectory(
-        at: directoryURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
+      files = try fileManager.personaKitDirectoryContents(at: directoryURL)
     } catch {
       return nil
     }

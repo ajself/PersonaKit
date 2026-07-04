@@ -310,13 +310,7 @@ public struct WorkspaceSnapshotBuilderDependencies: Sendable {
         FileManager.default.fileExists(atPath: url.path())
       },
       contentsOfDirectory: { url in
-        let fileManager = FileManager.default
-
-        return try fileManager.contentsOfDirectory(
-          at: url,
-          includingPropertiesForKeys: nil,
-          options: [.skipsHiddenFiles]
-        )
+        try FileManager.default.personaKitDirectoryContents(at: url)
       },
       readData: { url in
         try Data(contentsOf: url)

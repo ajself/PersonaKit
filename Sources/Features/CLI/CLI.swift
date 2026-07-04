@@ -168,6 +168,12 @@ struct ValidateCommand: ParsableCommand {
     let result = try Validator.validate(scopes: scopes)
     print(scopes.humanSummary)
     print(result.summary)
+    if !result.warnings.isEmpty {
+      var stderrStream = StandardError()
+      for warning in result.warnings {
+        stderrStream.write("warning: " + warning + "\n")
+      }
+    }
     if !result.errors.isEmpty {
       for error in result.errors {
         print(error.lineDescription())

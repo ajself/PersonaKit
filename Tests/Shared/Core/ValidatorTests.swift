@@ -261,6 +261,63 @@ struct ValidatorTests {
   }
 
   @Test
+  func validateEmptyResolvedRootWarnsInsteadOfPassingSilently() throws {
+    // A root that resolves but loads nothing must not look like a clean pass. This
+    // mirrors the observed hidden `.personakit`-on-iCloud failure, where the pack scan
+    // comes back empty: zero entities, zero errors. The warning keeps it from being silent.
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    for subdirectory in ["personas", "kits", "directives", "skills"] {
+      try FileManager.default.createDirectory(
+        at: root.appendingPathComponent("Packs/\(subdirectory)"),
+        withIntermediateDirectories: true
+      )
+    }
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.counts == .zero)
+    #expect(result.errors.isEmpty)
+    #expect(result.warnings.count == 1)
+    #expect(result.warnings.first?.contains(root.path) == true)
+    #expect(result.summary.contains("warnings=1"))
+  }
+
+  @Test
+  func validateLoadsEntitiesFlaggedHiddenAndIgnoresDotfileJunk() throws {
+    // Simulates the hidden-root-on-iCloud failure mode: a cloud-sync provider marks a
+    // normally-named entity file hidden. The old `.skipsHiddenFiles` scan dropped it
+    // silently; scanning by name instead must still load it. Dotfile and `._` AppleDouble
+    // junk sitting alongside it must never be decoded as entities.
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try PersonaKitInitializer().run(destination: root.path)
+
+    let personasDir = root.appendingPathComponent("Packs/personas")
+    let personaFiles = try FileManager.default.contentsOfDirectory(
+      at: personasDir,
+      includingPropertiesForKeys: nil
+    )
+    .filter { $0.pathExtension == "json" }
+
+    for file in personaFiles {
+      var mutable = file
+      var values = URLResourceValues()
+      values.isHidden = true
+      try mutable.setResourceValues(values)
+    }
+
+    try Data("junk".utf8).write(to: personasDir.appendingPathComponent(".DS_Store"))
+    try Data("junk".utf8).write(
+      to: personasDir.appendingPathComponent("._hidden.persona.json")
+    )
+
+    let result = try Validator.validate(root: root)
+
+    #expect(result.counts.personas == 1)
+    #expect(result.errors.isEmpty)
+    #expect(result.warnings.isEmpty)
+  }
+
+  @Test
   func validateRejectsPackEntityPathWhenItIsAFile() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     let packsURL = root.appendingPathComponent("Packs")

@@ -211,11 +211,7 @@ private func loadEntities<T: Decodable & EntityWithID>(
   let files: [URL]
 
   do {
-    files = try fileManager.contentsOfDirectory(
-      at: directory,
-      includingPropertiesForKeys: nil,
-      options: [.skipsHiddenFiles]
-    )
+    files = try fileManager.personaKitDirectoryContents(at: directory)
   } catch {
     let relativePath = relativePath(for: directory, root: root)
 

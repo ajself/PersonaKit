@@ -146,11 +146,7 @@ enum ValidatorReferenceChecker {
         continue
       }
 
-      let files = try fileManager.contentsOfDirectory(
-        at: skillsURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
-      )
+      let files = try fileManager.personaKitDirectoryContents(at: skillsURL)
       let sortedFiles =
         files
         .filter { $0.lastPathComponent.hasSuffix(".skill.json") }
