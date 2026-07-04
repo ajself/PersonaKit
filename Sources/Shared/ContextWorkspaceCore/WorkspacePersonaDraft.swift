@@ -8,6 +8,10 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
   public var responsibilities: [String]
   public var values: [String]
   public var nonGoals: [String]
+  /// Ambient operating context (host, language, constraints). Optional to mirror
+  /// the schema: `nil` means the field is absent, `[]` means an authored-empty
+  /// list. The two must round-trip distinctly, so this is not collapsed to `[]`.
+  public var environment: [String]?
   public var defaultKitIds: [String]
   public var allowedSkillIds: [String]
   public var forbiddenSkillIds: [String]
@@ -20,6 +24,7 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     responsibilities: [String],
     values: [String],
     nonGoals: [String],
+    environment: [String]? = nil,
     defaultKitIds: [String],
     allowedSkillIds: [String],
     forbiddenSkillIds: [String],
@@ -31,6 +36,7 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     self.responsibilities = responsibilities
     self.values = values
     self.nonGoals = nonGoals
+    self.environment = environment
     self.defaultKitIds = defaultKitIds
     self.allowedSkillIds = allowedSkillIds
     self.forbiddenSkillIds = forbiddenSkillIds
@@ -44,6 +50,7 @@ public struct WorkspacePersonaDraft: Equatable, Sendable {
     responsibilities: [],
     values: [],
     nonGoals: [],
+    environment: nil,
     defaultKitIds: [],
     allowedSkillIds: [],
     forbiddenSkillIds: [],

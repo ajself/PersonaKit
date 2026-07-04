@@ -1,9 +1,86 @@
+import ContextCore
 import ContextWorkspaceCore
 import Foundation
 import StudioFoundation
 import Testing
 
 struct WorkspacePersonaDraftBuilderTests {
+  private static func draft(environment: [String]?) -> WorkspacePersonaDraft {
+    WorkspacePersonaDraft(
+      id: "persona-a",
+      name: "Persona A",
+      summary: "Summary",
+      responsibilities: [],
+      values: [],
+      nonGoals: [],
+      environment: environment,
+      defaultKitIds: [],
+      allowedSkillIds: [],
+      forbiddenSkillIds: []
+    )
+  }
+
+  @Test
+  func environmentSurvivesDraftSaveReloadOrderPreservingAndTrimmed() throws {
+    let builder = WorkspacePersonaDraftBuilder()
+    let json = try builder.buildRawJSON(
+      draft: Self.draft(environment: [" Platform: macOS ", "", " Language: Swift "])
+    )
+    let reloaded = try JSONDecoder().decode(Persona.self, from: Data(json.utf8))
+    // Order preserved, blanks dropped, entries trimmed — not sorted/deduped.
+    #expect(reloaded.environment == ["Platform: macOS", "Language: Swift"])
+  }
+
+  @Test
+  func absentEnvironmentStaysAbsentAndIsNotEmitted() throws {
+    let builder = WorkspacePersonaDraftBuilder()
+    let json = try builder.buildRawJSON(draft: Self.draft(environment: nil))
+    let dictionary = try #require(
+      JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
+    )
+    #expect(dictionary["environment"] == nil)
+    let reloaded = try JSONDecoder().decode(Persona.self, from: Data(json.utf8))
+    #expect(reloaded.environment == nil)
+  }
+
+  @Test
+  func authoredEmptyEnvironmentIsEmittedAndDoesNotBecomeAbsent() throws {
+    let builder = WorkspacePersonaDraftBuilder()
+    let json = try builder.buildRawJSON(draft: Self.draft(environment: []))
+    let dictionary = try #require(
+      JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any]
+    )
+    // The empty list is a distinct authored value: it must be present as [], not omitted.
+    #expect(dictionary["environment"] as? [String] == [])
+    let reloaded = try JSONDecoder().decode(Persona.self, from: Data(json.utf8))
+    #expect(reloaded.environment == [])
+  }
+
+  @Test
+  func parseEditSaveIsIdempotentForEveryEnvironmentOptionality() throws {
+    let builder = WorkspacePersonaDraftBuilder()
+    for environment: [String]? in [nil, [], ["Platform: macOS", "Language: Swift"]] {
+      // Parse a persona JSON into a draft, re-emit, and confirm byte-stability.
+      let firstJSON = try builder.buildRawJSON(draft: Self.draft(environment: environment))
+      let persona = try JSONDecoder().decode(Persona.self, from: Data(firstJSON.utf8))
+      let reDraft = WorkspacePersonaDraft(
+        id: persona.id,
+        name: persona.name,
+        summary: persona.summary,
+        responsibilities: persona.responsibilities,
+        values: persona.values,
+        nonGoals: persona.nonGoals,
+        environment: persona.environment,
+        defaultKitIds: persona.defaultKitIds,
+        allowedSkillIds: persona.allowedSkillIds,
+        forbiddenSkillIds: persona.forbiddenSkillIds,
+        forbiddenCapabilities: persona.forbiddenCapabilities ?? []
+      )
+      let secondJSON = try builder.buildRawJSON(draft: reDraft)
+      #expect(firstJSON == secondJSON)
+    }
+  }
+
   @Test
   func buildRawJSONEmitsRequiredFieldsDeterministically() throws {
     let builder = WorkspacePersonaDraftBuilder()

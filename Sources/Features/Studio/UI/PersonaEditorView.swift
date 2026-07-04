@@ -5,6 +5,7 @@ import SwiftUI
 private enum PersonaHelpSection: String, Identifiable {
   case allowedSkillIDs
   case defaultKitIDs
+  case environment
   case forbiddenSkillIDs
   case nonGoals
   case persona
@@ -21,6 +22,8 @@ private enum PersonaHelpSection: String, Identifiable {
       return "Allowed Skill IDs"
     case .defaultKitIDs:
       return "Default Kit IDs"
+    case .environment:
+      return "Environment"
     case .forbiddenSkillIDs:
       return "Forbidden Skill IDs"
     case .nonGoals:
@@ -45,6 +48,9 @@ private enum PersonaHelpSection: String, Identifiable {
         "Allowed skills are this persona's capability ceiling: the external help it may use when a resolved contract requires it."
     case .defaultKitIDs:
       return "Default kits provide shared standards and constraints this persona always carries."
+    case .environment:
+      return
+        "Environment is ambient operating context — host, language, and standing constraints the persona always works within."
     case .forbiddenSkillIDs:
       return
         "Forbidden skills are hard denials. They block capabilities even when a kit or directive asks for them."
@@ -102,6 +108,7 @@ struct PersonaEditorView: View {
   @State private var responsibilitiesText: String
   @State private var valuesText: String
   @State private var nonGoalsText: String
+  @State private var environmentText: String
   @State private var defaultKitIDs: [String]
   @State private var allowedSkillIDs: [String]
   @State private var forbiddenSkillIDs: [String]
@@ -141,6 +148,7 @@ struct PersonaEditorView: View {
     _responsibilitiesText = State(initialValue: initialDraft.responsibilities.joined(separator: "\n"))
     _valuesText = State(initialValue: initialDraft.values.joined(separator: "\n"))
     _nonGoalsText = State(initialValue: initialDraft.nonGoals.joined(separator: "\n"))
+    _environmentText = State(initialValue: (initialDraft.environment ?? []).joined(separator: "\n"))
     _defaultKitIDs = State(initialValue: Self.normalizedIDList(initialDraft.defaultKitIds))
     _allowedSkillIDs = State(initialValue: Self.normalizedIDList(initialDraft.allowedSkillIds))
     _forbiddenSkillIDs = State(initialValue: Self.normalizedIDList(initialDraft.forbiddenSkillIds))
@@ -268,6 +276,23 @@ struct PersonaEditorView: View {
         }
 
         Section {
+          multiLineListEditor(
+            text: $environmentText,
+            prompt: "One environment line per line",
+            placeholder:
+              """
+              Platform: macOS
+              Language: Swift
+              """
+          )
+        } header: {
+          sectionHeader(
+            "Environment",
+            section: .environment
+          )
+        }
+
+        Section {
           referenceSelectionEditor(
             knownItems: knownKits,
             selectedIDs: $defaultKitIDs,
@@ -377,10 +402,17 @@ struct PersonaEditorView: View {
       responsibilities: normalizedTextLines(responsibilitiesText),
       values: normalizedTextLines(valuesText),
       nonGoals: normalizedTextLines(nonGoalsText),
+      // Empty editor → absent (nil); typed lines → a present list.
+      environment: environmentDraftValue,
       defaultKitIds: Self.normalizedIDList(defaultKitIDs),
       allowedSkillIds: Self.normalizedIDList(allowedSkillIDs),
       forbiddenSkillIds: Self.normalizedIDList(forbiddenSkillIDs)
     )
+  }
+
+  private var environmentDraftValue: [String]? {
+    let lines = normalizedTextLines(environmentText)
+    return lines.isEmpty ? nil : lines
   }
 
   private var normalizedID: String {

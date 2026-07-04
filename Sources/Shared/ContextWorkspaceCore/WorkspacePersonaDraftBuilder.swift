@@ -24,6 +24,10 @@ public struct WorkspacePersonaDraftBuilder: Sendable {
       responsibilities: normalizedTextItems(draft.responsibilities),
       values: normalizedTextItems(draft.values),
       nonGoals: normalizedTextItems(draft.nonGoals),
+      // Preserve absent (`nil`) vs authored-empty (`[]`): normalize the items when
+      // present, leave `nil` untouched. Environment lines are ordered prose, so —
+      // unlike `forbiddenCapabilities` below — they are neither sorted nor deduped.
+      environment: draft.environment.map(normalizedTextItems),
       defaultKitIds: normalizedIDItems(draft.defaultKitIds),
       allowedSkillIds: normalizedIDItems(draft.allowedSkillIds),
       forbiddenSkillIds: normalizedIDItems(draft.forbiddenSkillIds),
@@ -134,6 +138,9 @@ public struct WorkspacePersonaDraftBuilder: Sendable {
       responsibilities: normalized.responsibilities,
       values: normalized.values,
       nonGoals: normalized.nonGoals,
+      // Pass through as-is (no empty→nil collapse) so an authored `[]` and an
+      // absent value stay distinct across parse→edit→save.
+      environment: normalized.environment,
       defaultKitIds: normalized.defaultKitIds,
       allowedSkillIds: normalized.allowedSkillIds,
       forbiddenSkillIds: normalized.forbiddenSkillIds,

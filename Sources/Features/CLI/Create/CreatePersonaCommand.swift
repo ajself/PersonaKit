@@ -30,6 +30,9 @@ struct CreatePersonaCommand: ParsableCommand {
   @Option(name: .customLong("non-goal"), help: "Persona non-goal.")
   var nonGoals: [String] = []
 
+  @Option(name: .customLong("environment"), help: "Ambient operating context line (host, language, constraint).")
+  var environment: [String] = []
+
   @Option(name: .customLong("default-kit"), help: "Default kit id.")
   var defaultKitIDs: [String] = []
 
@@ -87,6 +90,11 @@ struct CreatePersonaCommand: ParsableCommand {
         label: "Non-goals (comma-separated)",
         hint: nil
       )
+      let resolvedEnvironment = prompter.promptCSVIfNeeded(
+        values: environment,
+        label: "Environment (comma-separated)",
+        hint: nil
+      )
       let resolvedDefaultKitIDs = prompter.promptCSVIfNeeded(
         values: defaultKitIDs,
         label: "Default kit ids (comma-separated)",
@@ -138,6 +146,8 @@ struct CreatePersonaCommand: ParsableCommand {
         responsibilities: resolvedResponsibilities,
         values: resolvedValues,
         nonGoals: resolvedNonGoals,
+        // No `--environment` given → absent field (nil), not an authored-empty list.
+        environment: resolvedEnvironment.isEmpty ? nil : resolvedEnvironment,
         defaultKitIds: resolvedDefaultKitIDs,
         allowedSkillIds: resolvedAllowedSkillIDs,
         forbiddenSkillIds: resolvedForbiddenSkillIDs,
