@@ -696,7 +696,7 @@ require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibilit
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "Search Validation"
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "description=Inspector"
 require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "description=Help"
-require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "No references or intents in this workspace"
+require_accessibility_text "$OUTPUT_DIR/04-validation-results-valid.accessibility.txt" "Skills"
 require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "Validation Results"
 require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "2 issues need review"
 require_accessibility_text "$OUTPUT_DIR/05-validation-results-error.accessibility.txt" "1 affected entity"
