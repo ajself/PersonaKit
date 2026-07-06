@@ -41,6 +41,7 @@ enum MCPToolPayloads {
     let responsibilitiesCount: Int
     let valuesCount: Int
     let nonGoalsCount: Int
+    let environmentCount: Int
   }
 
   struct DirectiveExplainData: Encodable {

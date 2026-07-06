@@ -288,6 +288,8 @@ struct MCPToolTests {
     let data = try #require(object["data"] as? [String: Any])
     let defaultKitIds = try #require(data["defaultKitIds"] as? [String])
     #expect(defaultKitIds == ["repo-constraints", "swift-style", "swiftui-style"])
+    // Regression (S8): the persona's ambient `environment` is surfaced, not dropped.
+    #expect(data["environmentCount"] as? Int == 2)
   }
 
   @Test

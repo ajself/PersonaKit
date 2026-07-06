@@ -25,7 +25,8 @@ extension MCPToolService {
             forbiddenSkillIds: MCPInternalSupport.uniqueSorted(persona.forbiddenSkillIds),
             responsibilitiesCount: persona.responsibilities.count,
             valuesCount: persona.values.count,
-            nonGoalsCount: persona.nonGoals.count
+            nonGoalsCount: persona.nonGoals.count,
+            environmentCount: persona.environment?.count ?? 0
           )
         )
       )
@@ -249,6 +250,7 @@ extension MCPToolService {
           "forbiddenSkillIds": MCPInternalSupport.uniqueSorted(persona.forbiddenSkillIds),
           "values": MCPInternalSupport.uniqueSorted(persona.values),
           "nonGoals": MCPInternalSupport.uniqueSorted(persona.nonGoals),
+          "environment": MCPInternalSupport.uniqueSorted(persona.environment ?? []),
         ]
       )
     case .directive:
