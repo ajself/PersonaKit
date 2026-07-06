@@ -164,7 +164,7 @@ struct CLISessionTests {
   }
 
   @Test
-  func resolveReferencesViaSessionReturnsStructuredJSON() throws {
+  func resolveGroundingSkillsViaSessionReturnsStructuredJSON() throws {
     let root = fixtureKitRootURL()
 
     var status: Int32 = 0

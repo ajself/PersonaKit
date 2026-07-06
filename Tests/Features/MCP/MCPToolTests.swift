@@ -315,6 +315,49 @@ struct MCPToolTests {
   }
 
   @Test
+  func compareEntitiesSurfacesPersonaEnvironmentDifference() throws {
+    // Regression (S8): `environment` is a compared persona field, not dropped.
+    // senior-swiftui-engineer declares an environment; the added persona does not,
+    // so the difference must appear.
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    let plainPersona = """
+      {
+        "id": "plain-persona",
+        "version": "1.0",
+        "name": "Plain Persona",
+        "summary": "No ambient environment.",
+        "responsibilities": [],
+        "values": [],
+        "nonGoals": [],
+        "defaultKitIds": [],
+        "allowedSkillIds": [],
+        "forbiddenSkillIds": []
+      }
+      """
+    try Data(plainPersona.utf8).write(
+      to: root.appendingPathComponent("Packs/personas/plain-persona.persona.json")
+    )
+
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_compare_entities",
+      arguments: [
+        "entityType": "persona",
+        "leftId": "senior-swiftui-engineer",
+        "rightId": "plain-persona",
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let listDifferences = try #require(object["listDifferences"] as? [[String: Any]])
+    #expect(listDifferences.contains { ($0["field"] as? String) == "environment" })
+  }
+
+  @Test
   func recommendSessionToolReturnsRankedSession() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
@@ -485,7 +528,7 @@ struct MCPToolTests {
   }
 
   @Test
-  func explainReferenceToolReturnsTriggerMetadata() throws {
+  func explainGroundingSkillReturnsTriggerMetadata() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
 
@@ -507,7 +550,7 @@ struct MCPToolTests {
   }
 
   @Test
-  func resolveReferencesToolReturnsMatchedReferences() throws {
+  func resolveGroundingSkillsReturnsMatchedSkills() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
 
@@ -535,7 +578,7 @@ struct MCPToolTests {
   }
 
   @Test
-  func resolveReferencesToolAcceptsSessionIDWithReferenceInputs() throws {
+  func resolveGroundingSkillsAcceptsSessionIDWithSkillInputs() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
 

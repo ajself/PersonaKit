@@ -131,7 +131,7 @@ struct ExporterTests {
   }
 
   @Test
-  func exportExpandsMatchedReferencesWhenTriggerInputsProvided() throws {
+  func exportExpandsMatchedGroundingSkillsWhenTriggerInputsProvided() throws {
     let root = fixtureKitRootURL()
 
     let output = try SessionExporter.export(
@@ -153,7 +153,7 @@ struct ExporterTests {
   }
 
   @Test
-  func exportFailsClosedWhenMatchedReferenceBodyIsMissing() throws {
+  func exportFailsClosedWhenMatchedGroundingSkillBodyIsMissing() throws {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)
 
