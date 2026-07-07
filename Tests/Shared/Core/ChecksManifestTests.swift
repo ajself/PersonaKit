@@ -56,7 +56,7 @@ struct ChecksManifestTests {
     #expect(manifest.checks.allSatisfy { $0.maxClass == "hook" })
 
     let editRule = manifest.checks[0].rule
-    #expect(editRule.kind == "capability-deny")
+    #expect(editRule.kind == .capabilityDeny)
     #expect(editRule.deniedActionClasses == ["file-mutation"])
 
     // The shell-bypass closure: forbidding run-commands independently denies
@@ -90,7 +90,7 @@ struct ChecksManifestTests {
 
     let review = manifest.checks[1]
     #expect(review.maxClass == "review")
-    #expect(review.rule.kind == "review")
+    #expect(review.rule.kind == .review)
     #expect(review.rule.criterion == "Review diff for scope creep")
 
     #expect(

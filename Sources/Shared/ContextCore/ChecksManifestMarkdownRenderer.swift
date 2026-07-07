@@ -80,14 +80,12 @@ enum ChecksManifestMarkdownRenderer {
   /// Short, structured rendering of a rule — never the manifest's verbose `mandate` sentence.
   private static func displayRule(_ rule: CheckRule) -> String {
     switch rule.kind {
-    case "capability-deny":
+    case .capabilityDeny:
       return "deny \((rule.deniedActionClasses ?? []).joined(separator: ", "))"
-    case "command":
+    case .command:
       return "`\(rule.command ?? "")`"
-    case "review":
+    case .review:
       return rule.criterion ?? ""
-    default:
-      return rule.kind
     }
   }
 

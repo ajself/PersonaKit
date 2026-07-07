@@ -23,13 +23,22 @@ public enum CheckClass: String, Codable, Sendable, CaseIterable {
 /// by the bundled JSON Schema validator (which has no conditional-required support).
 /// Only the fields relevant to a rule's `kind` are populated; the rest encode as absent.
 public struct CheckRule: Codable, Equatable, Sendable {
-  /// Rule discriminator: `capability-deny`, `command`, or `review`.
-  public let kind: String
+  /// The closed set of rule discriminators. `RawRepresentable` over `String` so the
+  /// wire format stays the plain string the JSON Schema constrains, while callers get
+  /// compile-time exhaustiveness instead of matching string literals.
+  public enum Kind: String, Codable, Equatable, Sendable {
+    case capabilityDeny = "capability-deny"
+    case command
+    case review
+  }
 
-  /// `capability-deny`: the forbidden host-neutral capability from the vocabulary.
+  /// Rule discriminator selecting which of the fields below is populated.
+  public let kind: Kind
+
+  /// `capabilityDeny`: the forbidden host-neutral capability from the vocabulary.
   public let deniedCapability: String?
 
-  /// `capability-deny`: host-neutral action classes a host must block for this mandate.
+  /// `capabilityDeny`: host-neutral action classes a host must block for this mandate.
   public let deniedActionClasses: [String]?
 
   /// `command`: the exact command whose exit code is the check.
@@ -39,7 +48,7 @@ public struct CheckRule: Codable, Equatable, Sendable {
   public let criterion: String?
 
   public init(
-    kind: String,
+    kind: Kind,
     deniedCapability: String? = nil,
     deniedActionClasses: [String]? = nil,
     command: String? = nil,
@@ -281,7 +290,7 @@ public enum ChecksManifestDeriver {
           mandate: "Forbidden capability '\(capability.rawValue)': deny \(actionClasses.joined(separator: ", ")) actions.",
           maxClass: CheckClass.hook.rawValue,
           rule: CheckRule(
-            kind: "capability-deny",
+            kind: .capabilityDeny,
             deniedCapability: capability.rawValue,
             deniedActionClasses: actionClasses
           ),
@@ -320,7 +329,7 @@ public enum ChecksManifestDeriver {
           id: uniqueID(prefix: "command", text: item.text, counts: &idCounts),
           mandate: "Verification command must pass: '\(item.text)'.",
           maxClass: CheckClass.command.rawValue,
-          rule: CheckRule(kind: "command", command: item.text),
+          rule: CheckRule(kind: .command, command: item.text),
           source: CheckSource(sourceType: "directive", sourceId: directive.id, field: "verification"),
           hostNotes: [
             "Reaches class 'command' on any host that can run the command and gate on its exit code.",
@@ -350,7 +359,7 @@ public enum ChecksManifestDeriver {
           id: uniqueID(prefix: "review", text: step.text, counts: &idCounts),
           mandate: "Review gate (step) — \(step.text).",
           maxClass: CheckClass.review.rawValue,
-          rule: CheckRule(kind: "review", criterion: step.text),
+          rule: CheckRule(kind: .review, criterion: step.text),
           source: CheckSource(sourceType: "directive", sourceId: directive.id, field: "steps"),
           hostNotes: hostNotes
         )
@@ -363,7 +372,7 @@ public enum ChecksManifestDeriver {
           id: uniqueID(prefix: "review", text: item.text, counts: &idCounts),
           mandate: "Review gate (\(item.kind)) — \(item.text).",
           maxClass: CheckClass.review.rawValue,
-          rule: CheckRule(kind: "review", criterion: item.text),
+          rule: CheckRule(kind: .review, criterion: item.text),
           source: CheckSource(sourceType: "directive", sourceId: directive.id, field: "verification"),
           hostNotes: hostNotes
         )
