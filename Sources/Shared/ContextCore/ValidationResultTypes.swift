@@ -2,6 +2,10 @@ import Foundation
 
 /// Entity categories used for deterministic validation reporting.
 public enum ValidationEntityType: String, Sendable {
+  /// A structural problem with the `Packs` root itself (missing directory, not a
+  /// directory) rather than a decodable entity. Kept distinct from `kit` so a
+  /// pack-root failure and a real kit error never share a diagnostics label.
+  case packsRoot = "packs"
   case session
   case persona
   case kit
@@ -11,16 +15,18 @@ public enum ValidationEntityType: String, Sendable {
   /// Stable sort priority used when ordering validation errors.
   public var sortOrder: Int {
     switch self {
-    case .session:
+    case .packsRoot:
       return 0
-    case .persona:
+    case .session:
       return 1
-    case .kit:
+    case .persona:
       return 2
-    case .directive:
+    case .kit:
       return 3
-    case .skill:
+    case .directive:
       return 4
+    case .skill:
+      return 5
     }
   }
 }

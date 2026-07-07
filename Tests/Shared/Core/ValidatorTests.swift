@@ -249,7 +249,7 @@ struct ValidatorTests {
     #expect(
       result.errors == [
         ValidationError(
-          entityType: .kit,
+          entityType: .packsRoot,
           entityId: nil,
           field: "file",
           missingId: nil,

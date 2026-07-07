@@ -93,6 +93,11 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       return .directive
     case .skill:
       return .skill
+    case .packsRoot:
+      // A missing/invalid Packs root is not a navigable Studio entity, so it
+      // surfaces under the nearest bucket rather than adding a phantom category
+      // to the workspace entity taxonomy.
+      return .kit
     }
   }
 

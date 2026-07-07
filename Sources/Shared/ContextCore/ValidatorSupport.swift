@@ -156,7 +156,7 @@ enum ValidatorSupport {
     case .skill:
       return .skill
     case .packsRoot:
-      return .kit
+      return .packsRoot
     }
   }
 
