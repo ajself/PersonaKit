@@ -7,12 +7,6 @@ enum StudioLibraryDetailMode: String, CaseIterable, Sendable {
   case json
 
   var title: String {
-    title(for: nil)
-  }
-
-  func title(
-    for selection: SidebarItem?
-  ) -> String {
     switch self {
     case .edit:
       return "Edit"

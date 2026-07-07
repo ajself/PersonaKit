@@ -275,7 +275,7 @@ struct StudioLibraryDetailView: View {
     if availableDetailModes.count > 1 {
       Picker("Detail Mode", selection: $detailMode) {
         ForEach(availableDetailModes, id: \.self) { mode in
-          Text(mode.title(for: selection))
+          Text(mode.title)
             .tag(mode)
         }
       }
