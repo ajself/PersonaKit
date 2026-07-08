@@ -5,16 +5,13 @@ import Testing
 
 struct CLIRootCommandTests {
   /// Bare `personakit` (no subcommand) must orient a cold agent with a short,
-  /// scope-free message and exit 0 — even from a directory with no `.personakit`,
-  /// since the orientation resolves no scope.
+  /// scope-free message and exit 0. The orientation is static and never resolves
+  /// scope, so it works from any directory. We deliberately do NOT mutate the
+  /// process working directory here: it is process-global state and Swift Testing
+  /// runs tests in parallel, so a `changeCurrentDirectoryPath` would race with any
+  /// concurrent test that reads the cwd (e.g. the MCP guidance scope-risk checks).
   @Test
   func bareCommandPrintsScopeFreeOrientation() throws {
-    let workspace = try makeTempDirectory()
-    let fileManager = FileManager.default
-    let originalDirectory = fileManager.currentDirectoryPath
-    #expect(fileManager.changeCurrentDirectoryPath(workspace.path))
-    defer { _ = fileManager.changeCurrentDirectoryPath(originalDirectory) }
-
     var status: Int32 = -1
     let output = captureStdout {
       status = PersonaKitCLI().run(arguments: ["personakit"])

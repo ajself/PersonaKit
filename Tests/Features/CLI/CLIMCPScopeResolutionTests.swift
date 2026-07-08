@@ -69,7 +69,7 @@ struct CLIMCPScopeResolutionTests {
   }
 
   @Test
-  func localProjectScopeSelectedOverGlobalWhenBothExist() throws {
+  func localProjectAndGlobalScopesMergedWhenBothExist() throws {
     let workspace = try makeTempDirectory()
     let nestedWorkspace = workspace.appendingPathComponent("a/b/c")
     let projectScope = workspace.appendingPathComponent(".personakit")
@@ -87,7 +87,7 @@ struct CLIMCPScopeResolutionTests {
     )
 
     #expect(scopes.projectScopeURL?.path == projectScope.path)
-    #expect(scopes.globalScopeURL == nil)
+    #expect(scopes.globalScopeURL?.path == globalScope.path)
   }
 
   @Test
@@ -179,17 +179,24 @@ struct CLIMCPScopeResolutionTests {
     }
   }
 
+  /// Regression for the `personakit mcp` global-scope bug: when a project
+  /// `.personakit` exists, MCP startup must still merge the global scope so that
+  /// global entities are visible and project entities can reference global kits.
+  /// Previously `resolveMCPScopes` returned project-only, so global entities were
+  /// invisible and any cross-scope contract failed to resolve.
   @Test
-  func localMcpResourcesAndExportIgnoreGlobalScopeWhenProjectExists() throws {
+  func localMcpResourcesAndExportMergeGlobalScopeWhenProjectExists() throws {
     let workspace = try makeTempDirectory()
     let projectScope = workspace.appendingPathComponent(".personakit")
     let globalHome = try makeTempDirectory()
     let globalScope = globalHome.appendingPathComponent(".personakit")
 
+    // Project persona depends on a kit that only exists in the global scope.
     try writePersona(
       id: "architectural-editor",
       name: "Architectural Editor",
-      root: projectScope
+      root: projectScope,
+      defaultKitIds: ["global-shared-kit"]
     )
     try writeDirective(
       id: "review-architecture-invariants",
@@ -200,6 +207,11 @@ struct CLIMCPScopeResolutionTests {
     try writePersona(
       id: "global-only-persona",
       name: "Global Only Persona",
+      root: globalScope
+    )
+    try writeKit(
+      id: "global-shared-kit",
+      name: "Global Shared Kit",
       root: globalScope
     )
 
@@ -213,7 +225,7 @@ struct CLIMCPScopeResolutionTests {
     let resources = try resourceService.listResources().map(\.name)
 
     #expect(resources.contains("architectural-editor"))
-    #expect(!resources.contains("global-only-persona"))
+    #expect(resources.contains("global-only-persona"))
 
     let toolService = MCPToolService(scopes: scopes)
     let result = try toolService.callTool(
@@ -224,8 +236,11 @@ struct CLIMCPScopeResolutionTests {
       ]
     )
 
+    // Export succeeds only because the project persona's global kit resolved
+    // across the merged scopes.
     let output = try #require(firstText(result))
     #expect(output.contains("architectural-editor"))
+    #expect(output.contains("global-shared-kit"))
   }
 
   /// Guards that `personakit contract` (CLI) and the `personakit_resolve_contract`
@@ -298,10 +313,12 @@ private func createKitRoot(_ root: URL) throws {
 private func writePersona(
   id: String,
   name: String,
-  root: URL
+  root: URL,
+  defaultKitIds: [String] = []
 ) throws {
   let directory = root.appendingPathComponent("Packs/personas")
   try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+  let kitIdsJSON = defaultKitIds.map { "\"\($0)\"" }.joined(separator: ", ")
   let json = """
     {
       "id": "\(id)",
@@ -311,12 +328,31 @@ private func writePersona(
       "responsibilities": [],
       "values": [],
       "nonGoals": [],
-      "defaultKitIds": [],
+      "defaultKitIds": [\(kitIdsJSON)],
       "allowedSkillIds": [],
       "forbiddenSkillIds": []
     }
     """
   try Data(json.utf8).write(to: directory.appendingPathComponent("\(id).persona.json"))
+}
+
+private func writeKit(
+  id: String,
+  name: String,
+  root: URL
+) throws {
+  let directory = root.appendingPathComponent("Packs/kits")
+  try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+  let json = """
+    {
+      "id": "\(id)",
+      "version": "1.0",
+      "name": "\(name)",
+      "summary": "Summary",
+      "skillIds": []
+    }
+    """
+  try Data(json.utf8).write(to: directory.appendingPathComponent("\(id).kit.json"))
 }
 
 private func writeDirective(

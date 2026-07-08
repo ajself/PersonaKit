@@ -139,13 +139,14 @@ enum CLIHelpers {
     return rootURL
   }
 
-  /// Resolves MCP startup scopes using local-first single-scope selection.
+  /// Resolves MCP startup scopes, merging project and global discovery.
   ///
   /// Resolution order:
   /// 1. `--root`
   /// 2. `PERSONAKIT_ROOT` (and compatibility with `PERSONAKIT_ROOT_OVERRIDE`)
-  /// 3. Local project `.personakit`
-  /// 4. Global `~/.personakit`
+  /// 3. Local project `.personakit` and global `~/.personakit`, merged so
+  ///    project entities can reference global kits/skills (honoring
+  ///    `--no-project`/`--no-global`), matching `resolveScopes`.
   static func resolveMCPScopes(
     options: ScopeOptions,
     environment: [String: String] = ProcessInfo.processInfo.environment,
@@ -179,27 +180,28 @@ enum CLIHelpers {
       )
     }
 
+    var projectScopeURL: URL?
     if options.useProjectScope {
       let projectLocator = ProjectPersonaKitLocator(
         startingURL: URL(fileURLWithPath: currentDirectoryPath)
       )
-
-      if let projectScopeURL = projectLocator.locate() {
-        return ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: nil)
-      }
+      projectScopeURL = projectLocator.locate()
     }
 
+    var globalScopeURL: URL?
     if options.useGlobalScope {
       let globalLocator = GlobalPersonaKitLocator(homeDirectory: homeDirectory)
-
-      if let globalScopeURL = globalLocator.locate() {
-        return ScopeSet(projectScopeURL: nil, globalScopeURL: globalScopeURL)
-      }
+      globalScopeURL = globalLocator.locate()
     }
 
-    throw ArgumentParser.ValidationError(
-      "No PersonaKit scope found for MCP. Provide --root <path>, set PERSONAKIT_ROOT, or create .personakit in this project or ~/.personakit."
-    )
+    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScopeURL)
+    guard !scopes.isEmpty else {
+      throw ArgumentParser.ValidationError(
+        "No PersonaKit scope found for MCP. Provide --root <path>, set PERSONAKIT_ROOT, or create .personakit in this project or ~/.personakit."
+      )
+    }
+
+    return scopes
   }
 
   private static func normalizedRootPath(_ value: String?) -> String? {
