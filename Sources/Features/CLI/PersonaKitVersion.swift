@@ -8,5 +8,5 @@ enum PersonaKitVersion {
   /// version). `make version-check` enforces this and runs as part of
   /// `cli-install` and the release preflight, so drift fails fast instead of
   /// shipping a stale `--version`.
-  static let current = "2.0.1"
+  static let current = "2.1.0"
 }
