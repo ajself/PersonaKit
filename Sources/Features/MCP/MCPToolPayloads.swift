@@ -42,6 +42,17 @@ enum MCPToolPayloads {
     let valuesCount: Int
     let nonGoalsCount: Int
     let environmentCount: Int
+    /// Sessions that reference this persona, so an agent holding only a persona id can
+    /// reach a full contract via `personakit_export({ sessionId })` without scanning
+    /// `personakit://catalog/sessions`. `nil` means session listing failed (e.g. a
+    /// malformed session file); an empty array means no session references this persona.
+    let sessions: [PersonaSessionRef]?
+  }
+
+  struct PersonaSessionRef: Encodable {
+    let sessionId: String
+    let directiveId: String
+    let kitOverrides: [String]
   }
 
   struct DirectiveExplainData: Encodable {

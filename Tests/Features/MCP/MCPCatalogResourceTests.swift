@@ -221,8 +221,16 @@ struct MCPCatalogResourceTests {
       )
     )
 
+    let groundingTiers = try #require(object["groundingTiers"] as? [[String: Any]])
+    #expect(groundingTiers.compactMap { $0["tier"] as? String } == ["authorizationGate", "fullText"])
+    #expect(
+      groundingTiers.first?["use"] as? String
+        == "personakit_resolve_contract with sessionId (or personaId and directiveId)"
+    )
+    #expect(groundingTiers.last?["use"] as? String == "personakit_export with sessionId")
+
     let quickStart = try #require(object["quickStart"] as? [[String: Any]])
-    #expect(quickStart.compactMap { $0["order"] as? Int } == [1, 2, 3, 4, 5, 6])
+    #expect(quickStart.compactMap { $0["order"] as? Int } == [1, 2, 3, 4, 5, 6, 7])
     #expect(
       quickStart.first?["action"] as? String
         == "Read the start guide and verify the loaded scope."
@@ -232,14 +240,20 @@ struct MCPCatalogResourceTests {
       quickStart[1]["use"] as? String
         == "personakit://catalog/guidance or personakit_best_guidance"
     )
-    #expect(
-      quickStart[2]["use"] as? String
-        == "personakit://catalog/sessions or personakit_recommend_session"
-    )
     #expect(quickStart[3]["use"] as? String == "personakit_resolve_contract with sessionId")
+    #expect(quickStart[4]["use"] as? String == "personakit_export with sessionId")
+    #expect(
+      quickStart[6]["use"] as? String
+        == "personakit://packs/{personas|kits|directives|skills}/<id>"
+    )
 
     let resourceMap = try #require(object["resourceMap"] as? [[String: Any]])
     #expect(resourceMap.first?["id"] as? String == "personakit://catalog/start")
+    #expect(
+      resourceMap.contains {
+        ($0["id"] as? String) == "personakit://packs/{personas|kits|directives|skills}/<id>"
+      }
+    )
 
     let toolMap = try #require(object["toolMap"] as? [[String: Any]])
     #expect(toolMap.contains { ($0["id"] as? String) == "personakit_best_guidance" })

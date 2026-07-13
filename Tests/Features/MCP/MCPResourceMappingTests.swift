@@ -19,6 +19,23 @@ struct MCPResourceMappingTests {
   }
 
   @Test
+  func singularPackTypeErrorNamesValidTokens() throws {
+    // A wrong (singular) type token must self-correct by naming the four valid plural
+    // tokens, not read as a stale or deleted resource.
+    #expect(throws: MCPResourceURIError.unknownPacksType("persona")) {
+      try MCPResourceReference.parse(uri: "personakit://packs/persona/senior-swiftui-engineer")
+    }
+
+    let message = MCPResourceURIError.unknownPacksType("persona").errorDescription
+    let description = try #require(message)
+    #expect(description.contains("personas"))
+    #expect(description.contains("kits"))
+    #expect(description.contains("directives"))
+    #expect(description.contains("skills"))
+    #expect(description.contains("personakit://packs/kits/<id>"))
+  }
+
+  @Test
   func catalogURIBuildsAndParses() throws {
     let reference = MCPResourceReference.catalog(type: .index)
 

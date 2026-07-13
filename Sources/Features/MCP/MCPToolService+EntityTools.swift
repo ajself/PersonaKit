@@ -13,6 +13,10 @@ extension MCPToolService {
           MCPInternalSupport.missingEntityMessage(entityType: .persona, id: input.id)
         )
       }
+      // Surface the reverse persona -> sessions edge so a cold agent can reach a full
+      // contract in <=2 calls. Session loading is best-effort: a malformed session file
+      // must not fail persona inspection, so degrade to `nil` rather than propagate.
+      let personaSessions = personaSessionRefs(for: input.id)
       return try MCPInternalSupport.encodeToolJSON(
         MCPToolPayloads.ExplainPayload(
           entityType: input.entityType.rawValue,
@@ -26,7 +30,8 @@ extension MCPToolService {
             responsibilitiesCount: persona.responsibilities.count,
             valuesCount: persona.values.count,
             nonGoalsCount: persona.nonGoals.count,
-            environmentCount: persona.environment?.count ?? 0
+            environmentCount: persona.environment?.count ?? 0,
+            sessions: personaSessions
           )
         )
       )
@@ -223,6 +228,28 @@ extension MCPToolService {
         recommendations: selected
       )
     )
+  }
+
+  /// Sessions referencing `personaId`, sorted by session id. Returns `nil` when session
+  /// files cannot be listed (e.g. a malformed session file), so persona inspection never
+  /// fails on an unrelated bad session; an empty array means no session references it.
+  func personaSessionRefs(for personaId: String) -> [MCPToolPayloads.PersonaSessionRef]? {
+    guard
+      let sessions = try? MCPInternalSupport.listSessions(scopes: scopes, fileManager: .default)
+    else {
+      return nil
+    }
+    return
+      sessions
+      .filter { $0.personaId == personaId }
+      .map { session in
+        MCPToolPayloads.PersonaSessionRef(
+          sessionId: session.id,
+          directiveId: session.directiveId,
+          kitOverrides: MCPInternalSupport.uniqueSorted(session.kitOverrides ?? [])
+        )
+      }
+      .sorted { $0.sessionId < $1.sessionId }
   }
 
   func comparableSnapshot(

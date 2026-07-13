@@ -9,12 +9,21 @@ enum MCPCatalogPayloads {
     let scope: Scope
     let warnings: [String]
     let safetyModel: [String]
+    let groundingTiers: [GroundingTier]
     let quickStart: [StartStep]
     let commonFlows: [StartFlow]
     let resourceMap: [StartEntry]
     let toolMap: [StartEntry]
     let promptMap: [StartEntry]
     let antiPatterns: [String]
+  }
+
+  /// The two-tier lazy-grounding split: a cheap authorization gate versus full rule text.
+  struct GroundingTier: Encodable {
+    let tier: String
+    let use: String
+    let when: String
+    let returns: String
   }
 
   struct StartStep: Encodable {

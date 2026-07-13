@@ -290,6 +290,14 @@ struct MCPToolTests {
     #expect(defaultKitIds == ["repo-constraints", "swift-style", "swiftui-style"])
     // Regression (S8): the persona's ambient `environment` is surfaced, not dropped.
     #expect(data["environmentCount"] as? Int == 2)
+
+    // A persona surfaces the sessions that reference it, so an agent holding only a
+    // persona id can reach a full contract via export in two calls.
+    let sessions = try #require(data["sessions"] as? [[String: Any]])
+    #expect(sessions.count == 1)
+    #expect(sessions.first?["sessionId"] as? String == "senior-swiftui-engineer_apply-style")
+    #expect(sessions.first?["directiveId"] as? String == "apply-style")
+    #expect(sessions.first?["kitOverrides"] as? [String] == [])
   }
 
   @Test

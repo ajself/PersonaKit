@@ -26,7 +26,11 @@ enum MCPResourceURIError: Error, LocalizedError, Equatable {
     case .invalidSegment(let segment):
       return "Invalid URI path segment: \(segment)"
     case .unknownPacksType(let type):
-      return "Unknown packs type: \(type)"
+      let validTypes = MCPPackResourceType.allCases.map(\.rawValue).joined(separator: ", ")
+      let example = MCPPackResourceType.kits.rawValue
+      return
+        "Unknown packs type: '\(type)'. Valid pack types are plural: \(validTypes). "
+        + "Example: personakit://packs/\(example)/<id>."
     case .unknownCatalogType(let type):
       return "Unknown catalog type: \(type)"
     }
