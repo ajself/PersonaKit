@@ -39,4 +39,22 @@ struct StudioDiagnosticsNavigationResolverTests {
     #expect(target.selectedLibraryItemID == "swiftui-style-guide-reference")
     #expect(target.searchText == "swiftui-style-guide-reference")
   }
+
+  @Test
+  func pathOnlyIssuesLandOnSectionWithoutSearchFilter() {
+    let target = StudioDiagnosticsNavigationResolver.navigationTarget(
+      for: WorkspaceValidationIssue(
+        entityType: .kit,
+        entityId: nil,
+        field: "packsRoot",
+        filePath: "/tmp/.personakit/Packs/kits",
+        message: "Packs directory could not be read.",
+        severity: .error
+      )
+    )
+
+    #expect(target.sidebarItem == .kits)
+    #expect(target.selectedLibraryItemID == nil)
+    #expect(target.searchText == "")
+  }
 }

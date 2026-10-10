@@ -5,6 +5,7 @@ import SwiftUI
 /// Sessions list panel with CRUD actions and project/global scope labels.
 struct SessionsListTabView: View {
   let items: [WorkspaceSessionListItem]
+  let snapshot: WorkspaceSnapshot
   @Binding var searchText: String
   @Binding var selectedSessionID: String?
   let sessionActionErrorMessage: String?
@@ -29,37 +30,16 @@ struct SessionsListTabView: View {
       }
 
       List(items, id: \.id, selection: $selectedSessionID) { session in
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(session.id)
-              .font(.headline)
-              .lineLimit(1)
-              .truncationMode(.middle)
-
-            Spacer()
-
-            scopeBadge(scope: session.sourceScope)
-          }
-
-          Text("persona: \(session.personaId) · directive: \(session.directiveId)")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .lineLimit(2)
-            .truncationMode(.tail)
-
-          Text(session.fileURL.path())
-            .font(.caption.monospaced())
-            .foregroundStyle(.tertiary)
-            .lineLimit(2)
-            .truncationMode(.middle)
-            .textSelection(.enabled)
-        }
-        .padding(.vertical, 4)
+        StudioListRow(
+          title: session.id,
+          subtitle: SessionsListRowState.subtitle(for: session, in: snapshot),
+          scope: session.sourceScope
+        )
         .tag(Optional(session.id))
       }
       .overlay {
         if items.isEmpty {
-          ContentUnavailableView.search
+          emptyState
         }
       }
       .padding(.top, sessionActionErrorMessage == nil ? 0 : 8)
@@ -80,15 +60,16 @@ struct SessionsListTabView: View {
     ]
   }
 
-  private func scopeBadge(scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
+  @ViewBuilder
+  private var emptyState: some View {
+    if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      ContentUnavailableView(
+        "No Sessions",
+        systemImage: "clock.arrow.circlepath",
+        description: Text("A session pairs a persona with a directive. Create one to resolve its contract.")
       )
+    } else {
+      ContentUnavailableView.search(text: searchText)
+    }
   }
 }

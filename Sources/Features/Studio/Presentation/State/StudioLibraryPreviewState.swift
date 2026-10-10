@@ -5,7 +5,7 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
   let sectionTitle: String
   let id: String
   let displayName: String
-  let scope: String
+  let sourceScope: WorkspaceSourceScope
   let relativePath: String
   let workstreamLine: String?
   let skillCapabilityLine: String?
@@ -23,7 +23,7 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
     sectionTitle = selection.singularTitle
     id = item.id
     displayName = item.displayName
-    scope = item.sourceScope.displayName
+    sourceScope = item.sourceScope
     relativePath = Self.relativePath(
       fileURL: item.fileURL,
       workspaceURL: workspaceURL
@@ -32,7 +32,10 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
     if let workstreamId = item.workstreamId,
       let workstreamPhase = item.workstreamPhase
     {
-      workstreamLine = "workstream: \(workstreamId) · phase: \(workstreamPhase)"
+      workstreamLine = SessionsPanelLayoutState.workstreamMetadataLine(
+        workstreamID: workstreamId,
+        phase: workstreamPhase
+      )
     } else {
       workstreamLine = nil
     }
@@ -54,6 +57,10 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
       skillReviewLine = nil
       skillNotesLine = nil
     }
+  }
+
+  var scope: String {
+    sourceScope.displayName
   }
 
   var accessibilitySummary: String {

@@ -123,16 +123,11 @@ struct SessionEditorView: View {
           .font(.headline)
 
         if let draftSessionMap {
-          Text(miniMapSummary(for: draftSessionMap))
-            .font(.caption)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-              Capsule()
-                .fill(draftSessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
-            )
-            .foregroundStyle(draftSessionMap.isFullyResolved ? .green : .orange)
+          StudioBadge(
+            title: miniMapSummary(for: draftSessionMap),
+            tone: draftSessionMap.isFullyResolved ? .success : .warning,
+            size: .regular
+          )
         }
       }
 
@@ -160,7 +155,7 @@ struct SessionEditorView: View {
         )
         .frame(minHeight: 180)
         .background(
-          RoundedRectangle(cornerRadius: 8)
+          RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
             .fill(.quaternary.opacity(0.15))
         )
       } else {

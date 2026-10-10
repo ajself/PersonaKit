@@ -8,19 +8,19 @@ struct StudioWelcomeView: View {
 
   private let rows: [StudioWelcomeRow] = [
     StudioWelcomeRow(
-      title: "Inspect PersonaKit Roots",
-      detail: "Load a workspace and review sessions, packs, and source locations.",
-      systemImage: "folder.badge.gearshape"
+      title: "Read a Contract",
+      detail: "See what a session hands your agent: its role, skills, boundaries, and stop points.",
+      systemImage: "doc.text.magnifyingglass"
     ),
     StudioWelcomeRow(
-      title: "Check Validation",
-      detail: "See schema and relationship issues before exporting context.",
+      title: "Write the Pieces",
+      detail: "Create and edit the personas, directives, kits, and skills a session is built from.",
+      systemImage: "square.and.pencil"
+    ),
+    StudioWelcomeRow(
+      title: "Check Before Handoff",
+      detail: "Validation flags missing references and schema problems before you export.",
       systemImage: "checkmark.seal"
-    ),
-    StudioWelcomeRow(
-      title: "Trace Relationships",
-      detail: "Follow persona, directive, kit, and skill links.",
-      systemImage: "point.3.connected.trianglepath.dotted"
     ),
   ]
 
@@ -37,18 +37,18 @@ struct StudioWelcomeView: View {
       Button {
         onOpenWorkspace()
       } label: {
-        Label("Open Workspace...", systemImage: "folder")
+        Label("Open Workspace…", systemImage: "folder")
       }
       .buttonStyle(.borderedProminent)
       .controlSize(.large)
-      .help("Open Workspace...")
+      .help("Open a folder that contains a .personakit directory")
 
       if !recentWorkspaces.isEmpty {
         recentWorkspacesView
       }
     }
     .padding(44)
-    .frame(width: 620, alignment: .leading)
+    .frame(maxWidth: 620, alignment: .leading)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
   }
 
@@ -57,7 +57,7 @@ struct StudioWelcomeView: View {
       Text("Welcome to PersonaKit Studio")
         .font(.largeTitle.bold())
 
-      Text("A read-only-first inspector for PersonaKit roots.")
+      Text("Read, write, and check the contracts your coding agents work under.")
         .font(.title3)
         .foregroundStyle(.secondary)
     }
@@ -155,7 +155,7 @@ private struct StudioRecentWorkspaceRowView: View {
     .padding(.horizontal, 10)
     .padding(.vertical, 8)
     .background(
-      RoundedRectangle(cornerRadius: 8)
+      RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
         .fill(.secondary.opacity(0.08))
     )
   }

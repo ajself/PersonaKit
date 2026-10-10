@@ -67,53 +67,11 @@ enum SessionsPanelLayoutState {
     return nil
   }
 
-  static func unresolvedIssueBadgeText(
-    issueCount: Int?
-  ) -> String? {
-    guard let issueCount, issueCount > 0 else {
-      return nil
-    }
-
-    return String(issueCount)
-  }
-
-  static func expectedSessionMapRequestKey(
-    for selectedSessionID: String
-  ) -> String {
-    return "session:\(selectedSessionID)"
-  }
-
-  static func unresolvedIssueBadgeText(
-    issueCount: Int?,
-    mapRequestKey: String,
-    selectedSessionID: String
-  ) -> String? {
-    guard mapRequestKey == expectedSessionMapRequestKey(for: selectedSessionID) else {
-      return nil
-    }
-
-    return unresolvedIssueBadgeText(
-      issueCount: issueCount
-    )
-  }
-
-  static func personaMetadataLine(
-    personaID: String
-  ) -> String {
-    "persona: \(personaID)"
-  }
-
-  static func directiveMetadataLine(
-    directiveID: String
-  ) -> String {
-    "directive: \(directiveID)"
-  }
-
   static func workstreamMetadataLine(
     workstreamID: String,
     phase: String
   ) -> String {
-    "workstream: \(workstreamID) · phase: \(phase)"
+    "Workstream \(workstreamID) · Phase \(phase)"
   }
 
   static func mapHealthText(

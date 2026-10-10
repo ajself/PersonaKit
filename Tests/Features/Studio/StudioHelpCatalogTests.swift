@@ -66,7 +66,7 @@ struct StudioHelpCatalogTests {
   }
 
   @Test
-  func everySidebarHelpTopicCanUseInspector() {
+  func everySidebarItemHasHelpTopic() {
     let sidebarItems: [SidebarItem] = [
       .sessions,
       .personas,
@@ -79,7 +79,6 @@ struct StudioHelpCatalogTests {
 
     for item in sidebarItems {
       #expect(StudioHelpCatalog.topic(for: item) != nil)
-      #expect(item.supportsInspector)
     }
   }
 

@@ -121,8 +121,8 @@ public struct GlobalLibraryDirectoryPickerClient: GlobalLibraryDirectoryPicking 
     panel.allowsMultipleSelection = false
     panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
       .appendingPathComponent(".personakit")
-    panel.message = "Choose the global PersonaKit library folder to connect."
-    panel.prompt = "Connect Library"
+    panel.message = "Choose your global library folder (~/.personakit) to connect."
+    panel.prompt = "Connect Global Library"
 
     guard panel.runModal() == .OK else {
       return nil

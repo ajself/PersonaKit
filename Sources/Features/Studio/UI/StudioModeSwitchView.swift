@@ -29,6 +29,8 @@ struct StudioModeSwitchView<ID: Hashable>: View {
     Picker(accessibilityLabel, selection: $selection) {
       ForEach(items) { item in
         Label(item.title, systemImage: item.systemImage)
+          .help(item.accessibilityHint)
+          .accessibilityHint(item.accessibilityHint)
           .tag(item.id)
       }
     }

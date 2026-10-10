@@ -36,6 +36,7 @@ struct SessionsPanelView: View {
     return HSplitView {
       SessionsListTabView(
         items: items,
+        snapshot: workspaceStore.snapshot,
         searchText: $searchText,
         selectedSessionID: $selectedSessionID,
         sessionActionErrorMessage: sessionActionErrorMessage,
@@ -208,7 +209,6 @@ struct SessionsPanelView: View {
         id: mode,
         title: mode.title,
         systemImage: mode.systemImage,
-        badgeText: nil,
         accessibilityHint: mode.accessibilityHint
       )
     }
@@ -256,27 +256,13 @@ struct SessionsPanelView: View {
           .foregroundStyle(.secondary)
       }
     } else if let sessionMap = workspaceStore.sessionMap {
-      Text(mapHealthText)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-          Capsule()
-            .fill(sessionMap.isFullyResolved ? .green.opacity(0.16) : .orange.opacity(0.16))
-        )
-        .foregroundStyle(sessionMap.isFullyResolved ? .green : .orange)
+      StudioBadge(
+        title: mapHealthText,
+        tone: sessionMap.isFullyResolved ? .success : .warning,
+        size: .regular
+      )
     } else {
-      Text(mapHealthText)
-        .font(.caption)
-        .fontWeight(.medium)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-          Capsule()
-            .fill(.quaternary.opacity(0.16))
-        )
+      StudioBadge(title: mapHealthText, size: .regular)
     }
   }
 
@@ -357,7 +343,7 @@ struct SessionsPanelView: View {
           selectedSession: selectedSession,
           actionState: actionState
         )
-        detailScopeBadge(scope: selectedSession.sourceScope)
+        StudioScopeBadge(scope: selectedSession.sourceScope)
       }
 
       VStack(alignment: .leading, spacing: 8) {
@@ -366,7 +352,7 @@ struct SessionsPanelView: View {
 
           Spacer(minLength: 8)
 
-          detailScopeBadge(scope: selectedSession.sourceScope)
+          StudioScopeBadge(scope: selectedSession.sourceScope)
         }
 
         detailModeSwitch
@@ -454,18 +440,6 @@ struct SessionsPanelView: View {
     return actions
   }
 
-  private func detailScopeBadge(scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        Capsule()
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
-      )
-  }
-
   private func detailMetadataRow(
     selectedSession: WorkspaceSessionListItem
   ) -> some View {
@@ -481,12 +455,7 @@ struct SessionsPanelView: View {
     selectedSession: WorkspaceSessionListItem
   ) -> String {
     var metadata = [
-      SessionsPanelLayoutState.personaMetadataLine(
-        personaID: selectedSession.personaId
-      ),
-      SessionsPanelLayoutState.directiveMetadataLine(
-        directiveID: selectedSession.directiveId
-      ),
+      SessionsListRowState.subtitle(for: selectedSession, in: workspaceStore.snapshot)
     ]
 
     if let directive = selectedDirective(
@@ -677,17 +646,8 @@ struct SessionsPanelView: View {
   }
 
   private func filteredSessions(_ items: [WorkspaceSessionListItem]) -> [WorkspaceSessionListItem] {
-    let normalizedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    guard !normalizedSearch.isEmpty else {
-      return items
-    }
-
-    return items.filter { item in
-      item.id.localizedCaseInsensitiveContains(normalizedSearch)
-        || item.personaId.localizedCaseInsensitiveContains(normalizedSearch)
-        || item.directiveId.localizedCaseInsensitiveContains(normalizedSearch)
-        || item.fileURL.path().localizedCaseInsensitiveContains(normalizedSearch)
+    items.filter { item in
+      SessionsListRowState.matches(item, searchText: searchText, in: workspaceStore.snapshot)
     }
   }
 
@@ -979,63 +939,26 @@ private struct SessionsInspectorView: View {
         .fontWeight(.semibold)
         .foregroundStyle(.secondary)
 
-      inspectorSection("Identity") {
-        metadataRow(label: "Session", value: selectedSession.id)
-        metadataRow(label: "Persona", value: selectedSession.personaId)
-        metadataRow(label: "Directive", value: selectedSession.directiveId)
+      StudioInspectorSection("Identity") {
+        StudioMetadataRow(label: "Session", value: selectedSession.id)
+        StudioMetadataRow(label: "Persona", value: selectedSession.personaId)
+        StudioMetadataRow(label: "Directive", value: selectedSession.directiveId)
       }
 
-      inspectorSection("Source") {
-        metadataRow(label: "Scope", value: selectedSession.sourceScope.displayName)
-        metadataRow(
+      StudioInspectorSection("Source") {
+        StudioMetadataRow(label: "Scope", value: selectedSession.sourceScope.displayName)
+        StudioMetadataRow(
           label: "Path",
           value: relativePath(for: selectedSession),
           monospaced: true
         )
       }
 
-      inspectorSection("Relationships") {
-        metadataRow(label: "Status", value: relationshipStatusText)
+      StudioInspectorSection("Relationships") {
+        StudioMetadataRow(label: "Status", value: relationshipStatusText)
       }
     }
     .accessibilityElement(children: .contain)
-  }
-
-  private func inspectorSection<Content: View>(
-    _ title: String,
-    @ViewBuilder content: () -> Content
-  ) -> some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(title)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundStyle(.secondary)
-
-      VStack(alignment: .leading, spacing: 10) {
-        content()
-      }
-    }
-  }
-
-  private func metadataRow(
-    label: String,
-    value: String,
-    monospaced: Bool = false
-  ) -> some View {
-    VStack(alignment: .leading, spacing: 3) {
-      Text(label)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundStyle(.secondary)
-
-      Text(value)
-        .font(monospaced ? .caption.monospaced() : .subheadline)
-        .foregroundStyle(.primary)
-        .lineLimit(monospaced ? 3 : 4)
-        .truncationMode(monospaced ? .middle : .tail)
-        .textSelection(.enabled)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
   }
 
   private func relativePath(

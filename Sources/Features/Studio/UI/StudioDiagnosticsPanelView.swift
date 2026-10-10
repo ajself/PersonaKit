@@ -145,12 +145,12 @@ private struct StudioGlobalLibraryBannerView: View {
         .frame(width: 18)
 
       VStack(alignment: .leading, spacing: 2) {
-        Text("Global library not connected")
+        Text("Global Library Not Connected")
           .font(.subheadline)
           .fontWeight(.semibold)
 
         Text(
-          "References to shared entities in ~/.personakit can't be verified until you connect the global library."
+          "References to items in your global library (~/.personakit) can't be checked until you connect it."
         )
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -159,16 +159,16 @@ private struct StudioGlobalLibraryBannerView: View {
 
       Spacer(minLength: 8)
 
-      Button("Connect", action: onConnect)
+      Button("Connect Global Library…", action: onConnect)
         .controlSize(.small)
     }
     .padding(12)
     .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(.orange.opacity(0.12))
+      RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
+        .fill(.orange.opacity(StudioDesign.tintOpacity))
     )
     .accessibilityElement(children: .contain)
-    .accessibilityLabel("Global library not connected. References to shared entities can't be verified.")
+    .accessibilityLabel("Global library not connected. References to global library items can't be checked.")
   }
 }
 
@@ -224,7 +224,7 @@ private struct StudioValidationReportOverviewView: View {
       }
       .padding(.horizontal, 12)
       .background(
-        RoundedRectangle(cornerRadius: 8)
+        RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
           .fill(.secondary.opacity(0.06))
       )
 
@@ -293,16 +293,7 @@ private struct StudioValidationIssueStatsView: View {
   }
 
   private func statBadge(_ title: String) -> some View {
-    Text(title)
-      .font(.caption)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background(
-        Capsule()
-          .fill(.orange.opacity(0.14))
-      )
-      .foregroundStyle(.orange)
+    StudioBadge(title: title, tone: .warning, size: .regular)
   }
 }
 
@@ -317,28 +308,28 @@ private struct StudioValidationStatusInspectorView: View {
         .fontWeight(.semibold)
         .foregroundStyle(.secondary)
 
-      inspectorSection("Summary") {
-        metadataRow(label: "Status", value: report.status.title)
-        metadataRow(label: "Headline", value: report.statusHeadline)
+      StudioInspectorSection("Summary") {
+        StudioMetadataRow(label: "Status", value: report.status.title)
+        StudioMetadataRow(label: "Headline", value: report.statusHeadline)
 
         if let coverageLine = report.coverageLine {
-          metadataRow(label: "Coverage", value: coverageLine)
+          StudioMetadataRow(label: "Coverage", value: coverageLine)
         }
       }
 
-      inspectorSection("Issues") {
-        metadataRow(label: "Count", value: report.issueCountText)
-        metadataRow(label: "Entities", value: report.affectedEntitiesText)
-        metadataRow(label: "Files", value: report.affectedFilesText)
-        metadataRow(label: "Filter", value: selectedFilterTitle)
+      StudioInspectorSection("Issues") {
+        StudioMetadataRow(label: "Count", value: report.issueCountText)
+        StudioMetadataRow(label: "Entities", value: report.affectedEntitiesText)
+        StudioMetadataRow(label: "Files", value: report.affectedFilesText)
+        StudioMetadataRow(label: "Filter", value: selectedFilterTitle)
       }
 
-      inspectorSection("Validated Areas") {
+      StudioInspectorSection("Validated Areas") {
         if report.areaRows.isEmpty {
-          metadataRow(label: "Areas", value: "None")
+          StudioMetadataRow(label: "Areas", value: "None")
         } else {
           ForEach(report.areaRows) { row in
-            metadataRow(label: row.title, value: row.statusText)
+            StudioMetadataRow(label: row.title, value: row.statusText)
           }
         }
       }
@@ -348,42 +339,6 @@ private struct StudioValidationStatusInspectorView: View {
 
   private var selectedFilterTitle: String {
     report.issueFilterOptions.first { $0.id == selectedIssueFilterID }?.title ?? "All"
-  }
-
-  private func inspectorSection<Content: View>(
-    _ title: String,
-    @ViewBuilder content: () -> Content
-  ) -> some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(title)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundStyle(.secondary)
-
-      VStack(alignment: .leading, spacing: 10) {
-        content()
-      }
-    }
-  }
-
-  private func metadataRow(
-    label: String,
-    value: String
-  ) -> some View {
-    VStack(alignment: .leading, spacing: 3) {
-      Text(label)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .foregroundStyle(.secondary)
-
-      Text(value)
-        .font(.subheadline)
-        .foregroundStyle(.primary)
-        .lineLimit(4)
-        .truncationMode(.tail)
-        .textSelection(.enabled)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
   }
 }
 
@@ -402,10 +357,11 @@ enum StudioDiagnosticsNavigationResolver {
       )
     }
 
-    if let filePath = issue.filePath {
+    if issue.filePath != nil {
+      // Lists don't search file paths, so land on the section unfiltered.
       return StudioNavigationTarget(
         sidebarItem: sidebarItem,
-        searchText: filePath
+        searchText: ""
       )
     }
 

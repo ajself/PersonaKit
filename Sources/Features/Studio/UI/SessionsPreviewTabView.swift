@@ -22,19 +22,19 @@ struct SessionsPreviewTabView: View {
         }
       } else if let sessionPreviewErrorMessage {
         stateContainer {
-          // A disconnected shared library is the overwhelmingly common cause of a preview
+          // A disconnected global library is the overwhelmingly common cause of a preview
           // failure, so offer the fix right here instead of making the user discover the
           // Connect action buried in Validation Results. If connecting does not resolve it,
           // the refreshed preview falls through to the raw error below.
           if !isGlobalLibraryConnected {
             ContentUnavailableView {
-              Label("Shared Library Not Connected", systemImage: "link.badge.plus")
+              Label("Global Library Not Connected", systemImage: "link.badge.plus")
             } description: {
               Text(
-                "This session uses personas, directives, or kits from your shared library (~/.personakit). Connect it to preview them."
+                "This session uses personas, directives, or kits from your global library (~/.personakit). Connect it to preview them."
               )
             } actions: {
-              Button("Connect Shared Library…", action: onConnectGlobalLibrary)
+              Button("Connect Global Library…", action: onConnectGlobalLibrary)
                 .buttonStyle(.borderedProminent)
             }
           } else {
@@ -75,7 +75,7 @@ struct SessionsPreviewTabView: View {
   }
 
   private var previewPanelBackground: some View {
-    RoundedRectangle(cornerRadius: 8)
+    RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
       .fill(.quaternary.opacity(0.2))
   }
 

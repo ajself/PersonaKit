@@ -26,9 +26,9 @@ public struct StudioRootView: View {
   public var body: some View {
     NavigationSplitView(columnVisibility: $sidebarVisibility) {
       StudioSidebarView(selection: $selection)
-        .navigationTitle("PersonaKit Studio")
     } detail: {
       detailView
+        .navigationTitle("PersonaKit Studio")
     }
     .toolbar {
       if !sidebarIsVisible {
@@ -168,13 +168,7 @@ public struct StudioRootView: View {
   }
 
   private var shouldShowInspectorToggle: Bool {
-    guard workspaceStore.workspaceURL != nil,
-      workspaceStore.loadErrorMessage == nil
-    else {
-      return false
-    }
-
-    return (selection ?? .sessions).supportsInspector
+    workspaceStore.workspaceURL != nil && workspaceStore.loadErrorMessage == nil
   }
 
   private var inspectorModeBinding: Binding<StudioInspectorMode> {
@@ -424,19 +418,6 @@ enum SidebarItem: Hashable {
       return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
       return "checklist"
-    }
-  }
-
-  var supportsInspector: Bool {
-    switch self {
-    case .sessions,
-      .personas,
-      .directives,
-      .kits,
-      .skills,
-      .relationshipMap,
-      .validationResults:
-      return true
     }
   }
 

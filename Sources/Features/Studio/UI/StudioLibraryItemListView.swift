@@ -2,59 +2,39 @@ import ContextCore
 import ContextWorkspaceCore
 import SwiftUI
 
-/// Library list rows with scope badges.
+/// Library list rows: name first, id second, with a scope badge.
 struct StudioLibraryItemListView: View {
+  let selection: SidebarItem
   let visibleItems: [WorkspaceListItem]
+  let searchText: String
   @Binding var selectedLibraryItemID: String?
 
   var body: some View {
     List(visibleItems, id: \.id, selection: $selectedLibraryItemID) { item in
-      VStack(alignment: .leading, spacing: 6) {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-          Text(item.id)
-            .font(.headline)
-            .lineLimit(1)
-            .truncationMode(.middle)
-
-          Spacer()
-
-          scopeBadge(scope: item.sourceScope)
-        }
-
-        if item.displayName != item.id {
-          Text(item.displayName)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .lineLimit(2)
-            .truncationMode(.tail)
-        }
-
-        Text(item.fileURL.path())
-          .font(.caption.monospaced())
-          .foregroundStyle(.tertiary)
-          .lineLimit(2)
-          .truncationMode(.middle)
-          .textSelection(.enabled)
-      }
-      .padding(.vertical, 4)
+      StudioListRow(
+        title: item.displayName,
+        subtitle: item.displayName == item.id ? nil : item.id,
+        scope: item.sourceScope
+      )
       .tag(Optional(item.id))
     }
     .overlay {
       if visibleItems.isEmpty {
-        ContentUnavailableView.search
+        emptyState
       }
     }
   }
 
-  private func scopeBadge(scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
+  @ViewBuilder
+  private var emptyState: some View {
+    if !searchText.isEmpty {
+      ContentUnavailableView.search(text: searchText)
+    } else {
+      ContentUnavailableView(
+        "No \(selection.title)",
+        systemImage: selection.systemImage,
+        description: Text("Use New to add one to this project.")
       )
+    }
   }
 }

@@ -78,7 +78,7 @@ struct StudioLibraryDetailView: View {
   }
 
   private var emptyStateDescription: String {
-    "Preview the selected source before editing or copying."
+    "Choose one from the list to read or edit it."
   }
 
   private var previewRequestID: String {
@@ -100,11 +100,18 @@ struct StudioLibraryDetailView: View {
       detailHeaderTitleRow(previewState)
 
       if previewState.displayName != previewState.id {
-        Text(previewState.displayName)
+        Text(previewState.id)
           .font(.subheadline)
           .foregroundStyle(.secondary)
-          .lineLimit(2)
+          .lineLimit(1)
           .textSelection(.enabled)
+      }
+
+      if let workstreamLine = previewState.workstreamLine {
+        Text(workstreamLine)
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
       }
 
       Text(previewState.relativePath)
@@ -218,16 +225,7 @@ struct StudioLibraryDetailView: View {
   }
 
   private var unsavedBadge: some View {
-    Text("Unsaved")
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 7)
-      .padding(.vertical, 3)
-      .background(
-        Capsule()
-          .fill(.orange.opacity(0.16))
-      )
-      .foregroundStyle(.orange)
+    StudioBadge(title: "Unsaved", tone: .warning)
   }
 
   private func detailHeaderTitleRow(
@@ -241,7 +239,7 @@ struct StudioLibraryDetailView: View {
 
         detailModePicker
         detailActionControls
-        scopeBadge(previewState.scope)
+        StudioScopeBadge(scope: previewState.sourceScope)
       }
 
       VStack(alignment: .leading, spacing: 8) {
@@ -250,7 +248,7 @@ struct StudioLibraryDetailView: View {
 
           Spacer(minLength: 8)
 
-          scopeBadge(previewState.scope)
+          StudioScopeBadge(scope: previewState.sourceScope)
         }
 
         detailModePicker
@@ -262,7 +260,7 @@ struct StudioLibraryDetailView: View {
   private func detailTitle(
     _ previewState: StudioLibraryPreviewState
   ) -> some View {
-    Text(previewState.id)
+    Text(previewState.displayName)
       .font(.title3)
       .fontWeight(.semibold)
       .lineLimit(1)
@@ -515,7 +513,7 @@ struct StudioLibraryDetailView: View {
   }
 
   private var previewPanelBackground: some View {
-    RoundedRectangle(cornerRadius: 8)
+    RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
       .fill(.quaternary.opacity(0.2))
   }
 
@@ -526,20 +524,6 @@ struct StudioLibraryDetailView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       .background(previewPanelBackground)
       .padding()
-  }
-
-  private func scopeBadge(
-    _ scope: String
-  ) -> some View {
-    Text(scope)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        Capsule()
-          .fill(scope == "Project" ? .blue.opacity(0.16) : .secondary.opacity(0.16))
-      )
   }
 
   @MainActor

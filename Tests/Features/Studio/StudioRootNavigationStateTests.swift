@@ -5,23 +5,6 @@ import Testing
 
 struct StudioRootNavigationStateTests {
   @Test
-  func everyWorkspaceSectionSupportsInspector() {
-    let inspectorSections: [SidebarItem] = [
-      .sessions,
-      .personas,
-      .directives,
-      .kits,
-      .skills,
-      .relationshipMap,
-      .validationResults,
-    ]
-
-    for section in inspectorSections {
-      #expect(section.supportsInspector)
-    }
-  }
-
-  @Test
   func mapNodeOpenSelectsLibraryItemAndClearsDestinationSearchOnly() throws {
     let node = WorkspaceSessionMapNode(
       key: "persona:persona-a",

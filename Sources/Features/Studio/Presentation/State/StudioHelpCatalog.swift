@@ -158,7 +158,7 @@ enum StudioHelpCatalog {
         purpose:
           "A session bundles persona, directive, and optional kit overrides into one named context package for an AI session. Preview and export are the concrete context payload you can paste into an assistant, and because PersonaKit is deterministic, the same session id resolves to the same context again later.",
         keyFields: [
-          "List view shows id, persona, directive, and scope.",
+          "List rows show the session id, its persona and directive names, and scope.",
           "Preview mode shows the exact context text you provide to an AI assistant.",
           "Map mode shows dependency resolution and missing reference issues.",
           "If a directive carries workstream routing, the session shows where that directive phase sits in the larger stream.",

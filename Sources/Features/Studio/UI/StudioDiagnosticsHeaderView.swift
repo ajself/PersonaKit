@@ -52,16 +52,7 @@ struct StudioDiagnosticsHeaderView: View {
         .font(.title3)
         .fontWeight(.semibold)
 
-      Text(report.status.title)
-        .font(.caption)
-        .fontWeight(.semibold)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-          Capsule()
-            .fill(statusColor.opacity(0.16))
-        )
-        .foregroundStyle(statusColor)
+      StudioBadge(title: report.status.title, tone: statusTone, size: .regular)
     }
   }
 
@@ -79,28 +70,20 @@ struct StudioDiagnosticsHeaderView: View {
     }
   }
 
-  private var statusColor: Color {
+  private var statusTone: StudioBadgeTone {
     switch report.status {
     case .clean:
-      return .green
+      return .success
     case .issues,
       .failed:
-      return .orange
+      return .warning
     case .validating,
       .notRun:
-      return .secondary
+      return .neutral
     }
   }
 
   private func statBadge(_ title: String) -> some View {
-    Text(title)
-      .font(.caption)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background(
-        Capsule()
-          .fill(.secondary.opacity(0.1))
-      )
+    StudioBadge(title: title, size: .regular)
   }
 }

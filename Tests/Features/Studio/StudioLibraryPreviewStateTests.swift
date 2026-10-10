@@ -41,7 +41,7 @@ struct StudioLibraryPreviewStateTests {
       workspaceURL: URL(fileURLWithPath: "/Workspace")
     )
 
-    #expect(state.workstreamLine == "workstream: starter · phase: review")
+    #expect(state.workstreamLine == "Workstream starter · Phase review")
   }
 
   @Test

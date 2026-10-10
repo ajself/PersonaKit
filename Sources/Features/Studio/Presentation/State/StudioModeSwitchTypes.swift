@@ -5,6 +5,5 @@ struct StudioModeSwitchItem<ID: Hashable>: Identifiable {
   let id: ID
   let title: String
   let systemImage: String
-  let badgeText: String?
-  let accessibilityHint: String?
+  let accessibilityHint: String
 }

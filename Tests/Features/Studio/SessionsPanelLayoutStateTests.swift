@@ -80,82 +80,13 @@ struct SessionsPanelLayoutStateTests {
   }
 
   @Test
-  func unresolvedIssueBadgeTextReturnsNilForMissingOrZeroIssueCount() {
-    let nilBadge = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: nil
-    )
-    let zeroBadge = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: 0
-    )
-
-    #expect(nilBadge == nil)
-    #expect(zeroBadge == nil)
-  }
-
-  @Test
-  func unresolvedIssueBadgeTextReturnsCountForPositiveIssueCount() {
-    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: 3
-    )
-
-    #expect(badgeText == "3")
-  }
-
-  @Test
-  func expectedSessionMapRequestKeyBuildsSessionRequestKey() {
-    let requestKey = SessionsPanelLayoutState.expectedSessionMapRequestKey(for: "session-a")
-
-    #expect(requestKey == "session:session-a")
-  }
-
-  @Test
-  func unresolvedIssueBadgeTextReturnsCountWhenMapRequestMatchesSelection() {
-    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: 2,
-      mapRequestKey: "session:session-a",
-      selectedSessionID: "session-a"
-    )
-
-    #expect(badgeText == "2")
-  }
-
-  @Test
-  func unresolvedIssueBadgeTextReturnsNilWhenMapRequestIsStale() {
-    let badgeText = SessionsPanelLayoutState.unresolvedIssueBadgeText(
-      issueCount: 2,
-      mapRequestKey: "session:session-a",
-      selectedSessionID: "session-b"
-    )
-
-    #expect(badgeText == nil)
-  }
-
-  @Test
-  func personaMetadataLineFormatsPersonaID() {
-    let personaLine = SessionsPanelLayoutState.personaMetadataLine(
-      personaID: "persona-a"
-    )
-
-    #expect(personaLine == "persona: persona-a")
-  }
-
-  @Test
-  func directiveMetadataLineFormatsDirectiveID() {
-    let directiveLine = SessionsPanelLayoutState.directiveMetadataLine(
-      directiveID: "directive-b"
-    )
-
-    #expect(directiveLine == "directive: directive-b")
-  }
-
-  @Test
   func workstreamMetadataLineFormatsWorkstreamSummary() {
     let metadataLine = SessionsPanelLayoutState.workstreamMetadataLine(
       workstreamID: "worktree-squad-lifecycle",
       phase: "planning"
     )
 
-    #expect(metadataLine == "workstream: worktree-squad-lifecycle · phase: planning")
+    #expect(metadataLine == "Workstream worktree-squad-lifecycle · Phase planning")
   }
 
   @Test

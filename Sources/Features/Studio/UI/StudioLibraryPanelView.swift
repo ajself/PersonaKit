@@ -55,18 +55,10 @@ struct StudioLibraryPanelView: View {
             .foregroundStyle(workspaceStore.libraryActionIsError ? .red : .secondary)
         }
 
-        if selection == .directives,
-          let selectedItem,
-          let workstreamId = selectedItem.workstreamId,
-          let workstreamPhase = selectedItem.workstreamPhase
-        {
-          Text("Workstream: \(workstreamId) · Phase: \(workstreamPhase)")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-
         StudioLibraryItemListView(
+          selection: selection,
           visibleItems: visibleItems,
+          searchText: normalizedSearchText,
           selectedLibraryItemID: $selectedLibraryItemID
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -245,7 +237,6 @@ struct StudioLibraryPanelView: View {
     return items.filter { item in
       item.id.localizedCaseInsensitiveContains(normalizedSearch)
         || item.displayName.localizedCaseInsensitiveContains(normalizedSearch)
-        || item.fileURL.path().localizedCaseInsensitiveContains(normalizedSearch)
     }
   }
 

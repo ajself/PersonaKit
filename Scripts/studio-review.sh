@@ -673,8 +673,8 @@ do
 done
 
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Welcome to PersonaKit Studio"
-require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Inspect PersonaKit Roots"
-require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Open Workspace..."
+require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Read a Contract"
+require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Open a folder that contains a .personakit directory"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "Recent Workspaces"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$VALID_WORKSPACE"
 require_accessibility_text "$OUTPUT_DIR/01-no-workspace.accessibility.txt" "$INVALID_WORKSPACE"

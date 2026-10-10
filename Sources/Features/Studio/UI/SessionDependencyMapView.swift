@@ -198,7 +198,7 @@ struct SessionDependencyMapView: View {
       Spacer(minLength: 0)
 
       if let scope = scopeByNodeKey[node.key] {
-        scopeBadge(scope)
+        StudioScopeBadge(scope: scope)
       }
     }
   }
@@ -218,15 +218,7 @@ struct SessionDependencyMapView: View {
     if !node.badges.isEmpty {
       HStack(spacing: 6) {
         ForEach(node.badges.sorted(), id: \.self) { badge in
-          Text(badge)
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-              Capsule()
-                .fill(.orange.opacity(0.18))
-            )
-            .foregroundStyle(.orange)
+          StudioBadge(title: badge, tone: .warning)
         }
       }
     }
@@ -382,18 +374,6 @@ struct SessionDependencyMapView: View {
       (edge.fromKey == highlightedNodeKey && edge.toKey == node.key)
         || (edge.toKey == highlightedNodeKey && edge.fromKey == node.key)
     }
-  }
-
-  private func scopeBadge(_ scope: WorkspaceSourceScope) -> some View {
-    Text(scope.displayName)
-      .font(.caption2)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 2)
-      .background(
-        RoundedRectangle(cornerRadius: 8)
-          .fill(scope == .project ? .blue.opacity(0.16) : .secondary.opacity(0.16))
-      )
   }
 
   private func nodeAccessibilityLabel(_ node: WorkspaceSessionMapNode) -> String {

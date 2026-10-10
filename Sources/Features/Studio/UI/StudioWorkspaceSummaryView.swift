@@ -116,16 +116,7 @@ struct StudioWorkspaceSummaryView: View {
   }
 
   private var validationBadge: some View {
-    Text(state.validationStatus.title)
-      .font(.caption)
-      .fontWeight(.semibold)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background(
-        Capsule()
-          .fill(validationColor.opacity(0.16))
-      )
-      .foregroundStyle(validationColor)
+    StudioBadge(title: state.validationStatus.title, tone: validationTone, size: .regular)
       .accessibilityLabel("Validation \(state.validationStatus.title)")
   }
 
@@ -151,7 +142,7 @@ struct StudioWorkspaceSummaryView: View {
       .padding(.vertical, 2)
       .background(
         Capsule()
-          .fill(.orange.opacity(0.18))
+          .fill(.orange.opacity(StudioDesign.tintOpacity))
       )
       .foregroundStyle(.orange)
       .accessibilityLabel("Validation \(state.validationStatus.title)")
@@ -175,16 +166,16 @@ struct StudioWorkspaceSummaryView: View {
     }
   }
 
-  private var validationColor: Color {
+  private var validationTone: StudioBadgeTone {
     switch state.validationStatus {
     case .clean:
-      return .green
+      return .success
     case .issues,
       .failed:
-      return .orange
+      return .warning
     case .validating,
       .notRun:
-      return .secondary
+      return .neutral
     }
   }
 
