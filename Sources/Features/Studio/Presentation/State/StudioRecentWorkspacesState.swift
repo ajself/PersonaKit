@@ -1,4 +1,6 @@
 import Foundation
+import Observation
+import StudioFoundation
 
 protocol StudioRecentWorkspaceBookmarking {
   func bookmarkData(for workspaceURL: URL) -> Data?
@@ -8,11 +10,6 @@ protocol StudioRecentWorkspaceSecurityScopeResolving {
   func resolveURL(from bookmarkData: Data) -> URL?
   func startAccessing(_ url: URL) -> Bool
   func stopAccessing(_ url: URL)
-}
-
-@MainActor
-protocol StudioRecentWorkspacesPersisting: AnyObject {
-  var storageValue: String { get set }
 }
 
 struct StudioRecentWorkspaceBookmarkClient: StudioRecentWorkspaceBookmarking {
@@ -44,30 +41,6 @@ struct StudioRecentWorkspaceSecurityScopeClient: StudioRecentWorkspaceSecuritySc
 
   func stopAccessing(_ url: URL) {
     url.stopAccessingSecurityScopedResource()
-  }
-}
-
-@MainActor
-final class StudioRecentWorkspacesUserDefaultsStorage: StudioRecentWorkspacesPersisting {
-  private let key: String
-  private let userDefaults: UserDefaults
-
-  init(
-    userDefaults: UserDefaults = StudioLaunchConfiguration.userDefaults(),
-    key: String = StudioRecentWorkspacesState.storageKey
-  ) {
-    self.key = key
-    self.userDefaults = userDefaults
-  }
-
-  var storageValue: String {
-    get {
-      userDefaults.string(forKey: key) ?? "[]"
-    }
-
-    set {
-      userDefaults.set(newValue, forKey: key)
-    }
   }
 }
 
@@ -116,7 +89,7 @@ struct StudioRecentWorkspace: Equatable, Identifiable, Sendable {
 
 enum StudioRecentWorkspacesState {
   static let maximumCount = 6
-  static let storageKey = "studio.recentWorkspaces"
+  static let storageKey = StudioRecentWorkspacesUserDefaultsStorage.storageKey
 
   static func workspaces(from storageValue: String) -> [StudioRecentWorkspace] {
     guard let data = storageValue.data(using: .utf8),
@@ -295,15 +268,18 @@ final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
   }
 }
 
+@Observable
 @MainActor
 final class StudioRecentWorkspacesFeatureModel {
-  private let bookmarkDataProvider: (URL) -> Data?
-  private let recentWorkspaceAccess: any StudioRecentWorkspaceAccessing
-  private let storage: any StudioRecentWorkspacesPersisting
+  @ObservationIgnored private let bookmarkDataProvider: (URL) -> Data?
+  @ObservationIgnored private let recentWorkspaceAccess: any StudioRecentWorkspaceAccessing
+  @ObservationIgnored private let storage: any StudioRecentWorkspacesPersisting
   private var storageValue: String
 
   init(
-    storage: any StudioRecentWorkspacesPersisting = StudioRecentWorkspacesUserDefaultsStorage(),
+    storage: any StudioRecentWorkspacesPersisting = StudioRecentWorkspacesUserDefaultsStorage(
+      userDefaults: StudioLaunchConfiguration.userDefaults()
+    ),
     recentWorkspaceAccess: any StudioRecentWorkspaceAccessing = StudioRecentWorkspaceAccess(),
     bookmarkDataProvider: @escaping (URL) -> Data? =
       StudioRecentWorkspacesState.securityScopedBookmarkData

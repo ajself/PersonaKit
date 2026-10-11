@@ -5,32 +5,18 @@ import StudioFoundation
 import SwiftUI
 
 /// Library detail pane with a lightweight rendered source preview.
+///
+/// The source text and inline draft live in `WorkspaceLibraryFeatureModel`; this view renders
+/// them and forwards edits.
 struct StudioLibraryDetailView: View {
+  let workspaceStore: WorkspaceStore
   let selection: SidebarItem
   let selectedItem: WorkspaceListItem?
   let entityType: WorkspaceLibraryEntityType?
   let previewState: StudioLibraryPreviewState?
-  let snapshotRevision: Int
-  let workspaceURL: URL?
   @Binding var detailMode: StudioLibraryDetailMode
-  let onRevealInFinder: (URL) -> Void
   let onEditInSheet: () -> Void
   let onCopyToProject: () -> Void
-  let onValidate: @Sendable (String, WorkspaceLibraryEditorPresentation) async -> String?
-  let onSave: @Sendable (String, WorkspaceLibraryEditorPresentation) async -> String?
-  let onSaveSucceeded: (String) -> Void
-
-  @State private var previewText = ""
-  @State private var draftRawJSON = ""
-  @State private var draftPreviewRequestID: String?
-  @State private var previewErrorMessage: String?
-  @State private var isLoadingPreview = false
-  @State private var formState = WorkspaceLibraryEntityFormState.empty
-  @State private var formSyncErrorMessage: String?
-  @State private var inlineMessage: String?
-  @State private var inlineMessageIsError = false
-  @State private var isSavingInlineForm = false
-  @State private var isValidatingInlineForm = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -45,25 +31,6 @@ struct StudioLibraryDetailView: View {
       } else {
         emptyState
       }
-    }
-    .task(id: previewRequestID) {
-      await loadPreview()
-    }
-    .onAppear {
-      beginInlineEditIfPossible()
-    }
-    .onChange(of: previewRequestID) { _, _ in
-      resetInlineFormState()
-    }
-    .onChange(of: previewText) { _, _ in
-      beginInlineEditIfPossible()
-    }
-    .onChange(of: detailMode) { _, _ in
-      guard effectiveDetailMode == .edit else {
-        return
-      }
-
-      beginInlineEditIfPossible()
     }
   }
 
@@ -81,16 +48,14 @@ struct StudioLibraryDetailView: View {
     "Choose one from the list to read or edit it."
   }
 
-  private var previewRequestID: String {
-    guard let selectedItem else {
-      return "\(selection.title)::none::\(snapshotRevision)"
-    }
+  private var detail: StudioLibraryDetailState {
+    workspaceStore.libraryDetail
+  }
 
-    return [
-      selection.title,
-      selectedItem.fileURL.standardizedFileURL.path(),
-      String(snapshotRevision),
-    ].joined(separator: "::")
+  /// The owner switches items one update after the selection does; until then the
+  /// previous item's detail must not render under the new header.
+  private var isShowingSelectedItem: Bool {
+    detail.item?.fileURL == selectedItem?.fileURL.standardizedFileURL
   }
 
   private func detailHeader(
@@ -137,6 +102,10 @@ struct StudioLibraryDetailView: View {
       if isInlineFormDirty {
         unsavedBadge
       }
+
+      if isInlineFormDirty, detail.hasChangedOnDisk {
+        changedOnDiskBadge
+      }
     }
   }
 
@@ -152,7 +121,7 @@ struct StudioLibraryDetailView: View {
         id: "library-detail-copy",
         title: "Copy to Project",
         systemImage: "arrow.down.doc",
-        isEnabled: !isSavingInlineForm && !isValidatingInlineForm,
+        isEnabled: !detail.isBusy,
         action: onCopyToProject
       )
     }
@@ -170,7 +139,7 @@ struct StudioLibraryDetailView: View {
         id: "library-detail-edit-json",
         title: "Edit JSON",
         systemImage: "curlybraces",
-        isEnabled: !isSavingInlineForm && !isValidatingInlineForm,
+        isEnabled: !detail.isBusy,
         action: onEditInSheet
       )
     }
@@ -186,9 +155,9 @@ struct StudioLibraryDetailView: View {
         id: "library-detail-reveal",
         title: "Reveal",
         systemImage: "folder",
-        isEnabled: !isSavingInlineForm && !isValidatingInlineForm,
+        isEnabled: !detail.isBusy,
         action: {
-          onRevealInFinder(selectedItem.fileURL)
+          workspaceStore.revealInFinder(fileURL: selectedItem.fileURL)
         }
       )
     ]
@@ -226,6 +195,11 @@ struct StudioLibraryDetailView: View {
 
   private var unsavedBadge: some View {
     StudioBadge(title: "Unsaved", tone: .warning)
+  }
+
+  private var changedOnDiskBadge: some View {
+    StudioBadge(title: "Changed on Disk", tone: .warning)
+      .help("This file changed on disk. Your edits are kept: Save overwrites the file, Cancel loads the new version.")
   }
 
   private func detailHeaderTitleRow(
@@ -289,7 +263,7 @@ struct StudioLibraryDetailView: View {
   private func previewContent(
     _ previewState: StudioLibraryPreviewState
   ) -> some View {
-    if isLoadingPreview {
+    if detail.isLoading || !isShowingSelectedItem {
       stateContainer {
         VStack(alignment: .center, spacing: 10) {
           ProgressView()
@@ -298,7 +272,7 @@ struct StudioLibraryDetailView: View {
             .foregroundStyle(.secondary)
         }
       }
-    } else if let previewErrorMessage {
+    } else if let previewErrorMessage = detail.errorMessage {
       stateContainer {
         ContentUnavailableView(
           "Preview Failed",
@@ -306,7 +280,7 @@ struct StudioLibraryDetailView: View {
           description: Text(previewErrorMessage)
         )
       }
-    } else if previewText.isEmpty {
+    } else if detail.sourceText.isEmpty {
       stateContainer {
         ContentUnavailableView(
           "No Preview",
@@ -315,7 +289,7 @@ struct StudioLibraryDetailView: View {
         )
       }
     } else if effectiveDetailMode == .edit,
-      inlineFormDraftIsReady
+      detail.isDraftReady
     {
       inlineFormPreview
     } else if effectiveDetailMode == .edit {
@@ -335,7 +309,7 @@ struct StudioLibraryDetailView: View {
   private var sourcePreview: some View {
     GeometryReader { proxy in
       ScrollView([.vertical, .horizontal]) {
-        Text(previewText)
+        Text(detail.sourceText)
           .font(.system(.body, design: .monospaced))
           .textSelection(.enabled)
           .padding(12)
@@ -353,14 +327,12 @@ struct StudioLibraryDetailView: View {
 
   @ViewBuilder
   private var inlineFormPreview: some View {
-    if let formDescriptor,
-      inlineEditorPresentation != nil
-    {
+    if let formDescriptor {
       VStack(spacing: 0) {
         ScrollView {
           RawJSONEditorMinimalFormView(
             formDescriptor: formDescriptor,
-            formSyncErrorMessage: formSyncErrorMessage,
+            formSyncErrorMessage: detail.formSyncErrorMessage,
             idBinding: idBinding,
             primaryTextBinding: primaryTextBinding,
             secondaryTextBinding: secondaryTextBinding,
@@ -405,56 +377,12 @@ struct StudioLibraryDetailView: View {
     )
   }
 
-  private var formAdapter: WorkspaceLibraryEntityFormAdapter? {
-    guard let entityType,
-      entityType.supportsMinimalForm
-    else {
-      return nil
-    }
-
-    return WorkspaceLibraryEntityFormAdapter(entityType: entityType)
-  }
-
   private var formDescriptor: WorkspaceLibraryEntityFormDescriptor? {
-    formAdapter?.descriptor
-  }
-
-  private var inlineEditorPresentation: WorkspaceLibraryEditorPresentation? {
-    guard
-      let selectedItem,
-      selectedItem.sourceScope == .project,
-      let entityType,
-      entityType.supportsMinimalForm,
-      let workspaceURL = workspaceURL?.standardizedFileURL
-    else {
-      return nil
-    }
-
-    return WorkspaceLibraryEditorPresentation(
-      itemID: selectedItem.id,
-      entityType: entityType,
-      fileURL: selectedItem.fileURL.standardizedFileURL,
-      rawJSON: draftRawJSON,
-      workspaceURL: workspaceURL,
-      isCreatingNewItem: false
-    )
+    detail.item?.formAdapter?.descriptor
   }
 
   private var isInlineFormDirty: Bool {
-    StudioLibraryInlineFormDraftStateResolver.isDirty(
-      effectiveMode: effectiveDetailMode,
-      draftPreviewRequestID: draftPreviewRequestID,
-      previewRequestID: previewRequestID,
-      draftRawJSON: draftRawJSON,
-      previewText: previewText
-    )
-  }
-
-  private var inlineFormDraftIsReady: Bool {
-    StudioLibraryInlineFormDraftStateResolver.isReady(
-      draftPreviewRequestID: draftPreviewRequestID,
-      previewRequestID: previewRequestID
-    )
+    effectiveDetailMode == .edit && detail.isDraftDirty
   }
 
   private var inlineFormFooter: some View {
@@ -479,10 +407,10 @@ struct StudioLibraryDetailView: View {
 
   @ViewBuilder
   private var inlineFooterMessage: some View {
-    if let inlineMessage {
+    if let inlineMessage = detail.inlineMessage {
       Text(inlineMessage)
         .font(.footnote)
-        .foregroundStyle(inlineMessageIsError ? .red : .secondary)
+        .foregroundStyle(detail.inlineMessageIsError ? .red : .secondary)
         .lineLimit(2)
     }
   }
@@ -490,22 +418,21 @@ struct StudioLibraryDetailView: View {
   private var inlineFooterButtons: some View {
     HStack(spacing: 8) {
       Button("Cancel", role: .cancel) {
-        cancelInlineForm()
+        workspaceStore.revertLibraryDetailDraft()
       }
-      .disabled(isSavingInlineForm || isValidatingInlineForm)
+      .disabled(detail.isBusy)
 
-      Button(isValidatingInlineForm ? "Validating..." : "Validate") {
-        validateInlineForm()
+      Button(detail.isValidating ? "Validating..." : "Validate") {
+        workspaceStore.validateLibraryDetailDraft()
       }
-      .disabled(isSavingInlineForm || isValidatingInlineForm || formSyncErrorMessage != nil)
+      .disabled(detail.isBusy || detail.formSyncErrorMessage != nil)
 
-      Button(isSavingInlineForm ? "Saving..." : "Save") {
-        saveInlineForm()
+      Button(detail.isSaving ? "Saving..." : "Save") {
+        workspaceStore.saveLibraryDetailDraft()
       }
       .disabled(
-        isSavingInlineForm
-          || isValidatingInlineForm
-          || formSyncErrorMessage != nil
+        detail.isBusy
+          || detail.formSyncErrorMessage != nil
           || !isInlineFormDirty
       )
     }
@@ -526,233 +453,36 @@ struct StudioLibraryDetailView: View {
       .padding()
   }
 
-  @MainActor
-  private func loadPreview() async {
-    guard let selectedItem else {
-      previewText = ""
-      previewErrorMessage = nil
-      isLoadingPreview = false
-      draftRawJSON = ""
-      draftPreviewRequestID = nil
-      return
-    }
-
-    isLoadingPreview = true
-    previewErrorMessage = nil
-
-    do {
-      previewText = try Self.previewText(
-        for: selectedItem.fileURL
-      )
-    } catch {
-      previewText = ""
-      previewErrorMessage = error.localizedDescription
-    }
-
-    isLoadingPreview = false
-
-    if effectiveDetailMode == .edit {
-      beginInlineEditIfPossible()
-    }
-  }
-
-  private static func previewText(
-    for fileURL: URL
-  ) throws -> String {
-    let rawText = try String(
-      contentsOf: fileURL.standardizedFileURL,
-      encoding: .utf8
-    )
-
-    return prettyPrintedJSON(rawText) ?? rawText
-  }
-
-  private static func prettyPrintedJSON(
-    _ rawText: String
-  ) -> String? {
-    guard let data = rawText.data(using: .utf8),
-      let jsonObject = try? JSONSerialization.jsonObject(with: data),
-      JSONSerialization.isValidJSONObject(jsonObject),
-      let prettyData = try? JSONSerialization.data(
-        withJSONObject: jsonObject,
-        options: [
-          .prettyPrinted,
-          .sortedKeys,
-        ]
-      )
-    else {
-      return nil
-    }
-
-    return String(data: prettyData, encoding: .utf8)
-  }
-
   private var idBinding: Binding<String> {
-    Binding(
-      get: { formState.id },
-      set: { updatedID in
-        formState.id = updatedID
-        syncDraftFromFormState()
-      }
-    )
+    formBinding(\.id)
   }
 
   private var primaryTextBinding: Binding<String> {
-    Binding(
-      get: { formState.primaryText },
-      set: { updatedText in
-        formState.primaryText = updatedText
-        syncDraftFromFormState()
-      }
-    )
+    formBinding(\.primaryText)
   }
 
   private var secondaryTextBinding: Binding<String> {
-    Binding(
-      get: { formState.secondaryText },
-      set: { updatedText in
-        formState.secondaryText = updatedText
-        syncDraftFromFormState()
-      }
-    )
+    formBinding(\.secondaryText)
   }
 
   private var firstArrayLinesBinding: Binding<String> {
-    Binding(
-      get: { formState.firstArrayLines },
-      set: { updatedText in
-        formState.firstArrayLines = updatedText
-        syncDraftFromFormState()
-      }
-    )
+    formBinding(\.firstArrayLines)
   }
 
   private var secondArrayLinesBinding: Binding<String> {
+    formBinding(\.secondArrayLines)
+  }
+
+  private func formBinding(
+    _ keyPath: WritableKeyPath<WorkspaceLibraryEntityFormState, String>
+  ) -> Binding<String> {
     Binding(
-      get: { formState.secondArrayLines },
+      get: { detail.formState[keyPath: keyPath] },
       set: { updatedText in
-        formState.secondArrayLines = updatedText
-        syncDraftFromFormState()
+        workspaceStore.updateLibraryDetailForm { formState in
+          formState[keyPath: keyPath] = updatedText
+        }
       }
     )
   }
-
-  private func resetInlineFormState() {
-    formState = .empty
-    draftRawJSON = ""
-    draftPreviewRequestID = nil
-    formSyncErrorMessage = nil
-    inlineMessage = nil
-    inlineMessageIsError = false
-    isSavingInlineForm = false
-    isValidatingInlineForm = false
-  }
-
-  private func beginInlineEditIfPossible() {
-    guard effectiveDetailMode == .edit,
-      !previewText.isEmpty,
-      draftPreviewRequestID != previewRequestID
-    else {
-      return
-    }
-
-    draftRawJSON = previewText
-    draftPreviewRequestID = previewRequestID
-    syncFormStateFromDraft()
-  }
-
-  private func syncFormStateFromDraft() {
-    guard let formAdapter else {
-      return
-    }
-
-    do {
-      formState = try formAdapter.parseFormState(from: draftRawJSON)
-      formSyncErrorMessage = nil
-    } catch {
-      formSyncErrorMessage = error.localizedDescription
-    }
-  }
-
-  private func syncDraftFromFormState() {
-    guard let formAdapter else {
-      return
-    }
-
-    do {
-      draftRawJSON = try formAdapter.applyFormState(
-        formState,
-        to: draftRawJSON
-      )
-      formSyncErrorMessage = nil
-      inlineMessage = nil
-    } catch {
-      formSyncErrorMessage = error.localizedDescription
-    }
-  }
-
-  private func validateInlineForm() {
-    guard let presentation = inlineEditorPresentation else {
-      inlineMessage = "Form editing is unavailable for this item."
-      inlineMessageIsError = true
-      return
-    }
-
-    isValidatingInlineForm = true
-    inlineMessage = nil
-
-    Task {
-      let validationError = await onValidate(draftRawJSON, presentation)
-
-      await MainActor.run {
-        isValidatingInlineForm = false
-
-        if let validationError {
-          inlineMessage = validationError
-          inlineMessageIsError = true
-        } else {
-          inlineMessage = "JSON is valid."
-          inlineMessageIsError = false
-        }
-      }
-    }
-  }
-
-  private func cancelInlineForm() {
-    draftRawJSON = previewText
-    draftPreviewRequestID = previewRequestID
-    inlineMessage = nil
-    inlineMessageIsError = false
-    syncFormStateFromDraft()
-  }
-
-  private func saveInlineForm() {
-    guard let presentation = inlineEditorPresentation else {
-      inlineMessage = "Form editing is unavailable for this item."
-      inlineMessageIsError = true
-      return
-    }
-
-    isSavingInlineForm = true
-    inlineMessage = nil
-
-    Task {
-      let saveError = await onSave(draftRawJSON, presentation)
-
-      await MainActor.run {
-        isSavingInlineForm = false
-
-        if let saveError {
-          inlineMessage = saveError
-          inlineMessageIsError = true
-        } else {
-          previewText = draftRawJSON
-          inlineMessage = "Saved \(presentation.itemID)."
-          inlineMessageIsError = false
-          onSaveSucceeded(presentation.itemID)
-        }
-      }
-    }
-  }
-
 }

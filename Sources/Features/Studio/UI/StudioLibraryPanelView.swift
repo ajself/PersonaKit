@@ -14,14 +14,12 @@ struct StudioLibraryPanelView: View {
   @Binding var inspectorMode: StudioInspectorMode
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
-  @State private var rawJSONEditorPresentation: WorkspaceLibraryEditorPresentation?
-  @State private var personaEditorPresentation: PersonaEditorPresentation?
   @State private var detailMode = StudioLibraryDetailMode.edit
   @SceneStorage("studio.library.detailMode")
   private var persistedDetailModeRawValue = StudioLibraryDetailMode.edit.rawValue
 
   var body: some View {
-    let visibleItems = filteredItems(items)
+    let visibleItems = StudioLibraryItemFilter.filteredItems(items, searchText: searchText)
     let selectedItem = selectedLibraryItem(items: visibleItems)
     let entityType = editableEntityTypeForSelection()
     let actionState = StudioLibraryActionBarState(
@@ -58,7 +56,7 @@ struct StudioLibraryPanelView: View {
         StudioLibraryItemListView(
           selection: selection,
           visibleItems: visibleItems,
-          searchText: normalizedSearchText,
+          searchText: StudioLibraryItemFilter.normalizedSearchText(searchText),
           selectedLibraryItemID: $selectedLibraryItemID
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -66,20 +64,16 @@ struct StudioLibraryPanelView: View {
       .frame(minWidth: 160, idealWidth: 320, maxWidth: .infinity)
 
       StudioLibraryDetailView(
+        workspaceStore: workspaceStore,
         selection: selection,
         selectedItem: selectedItem,
         entityType: entityType,
         previewState: previewState,
-        snapshotRevision: workspaceStore.snapshotRevision,
-        workspaceURL: workspaceStore.workspaceURL,
         detailMode: detailModeBinding,
-        onRevealInFinder: { fileURL in
-          workspaceStore.revealInFinder(fileURL: fileURL)
-        },
         onEditInSheet: {
           switch actionState.editAction {
           case .rawJSON:
-            openRawJSONEditorForSelectedItem(
+            workspaceStore.presentLibraryEditor(
               selectedItem: selectedItem,
               entityType: entityType
             )
@@ -89,25 +83,10 @@ struct StudioLibraryPanelView: View {
           }
         },
         onCopyToProject: {
-          copySelectedGlobalItemToProject(
+          workspaceStore.copyGlobalLibraryItemToProject(
             selectedItem: selectedItem,
             entityType: entityType
           )
-        },
-        onValidate: { rawJSON, presentation in
-          await workspaceStore.validateLibraryEditorRawJSON(
-            rawJSON,
-            presentation: presentation
-          )
-        },
-        onSave: { rawJSON, presentation in
-          await workspaceStore.saveLibraryEditorRawJSON(
-            rawJSON,
-            presentation: presentation
-          )
-        },
-        onSaveSucceeded: { itemID in
-          selectedLibraryItemID = itemID
         }
       )
       .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -127,7 +106,7 @@ struct StudioLibraryPanelView: View {
       .inspectorColumnWidth(min: 180, ideal: 260, max: 360)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .sheet(item: $personaEditorPresentation) { presentation in
+    .sheet(item: personaEditorPresentationBinding) { presentation in
       PersonaEditorView(
         title: "New Persona",
         initialDraft: presentation.draft,
@@ -135,7 +114,7 @@ struct StudioLibraryPanelView: View {
         knownKits: presentation.knownKits,
         knownSkills: presentation.knownSkills,
         onCancel: {
-          personaEditorPresentation = nil
+          workspaceStore.dismissPersonaEditor()
         },
         onSave: { draft in
           let normalizedDraft = WorkspacePersonaDraftBuilder().normalizedDraft(draft)
@@ -158,7 +137,7 @@ struct StudioLibraryPanelView: View {
         }
       )
     }
-    .sheet(item: $rawJSONEditorPresentation) { presentation in
+    .sheet(item: rawJSONEditorPresentationBinding) { presentation in
       RawJSONEditorView(
         title: presentation.isCreatingNewItem
           ? "New \(presentation.entityType.displayName)"
@@ -166,7 +145,7 @@ struct StudioLibraryPanelView: View {
         entityType: presentation.entityType,
         initialRawJSON: presentation.rawJSON,
         onCancel: {
-          rawJSONEditorPresentation = nil
+          workspaceStore.dismissLibraryEditor()
         },
         onRevealInFinder: presentation.isCreatingNewItem
           ? nil
@@ -198,9 +177,8 @@ struct StudioLibraryPanelView: View {
         }
       )
     }
-    .onChange(of: workspaceStore.workspaceURL) { _, _ in
-      personaEditorPresentation = nil
-      rawJSONEditorPresentation = nil
+    .onChange(of: selectedItem.map { StudioLibraryDetailItem(item: $0, entityType: entityType) }, initial: true) {
+      workspaceStore.selectLibraryDetailItem(selectedItem, entityType: entityType)
     }
     .onChange(of: visibleItems.map(\.id)) { _, _ in
       reconcileSelectedLibraryItem(visibleItems: visibleItems)
@@ -227,21 +205,30 @@ struct StudioLibraryPanelView: View {
     )
   }
 
-  private func filteredItems(_ items: [WorkspaceListItem]) -> [WorkspaceListItem] {
-    let normalizedSearch = normalizedSearchText
-
-    guard !normalizedSearch.isEmpty else {
-      return items
-    }
-
-    return items.filter { item in
-      item.id.localizedCaseInsensitiveContains(normalizedSearch)
-        || item.displayName.localizedCaseInsensitiveContains(normalizedSearch)
-    }
+  private var personaEditorPresentationBinding: Binding<PersonaEditorPresentation?> {
+    Binding(
+      get: {
+        workspaceStore.libraryPersonaEditorPresentation
+      },
+      set: { presentation in
+        if presentation == nil {
+          workspaceStore.dismissPersonaEditor()
+        }
+      }
+    )
   }
 
-  private var normalizedSearchText: String {
-    searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+  private var rawJSONEditorPresentationBinding: Binding<WorkspaceLibraryEditorPresentation?> {
+    Binding(
+      get: {
+        workspaceStore.libraryRawJSONEditorPresentation
+      },
+      set: { presentation in
+        if presentation == nil {
+          workspaceStore.dismissLibraryEditor()
+        }
+      }
+    )
   }
 
   private func editableEntityTypeForSelection() -> WorkspaceLibraryEntityType? {
@@ -282,44 +269,10 @@ struct StudioLibraryPanelView: View {
     }
   }
 
-  private func openRawJSONEditorForSelectedItem(
-    selectedItem: WorkspaceListItem?,
-    entityType: WorkspaceLibraryEntityType?
-  ) {
-    Task {
-      let presentation = await workspaceStore.openLibraryEditor(
-        selectedItem: selectedItem,
-        entityType: entityType
-      )
-
-      await MainActor.run {
-        rawJSONEditorPresentation = presentation
-      }
-    }
-  }
-
-  private func openPersonaEditor() {
-    guard selection == .personas else {
-      return
-    }
-
-    guard let workspaceURL = workspaceStore.workspaceURL?.standardizedFileURL else {
-      return
-    }
-
-    personaEditorPresentation = PersonaEditorPresentation(
-      workspaceURL: workspaceURL,
-      draft: workspaceStore.defaultPersonaDraft(),
-      existingPersonaIDs: workspaceStore.snapshot.personas.map(\.id),
-      knownKits: workspaceStore.snapshot.kits,
-      knownSkills: workspaceStore.snapshot.skills
-    )
-  }
-
   private func openNewItemEditor() {
     switch selection {
     case .personas:
-      openPersonaEditor()
+      workspaceStore.presentPersonaEditor()
     case .directives,
       .kits,
       .skills:
@@ -327,31 +280,9 @@ struct StudioLibraryPanelView: View {
         return
       }
 
-      rawJSONEditorPresentation = workspaceStore.newLibraryEditorPresentation(
-        entityType: entityType
-      )
+      workspaceStore.presentNewLibraryEditor(entityType: entityType)
     default:
       break
-    }
-  }
-
-  private func copySelectedGlobalItemToProject(
-    selectedItem: WorkspaceListItem?,
-    entityType: WorkspaceLibraryEntityType?
-  ) {
-    Task {
-      let didCopy = await workspaceStore.copySelectedGlobalLibraryItem(
-        selectedItem: selectedItem,
-        entityType: entityType
-      )
-
-      guard didCopy, let selectedItemID = selectedItem?.id else {
-        return
-      }
-
-      await MainActor.run {
-        selectedLibraryItemID = selectedItemID
-      }
     }
   }
 }

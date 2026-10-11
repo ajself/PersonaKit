@@ -94,31 +94,3 @@ enum StudioLibraryDetailModeResolver {
     }
   }
 }
-
-enum StudioLibraryInlineFormDraftStateResolver {
-  static func isReady(
-    draftPreviewRequestID: String?,
-    previewRequestID: String
-  ) -> Bool {
-    draftPreviewRequestID == previewRequestID
-  }
-
-  static func isDirty(
-    effectiveMode: StudioLibraryDetailMode,
-    draftPreviewRequestID: String?,
-    previewRequestID: String,
-    draftRawJSON: String,
-    previewText: String
-  ) -> Bool {
-    guard effectiveMode == .edit,
-      isReady(
-        draftPreviewRequestID: draftPreviewRequestID,
-        previewRequestID: previewRequestID
-      )
-    else {
-      return false
-    }
-
-    return draftRawJSON != previewText
-  }
-}

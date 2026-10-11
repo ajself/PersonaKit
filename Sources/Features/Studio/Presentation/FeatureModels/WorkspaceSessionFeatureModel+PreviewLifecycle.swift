@@ -34,61 +34,90 @@ extension WorkspaceSessionFeatureModel {
     cancelPreviewTask()
 
     activeWorkspaceURL = requestedWorkspaceURL
+    previewWorkspaceURL = requestedWorkspaceURL
     state.beginLoading(sessionID: session.id)
 
     previewTask = Task { [requestedWorkspaceURL, session] in
-      do {
-        let preview = try await operationRunner.loadSessionPreview(
-          workspaceURL: requestedWorkspaceURL,
-          session: session
-        )
+      let outcome = await loadPreviewOutcome(
+        workspaceURL: requestedWorkspaceURL,
+        session: session
+      )
 
-        guard !Task.isCancelled,
-          activeWorkspaceURL == requestedWorkspaceURL,
-          state.previewSessionID == session.id
-        else {
-          return
-        }
+      guard isCurrentPreviewRequest(workspaceURL: requestedWorkspaceURL, sessionID: session.id) else {
+        return
+      }
 
+      switch outcome {
+      case .loaded(let preview):
         state.setLoadedPreview(preview)
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          activeWorkspaceURL == requestedWorkspaceURL,
-          state.previewSessionID == session.id
-        else {
-          return
-        }
-
-        state.setFailedPreview(message: error.message)
-      } catch {
-        guard !Task.isCancelled,
-          activeWorkspaceURL == requestedWorkspaceURL,
-          state.previewSessionID == session.id
-        else {
-          return
-        }
-
-        state.setFailedPreview(message: error.localizedDescription)
+      case .failed(let message):
+        state.setFailedPreview(message: message)
       }
     }
   }
 
-  func restorePreviewIfPossible(
+  /// Brings the preview up to date after a workspace reload. Edits to other sessions' files
+  /// are skipped outright; otherwise the preview re-resolves in the background with the
+  /// current text left on screen, and is replaced only when the result differs.
+  func revalidatePreviewAfterReload(
     snapshot: WorkspaceSnapshot,
-    workspaceURL: URL?
+    workspaceURL: URL?,
+    changedFileURLs: Set<URL>?
   ) {
     guard let previewSessionID = state.previewSessionID,
-      let session = snapshot.sessions.first(where: { $0.id == previewSessionID })
+      let session = snapshot.sessions.first(where: { $0.id == previewSessionID }),
+      let workspaceURL
     else {
       clearPreview()
       return
     }
 
-    refreshPreview(
-      for: session,
-      workspaceURL: workspaceURL,
-      forceReload: true
-    )
+    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+
+    // Restart outright, with a visible load, when a load was in flight (it may predate the
+    // change, or an explicit reload cancelled it) or the preview belongs to another workspace.
+    guard !state.isLoading, previewWorkspaceURL == requestedWorkspaceURL else {
+      refreshPreview(for: session, workspaceURL: workspaceURL, forceReload: true)
+      return
+    }
+
+    guard
+      WorkspaceFileChangeRelevance.affectsSession(
+        fileURL: session.fileURL,
+        changedFileURLs: changedFileURLs
+      )
+    else {
+      return
+    }
+
+    cancelPreviewTask()
+    activeWorkspaceURL = requestedWorkspaceURL
+
+    previewTask = Task { [requestedWorkspaceURL, session] in
+      let outcome = await loadPreviewOutcome(
+        workspaceURL: requestedWorkspaceURL,
+        session: session
+      )
+
+      guard isCurrentPreviewRequest(workspaceURL: requestedWorkspaceURL, sessionID: session.id) else {
+        return
+      }
+
+      switch outcome {
+      case .loaded(let preview):
+        guard preview != state.preview || state.errorMessage != nil else {
+          return
+        }
+
+        state.setLoadedPreview(preview)
+      case .failed(let message):
+        guard message != state.errorMessage || !state.preview.isEmpty else {
+          return
+        }
+
+        state.setFailedPreview(message: message)
+      }
+    }
   }
 
   func cancelPreviewTask() {
@@ -99,6 +128,34 @@ extension WorkspaceSessionFeatureModel {
 
   func clearPreview() {
     cancelPreviewTask()
+    previewWorkspaceURL = nil
     state.clear()
+  }
+
+  private func isCurrentPreviewRequest(
+    workspaceURL: URL,
+    sessionID: String
+  ) -> Bool {
+    !Task.isCancelled
+      && activeWorkspaceURL == workspaceURL
+      && state.previewSessionID == sessionID
+  }
+
+  private func loadPreviewOutcome(
+    workspaceURL: URL,
+    session: WorkspaceSessionListItem
+  ) async -> WorkspaceLoadOutcome<String> {
+    do {
+      return .loaded(
+        try await operationRunner.loadSessionPreview(
+          workspaceURL: workspaceURL,
+          session: session
+        )
+      )
+    } catch let error as WorkspaceSnapshotBuildError {
+      return .failed(error.message)
+    } catch {
+      return .failed(error.localizedDescription)
+    }
   }
 }

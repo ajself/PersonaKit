@@ -1,4 +1,5 @@
 import Foundation
+import StudioFoundation
 
 /// Creates and resolves the app-wide security-scoped bookmark for the granted global
 /// PersonaKit library. Mirrors `StudioRecentWorkspaceBookmarkClient`'s option sets, but
@@ -63,25 +64,25 @@ struct StudioGlobalLibraryBookmarkClient: StudioGlobalLibraryBookmarking {
 /// bookmark is kept: the single granted global root (whatever folder the user picked).
 @MainActor
 public final class StudioGlobalLibraryAccess {
-  private static let storageKey = "studio.globalLibraryBookmark"
-
   private let bookmarkClient: any StudioGlobalLibraryBookmarking
-  private let userDefaults: UserDefaults
+  private let bookmarkStore: any StudioGlobalLibraryBookmarkStoring
   private var accessedURL: URL?
 
   init(
     bookmarkClient: any StudioGlobalLibraryBookmarking = StudioGlobalLibraryBookmarkClient(),
-    userDefaults: UserDefaults = StudioLaunchConfiguration.userDefaults()
+    bookmarkStore: any StudioGlobalLibraryBookmarkStoring = StudioGlobalLibraryBookmarkUserDefaultsStore(
+      userDefaults: StudioLaunchConfiguration.userDefaults()
+    )
   ) {
     self.bookmarkClient = bookmarkClient
-    self.userDefaults = userDefaults
+    self.bookmarkStore = bookmarkStore
   }
 
   /// Resolves the persisted grant, beginning access and re-persisting a stale bookmark.
   /// Returns `nil` when nothing is granted or the bookmark cannot be resolved.
   @discardableResult
   func resolveGrantedURL() -> URL? {
-    guard let data = userDefaults.data(forKey: Self.storageKey) else {
+    guard let data = bookmarkStore.bookmarkData() else {
       return nil
     }
 
@@ -92,7 +93,7 @@ public final class StudioGlobalLibraryAccess {
     if resolution.isStale,
       let refreshed = bookmarkClient.bookmarkData(for: resolution.url)
     {
-      userDefaults.set(refreshed, forKey: Self.storageKey)
+      bookmarkStore.setBookmarkData(refreshed)
     }
 
     beginAccess(to: resolution.url)
@@ -107,7 +108,7 @@ public final class StudioGlobalLibraryAccess {
       return false
     }
 
-    userDefaults.set(data, forKey: Self.storageKey)
+    bookmarkStore.setBookmarkData(data)
     beginAccess(to: grantedURL)
     return true
   }

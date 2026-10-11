@@ -61,4 +61,28 @@ struct SessionsListRowStateTests {
     #expect(SessionsListRowState.matches(session, searchText: "cli change", in: snapshot))
     #expect(!SessionsListRowState.matches(session, searchText: "tmp", in: snapshot))
   }
+
+  @Test
+  func filteredSessionsKeepsOrderAndMatchesResolvedNames() {
+    let other = WorkspaceSessionListItem(
+      id: "release-train",
+      personaId: "release-manager",
+      directiveId: "ship-it",
+      fileURL: URL(fileURLWithPath: "/tmp/.personakit/Sessions/release-train.session.json"),
+      sourceScope: .project
+    )
+    let sessions = [other, session]
+
+    #expect(
+      SessionsListRowState.filteredSessions(sessions, searchText: " ", in: snapshot).map(\.id)
+        == ["release-train", "solo-dev"]
+    )
+    #expect(
+      SessionsListRowState.filteredSessions(sessions, searchText: "make a small", in: snapshot)
+        .map(\.id) == ["solo-dev"]
+    )
+    #expect(
+      SessionsListRowState.filteredSessions(sessions, searchText: "nothing", in: snapshot).isEmpty
+    )
+  }
 }

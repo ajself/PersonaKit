@@ -1,9 +1,11 @@
 import ContextCore
 import ContextWorkspaceCore
 import Foundation
+import Observation
 import StudioFoundation
 
 /// Feature-owned system interaction model used by `WorkspaceStore`.
+@Observable
 @MainActor
 final class WorkspaceSystemFeatureModel {
   private let workspacePicker: any WorkspacePicking

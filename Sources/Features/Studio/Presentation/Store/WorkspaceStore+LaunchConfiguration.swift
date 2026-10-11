@@ -9,8 +9,11 @@ extension WorkspaceStore {
     launchConfigured(
       environment: environment,
       globalLibraryAccess: StudioGlobalLibraryAccess(
-        userDefaults: StudioLaunchConfiguration.userDefaults(environment: environment)
-      )
+        bookmarkStore: StudioGlobalLibraryBookmarkUserDefaultsStore(
+          userDefaults: StudioLaunchConfiguration.userDefaults(environment: environment)
+        )
+      ),
+      fileEventSource: FSEventsWorkspaceFileEventStream()
     )
   }
 
@@ -18,7 +21,8 @@ extension WorkspaceStore {
   /// persisted bookmark grant → none (fall back to the live default).
   static func launchConfigured(
     environment: [String: String],
-    globalLibraryAccess: StudioGlobalLibraryAccess
+    globalLibraryAccess: StudioGlobalLibraryAccess,
+    fileEventSource: (any WorkspaceFileEventStreaming)? = nil
   ) -> WorkspaceStore {
     let initialURL =
       StudioLaunchConfiguration.globalScopeURL(environment: environment)
@@ -32,7 +36,8 @@ extension WorkspaceStore {
     // the late-bindable box — otherwise the grant updates the box but nothing reads it.
     return WorkspaceStore(
       globalScopeProvider: provider,
-      globalLibraryAccess: globalLibraryAccess
+      globalLibraryAccess: globalLibraryAccess,
+      fileEventSource: fileEventSource
     )
   }
 
@@ -43,6 +48,21 @@ extension WorkspaceStore {
     globalScopeProvider: WorkspaceGlobalScopeProvider,
     globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
     globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
+  ) {
+    self.init(
+      globalScopeProvider: globalScopeProvider,
+      globalLibraryAccess: globalLibraryAccess,
+      globalLibraryPicker: globalLibraryPicker,
+      fileEventSource: nil
+    )
+  }
+
+  /// Provider-wired store that also takes the live-reload event source.
+  convenience init(
+    globalScopeProvider: WorkspaceGlobalScopeProvider,
+    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
+    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient(),
+    fileEventSource: (any WorkspaceFileEventStreaming)?
   ) {
     let scope: @Sendable () -> URL? = { globalScopeProvider.current() }
     let sessionManager = WorkspaceSessionManager()
@@ -69,7 +89,9 @@ extension WorkspaceStore {
       ),
       globalScopeProvider: globalScopeProvider,
       globalLibraryAccess: globalLibraryAccess,
-      globalLibraryPicker: globalLibraryPicker
+      globalLibraryPicker: globalLibraryPicker,
+      fileEventSource: fileEventSource,
+      liveReloadClock: ContinuousClock()
     )
   }
 }

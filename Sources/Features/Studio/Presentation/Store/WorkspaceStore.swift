@@ -17,8 +17,11 @@ public final class WorkspaceStore {
           return
         }
 
+        loadFeatureModel.stopWatching()
         libraryFeatureModel.resetState()
+        sessionEditorFeatureModel.reset()
         sessionFeatureModel.clearPreview()
+        sessionFeatureModel.clearPreviewActionMessage()
         sessionFeatureModel.clearMap()
         sessionFeatureModel.clearDraftMap()
         sessionFeatureModel.clearWorkspaceRelationshipMap()
@@ -35,31 +38,22 @@ public final class WorkspaceStore {
         return
       }
 
+      // The next successful load starts watching the new workspace.
+      loadFeatureModel.stopWatching()
       libraryFeatureModel.resetState()
+      sessionEditorFeatureModel.reset()
+      sessionFeatureModel.clearPreviewActionMessage()
+      sessionFeatureModel.clearDraftMap()
     }
   }
-  var snapshot: WorkspaceSnapshot = .empty {
-    didSet {
-      guard snapshot != oldValue else {
-        return
-      }
-
-      snapshotRevision &+= 1
-    }
-  }
-  private(set) var snapshotRevision = 0
-  // Keeps @Observable views subscribed when async validation mutates nested feature state.
-  private var validationRevision = 0
-  // Keeps @Observable views subscribed when the recent-workspace owner persists changes.
-  var recentWorkspacesRevision = 0
+  var snapshot: WorkspaceSnapshot = .empty
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var installStatus: WorkspaceInstallStatus
   var installResult: StudioInstallResult?
   var validation: WorkspaceValidationSnapshot {
     get {
-      _ = validationRevision
-      return validationFeatureModel.validation
+      validationFeatureModel.validation
     }
 
     set {
@@ -69,8 +63,7 @@ public final class WorkspaceStore {
 
   var validationErrorMessage: String? {
     get {
-      _ = validationRevision
-      return validationFeatureModel.validationErrorMessage
+      validationFeatureModel.validationErrorMessage
     }
 
     set {
@@ -144,6 +137,38 @@ public final class WorkspaceStore {
     libraryFeatureModel.isLoadingEditor
   }
 
+  var libraryRawJSONEditorPresentation: WorkspaceLibraryEditorPresentation? {
+    libraryFeatureModel.rawJSONEditorPresentation
+  }
+
+  var libraryPersonaEditorPresentation: PersonaEditorPresentation? {
+    libraryFeatureModel.personaEditorPresentation
+  }
+
+  var libraryDetail: StudioLibraryDetailState {
+    libraryFeatureModel.detail
+  }
+
+  var sessionPreviewActionMessage: String? {
+    sessionFeatureModel.previewActionMessage
+  }
+
+  var sessionEditorPresentation: SessionEditorPresentation? {
+    sessionEditorFeatureModel.editorPresentation
+  }
+
+  var pendingSessionDeletion: SessionDeletionPresentation? {
+    sessionEditorFeatureModel.pendingDeletion
+  }
+
+  var isLoadingSessionDraft: Bool {
+    sessionEditorFeatureModel.isLoadingDraft
+  }
+
+  var sessionActionErrorMessage: String? {
+    sessionEditorFeatureModel.actionErrorMessage
+  }
+
   let loadFeatureModel: WorkspaceLoadFeatureModel
   let systemFeatureModel: WorkspaceSystemFeatureModel
   let libraryFeatureModel: WorkspaceLibraryFeatureModel
@@ -163,7 +188,7 @@ public final class WorkspaceStore {
   // root (no `Packs/`); cleared on the next connect attempt.
   var globalLibraryConnectWarning: String?
 
-  public init(
+  public convenience init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
     sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
@@ -182,6 +207,51 @@ public final class WorkspaceStore {
     globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
     globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
     globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
+  ) {
+    self.init(
+      snapshotBuilder: snapshotBuilder,
+      workspaceValidator: workspaceValidator,
+      sessionManager: sessionManager,
+      libraryEntityManager: libraryEntityManager,
+      sessionPreviewManager: sessionPreviewManager,
+      sessionMapBuilder: sessionMapBuilder,
+      workspaceRelationshipMapBuilder: workspaceRelationshipMapBuilder,
+      workspaceInitializer: workspaceInitializer,
+      workspacePicker: workspacePicker,
+      previewExportDestinationPicker: previewExportDestinationPicker,
+      pasteboardWriter: pasteboardWriter,
+      fileRevealer: fileRevealer,
+      installEnvironment: installEnvironment,
+      globalScopeProvider: globalScopeProvider,
+      globalLibraryAccess: globalLibraryAccess,
+      globalLibraryPicker: globalLibraryPicker,
+      fileEventSource: nil,
+      liveReloadClock: ContinuousClock()
+    )
+  }
+
+  /// Designated initializer; `fileEventSource` enables live reload (nil disables it).
+  init(
+    snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
+    workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),
+    sessionManager: any WorkspaceSessionManaging = WorkspaceSessionManager(),
+    libraryEntityManager: (any WorkspaceLibraryEntityManaging)? = nil,
+    sessionPreviewManager: (any WorkspaceSessionPreviewManaging)? = nil,
+    sessionMapBuilder: (any WorkspaceSessionMapBuilding)? = nil,
+    workspaceRelationshipMapBuilder: (any WorkspaceRelationshipMapBuilding)? = nil,
+    workspaceInitializer: WorkspaceInitializer = WorkspaceInitializer(),
+    workspacePicker: any WorkspacePicking = WorkspacePickerClient(),
+    previewExportDestinationPicker: any PreviewExportDestinationPicking =
+      PreviewExportDestinationPickerClient(),
+    pasteboardWriter: any PasteboardWriting = PasteboardClient(),
+    fileRevealer: any FileRevealing = FileRevealerClient(),
+    installEnvironment: any WorkspaceInstallEnvironmentProviding =
+      WorkspaceInstallEnvironmentClient(),
+    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
+    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
+    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient(),
+    fileEventSource: (any WorkspaceFileEventStreaming)?,
+    liveReloadClock: any Clock<Duration>
   ) {
     self.globalScopeProvider = globalScopeProvider
     self.globalLibraryAccess = globalLibraryAccess
@@ -210,7 +280,11 @@ public final class WorkspaceStore {
       sessionMapBuilder: resolvedSessionMapBuilder,
       workspaceRelationshipMapBuilder: resolvedWorkspaceRelationshipMapBuilder
     )
-    self.loadFeatureModel = WorkspaceLoadFeatureModel(operationRunner: operationRunner)
+    self.loadFeatureModel = WorkspaceLoadFeatureModel(
+      operationRunner: operationRunner,
+      fileEventSource: fileEventSource,
+      clock: liveReloadClock
+    )
     self.systemFeatureModel = WorkspaceSystemFeatureModel(
       workspacePicker: workspacePicker,
       workspaceInitializer: workspaceInitializer,
@@ -231,9 +305,6 @@ public final class WorkspaceStore {
       operationRunner: operationRunner
     )
     self.recentWorkspacesFeatureModel = StudioRecentWorkspacesFeatureModel()
-    self.validationFeatureModel.onChange = { [weak self] in
-      self?.validationRevision &+= 1
-    }
   }
 
 }

@@ -45,3 +45,37 @@ struct PersonaEditorPresentation: Equatable, Identifiable, Sendable {
     "\(workspaceURL.path())::persona-editor"
   }
 }
+
+/// Session editor payload used by Studio session create, edit, and copy flows.
+struct SessionEditorPresentation: Equatable, Identifiable, Sendable {
+  let title: String
+  let originalSessionID: String?
+  let originalSessionFileURL: URL?
+  let draft: WorkspaceSessionDraft
+  let workspaceURL: URL
+
+  var id: String {
+    [
+      workspaceURL.path(),
+      title,
+      originalSessionID ?? "new",
+      originalSessionFileURL?.path() ?? "",
+    ]
+    .joined(separator: "::")
+  }
+}
+
+/// Pending session deletion awaiting confirmation.
+struct SessionDeletionPresentation: Equatable, Identifiable, Sendable {
+  let session: WorkspaceSessionListItem
+  let workspaceURL: URL
+
+  var id: String {
+    [
+      workspaceURL.path(),
+      session.id,
+      session.fileURL.standardizedFileURL.path(),
+    ]
+    .joined(separator: "::")
+  }
+}

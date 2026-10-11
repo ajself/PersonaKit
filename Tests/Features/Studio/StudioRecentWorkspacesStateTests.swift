@@ -1,5 +1,7 @@
 import ContextWorkspaceCore
 import Foundation
+import Observation
+import StudioFoundation
 import Testing
 
 @testable import StudioFeatures
@@ -140,6 +142,53 @@ struct StudioRecentWorkspacesStateTests {
         "/Workspace/3",
       ]
     )
+  }
+
+  @Test
+  @MainActor
+  func userDefaultsStorageUsesTheExistingDefaultsKey() {
+    let suite = "test.studio.recentWorkspaces.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defer { defaults.removePersistentDomain(forName: suite) }
+
+    let storage = StudioRecentWorkspacesUserDefaultsStorage(userDefaults: defaults)
+
+    #expect(storage.storageValue == "[]")
+
+    // Existing users' recents live under this key; renaming it would silently drop them.
+    defaults.set(#"["/Workspace/A"]"#, forKey: "studio.recentWorkspaces")
+    #expect(storage.storageValue == #"["/Workspace/A"]"#)
+
+    storage.storageValue = #"["/Workspace/B"]"#
+    #expect(defaults.string(forKey: "studio.recentWorkspaces") == #"["/Workspace/B"]"#)
+  }
+
+  @Test
+  @MainActor
+  func removingRecentWorkspaceNotifiesObserversWithoutRevisionCounter() {
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    storage.storageValue = StudioRecentWorkspacesState.storageValue(
+      adding: URL(fileURLWithPath: "/Workspace/A"),
+      to: "[]"
+    )
+    let store = WorkspaceStore()
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: StudioRecentWorkspaceAccessRecorder(),
+      bookmarkDataProvider: { _ in nil }
+    )
+    let didChange = MutableBooleanState(value: false)
+
+    withObservationTracking {
+      _ = store.recentWorkspaces
+    } onChange: {
+      didChange.value = true
+    }
+
+    store.removeRecentWorkspace(store.recentWorkspaces[0])
+
+    #expect(didChange.value)
+    #expect(store.recentWorkspaces.isEmpty)
   }
 
   @Test

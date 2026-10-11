@@ -39,44 +39,21 @@ extension WorkspaceSessionFeatureModel {
     cancelMapTask()
 
     activeMapWorkspaceURL = requestedWorkspaceURL
+    mapWorkspaceURL = requestedWorkspaceURL
     mapState.beginLoading(requestKey: requestKey)
 
     mapTask = Task { [requestedWorkspaceURL, requestKey, session] in
-      do {
-        let draft = try await operationRunner.loadSessionDraft(fileURL: session.fileURL)
-        let map = try await operationRunner.loadSessionMap(
-          workspaceURL: requestedWorkspaceURL,
-          personaId: draft.personaId,
-          directiveId: draft.directiveId,
-          kitOverrides: draft.kitOverrides
-        )
+      let outcome = await loadMapOutcome(workspaceURL: requestedWorkspaceURL, session: session)
 
-        guard !Task.isCancelled,
-          activeMapWorkspaceURL == requestedWorkspaceURL,
-          mapState.requestKey == requestKey
-        else {
-          return
-        }
+      guard isCurrentMapRequest(workspaceURL: requestedWorkspaceURL, requestKey: requestKey) else {
+        return
+      }
 
+      switch outcome {
+      case .loaded(let map):
         mapState.setLoadedMap(map)
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          activeMapWorkspaceURL == requestedWorkspaceURL,
-          mapState.requestKey == requestKey
-        else {
-          return
-        }
-
-        mapState.setFailedMap(message: error.message)
-      } catch {
-        guard !Task.isCancelled,
-          activeMapWorkspaceURL == requestedWorkspaceURL,
-          mapState.requestKey == requestKey
-        else {
-          return
-        }
-
-        mapState.setFailedMap(message: error.localizedDescription)
+      case .failed(let message):
+        mapState.setFailedMap(message: message)
       }
     }
   }
@@ -137,32 +114,66 @@ extension WorkspaceSessionFeatureModel {
     }
   }
 
-  func restoreMapIfPossible(
+  /// Brings the session map up to date after a workspace reload, mirroring
+  /// ``revalidatePreviewAfterReload(snapshot:workspaceURL:changedFileURLs:)``: the current map
+  /// stays on screen and is replaced only when the rebuilt one differs.
+  func revalidateMapAfterReload(
     snapshot: WorkspaceSnapshot,
-    workspaceURL: URL?
+    workspaceURL: URL?,
+    changedFileURLs: Set<URL>?
   ) {
-    guard let requestKey = mapState.requestKey else {
+    guard let requestKey = mapState.requestKey,
+      requestKey.hasPrefix("session:"),
+      let session = snapshot.sessions.first(where: {
+        $0.id == String(requestKey.dropFirst("session:".count))
+      }),
+      let workspaceURL
+    else {
       clearMap()
       return
     }
 
-    guard requestKey.hasPrefix("session:") else {
-      clearMap()
+    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
+
+    guard !mapState.isLoading, mapWorkspaceURL == requestedWorkspaceURL else {
+      refreshMap(for: session, workspaceURL: workspaceURL, forceReload: true)
       return
     }
 
-    let sessionID = String(requestKey.dropFirst("session:".count))
-
-    guard let session = snapshot.sessions.first(where: { $0.id == sessionID }) else {
-      clearMap()
+    guard
+      WorkspaceFileChangeRelevance.affectsSession(
+        fileURL: session.fileURL,
+        changedFileURLs: changedFileURLs
+      )
+    else {
       return
     }
 
-    refreshMap(
-      for: session,
-      workspaceURL: workspaceURL,
-      forceReload: true
-    )
+    cancelMapTask()
+    activeMapWorkspaceURL = requestedWorkspaceURL
+
+    mapTask = Task { [requestedWorkspaceURL, requestKey, session] in
+      let outcome = await loadMapOutcome(workspaceURL: requestedWorkspaceURL, session: session)
+
+      guard isCurrentMapRequest(workspaceURL: requestedWorkspaceURL, requestKey: requestKey) else {
+        return
+      }
+
+      switch outcome {
+      case .loaded(let map):
+        guard map != mapState.map || mapState.errorMessage != nil else {
+          return
+        }
+
+        mapState.setLoadedMap(map)
+      case .failed(let message):
+        guard message != mapState.errorMessage || mapState.map != nil else {
+          return
+        }
+
+        mapState.setFailedMap(message: message)
+      }
+    }
   }
 
   func cancelMapTask() {
@@ -179,6 +190,7 @@ extension WorkspaceSessionFeatureModel {
 
   func clearMap() {
     cancelMapTask()
+    mapWorkspaceURL = nil
     mapState.clear()
   }
 
@@ -246,6 +258,37 @@ extension WorkspaceSessionFeatureModel {
   func clearWorkspaceRelationshipMap() {
     cancelWorkspaceRelationshipMapTask()
     workspaceRelationshipMapState.clear()
+  }
+
+  private func isCurrentMapRequest(
+    workspaceURL: URL,
+    requestKey: String
+  ) -> Bool {
+    !Task.isCancelled
+      && activeMapWorkspaceURL == workspaceURL
+      && mapState.requestKey == requestKey
+  }
+
+  private func loadMapOutcome(
+    workspaceURL: URL,
+    session: WorkspaceSessionListItem
+  ) async -> WorkspaceLoadOutcome<WorkspaceSessionMap> {
+    do {
+      let draft = try await operationRunner.loadSessionDraft(fileURL: session.fileURL)
+
+      return .loaded(
+        try await operationRunner.loadSessionMap(
+          workspaceURL: workspaceURL,
+          personaId: draft.personaId,
+          directiveId: draft.directiveId,
+          kitOverrides: draft.kitOverrides
+        )
+      )
+    } catch let error as WorkspaceSnapshotBuildError {
+      return .failed(error.message)
+    } catch {
+      return .failed(error.localizedDescription)
+    }
   }
 
   private func makeDraftMapRequestKey(_ draft: WorkspaceSessionDraft) -> String {

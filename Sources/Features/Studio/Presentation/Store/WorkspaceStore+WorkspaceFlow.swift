@@ -1,12 +1,11 @@
 import ContextCore
 import ContextWorkspaceCore
 import Foundation
+import StudioFoundation
 
 extension WorkspaceStore {
   var recentWorkspaces: [StudioRecentWorkspace] {
-    _ = recentWorkspacesRevision
-
-    return recentWorkspacesFeatureModel.workspaces
+    recentWorkspacesFeatureModel.workspaces
   }
 
   func configureRecentWorkspaces(
@@ -20,7 +19,6 @@ extension WorkspaceStore {
       recentWorkspaceAccess: recentWorkspaceAccess,
       bookmarkDataProvider: bookmarkDataProvider
     )
-    recentWorkspacesRevision &+= 1
   }
 
   /// Loads a workspace passed through launch configuration. This is used by UI tests
@@ -68,11 +66,7 @@ extension WorkspaceStore {
   }
 
   func removeRecentWorkspace(_ workspace: StudioRecentWorkspace) {
-    guard recentWorkspacesFeatureModel.remove(workspace) else {
-      return
-    }
-
-    recentWorkspacesRevision &+= 1
+    recentWorkspacesFeatureModel.remove(workspace)
   }
 
   @discardableResult
@@ -80,31 +74,17 @@ extension WorkspaceStore {
     workspaceURL: URL,
     bookmarkData: Data? = nil
   ) -> Bool {
-    guard
-      recentWorkspacesFeatureModel.recordWorkspace(
-        at: workspaceURL,
-        bookmarkData: bookmarkData
-      )
-    else {
-      return false
-    }
-
-    recentWorkspacesRevision &+= 1
-    return true
+    recentWorkspacesFeatureModel.recordWorkspace(
+      at: workspaceURL,
+      bookmarkData: bookmarkData
+    )
   }
 
   @discardableResult
   func recordCurrentWorkspaceIfLoaded() -> Bool {
-    guard
-      recentWorkspacesFeatureModel.recordCurrentWorkspaceIfLoaded(
-        workspaceURL: workspaceURL
-      )
-    else {
-      return false
-    }
-
-    recentWorkspacesRevision &+= 1
-    return true
+    recentWorkspacesFeatureModel.recordCurrentWorkspaceIfLoaded(
+      workspaceURL: workspaceURL
+    )
   }
 
   func url(forRecentWorkspace workspace: StudioRecentWorkspace) -> URL {
@@ -157,11 +137,16 @@ extension WorkspaceStore {
   /// `~/.personakit` default. While `false`, unresolved shared-entity references can't be
   /// verified, so Studio surfaces the Connect prompt instead of per-reference errors.
   var isGlobalLibraryConnected: Bool {
+    currentGlobalScopeURL != nil
+  }
+
+  /// The global library root the snapshot, validator, and maps currently read, if any.
+  var currentGlobalScopeURL: URL? {
     if let globalScopeProvider {
-      return globalScopeProvider.current() != nil
+      return globalScopeProvider.current()
     }
 
-    return WorkspaceScopeResolver.defaultGlobalScopeURL() != nil
+    return WorkspaceScopeResolver.defaultGlobalScopeURL()
   }
 
   /// Presents the global-library folder picker, persists the grant for future launches,
@@ -201,10 +186,19 @@ extension WorkspaceStore {
 
   /// Reloads workspace data into the current snapshot and error state.
   func loadWorkspace() {
-    libraryFeatureModel.invalidateRequests()
+    loadWorkspace(trigger: .explicit)
+  }
+
+  /// Reloads the workspace. An explicit reload (open, save, connect) resets in-flight work
+  /// and shows validation progress; a reload for an external file change keeps everything
+  /// on screen and lets each owner decide whether the changed files concern it.
+  func loadWorkspace(trigger: WorkspaceReloadTrigger) {
+    let changedFileURLs = trigger.changedFileURLs
 
     guard let workspaceURL else {
+      libraryFeatureModel.invalidateRequests()
       loadFeatureModel.cancelLoadTask()
+      loadFeatureModel.stopWatching()
       validationFeatureModel.cancelValidationTask()
       sessionFeatureModel.clearPreview()
       sessionFeatureModel.clearMap()
@@ -220,11 +214,15 @@ extension WorkspaceStore {
     }
 
     loadFeatureModel.cancelLoadTask()
-    validationFeatureModel.cancelValidationTask()
-    sessionFeatureModel.cancelPreviewTask()
-    sessionFeatureModel.cancelMapTask()
-    sessionFeatureModel.cancelDraftMapTask()
-    sessionFeatureModel.cancelWorkspaceRelationshipMapTask()
+
+    if changedFileURLs == nil {
+      libraryFeatureModel.invalidateRequests()
+      validationFeatureModel.cancelValidationTask()
+      sessionFeatureModel.cancelPreviewTask()
+      sessionFeatureModel.cancelMapTask()
+      sessionFeatureModel.cancelDraftMapTask()
+      sessionFeatureModel.cancelWorkspaceRelationshipMapTask()
+    }
 
     loadFeatureModel.loadWorkspace(
       workspaceURL: workspaceURL,
@@ -233,22 +231,39 @@ extension WorkspaceStore {
         self.snapshot = snapshot
         self.loadErrorMessage = nil
         self.canInitializeWorkspaceStructure = false
-        self.validation = .empty
-        self.validationErrorMessage = nil
-        self.sessionFeatureModel.restorePreviewIfPossible(
-          snapshot: self.snapshot,
-          workspaceURL: self.workspaceURL
+
+        if changedFileURLs == nil {
+          self.validation = .empty
+          self.validationErrorMessage = nil
+        }
+
+        self.sessionFeatureModel.revalidatePreviewAfterReload(
+          snapshot: snapshot,
+          workspaceURL: self.workspaceURL,
+          changedFileURLs: changedFileURLs
         )
-        self.sessionFeatureModel.restoreMapIfPossible(
-          snapshot: self.snapshot,
-          workspaceURL: self.workspaceURL
+        self.sessionFeatureModel.revalidateMapAfterReload(
+          snapshot: snapshot,
+          workspaceURL: self.workspaceURL,
+          changedFileURLs: changedFileURLs
+        )
+        self.libraryFeatureModel.revalidateDetailAfterReload(
+          changedFileURLs: changedFileURLs
         )
         self.validationFeatureModel.runValidation(
           workspaceURL: workspaceURL,
-          snapshotAtValidationStart: self.snapshot
+          snapshotAtValidationStart: snapshot,
+          showsProgress: changedFileURLs == nil
         )
+        self.watchLoadedWorkspace()
       },
       onMissingPersonaKitDirectory: { error in
+        guard changedFileURLs == nil else {
+          self.keepLastSnapshotAfterFailedExternalReload(workspaceURL: workspaceURL)
+          return
+        }
+
+        self.loadFeatureModel.stopWatching()
         self.snapshot = .empty
         self.loadErrorMessage = error.localizedDescription
         self.canInitializeWorkspaceStructure = true
@@ -260,6 +275,11 @@ extension WorkspaceStore {
         self.sessionFeatureModel.clearWorkspaceRelationshipMap()
       },
       onLoadFailure: { message in
+        guard changedFileURLs == nil else {
+          self.keepLastSnapshotAfterFailedExternalReload(workspaceURL: workspaceURL)
+          return
+        }
+
         self.snapshot = .empty
         self.loadErrorMessage = message
         self.canInitializeWorkspaceStructure = false
@@ -269,7 +289,21 @@ extension WorkspaceStore {
         self.sessionFeatureModel.clearMap()
         self.sessionFeatureModel.clearDraftMap()
         self.sessionFeatureModel.clearWorkspaceRelationshipMap()
+        // Keep watching so fixing the broken file on disk reloads the workspace.
+        self.watchLoadedWorkspace()
       }
+    )
+  }
+
+  /// A file caught mid-write or briefly malformed fails the whole snapshot. Dropping to an
+  /// empty snapshot would clear selections and discard unsaved inline edits, so an external
+  /// reload that fails keeps the last good snapshot, keeps watching, and lets validation
+  /// report the problem; the next change that fixes the file reloads normally.
+  private func keepLastSnapshotAfterFailedExternalReload(workspaceURL: URL) {
+    validationFeatureModel.runValidation(
+      workspaceURL: workspaceURL,
+      snapshotAtValidationStart: snapshot,
+      showsProgress: false
     )
   }
 

@@ -18,14 +18,14 @@ struct StudioGlobalLibraryAccessTests {
     // Session 1: the user grants a folder → persist + begin access.
     let writer = GlobalLibraryBookmarkRecorder()
     writer.bookmarkDataToReturn = bookmark
-    let session1 = StudioGlobalLibraryAccess(bookmarkClient: writer, userDefaults: defaults)
+    let session1 = makeAccess(writer, defaults: defaults)
     #expect(session1.persist(grantedURL: url))
     #expect(writer.startedURLs == [url])
 
     // Session 2: a fresh instance over the same defaults resolves the same grant.
     let reader = GlobalLibraryBookmarkRecorder()
     reader.resolutionToReturn = StudioGlobalLibraryBookmarkResolution(url: url, isStale: false)
-    let session2 = StudioGlobalLibraryAccess(bookmarkClient: reader, userDefaults: defaults)
+    let session2 = makeAccess(reader, defaults: defaults)
     #expect(session2.resolveGrantedURL() == url)
     #expect(reader.resolvedData == [bookmark])
     #expect(reader.startedURLs == [url])
@@ -40,14 +40,14 @@ struct StudioGlobalLibraryAccessTests {
 
     let writer = GlobalLibraryBookmarkRecorder()
     writer.bookmarkDataToReturn = Data("v1".utf8)
-    StudioGlobalLibraryAccess(bookmarkClient: writer, userDefaults: defaults)
+    makeAccess(writer, defaults: defaults)
       .persist(grantedURL: url)
 
     // Resolving a stale bookmark re-mints and re-persists a fresh one.
     let staleReader = GlobalLibraryBookmarkRecorder()
     staleReader.resolutionToReturn = StudioGlobalLibraryBookmarkResolution(url: url, isStale: true)
     staleReader.bookmarkDataToReturn = Data("v2".utf8)
-    let staleAccess = StudioGlobalLibraryAccess(bookmarkClient: staleReader, userDefaults: defaults)
+    let staleAccess = makeAccess(staleReader, defaults: defaults)
     #expect(staleAccess.resolveGrantedURL() == url)
     #expect(staleReader.resolvedData == [Data("v1".utf8)])
     #expect(staleReader.bookmarkedURLs == [url])
@@ -55,7 +55,7 @@ struct StudioGlobalLibraryAccessTests {
     // The refreshed bookmark (v2) is what a later resolve reads back.
     let laterReader = GlobalLibraryBookmarkRecorder()
     laterReader.resolutionToReturn = StudioGlobalLibraryBookmarkResolution(url: url, isStale: false)
-    StudioGlobalLibraryAccess(bookmarkClient: laterReader, userDefaults: defaults)
+    makeAccess(laterReader, defaults: defaults)
       .resolveGrantedURL()
     #expect(laterReader.resolvedData == [Data("v2".utf8)])
   }
@@ -67,7 +67,7 @@ struct StudioGlobalLibraryAccessTests {
 
     let recorder = GlobalLibraryBookmarkRecorder()
     recorder.bookmarkDataToReturn = Data("bookmark".utf8)
-    let access = StudioGlobalLibraryAccess(bookmarkClient: recorder, userDefaults: defaults)
+    let access = makeAccess(recorder, defaults: defaults)
 
     let urlA = URL(fileURLWithPath: "/a/.personakit", isDirectory: true)
     let urlB = URL(fileURLWithPath: "/b/.personakit", isDirectory: true)
@@ -88,7 +88,7 @@ struct StudioGlobalLibraryAccessTests {
     defer { defaults.removePersistentDomain(forName: suite) }
 
     let recorder = GlobalLibraryBookmarkRecorder()
-    let access = StudioGlobalLibraryAccess(bookmarkClient: recorder, userDefaults: defaults)
+    let access = makeAccess(recorder, defaults: defaults)
 
     #expect(access.resolveGrantedURL() == nil)
     #expect(recorder.resolvedData.isEmpty)
@@ -100,18 +100,15 @@ struct StudioGlobalLibraryAccessTests {
     let (defaults, suite) = makeEphemeralDefaults()
     defer { defaults.removePersistentDomain(forName: suite) }
 
-    StudioGlobalLibraryAccess(
-      bookmarkClient: bookmarkWriter(returning: Data("bookmark".utf8)),
-      userDefaults: defaults
-    )
-    .persist(grantedURL: URL(fileURLWithPath: "/bookmarked/.personakit", isDirectory: true))
+    makeAccess(bookmarkWriter(returning: Data("bookmark".utf8)), defaults: defaults)
+      .persist(grantedURL: URL(fileURLWithPath: "/bookmarked/.personakit", isDirectory: true))
 
     let reader = GlobalLibraryBookmarkRecorder()
     reader.resolutionToReturn = StudioGlobalLibraryBookmarkResolution(
       url: URL(fileURLWithPath: "/bookmarked/.personakit", isDirectory: true),
       isStale: false
     )
-    let access = StudioGlobalLibraryAccess(bookmarkClient: reader, userDefaults: defaults)
+    let access = makeAccess(reader, defaults: defaults)
 
     let envURL = "/env/.personakit"
     let store = WorkspaceStore.launchConfigured(
@@ -133,18 +130,15 @@ struct StudioGlobalLibraryAccessTests {
     defer { defaults.removePersistentDomain(forName: suite) }
 
     let bookmarkedURL = URL(fileURLWithPath: "/bookmarked/.personakit", isDirectory: true)
-    StudioGlobalLibraryAccess(
-      bookmarkClient: bookmarkWriter(returning: Data("bookmark".utf8)),
-      userDefaults: defaults
-    )
-    .persist(grantedURL: bookmarkedURL)
+    makeAccess(bookmarkWriter(returning: Data("bookmark".utf8)), defaults: defaults)
+      .persist(grantedURL: bookmarkedURL)
 
     let reader = GlobalLibraryBookmarkRecorder()
     reader.resolutionToReturn = StudioGlobalLibraryBookmarkResolution(
       url: bookmarkedURL,
       isStale: false
     )
-    let access = StudioGlobalLibraryAccess(bookmarkClient: reader, userDefaults: defaults)
+    let access = makeAccess(reader, defaults: defaults)
 
     let store = WorkspaceStore.launchConfigured(
       environment: [:],
@@ -159,6 +153,30 @@ struct StudioGlobalLibraryAccessTests {
     let recorder = GlobalLibraryBookmarkRecorder()
     recorder.bookmarkDataToReturn = data
     return recorder
+  }
+
+  @Test
+  func grantIsStoredUnderTheExistingDefaultsKey() {
+    let (defaults, suite) = makeEphemeralDefaults()
+    defer { defaults.removePersistentDomain(forName: suite) }
+
+    let bookmark = Data("bookmark".utf8)
+
+    makeAccess(bookmarkWriter(returning: bookmark), defaults: defaults)
+      .persist(grantedURL: URL(fileURLWithPath: "/Users/test/.personakit", isDirectory: true))
+
+    // Existing users' grants live under this key; renaming it would silently drop them.
+    #expect(defaults.data(forKey: "studio.globalLibraryBookmark") == bookmark)
+  }
+
+  private func makeAccess(
+    _ bookmarkClient: GlobalLibraryBookmarkRecorder,
+    defaults: UserDefaults
+  ) -> StudioGlobalLibraryAccess {
+    StudioGlobalLibraryAccess(
+      bookmarkClient: bookmarkClient,
+      bookmarkStore: StudioGlobalLibraryBookmarkUserDefaultsStore(userDefaults: defaults)
+    )
   }
 
   private func makeEphemeralDefaults() -> (UserDefaults, String) {

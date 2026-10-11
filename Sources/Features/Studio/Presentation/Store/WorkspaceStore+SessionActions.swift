@@ -11,15 +11,6 @@ extension WorkspaceStore {
     )
   }
 
-  /// Loads an editable session draft from an existing on-disk session file.
-  func loadSessionDraft(
-    for session: WorkspaceSessionListItem
-  ) async throws -> WorkspaceSessionDraft {
-    try await sessionEditorFeatureModel.loadSessionDraft(
-      for: session
-    )
-  }
-
   /// Saves a session draft to project scope and refreshes workspace data.
   func saveSession(
     draft: WorkspaceSessionDraft,
@@ -121,5 +112,70 @@ extension WorkspaceStore {
   /// Presents a save panel and exports preview markdown to the selected path.
   func exportSessionPreviewWithSavePanel() async throws -> Bool {
     try await sessionFeatureModel.exportPreviewWithSavePanel()
+  }
+
+  /// Opens the session editor with a new-session draft.
+  func presentNewSessionEditor() {
+    sessionEditorFeatureModel.presentNewSessionEditor(
+      snapshot: snapshot,
+      workspaceURL: workspaceURL
+    )
+  }
+
+  /// Loads `session` and opens it for editing (or copying, for a global session).
+  func presentSessionEditor(for session: WorkspaceSessionListItem) {
+    sessionEditorFeatureModel.presentEditor(
+      for: session,
+      workspaceURL: workspaceURL,
+      currentWorkspaceURL: { self.workspaceURL }
+    )
+  }
+
+  func dismissSessionEditor() {
+    sessionEditorFeatureModel.dismissEditor()
+    sessionFeatureModel.clearDraftMap()
+  }
+
+  func requestSessionDeletion(_ session: WorkspaceSessionListItem) {
+    sessionEditorFeatureModel.requestDeletion(
+      of: session,
+      workspaceURL: workspaceURL
+    )
+  }
+
+  func cancelSessionDeletion() {
+    sessionEditorFeatureModel.cancelDeletion()
+  }
+
+  func confirmSessionDeletion(
+    _ presentation: SessionDeletionPresentation,
+    onDeleted: @MainActor @escaping (String) -> Void
+  ) {
+    sessionEditorFeatureModel.confirmDeletion(
+      presentation,
+      snapshot: snapshot,
+      workspaceURL: workspaceURL,
+      onWorkspaceMutation: { self.loadWorkspace() },
+      onDeleted: onDeleted
+    )
+  }
+
+  /// Drops work tied to the previous selection: a pending editor load and the last
+  /// Copy/Export message.
+  func sessionSelectionDidChange() {
+    sessionEditorFeatureModel.cancelPendingEditorLoad()
+    sessionFeatureModel.clearPreviewActionMessage()
+  }
+
+  func clearSessionPreviewActionMessage() {
+    sessionFeatureModel.clearPreviewActionMessage()
+  }
+
+  func copySessionPreviewReportingResult() {
+    sessionFeatureModel.copyPreviewReportingResult()
+  }
+
+  func exportSessionPreviewReportingResult() {
+    sessionFeatureModel.exportPreviewReportingResult()
   }
 }

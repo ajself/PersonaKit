@@ -34,6 +34,14 @@ enum SessionsListRowState {
     .contains { $0.localizedCaseInsensitiveContains(normalizedSearch) }
   }
 
+  static func filteredSessions(
+    _ sessions: [WorkspaceSessionListItem],
+    searchText: String,
+    in snapshot: WorkspaceSnapshot
+  ) -> [WorkspaceSessionListItem] {
+    sessions.filter { matches($0, searchText: searchText, in: snapshot) }
+  }
+
   private static func displayName(
     for id: String,
     in items: [WorkspaceListItem]

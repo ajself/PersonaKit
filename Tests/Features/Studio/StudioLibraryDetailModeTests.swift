@@ -86,45 +86,6 @@ struct StudioLibraryDetailModeTests {
     #expect(mode == .edit)
   }
 
-  @Test
-  func uninitializedInlineFormDraftIsNotDirty() {
-    let isDirty = StudioLibraryInlineFormDraftStateResolver.isDirty(
-      effectiveMode: .edit,
-      draftPreviewRequestID: nil,
-      previewRequestID: "personas::solo-developer::1",
-      draftRawJSON: "",
-      previewText: #"{"id":"solo-developer"}"#
-    )
-
-    #expect(!isDirty)
-  }
-
-  @Test
-  func staleInlineFormDraftIsNotDirtyForCurrentPreview() {
-    let isDirty = StudioLibraryInlineFormDraftStateResolver.isDirty(
-      effectiveMode: .edit,
-      draftPreviewRequestID: "personas::solo-developer::1",
-      previewRequestID: "personas::solo-developer::2",
-      draftRawJSON: "",
-      previewText: #"{"id":"solo-developer"}"#
-    )
-
-    #expect(!isDirty)
-  }
-
-  @Test
-  func initializedInlineFormDraftDetectsDirtyJSON() {
-    let isDirty = StudioLibraryInlineFormDraftStateResolver.isDirty(
-      effectiveMode: .edit,
-      draftPreviewRequestID: "personas::solo-developer::1",
-      previewRequestID: "personas::solo-developer::1",
-      draftRawJSON: #"{"id":"updated"}"#,
-      previewText: #"{"id":"solo-developer"}"#
-    )
-
-    #expect(isDirty)
-  }
-
   private func makeItem(
     scope: WorkspaceSourceScope
   ) -> WorkspaceListItem {

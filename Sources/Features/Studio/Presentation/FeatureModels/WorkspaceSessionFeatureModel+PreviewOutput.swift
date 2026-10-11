@@ -38,4 +38,42 @@ extension WorkspaceSessionFeatureModel {
 
     return true
   }
+
+  /// Copies the preview and reports the outcome in ``previewActionMessage``.
+  func copyPreviewReportingResult() {
+    do {
+      try copyPreviewToPasteboard()
+      previewActionMessage = "Copied preview to clipboard."
+    } catch {
+      previewActionMessage = error.localizedDescription
+    }
+  }
+
+  /// Runs the export flow in an owned task and reports the outcome in ``previewActionMessage``.
+  func exportPreviewReportingResult() {
+    previewExportTask?.cancel()
+    previewExportTask = Task {
+      do {
+        let didExport = try await exportPreviewWithSavePanel()
+
+        guard !Task.isCancelled else {
+          return
+        }
+
+        previewActionMessage = didExport ? "Exported preview markdown." : nil
+      } catch {
+        guard !Task.isCancelled else {
+          return
+        }
+
+        previewActionMessage = error.localizedDescription
+      }
+
+      previewExportTask = nil
+    }
+  }
+
+  func clearPreviewActionMessage() {
+    previewActionMessage = nil
+  }
 }

@@ -1,17 +1,18 @@
 import ContextCore
 import ContextWorkspaceCore
 import Foundation
+import Observation
 import StudioFoundation
 
 /// Feature-owned validation model used by `WorkspaceStore`.
+@Observable
 @MainActor
 final class WorkspaceValidationFeatureModel {
-  private let operationRunner: WorkspaceOperationRunner
+  @ObservationIgnored private let operationRunner: WorkspaceOperationRunner
 
-  private var validationTask: Task<Void, Never>?
+  @ObservationIgnored private var validationTask: Task<Void, Never>?
   private var state = WorkspaceValidationState()
-  private var activeWorkspaceURL: URL?
-  var onChange: (() -> Void)?
+  @ObservationIgnored private var activeWorkspaceURL: URL?
 
   init(operationRunner: WorkspaceOperationRunner) {
     self.operationRunner = operationRunner
@@ -24,7 +25,6 @@ final class WorkspaceValidationFeatureModel {
 
     set {
       state.setSnapshot(newValue)
-      onChange?()
     }
   }
 
@@ -35,7 +35,6 @@ final class WorkspaceValidationFeatureModel {
 
     set {
       state.setErrorMessage(newValue)
-      onChange?()
     }
   }
 
@@ -49,25 +48,29 @@ final class WorkspaceValidationFeatureModel {
     activeWorkspaceURL = nil
     state.setSnapshot(.empty)
     state.setErrorMessage(nil)
-    onChange?()
   }
 
+  /// Validates the workspace. `showsProgress: false` keeps the current results on screen
+  /// until the new ones arrive, so background revalidation after a file change doesn't flash.
   func runValidation(
     workspaceURL: URL,
-    snapshotAtValidationStart: WorkspaceSnapshot
+    snapshotAtValidationStart: WorkspaceSnapshot,
+    showsProgress: Bool = true
   ) {
     cancelValidationTask()
     let requestedWorkspaceURL = workspaceURL.standardizedFileURL
 
     activeWorkspaceURL = requestedWorkspaceURL
-    state.setSnapshot(
-      WorkspaceValidationSnapshot(
-        summary: "Validating workspace...",
-        issues: []
+
+    if showsProgress {
+      state.setSnapshot(
+        WorkspaceValidationSnapshot(
+          summary: "Validating workspace...",
+          issues: []
+        )
       )
-    )
-    state.setErrorMessage(nil)
-    onChange?()
+      state.setErrorMessage(nil)
+    }
 
     validationTask = Task { [requestedWorkspaceURL, snapshotAtValidationStart] in
       do {
@@ -84,7 +87,6 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(validation)
         state.setErrorMessage(nil)
-        onChange?()
       } catch let error as WorkspaceSnapshotBuildError {
         guard !Task.isCancelled,
           activeWorkspaceURL == requestedWorkspaceURL
@@ -94,7 +96,6 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(.empty)
         state.setErrorMessage(error.message)
-        onChange?()
       } catch {
         guard !Task.isCancelled,
           activeWorkspaceURL == requestedWorkspaceURL
@@ -104,7 +105,6 @@ final class WorkspaceValidationFeatureModel {
 
         state.setSnapshot(.empty)
         state.setErrorMessage(error.localizedDescription)
-        onChange?()
       }
     }
   }
