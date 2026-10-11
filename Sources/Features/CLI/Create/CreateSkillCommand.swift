@@ -243,9 +243,13 @@ struct CreateSkillCommand: ParsableCommand {
       defaultBody = ""
     }
 
-    var sections = ["# \(trimmedTitle)"]
-
     let finalBody = trimmedBody ?? defaultBody
+    // Match the exact title, not any H1: export strips the first H1 as the title,
+    // so a body opening with a different heading still needs ours above it.
+    let heading = "# \(trimmedTitle)"
+    let bodyOpensWithTitle = finalBody.split(separator: "\n", maxSplits: 1).first == Substring(heading)
+    var sections = bodyOpensWithTitle ? [] : [heading]
+
     if !finalBody.isEmpty {
       sections.append(finalBody)
     }
