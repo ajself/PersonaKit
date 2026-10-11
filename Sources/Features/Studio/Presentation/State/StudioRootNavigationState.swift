@@ -55,7 +55,6 @@ extension SidebarItem {
       .skills:
       return true
     case .sessions,
-      .relationshipMap,
       .validationResults:
       return false
     }

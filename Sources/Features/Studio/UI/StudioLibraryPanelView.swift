@@ -12,6 +12,7 @@ struct StudioLibraryPanelView: View {
   @Binding var selectedLibraryItemID: String?
   @Binding var isInspectorPresented: Bool
   @Binding var inspectorMode: StudioInspectorMode
+  let onNavigate: (StudioNavigationTarget) -> Void
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var detailMode = StudioLibraryDetailMode.edit
@@ -100,7 +101,10 @@ struct StudioLibraryPanelView: View {
       ) {
         StudioLibraryPreviewView(
           selection: selection,
-          state: previewState
+          state: previewState,
+          users: selectedItemUsers(selectedItem),
+          usersFailedToLoad: workspaceStore.libraryUsageLoadFailed,
+          onNavigate: onNavigate
         )
       }
       .inspectorColumnWidth(min: 180, ideal: 260, max: 360)
@@ -244,6 +248,18 @@ struct StudioLibraryPanelView: View {
     default:
       return nil
     }
+  }
+
+  private func selectedItemUsers(
+    _ selectedItem: WorkspaceListItem?
+  ) -> [WorkspaceSessionMapNode]? {
+    guard let selectedItem,
+      let kind = selection.libraryNodeKind
+    else {
+      return nil
+    }
+
+    return workspaceStore.libraryItemUsers(kind: kind, id: selectedItem.id)
   }
 
   private func selectedLibraryItem(

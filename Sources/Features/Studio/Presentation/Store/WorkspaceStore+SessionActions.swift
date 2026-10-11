@@ -94,16 +94,6 @@ extension WorkspaceStore {
     sessionFeatureModel.clearDraftMap()
   }
 
-  /// Loads or reloads the workspace-wide relationship map.
-  func refreshWorkspaceRelationshipMap() {
-    sessionFeatureModel.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
-  }
-
-  /// Clears workspace-wide relationship map state.
-  func clearWorkspaceRelationshipMap() {
-    sessionFeatureModel.clearWorkspaceRelationshipMap()
-  }
-
   /// Copies the current preview text into the system pasteboard.
   func copySessionPreviewToPasteboard() throws {
     try sessionFeatureModel.copyPreviewToPasteboard()

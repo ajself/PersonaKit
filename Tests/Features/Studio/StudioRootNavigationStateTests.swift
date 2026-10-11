@@ -27,7 +27,7 @@ struct StudioRootNavigationStateTests {
       selectedSessionID: "session-a",
       searchTextBySidebarItem: [
         .personas: "prior-persona-search",
-        .relationshipMap: "map-search",
+        .validationResults: "validation-search",
       ]
     )
 
@@ -37,7 +37,7 @@ struct StudioRootNavigationStateTests {
     #expect(state.selectedLibraryItemID == "persona-a")
     #expect(state.selectedSessionID == "session-a")
     #expect(state.searchTextBySidebarItem[.personas] == "")
-    #expect(state.searchTextBySidebarItem[.relationshipMap] == "map-search")
+    #expect(state.searchTextBySidebarItem[.validationResults] == "validation-search")
   }
 
   @Test
@@ -58,11 +58,11 @@ struct StudioRootNavigationStateTests {
     )
 
     var state = StudioRootNavigationState(
-      selection: .relationshipMap,
+      selection: .personas,
       selectedLibraryItemID: "persona-a",
       selectedSessionID: nil,
       searchTextBySidebarItem: [
-        .relationshipMap: "small-cli-change",
+        .personas: "solo",
         .sessions: "prior-session-search",
       ]
     )
@@ -72,7 +72,7 @@ struct StudioRootNavigationStateTests {
     #expect(state.selection == .sessions)
     #expect(state.selectedLibraryItemID == nil)
     #expect(state.selectedSessionID == "session-a")
-    #expect(state.searchTextBySidebarItem[.relationshipMap] == "small-cli-change")
+    #expect(state.searchTextBySidebarItem[.personas] == "solo")
     #expect(state.searchTextBySidebarItem[.sessions] == "")
   }
 
@@ -83,11 +83,11 @@ struct StudioRootNavigationStateTests {
       searchText: "missing reference"
     )
     var state = StudioRootNavigationState(
-      selection: .relationshipMap,
+      selection: .sessions,
       selectedLibraryItemID: nil,
       selectedSessionID: "session-a",
       searchTextBySidebarItem: [
-        .relationshipMap: "small-cli-change",
+        .sessions: "small-cli-change",
         .validationResults: "",
       ]
     )
@@ -96,7 +96,7 @@ struct StudioRootNavigationStateTests {
 
     #expect(state.selection == .validationResults)
     #expect(state.selectedSessionID == "session-a")
-    #expect(state.searchTextBySidebarItem[.relationshipMap] == "small-cli-change")
+    #expect(state.searchTextBySidebarItem[.sessions] == "small-cli-change")
     #expect(state.searchTextBySidebarItem[.validationResults] == "missing reference")
   }
 }

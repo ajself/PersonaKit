@@ -147,8 +147,27 @@ struct StudioLaunchConfigurationTests {
         environment: [
           StudioLaunchConfiguration.initialSectionEnvironmentKey: "personas"
         ],
+        arguments: ["PersonaKitStudio", "--section", "kits"]
+      ) == .kits
+    )
+  }
+
+  @Test
+  func initialSectionFallsBackToSessionsForRetiredRelationshipMap() {
+    #expect(StudioLaunchSection(rawValue: "relationship-map") == nil)
+    #expect(
+      StudioLaunchConfiguration.initialSection(
+        environment: [:],
         arguments: ["PersonaKitStudio", "--section", "relationship-map"]
-      ) == .relationshipMap
+      ) == .sessions
+    )
+    #expect(
+      StudioLaunchConfiguration.initialSection(
+        environment: [
+          StudioLaunchConfiguration.initialSectionEnvironmentKey: "relationship-map"
+        ],
+        arguments: ["PersonaKitStudio"]
+      ) == .sessions
     )
   }
 

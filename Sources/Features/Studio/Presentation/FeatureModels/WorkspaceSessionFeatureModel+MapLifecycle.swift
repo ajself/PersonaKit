@@ -199,67 +199,6 @@ extension WorkspaceSessionFeatureModel {
     draftMapState.clear()
   }
 
-  func refreshWorkspaceRelationshipMap(workspaceURL: URL?) {
-    cancelWorkspaceRelationshipMapTask()
-
-    guard let workspaceURL else {
-      clearWorkspaceRelationshipMap()
-      return
-    }
-
-    let requestedWorkspaceURL = workspaceURL.standardizedFileURL
-    let requestKey = "workspace:\(requestedWorkspaceURL.path())"
-
-    activeWorkspaceRelationshipMapURL = requestedWorkspaceURL
-    workspaceRelationshipMapState.beginLoading(requestKey: requestKey)
-
-    workspaceRelationshipMapTask = Task { [requestKey, requestedWorkspaceURL] in
-      do {
-        let map = try await operationRunner.loadWorkspaceRelationshipMap(
-          workspaceURL: requestedWorkspaceURL
-        )
-
-        guard !Task.isCancelled,
-          activeWorkspaceRelationshipMapURL == requestedWorkspaceURL,
-          workspaceRelationshipMapState.requestKey == requestKey
-        else {
-          return
-        }
-
-        workspaceRelationshipMapState.setLoadedMap(map)
-      } catch let error as WorkspaceSnapshotBuildError {
-        guard !Task.isCancelled,
-          activeWorkspaceRelationshipMapURL == requestedWorkspaceURL,
-          workspaceRelationshipMapState.requestKey == requestKey
-        else {
-          return
-        }
-
-        workspaceRelationshipMapState.setFailedMap(message: error.message)
-      } catch {
-        guard !Task.isCancelled,
-          activeWorkspaceRelationshipMapURL == requestedWorkspaceURL,
-          workspaceRelationshipMapState.requestKey == requestKey
-        else {
-          return
-        }
-
-        workspaceRelationshipMapState.setFailedMap(message: error.localizedDescription)
-      }
-    }
-  }
-
-  func cancelWorkspaceRelationshipMapTask() {
-    workspaceRelationshipMapTask?.cancel()
-    workspaceRelationshipMapTask = nil
-    activeWorkspaceRelationshipMapURL = nil
-  }
-
-  func clearWorkspaceRelationshipMap() {
-    cancelWorkspaceRelationshipMapTask()
-    workspaceRelationshipMapState.clear()
-  }
-
   private func isCurrentMapRequest(
     workspaceURL: URL,
     requestKey: String

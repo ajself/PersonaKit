@@ -214,20 +214,6 @@ public struct StudioRootView: View {
         }
       )
 
-    case .relationshipMap:
-      WorkspaceRelationshipMapPanelView(
-        workspaceStore: workspaceStore,
-        searchText: searchTextBinding(for: .relationshipMap),
-        isInspectorPresented: $isInspectorPresented,
-        inspectorMode: inspectorModeBinding,
-        onNavigate: { target in
-          applyNavigationTarget(target)
-        },
-        onNavigateHelpLink: { link in
-          applyHelpLink(link)
-        }
-      )
-
     case .personas,
       .directives,
       .kits,
@@ -240,6 +226,9 @@ public struct StudioRootView: View {
         selectedLibraryItemID: $selectedLibraryItemID,
         isInspectorPresented: $isInspectorPresented,
         inspectorMode: inspectorModeBinding,
+        onNavigate: { target in
+          applyNavigationTarget(target)
+        },
         onNavigateHelpLink: { link in
           applyHelpLink(link)
         }
@@ -370,7 +359,6 @@ enum SidebarItem: Hashable {
   case directives
   case kits
   case skills
-  case relationshipMap
   case validationResults
 
   static let contractItems: [SidebarItem] = [
@@ -380,7 +368,7 @@ enum SidebarItem: Hashable {
   ]
 
   static let contextItems: [SidebarItem] = [
-    .skills,
+    .skills
   ]
 
   var title: String {
@@ -395,8 +383,6 @@ enum SidebarItem: Hashable {
       return "Kits"
     case .skills:
       return "Skills"
-    case .relationshipMap:
-      return "Relationship Map"
     case .validationResults:
       return "Validation Results"
     }
@@ -414,8 +400,6 @@ enum SidebarItem: Hashable {
       return "shippingbox"
     case .skills:
       return "hammer"
-    case .relationshipMap:
-      return "point.3.filled.connected.trianglepath.dotted"
     case .validationResults:
       return "checklist"
     }
@@ -429,8 +413,6 @@ enum SidebarItem: Hashable {
       self = .kits
     case .personas:
       self = .personas
-    case .relationshipMap:
-      self = .relationshipMap
     case .sessions:
       self = .sessions
     case .skills:

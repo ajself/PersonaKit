@@ -41,108 +41,6 @@ struct StudioRelationshipMapPresentationStateTests {
   }
 
   @Test
-  func relationshipSummariesUseReadableReasonLabels() {
-    let map = WorkspaceSessionMap(
-      nodes: [
-        WorkspaceSessionMapNode(
-          key: "persona:solo-developer",
-          id: "solo-developer",
-          displayName: "Solo Developer",
-          kind: .persona,
-          isMissing: false,
-          badges: []
-        ),
-        WorkspaceSessionMapNode(
-          key: "kit:cli-guardrails",
-          id: "cli-guardrails",
-          displayName: "CLI Guardrails",
-          kind: .kit,
-          isMissing: false,
-          badges: []
-        ),
-      ],
-      edges: [
-        WorkspaceSessionMapEdge(
-          fromKey: "persona:solo-developer",
-          toKey: "kit:cli-guardrails",
-          reason: "persona.defaultKitIds"
-        ),
-        WorkspaceSessionMapEdge(
-          fromKey: "persona:solo-developer",
-          toKey: "kit:cli-guardrails",
-          reason: "persona.defaultKitIds"
-        ),
-      ],
-      resolutionErrors: [],
-      isFullyResolved: true
-    )
-
-    #expect(
-      RelationshipMapPresentationState.relationshipSummaries(map: map) == [
-        "solo-developer -> default kit -> cli-guardrails"
-      ]
-    )
-  }
-
-  @Test
-  func layoutStateTracksManualOffsets() {
-    var layoutState = RelationshipMapLayoutState()
-
-    #expect(!layoutState.hasManualOffsets)
-
-    layoutState.updateOffset(
-      for: "persona:solo-developer",
-      to: CGSize(
-        width: 24,
-        height: -12
-      )
-    )
-
-    #expect(layoutState.hasManualOffsets)
-    #expect(
-      layoutState.nodeOffsetsByKey["persona:solo-developer"]
-        == CGSize(
-          width: 0,
-          height: -12
-        )
-    )
-
-    layoutState.reset()
-
-    #expect(!layoutState.hasManualOffsets)
-    #expect(layoutState.nodeOffsetsByKey.isEmpty)
-  }
-
-  @Test
-  func layoutStatePrunesOffsetsForHiddenNodes() {
-    var layoutState = RelationshipMapLayoutState(
-      nodeOffsetsByKey: [
-        "kit:cli-guardrails": CGSize(
-          width: 10,
-          height: 20
-        ),
-        "persona:solo-developer": CGSize(
-          width: -4,
-          height: 8
-        ),
-      ]
-    )
-
-    layoutState.pruneOffsets(
-      validNodeKeys: ["persona:solo-developer"]
-    )
-
-    #expect(
-      layoutState.nodeOffsetsByKey == [
-        "persona:solo-developer": CGSize(
-          width: 0,
-          height: 8
-        )
-      ]
-    )
-  }
-
-  @Test
   func layoutStateCombinesBaseOffsetAndVerticalDragTranslation() {
     let offset = RelationshipMapLayoutState.offset(
       baseOffset: CGSize(
@@ -166,17 +64,15 @@ struct StudioRelationshipMapPresentationStateTests {
 
   @Test
   func layoutStateDropsTinyVerticalOffsets() {
-    var layoutState = RelationshipMapLayoutState()
-
-    layoutState.updateOffset(
-      for: "persona:solo-developer",
-      to: CGSize(
+    let offset = RelationshipMapLayoutState.offset(
+      baseOffset: .zero,
+      translation: CGSize(
         width: 30,
         height: 0.25
       )
     )
 
-    #expect(layoutState.nodeOffsetsByKey.isEmpty)
+    #expect(offset == .zero)
   }
 
   @Test

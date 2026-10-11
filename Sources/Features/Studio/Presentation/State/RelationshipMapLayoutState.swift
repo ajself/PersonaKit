@@ -1,46 +1,9 @@
 import CoreGraphics
 
-struct RelationshipMapLayoutState: Equatable {
+enum RelationshipMapLayoutState {
   static let maximumVerticalOffset = CGFloat(320)
   static let minimumVerticalOffset = CGFloat(-160)
   static let routeMargin = CGFloat(24)
-
-  var nodeOffsetsByKey: [String: CGSize]
-
-  init(
-    nodeOffsetsByKey: [String: CGSize] = [:]
-  ) {
-    self.nodeOffsetsByKey = Self.normalizedOffsets(nodeOffsetsByKey)
-  }
-
-  var hasManualOffsets: Bool {
-    !nodeOffsetsByKey.isEmpty
-  }
-
-  mutating func updateOffset(
-    for nodeKey: String,
-    to offset: CGSize
-  ) {
-    let normalizedOffset = Self.normalizedOffset(offset)
-
-    if normalizedOffset == .zero {
-      nodeOffsetsByKey.removeValue(forKey: nodeKey)
-    } else {
-      nodeOffsetsByKey[nodeKey] = normalizedOffset
-    }
-  }
-
-  mutating func pruneOffsets(
-    validNodeKeys: Set<String>
-  ) {
-    nodeOffsetsByKey = nodeOffsetsByKey.filter { nodeKey, _ in
-      validNodeKeys.contains(nodeKey)
-    }
-  }
-
-  mutating func reset() {
-    nodeOffsetsByKey.removeAll()
-  }
 
   static func offset(
     baseOffset: CGSize,

@@ -12,7 +12,6 @@ struct StudioHelpCatalogTests {
       .directives,
       .kits,
       .skills,
-      .relationshipMap,
       .validationResults,
     ]
 
@@ -73,7 +72,6 @@ struct StudioHelpCatalogTests {
       .directives,
       .kits,
       .skills,
-      .relationshipMap,
       .validationResults,
     ]
 
@@ -119,11 +117,27 @@ struct StudioHelpCatalogTests {
   }
 
   @Test
-  func relationshipMapHelpDocumentsRetainedFocusMode() throws {
-    let relationshipMap = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.relationshipMap))
+  func kitsHelpPointsToUsedByInsteadOfWorkspaceMap() throws {
+    let kits = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.kits))
 
-    #expect(relationshipMap.keyFields.contains { $0.contains("Focus Selected Session") })
-    #expect(relationshipMap.examples.contains { $0.contains("enable focus mode") })
+    #expect(kits.nextStepText.contains("Used by"))
+    #expect(!kits.nextStepText.localizedCaseInsensitiveContains("relationship map"))
+    #expect(kits.relatedLinks.map(\.destination) == [.sessions, .validationResults])
+  }
+
+  @Test
+  func helpTopicsCoverEverySidebarDestinationOnly() {
+    #expect(
+      StudioHelpTopicID.allCases == [
+        .directives,
+        .kits,
+        .personas,
+        .sessionEditor,
+        .sessions,
+        .skills,
+        .validationResults,
+      ]
+    )
   }
 
   private func trimmed(

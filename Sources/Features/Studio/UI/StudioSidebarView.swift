@@ -23,7 +23,6 @@ struct StudioSidebarView: View {
       }
 
       Section("Review") {
-        sidebarRow(for: .relationshipMap)
         sidebarRow(for: .validationResults)
       }
     }

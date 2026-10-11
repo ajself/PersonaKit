@@ -54,10 +54,10 @@ enum StudioHelpCatalog {
         examples: [
           "Example kit: \"swiftui-style\" including formatting, testing, and accessibility constraints."
         ],
-        nextStepText: "Verify kit ids used by sessions and directives resolve cleanly in the relationship map.",
+        nextStepText:
+          "Check Used by in the inspector to see what relies on this kit, then confirm it in Validation Results.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-          StudioHelpLink(label: "Go to Relationship Map", destination: .relationshipMap, searchText: nil),
           StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
         ]
       )
@@ -87,33 +87,6 @@ enum StudioHelpCatalog {
         relatedLinks: [
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-        ]
-      )
-
-    case .relationshipMap:
-      return StudioHelpTopic(
-        id: .relationshipMap,
-        title: "Relationship Map Help",
-        shortHint: "Relationship Map shows cross-entity references and resolution health.",
-        purpose:
-          "Use this panel to visualize dependencies between sessions, personas, directives, kits, and skills.",
-        keyFields: [
-          "Map Health summarizes whether references are fully resolved.",
-          "Focus Selected Session narrows the graph to one session context.",
-          "Entity type and scope filters reduce noise during troubleshooting.",
-        ],
-        commonMistakes: [
-          "Ignoring unresolved badges before exporting session context.",
-          "Troubleshooting from list views without checking graph dependencies.",
-          "Assuming missing nodes are safe if preview still renders.",
-        ],
-        examples: [
-          "Example check: select a session, enable focus mode, then resolve every orange issue badge."
-        ],
-        nextStepText: "Drill into unresolved nodes or jump to Validation Results to fix broken references.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
         ]
       )
 
@@ -237,8 +210,7 @@ enum StudioHelpCatalog {
         ],
         nextStepText: "Resolve listed issues, re-run validation, and return to Sessions when the workspace is clean.",
         relatedLinks: [
-          StudioHelpLink(label: "Go to Relationship Map", destination: .relationshipMap, searchText: nil),
-          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
+          StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil)
         ]
       )
     }
@@ -263,8 +235,6 @@ extension SidebarItem {
       return .kits
     case .skills:
       return .skills
-    case .relationshipMap:
-      return .relationshipMap
     case .validationResults:
       return .validationResults
     }

@@ -150,24 +150,6 @@ func makeSessionSnapshot(
   )
 }
 
-func makeWorkspaceRelationshipMap(personaID: String) -> WorkspaceSessionMap {
-  WorkspaceSessionMap(
-    nodes: [
-      WorkspaceSessionMapNode(
-        key: "persona:\(personaID)",
-        id: personaID,
-        displayName: personaID,
-        kind: .persona,
-        isMissing: false,
-        badges: []
-      )
-    ],
-    edges: [],
-    resolutionErrors: [],
-    isFullyResolved: true
-  )
-}
-
 func makeValidation(entityID: String) -> WorkspaceValidationSnapshot {
   WorkspaceValidationSnapshot(
     summary: "Validation summary: personas=1 kits=0 directives=0 skills=0 errors=1",

@@ -203,7 +203,6 @@ extension WorkspaceStore {
       sessionFeatureModel.clearPreview()
       sessionFeatureModel.clearMap()
       sessionFeatureModel.clearDraftMap()
-      sessionFeatureModel.clearWorkspaceRelationshipMap()
       snapshot = .empty
       loadErrorMessage = nil
       canInitializeWorkspaceStructure = false
@@ -221,7 +220,6 @@ extension WorkspaceStore {
       sessionFeatureModel.cancelPreviewTask()
       sessionFeatureModel.cancelMapTask()
       sessionFeatureModel.cancelDraftMapTask()
-      sessionFeatureModel.cancelWorkspaceRelationshipMapTask()
     }
 
     loadFeatureModel.loadWorkspace(
@@ -250,6 +248,7 @@ extension WorkspaceStore {
         self.libraryFeatureModel.revalidateDetailAfterReload(
           changedFileURLs: changedFileURLs
         )
+        self.libraryFeatureModel.refreshUsageGraph(workspaceURL: workspaceURL)
         self.validationFeatureModel.runValidation(
           workspaceURL: workspaceURL,
           snapshotAtValidationStart: snapshot,
@@ -272,7 +271,6 @@ extension WorkspaceStore {
         self.sessionFeatureModel.clearPreview()
         self.sessionFeatureModel.clearMap()
         self.sessionFeatureModel.clearDraftMap()
-        self.sessionFeatureModel.clearWorkspaceRelationshipMap()
       },
       onLoadFailure: { message in
         guard changedFileURLs == nil else {
@@ -288,7 +286,6 @@ extension WorkspaceStore {
         self.sessionFeatureModel.clearPreview()
         self.sessionFeatureModel.clearMap()
         self.sessionFeatureModel.clearDraftMap()
-        self.sessionFeatureModel.clearWorkspaceRelationshipMap()
         // Keep watching so fixing the broken file on disk reloads the workspace.
         self.watchLoadedWorkspace()
       }

@@ -1,8 +1,13 @@
+import ContextWorkspaceCore
 import SwiftUI
 
 struct StudioLibraryPreviewView: View {
   let selection: SidebarItem
   let state: StudioLibraryPreviewState?
+  /// Items that reference the selected one; `nil` until the workspace graph has loaded.
+  let users: [WorkspaceSessionMapNode]?
+  let usersFailedToLoad: Bool
+  let onNavigate: (StudioNavigationTarget) -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
@@ -72,8 +77,74 @@ struct StudioLibraryPreviewView: View {
       if let skillNotesLine = state.skillNotesLine {
         StudioMetadataRow(label: "Notes", value: skillNotesLine)
       }
+
+      StudioInspectorSection("Used by") {
+        usedByContent
+      }
     }
     .accessibilityElement(children: .contain)
     .accessibilityLabel(state.accessibilitySummary)
+  }
+
+  @ViewBuilder
+  private var usedByContent: some View {
+    if let users {
+      if users.isEmpty {
+        usedByNote("Not used by any session or library item.")
+      } else {
+        ForEach(users, id: \.key) { node in
+          usedByRow(node)
+        }
+      }
+    } else if usersFailedToLoad {
+      usedByNote("References couldn't be loaded.")
+    } else {
+      HStack(spacing: 6) {
+        ProgressView()
+          .controlSize(.small)
+
+        usedByNote("Finding references…")
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func usedByRow(_ node: WorkspaceSessionMapNode) -> some View {
+    if let target = SessionsMapNavigationResolver.navigationTarget(
+      for: node,
+      selectedSessionID: nil
+    ) {
+      let kindTitle = target.sidebarItem.singularTitle
+
+      Button {
+        onNavigate(target)
+      } label: {
+        Label {
+          VStack(alignment: .leading, spacing: 1) {
+            Text(node.id)
+              .lineLimit(1)
+              .truncationMode(.middle)
+
+            Text(kindTitle)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        } icon: {
+          Image(systemName: target.sidebarItem.systemImage)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Open \(kindTitle) \(node.id)")
+      .help("Open \(kindTitle) \(node.id)")
+    }
+  }
+
+  private func usedByNote(_ text: String) -> some View {
+    Text(text)
+      .font(.callout)
+      .foregroundStyle(.secondary)
   }
 }

@@ -580,133 +580,6 @@ struct WorkspaceSessionFeatureModelMapTests {
     #expect(model.mapErrorMessage == "Map load failed.")
   }
 
-  @Test
-  func refreshWorkspaceRelationshipMapPublishesMap() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let model = WorkspaceSessionFeatureModel(
-      operationRunner: makeOperationRunner(
-        sessionManager: StubSessionManager { _ in
-          WorkspaceSessionDraft(
-            id: "unused",
-            personaId: "unused",
-            directiveId: "unused",
-            kitOverrides: []
-          )
-        },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
-          Self.makeMap(personaID: "unused")
-        },
-        workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
-          buildHandler: { workspaceURL in
-            #expect(workspaceURL.path() == "/Workspace")
-            return Self.makeWorkspaceRelationshipMap(personaID: "persona-a")
-          }
-        )
-      ),
-      previewExportDestinationPicker: StubPreviewDestinationPicker(),
-      pasteboardWriter: StubPasteboardWriter()
-    )
-
-    model.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
-
-    await waitFor {
-      !model.isLoadingWorkspaceRelationshipMap && model.workspaceRelationshipMap != nil
-    }
-
-    #expect(model.workspaceRelationshipMapErrorMessage == nil)
-    #expect(
-      model.workspaceRelationshipMap?.nodes.contains(where: { $0.key == "persona:persona-a" }) == true
-    )
-  }
-
-  @Test
-  func refreshWorkspaceRelationshipMapSurfacesBuilderErrors() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let model = WorkspaceSessionFeatureModel(
-      operationRunner: makeOperationRunner(
-        sessionManager: StubSessionManager { _ in
-          WorkspaceSessionDraft(
-            id: "unused",
-            personaId: "unused",
-            directiveId: "unused",
-            kitOverrides: []
-          )
-        },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
-          Self.makeMap(personaID: "unused")
-        },
-        workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
-          buildHandler: { _ in
-            throw WorkspaceSnapshotBuildError(message: "Relationship map failed.")
-          }
-        )
-      ),
-      previewExportDestinationPicker: StubPreviewDestinationPicker(),
-      pasteboardWriter: StubPasteboardWriter()
-    )
-
-    model.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
-
-    await waitFor {
-      !model.isLoadingWorkspaceRelationshipMap && model.workspaceRelationshipMapErrorMessage != nil
-    }
-
-    #expect(model.workspaceRelationshipMap == nil)
-    #expect(model.workspaceRelationshipMapErrorMessage == "Relationship map failed.")
-  }
-
-  @Test
-  func refreshWorkspaceRelationshipMapIgnoresStaleResultAfterWorkspaceClear() async {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let mapGate = BlockingCallGate()
-    let model = WorkspaceSessionFeatureModel(
-      operationRunner: makeOperationRunner(
-        sessionManager: StubSessionManager { _ in
-          WorkspaceSessionDraft(
-            id: "unused",
-            personaId: "unused",
-            directiveId: "unused",
-            kitOverrides: []
-          )
-        },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
-          Self.makeMap(personaID: "unused")
-        },
-        workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder(
-          buildHandler: { _ in
-            _ = mapGate.markStarted()
-            mapGate.waitUntilReleased()
-            mapGate.markFinished()
-            return Self.makeWorkspaceRelationshipMap(personaID: "persona-slow")
-          }
-        )
-      ),
-      previewExportDestinationPicker: StubPreviewDestinationPicker(),
-      pasteboardWriter: StubPasteboardWriter()
-    )
-
-    model.refreshWorkspaceRelationshipMap(workspaceURL: workspaceURL)
-    await waitFor {
-      mapGate.hasStarted
-    }
-
-    model.refreshWorkspaceRelationshipMap(workspaceURL: nil)
-
-    #expect(model.workspaceRelationshipMap == nil)
-    #expect(model.workspaceRelationshipMapErrorMessage == nil)
-    #expect(!model.isLoadingWorkspaceRelationshipMap)
-
-    mapGate.release()
-    await waitFor {
-      mapGate.hasFinished
-    }
-    await yieldTasks()
-
-    #expect(model.workspaceRelationshipMap == nil)
-    #expect(model.workspaceRelationshipMapErrorMessage == nil)
-    #expect(!model.isLoadingWorkspaceRelationshipMap)
-  }
-
   private func waitFor(
     timeout: Duration = .seconds(2),
     condition: @escaping () -> Bool
@@ -749,30 +622,10 @@ struct WorkspaceSessionFeatureModelMapTests {
     )
   }
 
-  nonisolated private static func makeWorkspaceRelationshipMap(personaID: String) -> WorkspaceSessionMap {
-    WorkspaceSessionMap(
-      nodes: [
-        WorkspaceSessionMapNode(
-          key: "persona:\(personaID)",
-          id: personaID,
-          displayName: personaID,
-          kind: .persona,
-          isMissing: false,
-          badges: []
-        )
-      ],
-      edges: [],
-      resolutionErrors: [],
-      isFullyResolved: true
-    )
-  }
-
   private func makeOperationRunner(
     sessionManager: StubSessionManager,
     sessionMapBuilder: StubSessionMapBuilder,
-    sessionPreviewManager: any WorkspaceSessionPreviewManaging = StubSessionPreviewManager(),
-    workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder =
-      StubWorkspaceRelationshipMapBuilder()
+    sessionPreviewManager: any WorkspaceSessionPreviewManaging = StubSessionPreviewManager()
   ) -> WorkspaceOperationRunner {
     WorkspaceOperationRunner(
       snapshotBuilder: StubSnapshotBuilder { _ in
@@ -785,7 +638,7 @@ struct WorkspaceSessionFeatureModelMapTests {
       libraryEntityManager: StubLibraryEntityManager(),
       sessionPreviewManager: sessionPreviewManager,
       sessionMapBuilder: sessionMapBuilder,
-      workspaceRelationshipMapBuilder: workspaceRelationshipMapBuilder
+      workspaceRelationshipMapBuilder: StubWorkspaceRelationshipMapBuilder()
     )
   }
 }
@@ -898,23 +751,13 @@ private struct StubSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
 }
 
 private struct StubWorkspaceRelationshipMapBuilder: WorkspaceRelationshipMapBuilding, Sendable {
-  let buildHandler: @Sendable (URL) throws -> WorkspaceSessionMap
-
-  init(
-    buildHandler: @escaping @Sendable (URL) throws -> WorkspaceSessionMap = { _ in
-      WorkspaceSessionMap(
-        nodes: [],
-        edges: [],
-        resolutionErrors: [],
-        isFullyResolved: true
-      )
-    }
-  ) {
-    self.buildHandler = buildHandler
-  }
-
   func build(workspaceURL: URL) throws -> WorkspaceSessionMap {
-    try buildHandler(workspaceURL)
+    WorkspaceSessionMap(
+      nodes: [],
+      edges: [],
+      resolutionErrors: [],
+      isFullyResolved: true
+    )
   }
 }
 

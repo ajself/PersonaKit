@@ -24,7 +24,6 @@ public final class WorkspaceStore {
         sessionFeatureModel.clearPreviewActionMessage()
         sessionFeatureModel.clearMap()
         sessionFeatureModel.clearDraftMap()
-        sessionFeatureModel.clearWorkspaceRelationshipMap()
         return
       }
 
@@ -114,17 +113,6 @@ public final class WorkspaceStore {
   var isLoadingDraftSessionMap: Bool {
     sessionFeatureModel.isLoadingDraftMap
   }
-  var workspaceRelationshipMap: WorkspaceSessionMap? {
-    sessionFeatureModel.workspaceRelationshipMap
-  }
-
-  var workspaceRelationshipMapErrorMessage: String? {
-    sessionFeatureModel.workspaceRelationshipMapErrorMessage
-  }
-
-  var isLoadingWorkspaceRelationshipMap: Bool {
-    sessionFeatureModel.isLoadingWorkspaceRelationshipMap
-  }
   var libraryActionMessage: String? {
     libraryFeatureModel.actionMessage
   }
@@ -147,6 +135,18 @@ public final class WorkspaceStore {
 
   var libraryDetail: StudioLibraryDetailState {
     libraryFeatureModel.detail
+  }
+
+  var libraryUsageLoadFailed: Bool {
+    libraryFeatureModel.usageGraphLoadFailed
+  }
+
+  /// See ``WorkspaceLibraryFeatureModel/usedBy(kind:id:)``.
+  func libraryItemUsers(
+    kind: WorkspaceSessionMapNodeKind,
+    id: String
+  ) -> [WorkspaceSessionMapNode]? {
+    libraryFeatureModel.usedBy(kind: kind, id: id)
   }
 
   var sessionPreviewActionMessage: String? {

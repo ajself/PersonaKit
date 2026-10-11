@@ -1,12 +1,8 @@
 import Foundation
 
-/// Stable automation identifiers for Relationship Map visual review tooling.
+/// Stable automation identifiers for the session dependency map's visual review tooling.
 enum RelationshipMapAutomationIdentifier {
   static let mapCanvas = "relationship-map-canvas"
-  static let refresh = "relationship-map-refresh"
-  static let resetLayout = "relationship-map-reset-layout"
-  static let searchField = "relationship-map-search"
-  static let focusSelectedSession = "relationship-map-focus-selected-session"
 
   static func node(
     key: String

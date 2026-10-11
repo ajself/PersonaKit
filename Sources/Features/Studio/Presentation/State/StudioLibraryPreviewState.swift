@@ -185,8 +185,6 @@ extension SidebarItem {
       return "Kit"
     case .skills:
       return "Skill"
-    case .relationshipMap:
-      return "Relationship Map"
     case .validationResults:
       return "Validation Result"
     }
