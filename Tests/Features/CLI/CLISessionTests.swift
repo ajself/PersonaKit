@@ -164,6 +164,36 @@ struct CLISessionTests {
   }
 
   @Test
+  func contractViaPersonaOnlyKeepsKitGrounding() throws {
+    let root = fixtureKitRootURL()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "contract",
+        "--root",
+        root.path,
+        "--persona",
+        "senior-swiftui-engineer",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let data = try #require(output.data(using: .utf8))
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let groundingSkills = try #require(object["availableGroundingSkills"] as? [[String: Any]])
+    #expect(
+      groundingSkills.map { $0["id"] as? String } == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+        "tools-and-constraints",
+      ]
+    )
+  }
+
+  @Test
   func resolveGroundingSkillsViaSessionReturnsStructuredJSON() throws {
     let root = fixtureKitRootURL()
 

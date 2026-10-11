@@ -87,6 +87,8 @@ enum SessionContractComponentResolver {
     // Route each attached skill by nature: grounding skills (former references —
     // trigger rules, no capabilities) become always-available grounding and skip
     // authorization; tool-awareness skills stay required and authorization-gated.
+    // Without a directive there is no work to require capabilities for, so only
+    // grounding routes; a persona's kit grounding still applies.
     func routeSkill(
       _ skillId: String,
       sourceType: ResolverEntityType,
@@ -114,7 +116,7 @@ enum SessionContractComponentResolver {
             skillId: skillId
           )
         )
-      } else {
+      } else if directive != nil {
         requiredSkillReferences.append(
           SessionContractRequiredSkillReference(
             sourceType: sourceType,
@@ -126,13 +128,13 @@ enum SessionContractComponentResolver {
       }
     }
 
-    if let resolvedDirective = directive {
-      for kit in resolvedKits {
-        for skillId in kit.skillIds ?? [] {
-          routeSkill(skillId, sourceType: .kit, sourceId: kit.id, field: "skillIds")
-        }
+    for kit in resolvedKits {
+      for skillId in kit.skillIds ?? [] {
+        routeSkill(skillId, sourceType: .kit, sourceId: kit.id, field: "skillIds")
       }
+    }
 
+    if let resolvedDirective = directive {
       for skillId in resolvedDirective.requiresSkillIds {
         routeSkill(
           skillId,

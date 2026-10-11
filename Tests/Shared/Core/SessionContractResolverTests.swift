@@ -59,6 +59,13 @@ struct SessionContractResolverTests {
 
     #expect(result.directive == nil)
     #expect(result.kits.map(\.id) == ["repo-constraints", "swift-style", "swiftui-style"])
+    #expect(
+      result.availableGroundingSkills.map(\.id) == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+        "tools-and-constraints",
+      ]
+    )
     #expect(result.skills.isEmpty)
     #expect(result.skillAuthorization.requiredSkillIds.isEmpty)
     #expect(result.skillAuthorization.authorizedSkillIds == ["codex-cli"])
@@ -68,6 +75,52 @@ struct SessionContractResolverTests {
         "skill-authorization-contract",
       ]
     )
+  }
+
+  @Test
+  func resolveWithoutDirectiveKeepsKitCapabilitySkillsOutOfRequirements() throws {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try Data(
+      """
+      {
+        "id": "kit-tool",
+        "version": "1.0",
+        "name": "Kit Tool",
+        "description": "Capability skill only a kit declares.",
+        "capabilities": ["run-commands"]
+      }
+      """.utf8
+    ).write(to: root.appendingPathComponent("Packs/skills/kit-tool.skill.json"))
+    try Data(
+      """
+      {
+        "id": "repo-constraints",
+        "version": "1.0",
+        "name": "Repository Constraints Kit",
+        "summary": "Rules specific to this codebase.",
+        "skillIds": ["kit-tool", "tools-and-constraints"]
+      }
+      """.utf8
+    ).write(to: root.appendingPathComponent("Packs/kits/repo-constraints.kit.json"))
+    let scopes = ScopeSet(projectScopeURL: root, globalScopeURL: nil)
+
+    let personaOnly = try SessionContractResolver.resolve(
+      scopes: scopes,
+      personaId: "senior-swiftui-engineer",
+      directiveId: nil,
+      kitOverrides: []
+    )
+    let withDirective = try SessionContractResolver.resolve(
+      scopes: scopes,
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: []
+    )
+
+    #expect(personaOnly.skills.isEmpty)
+    #expect(personaOnly.availableGroundingSkills.map(\.id).contains("tools-and-constraints"))
+    #expect(withDirective.skills.map(\.id) == ["codex-cli", "kit-tool"])
   }
 
   @Test

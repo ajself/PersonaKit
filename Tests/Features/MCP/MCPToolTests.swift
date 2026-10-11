@@ -267,6 +267,28 @@ struct MCPToolTests {
   }
 
   @Test
+  func contractToolPersonaOnlyKeepsKitGrounding() throws {
+    let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_resolve_contract",
+      arguments: ["personaId": "senior-swiftui-engineer"]
+    )
+
+    let output = try #require(firstText(result))
+    let object = try #require(jsonObject(output))
+    let groundingSkills = try #require(object["availableGroundingSkills"] as? [[String: Any]])
+    #expect(
+      groundingSkills.map { $0["id"] as? String } == [
+        "swift-style-guide-reference",
+        "swiftui-style-guide-reference",
+        "tools-and-constraints",
+      ]
+    )
+  }
+
+  @Test
   func explainEntityToolReturnsPersonaLinks() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
