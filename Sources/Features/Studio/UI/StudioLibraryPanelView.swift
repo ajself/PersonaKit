@@ -5,6 +5,8 @@ import SwiftUI
 
 /// Library panel with edit/copy/reveal workflows.
 struct StudioLibraryPanelView: View {
+  private static let listPaneMinWidth: CGFloat = 160
+
   let workspaceStore: WorkspaceStore
   let selection: SidebarItem
   let items: [WorkspaceListItem]
@@ -62,7 +64,7 @@ struct StudioLibraryPanelView: View {
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       }
-      .frame(minWidth: 160, idealWidth: 320, maxWidth: .infinity)
+      .frame(minWidth: Self.listPaneMinWidth, idealWidth: 320, maxWidth: .infinity)
 
       StudioLibraryDetailView(
         workspaceStore: workspaceStore,
@@ -92,6 +94,9 @@ struct StudioLibraryPanelView: View {
       )
       .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+    // An HSplitView behaves as if its minimum width is its current width; beside the inspector that
+    // ratchets the window wider on every section switch, so pin the minimum to the list pane's.
+    .frame(minWidth: Self.listPaneMinWidth, maxWidth: .infinity, maxHeight: .infinity)
     .inspector(isPresented: $isInspectorPresented) {
       StudioContextInspectorView(
         primaryTitle: "Info",

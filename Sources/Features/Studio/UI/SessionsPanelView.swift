@@ -5,6 +5,8 @@ import SwiftUI
 
 /// Sessions feature panel with list CRUD, preview/export workflows, and dependency maps.
 struct SessionsPanelView: View {
+  private static let listPaneMinWidth: CGFloat = 160
+
   let workspaceStore: WorkspaceStore
   @Binding var searchText: String
   @Binding var selectedSessionID: String?
@@ -43,7 +45,7 @@ struct SessionsPanelView: View {
           workspaceStore.presentNewSessionEditor()
         }
       )
-      .frame(minWidth: 160, idealWidth: 250, maxWidth: .infinity)
+      .frame(minWidth: Self.listPaneMinWidth, idealWidth: 250, maxWidth: .infinity)
 
       VStack(spacing: 0) {
         if let selectedSession {
@@ -61,6 +63,9 @@ struct SessionsPanelView: View {
       }
       .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+    // An HSplitView behaves as if its minimum width is its current width; beside the inspector that
+    // ratchets the window wider on every section switch, so pin the minimum to the list pane's.
+    .frame(minWidth: Self.listPaneMinWidth, maxWidth: .infinity, maxHeight: .infinity)
     .inspector(isPresented: $isInspectorPresented) {
       StudioContextInspectorView(
         primaryTitle: "Info",
