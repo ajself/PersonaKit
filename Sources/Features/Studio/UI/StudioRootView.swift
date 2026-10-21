@@ -91,6 +91,11 @@ public struct StudioRootView: View {
 
       workspaceStore.refreshInstallStatus()
     }
+    .onChange(of: workspaceStore.workspaceURL) { _, _ in
+      // A global item keeps its identity across workspaces, so a carried-over selection would
+      // never re-select the detail the store just cleared.
+      selectedLibraryItemID = nil
+    }
     .alert(
       workspaceStore.installResult?.title ?? "",
       isPresented: Binding(

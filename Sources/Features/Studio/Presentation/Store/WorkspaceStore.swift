@@ -46,6 +46,9 @@ public final class WorkspaceStore {
     }
   }
   var snapshot: WorkspaceSnapshot = .empty
+  /// The reload the in-flight snapshot load answers, cleared when it lands. A load that
+  /// supersedes it folds it in, so the files it carried still reach the reload handlers.
+  @ObservationIgnored var inFlightReloadTrigger: WorkspaceReloadTrigger?
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var installStatus: WorkspaceInstallStatus

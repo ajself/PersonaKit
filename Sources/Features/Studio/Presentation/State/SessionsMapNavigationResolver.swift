@@ -1,6 +1,6 @@
 import ContextWorkspaceCore
 
-/// Shared map-node navigation resolver used by Studio relationship map surfaces.
+/// Shared map-node navigation resolver used by Studio session map surfaces.
 enum SessionsMapNavigationResolver {
   static func navigationTarget(
     for node: WorkspaceSessionMapNode,

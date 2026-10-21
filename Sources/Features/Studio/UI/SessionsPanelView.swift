@@ -227,7 +227,7 @@ struct SessionsPanelView: View {
     ContentUnavailableView(
       "Select a Session",
       systemImage: "doc.text.magnifyingglass",
-      description: Text("Preview the resolved session contract or inspect its relationship map.")
+      description: Text("Preview the resolved session contract or inspect its map.")
     )
     .foregroundStyle(.secondary)
     .frame(maxWidth: .infinity, maxHeight: .infinity)

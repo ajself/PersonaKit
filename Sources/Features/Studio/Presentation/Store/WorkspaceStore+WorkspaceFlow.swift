@@ -193,9 +193,11 @@ extension WorkspaceStore {
   /// and shows validation progress; a reload for an external file change keeps everything
   /// on screen and lets each owner decide whether the changed files concern it.
   func loadWorkspace(trigger: WorkspaceReloadTrigger) {
+    let trigger = inFlightReloadTrigger.map(trigger.merged(with:)) ?? trigger
     let changedFileURLs = trigger.changedFileURLs
 
     guard let workspaceURL else {
+      inFlightReloadTrigger = nil
       libraryFeatureModel.invalidateRequests()
       loadFeatureModel.cancelLoadTask()
       loadFeatureModel.stopWatching()
@@ -213,6 +215,7 @@ extension WorkspaceStore {
     }
 
     loadFeatureModel.cancelLoadTask()
+    inFlightReloadTrigger = trigger
 
     if changedFileURLs == nil {
       libraryFeatureModel.invalidateRequests()
@@ -226,6 +229,7 @@ extension WorkspaceStore {
       workspaceURL: workspaceURL,
       currentWorkspaceURL: { self.workspaceURL },
       onLoaded: { [workspaceURL] snapshot in
+        self.inFlightReloadTrigger = nil
         self.snapshot = snapshot
         self.loadErrorMessage = nil
         self.canInitializeWorkspaceStructure = false
@@ -258,9 +262,12 @@ extension WorkspaceStore {
       },
       onMissingPersonaKitDirectory: { error in
         guard changedFileURLs == nil else {
+          // Keep the failed batch pending so the reload that follows a fix still sees it.
           self.keepLastSnapshotAfterFailedExternalReload(workspaceURL: workspaceURL)
           return
         }
+
+        self.inFlightReloadTrigger = nil
 
         self.loadFeatureModel.stopWatching()
         self.snapshot = .empty
@@ -274,9 +281,12 @@ extension WorkspaceStore {
       },
       onLoadFailure: { message in
         guard changedFileURLs == nil else {
+          // Keep the failed batch pending so the reload that follows a fix still sees it.
           self.keepLastSnapshotAfterFailedExternalReload(workspaceURL: workspaceURL)
           return
         }
+
+        self.inFlightReloadTrigger = nil
 
         self.snapshot = .empty
         self.loadErrorMessage = message

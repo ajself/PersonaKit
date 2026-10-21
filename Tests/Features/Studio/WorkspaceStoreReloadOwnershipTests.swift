@@ -44,6 +44,35 @@ struct WorkspaceStoreReloadOwnershipTests {
   }
 
   @Test
+  func externalReloadThatSupersedesAnotherKeepsItsChangedFiles() async throws {
+    let gate = BlockingCallGate()
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let store = makeLibraryStore(disk: disk) { buildNumber in
+      if buildNumber == 2 {
+        _ = gate.markStarted()
+        gate.waitUntilReleased()
+      }
+    }
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    disk.value = #"{"id":"solo","name":"Solo","summary":"Changed elsewhere."}"#
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [soloFileURL])
+    await waitFor { gate.hasStarted }
+
+    // A second batch that only touches another file replaces the stalled load.
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [otherFileURL])
+    gate.release()
+
+    await waitFor { store.libraryDetail.hasChangedOnDisk }
+
+    #expect(store.libraryDetail.formState.primaryText == "Mine")
+  }
+
+  @Test
   func externalChangeWithACleanDraftShowsTheNewFile() async throws {
     let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
     let store = makeLibraryStore(disk: disk)
@@ -87,6 +116,33 @@ struct WorkspaceStoreReloadOwnershipTests {
     buildFails.value = false
     disk.value = #"{"id":"solo","name":"Solo","summary":"Changed elsewhere."}"#
     store.reloadWorkspaceAfterExternalChange(changedFileURLs: [soloFileURL])
+
+    await waitFor { store.libraryDetail.hasChangedOnDisk }
+    #expect(store.libraryDetail.formState.primaryText == "Mine")
+  }
+
+  @Test
+  func failedExternalReloadCarriesItsChangedFilesIntoTheNextReload() async throws {
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let buildCount = CallCounter()
+    let buildFails = MutableBooleanState(value: false)
+    let store = makeLibraryStore(disk: disk, buildCount: buildCount, buildFails: buildFails)
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+
+    // The open file changes in the same batch as a file caught mid-write.
+    buildFails.value = true
+    disk.value = #"{"id":"solo","name":"Solo","summary":"Changed elsewhere."}"#
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [soloFileURL, otherFileURL])
+    await waitFor { buildCount.count == 2 }
+    await yieldTasks()
+
+    // Fixing the broken file reloads with only that file in the new batch.
+    buildFails.value = false
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [otherFileURL])
 
     await waitFor { store.libraryDetail.hasChangedOnDisk }
     #expect(store.libraryDetail.formState.primaryText == "Mine")
@@ -338,6 +394,7 @@ struct WorkspaceStoreReloadOwnershipTests {
     readCount: CallCounter = CallCounter(),
     buildCount: CallCounter = CallCounter(),
     buildFails: MutableBooleanState = MutableBooleanState(value: false),
+    beforeBuild: (@Sendable (Int) -> Void)? = nil,
     readHandler: (@Sendable (URL) throws -> String)? = nil
   ) -> WorkspaceStore {
     let soloFileURL = soloFileURL
@@ -346,6 +403,7 @@ struct WorkspaceStoreReloadOwnershipTests {
     return WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
         buildCount.increment()
+        beforeBuild?(buildCount.count)
 
         if buildFails.value {
           throw WorkspaceSnapshotBuildError(message: "Failed to load workspace registry.")

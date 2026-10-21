@@ -17,6 +17,17 @@ enum WorkspaceReloadTrigger: Equatable {
       return changedFileURLs
     }
   }
+
+  /// One trigger covering both reloads: an explicit reload absorbs everything, and two
+  /// external changes combine their files.
+  func merged(with other: WorkspaceReloadTrigger) -> WorkspaceReloadTrigger {
+    switch (self, other) {
+    case (.externalChange(let changedFileURLs), .externalChange(let otherChangedFileURLs)):
+      return .externalChange(changedFileURLs.union(otherChangedFileURLs))
+    default:
+      return .explicit
+    }
+  }
 }
 
 extension WorkspaceStore {
