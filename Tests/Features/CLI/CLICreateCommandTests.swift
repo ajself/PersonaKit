@@ -277,6 +277,35 @@ struct CLICreateCommandTests {
   }
 
   @Test
+  func createGroundingSkillKeepsCRLFBodyTitleWithoutDuplicating() throws {
+    let root = try makeWritableFixtureRoot()
+
+    var status: Int32 = 0
+    _ = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "create",
+        "skill",
+        "--root",
+        root.path,
+        "--name",
+        "Product Judgment",
+        "--description",
+        "Rubric for product calls.",
+        "--always-on",
+        "--body",
+        "# Product Judgment\r\n\r\nName the unproven risk.",
+      ])
+    }
+
+    #expect(status == 0)
+
+    let bodyURL = root.appendingPathComponent("Packs/skills/product-judgment.md")
+    let body = try String(contentsOf: bodyURL, encoding: .utf8)
+    #expect(body == "# Product Judgment\r\n\r\nName the unproven risk.\n")
+  }
+
+  @Test
   func createGroundingSkillKeepsTitleAboveADifferentBodyHeading() throws {
     let root = try makeWritableFixtureRoot()
 
