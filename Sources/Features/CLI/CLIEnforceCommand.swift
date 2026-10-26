@@ -147,9 +147,10 @@ struct EnforceInstallCommand: ParsableCommand {
   var dryRun = false
 
   mutating func validate() throws {
-    if let mcpServer, !Self.isValidMCPServerName(mcpServer) {
+    if let mcpServer, !ClaudeCodeEnforcement.isValidMCPServerName(mcpServer) {
       throw ArgumentParser.ValidationError(
-        "--mcp-server must be non-empty, contain only letters, digits, '-' or '_', and not contain '__'."
+        "--mcp-server must be non-empty, contain only letters, digits, '-' or '_', and not contain '__'. "
+          + "Use the server name as it appears in Claude Code tool names (mcp__<name>__…)."
       )
     }
 
@@ -242,11 +243,6 @@ struct EnforceInstallCommand: ParsableCommand {
     }
 
     Self.reportDegradation(actionClasses: artifacts.degradedActionClasses, persona: manifest.personaId)
-  }
-
-  /// MCP tool names are `mcp__<server>__<tool>`, so a server name may not contain `__`.
-  private static func isValidMCPServerName(_ name: String) -> Bool {
-    !name.contains("__") && name.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
   }
 
   /// Surfaces forbidden capabilities that cannot reach the hook layer on Claude Code.

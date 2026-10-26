@@ -223,6 +223,7 @@ struct CLIEnforceTests {
 
     #expect(result.status != 0)
     #expect((result.stderr + result.stdout).contains("--mcp-server must be non-empty"))
+    #expect((result.stderr + result.stdout).contains("as it appears in Claude Code tool names"))
     #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
   }
 }

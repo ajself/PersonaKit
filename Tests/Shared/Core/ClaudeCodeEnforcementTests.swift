@@ -177,6 +177,36 @@ struct ClaudeCodeEnforcementTests {
     let decision = ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: readOnly)
     #expect(decision.isDenied)
     #expect(decision.reason?.contains("fail-closed") == true)
+    #expect(decision.reason?.contains("--mcp-server") == false)
+  }
+
+  @Test
+  func evaluatorDenialOfPersonaKitNamedToolHintsAtServerName() {
+    let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
+
+    let decision = ClaudeCodeHookCheckEvaluator.evaluate(
+      toolName: "mcp__pk-local__personakit_export",
+      manifest: readOnly
+    )
+    #expect(decision.isDenied)
+    #expect(decision.reason?.contains("`personakit enforce install --mcp-server pk-local`") == true)
+    #expect(decision.reason?.contains("do not run it yourself") == true)
+    #expect(decision.reason?.contains("`claude mcp get pk-local` shows it runs `personakit mcp`") == true)
+  }
+
+  @Test(arguments: [
+    "mcp__a__b__personakit_export",
+    "mcp____personakit_export",
+    "mcp__personakit_export",
+    "mcp__a b`x__personakit_export",
+  ])
+  func evaluatorOmitsHintWhenServerSegmentIsNotAValidServerName(toolName: String) {
+    let decision = ClaudeCodeHookCheckEvaluator.evaluate(
+      toolName: toolName,
+      manifest: manifest(forbiddenCapabilities: ["edit-files"])
+    )
+    #expect(decision.isDenied)
+    #expect(decision.reason?.contains("--mcp-server") == false)
   }
 
   @Test

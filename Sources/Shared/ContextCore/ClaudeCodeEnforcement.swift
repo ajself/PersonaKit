@@ -83,6 +83,25 @@ public enum ClaudeCodeEnforcement {
   public static func isTrustedPersonaKitMCPTool(_ toolName: String, serverName: String) -> Bool {
     personaKitMCPToolNames.contains { toolName == "mcp__\(serverName)__\($0)" }
   }
+
+  /// Whether a name can be a host MCP server segment: tool names are `mcp__<server>__<tool>`,
+  /// and Claude Code normalizes server names to `[A-Za-z0-9_-]`, so `__` would be ambiguous.
+  public static func isValidMCPServerName(_ name: String) -> Bool {
+    !name.contains("__") && name.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
+  }
+
+  /// The server segment of an MCP tool named like one of PersonaKit's own tools, if any.
+  ///
+  /// Used only to explain a denial; it never grants trust, since any server can expose a
+  /// tool by that name.
+  static func serverNameOfPersonaKitNamedMCPTool(_ toolName: String) -> String? {
+    guard isMCPTool(toolName) else { return nil }
+    for name in personaKitMCPToolNames where toolName.hasSuffix("__\(name)") {
+      let server = String(toolName.dropFirst("mcp__".count).dropLast("__\(name)".count))
+      return isValidMCPServerName(server) ? server : nil
+    }
+    return nil
+  }
 }
 
 /// Deterministic command hook entry: `{ "type": "command", "command": "…" }`.
@@ -359,10 +378,16 @@ public enum ClaudeCodeHookCheckEvaluator {
     }
 
     let capabilities = forbidden.map(\.id).joined(separator: ", ")
-    let reason =
+    var reason =
       "Blocked by PersonaKit contract: tool '\(toolName)' is an MCP tool PersonaKit cannot "
       + "classify, and this session forbids \(capabilities). Denying by fail-closed policy; "
       + "explicitly allow this tool only if it is read-only-safe."
+    if let server = ClaudeCodeEnforcement.serverNameOfPersonaKitNamedMCPTool(toolName) {
+      reason +=
+        " If '\(server)' is PersonaKit's own MCP server (`claude mcp get \(server)` shows it runs "
+        + "`personakit mcp`), ask the user to re-run "
+        + "`personakit enforce install --mcp-server \(server)`; do not run it yourself."
+    }
 
     return ClaudeCodeHookCheckDecision(isDenied: true, reason: reason)
   }
