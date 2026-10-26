@@ -1,0 +1,13 @@
+{
+  "name": "personakit",
+  "version": "2.1.0",
+  "description": "Shows which PersonaKit contract is in force in this Claude Code session and flags drift from it.",
+  "userConfig": {
+    "mcpServerName": {
+      "type": "string",
+      "title": "PersonaKit MCP server name",
+      "description": "Name of the MCP server that serves PersonaKit contracts.",
+      "default": "personakit"
+    }
+  }
+}
