@@ -29,22 +29,29 @@ function warnings(state: SessionState): string[] {
   return out
 }
 
-/** `<lead> · <persona> › <directive>`, with persona and directive dropped as asked. */
-function head(main: Resolution, keepPersona: boolean, keepDirective: boolean): string {
+/** Who leads the line: the session id, else the persona (shrunk to its id once the persona is dropped). */
+function lead(main: Resolution, keepPersona: boolean): string {
   const { ids, details } = main
   const persona = details?.personaName ?? details?.personaId ?? ids.personaId
-  const directive = details?.directiveTitle ?? details?.directiveId ?? ids.directiveId
-  const withDirective = (who: string) => (keepDirective && directive ? `${who} › ${directive}` : who)
-  if (ids.sessionId) return keepPersona && persona ? `${ids.sessionId}${SEP}${withDirective(persona)}` : ids.sessionId
-  // With no session id the persona leads; dropped, it shrinks to its id rather than vanishing.
-  return withDirective((keepPersona ? persona : (ids.personaId ?? persona)) ?? 'contract')
+  return ids.sessionId ?? (keepPersona ? persona : (ids.personaId ?? persona)) ?? 'contract'
+}
+
+/** The trailing names, `<persona> › <directive>`, without whatever already leads; dropped as asked. */
+function names(main: Resolution, keepPersona: boolean, keepDirective: boolean): string | undefined {
+  const { ids, details } = main
+  const persona = ids.sessionId && keepPersona ? (details?.personaName ?? details?.personaId ?? ids.personaId) : undefined
+  const directive = keepDirective ? (details?.directiveTitle ?? details?.directiveId ?? ids.directiveId) : undefined
+  return [persona, directive].filter(Boolean).join(' › ') || undefined
 }
 
 function cut(text: string): string {
   return text.length <= MAX ? text : `${text.slice(0, MAX - 1)}…`
 }
 
-/** The mod's one-line readout under the prompt. Plain text; warnings carry `⚠`. */
+/**
+ * The mod's one-line readout under the prompt: lead, warnings, enforcement, scope, then names. Plain text;
+ * warnings carry `⚠`.
+ */
 export function statusText(state: SessionState): string {
   const tail = warnings(state)
   const { main } = state
@@ -53,8 +60,9 @@ export function statusText(state: SessionState): string {
     return cut(['◇ no contract', enforcement, ...tail].join(SEP))
   }
   const scope = main.contract?.scope.mode
+  // Claude Code cuts the line at its own width, which the mod can't know: what matters most goes first.
   const line = (keepPersona: boolean, keepDirective: boolean) =>
-    ['◆ ' + head(main, keepPersona, keepDirective), scope, enforcementSegment(state.enforcement), ...tail]
+    ['◆ ' + lead(main, keepPersona), ...tail, enforcementSegment(state.enforcement), scope, names(main, keepPersona, keepDirective)]
       .filter(Boolean)
       .join(SEP)
   for (const [persona, directive] of [[true, true], [true, false], [false, false]] as const) {

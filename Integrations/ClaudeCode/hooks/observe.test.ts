@@ -24,9 +24,9 @@ test('MCP resolve from a trusted server yields a contract', async () => {
     trusted,
     none,
   )
-  expect(o?.kind).toBe('contract')
-  expect(o?.source).toBe('mcp')
-  expect(o?.ids).toEqual({
+  expect(o[0]?.kind).toBe('contract')
+  expect(o[0]?.source).toBe('mcp')
+  expect(o[0]?.ids).toEqual({
     sessionId: 'read-only-auditor_audit-pass',
     personaId: 'read-only-auditor',
     directiveId: 'audit-pass',
@@ -43,13 +43,13 @@ test('MCP export ids come from input and details', async () => {
     trusted,
     none,
   )
-  expect(o?.kind).toBe('export')
-  expect(o?.ids).toEqual({
+  expect(o[0]?.kind).toBe('export')
+  expect(o[0]?.ids).toEqual({
     sessionId: 'read-only-auditor_audit-pass',
     personaId: 'read-only-auditor',
     directiveId: 'audit-pass',
   })
-  expect(o?.kind === 'export' && o.details !== undefined).toBe(true)
+  expect(o[0]?.kind === 'export' && o[0].details !== undefined).toBe(true)
 })
 
 test('untrusted server is ignored', async () => {
@@ -58,20 +58,20 @@ test('untrusted server is ignored', async () => {
     trusted,
     none,
   )
-  expect(o).toBe(undefined)
+  expect(o).toEqual([])
 })
 
 test('CLI contract and export are recognized', async () => {
   const c = await run('personakit contract --session x', CONTRACT_JSON)
-  expect(c?.kind).toBe('contract')
-  expect(c?.source).toBe('cli')
+  expect(c[0]?.kind).toBe('contract')
+  expect(c[0]?.source).toBe('cli')
 
   const e1 = await run('/usr/local/bin/personakit export --session x --stats', EXPORT_MD)
-  expect(e1?.kind).toBe('export')
-  expect(e1?.ids.sessionId).toBe('x')
+  expect(e1[0]?.kind).toBe('export')
+  expect(e1[0]?.ids.sessionId).toBe('x')
 
   const e2 = await run('swift run personakit export --session x', EXPORT_MD)
-  expect(e2?.kind).toBe('export')
+  expect(e2[0]?.kind).toBe('export')
 
   const e3 = await observe(
     {
@@ -82,21 +82,21 @@ test('CLI contract and export are recognized', async () => {
     trusted,
     none,
   )
-  expect(e3).toEqual({ kind: 'export', source: 'cli', ids: { personaId: 'p', directiveId: 'd' } })
+  expect(e3).toEqual([{ kind: 'export', source: 'cli', ids: { personaId: 'p', directiveId: 'd' } }])
 
   const e4 = await runTruncated('personakit export --session=y --persona=p2')
-  expect(e4?.ids).toEqual({ sessionId: 'y', personaId: 'p2' })
+  expect(e4[0]?.ids).toEqual({ sessionId: 'y', personaId: 'p2' })
 })
 
 test('commands that only mention personakit are not observed', async () => {
-  expect(await run('git commit -m "personakit export fix"', 'x')).toBe(undefined)
-  expect(await run('cat personakit contract.md', 'x')).toBe(undefined)
-  expect(await run('echo personakit contract', 'x')).toBe(undefined)
+  expect(await run('git commit -m "personakit export fix"', 'x')).toEqual([])
+  expect(await run('cat personakit contract.md', 'x')).toEqual([])
+  expect(await run('echo personakit contract', 'x')).toEqual([])
 })
 
 test('--copy and --output exports are not observed', async () => {
-  expect(await run('personakit export --session x --copy', EXPORT_MD)).toBe(undefined)
-  expect(await run('personakit export --session x --output /tmp/a.md', EXPORT_MD)).toBe(undefined)
+  expect(await run('personakit export --session x --copy', EXPORT_MD)).toEqual([])
+  expect(await run('personakit export --session x --output /tmp/a.md', EXPORT_MD)).toEqual([])
 })
 
 test('persisted Bash output is read', async () => {
@@ -109,7 +109,7 @@ test('persisted Bash output is read', async () => {
     trusted,
     async (path) => (path === '/tmp/out.txt' ? EXPORT_MD : undefined),
   )
-  expect(o?.kind === 'export' && o.details?.personaId).toBe('read-only-auditor')
+  expect(o[0]?.kind === 'export' && o[0].details?.personaId).toBe('read-only-auditor')
 })
 
 test('truncated or unavailable output keeps ids', async () => {
@@ -122,7 +122,7 @@ test('truncated or unavailable output keeps ids', async () => {
     trusted,
     none,
   )
-  expect(o).toEqual({ kind: 'export', source: 'cli', ids: { sessionId: 'x' } })
+  expect(o).toEqual([{ kind: 'export', source: 'cli', ids: { sessionId: 'x' } }])
 })
 
 test('errored or unparseable output fails', async () => {
@@ -135,9 +135,9 @@ test('errored or unparseable output fails', async () => {
     trusted,
     none,
   )
-  expect(errored).toEqual({ kind: 'failed', source: 'cli', ids: { sessionId: 'x' } })
-  expect((await run('personakit contract --session x', 'garbage'))?.kind).toBe('failed')
-  expect((await run('personakit export --session x', 'garbage'))?.kind).toBe('failed')
+  expect(errored).toEqual([{ kind: 'failed', source: 'cli', ids: { sessionId: 'x' } }])
+  expect((await run('personakit contract --session x', 'garbage'))[0]?.kind).toBe('failed')
+  expect((await run('personakit export --session x', 'garbage'))[0]?.kind).toBe('failed')
 })
 
 test('isPersonaKitCall covers trusted MCP tools and CLI commands', () => {
@@ -155,13 +155,13 @@ test('persisted output wins over a truncated stdout preview', async () => {
     result: bash(CONTRACT_JSON.slice(0, 200), { persistedOutputPath: '/tmp/c.txt' }),
   }
   const full = await observe(call, trusted, async () => CONTRACT_JSON)
-  expect(full?.kind === 'contract' && full.contract?.personaId).toBe('read-only-auditor')
+  expect(full[0]?.kind === 'contract' && full[0].contract?.personaId).toBe('read-only-auditor')
   const gone = await observe(call, trusted, none)
-  expect(gone).toEqual({ kind: 'contract', source: 'cli', ids: { sessionId: 'x' } })
+  expect(gone).toEqual([{ kind: 'contract', source: 'cli', ids: { sessionId: 'x' } }])
 })
 
 test('contract accepts --session=x', async () => {
-  expect((await runTruncated('personakit contract --session=x'))?.ids).toEqual({ sessionId: 'x' })
+  expect((await runTruncated('personakit contract --session=x'))[0]?.ids).toEqual({ sessionId: 'x' })
 })
 
 test('MCP result with no text fails', async () => {
@@ -170,14 +170,100 @@ test('MCP result with no text fails', async () => {
     trusted,
     none,
   )
-  expect(o).toEqual({ kind: 'failed', source: 'mcp', ids: { sessionId: 'x' } })
+  expect(o).toEqual([{ kind: 'failed', source: 'mcp', ids: { sessionId: 'x' } }])
 })
 
 test('a quoted operator does not start a command', async () => {
-  expect(await run('echo "a && personakit export --session x"', 'x')).toBe(undefined)
+  expect(await run('echo "a && personakit export --session x"', 'x')).toEqual([])
 })
 
 test('output that never reached the agent is not observed', async () => {
-  expect(await run('personakit export --session x > out.md', '')).toBe(undefined)
-  expect(await run('personakit export --session x | pbcopy', '')).toBe(undefined)
+  expect(await run('personakit export --session x > out.md', '')).toEqual([])
+  expect(await run('personakit export --session x | pbcopy', '')).toEqual([])
+})
+
+const GOLDEN = { sessionId: 'read-only-auditor_audit-pass', personaId: 'read-only-auditor', directiveId: 'audit-pass' }
+const COMBINED_OUT = `${CONTRACT_JSON}\n---EXIT 0---\n${EXPORT_MD}\n---EXIT 0---\n`
+
+test('one command running contract then export yields both, in order', async () => {
+  const s = 'read-only-auditor_audit-pass'
+  const os = await run(
+    `personakit contract --session ${s}; echo "---EXIT $?---"; personakit export --session ${s}; echo "---EXIT $?---"`,
+    COMBINED_OUT,
+  )
+  expect(os.map((o) => o.kind)).toEqual(['contract', 'export'])
+  expect(os.map((o) => o.ids)).toEqual([GOLDEN, GOLDEN])
+  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
+  expect(os[1].kind === 'export' && os[1].details?.personaName).toBe('Read-Only Auditor')
+})
+
+test('&& chaining yields both', async () => {
+  const s = 'read-only-auditor_audit-pass'
+  const os = await run(`personakit contract --session ${s} && personakit export --session ${s}`, `${CONTRACT_JSON}\n${EXPORT_MD}`)
+  expect(os.map((o) => o.kind)).toEqual(['contract', 'export'])
+  expect(os.map((o) => o.ids)).toEqual([GOLDEN, GOLDEN])
+})
+
+test('a contract followed by trailing noise still parses', async () => {
+  const os = await run('personakit contract --session x', `${CONTRACT_JSON}\n---EXIT 0---\n`)
+  expect(os.length).toBe(1)
+  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
+})
+
+test('braces inside JSON strings do not end the contract early', async () => {
+  const tricky = JSON.stringify({ ...JSON.parse(CONTRACT_JSON), failureReasons: ['a } b', 'quote \\" } {'] })
+  const os = await run('personakit contract --session x', `noise\n${tricky}\nmore }`)
+  expect(os[0].kind === 'contract' && os[0].contract?.failureReasons).toEqual(['a } b', 'quote \\" } {'])
+})
+
+test('a missing part fails only its own invocation', async () => {
+  const os = await run('personakit contract --session x; personakit export --session x', `${CONTRACT_JSON}\n---EXIT 0---\n`)
+  expect(os.map((o) => o.kind)).toEqual(['contract', 'failed'])
+  expect(os[1]).toEqual({ kind: 'failed', source: 'cli', ids: { sessionId: 'x' } })
+  const unbalanced = await run('personakit contract --session x', '{ "personaId": "p"')
+  expect(unbalanced).toEqual([{ kind: 'failed', source: 'cli', ids: { sessionId: 'x' } }])
+})
+
+test('a --copy export beside a contract is skipped; the contract still counts', async () => {
+  const os = await run('personakit contract --session x && personakit export --session x --copy', CONTRACT_JSON)
+  expect(os.map((o) => o.kind)).toEqual(['contract'])
+})
+
+test('a persisted file is read once and split across invocations', async () => {
+  let reads = 0
+  const call = {
+    tool: 'Bash',
+    input: { command: 'personakit contract --session x; personakit export --session x' },
+    result: bash(CONTRACT_JSON.slice(0, 100), { persistedOutputPath: '/tmp/both.txt' }),
+  }
+  const os = await observe(call, trusted, async () => {
+    reads++
+    return COMBINED_OUT
+  })
+  expect(reads).toBe(1)
+  expect(os.map((o) => o.kind)).toEqual(['contract', 'export'])
+  const gone = await observe(call, trusted, none)
+  expect(gone).toEqual([
+    { kind: 'contract', source: 'cli', ids: { sessionId: 'x' } },
+    { kind: 'export', source: 'cli', ids: { sessionId: 'x' } },
+  ])
+})
+
+test('braces in export code before the contract do not hide it', async () => {
+  const s = 'read-only-auditor_audit-pass'
+  const swift = '\n```swift\nfinal class FeatureModel { var x = 1 }\n```\n'
+  const exportWithCode = EXPORT_MD.replace('# Available Skills', `${swift}\n# Available Skills`)
+  expect(exportWithCode).not.toBe(EXPORT_MD)
+  const os = await run(
+    `personakit export --session ${s}; echo "---EXIT $?---"; personakit contract --session ${s}; echo "---EXIT $?---"`,
+    `${exportWithCode}\n---EXIT 0---\n${CONTRACT_JSON}\n---EXIT 0---\n`,
+  )
+  expect(os.map((o) => o.kind)).toEqual(['export', 'contract'])
+  expect(os.map((o) => o.ids)).toEqual([GOLDEN, GOLDEN])
+})
+
+test('brace noise before the contract is skipped', async () => {
+  const os = await run('personakit contract --session x', `{not json}\n{ unclosed\n${CONTRACT_JSON}`)
+  expect(os.length).toBe(1)
+  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
 })

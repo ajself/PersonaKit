@@ -98,8 +98,10 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   expect(await text(ui, /Read-Only Auditor/)).toBe('Persona: Read-Only Auditor (read-only-auditor)')
   expect(await text(ui, /Read-only audit pass/)).toBe('Directive: Read-only audit pass (audit-pass)')
   expect(await text(ui, /^Goal:/)).toBe('Goal: Audit the change and report findings without editing it.')
-  expect(await text(ui, /Inspect the diff/)).toBe('  1. Inspect the diff and the surrounding code.')
-  expect(await text(ui, /Report confirmed issues/)).toBe('■ 2. Report confirmed issues before suggestions. (stop for review)')
+  expect(await text(ui, /Inspect the diff/)).toBe('Inspect the diff and the surrounding code.')
+  expect(await text(ui, /^  1\.$/)).toBe('  1.')
+  expect(await text(ui, /Report confirmed issues/)).toBe('Report confirmed issues before suggestions. (stop for review)')
+  expect(await text(ui, /^■ 2\.$/)).toBe('■ 2.')
   expect(await text(ui, /^Mode:/)).toBe('Mode: project-only')
   expect(await text(ui, /^Enforcement:/)).toBe('Enforcement: advisory (no PersonaKit hook installed)')
   expect(await text(ui, /^Advisory drift:/)).toBe('Advisory drift: command-execution, file-mutation, network-egress (from the export)')
@@ -108,6 +110,21 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   // Clean authorization: no authorization block.
   expect(await text(ui, /^Authorized:/)).toBe(undefined)
   expect(await ui.find({ type: 'Button', key: 'reground' })).toBeDefined()
+  await ui.unmount()
+})
+
+each('a wrapped step keeps its later lines aligned with its text', async ($, w, surface) => {
+  const long = 'Report confirmed issues before suggestions, citing the file and line for each, so that every finding satisfies the task.'
+  await call($, w, EXPORT, EXPORT_MD.replace('Report confirmed issues before suggestions.', long), { sessionId: SESSION })
+  const ui = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, bodyColumns: 30 } })
+  expect((await ui.find({ key: 'pane' }))?.props.width).toBe(30)
+  const row = (await ui.find({ key: 'step-2' }))!
+  expect(row.props.flexDirection).toBe('row')
+  const [marker, body] = row.children as { props: Record<string, unknown>; text?: string }[]
+  // The marker column is fixed; the step text wraps inside the box beside it, never back under the marker.
+  expect(marker.props).toMatchObject({ width: '■ 2. '.length, flexShrink: 0 })
+  expect(body.props).toMatchObject({ flexGrow: 1, flexShrink: 1 })
+  expect(await text(ui, /citing the file/)).toBe(`${long} (stop for review)`)
   await ui.unmount()
 })
 

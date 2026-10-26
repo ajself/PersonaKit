@@ -78,7 +78,19 @@ export function paneTree({ Box, Text, Button }: El, state: SessionState, columns
     if (directive) contractLines.push(`Directive: ${directive}`)
     if (details?.goal) contractLines.push(`Goal: ${details.goal}`)
   }
-  const steps = (details?.steps ?? []).map((s, i) => (s.isStop ? `■ ${i + 1}. ${s.text} (stop for review)` : `  ${i + 1}. ${s.text}`))
+  const steps = details?.steps ?? []
+  // The marker sits in its own fixed-width box so a wrapped step's later lines align with its text.
+  const markerWidth = `■ ${steps.length}. `.length
+  const stepRows = steps.map((s, i) => (
+    <Box key={`step-${i + 1}`} flexDirection="row">
+      <Box width={markerWidth} flexShrink={0}>
+        <Text>{s.isStop ? `■ ${i + 1}.` : `  ${i + 1}.`}</Text>
+      </Box>
+      <Box flexGrow={1} flexShrink={1}>
+        <Text>{s.isStop ? `${s.text} (stop for review)` : s.text}</Text>
+      </Box>
+    </Box>
+  ))
   const skillLines = contract
     ? [
         `Kits: ${list(contract.kitIds)}`,
@@ -113,7 +125,7 @@ export function paneTree({ Box, Text, Button }: El, state: SessionState, columns
       {main && heading('Contract')}
       {lines(contractLines)}
       {steps.length > 0 && <Text>Steps:</Text>}
-      {lines(steps)}
+      {stepRows}
       {lines(skillLines)}
       {lines(authLines)}
 

@@ -9,9 +9,10 @@ import { CONTRACT_JSON, EXPORT_MD } from './fixtures/golden'
 const contract = parseContract(CONTRACT_JSON)!
 const details = parseExport(EXPORT_MD)!
 const IDS = { sessionId: 'read-only-auditor_audit-pass', personaId: 'read-only-auditor', directiveId: 'audit-pass' }
-const STEADY = '◆ read-only-auditor_audit-pass · Read-Only Auditor › Read-only audit pass · project-only'
-// The golden line with the directive dropped: what a warning that would pass 120 characters leaves.
-const SHORT = '◆ read-only-auditor_audit-pass · Read-Only Auditor · project-only'
+const LEAD = '◆ read-only-auditor_audit-pass'
+const NAMES = 'Read-Only Auditor › Read-only audit pass'
+// What a warning that would pass 120 characters leaves: the directive dropped from the end.
+const PERSONA = 'Read-Only Auditor'
 
 const advisory: Enforcement = { kind: 'advisory' }
 const hooked = (kind: 'enforced' | 'enforcing-other', ids = IDS, extra: Record<string, unknown> = {}): Enforcement =>
@@ -43,23 +44,23 @@ test('no contract with an unreadable manifest', () => {
 })
 
 test('golden contract and export, advisory', () => {
-  expect(statusText(state())).toBe(`${STEADY} · advisory`)
+  expect(statusText(state())).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 })
 
 test('golden contract and export, enforced', () => {
-  expect(statusText(state({ enforcement: hooked('enforced') }))).toBe(`${STEADY} · enforced`)
+  expect(statusText(state({ enforcement: hooked('enforced') }))).toBe(`${LEAD} · enforced · project-only · ${NAMES}`)
 })
 
 test('enforcing another contract replaces the steady enforcement segment', () => {
   expect(statusText(state({ enforcement: hooked('enforcing-other', { sessionId: 'other-session' } as typeof IDS) }))).toBe(
-    `${STEADY} · ⚠ enforcing other-session`,
+    `${LEAD} · ⚠ enforcing other-session · project-only · ${NAMES}`,
   )
-  expect(statusText(state({ enforcement: unreadable }))).toBe(`${SHORT} · ⚠ enforcement manifest unreadable`)
+  expect(statusText(state({ enforcement: unreadable }))).toBe(`${LEAD} · ⚠ enforcement manifest unreadable · project-only · ${PERSONA}`)
 })
 
 test('export only drops the scope segment', () => {
   expect(statusText(state({ main: resolution({ contract: undefined }) }))).toBe(
-    '◆ read-only-auditor_audit-pass · Read-Only Auditor › Read-only audit pass · advisory',
+    `${LEAD} · advisory · ${NAMES}`,
   )
 })
 
@@ -72,37 +73,43 @@ test('persona-only ids lead with the persona name or id', () => {
     '◆ read-only-auditor · advisory',
   )
   expect(statusText(state({ main: resolution({ ids: { personaId: 'p', directiveId: 'd' }, contract: undefined, details: undefined }) }))).toBe(
-    '◆ p › d · advisory',
+    '◆ p · advisory · d',
   )
 })
 
+test('a persona lead too long for the line shrinks to its id', () => {
+  const ids = { personaId: 'p', directiveId: 'd' }
+  const named = { ...details, personaName: 'P'.repeat(130) }
+  expect(statusText(state({ main: resolution({ ids, contract: undefined, details: named }) }))).toBe('◆ p · advisory')
+})
+
 test('counted compactions append re-ground?', () => {
-  expect(statusText(state({ compactions: 1 }))).toBe(`${STEADY} · advisory · ⚠ re-ground?`)
+  expect(statusText(state({ compactions: 1 }))).toBe(`${LEAD} · ⚠ re-ground? · advisory · project-only · ${NAMES}`)
 })
 
 test('drift appends the latest event with a count', () => {
-  expect(statusText(state({ drift: [write] }))).toBe(`${SHORT} · advisory · ⚠ drift: Write (file-mutation)`)
+  expect(statusText(state({ drift: [write] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
   const bash: DriftEvent = { tool: 'Bash', actionClass: 'command-execution', kind: 'advisory', turn: 3 }
-  expect(statusText(state({ drift: [bash, write] }))).toBe(`${SHORT} · advisory · ⚠ drift: Write (file-mutation) ×2`)
+  expect(statusText(state({ drift: [bash, write] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) ×2 · advisory · project-only · ${PERSONA}`)
   const mcp: DriftEvent = { tool: 'mcp__x__y', kind: 'advisory', turn: 3 }
-  expect(statusText(state({ drift: [mcp] }))).toBe(`${STEADY} · advisory · ⚠ drift: mcp__x__y`)
+  expect(statusText(state({ drift: [mcp] }))).toBe(`${LEAD} · ⚠ drift: mcp__x__y · advisory · project-only · ${NAMES}`)
 })
 
 test('drift before the current main resolution is not shown', () => {
   const regrounded = resolution({ turn: 5 })
-  expect(statusText(state({ main: regrounded, drift: [write] }))).toBe(`${STEADY} · advisory`)
+  expect(statusText(state({ main: regrounded, drift: [write] }))).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
   const after: DriftEvent = { ...write, turn: 6 }
-  expect(statusText(state({ main: regrounded, drift: [write, after] }))).toBe(`${SHORT} · advisory · ⚠ drift: Write (file-mutation)`)
+  expect(statusText(state({ main: regrounded, drift: [write, after] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
   const sameTurn: DriftEvent = { ...write, turn: 5 }
-  expect(statusText(state({ main: regrounded, drift: [sameTurn] }))).toBe(`${SHORT} · advisory · ⚠ drift: Write (file-mutation)`)
+  expect(statusText(state({ main: regrounded, drift: [sameTurn] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
 })
 
 test('re-ground blocked appends its warning and is not counted as drift', () => {
   const blocked: DriftEvent = { tool: 'mcp__personakit__personakit_export', kind: 'reground-blocked', turn: 2 }
-  expect(statusText(state({ enforcement: hooked('enforced'), drift: [blocked] }))).toBe(`${SHORT} · enforced · ⚠ re-ground blocked`)
+  expect(statusText(state({ enforcement: hooked('enforced'), drift: [blocked] }))).toBe(`${LEAD} · ⚠ re-ground blocked · enforced · project-only · ${PERSONA}`)
   const short = resolution({ ids: { sessionId: 's' }, details: undefined })
   expect(statusText(state({ main: short, enforcement: hooked('enforced'), drift: [blocked, { ...write, kind: 'blocked' }], compactions: 2 }))).toBe(
-    '◆ s · project-only · enforced · ⚠ re-ground? · ⚠ drift: Write (file-mutation) · ⚠ re-ground blocked',
+    '◆ s · ⚠ re-ground? · ⚠ drift: Write (file-mutation) · ⚠ re-ground blocked · enforced · project-only',
   )
 })
 
@@ -112,10 +119,10 @@ test('never longer than 120 characters: directive first, then persona', () => {
     state({ main: resolution({ ids: { ...IDS, sessionId }, details: { ...details, personaName, directiveTitle } }) })
 
   const noDirective = statusText(withNames('s', long(40), long(80)))
-  expect(noDirective).toBe(`◆ s · ${long(40)} · project-only · advisory`)
+  expect(noDirective).toBe(`◆ s · advisory · project-only · ${long(40)}`)
 
   const noPersona = statusText(withNames('s', long(100), long(80)))
-  expect(noPersona).toBe('◆ s · project-only · advisory')
+  expect(noPersona).toBe('◆ s · advisory · project-only')
 
   const hardCut = statusText(withNames(long(200), 'P', 'D'))
   expect(hardCut.length).toBe(120)

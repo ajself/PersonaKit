@@ -9,11 +9,10 @@ const SESSION = 'read-only-auditor_audit-pass'
 const RESOLVE = 'mcp__personakit__personakit_resolve_contract'
 const EXPORT = 'mcp__personakit__personakit_export'
 const NO_CONTRACT = '◇ no contract · /pk use <session>'
-const STEADY = '◆ read-only-auditor_audit-pass · Read-Only Auditor › Read-only audit pass · project-only'
-// The golden line with the directive dropped: a drift warning would push it past 120 characters.
-const SHORT = '◆ read-only-auditor_audit-pass · Read-Only Auditor · project-only'
-// An export seen with no contract JSON: no scope segment.
-const EXPORTED = '◆ read-only-auditor_audit-pass · Read-Only Auditor › Read-only audit pass'
+const LEAD = '◆ read-only-auditor_audit-pass'
+const NAMES = 'Read-Only Auditor › Read-only audit pass'
+// What a warning that would pass 120 characters leaves: the directive dropped from the end.
+const PERSONA = 'Read-Only Auditor'
 const SURFACES = ['terminal', 'desktop'] as const
 
 const MANIFEST_PATH = '/p/.claude/personakit/read-only-auditor_audit-pass.checks.json'
@@ -134,9 +133,9 @@ each('handlers return the result beneath unchanged', async ($, w) => {
 
 each('an export of the same contract enriches it', async ($, w) => {
   await resolve($, w, ok(CONTRACT_JSON))
-  expect(status(w)).toBe('◆ read-only-auditor_audit-pass · read-only-auditor › audit-pass · project-only · advisory')
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · read-only-auditor › audit-pass`)
   await exportCall($, w, ok(EXPORT_MD))
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
   const s = await state(w)
   expect(s.main?.contract?.personaId).toBe('read-only-auditor')
   expect(s.main?.details?.personaName).toBe('Read-Only Auditor')
@@ -145,7 +144,7 @@ each('an export of the same contract enriches it', async ($, w) => {
 each('a different contract replaces it', async ($, w) => {
   await ground($, w)
   await resolve($, w, ok(otherContract))
-  expect(status(w)?.startsWith('◆ other-session · read-only-auditor › audit-pass')).toBe(true)
+  expect(status(w)?.startsWith('◆ other-session · advisory')).toBe(true)
   expect((await state(w)).main?.details).toBe(undefined)
 })
 
@@ -166,7 +165,7 @@ each('subagent resolve and subagent turns do not move the status line', async ($
   await ground($, w)
   await turn($, 1)
   const main = status(w)
-  expect(main).toBe(`${STEADY} · advisory`)
+  expect(main).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 
   await resolve($, w, ok(contractOnly('helper')), 'a1')
   await turn($, 2, 'a1')
@@ -186,20 +185,20 @@ each('subagent resolve and subagent turns do not move the status line', async ($
   await exportCall($, w, ok(EXPORT_MD), SESSION, 'a1')
   await write($, 'a1')
   expect((await state(w)).drift.length).toBe(2)
-  expect(status(w)).toBe(`${SHORT} · advisory · ⚠ drift: Write (file-mutation) ×2`)
+  expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) ×2 · advisory · project-only · ${PERSONA}`)
 })
 
 each('counted compactions mark stale; precompute, skipped, and subagent ones do not; a new resolve clears it', async ($, w) => {
   await ground($, w)
   await $.session.compact({ trigger: 'precompute', messages: SUMMARY })
   await $.session.compact({ trigger: 'manual', messages: SUMMARY, agentId: 'a1' })
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
   expect((await state(w)).compactions).toBe(0)
 
   await $.session.compact({ trigger: 'auto', messages: SUMMARY })
-  expect(status(w)).toBe(`${STEADY} · advisory · ⚠ re-ground?`)
+  expect(status(w)).toBe(`${LEAD} · ⚠ re-ground? · advisory · project-only · ${NAMES}`)
   await exportCall($, w, ok(EXPORT_MD))
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 })
 
 test('a skipped compaction is not counted', async ($, on) => {
@@ -208,7 +207,7 @@ test('a skipped compaction is not counted', async ($, on) => {
   await ground($, w)
   await $.session.compact({ trigger: 'manual', messages: SUMMARY })
   expect((await state(w)).compactions).toBe(0)
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 })
 
 each('/clear resets', async ($, w) => {
@@ -224,7 +223,7 @@ each('/clear keeps judging an installed hook, now against no contract', async ($
   w.files[MANIFEST_PATH] = MANIFEST
   await start($, surface)
   await ground($, w)
-  expect(status(w)).toBe(`${STEADY} · enforced`)
+  expect(status(w)).toBe(`${LEAD} · enforced · project-only · ${NAMES}`)
   await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } } as never)
   expect(status(w)).toBe(`◇ no contract · ⚠ enforcing ${SESSION}`)
   await $.turn.start({ text: 'go', turnId: 't1' })
@@ -266,7 +265,7 @@ each('session.start rebuilds only when state is empty', async ($, w, surface) =>
   let s = await state(w)
   expect(s.main?.ids.sessionId).toBe(SESSION)
   expect(s.drift.length).toBe(1)
-  expect(status(w)).toBe(`${EXPORTED} · advisory · ⚠ drift: Write (file-mutation)`)
+  expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · ${NAMES}`)
   await start($, surface)
   s = await state(w)
   expect(s.drift.length).toBe(1)
@@ -278,33 +277,34 @@ each('session.start rebuilds only when state is empty', async ($, w, surface) =>
   s = await state(w)
   expect(s.main?.ids.sessionId).toBe(SESSION)
   expect(s.compactions).toBe(1)
-  expect(status(w)).toBe('◆ read-only-auditor_audit-pass · Read-Only Auditor · advisory · ⚠ re-ground? · ⚠ drift: Write (file-mutation)')
+  expect(status(w)).toBe(`${LEAD} · ⚠ re-ground? · ⚠ drift: Write (file-mutation) · advisory · ${PERSONA}`)
 })
 
 each('settings are read on session.start and re-read on turn.complete', async ($, w, surface) => {
   w.files['/p/.claude/settings.json'] = JSON.stringify({ hooks: {} })
   await start($, surface)
   await ground($, w)
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 
   w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
   w.files[MANIFEST_PATH] = MANIFEST
   await turn($, 1)
-  expect(status(w)).toBe(`${STEADY} · enforced`)
+  expect(status(w)).toBe(`${LEAD} · enforced · project-only · ${NAMES}`)
   expect((await state(w)).enforcement.kind).toBe('enforced')
 
   // A different resolve under the installed hook reads as enforcing the other contract.
   await resolve($, w, ok(otherContract))
-  expect(status(w)?.endsWith(`· ⚠ enforcing ${SESSION}`)).toBe(true)
+  // The warning stands right after the lead, where a narrow terminal's cut can't hide it.
+  expect(status(w)?.split(' · ')[1]).toBe(`⚠ enforcing ${SESSION}`)
 })
 
 each('settings missing or not JSON leave enforcement advisory', async ($, w) => {
   await ground($, w)
   await turn($, 1)
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
   w.files['/p/.claude/settings.json'] = '{ not json'
   await turn($, 2)
-  expect(status(w)).toBe(`${STEADY} · advisory`)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 })
 
 each('an enforced denial is logged; a grep for the deny string is not', async ($, w) => {
@@ -317,7 +317,7 @@ each('an enforced denial is logged; a grep for the deny string is not', async ($
   expect((await state(w)).drift).toEqual([])
   w.answers.push(failed('Blocked by PersonaKit contract: capability-deny.edit-files'))
   await write($)
-  expect(status(w)).toBe(`${SHORT} · enforced · ⚠ drift: Write (file-mutation)`)
+  expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · enforced · project-only · ${PERSONA}`)
 })
 
 test('a configured server name is trusted', { options: { mcpServerName: 'pk' } }, async ($, on) => {
@@ -329,4 +329,45 @@ test('a configured server name is trusted', { options: { mcpServerName: 'pk' } }
   w.answers.push(ok(CONTRACT_JSON))
   await $.tool.call({ tool: 'mcp__pk__personakit_resolve_contract' } as never)
   expect(status(w)?.startsWith('◆ read-only-auditor_audit-pass')).toBe(true)
+})
+
+const bashOut = (stdout: string): Answer => ({ result: { stdout, stderr: '', interrupted: false }, text: stdout })
+const COMBINED = `personakit contract --session ${SESSION}; echo "---EXIT $?---"; personakit export --session ${SESSION}; echo "---EXIT $?---"`
+const COMBINED_OUT = `${CONTRACT_JSON}\n---EXIT 0---\n${EXPORT_MD}\n---EXIT 0---\n`
+
+each('one Bash call running contract then export grounds the full line', async ($, w) => {
+  w.answers.push(bashOut(COMBINED_OUT))
+  await $.tool.call({ tool: 'Bash', command: COMBINED } as never)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
+  expect(w.toasts).toEqual([])
+  const s = await state(w)
+  expect(s.main?.contract?.personaId).toBe('read-only-auditor')
+  expect(s.main?.details?.personaName).toBe('Read-Only Auditor')
+  expect(s.drift).toEqual([])
+})
+
+each('a multi-invocation call toasts only when every part failed, and once', async ($, w) => {
+  w.answers.push(bashOut(`${CONTRACT_JSON}\n---EXIT 0---\n`))
+  await $.tool.call({ tool: 'Bash', command: COMBINED } as never)
+  expect(w.toasts).toEqual([])
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · read-only-auditor › audit-pass`)
+  w.answers.push(bashOut('garbage'))
+  await $.tool.call({ tool: 'Bash', command: COMBINED } as never)
+  expect(w.toasts).toEqual(['PersonaKit resolve failed; read-only-auditor_audit-pass stays in force'])
+})
+
+each('rebuild applies every invocation of one Bash call', async ($, w, surface) => {
+  await $.session.end({ reason: 'resume', sessionId: 's1', resume: { id: 's1' } } as never)
+  w.messages = [
+    { role: 'user', text: 'go', toolUses: [] },
+    {
+      role: 'assistant',
+      text: '',
+      toolUses: [
+        { tool_use_id: 'u1', tool: 'Bash', input: { command: COMBINED }, result: { stdout: COMBINED_OUT, stderr: '', interrupted: false }, text: COMBINED_OUT },
+      ],
+    },
+  ]
+  await start($, surface)
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
 })

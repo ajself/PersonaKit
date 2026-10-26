@@ -48,23 +48,22 @@ function segments(command: string): string[][] {
 
 const basename = (path: string) => path.slice(path.lastIndexOf('/') + 1)
 
-/** The first `personakit contract|export` invocation in a Bash command, if any. */
-function parseCli(command: string): CliCommand | undefined {
+/** Every `personakit contract|export` invocation in a Bash command, in order. */
+function parseCli(command: string): CliCommand[] {
+  const out: CliCommand[] = []
   for (const words of segments(command)) {
     let i = 0
     while (i < words.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[i])) i++
     if (words[i] === 'swift' && words[i + 1] === 'run') i += 2
-    else if (words[i] === undefined) continue
     if (words[i] === undefined || basename(words[i]) !== 'personakit') continue
-    i += 1
-    const sub = words[i]
-    if (sub === 'contract' || sub === 'export') return { subcommand: sub, args: words.slice(i + 1) }
+    const sub = words[i + 1]
+    if (sub === 'contract' || sub === 'export') out.push({ subcommand: sub, args: words.slice(i + 2) })
   }
-  return undefined
+  return out
 }
 
-function cliCommand(tool: string, input: Record<string, unknown>): CliCommand | undefined {
-  if (tool !== 'Bash' || typeof input.command !== 'string') return undefined
+function cliCommands(tool: string, input: Record<string, unknown>): CliCommand[] {
+  if (tool !== 'Bash' || typeof input.command !== 'string') return []
   return parseCli(input.command)
 }
 
@@ -99,7 +98,7 @@ function mcpKind(tool: string, trustedServers: string[]): 'contract' | 'export' 
 
 /** True for a trusted MCP resolve/export tool or a recognized `personakit contract|export` command. */
 export function isPersonaKitCall(tool: string, input: Record<string, unknown>, trustedServers: string[]): boolean {
-  return mcpKind(tool, trustedServers) !== undefined || cliCommand(tool, input) !== undefined
+  return mcpKind(tool, trustedServers) !== undefined || cliCommands(tool, input).length > 0
 }
 
 const compact = (ids: ContractIds): ContractIds => {
@@ -110,43 +109,42 @@ const compact = (ids: ContractIds): ContractIds => {
   return out
 }
 
-/** Interprets one tool call as a PersonaKit contract or export observation; undefined when it is neither. */
-export async function observe(
-  call: Call,
-  trustedServers: string[],
-  readPersisted: (path: string) => Promise<string | undefined>,
-): Promise<Observation | undefined> {
-  const mcp = mcpKind(call.tool, trustedServers)
-  const cli = mcp === undefined ? cliCommand(call.tool, call.input) : undefined
-  const kind = mcp ?? cli?.subcommand
-  if (kind === undefined) return undefined
-  // The agent never saw the contract text for these.
-  if (cli?.subcommand === 'export' && (hasFlag(cli.args, '--copy') || hasFlag(cli.args, '--output'))) return undefined
-
-  const source = mcp !== undefined ? 'mcp' : 'cli'
-  const inputIds: ContractIds = cli
-    ? cliIds(cli.args)
-    : typeof call.input.sessionId === 'string' && call.input.sessionId
-      ? { sessionId: call.input.sessionId }
-      : {}
-  const failed: Observation = { kind: 'failed', source, ids: inputIds }
-
-  const result = (call.result ?? {}) as { isError?: boolean; text?: unknown; result?: unknown }
-  if (result.isError === true) return failed
-
-  let text: string | undefined
-  if (mcp !== undefined) {
-    text = typeof result.text === 'string' ? result.text : undefined
-    if (text === undefined) return failed
-  } else {
-    const raw = (result.result ?? {}) as { stdout?: unknown; persistedOutputPath?: unknown }
-    // With a persisted file, stdout is only a truncated preview: never parse it.
-    if (typeof raw.persistedOutputPath === 'string') text = await readPersisted(raw.persistedOutputPath)
-    else if (typeof raw.stdout === 'string' && raw.stdout.length > 0) text = raw.stdout
-    // Empty stdout and nothing persisted: the output never reached the agent (redirect, pipe to pbcopy).
-    else return undefined
+/** The end of the brace-balanced span opening at `start`, skipping JSON strings; undefined when it never closes. */
+function balancedEnd(text: string, start: number): number | undefined {
+  let depth = 0
+  let inString = false
+  for (let i = start; i < text.length; i++) {
+    const c = text[i]
+    if (inString) {
+      if (c === '\\') i++
+      else if (c === '"') inString = false
+    } else if (c === '"') inString = true
+    else if (c === '{') depth++
+    else if (c === '}' && --depth === 0) return i + 1
   }
+  return undefined
+}
 
+/** The first balanced `{…}` span that parses as a contract; braces in other output (export code, noise) are skipped. */
+function contractPart(text: string): string | undefined {
+  for (let start = text.indexOf('{'); start >= 0; start = text.indexOf('{', start + 1)) {
+    const end = balancedEnd(text, start)
+    if (end === undefined) continue
+    const span = text.slice(start, end)
+    if (parseContract(span) !== undefined) return span
+  }
+  return undefined
+}
+
+/** Export Markdown from its `PersonaKit-Output-Version:` line to the end of the output. */
+function exportPart(text: string): string | undefined {
+  const at = text.search(/^PersonaKit-Output-Version:/m)
+  return at < 0 ? undefined : text.slice(at)
+}
+
+/** A contract or export read from `text`; undefined text is truncated output, which keeps the input ids. */
+function interpret(kind: 'contract' | 'export', source: 'mcp' | 'cli', inputIds: ContractIds, text: string | undefined): Observation {
+  const failed: Observation = { kind: 'failed', source, ids: inputIds }
   if (kind === 'contract') {
     if (text === undefined) return { kind: 'contract', source, ids: inputIds }
     const contract = parseContract(text)
@@ -171,4 +169,46 @@ export async function observe(
     }),
     details,
   }
+}
+
+/**
+ * Interprets one tool call as PersonaKit contract and export observations, in invocation order:
+ * one for a trusted MCP call, one per `personakit contract|export` in a Bash command, else none.
+ */
+export async function observe(
+  call: Call,
+  trustedServers: string[],
+  readPersisted: (path: string) => Promise<string | undefined>,
+): Promise<Observation[]> {
+  const result = (call.result ?? {}) as { isError?: boolean; text?: unknown; result?: unknown }
+  const mcp = mcpKind(call.tool, trustedServers)
+  if (mcp !== undefined) {
+    const ids: ContractIds = typeof call.input.sessionId === 'string' && call.input.sessionId ? { sessionId: call.input.sessionId } : {}
+    const text = typeof result.text === 'string' ? result.text : undefined
+    if (result.isError === true || text === undefined) return [{ kind: 'failed', source: 'mcp', ids }]
+    return [interpret(mcp, 'mcp', ids, text)]
+  }
+
+  // The agent never saw the contract text for `--copy` / `--output` exports.
+  const clis = cliCommands(call.tool, call.input).filter(
+    (c) => c.subcommand !== 'export' || !(hasFlag(c.args, '--copy') || hasFlag(c.args, '--output')),
+  )
+  if (clis.length === 0) return []
+  if (result.isError === true) return clis.map((c) => ({ kind: 'failed', source: 'cli', ids: cliIds(c.args) }))
+
+  const raw = (result.result ?? {}) as { stdout?: unknown; persistedOutputPath?: unknown }
+  let text: string | undefined
+  // With a persisted file, stdout is only a truncated preview: never parse it.
+  if (typeof raw.persistedOutputPath === 'string') text = await readPersisted(raw.persistedOutputPath)
+  else if (typeof raw.stdout === 'string' && raw.stdout.length > 0) text = raw.stdout
+  // Empty stdout and nothing persisted: the output never reached the agent (redirect, pipe to pbcopy).
+  else return []
+
+  // One output holds every invocation's part; each is cut out of it, and a missing part fails its invocation.
+  return clis.map((c) => {
+    const ids = cliIds(c.args)
+    if (text === undefined) return interpret(c.subcommand, 'cli', ids, undefined)
+    const part = c.subcommand === 'contract' ? contractPart(text) : exportPart(text)
+    return part === undefined ? { kind: 'failed', source: 'cli', ids } : interpret(c.subcommand, 'cli', ids, part)
+  })
 }

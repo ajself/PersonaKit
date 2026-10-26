@@ -73,11 +73,12 @@ function resolved(prev: Resolution | undefined, o: Exclude<Observation, { kind: 
   return next
 }
 
-/** One completed tool call applied to the state: its observation, then its drift. Pure. */
-function applyCall(state: SessionState, call: Call, o: Observation | undefined, trusted: string[]): SessionState {
+/** One completed tool call applied to the state: its observations in order, then its drift once. Pure. */
+function applyCall(state: SessionState, call: Call, observations: Observation[], trusted: string[]): SessionState {
   let s = state
   const { agentId } = call
-  if (o && o.kind !== 'failed') {
+  for (const o of observations) {
+    if (o.kind === 'failed') continue
     if (agentId !== undefined) {
       s = { ...s, subagents: { ...s.subagents, [agentId]: resolved(s.subagents[agentId], o, s.turn) } }
     } else {
@@ -230,10 +231,10 @@ export const register: Register = (on, options) => {
       const result = (ran.deny !== undefined ? { isError: true, text: ran.deny } : ran) as Call['result']
       const call: Call = { tool, input, result, ...(agentId !== undefined ? { agentId } : {}) }
       const trusted = trustedServers(configured, (await read($, session)).enforcement)
-      const o = await observe(call, trusted, (path) => readText($, path))
-      const s = await update($, session, (cur) => applyCall(cur, call, o, trusted))
+      const os = await observe(call, trusted, (path) => readText($, path))
+      const s = await update($, session, (cur) => applyCall(cur, call, os, trusted))
       await paint($)
-      if (o?.kind === 'failed' && agentId === undefined) {
+      if (agentId === undefined && os.length > 0 && os.every((o) => o.kind === 'failed')) {
         const kept = s.main ? `; ${s.main.ids.sessionId ?? s.main.ids.personaId ?? 'the current contract'} stays in force` : ''
         $.ui.toast(`PersonaKit resolve failed${kept}`)
       }
