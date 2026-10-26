@@ -134,10 +134,25 @@ struct EnforceInstallCommand: ParsableCommand {
   @Option(name: .customLong("executable"), help: "Path to the personakit binary the hook invokes.")
   var executable: String?
 
+  @Option(
+    name: .customLong("mcp-server"),
+    help: """
+      MCP server name PersonaKit is configured under, if not "personakit". \
+      Recorded in the frozen manifest so hook-check trusts its own tools there.
+      """
+  )
+  var mcpServer: String?
+
   @Flag(name: .customLong("dry-run"), help: "Print the artifacts that would be written without writing them.")
   var dryRun = false
 
   mutating func validate() throws {
+    if let mcpServer, !Self.isValidMCPServerName(mcpServer) {
+      throw ArgumentParser.ValidationError(
+        "--mcp-server must be non-empty, contain only letters, digits, '-' or '_', and not contain '__'."
+      )
+    }
+
     guard session.sessionId != nil else {
       throw ArgumentParser.ValidationError("enforce install requires --session <id>.")
     }
@@ -154,7 +169,7 @@ struct EnforceInstallCommand: ParsableCommand {
     do {
       let sessionFile = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
       let result = try SessionContractResolver.resolve(scopes: scopes, session: sessionFile)
-      manifest = ChecksManifestDeriver.derive(from: result)
+      manifest = ChecksManifestDeriver.derive(from: result).withMCPServerName(mcpServer)
     } catch let error as ResolverResolutionError {
       var stderrStream = StandardError()
       for resolutionError in error.errors {
@@ -227,6 +242,11 @@ struct EnforceInstallCommand: ParsableCommand {
     }
 
     Self.reportDegradation(actionClasses: artifacts.degradedActionClasses, persona: manifest.personaId)
+  }
+
+  /// MCP tool names are `mcp__<server>__<tool>`, so a server name may not contain `__`.
+  private static func isValidMCPServerName(_ name: String) -> Bool {
+    !name.contains("__") && name.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
   }
 
   /// Surfaces forbidden capabilities that cannot reach the hook layer on Claude Code.

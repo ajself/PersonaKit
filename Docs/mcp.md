@@ -175,6 +175,8 @@ MCP resources and tools provide context. They do not authorize execution, file m
 
 If a contract does not authorize a needed skill, stop and re-ground instead of improvising.
 
+Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools stay fail-closed.
+
 ## How To Verify
 
 Use these checks after MCP behavior changes:

@@ -164,4 +164,65 @@ struct CLIEnforceTests {
     #expect(output.contains("Edit|Write|NotebookEdit|Bash"))
     #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
   }
+
+  /// Runs `enforce install` against the read-only fixture with extra arguments.
+  private func runInstall(
+    extra: [String],
+    projectDir: URL,
+    dryRun: Bool = true
+  ) -> (status: Int32, stdout: String, stderr: String) {
+    var status: Int32 = 0
+    var stdout = ""
+    let stderr = captureStderr {
+      stdout = captureStdout {
+        status = PersonaKitCLI().run(
+          arguments: [
+            "personakit", "enforce", "install",
+            "--root", readOnlyFixtureRootURL().path,
+            "--no-global",
+            "--session", "read-only-auditor_audit-pass",
+            "--project-dir", projectDir.path,
+            "--executable", "/usr/local/bin/personakit",
+          ] + (dryRun ? ["--dry-run"] : []) + extra
+        )
+      }
+    }
+    return (status, stdout, stderr)
+  }
+
+  private func freshProjectDir(_ prefix: String) throws -> URL {
+    let projectDir = FileManager.default.temporaryDirectory
+      .appendingPathComponent("\(prefix)-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: projectDir, withIntermediateDirectories: true)
+    return projectDir
+  }
+
+  @Test
+  func installDryRunRecordsCustomMCPServerName() throws {
+    let projectDir = try freshProjectDir("pk-mcpname")
+    let result = runInstall(extra: ["--mcp-server", "pk-local"], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("\"mcpServerName\" : \"pk-local\""))
+  }
+
+  @Test
+  func installDryRunOmitsServerNameByDefault() throws {
+    let projectDir = try freshProjectDir("pk-mcpdefault")
+    let result = runInstall(extra: [], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(!result.stdout.contains("mcpServerName"))
+  }
+
+  @Test(arguments: ["", "a__b", "pk local"])
+  func installRejectsInvalidServerNames(name: String) throws {
+    let projectDir = try freshProjectDir("pk-mcpbad")
+
+    let result = runInstall(extra: ["--mcp-server", name], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--mcp-server must be non-empty"))
+    #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
+  }
 }
