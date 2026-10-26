@@ -24,16 +24,17 @@ function segments(command: string): string[][] {
     words = []
   }
   for (let i = 0; i < command.length; i++) {
-    const c = command[i]
+    const c = command.charAt(i)
     if (quote) {
+      // An open quote always holds a word: the opening quote started one.
       if (c === quote) quote = undefined
-      else if (c === '\\' && quote === '"' && i + 1 < command.length) word += command[++i]
-      else word += c
+      else if (c === '\\' && quote === '"' && i + 1 < command.length) word = (word ?? '') + command.charAt(++i)
+      else word = (word ?? '') + c
     } else if (c === '"' || c === "'") {
       quote = c
       word ??= ''
     } else if (c === '\\' && i + 1 < command.length) {
-      word = (word ?? '') + command[++i]
+      word = (word ?? '') + command.charAt(++i)
     } else if (c === ' ' || c === '\t') {
       endWord()
     } else if (c === '|' || c === '&' || c === ';' || c === '\n') {
@@ -53,9 +54,10 @@ function parseCli(command: string): CliCommand[] {
   const out: CliCommand[] = []
   for (const words of segments(command)) {
     let i = 0
-    while (i < words.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(words[i])) i++
+    while (/^[A-Za-z_][A-Za-z0-9_]*=/.test(words[i] ?? '')) i++
     if (words[i] === 'swift' && words[i + 1] === 'run') i += 2
-    if (words[i] === undefined || basename(words[i]) !== 'personakit') continue
+    const program = words[i]
+    if (program === undefined || basename(program) !== 'personakit') continue
     const sub = words[i + 1]
     if (sub === 'contract' || sub === 'export') out.push({ subcommand: sub, args: words.slice(i + 2) })
   }
@@ -68,9 +70,9 @@ function cliCommands(tool: string, input: Record<string, unknown>): CliCommand[]
 }
 
 function flagValue(args: string[], flag: string): string | undefined {
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === flag) return args[i + 1]
-    if (args[i].startsWith(`${flag}=`)) return args[i].slice(flag.length + 1)
+  for (const [i, arg] of args.entries()) {
+    if (arg === flag) return args[i + 1]
+    if (arg.startsWith(`${flag}=`)) return arg.slice(flag.length + 1)
   }
   return undefined
 }

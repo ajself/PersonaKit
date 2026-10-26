@@ -41,7 +41,7 @@ function engine(on: On) {
   on('command.register', () => ({ value: { command: 'pk' } }))
   on('ui.open', (_, e) => {
     world.opens.push({ ...e })
-    return { value: { isPlaced: world.isPlaced } }
+    return { value: world.isPlaced ? { isPlaced: true as const } : { isPlaced: false as const, reason: 'no surface' } }
   })
   on('prompt.read', () => ({ value: { text: world.draft, cursor: world.draft.length } }))
   on('prompt.fill', (_, e) => {
@@ -122,8 +122,8 @@ each('a wrapped step keeps its later lines aligned with its text', async ($, w, 
   expect(row.props.flexDirection).toBe('row')
   const [marker, body] = row.children as { props: Record<string, unknown>; text?: string }[]
   // The marker column is fixed; the step text wraps inside the box beside it, never back under the marker.
-  expect(marker.props).toMatchObject({ width: '■ 2. '.length, flexShrink: 0 })
-  expect(body.props).toMatchObject({ flexGrow: 1, flexShrink: 1 })
+  expect(marker?.props).toMatchObject({ width: '■ 2. '.length, flexShrink: 0 })
+  expect(body?.props).toMatchObject({ flexGrow: 1, flexShrink: 1 })
   expect(await text(ui, /citing the file/)).toBe(`${long} (stop for review)`)
   await ui.unmount()
 })
@@ -174,12 +174,12 @@ each('/pk use s fills the prompt', async ($, w) => {
   w.draft = 'draft'
   await pk($, '  use   s  ')
   expect(w.fills[1]).toEqual({ text: `\n${usePrompt({ sessionId: 's' })}`, mode: 'append' })
-  expect(w.fills[1].text.startsWith('\n')).toBe(true)
+  expect(w.fills[1]?.text.startsWith('\n')).toBe(true)
 
   // A whitespace-only draft is empty.
   w.draft = '  \n'
   await pk($, 'use s')
-  expect(w.fills[2].mode).toBe('replace')
+  expect(w.fills[2]?.mode).toBe('replace')
   expect(w.opens).toEqual([])
   expect(w.toasts).toEqual([])
 })
@@ -232,6 +232,6 @@ test('Re-ground fills with persona and directive when the contract has no sessio
   const ui = await mount($, 'desktop')
   await ui.press({ key: 'reground' })
   expect(w.fills).toEqual([{ text: usePrompt({ personaId: 'read-only-auditor', directiveId: 'audit-pass' }), mode: 'replace' }])
-  expect(w.fills[0].text).toContain('--persona read-only-auditor --directive audit-pass')
+  expect(w.fills[0]?.text).toContain('--persona read-only-auditor --directive audit-pass')
   await ui.unmount()
 })

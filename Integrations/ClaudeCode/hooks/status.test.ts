@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import type { DriftEvent, Enforcement, Resolution, SessionState } from '../types'
+import type { ContractIds, DriftEvent, Enforcement, Resolution, SessionState } from '../types'
 import { parseContract } from './lib/contract'
 import { parseExport } from './lib/export'
 import { statusText } from './lib/status'
@@ -15,9 +15,9 @@ const NAMES = 'Read-Only Auditor › Read-only audit pass'
 const PERSONA = 'Read-Only Auditor'
 
 const advisory: Enforcement = { kind: 'advisory' }
-const hooked = (kind: 'enforced' | 'enforcing-other', ids = IDS, extra: Record<string, unknown> = {}): Enforcement =>
+const hooked = (kind: 'enforced' | 'enforcing-other', ids: ContractIds = IDS, extra: Record<string, unknown> = {}): Enforcement =>
   ({ kind, manifestPath: '/m.json', ids, deniedActionClasses: [], matcherTools: ['Edit'], ...extra }) as Enforcement
-const unreadable = hooked('enforcing-other', {} as typeof IDS, { manifestUnreadable: true })
+const unreadable = hooked('enforcing-other', {}, { manifestUnreadable: true })
 
 const resolution = (extra: Partial<Resolution> = {}): Resolution => ({ ids: IDS, contract, details, source: 'mcp', turn: 1, ...extra })
 const state = (extra: Partial<SessionState> = {}): SessionState => ({
@@ -34,7 +34,7 @@ test('no contract while another contract is enforced', () => {
   expect(statusText(empty({ enforcement: hooked('enforcing-other', { sessionId: 'other-session', personaId: 'p' }) }))).toBe(
     '◇ no contract · ⚠ enforcing other-session',
   )
-  expect(statusText(empty({ enforcement: hooked('enforcing-other', { personaId: 'p' } as typeof IDS) }))).toBe(
+  expect(statusText(empty({ enforcement: hooked('enforcing-other', { personaId: 'p' }) }))).toBe(
     '◇ no contract · ⚠ enforcing p',
   )
 })
@@ -52,7 +52,7 @@ test('golden contract and export, enforced', () => {
 })
 
 test('enforcing another contract replaces the steady enforcement segment', () => {
-  expect(statusText(state({ enforcement: hooked('enforcing-other', { sessionId: 'other-session' } as typeof IDS) }))).toBe(
+  expect(statusText(state({ enforcement: hooked('enforcing-other', { sessionId: 'other-session' }) }))).toBe(
     `${LEAD} · ⚠ enforcing other-session · project-only · ${NAMES}`,
   )
   expect(statusText(state({ enforcement: unreadable }))).toBe(`${LEAD} · ⚠ enforcement manifest unreadable · project-only · ${PERSONA}`)
@@ -96,12 +96,40 @@ test('drift appends the latest event with a count', () => {
 })
 
 test('drift before the current main resolution is not shown', () => {
-  const regrounded = resolution({ turn: 5 })
+  const regrounded = resolution({ turn: 5, driftMark: 1 })
   expect(statusText(state({ main: regrounded, drift: [write] }))).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
   const after: DriftEvent = { ...write, turn: 6 }
   expect(statusText(state({ main: regrounded, drift: [write, after] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
   const sameTurn: DriftEvent = { ...write, turn: 5 }
-  expect(statusText(state({ main: regrounded, drift: [sameTurn] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
+  expect(statusText(state({ main: regrounded, drift: [write, sameTurn] }))).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
+})
+
+test('drift earlier in the resolve\'s own turn is not shown; drift after it is', () => {
+  const before: DriftEvent = { ...write, turn: 5 }
+  const regrounded = resolution({ turn: 5, driftMark: 1 })
+  expect(statusText(state({ main: regrounded, drift: [before] }))).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
+  expect(statusText(state({ main: regrounded, drift: [before, { ...before }] }))).toBe(
+    `${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`,
+  )
+})
+
+test('re-ground blocked earlier in the resolve\'s own turn is not shown; one after it is', () => {
+  const blocked: DriftEvent = { tool: 'Bash', kind: 'reground-blocked', turn: 5 }
+  const regrounded = resolution({ turn: 5, driftMark: 1 })
+  expect(statusText(state({ main: regrounded, enforcement: hooked('enforced'), drift: [blocked] }))).toBe(
+    `${LEAD} · enforced · project-only · ${NAMES}`,
+  )
+  expect(statusText(state({ main: regrounded, enforcement: hooked('enforced'), drift: [blocked, { ...blocked }] }))).toBe(
+    `${LEAD} · ⚠ re-ground blocked · enforced · project-only · ${PERSONA}`,
+  )
+})
+
+test('a resolution without a mark counts all drift; no contract counts all drift', () => {
+  const old: DriftEvent = { ...write, turn: 0 }
+  expect(statusText(state({ main: resolution({ turn: 5 }), drift: [old] }))).toBe(
+    `${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`,
+  )
+  expect(statusText(empty({ drift: [old] }))).toBe('◇ no contract · /pk use <session> · ⚠ drift: Write (file-mutation)')
 })
 
 test('re-ground blocked appends its warning and is not counted as drift', () => {

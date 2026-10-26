@@ -13,7 +13,7 @@ export function sameContract(a: ContractIds, b: ContractIds): boolean {
 function readWord(text: string): { word: string; rest: string } {
   let word = ''
   let i = 0
-  while (i < text.length && !/\s/.test(text[i])) {
+  while (i < text.length && !/\s/.test(text.charAt(i))) {
     const c = text[i]
     if (c === "'") {
       const end = text.indexOf("'", i + 1)
@@ -23,7 +23,7 @@ function readWord(text: string): { word: string; rest: string } {
     } else if (c === '"') {
       i++
       while (i < text.length && text[i] !== '"') {
-        if (text[i] === '\\' && i + 1 < text.length && '"\\$`'.includes(text[i + 1])) i++
+        if (text[i] === '\\' && i + 1 < text.length && '"\\$`'.includes(text.charAt(i + 1))) i++
         word += text[i++]
       }
       i++

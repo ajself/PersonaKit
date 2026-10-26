@@ -73,7 +73,12 @@ function resolved(prev: Resolution | undefined, o: Exclude<Observation, { kind: 
   return next
 }
 
-/** One completed tool call applied to the state: its observations in order, then its drift once. Pure. */
+/**
+ * One completed tool call applied to the state: its observations in order, then its drift once. Pure.
+ * Every successful main observation, a re-ground of the same contract included, marks the drift seen so far as
+ * before it. The call's own drift lands after the mark: a PersonaKit call that resolved is never drift, and one that
+ * was blocked resolved nothing.
+ */
 function applyCall(state: SessionState, call: Call, observations: Observation[], trusted: string[]): SessionState {
   let s = state
   const { agentId } = call
@@ -82,7 +87,7 @@ function applyCall(state: SessionState, call: Call, observations: Observation[],
     if (agentId !== undefined) {
       s = { ...s, subagents: { ...s.subagents, [agentId]: resolved(s.subagents[agentId], o, s.turn) } }
     } else {
-      const main = resolved(s.main, o, s.turn)
+      const main: Resolution = { ...resolved(s.main, o, s.turn), driftMark: s.drift.length }
       s = { ...s, main, compactions: 0, enforcement: rejudge(s.enforcement, main.ids) }
     }
   }

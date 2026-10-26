@@ -112,7 +112,7 @@ export function paneTree({ Box, Text, Button }: El, state: SessionState, columns
         ]
       : []
   const scope = contract?.scope
-  const subagents = Object.keys(state.subagents).sort()
+  const subagents = Object.entries(state.subagents).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 
   return (
     <Box key="pane" flexDirection="column" width={columns}>
@@ -142,7 +142,7 @@ export function paneTree({ Box, Text, Button }: El, state: SessionState, columns
       {state.drift.length === 0 ? <Text dimColor>No drift.</Text> : lines(state.drift.map(driftRow))}
 
       {subagents.length > 0 && heading('Subagent contracts')}
-      {lines(subagents.map((id) => `${id}: ${lead(state.subagents[id])} · resolved turn ${state.subagents[id].turn} · ${source(state.subagents[id])}`))}
+      {lines(subagents.map(([id, r]) => `${id}: ${lead(r)} · resolved turn ${r.turn} · ${source(r)}`))}
 
       {main && heading('Actions')}
       {main && (

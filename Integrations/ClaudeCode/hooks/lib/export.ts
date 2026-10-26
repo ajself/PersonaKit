@@ -14,10 +14,10 @@ function parseSteps(lines: string[]): Step[] {
   if (start < 0) return []
   const steps: Step[] = []
   for (const line of lines.slice(start + 1)) {
-    const m = /^\d+\. (.*)$/.exec(line)
-    if (m === null) break
-    const isStop = STOP_MARKER.test(m[1])
-    steps.push({ text: isStop ? m[1].replace(STOP_MARKER, '') : m[1], isStop })
+    const text = /^\d+\. (.*)$/.exec(line)?.[1]
+    if (text === undefined) break
+    const isStop = STOP_MARKER.test(text)
+    steps.push({ text: isStop ? text.replace(STOP_MARKER, '') : text, isStop })
   }
   return steps
 }
@@ -43,8 +43,8 @@ export function parseExport(markdown: string): ExportDetails | undefined {
   const directive = last('Directive')
   const denied = new Set<string>()
   for (const line of last('Boundaries')) {
-    const m = DENY_LINE.exec(line)
-    if (m !== null) for (const c of m[1].split(', ')) denied.add(c)
+    const classes = DENY_LINE.exec(line)?.[1]
+    if (classes !== undefined) for (const c of classes.split(', ')) denied.add(c)
   }
 
   return {

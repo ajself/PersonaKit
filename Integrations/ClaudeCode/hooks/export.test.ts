@@ -11,7 +11,7 @@ test('parses the golden export', () => {
   expect(details?.directiveId).toBe('audit-pass')
   expect(details?.steps.length).toBe(2)
   expect(details?.steps[1]).toEqual({ text: 'Report confirmed issues before suggestions.', isStop: true })
-  expect(details?.steps[0].isStop).toBe(false)
+  expect(details?.steps[0]?.isStop).toBe(false)
   expect(details?.deniedActionClasses).toEqual(['command-execution', 'file-mutation', 'network-egress'])
 })
 

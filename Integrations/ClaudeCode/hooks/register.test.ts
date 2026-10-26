@@ -320,6 +320,77 @@ each('an enforced denial is logged; a grep for the deny string is not', async ($
   expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · enforced · project-only · ${PERSONA}`)
 })
 
+const DENY_COMMANDS = JSON.stringify({
+  ...JSON.parse(MANIFEST),
+  checks: [{ id: 'a', maxClass: 'hook', rule: { kind: 'capability-deny', deniedActionClasses: ['command-execution'] } }],
+})
+const CLI_CONTRACT = `personakit contract --session ${SESSION}`
+const BLOCKED_COMMAND = 'Blocked by PersonaKit contract: capability-deny.run-commands'
+
+each('a CLI re-ground the hook blocks, then an MCP resolve in the same turn, leaves no re-ground warning', async ($, w, surface) => {
+  w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
+  w.files[MANIFEST_PATH] = DENY_COMMANDS
+  await start($, surface)
+  await $.turn.start({ text: 'go', turnId: 't1' })
+  w.answers.push(failed(BLOCKED_COMMAND))
+  await $.tool.call({ tool: 'Bash', command: CLI_CONTRACT } as never)
+  expect((await state(w)).drift).toEqual([{ tool: 'Bash', kind: 'reground-blocked', turn: 1 }])
+  expect(status(w)).toContain('⚠ re-ground blocked')
+  await resolve($, w, ok(CONTRACT_JSON))
+  expect((await state(w)).main?.turn).toBe(1)
+  expect(status(w)).toBe(`${LEAD} · enforced · project-only · read-only-auditor › audit-pass`)
+})
+
+each('a blocked re-ground of the contract in force clears on its successful re-ground, and returns after it', async ($, w, surface) => {
+  w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
+  w.files[MANIFEST_PATH] = DENY_COMMANDS
+  await start($, surface)
+  await ground($, w)
+  await turn($, 1)
+  await $.turn.start({ text: 'go', turnId: 't2' })
+  w.answers.push(failed(BLOCKED_COMMAND))
+  await $.tool.call({ tool: 'Bash', command: CLI_CONTRACT } as never)
+  expect(status(w)).toBe(`${LEAD} · ⚠ re-ground blocked · enforced · project-only · ${PERSONA}`)
+  await resolve($, w, ok(CONTRACT_JSON))
+  expect(status(w)).toBe(`${LEAD} · enforced · project-only · ${NAMES}`)
+  w.answers.push(failed(BLOCKED_COMMAND))
+  await $.tool.call({ tool: 'Bash', command: CLI_CONTRACT } as never)
+  expect(status(w)).toBe(`${LEAD} · ⚠ re-ground blocked · enforced · project-only · ${PERSONA}`)
+})
+
+each('drift before the resolve in its own turn is not shown; drift after it is', async ($, w) => {
+  await ground($, w)
+  await turn($, 1)
+  await $.turn.start({ text: 'go', turnId: 't2' })
+  await write($)
+  expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
+  await resolve($, w, ok(CONTRACT_JSON))
+  expect(status(w)).toBe(`${LEAD} · advisory · project-only · ${NAMES}`)
+  await write($)
+  expect(status(w)).toBe(`${LEAD} · ⚠ drift: Write (file-mutation) · advisory · project-only · ${PERSONA}`)
+})
+
+each('rebuild marks drift against the resolve it follows', async ($, w, surface) => {
+  await $.session.end({ reason: 'resume', sessionId: 's1', resume: { id: 's1' } } as never)
+  w.messages = [
+    { role: 'user', text: 'go', toolUses: [] },
+    {
+      role: 'assistant',
+      text: '',
+      toolUses: [
+        { tool_use_id: 'u1', tool: EXPORT, input: { sessionId: SESSION }, result: EXPORT_MD, text: EXPORT_MD },
+        { tool_use_id: 'u2', tool: 'Write', input: { file_path: '/p/a', content: '' }, result: {}, text: 'ok' },
+        { tool_use_id: 'u3', tool: EXPORT, input: { sessionId: SESSION }, result: EXPORT_MD, text: EXPORT_MD },
+      ],
+    },
+  ]
+  await start($, surface)
+  const s = await state(w)
+  expect(s.drift.length).toBe(1)
+  expect(s.main?.driftMark).toBe(1)
+  expect(status(w)).toBe(`${LEAD} · advisory · ${NAMES}`)
+})
+
 test('a configured server name is trusted', { options: { mcpServerName: 'pk' } }, async ($, on) => {
   const w = engine(on)
   await start($, 'desktop')

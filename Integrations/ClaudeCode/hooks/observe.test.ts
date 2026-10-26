@@ -1,5 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
+import type { Observation } from '../types'
 import { isPersonaKitCall, observe } from './lib/observe'
 import { CONTRACT_JSON, EXPORT_MD } from './fixtures/golden'
 
@@ -17,6 +18,8 @@ const runTruncated = (command: string) =>
   )
 const run = (command: string, stdout: string, readPersisted = none) =>
   observe({ tool: 'Bash', input: { command }, result: bash(stdout) }, trusted, readPersisted)
+const contractOf = (o: Observation | undefined) => (o?.kind === 'contract' ? o.contract : undefined)
+const detailsOf = (o: Observation | undefined) => (o?.kind === 'export' ? o.details : undefined)
 
 test('MCP resolve from a trusted server yields a contract', async () => {
   const o = await observe(
@@ -193,8 +196,8 @@ test('one command running contract then export yields both, in order', async () 
   )
   expect(os.map((o) => o.kind)).toEqual(['contract', 'export'])
   expect(os.map((o) => o.ids)).toEqual([GOLDEN, GOLDEN])
-  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
-  expect(os[1].kind === 'export' && os[1].details?.personaName).toBe('Read-Only Auditor')
+  expect(contractOf(os[0])?.personaId).toBe('read-only-auditor')
+  expect(detailsOf(os[1])?.personaName).toBe('Read-Only Auditor')
 })
 
 test('&& chaining yields both', async () => {
@@ -207,13 +210,13 @@ test('&& chaining yields both', async () => {
 test('a contract followed by trailing noise still parses', async () => {
   const os = await run('personakit contract --session x', `${CONTRACT_JSON}\n---EXIT 0---\n`)
   expect(os.length).toBe(1)
-  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
+  expect(contractOf(os[0])?.personaId).toBe('read-only-auditor')
 })
 
 test('braces inside JSON strings do not end the contract early', async () => {
   const tricky = JSON.stringify({ ...JSON.parse(CONTRACT_JSON), failureReasons: ['a } b', 'quote \\" } {'] })
   const os = await run('personakit contract --session x', `noise\n${tricky}\nmore }`)
-  expect(os[0].kind === 'contract' && os[0].contract?.failureReasons).toEqual(['a } b', 'quote \\" } {'])
+  expect(contractOf(os[0])?.failureReasons).toEqual(['a } b', 'quote \\" } {'])
 })
 
 test('a missing part fails only its own invocation', async () => {
@@ -265,5 +268,5 @@ test('braces in export code before the contract do not hide it', async () => {
 test('brace noise before the contract is skipped', async () => {
   const os = await run('personakit contract --session x', `{not json}\n{ unclosed\n${CONTRACT_JSON}`)
   expect(os.length).toBe(1)
-  expect(os[0].kind === 'contract' && os[0].contract?.personaId).toBe('read-only-auditor')
+  expect(contractOf(os[0])?.personaId).toBe('read-only-auditor')
 })

@@ -15,7 +15,9 @@ export type Observation =
   | { kind: 'contract'; source: 'mcp' | 'cli'; ids: ContractIds; contract?: Contract }   // contract absent: truncated output
   | { kind: 'export'; source: 'mcp' | 'cli'; ids: ContractIds; details?: ExportDetails } // details absent: truncated output
   | { kind: 'failed'; source: 'mcp' | 'cli'; ids: ContractIds }
-export type Resolution = { ids: ContractIds; contract?: Contract; details?: ExportDetails; source: 'mcp' | 'cli'; turn: number }
+// driftMark: `drift.length` at main's latest successful resolve, a re-ground of the same contract included; the
+// status line's warnings count only drift from it on. Absent (state persisted before it existed) reads as 0.
+export type Resolution = { ids: ContractIds; contract?: Contract; details?: ExportDetails; source: 'mcp' | 'cli'; turn: number; driftMark?: number }
 export type Enforcement =
   | { kind: 'advisory' }
   | { kind: 'enforced' | 'enforcing-other'; manifestPath: string; ids: ContractIds; deniedActionClasses: string[]; matcherTools: string[]; mcpServerName?: string; manifestUnreadable?: true }

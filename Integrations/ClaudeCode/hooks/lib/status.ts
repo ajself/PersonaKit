@@ -13,19 +13,20 @@ function enforcementSegment(enforcement: Enforcement): string {
 
 /**
  * Warnings after the enforcement segment: stale, latest drift with its count, re-ground blocked.
- * Drift and re-ground blocked count only from the main resolution's turn on.
+ * Drift and re-ground blocked count only from the main resolution's drift mark on, so a re-ground clears what came
+ * before it even within its own turn.
  */
 function warnings(state: SessionState): string[] {
   const out: string[] = []
   if (state.main && state.compactions > 0) out.push('⚠ re-ground?')
-  const since = state.main?.turn ?? 0
-  const drift = state.drift.filter((d) => d.kind !== 'reground-blocked' && d.turn >= since)
+  const since = state.drift.slice(state.main?.driftMark ?? 0)
+  const drift = since.filter((d) => d.kind !== 'reground-blocked')
   const last = drift.at(-1)
   if (last) {
     const what = last.actionClass ? `${last.tool} (${last.actionClass})` : last.tool
     out.push(`⚠ drift: ${what}${drift.length > 1 ? ` ×${drift.length}` : ''}`)
   }
-  if (state.drift.some((d) => d.kind === 'reground-blocked' && d.turn >= since)) out.push('⚠ re-ground blocked')
+  if (since.some((d) => d.kind === 'reground-blocked')) out.push('⚠ re-ground blocked')
   return out
 }
 
