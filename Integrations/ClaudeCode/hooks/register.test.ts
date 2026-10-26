@@ -63,6 +63,7 @@ function engine(on: On, { skipCompactions = false } = {}) {
   on('tool.call', () => (answers.shift() ?? ok('ok')) as never)
   on('fs.read', (_, e) => (e.path in files ? { value: files[e.path] } : { deny: `${e.path}: missing` }) as never)
   on('session.root', () => ({ value: '/p' }))
+  on('command.register', () => ({ value: { command: 'pk' } }))
   on('session.messages', () => ({ value: world.messages }) as never)
   on('ui.status', (_, e) => {
     world.statuses.push(e.text)

@@ -5,10 +5,13 @@ import type { ContractIds, Enforcement, Observation, Resolution, SessionState } 
 import { classifyDrift } from './lib/drift'
 import { enforcementFor, installedHook, sameContract } from './lib/enforcement'
 import { observe } from './lib/observe'
+import { usePrompt } from './lib/prompts'
 import { statusText } from './lib/status'
+import { paneTree } from './pane'
 
 // Under the session's project root (`$.session.root()`), not its working directory.
 const SETTINGS = '.claude/settings.json'
+const PANE = 'personakit'
 
 const initial: SessionState = { subagents: {}, enforcement: { kind: 'advisory' }, compactions: 0, drift: [], turn: 0 }
 export const session = atom({ plugin: 'personakit', key: 'session' } as const, initial)
@@ -135,11 +138,44 @@ async function refreshEnforcement($: Dollar & Ui, installed?: Installed): Promis
   await paint($)
 }
 
+type Prompt = Ui & {
+  prompt: {
+    read: () => Promise<{ text: string }>
+    fill: (input: { text: string; mode: 'replace' | 'append' }) => Promise<{ isFilled: boolean }>
+  }
+  ui: { toast: (text: string) => void }
+}
+
+/**
+ * Pre-fills `text` without losing a draft: over an empty box, else on a new line after it.
+ * The person reviews and sends it; the mod never submits. Not filled, it is shown as a toast to copy.
+ */
+async function fillPrompt($: Prompt, text: string): Promise<boolean> {
+  let isFilled = false
+  try {
+    const draft = (await $.prompt.read()).text
+    const input = draft.trim() === '' ? { text, mode: 'replace' as const } : { text: `\n${text}`, mode: 'append' as const }
+    isFilled = (await $.prompt.fill(input)).isFilled
+  } catch (error) {
+    try {
+      $.ui.log(`personakit: prompt fill failed: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+    } catch {}
+  }
+  if (!isFilled) $.ui.toast(text)
+  return isFilled
+}
+
+const USE = 'Usage: /pk use <session>'
+const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills a grounding prompt.'
+
 export const register: Register = (on, options) => {
   const configured = typeof options.mcpServerName === 'string' ? options.mcpServerName : 'personakit'
 
   on('session.start', async ($, e, next) => {
     const ran = await next(e)
+    await safely($, async () => {
+      await $.command.register({ name: 'pk', description: 'Show the PersonaKit contract in force, or pre-fill a prompt to ground one', argumentHint: '[use <session>]' })
+    })
     await safely($, async () => {
       const installed = await readInstalled($)
       if (isEmpty(await read($, session))) {
@@ -203,5 +239,26 @@ export const register: Register = (on, options) => {
       }
     })
     return ran
+  })
+
+  on('command.run', { command: 'pk' }, async ($, e) => {
+    const [sub = '', name, ...rest] = e.args.trim().split(/\s+/)
+    if (sub === '') {
+      // Never `focus`: a focused pane would hold the keys and refuse Re-ground's fill.
+      const { isPlaced } = await $.ui.open({ id: PANE, title: 'PersonaKit' })
+      return { text: isPlaced ? 'PersonaKit pane opened.' : 'No surface here can show the PersonaKit pane.' }
+    }
+    if (sub !== 'use') return { text: USAGE }
+    if (name === undefined || rest.length > 0) return { text: USE }
+    const filled = await fillPrompt($, usePrompt({ sessionId: name }))
+    return { text: filled ? `Pre-filled a prompt to ground this session in \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
+  })
+
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const reground = async () => {
+      const { main } = await read($, session)
+      if (main) await fillPrompt($, usePrompt(main.ids))
+    }
+    return paneTree($.ui.resolve(e), await read($, session), e.props.bodyColumns, () => void safely($, reground))
   })
 }
