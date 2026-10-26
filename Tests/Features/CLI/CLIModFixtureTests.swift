@@ -35,6 +35,16 @@ struct CLIModFixtureTests {
     return String(decoding: data, as: UTF8.self)
   }
 
+  private func toolActionClassesJSON() throws -> String {
+    var map: [String: String] = [:]
+    for (actionClass, tools) in ClaudeCodeEnforcement.toolActionClasses {
+      for tool in tools { map[tool] = actionClass }
+    }
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    return String(decoding: try encoder.encode(map), as: UTF8.self)
+  }
+
   private func expectedGoldenText() throws -> String {
     let rootSpelling = readOnlyFixtureRootURL().path.replacingOccurrences(of: "/", with: "\\/")
     let contract = runCLI("contract").replacingOccurrences(of: rootSpelling, with: "<ROOT>")
@@ -44,6 +54,7 @@ struct CLIModFixtureTests {
       Self.header,
       "export const CONTRACT_JSON = \(try literal(contract))",
       "export const EXPORT_MD = \(try literal(export))",
+      "export const TOOL_ACTION_CLASSES_JSON = \(try literal(try toolActionClassesJSON()))",
     ].joined(separator: "\n") + "\n"
   }
 
