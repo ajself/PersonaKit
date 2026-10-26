@@ -7,6 +7,14 @@ import Testing
 
 struct MCPToolTests {
   @Test
+  func enforcementToolListMatchesMCPToolNames() {
+    #expect(
+      ClaudeCodeEnforcement.personaKitMCPToolNames == MCPToolName.allCases.map(\.rawValue).sorted(),
+      "MCP tools are trusted by hook-check under enforced contracts; add a tool to personaKitMCPToolNames only if it is read-only."
+    )
+  }
+
+  @Test
   func toolListIsDeterministic() {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)

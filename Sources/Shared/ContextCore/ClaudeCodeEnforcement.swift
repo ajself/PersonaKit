@@ -54,6 +54,35 @@ public enum ClaudeCodeEnforcement {
   static func isMCPTool(_ name: String) -> Bool {
     name.hasPrefix("mcp__")
   }
+
+  /// Server name PersonaKit's own MCP server is registered under by default.
+  public static let defaultMCPServerName = "personakit"
+
+  /// Tool names PersonaKit's own MCP server exposes, sorted.
+  ///
+  /// Every one is read-only grounding. Kept as a literal because ContextCore cannot import
+  /// ContextMCP; a parity test against `MCPToolName` guards drift.
+  public static let personaKitMCPToolNames: [String] = [
+    "personakit_best_guidance",
+    "personakit_compare_entities",
+    "personakit_explain_entity",
+    "personakit_export",
+    "personakit_graph",
+    "personakit_recommend_session",
+    "personakit_resolve_contract",
+    "personakit_resolve_grounding_skills",
+    "personakit_resolve_session_ref",
+    "personakit_trace_session",
+    "personakit_validate",
+  ]
+
+  /// Whether a tool call is one of PersonaKit's own read-only MCP tools on the trusted server.
+  ///
+  /// Matches the full `mcp__<serverName>__<tool>` name exactly, so a same-named tool from any
+  /// other server, or a near-miss tool name on the trusted server, is not trusted.
+  public static func isTrustedPersonaKitMCPTool(_ toolName: String, serverName: String) -> Bool {
+    personaKitMCPToolNames.contains { toolName == "mcp__\(serverName)__\($0)" }
+  }
 }
 
 /// Deterministic command hook entry: `{ "type": "command", "command": "…" }`.
@@ -287,8 +316,15 @@ public struct ClaudeCodeHookCheckDecision: Equatable, Sendable {
 public enum ClaudeCodeHookCheckEvaluator {
   public static func evaluate(toolName: String, manifest: ChecksManifest) -> ClaudeCodeHookCheckDecision {
     guard let actionClass = ClaudeCodeEnforcement.actionClass(forTool: toolName) else {
-      // Not a known built-in tool. An external MCP tool is unclassifiable, so if the contract
-      // forbids anything an MCP tool could do, fail closed rather than let it through.
+      // Not a known built-in tool. PersonaKit's own read-only MCP tools from the trusted server
+      // are allowed; any other MCP tool is unclassifiable, so if the contract forbids anything
+      // an MCP tool could do, fail closed rather than let it through.
+      if ClaudeCodeEnforcement.isTrustedPersonaKitMCPTool(
+        toolName,
+        serverName: manifest.mcpServerName ?? ClaudeCodeEnforcement.defaultMCPServerName
+      ) {
+        return ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+      }
       if ClaudeCodeEnforcement.isMCPTool(toolName) {
         return evaluateUnclassifiedMCPTool(toolName: toolName, manifest: manifest)
       }
@@ -309,6 +345,7 @@ public enum ClaudeCodeHookCheckEvaluator {
 
   /// Denies an unclassifiable MCP tool when the contract forbids any action class such a tool
   /// could perform (file mutation, command execution, network egress); otherwise allows it.
+  /// Trusted PersonaKit tools are allowed before reaching here.
   private static func evaluateUnclassifiedMCPTool(
     toolName: String,
     manifest: ChecksManifest

@@ -159,6 +159,9 @@
         "reviewCount",
         "unrepresentedCount"
       ]
+    },
+    "mcpServerName": {
+      "type": "string"
     }
   },
   "required": [

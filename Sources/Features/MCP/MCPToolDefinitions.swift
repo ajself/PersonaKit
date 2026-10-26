@@ -1,6 +1,9 @@
 import MCP
 
 /// Supported tool names exposed by the PersonaKit MCP server.
+///
+/// Every case is trusted by `hook-check` under enforced contracts (mirrored in
+/// `ClaudeCodeEnforcement.personaKitMCPToolNames`), so each tool must stay read-only.
 enum MCPToolName: String, CaseIterable {
   case bestGuidance = "personakit_best_guidance"
   case compareEntities = "personakit_compare_entities"

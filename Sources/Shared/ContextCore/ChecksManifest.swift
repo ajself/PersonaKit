@@ -180,6 +180,9 @@ public struct ChecksManifest: Codable, Equatable, Sendable {
   public let checks: [DerivedCheck]
   public let unrepresentedMandates: [UnrepresentedMandate]
   public let summary: ChecksManifestSummary
+  /// Server name PersonaKit's MCP server is registered under in the host, when it differs from
+  /// the default. Lets the hook checker trust PersonaKit's own tools by their host-qualified name.
+  public let mcpServerName: String?
 
   public init(
     sessionId: String?,
@@ -187,7 +190,8 @@ public struct ChecksManifest: Codable, Equatable, Sendable {
     directiveId: String?,
     checks: [DerivedCheck],
     unrepresentedMandates: [UnrepresentedMandate],
-    summary: ChecksManifestSummary
+    summary: ChecksManifestSummary,
+    mcpServerName: String? = nil
   ) {
     self.sessionId = sessionId
     self.personaId = personaId
@@ -195,6 +199,20 @@ public struct ChecksManifest: Codable, Equatable, Sendable {
     self.checks = checks
     self.unrepresentedMandates = unrepresentedMandates
     self.summary = summary
+    self.mcpServerName = mcpServerName
+  }
+
+  /// Returns a copy recording the host MCP server name PersonaKit's own tools are trusted under.
+  public func withMCPServerName(_ name: String?) -> ChecksManifest {
+    ChecksManifest(
+      sessionId: sessionId,
+      personaId: personaId,
+      directiveId: directiveId,
+      checks: checks,
+      unrepresentedMandates: unrepresentedMandates,
+      summary: summary,
+      mcpServerName: name
+    )
   }
 
   /// Returns the class-1 hook check that forbids a host-neutral action class, if any.

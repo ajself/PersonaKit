@@ -310,6 +310,28 @@ struct ChecksManifestTests {
   }
 
   @Test
+  func manifestWithServerNameValidatesAgainstSchema() throws {
+    let manifest = ChecksManifestDeriver.derive(
+      sessionId: "senior-swiftui-engineer_apply-style",
+      persona: persona(nonGoals: [], forbiddenCapabilities: ["edit-files"]),
+      directive: nil
+    ).withMCPServerName("pk-local")
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let data = try encoder.encode(manifest)
+
+    let errors = SchemaValidator.validate(
+      jsonData: data,
+      schemaName: "checks.schema.json",
+      relativePath: "checks-manifest.json"
+    )
+
+    #expect(String(decoding: data, as: UTF8.self).contains("pk-local"))
+    #expect(errors.isEmpty)
+  }
+
+  @Test
   func readOnlySessionFixtureDerivesHookChecksIncludingShellBypassClosure() throws {
     let scopes = ScopeSet(projectScopeURL: readOnlyFixtureRootURL(), globalScopeURL: nil)
     let session = try SessionFileLoader.load(scopes: scopes, sessionId: "read-only-auditor_audit-pass")

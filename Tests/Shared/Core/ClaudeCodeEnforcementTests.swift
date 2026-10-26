@@ -25,6 +25,78 @@ struct ClaudeCodeEnforcementTests {
   }
 
   @Test
+  func evaluatorAllowsPersonaKitToolsFromTrustedServer() {
+    let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
+    #expect(
+      !ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__personakit_resolve_contract",
+        manifest: readOnly
+      ).isDenied
+    )
+    #expect(
+      !ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__personakit_export",
+        manifest: readOnly
+      ).isDenied
+    )
+  }
+
+  @Test
+  func evaluatorDeniesPersonaKitNamedToolsFromOtherServers() {
+    let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__evil__personakit_validate",
+        manifest: readOnly
+      ).isDenied
+    )
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__personakit_export_all",
+        manifest: readOnly
+      ).isDenied
+    )
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__xpersonakit_export",
+        manifest: readOnly
+      ).isDenied
+    )
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__write_file",
+        manifest: readOnly
+      ).isDenied
+    )
+  }
+
+  @Test
+  func evaluatorTrustsOnlyTheRecordedServerName() {
+    let custom = manifest(forbiddenCapabilities: ["edit-files"]).withMCPServerName("pk-local")
+    #expect(
+      !ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__pk-local__personakit_export",
+        manifest: custom
+      ).isDenied
+    )
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        toolName: "mcp__personakit__personakit_export",
+        manifest: custom
+      ).isDenied
+    )
+  }
+
+  @Test
+  func manifestWithoutServerNameDecodesAndOmitsKey() throws {
+    let original = manifest(forbiddenCapabilities: ["edit-files"])
+    let data = try JSONEncoder().encode(original)
+    #expect(!String(decoding: data, as: UTF8.self).contains("mcpServerName"))
+    let decoded = try JSONDecoder().decode(ChecksManifest.self, from: data)
+    #expect(decoded.mcpServerName == nil)
+  }
+
+  @Test
   func rendererMapsReadOnlyStanceToFileBashAndMCPMatcher() {
     let artifacts = ClaudeCodeEnforcementRenderer.render(
       manifest: manifest(forbiddenCapabilities: ["edit-files", "run-commands"]),
