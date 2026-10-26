@@ -50,6 +50,7 @@ NOTARY_KEYCHAIN_PROFILE ?=
 # two code surfaces in sync so version-check passes:
 #   - MARKETING_VERSION in PersonaKit/PersonaKit.xcodeproj (app)
 #   - PersonaKitVersion.current in Sources/Features/CLI/PersonaKitVersion.swift (CLI/MCP)
+#   - "version" in Integrations/ClaudeCode/.claude-plugin/plugin.json (Claude Code mod)
 GH ?= gh
 RELEASE_VERSION ?= $(PKG_VERSION)
 RELEASE_TAG ?= v$(RELEASE_VERSION)
@@ -60,6 +61,8 @@ PKG_CHECKSUM_PATH ?= $(PKG_OUTPUT_PATH).sha256
 # agree with RELEASE_VERSION before the CLI is installed or a release is built.
 CLI_VERSION_FILE ?= Sources/Features/CLI/PersonaKitVersion.swift
 APP_PROJECT_PBXPROJ ?= PersonaKit/PersonaKit.xcodeproj/project.pbxproj
+MOD_DIR ?= Integrations/ClaudeCode
+MOD_PLUGIN_JSON ?= $(MOD_DIR)/.claude-plugin/plugin.json
 
 -include $(RELEASE_LOCAL_CONFIG)
 
@@ -86,7 +89,7 @@ SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
 SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
-	core-validate-repo core-zip public-check \
+	core-validate-repo core-zip public-check mod-check \
 	cli-build cli-install cli-install-zsh-completion cli-test version-check version-bump \
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
@@ -107,7 +110,8 @@ help:
 	@printf "  %-28s %s\n" "format-check" "Lint Sources and Tests with swift-format."
 	@printf "  %-28s %s\n" "core-validate-repo" "Run deterministic repo validation."
 	@printf "  %-28s %s\n" "core-zip" "Create a project zip archive."
-	@printf "  %-28s %s\n" "public-check" "Run public README and starter verification."
+	@printf "  %-28s %s\n" "public-check" "Run public README and starter verification, plus mod-check when claude is installed."
+	@printf "  %-28s %s\n" "mod-check" "Validate and test the Claude Code mod in Integrations/ClaudeCode."
 	@echo ""
 	@echo "CLI surface:"
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
@@ -115,7 +119,7 @@ help:
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@printf "  %-28s %s\n" "version-check" "Assert version surfaces match RELEASE_VERSION (runs before install/release)."
-	@printf "  %-28s %s\n" "version-bump" "Set both code version surfaces to VERSION=x.y.z (run before a release)."
+	@printf "  %-28s %s\n" "version-bump" "Set the code and mod version surfaces to VERSION=x.y.z (run before a release)."
 	@echo ""
 	@echo "Studio app:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with xcodebuild."
@@ -176,7 +180,7 @@ studio-build: studio-doctor
 cli-build: swiftpm-prepare
 	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
 
-# Rewrite the two code version surfaces to VERSION so a release can be cut with
+# Rewrite the code and mod version surfaces to VERSION so a release can be cut with
 # one knob. Run `make version-bump VERSION=1.1.0`, review the diff, commit, then
 # `make studio-publish-release VERSION=1.1.0`. Sets MARKETING_VERSION to the
 # major.minor (the Apple convention this project uses) and the CLI to the full
@@ -202,10 +206,14 @@ version-bump:
 	@if [ ! -f "$(APP_PROJECT_PBXPROJ)" ]; then \
 		echo "version-bump: $(APP_PROJECT_PBXPROJ) not found"; exit 1; \
 	fi
+	@if [ ! -f "$(MOD_PLUGIN_JSON)" ]; then \
+		echo "version-bump: $(MOD_PLUGIN_JSON) not found"; exit 1; \
+	fi
 	@rel_mm="$$(printf '%s' "$(VERSION)" | cut -d. -f1-2)"; \
 	sed -i '' 's/static let current = "[^"]*"/static let current = "$(VERSION)"/' "$(CLI_VERSION_FILE)"; \
 	sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $$rel_mm;/" "$(APP_PROJECT_PBXPROJ)"; \
-	echo "version-bump: set CLI current=$(VERSION), MARKETING_VERSION=$$rel_mm"
+	sed -i '' 's/^\([[:space:]]*"version"[[:space:]]*:[[:space:]]*\)"[^"]*"/\1"$(VERSION)"/' "$(MOD_PLUGIN_JSON)"; \
+	echo "version-bump: set CLI current=$(VERSION), MARKETING_VERSION=$$rel_mm, mod version=$(VERSION)"
 	@$(MAKE) --no-print-directory version-check VERSION=$(VERSION)
 	@echo "version-bump: review the diff and commit, then run 'make studio-publish-release VERSION=$(VERSION)'."
 
@@ -237,6 +245,18 @@ version-check:
 				exit 1; \
 			fi; \
 		done; \
+	fi; \
+	mod_ver="$$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$(MOD_PLUGIN_JSON)" 2>/dev/null | head -1)"; \
+	if [ -z "$$mod_ver" ]; then \
+		echo "version-check: could not read \"version\" from $(MOD_PLUGIN_JSON)"; \
+		exit 1; \
+	fi; \
+	if [ "$$mod_ver" != "$(RELEASE_VERSION)" ]; then \
+		echo "version-check: drift detected"; \
+		echo "  plugin.json version = $$mod_ver"; \
+		echo "  RELEASE_VERSION     = $(RELEASE_VERSION)"; \
+		echo "  fix: set '\"version\": \"$(RELEASE_VERSION)\"' in $(MOD_PLUGIN_JSON)"; \
+		exit 1; \
 	fi; \
 	echo "version-check: OK ($(RELEASE_VERSION))"
 
@@ -310,6 +330,10 @@ cli-test: swiftpm-prepare
 core-validate-repo: swiftpm-prepare
 	PERSONAKIT_VALIDATE_TMP_ROOT=$(VALIDATE_TMPDIR) ./Scripts/validate-repo.sh
 
+mod-check:
+	claude plugin validate $(MOD_DIR)
+	claude plugin test $(MOD_DIR)
+
 public-check: swiftpm-prepare
 ifeq ($(PUBLIC_CHECK_TEST),1)
 	$(SWIFT_TEST)
@@ -347,6 +371,11 @@ endif
 	! $(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty
 	$(SWIFT_RUN) personakit init /tmp/personakit-public-check/non-empty --force
 	$(SWIFT_RUN) personakit validate --root /tmp/personakit-public-check/non-empty
+	@if command -v claude >/dev/null 2>&1; then \
+		$(MAKE) mod-check; \
+	else \
+		echo "public-check: claude not found; skipping mod-check"; \
+	fi
 	! grep -REn "A[J]|O[r]bit|T[ask]board|architectural-editor|Studio release|workflow platform" .personakit README.md Docs Examples AGENTS.md
 	grep -REn "memory|orchestration" .personakit README.md Docs Examples AGENTS.md || true
 

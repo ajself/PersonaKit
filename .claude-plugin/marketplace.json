@@ -1,0 +1,6 @@
+{
+  "name": "personakit",
+  "description": "PersonaKit's Claude Code mod.",
+  "owner": { "name": "ajself" },
+  "plugins": [{ "name": "personakit", "source": "./Integrations/ClaudeCode" }]
+}

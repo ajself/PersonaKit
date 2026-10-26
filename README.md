@@ -216,6 +216,11 @@ Confirm it connected:
 claude mcp list
 ```
 
+The repository is also a Claude Code marketplace for an optional mod that shows the contract in force in your status
+line and flags drift from it. Install it from a Claude Code prompt with
+`/plugin install personakit --marketplace ajself/PersonaKit`. The mod only reads files: it never runs PersonaKit, blocks
+a tool call, or submits a prompt. See [Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
+
 For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio shape, use the per-host config table in
 [Docs/mcp.md](./Docs/mcp.md).
 
