@@ -27,7 +27,7 @@
   "verification": [
     {
       "kind": "command",
-      "text": "swift test"
+      "text": "make test"
     },
     {
       "kind": "command",
