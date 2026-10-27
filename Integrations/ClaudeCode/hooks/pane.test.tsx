@@ -74,7 +74,23 @@ const ground = async ($: Engine, w: World) => {
 const mount = ($: Engine, surface: Surface) => $.ui.mount({ ...PANE, surface })
 const pk = ($: Engine, args: string) =>
   $.command.run({ command: 'pk', args, origin: { kind: 'composer' }, presentation: { isFullscreen: true, columns: 160 } } as never)
-const text = async (ui: Awaited<ReturnType<typeof mount>>, match: RegExp) => (await ui.find({ type: 'Text', text: match }))?.text
+type Ui = Awaited<ReturnType<typeof mount>>
+const text = async (ui: Ui, match: RegExp) => (await ui.find({ type: 'Text', text: match }))?.text
+type Node = string | { type?: string; children?: Node[] }
+const shown = (n: Node): string => (typeof n === 'string' ? n : (n.children ?? []).map(shown).join(''))
+/** The outermost Texts' text under the element keyed `key`, in order: a Text nested in a Text reads as part of it. */
+const texts = async (ui: Ui, key: string) => {
+  const out: string[] = []
+  const walk = (n: Node) => {
+    if (typeof n === 'string') return
+    if (n.type === 'Text') out.push(shown(n))
+    else n.children?.forEach(walk)
+  }
+  walk((await ui.find({ key })) as Node)
+  return out
+}
+const row = (ui: Ui, label: string) => texts(ui, `row-${label}`)
+const chips = (ui: Ui) => texts(ui, 'chips')
 
 const each = (name: string, body: ($: Engine, w: World, surface: Surface) => Promise<void>) => {
   for (const surface of SURFACES) {
@@ -94,21 +110,22 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   const ui = await mount($, surface)
 
   expect((await ui.find({ key: 'pane' }))?.props.width).toBe(60)
-  expect(await text(ui, /^read-only-auditor_audit-pass/)).toBe('read-only-auditor_audit-pass · resolved turn 0 (this turn) · MCP')
-  expect(await text(ui, /Read-Only Auditor/)).toBe('Persona: Read-Only Auditor (read-only-auditor)')
-  expect(await text(ui, /Read-only audit pass/)).toBe('Directive: Read-only audit pass (audit-pass)')
-  expect(await text(ui, /^Goal:/)).toBe('Goal: Audit the change and report findings without editing it.')
-  expect(await text(ui, /Inspect the diff/)).toBe('Inspect the diff and the surrounding code.')
-  expect(await text(ui, /^  1\.$/)).toBe('  1.')
-  expect(await text(ui, /Report confirmed issues/)).toBe('Report confirmed issues before suggestions. (stop for review)')
-  expect(await text(ui, /^■ 2\.$/)).toBe('■ 2.')
-  expect(await text(ui, /^Mode:/)).toBe('Mode: project-only')
-  expect(await text(ui, /^Enforcement:/)).toBe('Enforcement: advisory (no PersonaKit hook installed)')
-  expect(await text(ui, /^Advisory drift:/)).toBe('Advisory drift: command-execution, file-mutation, network-egress (from the export)')
-  expect(await text(ui, /^Compactions since resolve:/)).toBe('Compactions since resolve: 1 · re-ground?')
-  expect(await text(ui, /^Write/)).toBe('Write (file-mutation) · advisory · main · turn 0')
+  expect(await text(ui, /^read-only-auditor_audit-pass$/)).toBe('read-only-auditor_audit-pass')
+  expect(await text(ui, /^Resolved turn/)).toBe('Resolved turn 0 · this turn · MCP')
+  expect(await chips(ui)).toEqual(['● Advisory', '● 1 compaction', '● 1 drift'])
+  expect(await row(ui, 'Persona')).toEqual(['Persona', 'Read-Only Auditor (read-only-auditor)'])
+  expect(await row(ui, 'Directive')).toEqual(['Directive', 'Read-only audit pass (audit-pass)'])
+  expect(await row(ui, 'Goal')).toEqual(['Goal', 'Audit the change and report findings without editing it.'])
+  expect(await texts(ui, 'step-1')).toEqual(['1', 'Inspect the diff and the surrounding code.'])
+  expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '⏸ Stop for review'])
+  expect(await row(ui, 'Mode')).toEqual(['Mode', 'project-only'])
+  expect(await row(ui, 'State')).toEqual(['State', 'Advisory · no hook installed'])
+  expect(await row(ui, 'Watching')).toEqual(['Watching', 'command-execution, file-mutation, network-egress · from the export'])
+  expect(await row(ui, 'Compactions')).toEqual(['Compactions', '1 · re-ground?'])
+  expect(await text(ui, /^Write/)).toBe('Write advisory · file-mutation · main · turn 0')
   // Clean authorization: no authorization block.
-  expect(await text(ui, /^Authorized:/)).toBe(undefined)
+  expect(await ui.find({ key: 'row-Authorized' }).then((r) => r && texts(ui, 'row-Authorized'))).toEqual(['Authorized', 'none'])
+  expect(await ui.find({ key: 'problem-0' })).toBe(undefined)
   expect(await ui.find({ type: 'Button', key: 'reground' })).toBeDefined()
   await ui.unmount()
 })
@@ -120,11 +137,11 @@ each('a wrapped step keeps its later lines aligned with its text', async ($, w, 
   expect((await ui.find({ key: 'pane' }))?.props.width).toBe(30)
   const row = (await ui.find({ key: 'step-2' }))!
   expect(row.props.flexDirection).toBe('row')
-  const [marker, body] = row.children as { props: Record<string, unknown>; text?: string }[]
-  // The marker column is fixed; the step text wraps inside the box beside it, never back under the marker.
-  expect(marker?.props).toMatchObject({ width: '■ 2. '.length, flexShrink: 0 })
+  const [number, body] = row.children as { props: Record<string, unknown>; text?: string }[]
+  // The number column is fixed; the step text wraps inside the box beside it, never back under the number.
+  expect(number?.props).toMatchObject({ width: '2. '.length, flexShrink: 0 })
   expect(body?.props).toMatchObject({ flexGrow: 1, flexShrink: 1 })
-  expect(await text(ui, /citing the file/)).toBe(`${long} (stop for review)`)
+  expect(await texts(ui, 'step-2')).toEqual(['2', long, '⏸ Stop for review'])
   await ui.unmount()
 })
 
@@ -137,9 +154,9 @@ each('authorization that is not clean shows its failure reasons', async ($, w, s
   })
   await call($, w, RESOLVE, unauthorized)
   const ui = await mount($, surface)
-  expect(await text(ui, /^Authorized:/)).toBe('Authorized: false')
-  expect(await text(ui, /required skill swift-build/)).toBe('  required skill swift-build is not authorized')
-  expect(await text(ui, /^Unauthorized required:/)).toBe('Unauthorized required: swift-build')
+  expect(await texts(ui, 'problem-0')).toEqual(['required skill swift-build is not authorized'])
+  expect(await texts(ui, 'problem-1')).toEqual(['Unauthorized required: swift-build'])
+  expect(await text(ui, /^false$/)).toBe('false')
   await ui.unmount()
 })
 
@@ -149,15 +166,17 @@ each('a subagent resolution shows under subagent contracts', async ($, w, surfac
   w.answers.push(ok(helper))
   await $.tool.call({ tool: RESOLVE, agentId: 'a1' } as never)
   const ui = await mount($, surface)
-  expect(await text(ui, /^a1:/)).toBe('a1: helper › d · resolved turn 0 · MCP')
+  expect(await texts(ui, 'subagent-a1')).toEqual(['a1 helper › d · resolved turn 0 · MCP'])
   await ui.unmount()
 })
 
 each('with no contract the pane gives the /pk use hint and no Re-ground', async ($, _w, surface) => {
   const ui = await mount($, surface)
-  expect(await text(ui, /\/pk use/)).toBe('No contract in force. Run /pk use <session> to ground this session.')
+  expect(await text(ui, /^No contract/)).toBe('No contract in force')
+  expect(await text(ui, /\/pk use/)).toBe('Run /pk use <session> to ground this session.')
+  expect(await chips(ui)).toEqual(['● Advisory', '✓ No drift'])
   expect(await ui.findAll({ type: 'Button' })).toEqual([])
-  expect(await text(ui, /^Advisory drift:/)).toBe('Advisory drift: off until an export is seen')
+  expect(await row(ui, 'Watching')).toEqual(['Watching', 'Off until an export is seen'])
   await ui.unmount()
 })
 
