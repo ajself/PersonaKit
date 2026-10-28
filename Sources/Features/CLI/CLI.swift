@@ -187,16 +187,28 @@ struct ValidateCommand: ParsableCommand {
 struct ListCLICommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "list",
-    abstract: "List entities from loaded scopes."
+    abstract: "List entities from loaded scopes. Use --json for machine-readable output with provenance."
   )
 
   @OptionGroup
   var scope: ScopeOptions
 
+  @Flag(name: .customLong("json"), help: "Print JSON with scope and source-file provenance. Required for `all`.")
+  var json = false
+
   @Argument(help: "Entity type to list.")
   var entityType: ListEntityType
 
   func run() throws {
+    if json {
+      try runJSON()
+      return
+    }
+
+    guard entityType != .all else {
+      throw ArgumentParser.ValidationError(ListCommand.allRequiresJSONMessage)
+    }
+
     let scopes = try CLIHelpers.resolveScopes(options: scope)
     do {
       let output = try ListCommand.list(scopes: scopes, entityType: entityType)
@@ -209,6 +221,25 @@ struct ListCLICommand: ParsableCommand {
         stderrStream.write(CLIHelpers.formatRegistryError(registryError) + "\n")
       }
       throw ExitCode.failure
+    }
+  }
+
+  /// Prints one JSON document. Missing scopes and load failures are documents, never text.
+  private func runJSON() throws {
+    let scopes: ScopeSet
+
+    do {
+      scopes = try CLIHelpers.resolveScopes(options: scope)
+    } catch is ArgumentParser.ValidationError {
+      print(ListJSONCommand.noLibraryDocument)
+      return
+    }
+
+    let result = ListJSONCommand.render(scopes: scopes, entityType: entityType)
+    print(result.output)
+
+    if result.exitCode != 0 {
+      throw ExitCode(result.exitCode)
     }
   }
 }

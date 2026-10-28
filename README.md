@@ -184,7 +184,8 @@ Discover and visualize:
 ```text
 personakit guidance
 personakit recommend --goal "<task>"
-personakit list personas|kits|directives|skills|sessions
+personakit list personas|kits|directives|skills|sessions [--json]
+personakit list all --json
 personakit graph --session <id>
 personakit refs <id>
 personakit orphans

@@ -9,10 +9,15 @@ enum ListEntityType: String, CaseIterable, Codable, ExpressibleByArgument {
   case directives
   case skills
   case sessions
+  /// Every kind in one document. Valid only with `--json`.
+  case all
 }
 
 /// Renders deterministic line-based listings from loaded PersonaKit scopes.
 struct ListCommand {
+  /// Shown when the JSON-only `all` kind is requested without `--json`.
+  static let allRequiresJSONMessage = "list all requires --json."
+
   /// Lists entities using a single explicit root directory.
   ///
   /// - Parameters:
@@ -58,6 +63,8 @@ struct ListCommand {
       lines = registry.skills.map { formatLine(id: $0.id, name: $0.name) }
     case .sessions:
       lines = try listSessions(scopes: scopes, fileManager: fileManager)
+    case .all:
+      throw ArgumentParser.ValidationError(allRequiresJSONMessage)
     }
 
     return lines.joined(separator: "\n")
