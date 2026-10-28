@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import type { ContractIds, Enforcement, Observation, PaneState, Resolution, SessionState } from '../types'
+import type { ContractIds, Enforcement, Observation, PaneState, Resolution, SessionState, View } from '../types'
 import { classifyDrift } from './lib/drift'
 import { enforcementFor, installedHook, sameContract } from './lib/enforcement'
 import { observe } from './lib/observe'
@@ -10,6 +10,7 @@ import { loadLibrary, loadPreview, personakitBinary, previewKey } from './lib/ru
 import type { RunnerDollar } from './lib/runner'
 import { statusText } from './lib/status'
 import { paneTree } from './pane'
+import type { PaneActions } from './pane'
 
 // Under the session's project root (`$.session.root()`), not its working directory.
 const SETTINGS = '.claude/settings.json'
@@ -19,7 +20,8 @@ const initial: SessionState = { subagents: {}, enforcement: { kind: 'advisory' }
 export const session = atom({ plugin: 'personakit', key: 'session' } as const, initial)
 
 // The Library and the previews: pane state apart from the session's, so nothing they load reaches the status line.
-const initialPane: PaneState = { view: { kind: 'library' }, back: [], filter: '', library: { kind: 'idle' }, previews: {}, expanded: [], token: 0 }
+// `/pk` picks the opening view; a pane opened any other way shows the Contract and runs nothing.
+const initialPane: PaneState = { view: { kind: 'contract' }, back: [], filter: '', library: { kind: 'idle' }, previews: {}, expanded: [], token: 0 }
 export const pane = atom({ plugin: 'personakit', key: 'pane' } as const, initialPane)
 
 type Call = { tool: string; input: Record<string, unknown>; result: { isError?: boolean; text?: string }; agentId?: string }
@@ -217,7 +219,7 @@ const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills
 
 export const register: Register = (on, options) => {
   const configured = typeof options.mcpServerName === 'string' ? options.mcpServerName : 'personakit'
-  // The executable the pane runs, for the Library and preview loads Task 7 triggers from here.
+  // The executable the pane runs for the Library and the previews.
   const binary = personakitBinary(options)
 
   on('session.start', async ($, e, next) => {
@@ -293,8 +295,12 @@ export const register: Register = (on, options) => {
   on('command.run', { command: 'pk' }, async ($, e) => {
     const [sub = '', name, ...rest] = e.args.trim().split(/\s+/)
     if (sub === '') {
+      // Opens on the Contract when one is in force, else on the Library, which loads each time it is shown.
+      const view: View = (await read($, session)).main ? { kind: 'contract' } : { kind: 'library' }
+      await safely($, async () => void (await update($, pane, (p): PaneState => ({ ...p, view, back: [] }))))
       // Never `focus`: a focused pane would hold the keys and refuse Re-ground's fill.
       const { isPlaced } = await $.ui.open({ id: PANE, title: 'PersonaKit' })
+      if (isPlaced && view.kind === 'library') await safely($, () => refreshLibrary($, binary))
       return { text: isPlaced ? 'PersonaKit pane opened.' : 'No surface here can show the PersonaKit pane.' }
     }
     if (sub !== 'use') return { text: USAGE }
@@ -308,6 +314,22 @@ export const register: Register = (on, options) => {
       const { main } = await read($, session)
       if (main) await fillPrompt($, usePrompt(main.ids))
     }
-    return paneTree($.ui.resolve(e), await read($, session), e.props.bodyColumns, () => void safely($, reground))
+    const edit = (change: (p: PaneState) => PaneState) => void safely($, async () => void (await update($, pane, change)))
+    // A top-level view clears the back stack and the Library loads each time it is shown; any other view stacks.
+    const go = async (view: View) => {
+      const isTop = view.kind === 'contract' || view.kind === 'library'
+      await update($, pane, (p): PaneState => ({ ...p, view, back: isTop ? [] : [...p.back, p.view] }))
+      if (view.kind === 'library') await refreshLibrary($, binary)
+    }
+    const actions: PaneActions = {
+      go: (view) => void safely($, () => go(view)),
+      back: () => edit((p) => ({ ...p, view: p.back.at(-1) ?? { kind: 'library' }, back: p.back.slice(0, -1) })),
+      setFilter: (filter) => edit((p) => ({ ...p, filter })),
+      refresh: () => void safely($, () => refreshLibrary($, binary)),
+      use: (sessionId) => void safely($, async () => void (await fillPrompt($, usePrompt({ sessionId })))),
+      reground: () => void safely($, reground),
+      toggle: (key) => edit((p) => ({ ...p, expanded: p.expanded.includes(key) ? p.expanded.filter((k) => k !== key) : [...p.expanded, key] })),
+    }
+    return paneTree({ ...$.ui.resolve(e), surface: e.surface }, await read($, session), await read($, pane), e.props.bodyColumns, actions)
   })
 }

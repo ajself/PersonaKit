@@ -3,8 +3,10 @@ import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 import type { SessionState } from '../types'
-import { CONTRACT_JSON, EXPORT_MD } from './fixtures/golden'
+import { CONTRACT_JSON, EXPORT_MD, LIST_ERRORS_JSON, LIST_JSON, LIST_MERGED_JSON } from './fixtures/golden'
 import { usePrompt } from './lib/prompts'
+import { rootsMismatchWarning } from './views/library'
+import { highlightRuns } from './views/parts'
 
 const SESSION = 'read-only-auditor_audit-pass'
 const RESOLVE = 'mcp__personakit__personakit_resolve_contract'
@@ -20,6 +22,8 @@ const PANE = {
 } as const
 
 type Fill = { text: string; mode: string }
+type Ran = { exitCode: number; stdout: string; stderr: string; isStdoutTruncated: boolean; isStderrTruncated: boolean }
+const ran = (stdout: string, exitCode = 0, stderr = ''): Ran => ({ exitCode, stdout, stderr, isStdoutTruncated: false, isStderrTruncated: false })
 
 /** The engine beneath the plugin, as register.test.ts stands it up, plus the prompt box and panes. */
 function engine(on: On) {
@@ -27,10 +31,20 @@ function engine(on: On) {
   const world = {
     answers, draft: '', fills: [] as Fill[], fillAnswer: { isFilled: true } as { isFilled: boolean; refusal?: 'dialog' | 'no_composer' },
     opens: [] as Record<string, unknown>[], isPlaced: true, toasts: [] as string[], logs: [] as string[], state: undefined as SessionState | undefined,
+    // `personakit` as the pane runs it: every argv, and what each run answers (a `deny` is the host refusing).
+    runs: [] as (readonly string[])[], sessionWrites: 0, process: (() => ran(LIST_JSON)) as (argv: readonly string[]) => Ran | { deny: string },
   }
   on('state.set', (_, e, next) => {
-    if (e.plugin === 'personakit' && e.key === 'session') world.state = e.value as SessionState
+    if (e.plugin === 'personakit' && e.key === 'session') {
+      world.state = e.value as SessionState
+      world.sessionWrites += 1
+    }
     return next(e)
+  })
+  on('process.run', (_, e) => {
+    world.runs.push(e.argv)
+    const answer = world.process(e.argv)
+    return ('deny' in answer ? answer : { value: answer }) as never
   })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.compact', (_, e) => ({ messages: e.messages }))
@@ -175,7 +189,8 @@ each('with no contract the pane gives the /pk use hint and no Re-ground', async 
   expect(await text(ui, /^No contract/)).toBe('No contract in force')
   expect(await text(ui, /\/pk use/)).toBe('Run /pk use <session> to ground this session.')
   expect(await chips(ui)).toEqual(['● Advisory', '✓ No drift'])
-  expect(await ui.findAll({ type: 'Button' })).toEqual([])
+  // Only the Contract | Library switch: nothing to Re-ground.
+  expect((await ui.findAll({ type: 'Button' })).map((b) => b.key)).toEqual(['switch-contract', 'switch-library'])
   expect(await row(ui, 'Watching')).toEqual(['Watching', 'Off until an export is seen'])
   await ui.unmount()
 })
@@ -253,4 +268,450 @@ test('Re-ground fills with persona and directive when the contract has no sessio
   expect(w.fills).toEqual([{ text: usePrompt({ personaId: 'read-only-auditor', directiveId: 'audit-pass' }), mode: 'replace' }])
   expect(w.fills[0]?.text).toContain('--persona read-only-auditor --directive audit-pass')
   await ui.unmount()
+})
+
+// The Library: `process.run` answers `personakit list all --json`; `/pk` opens the pane on the right view.
+const IN_FORCE = SESSION
+const listing = (change: (library: Record<string, any[]> & { scopes: Record<string, string> }) => void) => {
+  const library = JSON.parse(LIST_JSON)
+  change(library)
+  return JSON.stringify(library)
+}
+const session = (id: string, personaId = 'read-only-auditor') => ({
+  id, personaId, directiveId: 'audit-pass', kitOverrides: [], path: `Sessions/${id}.session.json`, scope: 'project', shadows: null, shadowedPath: null,
+})
+const keys = async (ui: Pick<Ui, 'findAll'>, type: string) => (await ui.findAll({ type })).map((b) => b.key)
+const library = async ($: Engine, w: World, surface: Surface, list = LIST_JSON) => {
+  w.process = () => ran(list)
+  await pk($, '')
+  return mount($, surface)
+}
+
+each('/pk opens on the Contract when one is in force, and loads nothing', async ($, w, surface) => {
+  await ground($, w)
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^CONTRACT$/)).toBe('CONTRACT')
+  expect(await text(ui, /^PEOPLE/)).toBe(undefined)
+  expect(w.runs).toEqual([])
+  expect(w.opens).toEqual([{ id: 'personakit', title: 'PersonaKit' }])
+  await ui.unmount()
+})
+
+each('/pk opens on the Library when none is in force, loading it once', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  expect(await text(ui, /^CONTRACT$/)).toBe(undefined)
+  expect(w.runs).toEqual([['personakit', 'list', 'all', '--json']])
+  await ui.unmount()
+})
+
+each('/pk that no surface places loads nothing', async ($, w) => {
+  w.isPlaced = false
+  await pk($, '')
+  expect(w.runs).toEqual([])
+})
+
+test('the personakitPath option is the binary the Library runs', { options: { personakitPath: '/opt/pk/personakit' } }, async ($, on) => {
+  const w = engine(on)
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: true })
+  await pk($, '')
+  expect(w.runs[0]).toEqual(['/opt/pk/personakit', 'list', 'all', '--json'])
+  expect(w.logs).toEqual([])
+})
+
+each('switching to the Library loads it each time and never writes the session', async ($, w, surface) => {
+  await ground($, w)
+  await pk($, '')
+  const ui = await mount($, surface)
+  const writes = w.sessionWrites
+  await ui.press({ key: 'switch-library' })
+  expect(w.runs).toHaveLength(1)
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  await ui.press({ key: 'switch-contract' })
+  expect(await text(ui, /^CONTRACT$/)).toBe('CONTRACT')
+  await ui.press({ key: 'switch-library' })
+  expect(w.runs).toHaveLength(2)
+  expect(w.sessionWrites).toBe(writes)
+  await ui.unmount()
+})
+
+each('Use fills the grounding prompt for that session', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  await ui.press({ key: `use:${SESSION}` })
+  expect(w.fills).toEqual([{ text: usePrompt({ sessionId: SESSION }), mode: 'replace' }])
+  expect(await text(ui, /^Use$/)).toBe(undefined) // a Button, not a Text
+  expect((await ui.find({ key: `use:${SESSION}` }))?.text).toBe('Use')
+  await ui.unmount()
+})
+
+each('another session in force turns Use into Switch and marks the one in force', async ($, w, surface) => {
+  await ground($, w)
+  w.process = () => ran(listing((l) => l.sessions!.push(session('b-session'))))
+  await pk($, '')
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  expect((await ui.find({ key: 'use:b-session' }))?.text).toBe('Switch')
+  expect(await ui.find({ key: `use:${IN_FORCE}` })).toBe(undefined)
+  expect(await texts(ui, `session-${IN_FORCE}`)).toContain('● in force')
+  await ui.unmount()
+})
+
+each('a persona no session uses says so and has no Use button', async ($, w, surface) => {
+  const ui = await library($, w, surface, listing((l) => (l.sessions = [])))
+  expect(await texts(ui, 'person-read-only-auditor')).toContain('No session uses this persona yet.')
+  expect(await keys(ui, 'Button')).not.toContain(`use:${SESSION}`)
+  await ui.unmount()
+})
+
+each('a session whose persona is missing from the library keeps its row, badge and Use', async ($, w, surface) => {
+  const ui = await library($, w, surface, listing((l) => l.sessions!.push(session('ghost-session', 'ghost'))))
+  expect(await texts(ui, 'person-ghost')).toEqual(['ghost', '└ ', 'ghost-session', 'project'])
+  expect(await ui.find({ key: 'open:persona:ghost' })).toBe(undefined)
+  expect((await ui.find({ key: 'use:ghost-session' }))?.text).toBe('Use')
+  expect(await ui.find({ key: 'open:session:ghost-session' })).toBeDefined()
+  await ui.unmount()
+})
+
+each('the filter groups results by kind and keeps its text through Back', async ($, w, surface) => {
+  const ui = await library($, w, surface, LIST_MERGED_JSON)
+  await ui.input({ key: 'filter', text: 'style' })
+  const captions = async () => (await ui.findAll({ type: 'Text', text: / · \d+$/ })).map((t) => t.text)
+  expect(await captions()).toEqual(['PEOPLE · 1', 'DIRECTIVES · 1', 'KITS · 2', 'SKILLS · 2'])
+  expect(await text(ui, /^PEOPLE$/)).toBe(undefined)
+  expect(await keys(ui, 'Button')).toContain('open:kit:swift-style')
+
+  await ui.press({ key: 'open:directive:apply-style' })
+  expect(await ui.find({ key: 'filter' })).toBe(undefined)
+  await ui.press({ key: 'back' })
+  expect((await ui.find({ key: 'filter' }))?.props.value).toBe('style')
+  expect(await captions()).toEqual(['PEOPLE · 1', 'DIRECTIVES · 1', 'KITS · 2', 'SKILLS · 2'])
+  await ui.unmount()
+})
+
+each('a filter that matches nothing says so and keeps the field', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  await ui.input({ key: 'filter', text: 'zzz' })
+  expect(await text(ui, /^Nothing matches/)).toBe('Nothing matches “zzz”.')
+  expect((await ui.find({ key: 'filter' }))?.props.value).toBe('zzz')
+  await ui.input({ key: 'filter', text: '' })
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  await ui.unmount()
+})
+
+each('every row carries its scope in words', async ($, w, surface) => {
+  const ui = await library($, w, surface, LIST_MERGED_JSON)
+  expect(await texts(ui, 'person-architectural-editor')).toContain('project')
+  expect(await texts(ui, 'person-senior-swiftui-engineer')).toContain('global')
+  expect(await texts(ui, 'session-senior-swiftui-engineer_apply-style')).toContain('global')
+
+  await ui.press({ key: 'list:kits' })
+  expect(await texts(ui, 'kit-repo-constraints')).toContain('project · overrides global')
+  expect(await texts(ui, 'kit-swift-style')).toContain('project · overrides global')
+  expect(await texts(ui, 'kit-architectural-editor-core')).toEqual(['architectural-editor-core', 'project'])
+
+  await ui.press({ key: 'back' })
+  await ui.input({ key: 'filter', text: 'repo' })
+  expect(await texts(ui, 'kit-repo-constraints')).toContain('project · overrides global')
+  await ui.unmount()
+})
+
+each('a scope badge is plain styled words in the terminal and an outline where the surface can draw one', async ($, w, surface) => {
+  const ui = await library($, w, surface, LIST_MERGED_JSON)
+  // The terminal's filter field is bordered too, but it is not a badge.
+  const outlines = (await ui.findAll({ type: 'Box' })).filter((b) => b.props.borderStyle !== undefined && b.key !== 'filter-field')
+  // The badges on two rows, so the legend's own scope words are not the ones read.
+  const badge = async (key: string, word: string) => {
+    const found: { props: Record<string, unknown> }[] = []
+    const walk = (n: Node & { props?: Record<string, unknown> }) => {
+      if (typeof n === 'string') return
+      if (n.type === 'Text' && shown(n) === word) found.push(n as { props: Record<string, unknown> })
+      n.children?.forEach(walk)
+    }
+    walk((await ui.find({ key })) as Node)
+    return found[0]
+  }
+  const project = await badge('person-architectural-editor', 'project')
+  const global = await badge('person-senior-swiftui-engineer', 'global')
+  if (surface === 'terminal') {
+    expect(outlines).toEqual([])
+    expect(project?.props).toMatchObject({ bold: true })
+    expect(global?.props).toMatchObject({ dimColor: true })
+  } else {
+    expect(outlines.length).toBeGreaterThan(0)
+    expect(outlines.map((b) => [b.props.borderStyle, b.props.borderDimColor ?? false])).toEqual(
+      expect.arrayContaining([['round', false], ['round', true]]),
+    )
+  }
+  await ui.unmount()
+})
+
+each('the legend names each root with its counts', async ($, w, surface) => {
+  const ui = await library($, w, surface, LIST_MERGED_JSON)
+  expect(await texts(ui, 'legend-project')).toEqual(['project  <PROJECT>  1 session · 1 persona'])
+  expect(await texts(ui, 'legend-global')).toEqual(['global  <GLOBAL>  1 session · 1 persona'])
+  await ui.unmount()
+  const only = await library($, w, surface, LIST_JSON)
+  expect(await texts(only, 'legend-project')).toEqual(['project  <ROOT>  1 session · 1 persona'])
+  expect(await only.find({ key: 'legend-global' })).toBe(undefined)
+  await only.unmount()
+})
+
+each('a kind list is sorted by display label, then id, and Back returns to the Library', async ($, w, surface) => {
+  const directive = (id: string, title: string) => ({ ...JSON.parse(LIST_JSON).directives[0], id, entity: { ...JSON.parse(LIST_JSON).directives[0].entity, id, title } })
+  const ui = await library($, w, surface, listing((l) => (l.directives = [directive('z-1', 'Alpha'), directive('a-2', 'beta'), directive('b-1', 'Alpha')])))
+  await ui.press({ key: 'list:directives' })
+  expect(await keys(ui, 'Button')).toEqual(['switch-contract', 'switch-library', 'back', 'open:directive:b-1', 'open:directive:z-1', 'open:directive:a-2'])
+  expect((await ui.find({ key: 'back' }))?.text).toBe('‹ Library')
+  await ui.press({ key: 'back' })
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  expect(w.runs).toHaveLength(1) // Back is not a switch: nothing reloads
+  await ui.unmount()
+})
+
+each('errors read as one document, grouped by scope and then path', async ($, w, surface) => {
+  const errors = [
+    { entityType: 'kit', id: 'k', message: 'no skills', path: null, scope: null },
+    { entityType: 'persona', id: null, message: 'bad json', path: 'Packs/personas/b.persona.json', scope: 'global' },
+    { entityType: 'persona', id: null, message: 'worse json', path: 'Packs/personas/a.persona.json', scope: 'project' },
+    { entityType: 'skill', id: 's', message: 'dup', path: 'Packs/personas/a.persona.json', scope: 'project' },
+  ]
+  w.process = () => ran(JSON.stringify({ errors }), 1)
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^The library didn't load/)).toBe("The library didn't load. Fix these and press Refresh:")
+  expect(await ui.find({ key: 'refresh' })).toBeDefined()
+  expect(await ui.find({ key: 'filter' })).toBe(undefined)
+  const body = await texts(ui, 'pane')
+  expect(body.slice(body.indexOf("The library didn't load. Fix these and press Refresh:") + 1)).toEqual([
+    'project', 'Packs/personas/a.persona.json', 'persona: worse json', 'skill s: dup',
+    'global', 'Packs/personas/b.persona.json', 'persona: bad json',
+    'library', '(no file)', 'kit k: no skills',
+  ])
+  await ui.unmount()
+})
+
+each('the fixture errors document shows its one error and a Refresh that loads again', async ($, w, surface) => {
+  w.process = () => ran(LIST_ERRORS_JSON, 1)
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^persona:/)).toContain('Failed to decode JSON')
+  await ui.press({ key: 'refresh' })
+  expect(w.runs).toHaveLength(2)
+  w.process = () => ran(LIST_JSON)
+  await ui.press({ key: 'refresh' })
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  await ui.unmount()
+})
+
+each('no library says where it looked', async ($, w, surface) => {
+  w.process = () => ran('{"noLibrary":true}', 0)
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^No PersonaKit library/)).toBe('No PersonaKit library here: no .personakit in this project and no ~/.personakit.')
+  await ui.unmount()
+})
+
+each('a binary that will not run names itself and the option to set', async ($, w, surface) => {
+  w.process = () => ran('', 64, 'usage: personakit list <kind>')
+  await pk($, '')
+  const ui = await mount($, surface)
+  const shown = (await text(ui, /^Couldn't run personakit/))!
+  expect(shown).toMatch(/^Couldn't run personakit: .+\. Set the personakitPath option if PersonaKit is installed elsewhere\.$/)
+  await ui.unmount()
+})
+
+each('a host that cannot run processes says the Library is not available and keeps the Contract', async ($, w, surface) => {
+  w.process = () => ({ deny: 'process.run is not available on this host' })
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^This host can't run PersonaKit/)).toBe(
+    "This host can't run PersonaKit, so the Library isn't available here. The Contract view still works.",
+  )
+  expect(await ui.find({ key: 'refresh' })).toBe(undefined)
+  await ui.press({ key: 'switch-contract' })
+  expect(await text(ui, /^No contract in force/)).toBe('No contract in force')
+  await ui.unmount()
+})
+
+test('mobile has no filter, and every Button is still there', async ($, on) => {
+  const w = engine(on)
+  await $.session.start({ cwd: '/p', surface: 'mobile', isInteractive: true })
+  await pk($, '')
+  const ui = await $.ui.mount({ ...PANE, surface: 'mobile' })
+  expect(await ui.find({ key: 'filter' })).toBe(undefined)
+  expect(await ui.findAll({ type: 'Input' })).toEqual([])
+  expect(await keys(ui, 'Button')).toEqual([
+    'switch-contract', 'switch-library', 'refresh', `open:persona:read-only-auditor`, `open:session:${SESSION}`, `use:${SESSION}`,
+    'list:directives', 'list:kits', 'list:skills',
+  ])
+  await ui.press({ key: `use:${SESSION}` })
+  expect(w.fills).toHaveLength(1)
+  await ui.unmount()
+})
+
+each('a Library loaded from other roots than the contract in force warns', async ($, w, surface) => {
+  const elsewhere = JSON.stringify({ ...JSON.parse(CONTRACT_JSON), scope: { mode: 'project-only', projectRoot: '/x' } })
+  await call($, w, RESOLVE, elsewhere)
+  await pk($, '')
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  expect(await text(ui, /^⚠/)).toBe('⚠ Library loaded from <ROOT>; the contract in force came from /x.')
+  await ui.unmount()
+})
+
+each('a Library from the same roots as the contract in force does not warn', async ($, w, surface) => {
+  await ground($, w)
+  await pk($, '')
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  expect(await text(ui, /^⚠/)).toBe(undefined)
+  expect(await text(ui, /^PEOPLE$/)).toBe('PEOPLE')
+  await ui.unmount()
+})
+
+each('filter results put each match in its own highlighted run, and the words read the same', async ($, w, surface) => {
+  const ui = await library($, w, surface, listing((l) => (l.directives![0]!.entity.title = 'Production audit pass')))
+  await ui.input({ key: 'filter', text: 'PROD project' })
+  const hit = (await ui.find({ key: 'open:directive:audit-pass' }))!
+  expect(hit.text).toBe('Production audit pass')
+  const runs = await ui.findAll({ type: 'Text', text: /^Prod$/ })
+  expect(runs).toHaveLength(2) // the directive's row, and the session row that names it
+  for (const run of runs) expect(run.props).toMatchObject({ weight: 'semibold', color: 'suggestion' })
+  expect((await ui.find({ key: `open:session:${SESSION}` }))?.text).toBe('Production audit pass') // the session leads with it
+  // The scope word filters by scope and is not styled as a match.
+  const scope = await ui.findAll({ type: 'Text', text: /^project$/ })
+  expect(scope.length).toBeGreaterThan(0)
+  for (const word of scope) expect(word.props.color).not.toBe('suggestion')
+  // Without a filter nothing is styled.
+  await ui.input({ key: 'filter', text: '' })
+  expect(await ui.findAll({ type: 'Text', text: /^Prod$/ })).toEqual([])
+  await ui.unmount()
+})
+
+each('the filter is a bordered field in the terminal and bare elsewhere', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  const field = await ui.find({ key: 'filter-field' })
+  const input = await ui.find({ key: 'filter' })
+  expect(input).toMatchObject({ type: 'Input', props: { label: 'Filter', placeholder: 'id, name, project or global' } })
+  if (surface === 'terminal') {
+    expect(field).toMatchObject({ type: 'Box', props: { borderStyle: 'round', paddingX: 1 } })
+    expect(field?.children?.map((c) => (c as { type?: string }).type)).toEqual(['Input'])
+  } else {
+    expect(field).toBe(undefined)
+  }
+  await ui.input({ key: 'filter', text: 'audit' }) // still the same handler
+  expect((await ui.find({ key: 'filter' }))?.props.value).toBe('audit')
+  await ui.unmount()
+})
+
+each('a person row leads with the persona, and each session with its directive title and then its id', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  expect((await ui.find({ key: 'open:persona:read-only-auditor' }))?.text).toBe('Read-Only Auditor')
+  expect((await ui.find({ key: `open:session:${SESSION}` }))?.text).toBe('Read-only audit pass')
+  // Persona: badge only, no id. Session: connector, id, badge. The links and Use are Buttons, not Texts.
+  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', SESSION, 'project'])
+  await ui.press({ key: `open:session:${SESSION}` })
+  expect(await ui.find({ key: 'filter' })).toBe(undefined) // the session's detail view
+  await ui.unmount()
+})
+
+each('the persona id shows only when a filter word matches it and nothing else on the row', async ($, w, surface) => {
+  const ui = await library($, w, surface, listing((l) => (l.sessions![0]!.id = 'audit-1')))
+  const id = async () => (await texts(ui, 'person-read-only-auditor')).filter((t) => t === 'read-only-auditor')
+  expect(await id()).toEqual([])
+  await ui.input({ key: 'filter', text: 'only-aud' }) // the id alone has it: not the name ("Read-Only Auditor") nor the session
+  expect(await id()).toEqual(['read-only-auditor'])
+  const runs = await ui.findAll({ type: 'Text', text: /^only-aud$/ })
+  expect(runs).toHaveLength(1)
+  expect(runs[0]?.props).toMatchObject({ weight: 'semibold', color: 'suggestion' })
+  await ui.input({ key: 'filter', text: 'auditor' }) // the name has it too
+  expect(await id()).toEqual([])
+  await ui.input({ key: 'filter', text: 'audit-1' }) // the session id has it
+  expect(await id()).toEqual([])
+  await ui.input({ key: 'filter', text: 'only-aud project' }) // a scope word is not text
+  expect(await id()).toEqual(['read-only-auditor'])
+  await ui.unmount()
+})
+
+each('a filter word in the session id is highlighted after the directive title', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  await ui.input({ key: 'filter', text: 'pass' })
+  expect((await ui.find({ key: `open:session:${SESSION}` }))?.text).toBe('Read-only audit pass')
+  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', 'pass', SESSION, 'project'])
+  const runs: { props: Record<string, unknown> }[] = []
+  const walk = (n: Node & { props?: Record<string, unknown> }) => {
+    if (typeof n === 'string') return
+    if (n.type === 'Text' && shown(n) === 'pass') runs.push(n as { props: Record<string, unknown> })
+    n.children?.forEach(walk)
+  }
+  walk((await ui.find({ key: 'person-read-only-auditor' })) as Node)
+  expect(runs).toHaveLength(2) // the directive title on the link, and the session id after it
+  for (const run of runs) expect(run.props).toMatchObject({ weight: 'semibold', color: 'suggestion' })
+  await ui.unmount()
+})
+
+each('session lines hang under a connector: ├ before the last session, └ on it and on the no-session line', async ($, w, surface) => {
+  const ui = await library($, w, surface, listing((l) => l.sessions!.push(session('z-session'))))
+  const lines = async () => (await texts(ui, 'person-read-only-auditor')).filter((t) => t === '├ ' || t === '└ ')
+  expect(await lines()).toEqual(['├ ', '└ '])
+  for (const id of [SESSION, 'z-session']) {
+    const line = (await ui.find({ key: `session-${id}` }))!
+    expect(line).toMatchObject({ type: 'Box', props: { marginLeft: 2, flexDirection: 'row' } })
+    const [connector, rest] = line.children as { type: string; props: Record<string, unknown> }[]
+    expect(connector).toMatchObject({ type: 'Box', props: { width: 2, flexShrink: 0 } })
+    expect(rest).toMatchObject({ type: 'Box', props: { flexDirection: 'row', flexWrap: 'wrap', flexShrink: 1 } })
+  }
+  await ui.unmount()
+  const none = await library($, w, surface, listing((l) => (l.sessions = [])))
+  expect(await texts(none, 'person-read-only-auditor')).toEqual(['project', '└ ', 'No session uses this persona yet.'])
+  await none.unmount()
+})
+
+each('the People caption sits under its title on the home and not on filter results', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  const caption = 'Who you can work with, and the jobs you can start with them.'
+  expect(await text(ui, /^Who you can/)).toBe(caption)
+  const section = (await ui.find({ key: 'section-People' }))!
+  expect((section.children as { type: string; props: Record<string, unknown> }[])[1]).toMatchObject({ type: 'Text', props: { dimColor: true } })
+  await ui.input({ key: 'filter', text: 'audit' })
+  expect(await text(ui, /^PEOPLE · 1$/)).toBe('PEOPLE · 1')
+  expect(await text(ui, /^Who you can/)).toBe(undefined)
+  await ui.unmount()
+})
+
+each('the kind lists sit under Components', async ($, w, surface) => {
+  const ui = await library($, w, surface)
+  expect(await text(ui, /^COMPONENTS$/)).toBe('COMPONENTS')
+  expect(await text(ui, /BUILDING/i)).toBe(undefined)
+  await ui.unmount()
+})
+
+test('highlightRuns cuts every match, longest word first, and rejoins to the text', () => {
+  expect(highlightRuns('Production audit', ['prod', 'AUDIT']).map((r) => [r.text, r.isMatch])).toEqual([
+    ['Prod', true], ['uction ', false], ['audit', true],
+  ])
+  expect(highlightRuns('a.b a.b', ['a.b']).filter((r) => r.isMatch)).toHaveLength(2) // regex characters are literal
+  expect(highlightRuns('swift swiftui', ['swift', 'swiftui']).map((r) => r.text)).toEqual(['swift', ' ', 'swiftui'])
+  expect(highlightRuns('plain', [])).toEqual([{ text: 'plain', isMatch: false }])
+  expect(highlightRuns('', ['x'])).toEqual([{ text: '', isMatch: false }])
+})
+
+test('rootsMismatchWarning compares the sets of roots, not their keys', () => {
+  const warn = rootsMismatchWarning
+  expect(warn({ mode: 'project-only', projectRoot: '/x' }, { project: '/p' })).toBe(
+    '⚠ Library loaded from /p; the contract in force came from /x.',
+  )
+  expect(warn({ mode: 'project+global', projectRoot: '/p', globalRoot: '/g' }, { project: '/p' })).toBe(
+    '⚠ Library loaded from /p; the contract in force came from /p, /g.',
+  )
+  expect(warn({ mode: 'project-only', projectRoot: '/p' }, { project: '/p', global: '/g' })).toBe(
+    '⚠ Library loaded from /p, /g; the contract in force came from /p.',
+  )
+  // The CLI reports an equal project and global root once, as `global`.
+  expect(warn({ mode: 'project+global', projectRoot: '/g', globalRoot: '/g' }, { global: '/g' })).toBe(undefined)
+  expect(warn({ mode: 'project+global', projectRoot: '/p', globalRoot: '/g' }, { global: '/g', project: '/p' })).toBe(undefined)
+  expect(warn({ mode: 'global-only', globalRoot: '/g' }, { global: '/g' })).toBe(undefined)
+  expect(warn(undefined, { project: '/p' })).toBe(undefined)
+  expect(warn({ mode: 'project-only' }, { project: '/p' })).toBe(undefined)
 })
