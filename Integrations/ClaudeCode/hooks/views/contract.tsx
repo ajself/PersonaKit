@@ -1,8 +1,9 @@
 import type { Color, RenderChildren } from 'claude-code'
 
-import type { Contract, DriftEvent, Resolution, SessionState } from '../../types'
+import type { Contract, DriftEvent, PaneState, Preview, Resolution, SessionState } from '../../types'
+import { previewKey } from '../lib/runner'
 import { LABEL_WIDTH, parts } from './parts'
-import type { El } from './parts'
+import type { El, PaneActions } from './parts'
 
 const list = (ids: readonly string[]) => (ids.length ? ids.join(', ') : 'none')
 const source = (r: Resolution) => (r.source === 'mcp' ? 'MCP' : 'CLI')
@@ -27,6 +28,14 @@ const isClean = (c: Contract) =>
   c.unauthorizedRequiredSkillIds.length === 0 &&
   c.undeclaredRequestedSkillIds.length === 0
 
+/** Why the Skills section is empty: the pane is reading, couldn't, or there was nothing to read. */
+const notSeen = (preview: Preview | undefined) =>
+  preview?.kind === 'loading'
+    ? 'Kits, skills, and scope: reading from the CLI…'
+    : preview?.kind === 'failed'
+      ? `Kits, skills, and scope: not seen (the pane couldn't read them: ${preview.message})`
+      : 'Kits, skills, and scope: not seen (no contract JSON resolved)'
+
 const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind)
 
 /**
@@ -34,10 +43,13 @@ const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground
  * drift log, subagent contracts, and Re-ground, in the spec's order. Labels are muted in a fixed
  * column so values align and wrap inside their own column; status reads through theme colors only,
  * so light and dark follow the person's theme. Re-ground only while a contract is in force.
+ *
+ * A resolution with export details but no contract JSON is filled in from the preview the pane read for its ids
+ * (`pane.previews`), display-only: the view reads it and runs nothing, and `main` is never touched.
  */
-export function contractView(el: El, state: SessionState, reground: () => void): RenderChildren[] {
+export function contractView(el: El, state: SessionState, pane: PaneState, actions: Pick<PaneActions, 'reground' | 'toggle'>): RenderChildren[] {
   const { Box, Text, Button } = el
-  const { section, row } = parts(el)
+  const { section, row, stepsSection } = parts(el)
   const { main, enforcement } = state
   const withId = ({ name, id }: { name?: string; id?: string }) => (
     <Text>
@@ -97,22 +109,11 @@ export function contractView(el: El, state: SessionState, reground: () => void):
     </Box>
   )
 
-  const contract = main?.contract
+  const preview = main?.contract || !main?.details ? undefined : pane.previews[previewKey(main.ids)]
+  const read = preview?.kind === 'loaded' ? preview.contract : undefined
+  const contract = main?.contract ?? read
   const details = main?.details
   const steps = details?.steps ?? []
-  // The number sits in its own fixed-width box so a wrapped step's later lines align with its text.
-  const numberWidth = `${steps.length}`.length + 2
-  const stepRows = steps.map((s, i) => (
-    <Box key={`step-${i + 1}`} flexDirection="row">
-      <Box width={numberWidth} flexShrink={0}>
-        <Text dimColor tabular>{`${i + 1}`}</Text>
-      </Box>
-      <Box flexDirection="column" flexGrow={1} flexShrink={1}>
-        <Text>{s.text}</Text>
-        {s.isStop && <Text color="warning">⏸ Stop for review</Text>}
-      </Box>
-    </Box>
-  ))
   const directive = named(details?.directiveTitle, details?.directiveId ?? main?.ids.directiveId)
 
   const contractSection =
@@ -122,8 +123,8 @@ export function contractView(el: El, state: SessionState, reground: () => void):
       row('Persona', withId(named(details?.personaName, details?.personaId ?? main.ids.personaId))),
       directive.name && row('Directive', withId(directive)),
       details?.goal && row('Goal', details.goal),
-      steps.length > 0 && row('Steps', stepRows),
     )
+  const stepsBlock = steps.length > 0 && stepsSection(steps, 'contract:steps', pane.expanded, actions.toggle)
 
   const authRows =
     contract && !isClean(contract)
@@ -152,8 +153,13 @@ export function contractView(el: El, state: SessionState, reground: () => void):
         row('Forbidden', list(contract.forbiddenSkillIds)),
         row('Authorized', list(contract.authorizedSkillIds)),
         ...authRows,
+        read && (
+          <Text key="read-by-pane" size="caption" dimColor>
+            Kits, skills, and scope: read by the pane from the CLI; the session did not resolve them.
+          </Text>
+        ),
       )
-    : main && section('Skills', <Text dimColor>Kits, skills, and scope: not seen (no contract JSON resolved)</Text>)
+    : main && section('Skills', <Text dimColor>{notSeen(preview)}</Text>)
 
   const scope = contract?.scope
   const scopeSection =
@@ -254,6 +260,7 @@ export function contractView(el: El, state: SessionState, reground: () => void):
   return [
     header,
     contractSection,
+    stepsBlock,
     skillsSection,
     scopeSection,
     enforcementSection,
@@ -262,7 +269,7 @@ export function contractView(el: El, state: SessionState, reground: () => void):
     subagentSection,
     main && (
       <Box key="actions">
-        <Button key="reground" variant="primary" onPress={() => reground()}>
+        <Button key="reground" variant="primary" onPress={() => actions.reground()}>
           Re-ground
         </Button>
       </Box>

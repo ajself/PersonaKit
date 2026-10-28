@@ -19,7 +19,7 @@ export function paneTree(el: El, session: SessionState, pane: PaneState, columns
   const body = (() => {
     switch (view.kind) {
       case 'contract':
-        return contractView(el, session, () => actions.reground())
+        return contractView(el, session, pane, actions)
       case 'library':
         return libraryHome(el, session, pane, actions)
       case 'list':

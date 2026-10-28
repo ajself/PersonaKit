@@ -131,7 +131,7 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   expect(await row(ui, 'Directive')).toEqual(['Directive', 'Read-only audit pass (audit-pass)'])
   expect(await row(ui, 'Goal')).toEqual(['Goal', 'Audit the change and report findings without editing it.'])
   expect(await texts(ui, 'step-1')).toEqual(['1', 'Inspect the diff and the surrounding code.'])
-  expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '⏸ Stop for review'])
+  expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '◆ stop'])
   expect(await row(ui, 'Mode')).toEqual(['Mode', 'project-only'])
   expect(await row(ui, 'State')).toEqual(['State', 'Advisory · no hook installed'])
   expect(await row(ui, 'Watching')).toEqual(['Watching', 'command-execution, file-mutation, network-egress · from the export'])
@@ -149,13 +149,117 @@ each('a wrapped step keeps its later lines aligned with its text', async ($, w, 
   await call($, w, EXPORT, EXPORT_MD.replace('Report confirmed issues before suggestions.', long), { sessionId: SESSION })
   const ui = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, bodyColumns: 30 } })
   expect((await ui.find({ key: 'pane' }))?.props.width).toBe(30)
+  await ui.press({ key: 'toggle:contract:steps' })
   const row = (await ui.find({ key: 'step-2' }))!
   expect(row.props.flexDirection).toBe('row')
   const [number, body] = row.children as { props: Record<string, unknown>; text?: string }[]
   // The number column is fixed; the step text wraps inside the box beside it, never back under the number.
   expect(number?.props).toMatchObject({ width: '2. '.length, flexShrink: 0 })
   expect(body?.props).toMatchObject({ flexGrow: 1, flexShrink: 1 })
-  expect(await texts(ui, 'step-2')).toEqual(['2', long, '⏸ Stop for review'])
+  expect(await texts(ui, 'step-2')).toEqual(['2', long, '◆ stop'])
+  await ui.unmount()
+})
+
+each('label and number rows align to the top of their row', async ($, w, surface) => {
+  await ground($, w)
+  const ui = await mount($, surface)
+  for (const key of ['row-Persona', 'row-Goal', 'row-Mode', 'step-1', 'step-2']) {
+    expect((await ui.find({ key }))?.props.alignItems, key).toBe('flex-start')
+  }
+  await ui.unmount()
+})
+
+const LONG_STEP = 'Read the diff. Then read every file it touches, top to bottom, before writing anything down at all, ever.'
+const longStepExport = () => EXPORT_MD.replace('1. Inspect the diff and the surrounding code.', `1. ${LONG_STEP}`)
+
+each('the contract steps show their first lines until shown in full', async ($, w, surface) => {
+  await call($, w, EXPORT, longStepExport(), { sessionId: SESSION })
+  const ui = await mount($, surface)
+  expect(await texts(ui, 'step-1')).toEqual(['1', 'Read the diff.'])
+  expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '◆ stop'])
+  expect((await ui.find({ key: 'toggle:contract:steps' }))?.text).toBe('Show full steps')
+  expect(await text(ui, /^⏸/)).toBe(undefined)
+  await ui.press({ key: 'toggle:contract:steps' })
+  expect(await texts(ui, 'step-1')).toEqual(['1', LONG_STEP])
+  expect((await ui.find({ key: 'toggle:contract:steps' }))?.text).toBe('Show first lines')
+  await ui.unmount()
+})
+
+// An export seen, no contract JSON: `process.run` answers the pane's own `personakit contract` and `export`.
+const exportOnly = (w: World) => {
+  w.process = (argv) => (argv[1] === 'contract' ? ran(CONTRACT_JSON) : argv[1] === 'export' ? ran(EXPORT_MD) : ran(LIST_JSON))
+}
+const contractRuns = (w: World) => w.runs.filter((argv) => argv[1] === 'contract')
+
+each('a contract with export details but no contract JSON is filled in from the CLI, labeled as read by the pane', async ($, w, surface) => {
+  exportOnly(w)
+  await call($, w, EXPORT, EXPORT_MD, { sessionId: SESSION })
+  expect((w.state as SessionState).main?.contract).toBe(undefined)
+  const before = await mount($, surface)
+  expect(await text(before, /not seen/)).toBeDefined() // opened without /pk: nothing read yet
+  await before.unmount()
+
+  await pk($, '')
+  expect(w.runs).toEqual([
+    ['personakit', 'contract', '--session', SESSION],
+    ['personakit', 'export', '--session', SESSION],
+  ])
+  const ui = await mount($, surface)
+  expect(await text(ui, /not seen/)).toBe(undefined)
+  expect(await text(ui, /read by the pane/)).toBeDefined()
+  expect(await row(ui, 'Kits')).toEqual(['Kits', 'none'])
+  expect(await row(ui, 'Mode')).toEqual(['Mode', 'project-only'])
+  await ui.unmount()
+})
+
+each('switching to the Contract fills it in, and a Library refresh in between drops the fill so it is read again', async ($, w, surface) => {
+  exportOnly(w)
+  await call($, w, EXPORT, EXPORT_MD, { sessionId: SESSION })
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  expect(contractRuns(w)).toHaveLength(0)
+  await ui.press({ key: 'switch-contract' })
+  expect(contractRuns(w)).toHaveLength(1)
+  expect(await text(ui, /read by the pane/)).toBeDefined()
+  await ui.press({ key: 'switch-library' })
+  await ui.press({ key: 'switch-contract' })
+  expect(contractRuns(w)).toHaveLength(2)
+  await ui.unmount()
+})
+
+each('a contract the session resolved is never read again by the pane', async ($, w, surface) => {
+  await ground($, w)
+  await pk($, '')
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  await ui.press({ key: 'switch-contract' })
+  expect(contractRuns(w)).toHaveLength(0)
+  expect(await text(ui, /read by the pane/)).toBe(undefined)
+  await ui.unmount()
+})
+
+each('the fill-in never writes the session or changes main', async ($, w, surface) => {
+  exportOnly(w)
+  await call($, w, EXPORT, EXPORT_MD, { sessionId: SESSION })
+  const main = (w.state as SessionState).main
+  const writes = w.sessionWrites
+  await pk($, '')
+  const ui = await mount($, surface)
+  await ui.press({ key: 'switch-library' })
+  await ui.press({ key: 'switch-contract' })
+  expect(w.runs.length).toBeGreaterThan(0)
+  expect(w.sessionWrites).toBe(writes)
+  expect((w.state as SessionState).main).toEqual(main)
+  expect((w.state as SessionState).main?.contract).toBe(undefined)
+  await ui.unmount()
+})
+
+each('a fill-in that cannot be read keeps the section as not seen and says why', async ($, w, surface) => {
+  w.process = () => ran('', 2, 'no such session')
+  await call($, w, EXPORT, EXPORT_MD, { sessionId: SESSION })
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /not seen/)).toBe("Kits, skills, and scope: not seen (the pane couldn't read them: no such session)")
   await ui.unmount()
 })
 

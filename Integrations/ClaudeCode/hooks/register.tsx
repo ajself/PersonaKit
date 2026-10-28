@@ -162,6 +162,12 @@ export async function openPreview($: Runner, binary: string, ids: ContractIds): 
   })
 }
 
+/** Reads the contract preview for the Contract view when it has export details but no contract JSON of its own. */
+async function fillContract($: Runner, binary: string): Promise<void> {
+  const { main } = await read($, session)
+  if (main?.details && !main.contract) await openPreview($, binary, main.ids)
+}
+
 type Ui = { ui: { status: (text: string | undefined) => void; log: (text: string, options?: { to: 'debug' }) => void } }
 
 /** Paints the latest state, not the one this handler wrote: a parallel call may have written since. */
@@ -301,6 +307,7 @@ export const register: Register = (on, options) => {
       // Never `focus`: a focused pane would hold the keys and refuse Re-ground's fill.
       const { isPlaced } = await $.ui.open({ id: PANE, title: 'PersonaKit' })
       if (isPlaced && view.kind === 'library') await safely($, () => refreshLibrary($, binary))
+      if (isPlaced && view.kind === 'contract') await safely($, () => fillContract($, binary))
       return { text: isPlaced ? 'PersonaKit pane opened.' : 'No surface here can show the PersonaKit pane.' }
     }
     if (sub !== 'use') return { text: USAGE }
@@ -316,11 +323,12 @@ export const register: Register = (on, options) => {
     }
     const edit = (change: (p: PaneState) => PaneState) => void safely($, async () => void (await update($, pane, change)))
     // A top-level view clears the back stack and the Library loads each time it is shown; any other view stacks.
-    // A session view reads its contract preview, once.
+    // A session view reads its contract preview, once; so does the Contract, when it lacks contract JSON.
     const go = async (view: View) => {
       const isTop = view.kind === 'contract' || view.kind === 'library'
       await update($, pane, (p): PaneState => ({ ...p, view, back: isTop ? [] : [...p.back, p.view] }))
       if (view.kind === 'library') await refreshLibrary($, binary)
+      if (view.kind === 'contract') await fillContract($, binary)
       if (view.kind === 'session') await openPreview($, binary, { sessionId: view.id })
     }
     const actions: PaneActions = {

@@ -88,7 +88,7 @@ export function parts({ Box, Text, Button, surface }: El) {
   )
 
   const row = (label: string, value: RenderChildren) => (
-    <Box key={`row-${label}`} flexDirection="row">
+    <Box key={`row-${label}`} flexDirection="row" alignItems="flex-start">
       <Box width={LABEL_WIDTH} flexShrink={0}>
         <Text dimColor>{label}</Text>
       </Box>
@@ -153,7 +153,7 @@ export function parts({ Box, Text, Button, surface }: El) {
     return section(
       'Steps',
       steps.map((step, i) => (
-        <Box key={`step-${i + 1}`} flexDirection="row">
+        <Box key={`step-${i + 1}`} flexDirection="row" alignItems="flex-start">
           <Box width={numberWidth} flexShrink={0}>
             <Text dimColor tabular>{`${i + 1}`}</Text>
           </Box>
