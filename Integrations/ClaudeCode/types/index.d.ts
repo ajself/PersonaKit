@@ -52,8 +52,25 @@ export type LibraryLoad =
   | { kind: 'errors'; errors: LibraryError[] }
   | { kind: 'unavailable'; binary: string; detail: string }
   | { kind: 'no-process' }
+export type View =
+  | { kind: 'contract' } | { kind: 'library' }
+  | { kind: 'list'; of: 'directives' | 'kits' | 'skills' }
+  | { kind: 'persona' | 'session' | 'directive' | 'kit' | 'skill'; id: string }
+// What `personakit contract` and `personakit export` printed for one contract, read by the pane and never
+// folded into `SessionState`.
+export type Preview =
+  | { kind: 'loading'; token: number } | { kind: 'loaded'; contract?: Contract; details?: ExportDetails }
+  | { kind: 'failed'; message: string }
+export type PaneState = {
+  view: View; back: View[]; filter: string; library: LibraryLoad
+  previews: Record<string, Preview>   // by `previewKey`
+  expanded: string[]; token: number   // token: the latest library load; an older one's result is dropped
+}
 declare module 'claude-code' {
   interface PluginState {
-    personakit: { session: SessionState }   // one versioned value: atom({ plugin: 'personakit', key: 'session' })
+    personakit: {
+      session: SessionState   // one versioned value: atom({ plugin: 'personakit', key: 'session' })
+      pane: PaneState         // atom({ plugin: 'personakit', key: 'pane' })
+    }
   }
 }

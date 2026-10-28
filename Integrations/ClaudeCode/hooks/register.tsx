@@ -1,11 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import type { ContractIds, Enforcement, Observation, Resolution, SessionState } from '../types'
+import type { ContractIds, Enforcement, Observation, PaneState, Resolution, SessionState } from '../types'
 import { classifyDrift } from './lib/drift'
 import { enforcementFor, installedHook, sameContract } from './lib/enforcement'
 import { observe } from './lib/observe'
 import { usePrompt } from './lib/prompts'
+import { loadLibrary, loadPreview, personakitBinary, previewKey } from './lib/runner'
+import type { RunnerDollar } from './lib/runner'
 import { statusText } from './lib/status'
 import { paneTree } from './pane'
 
@@ -15,6 +17,10 @@ const PANE = 'personakit'
 
 const initial: SessionState = { subagents: {}, enforcement: { kind: 'advisory' }, compactions: 0, drift: [], turn: 0 }
 export const session = atom({ plugin: 'personakit', key: 'session' } as const, initial)
+
+// The Library and the previews: pane state apart from the session's, so nothing they load reaches the status line.
+const initialPane: PaneState = { view: { kind: 'library' }, back: [], filter: '', library: { kind: 'idle' }, previews: {}, expanded: [], token: 0 }
+export const pane = atom({ plugin: 'personakit', key: 'pane' } as const, initialPane)
 
 type Call = { tool: string; input: Record<string, unknown>; result: { isError?: boolean; text?: string }; agentId?: string }
 type Installed = { hook: ReturnType<typeof installedHook>; manifest: string | undefined }
@@ -119,6 +125,41 @@ export async function rebuild($: Dollar, enforcement: Enforcement, configured: s
   return s
 }
 
+type Runner = Parameters<typeof read>[0] & RunnerDollar
+
+/**
+ * Loads the Library into the pane. Each call takes the next token and a result lands only while its token is still
+ * the latest, so Refresh during a load replaces the first and a late answer is dropped. Refresh also drops every
+ * preview: the pane must not show a contract the library it just reloaded no longer agrees with.
+ */
+export async function refreshLibrary($: Runner, binary: string): Promise<void> {
+  const { token } = await update($, pane, (p): PaneState => ({ ...p, token: p.token + 1, library: { kind: 'loading', token: p.token + 1 }, previews: {} }))
+  const library = await loadLibrary($, binary)
+  await update($, pane, (p): PaneState => (p.token === token ? { ...p, library } : p))
+}
+
+/**
+ * Reads the preview for `ids` into the pane, unless it is loaded or loading. A failed one is tried again. The result
+ * lands only while the loading marker it claimed is still there, so a Refresh in between drops it.
+ */
+export async function openPreview($: Runner, binary: string, ids: ContractIds): Promise<void> {
+  const key = previewKey(ids)
+  let isClaimed = false
+  let claimed = 0
+  await update($, pane, (p): PaneState => {
+    const current = p.previews[key]
+    isClaimed = current === undefined || current.kind === 'failed'
+    claimed = p.token
+    return isClaimed ? { ...p, previews: { ...p.previews, [key]: { kind: 'loading', token: p.token } } } : p
+  })
+  if (!isClaimed) return
+  const preview = await loadPreview($, binary, ids)
+  await update($, pane, (p): PaneState => {
+    const current = p.previews[key]
+    return current?.kind === 'loading' && current.token === claimed ? { ...p, previews: { ...p.previews, [key]: preview } } : p
+  })
+}
+
 type Ui = { ui: { status: (text: string | undefined) => void; log: (text: string, options?: { to: 'debug' }) => void } }
 
 /** Paints the latest state, not the one this handler wrote: a parallel call may have written since. */
@@ -176,6 +217,8 @@ const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills
 
 export const register: Register = (on, options) => {
   const configured = typeof options.mcpServerName === 'string' ? options.mcpServerName : 'personakit'
+  // The executable the pane runs, for the Library and preview loads Task 7 triggers from here.
+  const binary = personakitBinary(options)
 
   on('session.start', async ($, e, next) => {
     const ran = await next(e)
