@@ -30,6 +30,60 @@ struct CLIModFixtureTests {
     }
   }
 
+  private func runList(root: URL) -> String {
+    captureStdout {
+      _ = PersonaKitCLI().run(arguments: [
+        "personakit", "list", "all", "--json",
+        "--root", root.path,
+        "--no-global", "--no-project",
+      ])
+    }
+  }
+
+  private var mergedProjectRootURL: URL {
+    fixturesRootURL().appendingPathComponent("internal-agent-root/.personakit")
+  }
+
+  private var mergedGlobalRootURL: URL {
+    fixturesRootURL().appendingPathComponent("kit-root")
+  }
+
+  /// `list all --json` over a project root layered on a global root. `--root` pins only the project root, so this
+  /// calls the renderer directly. Global rows, shadowed rows, kits, skills, and several sessions come from this pair.
+  private func mergedList() -> String {
+    let project = mergedProjectRootURL
+    let global = mergedGlobalRootURL
+    let rendered = ListJSONCommand.render(
+      scopes: ScopeSet(projectScopeURL: project, globalScopeURL: global),
+      entityType: .all
+    )
+    precondition(rendered.exitCode == 0, "merged fixture pair must render a success document")
+    let projectNormalized = normalize(rendered.output, root: project, placeholder: "<PROJECT>")
+    return normalize(projectNormalized, root: global, placeholder: "<GLOBAL>")
+  }
+
+  /// A temp root holding the starter library plus one persona file that is not valid JSON.
+  private func malformedPersonaRoot() throws -> URL {
+    let root = try makeTempDirectory().appendingPathComponent("Project/.personakit")
+    try PersonaKitInitializer().run(destination: root.path)
+    let broken = root.appendingPathComponent("Packs/personas/broken.persona.json")
+    try FileManager.default.createDirectory(
+      at: broken.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try Data("{".utf8).write(to: broken)
+    return root
+  }
+
+  /// Replaces every spelling of `root` (plain, standardized, and JSON-escaped) with `placeholder`.
+  private func normalize(_ text: String, root: URL, placeholder: String = "<ROOT>") -> String {
+    let spellings = [root.path, root.standardizedFileURL.path, root.resolvingSymlinksInPath().path]
+    var result = text
+    for spelling in Set(spellings).sorted(by: { $0.count > $1.count }) {
+      result = result.replacingOccurrences(of: spelling.replacingOccurrences(of: "/", with: "\\/"), with: placeholder)
+      result = result.replacingOccurrences(of: spelling, with: placeholder)
+    }
+    return result
+  }
+
   private func literal(_ value: String) throws -> String {
     let data = try JSONEncoder().encode(value)
     return String(decoding: data, as: UTF8.self)
@@ -49,10 +103,17 @@ struct CLIModFixtureTests {
     let rootSpelling = readOnlyFixtureRootURL().path.replacingOccurrences(of: "/", with: "\\/")
     let contract = runCLI("contract").replacingOccurrences(of: rootSpelling, with: "<ROOT>")
     let export = runCLI("export")
+    let list = normalize(runList(root: readOnlyFixtureRootURL()), root: readOnlyFixtureRootURL())
+    let merged = mergedList()
+    let errorsRoot = try malformedPersonaRoot()
+    let listErrors = normalize(runList(root: errorsRoot), root: errorsRoot)
 
     return [
       Self.header,
       "export const CONTRACT_JSON = \(try literal(contract))",
+      "export const LIST_JSON = \(try literal(list))",
+      "export const LIST_ERRORS_JSON = \(try literal(listErrors))",
+      "export const LIST_MERGED_JSON = \(try literal(merged))",
       "export const EXPORT_MD = \(try literal(export))",
       "export const TOOL_ACTION_CLASSES_JSON = \(try literal(try toolActionClassesJSON()))",
     ].joined(separator: "\n") + "\n"
