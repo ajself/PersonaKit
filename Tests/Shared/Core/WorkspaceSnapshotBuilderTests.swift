@@ -311,6 +311,160 @@ struct WorkspaceSnapshotBuilderTests {
     #expect(directiveItem.workstreamPhase == "planning")
   }
 
+  @Test
+  func buildByScopesRecordsShadowedGlobalEntity() throws {
+    let scopes = Self.scopeSet()
+    let fixture = try makeShadowFixture(
+      scopes: scopes,
+      globalPersonas: ["p"],
+      projectPersonas: ["p"],
+      globalSessions: [],
+      projectSessions: []
+    )
+    let snapshot = try fixture.build(scopes: scopes)
+
+    #expect(snapshot.personas.map(\.id) == ["p"])
+    #expect(snapshot.personas[0].sourceScope == .project)
+    #expect(snapshot.personas[0].shadowedScope == .global)
+    #expect(snapshot.personas[0].fileURL == Self.personaFileURL(root: Self.projectRoot))
+    #expect(snapshot.personas[0].shadowedFileURL == Self.personaFileURL(root: Self.globalRoot))
+  }
+
+  @Test
+  func buildByScopesRecordsShadowedGlobalSession() throws {
+    let scopes = Self.scopeSet()
+    let fixture = try makeShadowFixture(
+      scopes: scopes,
+      globalPersonas: [],
+      projectPersonas: [],
+      globalSessions: ["s"],
+      projectSessions: ["s"]
+    )
+    let snapshot = try fixture.build(scopes: scopes)
+
+    #expect(snapshot.sessions.map(\.id) == ["s"])
+    #expect(snapshot.sessions[0].sourceScope == .project)
+    #expect(snapshot.sessions[0].shadowedScope == .global)
+    #expect(snapshot.sessions[0].fileURL == Self.sessionFileURL(root: Self.projectRoot))
+    #expect(snapshot.sessions[0].shadowedFileURL == Self.sessionFileURL(root: Self.globalRoot))
+  }
+
+  @Test
+  func buildByScopesLeavesUnshadowedNil() throws {
+    let scopes = Self.scopeSet()
+    let fixture = try makeShadowFixture(
+      scopes: scopes,
+      globalPersonas: ["p"],
+      projectPersonas: [],
+      globalSessions: ["s"],
+      projectSessions: []
+    )
+    let snapshot = try fixture.build(scopes: scopes)
+
+    #expect(snapshot.personas.map(\.id) == ["p"])
+    #expect(snapshot.personas[0].sourceScope == .global)
+    #expect(snapshot.personas[0].shadowedScope == nil)
+    #expect(snapshot.personas[0].shadowedFileURL == nil)
+    #expect(snapshot.sessions[0].sourceScope == .global)
+    #expect(snapshot.sessions[0].shadowedScope == nil)
+    #expect(snapshot.sessions[0].shadowedFileURL == nil)
+  }
+
+  @Test
+  func buildByScopesWithGlobalOnly() throws {
+    let scopes = Self.scopeSet(project: nil)
+    let fixture = try makeShadowFixture(
+      scopes: scopes,
+      globalPersonas: ["p"],
+      projectPersonas: [],
+      globalSessions: ["s"],
+      projectSessions: []
+    )
+    let snapshot = try fixture.build(scopes: scopes)
+
+    #expect(snapshot.personas.map(\.sourceScope) == [.global])
+    #expect(snapshot.sessions.map(\.sourceScope) == [.global])
+    #expect(snapshot.personas[0].shadowedScope == nil)
+    #expect(snapshot.sessions[0].shadowedScope == nil)
+    #expect(snapshot.personas[0].shadowedFileURL == nil)
+    #expect(snapshot.sessions[0].shadowedFileURL == nil)
+  }
+
+  private static let projectRoot = URL(fileURLWithPath: "/Workspace/.personakit")
+  private static let globalRoot = URL(fileURLWithPath: "/Global/.personakit")
+
+  private static func scopeSet(project: URL? = projectRoot, global: URL = globalRoot) -> ScopeSet {
+    ScopeSet(projectScopeURL: project, globalScopeURL: global)
+  }
+
+  private static func personaFileURL(root: URL) -> URL {
+    root.appendingPathComponent("Packs/personas/p.persona.json").standardizedFileURL
+  }
+
+  private static func sessionFileURL(root: URL) -> URL {
+    PersonaKitDirectory.sessionsURL(root: root).appendingPathComponent("s.session.json").standardizedFileURL
+  }
+
+  /// Builds a builder over in-memory persona and session files placed in the given scopes.
+  private func makeShadowFixture(
+    scopes: ScopeSet,
+    globalPersonas: [String],
+    projectPersonas: [String],
+    globalSessions: [String],
+    projectSessions: [String]
+  ) throws -> WorkspaceSnapshotBuilder {
+    var directories: [URL] = []
+    var directoryContents: [URL: [URL]] = [:]
+    var fileData: [URL: Data] = [:]
+
+    let placements: [(root: URL?, personas: [String], sessions: [String])] = [
+      (scopes.globalScopeURL, globalPersonas, globalSessions),
+      (scopes.projectScopeURL, projectPersonas, projectSessions),
+    ]
+
+    for placement in placements {
+      guard let root = placement.root else { continue }
+
+      let personasURL = root.appendingPathComponent("Packs/personas")
+      let sessionsURL = PersonaKitDirectory.sessionsURL(root: root)
+      directories.append(contentsOf: [PersonaKitDirectory.packsURL(root: root), personasURL, sessionsURL])
+
+      for id in placement.personas {
+        let fileURL = personasURL.appendingPathComponent("\(id).persona.json")
+        directoryContents[personasURL, default: []].append(fileURL)
+        fileData[fileURL] = try encode(
+          Persona(
+            id: id,
+            version: "1.0",
+            name: "\(id) in \(root.path())",
+            summary: "",
+            responsibilities: [],
+            values: [],
+            nonGoals: [],
+            defaultKitIds: [],
+            allowedSkillIds: [],
+            forbiddenSkillIds: []
+          )
+        )
+      }
+
+      for id in placement.sessions {
+        let fileURL = sessionsURL.appendingPathComponent("\(id).session.json")
+        directoryContents[sessionsURL, default: []].append(fileURL)
+        fileData[fileURL] = try encode(
+          SessionFile(id: id, personaId: "p", directiveId: "d", kitOverrides: nil)
+        )
+      }
+    }
+
+    let dependencies = try makeDependencies(
+      directories: directories,
+      directoryContents: directoryContents,
+      fileData: fileData
+    )
+    return WorkspaceSnapshotBuilder(globalScopeURL: scopes.globalScopeURL, dependencies: dependencies)
+  }
+
   private func makeDependencies(
     directories: [URL],
     files: [URL] = [],

@@ -62,7 +62,20 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
     try checkCancellation()
 
     let projectScopeURL = try scopeResolver().resolveProjectScopeURL(workspaceURL)
-    let scopes = ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScope())
+    return try build(scopes: ScopeSet(projectScopeURL: projectScopeURL, globalScopeURL: globalScope()))
+  }
+
+  /// Builds a workspace snapshot for an already-resolved scope set.
+  ///
+  /// When the same id exists in more than one scope, the later scope in load order wins and the winning
+  /// item records the scope and file it replaced in `shadowedScope` and `shadowedFileURL`.
+  ///
+  /// - Parameters:
+  ///   - scopes: Project and/or global scope roots to merge. Either may be absent.
+  /// - Returns: Snapshot containing merged list items, sorted by id.
+  /// - Throws: ``WorkspaceSnapshotBuildError`` when the registry is invalid or reads fail.
+  public func build(scopes: ScopeSet) throws -> WorkspaceSnapshot {
+    try checkCancellation()
 
     do {
       try dependencies.validateRegistry(scopes)
@@ -129,7 +142,9 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
           personaId: session.personaId,
           directiveId: session.directiveId,
           fileURL: fileURL.standardizedFileURL,
-          sourceScope: sourceScope
+          sourceScope: sourceScope,
+          shadowedScope: recordsByID[session.id]?.sourceScope,
+          shadowedFileURL: recordsByID[session.id]?.fileURL
         )
       }
     }
@@ -169,7 +184,9 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
           sourceScope: sourceScope,
           workstreamId: entity.workspaceWorkstreamId,
           workstreamPhase: entity.workspaceWorkstreamPhase,
-          skillMetadata: skillMetadata(for: entity)
+          skillMetadata: skillMetadata(for: entity),
+          shadowedScope: recordsByID[entity.id]?.sourceScope,
+          shadowedFileURL: recordsByID[entity.id]?.fileURL
         )
       }
     }

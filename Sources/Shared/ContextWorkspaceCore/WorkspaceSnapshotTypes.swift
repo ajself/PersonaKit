@@ -53,6 +53,10 @@ public struct WorkspaceListItem: Equatable, Sendable {
   public let workstreamId: String?
   public let workstreamPhase: String?
   public let skillMetadata: WorkspaceSkillMetadata?
+  /// Scope whose same-id item this one replaced, or `nil` when nothing was shadowed.
+  public let shadowedScope: WorkspaceSourceScope?
+  /// File URL of the same-id item this one replaced, or `nil` when nothing was shadowed.
+  public let shadowedFileURL: URL?
 
   public init(
     id: String,
@@ -61,7 +65,9 @@ public struct WorkspaceListItem: Equatable, Sendable {
     sourceScope: WorkspaceSourceScope,
     workstreamId: String? = nil,
     workstreamPhase: String? = nil,
-    skillMetadata: WorkspaceSkillMetadata? = nil
+    skillMetadata: WorkspaceSkillMetadata? = nil,
+    shadowedScope: WorkspaceSourceScope? = nil,
+    shadowedFileURL: URL? = nil
   ) {
     self.id = id
     self.displayName = displayName
@@ -70,6 +76,8 @@ public struct WorkspaceListItem: Equatable, Sendable {
     self.workstreamId = workstreamId
     self.workstreamPhase = workstreamPhase
     self.skillMetadata = skillMetadata
+    self.shadowedScope = shadowedScope
+    self.shadowedFileURL = shadowedFileURL
   }
 }
 
@@ -80,19 +88,27 @@ public struct WorkspaceSessionListItem: Equatable, Sendable {
   public let directiveId: String
   public let fileURL: URL
   public let sourceScope: WorkspaceSourceScope
+  /// Scope whose same-id session this one replaced, or `nil` when nothing was shadowed.
+  public let shadowedScope: WorkspaceSourceScope?
+  /// File URL of the same-id session this one replaced, or `nil` when nothing was shadowed.
+  public let shadowedFileURL: URL?
 
   public init(
     id: String,
     personaId: String,
     directiveId: String,
     fileURL: URL,
-    sourceScope: WorkspaceSourceScope
+    sourceScope: WorkspaceSourceScope,
+    shadowedScope: WorkspaceSourceScope? = nil,
+    shadowedFileURL: URL? = nil
   ) {
     self.id = id
     self.personaId = personaId
     self.directiveId = directiveId
     self.fileURL = fileURL
     self.sourceScope = sourceScope
+    self.shadowedScope = shadowedScope
+    self.shadowedFileURL = shadowedFileURL
   }
 }
 
