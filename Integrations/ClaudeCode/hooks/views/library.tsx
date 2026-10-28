@@ -98,6 +98,7 @@ function shared(el: El, session: SessionState, actions: PaneActions, words: read
   /**
    * A persona and the sessions that use it. A persona the library lacks (no scope) is its raw id, with nothing to open.
    * The persona's id is left off its line unless a filter word matches only the id, so the match has something to show.
+   * A session's badge is left off when it only repeats its persona's scope; an override or a differing scope keeps it.
    */
   const personRow = (person: PersonRow) => {
     const lower = (text: string) => text.toLowerCase()
@@ -137,7 +138,7 @@ function shared(el: El, session: SessionState, actions: PaneActions, words: read
                 i === person.sessions.length - 1,
                 link('session', s.id, s.directiveTitle),
                 <Text key="id" dimColor>{highlighted(s.id, words)}</Text>,
-                scopeBadge(s.scope, s.shadows),
+                (s.scope !== person.scope || s.shadows !== null) && scopeBadge(s.scope, s.shadows),
                 s.inForce ? (
                   <Text key="in-force" color="success">● in force</Text>
                 ) : (

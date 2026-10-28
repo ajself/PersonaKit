@@ -316,10 +316,12 @@ export const register: Register = (on, options) => {
     }
     const edit = (change: (p: PaneState) => PaneState) => void safely($, async () => void (await update($, pane, change)))
     // A top-level view clears the back stack and the Library loads each time it is shown; any other view stacks.
+    // A session view reads its contract preview, once.
     const go = async (view: View) => {
       const isTop = view.kind === 'contract' || view.kind === 'library'
       await update($, pane, (p): PaneState => ({ ...p, view, back: isTop ? [] : [...p.back, p.view] }))
       if (view.kind === 'library') await refreshLibrary($, binary)
+      if (view.kind === 'session') await openPreview($, binary, { sessionId: view.id })
     }
     const actions: PaneActions = {
       go: (view) => void safely($, () => go(view)),

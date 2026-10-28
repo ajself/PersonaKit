@@ -403,7 +403,7 @@ each('every row carries its scope in words', async ($, w, surface) => {
   const ui = await library($, w, surface, LIST_MERGED_JSON)
   expect(await texts(ui, 'person-architectural-editor')).toContain('project')
   expect(await texts(ui, 'person-senior-swiftui-engineer')).toContain('global')
-  expect(await texts(ui, 'session-senior-swiftui-engineer_apply-style')).toContain('global')
+  expect(await texts(ui, 'session-senior-swiftui-engineer_apply-style')).toEqual(['└ ', 'senior-swiftui-engineer_apply-style'])
 
   await ui.press({ key: 'list:kits' })
   expect(await texts(ui, 'kit-repo-constraints')).toContain('project · overrides global')
@@ -414,6 +414,28 @@ each('every row carries its scope in words', async ($, w, surface) => {
   await ui.input({ key: 'filter', text: 'repo' })
   expect(await texts(ui, 'kit-repo-constraints')).toContain('project · overrides global')
   await ui.unmount()
+})
+
+each('a session shows its scope only when it differs from its persona or overrides', async ($, w, surface) => {
+  const ui = await library($, w, surface, LIST_MERGED_JSON)
+  // Same scope as the persona: no badge on the session, the persona's own line keeps its.
+  expect(await texts(ui, 'person-architectural-editor')).toEqual(['project', '└ ', 'architectural-editor-review'])
+  expect(await texts(ui, 'person-senior-swiftui-engineer')).toEqual(['global', '└ ', 'senior-swiftui-engineer_apply-style'])
+  await ui.unmount()
+
+  const differs = await library($, w, surface, listing((l) => l.sessions!.push({ ...session('g-session'), scope: 'global' })))
+  expect(await texts(differs, 'person-read-only-auditor')).toEqual(['project', '├ ', 'g-session', 'global', '└ ', SESSION])
+  await differs.unmount()
+
+  const overrides = await library($, w, surface, listing((l) => (l.sessions![0]!.shadows = 'global')))
+  expect(await texts(overrides, 'person-read-only-auditor')).toEqual(['project', '└ ', SESSION, 'project · overrides global'])
+  await overrides.unmount()
+
+  const global = JSON.parse(LIST_MERGED_JSON)
+  global.sessions[1].scope = 'project'
+  const reversed = await library($, w, surface, JSON.stringify(global))
+  expect(await texts(reversed, 'person-senior-swiftui-engineer')).toEqual(['global', '└ ', 'senior-swiftui-engineer_apply-style', 'project'])
+  await reversed.unmount()
 })
 
 each('a scope badge is plain styled words in the terminal and an outline where the surface can draw one', async ($, w, surface) => {
@@ -609,8 +631,8 @@ each('a person row leads with the persona, and each session with its directive t
   const ui = await library($, w, surface)
   expect((await ui.find({ key: 'open:persona:read-only-auditor' }))?.text).toBe('Read-Only Auditor')
   expect((await ui.find({ key: `open:session:${SESSION}` }))?.text).toBe('Read-only audit pass')
-  // Persona: badge only, no id. Session: connector, id, badge. The links and Use are Buttons, not Texts.
-  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', SESSION, 'project'])
+  // Persona: badge only, no id. Session: connector, id; its badge only repeats the persona's scope. The links and Use are Buttons, not Texts.
+  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', SESSION])
   await ui.press({ key: `open:session:${SESSION}` })
   expect(await ui.find({ key: 'filter' })).toBe(undefined) // the session's detail view
   await ui.unmount()
@@ -638,7 +660,7 @@ each('a filter word in the session id is highlighted after the directive title',
   const ui = await library($, w, surface)
   await ui.input({ key: 'filter', text: 'pass' })
   expect((await ui.find({ key: `open:session:${SESSION}` }))?.text).toBe('Read-only audit pass')
-  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', 'pass', SESSION, 'project'])
+  expect(await texts(ui, 'person-read-only-auditor')).toEqual(['project', '└ ', 'pass', SESSION])
   const runs: { props: Record<string, unknown> }[] = []
   const walk = (n: Node & { props?: Record<string, unknown> }) => {
     if (typeof n === 'string') return
