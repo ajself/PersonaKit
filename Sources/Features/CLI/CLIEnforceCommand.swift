@@ -1,5 +1,6 @@
 import ArgumentParser
 import ContextCore
+import CryptoKit
 import Foundation
 
 /// Claude Code `PreToolUse` payload — only the fields the checker needs.
@@ -22,7 +23,19 @@ private struct HookDecisionOutput: Encodable {
   let hookSpecificOutput: Inner
 }
 
-/// Runtime checker invoked by a Claude Code `PreToolUse` hook.
+/// OpenCode deny output: `{"decision":"deny","reason":"…"}`.
+private struct OpenCodeDecisionOutput: Encodable {
+  let decision = "deny"
+  let reason: String
+}
+
+/// Host whose tool-call payload `hook-check` reads.
+enum HookCheckHost: String, CaseIterable, ExpressibleByArgument {
+  case claude
+  case opencode
+}
+
+/// Runtime checker invoked by a Claude Code `PreToolUse` hook, or by the OpenCode server plugin.
 ///
 /// Reads the tool call from stdin, consults a frozen checks manifest, and denies the call
 /// when the tool performs a forbidden action class. Read-only toward the agent: it can only
@@ -31,18 +44,40 @@ private struct HookDecisionOutput: Encodable {
 struct HookCheckCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "hook-check",
-    abstract: "Evaluate a Claude Code PreToolUse call against a frozen checks manifest.",
+    abstract: "Evaluate a Claude Code or OpenCode tool call against a frozen checks manifest.",
     discussion: """
-      Not run by hand. A `personakit enforce install` wires this into a project's \
-      .claude/settings.json as a PreToolUse hook. It reads the tool call on stdin and \
-      emits a deny decision when the session's contract forbids the tool.
+      Not run by hand. For Claude Code (--host claude, the default), `personakit enforce \
+      install` wires this into a project's .claude/settings.json as a PreToolUse hook. For \
+      OpenCode (--host opencode), the opencode-personakit server plugin runs it with \
+      --expect-sha256. Either way it reads the tool call on stdin and emits a deny decision \
+      when the session's contract forbids the tool.
       """
   )
 
   @Option(name: .customLong("manifest"), help: "Path to the frozen checks manifest to enforce.")
   var manifestPath: String
 
+  @Option(name: .customLong("host"), help: "Host that sends the tool call: claude (default) or opencode.")
+  var host: HookCheckHost = .claude
+
+  @Option(
+    name: .customLong("expect-sha256"),
+    help: "Required for --host opencode: lowercase hex SHA-256 the manifest must match, recorded when OpenCode started."
+  )
+  var expectSHA256: String?
+
+  mutating func validate() throws {
+    if host == .opencode, expectSHA256?.isEmpty != false {
+      throw ArgumentParser.ValidationError("hook-check --host opencode requires --expect-sha256 <hex>.")
+    }
+  }
+
   func run() throws {
+    if host == .opencode {
+      try runOpenCode()
+      return
+    }
+
     let decision = Self.decide(manifestPath: manifestPath)
 
     guard decision.isDenied else {
@@ -64,6 +99,103 @@ struct HookCheckCommand: ParsableCommand {
       print(json)
     }
     // Deny is communicated by the JSON above with exit 0; do not fail the process.
+  }
+
+  private func runOpenCode() throws {
+    let decision = Self.decideOpenCode(manifestPath: manifestPath, expectedSHA256: expectSHA256 ?? "")
+
+    guard decision.isDenied else {
+      return
+    }
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    let output = OpenCodeDecisionOutput(reason: decision.reason ?? "Denied by PersonaKit contract.")
+
+    if let data = try? encoder.encode(output), let json = String(data: data, encoding: .utf8) {
+      print(json)
+    } else {
+      // An encode failure must not read as an allow (no output).
+      print(
+        #"{"decision":"deny","reason":"PersonaKit enforcement could not encode its decision; "#
+          + #"denying by fail-closed policy."}"#
+      )
+    }
+    // Deny is communicated by the JSON above with exit 0; do not fail the process.
+  }
+
+  /// OpenCode decision: verify the manifest digest, read the manifest and the tool call, evaluate.
+  /// Fail-closed at every step.
+  ///
+  /// `environment` is the one OpenCode handed the hook, so the global config locations match OpenCode's.
+  /// When it has no `HOME` (unset or empty), `passwdHome` supplies the passwd entry's home, as OpenCode
+  /// falls back to it.
+  /// `executablePath` is this binary: it is protected like a config file, because an agent allowed to edit
+  /// could otherwise replace the checker with a stub that allows everything. No payload field supplies it.
+  static func decideOpenCode(
+    manifestPath: String,
+    expectedSHA256: String,
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    executablePath: String? = Bundle.main.executableURL?.path,
+    passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
+  ) -> ClaudeCodeHookCheckDecision {
+    func failClosed(_ message: String) -> ClaudeCodeHookCheckDecision {
+      ClaudeCodeHookCheckDecision(isDenied: true, reason: "\(message); denying by fail-closed policy.")
+    }
+
+    let manifestURL = RootPathResolver().resolve(path: manifestPath)
+
+    guard let data = try? Data(contentsOf: manifestURL) else {
+      return failClosed(
+        "PersonaKit enforcement manifest at \(manifestURL.path) is missing or changed since OpenCode started "
+          + "(it could not be read); restart OpenCode to load the current contract"
+      )
+    }
+
+    let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    guard digest == expectedSHA256.lowercased() else {
+      return failClosed(
+        "PersonaKit enforcement manifest at \(manifestURL.path) changed since OpenCode started "
+          + "(its SHA-256 no longer matches); restart OpenCode to load the current contract"
+      )
+    }
+
+    guard let manifest = try? JSONDecoder().decode(ChecksManifest.self, from: data) else {
+      return failClosed("PersonaKit enforcement could not decode its manifest at \(manifestURL.path)")
+    }
+
+    let stdin: String
+    do {
+      stdin = try CLIEnvironment.current.interactiveIO.readStdinToEnd()
+    } catch {
+      return failClosed("PersonaKit enforcement could not read the tool call")
+    }
+
+    guard let call = try? JSONDecoder().decode(OpenCodeToolCall.self, from: Data(stdin.utf8)) else {
+      return failClosed("PersonaKit enforcement could not parse the tool call")
+    }
+
+    var effectiveEnvironment = environment
+    if environment["HOME"]?.isEmpty != false, let home = passwdHome(), !home.isEmpty {
+      effectiveEnvironment["HOME"] = home
+    }
+
+    var protectedPaths = OpenCodeEnforcement.globalConfigPaths(environment: effectiveEnvironment)
+    if let executablePath, !executablePath.isEmpty {
+      // The evaluator compares each entry as spelled and as physically resolved, so a symlinked
+      // executable protects the file it points at too.
+      protectedPaths.append(executablePath)
+    }
+
+    return OpenCodeHookCheckEvaluator.evaluate(call, manifest: manifest, globalConfigPaths: protectedPaths)
+  }
+
+  /// The current user's home directory from the passwd database, the fallback OpenCode uses without `HOME`.
+  static func passwdHomeDirectory() -> String? {
+    guard let entry = getpwuid(getuid()), let directory = entry.pointee.pw_dir else {
+      return nil
+    }
+    return String(cString: directory)
   }
 
   /// Pure decision: read manifest + stdin, evaluate, fail-closed on any error.
