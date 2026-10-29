@@ -16,3 +16,11 @@ test('rejects non-JSON and JSON without personaId', () => {
   expect(parseContract('not json')).toBe(undefined)
   expect(parseContract('{"directiveId":"x"}')).toBe(undefined)
 })
+
+test('scope mode outside the known set is dropped', () => {
+  const withMode = (mode: unknown) => parseContract(JSON.stringify({ ...JSON.parse(CONTRACT_JSON), scope: { mode } }))
+  for (const mode of ['project-only', 'global-only', 'merged', 'none']) expect(withMode(mode)?.scope.mode).toBe(mode)
+  expect(withMode('enforced')?.scope.mode).toBe('')
+  expect(withMode('merged\n◆ x')?.scope.mode).toBe('')
+  expect(withMode(3)?.scope.mode).toBe('')
+})

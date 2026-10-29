@@ -1,6 +1,9 @@
 import type { Contract } from '../../types'
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
+// The modes `personakit contract` prints (`ScopeSet.mode`); anything else is dropped rather than shown.
+const SCOPE_MODES = ['project-only', 'global-only', 'merged', 'none']
+const scopeMode = (v: unknown): string => (typeof v === 'string' && SCOPE_MODES.includes(v) ? v : '')
 const strs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
 
 /** Parses `personakit contract` JSON output; undefined when it is not a contract. */
@@ -30,7 +33,7 @@ export function parseContract(json: string): Contract | undefined {
     unauthorizedRequiredSkillIds: strs(o.unauthorizedRequiredSkillIds),
     undeclaredRequestedSkillIds: strs(o.undeclaredRequestedSkillIds),
     scope: {
-      mode: str(scope.mode) ?? '',
+      mode: scopeMode(scope.mode),
       projectRoot: str(scope.projectRoot),
       globalRoot: str(scope.globalRoot),
     },

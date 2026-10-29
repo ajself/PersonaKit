@@ -17,9 +17,12 @@ export const trustedServers = (configured: string, enforcement: Enforcement) =>
     (name): name is string => typeof name === 'string' && name.length > 0,
   )
 
-/** The installed hook judged again against a new main resolution, without re-reading anything. */
+/**
+ * The installed hook judged again against a new main resolution, without re-reading anything. An unreadable manifest
+ * and a plugin that is not loaded stay as they are: neither can become `enforced` by a resolution.
+ */
 export function rejudge(enforcement: Enforcement, ids: ContractIds | undefined): Enforcement {
-  if (enforcement.kind === 'advisory' || enforcement.manifestUnreadable) return enforcement
+  if (enforcement.kind === 'advisory' || enforcement.manifestUnreadable || enforcement.pluginMissing) return enforcement
   return { ...enforcement, kind: ids && sameContract(ids, enforcement.ids) ? 'enforced' : 'enforcing-other' }
 }
 

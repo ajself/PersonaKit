@@ -6,6 +6,8 @@ export type Host = {
   shellTool: string
   mcpToolName: (server: string, tool: string) => string
   isMCPTool: (tool: string) => boolean
+  /** Whether a PersonaKit tool key from `server` can be trusted: no other configured server could have produced it. */
+  trustsMCPKey: (key: string, server: string) => boolean
   toolActionClasses: Readonly<Record<string, string>>
 }
 
@@ -23,6 +25,7 @@ export const CLAUDE_HOST: Host = {
   shellTool: 'Bash',
   mcpToolName: (server, tool) => `mcp__${server}__${tool}`,
   isMCPTool: (tool) => tool.startsWith('mcp__'),
+  trustsMCPKey: () => true,
   toolActionClasses: TOOL_ACTION_CLASSES,
 }
 
@@ -46,7 +49,8 @@ export const sanitizeMCPName = (name: string): string => name.replace(/[^A-Za-z0
 
 /**
  * OpenCode's tool names. An MCP tool is registered as `<server>_<tool>`, so a name is an MCP tool when some
- * configured server's prefix matches it, even when a built-in has the same id: the MCP key wins.
+ * configured server's prefix matches it, even when a built-in has the same id: the MCP key wins. Two servers can
+ * produce the same key (`a_b` with tool `c`, `a` with tool `b_c`); such a key is trusted for neither.
  */
 export function openCodeHost(mcpServers: readonly string[]): Host {
   const prefixes = mcpServers.map((server) => `${sanitizeMCPName(server)}_`)
@@ -54,6 +58,10 @@ export function openCodeHost(mcpServers: readonly string[]): Host {
     shellTool: 'bash',
     mcpToolName: (server, tool) => `${sanitizeMCPName(server)}_${sanitizeMCPName(tool)}`,
     isMCPTool: (tool) => prefixes.some((prefix) => tool.startsWith(prefix)),
+    // Mirrors `OpenCodeEnforcement.isTrustedPersonaKitMCPTool`: the server is configured and no other one collides.
+    trustsMCPKey: (key, server) =>
+      mcpServers.includes(server) &&
+      !mcpServers.some((other) => other !== server && key.startsWith(`${sanitizeMCPName(other)}_`)),
     toolActionClasses: OPENCODE_TOOL_ACTION_CLASSES,
   }
 }

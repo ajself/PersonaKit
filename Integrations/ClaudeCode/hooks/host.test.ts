@@ -61,3 +61,30 @@ test('observeReadsOpenCodeBashAndMCP', async () => {
   // Claude's names mean nothing to the OpenCode host.
   expect(await observe({ tool: 'Bash', input: { command: 'personakit contract' }, result: { result: { stdout: CONTRACT_JSON } } }, ['personakit'], none, host)).toEqual([])
 })
+
+const resolveKey = (host: ReturnType<typeof openCodeHost>) => host.mcpToolName('personakit', 'personakit_resolve_contract')
+
+test('openCodeTrustsAKeyOnlyWhenNoOtherServerCouldProduceIt', () => {
+  const key = 'personakit_personakit_resolve_contract'
+  expect(resolveKey(openCodeHost(['personakit', 'cupertino']))).toBe(key)
+  expect(openCodeHost(['personakit', 'cupertino']).trustsMCPKey(key, 'personakit')).toBe(true)
+  expect(openCodeHost(['personakit', 'personakit_personakit']).trustsMCPKey(key, 'personakit')).toBe(false)
+  // sanitizing makes `personakit.personakit` produce the same prefix
+  expect(openCodeHost(['personakit', 'personakit.personakit']).trustsMCPKey(key, 'personakit')).toBe(false)
+  // a server that is not configured is not trusted
+  expect(openCodeHost(['cupertino']).trustsMCPKey(key, 'personakit')).toBe(false)
+  expect(openCodeHost([]).trustsMCPKey(key, 'personakit')).toBe(false)
+})
+
+test('claudeHostTrustsEveryKey', () => {
+  expect(CLAUDE_HOST.trustsMCPKey('mcp__personakit__personakit_export', 'personakit')).toBe(true)
+})
+
+test('observeIgnoresAPersonaKitKeyAnotherServerCouldProduce', async () => {
+  const key = 'personakit_personakit_resolve_contract'
+  const call = { tool: key, input: {}, result: { text: CONTRACT_JSON } }
+  const colliding = await observe(call, ['personakit'], none, openCodeHost(['personakit', 'personakit_personakit']))
+  expect(colliding).toEqual([])
+  const clean = await observe(call, ['personakit'], none, openCodeHost(['personakit', 'cupertino']))
+  expect(clean.map((o) => o.kind)).toEqual(['contract'])
+})

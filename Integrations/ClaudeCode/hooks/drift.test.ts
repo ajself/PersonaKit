@@ -110,3 +110,11 @@ test('tool names that are Object.prototype members are not classified', () => {
     expect(classify({ tool, result: err(DENY) }, [], enforced([tool]))).toEqual({ tool, kind: 'blocked', turn: 4 })
   }
 })
+
+test('a manifest whose plugin is not loaded is judged as advisory', () => {
+  const missing = enforced(['.*'], { kind: 'enforcing-other', pluginMissing: true })
+  expect(classify({ tool: 'Edit', result: ok() }, ['file-mutation'], missing)).toEqual({
+    tool: 'Edit', kind: 'advisory', actionClass: 'file-mutation', turn: 4,
+  })
+  expect(classify({ tool: 'Edit', result: err(DENY) }, ['file-mutation'], missing)).toBeUndefined()
+})

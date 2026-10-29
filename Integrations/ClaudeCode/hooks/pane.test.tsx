@@ -329,12 +329,11 @@ each('/pk use with an id the CLI could read as a flag fills nothing and says so'
   expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
 })
 
-each('Re-ground with an unsupported id fills nothing and toasts', async ($, w, surface) => {
+each('a contract with an unsupported id is never resolved, so there is nothing to re-ground', async ($, w, surface) => {
   await call($, w, RESOLVE, JSON.stringify({ ...JSON.parse(CONTRACT_JSON), sessionId: '-x' }))
   const ui = await mount($, surface)
-  await ui.press({ key: 'reground' })
+  expect(await ui.find({ key: 'reground' })).toBeUndefined()
   expect(w.fills).toEqual([])
-  expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
   await ui.unmount()
 })
 

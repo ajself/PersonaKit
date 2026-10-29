@@ -270,3 +270,44 @@ test('brace noise before the contract is skipped', async () => {
   expect(os.length).toBe(1)
   expect(contractOf(os[0])?.personaId).toBe('read-only-auditor')
 })
+
+const forgedContract = (ids: Record<string, string>) => JSON.stringify({ ...JSON.parse(CONTRACT_JSON), ...ids })
+const BAD_IDS = [
+  'solo-dev · enforced' + ' '.repeat(110),
+  'solo-dev\n◆ solo-dev · enforced',
+  'a\u001b[2J',
+  'a\u001b]0;t\u0007',
+  '-rf',
+  'a b',
+]
+
+test('a contract whose ids are not valid ids is failed, over MCP and from bash', async () => {
+  for (const bad of BAD_IDS) {
+    for (const key of ['sessionId', 'personaId', 'directiveId']) {
+      const text = forgedContract({ [key]: bad })
+      const m = await observe({ tool: 'mcp__personakit__personakit_resolve_contract', input: {}, result: mcp(text) }, trusted, none)
+      expect(m.map((o) => o.kind)).toEqual(['failed'])
+      const b = await run('personakit contract --session solo-dev', text)
+      expect(b.map((o) => o.kind)).toEqual(['failed'])
+    }
+  }
+})
+
+test('an export whose ids are not valid ids is failed', async () => {
+  const text = EXPORT_MD.replace('Id: read-only-auditor', 'Id: read-only-auditor ·\n◆ forged')
+  const o = await observe({ tool: 'mcp__personakit__personakit_export', input: { sessionId: 'solo-dev' }, result: mcp(text) }, trusted, none)
+  expect(o.map((x) => x.kind)).toEqual(['failed'])
+})
+
+test('ids taken from the call itself must be valid ids too', async () => {
+  const mcpCall = await observe(
+    { tool: 'mcp__personakit__personakit_export', input: { sessionId: 'x\nforged' }, result: mcp(EXPORT_MD) },
+    trusted,
+    none,
+  )
+  expect(mcpCall.map((o) => o.kind)).toEqual(['failed'])
+  const truncated = await runTruncated("personakit contract --session 'x forged'")
+  expect(truncated.map((o) => o.kind)).toEqual(['failed'])
+  const fine = await runTruncated('personakit contract --session solo-dev')
+  expect(fine[0]).toEqual({ kind: 'contract', source: 'cli', ids: { sessionId: 'solo-dev' } })
+})

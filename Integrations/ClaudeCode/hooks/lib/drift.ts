@@ -51,7 +51,8 @@ export function classifyDrift(
   })
   const personaKit = isPersonaKitCall(tool, call.input, trustedServers, host)
 
-  if (enforcement.kind !== 'advisory') {
+  // A manifest whose plugin is not loaded enforces nothing, so its drift is judged as advisory.
+  if (enforcement.kind !== 'advisory' && !enforcement.pluginMissing) {
     const text = call.result.text ?? ''
     const denied =
       call.result.isError === true &&

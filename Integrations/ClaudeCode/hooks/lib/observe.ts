@@ -3,6 +3,7 @@ import { parseContract } from './contract'
 import { parseExport } from './export'
 import { CLAUDE_HOST } from './host'
 import type { Host } from './host'
+import { isValidId, presentIds } from './ids'
 
 type Call = { tool: string; input: Record<string, unknown>; result: unknown }
 type CliCommand = { subcommand: 'contract' | 'export'; args: string[] }
@@ -94,6 +95,7 @@ function cliIds(args: string[]): ContractIds {
 
 function mcpKind(tool: string, trustedServers: string[], host: Host): 'contract' | 'export' | undefined {
   for (const server of trustedServers) {
+    if (!host.trustsMCPKey(tool, server)) continue
     if (tool === host.mcpToolName(server, MCP_RESOLVE)) return 'contract'
     if (tool === host.mcpToolName(server, MCP_EXPORT)) return 'export'
   }
@@ -151,8 +153,16 @@ function exportPart(text: string): string | undefined {
   return at < 0 ? undefined : text.slice(at)
 }
 
-/** A contract or export read from `text`; undefined text is truncated output, which keeps the input ids. */
+/**
+ * A contract or export read from `text`; undefined text is truncated output, which keeps the input ids. Ids come from
+ * text the agent can print, so an observation carrying an id that is not a valid id is failed, never shown.
+ */
 function interpret(kind: 'contract' | 'export', source: 'mcp' | 'cli', inputIds: ContractIds, text: string | undefined): Observation {
+  const o = parseObservation(kind, source, inputIds, text)
+  return presentIds(o.ids).every(isValidId) ? o : { kind: 'failed', source, ids: {} }
+}
+
+function parseObservation(kind: 'contract' | 'export', source: 'mcp' | 'cli', inputIds: ContractIds, text: string | undefined): Observation {
   const failed: Observation = { kind: 'failed', source, ids: inputIds }
   if (kind === 'contract') {
     if (text === undefined) return { kind: 'contract', source, ids: inputIds }

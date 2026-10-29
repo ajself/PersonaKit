@@ -2,14 +2,24 @@ import type { Enforcement, Resolution, SessionState } from '../../types'
 
 const MAX = 120
 const SEP = ' · '
+// Budgets for observed text in the fallback, used only when the line would not fit otherwise. The lead and the
+// enforcing id are all that precede the enforcement segment there, so together they always leave it inside the cut.
+const LEAD_MAX = 32
+const ID_MAX = 32
+const TOOL_MAX = 24
+
+type Fit = (text: string, max: number) => string
+const whole: Fit = (text) => text
+/** `text` cut to `max` characters, ending in `…` when it was cut. */
+const ellipsize: Fit = (text, max) => (text.length <= max ? text : `${text.slice(0, max - 1)}…`)
 
 /** The enforcement segment: the steady word, or the warning that stands in its place. */
-function enforcementSegment(enforcement: Enforcement): string {
+function enforcementSegment(enforcement: Enforcement, fit: Fit): string {
   if (enforcement.kind === 'advisory') return 'advisory'
   if (enforcement.pluginMissing) return '⚠ manifest present · plugin not loaded'
   if (enforcement.manifestUnreadable) return '⚠ enforcement manifest unreadable'
   if (enforcement.kind === 'enforced') return 'enforced'
-  return `⚠ enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`
+  return `⚠ enforcing ${fit(enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract', ID_MAX)}`
 }
 
 /**
@@ -17,14 +27,15 @@ function enforcementSegment(enforcement: Enforcement): string {
  * Drift and re-ground blocked count only from the main resolution's drift mark on, so a re-ground clears what came
  * before it even within its own turn.
  */
-function warnings(state: SessionState): string[] {
+function warnings(state: SessionState, fit: Fit): string[] {
   const out: string[] = []
   if (state.main && state.compactions > 0) out.push('⚠ re-ground?')
   const since = state.drift.slice(state.main?.driftMark ?? 0)
   const drift = since.filter((d) => d.kind !== 'reground-blocked')
   const last = drift.at(-1)
   if (last) {
-    const what = last.actionClass ? `${last.tool} (${last.actionClass})` : last.tool
+    const tool = fit(last.tool, TOOL_MAX)
+    const what = last.actionClass ? `${tool} (${last.actionClass})` : tool
     out.push(`⚠ drift: ${what}${drift.length > 1 ? ` ×${drift.length}` : ''}`)
   }
   if (since.some((d) => d.kind === 'reground-blocked')) out.push('⚠ re-ground blocked')
@@ -32,10 +43,10 @@ function warnings(state: SessionState): string[] {
 }
 
 /** Who leads the line: the session id, else the persona (shrunk to its id once the persona is dropped). */
-function lead(main: Resolution, keepPersona: boolean): string {
+function lead(main: Resolution, keepPersona: boolean, fit: Fit): string {
   const { ids, details } = main
   const persona = details?.personaName ?? details?.personaId ?? ids.personaId
-  return ids.sessionId ?? (keepPersona ? persona : (ids.personaId ?? persona)) ?? 'contract'
+  return fit(ids.sessionId ?? (keepPersona ? persona : (ids.personaId ?? persona)) ?? 'contract', LEAD_MAX)
 }
 
 /** The trailing names, `<persona> › <directive>`, without whatever already leads; dropped as asked. */
@@ -52,24 +63,37 @@ function cut(text: string): string {
 
 /**
  * The mod's one-line readout under the prompt: lead, warnings, enforcement, scope, then names. Plain text;
- * warnings carry `⚠`.
+ * warnings carry `⚠`. Observed text is shown whole while the line fits; when it cannot fit, the lead, the tool name
+ * and the enforcing id are ellipsized and the enforcement segment moves ahead of the warnings, so whatever the hard
+ * cut takes, it is never the enforcement segment.
  */
 export function statusText(state: SessionState): string {
-  const tail = warnings(state)
   const { main } = state
   if (!main) {
-    const enforcement = state.enforcement.kind === 'advisory' ? '/pk use <session>' : enforcementSegment(state.enforcement)
-    return cut(['◇ no contract', enforcement, ...tail].join(SEP))
+    const line = (fit: Fit) => {
+      const enforcement = state.enforcement.kind === 'advisory' ? '/pk use <session>' : enforcementSegment(state.enforcement, fit)
+      return ['◇ no contract', enforcement, ...warnings(state, fit)].join(SEP)
+    }
+    const text = line(whole)
+    return text.length <= MAX ? text : cut(line(ellipsize))
   }
   const scope = main.contract?.scope.mode
   // Claude Code cuts the line at its own width, which the mod can't know: what matters most goes first.
-  const line = (keepPersona: boolean, keepDirective: boolean) =>
-    ['◆ ' + lead(main, keepPersona), ...tail, enforcementSegment(state.enforcement), scope, names(main, keepPersona, keepDirective)]
+  const line = (keepPersona: boolean, keepDirective: boolean, fit: Fit, enforcementFirst = false) => {
+    const enforcement = enforcementSegment(state.enforcement, fit)
+    const warned = warnings(state, fit)
+    return [
+      '◆ ' + lead(main, keepPersona, fit),
+      ...(enforcementFirst ? [enforcement, ...warned] : [...warned, enforcement]),
+      scope,
+      names(main, keepPersona, keepDirective),
+    ]
       .filter(Boolean)
       .join(SEP)
+  }
   for (const [persona, directive] of [[true, true], [true, false], [false, false]] as const) {
-    const text = line(persona, directive)
+    const text = line(persona, directive, whole)
     if (text.length <= MAX) return text
   }
-  return cut(line(false, false))
+  return cut(line(false, false, ellipsize, true))
 }
