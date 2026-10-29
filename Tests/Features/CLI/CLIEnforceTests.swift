@@ -565,4 +565,565 @@ struct CLIEnforceTests {
     #expect((result.stderr + result.stdout).contains("as it appears in Claude Code tool names"))
     #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
   }
+
+  // MARK: - enforce install --host opencode
+
+  private static let openCodeSessionId = "read-only-auditor_audit-pass"
+
+  /// Runs `enforce install --host opencode` with `HOME` pointed at `home` and `XDG_CONFIG_HOME` unset,
+  /// so the plugin-listed check never reads the real user's OpenCode config.
+  private func runOpenCodeInstall(
+    projectDir: URL,
+    home: URL,
+    dryRun: Bool = false,
+    session: String = CLIEnforceTests.openCodeSessionId,
+    extra: [String] = []
+  ) -> (status: Int32, stdout: String, stderr: String) {
+    withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": nil]) {
+      var status: Int32 = 0
+      var stdout = ""
+      let stderr = captureStderr {
+        stdout = captureStdout {
+          status = PersonaKitCLI().run(
+            arguments: [
+              "personakit", "enforce", "install",
+              "--host", "opencode",
+              "--root", readOnlyFixtureRootURL().path,
+              "--no-global",
+              "--session=\(session)",
+              "--project-dir", projectDir.path,
+            ] + (dryRun ? ["--dry-run"] : []) + extra
+          )
+        }
+      }
+      return (status, stdout, stderr)
+    }
+  }
+
+  /// Sets or unsets process environment variables for `body`, then restores them.
+  private func withEnvironment<T>(_ values: [String: String?], _ body: () -> T) -> T {
+    var saved: [String: String?] = [:]
+    for (key, value) in values {
+      saved[key] = ProcessInfo.processInfo.environment[key]
+      if let value {
+        setenv(key, value, 1)
+      } else {
+        unsetenv(key)
+      }
+    }
+    defer {
+      for (key, value) in saved {
+        if let value {
+          setenv(key, value, 1)
+        } else {
+          unsetenv(key)
+        }
+      }
+    }
+    return body()
+  }
+
+  /// Every file and directory under `root`, as sorted relative paths.
+  private func tree(_ root: URL) -> [String] {
+    let enumerator = FileManager.default.enumerator(atPath: root.path)
+    return ((enumerator?.allObjects as? [String]) ?? []).sorted()
+  }
+
+  @Test
+  func openCodeInstallWritesOnlyTheManifest() throws {
+    let projectDir = try freshProjectDir("pk-oc-install")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(
+      tree(projectDir) == [
+        ".opencode",
+        ".opencode/personakit",
+        ".opencode/personakit/\(Self.openCodeSessionId).checks.json",
+      ]
+    )
+    #expect(tree(home).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallManifestMatchesClaudeFrozenManifestBytes() throws {
+    let claudeDir = try freshProjectDir("pk-oc-claude")
+    let openCodeDir = try freshProjectDir("pk-oc-opencode")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let claude = runInstall(extra: [], projectDir: claudeDir, dryRun: false)
+    let openCode = runOpenCodeInstall(projectDir: openCodeDir, home: home)
+
+    #expect(claude.status == 0)
+    #expect(openCode.status == 0)
+    let name = "\(Self.openCodeSessionId).checks.json"
+    let claudeBytes = try Data(contentsOf: claudeDir.appendingPathComponent(".claude/personakit/\(name)"))
+    let openCodeBytes = try Data(contentsOf: openCodeDir.appendingPathComponent(".opencode/personakit/\(name)"))
+    #expect(claudeBytes == openCodeBytes)
+  }
+
+  @Test
+  func openCodeInstallReplacesOtherManifests() throws {
+    let projectDir = try freshProjectDir("pk-oc-replace")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+    try Data("notes".utf8).write(to: directory.appendingPathComponent("notes.txt"))
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(!FileManager.default.fileExists(atPath: directory.appendingPathComponent("old.checks.json").path))
+    #expect(FileManager.default.fileExists(atPath: directory.appendingPathComponent("notes.txt").path))
+    #expect(
+      FileManager.default.fileExists(
+        atPath: directory.appendingPathComponent("\(Self.openCodeSessionId).checks.json").path
+      )
+    )
+  }
+
+  @Test
+  func openCodeInstallRefusesASymlinkedManifestDirectory() throws {
+    let projectDir = try freshProjectDir("pk-oc-symlink-leaf")
+    let home = try freshProjectDir("pk-oc-home")
+    let elsewhere = try freshProjectDir("pk-oc-elsewhere")
+    let victim = elsewhere.appendingPathComponent("victim.checks.json")
+    try Data("{}".utf8).write(to: victim)
+    let opencodeDir = projectDir.appendingPathComponent(".opencode")
+    try FileManager.default.createDirectory(at: opencodeDir, withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(
+      at: opencodeDir.appendingPathComponent("personakit"),
+      withDestinationURL: elsewhere
+    )
+
+    for dryRun in [false, true] {
+      let result = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains(".opencode/personakit"))
+      #expect((result.stderr + result.stdout).contains("symbolic link"))
+    }
+    #expect(tree(elsewhere) == ["victim.checks.json"])
+    #expect(try String(contentsOf: victim, encoding: .utf8) == "{}")
+  }
+
+  @Test
+  func openCodeInstallRefusesASymlinkedOpencodeDirectory() throws {
+    let projectDir = try freshProjectDir("pk-oc-symlink-parent")
+    let home = try freshProjectDir("pk-oc-home")
+    let elsewhere = try freshProjectDir("pk-oc-elsewhere")
+    let personakit = elsewhere.appendingPathComponent("personakit")
+    try FileManager.default.createDirectory(at: personakit, withIntermediateDirectories: true)
+    let victim = personakit.appendingPathComponent("victim.checks.json")
+    try Data("{}".utf8).write(to: victim)
+    try FileManager.default.createSymbolicLink(
+      at: projectDir.appendingPathComponent(".opencode"),
+      withDestinationURL: elsewhere
+    )
+
+    for dryRun in [false, true] {
+      let result = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("symbolic link"))
+    }
+    #expect(tree(elsewhere) == ["personakit", "personakit/victim.checks.json"])
+    #expect(try String(contentsOf: victim, encoding: .utf8) == "{}")
+  }
+
+  @Test
+  func openCodeInstallRefusesNonRegularManifestEntries() throws {
+    let projectDir = try freshProjectDir("pk-oc-nonregular")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let target = projectDir.appendingPathComponent("target.txt")
+    try Data("t".utf8).write(to: target)
+    try FileManager.default.createSymbolicLink(
+      at: directory.appendingPathComponent("link.checks.json"),
+      withDestinationURL: target
+    )
+    try FileManager.default.createDirectory(
+      at: directory.appendingPathComponent("dir.checks.json"),
+      withIntermediateDirectories: true
+    )
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+    let before = tree(projectDir)
+
+    for dryRun in [false, true] {
+      let result = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("link.checks.json"))
+      #expect((result.stderr + result.stdout).contains("dir.checks.json"))
+      #expect(!(result.stderr + result.stdout).contains("old.checks.json"))
+    }
+    #expect(tree(projectDir) == before)
+  }
+
+  @Test
+  func openCodeInstallKeepsExactlyTheNewManifestWhenAnOldNameDiffersOnlyByCase() throws {
+    let projectDir = try freshProjectDir("pk-oc-case")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let variant = Self.openCodeSessionId.uppercased() + ".checks.json"
+    try Data("{}".utf8).write(to: directory.appendingPathComponent(variant))
+
+    let dry = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+    #expect(dry.status == 0)
+    #expect(!dry.stdout.contains("Would remove"))
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    // On disk the name is exactly the session id, whatever spelling the old entry had.
+    #expect(tree(directory) == ["\(Self.openCodeSessionId).checks.json"])
+    // The surviving file holds the new contract, not the stub.
+    let text = try String(
+      contentsOf: directory.appendingPathComponent("\(Self.openCodeSessionId).checks.json"),
+      encoding: .utf8
+    )
+    #expect(text.contains("\"sessionId\""))
+    #expect(result.stdout.contains("\(directory.path)/\(Self.openCodeSessionId).checks.json"))
+  }
+
+  @Test
+  func openCodeInstallRemovesAnEntryThatOnlyLooksLikeTheNewName() throws {
+    let projectDir = try freshProjectDir("pk-oc-dotless")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    // Dotless i is a different file name from `i` on APFS, so this is another manifest.
+    let lookalike = Self.openCodeSessionId.replacingOccurrences(of: "auditor", with: "aud\u{131}tor") + ".checks.json"
+    try Data("{}".utf8).write(to: directory.appendingPathComponent(lookalike))
+    try #require(tree(directory) == [lookalike])
+
+    let dry = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+    #expect(dry.status == 0)
+    #expect(dry.stdout.contains("Would remove"))
+    #expect(dry.stdout.contains(lookalike))
+    #expect(tree(directory) == [lookalike])
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(tree(directory) == ["\(Self.openCodeSessionId).checks.json"])
+  }
+
+  @Test
+  func openCodeInstallWarnsWhenPluginNotListed() throws {
+    let projectDir = try freshProjectDir("pk-oc-warn")
+    let home = try freshProjectDir("pk-oc-home")
+    // Configs exist but none lists the plugin.
+    try Data("{\"plugin\": [\"other\"]}".utf8).write(to: projectDir.appendingPathComponent("opencode.json"))
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("opencode plugin opencode-personakit@"))
+    // The check reads config; it never writes it.
+    #expect(
+      try String(contentsOf: projectDir.appendingPathComponent("opencode.json"), encoding: .utf8)
+        == "{\"plugin\": [\"other\"]}"
+    )
+  }
+
+  @Test(arguments: [
+    "opencode.json", "opencode.jsonc", ".opencode/opencode.json", ".opencode/opencode.jsonc",
+  ])
+  func openCodeInstallDoesNotWarnWhenProjectConfigListsPlugin(relativePath: String) throws {
+    let projectDir = try freshProjectDir("pk-oc-listed")
+    let home = try freshProjectDir("pk-oc-home")
+    let config = projectDir.appendingPathComponent(relativePath)
+    try FileManager.default.createDirectory(
+      at: config.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    // JSONC with a comment: the check is a substring search, not a parse.
+    try Data("{ // plugins\n \"plugin\": [\"opencode-personakit@2.1.0\"] }".utf8).write(to: config)
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(!result.stderr.contains("opencode plugin opencode-personakit@"))
+  }
+
+  @Test
+  func openCodeInstallDoesNotWarnWhenGlobalConfigListsPlugin() throws {
+    let projectDir = try freshProjectDir("pk-oc-global")
+    let home = try freshProjectDir("pk-oc-home")
+    let globalDir = home.appendingPathComponent(".config/opencode")
+    try FileManager.default.createDirectory(at: globalDir, withIntermediateDirectories: true)
+    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
+      .write(to: globalDir.appendingPathComponent("opencode.json"))
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(!result.stderr.contains("opencode plugin opencode-personakit@"))
+  }
+
+  @Test
+  func openCodeInstallDryRunWritesNothing() throws {
+    let projectDir = try freshProjectDir("pk-oc-dry")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("Dry run"))
+    #expect(result.stdout.contains(".opencode/personakit/\(Self.openCodeSessionId).checks.json"))
+    #expect(!result.stdout.contains("Edit|Write|NotebookEdit|Bash"))
+    #expect(tree(projectDir).isEmpty)
+    #expect(tree(home).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallDryRunKeepsExistingManifests() throws {
+    let projectDir = try freshProjectDir("pk-oc-dry-keep")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("old.checks.json"))
+    #expect(tree(projectDir) == [".opencode", ".opencode/personakit", ".opencode/personakit/old.checks.json"])
+  }
+
+  @Test
+  func openCodeInstallPrintsRestartNote() throws {
+    let projectDir = try freshProjectDir("pk-oc-restart")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("Restart OpenCode"))
+  }
+
+  @Test
+  func openCodeInstallOutputIsDeterministic() throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let projectDir = try freshProjectDir("pk-oc-det")
+
+    let one = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+    let two = runOpenCodeInstall(projectDir: projectDir, home: home, dryRun: true)
+    #expect(one.stdout == two.stdout)
+    #expect(one.stderr == two.stderr)
+  }
+
+  @Test(arguments: ["a/b", "../x", ".hidden", "-lead", "a b", "a..b/c"])
+  func openCodeInstallRejectsInvalidSessionIds(session: String) throws {
+    let projectDir = try freshProjectDir("pk-oc-badid")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, session: session)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--session must match"))
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test(arguments: ["", "a b", "a/b", "a_\u{e9}"])
+  func openCodeInstallRejectsInvalidServerNames(name: String) throws {
+    let projectDir = try freshProjectDir("pk-oc-badserver")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, extra: ["--mcp-server", name])
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--mcp-server must"))
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallAcceptsDotsAndDoubleUnderscoresInServerNames() throws {
+    let projectDir = try freshProjectDir("pk-oc-server")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(
+      projectDir: projectDir,
+      home: home,
+      dryRun: true,
+      extra: ["--mcp-server", "pk.local__2"]
+    )
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("\"mcpServerName\" : \"pk.local__2\""))
+  }
+
+  @Test
+  func claudeInstallStillRejectsServerNamesOpenCodeAccepts() throws {
+    let projectDir = try freshProjectDir("pk-claude-badserver")
+
+    let result = runInstall(extra: ["--mcp-server", "pk.local"], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--mcp-server must be non-empty"))
+  }
+
+  /// A copy of the read-only fixture whose persona forbids exactly `capabilities`.
+  private func fixtureRoot(forbidding capabilities: [String]) throws -> URL {
+    let container = FileManager.default.temporaryDirectory
+      .appendingPathComponent("pk-oc-fixture-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+    let rootURL = container.appendingPathComponent("root")
+    try FileManager.default.copyItem(at: readOnlyFixtureRootURL(), to: rootURL)
+    let personaFiles = try FileManager.default.subpathsOfDirectory(atPath: rootURL.path)
+      .filter { $0.hasSuffix(".persona.json") }
+    for relative in personaFiles {
+      let url = rootURL.appendingPathComponent(relative)
+      var object = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+      object["forbiddenCapabilities"] = capabilities
+      try JSONSerialization.data(withJSONObject: object).write(to: url)
+    }
+    return rootURL
+  }
+
+  private func runOpenCodeInstall(
+    root: URL,
+    projectDir: URL,
+    home: URL
+  ) -> (status: Int32, stdout: String, stderr: String) {
+    withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": nil]) {
+      var status: Int32 = 0
+      var stdout = ""
+      let stderr = captureStderr {
+        stdout = captureStdout {
+          status = PersonaKitCLI().run(arguments: [
+            "personakit", "enforce", "install", "--host", "opencode",
+            "--root", root.path, "--no-global",
+            "--session=\(Self.openCodeSessionId)",
+            "--project-dir", projectDir.path,
+          ])
+        }
+      }
+      return (status, stdout, stderr)
+    }
+  }
+
+  @Test(arguments: [[String](), ["autonomous-loop"]])
+  func openCodeInstallSkipsContractOpenCodeCannotDeny(capabilities: [String]) throws {
+    let root = try fixtureRoot(forbidding: capabilities)
+    let projectDir = try freshProjectDir("pk-oc-nothing")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("No class-1 hook checks to install for session"))
+    #expect(result.stderr.contains("nothing OpenCode can deny"))
+    #expect(result.stdout.isEmpty)
+    #expect(tree(projectDir).isEmpty)
+    if !capabilities.isEmpty {
+      #expect(result.stderr.contains("degrade to review"))
+      #expect(result.stderr.contains("unattended-iteration"))
+    }
+  }
+
+  @Test
+  func openCodeInstallSkipSaysAnExistingManifestRemainsInForce() throws {
+    let root = try fixtureRoot(forbidding: ["autonomous-loop"])
+    let projectDir = try freshProjectDir("pk-oc-remains")
+    let home = try freshProjectDir("pk-oc-home")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("prior.checks.json"))
+
+    let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("prior.checks.json"))
+    #expect(result.stderr.contains("remains in force"))
+    #expect(tree(projectDir) == [".opencode", ".opencode/personakit", ".opencode/personakit/prior.checks.json"])
+  }
+
+  @Test
+  func openCodeInstallNotesDegradationForAMixedContract() throws {
+    let root = try fixtureRoot(forbidding: ["network-access", "autonomous-loop"])
+    let projectDir = try freshProjectDir("pk-oc-mixed")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("Installed OpenCode enforcement"))
+    #expect(result.stderr.contains("degrade to review"))
+    #expect(result.stderr.contains("unattended-iteration"))
+    #expect(!result.stderr.contains("network-egress —"))
+  }
+
+  @Test
+  func openCodeInstallRejectsExecutableOption() throws {
+    let projectDir = try freshProjectDir("pk-oc-exe")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(
+      projectDir: projectDir,
+      home: home,
+      extra: ["--executable", "/usr/local/bin/personakit"]
+    )
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--executable"))
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallWarnsWhenNoConfigExistsAnywhere() throws {
+    let projectDir = try freshProjectDir("pk-oc-noconfig")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("opencode plugin opencode-personakit@"))
+    #expect(tree(home).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallHonorsXDGConfigHome() throws {
+    let projectDir = try freshProjectDir("pk-oc-xdg")
+    let home = try freshProjectDir("pk-oc-home")
+    let xdg = try freshProjectDir("pk-oc-xdg-home")
+    let configDir = xdg.appendingPathComponent("opencode")
+    try FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
+      .write(to: configDir.appendingPathComponent("opencode.json"))
+    // A listing under $HOME/.config is ignored once XDG_CONFIG_HOME is set.
+    let decoy = home.appendingPathComponent(".config/opencode")
+    try FileManager.default.createDirectory(at: decoy, withIntermediateDirectories: true)
+    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
+      .write(to: decoy.appendingPathComponent("opencode.json"))
+
+    let listed = withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": xdg.path]) {
+      captureStderr {
+        _ = PersonaKitCLI().run(arguments: [
+          "personakit", "enforce", "install", "--host", "opencode",
+          "--root", readOnlyFixtureRootURL().path, "--no-global",
+          "--session=\(Self.openCodeSessionId)", "--project-dir", projectDir.path, "--dry-run",
+        ])
+      }
+    }
+    #expect(!listed.contains("opencode plugin opencode-personakit@"))
+
+    let emptyXDG = try freshProjectDir("pk-oc-xdg-empty")
+    let unlisted = withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": emptyXDG.path]) {
+      captureStderr {
+        _ = PersonaKitCLI().run(arguments: [
+          "personakit", "enforce", "install", "--host", "opencode",
+          "--root", readOnlyFixtureRootURL().path, "--no-global",
+          "--session=\(Self.openCodeSessionId)", "--project-dir", projectDir.path, "--dry-run",
+        ])
+      }
+    }
+    #expect(unlisted.contains("opencode plugin opencode-personakit@"))
+  }
 }

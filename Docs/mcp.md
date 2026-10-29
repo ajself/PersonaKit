@@ -92,6 +92,38 @@ user. The generated shape is:
 Studio will not rewrite an existing JSONC config automatically; it reports a
 manual merge snippet instead so comments and trailing commas are not stripped.
 
+#### OpenCode enforcement
+
+Enforcement needs the `opencode-personakit` plugin, which blocks tool calls the
+active contract forbids. Install an exact version with OpenCode (add `-g` for a
+global install), then freeze a session's contract for the project:
+
+```bash
+opencode plugin opencode-personakit@<exact-version>
+personakit enforce install --host opencode --session <id>
+```
+
+`enforce install --host opencode` writes only
+`.opencode/personakit/<id>.checks.json`. Install keeps one manifest in the
+folder it writes to; more than one manifest between the start folder and the
+repo root blocks every checked call. It never edits OpenCode config; it warns
+when no `opencode.json(c)` lists the plugin. Restart OpenCode after installing
+so the plugin loads the new contract. A change to the manifest while OpenCode
+runs denies every checked call until the next restart.
+
+`opencode --pure` loads no external plugins, so it runs with no enforcement. That
+is your explicit choice, and PersonaKit does not detect it.
+
+Enforcement blocks the agent's own tools; it is not a sandbox. A contract that
+allows edits but denies commands can still run code through OpenCode's
+formatters and language servers, and with commands allowed nothing is
+protected.
+
+While a contract is enforced the agent cannot edit OpenCode's config or plugin
+files through its edit, write and patch tools (project `.opencode/`,
+`opencode.json(c)`, `tui.json(c)`, the global OpenCode config and cache, and the
+`personakit` binary), so make those edits by hand.
+
 ### Claude Code
 
 Claude Code supports MCP servers through `claude mcp` and project `.mcp.json`

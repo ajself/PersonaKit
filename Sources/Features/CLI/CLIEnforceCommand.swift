@@ -243,15 +243,17 @@ struct EnforceCommand: ParsableCommand {
   )
 }
 
-/// Installs Claude Code enforcement for a session — the explicit, one-time, reviewed step.
+/// Installs host enforcement for a session — the explicit, one-time, reviewed step.
 ///
-/// Writes a frozen manifest and merges a `PreToolUse` hook into `.claude/settings.json`.
+/// For Claude Code, writes a frozen manifest and merges a `PreToolUse` hook into `.claude/settings.json`.
+/// For OpenCode, writes only the frozen manifest: the `opencode-personakit` server plugin is the hook,
+/// and PersonaKit never edits OpenCode config.
 /// PersonaKit never writes host config on its own; this runs only when invoked, prints
 /// exactly what it changes, and supports `--dry-run` to review before energizing.
 struct EnforceInstallCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "install",
-    abstract: "Install Claude Code PreToolUse enforcement for a session (explicit, idempotent)."
+    abstract: "Install Claude Code or OpenCode enforcement for a session (explicit, idempotent)."
   )
 
   @OptionGroup
@@ -260,10 +262,19 @@ struct EnforceInstallCommand: ParsableCommand {
   @OptionGroup
   var session: SessionSelection
 
-  @Option(name: .customLong("project-dir"), help: "Project directory that owns .claude/ (defaults to CWD).")
+  @Option(name: .customLong("host"), help: "Host to install enforcement for: claude (default) or opencode.")
+  var host: HookCheckHost = .claude
+
+  @Option(
+    name: .customLong("project-dir"),
+    help: "Project directory that owns .claude/ (.opencode/ with --host opencode; defaults to CWD)."
+  )
   var projectDir: String?
 
-  @Option(name: .customLong("executable"), help: "Path to the personakit binary the hook invokes.")
+  @Option(
+    name: .customLong("executable"),
+    help: "Path to the personakit binary the hook invokes (Claude Code only)."
+  )
   var executable: String?
 
   @Option(
@@ -279,15 +290,37 @@ struct EnforceInstallCommand: ParsableCommand {
   var dryRun = false
 
   mutating func validate() throws {
-    if let mcpServer, !ClaudeCodeEnforcement.isValidMCPServerName(mcpServer) {
-      throw ArgumentParser.ValidationError(
-        "--mcp-server must be non-empty, contain only letters, digits, '-' or '_', and not contain '__'. "
-          + "Use the server name as it appears in Claude Code tool names (mcp__<name>__…)."
-      )
+    switch host {
+    case .claude:
+      if let mcpServer, !ClaudeCodeEnforcement.isValidMCPServerName(mcpServer) {
+        throw ArgumentParser.ValidationError(
+          "--mcp-server must be non-empty, contain only letters, digits, '-' or '_', and not contain '__'. "
+            + "Use the server name as it appears in Claude Code tool names (mcp__<name>__…)."
+        )
+      }
+    case .opencode:
+      if executable != nil {
+        throw ArgumentParser.ValidationError(
+          "--executable applies to --host claude only; the OpenCode plugin runs the personakit on PATH."
+        )
+      }
+      if let mcpServer, !Self.isValidOpenCodeServerName(mcpServer) {
+        throw ArgumentParser.ValidationError(
+          "--mcp-server must be non-empty and contain only letters, digits, '.', '_' or '-'. "
+            + "Use the server name as it appears in the OpenCode config's mcp section."
+        )
+      }
     }
 
-    guard session.sessionId != nil else {
+    guard let sessionId = session.sessionId else {
       throw ArgumentParser.ValidationError("enforce install requires --session <id>.")
+    }
+
+    // The session id becomes a file name under .opencode/, so it must be a plain id.
+    if host == .opencode, !Self.isValidId(sessionId) {
+      throw ArgumentParser.ValidationError(
+        "--session must match ^[A-Za-z0-9][A-Za-z0-9._-]*$ with --host opencode."
+      )
     }
   }
 
@@ -318,6 +351,12 @@ struct EnforceInstallCommand: ParsableCommand {
     }
 
     let projectRoot = RootPathResolver().resolve(path: projectDir)
+
+    if host == .opencode {
+      try installOpenCode(manifest: manifest, sessionId: sessionId, projectRoot: projectRoot)
+      return
+    }
+
     let claudeDir = projectRoot.appendingPathComponent(".claude")
     let frozenManifestURL =
       claudeDir
@@ -338,13 +377,15 @@ struct EnforceInstallCommand: ParsableCommand {
         "No class-1 hook checks to install for session \(sessionId): "
           + "nothing Claude Code can deny at the hook layer.\n"
       )
-      Self.reportDegradation(actionClasses: artifacts.degradedActionClasses, persona: manifest.personaId)
+      Self.reportDegradation(
+        actionClasses: artifacts.degradedActionClasses,
+        persona: manifest.personaId,
+        host: "Claude Code"
+      )
       return
     }
 
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    let frozenManifestJSON = String(decoding: try encoder.encode(manifest), as: UTF8.self)
+    let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
     let existingSettings = try? Data(contentsOf: settingsURL)
     let replacedExisting = ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: existingSettings)
@@ -374,18 +415,242 @@ struct EnforceInstallCommand: ParsableCommand {
       print("  settings: \(settingsURL.path)")
     }
 
-    Self.reportDegradation(actionClasses: artifacts.degradedActionClasses, persona: manifest.personaId)
+    Self.reportDegradation(
+      actionClasses: artifacts.degradedActionClasses,
+      persona: manifest.personaId,
+      host: "Claude Code"
+    )
   }
 
-  /// Surfaces forbidden capabilities that cannot reach the hook layer on Claude Code.
-  private static func reportDegradation(actionClasses: [String], persona: String) {
+  /// OpenCode accepts any `[A-Za-z0-9._-]` server name; it sanitizes the rest itself.
+  private static func isValidOpenCodeServerName(_ name: String) -> Bool {
+    name.range(of: "^[A-Za-z0-9._-]+$", options: .regularExpression) != nil
+  }
+
+  private static func isValidId(_ id: String) -> Bool {
+    id.range(of: "^[A-Za-z0-9][A-Za-z0-9._-]*$", options: .regularExpression) != nil
+  }
+
+  /// The frozen manifest text both hosts write. The OpenCode server plugin hashes these exact bytes at startup.
+  private static func frozenManifestJSON(_ manifest: ChecksManifest) throws -> String {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    return String(decoding: try encoder.encode(manifest), as: UTF8.self)
+  }
+
+  /// Installs OpenCode enforcement: the frozen manifest and nothing else.
+  ///
+  /// Never writes OpenCode config. Other `*.checks.json` files in the manifest directory are removed so
+  /// the folder it writes to keeps one manifest. Refuses, before writing anything, when `.opencode` or
+  /// `.opencode/personakit` is a symbolic link or the manifest folder holds a `*.checks.json` entry that is
+  /// not a regular file.
+  private func installOpenCode(manifest: ChecksManifest, sessionId: String, projectRoot: URL) throws {
+    let manifestDirectory =
+      projectRoot
+      .appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)
+      .appendingPathComponent("personakit")
+
+    let deniedClasses = Set(
+      manifest.checks
+        .filter { $0.maxClass == CheckClass.hook.rawValue }
+        .flatMap { $0.rule.deniedActionClasses ?? [] }
+    )
+    // The classes OpenCode can block: its mapped tools, plus the ones the unclassified-tool rule routes.
+    let blockableClasses: Set<String> = ["command-execution", "file-mutation", "network-egress"]
+    let degradedClasses = deniedClasses.subtracting(blockableClasses).sorted()
+
+    guard !deniedClasses.isDisjoint(with: blockableClasses) else {
+      var stderrStream = StandardError()
+      stderrStream.write(
+        "No class-1 hook checks to install for session \(sessionId): "
+          + "nothing OpenCode can deny at the hook layer.\n"
+      )
+      let existing = Self.manifestEntryNames(in: manifestDirectory)
+      if !existing.isEmpty {
+        stderrStream.write(
+          "Existing manifest remains in force: \(existing.joined(separator: ", ")).\n"
+        )
+      }
+      Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
+      return
+    }
+
+    try Self.refuseSymbolicLinks(projectRoot: projectRoot)
+
+    let frozenManifestURL = manifestDirectory.appendingPathComponent("\(sessionId).checks.json")
+    let entries = Self.manifestEntryNames(in: manifestDirectory)
+    let irregular = entries.filter { !Self.isRegularFile(manifestDirectory.appendingPathComponent($0).path) }
+    guard irregular.isEmpty else {
+      throw CLIError.failure(
+        "Refusing to install: \(manifestDirectory.path) holds entries that are not regular files: "
+          + "\(irregular.joined(separator: ", ")). Remove or rename them, then run install again."
+      )
+    }
+
+    // An entry that is the same directory entry as the new manifest (a case variant on a case-insensitive
+    // volume) is decided by identity, not by comparing names: the volume knows what folds together.
+    let existingNewIdentity = Self.fileIdentity(frozenManifestURL.path)
+    let otherManifests = entries.filter { name in
+      name != frozenManifestURL.lastPathComponent
+        && (existingNewIdentity == nil
+          || Self.fileIdentity(manifestDirectory.appendingPathComponent(name).path) != existingNewIdentity)
+    }
+    let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
+
+    if dryRun {
+      print("# Dry run — nothing written.")
+      print("# Frozen manifest → \(frozenManifestURL.path)")
+      print(frozenManifestJSON)
+      for name in otherManifests {
+        print("# Would remove → \(manifestDirectory.appendingPathComponent(name).path)")
+      }
+    } else {
+      try AtomicFileWriter().write(contents: frozenManifestJSON + "\n", to: frozenManifestURL)
+      let removed = try Self.removeOtherManifests(otherManifests, in: manifestDirectory, keeping: frozenManifestURL)
+
+      print("Installed OpenCode enforcement for session \(sessionId).")
+      for name in removed {
+        print("  (removed prior manifest \(name))")
+      }
+      print("  frozen manifest: \(frozenManifestURL.path)")
+      print("Restart OpenCode so the plugin loads this contract.")
+    }
+
+    Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
+
+    if !Self.openCodeConfigListsPlugin(projectRoot: projectRoot) {
+      var stderrStream = StandardError()
+      stderrStream.write(
+        "Note: no OpenCode config lists the opencode-personakit plugin, so this contract is not enforced yet. "
+          + "Install it with `opencode plugin opencode-personakit@<version>` (add -g for global); "
+          + "PersonaKit never edits OpenCode config.\n"
+      )
+    }
+  }
+
+  /// Removes `names` from `directory`, never the file that is the new manifest, then confirms that exactly
+  /// that manifest is left and that it is spelled `<id>.checks.json` on disk. Returns the names removed.
+  private static func removeOtherManifests(
+    _ names: [String],
+    in directory: URL,
+    keeping manifestURL: URL
+  ) throws -> [String] {
+    var removed: [String] = []
+    let keptIdentity = fileIdentity(manifestURL.path)
+
+    for name in names {
+      let path = directory.appendingPathComponent(name).path
+      guard let identity = fileIdentity(path) else {
+        continue
+      }
+      // The write can replace a pre-listed entry (case-folding volumes); never unlink the new manifest.
+      guard identity != keptIdentity, isRegularFile(path) else {
+        continue
+      }
+      try FileManager.default.removeItem(atPath: path)
+      removed.append(name)
+    }
+
+    let remaining = manifestEntryNames(in: directory)
+    guard remaining.count == 1, fileIdentity(directory.appendingPathComponent(remaining[0]).path) == keptIdentity
+    else {
+      throw CLIError.failure(
+        "Install did not leave exactly one manifest in \(directory.path) "
+          + "(found: \(remaining.joined(separator: ", "))). Check the folder, then run install again."
+      )
+    }
+
+    // A write that replaced a case variant keeps that entry's spelling; rename it to the session id's.
+    // A case-only rename works on APFS, and rename(2) does not refuse the "existing" destination.
+    let intendedName = manifestURL.lastPathComponent
+    if remaining[0] != intendedName {
+      let current = directory.appendingPathComponent(remaining[0]).path
+      guard rename(current, directory.appendingPathComponent(intendedName).path) == 0,
+        manifestEntryNames(in: directory) == [intendedName]
+      else {
+        throw CLIError.failure(
+          "Install could not rename \(current) to \(intendedName). Check the folder, then run install again."
+        )
+      }
+    }
+    return removed
+  }
+
+  /// Fails when `.opencode` or `.opencode/personakit` under the project is a symbolic link.
+  private static func refuseSymbolicLinks(projectRoot: URL) throws {
+    let opencode = projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)
+    for url in [opencode, opencode.appendingPathComponent("personakit")] where isSymbolicLink(url.path) {
+      throw CLIError.failure(
+        "Refusing to install: \(url.path) is a symbolic link. "
+          + "Replace it with a real directory so enforcement files stay inside the project."
+      )
+    }
+  }
+
+  /// Names of the entries directly in `directory` that end in `.checks.json`, sorted. Does not recurse.
+  private static func manifestEntryNames(in directory: URL) -> [String] {
+    ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? [])
+      .filter { $0.hasSuffix(".checks.json") }
+      .sorted()
+  }
+
+  private static func fileType(_ path: String) -> FileAttributeType? {
+    // attributesOfItem uses lstat, so a symbolic link reports as one rather than as its target.
+    (try? FileManager.default.attributesOfItem(atPath: path))?[.type] as? FileAttributeType
+  }
+
+  private static func isRegularFile(_ path: String) -> Bool {
+    fileType(path) == .typeRegular
+  }
+
+  private static func isSymbolicLink(_ path: String) -> Bool {
+    fileType(path) == .typeSymbolicLink
+  }
+
+  /// Device and inode of the entry itself (not a link target), or nil when it does not exist.
+  private static func fileIdentity(_ path: String) -> [UInt64]? {
+    var info = stat()
+    guard lstat(path, &info) == 0 else {
+      return nil
+    }
+    return [UInt64(info.st_dev), UInt64(info.st_ino)]
+  }
+
+  /// Whether any OpenCode config the install can see mentions the plugin.
+  ///
+  /// A substring search over `opencode.json(c)` in the project, its `.opencode/`, and the global config
+  /// directory. It never parses or writes the file, so JSONC comments are harmless.
+  private static func openCodeConfigListsPlugin(projectRoot: URL) -> Bool {
+    let environment = ProcessInfo.processInfo.environment
+    var directories = [projectRoot, projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)]
+
+    let configHome = environment["XDG_CONFIG_HOME"].flatMap { $0.isEmpty ? nil : $0 }
+    let home = environment["HOME"].flatMap { $0.isEmpty ? nil : $0 } ?? HookCheckCommand.passwdHomeDirectory()
+    if let configHome {
+      directories.append(URL(fileURLWithPath: configHome).appendingPathComponent("opencode"))
+    } else if let home {
+      directories.append(URL(fileURLWithPath: home).appendingPathComponent(".config/opencode"))
+    }
+
+    return directories.contains { directory in
+      ["opencode.json", "opencode.jsonc"].contains { name in
+        guard let text = try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8) else {
+          return false
+        }
+        return text.contains("\"opencode-personakit")
+      }
+    }
+  }
+
+  /// Surfaces forbidden capabilities that cannot reach the hook layer on the host.
+  private static func reportDegradation(actionClasses: [String], persona: String, host: String) {
     guard !actionClasses.isEmpty else {
       return
     }
 
     var stderrStream = StandardError()
     stderrStream.write(
-      "Note: persona \(persona) forbids capabilities Claude Code cannot deny at the hook layer; "
+      "Note: persona \(persona) forbids capabilities \(host) cannot deny at the hook layer; "
         + "they degrade to review — \(actionClasses.joined(separator: ", ")).\n"
     )
   }
