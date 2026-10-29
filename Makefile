@@ -62,6 +62,7 @@ PKG_CHECKSUM_PATH ?= $(PKG_OUTPUT_PATH).sha256
 CLI_VERSION_FILE ?= Sources/Features/CLI/PersonaKitVersion.swift
 APP_PROJECT_PBXPROJ ?= PersonaKit/PersonaKit.xcodeproj/project.pbxproj
 MOD_DIR ?= Integrations/ClaudeCode
+OPENCODE_DIR ?= Integrations/OpenCode
 MOD_PLUGIN_JSON ?= $(MOD_DIR)/.claude-plugin/plugin.json
 
 -include $(RELEASE_LOCAL_CONFIG)
@@ -89,7 +90,7 @@ SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
 SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
-	core-validate-repo core-zip public-check mod-check \
+	core-validate-repo core-zip public-check mod-check opencode-check \
 	cli-build cli-install cli-install-zsh-completion cli-test version-check version-bump \
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
@@ -112,6 +113,7 @@ help:
 	@printf "  %-28s %s\n" "core-zip" "Create a project zip archive."
 	@printf "  %-28s %s\n" "public-check" "Run public README and starter verification, plus mod-check when claude is installed."
 	@printf "  %-28s %s\n" "mod-check" "Validate and test the Claude Code mod in Integrations/ClaudeCode."
+	@printf "  %-28s %s\n" "opencode-check" "Typecheck, test, and dry-run pack the OpenCode plugin in Integrations/OpenCode."
 	@echo ""
 	@echo "CLI surface:"
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
@@ -333,6 +335,12 @@ core-validate-repo: swiftpm-prepare
 mod-check:
 	claude plugin validate $(MOD_DIR)
 	claude plugin test $(MOD_DIR)
+
+opencode-check:
+	cd $(OPENCODE_DIR) && bun install --frozen-lockfile
+	cd $(OPENCODE_DIR) && bunx tsc --noEmit
+	cd $(OPENCODE_DIR) && bun test
+	cd $(OPENCODE_DIR) && bun scripts/pack.ts > /dev/null
 
 public-check: swiftpm-prepare
 ifeq ($(PUBLIC_CHECK_TEST),1)
