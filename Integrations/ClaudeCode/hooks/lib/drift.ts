@@ -1,15 +1,9 @@
 import type { DriftEvent, Enforcement } from '../../types'
+import { CLAUDE_HOST, TOOL_ACTION_CLASSES } from './host'
+import type { Host } from './host'
 import { isPersonaKitCall } from './observe'
 
-/** Mirror of `ClaudeCodeEnforcement.toolActionClasses`, flattened; a golden test keeps it equal to the Swift map. */
-export const TOOL_ACTION_CLASSES: Record<string, string> = {
-  Edit: 'file-mutation',
-  Write: 'file-mutation',
-  NotebookEdit: 'file-mutation',
-  Bash: 'command-execution',
-  WebFetch: 'network-egress',
-  WebSearch: 'network-egress',
-}
+export { TOOL_ACTION_CLASSES }
 
 /** Classes an unclassifiable MCP tool could plausibly perform (mirrors `mcpRelevantActionClasses`). */
 const MCP_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']
@@ -42,9 +36,12 @@ export function classifyDrift(
   enforcement: Enforcement,
   trustedServers: string[],
   turn: number,
+  host: Host = CLAUDE_HOST,
 ): DriftEvent | undefined {
   const { tool, agentId } = call
-  const actionClass = TOOL_ACTION_CLASSES[tool]
+  // An MCP key shadows a built-in of the same name, and only a tool's own entry is a class (never `constructor`).
+  const actionClass =
+    !host.isMCPTool(tool) && Object.hasOwn(host.toolActionClasses, tool) ? host.toolActionClasses[tool] : undefined
   const event = (kind: DriftEvent['kind'], withClass = true): DriftEvent => ({
     tool,
     ...(withClass && actionClass !== undefined ? { actionClass } : {}),
@@ -52,7 +49,7 @@ export function classifyDrift(
     ...(agentId !== undefined ? { agentId } : {}),
     turn,
   })
-  const personaKit = isPersonaKitCall(tool, call.input, trustedServers)
+  const personaKit = isPersonaKitCall(tool, call.input, trustedServers, host)
 
   if (enforcement.kind !== 'advisory') {
     const text = call.result.text ?? ''
@@ -65,6 +62,6 @@ export function classifyDrift(
 
   if (personaKit || call.result.isError === true) return undefined
   if (actionClass !== undefined) return deniedActionClasses.includes(actionClass) ? event('advisory') : undefined
-  if (tool.startsWith('mcp__') && MCP_RELEVANT.some((c) => deniedActionClasses.includes(c))) return event('advisory', false)
+  if (host.isMCPTool(tool) && MCP_RELEVANT.some((c) => deniedActionClasses.includes(c))) return event('advisory', false)
   return undefined
 }

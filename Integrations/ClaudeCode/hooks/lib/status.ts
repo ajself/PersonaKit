@@ -6,6 +6,7 @@ const SEP = ' · '
 /** The enforcement segment: the steady word, or the warning that stands in its place. */
 function enforcementSegment(enforcement: Enforcement): string {
   if (enforcement.kind === 'advisory') return 'advisory'
+  if (enforcement.pluginMissing) return '⚠ manifest present · plugin not loaded'
   if (enforcement.manifestUnreadable) return '⚠ enforcement manifest unreadable'
   if (enforcement.kind === 'enforced') return 'enforced'
   return `⚠ enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`

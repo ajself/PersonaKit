@@ -89,14 +89,30 @@ struct CLIModFixtureTests {
     return String(decoding: data, as: UTF8.self)
   }
 
-  private func toolActionClassesJSON() throws -> String {
-    var map: [String: String] = [:]
-    for (actionClass, tools) in ClaudeCodeEnforcement.toolActionClasses {
-      for tool in tools { map[tool] = actionClass }
-    }
+  private func sortedJSON<Value: Encodable>(_ value: Value) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys]
-    return String(decoding: try encoder.encode(map), as: UTF8.self)
+    return String(decoding: try encoder.encode(value), as: UTF8.self)
+  }
+
+  private func flattened(_ classes: [(actionClass: String, tools: [String])]) -> [String: String] {
+    var map: [String: String] = [:]
+    for (actionClass, tools) in classes {
+      for tool in tools { map[tool] = actionClass }
+    }
+    return map
+  }
+
+  private func toolActionClassesJSON() throws -> String {
+    try sortedJSON(flattened(ClaudeCodeEnforcement.toolActionClasses))
+  }
+
+  private func openCodeToolActionClassesJSON() throws -> String {
+    try sortedJSON(flattened(OpenCodeEnforcement.toolActionClasses))
+  }
+
+  private func openCodeReadOnlyToolsJSON() throws -> String {
+    try sortedJSON(OpenCodeEnforcement.readOnlyTools.sorted())
   }
 
   private func expectedGoldenText() throws -> String {
@@ -116,6 +132,8 @@ struct CLIModFixtureTests {
       "export const LIST_MERGED_JSON = \(try literal(merged))",
       "export const EXPORT_MD = \(try literal(export))",
       "export const TOOL_ACTION_CLASSES_JSON = \(try literal(try toolActionClassesJSON()))",
+      "export const OPENCODE_TOOL_ACTION_CLASSES_JSON = \(try literal(try openCodeToolActionClassesJSON()))",
+      "export const OPENCODE_READ_ONLY_TOOLS_JSON = \(try literal(try openCodeReadOnlyToolsJSON()))",
     ].joined(separator: "\n") + "\n"
   }
 

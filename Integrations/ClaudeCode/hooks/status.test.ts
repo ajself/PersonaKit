@@ -156,3 +156,10 @@ test('never longer than 120 characters: directive first, then persona', () => {
   expect(hardCut.length).toBe(120)
   expect(hardCut.endsWith('…')).toBe(true)
 })
+
+test('a missing plugin leads the enforcement segment with its warning', () => {
+  const missing = hooked('enforced', IDS, { pluginMissing: true })
+  expect(statusText(empty({ enforcement: missing }))).toBe('◇ no contract · ⚠ manifest present · plugin not loaded')
+  expect(statusText(state({ enforcement: missing }))).toBe(`${LEAD} · ⚠ manifest present · plugin not loaded · project-only · ${PERSONA}`)
+  expect(statusText(state({ enforcement: hooked('enforced', IDS, { pluginMissing: true, manifestUnreadable: true }) }))).toContain('⚠ manifest present · plugin not loaded')
+})

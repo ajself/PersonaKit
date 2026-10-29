@@ -3,6 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import type { Enforcement } from '../types'
 import { TOOL_ACTION_CLASSES, classifyDrift } from './lib/drift'
 import { TOOL_ACTION_CLASSES_JSON } from './fixtures/golden'
+import { openCodeHost } from './lib/host'
 
 const trusted = ['personakit']
 const advisory: Enforcement = { kind: 'advisory' }
@@ -85,4 +86,27 @@ test('subagent drift carries agentId', () => {
   expect(classify({ tool: 'Bash', result: ok(), agentId: 'a1' }, ['command-execution'], advisory)).toEqual({
     tool: 'Bash', kind: 'advisory', actionClass: 'command-execution', agentId: 'a1', turn: 4,
   })
+})
+
+test('OpenCode: a configured server prefix makes a tool MCP even when a built-in shares its name', () => {
+  const host = openCodeHost(['apply'])
+  const patch = { input: {}, tool: 'apply_patch', result: ok() }
+  // Not file-mutation: `apply` + `patch` is an MCP key, so it is an unclassified MCP tool, as in the Swift evaluator.
+  expect(classifyDrift(patch, ['file-mutation'], advisory, trusted, 4, host)).toEqual({ tool: 'apply_patch', kind: 'advisory', turn: 4 })
+  expect(classifyDrift(patch, ['command-execution'], advisory, trusted, 4, host)).toEqual({ tool: 'apply_patch', kind: 'advisory', turn: 4 })
+  expect(classifyDrift(patch, ['something-else'], advisory, trusted, 4, host)).toBeUndefined()
+  // Without that server configured it is the built-in.
+  expect(classifyDrift(patch, ['file-mutation'], advisory, trusted, 4, openCodeHost([]))).toEqual({
+    tool: 'apply_patch', actionClass: 'file-mutation', kind: 'advisory', turn: 4,
+  })
+  expect(classifyDrift({ input: {}, tool: 'bash', result: ok() }, ['command-execution'], advisory, trusted, 4, host)?.actionClass).toBe('command-execution')
+})
+
+test('tool names that are Object.prototype members are not classified', () => {
+  for (const tool of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+    expect(classify({ tool, result: ok() }, ['file-mutation', 'command-execution', 'network-egress'], advisory)).toBeUndefined()
+    expect(classifyDrift({ input: {}, tool, result: ok() }, ['command-execution'], advisory, trusted, 4, openCodeHost([]))).toBeUndefined()
+    // A denied one carries no inherited "class".
+    expect(classify({ tool, result: err(DENY) }, [], enforced([tool]))).toEqual({ tool, kind: 'blocked', turn: 4 })
+  }
 })

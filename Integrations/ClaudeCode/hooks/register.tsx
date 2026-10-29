@@ -1,13 +1,15 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import type { ContractIds, Enforcement, Observation, PaneState, Resolution, SessionState, View } from '../types'
-import { classifyDrift } from './lib/drift'
-import { enforcementFor, installedHook, sameContract } from './lib/enforcement'
+import type { ContractIds, Enforcement, PaneState, SessionState, View } from '../types'
+import { enforcementFor, installedHook } from './lib/enforcement'
+import { canUse } from './lib/ids'
 import { observe } from './lib/observe'
 import { usePrompt } from './lib/prompts'
 import { loadLibrary, loadPreview, personakitBinary, previewKey } from './lib/runner'
 import type { RunnerDollar } from './lib/runner'
+import { applyCall, initial, isEmpty, rejudge, trustedServers } from './lib/session'
+import type { Call } from './lib/session'
 import { statusText } from './lib/status'
 import { paneTree } from './pane'
 import type { PaneActions } from './pane'
@@ -16,7 +18,6 @@ import type { PaneActions } from './pane'
 const SETTINGS = '.claude/settings.json'
 const PANE = 'personakit'
 
-const initial: SessionState = { subagents: {}, enforcement: { kind: 'advisory' }, compactions: 0, drift: [], turn: 0 }
 export const session = atom({ plugin: 'personakit', key: 'session' } as const, initial)
 
 // The Library and the previews: pane state apart from the session's, so nothing they load reaches the status line.
@@ -24,7 +25,6 @@ export const session = atom({ plugin: 'personakit', key: 'session' } as const, i
 const initialPane: PaneState = { view: { kind: 'contract' }, back: [], filter: '', library: { kind: 'idle' }, previews: {}, expanded: [], token: 0 }
 export const pane = atom({ plugin: 'personakit', key: 'pane' } as const, initialPane)
 
-type Call = { tool: string; input: Record<string, unknown>; result: { isError?: boolean; text?: string }; agentId?: string }
 type Installed = { hook: ReturnType<typeof installedHook>; manifest: string | undefined }
 // Only what the mod needs of `$`, so `rebuild` and the helpers take any hook's `$`.
 type Dollar = Parameters<typeof read>[0] & {
@@ -32,9 +32,6 @@ type Dollar = Parameters<typeof read>[0] & {
   session: { root: () => Promise<string>; messages: () => Promise<readonly { role: string; text: string; toolUses: readonly ToolUse[]; toolResults?: readonly unknown[] }[]> }
 }
 type ToolUse = { tool: string; input: Record<string, unknown>; result?: unknown; text?: string; isError?: true }
-
-const isEmpty = (s: SessionState) =>
-  s.main === undefined && Object.keys(s.subagents).length === 0 && s.drift.length === 0 && s.compactions === 0
 
 /** `$.fs.read` that answers undefined instead of rejecting: a missing or unreadable file is no file. */
 const readText = async ($: Dollar, path: string): Promise<string | undefined> => {
@@ -55,55 +52,6 @@ async function readInstalled($: Dollar): Promise<Installed> {
   }
   const hook = installedHook(await readText($, `${root.replace(/\/$/, '')}/${SETTINGS}`))
   return { hook, manifest: hook ? await readText($, hook.manifestPath) : undefined }
-}
-
-const trustedServers = (configured: string, enforcement: Enforcement) =>
-  [...new Set([configured, enforcement.kind === 'advisory' ? undefined : enforcement.mcpServerName])].filter(
-    (name): name is string => typeof name === 'string' && name.length > 0,
-  )
-
-/** The installed hook judged again against a new main resolution, without re-reading anything. */
-function rejudge(enforcement: Enforcement, ids: ContractIds | undefined): Enforcement {
-  if (enforcement.kind === 'advisory' || enforcement.manifestUnreadable) return enforcement
-  return { ...enforcement, kind: ids && sameContract(ids, enforcement.ids) ? 'enforced' : 'enforcing-other' }
-}
-
-/** A contract or export observation folded into the resolution it updates: merged when the same contract. */
-function resolved(prev: Resolution | undefined, o: Exclude<Observation, { kind: 'failed' }>, turn: number): Resolution {
-  const contract = o.kind === 'contract' ? o.contract : undefined
-  const details = o.kind === 'export' ? o.details : undefined
-  const same = prev !== undefined && sameContract(prev.ids, o.ids)
-  const next: Resolution = { ids: same ? { ...prev.ids, ...o.ids } : o.ids, source: o.source, turn }
-  const keptContract = contract ?? (same ? prev.contract : undefined)
-  const keptDetails = details ?? (same ? prev.details : undefined)
-  if (keptContract) next.contract = keptContract
-  if (keptDetails) next.details = keptDetails
-  return next
-}
-
-/**
- * One completed tool call applied to the state: its observations in order, then its drift once. Pure.
- * Every successful main observation, a re-ground of the same contract included, marks the drift seen so far as
- * before it. The call's own drift lands after the mark: a PersonaKit call that resolved is never drift, and one that
- * was blocked resolved nothing.
- */
-function applyCall(state: SessionState, call: Call, observations: Observation[], trusted: string[]): SessionState {
-  let s = state
-  const { agentId } = call
-  for (const o of observations) {
-    if (o.kind === 'failed') continue
-    if (agentId !== undefined) {
-      s = { ...s, subagents: { ...s.subagents, [agentId]: resolved(s.subagents[agentId], o, s.turn) } }
-    } else {
-      const main: Resolution = { ...resolved(s.main, o, s.turn), driftMark: s.drift.length }
-      s = { ...s, main, compactions: 0, enforcement: rejudge(s.enforcement, main.ids) }
-    }
-  }
-  // A subagent is judged by its own contract when it resolved one, otherwise by main's.
-  const judgedBy = (agentId !== undefined ? s.subagents[agentId] : undefined) ?? s.main
-  const denied = judgedBy?.details?.deniedActionClasses ?? []
-  const drift = classifyDrift(call, denied, s.enforcement, trusted, s.turn)
-  return drift ? { ...s, drift: [...s.drift, drift] } : s
 }
 
 /** The state the transcript implies, from scratch: main's resolves and drift, turn by turn. */
@@ -220,6 +168,15 @@ async function fillPrompt($: Prompt, text: string): Promise<boolean> {
   return isFilled
 }
 
+/** Pre-fills the grounding prompt for `ids`; an id the CLI could read as a flag fills nothing and is toasted. */
+async function fillGrounding($: Prompt, ids: ContractIds): Promise<boolean> {
+  if (!canUse(ids)) {
+    $.ui.toast('PersonaKit: unsupported id')
+    return false
+  }
+  return fillPrompt($, usePrompt(ids))
+}
+
 const USE = 'Usage: /pk use <session>'
 const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills a grounding prompt.'
 
@@ -312,14 +269,18 @@ export const register: Register = (on, options) => {
     }
     if (sub !== 'use') return { text: USAGE }
     if (name === undefined || rest.length > 0) return { text: USE }
-    const filled = await fillPrompt($, usePrompt({ sessionId: name }))
+    if (!canUse({ sessionId: name })) {
+      $.ui.toast('PersonaKit: unsupported id')
+      return { text: 'Unsupported id; no prompt was pre-filled.' }
+    }
+    const filled = await fillGrounding($, { sessionId: name })
     return { text: filled ? `Pre-filled a prompt to ground this session in \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const reground = async () => {
       const { main } = await read($, session)
-      if (main) await fillPrompt($, usePrompt(main.ids))
+      if (main) await fillGrounding($, main.ids)
     }
     const edit = (change: (p: PaneState) => PaneState) => void safely($, async () => void (await update($, pane, change)))
     // A top-level view clears the back stack and the Library loads each time it is shown; any other view stacks.
@@ -336,7 +297,7 @@ export const register: Register = (on, options) => {
       back: () => edit((p) => ({ ...p, view: p.back.at(-1) ?? { kind: 'library' }, back: p.back.slice(0, -1) })),
       setFilter: (filter) => edit((p) => ({ ...p, filter })),
       refresh: () => void safely($, () => refreshLibrary($, binary)),
-      use: (sessionId) => void safely($, async () => void (await fillPrompt($, usePrompt({ sessionId })))),
+      use: (sessionId) => void safely($, async () => void (await fillGrounding($, { sessionId }))),
       reground: () => void safely($, reground),
       toggle: (key) => edit((p) => ({ ...p, expanded: p.expanded.includes(key) ? p.expanded.filter((k) => k !== key) : [...p.expanded, key] })),
     }

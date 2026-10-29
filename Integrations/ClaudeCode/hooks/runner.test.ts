@@ -130,8 +130,8 @@ test('loadPreviewSession', async () => {
   const w = world(both)
   const preview = await loadPreview(w.$, 'personakit', { sessionId: 'x' })
   expect(w.argvs).toEqual([
-    ['personakit', 'contract', '--session', 'x'],
-    ['personakit', 'export', '--session', 'x'],
+    ['personakit', 'contract', '--session=x'],
+    ['personakit', 'export', '--session=x'],
   ])
   expect(preview.kind).toBe('loaded')
   if (preview.kind !== 'loaded') return
@@ -142,8 +142,8 @@ test('loadPreviewSession', async () => {
 test('loadPreviewPersonaAndDirective', async () => {
   const w = world(both)
   await loadPreview(w.$, 'personakit', { personaId: 'p', directiveId: 'd' })
-  expect(w.argvs[0]).toEqual(['personakit', 'contract', '--persona', 'p', '--directive', 'd'])
-  expect(w.argvs[1]).toEqual(['personakit', 'export', '--persona', 'p', '--directive', 'd'])
+  expect(w.argvs[0]).toEqual(['personakit', 'contract', '--persona=p', '--directive=d'])
+  expect(w.argvs[1]).toEqual(['personakit', 'export', '--persona=p', '--directive=d'])
 })
 
 test('loadPreviewFailure', async () => {
@@ -203,8 +203,8 @@ test('openPreviewRunsTheGivenBinary', async () => {
   const w = world(both)
   await openPreview(w.$, '/opt/pk', { sessionId: 'x' })
   expect(w.argvs).toEqual([
-    ['/opt/pk', 'contract', '--session', 'x'],
-    ['/opt/pk', 'export', '--session', 'x'],
+    ['/opt/pk', 'contract', '--session=x'],
+    ['/opt/pk', 'export', '--session=x'],
   ])
 })
 

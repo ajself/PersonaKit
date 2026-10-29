@@ -20,7 +20,7 @@ export type Observation =
 export type Resolution = { ids: ContractIds; contract?: Contract; details?: ExportDetails; source: 'mcp' | 'cli'; turn: number; driftMark?: number }
 export type Enforcement =
   | { kind: 'advisory' }
-  | { kind: 'enforced' | 'enforcing-other'; manifestPath: string; ids: ContractIds; deniedActionClasses: string[]; matcherTools: string[]; mcpServerName?: string; manifestUnreadable?: true }
+  | { kind: 'enforced' | 'enforcing-other'; manifestPath: string; ids: ContractIds; deniedActionClasses: string[]; matcherTools: string[]; mcpServerName?: string; manifestUnreadable?: true; pluginMissing?: true }
 export type DriftEvent = { tool: string; actionClass?: string; kind: 'blocked' | 'advisory' | 'reground-blocked'; agentId?: string; turn: number }
 export type SessionState = {
   main?: Resolution; subagents: Record<string, Resolution>

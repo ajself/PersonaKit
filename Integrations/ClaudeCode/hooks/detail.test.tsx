@@ -179,8 +179,8 @@ each('a persona detail collapses long lists to three and expands them', async ($
 each('a session detail reads its preview once and draws the steps, a stop marked', async ($, w, surface) => {
   const ui = await library($, w, surface)
   await ui.press({ key: `open:session:${SESSION}` })
-  expect(w.runs).toContainEqual(['personakit', 'contract', '--session', SESSION])
-  expect(w.runs).toContainEqual(['personakit', 'export', '--session', SESSION])
+  expect(w.runs).toContainEqual(['personakit', 'contract', `--session=${SESSION}`])
+  expect(w.runs).toContainEqual(['personakit', 'export', `--session=${SESSION}`])
   expect(await text(ui, /^Loading contract…$/)).toBe(undefined)
   expect(await text(ui, /^preview, not in force$/)).toBeDefined()
   expect(await text(ui, /^session · /)).toBe(undefined)

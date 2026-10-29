@@ -14,8 +14,8 @@ export function usePrompt(ids: ContractIds): string {
     ? `session \`${sessionId}\``
     : [personaId && `personaId \`${personaId}\``, directiveId && `directiveId \`${directiveId}\``].filter(Boolean).join(' and ')
   const flags = sessionId !== undefined
-    ? `--session ${sh(sessionId)}`
-    : [personaId && `--persona ${sh(personaId)}`, directiveId && `--directive ${sh(directiveId)}`].filter(Boolean).join(' ')
+    ? `--session=${sh(sessionId)}`
+    : [personaId && `--persona=${sh(personaId)}`, directiveId && `--directive=${sh(directiveId)}`].filter(Boolean).join(' ')
   return (
     `Ground this session in the PersonaKit contract for ${what}. ` +
     `Resolve and then export it through PersonaKit: if the PersonaKit MCP server is connected, call its personakit_resolve_contract tool and then its personakit_export tool, each with ${what}; ` +

@@ -1,12 +1,14 @@
-import type { ProcessRunResult } from 'claude-code'
-
 import type { ContractIds, LibraryLoad, Preview } from '../../types'
 import { parseContract } from './contract'
 import { parseExport } from './export'
+import { isValidId, presentIds } from './ids'
 import { parseLibrary } from './library'
 
+/** What the loaders read of a finished process; a host's richer result is assignable. */
+export type ProcessRunResult = { stdout: string; stderr: string; exitCode: number; isStdoutTruncated?: boolean }
+
 /** Only what the loaders need of `$`: the one-shot process call, which rejects when it cannot run. */
-export type RunnerDollar = { process: { run: (argv: readonly string[]) => Promise<ProcessRunResult> } }
+export type RunnerDollar = { process: { run: (argv: readonly string[], opts?: { stdin?: string }) => Promise<ProcessRunResult> } }
 
 const TRUNCATED = 'output passed 4 MiB'
 // The API documents no error type for "cannot start", so a start failure and a timeout are told by their message.
@@ -36,11 +38,11 @@ export async function loadLibrary($: RunnerDollar, binary: string): Promise<Libr
   return parseLibrary(result.stdout, result.exitCode, binary)
 }
 
-/** The flags `usePrompt` builds for `ids`: the session id, else the persona and directive. */
+/** The CLI flags for `ids`: `--session=<id>`, else `--persona=<id>` and `--directive=<id>`. */
 const flagsOf = ({ sessionId, personaId, directiveId }: ContractIds): string[] =>
   sessionId !== undefined
-    ? ['--session', sessionId]
-    : [...(personaId ? ['--persona', personaId] : []), ...(directiveId ? ['--directive', directiveId] : [])]
+    ? [`--session=${sessionId}`]
+    : [...(personaId ? [`--persona=${personaId}`] : []), ...(directiveId ? [`--directive=${directiveId}`] : [])]
 
 /** Where a contract's preview is kept in the pane: `session:<id>`, else `pd:<persona>/<directive>`. */
 export const previewKey = ({ sessionId, personaId, directiveId }: ContractIds): string =>
@@ -62,6 +64,8 @@ async function output($: RunnerDollar, argv: string[]): Promise<{ stdout: string
 
 /** Runs `contract` then `export` for `ids` and reads both; either failing fails the preview. */
 export async function loadPreview($: RunnerDollar, binary: string, ids: ContractIds): Promise<Preview> {
+  // An id the CLI could read as a flag never reaches argv.
+  if (!presentIds(ids).every(isValidId)) return { kind: 'failed', message: 'unsupported id' }
   const flags = flagsOf(ids)
   const contractOut = await output($, [binary, 'contract', ...flags])
   if ('message' in contractOut) return { kind: 'failed', message: contractOut.message }

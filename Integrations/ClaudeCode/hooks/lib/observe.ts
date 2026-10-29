@@ -1,6 +1,8 @@
 import type { ContractIds, Observation } from '../../types'
 import { parseContract } from './contract'
 import { parseExport } from './export'
+import { CLAUDE_HOST } from './host'
+import type { Host } from './host'
 
 type Call = { tool: string; input: Record<string, unknown>; result: unknown }
 type CliCommand = { subcommand: 'contract' | 'export'; args: string[] }
@@ -64,8 +66,8 @@ function parseCli(command: string): CliCommand[] {
   return out
 }
 
-function cliCommands(tool: string, input: Record<string, unknown>): CliCommand[] {
-  if (tool !== 'Bash' || typeof input.command !== 'string') return []
+function cliCommands(tool: string, input: Record<string, unknown>, host: Host): CliCommand[] {
+  if (tool !== host.shellTool || typeof input.command !== 'string') return []
   return parseCli(input.command)
 }
 
@@ -90,17 +92,22 @@ function cliIds(args: string[]): ContractIds {
   return ids
 }
 
-function mcpKind(tool: string, trustedServers: string[]): 'contract' | 'export' | undefined {
+function mcpKind(tool: string, trustedServers: string[], host: Host): 'contract' | 'export' | undefined {
   for (const server of trustedServers) {
-    if (tool === `mcp__${server}__${MCP_RESOLVE}`) return 'contract'
-    if (tool === `mcp__${server}__${MCP_EXPORT}`) return 'export'
+    if (tool === host.mcpToolName(server, MCP_RESOLVE)) return 'contract'
+    if (tool === host.mcpToolName(server, MCP_EXPORT)) return 'export'
   }
   return undefined
 }
 
 /** True for a trusted MCP resolve/export tool or a recognized `personakit contract|export` command. */
-export function isPersonaKitCall(tool: string, input: Record<string, unknown>, trustedServers: string[]): boolean {
-  return mcpKind(tool, trustedServers) !== undefined || cliCommands(tool, input).length > 0
+export function isPersonaKitCall(
+  tool: string,
+  input: Record<string, unknown>,
+  trustedServers: string[],
+  host: Host = CLAUDE_HOST,
+): boolean {
+  return mcpKind(tool, trustedServers, host) !== undefined || cliCommands(tool, input, host).length > 0
 }
 
 const compact = (ids: ContractIds): ContractIds => {
@@ -181,9 +188,10 @@ export async function observe(
   call: Call,
   trustedServers: string[],
   readPersisted: (path: string) => Promise<string | undefined>,
+  host: Host = CLAUDE_HOST,
 ): Promise<Observation[]> {
   const result = (call.result ?? {}) as { isError?: boolean; text?: unknown; result?: unknown }
-  const mcp = mcpKind(call.tool, trustedServers)
+  const mcp = mcpKind(call.tool, trustedServers, host)
   if (mcp !== undefined) {
     const ids: ContractIds = typeof call.input.sessionId === 'string' && call.input.sessionId ? { sessionId: call.input.sessionId } : {}
     const text = typeof result.text === 'string' ? result.text : undefined
@@ -192,7 +200,7 @@ export async function observe(
   }
 
   // The agent never saw the contract text for `--copy` / `--output` exports.
-  const clis = cliCommands(call.tool, call.input).filter(
+  const clis = cliCommands(call.tool, call.input, host).filter(
     (c) => c.subcommand !== 'export' || !(hasFlag(c.args, '--copy') || hasFlag(c.args, '--output')),
   )
   if (clis.length === 0) return []

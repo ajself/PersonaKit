@@ -201,8 +201,8 @@ each('a contract with export details but no contract JSON is filled in from the 
 
   await pk($, '')
   expect(w.runs).toEqual([
-    ['personakit', 'contract', '--session', SESSION],
-    ['personakit', 'export', '--session', SESSION],
+    ['personakit', 'contract', `--session=${SESSION}`],
+    ['personakit', 'export', `--session=${SESSION}`],
   ])
   const ui = await mount($, surface)
   expect(await text(ui, /not seen/)).toBe(undefined)
@@ -322,6 +322,22 @@ each('/pk use s fills the prompt', async ($, w) => {
   expect(w.toasts).toEqual([])
 })
 
+each('/pk use with an id the CLI could read as a flag fills nothing and says so', async ($, w) => {
+  const ran = await pk($, 'use -x')
+  expect(ran.text).toBe('Unsupported id; no prompt was pre-filled.')
+  expect(w.fills).toEqual([])
+  expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
+})
+
+each('Re-ground with an unsupported id fills nothing and toasts', async ($, w, surface) => {
+  await call($, w, RESOLVE, JSON.stringify({ ...JSON.parse(CONTRACT_JSON), sessionId: '-x' }))
+  const ui = await mount($, surface)
+  await ui.press({ key: 'reground' })
+  expect(w.fills).toEqual([])
+  expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
+  await ui.unmount()
+})
+
 each('/pk use with no session replies with usage and fills nothing', async ($, w) => {
   const ran = await pk($, 'use')
   expect(ran.text).toBe('Usage: /pk use <session>')
@@ -370,7 +386,7 @@ test('Re-ground fills with persona and directive when the contract has no sessio
   const ui = await mount($, 'desktop')
   await ui.press({ key: 'reground' })
   expect(w.fills).toEqual([{ text: usePrompt({ personaId: 'read-only-auditor', directiveId: 'audit-pass' }), mode: 'replace' }])
-  expect(w.fills[0]?.text).toContain('--persona read-only-auditor --directive audit-pass')
+  expect(w.fills[0]?.text).toContain('--persona=read-only-auditor --directive=audit-pass')
   await ui.unmount()
 })
 
