@@ -147,16 +147,18 @@ struct HookCheckCommand: ParsableCommand {
 
     guard let data = try? Data(contentsOf: manifestURL) else {
       return failClosed(
-        "PersonaKit enforcement manifest at \(manifestURL.path) is missing or changed since OpenCode started "
-          + "(it could not be read); restart OpenCode to load the current contract"
+        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(manifestURL.path) "
+          + "is missing or changed since OpenCode started (it could not be read); "
+          + "restart OpenCode to load the current contract"
       )
     }
 
     let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     guard digest == expectedSHA256.lowercased() else {
       return failClosed(
-        "PersonaKit enforcement manifest at \(manifestURL.path) changed since OpenCode started "
-          + "(its SHA-256 no longer matches); restart OpenCode to load the current contract"
+        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(manifestURL.path) "
+          + "changed since OpenCode started (its SHA-256 no longer matches); "
+          + "restart OpenCode to load the current contract"
       )
     }
 

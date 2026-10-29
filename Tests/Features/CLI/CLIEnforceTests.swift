@@ -223,6 +223,7 @@ struct CLIEnforceTests {
 
     #expect(output.contains("\"decision\":\"deny\""))
     #expect(output.contains("changed since OpenCode started"))
+    #expect(output.contains("\"reason\":\"Blocked by PersonaKit contract: PersonaKit enforcement manifest at "))
   }
 
   @Test
@@ -241,6 +242,7 @@ struct CLIEnforceTests {
     )
 
     #expect(output.contains("changed since OpenCode started"))
+    #expect(output.contains("\"reason\":\"Blocked by PersonaKit contract: PersonaKit enforcement manifest at "))
   }
 
   @Test
@@ -344,6 +346,7 @@ struct CLIEnforceTests {
 
     #expect(output.contains("\"decision\":\"deny\""))
     #expect(output.contains("missing or changed since OpenCode started"))
+    #expect(output.contains("\"reason\":\"Blocked by PersonaKit contract: PersonaKit enforcement manifest at "))
     #expect(output.contains("restart OpenCode"))
   }
 
