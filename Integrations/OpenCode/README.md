@@ -3,7 +3,8 @@
 An OpenCode plugin that shows which PersonaKit contract is in force in the current session, flags drift from it, and
 lets you browse your PersonaKit library and start a session from it. It also enforces a frozen contract: its server
 half is the hook that blocks the tool calls the contract forbids. It is the OpenCode counterpart of the
-[Claude Code mod](../ClaudeCode/README.md) and needs OpenCode 1.19.5 or a later 1.x release.
+[Claude Code mod](https://github.com/ajself/PersonaKit/blob/main/Integrations/ClaudeCode/README.md) and is tested
+on OpenCode 1.19.5.
 
 ## Install
 
@@ -26,7 +27,7 @@ personakit enforce install --host opencode --session <id>
 ```
 
 The status comes from what the agent resolves through the PersonaKit MCP server or the `personakit` CLI, so register
-the server as well; [Docs/mcp.md](../../Docs/mcp.md) has the OpenCode config.
+the server as well; [Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main/Docs/mcp.md) has the OpenCode config.
 
 ## What it shows
 
@@ -130,10 +131,12 @@ OpenCode's config or plugin files, even when the contract allows edits: `.openco
 `tui.json(c)` anywhere in the repo, the global OpenCode config and cache, `~/.opencode/`, `$OPENCODE_CONFIG`,
 `$OPENCODE_CONFIG_DIR`, `$OPENCODE_TUI_CONFIG`, and the `personakit` binary. Edit those by hand.
 
-Enforcement is not a sandbox. A contract that allows edits but denies commands can still run code through OpenCode's
-formatters and language servers, and with commands allowed nothing is protected. Shell commands you run yourself
-(`!cmd`, `/command` substitutions) are not checked. Sessions created through `opencode serve`'s `/api/session` API get
-only static deny rules; [Docs/mcp.md](../../Docs/mcp.md#opencode-enforcement) lists what that misses.
+Enforcement is not a sandbox. OpenCode launches programs on its own: formatters, language servers, MCP server
+commands, and plugins referenced by path. When one of them lives outside the protected files above, a contract that
+allows edits but denies commands still lets the agent rewrite it, and OpenCode then runs the new code. With commands
+allowed, nothing is protected. Shell commands you run yourself (`!cmd`, `/command` substitutions) are not checked.
+Sessions created through `opencode serve`'s `/api/session` API get only static deny rules;
+[Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main/Docs/mcp.md#opencode-enforcement) lists what that misses.
 
 ## What it does not do
 

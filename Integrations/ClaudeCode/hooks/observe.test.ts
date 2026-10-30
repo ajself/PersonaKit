@@ -163,6 +163,14 @@ test('persisted output wins over a truncated stdout preview', async () => {
   expect(gone).toEqual([{ kind: 'contract', source: 'cli', ids: { sessionId: 'x' } }])
 })
 
+test('a workspace-valid id starting with _ resolves from bash', async () => {
+  const text = JSON.stringify({ ...JSON.parse(CONTRACT_JSON), sessionId: '_wip' })
+  const o = await run('personakit contract --session _wip', text)
+  expect(o.map((x) => x.kind)).toEqual(['contract'])
+  expect(o[0]?.ids.sessionId).toBe('_wip')
+  expect(contractOf(o[0])?.sessionId).toBe('_wip')
+})
+
 test('contract accepts --session=x', async () => {
   expect((await runTruncated('personakit contract --session=x'))[0]?.ids).toEqual({ sessionId: 'x' })
 })
@@ -277,8 +285,9 @@ const BAD_IDS = [
   'solo-dev\n◆ solo-dev · enforced',
   'a\u001b[2J',
   'a\u001b]0;t\u0007',
-  '-rf',
+  '.hidden',
   'a b',
+  'ré',
 ]
 
 test('a contract whose ids are not valid ids is failed, over MCP and from bash', async () => {

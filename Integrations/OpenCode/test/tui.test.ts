@@ -328,19 +328,21 @@ function fakeBinary(stdout: string): string {
 }
 
 test('pkUseSkipsInvalidIds', async () => {
-  const library = LIST_MERGED_JSON.replaceAll('senior-swiftui-engineer_apply-style', '-rf')
+  const library = LIST_MERGED_JSON.replaceAll('senior-swiftui-engineer_apply-style', '.hidden')
   const fake = await start(fakeApi(), { personakitPath: fakeBinary(library) })
   await commands(fake).find((command) => command.slashName === 'pk-use')!.run({})
   expect(fake.record.dialogs.length).toBe(1)
   fake.record.dialogs[0]!()
   const props = fake.record.selects[0]!
   const byId = new Map(props.options.map((option) => [option.value, option]))
-  expect(byId.get('-rf')?.disabled).toBe(true)
+  expect(byId.get('.hidden')?.disabled).toBe(true)
+  // OpenCode never draws a disabled row, so it carries no extra copy.
+  expect(byId.get('.hidden')?.description).toBe('.hidden')
   expect(byId.get('architectural-editor-review')?.disabled).toBe(false)
   expect(byId.get('architectural-editor-review')?.title).toBe('Review architecture invariants before implementation')
   expect(byId.get('architectural-editor-review')?.description).toBe('architectural-editor-review')
 
-  props.onSelect?.(byId.get('-rf') as TuiDialogSelectOption<string>)
+  props.onSelect?.(byId.get('.hidden') as TuiDialogSelectOption<string>)
   await new Promise((resolve) => setTimeout(resolve, 10))
   expect(fake.record.appended).toEqual([])
 
@@ -349,13 +351,27 @@ test('pkUseSkipsInvalidIds', async () => {
   props.onFilter?.('architectural-editor-rev')
   expect(props.options.map((option) => option.value)).toEqual(['architectural-editor-review'])
   props.onFilter?.('swift style')
-  expect(props.options.map((option) => option.value)).toEqual(['-rf'])
+  expect(props.options.map((option) => option.value)).toEqual(['.hidden'])
   props.onFilter?.('')
   expect(props.options.length).toBe(2)
 
   props.onSelect?.(byId.get('architectural-editor-review') as TuiDialogSelectOption<string>)
   await until(() => fake.record.appended.length === 1, 'the pre-fill')
   expect(fake.record.appended).toEqual([usePrompt({ sessionId: 'architectural-editor-review' })])
+})
+
+test('pkUseAcceptsWorkspaceIds', async () => {
+  const library = LIST_MERGED_JSON.replaceAll('senior-swiftui-engineer_apply-style', '_wip')
+  const fake = await start(fakeApi(), { personakitPath: fakeBinary(library) })
+  await commands(fake).find((command) => command.slashName === 'pk-use')!.run({})
+  fake.record.dialogs[0]!()
+  const props = fake.record.selects[0]!
+  const option = props.options.find((o) => o.value === '_wip')!
+  expect(option.disabled).toBe(false)
+  expect(option.description).toBe('_wip')
+  props.onSelect?.(option as TuiDialogSelectOption<string>)
+  await until(() => fake.record.appended.length === 1, 'the pre-fill')
+  expect(fake.record.appended[0]).toContain('personakit contract --session=_wip')
 })
 
 test('pkUseStripsControlCharactersFromLibraryText', async () => {

@@ -246,6 +246,40 @@ struct CLIEnforceTests {
   }
 
   @Test
+  func openCodeManifestReasonsStripControlCharactersFromThePath() throws {
+    let directory = FileManager.default.temporaryDirectory
+      .appendingPathComponent("pk-ctl-\u{1b}[2J-\u{9b}31m-\u{7f}-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let manifest = directory.appendingPathComponent("s.checks.json")
+    let notAManifest = Data("[]".utf8)
+    try notAManifest.write(to: manifest)
+    let sha = SHA256.hash(data: notAManifest).map { String(format: "%02x", $0) }.joined()
+
+    let decisions = [
+      // decode
+      HookCheckCommand.decideOpenCode(manifestPath: manifest.path, expectedSHA256: sha, environment: [:]),
+      // mismatch
+      HookCheckCommand.decideOpenCode(
+        manifestPath: manifest.path,
+        expectedSHA256: String(repeating: "0", count: 64),
+        environment: [:]
+      ),
+      // unreadable
+      HookCheckCommand.decideOpenCode(
+        manifestPath: directory.appendingPathComponent("gone.checks.json").path,
+        expectedSHA256: sha,
+        environment: [:]
+      ),
+    ]
+    for decision in decisions {
+      let reason = try #require(decision.reason)
+      #expect(decision.isDenied)
+      #expect(reason.contains("pk-ctl-[2J-31m--"))
+      #expect(!reason.unicodeScalars.contains { $0.value < 0x20 || (0x7F...0x9F).contains($0.value) })
+    }
+  }
+
+  @Test
   func openCodeHostFailsClosedOnMalformedStdin() throws {
     let missing = URL(fileURLWithPath: "/no/such/manifest.json")
     let unreadable = runHookCheck(
@@ -582,7 +616,7 @@ struct CLIEnforceTests {
     session: String = CLIEnforceTests.openCodeSessionId,
     extra: [String] = []
   ) -> (status: Int32, stdout: String, stderr: String) {
-    withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": nil]) {
+    withEnvironment(Self.isolatedOpenCodeEnvironment(home: home)) {
       var status: Int32 = 0
       var stdout = ""
       let stderr = captureStderr {
@@ -601,6 +635,11 @@ struct CLIEnforceTests {
       }
       return (status, stdout, stderr)
     }
+  }
+
+  /// `HOME` pointed at `home` and every other variable the plugin-listed check reads unset.
+  private static func isolatedOpenCodeEnvironment(home: URL) -> [String: String?] {
+    ["HOME": home.path, "XDG_CONFIG_HOME": nil, "OPENCODE_CONFIG": nil, "OPENCODE_CONFIG_DIR": nil]
   }
 
   /// Sets or unsets process environment variables for `body`, then restores them.
@@ -922,7 +961,7 @@ struct CLIEnforceTests {
     #expect(one.stderr == two.stderr)
   }
 
-  @Test(arguments: ["a/b", "../x", ".hidden", "-lead", "a b", "a..b/c"])
+  @Test(arguments: ["a/b", "../x", ".hidden", "a b", "a..b/c", "a\n", "a\u{1b}[2Jb", "\u{e9}"])
   func openCodeInstallRejectsInvalidSessionIds(session: String) throws {
     let projectDir = try freshProjectDir("pk-oc-badid")
     let home = try freshProjectDir("pk-oc-home")
@@ -932,6 +971,18 @@ struct CLIEnforceTests {
     #expect(result.status != 0)
     #expect((result.stderr + result.stdout).contains("--session must match"))
     #expect(tree(projectDir).isEmpty)
+  }
+
+  /// The workspace id rule allows a leading `_` or `-`; validation passes and only the session lookup fails.
+  @Test(arguments: ["_wip", "-lead"])
+  func openCodeInstallAcceptsWorkspaceSessionIds(session: String) throws {
+    let projectDir = try freshProjectDir("pk-oc-wsid")
+    let home = try freshProjectDir("pk-oc-home")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, session: session)
+
+    #expect(!(result.stderr + result.stdout).contains("--session must match"))
+    #expect((result.stderr + result.stdout).contains(session))
   }
 
   @Test(arguments: ["", "a b", "a/b", "a_\u{e9}"])
@@ -995,7 +1046,7 @@ struct CLIEnforceTests {
     projectDir: URL,
     home: URL
   ) -> (status: Int32, stdout: String, stderr: String) {
-    withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": nil]) {
+    withEnvironment(Self.isolatedOpenCodeEnvironment(home: home)) {
       var status: Int32 = 0
       var stdout = ""
       let stderr = captureStderr {
@@ -1091,42 +1142,59 @@ struct CLIEnforceTests {
     #expect(tree(home).isEmpty)
   }
 
+  /// Writes an OpenCode config listing the plugin at `directory/name`.
+  private func writePluginListing(in directory: URL, name: String = "opencode.json") throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8).write(to: directory.appendingPathComponent(name))
+  }
+
+  private func listsPlugin(projectDir: URL, _ environment: [String: String]) -> Bool {
+    EnforceInstallCommand.openCodeConfigListsPlugin(
+      projectRoot: projectDir,
+      environment: environment,
+      passwdHome: { nil }
+    )
+  }
+
   @Test
-  func openCodeInstallHonorsXDGConfigHome() throws {
+  func openCodeConfigListingHonorsXDGConfigHome() throws {
     let projectDir = try freshProjectDir("pk-oc-xdg")
     let home = try freshProjectDir("pk-oc-home")
     let xdg = try freshProjectDir("pk-oc-xdg-home")
-    let configDir = xdg.appendingPathComponent("opencode")
-    try FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
-    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
-      .write(to: configDir.appendingPathComponent("opencode.json"))
+    try writePluginListing(in: xdg.appendingPathComponent("opencode"))
     // A listing under $HOME/.config is ignored once XDG_CONFIG_HOME is set.
-    let decoy = home.appendingPathComponent(".config/opencode")
-    try FileManager.default.createDirectory(at: decoy, withIntermediateDirectories: true)
-    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
-      .write(to: decoy.appendingPathComponent("opencode.json"))
-
-    let listed = withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": xdg.path]) {
-      captureStderr {
-        _ = PersonaKitCLI().run(arguments: [
-          "personakit", "enforce", "install", "--host", "opencode",
-          "--root", readOnlyFixtureRootURL().path, "--no-global",
-          "--session=\(Self.openCodeSessionId)", "--project-dir", projectDir.path, "--dry-run",
-        ])
-      }
-    }
-    #expect(!listed.contains("opencode plugin opencode-personakit@"))
-
+    try writePluginListing(in: home.appendingPathComponent(".config/opencode"))
     let emptyXDG = try freshProjectDir("pk-oc-xdg-empty")
-    let unlisted = withEnvironment(["HOME": home.path, "XDG_CONFIG_HOME": emptyXDG.path]) {
-      captureStderr {
-        _ = PersonaKitCLI().run(arguments: [
-          "personakit", "enforce", "install", "--host", "opencode",
-          "--root", readOnlyFixtureRootURL().path, "--no-global",
-          "--session=\(Self.openCodeSessionId)", "--project-dir", projectDir.path, "--dry-run",
-        ])
-      }
-    }
-    #expect(unlisted.contains("opencode plugin opencode-personakit@"))
+
+    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path, "XDG_CONFIG_HOME": xdg.path]))
+    #expect(!listsPlugin(projectDir: projectDir, ["HOME": home.path, "XDG_CONFIG_HOME": emptyXDG.path]))
+    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path]))
+  }
+
+  @Test
+  func openCodeConfigListingReadsEveryConfigLocation() throws {
+    let projectDir = try freshProjectDir("pk-oc-locations")
+    let home = try freshProjectDir("pk-oc-home")
+    #expect(!listsPlugin(projectDir: projectDir, ["HOME": home.path]))
+
+    let configFile = try freshProjectDir("pk-oc-config-file")
+    try writePluginListing(in: configFile, name: "custom.jsonc")
+    #expect(
+      listsPlugin(
+        projectDir: projectDir,
+        ["HOME": home.path, "OPENCODE_CONFIG": configFile.appendingPathComponent("custom.jsonc").path]
+      )
+    )
+
+    let configDir = try freshProjectDir("pk-oc-config-dir")
+    try writePluginListing(in: configDir, name: "opencode.jsonc")
+    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path, "OPENCODE_CONFIG_DIR": configDir.path]))
+
+    let dotHome = try freshProjectDir("pk-oc-dot-home")
+    try writePluginListing(in: dotHome.appendingPathComponent(".opencode"))
+    #expect(listsPlugin(projectDir: projectDir, ["HOME": dotHome.path]))
+
+    try writePluginListing(in: projectDir.appendingPathComponent(".opencode"))
+    #expect(listsPlugin(projectDir: projectDir, [:]))
   }
 }

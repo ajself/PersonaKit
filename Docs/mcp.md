@@ -94,8 +94,9 @@ manual merge snippet instead so comments and trailing commas are not stripped.
 
 #### OpenCode enforcement
 
-Enforcement needs the `opencode-personakit` plugin, whose server half blocks the
-tool calls the active contract forbids. The package is not on npm yet. Once it
+Enforcement needs the `opencode-personakit` plugin, tested on OpenCode 1.19.5,
+whose server half blocks the tool calls the active contract forbids. The
+package is not on npm yet. Once it
 is published, install an exact version with OpenCode (add `-g` for a global
 install), freeze a session's contract for the project, and restart OpenCode:
 
@@ -133,9 +134,11 @@ Make those edits by hand.
 
 What enforcement does not cover:
 
-- It is not a sandbox. A contract that allows edits but denies commands can
-  still run code through OpenCode's formatters and language servers, and with
-  commands allowed nothing is protected.
+- It is not a sandbox. OpenCode launches programs on its own: formatters,
+  language servers, MCP server commands, and plugins referenced by path. When
+  one of them lives outside the protected files above, a contract that allows
+  edits but denies commands still lets the agent rewrite it, and OpenCode then
+  runs the new code. With commands allowed, nothing is protected.
 - Shell commands you run yourself (`!cmd`, `/command` substitutions) are not
   checked.
 - `opencode --pure` loads no external plugins, so it runs with no enforcement.

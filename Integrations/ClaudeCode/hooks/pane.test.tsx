@@ -322,19 +322,26 @@ each('/pk use s fills the prompt', async ($, w) => {
   expect(w.toasts).toEqual([])
 })
 
-each('/pk use with an id the CLI could read as a flag fills nothing and says so', async ($, w) => {
-  const ran = await pk($, 'use -x')
+each('/pk use with an id outside the id rule fills nothing and says so', async ($, w) => {
+  const ran = await pk($, 'use .hidden')
   expect(ran.text).toBe('Unsupported id; no prompt was pre-filled.')
   expect(w.fills).toEqual([])
   expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
 })
 
 each('a contract with an unsupported id is never resolved, so there is nothing to re-ground', async ($, w, surface) => {
-  await call($, w, RESOLVE, JSON.stringify({ ...JSON.parse(CONTRACT_JSON), sessionId: '-x' }))
+  await call($, w, RESOLVE, JSON.stringify({ ...JSON.parse(CONTRACT_JSON), sessionId: '.hidden' }))
   const ui = await mount($, surface)
   expect(await ui.find({ key: 'reground' })).toBeUndefined()
   expect(w.fills).toEqual([])
   await ui.unmount()
+})
+
+each('/pk use _wip pre-fills --session=_wip', async ($, w) => {
+  await pk($, 'use _wip')
+  expect(w.fills).toEqual([{ text: usePrompt({ sessionId: '_wip' }), mode: 'replace' }])
+  expect(w.fills[0]?.text).toContain('personakit contract --session=_wip')
+  expect(w.toasts).toEqual([])
 })
 
 each('/pk use with no session replies with usage and fills nothing', async ($, w) => {

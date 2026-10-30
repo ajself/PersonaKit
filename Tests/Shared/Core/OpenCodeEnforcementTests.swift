@@ -190,6 +190,40 @@ struct OpenCodeEnforcementTests {
     }
   }
 
+  /// OpenCode compares tool ids by code unit; Swift `==` treats the Kelvin sign as `K`.
+  @Test
+  func canonicallyEquivalentToolIdsAreNotTrusted() {
+    let tool = "Persona\u{212A}it_personakit_resolve_contract"
+    #expect(
+      !OpenCodeEnforcement.isTrustedPersonaKitMCPTool(tool, serverName: "PersonaKit", configuredServers: ["PersonaKit"])
+    )
+    #expect(!OpenCodeEnforcement.isPossiblyMCPTool(tool, configuredServers: ["PersonaKit"]))
+    // A server spelled with the Kelvin sign is a different server, not the trusted one.
+    #expect(
+      !OpenCodeEnforcement.isTrustedPersonaKitMCPTool(
+        tool,
+        serverName: "PersonaKit",
+        configuredServers: ["Persona\u{212A}it"]
+      )
+    )
+    #expect(
+      OpenCodeEnforcement.collidingServers(
+        for: "PersonaKit_personakit_validate",
+        serverName: "Persona\u{212A}it",
+        configuredServers: ["PersonaKit"]
+      ) == ["PersonaKit"]
+    )
+
+    var manifest = manifest(forbiddenCapabilities: Self.allDenied)
+    manifest = manifest.withMCPServerName("PersonaKit")
+    let decision = OpenCodeHookCheckEvaluator.evaluate(
+      call(tool, mcpServers: ["PersonaKit"]),
+      manifest: manifest,
+      globalConfigPaths: []
+    )
+    #expect(decision.isDenied)
+  }
+
   @Test
   func sanitizesServerAndToolNamesLikeOpenCode() {
     #expect(OpenCodeEnforcement.sanitizeMCPName("a.b c-d_e") == "a_b_c-d_e")

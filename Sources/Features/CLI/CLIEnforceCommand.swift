@@ -1,5 +1,6 @@
 import ArgumentParser
 import ContextCore
+import ContextWorkspaceCore
 import CryptoKit
 import Foundation
 
@@ -144,10 +145,12 @@ struct HookCheckCommand: ParsableCommand {
     }
 
     let manifestURL = RootPathResolver().resolve(path: manifestPath)
+    // The path is shown in the deny reason, so it cannot carry terminal control characters.
+    let shownPath = OpenCodeEnforcement.strippingControlCharacters(manifestURL.path)
 
     guard let data = try? Data(contentsOf: manifestURL) else {
       return failClosed(
-        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(manifestURL.path) "
+        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(shownPath) "
           + "is missing or changed since OpenCode started (it could not be read); "
           + "restart OpenCode to load the current contract"
       )
@@ -156,14 +159,14 @@ struct HookCheckCommand: ParsableCommand {
     let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     guard digest == expectedSHA256.lowercased() else {
       return failClosed(
-        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(manifestURL.path) "
+        "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(shownPath) "
           + "changed since OpenCode started (its SHA-256 no longer matches); "
           + "restart OpenCode to load the current contract"
       )
     }
 
     guard let manifest = try? JSONDecoder().decode(ChecksManifest.self, from: data) else {
-      return failClosed("PersonaKit enforcement could not decode its manifest at \(manifestURL.path)")
+      return failClosed("PersonaKit enforcement could not decode its manifest at \(shownPath)")
     }
 
     let stdin: String
@@ -303,7 +306,8 @@ struct EnforceInstallCommand: ParsableCommand {
     case .opencode:
       if executable != nil {
         throw ArgumentParser.ValidationError(
-          "--executable applies to --host claude only; the OpenCode plugin runs the personakit on PATH."
+          "--executable applies to --host claude only; the OpenCode plugin runs its personakitPath option "
+            + "(personakit on PATH by default)."
         )
       }
       if let mcpServer, !Self.isValidOpenCodeServerName(mcpServer) {
@@ -318,10 +322,10 @@ struct EnforceInstallCommand: ParsableCommand {
       throw ArgumentParser.ValidationError("enforce install requires --session <id>.")
     }
 
-    // The session id becomes a file name under .opencode/, so it must be a plain id.
-    if host == .opencode, !Self.isValidId(sessionId) {
+    // The session id becomes a file name under .opencode/, so it must be a plain workspace id.
+    if host == .opencode, !WorkspaceEntityIDPolicy.isValid(sessionId) {
       throw ArgumentParser.ValidationError(
-        "--session must match ^[A-Za-z0-9][A-Za-z0-9._-]*$ with --host opencode."
+        "--session must match ^[A-Za-z0-9_-][A-Za-z0-9._-]*$ with --host opencode."
       )
     }
   }
@@ -429,10 +433,6 @@ struct EnforceInstallCommand: ParsableCommand {
     name.range(of: "^[A-Za-z0-9._-]+$", options: .regularExpression) != nil
   }
 
-  private static func isValidId(_ id: String) -> Bool {
-    id.range(of: "^[A-Za-z0-9][A-Za-z0-9._-]*$", options: .regularExpression) != nil
-  }
-
   /// The frozen manifest text both hosts write. The OpenCode server plugin hashes these exact bytes at startup.
   private static func frozenManifestJSON(_ manifest: ChecksManifest) throws -> String {
     let encoder = JSONEncoder()
@@ -520,7 +520,7 @@ struct EnforceInstallCommand: ParsableCommand {
 
     Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
 
-    if !Self.openCodeConfigListsPlugin(projectRoot: projectRoot) {
+    if !Self.openCodeConfigListsPlugin(projectRoot: projectRoot, environment: ProcessInfo.processInfo.environment) {
       var stderrStream = StandardError()
       stderrStream.write(
         "Note: no OpenCode config lists the opencode-personakit plugin, so this contract is not enforced yet. "
@@ -620,27 +620,45 @@ struct EnforceInstallCommand: ParsableCommand {
 
   /// Whether any OpenCode config the install can see mentions the plugin.
   ///
-  /// A substring search over `opencode.json(c)` in the project, its `.opencode/`, and the global config
-  /// directory. It never parses or writes the file, so JSONC comments are harmless.
-  private static func openCodeConfigListsPlugin(projectRoot: URL) -> Bool {
-    let environment = ProcessInfo.processInfo.environment
-    var directories = [projectRoot, projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)]
+  /// A substring search over `opencode.json(c)` in the project, its `.opencode/`, `$OPENCODE_CONFIG_DIR`, the global
+  /// config directory and `~/.opencode/`, plus the `$OPENCODE_CONFIG` file. It never parses or writes a file, so
+  /// JSONC comments are harmless. `environment` is the caller's; without `HOME`, `passwdHome` supplies the home.
+  static func openCodeConfigListsPlugin(
+    projectRoot: URL,
+    environment: [String: String],
+    passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
+  ) -> Bool {
+    func value(_ key: String) -> String? {
+      environment[key].flatMap { $0.isEmpty ? nil : $0 }
+    }
 
-    let configHome = environment["XDG_CONFIG_HOME"].flatMap { $0.isEmpty ? nil : $0 }
-    let home = environment["HOME"].flatMap { $0.isEmpty ? nil : $0 } ?? HookCheckCommand.passwdHomeDirectory()
-    if let configHome {
+    var directories = [projectRoot, projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)]
+    if let configDirectory = value("OPENCODE_CONFIG_DIR") {
+      directories.append(URL(fileURLWithPath: configDirectory))
+    }
+
+    let home = value("HOME") ?? passwdHome().flatMap { $0.isEmpty ? nil : $0 }
+    if let configHome = value("XDG_CONFIG_HOME") {
       directories.append(URL(fileURLWithPath: configHome).appendingPathComponent("opencode"))
     } else if let home {
       directories.append(URL(fileURLWithPath: home).appendingPathComponent(".config/opencode"))
     }
+    if let home {
+      directories.append(URL(fileURLWithPath: home).appendingPathComponent(".opencode"))
+    }
 
-    return directories.contains { directory in
-      ["opencode.json", "opencode.jsonc"].contains { name in
-        guard let text = try? String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8) else {
-          return false
-        }
-        return text.contains("\"opencode-personakit")
+    var files = directories.flatMap { directory in
+      ["opencode.json", "opencode.jsonc"].map { directory.appendingPathComponent($0) }
+    }
+    if let configFile = value("OPENCODE_CONFIG") {
+      files.append(URL(fileURLWithPath: configFile))
+    }
+
+    return files.contains { file in
+      guard let text = try? String(contentsOf: file, encoding: .utf8) else {
+        return false
       }
+      return text.contains("\"opencode-personakit")
     }
   }
 

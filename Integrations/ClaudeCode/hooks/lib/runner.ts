@@ -64,7 +64,7 @@ async function output($: RunnerDollar, argv: string[]): Promise<{ stdout: string
 
 /** Runs `contract` then `export` for `ids` and reads both; either failing fails the preview. */
 export async function loadPreview($: RunnerDollar, binary: string, ids: ContractIds): Promise<Preview> {
-  // An id the CLI could read as a flag never reaches argv.
+  // An id outside the id rule never reaches argv.
   if (!presentIds(ids).every(isValidId)) return { kind: 'failed', message: 'unsupported id' }
   const flags = flagsOf(ids)
   const contractOut = await output($, [binary, 'contract', ...flags])

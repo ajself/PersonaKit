@@ -348,7 +348,7 @@ const tui = async (
       return {
         title: sanitizeLine(titles.get(session.directiveId) ?? session.directiveId),
         value: session.id,
-        description: sanitizeLine(isUsable ? session.id : `${session.id} · unsupported id`),
+        description: sanitizeLine(session.id),
         disabled: !isUsable,
       }
     })

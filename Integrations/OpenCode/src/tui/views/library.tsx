@@ -263,7 +263,7 @@ export function ScopeBadge(props: { scope: Scope; shadows?: Scope | null }) {
 
 /**
  * `Use`, or `Switch` while another session is in force; the session in force is marked and has no button. A session
- * id the CLI could read as a flag, or that carries control characters, is shown but cannot be used.
+ * id outside the id rule (spaces, control characters, a leading `.`) is shown but cannot be used.
  */
 export function UseControl(props: { sessionId: string; inForceSessionId: string | undefined; use: (id: string) => void }) {
   const { theme } = useUi()

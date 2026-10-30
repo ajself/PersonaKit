@@ -168,7 +168,7 @@ async function fillPrompt($: Prompt, text: string): Promise<boolean> {
   return isFilled
 }
 
-/** Pre-fills the grounding prompt for `ids`; an id the CLI could read as a flag fills nothing and is toasted. */
+/** Pre-fills the grounding prompt for `ids`; an id outside the id rule fills nothing and is toasted. */
 async function fillGrounding($: Prompt, ids: ContractIds): Promise<boolean> {
   if (!canUse(ids)) {
     $.ui.toast('PersonaKit: unsupported id')

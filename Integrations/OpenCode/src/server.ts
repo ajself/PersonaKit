@@ -65,8 +65,8 @@ function startupEnforcement(directory: string, worktree: string, binaryName: str
 /**
  * The enforcement hook: every tool call except a known read-only built-in goes to `personakit hook-check`, and a
  * deny throws its reason, which blocks the call and reaches the model. Options: `personakitPath` (the executable,
- * `personakit` on PATH by default); `mcpServerName` is accepted for messages and changes nothing here. It is not
- * exported by name: a loader that walks named exports must not find a second plugin.
+ * `personakit` on PATH by default). The server plugin does not use `mcpServerName`; the manifest names the trusted
+ * server. It is not exported by name: a loader that walks named exports must not find a second plugin.
  */
 const server: Plugin = async (input, options) => {
   const state = startupEnforcement(input.directory, input.worktree, personakitBinary(options ?? {}))

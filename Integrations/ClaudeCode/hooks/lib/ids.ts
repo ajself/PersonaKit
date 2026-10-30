@@ -1,7 +1,11 @@
 import type { ContractIds } from '../../types'
 
-/** The only ids passed to the CLI: they cannot start with `-` or carry spaces or control characters. */
-export const isValidId = (id: string): boolean => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id)
+/**
+ * The id rule, the same as the CLI's `WorkspaceEntityIDPolicy`: ASCII letters, digits, `.`, `_` and `-`, not empty and
+ * not starting with `.`. Ids reach argv only as `--session=<id>`, `--persona=<id>` and `--directive=<id>`, so a
+ * leading `-` cannot read as a flag.
+ */
+export const isValidId = (id: string): boolean => /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(id)
 
 /** Every id `ids` carries, in session, persona, directive order. */
 export const presentIds = ({ sessionId, personaId, directiveId }: ContractIds): string[] =>

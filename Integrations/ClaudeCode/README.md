@@ -21,7 +21,8 @@ The status line under the prompt reads one of:
 - `◇ no contract · /pk use <session>` when nothing has been resolved.
 - `◆ <session> · <warnings> · enforced|advisory · <scope> · <persona> › <directive>` for the contract in force.
   Warnings and enforcement come first so a narrow terminal's cut hides the names, not them; the names are dropped
-  from the end to stay within 120 characters.
+  from the end to stay within 120 characters, and a long session id is shortened with `…` when the line still
+  does not fit.
 - Warnings cover a stale contract (`re-ground?` after compactions), the latest drift since the resolve
   (`drift: <tool> (<class>)`, with a `×N` count), `enforcing <other>` when a PersonaKit hook is installed for a
   different contract, `enforcement manifest unreadable`, and `re-ground blocked`.
@@ -65,7 +66,8 @@ that failed validation (listed by scope and path), or a host that cannot run pro
 - `/pk` opens the pane on the Contract when one is in force in the session, and on the Library otherwise.
 - `/pk use <session>` pre-fills the prompt box with a request to resolve and export that session and adopt the
   contract. It replaces an empty box and appends on a new line otherwise, so a draft is never lost. You review and
-  send it.
+  send it. An id outside PersonaKit's id rule (letters, digits, `.`, `_`, and `-`, not starting with `.`) is
+  rejected with a toast, and nothing is pre-filled.
 
 ## Options
 

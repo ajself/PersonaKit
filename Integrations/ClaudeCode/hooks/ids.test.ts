@@ -5,11 +5,9 @@ import { canUse, isValidId, presentIds } from './lib/ids'
 import { loadPreview } from './lib/runner'
 
 test('invalidIdsNeverReachArgv', async () => {
-  expect(isValidId('-x')).toBe(false)
-  expect(isValidId('a b')).toBe(false)
-  expect(isValidId('a\u001b')).toBe(false)
-  expect(isValidId('')).toBe(false)
-  expect(isValidId('solo-dev_1.x')).toBe(true)
+  // The WorkspaceEntityIDPolicy rule: ids reach argv only as `--session=<id>`, so a leading `-` or `_` is safe.
+  for (const ok of ['solo-dev_1.x', '_wip', '-x', 'a..b']) expect(isValidId(ok)).toBe(true)
+  for (const bad of ['a b', '.hidden', '.', 'a\u001b[2Jb', '', 'a\nb', 'a·b', 'é']) expect(isValidId(bad)).toBe(false)
   let calls = 0
   const $ = {
     process: {
@@ -19,7 +17,7 @@ test('invalidIdsNeverReachArgv', async () => {
       },
     },
   }
-  for (const ids of [{ sessionId: '-x' }, { personaId: 'p', directiveId: 'a b' }, { personaId: 'a\u001b' }]) {
+  for (const ids of [{ sessionId: '.hidden' }, { personaId: 'p', directiveId: 'a b' }, { personaId: 'a\u001b[2Jb' }, { sessionId: '' }]) {
     expect(await loadPreview($, 'personakit', ids)).toEqual({ kind: 'failed', message: 'unsupported id' })
   }
   expect(calls).toBe(0)
@@ -29,7 +27,8 @@ test('canUseNeedsOnePresentAndAllValid', () => {
   expect(canUse({})).toBe(false)
   expect(canUse({ sessionId: 's' })).toBe(true)
   expect(canUse({ personaId: 'p', directiveId: 'd' })).toBe(true)
-  expect(canUse({ personaId: 'p', directiveId: '-d' })).toBe(false)
+  expect(canUse({ personaId: 'p', directiveId: '-d' })).toBe(true)
+  expect(canUse({ personaId: 'p', directiveId: '.d' })).toBe(false)
   expect(canUse({ sessionId: 'bad id' })).toBe(false)
 })
 

@@ -33,7 +33,23 @@ public enum OpenCodeEnforcement {
   public static let protectedDirectoryName = ".opencode"
 
   static func actionClass(forTool tool: String) -> String? {
-    toolActionClasses.first { $0.tools.contains(tool) }?.actionClass
+    toolActionClasses.first { $0.tools.contains { isSameID($0, tool) } }?.actionClass
+  }
+
+  /// Whether `tool` is one of ``readOnlyTools``, compared by bytes.
+  static func isReadOnlyTool(_ tool: String) -> Bool {
+    readOnlyTools.contains { isSameID($0, tool) }
+  }
+
+  /// Byte equality, the way OpenCode compares ids. Swift `==` uses canonical equivalence, so the Kelvin sign
+  /// (U+212A) equals `K`; in OpenCode they are different tools and servers.
+  static func isSameID(_ lhs: String, _ rhs: String) -> Bool {
+    lhs.utf8.elementsEqual(rhs.utf8)
+  }
+
+  /// Whether `id` starts with `prefix`, compared by bytes like ``isSameID(_:_:)``.
+  static func hasIDPrefix(_ id: String, _ prefix: String) -> Bool {
+    id.utf8.starts(with: prefix.utf8)
   }
 
   /// The global OpenCode config locations, read from the environment OpenCode hands its hooks.
@@ -99,14 +115,14 @@ public enum OpenCodeEnforcement {
   /// OpenCode joins server and tool with `_`, so `a_b` plus tool `c` and `a` plus tool `b_c` share a key.
   static func collidingServers(for tool: String, serverName: String, configuredServers: [String]) -> [String] {
     configuredServers
-      .filter { $0 != serverName && tool.hasPrefix(sanitizeMCPName($0) + "_") }
+      .filter { !isSameID($0, serverName) && hasIDPrefix(tool, sanitizeMCPName($0) + "_") }
       .sorted()
   }
 
   /// Whether `tool` has the shape of a PersonaKit MCP tool registered by `serverName`.
   static func isPersonaKitToolKey(_ tool: String, serverName: String) -> Bool {
     ClaudeCodeEnforcement.personaKitMCPToolNames.contains {
-      tool == mcpToolKey(server: serverName, tool: $0)
+      isSameID(tool, mcpToolKey(server: serverName, tool: $0))
     }
   }
 
@@ -115,7 +131,7 @@ public enum OpenCodeEnforcement {
   /// OpenCode lets an MCP tool replace a built-in with the same id (`plan` plus `exit` is `plan_exit`),
   /// so a name with a configured server's prefix is never trusted as the built-in.
   static func isPossiblyMCPTool(_ tool: String, configuredServers: [String]) -> Bool {
-    configuredServers.contains { tool.hasPrefix(sanitizeMCPName($0) + "_") }
+    configuredServers.contains { hasIDPrefix(tool, sanitizeMCPName($0) + "_") }
   }
 
   /// Whether `tool` is one of PersonaKit's own read-only MCP tools on the trusted server, and no
@@ -125,7 +141,9 @@ public enum OpenCodeEnforcement {
     serverName: String,
     configuredServers: [String]
   ) -> Bool {
-    guard configuredServers.contains(serverName), isPersonaKitToolKey(tool, serverName: serverName) else {
+    guard configuredServers.contains(where: { isSameID($0, serverName) }),
+      isPersonaKitToolKey(tool, serverName: serverName)
+    else {
       return false
     }
     return collidingServers(for: tool, serverName: serverName, configuredServers: configuredServers).isEmpty
@@ -177,7 +195,7 @@ public enum OpenCodeEnforcement {
 
   /// Removes C0, C1, and DEL characters so a tool name or path cannot steer the terminal that shows a
   /// deny reason.
-  static func strippingControlCharacters(_ text: String) -> String {
+  public static func strippingControlCharacters(_ text: String) -> String {
     String(
       String.UnicodeScalarView(
         text.unicodeScalars.filter { $0.value >= 0x20 && !(0x7F...0x9F).contains($0.value) }
@@ -366,7 +384,7 @@ public enum OpenCodeHookCheckEvaluator {
       )
     }
 
-    if OpenCodeEnforcement.readOnlyTools.contains(call.tool) { return allow }
+    if OpenCodeEnforcement.isReadOnlyTool(call.tool) { return allow }
 
     return evaluateTrustedOrUnclassified(call, serverName: serverName, manifest: manifest)
   }
@@ -416,7 +434,7 @@ public enum OpenCodeHookCheckEvaluator {
       serverName: serverName,
       configuredServers: call.mcpServers
     )
-    if call.mcpServers.contains(serverName), !colliding.isEmpty,
+    if call.mcpServers.contains(where: { OpenCodeEnforcement.isSameID($0, serverName) }), !colliding.isEmpty,
       OpenCodeEnforcement.isPersonaKitToolKey(call.tool, serverName: serverName)
     {
       let names = colliding.map { "'\(OpenCodeEnforcement.strippingControlCharacters($0))'" }
