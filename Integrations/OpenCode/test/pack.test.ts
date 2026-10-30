@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test'
-import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -12,11 +11,9 @@ test('stagedPackageResolvesBothEntrypoints', async () => {
   const [report] = JSON.parse(out) as [{ files: { path: string }[] }]
   const files = report.files.map((file) => file.path)
 
-  // Every entrypoint the package declares ships. An entrypoint whose source has not landed yet is skipped; pack.ts
-  // names it on stderr.
-  for (const entry of ['src/server.ts', 'src/tui.tsx']) {
-    if (existsSync(join(root, entry))) expect(files).toContain(`Integrations/OpenCode/${entry}`)
-  }
+  // Every entrypoint the package declares ships.
+  expect(files).toContain('Integrations/OpenCode/src/server.ts')
+  expect(files).toContain('Integrations/OpenCode/src/tui.tsx')
   const staged = JSON.parse(await Bun.file(join(root, '.stage/package.json')).text()) as { exports: Record<string, string> }
   expect(staged.exports).toEqual({
     './server': './Integrations/OpenCode/src/server.ts',

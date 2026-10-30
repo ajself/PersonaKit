@@ -43,8 +43,10 @@ const staged = {
 }
 writeFileSync(join(stage, 'package.json'), `${JSON.stringify(staged, null, 2)}\n`)
 
-for (const target of Object.values(staged.exports)) {
-  if (!existsSync(join(stage, target))) console.error(`pack: entrypoint ${target} is not in the stage yet`)
+const missing = Object.values(staged.exports).filter((target) => !existsSync(join(stage, target)))
+if (missing.length > 0) {
+  for (const target of missing) console.error(`pack: entrypoint ${target} is not in the stage`)
+  process.exit(1)
 }
 
 const packed = Bun.spawnSync(['npm', 'pack', '--dry-run', '--json'], { cwd: stage, stdout: 'pipe', stderr: 'pipe' })

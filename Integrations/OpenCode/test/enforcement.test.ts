@@ -107,6 +107,12 @@ test('sanitizeTextStripsEscapes', () => {
   expect(sanitizeText('a\rb\u0000c\u007fd\u009be\u0085f')).toBe('abcdef')
 })
 
+test('sanitizeTextStripsBidiControls', () => {
+  expect(sanitizeText('a\u202ab\u202bc\u202cd\u202de\u202ef')).toBe('abcdef')
+  expect(sanitizeText('a\u2066b\u2067c\u2068d\u2069e\u200ef\u200fg\u061ch')).toBe('abcdefgh')
+  expect(sanitizeText('line one\nline two')).toBe('line one\nline two')
+})
+
 test('pluginListedAcceptsOnlyVersionOrTagAfterTheAt', () => {
   for (const spec of ['@2.1.0', '@latest', '@2.1.0-beta.1', '@1.0.0+build_5'])
     expect(pluginListed([`opencode-personakit${spec}`])).toBe(true)
@@ -121,4 +127,14 @@ test('sanitizeLineStripsEverythingThatMovesOrHidesText', () => {
   expect(sanitizeLine('a\u202ab\u202ec\u2066d\u2069e\u200ef\u200fg\u061ch')).toBe('abcdefgh')
   expect(sanitizeLine('a\u200bb\u200cc\u200dd\u2060e\ufefff')).toBe('abcdef')
   expect(sanitizeLine('plain text 1.2 é')).toBe('plain text 1.2 é')
+})
+
+test('sanitizeLineStripsInvisibleFillersAndTags', () => {
+  expect(sanitizeLine('a\u00adb\u180ec\u2061d\u2062e\u2063f\u2064g')).toBe('abcdefg')
+  expect(sanitizeLine('a\u3164b\u115fc\u1160d')).toBe('abcd')
+  expect(sanitizeLine('a\ufe00b\ufe0fc')).toBe('abc')
+  expect(sanitizeLine('a\u{E0000}b\u{E0041}c\u{E007F}d')).toBe('abcd')
+  // Neighbours of the stripped ranges stay.
+  expect(sanitizeLine('\u{E0080}\ufe10\u2060x\u2065')).toBe('\u{E0080}\ufe10x\u2065')
+  expect(sanitizeLine('emoji 👍 ok')).toBe('emoji 👍 ok')
 })
