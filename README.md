@@ -222,6 +222,11 @@ line and flags drift from it. Install it from a Claude Code prompt with
 `/plugin install personakit --marketplace ajself/PersonaKit`. The mod only reads files: it never runs PersonaKit, blocks
 a tool call, or submits a prompt. See [Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
 
+OpenCode has a matching plugin, `opencode-personakit`: a status chip beside the prompt, a sidebar panel, `/pk` for the
+contract and the Library, and `/pk-use` to start a session. It is also the hook that enforces a contract frozen with
+`personakit enforce install --host opencode`. It is not on npm yet; see
+[Integrations/OpenCode/README.md](./Integrations/OpenCode/README.md) for install and what it covers.
+
 For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio shape, use the per-host config table in
 [Docs/mcp.md](./Docs/mcp.md).
 

@@ -94,35 +94,71 @@ manual merge snippet instead so comments and trailing commas are not stripped.
 
 #### OpenCode enforcement
 
-Enforcement needs the `opencode-personakit` plugin, which blocks tool calls the
-active contract forbids. Install an exact version with OpenCode (add `-g` for a
-global install), then freeze a session's contract for the project:
+Enforcement needs the `opencode-personakit` plugin, whose server half blocks the
+tool calls the active contract forbids. The package is not on npm yet. Once it
+is published, install an exact version with OpenCode (add `-g` for a global
+install), freeze a session's contract for the project, and restart OpenCode:
 
 ```bash
-opencode plugin opencode-personakit@<exact-version>
+opencode plugin opencode-personakit@2.1.0
 personakit enforce install --host opencode --session <id>
 ```
 
+Install from npm, so the plugin lives in OpenCode's cache, which enforcement
+protects; a plugin loaded from a project file outside `.opencode/` is one the
+agent can edit. The plugin's status chip, Library, commands, and options are in
+[Integrations/OpenCode/README.md](../Integrations/OpenCode/README.md).
+
 `enforce install --host opencode` writes only
-`.opencode/personakit/<id>.checks.json`. Install keeps one manifest in the
-folder it writes to; more than one manifest between the start folder and the
-repo root blocks every checked call. It never edits OpenCode config; it warns
-when no `opencode.json(c)` lists the plugin. Restart OpenCode after installing
-so the plugin loads the new contract. A change to the manifest while OpenCode
-runs denies every checked call until the next restart.
+`.opencode/personakit/<id>.checks.json` and removes any other manifest in that
+folder. It never edits OpenCode config; it warns when no OpenCode config lists
+the plugin. The plugin reads the manifest and records its SHA-256 when OpenCode
+starts, which is why the restart is needed. After that, a manifest that changes
+or goes away while OpenCode runs denies every checked call until the next
+restart. An unreadable manifest denies every checked call too, and more than one
+manifest between the start folder and the repo root denies every call.
 
-`opencode --pure` loads no external plugins, so it runs with no enforcement. That
-is your explicit choice, and PersonaKit does not detect it.
-
-Enforcement blocks the agent's own tools; it is not a sandbox. A contract that
-allows edits but denies commands can still run code through OpenCode's
-formatters and language servers, and with commands allowed nothing is
-protected.
+The plugin's `tool.execute.before` hook does the checking, and it covers the
+TUI, `opencode run`, the web app, ACP, and subagents. Every tool except
+OpenCode's read-only built-ins goes to `personakit hook-check --host opencode`.
+MCP tools, other plugins' tools, and custom tools cannot be classified, so they
+are denied whenever the contract forbids anything such a tool could do.
 
 While a contract is enforced the agent cannot edit OpenCode's config or plugin
-files through its edit, write and patch tools (project `.opencode/`,
-`opencode.json(c)`, `tui.json(c)`, the global OpenCode config and cache, and the
-`personakit` binary), so make those edits by hand.
+files through its edit, write, and patch tools, even when the contract allows
+edits: `.opencode/` and `opencode.json(c)` or `tui.json(c)` anywhere in the
+repo, the global OpenCode config and cache, `~/.opencode/`, `$OPENCODE_CONFIG`,
+`$OPENCODE_CONFIG_DIR`, `$OPENCODE_TUI_CONFIG`, and the `personakit` binary.
+Make those edits by hand.
+
+What enforcement does not cover:
+
+- It is not a sandbox. A contract that allows edits but denies commands can
+  still run code through OpenCode's formatters and language servers, and with
+  commands allowed nothing is protected.
+- Shell commands you run yourself (`!cmd`, `/command` substitutions) are not
+  checked.
+- `opencode --pure` loads no external plugins, so it runs with no enforcement.
+  That is your explicit choice, and PersonaKit does not detect it.
+- Sessions created through `opencode serve`'s `/api/session` API run no plugin
+  hooks. They get only the deny rules the plugin adds when OpenCode starts: the
+  commands, edits, and network access the contract denies, plus the protected
+  files above when edits are allowed. An unreadable manifest, or more than one,
+  denies all three. OpenCode 1.19.5 offers no MCP or plugin tools in these
+  sessions. The rules have limits:
+  - Denials read as OpenCode's own generic messages, not the contract's reason.
+  - A manifest change after startup is not seen.
+  - The rules come from the manifest in the directory `opencode serve` started
+    in, so a session for any other directory gets the start directory's rules,
+    or none.
+  - A session started before plugins finish loading can run unchecked. List
+    `opencode-personakit` first in the `plugin` array.
+  - A session whose directory is inside `.opencode/` or the global config can
+    write there.
+  - The rules cannot express case variants of a new protected file name, such
+    as `OpenCode.json`, and a protected path reached through a symlink (file or
+    directory) is judged by its target.
+  - Later plugins can add agents or rules that override these.
 
 ### Claude Code
 

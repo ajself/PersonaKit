@@ -47,10 +47,11 @@ NOTARY_KEYCHAIN_PROFILE ?=
 
 # GitHub release publishing. RELEASE_VERSION flows from VERSION (see above) and
 # drives the release tag and title. `make version-bump VERSION=x.y.z` keeps the
-# two code surfaces in sync so version-check passes:
+# code and integration version surfaces in sync so version-check passes:
 #   - MARKETING_VERSION in PersonaKit/PersonaKit.xcodeproj (app)
 #   - PersonaKitVersion.current in Sources/Features/CLI/PersonaKitVersion.swift (CLI/MCP)
 #   - "version" in Integrations/ClaudeCode/.claude-plugin/plugin.json (Claude Code mod)
+#   - "version" in Integrations/OpenCode/package.json (OpenCode plugin)
 GH ?= gh
 RELEASE_VERSION ?= $(PKG_VERSION)
 RELEASE_TAG ?= v$(RELEASE_VERSION)
@@ -64,6 +65,7 @@ APP_PROJECT_PBXPROJ ?= PersonaKit/PersonaKit.xcodeproj/project.pbxproj
 MOD_DIR ?= Integrations/ClaudeCode
 OPENCODE_DIR ?= Integrations/OpenCode
 MOD_PLUGIN_JSON ?= $(MOD_DIR)/.claude-plugin/plugin.json
+OPENCODE_PACKAGE_JSON ?= $(OPENCODE_DIR)/package.json
 
 -include $(RELEASE_LOCAL_CONFIG)
 
@@ -121,7 +123,7 @@ help:
 	@printf "  %-28s %s\n" "cli-install-zsh-completion" "Install zsh completion for the installed personakit CLI."
 	@printf "  %-28s %s\n" "cli-test" "Run CLI-focused SwiftPM tests (defaults to filter CLI)."
 	@printf "  %-28s %s\n" "version-check" "Assert version surfaces match RELEASE_VERSION (runs before install/release)."
-	@printf "  %-28s %s\n" "version-bump" "Set the code and mod version surfaces to VERSION=x.y.z (run before a release)."
+	@printf "  %-28s %s\n" "version-bump" "Set the code, mod, and OpenCode plugin version surfaces to VERSION=x.y.z (run before a release)."
 	@echo ""
 	@echo "Studio app:"
 	@printf "  %-28s %s\n" "studio-build" "Build the Studio app target with xcodebuild."
@@ -182,11 +184,11 @@ studio-build: studio-doctor
 cli-build: swiftpm-prepare
 	$(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --product $(CLI_PRODUCT_NAME)
 
-# Rewrite the code and mod version surfaces to VERSION so a release can be cut with
-# one knob. Run `make version-bump VERSION=1.1.0`, review the diff, commit, then
-# `make studio-publish-release VERSION=1.1.0`. Sets MARKETING_VERSION to the
-# major.minor (the Apple convention this project uses) and the CLI to the full
-# semver; version-check accepts both.
+# Rewrite the code, mod, and OpenCode plugin version surfaces to VERSION so a
+# release can be cut with one knob. Run `make version-bump VERSION=1.1.0`, review
+# the diff, commit, then `make studio-publish-release VERSION=1.1.0`. Sets
+# MARKETING_VERSION to the major.minor (the Apple convention this project uses)
+# and the CLI to the full semver; version-check accepts both.
 version-bump:
 	@if [ "$(origin VERSION)" = "file" ] || [ "$(origin VERSION)" = "default" ]; then \
 		echo "version-bump: VERSION is required (it defaults to the current $(VERSION))."; \
@@ -211,11 +213,15 @@ version-bump:
 	@if [ ! -f "$(MOD_PLUGIN_JSON)" ]; then \
 		echo "version-bump: $(MOD_PLUGIN_JSON) not found"; exit 1; \
 	fi
+	@if [ ! -f "$(OPENCODE_PACKAGE_JSON)" ]; then \
+		echo "version-bump: $(OPENCODE_PACKAGE_JSON) not found"; exit 1; \
+	fi
 	@rel_mm="$$(printf '%s' "$(VERSION)" | cut -d. -f1-2)"; \
 	sed -i '' 's/static let current = "[^"]*"/static let current = "$(VERSION)"/' "$(CLI_VERSION_FILE)"; \
 	sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $$rel_mm;/" "$(APP_PROJECT_PBXPROJ)"; \
 	sed -i '' 's/^\([[:space:]]*"version"[[:space:]]*:[[:space:]]*\)"[^"]*"/\1"$(VERSION)"/' "$(MOD_PLUGIN_JSON)"; \
-	echo "version-bump: set CLI current=$(VERSION), MARKETING_VERSION=$$rel_mm, mod version=$(VERSION)"
+	sed -i '' 's/^\([[:space:]]*"version"[[:space:]]*:[[:space:]]*\)"[^"]*"/\1"$(VERSION)"/' "$(OPENCODE_PACKAGE_JSON)"; \
+	echo "version-bump: set CLI current=$(VERSION), MARKETING_VERSION=$$rel_mm, mod and OpenCode plugin version=$(VERSION)"
 	@$(MAKE) --no-print-directory version-check VERSION=$(VERSION)
 	@echo "version-bump: review the diff and commit, then run 'make studio-publish-release VERSION=$(VERSION)'."
 
@@ -258,6 +264,18 @@ version-check:
 		echo "  plugin.json version = $$mod_ver"; \
 		echo "  RELEASE_VERSION     = $(RELEASE_VERSION)"; \
 		echo "  fix: set '\"version\": \"$(RELEASE_VERSION)\"' in $(MOD_PLUGIN_JSON)"; \
+		exit 1; \
+	fi; \
+	opencode_ver="$$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$(OPENCODE_PACKAGE_JSON)" 2>/dev/null | head -1)"; \
+	if [ -z "$$opencode_ver" ]; then \
+		echo "version-check: could not read \"version\" from $(OPENCODE_PACKAGE_JSON)"; \
+		exit 1; \
+	fi; \
+	if [ "$$opencode_ver" != "$(RELEASE_VERSION)" ]; then \
+		echo "version-check: drift detected"; \
+		echo "  package.json version = $$opencode_ver"; \
+		echo "  RELEASE_VERSION      = $(RELEASE_VERSION)"; \
+		echo "  fix: set '\"version\": \"$(RELEASE_VERSION)\"' in $(OPENCODE_PACKAGE_JSON)"; \
 		exit 1; \
 	fi; \
 	echo "version-check: OK ($(RELEASE_VERSION))"
