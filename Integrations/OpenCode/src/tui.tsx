@@ -14,12 +14,12 @@ import { findManifest } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
 import { rebuildFrom } from './tui/observer.ts'
 import { prefill } from './tui/prefill.ts'
+import { registerRoute, ROUTE } from './tui/route.tsx'
 import { createSpawnRunner } from './tui/spawnRunner.ts'
 import { sanitizeLine } from './tui/text.ts'
 import { Chip, chipText } from './tui/views/chip.tsx'
 import { Sidebar } from './tui/views/sidebar.tsx'
 
-const ROUTE = 'personakit'
 // What `observe` may read of a tool's saved full output, and the largest manifest read; past it a file reads as none.
 const MAX_READ = 4 * 1024 * 1024
 // How far up `parentID` a subagent's session is followed to the session being tracked.
@@ -175,11 +175,12 @@ type Tracked = {
 }
 
 /**
- * The PersonaKit TUI: the status chip beside the prompt, the sidebar panel, `/pk` and `/pk-use`. It observes the
- * transcript and never writes a file or submits a prompt; it runs `personakit list all --json` only when `/pk-use`
- * is chosen. Options: `personakitPath` (the executable, `personakit` on PATH by default) and `mcpServerName` (the
- * trusted PersonaKit MCP server, `personakit` by default). OpenCode passes three arguments; `uptime`, the process age
- * in seconds, is for tests.
+ * The PersonaKit TUI: the status chip beside the prompt, the sidebar panel, `/pk` (the Library route) and `/pk-use`.
+ * It observes the transcript and never writes a file or submits a prompt; it runs `personakit list all --json`,
+ * `contract` and `export` only on the person's action (`/pk-use`, the route opening, Refresh, a preview). Options:
+ * `personakitPath` (the executable, `personakit` on PATH by default) and `mcpServerName` (the trusted PersonaKit MCP
+ * server, `personakit` by default). OpenCode passes three arguments; `uptime`, the process age in seconds, is for
+ * tests.
  */
 const tui = async (
   api: TuiPluginApi,
@@ -435,7 +436,10 @@ const tui = async (
         namespace: 'palette',
         slashName: 'pk',
         run() {
-          const sessionID = viewed()
+          // Run on the route itself, it keeps the session the route was opened from.
+          const current = api.route.current
+          const kept = current.name === ROUTE ? current.params?.sessionID : undefined
+          const sessionID = current.name === ROUTE ? (typeof kept === 'string' ? kept : undefined) : viewed()
           api.route.navigate(ROUTE, sessionID === undefined ? {} : { sessionID })
           api.ui.dialog.clear()
         },
@@ -472,8 +476,17 @@ const tui = async (
     },
   })
 
+  // The Library and detail views, opened by `/pk`.
+  const disposeRoute = registerRoute(api, {
+    runner,
+    binary,
+    session: (sessionID) => (sessionID === undefined ? { ...initial, enforcement: enforcementNow() } : track(sessionID).state()),
+    manifestChanged,
+  })
+
   api.lifecycle.onDispose(() => {
     disposed = true
+    disposeRoute()
     disposeConfigWatch()
     for (const off of unsubscribe) off()
     removeLayer()
