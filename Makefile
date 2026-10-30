@@ -354,7 +354,17 @@ endif
 # Compare file content, not directory structure: git diff --no-index ignores
 # empty dirs (git cannot track them), so a stray empty dir left by tooling does
 # not spuriously fail the mirror check. Plain diff -qr fails on such a dir.
-	git diff --no-index .personakit Examples/public-starter/.personakit
+# One sanctioned difference: this repo's small-cli-change directive verifies with
+# `make test` (bare `swift test` races here), while the shipped starter keeps
+# `swift test` for projects without this Makefile. Compare everything else as
+# mirrors, and that file only up to that one command.
+	cp -R .personakit /tmp/personakit-public-check/mirror-repo
+	cp -R Examples/public-starter/.personakit /tmp/personakit-public-check/mirror-starter
+	rm /tmp/personakit-public-check/mirror-repo/Packs/directives/small-cli-change.directive.json
+	rm /tmp/personakit-public-check/mirror-starter/Packs/directives/small-cli-change.directive.json
+	git diff --no-index /tmp/personakit-public-check/mirror-repo /tmp/personakit-public-check/mirror-starter
+	sed 's/"text": "make test"/"text": "swift test"/' .personakit/Packs/directives/small-cli-change.directive.json \
+		| git diff --no-index - Examples/public-starter/.personakit/Packs/directives/small-cli-change.directive.json
 	$(SWIFT_RUN) personakit validate --root .personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/internal-agent-root/.personakit
 	$(SWIFT_RUN) personakit validate --root Fixtures/kit-root
