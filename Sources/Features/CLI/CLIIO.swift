@@ -38,7 +38,9 @@ struct CLIInteractiveIO: Sendable {
         Swift.readLine(strippingNewline: true)
       },
       readStdinToEnd: {
-        let data = FileHandle.standardInput.readDataToEndOfFile()
+        // The throwing read: `readDataToEndOfFile()` raises an Objective-C exception on a read error,
+        // which aborts the process instead of reaching the caller's catch.
+        let data = try FileHandle.standardInput.readToEnd() ?? Data()
 
         guard let text = String(data: data, encoding: .utf8) else {
           throw CLIError.failure("Failed to read UTF-8 text from stdin.")

@@ -168,12 +168,6 @@ public enum OpenCodeEnforcement {
     let absolutePath = path.hasPrefix("/") ? path : projectDirectory + "/" + path
     guard let pathForms = forms(absolutePath), let projectForms = forms(projectDirectory) else { return true }
 
-    var globalEntries: [(isDirectory: Bool, forms: [[String]])] = []
-    for entry in globalConfigPaths {
-      guard let entryForms = forms(entry) else { return true }
-      globalEntries.append((entry.hasSuffix("/"), entryForms))
-    }
-
     let fileNames = Set(protectedFileNames.map(fold))
     let directoryName = fold(protectedDirectoryName)
 
@@ -183,9 +177,26 @@ public enum OpenCodeEnforcement {
         if below.contains(directoryName) { return true }
         if let last = below.last, fileNames.contains(last) { return true }
       }
-      for entry in globalEntries {
-        for entryForm in entry.forms {
-          let matches = entry.isDirectory ? isUnder(pathForm, directory: entryForm) : pathForm == entryForm
+    }
+    return matches(pathForms, entries: globalConfigPaths)
+  }
+
+  /// Whether the absolute `path` is one of `entries`, or under one that ends in `/`.
+  ///
+  /// Compared as ``isProtectedPath(_:projectDirectory:globalConfigPaths:)`` compares its global entries:
+  /// as spelled and physically resolved, with Unicode case folding. A path or entry that cannot be
+  /// resolved is protected.
+  public static func matchesProtectedEntry(_ path: String, entries: [String]) -> Bool {
+    guard let pathForms = forms(path) else { return true }
+    return matches(pathForms, entries: entries)
+  }
+
+  private static func matches(_ pathForms: [[String]], entries: [String]) -> Bool {
+    for entry in entries {
+      guard let entryForms = forms(entry) else { return true }
+      for pathForm in pathForms {
+        for entryForm in entryForms {
+          let matches = entry.hasSuffix("/") ? isUnder(pathForm, directory: entryForm) : pathForm == entryForm
           if matches { return true }
         }
       }

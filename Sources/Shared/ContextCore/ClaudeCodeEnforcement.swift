@@ -50,9 +50,56 @@ public enum ClaudeCodeEnforcement {
     toolActionClasses.first { $0.tools.contains(tool) }?.actionClass
   }
 
+  /// Whether a tool edits files, so its path is checked against the enforcement files.
+  static func isFileMutationTool(_ tool: String) -> Bool {
+    actionClass(forTool: tool) == "file-mutation"
+  }
+
   /// Whether a tool name is an external MCP tool (which PK cannot classify).
   static func isMCPTool(_ name: String) -> Bool {
     name.hasPrefix("mcp__")
+  }
+
+  /// The files an edit could disable enforcement through, sorted: the manifest's folder, the project
+  /// settings beside it that install the hook, the user settings (which can set `disableAllHooks`), and the
+  /// checker binary. An entry ending in `/` protects that directory and everything under it.
+  ///
+  /// `manifestPath` is absolute, laid out as `<project>/.claude/personakit/<id>.checks.json`.
+  /// `configDirectory` is Claude Code's user config directory (`$CLAUDE_CONFIG_DIR`, else `~/.claude`).
+  public static func protectedPaths(
+    manifestPath: String,
+    configDirectory: String?,
+    executablePath: String?
+  ) -> [String] {
+    let manifestDirectory = (manifestPath as NSString).deletingLastPathComponent
+    let settingsDirectory = (manifestDirectory as NSString).deletingLastPathComponent
+    var entries = [
+      manifestDirectory + "/",
+      settingsDirectory + "/settings.json",
+      settingsDirectory + "/settings.local.json",
+    ]
+    if let configDirectory, !configDirectory.isEmpty {
+      entries.append(configDirectory + "/settings.json")
+    }
+    if let executablePath, !executablePath.isEmpty {
+      entries.append(executablePath)
+    }
+    return Array(Set(entries)).sorted()
+  }
+
+  /// `path` made absolute the way Claude Code reads a tool's path: trimmed, then `~` and `~/…` against the
+  /// home directory, a relative path against the session's working directory. `nil` when neither applies.
+  static func absolutePath(_ rawPath: String, cwd: String?, homeDirectory: String?) -> String? {
+    let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+    if path.hasPrefix("/") {
+      return path
+    }
+    if path == "~" || path.hasPrefix("~/") {
+      guard let homeDirectory, homeDirectory.hasPrefix("/") else { return nil }
+      return homeDirectory + path.dropFirst()
+    }
+    guard let cwd, cwd.hasPrefix("/") else { return nil }
+    return cwd + "/" + path
   }
 
   /// Server name PersonaKit's own MCP server is registered under by default.
@@ -181,7 +228,7 @@ public enum ClaudeCodeEnforcementRenderer {
 
     let deniedSet = Set(deniedActionClasses)
 
-    let tools =
+    let deniedTools =
       ClaudeCodeEnforcement.toolOrder
       .filter { tool in
         guard let actionClass = ClaudeCodeEnforcement.actionClass(forTool: tool) else {
@@ -200,17 +247,22 @@ public enum ClaudeCodeEnforcementRenderer {
     // When the stance forbids something an MCP tool could do, also route MCP tools to the
     // checker so an unclassifiable third-party write/exec/network tool cannot bypass the deny.
     let deniesMcpRelevant = !deniedSet.isDisjoint(with: ClaudeCodeEnforcement.mcpRelevantActionClasses)
-    var matcherPatterns = tools
-    if deniesMcpRelevant {
-      matcherPatterns.append(ClaudeCodeEnforcement.mcpToolPattern)
-    }
 
-    guard !matcherPatterns.isEmpty else {
+    guard !deniedTools.isEmpty || deniesMcpRelevant else {
       return ClaudeCodeEnforcementArtifacts(
         matcher: nil,
         hookEntry: nil,
         degradedActionClasses: degraded
       )
+    }
+
+    // The file tools are routed even when edits are allowed, so the checker can refuse edits to its own
+    // manifest, the settings that install it, and its binary.
+    var matcherPatterns = ClaudeCodeEnforcement.toolOrder.filter {
+      deniedTools.contains($0) || ClaudeCodeEnforcement.isFileMutationTool($0)
+    }
+    if deniesMcpRelevant {
+      matcherPatterns.append(ClaudeCodeEnforcement.mcpToolPattern)
     }
 
     let matcher = matcherPatterns.joined(separator: "|")
@@ -327,12 +379,65 @@ public struct ClaudeCodeHookCheckDecision: Equatable, Sendable {
   }
 }
 
+/// The fields of one Claude Code `PreToolUse` call the checker reads.
+public struct ClaudeCodeToolCall: Equatable, Sendable {
+  public let toolName: String
+  /// `tool_input.file_path` and `tool_input.notebook_path`, whichever are strings, as sent.
+  public let paths: [String]
+  /// The session's working directory, which a relative path resolves against.
+  public let cwd: String?
+
+  public init(toolName: String, paths: [String], cwd: String?) {
+    self.toolName = toolName
+    self.paths = paths
+    self.cwd = cwd
+  }
+}
+
 /// Evaluates one incoming Claude Code tool call against a frozen manifest.
 ///
 /// Host-specific only in the tool→action-class mapping; the deny decision itself lives in the
 /// neutral core via ``ChecksManifest/hookCheck(denying:)``. Read-only toward the running
 /// agent: it can only *deny*, never authorize.
 public enum ClaudeCodeHookCheckEvaluator {
+  /// Denies a file edit that targets one of `protectedPaths` (see
+  /// ``ClaudeCodeEnforcement/protectedPaths(manifestPath:configDirectory:executablePath:)``), or that names
+  /// no path it can resolve, before applying the contract to the tool.
+  public static func evaluate(
+    _ call: ClaudeCodeToolCall,
+    manifest: ChecksManifest,
+    protectedPaths: [String],
+    homeDirectory: String?
+  ) -> ClaudeCodeHookCheckDecision {
+    if ClaudeCodeEnforcement.isFileMutationTool(call.toolName) {
+      let absolutePaths = call.paths.map {
+        ClaudeCodeEnforcement.absolutePath($0, cwd: call.cwd, homeDirectory: homeDirectory)
+      }
+      guard !absolutePaths.isEmpty, !call.paths.contains(""), !absolutePaths.contains(nil) else {
+        return ClaudeCodeHookCheckDecision(
+          isDenied: true,
+          reason: "Blocked by PersonaKit contract: tool '\(call.toolName)' modifies files but names no path "
+            + "PersonaKit can resolve, so it cannot check it against its enforcement files. "
+            + "Denying by fail-closed policy."
+        )
+      }
+      if let protected = absolutePaths.compactMap({ $0 }).first(where: {
+        OpenCodeEnforcement.matchesProtectedEntry($0, entries: protectedPaths)
+      }) {
+        return ClaudeCodeHookCheckDecision(
+          isDenied: true,
+          reason: "Blocked by PersonaKit contract: tool '\(call.toolName)' would modify "
+            + "'\(OpenCodeEnforcement.strippingControlCharacters(protected))', one of the PersonaKit enforcement "
+            + "files (the manifest folder, `.claude/settings.json`, `.claude/settings.local.json`, the user "
+            + "Claude Code settings, the personakit binary). Changing them could disable or bypass enforcement."
+        )
+      }
+    }
+
+    return evaluate(toolName: call.toolName, manifest: manifest)
+  }
+
+  /// Applies the contract to the tool by name alone, without the path check.
   public static func evaluate(toolName: String, manifest: ChecksManifest) -> ClaudeCodeHookCheckDecision {
     guard let actionClass = ClaudeCodeEnforcement.actionClass(forTool: toolName) else {
       // Not a known built-in tool. PersonaKit's own read-only MCP tools from the trusted server

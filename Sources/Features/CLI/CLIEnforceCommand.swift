@@ -7,9 +7,38 @@ import Foundation
 /// Claude Code `PreToolUse` payload — only the fields the checker needs.
 private struct PreToolUsePayload: Decodable {
   let toolName: String?
+  let toolInput: ToolInput?
+  let cwd: String?
 
   enum CodingKeys: String, CodingKey {
     case toolName = "tool_name"
+    case toolInput = "tool_input"
+    case cwd
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    toolName = try container.decodeIfPresent(String.self, forKey: .toolName)
+    toolInput = try? container.decodeIfPresent(ToolInput.self, forKey: .toolInput)
+    cwd = try? container.decodeIfPresent(String.self, forKey: .cwd)
+  }
+
+  /// The path fields of `tool_input`. Any tool's input is accepted: a field that is not a string reads as
+  /// absent, and a file edit with no path is denied by the evaluator.
+  struct ToolInput: Decodable {
+    let filePath: String?
+    let notebookPath: String?
+
+    enum CodingKeys: String, CodingKey {
+      case filePath = "file_path"
+      case notebookPath = "notebook_path"
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      filePath = try? container.decodeIfPresent(String.self, forKey: .filePath)
+      notebookPath = try? container.decodeIfPresent(String.self, forKey: .notebookPath)
+    }
   }
 }
 
@@ -40,8 +69,8 @@ enum HookCheckHost: String, CaseIterable, ExpressibleByArgument {
 ///
 /// Reads the tool call from stdin, consults a frozen checks manifest, and denies the call
 /// when the tool performs a forbidden action class. Read-only toward the agent: it can only
-/// deny, never authorize. Fail-closed — because the installed matcher only routes already
-/// forbidden tools here, denying on any internal error is safe by construction.
+/// deny, never authorize. Fail-closed: any internal error denies the call, including an allowed
+/// file edit, which the Claude Code matcher routes here so its path can be checked.
 struct HookCheckCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "hook-check",
@@ -204,7 +233,16 @@ struct HookCheckCommand: ParsableCommand {
   }
 
   /// Pure decision: read manifest + stdin, evaluate, fail-closed on any error.
-  static func decide(manifestPath: String) -> ClaudeCodeHookCheckDecision {
+  ///
+  /// `executablePath` is this binary, protected like the manifest so an agent allowed to edit cannot swap
+  /// the checker for a stub. Without `HOME`, `passwdHome` supplies the home, which locates `~/.claude`
+  /// (unless `CLAUDE_CONFIG_DIR` is set) and expands a `~` in a tool's path.
+  static func decide(
+    manifestPath: String,
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    executablePath: String? = Bundle.main.executableURL?.path,
+    passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
+  ) -> ClaudeCodeHookCheckDecision {
     let manifestURL = RootPathResolver().resolve(path: manifestPath)
 
     guard let data = try? Data(contentsOf: manifestURL),
@@ -235,7 +273,27 @@ struct HookCheckCommand: ParsableCommand {
       )
     }
 
-    return ClaudeCodeHookCheckEvaluator.evaluate(toolName: toolName, manifest: manifest)
+    func value(_ key: String) -> String? {
+      environment[key].flatMap { $0.isEmpty ? nil : $0 }
+    }
+    let home = value("HOME") ?? passwdHome().flatMap { $0.isEmpty ? nil : $0 }
+    let configDirectory = value("CLAUDE_CONFIG_DIR") ?? home.map { $0 + "/.claude" }
+
+    let call = ClaudeCodeToolCall(
+      toolName: toolName,
+      paths: [payload.toolInput?.filePath, payload.toolInput?.notebookPath].compactMap { $0 },
+      cwd: payload.cwd
+    )
+    return ClaudeCodeHookCheckEvaluator.evaluate(
+      call,
+      manifest: manifest,
+      protectedPaths: ClaudeCodeEnforcement.protectedPaths(
+        manifestPath: manifestURL.path,
+        configDirectory: configDirectory,
+        executablePath: executablePath
+      ),
+      homeDirectory: home
+    )
   }
 }
 

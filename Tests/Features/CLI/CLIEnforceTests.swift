@@ -183,6 +183,78 @@ struct CLIEnforceTests {
     #expect(output.contains("fail-closed"))
   }
 
+  /// Calls the Claude Code decision directly, with stdin supplied and the environment and executable injected.
+  private func decideClaude(
+    manifest: URL,
+    readStdin: @escaping @Sendable () throws -> String,
+    environment: [String: String] = [:],
+    executablePath: String? = nil
+  ) -> ClaudeCodeHookCheckDecision {
+    let context = CLIContext(
+      scopeRootResolver: ScopeRootResolver(),
+      mcpServerRunner: MCPServerRunner(),
+      interactiveIO: CLIInteractiveIO(isInteractive: { false }, readLine: { nil }, readStdinToEnd: readStdin)
+    )
+    return CLIEnvironment.withContext(context) {
+      HookCheckCommand.decide(
+        manifestPath: manifest.path,
+        environment: environment,
+        executablePath: executablePath,
+        passwdHome: { nil }
+      )
+    }
+  }
+
+  private func claudePayload(tool: String, input: [String: Any], cwd: String) throws -> String {
+    let object: [String: Any] = ["tool_name": tool, "tool_input": input, "cwd": cwd]
+    return String(decoding: try JSONSerialization.data(withJSONObject: object), as: UTF8.self)
+  }
+
+  @Test
+  func claudeHostProtectsEnforcementFilesWhenEditsAreAllowed() throws {
+    let manifest = try writeNetworkOnlyManifest()
+    let directory = manifest.deletingLastPathComponent().path
+    let home = try freshProjectDir("pk-claude-home").path
+    let binary = try freshProjectDir("pk-claude-bin").path + "/personakit"
+
+    func decide(_ tool: String, _ input: [String: Any]) throws -> ClaudeCodeHookCheckDecision {
+      let payload = try claudePayload(tool: tool, input: input, cwd: home)
+      return decideClaude(
+        manifest: manifest,
+        readStdin: { payload },
+        environment: ["HOME": home],
+        executablePath: binary
+      )
+    }
+
+    #expect(try decide("Edit", ["file_path": manifest.path]).isDenied)
+    #expect(try decide("Write", ["file_path": "~/.claude/settings.json"]).isDenied)
+    #expect(try decide("NotebookEdit", ["notebook_path": binary]).isDenied)
+    #expect(try decide("Edit", ["file_path": 7]).reason?.contains("names no path") == true)
+    #expect(try !decide("Edit", ["file_path": directory + "/../src/a.swift"]).isDenied)
+    #expect(try !decide("Write", ["file_path": "notes.md"]).isDenied)
+    #expect(try decide("Write", ["file_path": ".claude/settings.json"]).isDenied)
+  }
+
+  @Test
+  func claudeHostUsesClaudeConfigDirForUserSettings() throws {
+    let manifest = try writeNetworkOnlyManifest()
+    let config = try freshProjectDir("pk-claude-config").path
+    let payload = try claudePayload(tool: "Write", input: ["file_path": config + "/settings.json"], cwd: "/")
+
+    let decision = decideClaude(manifest: manifest, readStdin: { payload }, environment: ["CLAUDE_CONFIG_DIR": config])
+    #expect(decision.isDenied)
+  }
+
+  @Test
+  func claudeHostDeniesWhenStdinCannotBeRead() throws {
+    let manifest = try writeNetworkOnlyManifest()
+
+    let decision = decideClaude(manifest: manifest, readStdin: { throw CocoaError(.fileReadUnknown) })
+    #expect(decision.isDenied)
+    #expect(decision.reason?.contains("could not read the tool call") == true)
+  }
+
   @Test
   func openCodeHostDeniesEditAllowsRead() throws {
     let manifest = try writeReadOnlyManifest()

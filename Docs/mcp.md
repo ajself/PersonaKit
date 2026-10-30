@@ -182,6 +182,28 @@ files. A project-scoped local server uses the standard `mcpServers` shape:
 
 Claude Code may prompt before using project-scoped servers from `.mcp.json`.
 
+#### Claude Code enforcement
+
+`personakit enforce install --session <id>` writes
+`.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in
+`.claude/settings.json` that runs `personakit hook-check` on the tools the
+contract can deny and on every file edit. Restart Claude Code after installing, since it reads hooks
+at startup.
+
+While a contract is enforced the agent cannot use Edit, Write, or NotebookEdit
+on the enforcement files, even when the contract allows edits:
+`.claude/personakit/`, `.claude/settings.json`, `.claude/settings.local.json`,
+the user settings (`~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR`'s), and
+the `personakit` binary. Make those edits by hand. Hooks installed by an
+earlier PersonaKit version do not route allowed edits to the checker; run
+`enforce install` again to get this protection.
+
+It is not a sandbox. Claude Code runs programs on its own, such as other hook
+scripts, a `statusLine` command, and MCP server commands. A contract that allows
+edits but denies commands still lets the agent rewrite those, and Claude Code
+then runs the new code. With commands allowed, the agent can change the
+enforcement files through the shell.
+
 ### Codex
 
 Codex can connect to MCP servers from the CLI or config file. For local stdio

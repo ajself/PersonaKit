@@ -116,6 +116,143 @@ struct ClaudeCodeEnforcementTests {
   }
 
   @Test
+  func rendererRoutesFileToolsEvenWhenEditsAreAllowed() {
+    let artifacts = ClaudeCodeEnforcementRenderer.render(
+      manifest: manifest(forbiddenCapabilities: ["run-commands"]),
+      executablePath: "personakit",
+      manifestPath: "/proj/.claude/personakit/s.checks.json"
+    )
+
+    // Edits are allowed, but the checker still sees them so it can protect its own files.
+    #expect(artifacts.matcher == "Edit|Write|NotebookEdit|Bash|mcp__.*")
+  }
+
+  @Test
+  func protectedPathsCoverManifestFolderSettingsConfigAndBinary() {
+    #expect(
+      ClaudeCodeEnforcement.protectedPaths(
+        manifestPath: "/proj/.claude/personakit/s.checks.json",
+        configDirectory: "/home/u/.claude",
+        executablePath: "/opt/bin/personakit"
+      ) == [
+        "/home/u/.claude/settings.json",
+        "/opt/bin/personakit",
+        "/proj/.claude/personakit/",
+        "/proj/.claude/settings.json",
+        "/proj/.claude/settings.local.json",
+      ]
+    )
+  }
+
+  private func evaluate(
+    _ tool: String,
+    paths: [String],
+    cwd: String? = "/proj",
+    forbidding capabilities: [String] = ["run-commands"],
+    in project: (root: String, protected: [String])
+  ) -> ClaudeCodeHookCheckDecision {
+    ClaudeCodeHookCheckEvaluator.evaluate(
+      ClaudeCodeToolCall(toolName: tool, paths: paths, cwd: cwd),
+      manifest: manifest(forbiddenCapabilities: capabilities),
+      protectedPaths: project.protected,
+      homeDirectory: project.root + "/home"
+    )
+  }
+
+  /// A real project folder, so physical resolution sees actual files and links.
+  private func makeProject() throws -> (root: String, protected: [String]) {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("pk-claude-\(UUID().uuidString)").resolvingSymlinksInPath().path
+    try FileManager.default.createDirectory(atPath: root + "/.claude/personakit", withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: URL(fileURLWithPath: root + "/.claude/personakit/s.checks.json"))
+    let protected = ClaudeCodeEnforcement.protectedPaths(
+      manifestPath: root + "/.claude/personakit/s.checks.json",
+      configDirectory: root + "/home/.claude",
+      executablePath: root + "/bin/personakit"
+    )
+    return (root, protected)
+  }
+
+  @Test
+  func evaluatorDeniesEditsToEnforcementFilesWhenEditsAreAllowed() throws {
+    let project = try makeProject()
+    let root = project.root
+
+    for path in [
+      root + "/.claude/personakit/s.checks.json",
+      root + "/.claude/personakit/other.checks.json",
+      root + "/.claude/settings.json",
+      root + "/.claude/settings.local.json",
+      root + "/.CLAUDE/PersonaKit/s.checks.json",
+      root + "/src/../.claude/settings.json",
+      root + "/home/.claude/settings.json",
+      root + "/bin/personakit",
+    ] {
+      let decision = evaluate("Write", paths: [path], in: project)
+      #expect(decision.isDenied, "\(path)")
+      #expect(decision.reason?.contains("enforcement files") == true, "\(path)")
+    }
+
+    #expect(!evaluate("Edit", paths: [root + "/src/a.swift"], in: project).isDenied)
+    #expect(!evaluate("Write", paths: [root + "/.claude/commands/x.md"], in: project).isDenied)
+  }
+
+  @Test
+  func evaluatorFollowsSymlinksToEnforcementFiles() throws {
+    let project = try makeProject()
+    let root = project.root
+    try FileManager.default.createSymbolicLink(
+      atPath: root + "/link.json",
+      withDestinationPath: root + "/.claude/personakit/s.checks.json"
+    )
+
+    #expect(evaluate("Edit", paths: [root + "/link.json"], in: project).isDenied)
+  }
+
+  @Test
+  func evaluatorResolvesRelativeAndTildePaths() throws {
+    let project = try makeProject()
+    let root = project.root
+
+    #expect(evaluate("Edit", paths: [".claude/settings.json"], cwd: root, in: project).isDenied)
+    #expect(evaluate("Write", paths: ["~/.claude/settings.json"], in: project).isDenied)
+    // Claude Code trims a tool's path before writing.
+    #expect(evaluate("Write", paths: [" \(root)/.claude/settings.json\n"], in: project).isDenied)
+    #expect(!evaluate("Edit", paths: ["src/a.swift"], cwd: root, in: project).isDenied)
+    // A relative path with no working directory cannot be checked.
+    #expect(evaluate("Edit", paths: ["src/a.swift"], cwd: nil, in: project).isDenied)
+  }
+
+  @Test
+  func evaluatorDeniesFileEditsThatNameNoPath() throws {
+    let project = try makeProject()
+
+    #expect(evaluate("Edit", paths: [], in: project).reason?.contains("names no path") == true)
+    #expect(evaluate("NotebookEdit", paths: [""], in: project).isDenied)
+    // Tools that are not file edits need no path.
+    #expect(!evaluate("Read", paths: [], in: project).isDenied)
+  }
+
+  @Test
+  func evaluatorChecksEveryPathAndStillAppliesTheContract() throws {
+    let project = try makeProject()
+    let root = project.root
+
+    #expect(
+      evaluate("NotebookEdit", paths: [root + "/a.ipynb", root + "/.claude/settings.json"], in: project)
+        .isDenied
+    )
+    let readOnly = evaluate(
+      "Edit",
+      paths: [root + "/src/a.swift"],
+      forbidding: ["edit-files"],
+      in: project
+    )
+    #expect(readOnly.reason?.contains("performs file-mutation") == true)
+    #expect(evaluate("Bash", paths: [], in: project).isDenied)
+  }
+
+  @Test
   func rendererShellQuotesPathsContainingMetacharacters() {
     let artifacts = ClaudeCodeEnforcementRenderer.render(
       manifest: manifest(forbiddenCapabilities: ["edit-files"]),
