@@ -15,7 +15,9 @@ test('stagedPackageResolvesBothEntrypoints', async () => {
   expect(files).toContain('Integrations/OpenCode/src/server.ts')
   expect(files).toContain('Integrations/OpenCode/src/tui.tsx')
   const staged = JSON.parse(await Bun.file(join(root, '.stage/package.json')).text()) as { exports: Record<string, string> }
+  // `.` is the entry OpenCode's v2 loader resolves (the bare package name); v1 reads `./server` and `./tui`.
   expect(staged.exports).toEqual({
+    '.': './Integrations/OpenCode/src/server.ts',
     './server': './Integrations/OpenCode/src/server.ts',
     './tui': './Integrations/OpenCode/src/tui.tsx',
   })

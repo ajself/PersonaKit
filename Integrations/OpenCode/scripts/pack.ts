@@ -35,7 +35,9 @@ const staged = {
   description,
   type,
   'oc-plugin': source['oc-plugin'],
+  // `.` is what OpenCode's v2 loader resolves (the bare package name); v1 reads `./server` and `./tui` only.
   exports: {
+    '.': `./${opencodeDir}/src/server.ts`,
     './server': `./${opencodeDir}/src/server.ts`,
     './tui': `./${opencodeDir}/src/tui.tsx`,
   },

@@ -8,6 +8,7 @@
     "tui"
   ],
   "exports": {
+    ".": "./src/server.ts",
     "./server": "./src/server.ts",
     "./tui": "./src/tui.tsx"
   },

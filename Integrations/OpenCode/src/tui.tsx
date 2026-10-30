@@ -1,7 +1,6 @@
 import type { TuiPluginApi, TuiPluginMeta, TuiPluginModule } from '@opencode-ai/plugin/tui'
 import { createHash } from 'node:crypto'
-import { closeSync, constants, fstatSync, openSync, readdirSync, readSync, realpathSync } from 'node:fs'
-import { open } from 'node:fs/promises'
+import { readdirSync, realpathSync } from 'node:fs'
 import { createEffect, createRoot, createSignal } from 'solid-js'
 import type { Accessor, Setter } from 'solid-js'
 import type { Enforcement, LibraryLoad, SessionState } from '../../ClaudeCode/types'
@@ -13,6 +12,7 @@ import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
 import { findManifest } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
 import { rebuildFrom } from './tui/observer.ts'
+import { readRegularFileSync, readRegularFileText } from './regularFile.ts'
 import { prefill } from './tui/prefill.ts'
 import { registerRoute, ROUTE } from './tui/route.tsx'
 import { createSpawnRunner } from './tui/spawnRunner.ts'
@@ -20,8 +20,6 @@ import { sanitizeLine } from './tui/text.ts'
 import { Chip, chipText } from './tui/views/chip.tsx'
 import { Sidebar } from './tui/views/sidebar.tsx'
 
-// What `observe` may read of a tool's saved full output, and the largest manifest read; past it a file reads as none.
-const MAX_READ = 4 * 1024 * 1024
 // How far up `parentID` a subagent's session is followed to the session being tracked.
 const MAX_DEPTH = 8
 // OpenCode starts enabled plugins, server and TUI, within this many seconds of launch; a later first `tui()` is one
@@ -64,57 +62,10 @@ function readManifest(directory: string, worktree: string): ManifestRead {
     const path = found.paths.join(', ')
     return { signature: `many:${path}`, manifest: { path, text: undefined } }
   }
-  const bytes = readRegularSync(found.path)
+  const bytes = readRegularFileSync(found.path)
   if (bytes === undefined) return { signature: `unreadable:${found.path}`, manifest: { path: found.path, text: undefined } }
   const sha256 = createHash('sha256').update(bytes).digest('hex')
   return { signature: `one:${found.path}:${sha256}`, manifest: { path: found.path, text: bytes.toString('utf8') } }
-}
-
-// Opened without blocking, so a FIFO or device answers at once; what was opened is then checked to be a regular file.
-const READ_FLAGS = constants.O_RDONLY | constants.O_NONBLOCK
-
-/** A regular file of at most 4 MiB; anything else (a FIFO, a device, a directory), or any error, is `undefined`. */
-function readRegularSync(path: string): Buffer | undefined {
-  let fd: number | undefined
-  try {
-    fd = openSync(path, READ_FLAGS)
-    const info = fstatSync(fd)
-    if (!info.isFile() || info.size > MAX_READ) return undefined
-    const buffer = Buffer.alloc(MAX_READ + 1)
-    let length = 0
-    while (length < buffer.length) {
-      const bytesRead = readSync(fd, buffer, length, buffer.length - length, length)
-      if (bytesRead === 0) break
-      length += bytesRead
-    }
-    return length > MAX_READ ? undefined : buffer.subarray(0, length)
-  } catch {
-    return undefined
-  } finally {
-    if (fd !== undefined) closeSync(fd)
-  }
-}
-
-/** A regular file of at most 4 MiB, as text; anything else, or any error, is `undefined`. */
-async function readCapped(path: string): Promise<string | undefined> {
-  let handle: Awaited<ReturnType<typeof open>> | undefined
-  try {
-    handle = await open(path, READ_FLAGS)
-    const info = await handle.stat()
-    if (!info.isFile() || info.size > MAX_READ) return undefined
-    const buffer = Buffer.alloc(MAX_READ + 1)
-    let length = 0
-    while (length < buffer.length) {
-      const { bytesRead } = await handle.read(buffer, length, buffer.length - length, length)
-      if (bytesRead === 0) break
-      length += bytesRead
-    }
-    return length > MAX_READ ? undefined : buffer.subarray(0, length).toString('utf8')
-  } catch {
-    return undefined
-  } finally {
-    await handle?.close().catch(() => {})
-  }
 }
 
 /**
@@ -249,7 +200,7 @@ const tui = async (
       configured,
       enforcementNow(),
       sessionID,
-      readCapped,
+      readRegularFileText,
     )
     // Each compaction is a user message with a compaction part, so the history alone counts them (a restart keeps
     // them, and an automatic compaction's extra "continue" message is not one). A main resolution at a later user turn

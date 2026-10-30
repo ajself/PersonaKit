@@ -451,6 +451,25 @@ describe('server', () => {
     await before({ tool: 'read', sessionID: 's', callID: 'c' }, { args: {} })
   })
 
+  test('aManifestThatIsNotARegularFileDeniesRoutedCallsWithoutBlocking', async () => {
+    const { root, manifestPath, binary } = project('')
+    rmSync(manifestPath)
+    expect(Bun.spawnSync(['mkfifo', manifestPath]).exitCode).toBe(0)
+    const hooks = await plugin.server(input(root, async () => ({ data: {} })), { personakitPath: binary })
+    await expect(hooks['tool.execute.before']!({ tool: 'bash', sessionID: 's', callID: 'c' }, { args: {} })).rejects.toThrow(
+      `could not read the enforcement manifest at ${manifestPath}`,
+    )
+  })
+
+  test('aManifestOverFourMiBDeniesRoutedCalls', async () => {
+    const { root, manifestPath, binary } = project('')
+    writeFileSync(manifestPath, ' '.repeat(4 * 1024 * 1024 + 1))
+    const hooks = await plugin.server(input(root, async () => ({ data: {} })), { personakitPath: binary })
+    await expect(hooks['tool.execute.before']!({ tool: 'bash', sessionID: 's', callID: 'c' }, { args: {} })).rejects.toThrow(
+      `could not read the enforcement manifest at ${manifestPath}`,
+    )
+  })
+
   test('noManifestNeverRuns', async () => {
     const root = tempDir('enforce-none-')
     const hooks = await plugin.server(input(root, async () => ({ error: 'down' })), { personakitPath: '/nonexistent' })
