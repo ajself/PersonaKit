@@ -404,7 +404,6 @@ const tui = async (
     },
   })
 
-  // The Library and detail views, opened by `/pk`.
   const disposeRoute = registerRoute(api, {
     runner,
     binary,

@@ -71,7 +71,6 @@ extension WorkspaceStore {
     sessionFeatureModel.clearDraftMap()
   }
 
-  /// Opens the session editor with a new-session draft.
   func presentNewSessionEditor() {
     sessionEditorFeatureModel.presentNewSessionEditor(
       snapshot: snapshot,

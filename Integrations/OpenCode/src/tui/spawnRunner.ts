@@ -8,8 +8,7 @@ const KILL_GRACE_MS = 1000
  * word splitting or expansion; the first element is the executable. It rejects when the executable cannot start (the
  * message names the spawn errno, which the shared runner reads as "cannot start") and when `timeoutMs` passes
  * (`timed out`; SIGTERM, then SIGKILL after a second, and it rejects once the child has exited) and when its stdin
- * could not be written (`could not write stdin`). A nonzero exit
- * resolves, it is not an error.
+ * could not be written (`could not write stdin`). A nonzero exit resolves, it is not an error.
  *
  * Output is capped at `maxBytes` for stdout and for stderr. Past the cap stdout stops accumulating and
  * `isStdoutTruncated` is set; the child is not killed, its output is read and dropped so it exits on its own and the
@@ -78,7 +77,7 @@ export function createSpawnRunner(opts: { cwd: string; timeoutMs?: number; maxBy
               resolve({
                 stdout: out.text(),
                 stderr: err.text(),
-                // A signal death has no code; 128 + n is the shell's convention, and any nonzero value reads as failure.
+                // A signal death has no code; it reports a flat 128, which reads as failure like any nonzero value.
                 exitCode: code ?? (signal === null ? 1 : 128),
                 isStdoutTruncated: out.isTruncated(),
               })

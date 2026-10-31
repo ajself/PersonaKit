@@ -57,7 +57,6 @@ extension WorkspaceStore {
     )
   }
 
-  /// Provider-wired store that also takes the live-reload event source.
   convenience init(
     globalScopeProvider: WorkspaceGlobalScopeProvider,
     globalLibraryAccess: StudioGlobalLibraryAccess? = nil,

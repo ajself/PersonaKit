@@ -24,7 +24,6 @@ final class WorkspaceSessionEditorFeatureModel {
     self.operationRunner = operationRunner
   }
 
-  /// Opens the editor with a new-session draft.
   func presentNewSessionEditor(
     snapshot: WorkspaceSnapshot,
     workspaceURL: URL?

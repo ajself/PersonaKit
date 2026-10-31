@@ -47,7 +47,6 @@ extension WorkspaceStore {
     return [projectScopeURL] + [currentGlobalScopeURL].compactMap(\.self)
   }
 
-  /// Reloads the snapshot and revalidates after files change on disk.
   func reloadWorkspaceAfterExternalChange(changedFileURLs: Set<URL>) {
     guard workspaceURL != nil, !changedFileURLs.isEmpty else {
       return

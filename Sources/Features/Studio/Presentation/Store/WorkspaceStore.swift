@@ -179,9 +179,9 @@ public final class WorkspaceStore {
   // Non-nil only on the launch-configured path; `setGlobalScope` is a no-op without it.
   let globalScopeProvider: WorkspaceGlobalScopeProvider?
   // Persists/resolves the app-wide global-library grant across launches. Non-nil only on
-  // the launch-configured path; the grant flow (S3) persists through it.
+  // the launch-configured path; the grant flow persists through it.
   let globalLibraryAccess: StudioGlobalLibraryAccess?
-  // Picks the folder to grant as the global library when the user taps Connect (S3).
+  // Picks the folder to grant as the global library when the user taps Connect.
   let globalLibraryPicker: any GlobalLibraryDirectoryPicking
   // Non-blocking notice shown after a grant whose folder doesn't look like a PersonaKit
   // root (no `Packs/`); cleared on the next connect attempt.
@@ -229,7 +229,6 @@ public final class WorkspaceStore {
     )
   }
 
-  /// Designated initializer; `fileEventSource` enables live reload (nil disables it).
   init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
     workspaceValidator: any WorkspaceValidating = WorkspaceValidator(),

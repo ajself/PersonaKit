@@ -181,7 +181,6 @@ const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills
 
 export const register: Register = (on, options) => {
   const configured = mcpServerName(options)
-  // The executable the pane runs for the Library and the previews.
   const binary = personakitBinary(options)
 
   on('session.start', async ($, e, next) => {

@@ -40,7 +40,6 @@ extension WorkspaceStore {
     )
   }
 
-  /// Loads the selected item's raw JSON and presents the JSON editor sheet.
   func presentLibraryEditor(
     selectedItem: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?
@@ -76,7 +75,6 @@ extension WorkspaceStore {
     libraryFeatureModel.dismissPersonaEditor()
   }
 
-  /// Copies the selected global item into project scope.
   func copyGlobalLibraryItemToProject(
     selectedItem: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?
@@ -91,7 +89,6 @@ extension WorkspaceStore {
     )
   }
 
-  /// Shows `item` in the library detail pane.
   func selectLibraryDetailItem(
     _ item: WorkspaceListItem?,
     entityType: WorkspaceLibraryEntityType?

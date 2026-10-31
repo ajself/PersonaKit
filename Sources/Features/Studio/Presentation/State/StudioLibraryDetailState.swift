@@ -124,7 +124,6 @@ struct StudioLibraryDetailState: Equatable, Sendable {
     }
   }
 
-  /// Discards the draft and returns to the current on-disk source.
   mutating func revertDraft() {
     hasChangedOnDisk = false
     inlineMessage = nil

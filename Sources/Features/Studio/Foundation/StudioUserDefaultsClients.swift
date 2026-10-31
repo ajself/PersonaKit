@@ -1,6 +1,5 @@
 import Foundation
 
-/// Reads and writes the encoded recent-workspaces list.
 @MainActor
 package protocol StudioRecentWorkspacesPersisting: AnyObject {
   var storageValue: String { get set }
