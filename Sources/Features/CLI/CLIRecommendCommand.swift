@@ -59,7 +59,7 @@ struct RecommendCommand: ParsableCommand {
       let strongRecommendations = result.recommendations.filter { $0.score > 0 }
 
       if strongRecommendations.isEmpty {
-        print(renderNoStrongMatch(result: result))
+        print(TerminalText.sanitized(renderNoStrongMatch(result: result)))
         return
       }
 
@@ -72,7 +72,7 @@ struct RecommendCommand: ParsableCommand {
         registry: registry,
         scopes: scopes
       )
-      print(output)
+      print(TerminalText.sanitized(output))
     } catch let error as RegistryLoadError {
       var stderrStream = StandardError()
       for registryError in error.errors {

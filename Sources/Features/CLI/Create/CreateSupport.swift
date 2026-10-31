@@ -47,7 +47,7 @@ struct CreatePrompter {
     hint: String? = nil
   ) -> String {
     if let hint {
-      print(hint)
+      print(TerminalText.sanitized(hint))
     }
     CreateCommandHelpers.writePrompt("\(label): ")
     return CreateCommandHelpers.trimmed(io.readLine())
@@ -59,7 +59,7 @@ struct CreatePrompter {
   ) -> String {
     let suggested = WorkspaceEntityIDSuggester.suggestedID(from: source)
     if !suggested.isEmpty {
-      print("Suggested id: \(suggested)")
+      print(TerminalText.sanitized("Suggested id: \(suggested)"))
     }
     CreateCommandHelpers.writePrompt("\(label)\(suggested.isEmpty ? "" : " [\(suggested)]"): ")
     let response = CreateCommandHelpers.normalizedID(io.readLine())
@@ -71,7 +71,7 @@ struct CreatePrompter {
     suggestedID: String
   ) -> String {
     if !suggestedID.isEmpty {
-      print("Suggested id: \(suggestedID)")
+      print(TerminalText.sanitized("Suggested id: \(suggestedID)"))
     }
     CreateCommandHelpers.writePrompt("\(label)\(suggestedID.isEmpty ? "" : " [\(suggestedID)]"): ")
     let response = CreateCommandHelpers.normalizedID(io.readLine())
@@ -365,7 +365,7 @@ enum CreateCommandHelpers {
 
   static func emitJSON<T: Encodable>(_ value: T) {
     do {
-      print(try WorkspaceAuthoringJSON.encode(value), terminator: "")
+      print(TerminalText.escapingJSON(try WorkspaceAuthoringJSON.encode(value)), terminator: "")
     } catch {
       var stderrStream = StandardError()
       stderrStream.write("Error: \(error.localizedDescription)\n")
@@ -454,7 +454,7 @@ enum CreateCommandHelpers {
   }
 
   static func writePrompt(_ value: String) {
-    guard let data = value.data(using: .utf8) else {
+    guard let data = TerminalText.sanitized(value).data(using: .utf8) else {
       return
     }
 

@@ -75,7 +75,7 @@ struct RefsCommand: ParsableCommand {
         blocks.append(lines.joined(separator: "\n"))
       }
 
-      print(blocks.joined(separator: "\n\n"))
+      print(TerminalText.sanitized(blocks.joined(separator: "\n\n")))
     } catch let error as RegistryLoadError {
       ReferenceGraphLoader.reportRegistryError(error)
       throw ExitCode.failure
@@ -111,7 +111,7 @@ struct OrphansCommand: ParsableCommand {
       ]
       lines.append(contentsOf: orphans.map(Self.orphanLine))
 
-      print(lines.joined(separator: "\n"))
+      print(TerminalText.sanitized(lines.joined(separator: "\n")))
     } catch let error as RegistryLoadError {
       ReferenceGraphLoader.reportRegistryError(error)
       throw ExitCode.failure

@@ -160,10 +160,13 @@ enum CLICompletions {
       return []
     }
 
+    // A candidate the shell would print with control characters is dropped: rewriting it would stop it
+    // resolving.
     return
       values
       .sorted()
       .filter { prefix.isEmpty || $0.hasPrefix(prefix) }
+      .filter { TerminalText.sanitized($0) == $0 }
   }
 
   private static func resolvedScopes(arguments: [String], index: Int) -> ScopeSet? {

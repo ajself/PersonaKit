@@ -119,7 +119,7 @@ struct GuidanceCommand: ParsableCommand {
     let payload = BestGuidanceSupport.build(scopes: scopes)
     let output = try BestGuidanceSupport.encodeJSON(payload)
 
-    print(output)
+    print(TerminalText.escapingJSON(output))
   }
 }
 
@@ -166,8 +166,8 @@ struct ValidateCommand: ParsableCommand {
   func run() throws {
     let scopes = try CLIHelpers.resolveScopes(options: scope)
     let result = try Validator.validate(scopes: scopes)
-    print(scopes.humanSummary)
-    print(result.summary)
+    print(TerminalText.sanitized(scopes.humanSummary))
+    print(TerminalText.sanitized(result.summary))
     if !result.warnings.isEmpty {
       var stderrStream = StandardError()
       for warning in result.warnings {
@@ -176,7 +176,7 @@ struct ValidateCommand: ParsableCommand {
     }
     if !result.errors.isEmpty {
       for error in result.errors {
-        print(error.lineDescription())
+        print(TerminalText.sanitized(error.lineDescription()))
       }
       throw ExitCode.failure
     }
@@ -213,7 +213,7 @@ struct ListCLICommand: ParsableCommand {
     do {
       let output = try ListCommand.list(scopes: scopes, entityType: entityType)
       if !output.isEmpty {
-        print(output)
+        print(TerminalText.sanitized(output))
       }
     } catch let error as RegistryLoadError {
       var stderrStream = StandardError()
@@ -236,7 +236,7 @@ struct ListCLICommand: ParsableCommand {
     }
 
     let result = ListJSONCommand.render(scopes: scopes, entityType: entityType)
-    print(result.output)
+    print(TerminalText.escapingJSON(result.output))
 
     if result.exitCode != 0 {
       throw ExitCode(result.exitCode)

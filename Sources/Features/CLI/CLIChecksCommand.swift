@@ -69,6 +69,6 @@ struct ChecksCommand: ParsableCommand {
       throw CLIError.failure("Failed to encode checks manifest output.")
     }
 
-    print(output)
+    print(TerminalText.escapingJSON(output))
   }
 }

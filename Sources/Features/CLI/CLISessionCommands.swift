@@ -80,7 +80,7 @@ struct ContractCommand: ParsableCommand {
       throw CLIError.failure("Failed to encode contract output.")
     }
 
-    print(output)
+    print(TerminalText.escapingJSON(output))
   }
 }
 
@@ -124,13 +124,17 @@ struct ExportCommand: ParsableCommand {
         from: session,
         scopes: scopes
       )
-      let output = try SessionExporter.export(
-        scopes: scopes,
-        personaId: sessionInput.personaId,
-        directiveId: sessionInput.directiveId,
-        kitOverrides: sessionInput.kitOverrides,
-        targetPaths: referenceTriggers.targetPaths,
-        skillTags: referenceTriggers.skillTags
+      // Sanitized once for every destination, so a person reading this export sees what an agent reading it
+      // sees.
+      let output = try TerminalText.sanitized(
+        SessionExporter.export(
+          scopes: scopes,
+          personaId: sessionInput.personaId,
+          directiveId: sessionInput.directiveId,
+          kitOverrides: sessionInput.kitOverrides,
+          targetPaths: referenceTriggers.targetPaths,
+          skillTags: referenceTriggers.skillTags
+        )
       )
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
@@ -230,7 +234,7 @@ struct ResolveGroundingSkillsCommand: ParsableCommand {
         throw CLIError.failure("Failed to encode grounding skill resolution output.")
       }
 
-      print(output)
+      print(TerminalText.escapingJSON(output))
     } catch let error as GroundingSkillLookupError {
       var stderrStream = StandardError()
       switch error {
@@ -296,7 +300,7 @@ struct GraphCommand: ParsableCommand {
         resolvedSession: resolved,
         kitOverrides: sessionInput.kitOverrides
       )
-      print(output)
+      print(TerminalText.sanitized(output))
     } catch let error as RegistryLoadError {
       var stderrStream = StandardError()
       for registryError in error.errors {

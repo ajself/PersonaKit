@@ -177,7 +177,8 @@ struct HookCheckCommand: ParsableCommand {
     let output = HookDecisionOutput(
       hookSpecificOutput: HookDecisionOutput.Inner(
         permissionDecision: decision.permission.rawValue,
-        permissionDecisionReason: decision.reason ?? "Blocked by PersonaKit contract."
+        // The host shows the reason to the operator after decoding it, so JSON escaping alone would not help.
+        permissionDecisionReason: TerminalText.sanitized(decision.reason ?? "Blocked by PersonaKit contract.")
       )
     )
 
@@ -216,7 +217,9 @@ struct HookCheckCommand: ParsableCommand {
 
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys]
-    let output = OpenCodeDecisionOutput(reason: decision.reason ?? "Denied by PersonaKit contract.")
+    let output = OpenCodeDecisionOutput(
+      reason: TerminalText.sanitized(decision.reason ?? "Denied by PersonaKit contract.")
+    )
 
     if let data = try? encoder.encode(output), let json = String(data: data, encoding: .utf8) {
       print(json)
@@ -554,9 +557,9 @@ struct EnforceInstallCommand: ParsableCommand {
     if dryRun {
       print("# Dry run — nothing written.")
       print("# Frozen manifest → \(frozenManifestURL.path)")
-      print(frozenManifestJSON)
+      print(TerminalText.escapingJSON(frozenManifestJSON))
       print("# Merged settings → \(settingsURL.path)")
-      print(mergedSettingsJSON)
+      print(TerminalText.escapingJSON(mergedSettingsJSON))
     } else {
       let writer = AtomicFileWriter()
       try writer.write(contents: frozenManifestJSON + "\n", to: frozenManifestURL)
@@ -649,9 +652,9 @@ struct EnforceInstallCommand: ParsableCommand {
     if dryRun {
       print("# Dry run — nothing written.")
       print("# Frozen manifest → \(frozenManifestURL.path)")
-      print(frozenManifestJSON)
+      print(TerminalText.escapingJSON(frozenManifestJSON))
       for name in otherManifests {
-        print("# Would remove → \(manifestDirectory.appendingPathComponent(name).path)")
+        print(TerminalText.sanitized("# Would remove → \(manifestDirectory.appendingPathComponent(name).path)"))
       }
     } else {
       try AtomicFileWriter().write(contents: frozenManifestJSON + "\n", to: frozenManifestURL)
@@ -659,7 +662,7 @@ struct EnforceInstallCommand: ParsableCommand {
 
       print("Installed OpenCode enforcement for session \(sessionId).")
       for name in removed {
-        print("  (removed prior manifest \(name))")
+        print(TerminalText.sanitized("  (removed prior manifest \(name))"))
       }
       print("  frozen manifest: \(frozenManifestURL.path)")
       print("Restart OpenCode so the plugin loads this contract.")
