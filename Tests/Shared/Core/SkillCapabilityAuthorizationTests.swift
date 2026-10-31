@@ -37,7 +37,12 @@ struct SkillCapabilityAuthorizationTests {
         "persona reviewer authorizes skill editor with capability edit-files forbidden by forbiddenCapabilities"
       )
     )
-    #expect(errors.contains { if case .conflictingPersonaSkillCapability = $0 { return true }; return false })
+    #expect(
+      errors.contains {
+        if case .conflictingPersonaSkillCapability = $0 { return true }
+        return false
+      }
+    )
   }
 
   @Test

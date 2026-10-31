@@ -305,7 +305,8 @@ public enum ChecksManifestDeriver {
 
         return DerivedCheck(
           id: "capability-deny.\(capability.rawValue)",
-          mandate: "Forbidden capability '\(capability.rawValue)': deny \(actionClasses.joined(separator: ", ")) actions.",
+          mandate:
+            "Forbidden capability '\(capability.rawValue)': deny \(actionClasses.joined(separator: ", ")) actions.",
           maxClass: CheckClass.hook.rawValue,
           rule: CheckRule(
             kind: .capabilityDeny,

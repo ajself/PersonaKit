@@ -363,4 +363,3 @@ public struct SkillTriggerRule: Codable, Equatable, Sendable {
     self.skillTags = skillTags
   }
 }
-

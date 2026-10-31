@@ -144,7 +144,9 @@ struct ChecksManifestTests {
     )
 
     #expect(manifest.checks.map(\.maxClass) == ["hook", "command", "review"])
-    #expect(manifest.checks.map(\.id) == ["capability-deny.edit-files", "command.swift-test", "review.eyeball-aa-on-device"])
+    #expect(
+      manifest.checks.map(\.id) == ["capability-deny.edit-files", "command.swift-test", "review.eyeball-aa-on-device"]
+    )
   }
 
   @Test
@@ -200,7 +202,10 @@ struct ChecksManifestTests {
     #expect(manifest.unrepresentedMandates.count == 1)
     let unrepresented = manifest.unrepresentedMandates[0]
     #expect(unrepresented.mandate == "Forbidden capability 'delete-production-database'.")
-    #expect(unrepresented.source == CheckSource(sourceType: "persona", sourceId: "read-only-auditor", field: "forbiddenCapabilities"))
+    #expect(
+      unrepresented.source
+        == CheckSource(sourceType: "persona", sourceId: "read-only-auditor", field: "forbiddenCapabilities")
+    )
     #expect(
       manifest.summary
         == ChecksManifestSummary(hookCount: 1, commandCount: 0, reviewCount: 0, unrepresentedCount: 1)

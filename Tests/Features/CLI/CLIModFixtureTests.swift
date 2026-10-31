@@ -68,7 +68,9 @@ struct CLIModFixtureTests {
     try PersonaKitInitializer().run(destination: root.path)
     let broken = root.appendingPathComponent("Packs/personas/broken.persona.json")
     try FileManager.default.createDirectory(
-      at: broken.deletingLastPathComponent(), withIntermediateDirectories: true)
+      at: broken.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
     try Data("{".utf8).write(to: broken)
     return root
   }
@@ -143,7 +145,9 @@ struct CLIModFixtureTests {
 
     if ProcessInfo.processInfo.environment["PK_RECORD_MOD_FIXTURES"] == "1" {
       try FileManager.default.createDirectory(
-        at: goldenURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        at: goldenURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true
+      )
       try expected.write(to: goldenURL, atomically: true, encoding: .utf8)
       Issue.record("Recorded \(goldenURL.path); rerun without PK_RECORD_MOD_FIXTURES.")
       return

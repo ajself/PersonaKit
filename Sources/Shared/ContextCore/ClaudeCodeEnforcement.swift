@@ -266,7 +266,8 @@ public enum ClaudeCodeEnforcementRenderer {
     }
 
     let matcher = matcherPatterns.joined(separator: "|")
-    let command = "\(shellQuote(executablePath)) \(ClaudeCodeEnforcement.hookCheckSubcommand) --manifest \(shellQuote(manifestPath))"
+    let command =
+      "\(shellQuote(executablePath)) \(ClaudeCodeEnforcement.hookCheckSubcommand) --manifest \(shellQuote(manifestPath))"
 
     return ClaudeCodeEnforcementArtifacts(
       matcher: matcher,

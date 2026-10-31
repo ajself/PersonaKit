@@ -146,7 +146,8 @@ public struct ReferenceGraph: Sendable {
   public func orphans() -> [ReferenceNode] {
     let referenced = Set(edges.map(\.to))
 
-    return nodes
+    return
+      nodes
       .filter { $0.type != .session && !referenced.contains($0) }
       .sorted()
   }

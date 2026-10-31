@@ -173,7 +173,8 @@ struct ExportCommand: ParsableCommand {
   static func statsSummary(for output: String) -> String {
     let lineCount = output.isEmpty ? 0 : output.split(separator: "\n", omittingEmptySubsequences: false).count
     let byteCount = output.utf8.count
-    let sectionCount = output
+    let sectionCount =
+      output
       .split(separator: "\n", omittingEmptySubsequences: false)
       .filter { $0.hasPrefix("# ") }
       .count

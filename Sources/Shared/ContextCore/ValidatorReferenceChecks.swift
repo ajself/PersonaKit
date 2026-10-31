@@ -238,7 +238,8 @@ enum ValidatorReferenceChecker {
                 field: "triggerRules[\(ruleIndex)]",
                 missingId: nil,
                 expectedPath: nil,
-                message: "Trigger rule declares only blank pathGlobs or skillTags values; leave both unset for an always-on rule or provide a non-blank condition."
+                message:
+                  "Trigger rule declares only blank pathGlobs or skillTags values; leave both unset for an always-on rule or provide a non-blank condition."
               )
             )
           }

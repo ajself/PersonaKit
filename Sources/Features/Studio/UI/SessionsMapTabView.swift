@@ -93,7 +93,6 @@ struct SessionsMapTabView: View {
       scopes["kit:\(kit.id)"] = kit.sourceScope
     }
 
-
     for skill in snapshot.skills {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }

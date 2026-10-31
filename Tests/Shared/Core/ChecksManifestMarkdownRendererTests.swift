@@ -46,10 +46,14 @@ struct ChecksManifestMarkdownRendererTests {
     // Class-1 capability-deny bullets (uncovered by the export goldens).
     #expect(lines.contains("Class 1 — hook (deterministic deny):"))
     #expect(
-      lines.contains("- capability-deny.edit-files — deny file-mutation — persona:read-only-auditor [forbiddenCapabilities]")
+      lines.contains(
+        "- capability-deny.edit-files — deny file-mutation — persona:read-only-auditor [forbiddenCapabilities]"
+      )
     )
     #expect(
-      lines.contains("- capability-deny.run-commands — deny command-execution — persona:read-only-auditor [forbiddenCapabilities]")
+      lines.contains(
+        "- capability-deny.run-commands — deny command-execution — persona:read-only-auditor [forbiddenCapabilities]"
+      )
     )
     // Class-2 command is backticked and points at directive verification.
     #expect(

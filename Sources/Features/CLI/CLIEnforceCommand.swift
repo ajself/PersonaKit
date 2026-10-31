@@ -250,7 +250,8 @@ struct HookCheckCommand: ParsableCommand {
     else {
       return ClaudeCodeHookCheckDecision(
         isDenied: true,
-        reason: "PersonaKit enforcement could not read its manifest at \(manifestURL.path); denying by fail-closed policy."
+        reason:
+          "PersonaKit enforcement could not read its manifest at \(manifestURL.path); denying by fail-closed policy."
       )
     }
 

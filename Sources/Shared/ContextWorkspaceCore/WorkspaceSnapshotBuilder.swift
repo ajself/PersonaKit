@@ -152,7 +152,6 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
     return recordsByID.keys.sorted().compactMap { recordsByID[$0] }
   }
 
-
   private func loadEntityItems<T: WorkspaceEntityDocument>(
     scopes: ScopeSet,
     type: T.Type

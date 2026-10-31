@@ -69,10 +69,12 @@ struct ReferenceGraphTests {
     let graph = makeGraph()
     let outgoing = graph.outgoing(from: ReferenceNode(type: .persona, id: "p"))
 
-    #expect(outgoing.map(\.to) == [
-      ReferenceNode(type: .kit, id: "k"),
-      ReferenceNode(type: .skill, id: "used-skill"),
-    ])
+    #expect(
+      outgoing.map(\.to) == [
+        ReferenceNode(type: .kit, id: "k"),
+        ReferenceNode(type: .skill, id: "used-skill"),
+      ]
+    )
   }
 
   @Test

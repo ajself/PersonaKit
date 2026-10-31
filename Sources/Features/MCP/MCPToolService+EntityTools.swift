@@ -318,7 +318,7 @@ extension MCPToolService {
           "version": kit.version,
         ],
         lists: [
-          "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? []),
+          "skillIds": MCPInternalSupport.uniqueSorted(kit.skillIds ?? [])
         ]
       )
     case .session:
