@@ -203,6 +203,26 @@ test('a long persona that leads, a long enforced id and a long tool name are ell
   )
 })
 
+test('a host hint replaces the no-contract suggestion', () => {
+  expect(statusText(empty(), { hint: '/pk' })).toBe('◇ no contract · /pk')
+  expect(statusText(empty({ enforcement: unreadable }), { hint: '/pk' })).toBe('◇ no contract · ⚠ enforcement manifest unreadable')
+})
+
+test('a host warning stands in for the enforcement segment, whatever the enforcement', () => {
+  const warning = '⚠ host warning · restart'
+  for (const enforcement of [advisory, hooked('enforced'), unreadable]) {
+    expect(statusText(empty({ enforcement }), { hint: '/pk', enforcementWarning: warning })).toBe(`◇ no contract · ${warning}`)
+    expect(statusText(state({ enforcement }), { enforcementWarning: warning })).toBe(`${LEAD} · ${warning} · project-only · ${NAMES}`)
+  }
+  const long = 'N'.repeat(300)
+  const text = statusText(
+    state({ main: resolution({ ids: { sessionId: long } }), drift: [{ tool: long, kind: 'blocked', turn: 1 }] }),
+    { enforcementWarning: warning },
+  )
+  expect(text.length).toBeLessThanOrEqual(120)
+  expect(text.startsWith(`◆ ${'N'.repeat(31)}… · ${warning} · ⚠ drift: `)).toBe(true)
+})
+
 test('an id of exactly 32 characters is shown whole', () => {
   const id = 'a'.repeat(32)
   expect(statusText(state({ main: resolution({ ids: { sessionId: id } }) })).startsWith(`◆ ${id} · advisory`)).toBe(true)

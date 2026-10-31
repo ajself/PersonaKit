@@ -9,6 +9,7 @@ import { usePrompt } from '../../ClaudeCode/hooks/lib/prompts.ts'
 import type { ProcessRunResult, RunnerDollar } from '../../ClaudeCode/hooks/lib/runner.ts'
 import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
 import { registerRoute } from '../src/tui/route.tsx'
+import { chipText, MANIFEST_CHANGED } from '../src/tui/views/chip.tsx'
 import plugin from '../src/tui.tsx'
 
 const MAIN = 'ses_main'
@@ -324,6 +325,26 @@ test('contractViewSaysOpenCodesEnforcementStates', async () => {
   const okFrame = await ok.frame((f) => f.includes('ENFORCEMENT'))
   expect(okFrame).toContain('● Enforced')
   expect(okFrame).toContain('deny file-mutation')
+})
+
+test('chipTextPutsOpenCodesHintAndManifestWarningInTheSharedLine', () => {
+  expect(chipText(initial, false)).toBe('◇ no contract · /pk')
+  expect(chipText(initial, true)).toBe(`◇ no contract · ${MANIFEST_CHANGED}`)
+  // Fitted against OpenCode's shorter hint: this tool name would be cut beside the mod's.
+  const tool = 'T'.repeat(80)
+  expect(chipText({ ...initial, drift: [{ tool, kind: 'blocked', turn: 1 }] }, false)).toBe(`◇ no contract · /pk · ⚠ drift: ${tool}`)
+  const long = 'N'.repeat(300)
+  const crowded: SessionState = {
+    ...initial,
+    main: { ids: { sessionId: long }, source: 'cli', turn: 1 },
+    enforcement: { kind: 'enforced', manifestPath: '/m.json', ids: { sessionId: long }, deniedActionClasses: [], matcherTools: ['.*'] },
+    drift: [{ tool: long, kind: 'blocked', turn: 1 }],
+    compactions: 1,
+  }
+  const text = chipText(crowded, true)
+  expect(text.length).toBeLessThanOrEqual(120)
+  expect(text.startsWith(`◆ ${'N'.repeat(31)}… · ${MANIFEST_CHANGED} · `)).toBe(true)
+  expect(text).not.toContain('enforced')
 })
 
 test('refreshDropsAStaleLibraryLoad', async () => {

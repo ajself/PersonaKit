@@ -57,6 +57,17 @@ function names(main: Resolution, keepPersona: boolean, keepDirective: boolean): 
   return [persona, directive].filter(Boolean).join(' › ') || undefined
 }
 
+/** What a host words its own way; the mod's own words when absent. */
+export type StatusOptions = {
+  /** What the no-contract line suggests in place of `advisory`: `/pk use <session>` by default. */
+  hint?: string
+  /**
+   * A warning shown in place of the enforcement segment, whatever the enforcement is. It is never ellipsized, so it
+   * must fit beside the lead's budget, as the enforcing segment does.
+   */
+  enforcementWarning?: string
+}
+
 function cut(text: string): string {
   return text.length <= MAX ? text : `${text.slice(0, MAX - 1)}…`
 }
@@ -67,11 +78,13 @@ function cut(text: string): string {
  * and the enforcing id are ellipsized and the enforcement segment moves ahead of the warnings, so whatever the hard
  * cut takes, it is never the enforcement segment.
  */
-export function statusText(state: SessionState): string {
+export function statusText(state: SessionState, options: StatusOptions = {}): string {
   const { main } = state
+  const { hint = '/pk use <session>', enforcementWarning } = options
+  const segment = (fit: Fit) => enforcementWarning ?? enforcementSegment(state.enforcement, fit)
   if (!main) {
     const line = (fit: Fit) => {
-      const enforcement = state.enforcement.kind === 'advisory' ? '/pk use <session>' : enforcementSegment(state.enforcement, fit)
+      const enforcement = enforcementWarning ?? (state.enforcement.kind === 'advisory' ? hint : enforcementSegment(state.enforcement, fit))
       return ['◇ no contract', enforcement, ...warnings(state, fit)].join(SEP)
     }
     const text = line(whole)
@@ -80,7 +93,7 @@ export function statusText(state: SessionState): string {
   const scope = main.contract?.scope.mode
   // Claude Code cuts the line at its own width, which the mod can't know: what matters most goes first.
   const line = (keepPersona: boolean, keepDirective: boolean, fit: Fit, enforcementFirst = false) => {
-    const enforcement = enforcementSegment(state.enforcement, fit)
+    const enforcement = segment(fit)
     const warned = warnings(state, fit)
     return [
       '◆ ' + lead(main, keepPersona, fit),
