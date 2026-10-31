@@ -6,6 +6,7 @@ import { canUse } from '../../../ClaudeCode/hooks/lib/ids.ts'
 import { usePrompt } from '../../../ClaudeCode/hooks/lib/prompts.ts'
 import { loadLibrary, loadPreview, previewKey } from '../../../ClaudeCode/hooks/lib/runner.ts'
 import type { RunnerDollar } from '../../../ClaudeCode/hooks/lib/runner.ts'
+import { logFailure } from './log.ts'
 import { prefill } from './prefill.ts'
 import { ContractView } from './views/contract.tsx'
 import { DetailView } from './views/detail.tsx'
@@ -60,8 +61,8 @@ export function registerRoute(api: TuiPluginApi, deps: RouteDeps): () => void {
   const update = (change: (p: PaneState) => PaneState) => {
     if (!disposed) setPane(change)
   }
-  /** Async work for a control; a failure is dropped and never reaches OpenCode. */
-  const safely = (work: () => Promise<void>) => void work().catch(() => {})
+  /** Async work for a control; a failure is logged and never reaches OpenCode. */
+  const safely = (work: () => Promise<void>) => void work().catch((error) => logFailure(api, error))
 
   /**
    * Loads the Library. Each call takes the next token and a result lands only while its token is still the latest, so

@@ -228,6 +228,38 @@ test('compactionToastsOnViewedSession', async () => {
   expect(sidebar.captureCharFrame()).not.toContain('2 · re-ground?')
 })
 
+test('aFailedRebuildAndAFailedHandlerAreLoggedAtDebug', async () => {
+  const transcript = resolved()
+  const fake = fakeApi(transcript)
+  const logged: { level?: string; message?: string }[] = []
+  const api = fake.api as unknown as { client: Record<string, unknown>; state: { part: unknown }; ui: { toast: unknown } }
+  api.client.app = { log: async (entry: (typeof logged)[number]) => void logged.push(entry) }
+  await start(fake)
+  const sidebar = await render(fake, 'sidebar_content', 40)
+  await sidebar.waitForFrame((f) => f.includes(`◆ ${SESSION}`))
+
+  // The compaction toast throws, so the handler fails; then the store does, so the next rebuild fails.
+  api.ui.toast = () => {
+    throw new Error('toast gone')
+  }
+  transcript.messages[MAIN]!.push({ id: 'u2', role: 'user', sessionID: MAIN, time: { created: 3 } })
+  ;(transcript.parts as Record<string, unknown[]>).u2 = [compactionPart('u2')]
+  fake.emit('session.compacted', { sessionID: MAIN })
+  await until(() => logged.length === 1, 'the failed handler')
+  api.state.part = () => {
+    throw new Error('store gone')
+  }
+  fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a1', role: 'assistant', sessionID: MAIN } })
+  await until(() => logged.length === 2, 'the failed rebuild')
+  expect(logged.map((entry) => [entry.level, entry.message])).toEqual([
+    ['debug', 'personakit: toast gone'],
+    ['debug', 'personakit: rebuild failed: store gone'],
+  ])
+  // The last state stays.
+  await sidebar.renderOnce()
+  expect(sidebar.captureCharFrame()).toContain(`◆ ${SESSION}`)
+})
+
 test('autoCompactionCountsOnce', async () => {
   const transcript = resolved()
   const fake = await start(fakeApi(transcript))

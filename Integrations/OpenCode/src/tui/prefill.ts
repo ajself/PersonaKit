@@ -1,4 +1,5 @@
 import type { TuiPluginApi } from '@opencode-ai/plugin/tui'
+import { logFailure } from './log.ts'
 import { sanitizeLine } from './text.ts'
 
 /**
@@ -11,8 +12,8 @@ export async function prefill(api: TuiPluginApi, text: string): Promise<boolean>
   try {
     const result = await api.client.tui.appendPrompt({ text })
     isFilled = result.error === undefined
-  } catch {
-    isFilled = false
+  } catch (error) {
+    logFailure(api, error, 'prompt append failed')
   }
   if (!isFilled) api.ui.toast({ variant: 'warning', message: sanitizeLine(text) })
   return isFilled

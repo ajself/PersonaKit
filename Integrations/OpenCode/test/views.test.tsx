@@ -244,6 +244,27 @@ test('useNavigatesBackAndPrefills', async () => {
   expect(r.record.events).toEqual(['navigate:session', 'append'])
 })
 
+test('aFailedControlIsLoggedAtDebug', async () => {
+  const r = await open({ view: { kind: 'library' } })
+  const logged: { level?: string; message?: string }[] = []
+  // The append rejects and its fallback toast throws, so the control's work itself fails.
+  Object.assign(r.api.client, {
+    tui: { appendPrompt: () => Promise.reject(new Error('no tui')) },
+    app: { log: async (entry: { level?: string; message?: string }) => void logged.push(entry) },
+  })
+  Object.assign(r.api.ui, {
+    toast: () => {
+      throw new Error('toast gone')
+    },
+  })
+  await r.click('[ Use ]')
+  await settle()
+  expect(logged.map((entry) => [entry.level, entry.message])).toEqual([
+    ['debug', 'personakit: prompt append failed: no tui'],
+    ['debug', 'personakit: toast gone'],
+  ])
+})
+
 test('useByKeyboardPrefillsTheSelectedSession', async () => {
   const r = await open({ view: { kind: 'library' } })
   await r.frame((f) => f.includes('[ Use ]'))

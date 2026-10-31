@@ -12,6 +12,7 @@ import { readManifestSnapshot } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
 import { rebuildFrom } from './tui/observer.ts'
 import { readRegularFileText } from './regularFile.ts'
+import { logFailure } from './tui/log.ts'
 import { prefill } from './tui/prefill.ts'
 import { registerRoute, ROUTE } from './tui/route.tsx'
 import { createSpawnRunner } from './tui/spawnRunner.ts'
@@ -133,8 +134,8 @@ const tui = async (
     openCodeEnforcement(undefined, snapshotFor(directory, worktree).manifest, pluginListed(api.state.config.plugin))
   // Set on dispose: work still in flight then draws, toasts and pre-fills nothing.
   let disposed = false
-  /** Async work for a handler; observe-only, so a failure is dropped and never reaches OpenCode. */
-  const safely = (work: () => Promise<void>): Promise<void> => work().catch(() => {})
+  /** Async work for a handler; observe-only, so a failure is logged and never reaches OpenCode. */
+  const safely = (work: () => Promise<void>): Promise<void> => work().catch((error) => logFailure(api, error))
   const [manifestChanged, setManifestChanged] = createSignal(false)
 
   const tracked = new Map<string, Tracked>()
@@ -200,8 +201,9 @@ const tui = async (
         try {
           const next = await rebuildOne(sessionID, entry)
           if (!disposed) entry.setState(next)
-        } catch {
+        } catch (error) {
           // Observe-only: a failed rebuild leaves the last state in place.
+          logFailure(api, error, 'rebuild failed')
         }
       }
       entry.running = undefined

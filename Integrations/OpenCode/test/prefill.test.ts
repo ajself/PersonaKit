@@ -2,20 +2,21 @@ import { expect, test } from 'bun:test'
 import type { TuiPluginApi, TuiPromptRef, TuiToast } from '@opencode-ai/plugin/tui'
 import { prefill } from '../src/tui/prefill'
 
-/** Only what `prefill` may touch: `client.tui.appendPrompt` and `ui.toast`. A prompt ref whose submit throws. */
+/** Only what `prefill` may touch: `client.tui.appendPrompt`, `client.app.log` and `ui.toast`. A prompt ref whose submit throws. */
 function fakeApi(append: (input: { text?: string }) => Promise<unknown>) {
   const toasts: TuiToast[] = []
+  const logged: { level?: string; message?: string }[] = []
   const prompt = {
     submit() {
       throw new Error('prefill must never submit')
     },
   } as unknown as TuiPromptRef
   const api = {
-    client: { tui: { appendPrompt: append } },
+    client: { tui: { appendPrompt: append }, app: { log: async (entry: (typeof logged)[number]) => void logged.push(entry) } },
     ui: { toast: (toast: TuiToast) => void toasts.push(toast) },
     prompt,
   } as unknown as TuiPluginApi
-  return { api, toasts }
+  return { api, toasts, logged }
 }
 
 test('prefillAppendsTextAsIs', async () => {
@@ -47,9 +48,10 @@ test('prefillToastsTheTextWhenTheRequestFails', async () => {
 })
 
 test('prefillToastsTheTextWhenTheRequestRejects', async () => {
-  const { api, toasts } = fakeApi(async () => {
+  const { api, toasts, logged } = fakeApi(async () => {
     throw new Error('connection refused')
   })
   expect(await prefill(api, 'ground\u001b[2J me')).toBe(false)
   expect(toasts).toEqual([{ variant: 'warning', message: 'ground[2J me' }])
+  expect(logged.map((entry) => [entry.level, entry.message])).toEqual([['debug', 'personakit: prompt append failed: connection refused']])
 })
