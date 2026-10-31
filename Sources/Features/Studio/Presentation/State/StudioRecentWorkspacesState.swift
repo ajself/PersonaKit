@@ -89,7 +89,6 @@ struct StudioRecentWorkspace: Equatable, Identifiable, Sendable {
 
 enum StudioRecentWorkspacesState {
   static let maximumCount = 6
-  static let storageKey = StudioRecentWorkspacesUserDefaultsStorage.storageKey
 
   static func workspaces(from storageValue: String) -> [StudioRecentWorkspace] {
     guard let data = storageValue.data(using: .utf8),

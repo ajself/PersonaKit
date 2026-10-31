@@ -38,10 +38,6 @@ function readWord(text: string): { word: string; rest: string } {
   return { word, rest: text.slice(i) }
 }
 
-export function unquotePOSIX(value: string): string {
-  return readWord(value.trim()).word
-}
-
 function parse(json: string | undefined): unknown {
   if (!json) return undefined
   try {

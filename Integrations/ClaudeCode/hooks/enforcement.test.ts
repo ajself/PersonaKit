@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { enforcementFor, installedHook, sameContract, unquotePOSIX } from './lib/enforcement'
+import { enforcementFor, installedHook, sameContract } from './lib/enforcement'
 
 const COMMAND = `'/usr/local/bin/personakit' hook-check --manifest '/p/.claude/personakit/it'\\''s.checks.json'`
 const MATCHER = 'Edit|Write|NotebookEdit|Bash|mcp__.*'
@@ -37,16 +37,15 @@ test('sameContract falls back to persona and directive', () => {
   expect(sameContract({ sessionId: 'a', personaId: 'x', directiveId: 'd' }, { personaId: 'x', directiveId: 'd' })).toBe(true)
 })
 
-test('unquotePOSIX handles single quotes and escaped quotes', () => {
-  expect(unquotePOSIX(`'a b'`)).toBe('a b')
-  expect(unquotePOSIX(`'it'\\''s'`)).toBe("it's")
-  expect(unquotePOSIX('plain')).toBe('plain')
-})
-
 test('finds the PersonaKit hook, unquotes its path, splits its matcher', () => {
   const h = installedHook(settings(COMMAND))
   expect(h?.manifestPath).toBe("/p/.claude/personakit/it's.checks.json")
   expect(h?.matcherTools).toEqual(['Edit', 'Write', 'NotebookEdit', 'Bash', 'mcp__.*'])
+})
+
+test('unquotes a manifest path containing spaces', () => {
+  const h = installedHook(settings(`personakit hook-check --manifest '/Users/x/Library/Application Support/p.checks.json'`))
+  expect(h?.manifestPath).toBe('/Users/x/Library/Application Support/p.checks.json')
 })
 
 test('reads the manifest path ahead of the fail-closed suffix', () => {

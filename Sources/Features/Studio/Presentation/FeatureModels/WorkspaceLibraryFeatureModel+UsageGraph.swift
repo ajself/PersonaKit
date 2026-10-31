@@ -14,7 +14,6 @@ extension WorkspaceLibraryFeatureModel {
     }
 
     usageGraphWorkspaceURL = requestedWorkspaceURL
-    isLoadingUsageGraph = true
     usageGraphLoadFailed = false
 
     usageGraphTask = Task { [requestedWorkspaceURL] in
@@ -31,7 +30,6 @@ extension WorkspaceLibraryFeatureModel {
       }
 
       usageGraphLoadFailed = usageGraph == nil
-      isLoadingUsageGraph = false
       usageGraphTask = nil
     }
   }
@@ -42,7 +40,6 @@ extension WorkspaceLibraryFeatureModel {
     usageGraphTask = nil
     usageGraphWorkspaceURL = nil
     usageGraph = nil
-    isLoadingUsageGraph = false
     usageGraphLoadFailed = false
   }
 

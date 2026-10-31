@@ -19,7 +19,6 @@ final class WorkspaceLibraryFeatureModel {
   var detail = StudioLibraryDetailState()
   // Last successfully loaded workspace graph; kept on screen when a reload's graph fails.
   var usageGraph: WorkspaceSessionMap?
-  var isLoadingUsageGraph = false
   // True when the latest graph load failed with no earlier graph to fall back on.
   var usageGraphLoadFailed = false
   @ObservationIgnored var editorOpenTask: Task<Void, Never>?
@@ -43,6 +42,11 @@ final class WorkspaceLibraryFeatureModel {
 
   var isLoadingEditor: Bool {
     state.isLoadingEditor
+  }
+
+  // Not observable: `usageGraphTask` is ignored, so a view must not bind to this.
+  var isLoadingUsageGraph: Bool {
+    usageGraphTask != nil
   }
 
   func invalidateRequests() {

@@ -1,9 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
 import type { Enforcement } from '../types'
-import { TOOL_ACTION_CLASSES, classifyDrift } from './lib/drift'
+import { classifyDrift } from './lib/drift'
 import { TOOL_ACTION_CLASSES_JSON } from './fixtures/golden'
-import { openCodeHost } from './lib/host'
+import { TOOL_ACTION_CLASSES, openCodeHost } from './lib/host'
 
 const trusted = ['personakit']
 const advisory: Enforcement = { kind: 'advisory' }

@@ -1,9 +1,7 @@
 import type { Call, DriftEvent, Enforcement } from '../../types'
-import { CLAUDE_HOST, TOOL_ACTION_CLASSES } from './host'
+import { CLAUDE_HOST } from './host'
 import type { Host } from './host'
 import { isPersonaKitCall } from './observe'
-
-export { TOOL_ACTION_CLASSES }
 
 /** Classes an unclassifiable MCP tool could plausibly perform (mirrors `unclassifiedToolActionClasses`). */
 const MCP_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']

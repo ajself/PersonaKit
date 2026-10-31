@@ -12,24 +12,19 @@ package protocol StudioRecentWorkspacesPersisting: AnyObject {
 package final class StudioRecentWorkspacesUserDefaultsStorage: StudioRecentWorkspacesPersisting {
   package nonisolated static let storageKey = "studio.recentWorkspaces"
 
-  private let key: String
   private let userDefaults: UserDefaults
 
-  package init(
-    userDefaults: UserDefaults,
-    key: String = StudioRecentWorkspacesUserDefaultsStorage.storageKey
-  ) {
-    self.key = key
+  package init(userDefaults: UserDefaults) {
     self.userDefaults = userDefaults
   }
 
   package var storageValue: String {
     get {
-      userDefaults.string(forKey: key) ?? "[]"
+      userDefaults.string(forKey: Self.storageKey) ?? "[]"
     }
 
     set {
-      userDefaults.set(newValue, forKey: key)
+      userDefaults.set(newValue, forKey: Self.storageKey)
     }
   }
 }
