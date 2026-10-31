@@ -590,35 +590,135 @@ struct CLIEnforceTests {
   }
 
   @Test
-  func enforceInstallKeepsBareExecutableNameForPathResolution() throws {
-    let projectDir = FileManager.default.temporaryDirectory
-      .appendingPathComponent("pk-bareexe-\(UUID().uuidString)")
-    try FileManager.default.createDirectory(at: projectDir, withIntermediateDirectories: true)
+  func enforceInstallRefusesABareExecutableNameNotOnPath() throws {
+    let projectDir = try freshProjectDir("pk-bareexe")
+    let name = "personakit-missing-\(UUID().uuidString)"
 
-    var status: Int32 = 0
-    _ = captureStdout {
-      status = PersonaKitCLI().run(arguments: [
-        "personakit", "enforce", "install",
-        "--root", readOnlyFixtureRootURL().path,
-        "--no-global",
-        "--session", "read-only-auditor_audit-pass",
-        "--project-dir", projectDir.path,
-        "--executable", "personakit",
-      ])
+    let result = runInstall(extra: ["--executable", name], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("--executable \(name) is not an executable on PATH"))
+    #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
+  }
+
+  /// A temp directory holding an executable named `personakit`, for PATH lookups.
+  private func binDirectoryWithPersonaKit() throws -> URL {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent("pk-bin-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let binary = directory.appendingPathComponent("personakit")
+    try "#!/bin/sh\n".write(to: binary, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: binary.path)
+    return directory
+  }
+
+  @Test
+  func executablePathResolvesABareNameOnPathToAnAbsolutePath() throws {
+    let bin = try binDirectoryWithPersonaKit()
+    defer { try? FileManager.default.removeItem(at: bin) }
+    let empty = FileManager.default.temporaryDirectory.appendingPathComponent("pk-empty-\(UUID().uuidString)")
+    // Empty and relative entries are skipped: they depend on the directory the hook runs in.
+    let environment = ["PATH": "::.:relative:\(empty.path):\(bin.path)"]
+    let expected = bin.appendingPathComponent("personakit").standardized.path
+
+    #expect(
+      try EnforceInstallCommand.resolveExecutablePath(
+        override: "personakit",
+        invokedAs: nil,
+        environment: environment,
+        ownExecutable: nil
+      ) == expected
+    )
+    // Started as a bare `personakit`, the hook gets the binary the shell found, not the bare name.
+    #expect(
+      try EnforceInstallCommand.resolveExecutablePath(
+        override: nil,
+        invokedAs: "personakit",
+        environment: environment,
+        ownExecutable: "/own/personakit"
+      ) == expected
+    )
+  }
+
+  @Test
+  func executablePathFallsBackToThisBinaryWhenItsNameIsNotOnPath() throws {
+    #expect(
+      try EnforceInstallCommand.resolveExecutablePath(
+        override: nil,
+        invokedAs: "personakit",
+        environment: ["PATH": ""],
+        ownExecutable: "/own/personakit"
+      ) == "/own/personakit"
+    )
+    #expect(throws: (any Error).self) {
+      try EnforceInstallCommand.resolveExecutablePath(
+        override: nil,
+        invokedAs: "personakit",
+        environment: [:],
+        ownExecutable: nil
+      )
     }
-    #expect(status == 0)
+  }
 
-    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
-    let settings = try JSONSerialization.jsonObject(with: Data(contentsOf: settingsURL)) as? [String: Any]
-    let hooks = try #require(settings?["hooks"] as? [String: Any])
-    let preToolUse = try #require(hooks["PreToolUse"] as? [[String: Any]])
-    let command = try #require(
-      (preToolUse.first?["hooks"] as? [[String: Any]])?.first?["command"] as? String
+  @Test
+  func executablePathMakesAPathLikeValueAbsolute() throws {
+    let resolved = try EnforceInstallCommand.resolveExecutablePath(
+      override: "bin/personakit",
+      invokedAs: nil,
+      environment: [:],
+      ownExecutable: nil
     )
 
-    // A bare name stays bare — never rewritten to <cwd>/personakit.
-    #expect(command.hasPrefix("'personakit' hook-check --manifest "))
-    #expect(!command.contains("\(projectDir.path)/personakit"))
+    #expect(resolved.hasPrefix("/"))
+    #expect(resolved.hasSuffix("/bin/personakit"))
+  }
+
+  @Test
+  func executablePathSkipsPathEntriesThatAreNotExecutableFiles() throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("pk-skip-\(UUID().uuidString)")
+    let dirEntry = root.appendingPathComponent("dir")
+    let plainEntry = root.appendingPathComponent("plain")
+    try FileManager.default.createDirectory(
+      at: dirEntry.appendingPathComponent("personakit"),
+      withIntermediateDirectories: true
+    )
+    try FileManager.default.createDirectory(at: plainEntry, withIntermediateDirectories: true)
+    try "#!/bin/sh\n".write(to: plainEntry.appendingPathComponent("personakit"), atomically: true, encoding: .utf8)
+    let bin = try binDirectoryWithPersonaKit()
+    defer {
+      try? FileManager.default.removeItem(at: root)
+      try? FileManager.default.removeItem(at: bin)
+    }
+
+    // A directory named personakit and a file without the execute bit are passed over.
+    #expect(
+      try EnforceInstallCommand.resolveExecutablePath(
+        override: "personakit",
+        invokedAs: nil,
+        environment: ["PATH": "\(dirEntry.path):\(plainEntry.path):\(bin.path)"],
+        ownExecutable: nil
+      ) == bin.appendingPathComponent("personakit").standardized.path
+    )
+  }
+
+  @Test
+  func enforceInstallWarnsWhenTheExecutableIsADirectory() throws {
+    let projectDir = try freshProjectDir("pk-direxe")
+
+    let result = runInstall(extra: ["--executable", projectDir.path], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("Warning: \(projectDir.path) is not an executable file"))
+  }
+
+  @Test
+  func enforceInstallWarnsWhenTheExecutableIsMissing() throws {
+    let projectDir = try freshProjectDir("pk-missingexe")
+    let missing = "/nonexistent-\(UUID().uuidString)/personakit"
+
+    let result = runInstall(extra: ["--executable", missing], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("Warning: \(missing) is not an executable file"))
   }
 
   @Test

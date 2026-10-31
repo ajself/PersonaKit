@@ -19,6 +19,16 @@ public enum ClaudeCodeEnforcement {
   /// always contains `hook-check --manifest`, which a foreign hook realistically will not.
   public static let ownershipMarker = "hook-check --manifest"
 
+  /// Shell suffix that turns any checker failure into a block.
+  ///
+  /// Claude Code blocks a tool call only when the hook exits 2; any other non-zero exit, such as a
+  /// missing binary (127) or a crash, lets the call through. The checker itself always exits 0, so
+  /// a non-zero status means it never reached a decision, and the suffix exits 2 with a reason on
+  /// stderr, which Claude Code shows the agent.
+  static let failClosedSuffix =
+    "|| { echo 'PersonaKit could not check this tool call, so it is blocked. "
+    + "Tell the user that personakit hook-check failed.' >&2; exit 2; }"
+
   /// Single source of truth mapping host-neutral action classes to Claude Code tools.
   ///
   /// The checker turns an incoming tool name into its action class and denies it when the contract
@@ -270,7 +280,8 @@ public enum ClaudeCodeEnforcementRenderer {
     // even when edits are allowed, and a tool PersonaKit cannot classify is put to the operator.
     let matcher = ClaudeCodeEnforcement.allToolsPattern
     let command =
-      "\(shellQuote(executablePath)) \(ClaudeCodeEnforcement.hookCheckSubcommand) --manifest \(shellQuote(manifestPath))"
+      "\(shellQuote(executablePath)) \(ClaudeCodeEnforcement.hookCheckSubcommand) --manifest \(shellQuote(manifestPath)) "
+      + ClaudeCodeEnforcement.failClosedSuffix
 
     return ClaudeCodeEnforcementArtifacts(
       matcher: matcher,

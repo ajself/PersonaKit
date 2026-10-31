@@ -368,7 +368,7 @@ struct EnforceInstallCommand: ParsableCommand {
 
   @Option(
     name: .customLong("executable"),
-    help: "Path to the personakit binary the hook invokes (Claude Code only)."
+    help: "The personakit binary the hook invokes, as a path or a name looked up on PATH now (Claude Code only)."
   )
   var executable: String?
 
@@ -459,7 +459,14 @@ struct EnforceInstallCommand: ParsableCommand {
       .appendingPathComponent("personakit")
       .appendingPathComponent("\(sessionId).checks.json")
     let settingsURL = claudeDir.appendingPathComponent("settings.json")
-    let executablePath = Self.resolveExecutablePath(override: executable)
+    let executablePath = try Self.resolveExecutablePath(override: executable)
+    if !Self.isExecutableFile(executablePath) {
+      var stderrStream = StandardError()
+      stderrStream.write(
+        "Warning: \(executablePath) is not an executable file, so the hook will block every tool call "
+          + "until it is.\n"
+      )
+    }
 
     let artifacts = ClaudeCodeEnforcementRenderer.render(
       manifest: manifest,
@@ -765,25 +772,65 @@ struct EnforceInstallCommand: ParsableCommand {
     )
   }
 
-  /// Resolves the personakit binary reference to bake into the hook command.
-  private static func resolveExecutablePath(override: String?) -> String {
+  /// Resolves the personakit binary to bake into the hook command, always as an absolute path.
+  ///
+  /// A bare name is looked up on `PATH` now, as the shell just did, not when the hook fires: Claude Code may
+  /// run hooks with another `PATH`, where the name could find a different binary or none, and a missing
+  /// binary is a failed check. The `PATH` entry is kept as spelled, so a symlink that package upgrades
+  /// repoint keeps working. Without an override, the name this process was started by is used, falling back
+  /// to this binary's own path when that name is not on `PATH`.
+  static func resolveExecutablePath(
+    override: String?,
+    invokedAs: String? = CommandLine.arguments.first,
+    environment: [String: String] = ProcessInfo.processInfo.environment,
+    ownExecutable: String? = Bundle.main.executableURL?.path
+  ) throws -> String {
     if let override, !override.isEmpty {
-      return normalizedExecutable(override)
+      if override.contains("/") {
+        return RootPathResolver().resolve(path: override).path
+      }
+      guard let found = lookUpOnPath(override, environment: environment) else {
+        throw ArgumentParser.ValidationError(
+          "--executable \(override) is not an executable on PATH; pass the absolute path of the personakit binary."
+        )
+      }
+      return found
     }
 
-    return normalizedExecutable(CommandLine.arguments.first ?? "personakit")
+    if let invokedAs, !invokedAs.isEmpty {
+      if invokedAs.contains("/") {
+        return RootPathResolver().resolve(path: invokedAs).path
+      }
+      if let found = lookUpOnPath(invokedAs, environment: environment) {
+        return found
+      }
+    }
+
+    guard let ownExecutable, !ownExecutable.isEmpty else {
+      throw ArgumentParser.ValidationError(
+        "Could not find the personakit binary; pass its absolute path with --executable."
+      )
+    }
+    return ownExecutable
   }
 
-  /// Resolves a path-like value to an absolute path, but leaves a bare command name (no path
-  /// separator) untouched so the shell resolves it via PATH when the hook fires.
-  ///
-  /// Prepending the current directory to a bare name (as a plain path resolve would) bakes a
-  /// nonexistent `<cwd>/personakit` into the hook, silently breaking enforcement at run time.
-  private static func normalizedExecutable(_ value: String) -> String {
-    guard value.contains("/") else {
-      return value
+  /// The first executable file named `name` in an absolute `PATH` entry. Relative and empty entries are
+  /// skipped, since they depend on the directory the hook happens to run in.
+  private static func lookUpOnPath(_ name: String, environment: [String: String]) -> String? {
+    let directories = (environment["PATH"] ?? "").split(separator: ":").map(String.init)
+    for directory in directories where directory.hasPrefix("/") {
+      let candidate = URL(fileURLWithPath: directory).appendingPathComponent(name).standardized.path
+      if isExecutableFile(candidate) {
+        return candidate
+      }
     }
+    return nil
+  }
 
-    return RootPathResolver().resolve(path: value).path
+  /// Whether `path` is an executable file. A searchable directory passes `isExecutableFile(atPath:)` alone.
+  private static func isExecutableFile(_ path: String) -> Bool {
+    var isDirectory: ObjCBool = false
+    return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) && !isDirectory.boolValue
+      && FileManager.default.isExecutableFile(atPath: path)
   }
 }

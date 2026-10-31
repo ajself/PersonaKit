@@ -189,6 +189,11 @@ Claude Code may prompt before using project-scoped servers from `.mcp.json`.
 `.claude/settings.json` that runs `personakit hook-check` on every tool call.
 Restart Claude Code after installing, since it reads hooks at startup.
 
+The hook names the `personakit` binary by the absolute path found when you
+installed (pass `--executable` to choose another). If the checker cannot run,
+because the binary moved or crashed, the hook blocks every tool call until you
+fix the binary or run `enforce install` again.
+
 Each call gets one of three answers:
 
 - **Deny** a tool that does what the contract forbids: Edit, Write, and
@@ -213,8 +218,9 @@ on the enforcement files, even when the contract allows edits:
 the user settings (`~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR`'s), and
 the `personakit` binary. Make those edits by hand. Hooks installed by an
 earlier PersonaKit version route only a few named tools to the checker, so
-other tools, such as Monitor, pass unchecked; run `enforce install` again to
-route every tool.
+other tools, such as Monitor, pass unchecked, and a checker that fails to run
+lets the call through; run `enforce install` again to route every tool and
+block on failure.
 
 It is not a sandbox. Claude Code runs programs on its own, such as other hook
 scripts, a `statusLine` command, and MCP server commands. A contract that allows

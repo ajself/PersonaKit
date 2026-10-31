@@ -49,6 +49,13 @@ test('finds the PersonaKit hook, unquotes its path, splits its matcher', () => {
   expect(h?.matcherTools).toEqual(['Edit', 'Write', 'NotebookEdit', 'Bash', 'mcp__.*'])
 })
 
+test('reads the manifest path ahead of the fail-closed suffix', () => {
+  const suffix = `|| { echo 'PersonaKit could not check this tool call, so it is blocked.' >&2; exit 2; }`
+  const h = installedHook(settings(`${COMMAND} ${suffix}`, '.*'))
+  expect(h?.manifestPath).toBe("/p/.claude/personakit/it's.checks.json")
+  expect(h?.matcherTools).toEqual(['.*'])
+})
+
 test('ignores foreign hooks containing hook-check', () => {
   expect(installedHook(settings('run-hook-check-lint'))).toBeUndefined()
 })

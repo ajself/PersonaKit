@@ -110,7 +110,8 @@ struct ClaudeCodeEnforcementTests {
     // Command values are always single-quoted so no path metacharacter can reach the shell.
     #expect(
       artifacts.hookEntry?.hooks.first?.command
-        == "'/usr/local/bin/personakit' hook-check --manifest '/proj/.claude/personakit/s.checks.json'"
+        == "'/usr/local/bin/personakit' hook-check --manifest '/proj/.claude/personakit/s.checks.json' "
+        + ClaudeCodeEnforcement.failClosedSuffix
     )
     #expect(artifacts.degradedActionClasses.isEmpty)
   }
@@ -263,8 +264,77 @@ struct ClaudeCodeEnforcementTests {
     // The `;$(…)` path component is fully contained inside single quotes — no injection.
     #expect(
       artifacts.hookEntry?.hooks.first?.command
-        == "'personakit' hook-check --manifest '/proj/.claude/personakit/evil;$(touch pwned).checks.json'"
+        == "'personakit' hook-check --manifest '/proj/.claude/personakit/evil;$(touch pwned).checks.json' "
+        + ClaudeCodeEnforcement.failClosedSuffix
     )
+  }
+
+  /// Runs a rendered hook command the way Claude Code does, through `/bin/sh -c`.
+  private func runHookShell(_ command: String) throws -> (status: Int32, stdout: String, stderr: String) {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/bin/sh")
+    process.arguments = ["-c", command]
+    let stdout = Pipe()
+    let stderr = Pipe()
+    process.standardInput = FileHandle.nullDevice
+    process.standardOutput = stdout
+    process.standardError = stderr
+    try process.run()
+    process.waitUntilExit()
+    return (
+      process.terminationStatus,
+      String(decoding: stdout.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self),
+      String(decoding: stderr.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+    )
+  }
+
+  /// Writes an executable stub script and returns its path.
+  private func writeStub(_ body: String) throws -> String {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("pk-stub-\(UUID().uuidString)")
+    try ("#!/bin/sh\n" + body + "\n").write(to: url, atomically: true, encoding: .utf8)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+    return url.path
+  }
+
+  private func renderedCommand(executablePath: String) throws -> String {
+    let artifacts = ClaudeCodeEnforcementRenderer.render(
+      manifest: manifest(forbiddenCapabilities: ["run-commands"]),
+      executablePath: executablePath,
+      manifestPath: "/proj/.claude/personakit/s.checks.json"
+    )
+    return try #require(artifacts.hookEntry?.hooks.first?.command)
+  }
+
+  @Test
+  func hookCommandExitsTwoWhenTheCheckerIsMissing() throws {
+    // Claude Code lets a call through on any non-zero exit but 2, so a missing binary (127) must still block.
+    let result = try runHookShell(renderedCommand(executablePath: "/nonexistent-\(UUID().uuidString)/personakit"))
+
+    #expect(result.status == 2)
+    #expect(result.stderr.contains("PersonaKit could not check this tool call, so it is blocked."))
+  }
+
+  @Test
+  func hookCommandExitsTwoWhenTheCheckerFails() throws {
+    let stub = try writeStub("echo partial; exit 1")
+    defer { try? FileManager.default.removeItem(atPath: stub) }
+
+    let result = try runHookShell(renderedCommand(executablePath: stub))
+
+    #expect(result.status == 2)
+    #expect(result.stderr.contains("personakit hook-check failed"))
+  }
+
+  @Test
+  func hookCommandPassesTheCheckersDecisionThrough() throws {
+    let stub = try writeStub(#"echo '{"decision":"from-checker"}'"#)
+    defer { try? FileManager.default.removeItem(atPath: stub) }
+
+    let result = try runHookShell(renderedCommand(executablePath: stub))
+
+    #expect(result.status == 0)
+    #expect(result.stdout == "{\"decision\":\"from-checker\"}\n")
+    #expect(result.stderr.isEmpty)
   }
 
   @Test
