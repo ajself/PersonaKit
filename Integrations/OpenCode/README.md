@@ -122,9 +122,11 @@ Enforcement trusts PersonaKit's MCP tools by the name recorded in the manifest i
 
 At startup the server plugin finds the manifest in `.opencode/personakit/`, records its SHA-256, and resolves
 `personakit`. From then on every tool call except OpenCode's read-only built-ins goes to `personakit hook-check`,
-which denies what the contract forbids; the reason reaches the model. MCP tools, other plugins' tools, and custom tools
-cannot be classified, so they are denied whenever the contract forbids anything such a tool could do. A checker that
-cannot run, or a manifest that changed since startup, denies the call.
+which denies what the contract forbids; the reason reaches the model and tells it to stop and tell you what it needs
+rather than find another way. MCP tools, other plugins' tools, and custom tools cannot be classified, so they are denied
+whenever the contract forbids anything such a tool could do. Unlike the Claude Code mod, the plugin cannot ask you about
+them instead: OpenCode's permission rules never apply to plugin and custom tools, and `opencode run --auto` approves any
+ask. A checker that cannot run, or a manifest that changed since startup, denies the call.
 
 This covers the TUI, `opencode run`, the web app, ACP, and subagents. While a contract is enforced the agent cannot edit
 OpenCode's config or plugin files, even when the contract allows edits: `.opencode/` and `opencode.json(c)` or

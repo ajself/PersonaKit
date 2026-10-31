@@ -111,6 +111,36 @@ struct OpenCodeEnforcementTests {
     }
   }
 
+  @Test
+  func policyDenialsTellTheAgentToStopRatherThanWorkAround() {
+    let instruction = "Do not retry it through another tool or a workaround; stop and tell the user what you need."
+    let denials = [
+      evaluate(call("repo_clone"), forbiddenCapabilities: ["run-commands"]),
+      evaluate(call("bash"), forbiddenCapabilities: ["run-commands"]),
+      evaluate(call("edit", paths: []), forbiddenCapabilities: ["run-commands"]),
+      evaluate(call("edit", paths: ["/p/opencode.json"]), forbiddenCapabilities: ["run-commands"]),
+      evaluate(
+        call("personakit_personakit_resolve_contract", mcpServers: ["personakit", "personakit_personakit"]),
+        forbiddenCapabilities: Self.allDenied
+      ),
+    ]
+
+    #expect(denials[4].reason?.contains("trust is withdrawn") == true)
+    for decision in denials {
+      let reason = decision.reason ?? ""
+      #expect(decision.isDenied)
+      #expect(reason.hasSuffix(instruction), "\(reason)")
+      #expect(reason.components(separatedBy: instruction).count == 2, "appended once: \(reason)")
+      // No mechanism exists to allow a single tool, so the reason never suggests one.
+      #expect(!reason.contains("explicitly allow"))
+    }
+
+    // A malformed call is an internal fail-closed denial, which carries no instruction on either host.
+    let malformed = evaluate(call("bash", directory: "relative"), forbiddenCapabilities: ["run-commands"])
+    #expect(malformed.isDenied)
+    #expect(malformed.reason?.contains(instruction) == false)
+  }
+
   // MARK: - MCP trust
 
   @Test

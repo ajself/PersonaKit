@@ -123,7 +123,11 @@ The plugin's `tool.execute.before` hook does the checking, and it covers the
 TUI, `opencode run`, the web app, ACP, and subagents. Every tool except
 OpenCode's read-only built-ins goes to `personakit hook-check --host opencode`.
 MCP tools, other plugins' tools, and custom tools cannot be classified, so they
-are denied whenever the contract forbids anything such a tool could do.
+are denied whenever the contract forbids anything such a tool could do. A
+contract denial's reason tells the agent to stop and tell you what it needs,
+rather than find another way. Unlike Claude Code, OpenCode cannot ask you about
+these tools: its permission rules never apply to plugin and custom tools, and
+`opencode run --auto` approves any ask, which would let an MCP tool through.
 
 While a contract is enforced the agent cannot edit OpenCode's config or plugin
 files through its edit, write, and patch tools, even when the contract allows

@@ -367,7 +367,8 @@ public enum OpenCodeHookCheckEvaluator {
       guard !call.paths.isEmpty else {
         return deny(
           "Blocked by PersonaKit contract: tool '\(call.tool)' modifies files but names no path, so "
-            + "PersonaKit cannot check it against its enforcement files. Denying by fail-closed policy."
+            + "PersonaKit cannot check it against its enforcement files. Denying by fail-closed policy. "
+            + noWorkaroundInstruction
         )
       }
       if let protected = call.paths.first(where: {
@@ -381,7 +382,7 @@ public enum OpenCodeHookCheckEvaluator {
           "Blocked by PersonaKit contract: tool '\(call.tool)' would modify "
             + "'\(OpenCodeEnforcement.strippingControlCharacters(protected))', one of the PersonaKit enforcement files "
             + "or OpenCode config locations (`.opencode`, `opencode.json(c)`, `tui.json(c)`, the global OpenCode "
-            + "config and cache). Changing them could disable or bypass enforcement."
+            + "config and cache). Changing them could disable or bypass enforcement. " + noWorkaroundInstruction
         )
       }
     }
@@ -391,7 +392,7 @@ public enum OpenCodeHookCheckEvaluator {
       return deny(
         "Blocked by PersonaKit contract: \(denyingCheck.id) — \(denyingCheck.mandate) "
           + "(from \(denyingCheck.source.sourceType) '\(denyingCheck.source.sourceId)'). "
-          + "Tool '\(call.tool)' performs \(actionClass), which this session forbids."
+          + "Tool '\(call.tool)' performs \(actionClass), which this session forbids. " + noWorkaroundInstruction
       )
     }
 
@@ -401,6 +402,9 @@ public enum OpenCodeHookCheckEvaluator {
   }
 
   private static let allow = ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+
+  /// The same instruction Claude Code's denials end with, so the agent stops rather than hunting for another route.
+  private static let noWorkaroundInstruction = ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction
 
   private static func deny(_ reason: String) -> ClaudeCodeHookCheckDecision {
     ClaudeCodeHookCheckDecision(isDenied: true, reason: reason)
@@ -438,7 +442,7 @@ public enum OpenCodeHookCheckEvaluator {
     var reason =
       "Blocked by PersonaKit contract: tool '\(OpenCodeEnforcement.strippingControlCharacters(call.tool))' is a "
       + "tool PersonaKit cannot classify, and this session forbids \(capabilities). Denying by fail-closed "
-      + "policy; explicitly allow this tool only if it is read-only-safe."
+      + "policy."
 
     let colliding = OpenCodeEnforcement.collidingServers(
       for: call.tool,
@@ -455,6 +459,6 @@ public enum OpenCodeHookCheckEvaluator {
         + "\(names), so trust is withdrawn. Rename or remove the colliding server to restore it."
     }
 
-    return deny(reason)
+    return deny(reason + " " + noWorkaroundInstruction)
   }
 }
