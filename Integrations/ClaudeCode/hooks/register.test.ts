@@ -402,6 +402,14 @@ test('a configured server name is trusted', { options: { mcpServerName: 'pk' } }
   expect(status(w)?.startsWith('◆ read-only-auditor_audit-pass')).toBe(true)
 })
 
+test('an empty server name means the default', { options: { mcpServerName: '' } }, async ($, on) => {
+  const w = engine(on)
+  await start($, 'desktop')
+  w.answers.push(ok(CONTRACT_JSON))
+  await $.tool.call({ tool: RESOLVE } as never)
+  expect(status(w)?.startsWith('◆ read-only-auditor_audit-pass')).toBe(true)
+})
+
 const bashOut = (stdout: string): Answer => ({ result: { stdout, stderr: '', interrupted: false }, text: stdout })
 const COMBINED = `personakit contract --session ${SESSION}; echo "---EXIT $?---"; personakit export --session ${SESSION}; echo "---EXIT $?---"`
 const COMBINED_OUT = `${CONTRACT_JSON}\n---EXIT 0---\n${EXPORT_MD}\n---EXIT 0---\n`

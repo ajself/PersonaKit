@@ -6,7 +6,7 @@ import type { Enforcement, LibraryLoad, SessionState } from '../../ClaudeCode/ty
 import { openCodeHost } from '../../ClaudeCode/hooks/lib/host.ts'
 import { canUse, isValidId } from '../../ClaudeCode/hooks/lib/ids.ts'
 import { usePrompt } from '../../ClaudeCode/hooks/lib/prompts.ts'
-import { loadLibrary, personakitBinary } from '../../ClaudeCode/hooks/lib/runner.ts'
+import { loadLibrary, mcpServerName, personakitBinary } from '../../ClaudeCode/hooks/lib/runner.ts'
 import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
 import { readManifestSnapshot } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
@@ -115,7 +115,7 @@ const tui = async (
   uptime: () => number = () => process.uptime(),
 ): Promise<void> => {
   const binary = personakitBinary(options ?? {})
-  const configured = typeof options?.mcpServerName === 'string' && options.mcpServerName !== '' ? options.mcpServerName : 'personakit'
+  const configured = mcpServerName(options ?? {})
   const { directory, worktree } = api.state.path
   const runner = createSpawnRunner({ cwd: directory })
 

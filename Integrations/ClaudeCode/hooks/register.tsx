@@ -6,7 +6,7 @@ import { enforcementFor, installedHook } from './lib/enforcement'
 import { canUse } from './lib/ids'
 import { observe } from './lib/observe'
 import { usePrompt } from './lib/prompts'
-import { loadLibrary, loadPreview, personakitBinary, previewKey } from './lib/runner'
+import { loadLibrary, loadPreview, mcpServerName, personakitBinary, previewKey } from './lib/runner'
 import type { RunnerDollar } from './lib/runner'
 import { applyCall, initial, isEmpty, rejudge, trustedServers } from './lib/session'
 import { statusText } from './lib/status'
@@ -180,7 +180,7 @@ const USE = 'Usage: /pk use <session>'
 const USAGE = 'Usage: /pk opens the PersonaKit pane; /pk use <session> pre-fills a grounding prompt.'
 
 export const register: Register = (on, options) => {
-  const configured = typeof options.mcpServerName === 'string' ? options.mcpServerName : 'personakit'
+  const configured = mcpServerName(options)
   // The executable the pane runs for the Library and the previews.
   const binary = personakitBinary(options)
 

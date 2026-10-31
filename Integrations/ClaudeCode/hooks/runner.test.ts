@@ -3,7 +3,7 @@ import type { ProcessRunResult } from 'claude-code'
 import { read } from 'claude-code'
 
 import { CONTRACT_JSON, EXPORT_MD, LIST_ERRORS_JSON, LIST_JSON, LIST_MERGED_JSON } from './fixtures/golden'
-import { loadLibrary, loadPreview, personakitBinary, previewKey } from './lib/runner'
+import { loadLibrary, loadPreview, mcpServerName, personakitBinary, previewKey } from './lib/runner'
 import { openPreview, pane, refreshLibrary, session } from './register'
 
 type Hook = Parameters<typeof refreshLibrary>[0]
@@ -61,6 +61,13 @@ test('loadLibraryRunsListAll', async () => {
   const load = await loadLibrary(w.$, 'personakit')
   expect(w.argvs).toEqual([['personakit', 'list', 'all', '--json']])
   expect(load.kind).toBe('loaded')
+})
+
+test('mcpServerNameReadsTheOption', () => {
+  expect(mcpServerName({ mcpServerName: 'pk-dev' })).toBe('pk-dev')
+  expect(mcpServerName({})).toBe('personakit')
+  expect(mcpServerName({ mcpServerName: '' })).toBe('personakit')
+  expect(mcpServerName({ mcpServerName: 7 })).toBe('personakit')
 })
 
 test('personakitBinaryReadsTheOption', () => {

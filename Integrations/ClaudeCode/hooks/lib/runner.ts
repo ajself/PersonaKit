@@ -19,6 +19,10 @@ const TIMED_OUT = /timed out|timeout|still running/i
 export const personakitBinary = (options: Readonly<Record<string, unknown>>): string =>
   typeof options.personakitPath === 'string' && options.personakitPath !== '' ? options.personakitPath : 'personakit'
 
+/** The `mcpServerName` option: the trusted PersonaKit MCP server, `personakit` unless one is configured. */
+export const mcpServerName = (options: Readonly<Record<string, unknown>>): string =>
+  typeof options.mcpServerName === 'string' && options.mcpServerName !== '' ? options.mcpServerName : 'personakit'
+
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 const firstLine = (text: string) => text.trim().split('\n')[0]?.slice(0, 200) ?? ''
 
