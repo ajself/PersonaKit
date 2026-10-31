@@ -3,6 +3,7 @@ import ContextCore
 import ContextWorkspaceCore
 import CryptoKit
 import Foundation
+import Synchronization
 
 /// Claude Code `PreToolUse` payload — only the fields the checker needs.
 private struct PreToolUsePayload: Decodable {
@@ -76,6 +77,20 @@ private struct OpenCodeDecisionOutput: Encodable {
   let reason: String
 }
 
+/// Lets exactly one of the checker and its watchdog write the hook's answer.
+final class HookDecisionGate: Sendable {
+  private let claimed = Mutex(false)
+
+  /// Whether the caller is first; only the first caller may write.
+  func claim() -> Bool {
+    claimed.withLock { claimed in
+      guard !claimed else { return false }
+      claimed = true
+      return true
+    }
+  }
+}
+
 /// Host whose tool-call payload `hook-check` reads.
 enum HookCheckHost: String, CaseIterable, ExpressibleByArgument {
   case claude
@@ -127,13 +142,38 @@ struct HookCheckCommand: ParsableCommand {
       return
     }
 
+    // Claude Code lets the call through when the hook outlives its timeout, so a stuck check denies on its own.
+    let gate = HookDecisionGate()
+    Self.startWatchdog(after: .seconds(ClaudeCodeEnforcement.checkerDeadlineSeconds), gate: gate) {
+      print(Self.claudeOutputJSON(for: Self.missedDeadlineDecision))
+      fflush(stdout)
+      Foundation.exit(0)
+    }
+
     let decision = Self.decide(manifestPath: manifestPath)
+
+    guard gate.claim() else {
+      // The watchdog is writing its deny and will exit; returning first would exit with no output, an allow.
+      while true { sleep(60) }
+    }
 
     guard decision.permission != .allow else {
       // Allow: exit 0 with no output lets Claude Code's normal permission flow proceed.
       return
     }
 
+    print(Self.claudeOutputJSON(for: decision))
+    // Deny and ask are communicated by the JSON above with exit 0; do not fail the process.
+  }
+
+  /// The decision the watchdog emits when the check misses its deadline.
+  static let missedDeadlineDecision = ClaudeCodeHookCheckDecision(
+    isDenied: true,
+    reason: "PersonaKit enforcement did not reach a decision in time; denying by fail-closed policy."
+  )
+
+  /// Claude Code's `hookSpecificOutput` JSON for a deny or ask.
+  static func claudeOutputJSON(for decision: ClaudeCodeHookCheckDecision) -> String {
     let output = HookDecisionOutput(
       hookSpecificOutput: HookDecisionOutput.Inner(
         permissionDecision: decision.permission.rawValue,
@@ -145,16 +185,25 @@ struct HookCheckCommand: ParsableCommand {
     encoder.outputFormatting = [.sortedKeys]
 
     if let data = try? encoder.encode(output), let json = String(data: data, encoding: .utf8) {
-      print(json)
-    } else {
-      // An encode failure must not read as an allow (no output).
-      print(
-        #"{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","#
-          + #""permissionDecisionReason":"PersonaKit enforcement could not encode its decision; "#
-          + #"denying by fail-closed policy."}}"#
-      )
+      return json
     }
-    // Deny and ask are communicated by the JSON above with exit 0; do not fail the process.
+    // An encode failure must not read as an allow (no output).
+    return #"{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","#
+      + #""permissionDecisionReason":"PersonaKit enforcement could not encode its decision; "#
+      + #"denying by fail-closed policy."}}"#
+  }
+
+  /// Runs `fire` after `delay` unless the checker claimed `gate` first.
+  static func startWatchdog(
+    after delay: DispatchTimeInterval,
+    gate: HookDecisionGate,
+    fire: @escaping @Sendable () -> Void
+  ) {
+    DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+      if gate.claim() {
+        fire()
+      }
+    }
   }
 
   private func runOpenCode() throws {

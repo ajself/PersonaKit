@@ -590,6 +590,44 @@ struct CLIEnforceTests {
   }
 
   @Test
+  func hookDecisionGateLetsOnlyTheFirstCallerWrite() {
+    let gate = HookDecisionGate()
+
+    #expect(gate.claim())
+    #expect(!gate.claim())
+  }
+
+  @Test
+  func watchdogFiresWhenTheCheckerHasNotDecided() {
+    let fired = DispatchSemaphore(value: 0)
+
+    HookCheckCommand.startWatchdog(after: .milliseconds(10), gate: HookDecisionGate()) { fired.signal() }
+
+    #expect(fired.wait(timeout: .now() + 5) == .success)
+  }
+
+  @Test
+  func watchdogStaysQuietOnceTheCheckerHasDecided() {
+    let fired = DispatchSemaphore(value: 0)
+    let gate = HookDecisionGate()
+    #expect(gate.claim())
+
+    HookCheckCommand.startWatchdog(after: .milliseconds(10), gate: gate) { fired.signal() }
+
+    #expect(fired.wait(timeout: .now() + 0.5) == .timedOut)
+  }
+
+  @Test
+  func missedDeadlineOutputDeniesTheCall() throws {
+    let json = HookCheckCommand.claudeOutputJSON(for: HookCheckCommand.missedDeadlineDecision)
+    let root = try #require(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+    let inner = try #require(root["hookSpecificOutput"] as? [String: Any])
+
+    #expect(inner["permissionDecision"] as? String == "deny")
+    #expect((inner["permissionDecisionReason"] as? String)?.contains("did not reach a decision in time") == true)
+  }
+
+  @Test
   func enforceInstallRefusesABareExecutableNameNotOnPath() throws {
     let projectDir = try freshProjectDir("pk-bareexe")
     let name = "personakit-missing-\(UUID().uuidString)"
@@ -743,6 +781,7 @@ struct CLIEnforceTests {
     #expect(status == 0)
     #expect(output.contains("Dry run"))
     #expect(output.contains("\"matcher\" : \".*\""))
+    #expect(output.contains("\"timeout\" : 60"))
     #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
   }
 

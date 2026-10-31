@@ -192,7 +192,10 @@ Restart Claude Code after installing, since it reads hooks at startup.
 The hook names the `personakit` binary by the absolute path found when you
 installed (pass `--executable` to choose another). If the checker cannot run,
 because the binary moved or crashed, the hook blocks every tool call until you
-fix the binary or run `enforce install` again.
+fix the binary or run `enforce install` again. Claude Code lets a call through
+when a hook times out, so once the checker starts, it denies any call it has
+not decided within 10 seconds, well inside the hook's 60-second timeout. Only a
+checker that takes nearly a minute just to launch reaches that timeout.
 
 Each call gets one of three answers:
 

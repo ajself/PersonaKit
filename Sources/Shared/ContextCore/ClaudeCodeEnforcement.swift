@@ -29,6 +29,15 @@ public enum ClaudeCodeEnforcement {
     "|| { echo 'PersonaKit could not check this tool call, so it is blocked. "
     + "Tell the user that personakit hook-check failed.' >&2; exit 2; }"
 
+  /// Seconds Claude Code waits for the installed hook. A hook that runs past its timeout is killed and the call
+  /// proceeds, so the checker denies on its own well before this (see ``checkerDeadlineSeconds``).
+  public static let hookTimeoutSeconds = 60
+
+  /// Seconds the checker may take before its watchdog denies the call, far inside ``hookTimeoutSeconds`` so
+  /// a slow process launch still leaves room. A decision normally takes milliseconds; one this late means the
+  /// checker is stuck, for example on a tool call whose input never ends.
+  public static let checkerDeadlineSeconds = 10
+
   /// Single source of truth mapping host-neutral action classes to Claude Code tools.
   ///
   /// The checker turns an incoming tool name into its action class and denies it when the contract
@@ -184,14 +193,17 @@ public enum ClaudeCodeEnforcement {
   }
 }
 
-/// Deterministic command hook entry: `{ "type": "command", "command": "…" }`.
+/// Deterministic command hook entry: `{ "type": "command", "command": "…", "timeout": 60 }`.
 public struct ClaudeCodeHookCommand: Codable, Equatable, Sendable {
   public let type: String
   public let command: String
+  /// Seconds Claude Code waits before killing the hook; `nil` leaves Claude Code's default.
+  public let timeout: Int?
 
-  public init(command: String) {
+  public init(command: String, timeout: Int? = nil) {
     self.type = "command"
     self.command = command
+    self.timeout = timeout
   }
 }
 
@@ -285,7 +297,10 @@ public enum ClaudeCodeEnforcementRenderer {
 
     return ClaudeCodeEnforcementArtifacts(
       matcher: matcher,
-      hookEntry: ClaudeCodeHookMatcher(matcher: matcher, hooks: [ClaudeCodeHookCommand(command: command)]),
+      hookEntry: ClaudeCodeHookMatcher(
+        matcher: matcher,
+        hooks: [ClaudeCodeHookCommand(command: command, timeout: ClaudeCodeEnforcement.hookTimeoutSeconds)]
+      ),
       degradedActionClasses: degraded
     )
   }
@@ -338,7 +353,13 @@ public enum ClaudeCodeSettingsMerger {
 
     preToolUse.append([
       "matcher": hookEntry.matcher,
-      "hooks": hookEntry.hooks.map { ["type": $0.type, "command": $0.command] },
+      "hooks": hookEntry.hooks.map { hook -> [String: Any] in
+        var rendered: [String: Any] = ["type": hook.type, "command": hook.command]
+        if let timeout = hook.timeout {
+          rendered["timeout"] = timeout
+        }
+        return rendered
+      },
     ])
 
     hooks["PreToolUse"] = preToolUse

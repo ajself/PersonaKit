@@ -114,6 +114,26 @@ struct ClaudeCodeEnforcementTests {
         + ClaudeCodeEnforcement.failClosedSuffix
     )
     #expect(artifacts.degradedActionClasses.isEmpty)
+    // An explicit timeout keeps the checker's own deadline well inside Claude Code's.
+    #expect(artifacts.hookEntry?.hooks.first?.timeout == ClaudeCodeEnforcement.hookTimeoutSeconds)
+    #expect(ClaudeCodeEnforcement.checkerDeadlineSeconds * 2 < ClaudeCodeEnforcement.hookTimeoutSeconds)
+  }
+
+  @Test
+  func mergerWritesTheHookTimeout() throws {
+    let merged = try ClaudeCodeSettingsMerger.merge(
+      existingSettings: nil,
+      hookEntry: ClaudeCodeHookMatcher(
+        matcher: ".*",
+        hooks: [ClaudeCodeHookCommand(command: "pk hook-check --manifest /m.json", timeout: 60)]
+      )
+    )
+    let root = try #require(JSONSerialization.jsonObject(with: merged) as? [String: Any])
+    let hooks = try #require(root["hooks"] as? [String: Any])
+    let entry = try #require((hooks["PreToolUse"] as? [[String: Any]])?.first)
+    let hook = try #require((entry["hooks"] as? [[String: Any]])?.first)
+
+    #expect(hook["timeout"] as? Int == 60)
   }
 
   @Test
