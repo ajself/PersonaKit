@@ -546,7 +546,7 @@ struct EnforceInstallCommand: ParsableCommand {
 
     let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
-    let existingSettings = try? Data(contentsOf: settingsURL)
+    let existingSettings = try Self.existingSettings(at: settingsURL)
     let replacedExisting = ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: existingSettings)
     let mergedSettings = try ClaudeCodeSettingsMerger.merge(
       existingSettings: existingSettings,
@@ -735,6 +735,21 @@ struct EnforceInstallCommand: ParsableCommand {
       throw CLIError.failure(
         "Refusing to install: \(url.path) is a symbolic link. "
           + "Replace it with a real file or directory so enforcement files stay inside the project."
+      )
+    }
+  }
+
+  /// The project's settings, or nil when there are none. Any other read failure stops the install: merging into
+  /// nothing would replace every other setting with only the PersonaKit hook.
+  private static func existingSettings(at url: URL) throws -> Data? {
+    do {
+      return try Data(contentsOf: url)
+    } catch CocoaError.fileReadNoSuchFile {
+      return nil
+    } catch {
+      throw CLIError.failure(
+        "Refusing to install: could not read \(url.path): \(error.localizedDescription) "
+          + "Make it a readable file, then run install again."
       )
     }
   }

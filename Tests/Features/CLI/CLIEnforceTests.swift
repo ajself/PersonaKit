@@ -971,6 +971,30 @@ struct CLIEnforceTests {
     )
   }
 
+  @Test
+  func claudeInstallRefusesSettingsItCannotRead() throws {
+    let projectDir = try freshProjectDir("pk-claude-unreadable")
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    try FileManager.default.createDirectory(
+      at: settingsURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try Data(#"{"theme":"dark"}"#.utf8).write(to: settingsURL)
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: settingsURL.path)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: settingsURL.path) }
+
+    for dryRun in [false, true] {
+      let result = runInstall(extra: [], projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("could not read \(settingsURL.path)"))
+    }
+
+    try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: settingsURL.path)
+    #expect(try String(contentsOf: settingsURL, encoding: .utf8) == #"{"theme":"dark"}"#)
+    #expect(tree(projectDir.appendingPathComponent(".claude")) == ["settings.json"])
+  }
+
   @Test(arguments: [".claude", ".claude/personakit", ".claude/settings.json"])
   func claudeInstallRefusesASymlinkedEnforcementPath(linked: String) throws {
     let projectDir = try freshProjectDir("pk-claude-symlink")
