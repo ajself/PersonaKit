@@ -1,3 +1,4 @@
+import ContextCore
 import Foundation
 import MCP
 
@@ -133,6 +134,6 @@ enum MCPCatalogSupport {
       throw MCPError.internalError("Failed to encode catalog resource.")
     }
 
-    return text
+    return TerminalText.escapingJSON(text)
   }
 }

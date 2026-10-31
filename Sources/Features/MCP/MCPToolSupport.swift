@@ -65,7 +65,8 @@ enum MCPInternalSupport {
       throw MCPError.internalError("Failed to encode tool output.")
     }
 
-    return text + "\n"
+    // An agent reads the JSON as text, so hidden characters are escaped where it can see them; values stay exact.
+    return TerminalText.escapingJSON(text) + "\n"
   }
 
   static func exportOutput(
@@ -84,7 +85,8 @@ enum MCPInternalSupport {
       targetPaths: targetPaths,
       skillTags: skillTags
     )
-    return output + "\n"
+    // Stripped as the CLI export is, so invisible text in a repo's entities cannot reach an agent unseen.
+    return TerminalText.sanitized(output) + "\n"
   }
 
   static func graphOutput(
@@ -108,7 +110,7 @@ enum MCPInternalSupport {
       resolvedSession: resolved,
       kitOverrides: kitOverrides
     )
-    return output + "\n"
+    return TerminalText.sanitized(output) + "\n"
   }
 
   static func resolveSessionInput(
@@ -157,11 +159,11 @@ enum MCPInternalSupport {
     case .validationFailed(let result):
       var lines: [String] = [result.summary]
       lines.append(contentsOf: result.errors.map { $0.lineDescription() })
-      return lines.joined(separator: "\n")
+      return TerminalText.sanitized(lines.joined(separator: "\n"))
     case .resolutionFailed(let resolutionError):
       return formatResolutionErrors(resolutionError.errors)
     case .readFailed(let message):
-      return "Error: \(message)"
+      return TerminalText.sanitized("Error: \(message)")
     }
   }
 
@@ -188,7 +190,8 @@ enum MCPInternalSupport {
     } else if case .missingDirective(_, let missingId) = error {
       parts.append("missingId=\(missingId)")
     }
-    return parts.joined(separator: " ")
+    // Errors quote ids and paths from the repo, so they are stripped like any text an agent reads.
+    return TerminalText.sanitized(parts.joined(separator: " "))
   }
 
   static func formatRegistryErrors(_ errors: [RegistryError]) -> String {
@@ -205,7 +208,7 @@ enum MCPInternalSupport {
       parts.append(relativePath)
     }
     parts.append(error.message)
-    return "Error: " + parts.joined(separator: " ")
+    return TerminalText.sanitized("Error: " + parts.joined(separator: " "))
   }
 
   static func withRecoveryHint(_ message: String, hint: String) -> String {

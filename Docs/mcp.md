@@ -307,6 +307,8 @@ MCP resources and tools provide context. They do not authorize execution, file m
 
 If a contract does not authorize a needed skill, stop and re-ground instead of improvising.
 
+MCP never hands an agent text a person reviewing it would not see. `personakit_export`, `personakit_graph`, and error messages strip control characters, bidirectional overrides, and invisible characters such as Unicode tag characters from `.personakit` content. JSON results write those characters as `\uXXXX` escapes, so values stay exact. Raw pack resources are the files as written.
+
 Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools need the operator's approval on Claude Code and are denied on OpenCode.
 
 ## How To Verify

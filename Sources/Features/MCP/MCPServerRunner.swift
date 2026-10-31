@@ -128,7 +128,7 @@ private func formatRegistryError(_ error: RegistryError) -> String {
     parts.append(relativePath)
   }
   parts.append(error.message)
-  return parts.joined(separator: " ")
+  return TerminalText.sanitized(parts.joined(separator: " "))
 }
 
 /// `stderr` text stream used by MCP server startup failures.

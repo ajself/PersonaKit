@@ -116,13 +116,14 @@ public enum BestGuidanceSupport {
     )
   }
 
-  /// Encodes guidance payload as stable, pretty-printed JSON.
+  /// Encodes guidance payload as stable, pretty-printed JSON, with hidden characters escaped (see
+  /// ``TerminalText/escapingJSON(_:)``).
   public static func encodeJSON(_ payload: Payload) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let data = try encoder.encode(payload)
 
-    return String(data: data, encoding: .utf8) ?? "{}"
+    return TerminalText.escapingJSON(String(data: data, encoding: .utf8) ?? "{}")
   }
 
   private static func loadedSessions(

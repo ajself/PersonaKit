@@ -119,7 +119,7 @@ struct GuidanceCommand: ParsableCommand {
     let payload = BestGuidanceSupport.build(scopes: scopes)
     let output = try BestGuidanceSupport.encodeJSON(payload)
 
-    print(TerminalText.escapingJSON(output))
+    print(output)
   }
 }
 
