@@ -1,9 +1,8 @@
 import type { Part, ToolPart } from '@opencode-ai/sdk/v2'
-import type { Enforcement, SessionState } from '../../../ClaudeCode/types'
+import type { Call, Enforcement, SessionState } from '../../../ClaudeCode/types'
 import type { Host } from '../../../ClaudeCode/hooks/lib/host.ts'
 import { observe } from '../../../ClaudeCode/hooks/lib/observe.ts'
 import { applyCall, initial, trustedServers } from '../../../ClaudeCode/hooks/lib/session.ts'
-import type { Call } from '../../../ClaudeCode/hooks/lib/session.ts'
 
 /**
  * A finished tool part as the shared core's call, or undefined while it is pending or running. The tool id is kept
@@ -13,14 +12,18 @@ import type { Call } from '../../../ClaudeCode/hooks/lib/session.ts'
  * path is offered as `persistedOutputPath` so `observe` reads the full output from it, never the preview.
  */
 export function toCall(part: ToolPart, parentSessionID: string): Call | undefined {
-  type Result = Call['result'] & { result?: { stdout: string; persistedOutputPath?: string } }
   const { state } = part
   if (state.status !== 'completed' && state.status !== 'error') return undefined
-  let result: Result
+  let result: Call['result']
   if (state.status === 'completed') {
-    result = { text: state.output, result: { stdout: state.output } }
     const { truncated, outputPath } = state.metadata
-    if (truncated === true && typeof outputPath === 'string') result.result!.persistedOutputPath = outputPath
+    result = {
+      text: state.output,
+      result:
+        truncated === true && typeof outputPath === 'string'
+          ? { stdout: state.output, persistedOutputPath: outputPath }
+          : { stdout: state.output },
+    }
   } else {
     result = { isError: true, text: state.error }
   }

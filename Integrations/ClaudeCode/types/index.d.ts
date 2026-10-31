@@ -11,6 +11,13 @@ export type ExportDetails = {
   personaName?: string; personaId?: string; directiveTitle?: string; directiveId?: string; goal?: string
   steps: Step[]; deniedActionClasses: string[]   // sorted
 }
+// A finished tool call as either host hands it to the shared core. `text` is the result's plain-text rendering and
+// `isError` marks a failed or hook-denied call. `result.result` is the host's raw result: Claude Code's MCP text, or
+// a shell command's `stdout` and the `persistedOutputPath` of its full output, host data whose types `observe` checks.
+export type Call = {
+  tool: string; input: Record<string, unknown>; agentId?: string
+  result: { isError?: boolean; text?: string; result?: string | { stdout?: unknown; persistedOutputPath?: unknown } }
+}
 export type Observation =
   | { kind: 'contract'; source: 'mcp' | 'cli'; ids: ContractIds; contract?: Contract }   // contract absent: truncated output
   | { kind: 'export'; source: 'mcp' | 'cli'; ids: ContractIds; details?: ExportDetails } // details absent: truncated output

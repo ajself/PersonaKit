@@ -1,4 +1,4 @@
-import type { DriftEvent, Enforcement } from '../../types'
+import type { Call, DriftEvent, Enforcement } from '../../types'
 import { CLAUDE_HOST, TOOL_ACTION_CLASSES } from './host'
 import type { Host } from './host'
 import { isPersonaKitCall } from './observe'
@@ -14,14 +14,6 @@ const DENY_MARKERS = [
   'PersonaKit enforcement could not',
   'PersonaKit contract needs approval:',
 ]
-
-type Call = {
-  tool: string
-  input: Record<string, unknown>
-  // `text` is the result's plain-text rendering; `isError` marks a failed or hook-denied call.
-  result: { isError?: boolean; text?: string }
-  agentId?: string
-}
 
 /** Whether the installed hook's matcher routes the tool. Entries are regex alternatives anchored to the whole name. */
 function routed(tool: string, matcherTools: string[]): boolean {

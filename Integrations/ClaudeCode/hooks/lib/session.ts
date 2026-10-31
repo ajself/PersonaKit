@@ -1,12 +1,10 @@
-import type { ContractIds, Enforcement, Observation, Resolution, SessionState } from '../../types'
+import type { Call, ContractIds, Enforcement, Observation, Resolution, SessionState } from '../../types'
 import { classifyDrift } from './drift'
 import { sameContract } from './enforcement'
 import { CLAUDE_HOST } from './host'
 import type { Host } from './host'
 
 export const initial: SessionState = { subagents: {}, enforcement: { kind: 'advisory' }, compactions: 0, drift: [], turn: 0 }
-
-export type Call = { tool: string; input: Record<string, unknown>; result: { isError?: boolean; text?: string }; agentId?: string }
 
 export function isEmpty(s: SessionState): boolean {
   return s.main === undefined && Object.keys(s.subagents).length === 0 && s.drift.length === 0 && s.compactions === 0

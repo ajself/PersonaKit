@@ -1,11 +1,10 @@
-import type { ContractIds, Observation } from '../../types'
+import type { Call, ContractIds, Observation } from '../../types'
 import { parseContract } from './contract'
 import { parseExport } from './export'
 import { CLAUDE_HOST } from './host'
 import type { Host } from './host'
 import { isValidId, presentIds } from './ids'
 
-type Call = { tool: string; input: Record<string, unknown>; result: unknown }
 type CliCommand = { subcommand: 'contract' | 'export'; args: string[] }
 
 const MCP_RESOLVE = 'personakit_resolve_contract'
@@ -200,7 +199,8 @@ export async function observe(
   readPersisted: (path: string) => Promise<string | undefined>,
   host: Host = CLAUDE_HOST,
 ): Promise<Observation[]> {
-  const result = (call.result ?? {}) as { isError?: boolean; text?: unknown; result?: unknown }
+  // Defensive: every host sets a result today.
+  const result: Call['result'] = call.result ?? {}
   const mcp = mcpKind(call.tool, trustedServers, host)
   if (mcp !== undefined) {
     const ids: ContractIds = typeof call.input.sessionId === 'string' && call.input.sessionId ? { sessionId: call.input.sessionId } : {}
@@ -216,7 +216,7 @@ export async function observe(
   if (clis.length === 0) return []
   if (result.isError === true) return clis.map((c) => ({ kind: 'failed', source: 'cli', ids: cliIds(c.args) }))
 
-  const raw = (result.result ?? {}) as { stdout?: unknown; persistedOutputPath?: unknown }
+  const raw = typeof result.result === 'object' && result.result !== null ? result.result : {}
   let text: string | undefined
   // With a persisted file, stdout is only a truncated preview: never parse it.
   if (typeof raw.persistedOutputPath === 'string') text = await readPersisted(raw.persistedOutputPath)
