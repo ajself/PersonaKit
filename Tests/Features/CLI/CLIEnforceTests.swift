@@ -1258,6 +1258,56 @@ struct CLIEnforceTests {
   }
 
   @Test
+  func claudeInstallWarnsThatAllowedCommandsReachWhatTheContractForbids() throws {
+    let root = try fixtureRoot(forbidding: ["edit-files", "network-access"])
+    let projectDir = try freshProjectDir("pk-claude-shell")
+
+    let result = runInstall(extra: ["--root", root.path], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(
+      result.stderr.contains(
+        "does not forbid run-commands, so Claude Code blocks only the dedicated tools for edit-files, "
+          + "network-access; a shell command can still do them. Forbid run-commands too to enforce them."
+      )
+    )
+  }
+
+  @Test
+  func claudeInstallDoesNotWarnWhenCommandsAreForbidden() throws {
+    let projectDir = try freshProjectDir("pk-claude-noshell")
+
+    let result = runInstall(extra: [], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(!result.stderr.contains("a shell command can still do them"))
+  }
+
+  @Test
+  func openCodeInstallWarnsThatAllowedCommandsReachWhatTheContractForbids() throws {
+    let root = try fixtureRoot(forbidding: ["edit-files"])
+    let projectDir = try freshProjectDir("pk-oc-shell")
+    let home = try freshProjectDir("pk-oc-shell-home")
+
+    let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(result.stderr.contains("so OpenCode blocks only the dedicated tools for edit-files; a shell command"))
+  }
+
+  @Test
+  func openCodeInstallDoesNotWarnWhenCommandsAreForbidden() throws {
+    let root = try fixtureRoot(forbidding: ["edit-files", "run-commands"])
+    let projectDir = try freshProjectDir("pk-oc-noshell")
+    let home = try freshProjectDir("pk-oc-noshell-home")
+
+    let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(!result.stderr.contains("a shell command can still do them"))
+  }
+
+  @Test
   func claudeInstallStillRejectsServerNamesOpenCodeAccepts() throws {
     let projectDir = try freshProjectDir("pk-claude-badserver")
 

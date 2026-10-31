@@ -138,7 +138,10 @@ What enforcement does not cover:
   language servers, MCP server commands, and plugins referenced by path. When
   one of them lives outside the protected files above, a contract that allows
   edits but denies commands still lets the agent rewrite it, and OpenCode then
-  runs the new code. With commands allowed, nothing is protected.
+  runs the new code. With commands allowed, nothing is protected, and a
+  contract that forbids edits or network access blocks only OpenCode's own
+  tools for them, since a shell command can still do both. `enforce install`
+  warns when that is the case.
 - Shell commands you run yourself (`!cmd`, `/command` substitutions) are not
   checked.
 - `opencode --pure` loads no external plugins, so it runs with no enforcement.
@@ -229,7 +232,9 @@ It is not a sandbox. Claude Code runs programs on its own, such as other hook
 scripts, a `statusLine` command, and MCP server commands. A contract that allows
 edits but denies commands still lets the agent rewrite those, and Claude Code
 then runs the new code. With commands allowed, the agent can change the
-enforcement files through the shell.
+enforcement files through the shell, and a contract that forbids edits or
+network access blocks only the dedicated tools, since a shell command can still
+do both. `enforce install` warns when that is the case.
 
 ### Codex
 

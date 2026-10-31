@@ -572,6 +572,7 @@ struct EnforceInstallCommand: ParsableCommand {
       persona: manifest.personaId,
       host: "Claude Code"
     )
+    Self.reportShellReachableCapabilities(manifest: manifest, host: "Claude Code")
   }
 
   /// OpenCode accepts any `[A-Za-z0-9._-]` server name; it sanitizes the rest itself.
@@ -598,11 +599,7 @@ struct EnforceInstallCommand: ParsableCommand {
       .appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)
       .appendingPathComponent("personakit")
 
-    let deniedClasses = Set(
-      manifest.checks
-        .filter { $0.maxClass == CheckClass.hook.rawValue }
-        .flatMap { $0.rule.deniedActionClasses ?? [] }
-    )
+    let deniedClasses = Self.deniedHookClasses(in: manifest)
     // The classes OpenCode can block: its mapped tools, plus the ones the unclassified-tool rule routes.
     let blockableClasses: Set<String> = ["command-execution", "file-mutation", "network-egress"]
     let degradedClasses = deniedClasses.subtracting(blockableClasses).sorted()
@@ -665,6 +662,7 @@ struct EnforceInstallCommand: ParsableCommand {
     }
 
     Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
+    Self.reportShellReachableCapabilities(manifest: manifest, host: "OpenCode")
 
     if !Self.openCodeConfigListsPlugin(projectRoot: projectRoot, environment: ProcessInfo.processInfo.environment) {
       var stderrStream = StandardError()
@@ -818,6 +816,50 @@ struct EnforceInstallCommand: ParsableCommand {
     stderrStream.write(
       "Note: persona \(persona) forbids capabilities \(host) cannot deny at the hook layer; "
         + "they degrade to review — \(actionClasses.joined(separator: ", ")).\n"
+    )
+  }
+
+  /// The action classes the manifest's hook checks deny.
+  private static func deniedHookClasses(in manifest: ChecksManifest) -> Set<String> {
+    Set(
+      manifest.checks
+        .filter { $0.maxClass == CheckClass.hook.rawValue }
+        .flatMap { $0.rule.deniedActionClasses ?? [] }
+    )
+  }
+
+  /// Forbidden capabilities a shell command can still exercise because the contract does not forbid
+  /// `run-commands`, sorted.
+  ///
+  /// The hook blocks tools by what they are for, so with commands allowed, `Bash` or `bash` can still edit
+  /// files and reach the network. Those denials hold only against the dedicated tools. Named as capabilities,
+  /// since that is what an operator writes in `forbiddenCapabilities`.
+  static func shellReachableCapabilities(in manifest: ChecksManifest) -> [String] {
+    let denied = deniedHookClasses(in: manifest)
+    guard !denied.contains("command-execution") else {
+      return []
+    }
+    let capabilityByClass = [
+      "file-mutation": SkillCapability.editFiles.rawValue,
+      "network-egress": SkillCapability.networkAccess.rawValue,
+    ]
+    return denied.compactMap { capabilityByClass[$0] }.sorted()
+  }
+
+  /// Warns when the contract forbids something a shell command can still do, so the install never reads as
+  /// enforcing more than it does.
+  private static func reportShellReachableCapabilities(manifest: ChecksManifest, host: String) {
+    let capabilities = shellReachableCapabilities(in: manifest)
+    guard !capabilities.isEmpty else {
+      return
+    }
+
+    let runCommands = SkillCapability.runCommands.rawValue
+    var stderrStream = StandardError()
+    stderrStream.write(
+      "Note: persona \(manifest.personaId) does not forbid \(runCommands), so \(host) blocks only the dedicated "
+        + "tools for \(capabilities.joined(separator: ", ")); a shell command can still do them. "
+        + "Forbid \(runCommands) too to enforce them.\n"
     )
   }
 
