@@ -146,6 +146,13 @@ final class StubFileEventSource: WorkspaceFileEventStreaming, Sendable {
 
     continuation?.yield(changedFileURLs)
   }
+
+  /// Ends the most recent watch stream, as a watcher that fails to start does.
+  func finish() {
+    let continuation = state.withLock { $0.continuations.last }
+
+    continuation?.finish()
+  }
 }
 
 /// Thread-safe text a stub can read while a test changes it, standing in for a file on disk.

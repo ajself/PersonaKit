@@ -65,6 +65,14 @@ final class WorkspaceLoadFeatureModel {
 
         self.recordFileChanges(changedFileURLs, onChange: onChange)
       }
+
+      // The stream ended on its own, as when FSEvents fails to start: let the next load watch again.
+      guard let self, !Task.isCancelled else {
+        return
+      }
+
+      self.watchTask = nil
+      self.watchedDirectories = []
     }
   }
 

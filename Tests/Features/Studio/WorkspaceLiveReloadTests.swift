@@ -93,6 +93,21 @@ struct WorkspaceLiveReloadTests {
   }
 
   @Test
+  func aWatchWhoseStreamEndsIsStartedAgainOnTheNextWatch() async {
+    let source = StubFileEventSource()
+    let loadModel = makeStore(source: source, clock: ManualTestClock()).loadFeatureModel
+
+    loadModel.startWatching(directories: [watchedDirectory]) { _ in }
+    source.finish()
+    await waitFor { loadModel.watchedDirectories.isEmpty }
+
+    loadModel.startWatching(directories: [watchedDirectory]) { _ in }
+
+    #expect(source.watchedDirectories == [[watchedDirectory], [watchedDirectory]])
+    #expect(loadModel.watchedDirectories == [watchedDirectory])
+  }
+
+  @Test
   func rewatchingTheSameDirectoriesKeepsTheRunningWatch() async {
     let source = StubFileEventSource()
     let loadModel = makeStore(source: source, clock: ManualTestClock()).loadFeatureModel
