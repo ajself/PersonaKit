@@ -724,7 +724,7 @@ struct SessionsPanelView: View {
   ) {
     switch mode {
     case .preview:
-      workspaceStore.cancelSessionMapRefresh()
+      workspaceStore.clearSessionMap()
     case .map:
       workspaceStore.cancelSessionPreviewRefresh()
     }

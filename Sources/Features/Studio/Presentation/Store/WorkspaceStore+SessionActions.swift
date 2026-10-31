@@ -74,9 +74,9 @@ extension WorkspaceStore {
     sessionFeatureModel.cancelPreviewTask()
   }
 
-  /// Cancels any in-flight session map refresh task.
-  func cancelSessionMapRefresh() {
-    sessionFeatureModel.cancelMapTask()
+  /// Drops the session map so a hidden map neither rebuilds on reload nor reports stale health.
+  func clearSessionMap() {
+    sessionFeatureModel.clearMap()
   }
 
   /// Loads a dependency map for an in-flight session draft.

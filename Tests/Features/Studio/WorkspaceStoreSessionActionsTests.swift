@@ -788,6 +788,106 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(!store.isLoadingSessionMap)
   }
 
+  @Test
+  func clearSessionMapDropsLoadingMapAndSkipsRebuildOnReload() async {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let personaFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Personas/persona-a.json")
+    let mapGate = BlockingCallGate()
+    let validationCount = Mutex(0)
+    let mapBuildCount = Mutex(0)
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "unused",
+          directiveId: "unused",
+          fileURL: sessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: []
+    )
+
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        validationCount.withLock { $0 += 1 }
+
+        return WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: WorkspaceStoreStubSessionManager(
+        loadDraftHandler: { _ in
+          WorkspaceSessionDraft(
+            id: "session-a",
+            personaId: "persona-a",
+            directiveId: "directive-a",
+            kitOverrides: []
+          )
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          "session-a"
+        },
+        deleteSessionHandler: { _, _ in }
+      ),
+      sessionMapBuilder: WorkspaceStoreStubSessionMapBuilder(
+        buildHandler: { _, _, _, _ in
+          mapBuildCount.withLock { $0 += 1 }
+          _ = mapGate.markStarted()
+          mapGate.waitUntilReleased()
+          mapGate.markFinished()
+
+          return WorkspaceSessionMap(
+            nodes: [],
+            edges: [],
+            resolutionErrors: [],
+            isFullyResolved: true
+          )
+        }
+      )
+    )
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    store.refreshSessionMap(for: store.snapshot.sessions.first)
+    await waitFor {
+      mapGate.hasStarted
+    }
+
+    // Leaving Map mode mid-load.
+    store.clearSessionMap()
+
+    #expect(store.sessionMap == nil)
+    #expect(!store.isLoadingSessionMap)
+
+    mapGate.release()
+    await waitFor {
+      mapGate.hasFinished
+    }
+
+    // Validation starts after the map revalidation, so a second validation means the reload
+    // has already decided whether to rebuild the map.
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [personaFileURL])
+    await waitFor {
+      validationCount.withLock { $0 } == 2
+    }
+    await yieldTasks()
+
+    #expect(mapBuildCount.withLock { $0 } == 1)
+    #expect(store.sessionMap == nil)
+    #expect(!store.isLoadingSessionMap)
+  }
+
   private func yieldTasks(_ iterations: Int = 50) async {
     for _ in 0..<iterations {
       await Task.yield()
