@@ -198,6 +198,205 @@ struct WorkspaceStoreReloadOwnershipTests {
     #expect(store.libraryDetail.formState.primaryText == "Other")
   }
 
+  @Test
+  func validatingTheDraftReportsTheResultInline() async throws {
+    let rejects = MutableBooleanState(value: false)
+    let validated = MutableTextState("")
+    let store = makeLibraryStore(
+      disk: MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#),
+      validateHandler: { rawJSON in
+        validated.value = rawJSON
+
+        if rejects.value {
+          throw WorkspaceSnapshotBuildError(message: "Persona name is too long.")
+        }
+      }
+    )
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    store.validateLibraryDetailDraft()
+    await waitFor { store.libraryFeatureModel.detailActionTask == nil }
+
+    #expect(validated.value.contains("Mine"))
+    #expect(store.libraryDetail.inlineMessage == "JSON is valid.")
+    #expect(!store.libraryDetail.inlineMessageIsError)
+
+    rejects.value = true
+    store.validateLibraryDetailDraft()
+    await waitFor { store.libraryFeatureModel.detailActionTask == nil }
+
+    #expect(store.libraryDetail.inlineMessage == "Persona name is too long.")
+    #expect(store.libraryDetail.inlineMessageIsError)
+    #expect(!store.libraryDetail.isValidating)
+  }
+
+  @Test
+  func savingTheDraftWritesItThenShowsTheNormalizedFile() async throws {
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let saved = MutableTextState("")
+    let buildFails = MutableBooleanState(value: false)
+    let store = makeLibraryStore(
+      disk: disk,
+      buildFails: buildFails,
+      saveHandler: { rawJSON in
+        saved.value = rawJSON
+        // The CLI normalizes what it writes; the detail pane must show the file, not the draft.
+        disk.value = #"{"id":"solo","name":"Mine","summary":"Original.","version":"1.0"}"#
+        // The reload the save triggers fails, so only the save's own re-read can show the file.
+        buildFails.value = true
+      }
+    )
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    store.saveLibraryDetailDraft()
+
+    await waitFor { store.libraryDetail.sourceText.contains("\"version\"") }
+
+    #expect(saved.value.contains("Mine"))
+    #expect(store.libraryDetail.inlineMessage == "Saved solo.")
+    #expect(!store.libraryDetail.isSaving)
+    #expect(!store.libraryDetail.isDraftDirty)
+    #expect(!store.libraryDetail.hasChangedOnDisk)
+    #expect(store.libraryDetail.formState.primaryText == "Mine")
+  }
+
+  @Test
+  func savingDropsASourceReadThatStartedBeforeIt() async throws {
+    let readGate = BlockingCallGate()
+    let saveGate = BlockingCallGate()
+    let holdsNextRead = MutableBooleanState(value: false)
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let store = makeLibraryStore(
+      disk: disk,
+      readHandler: { _ in
+        if holdsNextRead.value {
+          holdsNextRead.value = false
+          _ = readGate.markStarted()
+          readGate.waitUntilReleased()
+        }
+
+        return disk.value
+      },
+      saveHandler: { rawJSON in
+        _ = saveGate.markStarted()
+        saveGate.waitUntilReleased()
+        disk.value = rawJSON
+      }
+    )
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+    let originalSource = store.libraryDetail.sourceText
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    holdsNextRead.value = true
+    disk.value = #"{"id":"solo","name":"Solo","summary":"Changed elsewhere."}"#
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [soloFileURL])
+    await waitFor { readGate.hasStarted }
+
+    store.saveLibraryDetailDraft()
+    readGate.release()
+    await waitFor { saveGate.hasStarted }
+    await yieldTasks()
+
+    // The read that began before the save must not land as a change on disk mid-save.
+    #expect(store.libraryDetail.isSaving)
+    #expect(store.libraryDetail.sourceText == originalSource)
+    #expect(!store.libraryDetail.hasChangedOnDisk)
+
+    saveGate.release()
+    await waitFor {
+      store.libraryFeatureModel.detailActionTask == nil && store.libraryFeatureModel.detailSourceTask == nil
+    }
+
+    #expect(store.libraryDetail.sourceText.contains("Mine"))
+    #expect(!store.libraryDetail.hasChangedOnDisk)
+    #expect(!store.libraryDetail.isDraftDirty)
+  }
+
+  @Test
+  func aReloadDuringASaveLeavesTheRereadToTheSave() async throws {
+    let buildGate = BlockingCallGate()
+    let saveGate = BlockingCallGate()
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let store = makeLibraryStore(
+      disk: disk,
+      beforeBuild: { buildNumber in
+        if buildNumber == 2 {
+          _ = buildGate.markStarted()
+          buildGate.waitUntilReleased()
+        }
+      },
+      saveHandler: { rawJSON in
+        _ = saveGate.markStarted()
+        saveGate.waitUntilReleased()
+        disk.value = rawJSON
+      }
+    )
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [soloFileURL])
+    await waitFor { buildGate.hasStarted }
+
+    store.saveLibraryDetailDraft()
+    buildGate.release()
+    await waitFor { saveGate.hasStarted }
+    await yieldTasks()
+
+    // The reload finished while the save was in flight and started no read of its own.
+    #expect(store.inFlightReloadTrigger == nil)
+    #expect(store.libraryDetail.isSaving)
+    #expect(store.libraryFeatureModel.detailSourceTask == nil)
+
+    saveGate.release()
+    await waitFor {
+      store.libraryFeatureModel.detailActionTask == nil && store.libraryFeatureModel.detailSourceTask == nil
+    }
+
+    #expect(store.libraryDetail.sourceText.contains("Mine"))
+    #expect(!store.libraryDetail.isDraftDirty)
+  }
+
+  @Test
+  func aFailedSaveKeepsTheDraftAndReportsInline() async throws {
+    let disk = MutableTextState(#"{"id":"solo","name":"Solo","summary":"Original."}"#)
+    let store = makeLibraryStore(
+      disk: disk,
+      saveHandler: { _ in
+        throw WorkspaceSnapshotBuildError(message: "Permission denied.")
+      }
+    )
+    let item = try await loadSoloItem(store)
+
+    store.selectLibraryDetailItem(item, entityType: .persona)
+    await waitFor { store.libraryDetail.isDraftReady }
+
+    store.updateLibraryDetailForm { $0.primaryText = "Mine" }
+    store.saveLibraryDetailDraft()
+    await waitFor {
+      store.libraryFeatureModel.detailActionTask == nil && store.libraryFeatureModel.detailSourceTask == nil
+    }
+
+    #expect(store.libraryDetail.inlineMessage?.contains("Permission denied.") == true)
+    #expect(store.libraryDetail.inlineMessageIsError)
+    #expect(!store.libraryDetail.isSaving)
+    #expect(store.libraryDetail.isDraftDirty)
+    #expect(store.libraryDetail.formState.primaryText == "Mine")
+  }
+
   // MARK: Session preview
 
   @Test
@@ -395,7 +594,9 @@ struct WorkspaceStoreReloadOwnershipTests {
     buildCount: CallCounter = CallCounter(),
     buildFails: MutableBooleanState = MutableBooleanState(value: false),
     beforeBuild: (@Sendable (Int) -> Void)? = nil,
-    readHandler: (@Sendable (URL) throws -> String)? = nil
+    readHandler: (@Sendable (URL) throws -> String)? = nil,
+    validateHandler: @escaping @Sendable (String) throws -> Void = { _ in },
+    saveHandler: @escaping @Sendable (String) throws -> Void = { _ in }
   ) -> WorkspaceStore {
     let soloFileURL = soloFileURL
     let otherFileURL = otherFileURL
@@ -428,8 +629,8 @@ struct WorkspaceStoreReloadOwnershipTests {
           readCount.increment()
           return try readHandler?(fileURL) ?? disk.value
         },
-        validateRawJSONHandler: { _, _, _ in },
-        saveRawJSONHandler: { _, _, _, _ in },
+        validateRawJSONHandler: { rawJSON, _, _ in try validateHandler(rawJSON) },
+        saveRawJSONHandler: { _, _, rawJSON, _ in try saveHandler(rawJSON) },
         copyGlobalItemToProjectHandler: { _, _, _ in }
       )
     )
