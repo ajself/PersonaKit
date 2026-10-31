@@ -624,7 +624,67 @@ struct CLIEnforceTests {
     let inner = try #require(root["hookSpecificOutput"] as? [String: Any])
 
     #expect(inner["permissionDecision"] as? String == "deny")
-    #expect((inner["permissionDecisionReason"] as? String)?.contains("did not reach a decision in time") == true)
+    #expect((inner["permissionDecisionReason"] as? String)?.contains("could not reach a decision in time") == true)
+  }
+
+  /// The mod's `DENY_MARKERS` (`Integrations/ClaudeCode/hooks/lib/drift.ts`): a deny reason without one is recorded
+  /// as ordinary drift, not a PersonaKit block. Keep the two lists in step.
+  private static let driftDenyMarkers = [
+    "Blocked by PersonaKit contract:",
+    "PersonaKit enforcement could not",
+    "PersonaKit contract needs approval:",
+  ]
+
+  @Test
+  func everyFallbackAndFailClosedDenyReasonCarriesADriftMarker() throws {
+    let manifest = try writeReadOnlyManifest()
+    let missing = URL(fileURLWithPath: "/no/such/manifest.checks.json")
+    let garbled = manifest.deletingLastPathComponent().appendingPathComponent("garbled.checks.json")
+    try Data("not a manifest".utf8).write(to: garbled)
+    let call = try openCodePayload(tool: "edit")
+
+    func openCode(_ manifest: URL, sha: String, stdin: @escaping @Sendable () throws -> String) -> String? {
+      let context = CLIContext(
+        scopeRootResolver: ScopeRootResolver(),
+        mcpServerRunner: MCPServerRunner(),
+        interactiveIO: CLIInteractiveIO(isInteractive: { false }, readLine: { nil }, readStdinToEnd: stdin)
+      )
+      return CLIEnvironment.withContext(context) {
+        HookCheckCommand.decideOpenCode(
+          manifestPath: manifest.path,
+          expectedSHA256: sha,
+          environment: [:],
+          executablePath: nil,
+          passwdHome: { nil }
+        ).reason
+      }
+    }
+
+    let sha = try sha256Hex(of: manifest)
+    let reasons: [(label: String, reason: String?)] = [
+      ("fallback", HookCheckCommand.fallbackDenyReason),
+      ("missed deadline", HookCheckCommand.missedDeadlineDecision.reason),
+      ("Claude: missing manifest", decideClaude(manifest: missing, readStdin: { "{}" }).reason),
+      (
+        "Claude: unreadable call",
+        decideClaude(manifest: manifest, readStdin: { throw CocoaError(.fileReadUnknown) }).reason
+      ),
+      ("Claude: unparseable call", decideClaude(manifest: manifest, readStdin: { "not json" }).reason),
+      ("OpenCode: missing manifest", openCode(missing, sha: sha, stdin: { call })),
+      ("OpenCode: changed manifest", openCode(manifest, sha: String(repeating: "0", count: 64), stdin: { call })),
+      ("OpenCode: undecodable manifest", openCode(garbled, sha: try sha256Hex(of: garbled), stdin: { call })),
+      ("OpenCode: unreadable call", openCode(manifest, sha: sha, stdin: { throw CocoaError(.fileReadUnknown) })),
+      ("OpenCode: unparseable call", openCode(manifest, sha: sha, stdin: { "not json" })),
+    ]
+
+    for (label, reason) in reasons {
+      let reason = try #require(reason, "\(label)")
+      #expect(Self.driftDenyMarkers.contains { reason.hasPrefix($0) }, "\(label): \(reason)")
+    }
+
+    // A Claude Code deny without a reason of its own carries the fallback.
+    let bare = ClaudeCodeHookCheckDecision(isDenied: true, reason: nil)
+    #expect(HookCheckCommand.claudeOutputJSON(for: bare).contains(HookCheckCommand.fallbackDenyReason))
   }
 
   @Test

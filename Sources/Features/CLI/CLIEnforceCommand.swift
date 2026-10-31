@@ -166,10 +166,14 @@ struct HookCheckCommand: ParsableCommand {
     // Deny and ask are communicated by the JSON above with exit 0; do not fail the process.
   }
 
+  /// The reason for a deny that carries none. Every deny reason starts with one of the mod's drift markers
+  /// (`DENY_MARKERS` in `Integrations/ClaudeCode/hooks/lib/drift.ts`), so the mod records the call as a block.
+  static let fallbackDenyReason = "Blocked by PersonaKit contract: the enforcement check denied this call."
+
   /// The decision the watchdog emits when the check misses its deadline.
   static let missedDeadlineDecision = ClaudeCodeHookCheckDecision(
     isDenied: true,
-    reason: "PersonaKit enforcement did not reach a decision in time; denying by fail-closed policy."
+    reason: "PersonaKit enforcement could not reach a decision in time; denying by fail-closed policy."
   )
 
   /// Claude Code's `hookSpecificOutput` JSON for a deny or ask.
@@ -178,7 +182,7 @@ struct HookCheckCommand: ParsableCommand {
       hookSpecificOutput: HookDecisionOutput.Inner(
         permissionDecision: decision.permission.rawValue,
         // The host shows the reason to the operator after decoding it, so JSON escaping alone would not help.
-        permissionDecisionReason: TerminalText.sanitized(decision.reason ?? "Blocked by PersonaKit contract.")
+        permissionDecisionReason: TerminalText.sanitized(decision.reason ?? Self.fallbackDenyReason)
       )
     )
 
@@ -218,7 +222,7 @@ struct HookCheckCommand: ParsableCommand {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys]
     let output = OpenCodeDecisionOutput(
-      reason: TerminalText.sanitized(decision.reason ?? "Denied by PersonaKit contract.")
+      reason: TerminalText.sanitized(decision.reason ?? Self.fallbackDenyReason)
     )
 
     if let data = try? encoder.encode(output), let json = String(data: data, encoding: .utf8) {
