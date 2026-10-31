@@ -971,6 +971,42 @@ struct CLIEnforceTests {
     )
   }
 
+  @Test(arguments: [".claude", ".claude/personakit", ".claude/settings.json"])
+  func claudeInstallRefusesASymlinkedEnforcementPath(linked: String) throws {
+    let projectDir = try freshProjectDir("pk-claude-symlink")
+    let elsewhere = try freshProjectDir("pk-claude-elsewhere")
+    let victim = elsewhere.appendingPathComponent("settings.json")
+    try Data(#"{"theme":"dark"}"#.utf8).write(to: victim)
+    let link = projectDir.appendingPathComponent(linked)
+    try FileManager.default.createDirectory(
+      at: link.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try FileManager.default.createSymbolicLink(
+      at: link,
+      withDestinationURL: linked.hasSuffix(".json") ? victim : elsewhere
+    )
+
+    for dryRun in [false, true] {
+      let result = runInstall(extra: [], projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("\(link.path) is a symbolic link"))
+      // The target's settings are never read into the output.
+      #expect(!result.stdout.contains("theme"))
+    }
+    #expect(
+      (try? FileManager.default.attributesOfItem(atPath: link.path))?[.type] as? FileAttributeType
+        == .typeSymbolicLink
+    )
+    // Nothing was written through the link, and no settings landed in the project beside it.
+    #expect(tree(elsewhere) == ["settings.json"])
+    #expect(try String(contentsOf: victim, encoding: .utf8) == #"{"theme":"dark"}"#)
+    if linked == ".claude/personakit" {
+      #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude/settings.json").path))
+    }
+  }
+
   @Test
   func openCodeInstallRefusesASymlinkedManifestDirectory() throws {
     let projectDir = try freshProjectDir("pk-oc-symlink-leaf")

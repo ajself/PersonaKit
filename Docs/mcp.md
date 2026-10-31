@@ -190,7 +190,10 @@ Claude Code may prompt before using project-scoped servers from `.mcp.json`.
 `personakit enforce install --session <id>` writes
 `.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in
 `.claude/settings.json` that runs `personakit hook-check` on every tool call.
-Restart Claude Code after installing, since it reads hooks at startup.
+Restart Claude Code after installing, since it reads hooks at startup. Install
+refuses, before writing anything, when `.claude`, `.claude/personakit`, or
+`.claude/settings.json` is a symbolic link, so the hook and manifest stay
+inside the project.
 
 The hook names the `personakit` binary by the absolute path found when you
 installed (pass `--executable` to choose another). If the checker cannot run,

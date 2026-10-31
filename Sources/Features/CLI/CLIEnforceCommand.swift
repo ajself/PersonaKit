@@ -537,6 +537,10 @@ struct EnforceInstallCommand: ParsableCommand {
       return
     }
 
+    // A cloned repo can commit any of these as a link, which would put the hook and manifest outside the
+    // project (a link to ~/.claude makes the contract global) or copy the target's settings into it.
+    try Self.refuseSymbolicLinks([claudeDir, frozenManifestURL.deletingLastPathComponent(), settingsURL])
+
     let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
     let existingSettings = try? Data(contentsOf: settingsURL)
@@ -620,7 +624,7 @@ struct EnforceInstallCommand: ParsableCommand {
       return
     }
 
-    try Self.refuseSymbolicLinks(projectRoot: projectRoot)
+    try Self.refuseSymbolicLinks([manifestDirectory.deletingLastPathComponent(), manifestDirectory])
 
     let frozenManifestURL = manifestDirectory.appendingPathComponent("\(sessionId).checks.json")
     let entries = Self.manifestEntryNames(in: manifestDirectory)
@@ -722,13 +726,12 @@ struct EnforceInstallCommand: ParsableCommand {
     return removed
   }
 
-  /// Fails when `.opencode` or `.opencode/personakit` under the project is a symbolic link.
-  private static func refuseSymbolicLinks(projectRoot: URL) throws {
-    let opencode = projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)
-    for url in [opencode, opencode.appendingPathComponent("personakit")] where isSymbolicLink(url.path) {
+  /// Fails, naming the first one, when any of `urls` is a symbolic link.
+  private static func refuseSymbolicLinks(_ urls: [URL]) throws {
+    for url in urls where isSymbolicLink(url.path) {
       throw CLIError.failure(
         "Refusing to install: \(url.path) is a symbolic link. "
-          + "Replace it with a real directory so enforcement files stay inside the project."
+          + "Replace it with a real file or directory so enforcement files stay inside the project."
       )
     }
   }
