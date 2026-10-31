@@ -4,13 +4,6 @@ import Foundation
 import StudioFoundation
 
 extension WorkspaceStore {
-  /// Creates a prefilled draft for new-session creation.
-  func defaultSessionDraft() -> WorkspaceSessionDraft {
-    sessionEditorFeatureModel.defaultSessionDraft(
-      snapshot: snapshot
-    )
-  }
-
   /// Saves a session draft to project scope and refreshes workspace data.
   func saveSession(
     draft: WorkspaceSessionDraft,
@@ -25,22 +18,6 @@ extension WorkspaceStore {
       workspaceURL: workspaceURL,
       expectedWorkspaceURL: expectedWorkspaceURL,
       expectedOriginalSessionFileURL: expectedOriginalSessionFileURL,
-      onWorkspaceMutation: { self.loadWorkspace() }
-    )
-  }
-
-  /// Deletes a project-scoped session file and refreshes workspace data.
-  func deleteSession(
-    sessionID: String,
-    expectedWorkspaceURL: URL? = nil,
-    expectedSessionFileURL: URL? = nil
-  ) async throws {
-    try await sessionEditorFeatureModel.deleteSession(
-      sessionID: sessionID,
-      workspaceURL: workspaceURL,
-      snapshot: snapshot,
-      expectedWorkspaceURL: expectedWorkspaceURL,
-      expectedSessionFileURL: expectedSessionFileURL,
       onWorkspaceMutation: { self.loadWorkspace() }
     )
   }
@@ -92,16 +69,6 @@ extension WorkspaceStore {
   /// Clears in-flight draft map state when the session editor is dismissed.
   func clearDraftSessionMap() {
     sessionFeatureModel.clearDraftMap()
-  }
-
-  /// Copies the current preview text into the system pasteboard.
-  func copySessionPreviewToPasteboard() throws {
-    try sessionFeatureModel.copyPreviewToPasteboard()
-  }
-
-  /// Presents a save panel and exports preview markdown to the selected path.
-  func exportSessionPreviewWithSavePanel() async throws -> Bool {
-    try await sessionFeatureModel.exportPreviewWithSavePanel()
   }
 
   /// Opens the session editor with a new-session draft.

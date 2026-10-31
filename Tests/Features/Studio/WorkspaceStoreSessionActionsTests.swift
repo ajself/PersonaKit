@@ -11,7 +11,7 @@ import Testing
 @MainActor
 struct WorkspaceStoreSessionActionsTests {
   @Test
-  func defaultSessionDraftUsesFirstPersonaAndDirective() async {
+  func newSessionEditorDraftUsesFirstPersonaAndDirective() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
 
     let store = WorkspaceStore(
@@ -62,12 +62,13 @@ struct WorkspaceStoreSessionActionsTests {
       store.snapshot.personas.count == 2
     }
 
-    let draft = store.defaultSessionDraft()
+    store.presentNewSessionEditor()
+    let draft = store.sessionEditorPresentation?.draft
 
-    #expect(draft.id.isEmpty)
-    #expect(draft.personaId == "persona-a")
-    #expect(draft.directiveId == "directive-a")
-    #expect(draft.kitOverrides.isEmpty)
+    #expect(draft?.id.isEmpty == true)
+    #expect(draft?.personaId == "persona-a")
+    #expect(draft?.directiveId == "directive-a")
+    #expect(draft?.kitOverrides.isEmpty == true)
   }
 
   @Test
@@ -160,7 +161,7 @@ struct WorkspaceStoreSessionActionsTests {
   }
 
   @Test
-  func deleteSessionForwardsToSessionManager() async throws {
+  func confirmSessionDeletionForwardsToSessionManager() async throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
 
     let store = WorkspaceStore(
@@ -210,11 +211,13 @@ struct WorkspaceStoreSessionActionsTests {
       store.snapshot.sessions.first?.id == "session-delete"
     }
 
-    try await store.deleteSession(
-      sessionID: "session-delete",
-      expectedWorkspaceURL: workspaceURL,
-      expectedSessionFileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-delete.session.json")
-    )
+    var deletedSessionIDs: [String] = []
+    store.requestSessionDeletion(store.snapshot.sessions[0])
+    let presentation = try #require(store.pendingSessionDeletion)
+    store.confirmSessionDeletion(presentation) { deletedSessionIDs.append($0) }
+
+    await waitFor { deletedSessionIDs == ["session-delete"] }
+    #expect(store.sessionActionErrorMessage == nil)
   }
 
   @Test
@@ -285,7 +288,7 @@ struct WorkspaceStoreSessionActionsTests {
   }
 
   @Test
-  func deleteSessionRejectsStaleSessionFileBeforeMutating() async throws {
+  func confirmSessionDeletionRejectsStaleSessionFileBeforeMutating() async throws {
     let recorder = SessionMutationRecorder()
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let currentSessionFileURL = URL(
@@ -341,13 +344,23 @@ struct WorkspaceStoreSessionActionsTests {
       store.snapshot.sessions.first?.id == "session-delete"
     }
 
-    await #expect(throws: WorkspaceSnapshotBuildError.self) {
-      try await store.deleteSession(
-        sessionID: "session-delete",
-        expectedWorkspaceURL: workspaceURL,
-        expectedSessionFileURL: staleSessionFileURL
-      )
+    let staleSession = WorkspaceSessionListItem(
+      id: "session-delete",
+      personaId: "persona-a",
+      directiveId: "directive-a",
+      fileURL: staleSessionFileURL,
+      sourceScope: .project
+    )
+    store.requestSessionDeletion(staleSession)
+    let presentation = try #require(store.pendingSessionDeletion)
+    store.confirmSessionDeletion(presentation) { _ in
+      Issue.record("A stale session file must not report a deletion.")
     }
+
+    await waitFor {
+      store.sessionActionErrorMessage != nil
+    }
+    #expect(store.sessionActionErrorMessage?.contains("no longer available") == true)
     #expect(recorder.deleteCount == 0)
   }
 
@@ -949,7 +962,7 @@ struct WorkspaceStoreSessionActionsTests {
   }
 
   @Test
-  func copySessionPreviewUsesInjectedPasteboardWriter() throws {
+  func copySessionPreviewUsesInjectedPasteboardWriter() {
     let expectedPreview = "preview-to-copy"
     let store = WorkspaceStore(
       pasteboardWriter: WorkspaceStoreStubPasteboardWriter(
@@ -959,11 +972,28 @@ struct WorkspaceStoreSessionActionsTests {
     )
 
     store.sessionPreview = expectedPreview
-    try store.copySessionPreviewToPasteboard()
+    store.copySessionPreviewReportingResult()
+
+    #expect(store.sessionPreviewActionMessage == "Copied preview to clipboard.")
   }
 
   @Test
-  func exportSessionPreviewUsesInjectedDestinationPicker() async throws {
+  func copySessionPreviewReportsAPasteboardFailure() {
+    let store = WorkspaceStore(
+      pasteboardWriter: WorkspaceStoreStubPasteboardWriter(
+        expectedValue: "preview-to-copy",
+        shouldSucceed: false
+      )
+    )
+
+    store.sessionPreview = "preview-to-copy"
+    store.copySessionPreviewReportingResult()
+
+    #expect(store.sessionPreviewActionMessage == "Failed to copy preview to the clipboard.")
+  }
+
+  @Test
+  func exportSessionPreviewUsesInjectedDestinationPicker() async {
     let destinationURL = URL(fileURLWithPath: "/Exports/preview.md")
     let expectedPreview = "preview-to-export"
 
@@ -983,23 +1013,36 @@ struct WorkspaceStoreSessionActionsTests {
     )
 
     store.sessionPreview = expectedPreview
-    let didExport = try await store.exportSessionPreviewWithSavePanel()
+    store.exportSessionPreviewReportingResult()
 
-    #expect(didExport)
+    await waitFor {
+      store.sessionPreviewActionMessage == "Exported preview markdown."
+    }
   }
 
   @Test
-  func exportSessionPreviewReturnsFalseWhenDestinationPickerCancels() async throws {
+  func exportSessionPreviewReportsNothingWhenDestinationPickerCancels() async {
     let store = WorkspaceStore(
+      sessionPreviewManager: WorkspaceStoreStubSessionPreviewManager(
+        loadPreviewHandler: { _, _ in
+          "unused"
+        },
+        exportPreviewHandler: { _, _ in
+          Issue.record("A cancelled save panel must not export.")
+        }
+      ),
       previewExportDestinationPicker: WorkspaceStoreStubPreviewExportDestinationPicker(
         destinationURL: nil
       )
     )
 
     store.sessionPreview = "preview-to-export"
-    let didExport = try await store.exportSessionPreviewWithSavePanel()
+    store.exportSessionPreviewReportingResult()
 
-    #expect(!didExport)
+    await waitFor {
+      store.sessionFeatureModel.previewExportTask == nil
+    }
+    #expect(store.sessionPreviewActionMessage == nil)
   }
 }
 

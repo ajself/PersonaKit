@@ -171,7 +171,8 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.kits.isEmpty
     }
 
-    let presentation = store.newLibraryEditorPresentation(entityType: .kit)
+    store.presentNewLibraryEditor(entityType: .kit)
+    let presentation = store.libraryRawJSONEditorPresentation
     #expect(presentation?.isCreatingNewItem == true)
 
     let saveError = await store.saveLibraryEditorRawJSON(
@@ -218,7 +219,8 @@ struct WorkspaceStoreLibraryActionsTests {
     )
 
     store.workspaceURL = URL(fileURLWithPath: "/Workspace")
-    let presentation = store.newLibraryEditorPresentation(entityType: .kit)
+    store.presentNewLibraryEditor(entityType: .kit)
+    let presentation = store.libraryRawJSONEditorPresentation
 
     let saveError = await store.saveLibraryEditorRawJSON(
       """
@@ -279,7 +281,8 @@ struct WorkspaceStoreLibraryActionsTests {
     for validationCase in validationCases {
       let store = createValidationStore()
       store.workspaceURL = URL(fileURLWithPath: "/Workspace")
-      let presentation = store.newLibraryEditorPresentation(entityType: validationCase.entityType)
+      store.presentNewLibraryEditor(entityType: validationCase.entityType)
+      let presentation = store.libraryRawJSONEditorPresentation
 
       let saveError = await store.saveLibraryEditorRawJSON(
         validationCase.rawJSON,
@@ -462,9 +465,10 @@ struct WorkspaceStoreLibraryActionsTests {
   }
 
   @Test
-  func newerLibraryEditorLoadResultWinsWhenRequestsOverlap() async {
+  func newerLibraryEditorOpenWinsWhenOpensOverlap() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let loadGate = BlockingCallGate()
+    let secondLoadGate = BlockingCallGate()
     let firstItem = WorkspaceListItem(
       id: "persona-a",
       displayName: "Persona A",
@@ -504,6 +508,9 @@ struct WorkspaceStoreLibraryActionsTests {
             return #"{"id":"persona-a"}"#
           }
 
+          _ = secondLoadGate.markStarted()
+          secondLoadGate.waitUntilReleased()
+
           return #"{"id":"persona-b"}"#
         },
         validateRawJSONHandler: { _, _, _ in },
@@ -519,23 +526,14 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 2
     }
 
-    let firstTask = Task {
-      await store.openLibraryEditor(
-        selectedItem: firstItem,
-        entityType: .persona
-      )
-    }
+    store.presentLibraryEditor(selectedItem: firstItem, entityType: .persona)
+    let firstOpen = store.libraryFeatureModel.editorOpenTask
 
     await waitFor {
       loadGate.hasStarted
     }
 
-    let secondTask = Task {
-      await store.openLibraryEditor(
-        selectedItem: secondItem,
-        entityType: .persona
-      )
-    }
+    store.presentLibraryEditor(selectedItem: secondItem, entityType: .persona)
 
     await waitFor {
       store.libraryFeatureModel.state.requestID == 2
@@ -543,12 +541,18 @@ struct WorkspaceStoreLibraryActionsTests {
 
     loadGate.release()
 
-    let secondResult = await secondTask.value
-    #expect(secondResult?.itemID == "persona-b")
-    #expect(secondResult?.rawJSON == #"{"id":"persona-b"}"#)
+    // The cancelled first open finishes while the second load is still held, and presents nothing.
+    await firstOpen?.value
+    #expect(store.libraryRawJSONEditorPresentation == nil)
 
-    let firstResult = await firstTask.value
-    #expect(firstResult == nil)
+    secondLoadGate.release()
+
+    await waitFor {
+      store.libraryRawJSONEditorPresentation?.itemID == "persona-b"
+    }
+
+    #expect(store.libraryRawJSONEditorPresentation?.itemID == "persona-b")
+    #expect(store.libraryRawJSONEditorPresentation?.rawJSON == #"{"id":"persona-b"}"#)
     #expect(!store.isLoadingLibraryEditor)
   }
 
@@ -632,7 +636,7 @@ struct WorkspaceStoreLibraryActionsTests {
   }
 
   @Test
-  func openLibraryEditorRejectsItemOutsideCurrentSnapshot() async {
+  func presentLibraryEditorRejectsItemOutsideCurrentSnapshot() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let selectedItem = WorkspaceListItem(
       id: "persona-a",
@@ -677,18 +681,19 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 1
     }
 
-    let presentation = await store.openLibraryEditor(
-      selectedItem: selectedItem,
-      entityType: .persona
-    )
+    store.presentLibraryEditor(selectedItem: selectedItem, entityType: .persona)
 
-    #expect(presentation == nil)
+    await waitFor {
+      store.libraryFeatureModel.editorOpenTask == nil
+    }
+
+    #expect(store.libraryRawJSONEditorPresentation == nil)
     #expect(store.libraryActionIsError)
     #expect(store.libraryActionMessage?.contains("not a project library entity") == true)
   }
 
   @Test
-  func copySelectedGlobalLibraryItemRejectsItemOutsideCurrentSnapshot() async {
+  func copyGlobalLibraryItemToProjectRejectsItemOutsideCurrentSnapshot() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let selectedItem = WorkspaceListItem(
       id: "persona-a",
@@ -735,18 +740,18 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 1
     }
 
-    let didCopy = await store.copySelectedGlobalLibraryItem(
-      selectedItem: selectedItem,
-      entityType: .persona
-    )
+    store.copyGlobalLibraryItemToProject(selectedItem: selectedItem, entityType: .persona)
 
-    #expect(!didCopy)
+    await waitFor {
+      store.libraryFeatureModel.copyTask == nil
+    }
+
     #expect(store.libraryActionIsError)
     #expect(store.libraryActionMessage?.contains("not a global library entity") == true)
   }
 
   @Test
-  func copySelectedGlobalLibraryItemForwardsStandardizedWorkspaceURL() async {
+  func copyGlobalLibraryItemToProjectForwardsStandardizedWorkspaceURL() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace/../Workspace")
     let globalItem = WorkspaceListItem(
       id: "persona-a",
@@ -789,12 +794,12 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 1
     }
 
-    let didCopy = await store.copySelectedGlobalLibraryItem(
-      selectedItem: globalItem,
-      entityType: .persona
-    )
+    store.copyGlobalLibraryItemToProject(selectedItem: globalItem, entityType: .persona)
 
-    #expect(didCopy)
+    await waitFor {
+      store.libraryFeatureModel.copyTask == nil
+    }
+
     #expect(!store.libraryActionIsError)
     #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
   }
@@ -844,12 +849,12 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 1
     }
 
-    let didCopy = await store.copySelectedGlobalLibraryItem(
-      selectedItem: globalItem,
-      entityType: .persona
-    )
+    store.copyGlobalLibraryItemToProject(selectedItem: globalItem, entityType: .persona)
 
-    #expect(didCopy)
+    await waitFor {
+      store.libraryFeatureModel.copyTask == nil
+    }
+
     #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
 
     store.workspaceURL = secondWorkspaceURL
@@ -903,12 +908,12 @@ struct WorkspaceStoreLibraryActionsTests {
       store.snapshot.personas.count == 1
     }
 
-    let didCopy = await store.copySelectedGlobalLibraryItem(
-      selectedItem: globalItem,
-      entityType: .persona
-    )
+    store.copyGlobalLibraryItemToProject(selectedItem: globalItem, entityType: .persona)
 
-    #expect(didCopy)
+    await waitFor {
+      store.libraryFeatureModel.copyTask == nil
+    }
+
     #expect(store.libraryActionMessage?.contains("Copied persona-a to project scope.") == true)
 
     store.workspaceURL = nil
