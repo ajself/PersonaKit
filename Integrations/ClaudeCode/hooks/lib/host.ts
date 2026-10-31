@@ -17,6 +17,8 @@ export const TOOL_ACTION_CLASSES: Record<string, string> = {
   Write: 'file-mutation',
   NotebookEdit: 'file-mutation',
   Bash: 'command-execution',
+  Monitor: 'command-execution',
+  PowerShell: 'command-execution',
   WebFetch: 'network-egress',
   WebSearch: 'network-egress',
 }

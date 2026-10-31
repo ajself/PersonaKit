@@ -186,17 +186,35 @@ Claude Code may prompt before using project-scoped servers from `.mcp.json`.
 
 `personakit enforce install --session <id>` writes
 `.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in
-`.claude/settings.json` that runs `personakit hook-check` on the tools the
-contract can deny and on every file edit. Restart Claude Code after installing, since it reads hooks
-at startup.
+`.claude/settings.json` that runs `personakit hook-check` on every tool call.
+Restart Claude Code after installing, since it reads hooks at startup.
+
+Each call gets one of three answers:
+
+- **Deny** a tool that does what the contract forbids: Edit, Write, and
+  NotebookEdit edit files; Bash, Monitor, and PowerShell run commands; WebFetch
+  and WebSearch reach the network. The reason tells the agent to stop and tell
+  you what it needs, rather than find another way.
+- **Allow** read-only built-ins, such as Read, Glob, Grep, and subagents of
+  Claude Code's built-in types, and PersonaKit's own MCP tools and resources.
+- **Ask** you about any other tool, including Skill, custom agent types,
+  subagents started in a worktree or remote environment, MCP tools from other
+  servers, and tools Claude Code adds later. Claude Code shows the reason and
+  lets you approve or refuse the call. Where no one can answer, as in
+  `claude -p`, Claude Code refuses it, and under `bypassPermissions` the checker
+  denies it.
+
+A tool is only asked about when the contract forbids editing files, running
+commands, or reaching the network.
 
 While a contract is enforced the agent cannot use Edit, Write, or NotebookEdit
 on the enforcement files, even when the contract allows edits:
 `.claude/personakit/`, `.claude/settings.json`, `.claude/settings.local.json`,
 the user settings (`~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR`'s), and
 the `personakit` binary. Make those edits by hand. Hooks installed by an
-earlier PersonaKit version do not route allowed edits to the checker; run
-`enforce install` again to get this protection.
+earlier PersonaKit version route only a few named tools to the checker, so
+other tools, such as Monitor, pass unchecked; run `enforce install` again to
+route every tool.
 
 It is not a sandbox. Claude Code runs programs on its own, such as other hook
 scripts, a `statusLine` command, and MCP server commands. A contract that allows
@@ -268,7 +286,7 @@ MCP resources and tools provide context. They do not authorize execution, file m
 
 If a contract does not authorize a needed skill, stop and re-ground instead of improvising.
 
-Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools stay fail-closed.
+Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools need the operator's approval on Claude Code and are denied on OpenCode.
 
 ## How To Verify
 

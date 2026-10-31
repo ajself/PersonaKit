@@ -21,29 +21,52 @@ public enum ClaudeCodeEnforcement {
 
   /// Single source of truth mapping host-neutral action classes to Claude Code tools.
   ///
-  /// Used in both directions: the renderer turns denied action classes into a tool-name
-  /// matcher; the checker turns an incoming tool name back into its action class. Ordered
-  /// so generated matchers are deterministic.
+  /// The checker turns an incoming tool name into its action class and denies it when the contract
+  /// forbids that class. `Monitor` and `PowerShell` run shell commands, so they count as command
+  /// execution alongside `Bash`.
   static let toolActionClasses: [(actionClass: String, tools: [String])] = [
     ("file-mutation", ["Edit", "Write", "NotebookEdit"]),
-    ("command-execution", ["Bash"]),
+    ("command-execution", ["Bash", "Monitor", "PowerShell"]),
     ("network-egress", ["WebFetch", "WebSearch"]),
   ]
 
-  /// Canonical tool ordering for deterministic matcher rendering.
-  static let toolOrder: [String] = toolActionClasses.flatMap(\.tools)
-
-  /// Matcher pattern that routes external MCP tools to the checker.
+  /// Built-in tools that cannot mutate files, run commands, or reach the network, sorted.
   ///
-  /// MCP tools are third-party and unclassifiable, so the fixed built-in matcher alone would
-  /// let an un-enumerated `mcp__…__write`/`exec`/network tool slip past a read-only contract.
-  /// When a mutation- or network-forbidding stance is in force, MCP tools are matched and
-  /// denied fail-closed instead.
-  static let mcpToolPattern = "mcp__.*"
+  /// Any other built-in is one PersonaKit cannot classify, so the checker asks the operator rather
+  /// than let it through or strand the agent. `Skill` is deliberately absent: a skill can run shell
+  /// commands while it loads. `Agent` and `Task` are allowed only for a built-in local agent type with
+  /// no `isolation` (see ``subagentTools``); their subagents' own tool calls reach the hook.
+  public static let readOnlyTools: [String] = [
+    "Agent", "AskUserQuestion", "EnterPlanMode", "ExitPlanMode", "Glob", "Grep", "ListAgents", "Read", "Task",
+    "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskUpdate", "TodoWrite", "ToolSearch",
+  ]
 
-  /// Action classes an unclassifiable MCP tool could plausibly perform. If any is forbidden,
-  /// MCP tools are routed to the checker and denied, since PK cannot prove they are safe.
-  static let mcpRelevantActionClasses: Set<String> = ["file-mutation", "command-execution", "network-egress"]
+  /// Tools that start a subagent. With `isolation` set, the subagent runs in a new git worktree (a branch
+  /// and a directory written outside the file tools) or a remote environment the local hook never sees.
+  /// A custom agent type can carry its own `isolation`, so only built-in types count as read-only.
+  static let subagentTools: Set<String> = ["Agent", "Task"]
+
+  /// Claude Code's built-in agent types, which run locally with no `isolation` of their own.
+  static let localSubagentTypes: Set<String> = [
+    "Explore", "Plan", "claude-code-guide", "fork", "general-purpose", "statusline-setup",
+  ]
+
+  /// Built-ins that list or read MCP resources. Allowed only against PersonaKit's own trusted server,
+  /// so an agent can re-ground; any other server's resources are asked about.
+  static let mcpResourceTools: Set<String> = ["ListMcpResourcesTool", "ReadMcpResourceDirTool", "ReadMcpResourceTool"]
+
+  /// Claude Code's `permission_mode` when it skips permission prompts, so an ask would go unanswered.
+  static let bypassPermissionMode = "bypassPermissions"
+
+  /// Matcher that routes every tool to the checker.
+  ///
+  /// A fixed list of tool names would let any tool missing from it, including one Claude Code adds
+  /// later, slip past the contract unchecked.
+  static let allToolsPattern = ".*"
+
+  /// Action classes a tool PersonaKit cannot classify could plausibly perform. If any is forbidden,
+  /// such a tool is put to the operator, since PK cannot prove it is safe.
+  static let unclassifiedToolActionClasses: Set<String> = ["file-mutation", "command-execution", "network-egress"]
 
   /// Returns the action class a Claude Code tool belongs to, if any is mapped.
   static func actionClass(forTool tool: String) -> String? {
@@ -55,7 +78,7 @@ public enum ClaudeCodeEnforcement {
     actionClass(forTool: tool) == "file-mutation"
   }
 
-  /// Whether a tool name is an external MCP tool (which PK cannot classify).
+  /// Whether a tool name is an external MCP tool.
   static func isMCPTool(_ name: String) -> Bool {
     name.hasPrefix("mcp__")
   }
@@ -162,7 +185,7 @@ public struct ClaudeCodeHookCommand: Codable, Equatable, Sendable {
   }
 }
 
-/// A matcher-scoped group of hooks: `{ "matcher": "Edit|Write|…", "hooks": [ … ] }`.
+/// A matcher-scoped group of hooks: `{ "matcher": ".*", "hooks": [ … ] }`.
 public struct ClaudeCodeHookMatcher: Codable, Equatable, Sendable {
   public let matcher: String
   public let hooks: [ClaudeCodeHookCommand]
@@ -179,7 +202,7 @@ public struct ClaudeCodeHookMatcher: Codable, Equatable, Sendable {
 /// `hookEntry` is `nil` when the manifest denies nothing Claude Code can enforce at the hook
 /// layer, while `degradedActionClasses` still names what was forbidden but unreachable.
 public struct ClaudeCodeEnforcementArtifacts: Equatable, Sendable {
-  /// The tool-name matcher (regex-alternation) scoping which tools invoke the checker, if any.
+  /// The tool-name matcher scoping which tools invoke the checker (every tool), if any.
   public let matcher: String?
 
   /// The `PreToolUse` entry to merge into `settings.json`, or `nil` when nothing is installable.
@@ -228,15 +251,6 @@ public enum ClaudeCodeEnforcementRenderer {
 
     let deniedSet = Set(deniedActionClasses)
 
-    let deniedTools =
-      ClaudeCodeEnforcement.toolOrder
-      .filter { tool in
-        guard let actionClass = ClaudeCodeEnforcement.actionClass(forTool: tool) else {
-          return false
-        }
-        return deniedSet.contains(actionClass)
-      }
-
     let mappedActionClasses = Set(
       ClaudeCodeEnforcement.toolActionClasses
         .filter { !$0.tools.isEmpty }
@@ -244,11 +258,7 @@ public enum ClaudeCodeEnforcementRenderer {
     )
     let degraded = deniedSet.subtracting(mappedActionClasses).sorted()
 
-    // When the stance forbids something an MCP tool could do, also route MCP tools to the
-    // checker so an unclassifiable third-party write/exec/network tool cannot bypass the deny.
-    let deniesMcpRelevant = !deniedSet.isDisjoint(with: ClaudeCodeEnforcement.mcpRelevantActionClasses)
-
-    guard !deniedTools.isEmpty || deniesMcpRelevant else {
+    guard !deniedSet.isDisjoint(with: ClaudeCodeEnforcement.unclassifiedToolActionClasses) else {
       return ClaudeCodeEnforcementArtifacts(
         matcher: nil,
         hookEntry: nil,
@@ -256,16 +266,9 @@ public enum ClaudeCodeEnforcementRenderer {
       )
     }
 
-    // The file tools are routed even when edits are allowed, so the checker can refuse edits to its own
-    // manifest, the settings that install it, and its binary.
-    var matcherPatterns = ClaudeCodeEnforcement.toolOrder.filter {
-      deniedTools.contains($0) || ClaudeCodeEnforcement.isFileMutationTool($0)
-    }
-    if deniesMcpRelevant {
-      matcherPatterns.append(ClaudeCodeEnforcement.mcpToolPattern)
-    }
-
-    let matcher = matcherPatterns.joined(separator: "|")
+    // Every tool is routed: a forbidden class is denied, a file edit is checked against the enforcement files
+    // even when edits are allowed, and a tool PersonaKit cannot classify is put to the operator.
+    let matcher = ClaudeCodeEnforcement.allToolsPattern
     let command =
       "\(shellQuote(executablePath)) \(ClaudeCodeEnforcement.hookCheckSubcommand) --manifest \(shellQuote(manifestPath))"
 
@@ -371,12 +374,28 @@ public enum ClaudeCodeSettingsMerger {
 
 /// Decision returned by the Claude Code checker for a single tool call.
 public struct ClaudeCodeHookCheckDecision: Equatable, Sendable {
-  public let isDenied: Bool
+  /// Claude Code's `permissionDecision` values. `ask` puts the call to the operator; where no one can
+  /// answer (a headless run), Claude Code denies it.
+  public enum Permission: String, Sendable {
+    case allow
+    case deny
+    case ask
+  }
+
+  public let permission: Permission
   public let reason: String?
 
-  public init(isDenied: Bool, reason: String?) {
-    self.isDenied = isDenied
+  public var isDenied: Bool {
+    permission == .deny
+  }
+
+  public init(permission: Permission, reason: String?) {
+    self.permission = permission
     self.reason = reason
+  }
+
+  public init(isDenied: Bool, reason: String?) {
+    self.init(permission: isDenied ? .deny : .allow, reason: reason)
   }
 }
 
@@ -387,11 +406,31 @@ public struct ClaudeCodeToolCall: Equatable, Sendable {
   public let paths: [String]
   /// The session's working directory, which a relative path resolves against.
   public let cwd: String?
+  /// `tool_input.isolation` of a subagent call (`worktree`, `remote`), as sent.
+  public let isolation: String?
+  /// `tool_input.subagent_type` of a subagent call, as sent.
+  public let subagentType: String?
+  /// `tool_input.server` of an MCP-resource call, as sent.
+  public let mcpServer: String?
+  /// The session's `permission_mode`, as sent.
+  public let permissionMode: String?
 
-  public init(toolName: String, paths: [String], cwd: String?) {
+  public init(
+    toolName: String,
+    paths: [String],
+    cwd: String?,
+    isolation: String? = nil,
+    subagentType: String? = nil,
+    mcpServer: String? = nil,
+    permissionMode: String? = nil
+  ) {
     self.toolName = toolName
     self.paths = paths
     self.cwd = cwd
+    self.isolation = isolation
+    self.subagentType = subagentType
+    self.mcpServer = mcpServer
+    self.permissionMode = permissionMode
   }
 }
 
@@ -399,38 +438,92 @@ public struct ClaudeCodeToolCall: Equatable, Sendable {
 ///
 /// Host-specific only in the tool→action-class mapping; the deny decision itself lives in the
 /// neutral core via ``ChecksManifest/hookCheck(denying:)``. Read-only toward the running
-/// agent: it can only *deny*, never authorize.
+/// agent: it can only *deny* or *ask* the operator, never authorize.
 public enum ClaudeCodeHookCheckEvaluator {
+  /// Appended to every denial so the agent stops instead of hunting for another route to the same action.
+  static let noWorkaroundInstruction =
+    "Do not retry it through another tool or a workaround; stop and tell the user what you need."
+
   /// Denies a file edit that targets one of `protectedPaths` (see
   /// ``ClaudeCodeEnforcement/protectedPaths(manifestPath:configDirectory:executablePath:)``), or that names
-  /// no path it can resolve, before applying the contract to the tool.
+  /// no path it can resolve, before applying the contract to the tool. An ask becomes a deny when Claude
+  /// Code is skipping permission prompts, since no one would answer it.
   public static func evaluate(
     _ call: ClaudeCodeToolCall,
     manifest: ChecksManifest,
     protectedPaths: [String],
     homeDirectory: String?
   ) -> ClaudeCodeHookCheckDecision {
+    let decision = evaluateContract(
+      call,
+      manifest: manifest,
+      protectedPaths: protectedPaths,
+      homeDirectory: homeDirectory
+    )
+    guard decision.permission == .ask, call.permissionMode == ClaudeCodeEnforcement.bypassPermissionMode else {
+      return decision
+    }
+
+    return ClaudeCodeHookCheckDecision(
+      permission: .deny,
+      reason: "Blocked by PersonaKit contract: this call needs the operator's approval, but Claude Code is "
+        + "skipping permission prompts, so no one can give it. \(decision.reason ?? "")"
+    )
+  }
+
+  private static func evaluateContract(
+    _ call: ClaudeCodeToolCall,
+    manifest: ChecksManifest,
+    protectedPaths: [String],
+    homeDirectory: String?
+  ) -> ClaudeCodeHookCheckDecision {
+    if ClaudeCodeEnforcement.subagentTools.contains(call.toolName) {
+      if let isolation = call.isolation, !isolation.isEmpty {
+        let shown = OpenCodeEnforcement.strippingControlCharacters(isolation)
+        return evaluateUnclassifiedTool(
+          toolName: call.toolName,
+          detail: " with isolation '\(shown)'",
+          manifest: manifest
+        )
+      }
+      if let type = call.subagentType, !type.isEmpty, !ClaudeCodeEnforcement.localSubagentTypes.contains(type) {
+        let shown = OpenCodeEnforcement.strippingControlCharacters(type)
+        return evaluateUnclassifiedTool(
+          toolName: call.toolName,
+          detail: " with agent type '\(shown)'",
+          manifest: manifest
+        )
+      }
+    }
+
+    if ClaudeCodeEnforcement.mcpResourceTools.contains(call.toolName),
+      call.mcpServer == (manifest.mcpServerName ?? ClaudeCodeEnforcement.defaultMCPServerName)
+    {
+      return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
+    }
+
     if ClaudeCodeEnforcement.isFileMutationTool(call.toolName) {
       let absolutePaths = call.paths.map {
         ClaudeCodeEnforcement.absolutePath($0, cwd: call.cwd, homeDirectory: homeDirectory)
       }
       guard !absolutePaths.isEmpty, !call.paths.contains(""), !absolutePaths.contains(nil) else {
         return ClaudeCodeHookCheckDecision(
-          isDenied: true,
+          permission: .deny,
           reason: "Blocked by PersonaKit contract: tool '\(call.toolName)' modifies files but names no path "
             + "PersonaKit can resolve, so it cannot check it against its enforcement files. "
-            + "Denying by fail-closed policy."
+            + "Denying by fail-closed policy. " + noWorkaroundInstruction
         )
       }
       if let protected = absolutePaths.compactMap({ $0 }).first(where: {
         OpenCodeEnforcement.matchesProtectedEntry($0, entries: protectedPaths)
       }) {
         return ClaudeCodeHookCheckDecision(
-          isDenied: true,
+          permission: .deny,
           reason: "Blocked by PersonaKit contract: tool '\(call.toolName)' would modify "
             + "'\(OpenCodeEnforcement.strippingControlCharacters(protected))', one of the PersonaKit enforcement "
             + "files (the manifest folder, `.claude/settings.json`, `.claude/settings.local.json`, the user "
-            + "Claude Code settings, the personakit binary). Changing them could disable or bypass enforcement."
+            + "Claude Code settings, the personakit binary). Changing them could disable or bypass enforcement. "
+            + noWorkaroundInstruction
         )
       }
     }
@@ -441,53 +534,56 @@ public enum ClaudeCodeHookCheckEvaluator {
   /// Applies the contract to the tool by name alone, without the path check.
   public static func evaluate(toolName: String, manifest: ChecksManifest) -> ClaudeCodeHookCheckDecision {
     guard let actionClass = ClaudeCodeEnforcement.actionClass(forTool: toolName) else {
-      // Not a known built-in tool. PersonaKit's own read-only MCP tools from the trusted server
-      // are allowed; any other MCP tool is unclassifiable, so if the contract forbids anything
-      // an MCP tool could do, fail closed rather than let it through.
-      if ClaudeCodeEnforcement.isTrustedPersonaKitMCPTool(
-        toolName,
-        serverName: manifest.mcpServerName ?? ClaudeCodeEnforcement.defaultMCPServerName
-      ) {
-        return ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+      // Not a classified tool. Read-only built-ins and PersonaKit's own MCP tools from the trusted
+      // server are allowed; anything else is put to the operator.
+      if ClaudeCodeEnforcement.readOnlyTools.contains(toolName)
+        || ClaudeCodeEnforcement.isTrustedPersonaKitMCPTool(
+          toolName,
+          serverName: manifest.mcpServerName ?? ClaudeCodeEnforcement.defaultMCPServerName
+        )
+      {
+        return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
       }
-      if ClaudeCodeEnforcement.isMCPTool(toolName) {
-        return evaluateUnclassifiedMCPTool(toolName: toolName, manifest: manifest)
-      }
-      return ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+      return evaluateUnclassifiedTool(toolName: toolName, detail: "", manifest: manifest)
     }
 
     guard let denyingCheck = manifest.hookCheck(denying: actionClass) else {
-      return ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+      return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
     }
 
     let reason =
       "Blocked by PersonaKit contract: \(denyingCheck.id) — \(denyingCheck.mandate) "
       + "(from \(denyingCheck.source.sourceType) '\(denyingCheck.source.sourceId)'). "
-      + "Tool '\(toolName)' performs \(actionClass), which this session forbids."
+      + "Tool '\(toolName)' performs \(actionClass), which this session forbids. "
+      + noWorkaroundInstruction
 
-    return ClaudeCodeHookCheckDecision(isDenied: true, reason: reason)
+    return ClaudeCodeHookCheckDecision(permission: .deny, reason: reason)
   }
 
-  /// Denies an unclassifiable MCP tool when the contract forbids any action class such a tool
-  /// could perform (file mutation, command execution, network egress); otherwise allows it.
-  /// Trusted PersonaKit tools are allowed before reaching here.
-  private static func evaluateUnclassifiedMCPTool(
+  /// Asks the operator about a call PersonaKit cannot classify (an unlisted built-in, a third-party MCP tool,
+  /// another server's MCP resource, or a subagent that is not a built-in local one) when the contract forbids
+  /// any action class such a call could perform; otherwise allows it.
+  /// The reason is shown in the operator's prompt, and reaches the agent when a headless run refuses
+  /// the call. `detail` qualifies the tool in that reason.
+  private static func evaluateUnclassifiedTool(
     toolName: String,
+    detail: String,
     manifest: ChecksManifest
   ) -> ClaudeCodeHookCheckDecision {
-    let forbidden = ClaudeCodeEnforcement.mcpRelevantActionClasses
+    let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
       .sorted()
       .compactMap { manifest.hookCheck(denying: $0) }
 
     guard !forbidden.isEmpty else {
-      return ClaudeCodeHookCheckDecision(isDenied: false, reason: nil)
+      return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
     }
 
     let capabilities = forbidden.map(\.id).joined(separator: ", ")
     var reason =
-      "Blocked by PersonaKit contract: tool '\(toolName)' is an MCP tool PersonaKit cannot "
-      + "classify, and this session forbids \(capabilities). Denying by fail-closed policy; "
-      + "explicitly allow this tool only if it is read-only-safe."
+      "PersonaKit contract needs approval: PersonaKit cannot classify tool "
+      + "'\(OpenCodeEnforcement.strippingControlCharacters(toolName))'\(detail), and this session "
+      + "forbids \(capabilities). Approve only if this call does none of that. If it is refused, the agent "
+      + "should not work around it but tell the user what it needs."
     if let server = ClaudeCodeEnforcement.serverNameOfPersonaKitNamedMCPTool(toolName) {
       reason +=
         " If '\(server)' is PersonaKit's own MCP server (`claude mcp get \(server)` shows it runs "
@@ -495,6 +591,6 @@ public enum ClaudeCodeHookCheckEvaluator {
         + "`personakit enforce install --mcp-server \(server)`; do not run it yourself."
     }
 
-    return ClaudeCodeHookCheckDecision(isDenied: true, reason: reason)
+    return ClaudeCodeHookCheckDecision(permission: .ask, reason: reason)
   }
 }

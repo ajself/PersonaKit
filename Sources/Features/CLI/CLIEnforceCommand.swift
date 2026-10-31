@@ -9,11 +9,13 @@ private struct PreToolUsePayload: Decodable {
   let toolName: String?
   let toolInput: ToolInput?
   let cwd: String?
+  let permissionMode: String?
 
   enum CodingKeys: String, CodingKey {
     case toolName = "tool_name"
     case toolInput = "tool_input"
     case cwd
+    case permissionMode = "permission_mode"
   }
 
   init(from decoder: Decoder) throws {
@@ -21,23 +23,38 @@ private struct PreToolUsePayload: Decodable {
     toolName = try container.decodeIfPresent(String.self, forKey: .toolName)
     toolInput = try? container.decodeIfPresent(ToolInput.self, forKey: .toolInput)
     cwd = try? container.decodeIfPresent(String.self, forKey: .cwd)
+    permissionMode = try? container.decodeIfPresent(String.self, forKey: .permissionMode)
   }
 
-  /// The path fields of `tool_input`. Any tool's input is accepted: a field that is not a string reads as
-  /// absent, and a file edit with no path is denied by the evaluator.
+  /// The fields of `tool_input` the checker reads. Any tool's input is accepted: a field that is not a string
+  /// reads as absent, and a file edit with no path is denied by the evaluator. A subagent's `isolation` or
+  /// `subagent_type` that is present but not a string reads as an unknown value, so the call is asked about.
   struct ToolInput: Decodable {
     let filePath: String?
     let notebookPath: String?
+    let isolation: String?
+    let subagentType: String?
+    let server: String?
 
     enum CodingKeys: String, CodingKey {
       case filePath = "file_path"
       case notebookPath = "notebook_path"
+      case isolation
+      case subagentType = "subagent_type"
+      case server
     }
 
     init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
+      func presentString(_ key: CodingKeys) -> String? {
+        guard container.contains(key), (try? container.decodeNil(forKey: key)) != true else { return nil }
+        return (try? container.decode(String.self, forKey: key)) ?? "(not a string)"
+      }
       filePath = try? container.decodeIfPresent(String.self, forKey: .filePath)
       notebookPath = try? container.decodeIfPresent(String.self, forKey: .notebookPath)
+      isolation = presentString(.isolation)
+      subagentType = presentString(.subagentType)
+      server = try? container.decodeIfPresent(String.self, forKey: .server)
     }
   }
 }
@@ -68,9 +85,10 @@ enum HookCheckHost: String, CaseIterable, ExpressibleByArgument {
 /// Runtime checker invoked by a Claude Code `PreToolUse` hook, or by the OpenCode server plugin.
 ///
 /// Reads the tool call from stdin, consults a frozen checks manifest, and denies the call
-/// when the tool performs a forbidden action class. Read-only toward the agent: it can only
-/// deny, never authorize. Fail-closed: any internal error denies the call, including an allowed
-/// file edit, which the Claude Code matcher routes here so its path can be checked.
+/// when the tool performs a forbidden action class. For Claude Code, which routes every tool here,
+/// it asks the operator about a tool it cannot classify. Read-only toward the agent: it can only
+/// deny or ask, never authorize. Fail-closed: any internal error denies the call, including an
+/// allowed file edit.
 struct HookCheckCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "hook-check",
@@ -80,7 +98,8 @@ struct HookCheckCommand: ParsableCommand {
       install` wires this into a project's .claude/settings.json as a PreToolUse hook. For \
       OpenCode (--host opencode), the opencode-personakit server plugin runs it with \
       --expect-sha256. Either way it reads the tool call on stdin and emits a deny decision \
-      when the session's contract forbids the tool.
+      when the session's contract forbids the tool. For Claude Code it emits an ask decision \
+      for a tool it cannot classify.
       """
   )
 
@@ -110,15 +129,15 @@ struct HookCheckCommand: ParsableCommand {
 
     let decision = Self.decide(manifestPath: manifestPath)
 
-    guard decision.isDenied else {
+    guard decision.permission != .allow else {
       // Allow: exit 0 with no output lets Claude Code's normal permission flow proceed.
       return
     }
 
     let output = HookDecisionOutput(
       hookSpecificOutput: HookDecisionOutput.Inner(
-        permissionDecision: "deny",
-        permissionDecisionReason: decision.reason ?? "Denied by PersonaKit contract."
+        permissionDecision: decision.permission.rawValue,
+        permissionDecisionReason: decision.reason ?? "Blocked by PersonaKit contract."
       )
     )
 
@@ -127,14 +146,22 @@ struct HookCheckCommand: ParsableCommand {
 
     if let data = try? encoder.encode(output), let json = String(data: data, encoding: .utf8) {
       print(json)
+    } else {
+      // An encode failure must not read as an allow (no output).
+      print(
+        #"{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","#
+          + #""permissionDecisionReason":"PersonaKit enforcement could not encode its decision; "#
+          + #"denying by fail-closed policy."}}"#
+      )
     }
-    // Deny is communicated by the JSON above with exit 0; do not fail the process.
+    // Deny and ask are communicated by the JSON above with exit 0; do not fail the process.
   }
 
   private func runOpenCode() throws {
     let decision = Self.decideOpenCode(manifestPath: manifestPath, expectedSHA256: expectSHA256 ?? "")
 
-    guard decision.isDenied else {
+    // OpenCode output can only deny, so anything but an allow is a deny.
+    guard decision.permission != .allow else {
       return
     }
 
@@ -283,7 +310,11 @@ struct HookCheckCommand: ParsableCommand {
     let call = ClaudeCodeToolCall(
       toolName: toolName,
       paths: [payload.toolInput?.filePath, payload.toolInput?.notebookPath].compactMap { $0 },
-      cwd: payload.cwd
+      cwd: payload.cwd,
+      isolation: payload.toolInput?.isolation,
+      subagentType: payload.toolInput?.subagentType,
+      mcpServer: payload.toolInput?.server,
+      permissionMode: payload.permissionMode
     )
     return ClaudeCodeHookCheckEvaluator.evaluate(
       call,

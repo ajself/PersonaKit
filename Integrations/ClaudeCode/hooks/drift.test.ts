@@ -32,6 +32,15 @@ test('enforced denial is blocked', () => {
   ).toBe('blocked')
 })
 
+test('a refused operator prompt under the route-every-tool matcher is blocked', () => {
+  const ask = "PersonaKit contract needs approval: PersonaKit cannot classify tool 'CronCreate'"
+  expect(classify({ tool: 'CronCreate', result: err(ask) }, [], enforced(['.*']))).toEqual({
+    tool: 'CronCreate', kind: 'blocked', turn: 4,
+  })
+  expect(classify({ tool: 'Bash', result: err(DENY) }, [], enforced(['.*']))?.kind).toBe('blocked')
+  expect(classify({ tool: 'CronCreate', result: ok('done') }, [], enforced(['.*']))).toBeUndefined()
+})
+
 test('enforcing-other with an unreadable manifest is still blocked', () => {
   const e = enforced(['Edit', 'Write'], { kind: 'enforcing-other', ids: {}, deniedActionClasses: [], manifestUnreadable: true })
   expect(

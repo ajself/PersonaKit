@@ -155,12 +155,16 @@ struct CLIEnforceTests {
   }
 
   @Test
-  func hookCheckDeniesEditAndBashButAllowsRead() throws {
+  func hookCheckDeniesEditAndBashAsksForUnknownToolsAndAllowsRead() throws {
     let manifest = try writeReadOnlyManifest()
 
     #expect(runHookCheck(manifest: manifest, toolName: "Edit").contains("\"permissionDecision\":\"deny\""))
     // The bypass proof: a shell write goes through Bash, which read-only forbids.
     #expect(runHookCheck(manifest: manifest, toolName: "Bash").contains("\"permissionDecision\":\"deny\""))
+    // Monitor runs shell commands too.
+    #expect(runHookCheck(manifest: manifest, toolName: "Monitor").contains("\"permissionDecision\":\"deny\""))
+    // A tool PersonaKit cannot classify goes to the operator.
+    #expect(runHookCheck(manifest: manifest, toolName: "Artifact").contains("\"permissionDecision\":\"ask\""))
     // Allow is an empty stdout + exit 0.
     #expect(runHookCheck(manifest: manifest, toolName: "Read").isEmpty)
   }
@@ -205,9 +209,38 @@ struct CLIEnforceTests {
     }
   }
 
-  private func claudePayload(tool: String, input: [String: Any], cwd: String) throws -> String {
-    let object: [String: Any] = ["tool_name": tool, "tool_input": input, "cwd": cwd]
+  private func claudePayload(
+    tool: String,
+    input: [String: Any],
+    cwd: String,
+    permissionMode: String? = nil
+  ) throws -> String {
+    var object: [String: Any] = ["tool_name": tool, "tool_input": input, "cwd": cwd]
+    if let permissionMode {
+      object["permission_mode"] = permissionMode
+    }
     return String(decoding: try JSONSerialization.data(withJSONObject: object), as: UTF8.self)
+  }
+
+  @Test
+  func claudeHostReadsIsolationServerAndPermissionModeFromThePayload() throws {
+    let manifest = try writeReadOnlyManifest()
+
+    func decide(_ tool: String, _ input: [String: Any], mode: String? = nil) throws -> ClaudeCodeHookCheckDecision {
+      let payload = try claudePayload(tool: tool, input: input, cwd: "/", permissionMode: mode)
+      return decideClaude(manifest: manifest, readStdin: { payload })
+    }
+
+    #expect(try decide("Agent", ["prompt": "x"]).permission == .allow)
+    #expect(try decide("Agent", ["prompt": "x", "isolation": "worktree"]).permission == .ask)
+    #expect(try decide("Agent", ["prompt": "x", "isolation": true]).permission == .ask)
+    #expect(try decide("Agent", ["prompt": "x", "subagent_type": "Explore"]).permission == .allow)
+    #expect(try decide("Agent", ["prompt": "x", "subagent_type": "cloud-worker"]).permission == .ask)
+    #expect(try decide("Agent", ["prompt": "x", "subagent_type": ["Explore"]]).permission == .ask)
+    #expect(try decide("ReadMcpResourceTool", ["server": "personakit", "uri": "pk://x"]).permission == .allow)
+    #expect(try decide("ReadMcpResourceTool", ["server": "other", "uri": "x"]).permission == .ask)
+    #expect(try decide("CronCreate", [:], mode: "default").permission == .ask)
+    #expect(try decide("CronCreate", [:], mode: "bypassPermissions").permission == .deny)
   }
 
   @Test
@@ -609,7 +642,7 @@ struct CLIEnforceTests {
 
     #expect(status == 0)
     #expect(output.contains("Dry run"))
-    #expect(output.contains("Edit|Write|NotebookEdit|Bash"))
+    #expect(output.contains("\"matcher\" : \".*\""))
     #expect(!FileManager.default.fileExists(atPath: projectDir.appendingPathComponent(".claude").path))
   }
 
@@ -991,7 +1024,7 @@ struct CLIEnforceTests {
     #expect(result.status == 0)
     #expect(result.stdout.contains("Dry run"))
     #expect(result.stdout.contains(".opencode/personakit/\(Self.openCodeSessionId).checks.json"))
-    #expect(!result.stdout.contains("Edit|Write|NotebookEdit|Bash"))
+    #expect(!result.stdout.contains("\"matcher\""))
     #expect(tree(projectDir).isEmpty)
     #expect(tree(home).isEmpty)
   }

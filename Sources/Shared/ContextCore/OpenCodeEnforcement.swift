@@ -428,7 +428,7 @@ public enum OpenCodeHookCheckEvaluator {
     serverName: String,
     manifest: ChecksManifest
   ) -> ClaudeCodeHookCheckDecision {
-    let forbidden = ClaudeCodeEnforcement.mcpRelevantActionClasses
+    let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
       .sorted()
       .compactMap { manifest.hookCheck(denying: $0) }
 

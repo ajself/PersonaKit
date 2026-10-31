@@ -5,10 +5,15 @@ import { isPersonaKitCall } from './observe'
 
 export { TOOL_ACTION_CLASSES }
 
-/** Classes an unclassifiable MCP tool could plausibly perform (mirrors `mcpRelevantActionClasses`). */
+/** Classes an unclassifiable MCP tool could plausibly perform (mirrors `unclassifiedToolActionClasses`). */
 const MCP_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']
 
-const DENY_MARKERS = ['Blocked by PersonaKit contract:', 'PersonaKit enforcement could not']
+// The last marks an operator prompt that was refused, as in a headless run where no one can answer it.
+const DENY_MARKERS = [
+  'Blocked by PersonaKit contract:',
+  'PersonaKit enforcement could not',
+  'PersonaKit contract needs approval:',
+]
 
 type Call = {
   tool: string

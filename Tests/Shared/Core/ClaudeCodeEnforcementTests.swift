@@ -28,45 +28,45 @@ struct ClaudeCodeEnforcementTests {
   func evaluatorAllowsPersonaKitToolsFromTrustedServer() {
     let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
     #expect(
-      !ClaudeCodeHookCheckEvaluator.evaluate(
+      ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__personakit_resolve_contract",
         manifest: readOnly
-      ).isDenied
+      ).permission == .allow
     )
     #expect(
-      !ClaudeCodeHookCheckEvaluator.evaluate(
+      ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__personakit_export",
         manifest: readOnly
-      ).isDenied
+      ).permission == .allow
     )
   }
 
   @Test
-  func evaluatorDeniesPersonaKitNamedToolsFromOtherServers() {
+  func evaluatorAsksForPersonaKitNamedToolsFromOtherServers() {
     let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
     #expect(
       ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__evil__personakit_validate",
         manifest: readOnly
-      ).isDenied
+      ).permission == .ask
     )
     #expect(
       ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__personakit_export_all",
         manifest: readOnly
-      ).isDenied
+      ).permission == .ask
     )
     #expect(
       ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__xpersonakit_export",
         manifest: readOnly
-      ).isDenied
+      ).permission == .ask
     )
     #expect(
       ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__write_file",
         manifest: readOnly
-      ).isDenied
+      ).permission == .ask
     )
   }
 
@@ -74,16 +74,16 @@ struct ClaudeCodeEnforcementTests {
   func evaluatorTrustsOnlyTheRecordedServerName() {
     let custom = manifest(forbiddenCapabilities: ["edit-files"]).withMCPServerName("pk-local")
     #expect(
-      !ClaudeCodeHookCheckEvaluator.evaluate(
+      ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__pk-local__personakit_export",
         manifest: custom
-      ).isDenied
+      ).permission == .allow
     )
     #expect(
       ClaudeCodeHookCheckEvaluator.evaluate(
         toolName: "mcp__personakit__personakit_export",
         manifest: custom
-      ).isDenied
+      ).permission == .ask
     )
   }
 
@@ -97,15 +97,15 @@ struct ClaudeCodeEnforcementTests {
   }
 
   @Test
-  func rendererMapsReadOnlyStanceToFileBashAndMCPMatcher() {
+  func rendererRoutesEveryToolUnderReadOnlyStance() {
     let artifacts = ClaudeCodeEnforcementRenderer.render(
       manifest: manifest(forbiddenCapabilities: ["edit-files", "run-commands"]),
       executablePath: "/usr/local/bin/personakit",
       manifestPath: "/proj/.claude/personakit/s.checks.json"
     )
 
-    // command-execution → Bash is the shell-bypass closure; mcp__.* closes the MCP bypass.
-    #expect(artifacts.matcher == "Edit|Write|NotebookEdit|Bash|mcp__.*")
+    // Every tool reaches the checker, so one it cannot classify is put to the operator instead of slipping past.
+    #expect(artifacts.matcher == ".*")
     #expect(artifacts.isInstallable)
     // Command values are always single-quoted so no path metacharacter can reach the shell.
     #expect(
@@ -124,7 +124,7 @@ struct ClaudeCodeEnforcementTests {
     )
 
     // Edits are allowed, but the checker still sees them so it can protect its own files.
-    #expect(artifacts.matcher == "Edit|Write|NotebookEdit|Bash|mcp__.*")
+    #expect(artifacts.matcher == ".*")
   }
 
   @Test
@@ -291,8 +291,8 @@ struct ClaudeCodeEnforcementTests {
     // The bypass test: Bash is denied because run-commands is forbidden.
     #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Bash", manifest: readOnly).isDenied)
 
-    #expect(!ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Read", manifest: readOnly).isDenied)
-    #expect(!ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Grep", manifest: readOnly).isDenied)
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Read", manifest: readOnly).permission == .allow)
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Grep", manifest: readOnly).permission == .allow)
 
     let bashReason = ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Bash", manifest: readOnly).reason
     #expect(bashReason?.contains("capability-deny.run-commands") == true)
@@ -307,25 +307,27 @@ struct ClaudeCodeEnforcementTests {
   }
 
   @Test
-  func evaluatorFailsClosedOnUnclassifiedMCPToolUnderReadOnly() {
+  func evaluatorAsksTheOperatorForUnclassifiedMCPToolUnderReadOnly() {
     let readOnly = manifest(forbiddenCapabilities: ["edit-files", "run-commands"])
 
-    // An un-enumerated MCP write/exec tool cannot bypass a read-only contract.
+    // An un-enumerated MCP write/exec tool cannot bypass a read-only contract: the operator decides.
     let decision = ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: readOnly)
-    #expect(decision.isDenied)
-    #expect(decision.reason?.contains("fail-closed") == true)
+    #expect(decision.permission == .ask)
+    #expect(decision.reason?.hasPrefix("PersonaKit contract needs approval:") == true)
+    #expect(decision.reason?.contains("capability-deny.run-commands, capability-deny.edit-files") == true)
+    #expect(decision.reason?.contains("explicitly allow") == false)
     #expect(decision.reason?.contains("--mcp-server") == false)
   }
 
   @Test
-  func evaluatorDenialOfPersonaKitNamedToolHintsAtServerName() {
+  func evaluatorAskForPersonaKitNamedToolHintsAtServerName() {
     let readOnly = manifest(forbiddenCapabilities: ["edit-files"])
 
     let decision = ClaudeCodeHookCheckEvaluator.evaluate(
       toolName: "mcp__pk-local__personakit_export",
       manifest: readOnly
     )
-    #expect(decision.isDenied)
+    #expect(decision.permission == .ask)
     #expect(decision.reason?.contains("`personakit enforce install --mcp-server pk-local`") == true)
     #expect(decision.reason?.contains("do not run it yourself") == true)
     #expect(decision.reason?.contains("`claude mcp get pk-local` shows it runs `personakit mcp`") == true)
@@ -342,7 +344,7 @@ struct ClaudeCodeEnforcementTests {
       toolName: toolName,
       manifest: manifest(forbiddenCapabilities: ["edit-files"])
     )
-    #expect(decision.isDenied)
+    #expect(decision.permission == .ask)
     #expect(decision.reason?.contains("--mcp-server") == false)
   }
 
@@ -350,11 +352,168 @@ struct ClaudeCodeEnforcementTests {
   func evaluatorAllowsMCPToolWhenNoMCPRelevantCapabilityIsForbidden() {
     // autonomous-loop is not something an MCP file/exec/network tool is denied for.
     let looseManifest = manifest(forbiddenCapabilities: ["autonomous-loop"])
-    #expect(!ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: looseManifest).isDenied)
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: looseManifest).permission
+        == .allow
+    )
 
     // With no forbidden capabilities at all, MCP tools are allowed.
     let openManifest = manifest(forbiddenCapabilities: [])
-    #expect(!ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: openManifest).isDenied)
+    #expect(
+      ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: openManifest).permission
+        == .allow
+    )
+  }
+
+  @Test
+  func evaluatorDeniesMonitorAndPowerShellWhenCommandsAreForbidden() {
+    let noCommands = manifest(forbiddenCapabilities: ["run-commands"])
+    // Monitor and PowerShell run shell commands, so they are command execution like Bash.
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Monitor", manifest: noCommands).permission == .deny)
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "PowerShell", manifest: noCommands).permission == .deny)
+
+    let editOnly = manifest(forbiddenCapabilities: ["edit-files"])
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Monitor", manifest: editOnly).permission == .allow)
+  }
+
+  @Test(arguments: ClaudeCodeEnforcement.readOnlyTools)
+  func evaluatorAllowsReadOnlyBuiltInsUnderReadOnly(toolName: String) {
+    let readOnly = manifest(forbiddenCapabilities: ["edit-files", "run-commands", "network-access"])
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: toolName, manifest: readOnly).permission == .allow)
+  }
+
+  @Test(arguments: ["Artifact", "CronCreate", "EnterWorktree", "RemoteTrigger", "Skill", "SomeFutureTool", "read"])
+  func evaluatorAsksTheOperatorForBuiltInsItCannotClassify(toolName: String) {
+    let readOnly = manifest(forbiddenCapabilities: ["edit-files", "run-commands"])
+    let decision = ClaudeCodeHookCheckEvaluator.evaluate(toolName: toolName, manifest: readOnly)
+    #expect(decision.permission == .ask)
+    #expect(decision.reason?.contains("cannot classify tool '\(toolName)'") == true)
+
+    // Nothing an unclassified tool could do is forbidden, so there is nothing to ask about.
+    let loose = manifest(forbiddenCapabilities: ["autonomous-loop"])
+    #expect(ClaudeCodeHookCheckEvaluator.evaluate(toolName: toolName, manifest: loose).permission == .allow)
+  }
+
+  @Test
+  func denialTellsTheAgentNotToWorkAround() {
+    let readOnly = manifest(forbiddenCapabilities: ["run-commands"])
+    let reason = ClaudeCodeHookCheckEvaluator.evaluate(toolName: "Bash", manifest: readOnly).reason
+    #expect(reason?.contains("Do not retry it through another tool or a workaround") == true)
+  }
+
+  @Test
+  func readOnlyToolsAreSortedAndNeverClassified() {
+    #expect(ClaudeCodeEnforcement.readOnlyTools == ClaudeCodeEnforcement.readOnlyTools.sorted())
+    #expect(ClaudeCodeEnforcement.readOnlyTools.allSatisfy { ClaudeCodeEnforcement.actionClass(forTool: $0) == nil })
+  }
+
+  private func evaluateCall(
+    _ call: ClaudeCodeToolCall,
+    forbidding capabilities: [String] = ["edit-files", "run-commands"]
+  ) -> ClaudeCodeHookCheckDecision {
+    ClaudeCodeHookCheckEvaluator.evaluate(
+      call,
+      manifest: manifest(forbiddenCapabilities: capabilities),
+      protectedPaths: ["/proj/.claude/personakit/"],
+      homeDirectory: "/home/u"
+    )
+  }
+
+  @Test(arguments: ["Agent", "Task"])
+  func evaluatorAsksAboutSubagentsWithIsolation(toolName: String) {
+    // A local subagent's tool calls reach the hook; a worktree writes a branch and a remote one escapes the hook.
+    #expect(evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: "/proj")).permission == .allow)
+    #expect(
+      evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: "/proj", isolation: "")).permission == .allow
+    )
+    for isolation in ["worktree", "remote"] {
+      let decision = evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: "/proj", isolation: isolation))
+      #expect(decision.permission == .ask)
+      #expect(decision.reason?.contains("tool '\(toolName)' with isolation '\(isolation)'") == true)
+    }
+  }
+
+  @Test(arguments: ["Agent", "Task"])
+  func evaluatorAsksAboutSubagentsThatAreNotBuiltInLocalTypes(toolName: String) {
+    for type in ClaudeCodeEnforcement.localSubagentTypes.sorted() {
+      #expect(
+        evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil, subagentType: type)).permission
+          == .allow,
+        "\(type)"
+      )
+    }
+    // A custom or plugin agent can carry its own isolation, so it goes to the operator.
+    for type in ["cloud-worker", "claude-security:explore", "explore", "(not a string)"] {
+      let decision = evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil, subagentType: type))
+      #expect(decision.permission == .ask, "\(type)")
+      #expect(decision.reason?.contains("with agent type '\(type)'") == true)
+    }
+    // Isolation is asked about even on a built-in type, and denied when prompts are bypassed.
+    #expect(
+      evaluateCall(
+        ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil, isolation: "Worktree", subagentType: "Explore")
+      ).permission == .ask
+    )
+    #expect(
+      evaluateCall(
+        ClaudeCodeToolCall(
+          toolName: toolName,
+          paths: [],
+          cwd: nil,
+          isolation: "remote",
+          permissionMode: "bypassPermissions"
+        )
+      ).permission == .deny
+    )
+  }
+
+  @Test
+  func evaluatorAllowsMCPResourcesFromACustomTrustedServerName() {
+    let custom = manifest(forbiddenCapabilities: ["edit-files"]).withMCPServerName("pk-local")
+    func decide(_ server: String) -> ClaudeCodeHookCheckDecision.Permission {
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        ClaudeCodeToolCall(toolName: "ReadMcpResourceTool", paths: [], cwd: nil, mcpServer: server),
+        manifest: custom,
+        protectedPaths: [],
+        homeDirectory: nil
+      ).permission
+    }
+    #expect(decide("pk-local") == .allow)
+    #expect(decide("personakit") == .ask)
+    #expect(decide(" pk-local") == .ask)
+  }
+
+  @Test(arguments: ["ListMcpResourcesTool", "ReadMcpResourceDirTool", "ReadMcpResourceTool"])
+  func evaluatorAllowsMCPResourcesOnlyFromTheTrustedServer(toolName: String) {
+    #expect(
+      evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil, mcpServer: "personakit")).permission
+        == .allow
+    )
+    #expect(
+      evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil, mcpServer: "other")).permission == .ask
+    )
+    #expect(evaluateCall(ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: nil)).permission == .ask)
+  }
+
+  @Test
+  func evaluatorDeniesInsteadOfAskingWhenPromptsAreBypassed() {
+    let bypassed = evaluateCall(
+      ClaudeCodeToolCall(toolName: "CronCreate", paths: [], cwd: nil, permissionMode: "bypassPermissions")
+    )
+    #expect(bypassed.permission == .deny)
+    #expect(bypassed.reason?.contains("skipping permission prompts") == true)
+    #expect(bypassed.reason?.contains("cannot classify tool 'CronCreate'") == true)
+
+    // Every other mode keeps the ask; Claude Code refuses it wherever no one can answer.
+    for mode in ["default", "acceptEdits", "auto", "dontAsk", "plan"] {
+      let decision = evaluateCall(ClaudeCodeToolCall(toolName: "CronCreate", paths: [], cwd: nil, permissionMode: mode))
+      #expect(decision.permission == .ask, "\(mode)")
+    }
+    // An allow stays an allow.
+    #expect(
+      evaluateCall(ClaudeCodeToolCall(toolName: "Read", paths: [], cwd: nil, permissionMode: "bypassPermissions"))
+        .permission == .allow
+    )
   }
 
   @Test
