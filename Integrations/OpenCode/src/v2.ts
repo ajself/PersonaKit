@@ -2,7 +2,7 @@ import type { AgentHooks, Reload } from '@opencode-ai/plugin/v2/promise'
 import { lstatSync, realpathSync } from 'node:fs'
 import { homedir as accountHome } from 'node:os'
 import path from 'node:path'
-import type { ManifestFind } from './enforce.ts'
+import { isMissing, type ManifestFind } from './enforce.ts'
 
 // OpenCode 1.19.5's v2 session runner (`/api/session/*`) calls no plugin hooks. Its built-ins assert the agent's
 // permission rules instead (`PermissionV2.assert`): `bash` under `bash`, `edit`/`write`/`apply_patch` under `edit`,
@@ -130,11 +130,6 @@ export function globalConfigPaths(
   if (cacheHome !== undefined) entries.push(directory(path.join(cacheHome, 'opencode')))
   if (home !== undefined) entries.push(directory(path.join(home, '.opencode')))
   return [...new Set(entries)].sort()
-}
-
-const isMissing = (error: unknown) => {
-  const code = (error as NodeJS.ErrnoException).code
-  return code === 'ENOENT' || code === 'ENOTDIR'
 }
 
 /**

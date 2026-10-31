@@ -1,10 +1,13 @@
-import { accessSync, constants, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { accessSync, constants, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { OPENCODE_READ_ONLY_TOOLS, openCodeHost } from '../../ClaudeCode/hooks/lib/host.ts'
 import type { ProcessRunResult, RunnerDollar } from '../../ClaudeCode/hooks/lib/runner.ts'
+import { readRegularFileSync } from './regularFile.ts'
 
 // The enforcement logic of the server plugin, with the file system, the process runner and the MCP status lookup
-// injected. `server.ts` wires the real ones. Nothing here writes a file or logs a tool call's arguments.
+// injected; the file system defaults to the real one where noted. `server.ts` wires the rest, and v2 setup and the TUI
+// read the manifest through `readManifestSnapshot`. Nothing here writes a file or logs a tool call's arguments.
 
 const MANIFEST_DIR = path.join('.opencode', 'personakit')
 const MANIFEST_SUFFIX = '.checks.json'
@@ -51,6 +54,55 @@ export function findManifest(directory: string, worktree: string, fs: { list(dir
   if (found.length === 0) return { kind: 'none' }
   if (found.length === 1) return { kind: 'one', ...found[0]! }
   return { kind: 'many', paths: found.map((entry) => entry.path).sort() }
+}
+
+/** Whether a file system error means the entry is not there: missing, or a path through a non-directory. */
+export function isMissing(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code
+  return code === 'ENOENT' || code === 'ENOTDIR'
+}
+
+/** The names in `dir`; none when it is missing or not a directory. Any other error propagates. */
+function listDir(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+  } catch (error) {
+    if (isMissing(error)) return []
+    throw error
+  }
+}
+
+/** The manifest as found and read: `bytes` and `sha256` only for one readable manifest. */
+export type ManifestSnapshot =
+  | { find: ManifestFind; bytes: Buffer; sha256: string }
+  | { find: ManifestFind; bytes: undefined; sha256: undefined }
+
+/**
+ * The one way the server plugin, v2 setup and the TUI find and read the manifest, so the TUI's `enforced` matches what
+ * the server enforces. A directory whose listing fails is one manifest at that directory with no bytes, so it reads
+ * as unreadable.
+ */
+export function readManifestSnapshot(
+  directory: string,
+  worktree: string,
+  fs: { list(dir: string): string[]; read(file: string): Buffer | undefined } = { list: listDir, read: readRegularFileSync },
+): ManifestSnapshot {
+  let listing = directory
+  let find: ManifestFind
+  try {
+    find = findManifest(directory, worktree, {
+      list: (dir) => {
+        listing = dir
+        return fs.list(dir)
+      },
+    })
+  } catch {
+    // `listing` is the absolute directory whose listing threw.
+    return { find: { kind: 'one', path: listing, projectDir: directory }, bytes: undefined, sha256: undefined }
+  }
+  const bytes = find.kind === 'one' ? fs.read(find.path) : undefined
+  if (bytes === undefined) return { find, bytes: undefined, sha256: undefined }
+  return { find, bytes, sha256: createHash('sha256').update(bytes).digest('hex') }
 }
 
 /** The deny reason for more than one manifest, naming each one. */

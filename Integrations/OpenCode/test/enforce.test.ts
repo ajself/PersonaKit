@@ -12,6 +12,7 @@ import {
   liveServers,
   patchPaths,
   payload,
+  readManifestSnapshot,
   resolveExecutable,
   routes,
   type Enforcement,
@@ -94,6 +95,72 @@ describe('findManifest', () => {
       },
     }
     expect(() => findManifest('/w', '/w', fs)).toThrow('EACCES')
+  })
+})
+
+describe('readManifestSnapshot', () => {
+  const manifestPath = '/w/.opencode/personakit/s.checks.json'
+  const listing = { '/w/.opencode/personakit': ['s.checks.json'] }
+
+  test('oneReadableManifestHasBytesAndHash', () => {
+    const bytes = Buffer.from('{"personaId":"p"}')
+    const snapshot = readManifestSnapshot('/w/a', '/w', { ...fakeFs(listing), read: () => bytes })
+    expect(snapshot).toEqual({
+      find: { kind: 'one', path: manifestPath, projectDir: '/w' },
+      bytes,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    })
+  })
+
+  test('unreadableManifestHasNoBytesOrHash', () => {
+    const reads: string[] = []
+    const fs = {
+      ...fakeFs(listing),
+      read: (file: string) => {
+        reads.push(file)
+        return undefined
+      },
+    }
+    expect(readManifestSnapshot('/w', '/w', fs)).toEqual({
+      find: { kind: 'one', path: manifestPath, projectDir: '/w' },
+      bytes: undefined,
+      sha256: undefined,
+    })
+    expect(reads).toEqual([manifestPath])
+  })
+
+  test('manyManifestsReadNothing', () => {
+    const reads: string[] = []
+    const fs = {
+      ...fakeFs({ '/w/.opencode/personakit': ['a.checks.json', 'b.checks.json'] }),
+      read: (file: string) => {
+        reads.push(file)
+        return Buffer.from('{}')
+      },
+    }
+    expect(readManifestSnapshot('/w', '/w', fs)).toMatchObject({ find: { kind: 'many' }, bytes: undefined, sha256: undefined })
+    expect(reads).toEqual([])
+  })
+
+  test('unlistableDirectoryIsOneUnreadableManifestThere', () => {
+    const fs = {
+      list: (dir: string) => {
+        if (dir === '/w/.opencode/personakit') throw new Error('EACCES')
+        return []
+      },
+      read: () => Buffer.from('{}'),
+    }
+    expect(readManifestSnapshot('/w/a', '/w', fs)).toEqual({
+      find: { kind: 'one', path: '/w/.opencode/personakit', projectDir: '/w/a' },
+      bytes: undefined,
+      sha256: undefined,
+    })
+  })
+
+  test('missingDirectoriesOnDiskAreNone', () => {
+    const root = tempDir('pk-snapshot-')
+    writeFileSync(join(root, '.opencode'), 'not a directory')
+    expect(readManifestSnapshot(join(root, 'absent'), root)).toEqual({ find: { kind: 'none' }, bytes: undefined, sha256: undefined })
   })
 })
 

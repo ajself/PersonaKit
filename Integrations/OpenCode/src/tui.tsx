@@ -1,6 +1,5 @@
 import type { TuiPluginApi, TuiPluginMeta, TuiPluginModule } from '@opencode-ai/plugin/tui'
-import { createHash } from 'node:crypto'
-import { readdirSync, realpathSync } from 'node:fs'
+import { realpathSync } from 'node:fs'
 import { createEffect, createRoot, createSignal } from 'solid-js'
 import type { Accessor, Setter } from 'solid-js'
 import type { Enforcement, LibraryLoad, SessionState } from '../../ClaudeCode/types'
@@ -9,10 +8,10 @@ import { canUse, isValidId } from '../../ClaudeCode/hooks/lib/ids.ts'
 import { usePrompt } from '../../ClaudeCode/hooks/lib/prompts.ts'
 import { loadLibrary, personakitBinary } from '../../ClaudeCode/hooks/lib/runner.ts'
 import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
-import { findManifest } from './enforce.ts'
+import { readManifestSnapshot } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
 import { rebuildFrom } from './tui/observer.ts'
-import { readRegularFileSync, readRegularFileText } from './regularFile.ts'
+import { readRegularFileText } from './regularFile.ts'
 import { prefill } from './tui/prefill.ts'
 import { registerRoute, ROUTE } from './tui/route.tsx'
 import { createSpawnRunner } from './tui/spawnRunner.ts'
@@ -26,46 +25,22 @@ const MAX_DEPTH = 8
 // enabled or installed mid-session, after the server plugin took its snapshot.
 const STARTUP_WINDOW_SECONDS = 15
 
-/** The names in `dir`; none when it is missing or not a directory. Any other error propagates. */
-function listDir(dir: string): string[] {
-  try {
-    return readdirSync(dir)
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code
-    if (code === 'ENOENT' || code === 'ENOTDIR') return []
-    throw error
-  }
-}
-
 /** The enforcement manifest as found now: what identifies it (`signature`), and what the status may judge. */
 type ManifestRead = { signature: string; manifest: { path: string; text: string | undefined } | undefined }
 
 /**
- * Finds and reads the manifest the way the server plugin does at startup. Several manifests, or one that cannot be
- * listed or read, come back without text, which reads as an unreadable manifest and never as enforced.
+ * The manifest as the server plugin reads it. Several manifests, or one that cannot be listed or read, come back
+ * without text, which reads as an unreadable manifest and never as enforced.
  */
 function readManifest(directory: string, worktree: string): ManifestRead {
-  let listing = directory
-  let found
-  try {
-    found = findManifest(directory, worktree, {
-      list: (dir) => {
-        listing = dir
-        return listDir(dir)
-      },
-    })
-  } catch {
-    return { signature: `unlistable:${listing}`, manifest: { path: listing, text: undefined } }
-  }
-  if (found.kind === 'none') return { signature: 'none', manifest: undefined }
-  if (found.kind === 'many') {
-    const path = found.paths.join(', ')
+  const { find, bytes, sha256 } = readManifestSnapshot(directory, worktree)
+  if (find.kind === 'none') return { signature: 'none', manifest: undefined }
+  if (find.kind === 'many') {
+    const path = find.paths.join(', ')
     return { signature: `many:${path}`, manifest: { path, text: undefined } }
   }
-  const bytes = readRegularFileSync(found.path)
-  if (bytes === undefined) return { signature: `unreadable:${found.path}`, manifest: { path: found.path, text: undefined } }
-  const sha256 = createHash('sha256').update(bytes).digest('hex')
-  return { signature: `one:${found.path}:${sha256}`, manifest: { path: found.path, text: bytes.toString('utf8') } }
+  if (bytes === undefined) return { signature: `unreadable:${find.path}`, manifest: { path: find.path, text: undefined } }
+  return { signature: `one:${find.path}:${sha256}`, manifest: { path: find.path, text: bytes.toString('utf8') } }
 }
 
 /**
