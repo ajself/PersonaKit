@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { openCodeEnforcement, pluginListed } from '../src/tui/enforcement'
+import { installedPluginDirectory, openCodeEnforcement, pluginListed } from '../src/tui/enforcement'
 import { sanitizeLine, sanitizeText } from '../src/tui/text'
 
 const SOLO = { sessionId: 'solo-dev' }
@@ -76,29 +76,58 @@ test('unparseableManifestNeverEnforced', () => {
   }
 })
 
-test('pluginListedMatchesOnlyThePackageSpec', () => {
-  expect(pluginListed(['opencode-personakit'])).toBe(true)
-  expect(pluginListed(['opencode-personakit@2.1.0'])).toBe(true)
-  expect(pluginListed(['opencode-personakit@latest'])).toBe(true)
-  expect(pluginListed([['opencode-personakit', { x: 1 }]])).toBe(true)
-  expect(pluginListed([['opencode-personakit@2.1.0', {}]])).toBe(true)
-  expect(pluginListed(['other', 'opencode-personakit'])).toBe(true)
+const ENV = { HOME: '/Users/me' }
+const SPEC = 'file:///Users/me/.cache/opencode/personakit/plugin'
+const noHome = () => ''
+const listed = (plugins: Parameters<typeof pluginListed>[0], env: Record<string, string | undefined> = ENV) =>
+  pluginListed(plugins, env, noHome)
+
+test('installedPluginDirectoryFollowsTheCacheHome', () => {
+  expect(installedPluginDirectory(ENV, noHome)).toBe('/Users/me/.cache/opencode/personakit/plugin')
+  expect(installedPluginDirectory({ HOME: '/Users/me', XDG_CACHE_HOME: '/c' }, noHome)).toBe('/c/opencode/personakit/plugin')
+  expect(installedPluginDirectory({ HOME: '/Users/me', XDG_CACHE_HOME: '' }, noHome)).toBe('/Users/me/.cache/opencode/personakit/plugin')
+  expect(installedPluginDirectory({ XDG_CACHE_HOME: '/c/x/../y/' }, noHome)).toBe('/c/y/opencode/personakit/plugin')
+  expect(installedPluginDirectory({ HOME: '' }, () => '/Users/acct')).toBe('/Users/acct/.cache/opencode/personakit/plugin')
+  expect(installedPluginDirectory({}, noHome)).toBeUndefined()
 })
 
-test('pluginListedRejectsLookalikes', () => {
-  expect(pluginListed(['opencode-personakit-evil'])).toBe(false)
-  expect(pluginListed(['opencode-personakit-evil@1.0.0'])).toBe(false)
-  expect(pluginListed(['xopencode-personakit'])).toBe(false)
-  expect(pluginListed(['@scope/opencode-personakit'])).toBe(false)
-  expect(pluginListed(['file:///Users/me/opencode-personakit'])).toBe(false)
-  expect(pluginListed(['file:///x/opencode-personakit/src/server.ts'])).toBe(false)
-  expect(pluginListed([['opencode-personakit-evil', {}]])).toBe(false)
-  expect(pluginListed([])).toBe(false)
-  expect(pluginListed(undefined)).toBe(false)
+test('pluginListedMatchesOnlyTheInstalledSpec', () => {
+  expect(listed([SPEC])).toBe(true)
+  expect(listed([[SPEC, { personakitPath: '/x' }]])).toBe(true)
+  expect(listed(['other', SPEC])).toBe(true)
+  expect(listed(['file:///c/opencode/personakit/plugin'], { HOME: '/Users/me', XDG_CACHE_HOME: '/c' })).toBe(true)
+  // The cache home moved, so the listed spec is no longer the installed plugin.
+  expect(listed([SPEC], { HOME: '/Users/me', XDG_CACHE_HOME: '/c' })).toBe(false)
+})
+
+test('pluginListedRejectsEveryOtherSpec', () => {
+  for (const spec of [
+    'opencode-personakit',
+    'opencode-personakit@2.1.0',
+    'opencode-personakit@latest',
+    '@scope/opencode-personakit',
+    'file:///Users/me/Code/PersonaKit/Integrations/OpenCode',
+    `${SPEC}/`,
+    `${SPEC}/Integrations/OpenCode/src/server.ts`,
+    `${SPEC}-evil`,
+    'file:///Users/me/.cache/opencode/personakit/plugin/../plugin',
+    'file://localhost/Users/me/.cache/opencode/personakit/plugin',
+    'FILE:///Users/me/.cache/opencode/personakit/plugin',
+    '/Users/me/.cache/opencode/personakit/plugin',
+    'file:///users/me/.cache/opencode/personakit/plugin',
+    ` ${SPEC}`,
+    `${SPEC}\n`,
+  ])
+    expect(listed([spec])).toBe(false)
+  expect(listed([['opencode-personakit', {}]])).toBe(false)
+  expect(listed([])).toBe(false)
+  expect(listed(undefined)).toBe(false)
+  // No home and no cache home: nothing can be the installed plugin.
+  expect(pluginListed(['file://undefined/opencode/personakit/plugin', SPEC], {}, noHome)).toBe(false)
 })
 
 test('pluginListedToleratesMalformedEntries', () => {
-  expect(pluginListed([[] as never, 3 as never, null as never, [3, 'opencode-personakit'] as never])).toBe(false)
+  expect(listed([[] as never, 3 as never, null as never, [3, SPEC] as never, [[SPEC]] as never])).toBe(false)
 })
 
 test('sanitizeTextStripsEscapes', () => {
@@ -111,13 +140,6 @@ test('sanitizeTextStripsBidiControls', () => {
   expect(sanitizeText('a\u202ab\u202bc\u202cd\u202de\u202ef')).toBe('abcdef')
   expect(sanitizeText('a\u2066b\u2067c\u2068d\u2069e\u200ef\u200fg\u061ch')).toBe('abcdefgh')
   expect(sanitizeText('line one\nline two')).toBe('line one\nline two')
-})
-
-test('pluginListedAcceptsOnlyVersionOrTagAfterTheAt', () => {
-  for (const spec of ['@2.1.0', '@latest', '@2.1.0-beta.1', '@1.0.0+build_5'])
-    expect(pluginListed([`opencode-personakit${spec}`])).toBe(true)
-  for (const spec of ['@', '@npm:evil@1.0.0', '@file:../x', '@github:a/b', '@https://x/y.tgz', '@-x', '@a b', '@a/b', '@2.1.0\n'])
-    expect(pluginListed([`opencode-personakit${spec}`])).toBe(false)
 })
 
 test('sanitizeLineStripsEverythingThatMovesOrHidesText', () => {

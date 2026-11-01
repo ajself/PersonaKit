@@ -92,7 +92,7 @@ SWIFT_RUN ?= $(SWIFTPM_ENV) $(SWIFT) run $(SWIFTPM_FLAGS)
 SWIFT_TEST ?= $(SWIFTPM_ENV) $(SWIFT) test $(SWIFTPM_FLAGS) $(SWIFT_TEST_FLAGS)
 
 .PHONY: help studio-doctor clean build test format-check swiftpm-prepare \
-	core-validate-repo core-zip public-check mod-check opencode-check \
+	core-validate-repo core-zip public-check mod-check opencode-check opencode-install \
 	cli-build cli-install cli-install-zsh-completion cli-test version-check version-bump \
 	studio-build studio-run studio-test studio-review \
 	studio-pkg-preflight studio-archive-release studio-export-release \
@@ -116,6 +116,7 @@ help:
 	@printf "  %-28s %s\n" "public-check" "Run public README and starter verification, plus mod-check when claude is installed."
 	@printf "  %-28s %s\n" "mod-check" "Validate and test the Claude Code mod in Integrations/ClaudeCode."
 	@printf "  %-28s %s\n" "opencode-check" "Typecheck, test, and dry-run pack the OpenCode plugin in Integrations/OpenCode."
+	@printf "  %-28s %s\n" "opencode-install" "Install the OpenCode plugin from this checkout for every project on this machine."
 	@echo ""
 	@echo "CLI surface:"
 	@printf "  %-28s %s\n" "cli-build" "Build the SwiftPM CLI executable."
@@ -359,6 +360,43 @@ opencode-check:
 	cd $(OPENCODE_DIR) && bunx tsc --noEmit
 	cd $(OPENCODE_DIR) && bun test
 	cd $(OPENCODE_DIR) && bun scripts/pack.ts > /dev/null
+
+# Copies the source files scripts/pack.ts stages, in the same repo layout, to
+# ${XDG_CACHE_HOME:-$HOME/.cache}/opencode/personakit/plugin, with package.json copied whole and its exports pointed
+# into that layout, then lists the directory in the global OpenCode config. No bun and no package install: OpenCode
+# supplies the plugin's runtime imports. The listed spec must stay exactly what `pluginListed`
+# (Integrations/OpenCode/src/tui/enforcement.ts) and `openCodeConfigListsPlugin` (Sources/Features/CLI/
+# CLIEnforceCommand.swift) accept, and what OpenCode stores after it re-encodes the spec as a file URL: so the cache
+# directory must be absolute, without `//`, `.` or `..` components, and use only characters a file URL keeps as is.
+opencode-install:
+	@command -v opencode >/dev/null 2>&1 || { echo "opencode-install: opencode is not on PATH. Install OpenCode, then run make opencode-install again."; exit 1; }; \
+	if [ -n "$$XDG_CACHE_HOME" ]; then cache_home="$$XDG_CACHE_HOME"; \
+	elif [ -n "$$HOME" ]; then cache_home="$$HOME/.cache"; \
+	else echo "opencode-install: neither XDG_CACHE_HOME nor HOME is set."; exit 1; fi; \
+	while case "$$cache_home" in */) true;; *) false;; esac; do cache_home="$${cache_home%/}"; done; \
+	case "$$cache_home" in \
+		/*) ;; \
+		*) echo "opencode-install: the cache directory '$$cache_home' is not an absolute path."; exit 1;; \
+	esac; \
+	case "$$cache_home" in \
+		*//*|*/./*|*/../*|*/.|*/..) echo "opencode-install: write the cache directory '$$cache_home' without '//', '.' or '..'."; exit 1;; \
+		*[!A-Za-z0-9/._+-]*) echo "opencode-install: the cache directory '$$cache_home' may hold only letters, digits and / . _ + -, so its file:// spec stays exact."; exit 1;; \
+	esac; \
+	dest="$$cache_home/opencode/personakit/plugin"; \
+	rm -rf "$$dest" || exit 1; \
+	mkdir -p "$$dest/$(OPENCODE_DIR)" "$$dest/$(MOD_DIR)/hooks" "$$dest/$(MOD_DIR)/types" && \
+	cp -R "$(OPENCODE_DIR)/src" "$$dest/$(OPENCODE_DIR)/src" && \
+	cp -R "$(MOD_DIR)/hooks/lib" "$$dest/$(MOD_DIR)/hooks/lib" && \
+	cp "$(MOD_DIR)/types/index.d.ts" "$$dest/$(MOD_DIR)/types/index.d.ts" && \
+	cp "$(OPENCODE_DIR)/README.md" "$$dest/README.md" && \
+	find "$$dest" -type f \( -name '*.test.ts' -o -name '*.test.tsx' \) -delete && \
+	sed 's#"\./src/#"./$(OPENCODE_DIR)/src/#' "$(OPENCODE_PACKAGE_JSON)" > "$$dest/package.json" || exit 1; \
+	for entry in server.ts tui.tsx; do \
+		[ -f "$$dest/$(OPENCODE_DIR)/src/$$entry" ] && grep -q "\"./$(OPENCODE_DIR)/src/$$entry\"" "$$dest/package.json" || \
+			{ echo "opencode-install: entrypoint $(OPENCODE_DIR)/src/$$entry is missing from $$dest."; exit 1; }; \
+	done; \
+	opencode plugin -g --force "file://$$dest" || exit 1; \
+	echo "Installed the PersonaKit OpenCode plugin to $$dest. Restart OpenCode to load it."
 
 public-check: swiftpm-prepare
 ifeq ($(PUBLIC_CHECK_TEST),1)

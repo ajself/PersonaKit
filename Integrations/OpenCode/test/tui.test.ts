@@ -8,9 +8,12 @@ import { join } from 'node:path'
 import { CONTRACT_JSON, EXPORT_MD, LIST_MERGED_JSON } from '../../ClaudeCode/hooks/fixtures/golden.ts'
 import { usePrompt } from '../../ClaudeCode/hooks/lib/prompts.ts'
 import plugin from '../src/tui.tsx'
+import { installedPluginDirectory } from '../src/tui/enforcement.ts'
 
 const MAIN = 'ses_main'
 const SESSION = 'read-only-auditor_audit-pass'
+// The spec `make opencode-install` writes for this process's environment.
+const PLUGIN_SPEC = `file://${installedPluginDirectory(process.env)}`
 
 type Handler = (event: { type: string; properties: Record<string, unknown> }) => void
 type Command = { name: string; title?: string; namespace?: string; slashName?: string; run: (ctx: unknown) => unknown }
@@ -432,7 +435,7 @@ const writeManifest = (dir: string, text: string) => {
 test('manifestChangedAfterStartIsAWarningNeverEnforced', async () => {
   const directory = tempDir('pk-manifest-')
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
-  const fake = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const fake = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(fake, 'session_prompt_right')
   expect(await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))).toContain(' · enforced · ')
 
@@ -445,7 +448,7 @@ test('manifestChangedAfterStartIsAWarningNeverEnforced', async () => {
 
 test('manifestAppearingAfterStartIsAWarning', async () => {
   const directory = tempDir('pk-manifest-')
-  const fake = await start(fakeApi({ directory, plugins: ['opencode-personakit'] }))
+  const fake = await start(fakeApi({ directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(fake, 'session_prompt_right')
   await chip.waitForFrame((f) => f.includes('/pk'))
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
@@ -456,10 +459,10 @@ test('manifestAppearingAfterStartIsAWarning', async () => {
 test('reactivatingThePluginKeepsTheStartupSnapshot', async () => {
   // OpenCode starts with no manifest; the server enforces nothing for the rest of the process.
   const directory = tempDir('pk-toggle-')
-  await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
   // The person turns the TUI plugin off and on: `tui()` runs again in the same process.
-  const again = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const again = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(again, 'session_prompt_right')
   const frame = await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`) && f.includes('manifest changed'))
   expect(frame).toContain(`◆ ${SESSION} · ⚠ manifest changed · restart OpenCode`)
@@ -470,7 +473,7 @@ test('aReactivationNeverClaimsEnforcedUntilAnInstanceDispose', async () => {
   const directory = tempDir('pk-reactivate-')
   const M1 = JSON.stringify({ sessionId: SESSION, checks: [] })
   writeManifest(directory, M1)
-  const first = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const first = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const firstChip = await render(first, 'session_prompt_right')
   expect(await firstChip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))).toContain(' · enforced · ')
 
@@ -479,7 +482,7 @@ test('aReactivationNeverClaimsEnforcedUntilAnInstanceDispose', async () => {
   for (const dispose of first.record.disposers) await dispose()
   unlinkSync(join(directory, '.opencode', 'personakit', `${SESSION}.checks.json`))
   writeManifest(directory, M1)
-  const again = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const again = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(again, 'session_prompt_right')
   const frame = await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`) && f.includes('manifest changed'))
   expect(frame).toContain(`◆ ${SESSION} · ⚠ manifest changed · restart OpenCode`)
@@ -495,7 +498,7 @@ test('aFirstActivationAfterStartupNeverClaimsEnforcedUntilAnInstanceDispose', as
   const directory = tempDir('pk-late-')
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
   // A manifest appeared mid-session, then the person enables the plugin: the first `tui()` in this process, late.
-  const fake = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }), {}, () => 15)
+  const fake = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }), {}, () => 15)
   const chip = await render(fake, 'session_prompt_right')
   const frame = await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`) && f.includes('manifest changed'))
   expect(frame).toContain(`◆ ${SESSION} · ⚠ manifest changed · restart OpenCode`)
@@ -508,9 +511,9 @@ test('aFirstActivationAfterStartupNeverClaimsEnforcedUntilAnInstanceDispose', as
 
 test('aReactivationWithoutAManifestIsAdvisory', async () => {
   const directory = tempDir('pk-reactivate-')
-  const first = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const first = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   for (const dispose of first.record.disposers) await dispose()
-  const again = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const again = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(again, 'session_prompt_right')
   const frame = await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))
   expect(frame).toContain(`◆ ${SESSION} · advisory`)
@@ -526,7 +529,7 @@ test('aManifestThatIsNotARegularFileIsUnreadableAndNeverBlocks', async () => {
     const directory = tempDir('pk-special-')
     mkdirSync(join(directory, '.opencode', 'personakit'), { recursive: true })
     make(join(directory, '.opencode', 'personakit', `${SESSION}.checks.json`))
-    const fake = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+    const fake = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
     const chip = await render(fake, 'session_prompt_right')
     const frame = await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))
     expect(frame).toContain('⚠ enforcement manifest unreadable')
@@ -551,7 +554,7 @@ test('anInstanceDisposeRetakesTheSnapshotTheServerRetakes', async () => {
   const directory = tempDir('pk-instance-')
   const M1 = JSON.stringify({ sessionId: SESSION, checks: [] })
   writeManifest(directory, M1)
-  const fake = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const fake = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(fake, 'session_prompt_right')
   const poke = () => fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a1', role: 'assistant', sessionID: MAIN } })
   expect(await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))).toContain(' · enforced · ')
@@ -575,7 +578,7 @@ test('anInstanceDisposeRetakesTheSnapshotTheServerRetakes', async () => {
 test('anInstanceDisposeReReadsThePluginList', async () => {
   const directory = tempDir('pk-instance-')
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
-  const fake = await start(fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] }))
+  const fake = await start(fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] }))
   const chip = await render(fake, 'session_prompt_right')
   expect(await chip.waitForFrame((f) => f.includes(`◆ ${SESSION}`))).toContain(' · enforced · ')
 
@@ -592,9 +595,9 @@ test('anInstanceDisposeReReadsThePluginList', async () => {
 test('aReloadedPluginListRebuildsWithoutAnotherEvent', async () => {
   const directory = tempDir('pk-instance-')
   writeManifest(directory, JSON.stringify({ sessionId: SESSION, checks: [] }))
-  const fake = fakeApi({ ...resolved(), directory, plugins: ['opencode-personakit'] })
+  const fake = fakeApi({ ...resolved(), directory, plugins: [PLUGIN_SPEC] })
   // OpenCode's config is a reactive store; it is replaced after the instance reloads, after the dispose event.
-  const [config, setConfig] = createStore({ mcp: {}, plugin: ['opencode-personakit'] })
+  const [config, setConfig] = createStore({ mcp: {}, plugin: [PLUGIN_SPEC] })
   ;(fake.api.state as { config: unknown }).config = config
   await start(fake)
   const chip = await render(fake, 'session_prompt_right')

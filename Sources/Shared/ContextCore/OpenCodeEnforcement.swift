@@ -87,6 +87,24 @@ public enum OpenCodeEnforcement {
     return Array(Set(entries)).sorted()
   }
 
+  /// Where `make opencode-install` puts the plugin: `${XDG_CACHE_HOME:-$HOME/.cache}/opencode/personakit/plugin`,
+  /// made absolute with `.` and `..` applied, as the plugin's `installedPluginDirectory` computes it. Empty values
+  /// count as unset. Nil when neither `XDG_CACHE_HOME` nor `HOME` is set.
+  public static func installedPluginDirectory(environment: [String: String]) -> String? {
+    func value(_ key: String) -> String? {
+      environment[key].flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    guard let cacheHome = value("XDG_CACHE_HOME") ?? value("HOME").map({ $0 + "/.cache" }) else { return nil }
+    return lexicalPath(cacheHome + "/opencode/personakit/plugin")
+  }
+
+  /// The plugin spec `make opencode-install` writes to the machine-wide OpenCode config:
+  /// `file://` followed by ``installedPluginDirectory(environment:)``.
+  public static func installedPluginSpec(environment: [String: String]) -> String? {
+    installedPluginDirectory(environment: environment).map { "file://" + $0 }
+  }
+
   /// Replaces every character OpenCode rejects in an MCP key segment with `_`.
   ///
   /// OpenCode applies `[^A-Za-z0-9_-]` per UTF-16 code unit, so an astral character becomes two

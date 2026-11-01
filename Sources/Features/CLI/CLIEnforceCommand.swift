@@ -292,11 +292,7 @@ struct HookCheckCommand: ParsableCommand {
       return failClosed("PersonaKit enforcement could not parse the tool call")
     }
 
-    var effectiveEnvironment = environment
-    if environment["HOME"]?.isEmpty != false, let home = passwdHome(), !home.isEmpty {
-      effectiveEnvironment["HOME"] = home
-    }
-
+    let effectiveEnvironment = withAccountHome(environment, passwdHome: passwdHome)
     var protectedPaths = OpenCodeEnforcement.globalConfigPaths(environment: effectiveEnvironment)
     if let executablePath, !executablePath.isEmpty {
       // The evaluator compares each entry as spelled and as physically resolved, so a symlinked
@@ -313,6 +309,15 @@ struct HookCheckCommand: ParsableCommand {
       return nil
     }
     return String(cString: directory)
+  }
+
+  /// `environment` with `HOME` from `passwdHome` when it is unset or empty, the home OpenCode falls back to.
+  static func withAccountHome(_ environment: [String: String], passwdHome: () -> String?) -> [String: String] {
+    var effective = environment
+    if environment["HOME"]?.isEmpty != false, let home = passwdHome(), !home.isEmpty {
+      effective["HOME"] = home
+    }
+    return effective
   }
 
   /// Pure decision: read manifest + stdin, evaluate, fail-closed on any error.
@@ -601,10 +606,13 @@ struct EnforceInstallCommand: ParsableCommand {
   /// Installs OpenCode enforcement: the frozen manifest and nothing else.
   ///
   /// Never writes OpenCode config. Other `*.checks.json` files in the manifest directory are removed so
-  /// the folder it writes to keeps one manifest. Refuses, before writing anything, when `.opencode` or
+  /// the folder it writes to keeps one manifest. Refuses, before writing anything, when the plugin
+  /// `make opencode-install` installs is missing or is not this CLI's version, when `.opencode` or
   /// `.opencode/personakit` is a symbolic link or the manifest folder holds a `*.checks.json` entry that is
   /// not a regular file.
   private func installOpenCode(manifest: ChecksManifest, sessionId: String, projectRoot: URL) throws {
+    try Self.checkInstalledOpenCodePlugin(environment: ProcessInfo.processInfo.environment)
+
     let manifestDirectory =
       projectRoot
       .appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)
@@ -675,12 +683,12 @@ struct EnforceInstallCommand: ParsableCommand {
     Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
     Self.reportShellReachableCapabilities(manifest: manifest, host: "OpenCode")
 
-    if !Self.openCodeConfigListsPlugin(projectRoot: projectRoot, environment: ProcessInfo.processInfo.environment) {
+    if !Self.openCodeConfigListsPlugin(environment: ProcessInfo.processInfo.environment) {
       var stderrStream = StandardError()
       stderrStream.write(
-        "Note: no OpenCode config lists the opencode-personakit plugin, so this contract is not enforced yet. "
-          + "Install it with `opencode plugin opencode-personakit@<version>` (add -g for global); "
-          + "PersonaKit never edits OpenCode config.\n"
+        "Note: the machine-wide OpenCode config does not list the PersonaKit plugin, so this contract is not "
+          + "enforced yet. Run `make opencode-install` from a PersonaKit checkout of tag v\(PersonaKitVersion.current); "
+          + "`personakit` itself never edits OpenCode config.\n"
       )
     }
   }
@@ -787,47 +795,91 @@ struct EnforceInstallCommand: ParsableCommand {
     return [UInt64(info.st_dev), UInt64(info.st_ino)]
   }
 
-  /// Whether any OpenCode config the install can see mentions the plugin.
+  /// Refuses unless the plugin `make opencode-install` installs is present and is this CLI's version.
   ///
-  /// A substring search over `opencode.json(c)` in the project, its `.opencode/`, `$OPENCODE_CONFIG_DIR`, the global
-  /// config directory and `~/.opencode/`, plus the `$OPENCODE_CONFIG` file. It never parses or writes a file, so
-  /// JSONC comments are harmless. `environment` is the caller's; without `HOME`, `passwdHome` supplies the home.
+  /// Reads `version` from `package.json` in ``OpenCodeEnforcement/installedPluginDirectory(environment:)``.
+  /// `environment` is the caller's; without `HOME`, `passwdHome` supplies the home.
+  static func checkInstalledOpenCodePlugin(
+    environment: [String: String],
+    passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
+  ) throws {
+    let cliVersion = PersonaKitVersion.current
+    let remedy = "Run `make opencode-install` from a PersonaKit checkout of tag v\(cliVersion), then run install again."
+    let environment = HookCheckCommand.withAccountHome(environment, passwdHome: passwdHome)
+    guard let directory = OpenCodeEnforcement.installedPluginDirectory(environment: environment) else {
+      throw CLIError.failure(
+        "Refusing to install: cannot locate the OpenCode plugin because neither XDG_CACHE_HOME nor HOME is set. "
+          + remedy
+      )
+    }
+
+    let packageURL = URL(fileURLWithPath: directory).appendingPathComponent("package.json")
+    let data: Data
+    do {
+      data = try Data(contentsOf: packageURL)
+    } catch CocoaError.fileReadNoSuchFile {
+      throw CLIError.failure("Refusing to install: the OpenCode plugin is not installed at \(directory). " + remedy)
+    } catch {
+      throw CLIError.failure(
+        "Refusing to install: could not read \(packageURL.path): \(error.localizedDescription) " + remedy
+      )
+    }
+
+    guard let package = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let version = package["version"] as? String
+    else {
+      throw CLIError.failure("Refusing to install: \(packageURL.path) has no readable \"version\". " + remedy)
+    }
+    guard version.utf8.elementsEqual(cliVersion.utf8) else {
+      throw CLIError.failure(
+        "Refusing to install: the OpenCode plugin at \(directory) does not match this CLI "
+          + "(plugin \(version), CLI \(cliVersion)). " + remedy
+      )
+    }
+  }
+
+  /// Whether the machine-wide OpenCode config lists the plugin `make opencode-install` installs.
+  ///
+  /// Reads `config.json`, `opencode.json` and `opencode.jsonc` in `$XDG_CONFIG_HOME/opencode` (`~/.config/opencode`
+  /// without it), the files OpenCode merges there and `opencode plugin -g` writes to, and parses each as JSONC. Only an entry that is exactly
+  /// ``OpenCodeEnforcement/installedPluginSpec(environment:)``, compared by bytes, as a string or the first element of
+  /// a `[spec, options]` pair, counts. A project config, `$OPENCODE_CONFIG`, `$OPENCODE_CONFIG_DIR` and
+  /// `~/.opencode` do not count, and a file that cannot be read or parsed lists nothing. Never writes a file.
+  /// `environment` is the caller's; without `HOME`, `passwdHome` supplies the home.
   static func openCodeConfigListsPlugin(
-    projectRoot: URL,
     environment: [String: String],
     passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
   ) -> Bool {
+    let environment = HookCheckCommand.withAccountHome(environment, passwdHome: passwdHome)
     func value(_ key: String) -> String? {
       environment[key].flatMap { $0.isEmpty ? nil : $0 }
     }
 
-    var directories = [projectRoot, projectRoot.appendingPathComponent(OpenCodeEnforcement.protectedDirectoryName)]
-    if let configDirectory = value("OPENCODE_CONFIG_DIR") {
-      directories.append(URL(fileURLWithPath: configDirectory))
+    guard let spec = OpenCodeEnforcement.installedPluginSpec(environment: environment) else {
+      return false
     }
-
-    let home = value("HOME") ?? passwdHome().flatMap { $0.isEmpty ? nil : $0 }
+    let configDirectory: URL
     if let configHome = value("XDG_CONFIG_HOME") {
-      directories.append(URL(fileURLWithPath: configHome).appendingPathComponent("opencode"))
-    } else if let home {
-      directories.append(URL(fileURLWithPath: home).appendingPathComponent(".config/opencode"))
-    }
-    if let home {
-      directories.append(URL(fileURLWithPath: home).appendingPathComponent(".opencode"))
-    }
-
-    var files = directories.flatMap { directory in
-      ["opencode.json", "opencode.jsonc"].map { directory.appendingPathComponent($0) }
-    }
-    if let configFile = value("OPENCODE_CONFIG") {
-      files.append(URL(fileURLWithPath: configFile))
+      configDirectory = URL(fileURLWithPath: configHome).appendingPathComponent("opencode")
+    } else if let home = value("HOME") {
+      configDirectory = URL(fileURLWithPath: home).appendingPathComponent(".config/opencode")
+    } else {
+      return false
     }
 
-    return files.contains { file in
-      guard let text = try? String(contentsOf: file, encoding: .utf8) else {
+    return ["config.json", "opencode.json", "opencode.jsonc"].contains { name in
+      guard let data = try? Data(contentsOf: configDirectory.appendingPathComponent(name)),
+        let config = try? JSONSerialization.jsonObject(with: data, options: [.json5Allowed]) as? [String: Any],
+        let plugins = config["plugin"] as? [Any]
+      else {
         return false
       }
-      return text.contains("\"opencode-personakit")
+      return plugins.contains { entry in
+        guard let listed = ((entry as? [Any])?.first ?? entry) as? String else {
+          return false
+        }
+        return listed.utf8.elementsEqual(spec.utf8)
+      }
     }
   }
 

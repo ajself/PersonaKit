@@ -1,20 +1,38 @@
 import type { ContractIds, Enforcement } from '../../../ClaudeCode/types'
 import { enforcementFor } from '../../../ClaudeCode/hooks/lib/enforcement.ts'
-
-const PACKAGE = 'opencode-personakit'
-// What may follow `@`: a version or a dist-tag, never an alias, path, URL or git spec.
-const VERSION_OR_TAG = /^[A-Za-z0-9][A-Za-z0-9.+_-]*$/
+import { homedir as accountHome } from 'node:os'
+import path from 'node:path'
 
 /**
- * Whether the resolved config's `plugin` list names this package: the bare name or `name@<version or dist-tag>`, as a
- * string entry or the first element of a `[spec, options]` entry. A `file://` path, a scoped name and a longer name
- * that merely starts with this one (`opencode-personakit-evil`) do not count.
+ * Where `make opencode-install` puts the plugin: `${XDG_CACHE_HOME:-$HOME/.cache}/opencode/personakit/plugin`, made
+ * absolute with `.` and `..` applied. Empty values count as unset. Without `HOME`, the home directory is `homedir()`
+ * (the account's), as `globalConfigPaths` does. Undefined when neither gives a directory.
  */
-export function pluginListed(plugins: readonly (string | readonly [string, unknown])[] | undefined): boolean {
-  return (plugins ?? []).some((entry) => {
-    const spec: unknown = Array.isArray(entry) ? entry[0] : entry
-    return typeof spec === 'string' && (spec === PACKAGE || (spec.startsWith(`${PACKAGE}@`) && VERSION_OR_TAG.test(spec.slice(PACKAGE.length + 1))))
-  })
+export function installedPluginDirectory(
+  env: Readonly<Record<string, string | undefined>>,
+  homedir: () => string = accountHome,
+): string | undefined {
+  const value = (key: string) => (env[key] === undefined || env[key] === '' ? undefined : env[key])
+  const home = value('HOME') ?? (homedir() || undefined)
+  const cacheHome = value('XDG_CACHE_HOME') ?? (home === undefined ? undefined : path.join(home, '.cache'))
+  return cacheHome === undefined ? undefined : path.resolve(cacheHome, 'opencode', 'personakit', 'plugin')
+}
+
+/**
+ * Whether the resolved config's `plugin` list names the plugin `make opencode-install` installs: exactly
+ * `file://<installedPluginDirectory>`, as a string entry or the first element of a `[spec, options]` entry, compared
+ * by code units. Any other spec, an npm `opencode-personakit` or `opencode-personakit@<version>` included, does not
+ * count.
+ */
+export function pluginListed(
+  plugins: readonly (string | readonly [string, unknown])[] | undefined,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+  homedir: () => string = accountHome,
+): boolean {
+  const directory = installedPluginDirectory(env, homedir)
+  if (directory === undefined) return false
+  const expected = `file://${directory}`
+  return (plugins ?? []).some((entry) => (Array.isArray(entry) ? entry[0] : entry) === expected)
 }
 
 /**

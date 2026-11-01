@@ -912,15 +912,17 @@ struct CLIEnforceTests {
   private static let openCodeSessionId = "read-only-auditor_audit-pass"
 
   /// Runs `enforce install --host opencode` with `HOME` pointed at `home` and `XDG_CONFIG_HOME` unset,
-  /// so the plugin-listed check never reads the real user's OpenCode config.
+  /// so the plugin-listed check never reads the real user's OpenCode config. `XDG_CACHE_HOME` is `cacheHome`, or
+  /// one beside `home` holding the plugin at this CLI's version.
   private func runOpenCodeInstall(
     projectDir: URL,
     home: URL,
+    cacheHome: URL? = nil,
     dryRun: Bool = false,
     session: String = CLIEnforceTests.openCodeSessionId,
     extra: [String] = []
   ) -> (status: Int32, stdout: String, stderr: String) {
-    withEnvironment(Self.isolatedOpenCodeEnvironment(home: home)) {
+    withEnvironment(Self.isolatedOpenCodeEnvironment(home: home, cacheHome: cacheHome)) {
       var status: Int32 = 0
       var stdout = ""
       let stderr = captureStderr {
@@ -941,9 +943,37 @@ struct CLIEnforceTests {
     }
   }
 
-  /// `HOME` pointed at `home` and every other variable the plugin-listed check reads unset.
-  private static func isolatedOpenCodeEnvironment(home: URL) -> [String: String?] {
-    ["HOME": home.path, "XDG_CONFIG_HOME": nil, "OPENCODE_CONFIG": nil, "OPENCODE_CONFIG_DIR": nil]
+  /// `HOME` pointed at `home`, `XDG_CACHE_HOME` at `cacheHome` (by default a cache home beside `home` holding the
+  /// plugin at this CLI's version), and every other variable the plugin checks read unset.
+  private static func isolatedOpenCodeEnvironment(home: URL, cacheHome: URL? = nil) -> [String: String?] {
+    [
+      "HOME": home.path,
+      "XDG_CACHE_HOME": (cacheHome ?? pluginCacheHome(beside: home)).path,
+      "XDG_CONFIG_HOME": nil,
+      "OPENCODE_CONFIG": nil,
+      "OPENCODE_CONFIG_DIR": nil,
+    ]
+  }
+
+  /// A cache home beside `home`: `<home>-cache`, holding the plugin `make opencode-install` installs with
+  /// `packageJSON` as its `package.json`, or no plugin when `packageJSON` is nil.
+  private static func pluginCacheHome(
+    beside home: URL,
+    packageJSON: String? = "{\"name\": \"opencode-personakit\", \"version\": \"\(PersonaKitVersion.current)\"}"
+  ) -> URL {
+    let cacheHome = URL(fileURLWithPath: home.path + "-cache")
+    try? FileManager.default.createDirectory(at: cacheHome, withIntermediateDirectories: true)
+    if let packageJSON {
+      let plugin = cacheHome.appendingPathComponent("opencode/personakit/plugin")
+      try? FileManager.default.createDirectory(at: plugin, withIntermediateDirectories: true)
+      try? Data(packageJSON.utf8).write(to: plugin.appendingPathComponent("package.json"))
+    }
+    return cacheHome
+  }
+
+  /// The spec `make opencode-install` writes for the default cache home beside `home`.
+  private static func pluginSpec(home: URL) -> String {
+    "file://\(home.path)-cache/opencode/personakit/plugin"
   }
 
   /// Sets or unsets process environment variables for `body`, then restores them.
@@ -1230,7 +1260,8 @@ struct CLIEnforceTests {
     let result = runOpenCodeInstall(projectDir: projectDir, home: home)
 
     #expect(result.status == 0)
-    #expect(result.stderr.contains("opencode plugin opencode-personakit@"))
+    #expect(result.stderr.contains("does not list the PersonaKit plugin"))
+    #expect(result.stderr.contains("make opencode-install"))
     // The check reads config; it never writes it.
     #expect(
       try String(contentsOf: projectDir.appendingPathComponent("opencode.json"), encoding: .utf8)
@@ -1241,36 +1272,102 @@ struct CLIEnforceTests {
   @Test(arguments: [
     "opencode.json", "opencode.jsonc", ".opencode/opencode.json", ".opencode/opencode.jsonc",
   ])
-  func openCodeInstallDoesNotWarnWhenProjectConfigListsPlugin(relativePath: String) throws {
+  func openCodeInstallWarnsWhenOnlyProjectConfigListsPlugin(relativePath: String) throws {
     let projectDir = try freshProjectDir("pk-oc-listed")
     let home = try freshProjectDir("pk-oc-home")
     let config = projectDir.appendingPathComponent(relativePath)
-    try FileManager.default.createDirectory(
-      at: config.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    // JSONC with a comment: the check is a substring search, not a parse.
-    try Data("{ // plugins\n \"plugin\": [\"opencode-personakit@2.1.0\"] }".utf8).write(to: config)
+    try writePluginListing(in: config.deletingLastPathComponent(), name: config.lastPathComponent, home: home)
 
     let result = runOpenCodeInstall(projectDir: projectDir, home: home)
 
     #expect(result.status == 0)
-    #expect(!result.stderr.contains("opencode plugin opencode-personakit@"))
+    #expect(result.stderr.contains("does not list the PersonaKit plugin"))
+  }
+
+  @Test(arguments: ["config.json", "opencode.json", "opencode.jsonc"])
+  func openCodeInstallDoesNotWarnWhenGlobalConfigListsPlugin(name: String) throws {
+    let projectDir = try freshProjectDir("pk-oc-global")
+    let home = try freshProjectDir("pk-oc-home")
+    try writePluginListing(in: home.appendingPathComponent(".config/opencode"), name: name, home: home)
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+
+    #expect(result.status == 0)
+    #expect(!result.stderr.contains("does not list the PersonaKit plugin"))
   }
 
   @Test
-  func openCodeInstallDoesNotWarnWhenGlobalConfigListsPlugin() throws {
-    let projectDir = try freshProjectDir("pk-oc-global")
+  func openCodeInstallRefusesWhenThePluginIsMissing() throws {
     let home = try freshProjectDir("pk-oc-home")
-    let globalDir = home.appendingPathComponent(".config/opencode")
-    try FileManager.default.createDirectory(at: globalDir, withIntermediateDirectories: true)
-    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8)
-      .write(to: globalDir.appendingPathComponent("opencode.json"))
+    let noDirectory = Self.pluginCacheHome(beside: home, packageJSON: nil)
+    let noPackage = try freshProjectDir("pk-oc-cache-empty")
+    try FileManager.default.createDirectory(
+      at: noPackage.appendingPathComponent("opencode/personakit/plugin"),
+      withIntermediateDirectories: true
+    )
 
-    let result = runOpenCodeInstall(projectDir: projectDir, home: home)
+    for cacheHome in [noDirectory, noPackage] {
+      for dryRun in [false, true] {
+        let projectDir = try freshProjectDir("pk-oc-missing")
+        let result = runOpenCodeInstall(projectDir: projectDir, home: home, cacheHome: cacheHome, dryRun: dryRun)
+
+        #expect(result.status != 0)
+        #expect(
+          result.stderr.contains("the OpenCode plugin is not installed at \(cacheHome.path)/opencode/personakit/plugin")
+        )
+        #expect(
+          result.stderr.contains(
+            "Run `make opencode-install` from a PersonaKit checkout of tag v\(PersonaKitVersion.current)"
+          )
+        )
+        #expect(tree(projectDir).isEmpty)
+      }
+    }
+  }
+
+  @Test
+  func openCodeInstallRefusesWhenThePluginVersionDiffers() throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let cacheHome = Self.pluginCacheHome(beside: home, packageJSON: "{\"version\": \"0.0.1\"}")
+
+    for dryRun in [false, true] {
+      let projectDir = try freshProjectDir("pk-oc-mismatch")
+      let result = runOpenCodeInstall(projectDir: projectDir, home: home, cacheHome: cacheHome, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect(result.stderr.contains("(plugin 0.0.1, CLI \(PersonaKitVersion.current))"))
+      #expect(
+        result.stderr.contains(
+          "Run `make opencode-install` from a PersonaKit checkout of tag v\(PersonaKitVersion.current)"
+        )
+      )
+      #expect(tree(projectDir).isEmpty)
+    }
+  }
+
+  @Test(arguments: ["{ not json", "[]", "{}", "{\"version\": 2}"])
+  func openCodeInstallRefusesWhenThePluginVersionIsUnreadable(packageJSON: String) throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let projectDir = try freshProjectDir("pk-oc-unreadable")
+    let cacheHome = Self.pluginCacheHome(beside: home, packageJSON: packageJSON)
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, cacheHome: cacheHome)
+
+    #expect(result.status != 0)
+    #expect(result.stderr.contains("has no readable \"version\""))
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test
+  func openCodeInstallSucceedsWhenThePluginVersionMatches() throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let projectDir = try freshProjectDir("pk-oc-match")
+
+    let result = runOpenCodeInstall(projectDir: projectDir, home: home, cacheHome: Self.pluginCacheHome(beside: home))
 
     #expect(result.status == 0)
-    #expect(!result.stderr.contains("opencode plugin opencode-personakit@"))
+    #expect(!result.stderr.contains("Refusing"))
+    #expect(tree(projectDir).contains(".opencode/personakit/\(Self.openCodeSessionId).checks.json"))
   }
 
   @Test
@@ -1552,63 +1649,117 @@ struct CLIEnforceTests {
     let result = runOpenCodeInstall(projectDir: projectDir, home: home)
 
     #expect(result.status == 0)
-    #expect(result.stderr.contains("opencode plugin opencode-personakit@"))
+    #expect(result.stderr.contains("does not list the PersonaKit plugin"))
     #expect(tree(home).isEmpty)
   }
 
-  /// Writes an OpenCode config listing the plugin at `directory/name`.
-  private func writePluginListing(in directory: URL, name: String = "opencode.json") throws {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    try Data("{\"plugin\": [\"opencode-personakit@2.1.0\"]}".utf8).write(to: directory.appendingPathComponent(name))
+  /// Writes an OpenCode config at `directory/name` listing `spec`, by default the one `make opencode-install`
+  /// writes for the cache home beside `home`.
+  private func writePluginListing(in directory: URL, name: String = "opencode.json", home: URL) throws {
+    try writePluginListing(in: directory, name: name, body: "{\"plugin\": [\"\(Self.pluginSpec(home: home))\"]}")
   }
 
-  private func listsPlugin(projectDir: URL, _ environment: [String: String]) -> Bool {
-    EnforceInstallCommand.openCodeConfigListsPlugin(
-      projectRoot: projectDir,
-      environment: environment,
-      passwdHome: { nil }
-    )
+  private func writePluginListing(in directory: URL, name: String = "opencode.json", body: String) throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data(body.utf8).write(to: directory.appendingPathComponent(name))
+  }
+
+  private func listsPlugin(_ environment: [String: String]) -> Bool {
+    EnforceInstallCommand.openCodeConfigListsPlugin(environment: environment, passwdHome: { nil })
   }
 
   @Test
   func openCodeConfigListingHonorsXDGConfigHome() throws {
-    let projectDir = try freshProjectDir("pk-oc-xdg")
     let home = try freshProjectDir("pk-oc-home")
     let xdg = try freshProjectDir("pk-oc-xdg-home")
-    try writePluginListing(in: xdg.appendingPathComponent("opencode"))
+    try writePluginListing(in: xdg.appendingPathComponent("opencode"), home: home)
     // A listing under $HOME/.config is ignored once XDG_CONFIG_HOME is set.
-    try writePluginListing(in: home.appendingPathComponent(".config/opencode"))
+    try writePluginListing(in: home.appendingPathComponent(".config/opencode"), home: home)
     let emptyXDG = try freshProjectDir("pk-oc-xdg-empty")
+    let cache = ["XDG_CACHE_HOME": home.path + "-cache"]
 
-    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path, "XDG_CONFIG_HOME": xdg.path]))
-    #expect(!listsPlugin(projectDir: projectDir, ["HOME": home.path, "XDG_CONFIG_HOME": emptyXDG.path]))
-    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path]))
+    #expect(listsPlugin(cache.merging(["HOME": home.path, "XDG_CONFIG_HOME": xdg.path]) { $1 }))
+    #expect(!listsPlugin(cache.merging(["HOME": home.path, "XDG_CONFIG_HOME": emptyXDG.path]) { $1 }))
+    #expect(listsPlugin(cache.merging(["HOME": home.path]) { $1 }))
+    #expect(listsPlugin(cache.merging(["HOME": home.path, "XDG_CONFIG_HOME": ""]) { $1 }))
   }
 
   @Test
-  func openCodeConfigListingReadsEveryConfigLocation() throws {
+  func openCodeConfigListingReadsOnlyTheMachineWideConfig() throws {
     let projectDir = try freshProjectDir("pk-oc-locations")
     let home = try freshProjectDir("pk-oc-home")
-    #expect(!listsPlugin(projectDir: projectDir, ["HOME": home.path]))
+    let environment = ["HOME": home.path, "XDG_CACHE_HOME": home.path + "-cache"]
+    #expect(!listsPlugin(environment))
 
     let configFile = try freshProjectDir("pk-oc-config-file")
-    try writePluginListing(in: configFile, name: "custom.jsonc")
+    try writePluginListing(in: configFile, name: "custom.jsonc", home: home)
+    let configDir = try freshProjectDir("pk-oc-config-dir")
+    try writePluginListing(in: configDir, name: "opencode.jsonc", home: home)
+    try writePluginListing(in: home.appendingPathComponent(".opencode"), home: home)
+    try writePluginListing(in: projectDir, home: home)
+    try writePluginListing(in: projectDir.appendingPathComponent(".opencode"), home: home)
     #expect(
-      listsPlugin(
-        projectDir: projectDir,
-        ["HOME": home.path, "OPENCODE_CONFIG": configFile.appendingPathComponent("custom.jsonc").path]
+      !listsPlugin(
+        environment.merging([
+          "OPENCODE_CONFIG": configFile.appendingPathComponent("custom.jsonc").path,
+          "OPENCODE_CONFIG_DIR": configDir.path,
+        ]) { $1 }
       )
     )
 
-    let configDir = try freshProjectDir("pk-oc-config-dir")
-    try writePluginListing(in: configDir, name: "opencode.jsonc")
-    #expect(listsPlugin(projectDir: projectDir, ["HOME": home.path, "OPENCODE_CONFIG_DIR": configDir.path]))
+    try writePluginListing(in: home.appendingPathComponent(".config/opencode"), name: "opencode.jsonc", home: home)
+    #expect(listsPlugin(environment))
+  }
 
-    let dotHome = try freshProjectDir("pk-oc-dot-home")
-    try writePluginListing(in: dotHome.appendingPathComponent(".opencode"))
-    #expect(listsPlugin(projectDir: projectDir, ["HOME": dotHome.path]))
+  @Test
+  func openCodeConfigListingFollowsTheCacheHome() throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let globalDir = home.appendingPathComponent(".config/opencode")
+    try writePluginListing(
+      in: globalDir,
+      body: "{\"plugin\": [\"file://\(home.path)/.cache/opencode/personakit/plugin\"]}"
+    )
 
-    try writePluginListing(in: projectDir.appendingPathComponent(".opencode"))
-    #expect(listsPlugin(projectDir: projectDir, [:]))
+    #expect(listsPlugin(["HOME": home.path]))
+    #expect(listsPlugin(["HOME": home.path, "XDG_CACHE_HOME": ""]))
+    #expect(listsPlugin(["HOME": home.path, "XDG_CACHE_HOME": "\(home.path)/x/../.cache/"]))
+    #expect(!listsPlugin(["HOME": home.path, "XDG_CACHE_HOME": "/elsewhere"]))
+    // Without HOME, the passwd home stands in.
+    #expect(
+      EnforceInstallCommand.openCodeConfigListsPlugin(
+        environment: ["XDG_CONFIG_HOME": home.path + "/.config"],
+        passwdHome: { home.path }
+      )
+    )
+    #expect(!listsPlugin([:]))
+  }
+
+  @Test
+  func openCodeConfigListingParsesJSONCAndMatchesOnlyTheInstalledSpec() throws {
+    let home = try freshProjectDir("pk-oc-home")
+    let environment = ["HOME": home.path, "XDG_CACHE_HOME": home.path + "-cache"]
+    let spec = Self.pluginSpec(home: home)
+    let globalDir = home.appendingPathComponent(".config/opencode")
+
+    func lists(_ body: String) throws -> Bool {
+      try writePluginListing(in: globalDir, name: "opencode.jsonc", body: body)
+      return listsPlugin(environment)
+    }
+
+    #expect(try lists("{ // plugins\n \"plugin\": [\"\(spec)\",], /* end */ }"))
+    #expect(try lists("{\"plugin\": [\"other\", [\"\(spec)\", {\"personakitPath\": \"/x\"}]]}"))
+    for listed in [
+      "opencode-personakit", "opencode-personakit@\(PersonaKitVersion.current)", "opencode-personakit@latest",
+      "\(spec)/", "\(spec)-evil", "\(spec)/Integrations/OpenCode/src/server.ts", "file://\(home.path)/plugin",
+      "FILE://\(home.path)-cache/opencode/personakit/plugin", "\(home.path)-cache/opencode/personakit/plugin",
+      " \(spec)",
+    ] {
+      #expect(try !lists("{\"plugin\": [\"\(listed)\"]}"), "\(listed)")
+    }
+    for body in [
+      "{\"plugin\": [[[\"\(spec)\"]]]}", "{\"plugin\": \"\(spec)\"}", "{\"plugin\": [\"\(spec)\"", "[\"\(spec)\"]", "",
+    ] {
+      #expect(try !lists(body), "\(body)")
+    }
   }
 }
