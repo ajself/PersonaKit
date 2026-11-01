@@ -168,7 +168,7 @@ extension MCPResourceService {
           use: "personakit_export with sessionId",
           when: "Call when work begins and the full rule text is needed.",
           returns:
-            "The complete assembled contract as Markdown in one call. If you hold a persona id, "
+            "The complete contract as Markdown handoff context in one call. If you hold a persona id, "
             + "personakit_explain_entity returns its sessions, so export is reachable in two calls."
         ),
       ],
@@ -304,13 +304,13 @@ extension MCPResourceService {
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit_export",
-          use: "Use when a human-readable assembled Markdown prompt is needed."
+          use: "Use when human-readable handoff context is needed."
         ),
       ],
       promptMap: [
         MCPCatalogPayloads.StartEntry(
           id: "personakit.session.export",
-          use: "User-selected prompt that returns assembled Markdown context."
+          use: "User-selected prompt that returns the session's handoff context."
         ),
         MCPCatalogPayloads.StartEntry(
           id: "personakit.session.graph",

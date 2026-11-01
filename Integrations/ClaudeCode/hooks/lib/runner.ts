@@ -78,6 +78,6 @@ export async function loadPreview($: RunnerDollar, binary: string, ids: Contract
   const contract = parseContract(contractOut.stdout)
   if (contract === undefined) return { kind: 'failed', message: 'contract output was not a contract' }
   const details = parseExport(exportOut.stdout)
-  if (details === undefined) return { kind: 'failed', message: 'export output was not an export' }
+  if (details === undefined) return { kind: 'failed', message: 'export output was not handoff context' }
   return { kind: 'loaded', contract, details }
 }

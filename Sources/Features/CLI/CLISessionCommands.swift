@@ -84,11 +84,11 @@ struct ContractCommand: ParsableCommand {
   }
 }
 
-/// Exports a resolved PersonaKit session as text.
+/// Exports a resolved PersonaKit session as handoff context.
 struct ExportCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "export",
-    abstract: "Export a session prompt."
+    abstract: "Export a session's handoff context."
   )
 
   @OptionGroup
@@ -142,11 +142,11 @@ struct ExportCommand: ParsableCommand {
         try AtomicFileWriter().write(contents: output, to: outputURL)
       } else if copyToClipboard {
         guard CLIEnvironment.current.clipboardIO.writeString(output) else {
-          throw CLIError.failure("Failed to copy prompt to the clipboard.")
+          throw CLIError.failure("Failed to copy handoff context to the clipboard.")
         }
 
         var stderrStream = StandardError()
-        stderrStream.write("Copied prompt to clipboard.\n")
+        stderrStream.write("Copied handoff context to clipboard.\n")
       } else {
         print(output)
       }
@@ -174,7 +174,7 @@ struct ExportCommand: ParsableCommand {
     }
   }
 
-  /// Builds a deterministic one-line size summary for a resolved export payload.
+  /// Builds a deterministic one-line size summary for exported handoff context.
   static func statsSummary(for output: String) -> String {
     let lineCount = output.isEmpty ? 0 : output.split(separator: "\n", omittingEmptySubsequences: false).count
     let byteCount = output.utf8.count
@@ -192,7 +192,7 @@ struct ExportCommand: ParsableCommand {
 struct ResolveGroundingSkillsCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "resolve-grounding-skills",
-    abstract: "Resolve triggered references for a session prompt."
+    abstract: "Resolve triggered references for a session's handoff context."
   )
 
   @OptionGroup

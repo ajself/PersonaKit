@@ -120,8 +120,8 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
   const watching = () => {
     if (enforcement().kind !== 'advisory') return { text: 'Off while a PersonaKit hook is installed', isMuted: true }
     const d = details()
-    if (!d) return { text: 'Off until an export is seen', isMuted: true }
-    if (!d.deniedActionClasses.length) return { text: 'Nothing denied by the export', isMuted: true }
+    if (!d) return { text: 'Off until handoff context is seen', isMuted: true }
+    if (!d.deniedActionClasses.length) return { text: 'Nothing denied by the handoff context', isMuted: true }
     return { text: d.deniedActionClasses.join(', '), isMuted: false }
   }
   const subagents = () => Object.entries(props.state.subagents).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
@@ -217,7 +217,7 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
           <text fg={watching().isMuted ? theme().textMuted : theme().text}>
             {line(watching().text)}
             <Show when={!watching().isMuted}>
-              <span style={{ fg: theme().textMuted }}> · from the export</span>
+              <span style={{ fg: theme().textMuted }}> · from the handoff context</span>
             </Show>
           </text>
         </Row>

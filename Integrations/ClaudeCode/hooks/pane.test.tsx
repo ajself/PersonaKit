@@ -134,7 +134,7 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '◆ stop'])
   expect(await row(ui, 'Mode')).toEqual(['Mode', 'project-only'])
   expect(await row(ui, 'State')).toEqual(['State', 'Advisory · no hook installed'])
-  expect(await row(ui, 'Watching')).toEqual(['Watching', 'command-execution, file-mutation, network-egress · from the export'])
+  expect(await row(ui, 'Watching')).toEqual(['Watching', 'command-execution, file-mutation, network-egress · from the handoff context'])
   expect(await row(ui, 'Compactions')).toEqual(['Compactions', '1 · re-ground?'])
   expect(await text(ui, /^Write/)).toBe('Write advisory · file-mutation · main · turn 0')
   // Clean authorization: no authorization block.
@@ -295,7 +295,7 @@ each('with no contract the pane gives the /pk use hint and no Re-ground', async 
   expect(await chips(ui)).toEqual(['● Advisory', '✓ No drift'])
   // Only the Contract | Library switch: nothing to Re-ground.
   expect((await ui.findAll({ type: 'Button' })).map((b) => b.key)).toEqual(['switch-contract', 'switch-library'])
-  expect(await row(ui, 'Watching')).toEqual(['Watching', 'Off until an export is seen'])
+  expect(await row(ui, 'Watching')).toEqual(['Watching', 'Off until handoff context is seen'])
   await ui.unmount()
 })
 

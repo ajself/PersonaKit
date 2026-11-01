@@ -173,12 +173,12 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
 
   const watching = (() => {
     if (enforcement.kind !== 'advisory') return <Text dimColor>Off while a PersonaKit hook is installed</Text>
-    if (!details) return <Text dimColor>Off until an export is seen</Text>
-    if (!details.deniedActionClasses.length) return <Text dimColor>Nothing denied by the export</Text>
+    if (!details) return <Text dimColor>Off until handoff context is seen</Text>
+    if (!details.deniedActionClasses.length) return <Text dimColor>Nothing denied by the handoff context</Text>
     return (
       <Text>
         {details.deniedActionClasses.join(', ')}
-        <Text dimColor> · from the export</Text>
+        <Text dimColor> · from the handoff context</Text>
       </Text>
     )
   })()

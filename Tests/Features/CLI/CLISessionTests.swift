@@ -112,7 +112,7 @@ struct CLISessionTests {
     }
 
     #expect(status == 0)
-    #expect(stderrOutput.contains("Copied prompt to clipboard."))
+    #expect(stderrOutput.contains("Copied handoff context to clipboard."))
     #expect(clipboardContents.withLock { $0 } == expected)
   }
 
@@ -356,6 +356,6 @@ struct CLISessionTests {
     }
 
     #expect(status == 1)
-    #expect(stderrOutput.contains("Failed to copy prompt to the clipboard."))
+    #expect(stderrOutput.contains("Failed to copy handoff context to the clipboard."))
   }
 }

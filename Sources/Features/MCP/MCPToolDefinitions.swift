@@ -29,7 +29,8 @@ enum MCPToolName: String, CaseIterable {
     case .explainEntity:
       return "Explain a PersonaKit entity with key fields and relationship edges."
     case .export:
-      return "Assemble a resolved PersonaKit contract into Markdown when human-readable grounding is needed."
+      return
+        "Assemble a resolved PersonaKit contract into Markdown handoff context when human-readable grounding is needed."
     case .graph:
       return "Print a readable dependency graph for a session."
     case .recommendSession:
