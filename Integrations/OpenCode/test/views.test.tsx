@@ -200,6 +200,13 @@ test('libraryErrorsListed', async () => {
   expect(frame).toContain('[ Refresh ]')
 })
 
+test('libraryNamesTheVersionAnOldCLINeeds', async () => {
+  const r = await open({ list: '', listExit: 64, view: { kind: 'library' } })
+  const frame = await r.frame((f) => f.includes('This needs PersonaKit'))
+  expect(frame).toContain('This needs PersonaKit 2.2.0 or later.')
+  expect(frame).not.toContain('personakitPath')
+})
+
 test('libraryRowStripsControlChars', async () => {
   // The id reaches the route as JSON's escape; parsed, it carries a real ESC.
   const list = LIST_JSON.replaceAll(SESSION, ESC_ID_JSON).replace('"Read-Only Auditor"', '"Read\\u001b[31m-Only Auditor"')

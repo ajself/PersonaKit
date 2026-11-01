@@ -660,12 +660,28 @@ each('no library says where it looked', async ($, w, surface) => {
   await ui.unmount()
 })
 
-each('a binary that will not run names itself and the option to set', async ($, w, surface) => {
-  w.process = () => ran('', 64, 'usage: personakit list <kind>')
+each('a binary that will not start names itself and the option to set', async ($, w, surface) => {
+  w.process = () => ({ deny: 'spawn personakit ENOENT' })
   await pk($, '')
   const ui = await mount($, surface)
   const shown = (await text(ui, /^Couldn't run personakit/))!
   expect(shown).toMatch(/^Couldn't run personakit: .+\. Set the personakitPath option if PersonaKit is installed elsewhere\.$/)
+  await ui.unmount()
+})
+
+each('a CLI too old for the Library names the version it needs and what the CLI said', async ($, w, surface) => {
+  w.process = () => ran('', 64, 'usage: personakit list <kind>')
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^This needs PersonaKit/)).toBe('This needs PersonaKit 2.2.0 or later. usage: personakit list <kind>')
+  await ui.unmount()
+})
+
+each('a CLI that timed out names itself without the personakitPath option', async ($, w, surface) => {
+  w.process = () => ({ deny: 'command timed out after 30000ms' })
+  await pk($, '')
+  const ui = await mount($, surface)
+  expect(await text(ui, /^Couldn't run personakit/)).toMatch(/^Couldn't run personakit: .*timed out after 30000ms\.$/)
   await ui.unmount()
 })
 

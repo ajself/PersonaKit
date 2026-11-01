@@ -92,8 +92,8 @@ test('refreshLibraryRunsTheGivenBinary', async () => {
 
 test('loadLibraryStartFailure', async () => {
   const load = await loadLibrary(world(() => 'spawn personakit ENOENT').$, 'personakit')
-  expect(load.kind).toBe('unavailable')
-  if (load.kind !== 'unavailable') return
+  expect(load.kind).toBe('missing')
+  if (load.kind !== 'missing') return
   expect(load.binary).toBe('personakit')
   expect(load.detail).toContain('ENOENT')
 })
@@ -120,8 +120,18 @@ test('loadLibraryTruncatedOutput', async () => {
 })
 
 test('loadLibraryOldBinary', async () => {
-  const load = await loadLibrary(world(() => ran('', 64, 'Usage: personakit list <kind>')).$, 'personakit')
+  const load = await loadLibrary(world(() => ran('', 64, 'Usage: personakit list <kind>\nSee personakit list --help')).$, 'personakit')
+  expect(load).toEqual({ kind: 'outdated', detail: 'Usage: personakit list <kind>' })
+})
+
+test('loadLibraryFailureWithOutputIsNotOutdated', async () => {
+  const load = await loadLibrary(world(() => ran('Usage: personakit list <kind>', 64)).$, 'personakit')
   expect(load.kind).toBe('unavailable')
+})
+
+test('loadLibraryWrapperWithoutItsTargetIsMissing', async () => {
+  const load = await loadLibrary(world(() => ran('', 127, 'pk-shim: line 2: /gone/personakit: not found')).$, '/opt/pk-shim')
+  expect(load).toEqual({ kind: 'missing', binary: '/opt/pk-shim', detail: 'pk-shim: line 2: /gone/personakit: not found' })
 })
 
 test('loadLibraryErrorsDocument', async () => {

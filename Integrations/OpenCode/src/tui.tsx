@@ -79,8 +79,12 @@ function libraryProblem(load: Exclude<LibraryLoad, { kind: 'loaded' }>): string 
   switch (load.kind) {
     case 'no-library':
       return 'PersonaKit: no library here (no .personakit in this project and no ~/.personakit)'
-    case 'unavailable':
+    case 'missing':
       return `PersonaKit: couldn't run ${load.binary}: ${load.detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`
+    case 'outdated':
+      return `PersonaKit: this needs PersonaKit 2.2.0 or later.${load.detail ? ` ${load.detail}` : ''}`
+    case 'unavailable':
+      return `PersonaKit: couldn't run ${load.binary}: ${load.detail}.`
     case 'errors':
       return 'PersonaKit: the library has errors; open /pk to see them'
     case 'no-process':

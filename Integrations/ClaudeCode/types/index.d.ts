@@ -57,6 +57,8 @@ export type LibraryLoad =
   | { kind: 'idle' } | { kind: 'loading'; token: number }
   | { kind: 'loaded'; library: Library } | { kind: 'no-library' }
   | { kind: 'errors'; errors: LibraryError[] }
+  | { kind: 'missing'; binary: string; detail: string }
+  | { kind: 'outdated'; detail: string }
   | { kind: 'unavailable'; binary: string; detail: string }
   | { kind: 'no-process' }
 export type View =

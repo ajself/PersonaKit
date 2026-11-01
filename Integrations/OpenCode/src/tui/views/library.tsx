@@ -369,12 +369,18 @@ export function LoadState(props: { load: Exclude<LibraryLoad, { kind: 'loaded' }
       <Match when={props.load.kind === 'no-library'}>
         <text fg={theme().text}>No PersonaKit library here: no .personakit in this project and no ~/.personakit.</text>
       </Match>
-      <Match when={props.load.kind === 'unavailable' && props.load}>
+      <Match when={props.load.kind === 'missing' && props.load}>
         {(load) => (
           <text fg={theme().text}>
             {line(`Couldn't run ${load().binary}: ${load().detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`)}
           </text>
         )}
+      </Match>
+      <Match when={props.load.kind === 'outdated' && props.load}>
+        {(load) => <text fg={theme().text}>{line(`This needs PersonaKit 2.2.0 or later.${load().detail ? ` ${load().detail}` : ''}`)}</text>}
+      </Match>
+      <Match when={props.load.kind === 'unavailable' && props.load}>
+        {(load) => <text fg={theme().text}>{line(`Couldn't run ${load().binary}: ${load().detail}.`)}</text>}
       </Match>
       <Match when={props.load.kind === 'no-process'}>
         <text fg={theme().text}>This host can't run PersonaKit, so the Library isn't available here. The Contract view still works.</text>

@@ -27,8 +27,10 @@ const messageOf = (error: unknown) => (error instanceof Error ? error.message : 
 const firstLine = (text: string) => text.trim().split('\n')[0]?.slice(0, 200) ?? ''
 
 /**
- * Runs `personakit list all --json` and reads it. A binary that cannot start, or timed out, is unavailable; any
- * other rejection means the host cannot run processes at all. `$.process` itself is never inspected.
+ * Runs `personakit list all --json` and reads it. A binary that cannot start, or a wrapper whose target cannot (exit 126
+ * or 127), is missing; one that timed out is unavailable; any other rejection means the host cannot run processes at
+ * all. Another failure with nothing on stdout is a CLI older than `list all --json`, which always prints a document.
+ * `$.process` itself is never inspected.
  */
 export async function loadLibrary($: RunnerDollar, binary: string): Promise<LibraryLoad> {
   let result: ProcessRunResult
@@ -36,9 +38,14 @@ export async function loadLibrary($: RunnerDollar, binary: string): Promise<Libr
     result = await $.process.run([binary, 'list', 'all', '--json'])
   } catch (error) {
     const detail = messageOf(error)
-    return CANNOT_START.test(detail) || TIMED_OUT.test(detail) ? { kind: 'unavailable', binary, detail } : { kind: 'no-process' }
+    if (CANNOT_START.test(detail)) return { kind: 'missing', binary, detail }
+    return TIMED_OUT.test(detail) ? { kind: 'unavailable', binary, detail } : { kind: 'no-process' }
   }
   if (result.isStdoutTruncated) return { kind: 'unavailable', binary, detail: TRUNCATED }
+  if (result.exitCode === 126 || result.exitCode === 127) {
+    return { kind: 'missing', binary, detail: firstLine(result.stderr) || `exit ${result.exitCode}` }
+  }
+  if (result.exitCode !== 0 && result.stdout.trim() === '') return { kind: 'outdated', detail: firstLine(result.stderr) }
   return parseLibrary(result.stdout, result.exitCode, binary)
 }
 

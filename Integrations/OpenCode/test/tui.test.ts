@@ -426,6 +426,19 @@ test('pkUseToastsWhenTheLibraryCannotLoad', async () => {
   expect(fake.record.toasts[0]!.message).toContain('personakitPath')
 })
 
+test('pkUseToastsTheVersionAnOldCLINeeds', async () => {
+  const dir = tempDir('pk-old-')
+  const file = join(dir, 'personakit')
+  writeFileSync(file, `#!/bin/sh\necho "Error: Unexpected argument 'all'" >&2\nexit 64\n`)
+  chmodSync(file, 0o755)
+  const fake = await start(fakeApi(), { personakitPath: file })
+  await commands(fake).find((command) => command.slashName === 'pk-use')!.run({})
+  expect(fake.record.dialogs).toEqual([])
+  expect(fake.record.toasts.map((toast) => toast.message)).toEqual([
+    "PersonaKit: this needs PersonaKit 2.2.0 or later. Error: Unexpected argument 'all'",
+  ])
+})
+
 /** Writes the one enforcement manifest in `dir`. */
 const writeManifest = (dir: string, text: string) => {
   mkdirSync(join(dir, '.opencode', 'personakit'), { recursive: true })

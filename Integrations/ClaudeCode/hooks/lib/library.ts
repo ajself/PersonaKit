@@ -12,7 +12,7 @@ import type {
 } from '../../types'
 
 type Obj = Record<string, unknown>
-type Parsed = Exclude<LibraryLoad, { kind: 'idle' | 'loading' | 'no-process' }>
+type Parsed = Exclude<LibraryLoad, { kind: 'idle' | 'loading' | 'no-process' | 'missing' | 'outdated' }>
 
 const obj = (v: unknown): Obj | undefined => (typeof v === 'object' && v !== null && !Array.isArray(v) ? (v as Obj) : undefined)
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)

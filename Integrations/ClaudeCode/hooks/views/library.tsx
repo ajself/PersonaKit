@@ -54,12 +54,16 @@ function loadState(el: El, load: Exclude<LibraryLoad, { kind: 'loaded' }>): Rend
       return [<Text key="loading" dimColor>Loading the library…</Text>]
     case 'no-library':
       return [<Text key="no-library">No PersonaKit library here: no .personakit in this project and no ~/.personakit.</Text>]
-    case 'unavailable':
+    case 'missing':
       return [
-        <Text key="unavailable">
+        <Text key="missing">
           {`Couldn't run ${load.binary}: ${load.detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`}
         </Text>,
       ]
+    case 'outdated':
+      return [<Text key="outdated">{`This needs PersonaKit 2.2.0 or later.${load.detail ? ` ${load.detail}` : ''}`}</Text>]
+    case 'unavailable':
+      return [<Text key="unavailable">{`Couldn't run ${load.binary}: ${load.detail}.`}</Text>]
     case 'no-process':
       return [<Text key="no-process">This host can't run PersonaKit, so the Library isn't available here. The Contract view still works.</Text>]
     case 'errors':
