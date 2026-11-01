@@ -2,7 +2,7 @@ import Foundation
 
 /// Why the workspace is reloading.
 enum WorkspaceReloadTrigger: Equatable {
-  /// The user opened, saved, connected, or otherwise asked for fresh data.
+  /// The user opened, saved, or otherwise asked for fresh data.
   case explicit
   /// Files changed on disk outside Studio's own write paths (or through them; reloads are
   /// idempotent either way).
@@ -56,7 +56,7 @@ extension WorkspaceStore {
   }
 
   /// Starts (or keeps) watching the loaded workspace. Called after each successful load so
-  /// the watch follows a newly created `.personakit` folder or a newly connected library.
+  /// the watch follows a newly created project `.personakit` folder or `~/.personakit`.
   func watchLoadedWorkspace() {
     loadFeatureModel.startWatching(directories: liveReloadDirectories) { [weak self] changedFileURLs in
       self?.reloadWorkspaceAfterExternalChange(changedFileURLs: changedFileURLs)

@@ -1,13 +1,11 @@
 import AppKit
 import SwiftUI
 
-/// Session preview detail content.
+/// Session handoff-context detail content.
 struct SessionsPreviewTabView: View {
   let sessionPreview: String
   let sessionPreviewErrorMessage: String?
   let isLoadingSessionPreview: Bool
-  let isGlobalLibraryConnected: Bool
-  let onConnectGlobalLibrary: () -> Void
 
   var body: some View {
     Group {
@@ -16,41 +14,24 @@ struct SessionsPreviewTabView: View {
           VStack(alignment: .center, spacing: 10) {
             ProgressView()
 
-            Text("Loading preview...")
+            Text("Loading handoff context...")
               .foregroundStyle(.secondary)
           }
         }
       } else if let sessionPreviewErrorMessage {
         stateContainer {
-          // A disconnected global library is the overwhelmingly common cause of a preview
-          // failure, so offer the fix right here instead of making the user discover the
-          // Connect action buried in Validation Results. If connecting does not resolve it,
-          // the refreshed preview falls through to the raw error below.
-          if !isGlobalLibraryConnected {
-            ContentUnavailableView {
-              Label("Global Library Not Connected", systemImage: "link.badge.plus")
-            } description: {
-              Text(
-                "This session uses personas, directives, or kits from your global library (~/.personakit). Connect it to preview them."
-              )
-            } actions: {
-              Button("Connect Global Library…", action: onConnectGlobalLibrary)
-                .buttonStyle(.borderedProminent)
-            }
-          } else {
-            ContentUnavailableView(
-              "Preview Failed",
-              systemImage: "exclamationmark.triangle",
-              description: Text(sessionPreviewErrorMessage)
-            )
-          }
+          ContentUnavailableView(
+            "Handoff Context Failed",
+            systemImage: "exclamationmark.triangle",
+            description: Text(sessionPreviewErrorMessage)
+          )
         }
       } else if sessionPreview.isEmpty {
         stateContainer {
           ContentUnavailableView(
-            "No Preview",
+            "No Handoff Context",
             systemImage: "doc.plaintext",
-            description: Text("Generate a preview for the selected session.")
+            description: Text("Generate handoff context for the selected session.")
           )
         }
       } else {

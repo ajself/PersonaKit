@@ -5,104 +5,61 @@ import Testing
 
 @testable import StudioFeatures
 
-/// Coverage for applying a global-library grant to a live store (Tranche 4, S1).
+/// Coverage for how a store resolves the global library: environment override, the
+/// user's `~/.personakit`, or project-only when neither exists.
 @MainActor
 struct WorkspaceStoreGlobalScopeTests {
   @Test
-  func setGlobalScopeReloadsAndRevalidatesOpenWorkspace() async throws {
-    let (workspaceURL, _, globalScopeURL) = try makeGlobalOnlyReferenceWorkspace()
+  func projectOnlyStoreReportsUnresolvedReferencesAsErrors() async throws {
+    let (workspaceURL, _, _) = try makeGlobalOnlyReferenceWorkspace()
 
-    // Launch-configured-style store with no grant: builders read the late-bindable box.
+    // No global library: references to shared entities can't resolve and are real errors.
     let provider = WorkspaceGlobalScopeProvider(initialURL: nil, fallback: { nil })
     let store = WorkspaceStore(globalScopeProvider: provider)
 
     store.workspaceURL = workspaceURL
     store.loadWorkspace()
 
-    // Without the global scope, the session's references read as missing.
-    await waitFor {
-      !store.validation.issues.isEmpty
-    }
+    await waitFor { !store.validation.issues.isEmpty }
 
-    // Granting the global library flips the previously-failing references clean.
-    // A completed clean run reports `errors=0` (distinct from the `.empty` reset state).
-    store.setGlobalScope(globalScopeURL)
-
-    await waitFor {
-      store.validation.issues.isEmpty
-        && store.validation.summary.contains("errors=0")
-        && store.loadErrorMessage == nil
-    }
+    let report = StudioValidationReportState(
+      snapshot: store.snapshot,
+      validation: store.validation,
+      validationErrorMessage: store.validationErrorMessage
+    )
+    #expect(report.issues == store.validation.issues)
+    #expect(report.status == .issues(store.validation.issues.count))
   }
 
   @Test
-  func connectGlobalLibraryGrantsRevalidatesAndClearsBanner() async throws {
-    let (workspaceURL, _, globalScopeURL) = try makeGlobalOnlyReferenceWorkspace()
-
-    // No grant yet, and the fallback resolves nothing — the global library is unconnected.
-    let provider = WorkspaceGlobalScopeProvider(initialURL: nil, fallback: { nil })
-    let store = WorkspaceStore(
-      globalScopeProvider: provider,
-      globalLibraryPicker: WorkspaceStoreStubGlobalLibraryPicker(selectedURL: globalScopeURL)
+  func providerFallbackPicksUpLibraryCreatedAfterLaunch() throws {
+    let globalScopeURL = try makeTempDirectory().appendingPathComponent(".personakit")
+    let provider = WorkspaceGlobalScopeProvider(
+      initialURL: nil,
+      fallback: {
+        WorkspaceScopeResolver.directoryExists(globalScopeURL) ? globalScopeURL : nil
+      }
     )
 
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
+    #expect(provider.current() == nil)
 
-    await waitFor { !store.validation.issues.isEmpty }
+    try FileManager.default.createDirectory(at: globalScopeURL, withIntermediateDirectories: true)
 
-    // Disconnected: the unresolved references fold into the Connect banner.
-    #expect(!store.isGlobalLibraryConnected)
-    let beforeReport = StudioValidationReportState(
-      snapshot: store.snapshot,
-      validation: store.validation,
-      validationErrorMessage: store.validationErrorMessage,
-      globalLibraryConnected: store.isGlobalLibraryConnected
-    )
-    #expect(beforeReport.showsGlobalLibraryBanner)
-    #expect(beforeReport.issues.isEmpty)
-
-    // Connecting picks the global library, applies it, and revalidates clean.
-    store.connectGlobalLibrary()
-
-    await waitFor {
-      store.validation.issues.isEmpty
-        && store.validation.summary.contains("errors=0")
-    }
-
-    #expect(store.isGlobalLibraryConnected)
-    #expect(store.globalLibraryConnectWarning == nil)
-    let afterReport = StudioValidationReportState(
-      snapshot: store.snapshot,
-      validation: store.validation,
-      validationErrorMessage: store.validationErrorMessage,
-      globalLibraryConnected: store.isGlobalLibraryConnected
-    )
-    #expect(!afterReport.showsGlobalLibraryBanner)
+    #expect(provider.current() == globalScopeURL)
   }
 
   @Test
-  func connectGlobalLibraryWarnsWhenPickedFolderHasNoPacks() async throws {
-    let (workspaceURL, _, _) = try makeGlobalOnlyReferenceWorkspace()
-    // A folder that exists but is not a PersonaKit root (no `Packs/`).
-    let emptyFolder = try makeTempDirectory().appendingPathComponent("not-a-library")
-    try FileManager.default.createDirectory(at: emptyFolder, withIntermediateDirectories: true)
-
-    let provider = WorkspaceGlobalScopeProvider(initialURL: nil, fallback: { nil })
-    let store = WorkspaceStore(
-      globalScopeProvider: provider,
-      globalLibraryPicker: WorkspaceStoreStubGlobalLibraryPicker(selectedURL: emptyFolder)
+  func launchConfiguredPrefersEnvironmentOverride() {
+    let envPath = "/env/.personakit"
+    let store = WorkspaceStore.launchConfigured(
+      environment: [StudioLaunchConfiguration.globalScopePathEnvironmentKey: envPath],
+      fileEventSource: nil
     )
 
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-    await waitFor { !store.validation.issues.isEmpty }
-
-    store.connectGlobalLibrary()
-
-    // The grant still applies (non-blocking), but the mismatch is flagged.
-    #expect(store.globalLibraryConnectWarning != nil)
-    #expect(store.isGlobalLibraryConnected)
+    #expect(
+      store.globalScopeProvider?.current()
+        == URL(fileURLWithPath: envPath, isDirectory: true).standardizedFileURL
+    )
   }
 
   @Test
@@ -114,7 +71,8 @@ struct WorkspaceStoreGlobalScopeTests {
     let store = WorkspaceStore.launchConfigured(
       environment: [
         StudioLaunchConfiguration.globalScopePathEnvironmentKey: globalScopeURL.path()
-      ]
+      ],
+      fileEventSource: nil
     )
 
     store.workspaceURL = workspaceURL
@@ -124,30 +82,5 @@ struct WorkspaceStoreGlobalScopeTests {
       store.validation.issues.isEmpty
         && store.validation.summary.contains("errors=0")
     }
-  }
-
-  @Test
-  func setGlobalScopeWithoutProviderIsNoOp() async throws {
-    let (workspaceURL, _, globalScopeURL) = try makeGlobalOnlyReferenceWorkspace()
-
-    // A store built without a late-bindable provider cannot late-bind a grant.
-    // Fixed `{ nil }` providers keep this project-scope-only and off the real home.
-    let store = WorkspaceStore(
-      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeProvider: { nil }),
-      workspaceValidator: WorkspaceValidator(globalScopeProvider: { nil })
-    )
-
-    store.workspaceURL = workspaceURL
-    store.loadWorkspace()
-
-    await waitFor {
-      !store.validation.issues.isEmpty
-    }
-
-    let issuesBefore = store.validation.issues
-    store.setGlobalScope(globalScopeURL)
-
-    // No reload/revalidate happens, so the issues are unchanged.
-    #expect(store.validation.issues == issuesBefore)
   }
 }

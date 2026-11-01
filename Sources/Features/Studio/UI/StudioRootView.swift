@@ -88,33 +88,23 @@ public struct StudioRootView: View {
       if workspaceStore.workspaceURL != previousWorkspaceURL {
         recordCurrentWorkspaceIfLoaded()
       }
-
-      workspaceStore.refreshInstallStatus()
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       // A global item keeps its identity across workspaces, so a carried-over selection would
       // never re-select the detail the store just cleared.
       selectedLibraryItemID = nil
     }
-    .alert(
-      workspaceStore.installResult?.title ?? "",
+    .sheet(
       isPresented: Binding(
-        get: {
-          workspaceStore.installResult != nil
-        },
-        set: { isPresented in
-          if !isPresented {
-            workspaceStore.dismissInstallResult()
-          }
+        get: { workspaceStore.isAgentSetupPresented },
+        set: { workspaceStore.isAgentSetupPresented = $0 }
+      )
+    ) {
+      StudioAgentSetupSheetView(
+        onDone: {
+          workspaceStore.isAgentSetupPresented = false
         }
-      ),
-      presenting: workspaceStore.installResult
-    ) { _ in
-      Button("OK") {
-        workspaceStore.dismissInstallResult()
-      }
-    } message: { result in
-      Text(result.message)
+      )
     }
   }
 
@@ -264,8 +254,7 @@ public struct StudioRootView: View {
       workspaceURL: workspaceURL,
       snapshot: workspaceStore.snapshot,
       validation: workspaceStore.validation,
-      validationErrorMessage: workspaceStore.validationErrorMessage,
-      globalLibraryConnected: workspaceStore.isGlobalLibraryConnected
+      validationErrorMessage: workspaceStore.validationErrorMessage
     )
   }
 

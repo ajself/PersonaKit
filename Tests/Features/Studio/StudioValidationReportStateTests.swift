@@ -121,57 +121,17 @@ struct StudioValidationReportStateTests {
   }
 
   @Test
-  func disconnectedGlobalLibraryFoldsReferenceIssuesIntoBanner() {
+  func unresolvedReferenceIssuesAreShownAsRealErrors() {
     let report = StudioValidationReportState(
       snapshot: snapshot(),
       validation: WorkspaceValidationSnapshot(
         summary: "Validation summary: errors=2",
         issues: [referenceMissingIssue(), structuralIssue()]
       ),
-      validationErrorMessage: nil,
-      globalLibraryConnected: false
+      validationErrorMessage: nil
     )
 
-    // The unresolved reference is folded into the banner; the structural error stays.
-    #expect(report.showsGlobalLibraryBanner)
-    #expect(report.suppressedGlobalReferenceIssues.map(\.field) == ["personaId"])
-    #expect(report.issues.map(\.field) == ["schema"])
-    #expect(report.issueCountText == "1 issue")
-    #expect(report.affectedFilesText == "1 affected file")
-  }
-
-  @Test
-  func disconnectedGlobalLibraryWithOnlyReferenceIssuesReadsCleanBehindBanner() {
-    let report = StudioValidationReportState(
-      snapshot: snapshot(),
-      validation: WorkspaceValidationSnapshot(
-        summary: "Validation summary: errors=1",
-        issues: [referenceMissingIssue()]
-      ),
-      validationErrorMessage: nil,
-      globalLibraryConnected: false
-    )
-
-    #expect(report.showsGlobalLibraryBanner)
-    #expect(report.issues.isEmpty)
-    #expect(report.statusHeadline == "No validation issues reported")
-  }
-
-  @Test
-  func connectedGlobalLibraryShowsReferenceIssuesAsRealErrors() {
-    let report = StudioValidationReportState(
-      snapshot: snapshot(),
-      validation: WorkspaceValidationSnapshot(
-        summary: "Validation summary: errors=2",
-        issues: [referenceMissingIssue(), structuralIssue()]
-      ),
-      validationErrorMessage: nil,
-      globalLibraryConnected: true
-    )
-
-    #expect(!report.showsGlobalLibraryBanner)
-    #expect(report.suppressedGlobalReferenceIssues.isEmpty)
-    #expect(report.issues.count == 2)
+    #expect(report.issues.map(\.field) == ["personaId", "schema"])
     #expect(report.statusHeadline == "2 issues need review")
   }
 

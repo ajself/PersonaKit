@@ -11,27 +11,15 @@ final class WorkspaceSystemFeatureModel {
   private let workspacePicker: any WorkspacePicking
   private let workspaceInitializer: WorkspaceInitializer
   private let fileRevealer: any FileRevealing
-  private let installEnvironment: any WorkspaceInstallEnvironmentProviding
-  private let installFileSystem: any WorkspaceInstallFileOperating
-  private let openCodeConfigFile: any OpenCodeConfigurationFileAccessing
 
   init(
     workspacePicker: any WorkspacePicking,
     workspaceInitializer: WorkspaceInitializer,
-    fileRevealer: any FileRevealing,
-    installEnvironment: any WorkspaceInstallEnvironmentProviding =
-      WorkspaceInstallEnvironmentClient(),
-    installFileSystem: any WorkspaceInstallFileOperating =
-      WorkspaceInstallFileSystemClient(),
-    openCodeConfigFile: any OpenCodeConfigurationFileAccessing =
-      OpenCodeConfigurationFileClient()
+    fileRevealer: any FileRevealing
   ) {
     self.workspacePicker = workspacePicker
     self.workspaceInitializer = workspaceInitializer
     self.fileRevealer = fileRevealer
-    self.installEnvironment = installEnvironment
-    self.installFileSystem = installFileSystem
-    self.openCodeConfigFile = openCodeConfigFile
   }
 
   /// Presents the workspace picker and returns the selected folder URL.
@@ -74,17 +62,5 @@ final class WorkspaceSystemFeatureModel {
     }
 
     fileRevealer.reveal(fileURL)
-  }
-
-  func installEnvironmentStatus() -> any WorkspaceInstallEnvironmentProviding {
-    installEnvironment
-  }
-
-  func installFileSystemClient() -> any WorkspaceInstallFileOperating {
-    installFileSystem
-  }
-
-  func openCodeConfigFileClient() -> any OpenCodeConfigurationFileAccessing {
-    openCodeConfigFile
   }
 }

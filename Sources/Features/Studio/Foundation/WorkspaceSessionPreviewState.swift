@@ -51,7 +51,7 @@ package struct WorkspaceSessionPreviewState: Sendable {
 
   package func defaultFilename() -> String {
     guard let previewSessionID else {
-      return "session-preview.md"
+      return "session-handoff.md"
     }
 
     return "\(previewSessionID).md"

@@ -8,59 +8,36 @@ extension WorkspaceStore {
   ) -> WorkspaceStore {
     launchConfigured(
       environment: environment,
-      globalLibraryAccess: StudioGlobalLibraryAccess(
-        bookmarkStore: StudioGlobalLibraryBookmarkUserDefaultsStore(
-          userDefaults: StudioLaunchConfiguration.userDefaults(environment: environment)
-        )
-      ),
       fileEventSource: FSEventsWorkspaceFileEventStream()
     )
   }
 
-  /// Launch precedence for the initial global scope: environment override →
-  /// persisted bookmark grant → none (fall back to the live default).
+  /// Launch precedence for the global scope: environment override → `~/.personakit` in
+  /// the user's real home, when it exists → none (project-only).
   static func launchConfigured(
     environment: [String: String],
-    globalLibraryAccess: StudioGlobalLibraryAccess,
-    fileEventSource: (any WorkspaceFileEventStreaming)? = nil
+    fileEventSource: (any WorkspaceFileEventStreaming)?
   ) -> WorkspaceStore {
-    let initialURL =
-      StudioLaunchConfiguration.globalScopeURL(environment: environment)
-      ?? globalLibraryAccess.resolveGrantedURL()
     let provider = WorkspaceGlobalScopeProvider(
-      initialURL: initialURL,
-      fallback: { WorkspaceScopeResolver.defaultGlobalScopeURL(fileManager: .default) }
+      initialURL: StudioLaunchConfiguration.globalScopeURL(environment: environment),
+      fallback: { WorkspaceGlobalScopeProvider.userHomeGlobalScopeURL() }
     )
 
-    // Route through the provider-wiring convenience init so the builders/validator read
-    // the late-bindable box — otherwise the grant updates the box but nothing reads it.
+    // Route through the provider-wiring init so the builders/validator read the box.
     return WorkspaceStore(
       globalScopeProvider: provider,
-      globalLibraryAccess: globalLibraryAccess,
       fileEventSource: fileEventSource
     )
   }
 
   /// Builds a store whose snapshot/validation/preview/maps read the global library
-  /// through a late-bindable provider, so a post-launch grant can be applied via
-  /// ``setGlobalScope(_:)`` without rebuilding the store.
-  public convenience init(
-    globalScopeProvider: WorkspaceGlobalScopeProvider,
-    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
-    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
-  ) {
-    self.init(
-      globalScopeProvider: globalScopeProvider,
-      globalLibraryAccess: globalLibraryAccess,
-      globalLibraryPicker: globalLibraryPicker,
-      fileEventSource: nil
-    )
+  /// through the supplied provider.
+  public convenience init(globalScopeProvider: WorkspaceGlobalScopeProvider) {
+    self.init(globalScopeProvider: globalScopeProvider, fileEventSource: nil)
   }
 
   convenience init(
     globalScopeProvider: WorkspaceGlobalScopeProvider,
-    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
-    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient(),
     fileEventSource: (any WorkspaceFileEventStreaming)?
   ) {
     let scope: @Sendable () -> URL? = { globalScopeProvider.current() }
@@ -87,8 +64,6 @@ extension WorkspaceStore {
         globalScopeProvider: scope
       ),
       globalScopeProvider: globalScopeProvider,
-      globalLibraryAccess: globalLibraryAccess,
-      globalLibraryPicker: globalLibraryPicker,
       fileEventSource: fileEventSource,
       liveReloadClock: ContinuousClock()
     )

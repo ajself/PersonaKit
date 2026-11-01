@@ -273,90 +273,17 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
-  func installOrUpdateCLIStoresResultAndRefreshesStatus() throws {
-    let homeDirectoryURL = try makeTempDirectory()
-    let bundledCLIURL = homeDirectoryURL.appendingPathComponent("Bundle/PersonaKitCLI")
-    let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
-      "Bundle/PersonaKit_ContextCore.bundle"
-    )
-    let bundledSupportMarkerURL =
-      bundledSupportBundleURL
-      .appendingPathComponent("Contents/Resources/marker.txt")
-    try FileManager.default.createDirectory(
-      at: bundledCLIURL.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    try Data("bundled-cli".utf8).write(to: bundledCLIURL, options: [.atomic])
-    try FileManager.default.createDirectory(
-      at: bundledSupportMarkerURL.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    try Data("bundled-support".utf8).write(to: bundledSupportMarkerURL, options: [.atomic])
-    try FileManager.default.setAttributes(
-      [.posixPermissions: 0o755],
-      ofItemAtPath: bundledCLIURL.path()
-    )
+  func presentAgentSetupShowsTheSheet() {
     let store = WorkspaceStore(
-      installEnvironment: WorkspaceStoreStubInstallEnvironment(
-        rootHomeDirectoryURL: homeDirectoryURL,
-        resolvedBundledCLIURL: bundledCLIURL,
-        resolvedBundledCLISupportBundleURL: bundledSupportBundleURL
-      )
+      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeProvider: { nil }),
+      workspaceValidator: WorkspaceValidator(globalScopeProvider: { nil })
     )
 
-    store.installOrUpdateCLI()
+    #expect(!store.isAgentSetupPresented)
 
-    #expect(store.installResult?.outcome == .installed)
-    #expect(
-      store.installStatus.installedCLIURL?.path()
-        == homeDirectoryURL.appendingPathComponent(".local/bin/personakit").path()
-    )
-    #expect(
-      FileManager.default.fileExists(
-        atPath: homeDirectoryURL.appendingPathComponent(
-          ".local/bin/PersonaKit_ContextCore.bundle/Contents/Resources/marker.txt"
-        )
-        .path()
-      )
-    )
-  }
+    store.presentAgentSetup()
 
-  @Test
-  func installOrUpdateOpenCodeMCPStoresResultAndRefreshesStatus() throws {
-    let homeDirectoryURL = try makeTempDirectory()
-    let bundledCLIURL = homeDirectoryURL.appendingPathComponent("Bundle/PersonaKitCLI")
-    let bundledSupportBundleURL = homeDirectoryURL.appendingPathComponent(
-      "Bundle/PersonaKit_ContextCore.bundle"
-    )
-    let bundledSupportMarkerURL =
-      bundledSupportBundleURL
-      .appendingPathComponent("Contents/Resources/marker.txt")
-    try FileManager.default.createDirectory(
-      at: bundledCLIURL.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    try Data("bundled-cli".utf8).write(to: bundledCLIURL, options: [.atomic])
-    try FileManager.default.createDirectory(
-      at: bundledSupportMarkerURL.deletingLastPathComponent(),
-      withIntermediateDirectories: true
-    )
-    try Data("bundled-support".utf8).write(to: bundledSupportMarkerURL, options: [.atomic])
-    try FileManager.default.setAttributes(
-      [.posixPermissions: 0o755],
-      ofItemAtPath: bundledCLIURL.path()
-    )
-    let store = WorkspaceStore(
-      installEnvironment: WorkspaceStoreStubInstallEnvironment(
-        rootHomeDirectoryURL: homeDirectoryURL,
-        resolvedBundledCLIURL: bundledCLIURL,
-        resolvedBundledCLISupportBundleURL: bundledSupportBundleURL
-      )
-    )
-
-    store.installOrUpdateOpenCodeMCP()
-
-    #expect(store.installResult?.outcome == .installed)
-    #expect(store.installStatus.openCodeMCPCommandPath == bundledCLIURL.path())
+    #expect(store.isAgentSetupPresented)
   }
 
   private func yieldTasks(_ iterations: Int = 50) async {

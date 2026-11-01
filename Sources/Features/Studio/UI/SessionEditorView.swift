@@ -5,8 +5,8 @@ import SwiftUI
 /// Modal editor for creating and updating session files.
 struct SessionEditorView: View {
   let title: String
-  let personaIDs: [String]
-  let directiveIDs: [String]
+  let personaOptions: SessionEditorReferenceOptions
+  let directiveOptions: SessionEditorReferenceOptions
   let kitIDs: [String]
   let draftSessionMap: WorkspaceSessionMap?
   let draftSessionMapErrorMessage: String?
@@ -40,8 +40,6 @@ struct SessionEditorView: View {
     onRefreshMap: @escaping (WorkspaceSessionDraft) -> Void
   ) {
     self.title = title
-    self.personaIDs = personaIDs
-    self.directiveIDs = directiveIDs
     self.kitIDs = kitIDs
     self.draftSessionMap = draftSessionMap
     self.draftSessionMapErrorMessage = draftSessionMapErrorMessage
@@ -51,18 +49,20 @@ struct SessionEditorView: View {
     self.onSave = onSave
     self.onRefreshMap = onRefreshMap
 
-    let resolvedPersonaID = Self.resolvedSelection(
+    let personaOptions = SessionEditorReferenceOptions(
       requestedID: initialDraft.personaId,
-      candidates: personaIDs
+      loadedIDs: personaIDs
     )
-    let resolvedDirectiveID = Self.resolvedSelection(
+    let directiveOptions = SessionEditorReferenceOptions(
       requestedID: initialDraft.directiveId,
-      candidates: directiveIDs
+      loadedIDs: directiveIDs
     )
+    self.personaOptions = personaOptions
+    self.directiveOptions = directiveOptions
 
     _id = State(initialValue: initialDraft.id)
-    _personaID = State(initialValue: resolvedPersonaID)
-    _directiveID = State(initialValue: resolvedDirectiveID)
+    _personaID = State(initialValue: personaOptions.initialSelection)
+    _directiveID = State(initialValue: directiveOptions.initialSelection)
     _selectedKitIDs = State(initialValue: Set(initialDraft.kitOverrides))
   }
 
@@ -76,8 +76,8 @@ struct SessionEditorView: View {
         id: $id,
         personaID: $personaID,
         directiveID: $directiveID,
-        personaIDs: personaIDs,
-        directiveIDs: directiveIDs,
+        personaOptions: personaOptions,
+        directiveOptions: directiveOptions,
         kitIDs: kitIDs,
         bindingForKitOverride: { kitID in
           bindingForKitOverride(kitID)
@@ -170,14 +170,6 @@ struct SessionEditorView: View {
     id.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
-  private var isPersonaValid: Bool {
-    personaIDs.contains(personaID)
-  }
-
-  private var isDirectiveValid: Bool {
-    directiveIDs.contains(directiveID)
-  }
-
   private var validationMessage: String {
     if normalizedID.isEmpty {
       return "Session id is required."
@@ -187,11 +179,19 @@ struct SessionEditorView: View {
       return "Use letters, numbers, hyphen, underscore, or period for session id."
     }
 
-    if !isPersonaValid {
+    if personaID == personaOptions.unloadedID {
+      return "Persona \"\(personaID)\" isn't loaded. Choose a loaded persona."
+    }
+
+    if !personaOptions.isLoaded(personaID) {
       return "Choose a valid persona."
     }
 
-    if !isDirectiveValid {
+    if directiveID == directiveOptions.unloadedID {
+      return "Directive \"\(directiveID)\" isn't loaded. Choose a loaded directive."
+    }
+
+    if !directiveOptions.isLoaded(directiveID) {
       return "Choose a valid directive."
     }
 
@@ -268,17 +268,6 @@ struct SessionEditorView: View {
         }
       }
     }
-  }
-
-  private static func resolvedSelection(
-    requestedID: String,
-    candidates: [String]
-  ) -> String {
-    if candidates.contains(requestedID) {
-      return requestedID
-    }
-
-    return candidates.first ?? ""
   }
 
   private func isValidSessionID(_ value: String) -> Bool {

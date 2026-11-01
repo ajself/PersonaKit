@@ -247,41 +247,11 @@ struct WorkspaceStoreStubLibraryEntityManager: WorkspaceLibraryEntityManaging, S
   }
 }
 
-struct WorkspaceStoreStubInstallEnvironment: WorkspaceInstallEnvironmentProviding, Sendable {
-  let rootHomeDirectoryURL: URL
-  let resolvedBundledCLIURL: URL?
-  let resolvedBundledCLISupportBundleURL: URL?
-
-  @MainActor
-  func homeDirectoryURL() -> URL {
-    rootHomeDirectoryURL.standardizedFileURL
-  }
-
-  @MainActor
-  func bundledCLIURL() -> URL? {
-    resolvedBundledCLIURL?.standardizedFileURL
-  }
-
-  @MainActor
-  func bundledCLISupportBundleURL() -> URL? {
-    resolvedBundledCLISupportBundleURL?.standardizedFileURL
-  }
-}
-
 struct WorkspaceStoreStubWorkspacePicker: WorkspacePicking {
   let selectedURL: URL?
 
   @MainActor
   func pickWorkspaceURL() -> URL? {
-    selectedURL
-  }
-}
-
-struct WorkspaceStoreStubGlobalLibraryPicker: GlobalLibraryDirectoryPicking {
-  let selectedURL: URL?
-
-  @MainActor
-  func pickGlobalLibraryURL() -> URL? {
     selectedURL
   }
 }

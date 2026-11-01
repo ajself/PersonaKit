@@ -5,8 +5,8 @@ struct SessionEditorFormSectionsView: View {
   @Binding var id: String
   @Binding var personaID: String
   @Binding var directiveID: String
-  let personaIDs: [String]
-  let directiveIDs: [String]
+  let personaOptions: SessionEditorReferenceOptions
+  let directiveOptions: SessionEditorReferenceOptions
   let kitIDs: [String]
   let bindingForKitOverride: (String) -> Binding<Bool>
 
@@ -15,19 +15,9 @@ struct SessionEditorFormSectionsView: View {
       Section("Session") {
         TextField("Session id", text: $id)
 
-        Picker("Persona", selection: $personaID) {
-          ForEach(personaIDs, id: \.self) { item in
-            Text(item)
-              .tag(item)
-          }
-        }
+        referencePicker("Persona", selection: $personaID, options: personaOptions)
 
-        Picker("Directive", selection: $directiveID) {
-          ForEach(directiveIDs, id: \.self) { item in
-            Text(item)
-              .tag(item)
-          }
-        }
+        referencePicker("Directive", selection: $directiveID, options: directiveOptions)
       }
 
       Section("Kit Overrides") {
@@ -44,5 +34,23 @@ struct SessionEditorFormSectionsView: View {
       }
     }
     .formStyle(.grouped)
+  }
+
+  private func referencePicker(
+    _ title: String,
+    selection: Binding<String>,
+    options: SessionEditorReferenceOptions
+  ) -> some View {
+    Picker(title, selection: selection) {
+      ForEach(options.loadedIDs, id: \.self) { item in
+        Text(item)
+          .tag(item)
+      }
+
+      if let unloadedID = options.unloadedID {
+        Text(SessionEditorReferenceOptions.unloadedTitle(for: unloadedID))
+          .tag(unloadedID)
+      }
+    }
   }
 }

@@ -16,8 +16,7 @@ struct StudioDiagnosticsPanelView: View {
     let report = StudioValidationReportState(
       snapshot: workspaceStore.snapshot,
       validation: workspaceStore.validation,
-      validationErrorMessage: workspaceStore.validationErrorMessage,
-      globalLibraryConnected: workspaceStore.isGlobalLibraryConnected
+      validationErrorMessage: workspaceStore.validationErrorMessage
     )
     let issues = report.visibleIssues(
       selectedFilterID: selectedIssueFilterID,
@@ -25,8 +24,8 @@ struct StudioDiagnosticsPanelView: View {
     )
 
     // Root as a ScrollView so its content insets below the window toolbar. A plain
-    // VStack detail underlaps the unified toolbar, hiding the header (and the global
-    // library Connect banner) behind it; a scroll container reserves that safe area.
+    // VStack detail underlaps the unified toolbar, hiding the header behind it; a scroll
+    // container reserves that safe area.
     ScrollView {
       VStack(alignment: .leading, spacing: 14) {
         StudioDiagnosticsHeaderView(
@@ -36,21 +35,6 @@ struct StudioDiagnosticsPanelView: View {
             workspaceStore.validateWorkspace()
           }
         )
-
-        if report.showsGlobalLibraryBanner {
-          StudioGlobalLibraryBannerView(
-            onConnect: {
-              workspaceStore.connectGlobalLibrary()
-            }
-          )
-        }
-
-        if let warning = workspaceStore.globalLibraryConnectWarning {
-          Label(warning, systemImage: "exclamationmark.triangle")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityLabel("Global library warning: \(warning)")
-        }
 
         if let validationErrorMessage = workspaceStore.validationErrorMessage {
           ContentUnavailableView(
@@ -129,46 +113,6 @@ struct StudioDiagnosticsPanelView: View {
         selectedIssueFilterID = "all"
       }
     }
-  }
-}
-
-/// Single, honest prompt shown when the global library is not connected: shared-entity
-/// references can't be verified (we don't yet know whether they exist), so we offer a
-/// Connect action rather than reporting each reference as a missing-id error.
-private struct StudioGlobalLibraryBannerView: View {
-  let onConnect: () -> Void
-
-  var body: some View {
-    HStack(alignment: .top, spacing: 10) {
-      Image(systemName: "link.badge.plus")
-        .foregroundStyle(.orange)
-        .frame(width: 18)
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text("Global Library Not Connected")
-          .font(.subheadline)
-          .fontWeight(.semibold)
-
-        Text(
-          "References to items in your global library (~/.personakit) can't be checked until you connect it."
-        )
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-      }
-
-      Spacer(minLength: 8)
-
-      Button("Connect Global Library…", action: onConnect)
-        .controlSize(.small)
-    }
-    .padding(12)
-    .background(
-      RoundedRectangle(cornerRadius: StudioDesign.Radius.card)
-        .fill(.orange.opacity(StudioDesign.tintOpacity))
-    )
-    .accessibilityElement(children: .contain)
-    .accessibilityLabel("Global library not connected. References to global library items can't be checked.")
   }
 }
 

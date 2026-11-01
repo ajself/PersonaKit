@@ -95,22 +95,8 @@ extension WorkspaceStore {
     recentWorkspacesFeatureModel.stopAccess()
   }
 
-  func refreshInstallStatus() {
-    installStatus = systemFeatureModel.refreshInstallStatus()
-  }
-
-  func installOrUpdateCLI() {
-    installResult = systemFeatureModel.installOrUpdateCLI()
-    refreshInstallStatus()
-  }
-
-  func installOrUpdateOpenCodeMCP() {
-    installResult = systemFeatureModel.installOrUpdateOpenCodeMCP()
-    refreshInstallStatus()
-  }
-
-  func dismissInstallResult() {
-    installResult = nil
+  func presentAgentSetup() {
+    isAgentSetupPresented = true
   }
 
   /// Creates a minimal PersonaKit folder structure at the selected workspace and reloads state.
@@ -132,14 +118,6 @@ extension WorkspaceStore {
     }
   }
 
-  /// `true` when the global PersonaKit library is currently readable — either through a
-  /// user grant applied to this store's provider, or (in unsandboxed builds) the live
-  /// `~/.personakit` default. While `false`, unresolved shared-entity references can't be
-  /// verified, so Studio surfaces the Connect prompt instead of per-reference errors.
-  var isGlobalLibraryConnected: Bool {
-    currentGlobalScopeURL != nil
-  }
-
   /// The global library root the snapshot, validator, and maps currently read, if any.
   var currentGlobalScopeURL: URL? {
     if let globalScopeProvider {
@@ -149,47 +127,12 @@ extension WorkspaceStore {
     return WorkspaceScopeResolver.defaultGlobalScopeURL()
   }
 
-  /// Presents the global-library folder picker, persists the grant for future launches,
-  /// applies it to the live provider, and revalidates the open workspace. A picked folder
-  /// without a `Packs/` directory is accepted but flagged with a non-blocking warning —
-  /// connecting a wrong or empty root leaves any genuine breakage visible as real errors.
-  func connectGlobalLibrary() {
-    globalLibraryConnectWarning = nil
-
-    guard let pickedURL = globalLibraryPicker.pickGlobalLibraryURL() else {
-      return
-    }
-
-    let grantedURL = pickedURL.standardizedFileURL
-    globalLibraryAccess?.persist(grantedURL: grantedURL)
-
-    if !WorkspaceScopeResolver.directoryExists(PersonaKitDirectory.packsURL(root: grantedURL)) {
-      globalLibraryConnectWarning =
-        "The selected folder has no Packs directory, so it may not be a PersonaKit library."
-    }
-
-    setGlobalScope(grantedURL)
-  }
-
-  /// Applies a user-granted global library scope (or clears it with `nil`) and reloads
-  /// the open workspace so snapshot, validation, and maps re-resolve against it.
-  ///
-  /// No-op when this store was not launch-configured with a late-bindable provider.
-  public func setGlobalScope(_ url: URL?) {
-    guard let globalScopeProvider else {
-      return
-    }
-
-    globalScopeProvider.setURL(url)
-    loadWorkspace()
-  }
-
   /// Reloads workspace data into the current snapshot and error state.
   func loadWorkspace() {
     loadWorkspace(trigger: .explicit)
   }
 
-  /// Reloads the workspace. An explicit reload (open, save, connect) resets in-flight work
+  /// Reloads the workspace. An explicit reload (open, save) resets in-flight work
   /// and shows validation progress; a reload for an external file change keeps everything
   /// on screen and lets each owner decide whether the changed files concern it.
   func loadWorkspace(trigger: WorkspaceReloadTrigger) {

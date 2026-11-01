@@ -5,13 +5,13 @@ extension WorkspaceSessionFeatureModel {
   func copyPreviewToPasteboard() throws {
     guard !state.preview.isEmpty else {
       throw WorkspaceSnapshotBuildError(
-        message: "No preview is available to copy."
+        message: "No handoff context is available to copy."
       )
     }
 
     guard pasteboardWriter.writeString(state.preview) else {
       throw WorkspaceSnapshotBuildError(
-        message: "Failed to copy preview to the clipboard."
+        message: "Failed to copy handoff context to the clipboard."
       )
     }
   }
@@ -19,7 +19,7 @@ extension WorkspaceSessionFeatureModel {
   func exportPreviewWithSavePanel() async throws -> Bool {
     guard !state.preview.isEmpty else {
       throw WorkspaceSnapshotBuildError(
-        message: "No preview is available to export."
+        message: "No handoff context is available to export."
       )
     }
 
@@ -43,7 +43,7 @@ extension WorkspaceSessionFeatureModel {
   func copyPreviewReportingResult() {
     do {
       try copyPreviewToPasteboard()
-      previewActionMessage = "Copied preview to clipboard."
+      previewActionMessage = "Copied handoff context to clipboard."
     } catch {
       previewActionMessage = error.localizedDescription
     }
@@ -60,7 +60,7 @@ extension WorkspaceSessionFeatureModel {
           return
         }
 
-        previewActionMessage = didExport ? "Exported preview markdown." : nil
+        previewActionMessage = didExport ? "Exported handoff context." : nil
       } catch {
         guard !Task.isCancelled else {
           return

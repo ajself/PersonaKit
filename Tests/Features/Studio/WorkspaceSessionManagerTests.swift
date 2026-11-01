@@ -1,6 +1,7 @@
 import ContextWorkspaceCore
 import Foundation
 import StudioFoundation
+import Synchronization
 import Testing
 
 @testable import PersonaKitStudio
@@ -164,6 +165,9 @@ struct WorkspaceSessionManagerTests {
         }
 
         try FileManager.default.removeItem(at: url)
+      },
+      trashItem: { _ in
+        Issue.record("Rename must not trash files.")
       }
     )
     let manager = WorkspaceSessionManager(dependencies: dependencies)
@@ -193,6 +197,42 @@ struct WorkspaceSessionManagerTests {
 
     #expect(FileManager.default.fileExists(atPath: sourceURL.path()))
     #expect(!FileManager.default.fileExists(atPath: destinationURL.path()))
+  }
+
+  @Test
+  func deleteMovesTheSessionFileToTheTrash() throws {
+    let workspaceURL = try makeTempDirectory()
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+    let sessionsURL = projectScopeURL.appendingPathComponent("Sessions")
+    let sessionURL = sessionsURL.appendingPathComponent("session-a.session.json")
+
+    try FileManager.default.createDirectory(
+      at: projectScopeURL.appendingPathComponent("Packs"),
+      withIntermediateDirectories: true
+    )
+    try FileManager.default.createDirectory(at: sessionsURL, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: sessionURL, options: [.atomic])
+
+    let trashed = Mutex<[URL]>([])
+    let live = WorkspaceSessionManagerDependencies.live()
+    let dependencies = WorkspaceSessionManagerDependencies(
+      directoryExists: live.directoryExists,
+      createDirectory: live.createDirectory,
+      fileExists: live.fileExists,
+      readData: live.readData,
+      writeData: live.writeData,
+      removeItem: { _ in
+        Issue.record("Delete must trash the session, not remove it.")
+      },
+      trashItem: { url in
+        trashed.withLock { $0.append(url.standardizedFileURL) }
+      }
+    )
+
+    try WorkspaceSessionManager(dependencies: dependencies)
+      .deleteSession(workspaceURL: workspaceURL, sessionID: "session-a")
+
+    #expect(trashed.withLock { $0 } == [sessionURL.standardizedFileURL])
   }
 
   @Test

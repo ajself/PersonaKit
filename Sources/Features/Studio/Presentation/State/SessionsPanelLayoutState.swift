@@ -7,7 +7,7 @@ enum SessionsDetailMode: String, CaseIterable, Sendable {
   var title: String {
     switch self {
     case .preview:
-      return "Preview"
+      return "Handoff"
     case .map:
       return "Map"
     }
@@ -25,7 +25,7 @@ enum SessionsDetailMode: String, CaseIterable, Sendable {
   var accessibilityHint: String {
     switch self {
     case .preview:
-      return "Shows resolved export text for the selected session."
+      return "Shows the handoff context for the selected session."
     case .map:
       return "Shows dependency relationships and resolution issues for the selected session."
     }

@@ -304,7 +304,7 @@ public struct WorkspaceSessionManager: WorkspaceSessionManaging, Sendable {
     }
 
     do {
-      try dependencies.removeItem(destinationURL)
+      try dependencies.trashItem(destinationURL)
     } catch {
       throw WorkspaceSessionManagerError.deleteFailed(error.localizedDescription)
     }
@@ -319,6 +319,8 @@ public struct WorkspaceSessionManagerDependencies: Sendable {
   public let readData: @Sendable (URL) throws -> Data
   public let writeData: @Sendable (Data, URL) throws -> Void
   public let removeItem: @Sendable (URL) throws -> Void
+  /// Moves a deleted session to the Trash so the user can recover it.
+  public let trashItem: @Sendable (URL) throws -> Void
 
   public init(
     directoryExists: @escaping @Sendable (URL) -> Bool,
@@ -326,7 +328,8 @@ public struct WorkspaceSessionManagerDependencies: Sendable {
     fileExists: @escaping @Sendable (URL) -> Bool,
     readData: @escaping @Sendable (URL) throws -> Data,
     writeData: @escaping @Sendable (Data, URL) throws -> Void,
-    removeItem: @escaping @Sendable (URL) throws -> Void
+    removeItem: @escaping @Sendable (URL) throws -> Void,
+    trashItem: @escaping @Sendable (URL) throws -> Void
   ) {
     self.directoryExists = directoryExists
     self.createDirectory = createDirectory
@@ -334,6 +337,7 @@ public struct WorkspaceSessionManagerDependencies: Sendable {
     self.readData = readData
     self.writeData = writeData
     self.removeItem = removeItem
+    self.trashItem = trashItem
   }
 
   public static func live() -> WorkspaceSessionManagerDependencies {
@@ -362,6 +366,9 @@ public struct WorkspaceSessionManagerDependencies: Sendable {
       },
       removeItem: { url in
         try FileManager.default.removeItem(at: url)
+      },
+      trashItem: { url in
+        try FileManager.default.trashItem(at: url, resultingItemURL: nil)
       }
     )
   }

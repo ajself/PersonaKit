@@ -58,7 +58,7 @@ public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, S
       try dependencies.writeData(Data(preview.utf8), destinationURL)
     } catch {
       throw WorkspaceSnapshotBuildError(
-        message: "Failed to export preview: \(error.localizedDescription)"
+        message: "Failed to export handoff context: \(error.localizedDescription)"
       )
     }
   }
@@ -113,17 +113,7 @@ public struct WorkspaceSessionPreviewManagerDependencies: Sendable {
         FileManager.default.fileExists(atPath: url.path())
       },
       defaultGlobalScopeURL: {
-        let fileManager = FileManager.default
-        let candidate = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".personakit")
-        var isDirectory: ObjCBool = false
-
-        guard fileManager.fileExists(atPath: candidate.path, isDirectory: &isDirectory),
-          isDirectory.boolValue
-        else {
-          return nil
-        }
-
-        return candidate.standardizedFileURL
+        WorkspaceGlobalScopeProvider.userHomeGlobalScopeURL()
       },
       createDirectory: { url in
         try FileManager.default.createDirectory(

@@ -83,7 +83,7 @@ struct StudioWorkspaceSummaryStateTests {
   }
 
   @Test
-  func summaryFoldsReferenceIssuesOutOfCountWhenGlobalLibraryDisconnected() {
+  func summaryCountsUnresolvedReferenceIssuesAsErrors() {
     let validation = WorkspaceValidationSnapshot(
       summary: "Validation summary: errors=2",
       issues: [
@@ -108,25 +108,13 @@ struct StudioWorkspaceSummaryStateTests {
       ]
     )
 
-    // Disconnected: the headline count matches the panel (structural error only).
-    let disconnected = StudioWorkspaceSummaryState(
+    let state = StudioWorkspaceSummaryState(
       workspaceURL: URL(fileURLWithPath: "/Workspace"),
       snapshot: .empty,
       validation: validation,
-      validationErrorMessage: nil,
-      globalLibraryConnected: false
+      validationErrorMessage: nil
     )
-    #expect(disconnected.validationStatus == .issues(1))
-
-    // Connected: both issues count as real errors.
-    let connected = StudioWorkspaceSummaryState(
-      workspaceURL: URL(fileURLWithPath: "/Workspace"),
-      snapshot: .empty,
-      validation: validation,
-      validationErrorMessage: nil,
-      globalLibraryConnected: true
-    )
-    #expect(connected.validationStatus == .issues(2))
+    #expect(state.validationStatus == .issues(2))
   }
 
   @Test

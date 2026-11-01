@@ -17,13 +17,9 @@ public struct StudioAppCommands: Commands {
       .keyboardShortcut("o", modifiers: [.command])
     }
 
-    CommandMenu("Install") {
-      Button("Install or Update CLI…") {
-        workspaceStore.installOrUpdateCLI()
-      }
-
-      Button("Install or Update MCP for OpenCode…") {
-        workspaceStore.installOrUpdateOpenCodeMCP()
+    CommandGroup(after: .appInfo) {
+      Button("Set Up Agents…") {
+        workspaceStore.presentAgentSetup()
       }
     }
   }

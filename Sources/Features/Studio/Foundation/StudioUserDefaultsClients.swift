@@ -27,31 +27,3 @@ package final class StudioRecentWorkspacesUserDefaultsStorage: StudioRecentWorks
     }
   }
 }
-
-/// Reads and writes the security-scoped bookmark for the granted global library.
-@MainActor
-package protocol StudioGlobalLibraryBookmarkStoring: AnyObject {
-  func bookmarkData() -> Data?
-  func setBookmarkData(_ data: Data)
-}
-
-/// Persists the global-library bookmark in `UserDefaults` under a stable key, so existing
-/// users keep their grant across releases.
-@MainActor
-package final class StudioGlobalLibraryBookmarkUserDefaultsStore: StudioGlobalLibraryBookmarkStoring {
-  package nonisolated static let storageKey = "studio.globalLibraryBookmark"
-
-  private let userDefaults: UserDefaults
-
-  package init(userDefaults: UserDefaults) {
-    self.userDefaults = userDefaults
-  }
-
-  package func bookmarkData() -> Data? {
-    userDefaults.data(forKey: Self.storageKey)
-  }
-
-  package func setBookmarkData(_ data: Data) {
-    userDefaults.set(data, forKey: Self.storageKey)
-  }
-}

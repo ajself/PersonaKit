@@ -12,7 +12,7 @@ package protocol WorkspaceFileEventStreaming: Sendable {
 ///
 /// Inside the App Sandbox, FSEvents only reports paths the app can already read, so this
 /// relies on the security-scoped access Studio holds for the open workspace and the
-/// granted global library. It never requests access itself.
+/// entitlement-granted global library. It never requests access itself.
 package struct FSEventsWorkspaceFileEventStream: WorkspaceFileEventStreaming {
   private let latency: TimeInterval
 

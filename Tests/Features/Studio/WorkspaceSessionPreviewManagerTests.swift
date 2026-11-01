@@ -248,7 +248,7 @@ struct WorkspaceSessionPreviewManagerTests {
       try manager.exportPreview("preview", to: destinationURL)
       #expect(Bool(false))
     } catch let error as WorkspaceSnapshotBuildError {
-      #expect(error.message.contains("Failed to export preview"))
+      #expect(error.message.contains("Failed to export handoff context"))
     }
   }
 }

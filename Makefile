@@ -489,10 +489,11 @@ studio-export-release:
 	fi
 
 # Harden gate: hardened runtime, secure timestamp, and the exact distribution
-# entitlement set the global-library grant needs. bookmarks.app-scope must be
-# PRESENT: an app-scoped security bookmark only resolves on a later launch with
-# it, so without it the persisted global-library grant silently fails after the
-# app relaunches. Asserting it keeps the signing surface from drifting.
+# entitlement set. bookmarks.app-scope must be PRESENT: recent workspaces reopen
+# through app-scoped security bookmarks, which only resolve on a later launch
+# with it. The home-relative-path exception for /.personakit/ is how the
+# sandboxed app reads the global library. Asserting both keeps the signing
+# surface from drifting.
 studio-verify-app:
 	@set -e; \
 	app="$(PKG_EXPORT_PATH)/$(APP_NAME).app"; \
@@ -517,7 +518,7 @@ studio-verify-app:
 		exit 1; \
 	fi; \
 	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.files.user-selected.read-write</key><true/>'; then \
-		echo "error: $$app is missing com.apple.security.files.user-selected.read-write; the global-library grant would break."; \
+		echo "error: $$app is missing com.apple.security.files.user-selected.read-write; opening workspaces would break."; \
 		exit 1; \
 	fi; \
 	if printf '%s' "$$norm" | grep -q '<key>com.apple.security.get-task-allow</key><true/>'; then \
@@ -525,10 +526,14 @@ studio-verify-app:
 		exit 1; \
 	fi; \
 	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.files.bookmarks.app-scope</key><true/>'; then \
-		echo "error: $$app is missing com.apple.security.files.bookmarks.app-scope; the persisted global-library grant would not survive a relaunch."; \
+		echo "error: $$app is missing com.apple.security.files.bookmarks.app-scope; recent workspaces would not reopen after a relaunch."; \
 		exit 1; \
 	fi; \
-	echo "studio-verify-app: hardened runtime + secure timestamp OK; sandbox on, user-selected read-write present, app-scope bookmarks present, no get-task-allow."
+	if ! printf '%s' "$$norm" | grep -q '<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key><array><string>/.personakit/</string></array>'; then \
+		echo "error: $$app is missing the home-relative-path read-write exception for /.personakit/; Studio could not read the global library."; \
+		exit 1; \
+	fi; \
+	echo "studio-verify-app: hardened runtime + secure timestamp OK; sandbox on, user-selected read-write present, app-scope bookmarks present, ~/.personakit exception present, no get-task-allow."
 
 studio-pkg-app:
 	@if [ ! -d "$(PKG_EXPORT_PATH)/$(APP_NAME).app" ]; then \

@@ -51,8 +51,7 @@ public final class WorkspaceStore {
   @ObservationIgnored var inFlightReloadTrigger: WorkspaceReloadTrigger?
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
-  var installStatus: WorkspaceInstallStatus
-  var installResult: StudioInstallResult?
+  var isAgentSetupPresented = false
   var validation: WorkspaceValidationSnapshot {
     get {
       validationFeatureModel.validation
@@ -175,17 +174,9 @@ public final class WorkspaceStore {
   let sessionFeatureModel: WorkspaceSessionFeatureModel
   let validationFeatureModel: WorkspaceValidationFeatureModel
   var recentWorkspacesFeatureModel: StudioRecentWorkspacesFeatureModel
-  // Backs the late-bindable global scope read by this store's builders/validator.
-  // Non-nil only on the launch-configured path; `setGlobalScope` is a no-op without it.
+  // Backs the global scope read by this store's builders/validator. Non-nil only on the
+  // launch-configured path.
   let globalScopeProvider: WorkspaceGlobalScopeProvider?
-  // Persists/resolves the app-wide global-library grant across launches. Non-nil only on
-  // the launch-configured path; the grant flow persists through it.
-  let globalLibraryAccess: StudioGlobalLibraryAccess?
-  // Picks the folder to grant as the global library when the user taps Connect.
-  let globalLibraryPicker: any GlobalLibraryDirectoryPicking
-  // Non-blocking notice shown after a grant whose folder doesn't look like a PersonaKit
-  // root (no `Packs/`); cleared on the next connect attempt.
-  var globalLibraryConnectWarning: String?
 
   public convenience init(
     snapshotBuilder: any WorkspaceSnapshotBuilding = WorkspaceSnapshotBuilder(),
@@ -201,11 +192,7 @@ public final class WorkspaceStore {
       PreviewExportDestinationPickerClient(),
     pasteboardWriter: any PasteboardWriting = PasteboardClient(),
     fileRevealer: any FileRevealing = FileRevealerClient(),
-    installEnvironment: any WorkspaceInstallEnvironmentProviding =
-      WorkspaceInstallEnvironmentClient(),
-    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
-    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
-    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient()
+    globalScopeProvider: WorkspaceGlobalScopeProvider? = nil
   ) {
     self.init(
       snapshotBuilder: snapshotBuilder,
@@ -220,10 +207,7 @@ public final class WorkspaceStore {
       previewExportDestinationPicker: previewExportDestinationPicker,
       pasteboardWriter: pasteboardWriter,
       fileRevealer: fileRevealer,
-      installEnvironment: installEnvironment,
       globalScopeProvider: globalScopeProvider,
-      globalLibraryAccess: globalLibraryAccess,
-      globalLibraryPicker: globalLibraryPicker,
       fileEventSource: nil,
       liveReloadClock: ContinuousClock()
     )
@@ -243,17 +227,11 @@ public final class WorkspaceStore {
       PreviewExportDestinationPickerClient(),
     pasteboardWriter: any PasteboardWriting = PasteboardClient(),
     fileRevealer: any FileRevealing = FileRevealerClient(),
-    installEnvironment: any WorkspaceInstallEnvironmentProviding =
-      WorkspaceInstallEnvironmentClient(),
     globalScopeProvider: WorkspaceGlobalScopeProvider? = nil,
-    globalLibraryAccess: StudioGlobalLibraryAccess? = nil,
-    globalLibraryPicker: any GlobalLibraryDirectoryPicking = GlobalLibraryDirectoryPickerClient(),
     fileEventSource: (any WorkspaceFileEventStreaming)?,
     liveReloadClock: any Clock<Duration>
   ) {
     self.globalScopeProvider = globalScopeProvider
-    self.globalLibraryAccess = globalLibraryAccess
-    self.globalLibraryPicker = globalLibraryPicker
 
     let resolvedLibraryEntityManager =
       libraryEntityManager
@@ -286,10 +264,8 @@ public final class WorkspaceStore {
     self.systemFeatureModel = WorkspaceSystemFeatureModel(
       workspacePicker: workspacePicker,
       workspaceInitializer: workspaceInitializer,
-      fileRevealer: fileRevealer,
-      installEnvironment: installEnvironment
+      fileRevealer: fileRevealer
     )
-    self.installStatus = self.systemFeatureModel.refreshInstallStatus()
     self.libraryFeatureModel = WorkspaceLibraryFeatureModel(operationRunner: operationRunner)
     self.sessionEditorFeatureModel = WorkspaceSessionEditorFeatureModel(
       operationRunner: operationRunner

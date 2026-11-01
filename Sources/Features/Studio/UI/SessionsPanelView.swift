@@ -153,7 +153,7 @@ struct SessionsPanelView: View {
       )
     }
     .alert(
-      "Delete Session?",
+      Text(deletionConfirmationTitle),
       isPresented: Binding(
         get: {
           workspaceStore.pendingSessionDeletion != nil
@@ -166,7 +166,7 @@ struct SessionsPanelView: View {
       ),
       presenting: workspaceStore.pendingSessionDeletion
     ) { presentation in
-      Button("Delete", role: .destructive) {
+      Button("Move to Trash", role: .destructive) {
         workspaceStore.confirmSessionDeletion(presentation) { deletedSessionID in
           // Clearing (rather than leaving a stale id) lets the reload select the first session.
           if selectedSessionID == deletedSessionID {
@@ -178,9 +178,15 @@ struct SessionsPanelView: View {
       Button("Cancel", role: .cancel) {
         workspaceStore.cancelSessionDeletion()
       }
-    } message: { presentation in
-      Text("Delete session \"\(presentation.session.id)\" from project scope?")
     }
+  }
+
+  private var deletionConfirmationTitle: String {
+    guard let session = workspaceStore.pendingSessionDeletion?.session else {
+      return ""
+    }
+
+    return "Move session \"\(session.id)\" to the Trash?"
   }
 
   private var detailModeBinding: Binding<SessionsDetailMode> {
@@ -232,7 +238,7 @@ struct SessionsPanelView: View {
     ContentUnavailableView(
       "Select a Session",
       systemImage: "doc.text.magnifyingglass",
-      description: Text("Preview the resolved session contract or inspect its map.")
+      description: Text("See the session's handoff context or inspect its map.")
     )
     .foregroundStyle(.secondary)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -269,11 +275,7 @@ struct SessionsPanelView: View {
       SessionsPreviewTabView(
         sessionPreview: workspaceStore.sessionPreview,
         sessionPreviewErrorMessage: workspaceStore.sessionPreviewErrorMessage,
-        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview,
-        isGlobalLibraryConnected: workspaceStore.isGlobalLibraryConnected,
-        onConnectGlobalLibrary: {
-          workspaceStore.connectGlobalLibrary()
-        }
+        isLoadingSessionPreview: workspaceStore.isLoadingSessionPreview
       )
 
     case .map:
@@ -591,7 +593,7 @@ struct SessionsPanelView: View {
       ),
       StudioUtilityActionItem(
         id: "session-preview-export",
-        title: "Export Markdown…",
+        title: "Export Handoff…",
         systemImage: "square.and.arrow.up",
         isEnabled: !workspaceStore.sessionPreview.isEmpty && !workspaceStore.isLoadingSessionPreview,
         action: {

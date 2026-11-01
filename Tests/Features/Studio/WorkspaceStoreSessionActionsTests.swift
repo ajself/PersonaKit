@@ -974,7 +974,7 @@ struct WorkspaceStoreSessionActionsTests {
     store.sessionPreview = expectedPreview
     store.copySessionPreviewReportingResult()
 
-    #expect(store.sessionPreviewActionMessage == "Copied preview to clipboard.")
+    #expect(store.sessionPreviewActionMessage == "Copied handoff context to clipboard.")
   }
 
   @Test
@@ -989,7 +989,7 @@ struct WorkspaceStoreSessionActionsTests {
     store.sessionPreview = "preview-to-copy"
     store.copySessionPreviewReportingResult()
 
-    #expect(store.sessionPreviewActionMessage == "Failed to copy preview to the clipboard.")
+    #expect(store.sessionPreviewActionMessage == "Failed to copy handoff context to the clipboard.")
   }
 
   @Test
@@ -1016,7 +1016,7 @@ struct WorkspaceStoreSessionActionsTests {
     store.exportSessionPreviewReportingResult()
 
     await waitFor {
-      store.sessionPreviewActionMessage == "Exported preview markdown."
+      store.sessionPreviewActionMessage == "Exported handoff context."
     }
   }
 

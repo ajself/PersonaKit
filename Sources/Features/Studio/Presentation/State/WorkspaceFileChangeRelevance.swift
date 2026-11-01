@@ -2,7 +2,7 @@ import Foundation
 
 /// Decides which owners refresh after an external file change.
 ///
-/// A `nil` change set means an explicit reload (open, save, connect), which always counts as
+/// A `nil` change set means an explicit reload (open, save), which always counts as
 /// relevant. Matching errs toward refreshing: a same-named file in another scope, or a
 /// changed parent directory (FSEvents coalesces to directories when it drops events), also
 /// counts as a match.

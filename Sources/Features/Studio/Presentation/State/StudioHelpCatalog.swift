@@ -24,10 +24,10 @@ enum StudioHelpCatalog {
           "Treating workstream metadata like an executable workflow engine.",
         ],
         examples: [
-          "Example directive: \"Refactor session preview caching without changing export behavior.\"",
+          "Example directive: \"Refactor handoff context caching without changing export behavior.\"",
           "Example routing note: a directive can declare a workstream id and phase so the next session is visible without executing anything.",
         ],
-        nextStepText: "Link this directive from a session, then inspect session preview and map before saving.",
+        nextStepText: "Link this directive from a session, then inspect its handoff context and map before saving.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
           StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
@@ -83,7 +83,7 @@ enum StudioHelpCatalog {
           "Example persona: \"Senior SwiftUI Engineer\" with explicit responsibilities and non-goals."
         ],
         nextStepText:
-          "Pair this persona with a directive in Sessions and verify the preview output matches expectations.",
+          "Pair this persona with a directive in Sessions and verify the handoff context matches expectations.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil),
@@ -96,7 +96,7 @@ enum StudioHelpCatalog {
         title: "Session Editor Help",
         shortHint: "A Session is a deterministic Persona + Directive pairing with optional kit overrides.",
         purpose:
-          "Session creation defines the exact context to export for an agent: role, task, and optional workflow constraints.",
+          "Session creation defines the exact handoff context for an agent: role, task, and optional workflow constraints.",
         keyFields: [
           "Session id must be stable and filesystem-safe.",
           "Persona selects who performs the work.",
@@ -114,7 +114,7 @@ enum StudioHelpCatalog {
           "Example session draft: id \"ios-bugfix\", persona \"senior-swiftui-engineer\", directive \"apply-style\"."
         ],
         nextStepText:
-          "After save, review Preview output, inspect Map health, and run Validation Results if references fail.",
+          "After save, review the Handoff tab, inspect Map health, and run Validation Results if references fail.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Personas", destination: .personas, searchText: nil),
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
@@ -127,26 +127,26 @@ enum StudioHelpCatalog {
       return StudioHelpTopic(
         id: .sessions,
         title: "Sessions Help",
-        shortHint: "Sessions create reusable context packages for AI sessions.",
+        shortHint: "Sessions create reusable handoff context for AI sessions.",
         purpose:
-          "A session bundles persona, directive, and optional kit overrides into one named context package for an AI session. Preview and export are the concrete context payload you can paste into an assistant, and because PersonaKit is deterministic, the same session id resolves to the same context again later.",
+          "A session bundles persona, directive, and optional kit overrides into one named session for an AI assistant. Its handoff context is the concrete text you copy or export into an assistant, and because PersonaKit is deterministic, the same session id resolves to the same handoff context again later.",
         keyFields: [
           "List rows show the session id, its persona and directive names, and scope.",
-          "Preview mode shows the exact context text you provide to an AI assistant.",
+          "The Handoff tab shows the exact handoff context you provide to an AI assistant.",
           "Map mode shows dependency resolution and missing reference issues.",
           "If a directive carries workstream routing, the session shows where that directive phase sits in the larger stream.",
         ],
         commonMistakes: [
           "Treating sessions like executable workflows instead of context definitions.",
-          "Ignoring map resolution issues before exporting.",
+          "Ignoring map resolution issues before exporting handoff context.",
           "Editing global-scope sessions instead of copying to project scope.",
           "Assuming workstream visibility means PersonaKit will auto-switch sessions for you.",
         ],
         examples: [
-          "Example usage: export markdown from one session and paste it into a fresh AI chat as starting context."
+          "Example usage: export the handoff context from one session and paste it into a fresh AI chat as starting context."
         ],
         nextStepText:
-          "Create or edit a session, confirm preview/map health, then export markdown for your active agent context.",
+          "Create or edit a session, confirm handoff/map health, then export the handoff context for your active agent.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Personas", destination: .personas, searchText: nil),
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
@@ -179,7 +179,7 @@ enum StudioHelpCatalog {
           "Example: code-editing declares that a coding tool may perform edits after PersonaKit exports the resolved operating contract. PersonaKit records the capability boundary; it does not launch the tool."
         ],
         nextStepText:
-          "Confirm the selected skill reads like a capability boundary, then verify references resolve in map/validation before exporting session context.",
+          "Confirm the selected skill reads like a capability boundary, then verify references resolve in map/validation before exporting handoff context.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Personas", destination: .personas, searchText: nil),
           StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
@@ -194,7 +194,7 @@ enum StudioHelpCatalog {
         title: "Validation Results Help",
         shortHint: "Validation Results shows schema and reference errors across the workspace.",
         purpose:
-          "Use validation to catch invalid json/markdown structure and broken cross-entity references before exporting sessions.",
+          "Use validation to catch invalid json/markdown structure and broken cross-entity references before exporting handoff context.",
         keyFields: [
           "Summary indicates current workspace validation status.",
           "Issue list can search by id, file path, and message text.",
