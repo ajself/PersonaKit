@@ -390,12 +390,12 @@ struct HookCheckCommand: ParsableCommand {
   }
 }
 
-/// Parent command grouping enforcement export/install subcommands.
+/// Parent command grouping the enforcement install and uninstall subcommands.
 struct EnforceCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "enforce",
     abstract: "Project a session contract into host enforcement.",
-    subcommands: [EnforceInstallCommand.self]
+    subcommands: [EnforceInstallCommand.self, EnforceUninstallCommand.self]
   )
 }
 
@@ -551,11 +551,14 @@ struct EnforceInstallCommand: ParsableCommand {
 
     // A cloned repo can commit any of these as a link, which would put the hook and manifest outside the
     // project (a link to ~/.claude makes the contract global) or copy the target's settings into it.
-    try Self.refuseSymbolicLinks([claudeDir, frozenManifestURL.deletingLastPathComponent(), settingsURL])
+    try Self.refuseSymbolicLinks(
+      [claudeDir, frozenManifestURL.deletingLastPathComponent(), settingsURL],
+      action: "install"
+    )
 
     let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
-    let existingSettings = try Self.existingSettings(at: settingsURL)
+    let existingSettings = try Self.existingSettings(at: settingsURL, action: "install")
     let replacedExisting = ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: existingSettings)
     let mergedSettings = try ClaudeCodeSettingsMerger.merge(
       existingSettings: existingSettings,
@@ -639,17 +642,10 @@ struct EnforceInstallCommand: ParsableCommand {
       return
     }
 
-    try Self.refuseSymbolicLinks([manifestDirectory.deletingLastPathComponent(), manifestDirectory])
+    try Self.refuseSymbolicLinks([manifestDirectory.deletingLastPathComponent(), manifestDirectory], action: "install")
 
     let frozenManifestURL = manifestDirectory.appendingPathComponent("\(sessionId).checks.json")
-    let entries = Self.manifestEntryNames(in: manifestDirectory)
-    let irregular = entries.filter { !Self.isRegularFile(manifestDirectory.appendingPathComponent($0).path) }
-    guard irregular.isEmpty else {
-      throw CLIError.failure(
-        "Refusing to install: \(manifestDirectory.path) holds entries that are not regular files: "
-          + "\(irregular.joined(separator: ", ")). Remove or rename them, then run install again."
-      )
-    }
+    let entries = try Self.regularManifestEntryNames(in: manifestDirectory, action: "install")
 
     // An entry that is the same directory entry as the new manifest (a case variant on a case-insensitive
     // volume) is decided by identity, not by comparing names: the volume knows what folds together.
@@ -741,36 +737,50 @@ struct EnforceInstallCommand: ParsableCommand {
     return removed
   }
 
-  /// Fails, naming the first one, when any of `urls` is a symbolic link.
-  private static func refuseSymbolicLinks(_ urls: [URL]) throws {
+  /// Fails, naming the first one, when any of `urls` is a symbolic link. `action` names the refused command.
+  static func refuseSymbolicLinks(_ urls: [URL], action: String) throws {
     for url in urls where isSymbolicLink(url.path) {
       throw CLIError.failure(
-        "Refusing to install: \(url.path) is a symbolic link. "
+        "Refusing to \(action): \(url.path) is a symbolic link. "
           + "Replace it with a real file or directory so enforcement files stay inside the project."
       )
     }
   }
 
   /// The project's settings, or nil when there are none. Any other read failure stops the install: merging into
-  /// nothing would replace every other setting with only the PersonaKit hook.
-  private static func existingSettings(at url: URL) throws -> Data? {
+  /// nothing would replace every other setting with only the PersonaKit hook. `action` names the refused command.
+  static func existingSettings(at url: URL, action: String) throws -> Data? {
     do {
       return try Data(contentsOf: url)
     } catch CocoaError.fileReadNoSuchFile {
       return nil
     } catch {
       throw CLIError.failure(
-        "Refusing to install: could not read \(url.path): \(error.localizedDescription) "
-          + "Make it a readable file, then run install again."
+        "Refusing to \(action): could not read \(url.path): \(error.localizedDescription) "
+          + "Make it a readable file, then run \(action) again."
       )
     }
   }
 
   /// Names of the entries directly in `directory` that end in `.checks.json`, sorted. Does not recurse.
-  private static func manifestEntryNames(in directory: URL) -> [String] {
+  static func manifestEntryNames(in directory: URL) -> [String] {
     ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? [])
       .filter { $0.hasSuffix(".checks.json") }
       .sorted()
+  }
+
+  /// ``manifestEntryNames(in:)``, failing when any of them is not a regular file. `action` names the refused
+  /// command.
+  static func regularManifestEntryNames(in directory: URL, action: String) throws -> [String] {
+    let entries = manifestEntryNames(in: directory)
+    let irregular = entries.filter { !isRegularFile(directory.appendingPathComponent($0).path) }
+    guard irregular.isEmpty else {
+      throw CLIError.failure(
+        "Refusing to \(action): \(directory.path) holds entries that are not regular files: "
+          + "\(irregular.joined(separator: ", ")). Remove or rename them, then run \(action) again."
+      )
+    }
+    return entries
   }
 
   private static func fileType(_ path: String) -> FileAttributeType? {
@@ -778,7 +788,7 @@ struct EnforceInstallCommand: ParsableCommand {
     (try? FileManager.default.attributesOfItem(atPath: path))?[.type] as? FileAttributeType
   }
 
-  private static func isRegularFile(_ path: String) -> Bool {
+  static func isRegularFile(_ path: String) -> Bool {
     fileType(path) == .typeRegular
   }
 

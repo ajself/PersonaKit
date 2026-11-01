@@ -385,6 +385,70 @@ public enum ClaudeCodeSettingsMerger {
     return preToolUse.contains { isPersonaKitEntry($0) }
   }
 
+  /// What uninstalling leaves of a `settings.json`.
+  public enum Removal: Equatable {
+    /// No PersonaKit-owned hook: leave the file as it is.
+    case nothingToRemove
+    /// Nothing but the PersonaKit hook was there: delete the file.
+    case deleteFile
+    /// The settings with the PersonaKit hook removed.
+    case write(Data)
+  }
+
+  /// Removes every PersonaKit-owned hook (identified by ``ClaudeCodeEnforcement/ownershipMarker``) from
+  /// `PreToolUse`, preserving all other content.
+  ///
+  /// Narrower than ``merge(existingSettings:hookEntry:)``: a hook someone else added to a PersonaKit entry's
+  /// group is kept, and only a group left with no hooks is dropped. A `PreToolUse` list, then a `hooks` object,
+  /// that the removal leaves empty is dropped too, so uninstalling from settings that held only the hook deletes
+  /// the file install created.
+  public static func removingPersonaKitEntries(from existingSettings: Data?) throws -> Removal {
+    guard let existingSettings, !existingSettings.isEmpty else {
+      return .nothingToRemove
+    }
+    guard let parsed = try? JSONSerialization.jsonObject(with: existingSettings),
+      var root = parsed as? [String: Any]
+    else {
+      throw MergeError.invalidExistingSettings
+    }
+    guard var hooks = root["hooks"] as? [String: Any],
+      let preToolUse = hooks["PreToolUse"] as? [Any],
+      preToolUse.contains(where: isPersonaKitEntry)
+    else {
+      return .nothingToRemove
+    }
+
+    let remaining = preToolUse.compactMap { entry -> Any? in
+      guard isPersonaKitEntry(entry), var group = entry as? [String: Any],
+        let groupHooks = group["hooks"] as? [Any]
+      else {
+        return entry
+      }
+      let kept = groupHooks.filter { !isPersonaKitHook($0) }
+      guard !kept.isEmpty else {
+        return nil
+      }
+      group["hooks"] = kept
+      return group
+    }
+
+    if remaining.isEmpty {
+      hooks.removeValue(forKey: "PreToolUse")
+    } else {
+      hooks["PreToolUse"] = remaining
+    }
+    if hooks.isEmpty {
+      root.removeValue(forKey: "hooks")
+    } else {
+      root["hooks"] = hooks
+    }
+    guard !root.isEmpty else {
+      return .deleteFile
+    }
+
+    return .write(try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys]))
+  }
+
   /// Whether a `PreToolUse` entry is one PersonaKit installed (by its command's ownership marker).
   private static func isPersonaKitEntry(_ entry: Any) -> Bool {
     guard let entry = entry as? [String: Any],
@@ -393,14 +457,17 @@ public enum ClaudeCodeSettingsMerger {
       return false
     }
 
-    return entryHooks.contains { hook in
-      guard let hook = hook as? [String: Any],
-        let command = hook["command"] as? String
-      else {
-        return false
-      }
-      return command.contains(ClaudeCodeEnforcement.ownershipMarker)
+    return entryHooks.contains(where: isPersonaKitHook)
+  }
+
+  /// Whether one hook in a `PreToolUse` group runs PersonaKit's checker.
+  private static func isPersonaKitHook(_ hook: Any) -> Bool {
+    guard let hook = hook as? [String: Any],
+      let command = hook["command"] as? String
+    else {
+      return false
     }
+    return command.contains(ClaudeCodeEnforcement.ownershipMarker)
   }
 }
 

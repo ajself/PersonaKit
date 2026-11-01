@@ -1762,4 +1762,388 @@ struct CLIEnforceTests {
       #expect(try !lists(body), "\(body)")
     }
   }
+
+  // MARK: - enforce uninstall
+
+  /// Runs `enforce uninstall` for `host` in `projectDir`.
+  private func runUninstall(
+    host: String = "claude",
+    projectDir: URL,
+    dryRun: Bool = false
+  ) -> (status: Int32, stdout: String, stderr: String) {
+    var status: Int32 = 0
+    var stdout = ""
+    let stderr = captureStderr {
+      stdout = captureStdout {
+        status = PersonaKitCLI().run(
+          arguments: ["personakit", "enforce", "uninstall", "--host", host, "--project-dir", projectDir.path]
+            + (dryRun ? ["--dry-run"] : [])
+        )
+      }
+    }
+    return (status, stdout, stderr)
+  }
+
+  /// Every entry under `root` by relative path: a file's bytes, or nil for a directory or a link.
+  private func snapshot(_ root: URL) -> [String: Data?] {
+    var entries: [String: Data?] = [:]
+    for path in tree(root) {
+      let url = root.appendingPathComponent(path)
+      let type = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.type] as? FileAttributeType
+      entries[path] = type == .typeRegular ? try? Data(contentsOf: url) : nil
+    }
+    return entries
+  }
+
+  /// A project with Claude Code settings in install's own format, local settings, and a command.
+  private func claudeProjectWithOwnSettings() throws -> URL {
+    let projectDir = try freshProjectDir("pk-un-claude")
+    let claudeDir = projectDir.appendingPathComponent(".claude")
+    try FileManager.default.createDirectory(
+      at: claudeDir.appendingPathComponent("commands"),
+      withIntermediateDirectories: true
+    )
+    let settings = try JSONSerialization.data(
+      withJSONObject: [
+        "model": "opus",
+        "permissions": ["allow": ["Bash(make test)"]],
+        "hooks": ["PreToolUse": [["matcher": "Bash", "hooks": [["type": "command", "command": "audit-log"]]]]],
+      ],
+      options: [.prettyPrinted, .sortedKeys]
+    )
+    try (settings + Data("\n".utf8)).write(to: claudeDir.appendingPathComponent("settings.json"))
+    try Data(#"{"theme":"dark"}"#.utf8).write(to: claudeDir.appendingPathComponent("settings.local.json"))
+    try Data("# review\n".utf8).write(to: claudeDir.appendingPathComponent("commands/review.md"))
+    return projectDir
+  }
+
+  @Test
+  func claudeUninstallRestoresTheProjectInstallChanged() throws {
+    let projectDir = try claudeProjectWithOwnSettings()
+    let before = snapshot(projectDir)
+
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    #expect(snapshot(projectDir) != before)
+    let result = runUninstall(projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("removed the PersonaKit hook from"))
+    #expect(result.stdout.contains("removed manifest"))
+    #expect(result.stdout.contains("Restart Claude Code"))
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func claudeUninstallFromABareProjectLeavesNothing() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-bare")
+
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let result = runUninstall(projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test
+  func claudeUninstallKeepsUnrelatedSettingsInAnotherFormat() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-format")
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    try FileManager.default.createDirectory(
+      at: settingsURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    let original = #"{"theme":"dark","env":{"A":"1"},"hooks":{"Stop":[{"hooks":[{"type":"command","command":"x"}]}]}}"#
+    try Data(original.utf8).write(to: settingsURL)
+
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    #expect(runUninstall(projectDir: projectDir).status == 0)
+
+    let restored = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: settingsURL)) as? NSDictionary)
+    let expected = try #require(try JSONSerialization.jsonObject(with: Data(original.utf8)) as? NSDictionary)
+    #expect(restored == expected)
+    #expect(tree(projectDir.appendingPathComponent(".claude")) == ["settings.json"])
+  }
+
+  @Test
+  func claudeUninstallWithNothingInstalledChangesNothing() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-none")
+    let bare = runUninstall(projectDir: projectDir)
+
+    #expect(bare.status == 0)
+    #expect(bare.stdout.contains("No Claude Code enforcement installed in \(projectDir.path)."))
+    #expect(tree(projectDir).isEmpty)
+
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    try FileManager.default.createDirectory(
+      at: settingsURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try Data(#"{"theme":"dark"}"#.utf8).write(to: settingsURL)
+    let before = snapshot(projectDir)
+    let result = runUninstall(projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("No Claude Code enforcement installed"))
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func claudeUninstallDryRunChangesNothing() throws {
+    let projectDir = try claudeProjectWithOwnSettings()
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let installed = snapshot(projectDir)
+
+    let result = runUninstall(projectDir: projectDir, dryRun: true)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("Dry run"))
+    #expect(result.stdout.contains("audit-log"))
+    #expect(!result.stdout.contains("hook-check --manifest"))
+    #expect(result.stdout.contains("# Would remove → "))
+    #expect(snapshot(projectDir) == installed)
+  }
+
+  @Test(arguments: [".claude", ".claude/personakit", ".claude/settings.json"])
+  func claudeUninstallRefusesASymlinkedEnforcementPath(linked: String) throws {
+    // The link's target holds installed enforcement, as ~/.claude could.
+    let elsewhere = try freshProjectDir("pk-un-claude-elsewhere")
+    #expect(runInstall(extra: [], projectDir: elsewhere, dryRun: false).status == 0)
+    let target = elsewhere.appendingPathComponent(".claude").appendingPathComponent(
+      String(linked.dropFirst(".claude".count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    )
+    let before = snapshot(elsewhere)
+
+    let projectDir = try freshProjectDir("pk-un-claude-symlink")
+    let link = projectDir.appendingPathComponent(linked)
+    try FileManager.default.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
+
+    for dryRun in [false, true] {
+      let result = runUninstall(projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("Refusing to uninstall: \(link.path) is a symbolic link"))
+    }
+    #expect(snapshot(elsewhere) == before)
+    #expect(
+      (try? FileManager.default.attributesOfItem(atPath: link.path))?[.type] as? FileAttributeType == .typeSymbolicLink
+    )
+  }
+
+  @Test
+  func claudeUninstallRefusesNonRegularManifestEntries() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-nonregular")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    let nested = directory.appendingPathComponent("dir.checks.json")
+    try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+    try Data("keep".utf8).write(to: nested.appendingPathComponent("inside.txt"))
+    let target = projectDir.appendingPathComponent("target.txt")
+    try Data("t".utf8).write(to: target)
+    try FileManager.default.createSymbolicLink(
+      at: directory.appendingPathComponent("link.checks.json"),
+      withDestinationURL: target
+    )
+    let before = snapshot(projectDir)
+
+    for dryRun in [false, true] {
+      let result = runUninstall(projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("Refusing to uninstall"))
+      #expect((result.stderr + result.stdout).contains("dir.checks.json, link.checks.json"))
+    }
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func claudeUninstallRefusesSettingsThatAreNotAJSONObject() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-badjson")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    try Data("{ not json".utf8).write(to: settingsURL)
+    let before = snapshot(projectDir)
+
+    let result = runUninstall(projectDir: projectDir)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("Refusing to uninstall: \(settingsURL.path) is not a JSON object"))
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func openCodeUninstallRestoresTheProjectInstallChanged() throws {
+    let projectDir = try freshProjectDir("pk-un-oc")
+    let home = try freshProjectDir("pk-oc-home")
+    try Data("{\"plugin\": [\"other\"]}".utf8).write(to: projectDir.appendingPathComponent("opencode.json"))
+    let plugins = projectDir.appendingPathComponent(".opencode/plugins")
+    try FileManager.default.createDirectory(at: plugins, withIntermediateDirectories: true)
+    try Data("export {}\n".utf8).write(to: plugins.appendingPathComponent("local.ts"))
+    let before = snapshot(projectDir)
+
+    #expect(runOpenCodeInstall(projectDir: projectDir, home: home).status == 0)
+    #expect(snapshot(projectDir) != before)
+    let result = runUninstall(host: "opencode", projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("removed manifest"))
+    #expect(result.stdout.contains("Restart OpenCode"))
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func openCodeUninstallFromABareProjectLeavesNothing() throws {
+    let projectDir = try freshProjectDir("pk-un-oc-bare")
+    let home = try freshProjectDir("pk-oc-home")
+
+    #expect(runOpenCodeInstall(projectDir: projectDir, home: home).status == 0)
+    let result = runUninstall(host: "opencode", projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(tree(projectDir).isEmpty)
+  }
+
+  @Test
+  func openCodeUninstallRemovesEveryManifestAndKeepsOtherFiles() throws {
+    let projectDir = try freshProjectDir("pk-un-oc-many")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("a.checks.json"))
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("b.checks.json"))
+    try Data("notes".utf8).write(to: directory.appendingPathComponent("notes.txt"))
+
+    let dry = runUninstall(host: "opencode", projectDir: projectDir, dryRun: true)
+    #expect(dry.status == 0)
+    #expect(tree(directory) == ["a.checks.json", "b.checks.json", "notes.txt"])
+
+    let result = runUninstall(host: "opencode", projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(tree(directory) == ["notes.txt"])
+  }
+
+  @Test
+  func openCodeUninstallWithNothingInstalledChangesNothing() throws {
+    let projectDir = try freshProjectDir("pk-un-oc-none")
+    try Data("{}".utf8).write(to: projectDir.appendingPathComponent("opencode.json"))
+    let before = snapshot(projectDir)
+
+    let result = runUninstall(host: "opencode", projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("No OpenCode enforcement installed in \(projectDir.path)."))
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test(arguments: [".opencode", ".opencode/personakit"])
+  func openCodeUninstallRefusesASymlinkedEnforcementPath(linked: String) throws {
+    let elsewhere = try freshProjectDir("pk-un-oc-elsewhere")
+    let personakit = elsewhere.appendingPathComponent("personakit")
+    try FileManager.default.createDirectory(at: personakit, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: personakit.appendingPathComponent("victim.checks.json"))
+    let before = snapshot(elsewhere)
+
+    let projectDir = try freshProjectDir("pk-un-oc-symlink")
+    let link = projectDir.appendingPathComponent(linked)
+    try FileManager.default.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(
+      at: link,
+      withDestinationURL: linked == ".opencode" ? elsewhere : personakit
+    )
+
+    for dryRun in [false, true] {
+      let result = runUninstall(host: "opencode", projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("Refusing to uninstall: \(link.path) is a symbolic link"))
+    }
+    #expect(snapshot(elsewhere) == before)
+  }
+
+  @Test
+  func openCodeUninstallRefusesNonRegularManifestEntries() throws {
+    let projectDir = try freshProjectDir("pk-un-oc-nonregular")
+    let directory = projectDir.appendingPathComponent(".opencode/personakit")
+    try FileManager.default.createDirectory(
+      at: directory.appendingPathComponent("dir.checks.json"),
+      withIntermediateDirectories: true
+    )
+    try Data("keep".utf8).write(to: directory.appendingPathComponent("dir.checks.json/inside.txt"))
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+    let before = snapshot(projectDir)
+
+    for dryRun in [false, true] {
+      let result = runUninstall(host: "opencode", projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("not regular files: dir.checks.json."))
+    }
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func claudeUninstallRefusesSettingsItCannotReadAndKeepsTheManifests() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-unreadable")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    let before = snapshot(projectDir)
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: settingsURL.path)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: settingsURL.path) }
+
+    let result = runUninstall(projectDir: projectDir)
+
+    #expect(result.status != 0)
+    #expect((result.stderr + result.stdout).contains("Refusing to uninstall: could not read \(settingsURL.path)"))
+    try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: settingsURL.path)
+    #expect(snapshot(projectDir) == before)
+  }
+
+  @Test
+  func claudeUninstallRemovesWhicheverHalfIsLeft() throws {
+    let manifestsOnly = try claudeProjectWithOwnSettings()
+    let settings = try Data(contentsOf: manifestsOnly.appendingPathComponent(".claude/settings.json"))
+    #expect(runInstall(extra: [], projectDir: manifestsOnly, dryRun: false).status == 0)
+    try settings.write(to: manifestsOnly.appendingPathComponent(".claude/settings.json"))
+
+    let first = runUninstall(projectDir: manifestsOnly)
+
+    #expect(first.status == 0)
+    #expect(!first.stdout.contains("removed the PersonaKit hook"))
+    #expect(first.stdout.contains("removed manifest"))
+    #expect(!FileManager.default.fileExists(atPath: manifestsOnly.appendingPathComponent(".claude/personakit").path))
+
+    let hookOnly = try claudeProjectWithOwnSettings()
+    let before = snapshot(hookOnly)
+    #expect(runInstall(extra: [], projectDir: hookOnly, dryRun: false).status == 0)
+    try FileManager.default.removeItem(at: hookOnly.appendingPathComponent(".claude/personakit"))
+
+    let second = runUninstall(projectDir: hookOnly)
+
+    #expect(second.status == 0)
+    #expect(second.stdout.contains("removed the PersonaKit hook"))
+    #expect(!second.stdout.contains("removed manifest"))
+    #expect(snapshot(hookOnly) == before)
+  }
+
+  @Test
+  func claudeUninstallKeepsAHookAddedToThePersonaKitGroup() throws {
+    let projectDir = try freshProjectDir("pk-un-claude-shared")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    var root = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: settingsURL)) as? [String: Any])
+    var hooks = try #require(root["hooks"] as? [String: Any])
+    var groups = try #require(hooks["PreToolUse"] as? [[String: Any]])
+    var groupHooks = try #require(groups[0]["hooks"] as? [[String: Any]])
+    groupHooks.append(["type": "command", "command": "audit-log"])
+    groups[0]["hooks"] = groupHooks
+    hooks["PreToolUse"] = groups
+    root["hooks"] = hooks
+    try JSONSerialization.data(withJSONObject: root).write(to: settingsURL)
+
+    #expect(runUninstall(projectDir: projectDir).status == 0)
+
+    let text = try String(contentsOf: settingsURL, encoding: .utf8)
+    #expect(text.contains("audit-log"))
+    #expect(!text.contains("hook-check --manifest"))
+  }
 }

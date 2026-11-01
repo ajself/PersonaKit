@@ -701,4 +701,79 @@ struct ClaudeCodeEnforcementTests {
     #expect(!ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: foreign))
     #expect(!ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: nil))
   }
+
+  private static let personaKitEntry = ClaudeCodeHookMatcher(
+    matcher: ".*",
+    hooks: [ClaudeCodeHookCommand(command: "pk hook-check --manifest /m.json", timeout: 60)]
+  )
+
+  @Test
+  func removalRestoresSettingsInstallMergedInto() throws {
+    let existing = try JSONSerialization.data(
+      withJSONObject: [
+        "model": "opus",
+        "hooks": [
+          "PreToolUse": [["matcher": "WebFetch", "hooks": [["type": "command", "command": "other-tool"]]]],
+          "PostToolUse": [["matcher": "Edit", "hooks": [] as [Any]]],
+        ],
+      ],
+      options: [.prettyPrinted, .sortedKeys]
+    )
+
+    let merged = try ClaudeCodeSettingsMerger.merge(existingSettings: existing, hookEntry: Self.personaKitEntry)
+
+    #expect(try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: merged) == .write(existing))
+  }
+
+  @Test
+  func removalDeletesSettingsThatHeldOnlyTheHook() throws {
+    let merged = try ClaudeCodeSettingsMerger.merge(existingSettings: nil, hookEntry: Self.personaKitEntry)
+
+    #expect(try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: merged) == .deleteFile)
+  }
+
+  @Test
+  func removalKeepsOtherHooksSharingAPersonaKitGroup() throws {
+    let existing = Data(
+      """
+      {"hooks":{"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","command":"pk hook-check --manifest /m.json"},\
+      {"type":"command","command":"audit-log"}]}]}}
+      """.utf8
+    )
+
+    let removal = try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: existing)
+
+    guard case .write(let data) = removal else {
+      Issue.record("Expected settings to write, got \(removal)")
+      return
+    }
+    let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let preToolUse = try #require((root["hooks"] as? [String: Any])?["PreToolUse"] as? [[String: Any]])
+    let commands = preToolUse.flatMap { ($0["hooks"] as? [[String: Any]]) ?? [] }.compactMap { $0["command"] }
+    #expect(commands as? [String] == ["audit-log"])
+    #expect(preToolUse.first?["matcher"] as? String == ".*")
+  }
+
+  @Test
+  func removalLeavesSettingsWithoutAPersonaKitHookAlone() throws {
+    let foreign = Data(
+      """
+      {"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"run-hook-check-lint"}]}]}}
+      """.utf8
+    )
+
+    #expect(try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: foreign) == .nothingToRemove)
+    #expect(
+      try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: Data(#"{"hooks":7}"#.utf8)) == .nothingToRemove
+    )
+    #expect(try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: Data()) == .nothingToRemove)
+    #expect(try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: nil) == .nothingToRemove)
+  }
+
+  @Test(arguments: ["not json", "[1, 2]"])
+  func removalRejectsSettingsThatAreNotAJSONObject(text: String) {
+    #expect(throws: ClaudeCodeSettingsMerger.MergeError.invalidExistingSettings) {
+      try ClaudeCodeSettingsMerger.removingPersonaKitEntries(from: Data(text.utf8))
+    }
+  }
 }
