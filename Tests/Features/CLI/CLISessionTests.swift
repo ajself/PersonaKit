@@ -30,6 +30,53 @@ struct CLISessionTests {
   }
 
   @Test
+  func exportViaSessionListsWorkstreamNextSessions() throws {
+    let root = try makeWorkstreamFixtureRoot()
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style_workstream.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "export",
+        "--root",
+        root.path,
+        "--session",
+        "senior-swiftui-engineer_apply-style",
+      ])
+    }
+
+    #expect(status == 0)
+    #expect(output.contains("Next Sessions:\n- style-followup"))
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func exportViaPersonaAndDirectiveListsNoWorkstreamNextSessions() throws {
+    let root = try makeWorkstreamFixtureRoot()
+
+    var status: Int32 = 0
+    let output = captureStdout {
+      status = PersonaKitCLI().run(arguments: [
+        "personakit",
+        "export",
+        "--root",
+        root.path,
+        "--persona",
+        "senior-swiftui-engineer",
+        "--directive",
+        "apply-style",
+      ])
+    }
+
+    #expect(status == 0)
+    #expect(output.contains("# Workstream"))
+    #expect(!output.contains("Next Sessions:"))
+  }
+
+  @Test
   func exportViaSessionCopiesToClipboard() throws {
     let root = fixtureKitRootURL()
     let fixtureURL = fixturesRootURL()

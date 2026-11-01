@@ -28,6 +28,7 @@ extension MCPToolService {
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
+        sessionId: sessionInput.sessionId,
         targetPaths: input.targetPaths,
         skillTags: input.skillTags
       )

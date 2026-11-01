@@ -71,6 +71,8 @@ struct CLIClipboardIO: Sendable {
 
 /// Normalized resolved session identifiers used by export and graph commands.
 struct SessionInput {
+  /// Stored session id, when the input came from a session file.
+  let sessionId: String?
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]

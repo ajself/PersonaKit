@@ -132,6 +132,7 @@ struct ExportCommand: ParsableCommand {
           personaId: sessionInput.personaId,
           directiveId: sessionInput.directiveId,
           kitOverrides: sessionInput.kitOverrides,
+          sessionId: sessionInput.sessionId,
           targetPaths: referenceTriggers.targetPaths,
           skillTags: referenceTriggers.skillTags
         )

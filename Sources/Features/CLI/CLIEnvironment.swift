@@ -57,6 +57,7 @@ enum CLIHelpers {
       let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
       let overrides = session.kitOverrides ?? []
       return SessionInput(
+        sessionId: session.id,
         personaId: session.personaId,
         directiveId: session.directiveId,
         kitOverrides: overrides
@@ -67,6 +68,7 @@ enum CLIHelpers {
       throw ArgumentParser.ValidationError("Missing session input.")
     }
     return SessionInput(
+      sessionId: nil,
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: options.kitIds

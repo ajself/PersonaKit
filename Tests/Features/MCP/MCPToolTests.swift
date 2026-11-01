@@ -175,6 +175,27 @@ struct MCPToolTests {
   }
 
   @Test
+  func toolCallExportBySessionIDListsWorkstreamNextSessions() throws {
+    let scopes = ScopeSet(projectScopeURL: try makeWorkstreamFixtureRoot(), globalScopeURL: nil)
+    let service = MCPToolService(scopes: scopes)
+
+    let result = try service.callTool(
+      name: "personakit_export",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let output = try #require(firstText(result))
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style_workstream.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(output.contains("Next Sessions:\n- style-followup"))
+    #expect(normalizedTrailingNewline(output) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
   func toolCallGraphMatchesFixture() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)

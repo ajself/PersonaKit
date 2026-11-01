@@ -58,6 +58,27 @@ struct MCPSurfaceParityTests {
   }
 
   @Test
+  func exportPromptWithSessionIDListsWorkstreamNextSessions() throws {
+    let scopes = ScopeSet(projectScopeURL: try makeWorkstreamFixtureRoot(), globalScopeURL: nil)
+    let promptService = MCPPromptService(scopes: scopes)
+
+    let promptResult = try promptService.getPrompt(
+      name: "personakit.session.export",
+      arguments: [
+        "sessionId": .string("senior-swiftui-engineer_apply-style")
+      ]
+    )
+
+    let promptText = try #require(firstPromptText(promptResult))
+    let fixtureURL = fixturesRootURL()
+      .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style_workstream.md")
+    let expected = try String(contentsOf: fixtureURL, encoding: .utf8)
+
+    #expect(promptText.contains("Next Sessions:\n- style-followup"))
+    #expect(normalizedTrailingNewline(promptText) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
   func graphPromptMatchesGraphToolOutput() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let promptService = MCPPromptService(scopes: scopes)

@@ -3,6 +3,8 @@ import Foundation
 import MCP
 
 struct MCPResolvedSessionInput {
+  /// Stored session id, when the input came from a session file.
+  let sessionId: String?
   let personaId: String
   let directiveId: String
   let kitOverrides: [String]
@@ -74,6 +76,7 @@ enum MCPInternalSupport {
     personaId: String,
     directiveId: String,
     kitOverrides: [String],
+    sessionId: String? = nil,
     targetPaths: [String] = [],
     skillTags: [String] = []
   ) throws -> String {
@@ -82,6 +85,7 @@ enum MCPInternalSupport {
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: kitOverrides,
+      sessionId: sessionId,
       targetPaths: targetPaths,
       skillTags: skillTags
     )
@@ -122,6 +126,7 @@ enum MCPInternalSupport {
         let session = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
 
         return MCPResolvedSessionInput(
+          sessionId: session.id,
           personaId: session.personaId,
           directiveId: session.directiveId,
           kitOverrides: session.kitOverrides ?? []
@@ -148,6 +153,7 @@ enum MCPInternalSupport {
     }
 
     return MCPResolvedSessionInput(
+      sessionId: nil,
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: selection.kitOverrides
