@@ -7,47 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D1A6F0012FC0000000670F8F /* PersonaKitCLI in Resources */ = {isa = PBXBuildFile; fileRef = D15697CC2F5BA47200670F8F /* PersonaKitCLI */; };
 		D15697C72F5BA42E00670F8F /* StudioFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D15697C62F5BA42E00670F8F /* StudioFeatures */; };
-		D15697D72F5BA48E00670F8F /* ContextCLI in Frameworks */ = {isa = PBXBuildFile; productRef = D15697D62F5BA48E00670F8F /* ContextCLI */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = D15697932F5BA3AB00670F8F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = D15697CB2F5BA47200670F8F;
-			remoteInfo = PersonaKitCLI;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		D15697CA2F5BA47200670F8F /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D156979B2F5BA3AB00670F8F /* PersonaKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D15697CC2F5BA47200670F8F /* PersonaKitCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PersonaKitCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D156979D2F5BA3AB00670F8F /* PersonaKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PersonaKit;
-			sourceTree = "<group>";
-		};
-		D15697CD2F5BA47200670F8F /* PersonaKitCLI */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaKitCLI;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -61,28 +31,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D15697A52F5BA3AC00670F8F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D15697AF2F5BA3AC00670F8F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D15697C92F5BA47200670F8F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				D15697D72F5BA48E00670F8F /* ContextCLI in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,7 +38,6 @@
 			isa = PBXGroup;
 			children = (
 				D156979D2F5BA3AB00670F8F /* PersonaKit */,
-				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
 				D156979C2F5BA3AB00670F8F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,7 +46,6 @@
 			isa = PBXGroup;
 			children = (
 				D156979B2F5BA3AB00670F8F /* PersonaKit.app */,
-				D15697CC2F5BA47200670F8F /* PersonaKitCLI */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,7 +64,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				D1A6F0032FC0000000670F8F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D156979D2F5BA3AB00670F8F /* PersonaKit */,
@@ -131,29 +76,6 @@
 			productReference = D156979B2F5BA3AB00670F8F /* PersonaKit.app */;
 			productType = "com.apple.product-type.application";
 		};
-		D15697CB2F5BA47200670F8F /* PersonaKitCLI */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = D15697D02F5BA47200670F8F /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */;
-			buildPhases = (
-				D15697C82F5BA47200670F8F /* Sources */,
-				D15697C92F5BA47200670F8F /* Frameworks */,
-				D15697CA2F5BA47200670F8F /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				D15697CD2F5BA47200670F8F /* PersonaKitCLI */,
-			);
-			name = PersonaKitCLI;
-			packageProductDependencies = (
-				D15697D62F5BA48E00670F8F /* ContextCLI */,
-			);
-			productName = PersonaKitCLI;
-			productReference = D15697CC2F5BA47200670F8F /* PersonaKitCLI */;
-			productType = "com.apple.product-type.tool";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -165,9 +87,6 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					D156979A2F5BA3AB00670F8F = {
-						CreatedOnToolsVersion = 26.2;
-					};
-					D15697CB2F5BA47200670F8F = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -190,7 +109,6 @@
 			projectRoot = "";
 			targets = (
 				D156979A2F5BA3AB00670F8F /* PersonaKit */,
-				D15697CB2F5BA47200670F8F /* PersonaKitCLI */,
 			);
 		};
 /* End PBXProject section */
@@ -200,7 +118,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D1A6F0012FC0000000670F8F /* PersonaKitCLI in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,22 +131,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D15697C82F5BA47200670F8F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		D1A6F0032FC0000000670F8F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = D15697CB2F5BA47200670F8F /* PersonaKitCLI */;
-			targetProxy = D1A6F0022FC0000000670F8F /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		D15697BA2F5BA3AC00670F8F /* Debug */ = {
@@ -418,32 +320,6 @@
 			};
 			name = Release;
 		};
-		D15697D12F5BA47200670F8F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				ENABLE_HARDENED_RUNTIME = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		D15697D22F5BA47200670F8F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = QW7RW77V32;
-				ENABLE_HARDENED_RUNTIME = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -465,15 +341,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D15697D02F5BA47200670F8F /* Build configuration list for PBXNativeTarget "PersonaKitCLI" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D15697D12F5BA47200670F8F /* Debug */,
-				D15697D22F5BA47200670F8F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -487,10 +354,6 @@
 		D15697C62F5BA42E00670F8F /* StudioFeatures */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = StudioFeatures;
-		};
-		D15697D62F5BA48E00670F8F /* ContextCLI */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ContextCLI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

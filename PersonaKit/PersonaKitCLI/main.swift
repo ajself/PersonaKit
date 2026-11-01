@@ -1,3 +1,0 @@
-import ContextCLI
-
-ContextCLIEntrypoint.main()
