@@ -341,7 +341,7 @@ test('contractViewShowsTheContractInForce', async () => {
 test('contractViewSaysOpenCodesEnforcementStates', async () => {
   const enforced = (extra: object): (() => SessionState) => () => ({
     ...initial,
-    enforcement: { kind: 'enforced', manifestPath: '/p/.opencode/personakit-enforcement.json', ids: { sessionId: SESSION }, deniedActionClasses: ['file-mutation'], matcherTools: ['edit'], ...extra },
+    enforcement: { kind: 'enforced', manifestPath: '/p/.opencode/personakit-enforcement.json', ids: { sessionId: SESSION }, deniedActionClasses: ['file-mutation'], matcherTools: ['.*'], ...extra },
   })
   const missing = await open({ view: { kind: 'contract' }, session: enforced({ pluginMissing: true }) })
   const missingFrame = await missing.frame((f) => f.includes('ENFORCEMENT'))
@@ -349,15 +349,24 @@ test('contractViewSaysOpenCodesEnforcementStates', async () => {
   // Nothing enforces the manifest, so drift is still watched.
   expect(missingFrame).toContain('Off until handoff context is seen')
   expect(missingFrame).not.toContain('Off while')
+  // Nor does it block or check anything.
+  expect(missingFrame).not.toContain('Blocks')
+  expect(missingFrame).not.toContain('Checks')
   const changed = await open({ view: { kind: 'contract' }, session: enforced({}), manifestChanged: true })
   const frame = await changed.frame((f) => f.includes('ENFORCEMENT'))
   expect(frame).toContain('⚠ manifest changed · restart OpenCode')
   expect(frame).not.toContain('Enforced')
+  // The server plugin enforces its startup snapshot, not the manifest as it reads now.
+  expect(frame).not.toContain('Blocks')
+  const unreadable = await open({ view: { kind: 'contract' }, session: enforced({ kind: 'enforcing-other', manifestUnreadable: true, deniedActionClasses: [] }) })
+  expect(await unreadable.frame((f) => f.includes('ENFORCEMENT'))).toMatch(/Blocks +every tool call it checks/)
   const ok = await open({ view: { kind: 'contract' }, session: enforced({}) })
   const okFrame = await ok.frame((f) => f.includes('ENFORCEMENT'))
   expect(okFrame).toContain('● Enforced')
-  expect(okFrame).toContain('deny file-mutation')
-  expect(okFrame).toContain('Off while the plugin enforces a manifest')
+  expect(okFrame).toMatch(/Blocks +file-mutation/)
+  expect(okFrame).toContain("every tool call but OpenCode's read-only built-ins")
+  expect(okFrame).toMatch(/Drift check +Off while the plugin enforces a manifest/)
+  for (const jargon of ['Class-1', 'Routed', 'Watching', '.*']) expect(okFrame).not.toContain(jargon)
   const advisory = await open({ view: { kind: 'contract' }, session: () => initial })
   const advisoryFrame = await advisory.frame((f) => f.includes('ENFORCEMENT'))
   expect(advisoryFrame).toContain('Advisory · no manifest installed')
@@ -365,11 +374,11 @@ test('contractViewSaysOpenCodesEnforcementStates', async () => {
 })
 
 test('chipTextPutsOpenCodesHintAndManifestWarningInTheSharedLine', () => {
-  expect(chipText(initial, false)).toBe('◇ no contract · /pk')
+  expect(chipText(initial, false)).toBe('◇ no contract · /pk-use')
   expect(chipText(initial, true)).toBe(`◇ no contract · ${MANIFEST_CHANGED}`)
   // Fitted against OpenCode's shorter hint: this tool name would be cut beside the mod's.
   const tool = 'T'.repeat(80)
-  expect(chipText({ ...initial, drift: [{ tool, kind: 'blocked', turn: 1 }] }, false)).toBe(`◇ no contract · /pk · ⚠ drift: ${tool}`)
+  expect(chipText({ ...initial, drift: [{ tool, kind: 'blocked', turn: 1 }] }, false)).toBe(`◇ no contract · /pk-use · ⚠ drift: ${tool}`)
   const long = 'N'.repeat(300)
   const crowded: SessionState = {
     ...initial,
@@ -522,4 +531,21 @@ test('tuiRegistersTheRouteAndDisposesIt', async () => {
   expect(fake.record.routes.map((r) => r.name)).toEqual(['personakit'])
   for (const dispose of disposers) dispose()
   expect(fake.record.unregistered).toBe(1)
+})
+
+test('contractViewColorsAdvisoryMutedAndAnotherContractByWhetherOneIsResolved', async () => {
+  /** The color of the first span that reads `text`. */
+  const color = async (session: () => SessionState, text: string) => {
+    const r = await open({ view: { kind: 'contract' }, session })
+    await r.frame((f) => f.includes(text))
+    const span = r.setup.captureSpans().lines.flatMap((l) => l.spans).find((s) => s.text.includes(text))
+    return span?.fg.toInts()
+  }
+  const hex = (h: string) => RGBA.fromHex(h).toInts()
+  expect(await color(() => initial, '● Advisory')).toEqual(hex('#888888'))
+  const other = { kind: 'enforcing-other' as const, manifestPath: '/p/m.json', ids: { sessionId: 'other' }, deniedActionClasses: [], matcherTools: ['.*'] }
+  // Nothing resolved yet: the manifest names its contract as a warning, not an error.
+  expect(await color(() => ({ ...initial, enforcement: other }), '● Enforcing other')).toEqual(hex('#ffaa00'))
+  const main = { ids: { sessionId: SESSION }, source: 'cli' as const, turn: 1 }
+  expect(await color(() => ({ ...initial, main, enforcement: other }), '● Enforcing other')).toEqual(hex('#ff0000'))
 })

@@ -3,7 +3,7 @@ import { For, Show } from 'solid-js'
 import type { Contract, DriftEvent, PaneState, Preview, Resolution, SessionState } from '../../../../ClaudeCode/types'
 import { canUse } from '../../../../ClaudeCode/hooks/lib/ids.ts'
 import { previewKey } from '../../../../ClaudeCode/hooks/lib/runner.ts'
-import { MANIFEST_CHANGED } from './chip.tsx'
+import { MANIFEST_CHANGED, NO_CONTRACT_HINT } from './chip.tsx'
 import { Button, LABEL_WIDTH, line, Muted, Row, Section, StepsSection, useUi } from './library.tsx'
 import type { PaneActions, Theme } from './library.tsx'
 
@@ -41,22 +41,25 @@ const notSeen = (preview: Preview | undefined) =>
       ? `Kits, skills, and scope: not seen (the pane couldn't read them: ${preview.message})`
       : 'Kits, skills, and scope: not seen (no contract JSON resolved)'
 
-const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind)
+/** A drift event's kind in words: a call the contract forbids ran unblocked, was blocked, or a re-ground was blocked. */
+const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind === 'advisory' ? 'not blocked' : 'blocked')
 
-/** The enforcement chip and the State row: words and their theme color. */
+/**
+ * The enforcement chip and the State row: words and their theme color. Advisory is the default, so it reads muted, as
+ * the chip and sidebar do; a manifest for another contract is an error only once a contract is resolved to contradict.
+ */
 function enforcementWords(state: SessionState, manifestChanged: boolean, theme: Theme): { chip: [string, RGBA]; state: [string, RGBA] } {
   const { enforcement } = state
   if (manifestChanged) return { chip: ['● Manifest changed', theme.warning], state: [MANIFEST_CHANGED, theme.warning] }
-  if (enforcement.kind === 'advisory') return { chip: ['● Advisory', theme.warning], state: ['Advisory', theme.warning] }
+  if (enforcement.kind === 'advisory') return { chip: ['● Advisory', theme.textMuted], state: ['Advisory', theme.textMuted] }
   if (enforcement.pluginMissing) {
     return { chip: ['● Plugin not loaded', theme.warning], state: ['⚠ manifest present · plugin not loaded', theme.warning] }
   }
   if (enforcement.manifestUnreadable) return { chip: ['● Manifest unreadable', theme.error], state: ['⚠ Manifest unreadable', theme.error] }
   if (enforcement.kind === 'enforced') return { chip: ['● Enforced', theme.success], state: ['Enforced', theme.success] }
-  return {
-    chip: ['● Enforcing another contract', theme.error],
-    state: [`⚠ Enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`, theme.error],
-  }
+  const other = enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'
+  const color = state.main ? theme.error : theme.warning
+  return { chip: [`● Enforcing ${other}`, color], state: [`⚠ Enforcing ${other}`, color] }
 }
 
 /** A name with its id muted beside it. */
@@ -87,6 +90,15 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
   const manifest = () => {
     const e = enforcement()
     return e.kind === 'advisory' ? undefined : e
+  }
+  /**
+   * What the plugin blocks, or undefined when it isn't enforcing this manifest: one whose plugin isn't loaded enforces
+   * nothing, and a changed one isn't the snapshot the server plugin enforces.
+   */
+  const blocks = () => {
+    const e = manifest()
+    if (e === undefined || e.pluginMissing || props.manifestChanged) return undefined
+    return e.manifestUnreadable ? 'every tool call it checks' : list(e.deniedActionClasses)
   }
   const chips = (): [string, RGBA][] => {
     const blocked = props.state.drift.some((d) => d.kind !== 'advisory')
@@ -134,11 +146,11 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
         <text fg={theme().text}>
           <b>{main() ? line(lead(main()!)) : 'No contract in force'}</b>
         </text>
-        <Show when={main()} fallback={<text fg={theme().textMuted}>Run /pk-use to ground this session.</text>}>
+        <Show when={main()} fallback={<text fg={theme().textMuted}>{`Run ${NO_CONTRACT_HINT} to ground this session.`}</text>}>
           {(m) => <text fg={theme().textMuted}>{`Resolved turn ${m().turn} · ${ago(props.state.turn - m().turn)} · ${source(m())}`}</text>}
         </Show>
         <box flexDirection="row" flexWrap="wrap" columnGap={2} marginTop={1}>
-          <For each={chips()}>{([label, color]) => <text fg={color}>{label}</text>}</For>
+          <For each={chips()}>{([label, color]) => <text fg={color}>{line(label)}</text>}</For>
         </box>
       </box>
 
@@ -210,12 +222,18 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
           {(e) => (
             <>
               <Row label="Manifest">{e().manifestPath}</Row>
-              <Row label="Class-1">{e().deniedActionClasses.length ? `deny ${e().deniedActionClasses.join(', ')}` : 'none'}</Row>
-              <Row label="Routed">{list(e().matcherTools)}</Row>
+              <Show when={blocks()}>
+                {(blocked) => (
+                  <>
+                    <Row label="Blocks">{blocked()}</Row>
+                    <Row label="Checks">every tool call but OpenCode's read-only built-ins</Row>
+                  </>
+                )}
+              </Show>
             </>
           )}
         </Show>
-        <Row label="Watching">
+        <Row label="Drift check">
           <text fg={watching().isMuted ? theme().textMuted : theme().text}>
             {line(watching().text)}
             <Show when={!watching().isMuted}>

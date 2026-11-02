@@ -1,6 +1,6 @@
 import type { Color, RenderChildren } from 'claude-code'
 
-import type { Contract, DriftEvent, PaneState, Preview, Resolution, SessionState } from '../../types'
+import type { Contract, DriftEvent, Enforcement, PaneState, Preview, Resolution, SessionState } from '../../types'
 import { previewKey } from '../lib/runner'
 import { LABEL_WIDTH, parts } from './parts'
 import type { El, PaneActions } from './parts'
@@ -36,7 +36,15 @@ const notSeen = (preview: Preview | undefined) =>
       ? `Kits, skills, and scope: not seen (the pane couldn't read them: ${preview.message})`
       : 'Kits, skills, and scope: not seen (no contract JSON resolved)'
 
-const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind)
+/** A drift event's kind in words: a call the contract forbids ran unblocked, was blocked, or a re-ground was blocked. */
+const driftKind = (d: DriftEvent) => (d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind === 'advisory' ? 'not blocked' : 'blocked')
+
+/** The tools the hook checks: its matcher entries, or "every tool call" for `.*` or no matcher, which match any tool. */
+const checked = (matcherTools: readonly string[]) =>
+  matcherTools.length === 0 || matcherTools.includes('.*') ? 'every tool call' : list(matcherTools)
+
+/** What the hook blocks: the manifest's denied classes, or every call it checks while it can't read the manifest. */
+const blocks = (e: Exclude<Enforcement, { kind: 'advisory' }>) => (e.manifestUnreadable ? 'every tool call it checks' : list(e.deniedActionClasses))
 
 /**
  * The Contract view: header with status chips, then contract, skills, scope, enforcement, freshness,
@@ -59,15 +67,17 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
   )
   const path = (p: string) => <Text mono>{p}</Text>
 
-  // Status chips: what the sections below say, at a glance.
+  // Status chips: what the sections below say, at a glance. Advisory is the default, so it reads muted, as the status
+  // line does; a hook for another contract is an error only once a contract is resolved for it to contradict.
+  const enforcing = enforcement.kind === 'advisory' ? undefined : (enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract')
   const enforcementChip: [string, Color] =
     enforcement.kind === 'advisory'
-      ? ['● Advisory', 'warning']
+      ? ['● Advisory', 'inactive']
       : enforcement.manifestUnreadable
         ? ['● Manifest unreadable', 'error']
         : enforcement.kind === 'enforced'
           ? ['● Enforced', 'success']
-          : ['● Enforcing another contract', 'error']
+          : [`● Enforcing ${enforcing}`, main ? 'error' : 'warning']
   const blocked = state.drift.some((d) => d.kind !== 'advisory')
   const driftChip: [string, Color] =
     state.drift.length === 0
@@ -188,12 +198,9 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
           'Enforcement',
           row(
             'State',
-            <Text color="warning">
-              Advisory
-              <Text dimColor> · no hook installed</Text>
-            </Text>,
+            <Text dimColor>Advisory · no hook installed</Text>,
           ),
-          row('Watching', watching),
+          row('Drift check', watching),
         )
       : section(
           'Enforcement',
@@ -204,13 +211,13 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
                 ? '⚠ Manifest unreadable'
                 : enforcement.kind === 'enforced'
                   ? 'Enforced'
-                  : `⚠ Enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`}
+                  : `⚠ Enforcing ${enforcing}`}
             </Text>,
           ),
           row('Manifest', path(enforcement.manifestPath)),
-          row('Class-1', enforcement.deniedActionClasses.length ? `deny ${enforcement.deniedActionClasses.join(', ')}` : 'none'),
-          row('Routed', list(enforcement.matcherTools)),
-          row('Watching', watching),
+          row('Blocks', blocks(enforcement)),
+          row('Checks', checked(enforcement.matcherTools)),
+          row('Drift check', watching),
         )
 
   const freshnessSection =

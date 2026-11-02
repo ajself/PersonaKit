@@ -31,6 +31,7 @@ function engine(on: On) {
   const world = {
     answers, draft: '', fills: [] as Fill[], fillAnswer: { isFilled: true } as { isFilled: boolean; refusal?: 'dialog' | 'no_composer' },
     opens: [] as Record<string, unknown>[], isPlaced: true, toasts: [] as string[], logs: [] as string[], state: undefined as SessionState | undefined,
+    files: {} as Record<string, string>,
     // `personakit` as the pane runs it: every argv, and what each run answers (a `deny` is the host refusing).
     runs: [] as (readonly string[])[], sessionWrites: 0, process: (() => ran(LIST_JSON)) as (argv: readonly string[]) => Ran | { deny: string },
   }
@@ -48,8 +49,9 @@ function engine(on: On) {
   })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.compact', (_, e) => ({ messages: e.messages }))
+  on('turn.complete', (_, e) => ({ text: e.answer }))
   on('tool.call', () => (answers.shift() ?? { result: 'ok', text: 'ok' }) as never)
-  on('fs.read', (_, e) => ({ deny: `${e.path}: missing` }) as never)
+  on('fs.read', (_, e) => (e.path in world.files ? { value: world.files[e.path] } : { deny: `${e.path}: missing` }) as never)
   on('session.root', () => ({ value: '/p' }))
   on('session.messages', () => ({ value: [] }) as never)
   on('command.register', () => ({ value: { command: 'pk' } }))
@@ -105,6 +107,24 @@ const texts = async (ui: Ui, key: string) => {
 }
 const row = (ui: Ui, label: string) => texts(ui, `row-${label}`)
 const chips = (ui: Ui) => texts(ui, 'chips')
+/** Each chip's text and the color it reads in. */
+const chipColors = async (ui: Ui) =>
+  (((await ui.find({ key: 'chips' })) as { children?: { props?: { color?: unknown }; children?: Node[] }[] }).children ?? []).map(
+    (chip) => [shown(chip as Node), chip.props?.color],
+  )
+
+const MANIFEST_PATH = '/p/.claude/personakit/read-only-auditor_audit-pass.checks.json'
+const HOOKED_SETTINGS = JSON.stringify({
+  hooks: {
+    PreToolUse: [{ matcher: '.*', hooks: [{ type: 'command', command: `'/usr/local/bin/personakit' hook-check --manifest '${MANIFEST_PATH}'` }] }],
+  },
+})
+const MANIFEST = JSON.stringify({
+  sessionId: SESSION,
+  personaId: 'read-only-auditor',
+  directiveId: 'audit-pass',
+  checks: [{ id: 'a', maxClass: 'hook', rule: { kind: 'capability-deny', deniedActionClasses: ['file-mutation', 'network-egress'] } }],
+})
 
 const each = (name: string, body: ($: Engine, w: World, surface: Surface) => Promise<void>) => {
   for (const surface of SURFACES) {
@@ -134,9 +154,9 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   expect(await texts(ui, 'step-2')).toEqual(['2', 'Report confirmed issues before suggestions.', '◆ stop'])
   expect(await row(ui, 'Mode')).toEqual(['Mode', 'project-only'])
   expect(await row(ui, 'State')).toEqual(['State', 'Advisory · no hook installed'])
-  expect(await row(ui, 'Watching')).toEqual(['Watching', 'command-execution, file-mutation, network-egress · from the handoff context'])
+  expect(await row(ui, 'Drift check')).toEqual(['Drift check', 'command-execution, file-mutation, network-egress · from the handoff context'])
   expect(await row(ui, 'Compactions')).toEqual(['Compactions', '1 · re-ground?'])
-  expect(await text(ui, /^Write/)).toBe('Write advisory · file-mutation · main · turn 0')
+  expect(await text(ui, /^Write/)).toBe('Write not blocked · file-mutation · main · turn 0')
   // Clean authorization: no authorization block.
   expect(await ui.find({ key: 'row-Authorized' }).then((r) => r && texts(ui, 'row-Authorized'))).toEqual(['Authorized', 'none'])
   expect(await ui.find({ key: 'problem-0' })).toBe(undefined)
@@ -292,10 +312,10 @@ each('with no contract the pane gives the /pk use hint and no Re-ground', async 
   const ui = await mount($, surface)
   expect(await text(ui, /^No contract/)).toBe('No contract in force')
   expect(await text(ui, /\/pk use/)).toBe('Run /pk use <session> to ground this session.')
-  expect(await chips(ui)).toEqual(['● Advisory', '✓ No drift'])
+  expect(await chipColors(ui)).toEqual([['● Advisory', 'inactive'], ['✓ No drift', 'success']])
   // Only the Contract | Library switch: nothing to Re-ground.
   expect((await ui.findAll({ type: 'Button' })).map((b) => b.key)).toEqual(['switch-contract', 'switch-library'])
-  expect(await row(ui, 'Watching')).toEqual(['Watching', 'Off until handoff context is seen'])
+  expect(await row(ui, 'Drift check')).toEqual(['Drift check', 'Off until handoff context is seen'])
   await ui.unmount()
 })
 
@@ -324,9 +344,12 @@ each('/pk use s fills the prompt', async ($, w) => {
 
 each('/pk use with an id outside the id rule fills nothing and says so', async ($, w) => {
   const ran = await pk($, 'use .hidden')
-  expect(ran.text).toBe('Unsupported id; no prompt was pre-filled.')
+  // Said once, in the reply, with the rule it broke.
+  expect(ran.text).toBe(
+    'Unsupported id: PersonaKit ids use only letters, digits, dots, underscores, and hyphens, and do not start with a dot. No prompt was pre-filled.',
+  )
   expect(w.fills).toEqual([])
-  expect(w.toasts).toEqual(['PersonaKit: unsupported id'])
+  expect(w.toasts).toEqual([])
 })
 
 each('a contract with an unsupported id is never resolved, so there is nothing to re-ground', async ($, w, surface) => {
@@ -878,4 +901,37 @@ test('rootsMismatchWarning compares the sets of roots, not their keys', () => {
   expect(warn({ mode: 'global-only', globalRoot: '/g' }, { global: '/g' })).toBe(undefined)
   expect(warn(undefined, { project: '/p' })).toBe(undefined)
   expect(warn({ mode: 'project-only' }, { project: '/p' })).toBe(undefined)
+})
+
+for (const surface of SURFACES) {
+  test(`an installed hook reads in plain words: what it blocks, what it checks, and that drift check is off (${surface})`, async ($, on) => {
+  const w = engine(on)
+  w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
+  w.files[MANIFEST_PATH] = MANIFEST
+  await $.session.start({ cwd: '/p', surface, isInteractive: true })
+  let ui = await mount($, surface)
+  // A hook with nothing resolved names its contract as a warning: nothing contradicts it yet.
+  expect(await chipColors(ui)).toEqual([[`● Enforcing ${SESSION}`, 'warning'], ['✓ No drift', 'success']])
+  expect(await row(ui, 'State')).toEqual(['State', `⚠ Enforcing ${SESSION}`])
+  await ui.unmount()
+  await ground($, w)
+  ui = await mount($, surface)
+  expect(await chipColors(ui)).toEqual([['● Enforced', 'success'], ['✓ No drift', 'success']])
+  expect(await row(ui, 'State')).toEqual(['State', 'Enforced'])
+  expect(await row(ui, 'Blocks')).toEqual(['Blocks', 'file-mutation, network-egress'])
+  expect(await row(ui, 'Checks')).toEqual(['Checks', 'every tool call'])
+  expect(await row(ui, 'Drift check')).toEqual(['Drift check', 'Off while a PersonaKit hook is installed'])
+  await ui.unmount()
+  expect(w.logs).toEqual([])
+  })
+}
+
+each('an unreadable manifest blocks every tool call the hook checks, and the pane says so', async ($, w, surface) => {
+  w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
+  w.files[MANIFEST_PATH] = '{ not json'
+  await $.turn.complete({ answer: 'done', durationMs: 1, isAborted: false, turnId: 't0', reason: 'answer' } as never)
+  const ui = await mount($, surface)
+  expect(await row(ui, 'State')).toEqual(['State', '⚠ Manifest unreadable'])
+  expect(await row(ui, 'Blocks')).toEqual(['Blocks', 'every tool call it checks'])
+  await ui.unmount()
 })

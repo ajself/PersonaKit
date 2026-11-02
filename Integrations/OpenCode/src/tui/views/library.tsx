@@ -32,6 +32,9 @@ export const LABEL_WIDTH = 12
 
 export const line = sanitizeLine
 
+/** Where to fix a `personakit` the TUI couldn't run: the option goes in both configs, since each half reads its own. */
+export const PERSONAKIT_PATH_FIX = "Set the personakitPath option in the plugin's entry in both opencode.json and tui.json if PersonaKit is installed elsewhere."
+
 type NavEntry = { id: string; press: () => void; isEnabled: () => boolean; node: () => Renderable | undefined }
 
 /** The route's buttons in screen order, the one the keyboard selected, and moving and pressing it. */
@@ -372,7 +375,7 @@ export function LoadState(props: { load: Exclude<LibraryLoad, { kind: 'loaded' }
       <Match when={props.load.kind === 'missing' && props.load}>
         {(load) => (
           <text fg={theme().text}>
-            {line(`Couldn't run ${load().binary}: ${load().detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`)}
+            {line(`Couldn't run ${load().binary}: ${load().detail}. ${PERSONAKIT_PATH_FIX}`)}
           </text>
         )}
       </Match>

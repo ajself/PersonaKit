@@ -7,6 +7,9 @@ import type { ContractIds } from '../../types'
  */
 export const isValidId = (id: string): boolean => /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/.test(id)
 
+/** The id rule in words, for a message that rejects an id. */
+export const ID_RULE = 'PersonaKit ids use only letters, digits, dots, underscores, and hyphens, and do not start with a dot'
+
 /** Every id `ids` carries, in session, persona, directive order. */
 export const presentIds = ({ sessionId, personaId, directiveId }: ContractIds): string[] =>
   [sessionId, personaId, directiveId].filter((id): id is string => id !== undefined)

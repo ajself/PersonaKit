@@ -195,7 +195,7 @@ test('chipShowsNoContract', async () => {
   const fake = await start(fakeApi())
   const chip = await render(fake, 'session_prompt_right')
   const frame = await chip.waitForFrame((f) => f.includes('no contract'))
-  expect(frame).toContain('◇ no contract · /pk')
+  expect(frame).toContain('◇ no contract · /pk-use')
   expect(frame).not.toContain('<session>')
 })
 
@@ -219,6 +219,8 @@ test('compactionToastsOnViewedSession', async () => {
   await until(() => fake.record.toasts.length === 1, 'the compaction toast')
   expect(fake.record.toasts[0]!.variant).toBe('warning')
   expect(fake.record.toasts[0]!.message).toContain('re-ground')
+  // The sidebar's Re-ground takes a mouse, so the toast names the keyboard path too.
+  expect(fake.record.toasts[0]!.message).toContain('Open /pk and press Re-ground')
   const frame = await sidebar.waitForFrame((f) => f.includes('1 · re-ground?'))
   expect(frame).toContain('Compactions')
 
@@ -350,7 +352,7 @@ test('subagentSessionDriftIsTheSubagents', async () => {
   parts.ca1 = [child]
   fake.emit('message.part.updated', { sessionID: CHILD, part: child, time: 4 })
   const frame = await sidebar.waitForFrame((f) => f.includes('Drift (1)'))
-  expect(frame).toContain('bash advisory · command-execution · subagent · turn 1')
+  expect(frame).toContain('bash not blocked · command-execution · subagent · turn 1')
 })
 
 /** A `personakit` stand-in that prints `stdout` for `list all --json`. */
@@ -425,7 +427,7 @@ test('pkUseToastsWhenTheLibraryCannotLoad', async () => {
   await commands(fake).find((command) => command.slashName === 'pk-use')!.run({})
   expect(fake.record.dialogs).toEqual([])
   expect(fake.record.toasts.length).toBe(1)
-  expect(fake.record.toasts[0]!.message).toContain('personakitPath')
+  expect(fake.record.toasts[0]!.message).toContain("personakitPath option in the plugin's entry in both opencode.json and tui.json")
 })
 
 test('pkUseToastsTheVersionAnOldCLINeeds', async () => {

@@ -3,7 +3,7 @@ import type { Register } from 'claude-code'
 
 import type { Call, ContractIds, Enforcement, PaneState, SessionState, View } from '../types'
 import { enforcementFor, installedHook } from './lib/enforcement'
-import { canUse } from './lib/ids'
+import { canUse, ID_RULE } from './lib/ids'
 import { observe } from './lib/observe'
 import { usePrompt } from './lib/prompts'
 import { loadLibrary, loadPreview, mcpServerName, personakitBinary, previewKey } from './lib/runner'
@@ -170,7 +170,7 @@ async function fillPrompt($: Prompt, text: string): Promise<boolean> {
 /** Pre-fills the grounding prompt for `ids`, naming `binary`; an id outside the id rule fills nothing and is toasted. */
 async function fillGrounding($: Prompt, ids: ContractIds, binary: string): Promise<boolean> {
   if (!canUse(ids)) {
-    $.ui.toast('PersonaKit: unsupported id')
+    $.ui.toast(`PersonaKit: unsupported id. ${ID_RULE}.`)
     return false
   }
   return fillPrompt($, usePrompt(ids, binary))
@@ -267,10 +267,7 @@ export const register: Register = (on, options) => {
     }
     if (sub !== 'use') return { text: USAGE }
     if (name === undefined || rest.length > 0) return { text: USE }
-    if (!canUse({ sessionId: name })) {
-      $.ui.toast('PersonaKit: unsupported id')
-      return { text: 'Unsupported id; no prompt was pre-filled.' }
-    }
+    if (!canUse({ sessionId: name })) return { text: `Unsupported id: ${ID_RULE}. No prompt was pre-filled.` }
     const filled = await fillGrounding($, { sessionId: name }, binary)
     return { text: filled ? `Pre-filled a prompt to ground this session in \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
   })

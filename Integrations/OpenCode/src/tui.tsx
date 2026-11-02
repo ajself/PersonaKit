@@ -18,6 +18,7 @@ import { registerRoute, ROUTE } from './tui/route.tsx'
 import { createSpawnRunner } from './tui/spawnRunner.ts'
 import { sanitizeLine } from './tui/text.ts'
 import { Chip, chipText } from './tui/views/chip.tsx'
+import { PERSONAKIT_PATH_FIX } from './tui/views/library.tsx'
 import { Sidebar } from './tui/views/sidebar.tsx'
 
 // How far up `parentID` a subagent's session is followed to the session being tracked.
@@ -80,7 +81,7 @@ function libraryProblem(load: Exclude<LibraryLoad, { kind: 'loaded' }>): string 
     case 'no-library':
       return 'PersonaKit: no library here (no .personakit in this project and no ~/.personakit); run `personakit init .personakit` to create one'
     case 'missing':
-      return `PersonaKit: couldn't run ${load.binary}: ${load.detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`
+      return `PersonaKit: couldn't run ${load.binary}: ${load.detail}. ${PERSONAKIT_PATH_FIX}`
     case 'outdated':
       return `PersonaKit: this needs PersonaKit 2.2.0 or later.${load.detail ? ` ${load.detail}` : ''}`
     case 'unavailable':
@@ -262,7 +263,7 @@ const tui = async (
     api.ui.toast({
       variant: 'warning',
       title: 'PersonaKit',
-      message: sanitizeLine(`Context compacted: re-ground ${id}? Re-ground is in the sidebar.`),
+      message: sanitizeLine(`Context compacted: re-ground ${id}? Open /pk and press Re-ground, or use the sidebar.`),
     })
   }
 

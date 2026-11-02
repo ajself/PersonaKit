@@ -3,7 +3,7 @@ import type { RGBA } from '@opentui/core'
 import { For, Show } from 'solid-js'
 import type { DriftEvent, Enforcement, Resolution, SessionState } from '../../../../ClaudeCode/types'
 import { sanitizeLine, sanitizeText } from '../text.ts'
-import { MANIFEST_CHANGED } from './chip.tsx'
+import { MANIFEST_CHANGED, NO_CONTRACT_HINT } from './chip.tsx'
 
 /** The label column's width, in cells: the longest label ("Compactions") and a space. */
 const LABEL_WIDTH = 12
@@ -14,13 +14,14 @@ type Theme = TuiPluginApi['theme']['current']
 const list = (ids: readonly string[]) => (ids.length ? ids.join(', ') : 'none')
 
 /** The enforcement row: the status line's words, and the theme color they read in. */
-function enforcementRow(enforcement: Enforcement, manifestChanged: boolean, theme: Theme): [string, RGBA] {
+function enforcementRow(enforcement: Enforcement, manifestChanged: boolean, isResolved: boolean, theme: Theme): [string, RGBA] {
   if (manifestChanged) return [MANIFEST_CHANGED, theme.warning]
   if (enforcement.kind === 'advisory') return ['advisory', theme.textMuted]
   if (enforcement.pluginMissing) return ['⚠ manifest present · plugin not loaded', theme.warning]
   if (enforcement.manifestUnreadable) return ['⚠ enforcement manifest unreadable', theme.error]
   if (enforcement.kind === 'enforced') return ['enforced', theme.success]
-  return [`⚠ enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`, theme.error]
+  // Another contract's manifest is an error only once a contract is resolved for it to contradict.
+  return [`⚠ enforcing ${enforcement.ids.sessionId ?? enforcement.ids.personaId ?? 'another contract'}`, isResolved ? theme.error : theme.warning]
 }
 
 /** Session id, else persona › directive: how the resolution is named. */
@@ -32,7 +33,7 @@ function lead({ ids, details }: Resolution): string {
 }
 
 const driftLine = (d: DriftEvent) =>
-  `${d.tool} ${d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind}${d.actionClass ? ` · ${d.actionClass}` : ''} · ${d.agentId !== undefined ? 'subagent' : 'main'} · turn ${d.turn}`
+  `${d.tool} ${d.kind === 'reground-blocked' ? 're-ground blocked' : d.kind === 'advisory' ? 'not blocked' : 'blocked'}${d.actionClass ? ` · ${d.actionClass}` : ''} · ${d.agentId !== undefined ? 'subagent' : 'main'} · turn ${d.turn}`
 
 /** A muted label in a fixed column, its value wrapping in its own. */
 function Row(props: { theme: Theme; label: string; value: string; color?: RGBA }) {
@@ -56,14 +57,14 @@ function Row(props: { theme: Theme; label: string; value: string; color?: RGBA }
 export function Sidebar(props: { api: TuiPluginApi; state: SessionState; manifestChanged: boolean; reground: (() => void) | undefined }) {
   const theme = () => props.api.theme.current
   const main = () => props.state.main
-  const enforcement = () => enforcementRow(props.state.enforcement, props.manifestChanged, theme())
+  const enforcement = () => enforcementRow(props.state.enforcement, props.manifestChanged, props.state.main !== undefined, theme())
   const drift = () => props.state.drift.slice(-DRIFT_SHOWN)
   return (
     <box flexDirection="column">
       <text fg={theme().text}>
         <b>PersonaKit</b>
       </text>
-      <Show when={main()} fallback={<text fg={theme().textMuted}>◇ no contract · /pk-use to ground one</text>}>
+      <Show when={main()} fallback={<text fg={theme().textMuted}>{`◇ no contract · ${NO_CONTRACT_HINT}`}</text>}>
         {(resolution) => {
           const details = () => resolution().details
           const contract = () => resolution().contract

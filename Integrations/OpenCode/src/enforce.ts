@@ -20,7 +20,7 @@ const failClosed = (problem: string, fix: string): string => `${PREFIX} ${proble
 
 /** The fix when `hook-check` runs but cannot answer the plugin: a binary from another release, or a broken one. */
 const CHECKER_FIX =
-  'check that personakit (the personakitPath option) runs and matches the plugin version, then restart OpenCode'
+  "check that personakit (the personakitPath option in the plugin's entry in opencode.json) runs and matches the plugin version, then restart OpenCode"
 
 export type ManifestFind = { kind: 'none' } | { kind: 'one'; path: string; projectDir: string } | { kind: 'many'; paths: string[] }
 
@@ -293,7 +293,7 @@ export function resolveExecutable(
 export const unresolvedReason = (name: string): string =>
   failClosed(
     `could not run personakit: ${printable(name)} is not an executable file or on PATH`,
-    'set the personakitPath option to the absolute path of the personakit binary, or to a name on the PATH OpenCode sees, then restart OpenCode',
+    "set the personakitPath option in the plugin's entry in opencode.json to the absolute path of the personakit binary, or to a name on the PATH OpenCode sees, then restart OpenCode",
   )
 
 /** The reason every routed call gets when the manifest could not be read or hashed at startup. */
