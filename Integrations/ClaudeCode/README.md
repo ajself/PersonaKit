@@ -5,7 +5,16 @@ lets you browse your PersonaKit library and start a session from it.
 
 ## Install
 
-At the prompt of a terminal session:
+The mod needs the `personakit` CLI: install it from the signed `.pkg` on
+[GitHub Releases](https://github.com/ajself/PersonaKit/releases/latest), or see the
+[Install page](https://ajself.github.io/PersonaKit/install/). The status comes from what the agent resolves through
+the PersonaKit MCP server or the CLI, so register the server too:
+
+```bash
+claude mcp add personakit --scope user -- "$(which personakit)" mcp
+```
+
+Then, at the prompt of a terminal session:
 
 ```text
 /plugin install personakit --marketplace ajself/PersonaKit
@@ -58,8 +67,9 @@ The Library is the other half of the `/pk` pane: your personas, sessions, and co
   pre-fills the prompt, as `/pk use` does; nothing is in force until you send it and the agent resolves the contract.
 
 When the library cannot load, the pane says why instead of showing an empty list: no library in this project or in
-`~/.personakit`, a `personakit` binary that could not run (it names the binary and points at `personakitPath`), files
-that failed validation (listed by scope and path), or a host that cannot run processes at all.
+`~/.personakit`, a `personakit` binary that could not run (it names the binary and points at `personakitPath`), a CLI
+too old for the mod ("This needs PersonaKit 2.2.0 or later."), files that failed validation (listed by scope and
+path), or a host that cannot run processes at all.
 
 ## Commands
 
@@ -83,6 +93,8 @@ The mod never blocks a tool call, never submits a prompt, and never writes a fil
 `personakit list all --json`, `personakit contract`, and `personakit export`, all read-only, and only from the `/pk`
 pane. Everything else it does is read files and observe what the agent already did. What the pane loads never reaches
 the status line or the drift log. Enforcement itself comes from `personakit enforce install`; the mod reports its state.
+[Docs/enforcement.md](https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md) covers what enforcement
+blocks and how to install and remove it.
 
 ## Development
 

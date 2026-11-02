@@ -8,23 +8,31 @@ on OpenCode 1.19.5.
 
 ## Install
 
-The package, `opencode-personakit`, is not on npm yet. Once it is published, install an exact version from a shell in
-your project:
+The plugin installs from a PersonaKit checkout, at the release tag that matches your `personakit` CLI:
 
 ```bash
-opencode plugin opencode-personakit@2.1.0
+git clone https://github.com/ajself/PersonaKit.git
+cd PersonaKit
+git checkout "v$(personakit --version)"
+make opencode-install
 ```
 
-Add `-g` to install it for every project. OpenCode adds the entry to both its server config (`opencode.json`) and its
-TUI config (`tui.json`); PersonaKit never writes either file. Install from npm rather than pointing OpenCode at a
-checkout: an npm install lives in OpenCode's cache, which enforcement protects, while a plugin loaded from a project
-file outside `.opencode/` is one the agent can edit. A plugin loaded from a path also reads as `plugin not loaded`.
+`make opencode-install` copies the plugin to `${XDG_CACHE_HOME:-~/.cache}/opencode/personakit/plugin` and registers it
+for every project on the machine with `opencode plugin -g --force file://<that folder>`, which adds the entry to both
+OpenCode's server config (`opencode.json`) and its TUI config (`tui.json`). The `personakit` CLI never writes either
+file. The plugin lives in OpenCode's cache, which enforcement protects from the agent's edits. Run the install again
+after you upgrade the CLI: `personakit enforce install --host opencode` refuses a plugin whose version differs from
+the CLI's. Restart OpenCode to load the plugin.
 
 To enforce a session's contract in this project, freeze it, then restart OpenCode so the plugin loads it:
 
 ```bash
 personakit enforce install --host opencode --session <id>
 ```
+
+`personakit enforce uninstall --host opencode` removes it again.
+[Docs/enforcement.md](https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md) covers what enforcement
+blocks, how to install and remove it, and what it does not cover.
 
 The status comes from what the agent resolves through the PersonaKit MCP server or the `personakit` CLI, so register
 the server as well; [Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main/Docs/mcp.md) has the OpenCode config.
@@ -43,8 +51,8 @@ The enforcement segment reads:
 - `enforced` only when a manifest exists, the resolved OpenCode config lists the server plugin, and the manifest is
   the one OpenCode loaded at startup.
 - `advisory` when the project has no manifest.
-- `⚠ manifest present · plugin not loaded` when no config lists `opencode-personakit`, so nothing enforces the
-  manifest.
+- `⚠ manifest present · plugin not loaded` when no config lists the plugin `make opencode-install` registered, so
+  nothing enforces the manifest.
 - `⚠ manifest changed · restart OpenCode` when the manifest was added, changed, or removed since OpenCode started. It
   also shows after you turn the plugin off and on or enable it mid-session, since the plugin can no longer confirm what
   OpenCode loaded at startup.
@@ -83,8 +91,8 @@ loads each time the view opens, and Refresh loads it again.
 on the top view returns to the session `/pk` was opened from.
 
 When the library cannot load, the view says why instead of showing an empty list: no library in this project or in
-`~/.personakit`, a `personakit` binary that could not run (it points at `personakitPath`), or files that failed
-validation, listed by scope and path.
+`~/.personakit`, a `personakit` binary that could not run (it points at `personakitPath`), a CLI too old for the plugin
+("This needs PersonaKit 2.2.0 or later."), or files that failed validation, listed by scope and path.
 
 ## Commands
 
@@ -99,12 +107,13 @@ and never sends it. You review and send. If the box cannot take the text, a toas
 
 ## Options
 
-Options go in the plugin's entry as `[spec, options]`. The server plugin reads its entry in `opencode.json` and the TUI
-reads its own in `tui.json`, so set `personakitPath` in both:
+Options go in the plugin's entry as `[spec, options]`, with the spec exactly as `make opencode-install` wrote it. The
+server plugin reads its entry in the global `opencode.json` and the TUI reads its own in `tui.json`, so set
+`personakitPath` in both:
 
 ```json
 {
-  "plugin": [["opencode-personakit@2.1.0", { "personakitPath": "/opt/homebrew/bin/personakit" }]]
+  "plugin": [["file:///Users/you/.cache/opencode/personakit/plugin", { "personakitPath": "/usr/local/bin/personakit" }]]
 }
 ```
 
@@ -117,6 +126,8 @@ restart OpenCode.
 `tui.json` if you registered the server under another name, so the status recognizes those calls as PersonaKit's own.
 Enforcement trusts PersonaKit's MCP tools by the name recorded in the manifest instead: pass the same name to
 `personakit enforce install --mcp-server <name>`.
+[Docs/enforcement.md](https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md#trusted-mcp-server-names)
+explains which names it trusts.
 
 ## Enforcement
 
@@ -138,7 +149,8 @@ commands, and plugins referenced by path. When one of them lives outside the pro
 allows edits but denies commands still lets the agent rewrite it, and OpenCode then runs the new code. With commands
 allowed, nothing is protected. Shell commands you run yourself (`!cmd`, `/command` substitutions) are not checked.
 Sessions created through `opencode serve`'s `/api/session` API get only static deny rules;
-[Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main/Docs/mcp.md#opencode-enforcement) lists what that misses.
+[Docs/enforcement.md](https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md#what-it-does-not-cover) lists
+what that misses.
 
 ## What it does not do
 

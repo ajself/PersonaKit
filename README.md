@@ -44,7 +44,13 @@ the authored content, inspects the resolved contract, and exports handoff contex
 
 ## Quick Start
 
-The Makefile is the repo command surface:
+The simplest install is the signed, notarized `PersonaKit.pkg` from
+[GitHub Releases](https://github.com/ajself/PersonaKit/releases/latest). It installs PersonaKit Studio in
+`/Applications` and the `personakit` CLI in `/usr/local/bin`, and needs macOS 26.2 or later. The
+[Install page](https://ajself.github.io/PersonaKit/install/) covers it and the source build.
+
+To build the CLI from source instead, you need macOS 26 or later and the Swift 6.2 toolchain. The Makefile is the repo
+command surface:
 
 ```bash
 make help
@@ -62,13 +68,13 @@ Install the CLI locally:
 make cli-install INSTALL_BIN_DIR="$HOME/.local/bin"
 ```
 
-Make sure the install directory is on your `PATH`, then check the CLI:
+Check the CLI. After a source build, make sure the install directory is on your `PATH` first:
 
 ```bash
 personakit --help
 ```
 
-Validate the public starter root:
+The rest of this section uses the public starter root in this repository. Validate it:
 
 ```bash
 personakit validate --root Examples/public-starter/.personakit
@@ -177,6 +183,7 @@ Author PersonaKit content:
 ```text
 personakit init <path>
 personakit create <subcommand>
+personakit schema persona|kit|directive|skill
 ```
 
 Discover and visualize:
@@ -198,7 +205,19 @@ Integrate with MCP clients:
 personakit mcp
 ```
 
-PersonaKit should stay focused on validation, deterministic resolution, inspection, export, and read-only grounding.
+Derive checks and enforce a contract in a host (opt-in; see [Enforce A Contract](#enforce-a-contract)):
+
+```text
+personakit checks --session <id>
+personakit enforce install --session <id> [--host claude|opencode] [--dry-run]
+personakit enforce uninstall [--host claude|opencode] [--dry-run]
+personakit hook-check --manifest <path>
+```
+
+`hook-check` is what the installed hook runs on each tool call; you do not run it by hand.
+
+PersonaKit should stay focused on validation, deterministic resolution, inspection, export, read-only grounding, and
+opt-in host enforcement.
 
 ## Use With AI Agents
 
@@ -219,13 +238,15 @@ claude mcp list
 
 The repository is also a Claude Code marketplace for an optional mod that shows the contract in force in your status
 line and flags drift from it. Install it from a Claude Code prompt with
-`/plugin install personakit --marketplace ajself/PersonaKit`. The mod only reads files: it never runs PersonaKit, blocks
-a tool call, or submits a prompt. See [Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
+`/plugin install personakit --marketplace ajself/PersonaKit`. From its `/pk` pane the mod runs three read-only
+`personakit` commands: `list all --json`, `contract`, and `export`. It never blocks a tool call, submits a prompt, or
+writes a file. See [Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
 
-OpenCode has a matching plugin, `opencode-personakit`: a status chip beside the prompt, a sidebar panel, `/pk` for the
-contract and the Library, and `/pk-use` to start a session. It is also the hook that enforces a contract frozen with
-`personakit enforce install --host opencode`. It is not on npm yet; see
-[Integrations/OpenCode/README.md](./Integrations/OpenCode/README.md) for install and what it covers.
+OpenCode has a matching plugin: a status chip beside the prompt, a sidebar panel, `/pk` for the contract and the
+Library, and `/pk-use` to start a session. It is also the hook that enforces a contract frozen with
+`personakit enforce install --host opencode`. Install it with `make opencode-install` from a checkout of the release
+tag that matches your CLI; see [Integrations/OpenCode/README.md](./Integrations/OpenCode/README.md) for the steps and
+what it covers.
 
 For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio shape, use the per-host config table in
 [Docs/mcp.md](./Docs/mcp.md).
@@ -242,7 +263,7 @@ moment: resolve the active contract before choosing tools, skills, or files. `pe
 `personakit-grounding/SKILL.md`; per-host variants (Claude Code, Cursor, Copilot, OpenCode) live in the grounding
 tutorial on the [PersonaKit website](https://ajself.github.io/PersonaKit/). Copy the variant for your host into the
 directory it discovers skills from. For Claude Code that is `.claude/skills/`. PersonaKit never writes into a host
-config directory for you.
+config directory for you unless you opt in to enforcement, below.
 
 ### Point A Cold Agent At PersonaKit (optional)
 
@@ -258,10 +279,31 @@ PersonaKit MCP server is connected) to resolve the active session contract:
 role, rules, allowed capabilities, forbidden actions, and stop points.
 ```
 
+## Enforce A Contract
+
+A contract is intent by default: the agent is expected to follow it, and nothing blocks a call it forbids. When you
+want the host to deny forbidden tool calls, opt in for one project:
+
+```bash
+personakit enforce install --session <id>
+```
+
+For Claude Code this writes `.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in `.claude/settings.json`
+that runs `personakit hook-check` on every tool call. For OpenCode, install the plugin with `make opencode-install`
+first, then add `--host opencode`; that writes only `.opencode/personakit/<id>.checks.json`. Add `--dry-run` to see
+the files before they are written, and restart the host afterward. `personakit enforce uninstall` removes what install
+wrote.
+
+Enforcement denies the dedicated tools for the capabilities a persona forbids: `edit-files`, `run-commands`, and
+`network-access`. Shell tools are judged by name only, so a contract that allows `run-commands` cannot stop a shell
+command from editing files or reaching the network. Enforcement is not a sandbox, and a call it does not deny still
+has to follow the contract. [Docs/enforcement.md](./Docs/enforcement.md) has the details.
+
 ## Studio And MCP
 
 PersonaKit Studio is a local GUI for managing packs and sessions. Use it when you want a visual administration surface
-alongside the CLI and MCP flows.
+alongside the CLI and MCP flows. Its Set Up Agents sheet lists the steps to install the CLI, register the MCP server,
+install the OpenCode plugin, and enforce a contract; Studio runs none of them.
 
 For repository development, `make studio-review` builds Studio, opens deterministic demo workspaces, and captures
 screenshots under `.build/studio-review/` for operator inspection.

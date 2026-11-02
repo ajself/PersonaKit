@@ -96,7 +96,8 @@ personakit export --root personakit-root --session cli-maintenance`;
 
   <p>Add <code>--stats</code> to print a size summary of the resolved export (lines, bytes, sections) to stderr, which helps spot context bloat before handoff.</p>
 
-  <h2>How To Read The Payload</h2>
+  <h2>How To Read The Handoff Context</h2>
+  <p>The export has these sections, in this order:</p>
   <table>
     <thead>
       <tr>
@@ -106,32 +107,40 @@ personakit export --root personakit-root --session cli-maintenance`;
     </thead>
     <tbody>
       <tr>
-        <td>Resolution</td>
-        <td>The session, persona, directive, and kits match the work mode you intended.</td>
-      </tr>
-      <tr>
         <td>Persona</td>
-        <td>The role has the right responsibilities, values, and non-goals.</td>
+        <td>The role has the right responsibilities, values, non-goals, and allowed and forbidden skills.</td>
       </tr>
       <tr>
         <td>Skill Contract</td>
-        <td>The needed capability is authorized and dangerous capabilities are forbidden.</td>
+        <td>The skills the task needs are authorized and required, and <code>Authorized</code> reads <code>true</code>.</td>
       </tr>
       <tr>
         <td>Applied Kits</td>
         <td>The durable rules that shape this work mode are included.</td>
       </tr>
       <tr>
-        <td>Grounding Skills</td>
-        <td>Always-on and triggered grounding is present, including built-in PersonaKit contracts.</td>
+        <td>Available Skills</td>
+        <td>The grounding skills in reach, with their triggers and where each one came from.</td>
+      </tr>
+      <tr>
+        <td>Expanded Skills</td>
+        <td>The grounding text loaded for this session: always-on skills and any whose triggers matched. Absent when none apply.</td>
       </tr>
       <tr>
         <td>Directive</td>
         <td>The steps, stop points, acceptance criteria, and verification fit the task.</td>
       </tr>
       <tr>
-        <td>Handoff Context</td>
-        <td>The exported Markdown is ready to copy into the coding tool you use for the actual work.</td>
+        <td>Workstream</td>
+        <td>Only when the directive belongs to a workstream: its phase, the session map, and the next sessions to hand off to.</td>
+      </tr>
+      <tr>
+        <td>Boundaries</td>
+        <td>Each guardrail is tagged with the strongest enforcement class it can reach (hook, command, or review), and anything not yet checkable is listed. Nothing here is enforced unless you opt in with <code>personakit enforce install</code>.</td>
+      </tr>
+      <tr>
+        <td>Skill Awareness</td>
+        <td>The capability skills the work requires: who provides each one and its risk.</td>
       </tr>
     </tbody>
   </table>

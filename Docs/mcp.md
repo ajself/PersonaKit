@@ -56,7 +56,7 @@ The key tools are:
 - `personakit_resolve_contract`: resolve persona, directive, kits, skills, and skill authorization.
 - `personakit_trace_session`: audit where resolved constraints came from.
 - `personakit_resolve_grounding_skills`: select triggered grounding skills for explicit paths or tags.
-- `personakit_export`: assemble human-readable Markdown grounding.
+- `personakit_export`: assemble the Markdown handoff context.
 
 ## Client Setup Notes
 
@@ -73,8 +73,8 @@ Current client docs:
 
 ### OpenCode
 
-PersonaKit Studio can install or update the OpenCode MCP entry for the local
-user. The generated shape is:
+Add the server to your OpenCode config (`opencode.json`). PersonaKit Studio's
+Set Up Agents sheet shows the same entry to copy; Studio writes nothing itself.
 
 ```json
 {
@@ -89,86 +89,13 @@ user. The generated shape is:
 }
 ```
 
-Studio will not rewrite an existing JSONC config automatically; it reports a
-manual merge snippet instead so comments and trailing commas are not stripped.
-
-#### OpenCode enforcement
-
-Enforcement needs the `opencode-personakit` plugin, tested on OpenCode 1.19.5,
-whose server half blocks the tool calls the active contract forbids. The
-package is not on npm yet. Once it
-is published, install an exact version with OpenCode (add `-g` for a global
-install), freeze a session's contract for the project, and restart OpenCode:
-
-```bash
-opencode plugin opencode-personakit@2.1.0
-personakit enforce install --host opencode --session <id>
-```
-
-Install from npm, so the plugin lives in OpenCode's cache, which enforcement
-protects; a plugin loaded from a project file outside `.opencode/` is one the
-agent can edit. The plugin's status chip, Library, commands, and options are in
-[Integrations/OpenCode/README.md](../Integrations/OpenCode/README.md).
-
-`enforce install --host opencode` writes only
-`.opencode/personakit/<id>.checks.json` and removes any other manifest in that
-folder. It never edits OpenCode config; it warns when no OpenCode config lists
-the plugin. The plugin reads the manifest and records its SHA-256 when OpenCode
-starts, which is why the restart is needed. After that, a manifest that changes
-or goes away while OpenCode runs denies every checked call until the next
-restart. An unreadable manifest denies every checked call too, and more than one
-manifest between the start folder and the repo root denies every call.
-
-The plugin's `tool.execute.before` hook does the checking, and it covers the
-TUI, `opencode run`, the web app, ACP, and subagents. Every tool except
-OpenCode's read-only built-ins goes to `personakit hook-check --host opencode`.
-MCP tools, other plugins' tools, and custom tools cannot be classified, so they
-are denied whenever the contract forbids anything such a tool could do. A
-contract denial's reason tells the agent to stop and tell you what it needs,
-rather than find another way. Unlike Claude Code, OpenCode cannot ask you about
-these tools: its permission rules never apply to plugin and custom tools, and
-`opencode run --auto` approves any ask, which would let an MCP tool through.
-
-While a contract is enforced the agent cannot edit OpenCode's config or plugin
-files through its edit, write, and patch tools, even when the contract allows
-edits: `.opencode/` and `opencode.json(c)` or `tui.json(c)` anywhere in the
-repo, the global OpenCode config and cache, `~/.opencode/`, `$OPENCODE_CONFIG`,
-`$OPENCODE_CONFIG_DIR`, `$OPENCODE_TUI_CONFIG`, and the `personakit` binary.
-Make those edits by hand.
-
-What enforcement does not cover:
-
-- It is not a sandbox. OpenCode launches programs on its own: formatters,
-  language servers, MCP server commands, and plugins referenced by path. When
-  one of them lives outside the protected files above, a contract that allows
-  edits but denies commands still lets the agent rewrite it, and OpenCode then
-  runs the new code. With commands allowed, nothing is protected, and a
-  contract that forbids edits or network access blocks only OpenCode's own
-  tools for them, since a shell command can still do both. `enforce install`
-  warns when that is the case.
-- Shell commands you run yourself (`!cmd`, `/command` substitutions) are not
-  checked.
-- `opencode --pure` loads no external plugins, so it runs with no enforcement.
-  That is your explicit choice, and PersonaKit does not detect it.
-- Sessions created through `opencode serve`'s `/api/session` API run no plugin
-  hooks. They get only the deny rules the plugin adds when OpenCode starts: the
-  commands, edits, and network access the contract denies, plus the protected
-  files above when edits are allowed. An unreadable manifest, or more than one,
-  denies all three. OpenCode 1.19.5 offers no MCP or plugin tools in these
-  sessions. The rules have limits:
-  - Denials read as OpenCode's own generic messages, not the contract's reason.
-  - A manifest change after startup is not seen.
-  - The rules come from the manifest in the directory `opencode serve` started
-    in, so a session for any other directory gets the start directory's rules,
-    or none.
-  - A session started before plugins finish loading can run unchecked. List
-    `opencode-personakit` first in the `plugin` array.
-  - A session whose directory is inside `.opencode/` or the global config can
-    write there.
-  - The rules cannot express case variants of a new protected file name, such
-    as `OpenCode.json`, and a protected path reached through a symlink (file or
-    directory) is judged by its target.
-  - Later plugins can add agents or rules that override these.
+The PersonaKit OpenCode plugin adds a status chip, a Library, and `/pk`
+commands, and it is the hook that enforces a frozen contract. Install it with
+`make opencode-install` from a checkout of the release tag that matches your
+CLI; [Integrations/OpenCode/README.md](../Integrations/OpenCode/README.md) has
+the steps. [Docs/enforcement.md](./enforcement.md) covers enforcement on
+OpenCode: what it blocks, how to install and remove it, and what it does not
+cover.
 
 ### Claude Code
 
@@ -193,55 +120,10 @@ Claude Code may prompt before using project-scoped servers from `.mcp.json`.
 
 `personakit enforce install --session <id>` writes
 `.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in
-`.claude/settings.json` that runs `personakit hook-check` on every tool call.
-Restart Claude Code after installing, since it reads hooks at startup. Install
-refuses, before writing anything, when `.claude`, `.claude/personakit`, or
-`.claude/settings.json` is a symbolic link, so the hook and manifest stay
-inside the project.
-
-The hook names the `personakit` binary by the absolute path found when you
-installed (pass `--executable` to choose another). If the checker cannot run,
-because the binary moved or crashed, the hook blocks every tool call until you
-fix the binary or run `enforce install` again. Claude Code lets a call through
-when a hook times out, so once the checker starts, it denies any call it has
-not decided within 10 seconds, well inside the hook's 60-second timeout. Only a
-checker that takes nearly a minute just to launch reaches that timeout.
-
-Each call gets one of three answers:
-
-- **Deny** a tool that does what the contract forbids: Edit, Write, and
-  NotebookEdit edit files; Bash, Monitor, and PowerShell run commands; WebFetch
-  and WebSearch reach the network. The reason tells the agent to stop and tell
-  you what it needs, rather than find another way.
-- **Allow** read-only built-ins, such as Read, Glob, Grep, and subagents of
-  Claude Code's built-in types, and PersonaKit's own MCP tools and resources.
-- **Ask** you about any other tool, including Skill, custom agent types,
-  subagents started in a worktree or remote environment, MCP tools from other
-  servers, and tools Claude Code adds later. Claude Code shows the reason and
-  lets you approve or refuse the call. Where no one can answer, as in
-  `claude -p`, Claude Code refuses it, and under `bypassPermissions` the checker
-  denies it.
-
-A tool is only asked about when the contract forbids editing files, running
-commands, or reaching the network.
-
-While a contract is enforced the agent cannot use Edit, Write, or NotebookEdit
-on the enforcement files, even when the contract allows edits:
-`.claude/personakit/`, `.claude/settings.json`, `.claude/settings.local.json`,
-the user settings (`~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR`'s), and
-the `personakit` binary. Make those edits by hand. Hooks installed by an
-earlier PersonaKit version route only a few named tools to the checker, so
-other tools, such as Monitor, pass unchecked, and a checker that fails to run
-lets the call through; run `enforce install` again to route every tool and
-block on failure.
-
-It is not a sandbox. Claude Code runs programs on its own, such as other hook
-scripts, a `statusLine` command, and MCP server commands. A contract that allows
-edits but denies commands still lets the agent rewrite those, and Claude Code
-then runs the new code. With commands allowed, the agent can change the
-enforcement files through the shell, and a contract that forbids edits or
-network access blocks only the dedicated tools, since a shell command can still
-do both. `enforce install` warns when that is the case.
+`.claude/settings.json` that runs `personakit hook-check` on every tool call;
+`personakit enforce uninstall` removes both.
+[Docs/enforcement.md](./enforcement.md) covers what the hook denies, allows, and
+asks about, and what it does not cover.
 
 ### Codex
 
@@ -309,7 +191,7 @@ If a contract does not authorize a needed skill, stop and re-ground instead of i
 
 MCP never hands an agent text a person reviewing it would not see. `personakit_export`, `personakit_graph`, and error messages strip control characters, bidirectional overrides, and invisible characters such as Unicode tag characters from `.personakit` content. JSON results write those characters as `\uXXXX` escapes, so values stay exact. Raw pack resources are the files as written.
 
-Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools need the operator's approval on Claude Code and are denied on OpenCode.
+Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools need the operator's approval on Claude Code and are denied on OpenCode. See [Docs/enforcement.md](./enforcement.md#trusted-mcp-server-names).
 
 ## How To Verify
 
@@ -325,3 +207,4 @@ swift run personakit mcp --help
 
 - [Repository Overview](../README.md)
 - [PersonaKit For Agents](./agent-guide.md)
+- [PersonaKit Enforcement](./enforcement.md)

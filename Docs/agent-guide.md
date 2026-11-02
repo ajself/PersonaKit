@@ -25,12 +25,26 @@ sandbox.**
 
 PersonaKit resolves a deterministic operating contract (who to act as, what work
 mode is active, which capabilities are allowed, which are forbidden, and where to
-stop) and exports it as inspectable text. PersonaKit does not run anything, watch
-anything, or enforce anything. It states what *should* be true; your host decides
-what actually happens.
+stop) and exports it as inspectable text. By default PersonaKit does not run
+anything, watch anything, or enforce anything. It states what *should* be true;
+your host decides what actually happens. A project can opt in to enforcement with
+`personakit enforce install`, which wires the contract into Claude Code or
+OpenCode tool hooks ([Docs/enforcement.md](./enforcement.md)).
 
 Every other question in this guide follows from that one sentence. When in doubt:
 the contract describes intent; you and your host carry it out.
+
+### When The Contract Is Enforced
+
+The contract is authoritative. When it's enforced, hooks also deny some of what it forbids. A call that isn't denied still has to follow the contract.
+
+A deny means stop and tell the user. When PersonaKit denies a tool call (the
+reason starts with `Blocked by PersonaKit contract:`, or says PersonaKit could
+not check the call), stop and tell the user what you were trying to do and what
+you need. Do not retry it through another tool, a shell command, or
+a workaround, and do not edit the enforcement files or run `personakit enforce`
+yourself to get past it. A tool call the user refuses at an approval prompt
+counts the same.
 
 ## Orient Yourself First
 
@@ -93,7 +107,8 @@ is read-only by design.
 4. Export handoff context when you need it as Markdown:
    `personakit export --session <id>` (add `--copy` or `--output <path>`). Add
    `--stats` to print a size summary (lines / bytes / sections) to stderr when you
-   need to budget the payload; it leaves the exported Markdown on stdout untouched.
+   need to budget the handoff context; it leaves the exported Markdown on stdout
+   untouched.
 5. Inspect provenance if a constraint surprises you:
    `personakit graph --session <id>`.
 
@@ -203,4 +218,5 @@ editor, owns the byte layout.
 
 - [Repository Overview](../README.md)
 - [PersonaKit MCP Guide](./mcp.md)
+- [PersonaKit Enforcement](./enforcement.md)
 - [AGENTS.md](../AGENTS.md), policy for agents working *in* this repository

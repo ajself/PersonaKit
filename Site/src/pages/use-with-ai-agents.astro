@@ -10,6 +10,10 @@ const verifyCommand = "claude mcp list";
 
 const groundCommand = "personakit guidance";
 
+const enforceCommand = "personakit enforce install --session <id>";
+
+const enforcementGuideHref = "https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md";
+
 const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
 
 const breadcrumbSnippet = `## PersonaKit
@@ -56,7 +60,7 @@ role, rules, allowed capabilities, forbidden actions, and stop points.`;
   <p><code>personakit init</code> scaffolds a host-neutral <code>personakit-grounding/SKILL.md</code>. Per-host variants for Claude Code, Cursor, GitHub Copilot, and OpenCode are in the grounding tutorial. Copy the variant for your host into the directory it discovers skills from. For Claude Code that is <code>.claude/skills/</code>.</p>
 
   <Callout>
-    <p>PersonaKit never writes into a host config directory for you. You copy the variant in deliberately, so nothing mutates your agent setup behind your back.</p>
+    <p>PersonaKit never writes into a host config directory for you unless you opt in to enforcement (step 4). You copy the variant in deliberately, so nothing mutates your agent setup behind your back.</p>
   </Callout>
 
   <p><a class="button-link" href={groundingSkillHref}>Open the grounding skill examples</a></p>
@@ -65,6 +69,19 @@ role, rules, allowed capabilities, forbidden actions, and stop points.`;
   <p>An agent that does not know PersonaKit exists will not look for it. If your project keeps an <code>AGENTS.md</code>, a short breadcrumb tells a cold agent where to orient. This snippet is opt-in; PersonaKit does not scaffold it into your repo.</p>
 
   <Code code={breadcrumbSnippet} lang="markdown" theme="github-dark" />
+
+  <h2 id="enforce">4. Enforce A Contract (Optional)</h2>
+  <p>A resolved contract is intent: the agent is expected to follow it, and nothing blocks a call it forbids. For Claude Code and OpenCode you can opt in to enforcement for one project. <code>personakit enforce install</code> freezes a session's contract into a manifest and wires it into the host's tool hook, so the host denies the dedicated tools for the capabilities the persona forbids: editing files, running commands, and reaching the network.</p>
+
+  <Code code={enforceCommand} lang="bash" theme="github-dark" />
+
+  <p>For Claude Code this writes <code>.claude/personakit/&lt;id&gt;.checks.json</code> and a <code>PreToolUse</code> hook in <code>.claude/settings.json</code>. For OpenCode, install the PersonaKit plugin with <code>make opencode-install</code> from a checkout of the release tag that matches your CLI, then add <code>--host opencode</code>; that writes only <code>.opencode/personakit/&lt;id&gt;.checks.json</code>. Add <code>--dry-run</code> to review the files first, restart the host afterward, and run <code>personakit enforce uninstall</code> to remove what install wrote.</p>
+
+  <Callout>
+    <p>Enforcement is a backstop, not a sandbox. Shell tools are judged by name only, so a contract that allows running commands cannot stop a shell command from editing files or reaching the network. The contract stays authoritative: a call that is not denied still has to follow it, and a denied call means the agent stops and tells you what it needs.</p>
+  </Callout>
+
+  <p><a class="button-link" href={enforcementGuideHref}>Read the enforcement guide</a></p>
 
   <h2 id="what-happens">What The Agent Does Once Connected</h2>
   <p>With the server connected and the contract resolved, the agent follows a small, inspectable loop:</p>
