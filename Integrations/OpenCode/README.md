@@ -1,8 +1,9 @@
 # PersonaKit for OpenCode
 
 An OpenCode plugin that shows which PersonaKit contract is in force in the current session, flags drift from it, and
-lets you browse your PersonaKit library and start a session from it. It also enforces a frozen contract: its server
-half is the hook that blocks the tool calls the contract forbids. It is the OpenCode counterpart of the
+lets you browse your PersonaKit library. From the library it pre-fills a request to resolve, export, and adopt a
+session's contract, which you review and send. Once you opt in, it also enforces the contract: its server half is the
+hook that blocks the tool calls the contract forbids. It is the OpenCode counterpart of the
 [Claude Code mod](https://github.com/ajself/PersonaKit/blob/main/Integrations/ClaudeCode/README.md) and is tested
 on OpenCode 1.19.5.
 
@@ -24,7 +25,7 @@ file. The plugin lives in OpenCode's cache, which enforcement protects from the 
 after you upgrade the CLI: `personakit enforce install --host opencode` refuses a plugin whose version differs from
 the CLI's. Restart OpenCode to load the plugin.
 
-To enforce a session's contract in this project, freeze it, then restart OpenCode so the plugin loads it:
+To enforce a session's contract in this project, install it, then restart OpenCode so the plugin loads it:
 
 ```bash
 personakit enforce install --host opencode --session <id>
@@ -41,11 +42,12 @@ the server as well; [Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main
 
 The status chip beside the prompt reads the same line as the Claude Code mod:
 
-- `◇ no contract · /pk` when nothing has been resolved in the session. With a manifest in the project, the enforcement
-  segment takes the hint's place.
+- `◇ no contract · /pk-use` when nothing has been resolved in the session. With a manifest in the project, the
+  enforcement segment takes the hint's place.
 - `◆ <session> · <warnings> · enforced|advisory · <scope> · <persona> › <directive>` for the contract in force, cut to
-  120 characters with the names dropped first. Warnings cover a stale contract (`re-ground?` after compactions) and
-  the latest drift since the resolve (`drift: <tool> (<class>)`, with a `×N` count).
+  120 characters with the names dropped first. Warnings cover a stale contract (`re-ground?` after compactions), the
+  latest drift since the resolve (`drift: <tool> (<class>)`, with a `×N` count), and `re-ground blocked` when the
+  plugin denied the agent's call to resolve the contract again.
 
 The enforcement segment reads:
 
@@ -62,18 +64,22 @@ The enforcement segment reads:
 - `⚠ enforcing <other>` when the manifest belongs to a different contract than the one resolved.
 
 The chip turns the theme's warning color while it carries a `⚠`. The sidebar shows the contract in force (persona,
-directive, steps with stop points, kits, skills), the enforcement state, compactions since the resolve, the latest
-drift, and a Re-ground button that pre-fills a prompt to resolve the contract again. Subagents count as part of the
-session that started them.
+directive, steps with stop points, kits, skills), the enforcement state, compactions since the resolve, the last five
+drift entries under a count of all drift in the session, and a Re-ground button that pre-fills a prompt to resolve the
+contract again. The sidebar's button takes a mouse; from the keyboard, Re-ground is on the Contract tab of `/pk`.
+Subagents count as part of the session that started them.
 
 OpenCode continues on its own after it compacts a conversation, so when the session you are viewing compacts, a toast
-asks whether to re-ground. Nothing is injected into the conversation; re-grounding is your call.
+asks whether to re-ground and points to `/pk`. Nothing is injected into the conversation; re-grounding is your call.
 
 ## The Library
 
 `/pk` opens a PersonaKit view in place of the session, with Contract and Library tabs. The Contract tab is the mod's
 Contract view: the resolved contract, scope, enforcement state and installed manifest, compactions, a drift log,
-contracts resolved by subagents, and Re-ground.
+contracts resolved by subagents, and Re-ground. With a manifest the plugin enforces, the Enforcement section lists what
+it blocks; without one, Drift check lists what the handoff context forbids, which the status flags when the agent does
+it anyway. Each drift log entry reads `blocked`, `not blocked` (a forbidden call ran with nothing to stop it), or
+`re-ground blocked`.
 
 The Library lists your personas, sessions, and components, read from the same `.personakit` roots the CLI resolves. It
 loads each time the view opens, and Refresh loads it again.
@@ -87,22 +93,24 @@ loads each time the view opens, and Refresh loads it again.
 - Every name opens a detail view. A session's detail is a preview of its contract, labeled `preview, not in force`.
   Use returns to the session and pre-fills the prompt; nothing is in force until you send it and the agent resolves
   the contract.
+- When the Library loads from other `.personakit` roots than the contract in force came from, a warning above the
+  list names both (`⚠ Library loaded from …; the contract in force came from …`).
 
 ↑ and ↓ (or Tab and Shift-Tab) move between controls, Enter presses one, and Esc clears the filter or goes back. Back
 on the top view returns to the session `/pk` was opened from.
 
 When the library cannot load, the view says why instead of showing an empty list: no library in this project or in
-`~/.personakit` (with a `personakit init` hint), a `personakit` binary that could not run (it points at
-`personakitPath`), a CLI too old for the plugin ("This needs PersonaKit 2.2.0 or later."), or files that failed
-validation, listed by scope and path.
+`~/.personakit` (with a `personakit init` hint), a `personakit` binary that could not run (it says to set
+`personakitPath` in both `opencode.json` and `tui.json`), a CLI too old for the plugin ("This needs PersonaKit 2.2.0
+or later."), or files that failed validation, listed by scope and path.
 
 ## Commands
 
 - `/pk` opens the PersonaKit view on the Contract when one is in force in the session, and on the Library otherwise.
 - `/pk-use` lists the library's sessions by directive title, with the id beside each; typing filters by title or id.
-  Picking one pre-fills the prompt with a request to resolve and export that session and adopt the contract. Sessions
-  whose ids PersonaKit cannot pass safely are left out. OpenCode's palette commands take no arguments, which is why
-  this is a list rather than the mod's `/pk use <session>`.
+  Picking one pre-fills the prompt with a request to resolve and export that session and adopt the contract. A
+  session whose id PersonaKit cannot pass safely is listed but disabled, and picking it pre-fills nothing. OpenCode's
+  palette commands take no arguments, which is why this is a list rather than the mod's `/pk use <session>`.
 
 Pre-fill appends to the prompt box with no separating newline, since OpenCode does not expose the draft to plugins,
 and never sends it. You review and send. If the box cannot take the text, a toast shows it to copy instead.

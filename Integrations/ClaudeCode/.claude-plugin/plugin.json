@@ -1,7 +1,7 @@
 {
   "name": "personakit",
   "version": "2.1.0",
-  "description": "Shows which PersonaKit contract is in force in this Claude Code session and flags drift from it.",
+  "description": "Shows which PersonaKit contract is in force in this Claude Code session, flags drift from it, and browses your PersonaKit library.",
   "userConfig": {
     "mcpServerName": {
       "type": "string",

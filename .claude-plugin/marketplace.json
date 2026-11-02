@@ -1,6 +1,6 @@
 {
   "name": "personakit",
-  "description": "PersonaKit's Claude Code mod.",
+  "description": "Shows which PersonaKit contract is in force in Claude Code, flags drift from it, and browses your PersonaKit library.",
   "owner": { "name": "ajself" },
   "plugins": [{ "name": "personakit", "source": "./Integrations/ClaudeCode" }]
 }
