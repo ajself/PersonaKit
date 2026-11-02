@@ -19,8 +19,8 @@ final class WorkspaceLibraryFeatureModel {
   var detail = StudioLibraryDetailState()
   // Last successfully loaded workspace graph; kept on screen when a reload's graph fails.
   var usageGraph: WorkspaceSessionMap?
-  // True when the latest graph load failed with no earlier graph to fall back on.
-  var usageGraphLoadFailed = false
+  // Why the latest graph load failed, set only when there is no earlier graph to fall back on.
+  var usageGraphLoadErrorMessage: String?
   @ObservationIgnored var editorOpenTask: Task<Void, Never>?
   @ObservationIgnored var copyTask: Task<Void, Never>?
   @ObservationIgnored var detailSourceTask: Task<Void, Never>?

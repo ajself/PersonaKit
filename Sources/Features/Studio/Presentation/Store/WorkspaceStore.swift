@@ -135,8 +135,8 @@ public final class WorkspaceStore {
     libraryFeatureModel.detail
   }
 
-  var libraryUsageLoadFailed: Bool {
-    libraryFeatureModel.usageGraphLoadFailed
+  var libraryUsageLoadErrorMessage: String? {
+    libraryFeatureModel.usageGraphLoadErrorMessage
   }
 
   /// See ``WorkspaceLibraryFeatureModel/usedBy(kind:id:)``.

@@ -6,7 +6,8 @@ struct StudioLibraryPreviewView: View {
   let state: StudioLibraryPreviewState?
   /// Items that reference the selected one; `nil` until the workspace graph has loaded.
   let users: [WorkspaceSessionMapNode]?
-  let usersFailedToLoad: Bool
+  /// Why "Used by" couldn't load; set only when no earlier graph is available to show.
+  let usersLoadErrorMessage: String?
   let onNavigate: (StudioNavigationTarget) -> Void
 
   var body: some View {
@@ -96,8 +97,8 @@ struct StudioLibraryPreviewView: View {
           usedByRow(node)
         }
       }
-    } else if usersFailedToLoad {
-      usedByNote("References couldn't be loaded.")
+    } else if let usersLoadErrorMessage {
+      usedByLoadFailure(reason: usersLoadErrorMessage)
     } else {
       HStack(spacing: 6) {
         ProgressView()
@@ -139,6 +140,25 @@ struct StudioLibraryPreviewView: View {
       .buttonStyle(.plain)
       .accessibilityLabel("Open \(kindTitle) \(node.id)")
       .help("Open \(kindTitle) \(node.id)")
+    }
+  }
+
+  // The graph reloads after every successful workspace reload, so saving a fix clears this.
+  private func usedByLoadFailure(reason: String) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      usedByNote("References couldn't be loaded.")
+
+      Text(reason)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .textSelection(.enabled)
+
+      usedByNote("If Validation Results shows a problem, fix it and save. References reload when the workspace does.")
+
+      Button("Show Validation Results") {
+        onNavigate(StudioNavigationTarget(sidebarItem: .validationResults, searchText: ""))
+      }
+      .controlSize(.small)
     }
   }
 

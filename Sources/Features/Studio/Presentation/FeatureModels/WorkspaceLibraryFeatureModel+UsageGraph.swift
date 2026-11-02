@@ -14,22 +14,30 @@ extension WorkspaceLibraryFeatureModel {
     }
 
     usageGraphWorkspaceURL = requestedWorkspaceURL
-    usageGraphLoadFailed = false
+    usageGraphLoadErrorMessage = nil
 
     usageGraphTask = Task { [requestedWorkspaceURL] in
-      let graph = try? await operationRunner.loadWorkspaceRelationshipMap(
-        workspaceURL: requestedWorkspaceURL
-      )
+      let outcome: WorkspaceLoadOutcome<WorkspaceSessionMap>
+
+      do {
+        outcome = .loaded(
+          try await operationRunner.loadWorkspaceRelationshipMap(workspaceURL: requestedWorkspaceURL)
+        )
+      } catch {
+        outcome = .failed(error.localizedDescription)
+      }
 
       guard !Task.isCancelled, usageGraphWorkspaceURL == requestedWorkspaceURL else {
         return
       }
 
-      if let graph {
+      switch outcome {
+      case .loaded(let graph):
         usageGraph = graph
+      case .failed(let message):
+        usageGraphLoadErrorMessage = usageGraph == nil ? message : nil
       }
 
-      usageGraphLoadFailed = usageGraph == nil
       usageGraphTask = nil
     }
   }
@@ -40,7 +48,7 @@ extension WorkspaceLibraryFeatureModel {
     usageGraphTask = nil
     usageGraphWorkspaceURL = nil
     usageGraph = nil
-    usageGraphLoadFailed = false
+    usageGraphLoadErrorMessage = nil
   }
 
   /// Sessions and library items that reference the given item, or `nil` before any graph

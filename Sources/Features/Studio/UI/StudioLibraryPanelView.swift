@@ -108,7 +108,7 @@ struct StudioLibraryPanelView: View {
           selection: selection,
           state: previewState,
           users: selectedItemUsers(selectedItem),
-          usersFailedToLoad: workspaceStore.libraryUsageLoadFailed,
+          usersLoadErrorMessage: workspaceStore.libraryUsageLoadErrorMessage,
           onNavigate: onNavigate
         )
       }

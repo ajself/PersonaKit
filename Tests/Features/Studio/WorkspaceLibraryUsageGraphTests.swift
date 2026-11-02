@@ -80,7 +80,7 @@ struct WorkspaceLibraryUsageGraphTests {
 
     await waitFor { buildCount.count == 2 && !store.libraryFeatureModel.isLoadingUsageGraph }
     #expect(users(in: store) == ["session:solo-dev"])
-    #expect(!store.libraryUsageLoadFailed)
+    #expect(store.libraryUsageLoadErrorMessage == nil)
   }
 
   @Test
@@ -96,7 +96,33 @@ struct WorkspaceLibraryUsageGraphTests {
 
     await waitFor { buildCount.count == 1 && !store.libraryFeatureModel.isLoadingUsageGraph }
     #expect(users(in: store) == nil)
-    #expect(store.libraryUsageLoadFailed)
+    #expect(store.libraryUsageLoadErrorMessage == "Graph failed.")
+  }
+
+  @Test
+  func successfulReloadClearsTheLoadFailure() async {
+    let buildCount = CallCounter()
+    let buildFails = MutableBooleanState(value: true)
+    let store = makeStore { _ in
+      buildCount.increment()
+
+      if buildFails.value {
+        throw WorkspaceSnapshotBuildError(message: "Graph failed.")
+      }
+
+      return makeUsageGraph(sessionIDs: ["solo-dev"])
+    }
+
+    store.workspaceURL = workspaceURL
+    store.loadWorkspace()
+    await waitFor { buildCount.count == 1 && !store.libraryFeatureModel.isLoadingUsageGraph }
+    #expect(store.libraryUsageLoadErrorMessage == "Graph failed.")
+
+    buildFails.value = false
+    store.loadWorkspace()
+
+    await waitFor { users(in: store) == ["session:solo-dev"] && !store.libraryFeatureModel.isLoadingUsageGraph }
+    #expect(store.libraryUsageLoadErrorMessage == nil)
   }
 
   @Test
@@ -121,7 +147,7 @@ struct WorkspaceLibraryUsageGraphTests {
     // Until the new workspace loads, the inspector shows loading rather than a failure.
     #expect(users(in: store) == nil)
     #expect(!store.libraryFeatureModel.isLoadingUsageGraph)
-    #expect(!store.libraryUsageLoadFailed)
+    #expect(store.libraryUsageLoadErrorMessage == nil)
 
     store.loadWorkspace()
     gate.release()
