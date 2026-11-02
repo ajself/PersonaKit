@@ -827,6 +827,7 @@ struct PersonaEditorView: View {
                   .font(.caption)
               }
               .buttonStyle(.plain)
+              .accessibilityLabel("Remove \(customSelectionID)")
               .help("Remove custom id")
             }
             .padding(.horizontal, 8)

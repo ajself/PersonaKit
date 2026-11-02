@@ -41,6 +41,42 @@ struct StudioRelationshipMapPresentationStateTests {
   }
 
   @Test
+  func missingNodeLeadsWithMissingBadgeAndSaysSoInItsLabel() {
+    let node = WorkspaceSessionMapNode(
+      key: "kit:cli-guardrails",
+      id: "cli-guardrails",
+      displayName: "cli-guardrails",
+      kind: .kit,
+      isMissing: true,
+      badges: ["required", "override"]
+    )
+
+    #expect(RelationshipMapPresentationState.nodeBadges(node) == ["missing", "override", "required"])
+    #expect(
+      RelationshipMapPresentationState.nodeAccessibilityLabel(node, scope: nil)
+        == "Kits, cli-guardrails, missing, override, required"
+    )
+  }
+
+  @Test
+  func presentNodeLabelListsScopeAndBadgesWithoutMissing() {
+    let node = WorkspaceSessionMapNode(
+      key: "persona:solo-developer",
+      id: "solo-developer",
+      displayName: "Solo Developer",
+      kind: .persona,
+      isMissing: false,
+      badges: ["default"]
+    )
+
+    #expect(RelationshipMapPresentationState.nodeBadges(node) == ["default"])
+    #expect(
+      RelationshipMapPresentationState.nodeAccessibilityLabel(node, scope: .project)
+        == "Persona, solo-developer, Solo Developer, \(WorkspaceSourceScope.project.displayName), default"
+    )
+  }
+
+  @Test
   func layoutStateCombinesBaseOffsetAndVerticalDragTranslation() {
     let offset = RelationshipMapLayoutState.offset(
       baseOffset: CGSize(

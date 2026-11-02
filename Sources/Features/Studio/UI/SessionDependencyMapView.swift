@@ -215,9 +215,11 @@ struct SessionDependencyMapView: View {
 
   @ViewBuilder
   private func nodeCardBadges(_ node: WorkspaceSessionMapNode) -> some View {
-    if !node.badges.isEmpty {
+    let badges = RelationshipMapPresentationState.nodeBadges(node)
+
+    if !badges.isEmpty {
       HStack(spacing: 6) {
-        ForEach(node.badges.sorted(), id: \.self) { badge in
+        ForEach(badges, id: \.self) { badge in
           StudioBadge(title: badge, tone: .warning)
         }
       }
@@ -377,24 +379,7 @@ struct SessionDependencyMapView: View {
   }
 
   private func nodeAccessibilityLabel(_ node: WorkspaceSessionMapNode) -> String {
-    var parts = [
-      node.kind.title,
-      node.id,
-    ]
-
-    if node.displayName != node.id {
-      parts.append(node.displayName)
-    }
-
-    if let scope = scopeByNodeKey[node.key] {
-      parts.append(scope.displayName)
-    }
-
-    if !node.badges.isEmpty {
-      parts.append(node.badges.sorted().joined(separator: ", "))
-    }
-
-    return parts.joined(separator: ", ")
+    RelationshipMapPresentationState.nodeAccessibilityLabel(node, scope: scopeByNodeKey[node.key])
   }
 
   private func cardBackground(node: WorkspaceSessionMapNode) -> some View {
@@ -497,22 +482,5 @@ private struct SessionMapNodeFramePreferenceKey: PreferenceKey {
     nextValue: () -> [String: Anchor<CGRect>]
   ) {
     value.merge(nextValue(), uniquingKeysWith: { _, rhs in rhs })
-  }
-}
-
-extension WorkspaceSessionMapNodeKind {
-  fileprivate var title: String {
-    switch self {
-    case .session:
-      return "Session"
-    case .persona:
-      return "Persona"
-    case .directive:
-      return "Directive"
-    case .kit:
-      return "Kits"
-    case .skill:
-      return "Skills"
-    }
   }
 }

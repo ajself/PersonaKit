@@ -66,6 +66,7 @@ struct StudioUtilityActionRowView: View {
     .buttonStyle(.bordered)
     .controlSize(controlSize)
     .accessibilityLabel("More Actions")
+    .help("More Actions")
   }
 
   private func primaryActionButton(_ action: StudioUtilityActionItem) -> some View {
@@ -79,6 +80,7 @@ struct StudioUtilityActionRowView: View {
     .disabled(!action.isEnabled)
     .accessibilityLabel(action.title)
     .accessibilityIdentifier(action.id)
+    .help(action.title)
   }
 
   private func secondaryActionButton(
@@ -94,6 +96,7 @@ struct StudioUtilityActionRowView: View {
     .disabled(!action.isEnabled)
     .accessibilityLabel(action.title)
     .accessibilityIdentifier(action.id)
+    .help(action.title)
   }
 
   private func adaptiveLabel(_ action: StudioUtilityActionItem) -> some View {

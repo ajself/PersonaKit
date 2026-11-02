@@ -216,6 +216,7 @@ private struct StudioValidationIssueFilterBarView: View {
           .buttonStyle(.bordered)
           .controlSize(.small)
           .tint(selectedIssueFilterID == option.id ? .accentColor : .secondary)
+          .accessibilityAddTraits(selectedIssueFilterID == option.id ? .isSelected : [])
         }
       }
     }
