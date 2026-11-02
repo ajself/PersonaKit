@@ -63,7 +63,7 @@ personakit create persona --root "$demo_root/.personakit" --dry-run --id staff-c
 ## Expected Validation Shape
 
 ```text
-Validation summary: personas=1 kits=1 directives=1 skills=4 errors=0
+Validation summary: personas=1 kits=1 directives=1 skills=4 warnings=0 errors=0
 ```
 
 ## What To Inspect

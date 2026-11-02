@@ -7,7 +7,7 @@ import { sitePath } from "../utils/sitePath";
 const validateCommands = `cd Site/public/examples/swift-cli-maintenance
 personakit validate --root personakit-root`;
 
-const validationShape = "Validation summary: personas=1 kits=1 directives=1 skills=4 errors=0";
+const validationShape = "Validation summary: personas=1 kits=1 directives=1 skills=4 warnings=0 errors=0";
 
 const contractCommand = "personakit contract --root personakit-root --session cli-maintenance";
 
@@ -73,7 +73,7 @@ personakit export --root personakit-root --session cli-maintenance`;
   <p>Expected shape:</p>
   <Code code={validationShape} lang="text" theme="github-dark" />
 
-  <p>Validate and contract also print a leading line naming the resolved scopes. Here it reports project-only, because <code>--root</code> pins a single root and skips global library discovery.</p>
+  <p>Validate also prints a leading line naming the resolved scopes, and the contract in step 2 reports the same thing in its <code>scope</code> field. Here both say project-only, because <code>--root</code> pins a single root and skips global library discovery.</p>
 
   <p>What this proves: the authored PersonaKit root is structurally valid. The persona, directive, kit, skill declarations, and session can be loaded before any agent work starts.</p>
 
