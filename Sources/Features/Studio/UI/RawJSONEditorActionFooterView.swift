@@ -22,6 +22,7 @@ struct RawJSONEditorActionFooterView: View {
       Button("Cancel", role: .cancel) {
         onCancel()
       }
+      .keyboardShortcut(.cancelAction)
       .disabled(isSaving || isValidating)
 
       Button(isValidating ? "Validating…" : "Validate") {
@@ -32,6 +33,7 @@ struct RawJSONEditorActionFooterView: View {
       Button(isSaving ? "Saving…" : "Save") {
         onSave()
       }
+      .keyboardShortcut("s", modifiers: [.command])
       .disabled(isSaving || isValidating)
     }
   }

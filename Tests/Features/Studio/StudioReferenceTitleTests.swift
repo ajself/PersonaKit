@@ -1,5 +1,6 @@
 import ContextWorkspaceCore
 import Foundation
+import SwiftUI
 import Testing
 
 @testable import StudioFeatures
@@ -66,4 +67,9 @@ struct StudioReferenceTitleTests {
     )
   }
 
+  @Test
+  func keyboardShortcutTextUsesMenuSymbolsInMenuOrder() {
+    #expect(StudioKeyboardShortcutText.text(key: "1", modifiers: [.command]) == "⌘1")
+    #expect(StudioKeyboardShortcutText.text(key: "s", modifiers: [.command, .shift]) == "⇧⌘S")
+  }
 }

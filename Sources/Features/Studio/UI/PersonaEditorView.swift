@@ -354,15 +354,17 @@ struct PersonaEditorView: View {
       HStack(spacing: 8) {
         Spacer()
 
-        Button("Cancel") {
+        Button("Cancel", role: .cancel) {
           onCancel()
         }
+        .keyboardShortcut(.cancelAction)
         .disabled(isSaving)
 
         Button("Save") {
           save()
         }
         .buttonStyle(.borderedProminent)
+        .keyboardShortcut("s", modifiers: [.command])
         .disabled(isSaving)
       }
     }

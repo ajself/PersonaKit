@@ -29,7 +29,7 @@ struct StudioModeSwitchView<ID: Hashable>: View {
     Picker(accessibilityLabel, selection: $selection) {
       ForEach(items) { item in
         Label(item.title, systemImage: item.systemImage)
-          .help(item.accessibilityHint)
+          .help(helpText(for: item))
           .accessibilityHint(item.accessibilityHint)
           .tag(item.id)
       }
@@ -41,6 +41,16 @@ struct StudioModeSwitchView<ID: Hashable>: View {
     .background(shortcutButtons)
     .accessibilityElement(children: .contain)
     .accessibilityLabel(accessibilityLabel)
+  }
+
+  private func helpText(for item: StudioModeSwitchItem<ID>) -> String {
+    guard let shortcut = keyboardShortcut(item.id) else {
+      return item.accessibilityHint
+    }
+
+    let shortcutText = StudioKeyboardShortcutText.text(key: shortcut.key, modifiers: shortcut.modifiers)
+
+    return "\(item.accessibilityHint) (\(shortcutText))"
   }
 
   @ViewBuilder
@@ -56,5 +66,33 @@ struct StudioModeSwitchView<ID: Hashable>: View {
     .opacity(0)
     .accessibilityHidden(true)
     .frame(width: 0, height: 0)
+  }
+}
+
+/// Menu-style text for a keyboard shortcut, such as "⌘1", for tooltips and help.
+enum StudioKeyboardShortcutText {
+  static func text(
+    key: KeyEquivalent,
+    modifiers: EventModifiers
+  ) -> String {
+    var text = ""
+
+    if modifiers.contains(.control) {
+      text += "⌃"
+    }
+
+    if modifiers.contains(.option) {
+      text += "⌥"
+    }
+
+    if modifiers.contains(.shift) {
+      text += "⇧"
+    }
+
+    if modifiers.contains(.command) {
+      text += "⌘"
+    }
+
+    return text + String(key.character).uppercased()
   }
 }

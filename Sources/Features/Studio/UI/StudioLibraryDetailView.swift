@@ -430,6 +430,7 @@ struct StudioLibraryDetailView: View {
       Button(detail.isSaving ? "Saving…" : "Save") {
         workspaceStore.saveLibraryDetailDraft()
       }
+      .keyboardShortcut("s", modifiers: [.command])
       .disabled(
         detail.isBusy
           || detail.formSyncErrorMessage != nil

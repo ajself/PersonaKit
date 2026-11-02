@@ -28,11 +28,13 @@ struct SessionEditorFooterView: View {
       Button("Cancel", role: .cancel) {
         onCancel()
       }
+      .keyboardShortcut(.cancelAction)
       .disabled(isSaving)
 
       Button(isSaving ? "Saving…" : "Save") {
         onSave()
       }
+      .keyboardShortcut("s", modifiers: [.command])
       .disabled(isSaving || !canSave)
     }
   }

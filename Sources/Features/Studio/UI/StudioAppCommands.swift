@@ -15,6 +15,11 @@ public struct StudioAppCommands: Commands {
         workspaceStore.openWorkspacePickerAndRecordRecent()
       }
       .keyboardShortcut("o", modifiers: [.command])
+
+      Button("Validate Workspace") {
+        workspaceStore.validateWorkspace()
+      }
+      .disabled(workspaceStore.workspaceURL == nil)
     }
 
     CommandGroup(after: .appInfo) {
