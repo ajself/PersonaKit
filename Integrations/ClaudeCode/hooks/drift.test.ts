@@ -32,6 +32,13 @@ test('enforced denial is blocked', () => {
   ).toBe('blocked')
 })
 
+test("the hook command's fallback deny, for a checker that never ran, is blocked", () => {
+  const failed = 'PreToolUse:Bash hook error: PersonaKit could not check this tool call, so it is blocked.'
+  expect(classify({ tool: 'Bash', result: err(failed) }, [], enforced())).toEqual({
+    tool: 'Bash', kind: 'blocked', actionClass: 'command-execution', turn: 4,
+  })
+})
+
 test('a refused operator prompt under the route-every-tool matcher is blocked', () => {
   const ask = "PersonaKit contract needs approval: PersonaKit cannot classify tool 'CronCreate'"
   expect(classify({ tool: 'CronCreate', result: err(ask) }, [], enforced(['.*']))).toEqual({

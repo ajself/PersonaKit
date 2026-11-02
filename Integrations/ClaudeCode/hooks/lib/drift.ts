@@ -10,6 +10,7 @@ const MCP_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']
 const DENY_MARKERS = [
   'Blocked by PersonaKit contract:',
   'PersonaKit enforcement could not',
+  'PersonaKit could not check this tool call',
   'PersonaKit contract needs approval:',
 ]
 

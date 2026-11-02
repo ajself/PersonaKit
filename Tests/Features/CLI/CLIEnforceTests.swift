@@ -662,6 +662,7 @@ struct CLIEnforceTests {
   private static let driftDenyMarkers = [
     "Blocked by PersonaKit contract:",
     "PersonaKit enforcement could not",
+    "PersonaKit could not check this tool call",
     "PersonaKit contract needs approval:",
   ]
 
@@ -691,8 +692,13 @@ struct CLIEnforceTests {
     }
 
     let sha = try sha256Hex(of: manifest)
+    // The hook command's shell fallback, for a checker that never ran: the text it echoes to stderr.
+    let suffixReason = ClaudeCodeEnforcement.failClosedSuffix
+      .components(separatedBy: "echo '").last?
+      .components(separatedBy: "' >&2").first
     let reasons: [(label: String, reason: String?)] = [
       ("fallback", HookCheckCommand.fallbackDenyReason),
+      ("Claude: hook-check failed", suffixReason),
       ("missed deadline", HookCheckCommand.missedDeadlineDecision.reason),
       ("Claude: missing manifest", decideClaude(manifest: missing, readStdin: { "{}" }).reason),
       (
