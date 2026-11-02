@@ -129,7 +129,7 @@ export function registerRoute(api: TuiPluginApi, deps: RouteDeps): () => void {
     if (disposed || !canUse(ids)) return
     leave(sessionID)
     safely(async () => {
-      if (!disposed) await prefill(api, usePrompt(ids))
+      if (!disposed) await prefill(api, usePrompt(ids, deps.binary))
     })
   }
 

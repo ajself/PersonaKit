@@ -118,7 +118,9 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
     ...(c.undeclaredRequestedSkillIds.length ? [`Undeclared requested: ${list(c.undeclaredRequestedSkillIds)}`] : []),
   ]
   const watching = () => {
-    if (enforcement().kind !== 'advisory') return { text: 'Off while a PersonaKit hook is installed', isMuted: true }
+    // A manifest whose plugin is not loaded enforces nothing, so its drift is still watched (see `classifyDrift`).
+    const e = enforcement()
+    if (e.kind !== 'advisory' && !e.pluginMissing) return { text: 'Off while the plugin enforces a manifest', isMuted: true }
     const d = details()
     if (!d) return { text: 'Off until handoff context is seen', isMuted: true }
     if (!d.deniedActionClasses.length) return { text: 'Nothing denied by the handoff context', isMuted: true }
@@ -200,7 +202,7 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
           <text fg={words().state[1]}>
             {line(words().state[0])}
             <Show when={enforcement().kind === 'advisory' && !props.manifestChanged}>
-              <span style={{ fg: theme().textMuted }}> · no hook installed</span>
+              <span style={{ fg: theme().textMuted }}> · no manifest installed</span>
             </Show>
           </text>
         </Row>

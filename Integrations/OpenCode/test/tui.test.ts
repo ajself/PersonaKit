@@ -364,7 +364,8 @@ function fakeBinary(stdout: string): string {
 
 test('pkUseSkipsInvalidIds', async () => {
   const library = LIST_MERGED_JSON.replaceAll('senior-swiftui-engineer_apply-style', '.hidden')
-  const fake = await start(fakeApi(), { personakitPath: fakeBinary(library) })
+  const binary = fakeBinary(library)
+  const fake = await start(fakeApi(), { personakitPath: binary })
   await commands(fake).find((command) => command.slashName === 'pk-use')!.run({})
   expect(fake.record.dialogs.length).toBe(1)
   fake.record.dialogs[0]!()
@@ -392,7 +393,8 @@ test('pkUseSkipsInvalidIds', async () => {
 
   props.onSelect?.(byId.get('architectural-editor-review') as TuiDialogSelectOption<string>)
   await until(() => fake.record.appended.length === 1, 'the pre-fill')
-  expect(fake.record.appended).toEqual([usePrompt({ sessionId: 'architectural-editor-review' })])
+  // The prompt's CLI fallback names the configured personakitPath.
+  expect(fake.record.appended).toEqual([usePrompt({ sessionId: 'architectural-editor-review' }, binary)])
 })
 
 test('pkUseAcceptsWorkspaceIds', async () => {

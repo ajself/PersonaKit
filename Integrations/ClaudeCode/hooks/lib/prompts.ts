@@ -7,8 +7,9 @@ const sh = (word: string) => (/^[A-Za-z0-9._\/:@+-]+$/.test(word) ? word : `'${w
  * The prompt `/pk use` and Re-ground pre-fill: resolve the contract, then export it, by the ids it was
  * resolved with (session id when there is one, else persona and directive), then adopt it. Both, so the
  * mod sees the contract JSON (kits, skills, scope) as well as the export (names, steps, boundaries).
+ * The CLI fallback names `binary`, the configured `personakitPath`.
  */
-export function usePrompt(ids: ContractIds): string {
+export function usePrompt(ids: ContractIds, binary = 'personakit'): string {
   const { sessionId, personaId, directiveId } = ids
   const what = sessionId !== undefined
     ? `session \`${sessionId}\``
@@ -19,7 +20,7 @@ export function usePrompt(ids: ContractIds): string {
   return (
     `Ground this session in the PersonaKit contract for ${what}. ` +
     `Resolve and then export it through PersonaKit: if the PersonaKit MCP server is connected, call its personakit_resolve_contract tool and then its personakit_export tool, each with ${what}; ` +
-    `otherwise run \`personakit contract ${flags}\` and then \`personakit export ${flags}\`. ` +
+    `otherwise run \`${sh(binary)} contract ${flags}\` and then \`${sh(binary)} export ${flags}\`. ` +
     `Then adopt the exported contract as your operating contract for this session: its persona, its directive's steps and stop points, and its boundaries.`
   )
 }

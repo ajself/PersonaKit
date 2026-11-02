@@ -78,7 +78,7 @@ function sameDirectory(a: string, b: string): boolean {
 function libraryProblem(load: Exclude<LibraryLoad, { kind: 'loaded' }>): string {
   switch (load.kind) {
     case 'no-library':
-      return 'PersonaKit: no library here (no .personakit in this project and no ~/.personakit)'
+      return 'PersonaKit: no library here (no .personakit in this project and no ~/.personakit); run `personakit init .personakit` to create one'
     case 'missing':
       return `PersonaKit: couldn't run ${load.binary}: ${load.detail}. Set the personakitPath option if PersonaKit is installed elsewhere.`
     case 'outdated':
@@ -308,7 +308,7 @@ const tui = async (
 
   const reground = (sessionID: string) => {
     const { main } = track(sessionID).state()
-    if (!disposed && main && canUse(main.ids)) void safely(async () => void (await prefill(api, usePrompt(main.ids))))
+    if (!disposed && main && canUse(main.ids)) void safely(async () => void (await prefill(api, usePrompt(main.ids, binary))))
   }
 
   const useSession = async () => {
@@ -352,7 +352,7 @@ const tui = async (
           // A disabled row can still reach here; its id never becomes a prompt.
           if (disposed || !canUse({ sessionId: option.value })) return
           api.ui.dialog.clear()
-          void safely(async () => void (await prefill(api, usePrompt({ sessionId: option.value }))))
+          void safely(async () => void (await prefill(api, usePrompt({ sessionId: option.value }, binary))))
         }}
       />
     ))

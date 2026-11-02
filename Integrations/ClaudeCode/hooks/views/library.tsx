@@ -53,7 +53,7 @@ function loadState(el: El, load: Exclude<LibraryLoad, { kind: 'loaded' }>): Rend
     case 'loading':
       return [<Text key="loading" dimColor>Loading the library…</Text>]
     case 'no-library':
-      return [<Text key="no-library">No PersonaKit library here: no .personakit in this project and no ~/.personakit.</Text>]
+      return [<Text key="no-library">No PersonaKit library here: no .personakit in this project and no ~/.personakit. Run `personakit init .personakit` to create one.</Text>]
     case 'missing':
       return [
         <Text key="missing">

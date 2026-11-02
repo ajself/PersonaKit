@@ -12,6 +12,13 @@ test('a session prompt names it and asks to resolve, export, and adopt it', asyn
   expect(text).not.toContain('--persona')
 })
 
+test('the CLI fallback names the configured personakitPath, quoted when it needs to be', async () => {
+  expect(usePrompt({ sessionId: 's' }, '/opt/pk/bin/personakit')).toContain(
+    '`/opt/pk/bin/personakit contract --session=s` and then `/opt/pk/bin/personakit export --session=s`',
+  )
+  expect(usePrompt({ sessionId: 's' }, '/Users/x/My Tools/personakit')).toContain("`'/Users/x/My Tools/personakit' contract --session=s`")
+})
+
 test('persona and directive ids produce --persona and --directive', async () => {
   const text = usePrompt({ personaId: 'p', directiveId: 'd' })
   expect(text).toContain('`personakit contract --persona=p --directive=d` and then `personakit export --persona=p --directive=d`')

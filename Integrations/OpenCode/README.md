@@ -41,15 +41,16 @@ the server as well; [Docs/mcp.md](https://github.com/ajself/PersonaKit/blob/main
 
 The status chip beside the prompt reads the same line as the Claude Code mod:
 
-- `◇ no contract · /pk` when nothing has been resolved in the session.
+- `◇ no contract · /pk` when nothing has been resolved in the session. With a manifest in the project, the enforcement
+  segment takes the hint's place.
 - `◆ <session> · <warnings> · enforced|advisory · <scope> · <persona> › <directive>` for the contract in force, cut to
   120 characters with the names dropped first. Warnings cover a stale contract (`re-ground?` after compactions) and
   the latest drift since the resolve (`drift: <tool> (<class>)`, with a `×N` count).
 
 The enforcement segment reads:
 
-- `enforced` only when a manifest exists, the resolved OpenCode config lists the server plugin, and the manifest is
-  the one OpenCode loaded at startup.
+- `enforced` only when a manifest exists, the resolved OpenCode config lists the server plugin, the manifest is the one
+  OpenCode loaded at startup, and it belongs to the contract resolved in the session.
 - `advisory` when the project has no manifest.
 - `⚠ manifest present · plugin not loaded` when no config lists the plugin `make opencode-install` registered, so
   nothing enforces the manifest.
@@ -91,8 +92,9 @@ loads each time the view opens, and Refresh loads it again.
 on the top view returns to the session `/pk` was opened from.
 
 When the library cannot load, the view says why instead of showing an empty list: no library in this project or in
-`~/.personakit`, a `personakit` binary that could not run (it points at `personakitPath`), a CLI too old for the plugin
-("This needs PersonaKit 2.2.0 or later."), or files that failed validation, listed by scope and path.
+`~/.personakit` (with a `personakit init` hint), a `personakit` binary that could not run (it points at
+`personakitPath`), a CLI too old for the plugin ("This needs PersonaKit 2.2.0 or later."), or files that failed
+validation, listed by scope and path.
 
 ## Commands
 
@@ -117,10 +119,10 @@ server plugin reads its entry in the global `opencode.json` and the TUI reads it
 }
 ```
 
-`personakitPath` (default `personakit`) is the executable the plugin runs: `hook-check` for enforcement, and the
-Library and contract previews in the TUI. Give an absolute path or a bare name on the `PATH` OpenCode sees. The server
-plugin rejects a relative path such as `bin/personakit`, and then blocks every checked tool call until you fix it and
-restart OpenCode.
+`personakitPath` (default `personakit`) is the executable the plugin runs: `hook-check` for enforcement, and the Library
+and contract previews in the TUI. The grounding prompt names it too, for the agent to run when the MCP server is not
+connected. Give an absolute path or a bare name on the `PATH` OpenCode sees. The server plugin rejects a relative path
+such as `bin/personakit`, and then blocks every checked tool call until you fix it and restart OpenCode.
 
 `mcpServerName` (default `personakit`) is the name of the MCP server that serves PersonaKit contracts. Set it in
 `tui.json` if you registered the server under another name, so the status recognizes those calls as PersonaKit's own.
@@ -135,9 +137,10 @@ At startup the server plugin finds the manifest in `.opencode/personakit/`, reco
 `personakit`. From then on every tool call except OpenCode's read-only built-ins goes to `personakit hook-check`,
 which denies what the contract forbids; the reason reaches the model and tells it to stop and tell you what it needs
 rather than find another way. MCP tools, other plugins' tools, and custom tools cannot be classified, so they are denied
-whenever the contract forbids anything such a tool could do. Unlike the Claude Code mod, the plugin cannot ask you about
-them instead: OpenCode's permission rules never apply to plugin and custom tools, and `opencode run --auto` approves any
-ask. A checker that cannot run, or a manifest that changed since startup, denies the call.
+whenever the contract forbids anything such a tool could do. Claude Code enforcement asks you about such a tool
+instead; the plugin cannot, since OpenCode's permission rules never apply to plugin and custom tools, and
+`opencode run --auto` approves any ask. A checker that cannot run, or a manifest that changed since startup, denies the
+call, and the reason says how to fix it.
 
 This covers the TUI, `opencode run`, the web app, ACP, and subagents. While a contract is enforced the agent cannot edit
 OpenCode's config or plugin files, even when the contract allows edits: `.opencode/` and `opencode.json(c)` or

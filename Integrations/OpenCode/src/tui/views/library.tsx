@@ -367,7 +367,7 @@ export function LoadState(props: { load: Exclude<LibraryLoad, { kind: 'loaded' }
         <text fg={theme().textMuted}>Loading the library…</text>
       </Match>
       <Match when={props.load.kind === 'no-library'}>
-        <text fg={theme().text}>No PersonaKit library here: no .personakit in this project and no ~/.personakit.</text>
+        <text fg={theme().text}>No PersonaKit library here: no .personakit in this project and no ~/.personakit. Run `personakit init .personakit` to create one.</text>
       </Match>
       <Match when={props.load.kind === 'missing' && props.load}>
         {(load) => (

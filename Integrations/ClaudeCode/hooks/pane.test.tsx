@@ -656,7 +656,7 @@ each('no library says where it looked', async ($, w, surface) => {
   w.process = () => ran('{"noLibrary":true}', 0)
   await pk($, '')
   const ui = await mount($, surface)
-  expect(await text(ui, /^No PersonaKit library/)).toBe('No PersonaKit library here: no .personakit in this project and no ~/.personakit.')
+  expect(await text(ui, /^No PersonaKit library/)).toBe('No PersonaKit library here: no .personakit in this project and no ~/.personakit. Run `personakit init .personakit` to create one.')
   await ui.unmount()
 })
 

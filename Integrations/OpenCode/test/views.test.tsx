@@ -344,7 +344,11 @@ test('contractViewSaysOpenCodesEnforcementStates', async () => {
     enforcement: { kind: 'enforced', manifestPath: '/p/.opencode/personakit-enforcement.json', ids: { sessionId: SESSION }, deniedActionClasses: ['file-mutation'], matcherTools: ['edit'], ...extra },
   })
   const missing = await open({ view: { kind: 'contract' }, session: enforced({ pluginMissing: true }) })
-  expect(await missing.frame((f) => f.includes('ENFORCEMENT'))).toContain('⚠ manifest present · plugin not loaded')
+  const missingFrame = await missing.frame((f) => f.includes('ENFORCEMENT'))
+  expect(missingFrame).toContain('⚠ manifest present · plugin not loaded')
+  // Nothing enforces the manifest, so drift is still watched.
+  expect(missingFrame).toContain('Off until handoff context is seen')
+  expect(missingFrame).not.toContain('Off while')
   const changed = await open({ view: { kind: 'contract' }, session: enforced({}), manifestChanged: true })
   const frame = await changed.frame((f) => f.includes('ENFORCEMENT'))
   expect(frame).toContain('⚠ manifest changed · restart OpenCode')
@@ -353,6 +357,11 @@ test('contractViewSaysOpenCodesEnforcementStates', async () => {
   const okFrame = await ok.frame((f) => f.includes('ENFORCEMENT'))
   expect(okFrame).toContain('● Enforced')
   expect(okFrame).toContain('deny file-mutation')
+  expect(okFrame).toContain('Off while the plugin enforces a manifest')
+  const advisory = await open({ view: { kind: 'contract' }, session: () => initial })
+  const advisoryFrame = await advisory.frame((f) => f.includes('ENFORCEMENT'))
+  expect(advisoryFrame).toContain('Advisory · no manifest installed')
+  expect(advisoryFrame).not.toContain('hook')
 })
 
 test('chipTextPutsOpenCodesHintAndManifestWarningInTheSharedLine', () => {

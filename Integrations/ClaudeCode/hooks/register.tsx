@@ -167,13 +167,13 @@ async function fillPrompt($: Prompt, text: string): Promise<boolean> {
   return isFilled
 }
 
-/** Pre-fills the grounding prompt for `ids`; an id outside the id rule fills nothing and is toasted. */
-async function fillGrounding($: Prompt, ids: ContractIds): Promise<boolean> {
+/** Pre-fills the grounding prompt for `ids`, naming `binary`; an id outside the id rule fills nothing and is toasted. */
+async function fillGrounding($: Prompt, ids: ContractIds, binary: string): Promise<boolean> {
   if (!canUse(ids)) {
     $.ui.toast('PersonaKit: unsupported id')
     return false
   }
-  return fillPrompt($, usePrompt(ids))
+  return fillPrompt($, usePrompt(ids, binary))
 }
 
 const USE = 'Usage: /pk use <session>'
@@ -271,14 +271,14 @@ export const register: Register = (on, options) => {
       $.ui.toast('PersonaKit: unsupported id')
       return { text: 'Unsupported id; no prompt was pre-filled.' }
     }
-    const filled = await fillGrounding($, { sessionId: name })
+    const filled = await fillGrounding($, { sessionId: name }, binary)
     return { text: filled ? `Pre-filled a prompt to ground this session in \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const reground = async () => {
       const { main } = await read($, session)
-      if (main) await fillGrounding($, main.ids)
+      if (main) await fillGrounding($, main.ids, binary)
     }
     const edit = (change: (p: PaneState) => PaneState) => void safely($, async () => void (await update($, pane, change)))
     // A top-level view clears the back stack and the Library loads each time it is shown; any other view stacks.
@@ -295,7 +295,7 @@ export const register: Register = (on, options) => {
       back: () => edit((p) => ({ ...p, view: p.back.at(-1) ?? { kind: 'library' }, back: p.back.slice(0, -1) })),
       setFilter: (filter) => edit((p) => ({ ...p, filter })),
       refresh: () => void safely($, () => refreshLibrary($, binary)),
-      use: (sessionId) => void safely($, async () => void (await fillGrounding($, { sessionId }))),
+      use: (sessionId) => void safely($, async () => void (await fillGrounding($, { sessionId }, binary))),
       reground: () => void safely($, reground),
       toggle: (key) => edit((p) => ({ ...p, expanded: p.expanded.includes(key) ? p.expanded.filter((k) => k !== key) : [...p.expanded, key] })),
     }

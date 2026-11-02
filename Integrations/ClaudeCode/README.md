@@ -37,7 +37,9 @@ The status line under the prompt reads one of:
   different contract, `enforcement manifest unreadable`, and `re-ground blocked`.
 
 The contract is whatever the agent last resolved through the PersonaKit MCP server or the `personakit` CLI in this
-session. Warnings use `⚠` rather than color.
+session. Warnings use `⚠` rather than color. The mod reads the installed hook again whenever a turn ends, so a hook
+installed or removed mid-session shows once the current turn finishes; Claude Code itself applies it within a few
+seconds, without a restart.
 Claude Code draws every plugin status line as a `⚠ <plugin>:` notice, so the steady state shows that marker too;
 `$.ui.status` offers no styling.
 
@@ -67,9 +69,9 @@ The Library is the other half of the `/pk` pane: your personas, sessions, and co
   pre-fills the prompt, as `/pk use` does; nothing is in force until you send it and the agent resolves the contract.
 
 When the library cannot load, the pane says why instead of showing an empty list: no library in this project or in
-`~/.personakit`, a `personakit` binary that could not run (it names the binary and points at `personakitPath`), a CLI
-too old for the mod ("This needs PersonaKit 2.2.0 or later."), files that failed validation (listed by scope and
-path), or a host that cannot run processes at all.
+`~/.personakit` (with a `personakit init` hint), a `personakit` binary that could not run (it names the binary and
+points at `personakitPath`), a CLI too old for the mod ("This needs PersonaKit 2.2.0 or later."), files that failed
+validation (listed by scope and path), or a host that cannot run processes at all.
 
 ## Commands
 
@@ -85,7 +87,8 @@ path), or a host that cannot run processes at all.
 registered the server under another name, so the mod recognizes those calls as PersonaKit's own.
 
 `personakitPath` (default `personakit`) is the executable the pane runs to load the Library and the contract
-previews. Set it to a path or name when `personakit` is not on the `PATH` Claude Code sees.
+previews, and the one the grounding prompt tells the agent to run when the MCP server is not connected. Set it to a
+path or name when `personakit` is not on the `PATH` Claude Code sees.
 
 ## What it does not do
 
