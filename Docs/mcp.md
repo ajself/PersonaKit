@@ -90,12 +90,13 @@ Set Up Agents sheet shows the same entry to copy; Studio writes nothing itself.
 ```
 
 The PersonaKit OpenCode plugin adds a status chip, a Library, and `/pk`
-commands, and it is the hook that enforces a frozen contract. Install it with
-`make opencode-install` from a checkout of the release tag that matches your
-CLI; [Integrations/OpenCode/README.md](../Integrations/OpenCode/README.md) has
-the steps. [Docs/enforcement.md](./enforcement.md) covers enforcement on
-OpenCode: what it blocks, how to install and remove it, and what it does not
-cover.
+commands. After `personakit enforce install --host opencode --session <id>`
+and an OpenCode restart, it is the hook that enforces the contract. Install the
+plugin with `make opencode-install` from a checkout of the release tag that
+matches your CLI;
+[Integrations/OpenCode/README.md](../Integrations/OpenCode/README.md) has the
+steps. [Docs/enforcement.md](./enforcement.md) covers enforcement on OpenCode:
+what it blocks, how to install and remove it, and what it does not cover.
 
 ### Claude Code
 
@@ -191,7 +192,7 @@ If a contract does not authorize a needed skill, stop and re-ground instead of i
 
 MCP never hands an agent text a person reviewing it would not see. `personakit_export`, `personakit_graph`, and error messages strip control characters, bidirectional overrides, and invisible characters such as Unicode tag characters from `.personakit` content. JSON results write those characters as `\uXXXX` escapes, so values stay exact. Raw pack resources are the files as written.
 
-Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. Other MCP tools need the operator's approval on Claude Code and are denied on OpenCode. See [Docs/enforcement.md](./enforcement.md#trusted-mcp-server-names).
+With no enforcement installed, PersonaKit checks no MCP calls, and the contract alone governs them. Under an enforced contract, `hook-check` allows PersonaKit's own MCP tools from the server named `personakit`, or from the name given to `enforce install --mcp-server`, so agents can re-ground. On OpenCode that trust holds only while the server is configured and no other configured server's name could produce the same tool id, and MCP tools from other servers are denied. On Claude Code you are asked about them; where no one can answer, as in `claude -p`, Claude Code refuses them, and under `bypassPermissions` the checker denies them. See [Docs/enforcement.md](./enforcement.md#trusted-mcp-server-names).
 
 ## How To Verify
 

@@ -236,20 +236,26 @@ Confirm it connected:
 claude mcp list
 ```
 
-The repository is also a Claude Code marketplace for an optional mod that shows the contract in force in your status
-line and flags drift from it. Install it from a Claude Code prompt with
-`/plugin install personakit --marketplace ajself/PersonaKit`. From its `/pk` pane the mod runs three read-only
-`personakit` commands: `list all --json`, `contract`, and `export`. It never blocks a tool call, submits a prompt, or
-writes a file. See [Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
+The repository is also a Claude Code marketplace for an optional mod. It shows the contract in force in your status
+line and flags drift from it. `/pk` opens a pane with the contract and the Library, and `/pk use <session>` pre-fills
+a request asking the agent to resolve and export that session's contract and adopt it; you review and send it. From
+the pane the mod runs three read-only `personakit` commands: `list all --json`, `contract`, and `export`. It never
+blocks a tool call, submits a prompt, or writes a file. On Claude Code, enforcement is a separate hook, and the mod
+reports its state. Install the mod from a Claude Code prompt with
+`/plugin install personakit --marketplace ajself/PersonaKit`; see
+[Integrations/ClaudeCode/README.md](./Integrations/ClaudeCode/README.md).
 
-OpenCode has a matching plugin: a status chip beside the prompt, a sidebar panel, `/pk` for the contract and the
-Library, and `/pk-use` to start a session. It is also the hook that enforces a contract frozen with
-`personakit enforce install --host opencode`. Install it with `make opencode-install` from a checkout of the release
-tag that matches your CLI; see [Integrations/OpenCode/README.md](./Integrations/OpenCode/README.md) for the steps and
-what it covers.
+OpenCode has a matching plugin. It shows the contract in force in a status chip and a sidebar panel, and flags drift
+from it. `/pk` opens the contract and the Library, and `/pk-use` lists the library's sessions and pre-fills the same
+request for the one you pick. Its TUI runs the same three commands, only on your action, and the plugin never submits
+a prompt or writes a file. Unlike the mod, its server half is the enforcement hook: after
+`personakit enforce install --host opencode --session <id>` and an OpenCode restart, it runs `personakit hook-check`
+on every tool call except OpenCode's read-only built-ins. Install the plugin with `make opencode-install` from a
+checkout of the release tag that matches your CLI; see
+[Integrations/OpenCode/README.md](./Integrations/OpenCode/README.md) for the steps and what it covers.
 
-For Cursor, GitHub Copilot, Codex, VS Code, OpenCode, and the generic stdio shape, use the per-host config table in
-[Docs/mcp.md](./Docs/mcp.md).
+[Docs/mcp.md](./Docs/mcp.md) has setup notes for project-scoped Claude Code, OpenCode, Codex, GitHub Copilot CLI, and
+VS Code. Cursor and other clients take the generic stdio shape there.
 
 Once connected, an agent grounds itself by reading `personakit://catalog/start`, then resolving a session. With no MCP
 server connected, the same grounding is one CLI call away: `personakit guidance`. A resolved contract is not a locked
