@@ -45,12 +45,13 @@ Claude Code draws every plugin status line as a `⚠ <plugin>:` notice, so the s
 `$.ui.status` offers no styling.
 
 The `/pk` pane shows the resolved contract (persona, directive, steps with stop points, kits, skills, authorization
-failures), scope, enforcement state and installed manifest, counted compactions since the resolve, a drift log,
-and contracts resolved by subagents. Its Re-ground button pre-fills a prompt. When the agent's resolution carried no
-contract JSON, the pane reads the kits, skills, and scope itself and says so beside them. With a hook installed, the
-Enforcement section lists what the hook blocks and which tool calls it checks; without one, Drift check lists what the
-handoff context forbids, which the mod flags when the agent does it anyway. Each drift log entry reads `blocked` when
-the hook denied the call, `not blocked` when a forbidden call ran with no hook to stop it, or `re-ground blocked`.
+failures), scope, enforcement state and installed manifest, counted compactions since the resolve, drift counted
+since the latest grounding with the full drift log below it, and contracts resolved by subagents. Its Re-ground button
+pre-fills a prompt. When the agent's resolution carried no contract JSON, the pane reads the kits, skills, and scope
+itself and says so beside them. With a hook installed, the Enforcement section lists what the hook blocks and which
+tool calls it checks; without one, Drift check lists what the handoff context forbids, which the mod flags when the
+agent does it anyway. Each drift log entry reads `blocked` when the hook denied the call, `not blocked` when a
+forbidden call ran with no hook to stop it, or `re-ground blocked`.
 
 ## The Library
 

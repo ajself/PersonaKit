@@ -23,7 +23,8 @@ export type Observation =
   | { kind: 'export'; source: 'mcp' | 'cli'; ids: ContractIds; details?: ExportDetails } // details absent: truncated output
   | { kind: 'failed'; source: 'mcp' | 'cli'; ids: ContractIds }
 // driftMark: `drift.length` at main's latest successful resolve, a re-ground of the same contract included; the
-// status line's warnings count only drift from it on. Absent (state persisted before it existed) reads as 0.
+// status line, the pane, and the OpenCode sidebar count only drift from it on; the drift log shows all of it. Absent
+// (state persisted before it existed) reads as 0.
 export type Resolution = { ids: ContractIds; contract?: Contract; details?: ExportDetails; source: 'mcp' | 'cli'; turn: number; driftMark?: number }
 export type Enforcement =
   | { kind: 'advisory' }

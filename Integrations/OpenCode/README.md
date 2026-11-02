@@ -65,8 +65,8 @@ The enforcement segment reads:
 
 The chip turns the theme's warning color while it carries a `⚠`. The sidebar shows the contract in force (persona,
 directive, steps with stop points, kits, skills), the enforcement state, compactions since the resolve, the last five
-drift entries under a count of all drift in the session, and a Re-ground button that pre-fills a prompt to resolve the
-contract again. The sidebar's button takes a mouse; from the keyboard, Re-ground is on the Contract tab of `/pk`.
+drift entries since the latest grounding under their count, and a Re-ground button that pre-fills a prompt to resolve
+the contract again. The sidebar's button takes a mouse; from the keyboard, Re-ground is on the Contract tab of `/pk`.
 Subagents count as part of the session that started them.
 
 OpenCode continues on its own after it compacts a conversation, so when the session you are viewing compacts, a toast
@@ -75,11 +75,11 @@ asks whether to re-ground and points to `/pk`. Nothing is injected into the conv
 ## The Library
 
 `/pk` opens a PersonaKit view in place of the session, with Contract and Library tabs. The Contract tab is the mod's
-Contract view: the resolved contract, scope, enforcement state and installed manifest, compactions, a drift log,
-contracts resolved by subagents, and Re-ground. With a manifest the plugin enforces, the Enforcement section lists what
-it blocks; without one, Drift check lists what the handoff context forbids, which the status flags when the agent does
-it anyway. Each drift log entry reads `blocked`, `not blocked` (a forbidden call ran with nothing to stop it), or
-`re-ground blocked`.
+Contract view: the resolved contract, scope, enforcement state and installed manifest, compactions, drift counted since
+the latest grounding with the full drift log below it, contracts resolved by subagents, and Re-ground. With a manifest
+the plugin enforces, the Enforcement section lists what it blocks; without one, Drift check lists what the handoff
+context forbids, which the status flags when the agent does it anyway. Each drift log entry reads `blocked`,
+`not blocked` (a forbidden call ran with nothing to stop it), or `re-ground blocked`.
 
 The Library lists your personas, sessions, and components, read from the same `.personakit` roots the CLI resolves. It
 loads each time the view opens, and Refresh loads it again.

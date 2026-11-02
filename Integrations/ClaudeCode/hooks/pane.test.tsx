@@ -32,13 +32,16 @@ function engine(on: On) {
     answers, draft: '', fills: [] as Fill[], fillAnswer: { isFilled: true } as { isFilled: boolean; refusal?: 'dialog' | 'no_composer' },
     opens: [] as Record<string, unknown>[], isPlaced: true, toasts: [] as string[], logs: [] as string[], state: undefined as SessionState | undefined,
     files: {} as Record<string, string>,
+    // What the session state is saved as: unchanged unless a test stands in for an older mod's state.
+    saved: ((value: SessionState) => value) as (value: SessionState) => SessionState,
     // `personakit` as the pane runs it: every argv, and what each run answers (a `deny` is the host refusing).
     runs: [] as (readonly string[])[], sessionWrites: 0, process: (() => ran(LIST_JSON)) as (argv: readonly string[]) => Ran | { deny: string },
   }
   on('state.set', (_, e, next) => {
     if (e.plugin === 'personakit' && e.key === 'session') {
-      world.state = e.value as SessionState
+      world.state = world.saved(e.value as SessionState)
       world.sessionWrites += 1
+      return next({ ...e, value: world.state })
     }
     return next(e)
   })
@@ -146,7 +149,7 @@ each('the pane shows the golden contract, its enforcement, freshness, and drift'
   expect((await ui.find({ key: 'pane' }))?.props.width).toBe(60)
   expect(await text(ui, /^read-only-auditor_audit-pass$/)).toBe('read-only-auditor_audit-pass')
   expect(await text(ui, /^Resolved turn/)).toBe('Resolved turn 0 · this turn · MCP')
-  expect(await chips(ui)).toEqual(['● Advisory', '● 1 compaction', '● 1 drift'])
+  expect(await chips(ui)).toEqual(['● Advisory', '● 1 compaction', '● 1 drift since grounding'])
   expect(await row(ui, 'Persona')).toEqual(['Persona', 'Read-Only Auditor (read-only-auditor)'])
   expect(await row(ui, 'Directive')).toEqual(['Directive', 'Read-only audit pass (audit-pass)'])
   expect(await row(ui, 'Goal')).toEqual(['Goal', 'Audit the change and report findings without editing it.'])
@@ -306,6 +309,46 @@ each('a subagent resolution shows under subagent contracts', async ($, w, surfac
   const ui = await mount($, surface)
   expect(await texts(ui, 'subagent-a1')).toEqual(['a1 helper › d · resolved turn 0 · MCP'])
   await ui.unmount()
+})
+
+each('drift counts from the latest grounding while the drift log keeps all of it', async ($, w, surface) => {
+  w.files['/p/.claude/settings.json'] = HOOKED_SETTINGS
+  w.files[MANIFEST_PATH] = MANIFEST
+  await $.turn.complete({ answer: 'done', durationMs: 1, isAborted: false, turnId: 't0', reason: 'answer' } as never)
+  const blockedWrite = async (path: string) => {
+    const deny = 'Blocked by PersonaKit contract: capability-deny.edit-files'
+    w.answers.push({ result: deny, text: deny, isError: true })
+    await $.tool.call({ tool: 'Write', file_path: path, content: 'x' } as never)
+  }
+  const drift = async () => {
+    const ui = await mount($, surface)
+    const shown = { chip: (await chips(ui)).at(-1), log: (await ui.findAll({ type: 'Text', text: /^Write blocked/ })).length }
+    await ui.unmount()
+    return shown
+  }
+  // Nothing grounded: every drift counts, with no grounding to count from.
+  await blockedWrite('/p/a.txt')
+  expect(await drift()).toEqual({ chip: '● 1 drift', log: 1 })
+  await ground($, w)
+  expect(await drift()).toEqual({ chip: '✓ No drift', log: 1 })
+  await blockedWrite('/p/b.txt')
+  expect(await drift()).toEqual({ chip: '● 1 drift since grounding', log: 2 })
+})
+
+each('a contract persisted before drift marks existed counts all drift, and says so', async ($, w, surface) => {
+  // State as a mod older than `driftMark` saved it: the resolution carries none.
+  w.saved = (value) => {
+    if (value.main === undefined) return value
+    const { driftMark: _mark, ...main } = value.main
+    return { ...value, main }
+  }
+  await ground($, w)
+  await $.tool.call({ tool: 'Write', file_path: '/p/a.txt', content: 'x' } as never)
+  const ui = await mount($, surface)
+  expect(await chips(ui)).toEqual(['● Advisory', '● 1 drift'])
+  await ui.unmount()
+  expect(w.state?.main).toBeDefined()
+  expect(w.state?.main?.driftMark).toBeUndefined()
 })
 
 each('with no contract the pane gives the /pk use hint and no Re-ground', async ($, _w, surface) => {

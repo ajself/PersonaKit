@@ -2,6 +2,7 @@ import type { Color, RenderChildren } from 'claude-code'
 
 import type { Contract, DriftEvent, Enforcement, PaneState, Preview, Resolution, SessionState } from '../../types'
 import { previewKey } from '../lib/runner'
+import { countsFromGrounding, driftSinceGrounding } from '../lib/session'
 import { LABEL_WIDTH, parts } from './parts'
 import type { El, PaneActions } from './parts'
 
@@ -78,11 +79,13 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
         : enforcement.kind === 'enforced'
           ? ['● Enforced', 'success']
           : [`● Enforcing ${enforcing}`, main ? 'error' : 'warning']
-  const blocked = state.drift.some((d) => d.kind !== 'advisory')
+  // Counted as the status line counts, from the latest grounding; the drift log below keeps all of it.
+  const since = driftSinceGrounding(state)
+  const blocked = since.some((d) => d.kind !== 'advisory')
   const driftChip: [string, Color] =
-    state.drift.length === 0
+    since.length === 0
       ? ['✓ No drift', 'success']
-      : [`● ${state.drift.length} drift`, blocked ? 'error' : 'warning']
+      : [`● ${since.length} drift${countsFromGrounding(state) ? ' since grounding' : ''}`, blocked ? 'error' : 'warning']
   const chips: [string, Color][] = [
     enforcementChip,
     ...(main && state.compactions > 0

@@ -10,6 +10,12 @@ export function isEmpty(s: SessionState): boolean {
   return s.main === undefined && Object.keys(s.subagents).length === 0 && s.drift.length === 0 && s.compactions === 0
 }
 
+/** Drift from main's latest grounding on, or all of it with nothing grounded: what every drift count shows. */
+export const driftSinceGrounding = (s: SessionState) => s.drift.slice(s.main?.driftMark ?? 0)
+
+/** Whether that count starts at a grounding: a state persisted before `driftMark` existed counts all of it. */
+export const countsFromGrounding = (s: SessionState) => s.main?.driftMark !== undefined
+
 export const trustedServers = (configured: string, enforcement: Enforcement) =>
   [...new Set([configured, enforcement.kind === 'advisory' ? undefined : enforcement.mcpServerName])].filter(
     (name): name is string => typeof name === 'string' && name.length > 0,

@@ -1,4 +1,5 @@
 import type { Enforcement, Resolution, SessionState } from '../../types'
+import { driftSinceGrounding } from './session'
 
 const MAX = 120
 const SEP = ' · '
@@ -30,7 +31,7 @@ function enforcementSegment(enforcement: Enforcement, fit: Fit): string {
 function warnings(state: SessionState, fit: Fit): string[] {
   const out: string[] = []
   if (state.main && state.compactions > 0) out.push('⚠ re-ground?')
-  const since = state.drift.slice(state.main?.driftMark ?? 0)
+  const since = driftSinceGrounding(state)
   const drift = since.filter((d) => d.kind !== 'reground-blocked')
   const last = drift.at(-1)
   if (last) {

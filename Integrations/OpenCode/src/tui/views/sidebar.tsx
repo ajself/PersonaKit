@@ -2,6 +2,7 @@ import type { TuiPluginApi } from '@opencode-ai/plugin/tui'
 import type { RGBA } from '@opentui/core'
 import { For, Show } from 'solid-js'
 import type { DriftEvent, Enforcement, Resolution, SessionState } from '../../../../ClaudeCode/types'
+import { countsFromGrounding, driftSinceGrounding } from '../../../../ClaudeCode/hooks/lib/session.ts'
 import { sanitizeLine, sanitizeText } from '../text.ts'
 import { MANIFEST_CHANGED, NO_CONTRACT_HINT } from './chip.tsx'
 
@@ -58,7 +59,9 @@ export function Sidebar(props: { api: TuiPluginApi; state: SessionState; manifes
   const theme = () => props.api.theme.current
   const main = () => props.state.main
   const enforcement = () => enforcementRow(props.state.enforcement, props.manifestChanged, props.state.main !== undefined, theme())
-  const drift = () => props.state.drift.slice(-DRIFT_SHOWN)
+  // Counted as the status line counts, from the latest grounding; the full log is on the Contract tab of `/pk`.
+  const since = () => driftSinceGrounding(props.state)
+  const drift = () => since().slice(-DRIFT_SHOWN)
   return (
     <box flexDirection="column">
       <text fg={theme().text}>
@@ -111,7 +114,7 @@ export function Sidebar(props: { api: TuiPluginApi; state: SessionState; manifes
       </Show>
       <Show when={drift().length > 0}>
         <box flexDirection="column">
-          <text fg={theme().textMuted}>{`Drift (${props.state.drift.length})`}</text>
+          <text fg={theme().textMuted}>{`${countsFromGrounding(props.state) ? 'Drift since grounding' : 'Drift'} (${since().length})`}</text>
           <For each={drift()}>
             {(d) => <text fg={d.kind === 'advisory' ? theme().warning : theme().error}>{sanitizeLine(driftLine(d))}</text>}
           </For>

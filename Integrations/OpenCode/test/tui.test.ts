@@ -351,7 +351,7 @@ test('subagentSessionDriftIsTheSubagents', async () => {
   const child = tool('c1', 'ca1', 'ls', 'README.md\n', CHILD)
   parts.ca1 = [child]
   fake.emit('message.part.updated', { sessionID: CHILD, part: child, time: 4 })
-  const frame = await sidebar.waitForFrame((f) => f.includes('Drift (1)'))
+  const frame = await sidebar.waitForFrame((f) => f.includes('Drift since grounding (1)'))
   expect(frame).toContain('bash not blocked · command-execution · subagent · turn 1')
 })
 

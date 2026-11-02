@@ -10,6 +10,7 @@ import type { ProcessRunResult, RunnerDollar } from '../../ClaudeCode/hooks/lib/
 import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
 import { registerRoute } from '../src/tui/route.tsx'
 import { chipText, MANIFEST_CHANGED } from '../src/tui/views/chip.tsx'
+import { Sidebar } from '../src/tui/views/sidebar.tsx'
 import plugin from '../src/tui.tsx'
 
 const MAIN = 'ses_main'
@@ -531,6 +532,57 @@ test('tuiRegistersTheRouteAndDisposesIt', async () => {
   expect(fake.record.routes.map((r) => r.name)).toEqual(['personakit'])
   for (const dispose of disposers) dispose()
   expect(fake.record.unregistered).toBe(1)
+})
+
+test('driftCountsFromTheLatestGroundingWhileTheLogKeepsAllOfIt', async () => {
+  const drift: SessionState['drift'] = [
+    { tool: 'early_tool', kind: 'blocked', turn: 1 },
+    { tool: 'late_tool', kind: 'advisory', turn: 2 },
+  ]
+  const main = (driftMark?: number) => ({ ids: { sessionId: SESSION }, source: 'cli' as const, turn: 2, ...(driftMark === undefined ? {} : { driftMark }) })
+  let shown: Awaited<ReturnType<typeof open>> | undefined
+  const pane = async (state: SessionState) => {
+    shown = await open({ view: { kind: 'contract' }, session: () => state })
+    return shown.frame((f) => f.includes('DRIFT LOG'))
+  }
+  /** The color of the first span in the last pane drawn that reads `text`. */
+  const color = (text: string) => shown?.setup.captureSpans().lines.flatMap((l) => l.spans).find((s) => s.text.includes(text))?.fg.toInts()
+  const sidebar = async (state: SessionState) => {
+    const setup = await testRender(() => <Sidebar api={fakeApi().api} state={state} manifestChanged={false} reground={undefined} />, { width: 60, height: 40 })
+    renderers.push(setup.renderer)
+    await setup.renderOnce()
+    return setup.captureCharFrame()
+  }
+
+  // Nothing grounded: all of it counts, with no grounding to count from.
+  const none = { ...initial, drift }
+  expect(await pane(none)).toContain('● 2 drift ')
+  expect(await sidebar(none)).toContain('Drift (2)')
+
+  // A contract persisted before drift marks existed still counts all of it, so it claims no grounding to count from.
+  const unmarked = { ...initial, main: main(), drift }
+  const unmarkedPane = await pane(unmarked)
+  expect(unmarkedPane).toContain('● 2 drift ')
+  expect(unmarkedPane).not.toContain('since grounding')
+  expect(await sidebar(unmarked)).toContain('Drift (2)')
+
+  const regrounded = { ...initial, main: main(1), drift }
+  const regroundedPane = await pane(regrounded)
+  expect(regroundedPane).toContain('● 1 drift since grounding')
+  expect(regroundedPane).toContain('early_tool')
+  expect(regroundedPane).toContain('late_tool')
+  // Only the advisory entry counts now, so the chip warns rather than errs.
+  expect(color('● 1 drift since grounding')).toEqual(RGBA.fromHex('#ffaa00').toInts())
+  const regroundedSidebar = await sidebar(regrounded)
+  expect(regroundedSidebar).toContain('Drift since grounding (1)')
+  expect(regroundedSidebar).toContain('late_tool')
+  expect(regroundedSidebar).not.toContain('early_tool')
+
+  const clean = { ...initial, main: main(2), drift }
+  const cleanPane = await pane(clean)
+  expect(cleanPane).toContain('✓ No drift')
+  expect(cleanPane).toContain('early_tool')
+  expect(await sidebar(clean)).not.toContain('Drift')
 })
 
 test('contractViewColorsAdvisoryMutedAndAnotherContractByWhetherOneIsResolved', async () => {

@@ -3,6 +3,7 @@ import { For, Show } from 'solid-js'
 import type { Contract, DriftEvent, PaneState, Preview, Resolution, SessionState } from '../../../../ClaudeCode/types'
 import { canUse } from '../../../../ClaudeCode/hooks/lib/ids.ts'
 import { previewKey } from '../../../../ClaudeCode/hooks/lib/runner.ts'
+import { countsFromGrounding, driftSinceGrounding } from '../../../../ClaudeCode/hooks/lib/session.ts'
 import { MANIFEST_CHANGED, NO_CONTRACT_HINT } from './chip.tsx'
 import { Button, LABEL_WIDTH, line, Muted, Row, Section, StepsSection, useUi } from './library.tsx'
 import type { PaneActions, Theme } from './library.tsx'
@@ -101,9 +102,13 @@ export function ContractView(props: { state: SessionState; manifestChanged: bool
     return e.manifestUnreadable ? 'every tool call it checks' : list(e.deniedActionClasses)
   }
   const chips = (): [string, RGBA][] => {
-    const blocked = props.state.drift.some((d) => d.kind !== 'advisory')
+    // Counted as the status line counts, from the latest grounding; the drift log below keeps all of it.
+    const since = driftSinceGrounding(props.state)
+    const blocked = since.some((d) => d.kind !== 'advisory')
     const drift: [string, RGBA] =
-      props.state.drift.length === 0 ? ['✓ No drift', theme().success] : [`● ${props.state.drift.length} drift`, blocked ? theme().error : theme().warning]
+      since.length === 0
+        ? ['✓ No drift', theme().success]
+        : [`● ${since.length} drift${countsFromGrounding(props.state) ? ' since grounding' : ''}`, blocked ? theme().error : theme().warning]
     const compactions = props.state.compactions
     return [
       words().chip,
