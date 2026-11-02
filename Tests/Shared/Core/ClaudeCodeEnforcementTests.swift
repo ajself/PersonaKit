@@ -405,9 +405,28 @@ struct ClaudeCodeEnforcementTests {
     let decision = ClaudeCodeHookCheckEvaluator.evaluate(toolName: "mcp__fs__write_file", manifest: readOnly)
     #expect(decision.permission == .ask)
     #expect(decision.reason?.hasPrefix("PersonaKit contract needs approval:") == true)
-    #expect(decision.reason?.contains("capability-deny.run-commands, capability-deny.edit-files") == true)
+    #expect(decision.reason?.contains("this session forbids command execution and file mutation.") == true)
+    #expect(decision.reason?.contains("capability-deny") == false)
     #expect(decision.reason?.contains("explicitly allow") == false)
     #expect(decision.reason?.contains("--mcp-server") == false)
+  }
+
+  @Test(arguments: [
+    (["network-access"], "network egress"),
+    (["edit-files", "network-access"], "file mutation and network egress"),
+    (["edit-files", "run-commands", "network-access"], "command execution, file mutation, and network egress"),
+  ])
+  func evaluatorAskNamesForbiddenActionsInWords(forbiddenCapabilities: [String], actions: String) {
+    let decision = ClaudeCodeHookCheckEvaluator.evaluate(
+      toolName: "mcp__fs__write_file",
+      manifest: manifest(forbiddenCapabilities: forbiddenCapabilities)
+    )
+    #expect(
+      decision.reason
+        == "PersonaKit contract needs approval: PersonaKit cannot classify tool 'mcp__fs__write_file', and this "
+        + "session forbids \(actions). Approve only if this call does none of that. If it is refused, the agent "
+        + "should not work around it but tell the user what it needs."
+    )
   }
 
   @Test

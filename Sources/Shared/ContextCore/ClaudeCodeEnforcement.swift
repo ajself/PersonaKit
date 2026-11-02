@@ -673,17 +673,17 @@ public enum ClaudeCodeHookCheckEvaluator {
   ) -> ClaudeCodeHookCheckDecision {
     let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
       .sorted()
-      .compactMap { manifest.hookCheck(denying: $0) }
+      .filter { manifest.hookCheck(denying: $0) != nil }
 
     guard !forbidden.isEmpty else {
       return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
     }
 
-    let capabilities = forbidden.map(\.id).joined(separator: ", ")
+    let actions = listInWords(forbidden.map { $0.replacingOccurrences(of: "-", with: " ") })
     var reason =
       "PersonaKit contract needs approval: PersonaKit cannot classify tool "
       + "'\(OpenCodeEnforcement.strippingControlCharacters(toolName))'\(detail), and this session "
-      + "forbids \(capabilities). Approve only if this call does none of that. If it is refused, the agent "
+      + "forbids \(actions). Approve only if this call does none of that. If it is refused, the agent "
       + "should not work around it but tell the user what it needs."
     if let server = ClaudeCodeEnforcement.serverNameOfPersonaKitNamedMCPTool(toolName) {
       reason +=
@@ -693,5 +693,14 @@ public enum ClaudeCodeHookCheckEvaluator {
     }
 
     return ClaudeCodeHookCheckDecision(permission: .ask, reason: reason)
+  }
+
+  /// Joins items as prose: "a", "a and b", "a, b, and c".
+  private static func listInWords(_ items: [String]) -> String {
+    switch items.count {
+    case 0, 1: return items.first ?? ""
+    case 2: return "\(items[0]) and \(items[1])"
+    default: return items.dropLast().joined(separator: ", ") + ", and " + items[items.count - 1]
+    }
   }
 }
