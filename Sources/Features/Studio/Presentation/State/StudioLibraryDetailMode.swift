@@ -9,7 +9,7 @@ enum StudioLibraryDetailMode: String, CaseIterable, Sendable {
   var title: String {
     switch self {
     case .edit:
-      return "Edit"
+      return "Form"
     case .json:
       return "JSON"
     }

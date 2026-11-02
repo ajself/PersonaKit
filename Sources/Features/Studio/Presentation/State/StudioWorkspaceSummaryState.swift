@@ -41,7 +41,7 @@ enum StudioWorkspaceValidationStatus: Equatable, Sendable {
       return .notRun
     }
 
-    if validation.summary == "Validating workspace..." {
+    if validation.summary == "Validating workspace…" {
       return .validating
     }
 

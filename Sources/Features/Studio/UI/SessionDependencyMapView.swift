@@ -136,7 +136,7 @@ struct SessionDependencyMapView: View {
     nodes: [WorkspaceSessionMapNode]
   ) -> some View {
     VStack(alignment: .leading, spacing: compact ? 8 : 10) {
-      Text(kind.title)
+      Text(kind.laneTitle)
         .font(compact ? .caption.weight(.semibold) : .subheadline.weight(.semibold))
         .foregroundStyle(.secondary)
 

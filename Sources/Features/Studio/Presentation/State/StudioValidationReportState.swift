@@ -75,7 +75,7 @@ struct StudioValidationReportState: Equatable, Sendable {
       .issues:
       break
     case .validating:
-      return "Checking workspace contents..."
+      return "Checking workspace contents…"
     case .failed,
       .notRun:
       return nil

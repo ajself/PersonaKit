@@ -7,7 +7,7 @@ import SwiftUI
 struct RawJSONEditorView: View {
   private enum EditorMode: String, CaseIterable, Identifiable {
     case form = "Form"
-    case rawJSON = "Raw JSON"
+    case rawJSON = "JSON"
 
     var id: EditorMode {
       self

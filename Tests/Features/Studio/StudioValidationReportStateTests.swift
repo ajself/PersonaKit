@@ -72,14 +72,14 @@ struct StudioValidationReportStateTests {
     let validatingReport = StudioValidationReportState(
       snapshot: snapshot(),
       validation: WorkspaceValidationSnapshot(
-        summary: "Validating workspace...",
+        summary: "Validating workspace…",
         issues: []
       ),
       validationErrorMessage: nil
     )
 
     #expect(validatingReport.statusHeadline == "Validating workspace")
-    #expect(validatingReport.coverageLine == "Checking workspace contents...")
+    #expect(validatingReport.coverageLine == "Checking workspace contents…")
     #expect(validatingReport.completedStatTexts.isEmpty)
 
     let failedReport = StudioValidationReportState(

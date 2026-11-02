@@ -65,7 +65,7 @@ final class WorkspaceValidationFeatureModel {
     if showsProgress {
       state.setSnapshot(
         WorkspaceValidationSnapshot(
-          summary: "Validating workspace...",
+          summary: "Validating workspace…",
           issues: []
         )
       )

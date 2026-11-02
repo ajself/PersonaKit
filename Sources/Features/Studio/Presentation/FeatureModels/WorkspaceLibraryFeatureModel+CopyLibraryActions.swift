@@ -19,7 +19,7 @@ extension WorkspaceLibraryFeatureModel {
 
     guard let entityType else {
       setAction(
-        message: "Raw JSON copy is not available for this category.",
+        message: "JSON copy is not available for this category.",
         isError: true
       )
       return false

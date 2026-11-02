@@ -27,7 +27,7 @@ enum SessionsDetailMode: String, CaseIterable, Sendable {
     case .preview:
       return "Shows the handoff context for the selected session."
     case .map:
-      return "Shows dependency relationships and resolution issues for the selected session."
+      return "Shows the selected session's dependencies and resolution issues."
     }
   }
 }
@@ -74,13 +74,40 @@ enum SessionsPanelLayoutState {
     "Workstream \(workstreamID) · Phase \(phase)"
   }
 
+  /// The inspector's map status. The map loads only in Map mode, so Handoff mode points there.
+  static func inspectorMapStatusText(
+    detailMode: SessionsDetailMode,
+    isLoading: Bool,
+    mapIsFullyResolved: Bool?,
+    unresolvedIssueCount: Int?,
+    loadFailed: Bool
+  ) -> String {
+    if isLoading || mapIsFullyResolved != nil {
+      return mapHealthText(
+        isLoading: isLoading,
+        mapIsFullyResolved: mapIsFullyResolved,
+        unresolvedIssueCount: unresolvedIssueCount
+      )
+    }
+
+    if loadFailed {
+      return "Couldn't load"
+    }
+
+    if detailMode == .preview {
+      return "Open Map to check (⌘2)"
+    }
+
+    return mapHealthText(isLoading: false, mapIsFullyResolved: nil, unresolvedIssueCount: nil)
+  }
+
   static func mapHealthText(
     isLoading: Bool,
     mapIsFullyResolved: Bool?,
     unresolvedIssueCount: Int?
   ) -> String {
     if isLoading {
-      return "Refreshing..."
+      return "Refreshing…"
     }
 
     guard let mapIsFullyResolved else {

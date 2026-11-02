@@ -90,6 +90,56 @@ struct SessionsPanelLayoutStateTests {
   }
 
   @Test
+  func inspectorMapStatusPointsAtMapModeOnlyFromHandoff() {
+    func status(_ mode: SessionsDetailMode) -> String {
+      SessionsPanelLayoutState.inspectorMapStatusText(
+        detailMode: mode,
+        isLoading: false,
+        mapIsFullyResolved: nil,
+        unresolvedIssueCount: nil,
+        loadFailed: false
+      )
+    }
+
+    #expect(status(.preview) == "Open Map to check (⌘2)")
+    #expect(status(.map) == "Unavailable")
+  }
+
+  @Test
+  func inspectorMapStatusReportsAFailedLoadInMapMode() {
+    let statusText = SessionsPanelLayoutState.inspectorMapStatusText(
+      detailMode: .map,
+      isLoading: false,
+      mapIsFullyResolved: nil,
+      unresolvedIssueCount: nil,
+      loadFailed: true
+    )
+
+    #expect(statusText == "Couldn't load")
+  }
+
+  @Test
+  func inspectorMapStatusShowsLoadingAndLoadedHealth() {
+    let loading = SessionsPanelLayoutState.inspectorMapStatusText(
+      detailMode: .map,
+      isLoading: true,
+      mapIsFullyResolved: nil,
+      unresolvedIssueCount: nil,
+      loadFailed: false
+    )
+    let unresolved = SessionsPanelLayoutState.inspectorMapStatusText(
+      detailMode: .map,
+      isLoading: false,
+      mapIsFullyResolved: false,
+      unresolvedIssueCount: 2,
+      loadFailed: false
+    )
+
+    #expect(loading == "Refreshing…")
+    #expect(unresolved == SessionsPanelLayoutState.unresolvedIssueSummary(issueCount: 2))
+  }
+
+  @Test
   func mapHealthTextReturnsRefreshingWhileLoading() {
     let healthText = SessionsPanelLayoutState.mapHealthText(
       isLoading: true,
@@ -97,7 +147,7 @@ struct SessionsPanelLayoutStateTests {
       unresolvedIssueCount: nil
     )
 
-    #expect(healthText == "Refreshing...")
+    #expect(healthText == "Refreshing…")
   }
 
   @Test

@@ -76,7 +76,7 @@ struct SessionsPanelView: View {
         SessionsInspectorView(
           selectedSession: selectedSession,
           workspaceURL: workspaceStore.workspaceURL,
-          relationshipStatusText: inspectorRelationshipStatusText
+          mapStatusText: inspectorMapStatusText
         )
       }
       .inspectorColumnWidth(min: 180, ideal: 250, max: 340)
@@ -224,14 +224,16 @@ struct SessionsPanelView: View {
     )
   }
 
-  private var inspectorRelationshipStatusText: String {
-    guard !workspaceStore.isLoadingSessionMap,
-      workspaceStore.sessionMap == nil
-    else {
-      return mapHealthText
-    }
+  private var inspectorMapStatusText: String {
+    let sessionMap = workspaceStore.sessionMap
 
-    return "Not checked"
+    return SessionsPanelLayoutState.inspectorMapStatusText(
+      detailMode: detailMode,
+      isLoading: workspaceStore.isLoadingSessionMap,
+      mapIsFullyResolved: sessionMap?.isFullyResolved,
+      unresolvedIssueCount: sessionMap?.resolutionErrors.count,
+      loadFailed: workspaceStore.sessionMapErrorMessage != nil
+    )
   }
 
   private var detailEmptyState: some View {
@@ -742,7 +744,7 @@ struct SessionsPanelView: View {
 private struct SessionsInspectorView: View {
   let selectedSession: WorkspaceSessionListItem?
   let workspaceURL: URL?
-  let relationshipStatusText: String
+  let mapStatusText: String
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
@@ -784,8 +786,8 @@ private struct SessionsInspectorView: View {
         )
       }
 
-      StudioInspectorSection("Relationships") {
-        StudioMetadataRow(label: "Status", value: relationshipStatusText)
+      StudioInspectorSection("Map") {
+        StudioMetadataRow(label: "Status", value: mapStatusText)
       }
     }
     .accessibilityElement(children: .contain)

@@ -278,7 +278,7 @@ struct PersonaEditorView: View {
         Section {
           multiLineListEditor(
             text: $environmentText,
-            prompt: "One environment line per line",
+            prompt: "One environment detail per line",
             placeholder:
               """
               Platform: macOS
@@ -552,6 +552,7 @@ struct PersonaEditorView: View {
           .foregroundStyle(.secondary)
       }
       .buttonStyle(.plain)
+      .accessibilityLabel("\(title) Help")
       .help(section.helpSummary)
       .popover(
         isPresented: helpPopoverBinding(for: section),

@@ -261,7 +261,7 @@ struct WorkspaceLiveReloadTests {
     await waitFor { gate.hasStarted }
 
     #expect(store.validation.issues.count == 1)
-    #expect(store.validation.summary != "Validating workspace...")
+    #expect(store.validation.summary != "Validating workspace…")
 
     gate.release()
   }

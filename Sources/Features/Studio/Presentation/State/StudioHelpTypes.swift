@@ -1,11 +1,10 @@
 import SwiftUI
 
-/// Stable help-topic identifiers used by Studio panels and editors.
+/// Stable help-topic identifiers used by Studio panels.
 enum StudioHelpTopicID: String, CaseIterable, Sendable {
   case directives
   case kits
   case personas
-  case sessionEditor
   case sessions
   case skills
   case validationResults
@@ -18,7 +17,7 @@ struct StudioHelpLink: Equatable, Sendable {
   let searchText: String?
 }
 
-/// Structured contextual help content for a panel or editor flow.
+/// Structured contextual help content for a panel.
 struct StudioHelpTopic: Equatable, Sendable {
   let id: StudioHelpTopicID
   let title: String

@@ -268,7 +268,7 @@ struct StudioLibraryDetailView: View {
         VStack(alignment: .center, spacing: 10) {
           ProgressView()
 
-          Text("Loading preview...")
+          Text("Loading preview…")
             .foregroundStyle(.secondary)
         }
       }
@@ -297,7 +297,7 @@ struct StudioLibraryDetailView: View {
         VStack(alignment: .center, spacing: 10) {
           ProgressView()
 
-          Text("Preparing editor...")
+          Text("Preparing editor…")
             .foregroundStyle(.secondary)
         }
       }
@@ -422,12 +422,12 @@ struct StudioLibraryDetailView: View {
       }
       .disabled(detail.isBusy)
 
-      Button(detail.isValidating ? "Validating..." : "Validate") {
+      Button(detail.isValidating ? "Validating…" : "Validate") {
         workspaceStore.validateLibraryDetailDraft()
       }
       .disabled(detail.isBusy || detail.formSyncErrorMessage != nil)
 
-      Button(detail.isSaving ? "Saving..." : "Save") {
+      Button(detail.isSaving ? "Saving…" : "Save") {
         workspaceStore.saveLibraryDetailDraft()
       }
       .disabled(

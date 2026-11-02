@@ -54,8 +54,16 @@ struct StudioRelationshipMapPresentationStateTests {
     #expect(RelationshipMapPresentationState.nodeBadges(node) == ["missing", "override", "required"])
     #expect(
       RelationshipMapPresentationState.nodeAccessibilityLabel(node, scope: nil)
-        == "Kits, cli-guardrails, missing, override, required"
+        == "Kit, cli-guardrails, missing, override, required"
     )
+  }
+
+  @Test
+  func nodeKindTitlesAreSingularAndLaneTitlesMatchTheSidebar() {
+    let kinds: [WorkspaceSessionMapNodeKind] = [.session, .persona, .directive, .kit, .skill]
+
+    #expect(kinds.map(\.title) == ["Session", "Persona", "Directive", "Kit", "Skill"])
+    #expect(kinds.map(\.laneTitle) == ["Sessions", "Personas", "Directives", "Kits", "Skills"])
   }
 
   @Test

@@ -1,4 +1,4 @@
-/// Centralized contextual help catalog for Studio sections and focused workflows.
+/// Centralized contextual help catalog for Studio sections.
 enum StudioHelpCatalog {
   static func topic(
     for topicID: StudioHelpTopicID
@@ -21,7 +21,7 @@ enum StudioHelpCatalog {
           "Using vague goals without concrete completion criteria.",
           "Mixing multiple unrelated tasks into one directive.",
           "Forgetting to include explicit stop/review points.",
-          "Treating workstream metadata like an executable workflow engine.",
+          "Treating workstream metadata as something PersonaKit runs.",
         ],
         examples: [
           "Example directive: \"Refactor handoff context caching without changing export behavior.\"",
@@ -38,21 +38,21 @@ enum StudioHelpCatalog {
       return StudioHelpTopic(
         id: .kits,
         title: "Kits Help",
-        shortHint: "Kits define how work is performed in your environment.",
+        shortHint: "Kits bundle skill ids that related sessions share.",
         purpose:
-          "Kits hold standards, constraints, and workflow assumptions that shape execution across many directives.",
+          "A kit bundles the skills a group of sessions shares, so personas and sessions can pull them in by one id instead of listing each skill.",
         keyFields: [
-          "Use explicit ids for standards and constraints references.",
-          "Group related rules into coherent kits.",
+          "Use the id as a stable reference from personas and session kit overrides.",
+          "List the skills the kit requires in Skill IDs.",
           "Keep kit overrides intentional and minimal.",
         ],
         commonMistakes: [
-          "Packing unrelated standards into one giant kit.",
-          "Relying on implicit context not written in the kit.",
+          "Packing unrelated skills into one giant kit.",
+          "Expecting a kit to add rules that none of its skills carry.",
           "Creating duplicate kits with slight wording differences.",
         ],
         examples: [
-          "Example kit: \"swiftui-style\" including formatting, testing, and accessibility constraints."
+          "Example kit: \"swiftui-style\" requiring the formatting, testing, and accessibility skills."
         ],
         nextStepText:
           "Check Used by in the inspector to see what relies on this kit, then confirm it in Validation Results.",
@@ -90,39 +90,6 @@ enum StudioHelpCatalog {
         ]
       )
 
-    case .sessionEditor:
-      return StudioHelpTopic(
-        id: .sessionEditor,
-        title: "Session Editor Help",
-        shortHint: "A Session is a deterministic Persona + Directive pairing with optional kit overrides.",
-        purpose:
-          "Session creation defines the exact handoff context for an agent: role, task, and optional workflow constraints.",
-        keyFields: [
-          "Session id must be stable and filesystem-safe.",
-          "Persona selects who performs the work.",
-          "Directive selects what work is done.",
-          "Kit overrides refine or extend how the work should be done.",
-          "Directive-selected workstream routing is read-only context, not a runnable workflow.",
-        ],
-        commonMistakes: [
-          "Using invalid session ids or ids that change frequently.",
-          "Selecting persona/directive ids that no longer exist.",
-          "Adding unnecessary kit overrides that duplicate defaults.",
-          "Saving before reviewing dependency mini-map resolution.",
-        ],
-        examples: [
-          "Example session draft: id \"ios-bugfix\", persona \"senior-swiftui-engineer\", directive \"apply-style\"."
-        ],
-        nextStepText:
-          "After save, review the Handoff tab, inspect Map health, and run Validation Results if references fail.",
-        relatedLinks: [
-          StudioHelpLink(label: "Go to Personas", destination: .personas, searchText: nil),
-          StudioHelpLink(label: "Go to Directives", destination: .directives, searchText: nil),
-          StudioHelpLink(label: "Go to Kits", destination: .kits, searchText: nil),
-          StudioHelpLink(label: "Go to Validation Results", destination: .validationResults, searchText: nil),
-        ]
-      )
-
     case .sessions:
       return StudioHelpTopic(
         id: .sessions,
@@ -134,10 +101,11 @@ enum StudioHelpCatalog {
           "List rows show the session id, its persona and directive names, and scope.",
           "The Handoff tab shows the exact handoff context you provide to an AI assistant.",
           "Map mode shows dependency resolution and missing reference issues.",
+          "Switch between Handoff and Map with ⌘1 and ⌘2.",
           "If a directive carries workstream routing, the session shows where that directive phase sits in the larger stream.",
         ],
         commonMistakes: [
-          "Treating sessions like executable workflows instead of context definitions.",
+          "Treating a session as something PersonaKit runs instead of context it resolves.",
           "Ignoring map resolution issues before exporting handoff context.",
           "Editing global-scope sessions instead of copying to project scope.",
           "Assuming workstream visibility means PersonaKit will auto-switch sessions for you.",
@@ -197,18 +165,18 @@ enum StudioHelpCatalog {
           "Use validation to catch invalid json/markdown structure and broken cross-entity references before exporting handoff context.",
         keyFields: [
           "Summary indicates current workspace validation status.",
+          "Validation reruns on its own after every save and every file change on disk.",
           "Issue list can search by id, file path, and message text.",
           "Issue actions navigate directly to the affected section.",
         ],
         commonMistakes: [
           "Ignoring warnings/errors and exporting anyway.",
-          "Fixing one issue without re-validating workspace.",
           "Searching manually instead of navigating from issue links.",
         ],
         examples: [
-          "Example workflow: fix one missing persona id, rerun validation, then verify zero unresolved issues."
+          "Example: fix one missing persona id, save, then confirm the list shows no unresolved issues."
         ],
-        nextStepText: "Resolve listed issues, re-run validation, and return to Sessions when the workspace is clean.",
+        nextStepText: "Resolve listed issues and save; return to Sessions when the workspace is clean.",
         relatedLinks: [
           StudioHelpLink(label: "Go to Sessions", destination: .sessions, searchText: nil)
         ]

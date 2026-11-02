@@ -19,7 +19,7 @@ struct SessionsMapTabView: View {
         VStack(spacing: 10) {
           ProgressView()
 
-          Text("Loading map...")
+          Text("Loading map…")
             .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -48,7 +48,7 @@ struct SessionsMapTabView: View {
 
           if !sessionMap.resolutionErrors.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-              Text("Relationship Issues")
+              Text("Map Issues")
                 .font(.headline)
 
               ForEach(Array(sessionMap.resolutionErrors.enumerated()), id: \.offset) { _, issue in
@@ -66,7 +66,7 @@ struct SessionsMapTabView: View {
         ContentUnavailableView(
           "No Map",
           systemImage: "point.topleft.down.curvedto.point.bottomright.up",
-          description: Text("Generate a map for the selected session.")
+          description: Text("Click Refresh to load the map for the selected session.")
         )
       }
     }

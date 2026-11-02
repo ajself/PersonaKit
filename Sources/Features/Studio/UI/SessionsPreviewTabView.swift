@@ -14,7 +14,7 @@ struct SessionsPreviewTabView: View {
           VStack(alignment: .center, spacing: 10) {
             ProgressView()
 
-            Text("Loading handoff context...")
+            Text("Loading handoff context…")
               .foregroundStyle(.secondary)
           }
         }
@@ -31,7 +31,7 @@ struct SessionsPreviewTabView: View {
           ContentUnavailableView(
             "No Handoff Context",
             systemImage: "doc.plaintext",
-            description: Text("Generate handoff context for the selected session.")
+            description: Text("Click Refresh to load handoff context for the selected session.")
           )
         }
       } else {

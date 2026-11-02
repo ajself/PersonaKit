@@ -359,10 +359,7 @@ enum SidebarItem: Hashable {
     .personas,
     .directives,
     .kits,
-  ]
-
-  static let contextItems: [SidebarItem] = [
-    .skills
+    .skills,
   ]
 
   var title: String {

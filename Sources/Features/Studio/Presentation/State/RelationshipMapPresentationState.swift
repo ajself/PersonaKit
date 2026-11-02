@@ -49,6 +49,7 @@ enum RelationshipMapPresentationState {
 }
 
 extension WorkspaceSessionMapNodeKind {
+  /// Names one node of this kind, as VoiceOver reads it on each node card.
   var title: String {
     switch self {
     case .session:
@@ -57,6 +58,22 @@ extension WorkspaceSessionMapNodeKind {
       return "Persona"
     case .directive:
       return "Directive"
+    case .kit:
+      return "Kit"
+    case .skill:
+      return "Skill"
+    }
+  }
+
+  /// Heads the map lane holding nodes of this kind, matching the sidebar's section titles.
+  var laneTitle: String {
+    switch self {
+    case .session:
+      return "Sessions"
+    case .persona:
+      return "Personas"
+    case .directive:
+      return "Directives"
     case .kit:
       return "Kits"
     case .skill:

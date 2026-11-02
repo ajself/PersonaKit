@@ -16,12 +16,6 @@ struct StudioSidebarView: View {
         }
       }
 
-      Section("Context") {
-        ForEach(SidebarItem.contextItems, id: \.self) { item in
-          sidebarRow(for: item)
-        }
-      }
-
       Section("Review") {
         sidebarRow(for: .validationResults)
       }

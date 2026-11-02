@@ -119,7 +119,7 @@ struct SessionEditorView: View {
   private var miniMapSection: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
-        Text("Dependency Mini-Map")
+        Text("Map")
           .font(.headline)
 
         if let draftSessionMap {
@@ -135,7 +135,7 @@ struct SessionEditorView: View {
         HStack(spacing: 8) {
           ProgressView()
 
-          Text("Refreshing map...")
+          Text("Refreshing map…")
             .foregroundStyle(.secondary)
             .font(.footnote)
         }
@@ -159,7 +159,7 @@ struct SessionEditorView: View {
             .fill(.quaternary.opacity(0.15))
         )
       } else {
-        Text("Choose a persona and directive to render the dependency map.")
+        Text("Choose a persona and directive to render the map.")
           .font(.footnote)
           .foregroundStyle(.secondary)
       }

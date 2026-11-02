@@ -98,11 +98,9 @@ struct StudioHelpCatalogTests {
   func sessionsAndDirectivesHelpExplainWorkstreamAsRoutingMetadata() throws {
     let directives = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.directives))
     let sessions = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions))
-    let sessionEditor = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.sessionEditor))
 
     #expect(directives.keyFields.contains { $0.contains("routing context only") })
     #expect(sessions.keyFields.contains { $0.contains("workstream routing") })
-    #expect(sessionEditor.keyFields.contains { $0.contains("read-only context") })
   }
 
   @Test
@@ -121,8 +119,32 @@ struct StudioHelpCatalogTests {
     let kits = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.kits))
 
     #expect(kits.nextStepText.contains("Used by"))
+    #expect(kits.purpose.contains("skills"))
+    #expect(kits.shortHint.contains("skill ids"))
+    #expect(!kits.shortHint.contains("rules"))
+    #expect(kits.keyFields.contains { $0.contains("Skill IDs") })
+    #expect(!kits.commonMistakes.contains { $0.contains("standards") })
     #expect(!kits.nextStepText.localizedCaseInsensitiveContains("relationship map"))
     #expect(kits.relatedLinks.map(\.destination) == [.sessions, .validationResults])
+  }
+
+  @Test
+  func helpUsesProductTermsAndCurrentBehavior() throws {
+    for topicID in StudioHelpTopicID.allCases {
+      let topic = try #require(StudioHelpCatalog.topic(for: topicID))
+      let text =
+        ([topic.shortHint, topic.purpose, topic.nextStepText]
+        + topic.keyFields + topic.commonMistakes + topic.examples).joined(separator: "\n")
+
+      #expect(!text.localizedCaseInsensitiveContains("workflow"), "\(topicID) says workflow")
+    }
+
+    let validation = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.validationResults))
+    let sessions = try #require(StudioHelpCatalog.topic(for: StudioHelpTopicID.sessions))
+
+    #expect(!validation.nextStepText.localizedCaseInsensitiveContains("re-run"))
+    #expect(validation.keyFields.contains { $0.contains("reruns on its own") })
+    #expect(sessions.keyFields.contains { $0.contains("⌘1") && $0.contains("⌘2") })
   }
 
   @Test
@@ -132,12 +154,16 @@ struct StudioHelpCatalogTests {
         .directives,
         .kits,
         .personas,
-        .sessionEditor,
         .sessions,
         .skills,
         .validationResults,
       ]
     )
+  }
+
+  @Test
+  func sidebarGroupsSkillsWithTheOtherContractItems() {
+    #expect(SidebarItem.contractItems == [.personas, .directives, .kits, .skills])
   }
 
   private func trimmed(

@@ -35,7 +35,7 @@ struct WorkspaceStoreSmokeTests {
       store.snapshot.personas.first?.id == "project-persona"
     }
 
-    #expect(store.validation.summary == "Validating workspace...")
+    #expect(store.validation.summary == "Validating workspace…")
     #expect(store.validation.issues.isEmpty)
 
     validationGate.release()

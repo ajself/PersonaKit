@@ -18,7 +18,7 @@ extension WorkspaceLibraryFeatureModel {
 
     guard let entityType else {
       setAction(
-        message: "Raw JSON editing is not available for this category.",
+        message: "JSON editing is not available for this category.",
         isError: true
       )
       return nil
