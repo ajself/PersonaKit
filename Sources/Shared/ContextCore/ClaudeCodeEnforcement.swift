@@ -24,10 +24,12 @@ public enum ClaudeCodeEnforcement {
   /// Claude Code blocks a tool call only when the hook exits 2; any other non-zero exit, such as a
   /// missing binary (127) or a crash, lets the call through. The checker itself always exits 0, so
   /// a non-zero status means it never reached a decision, and the suffix exits 2 with a reason on
-  /// stderr, which Claude Code shows the agent.
+  /// stderr, which Claude Code shows the agent. The reason is single-quoted, so it holds no `'`.
   static let failClosedSuffix =
-    "|| { echo 'PersonaKit could not check this tool call, so it is blocked. "
-    + "Tell the user that personakit hook-check failed.' >&2; exit 2; }"
+    "|| { echo 'PersonaKit could not check this tool call, so it is blocked. The personakit hook-check command failed. "
+    + "To fix it, the user can make sure the personakit binary this hook runs exists and works, or run "
+    + "personakit enforce install --session <id> again to point the hook at the current binary. "
+    + ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction + "' >&2; exit 2; }"
 
   /// Seconds Claude Code waits for the installed hook. A hook that runs past its timeout is killed and the call
   /// proceeds, so the checker denies on its own well before this (see ``checkerDeadlineSeconds``).
@@ -540,7 +542,7 @@ public struct ClaudeCodeToolCall: Equatable, Sendable {
 /// agent: it can only *deny* or *ask* the operator, never authorize.
 public enum ClaudeCodeHookCheckEvaluator {
   /// Appended to every denial so the agent stops instead of hunting for another route to the same action.
-  static let noWorkaroundInstruction =
+  public static let noWorkaroundInstruction =
     "Do not retry it through another tool or a workaround; stop and tell the user what you need."
 
   /// Denies a file edit that targets one of `protectedPaths` (see

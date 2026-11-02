@@ -10,11 +10,14 @@ import {
   findManifest,
   isExecutableFile,
   liveServers,
+  manyReason,
   patchPaths,
   payload,
   readManifestSnapshot,
   resolveExecutable,
   routes,
+  unreadableReason,
+  unresolvedReason,
   type Enforcement,
 } from '../src/enforce'
 import plugin from '../src/server'
@@ -276,6 +279,36 @@ describe('check', () => {
     }
     const decision = await check(run, '/bin/personakit', manifest, body)
     expect('deny' in decision && decision.deny).toContain('could not run personakit')
+  })
+
+  test('everyFailClosedReasonKeepsThePrefixNamesAFixAndEndsWithTheStopInstruction', async () => {
+    const stop = 'Do not retry it through another tool or a workaround; stop and tell the user what you need.'
+    const failing: Run = async () => {
+      throw new Error('spawn ENOENT')
+    }
+    const reasons = [
+      manyReason(['/a/.opencode/personakit/x.checks.json', '/b/.opencode/personakit/y.checks.json']),
+      unresolvedReason('bin/personakit'),
+      unreadableReason('/p/.opencode/personakit/x.checks.json'),
+      ...(await Promise.all([
+        check(failing, '/bin/personakit', manifest, body),
+        check(fakeRun({ exitCode: 64 }).run, '/bin/personakit', manifest, body),
+        check(fakeRun({ stdout: 'not json' }).run, '/bin/personakit', manifest, body),
+        check(fakeRun({ stdout: '{"decision"', isStdoutTruncated: true }).run, '/bin/personakit', manifest, body),
+        enforceCall({ kind: 'on', manifest, binary: '/bin/personakit' }, { tool: 'bash', args: {} }, {
+          configServers: () => [],
+          status: async () => ({ error: 'down' }),
+          run: failing,
+          directory: '/p',
+          worktree: '/p',
+        }),
+      ])).map((decision) => ('deny' in decision ? decision.deny : 'allowed')),
+    ]
+    for (const reason of reasons) {
+      expect(reason.startsWith('Blocked by PersonaKit contract: ')).toBe(true)
+      expect(reason).toContain('. To fix it, the user can ')
+      expect(reason.endsWith(stop)).toBe(true)
+    }
   })
 
   test('checkDeniesOnDenyJSON', async () => {

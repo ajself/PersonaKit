@@ -368,7 +368,9 @@ public enum OpenCodeHookCheckEvaluator {
       return deny(
         "Blocked by PersonaKit contract: tool call '\(OpenCodeEnforcement.strippingControlCharacters(call.tool))' "
           + "is malformed (the start directory, the worktree, or a path is empty or not absolute). "
-          + "Denying by fail-closed policy."
+          + "Denying by fail-closed policy. To fix it, the user can reinstall the plugin with "
+          + "`make opencode-install` from the PersonaKit release that matches personakit, then restart OpenCode. "
+          + noWorkaroundInstruction
       )
     }
 

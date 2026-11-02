@@ -173,7 +173,24 @@ struct HookCheckCommand: ParsableCommand {
   /// The decision the watchdog emits when the check misses its deadline.
   static let missedDeadlineDecision = ClaudeCodeHookCheckDecision(
     isDenied: true,
-    reason: "PersonaKit enforcement could not reach a decision in time; denying by fail-closed policy."
+    reason: failClosedReason(
+      "PersonaKit enforcement could not reach a decision in time",
+      fix: "ask for the call again and, if it keeps timing out, check that the personakit binary the hook runs works"
+    )
+  )
+
+  /// A deny that is not the contract's: what failed, the fix the user would make, and the same instruction to stop
+  /// that a contract deny ends with. `problem` keeps the prefix the mod and the docs key off.
+  static func failClosedReason(_ problem: String, fix: String) -> String {
+    "\(problem); denying by fail-closed policy. To fix it, the user can \(fix). "
+      + ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction
+  }
+
+  /// The reason for an encode failure, which only a PersonaKit update can address. It holds nothing JSON must escape,
+  /// so the fallback output can embed it as is.
+  private static let encodeFailureReason = failClosedReason(
+    "PersonaKit enforcement could not encode its decision",
+    fix: "update personakit"
   )
 
   /// Claude Code's `hookSpecificOutput` JSON for a deny or ask.
@@ -194,8 +211,7 @@ struct HookCheckCommand: ParsableCommand {
     }
     // An encode failure must not read as an allow (no output).
     return #"{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","#
-      + #""permissionDecisionReason":"PersonaKit enforcement could not encode its decision; "#
-      + #"denying by fail-closed policy."}}"#
+      + #""permissionDecisionReason":""# + encodeFailureReason + #""}}"#
   }
 
   /// Runs `fire` after `delay` unless the checker claimed `gate` first.
@@ -229,10 +245,7 @@ struct HookCheckCommand: ParsableCommand {
       print(json)
     } else {
       // An encode failure must not read as an allow (no output).
-      print(
-        #"{"decision":"deny","reason":"PersonaKit enforcement could not encode its decision; "#
-          + #"denying by fail-closed policy."}"#
-      )
+      print(#"{"decision":"deny","reason":""# + Self.encodeFailureReason + #""}"#)
     }
     // Deny is communicated by the JSON above with exit 0; do not fail the process.
   }
@@ -252,9 +265,13 @@ struct HookCheckCommand: ParsableCommand {
     executablePath: String? = Bundle.main.executableURL?.path,
     passwdHome: () -> String? = HookCheckCommand.passwdHomeDirectory
   ) -> ClaudeCodeHookCheckDecision {
-    func failClosed(_ message: String) -> ClaudeCodeHookCheckDecision {
-      ClaudeCodeHookCheckDecision(isDenied: true, reason: "\(message); denying by fail-closed policy.")
+    func failClosed(_ message: String, fix: String) -> ClaudeCodeHookCheckDecision {
+      ClaudeCodeHookCheckDecision(isDenied: true, reason: failClosedReason(message, fix: fix))
     }
+    let restart = "restart OpenCode to load the current contract"
+    let reinstallPlugin =
+      "reinstall the plugin with `make opencode-install` from the PersonaKit release that matches personakit, "
+      + "then restart OpenCode"
 
     let manifestURL = RootPathResolver().resolve(path: manifestPath)
     // The path is shown in the deny reason, so it cannot carry terminal control characters.
@@ -263,8 +280,8 @@ struct HookCheckCommand: ParsableCommand {
     guard let data = try? Data(contentsOf: manifestURL) else {
       return failClosed(
         "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(shownPath) "
-          + "is missing or changed since OpenCode started (it could not be read); "
-          + "restart OpenCode to load the current contract"
+          + "is missing or changed since OpenCode started (it could not be read)",
+        fix: restart
       )
     }
 
@@ -272,24 +289,27 @@ struct HookCheckCommand: ParsableCommand {
     guard digest == expectedSHA256.lowercased() else {
       return failClosed(
         "Blocked by PersonaKit contract: PersonaKit enforcement manifest at \(shownPath) "
-          + "changed since OpenCode started (its SHA-256 no longer matches); "
-          + "restart OpenCode to load the current contract"
+          + "changed since OpenCode started (its SHA-256 no longer matches)",
+        fix: restart
       )
     }
 
     guard let manifest = try? JSONDecoder().decode(ChecksManifest.self, from: data) else {
-      return failClosed("PersonaKit enforcement could not decode its manifest at \(shownPath)")
+      return failClosed(
+        "PersonaKit enforcement could not decode its manifest at \(shownPath)",
+        fix: "run `personakit enforce install --host opencode --session <id>` again, then restart OpenCode"
+      )
     }
 
     let stdin: String
     do {
       stdin = try CLIEnvironment.current.interactiveIO.readStdinToEnd()
     } catch {
-      return failClosed("PersonaKit enforcement could not read the tool call")
+      return failClosed("PersonaKit enforcement could not read the tool call", fix: "restart OpenCode")
     }
 
     guard let call = try? JSONDecoder().decode(OpenCodeToolCall.self, from: Data(stdin.utf8)) else {
-      return failClosed("PersonaKit enforcement could not parse the tool call")
+      return failClosed("PersonaKit enforcement could not parse the tool call", fix: reinstallPlugin)
     }
 
     let effectiveEnvironment = withAccountHome(environment, passwdHome: passwdHome)
@@ -338,8 +358,11 @@ struct HookCheckCommand: ParsableCommand {
     else {
       return ClaudeCodeHookCheckDecision(
         isDenied: true,
-        reason:
-          "PersonaKit enforcement could not read its manifest at \(manifestURL.path); denying by fail-closed policy."
+        reason: failClosedReason(
+          "PersonaKit enforcement could not read its manifest at \(manifestURL.path)",
+          fix: "run `personakit enforce install --session <id>` again, or `personakit enforce uninstall` to remove "
+            + "the hook"
+        )
       )
     }
 
@@ -349,7 +372,10 @@ struct HookCheckCommand: ParsableCommand {
     } catch {
       return ClaudeCodeHookCheckDecision(
         isDenied: true,
-        reason: "PersonaKit enforcement could not read the tool call; denying by fail-closed policy."
+        reason: failClosedReason(
+          "PersonaKit enforcement could not read the tool call",
+          fix: "restart Claude Code and, if it keeps happening, update personakit"
+        )
       )
     }
 
@@ -358,7 +384,10 @@ struct HookCheckCommand: ParsableCommand {
     else {
       return ClaudeCodeHookCheckDecision(
         isDenied: true,
-        reason: "PersonaKit enforcement could not parse the tool call; denying by fail-closed policy."
+        reason: failClosedReason(
+          "PersonaKit enforcement could not parse the tool call",
+          fix: "update personakit so it reads this Claude Code version's tool calls"
+        )
       )
     }
 
@@ -537,10 +566,13 @@ struct EnforceInstallCommand: ParsableCommand {
 
     guard let hookEntry = artifacts.hookEntry, let matcher = artifacts.matcher else {
       var stderrStream = StandardError()
-      stderrStream.write(
-        "No class-1 hook checks to install for session \(sessionId): "
-          + "nothing Claude Code can deny at the hook layer.\n"
-      )
+      stderrStream.write(Self.nothingToInstall(sessionId: sessionId, persona: manifest.personaId, host: "Claude Code"))
+      if ClaudeCodeSettingsMerger.containsPersonaKitEntry(in: try? Data(contentsOf: settingsURL)) {
+        stderrStream.write(
+          "A PersonaKit hook from an earlier install is still in force in \(settingsURL.path). "
+            + "Run `\(uninstallCommand(projectRoot: projectRoot))` to remove it.\n"
+        )
+      }
       Self.reportDegradation(
         actionClasses: artifacts.degradedActionClasses,
         persona: manifest.personaId,
@@ -584,6 +616,7 @@ struct EnforceInstallCommand: ParsableCommand {
       print("  matcher: \(matcher)")
       print("  frozen manifest: \(frozenManifestURL.path)")
       print("  settings: \(settingsURL.path)")
+      print(Self.claudeCodeReloadNote)
     }
 
     Self.reportDegradation(
@@ -592,6 +625,20 @@ struct EnforceInstallCommand: ParsableCommand {
       host: "Claude Code"
     )
     Self.reportShellReachableCapabilities(manifest: manifest, host: "Claude Code")
+  }
+
+  /// The `enforce uninstall` command that reverses this install, with the host and project folder it was given.
+  private func uninstallCommand(projectRoot: URL) -> String {
+    var command = "personakit enforce uninstall"
+    if host == .opencode {
+      command += " --host opencode"
+    }
+    if projectDir != nil {
+      let path = projectRoot.path
+      let isBare = path.range(of: "^[A-Za-z0-9._/@+-]+$", options: .regularExpression) != nil
+      command += " --project-dir " + (isBare ? path : "'" + path.replacingOccurrences(of: "'", with: #"'\''"#) + "'")
+    }
+    return command
   }
 
   /// OpenCode accepts any `[A-Za-z0-9._-]` server name; it sanitizes the rest itself.
@@ -628,14 +675,12 @@ struct EnforceInstallCommand: ParsableCommand {
 
     guard !deniedClasses.isDisjoint(with: blockableClasses) else {
       var stderrStream = StandardError()
-      stderrStream.write(
-        "No class-1 hook checks to install for session \(sessionId): "
-          + "nothing OpenCode can deny at the hook layer.\n"
-      )
+      stderrStream.write(Self.nothingToInstall(sessionId: sessionId, persona: manifest.personaId, host: "OpenCode"))
       let existing = Self.manifestEntryNames(in: manifestDirectory)
       if !existing.isEmpty {
         stderrStream.write(
-          "Existing manifest remains in force: \(existing.joined(separator: ", ")).\n"
+          "A manifest from an earlier install is still in force in \(manifestDirectory.path): "
+            + "\(existing.joined(separator: ", ")). Run `\(uninstallCommand(projectRoot: projectRoot))` to remove it.\n"
         )
       }
       Self.reportDegradation(actionClasses: degradedClasses, persona: manifest.personaId, host: "OpenCode")
@@ -893,16 +938,43 @@ struct EnforceInstallCommand: ParsableCommand {
     }
   }
 
-  /// Surfaces forbidden capabilities that cannot reach the hook layer on the host.
+  /// What Claude Code does with a hook written into a running project, printed after install and uninstall.
+  /// Claude Code watches its settings files and applies hook changes to running sessions.
+  static let claudeCodeReloadNote =
+    "Claude Code applies the change within a few seconds, running sessions included; restart it if it does not."
+
+  /// The capabilities enforcement blocks on both hosts, as an operator writes them in `forbiddenCapabilities`.
+  private static let blockableCapabilities = [
+    SkillCapability.editFiles, SkillCapability.runCommands, SkillCapability.networkAccess,
+  ].map(\.rawValue)
+
+  /// The capability each action class comes from, so notes name what the operator wrote.
+  private static let capabilityByActionClass = [
+    "file-mutation": SkillCapability.editFiles.rawValue,
+    "command-execution": SkillCapability.runCommands.rawValue,
+    "network-egress": SkillCapability.networkAccess.rawValue,
+    "inspection": SkillCapability.readOnlyInspection.rawValue,
+    "unattended-iteration": SkillCapability.autonomousLoop.rawValue,
+  ]
+
+  /// The line install prints when the contract forbids none of ``blockableCapabilities``, so there is nothing to write.
+  private static func nothingToInstall(sessionId: String, persona: String, host: String) -> String {
+    "Nothing to install for session \(sessionId): persona \(persona) forbids none of "
+      + "\(blockableCapabilities.joined(separator: ", ")), the capabilities \(host) enforcement blocks.\n"
+  }
+
+  /// Surfaces forbidden capabilities that no tool on the host maps to, so enforcement cannot block them.
   private static func reportDegradation(actionClasses: [String], persona: String, host: String) {
     guard !actionClasses.isEmpty else {
       return
     }
 
+    let capabilities = actionClasses.map { capabilityByActionClass[$0] ?? $0 }
+    let them = capabilities.count == 1 ? "it" : "them"
     var stderrStream = StandardError()
     stderrStream.write(
-      "Note: persona \(persona) forbids capabilities \(host) cannot deny at the hook layer; "
-        + "they degrade to review — \(actionClasses.joined(separator: ", ")).\n"
+      "Note: persona \(persona) forbids \(capabilities.joined(separator: ", ")), but no \(host) tool maps to \(them), "
+        + "so enforcement cannot block \(them); the agent must still follow the contract.\n"
     )
   }
 

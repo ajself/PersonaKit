@@ -75,7 +75,7 @@ role, rules, allowed capabilities, forbidden actions, and stop points.`;
 
   <Code code={enforceCommand} lang="bash" theme="github-dark" />
 
-  <p>For Claude Code this writes <code>.claude/personakit/&lt;id&gt;.checks.json</code> and a <code>PreToolUse</code> hook in <code>.claude/settings.json</code>. For OpenCode, install the PersonaKit plugin with <code>make opencode-install</code> from a checkout of the release tag that matches your CLI, then add <code>--host opencode</code>; that writes only <code>.opencode/personakit/&lt;id&gt;.checks.json</code>. Add <code>--dry-run</code> to review the files first, restart the host afterward, and run <code>personakit enforce uninstall</code> to remove what install wrote.</p>
+  <p>For Claude Code this writes <code>.claude/personakit/&lt;id&gt;.checks.json</code> and a <code>PreToolUse</code> hook in <code>.claude/settings.json</code>. For OpenCode, install the PersonaKit plugin with <code>make opencode-install</code> from a checkout of the release tag that matches your CLI, then add <code>--host opencode</code>; that writes only <code>.opencode/personakit/&lt;id&gt;.checks.json</code>. Add <code>--dry-run</code> to review the files first. Claude Code picks up the hook within a few seconds; restart OpenCode so the plugin loads the manifest. Run <code>personakit enforce uninstall</code> to remove what install wrote.</p>
 
   <Callout>
     <p>Enforcement is a backstop, not a sandbox. Shell tools are judged by name only, so a contract that allows running commands cannot stop a shell command from editing files or reaching the network. The contract stays authoritative: a call that is not denied still has to follow it, and a denied call means the agent stops and tells you what it needs.</p>

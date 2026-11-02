@@ -291,8 +291,8 @@ personakit enforce install --session <id>
 For Claude Code this writes `.claude/personakit/<id>.checks.json` and a `PreToolUse` hook in `.claude/settings.json`
 that runs `personakit hook-check` on every tool call. For OpenCode, install the plugin with `make opencode-install`
 first, then add `--host opencode`; that writes only `.opencode/personakit/<id>.checks.json`. Add `--dry-run` to see
-the files before they are written, and restart the host afterward. `personakit enforce uninstall` removes what install
-wrote.
+the files before they are written. Claude Code picks up the hook within a few seconds; restart OpenCode so the plugin
+loads the manifest. `personakit enforce uninstall` removes what install wrote.
 
 Enforcement denies the dedicated tools for the capabilities a persona forbids: `edit-files`, `run-commands`, and
 `network-access`. Shell tools are judged by name only, so a contract that allows `run-commands` cannot stop a shell

@@ -135,10 +135,11 @@ struct OpenCodeEnforcementTests {
       #expect(!reason.contains("explicitly allow"))
     }
 
-    // A malformed call is an internal fail-closed denial, which carries no instruction on either host.
+    // A malformed call is an internal fail-closed denial: it names the fix and still ends with the instruction.
     let malformed = evaluate(call("bash", directory: "relative"), forbiddenCapabilities: ["run-commands"])
     #expect(malformed.isDenied)
-    #expect(malformed.reason?.contains(instruction) == false)
+    #expect(malformed.reason?.contains("To fix it, the user can reinstall the plugin") == true)
+    #expect(malformed.reason?.hasSuffix(instruction) == true)
   }
 
   // MARK: - MCP trust

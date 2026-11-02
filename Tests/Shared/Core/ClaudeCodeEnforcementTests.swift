@@ -342,7 +342,8 @@ struct ClaudeCodeEnforcementTests {
     let result = try runHookShell(renderedCommand(executablePath: stub))
 
     #expect(result.status == 2)
-    #expect(result.stderr.contains("personakit hook-check failed"))
+    #expect(result.stderr.contains("The personakit hook-check command failed."))
+    #expect(result.stderr.hasSuffix(ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction + "\n"))
   }
 
   @Test

@@ -185,6 +185,8 @@ struct CLIEnforceTests {
 
     #expect(output.contains("\"permissionDecision\":\"deny\""))
     #expect(output.contains("fail-closed"))
+    #expect(output.contains("To fix it, the user can run `personakit enforce install"))
+    #expect(output.contains("stop and tell the user"))
   }
 
   /// Calls the Claude Code decision directly, with stdin supplied and the environment and executable injected.
@@ -286,6 +288,8 @@ struct CLIEnforceTests {
     let decision = decideClaude(manifest: manifest, readStdin: { throw CocoaError(.fileReadUnknown) })
     #expect(decision.isDenied)
     #expect(decision.reason?.contains("could not read the tool call") == true)
+    #expect(decision.reason?.contains("To fix it, the user can restart Claude Code") == true)
+    #expect(decision.reason?.hasSuffix(ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction) == true)
   }
 
   @Test
@@ -329,6 +333,25 @@ struct CLIEnforceTests {
     #expect(output.contains("\"decision\":\"deny\""))
     #expect(output.contains("changed since OpenCode started"))
     #expect(output.contains("\"reason\":\"Blocked by PersonaKit contract: PersonaKit enforcement manifest at "))
+    #expect(output.contains("To fix it, the user can restart OpenCode to load the current contract."))
+    #expect(output.contains("stop and tell the user"))
+  }
+
+  @Test
+  func hookCheckNamesTheFixWhenTheOpenCodeManifestCannotBeDecoded() throws {
+    let manifest = FileManager.default.temporaryDirectory.appendingPathComponent("pk-bad-\(UUID().uuidString).json")
+    try Data("not a manifest".utf8).write(to: manifest)
+
+    let output = runHookCheck(
+      manifest: manifest,
+      host: "opencode",
+      expectSHA256: try sha256Hex(of: manifest),
+      stdin: try openCodePayload(tool: "read")
+    )
+
+    #expect(output.contains("PersonaKit enforcement could not decode its manifest"))
+    #expect(output.contains("To fix it, the user can run `personakit enforce install --host opencode --session <id>`"))
+    #expect(output.contains("stop and tell the user"))
   }
 
   @Test
@@ -395,6 +418,8 @@ struct CLIEnforceTests {
     )
     #expect(unreadable.contains("\"decision\":\"deny\""))
     #expect(unreadable.contains("fail-closed"))
+    #expect(unreadable.contains("To fix it, the user can restart OpenCode"))
+    #expect(unreadable.contains("stop and tell the user"))
 
     let manifest = try writeReadOnlyManifest()
     let sha = try sha256Hex(of: manifest)
@@ -402,6 +427,8 @@ struct CLIEnforceTests {
       let output = runHookCheck(manifest: manifest, host: "opencode", expectSHA256: sha, stdin: stdin)
       #expect(output.contains("\"decision\":\"deny\""))
       #expect(output.contains("fail-closed"))
+      #expect(output.contains("To fix it, the user can"))
+      #expect(output.contains("stop and tell the user"))
     }
   }
 
@@ -624,7 +651,10 @@ struct CLIEnforceTests {
     let inner = try #require(root["hookSpecificOutput"] as? [String: Any])
 
     #expect(inner["permissionDecision"] as? String == "deny")
-    #expect((inner["permissionDecisionReason"] as? String)?.contains("could not reach a decision in time") == true)
+    let reason = try #require(inner["permissionDecisionReason"] as? String)
+    #expect(reason.contains("could not reach a decision in time"))
+    #expect(reason.contains("To fix it, the user can ask for the call again"))
+    #expect(reason.hasSuffix(ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction))
   }
 
   /// The mod's `DENY_MARKERS` (`Integrations/ClaudeCode/hooks/lib/drift.ts`): a deny reason without one is recorded
@@ -1552,6 +1582,42 @@ struct CLIEnforceTests {
     return rootURL
   }
 
+  @Test(arguments: [false, true])
+  func claudeInstallSkipSaysWhetherAPriorHookRemainsInForce(hasPriorHook: Bool) throws {
+    let root = try fixtureRoot(forbidding: ["autonomous-loop"])
+    let projectDir = try freshProjectDir("pk-claude-nothing")
+    let claudeDir = projectDir.appendingPathComponent(".claude")
+    if hasPriorHook {
+      try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+      let settings =
+        #"{"hooks":{"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","#
+        + #""command":"personakit hook-check --manifest /p/.claude/personakit/old.checks.json"}]}]}}"#
+      try Data(settings.utf8).write(to: claudeDir.appendingPathComponent("settings.json"))
+    }
+    let before = snapshot(projectDir)
+
+    var status: Int32 = 0
+    var stdout = ""
+    let stderr = captureStderr {
+      stdout = captureStdout {
+        status = PersonaKitCLI().run(arguments: [
+          "personakit", "enforce", "install", "--root", root.path, "--no-global",
+          "--session", "read-only-auditor_audit-pass", "--project-dir", projectDir.path,
+          "--executable", "/usr/local/bin/personakit",
+        ])
+      }
+    }
+
+    #expect(status == 0)
+    #expect(stdout.isEmpty)
+    #expect(stderr.contains("Nothing to install for session read-only-auditor_audit-pass"))
+    #expect(stderr.contains("forbids autonomous-loop, but no Claude Code tool maps to it"))
+    #expect(!stderr.contains("class-1"))
+    #expect(stderr.contains("still in force") == hasPriorHook)
+    #expect(stderr.contains("Run `personakit enforce uninstall --project-dir ") == hasPriorHook)
+    #expect(snapshot(projectDir) == before)
+  }
+
   private func runOpenCodeInstall(
     root: URL,
     projectDir: URL,
@@ -1583,13 +1649,13 @@ struct CLIEnforceTests {
     let result = runOpenCodeInstall(root: root, projectDir: projectDir, home: home)
 
     #expect(result.status == 0)
-    #expect(result.stderr.contains("No class-1 hook checks to install for session"))
-    #expect(result.stderr.contains("nothing OpenCode can deny"))
+    #expect(result.stderr.contains("Nothing to install for session"))
+    #expect(result.stderr.contains("the capabilities OpenCode enforcement blocks"))
+    #expect(!result.stderr.contains("still in force"))
     #expect(result.stdout.isEmpty)
     #expect(tree(projectDir).isEmpty)
     if !capabilities.isEmpty {
-      #expect(result.stderr.contains("degrade to review"))
-      #expect(result.stderr.contains("unattended-iteration"))
+      #expect(result.stderr.contains("forbids autonomous-loop, but no OpenCode tool maps to it"))
     }
   }
 
@@ -1606,7 +1672,8 @@ struct CLIEnforceTests {
 
     #expect(result.status == 0)
     #expect(result.stderr.contains("prior.checks.json"))
-    #expect(result.stderr.contains("remains in force"))
+    #expect(result.stderr.contains("still in force"))
+    #expect(result.stderr.contains("personakit enforce uninstall --host opencode"))
     #expect(tree(projectDir) == [".opencode", ".opencode/personakit", ".opencode/personakit/prior.checks.json"])
   }
 
@@ -1620,9 +1687,8 @@ struct CLIEnforceTests {
 
     #expect(result.status == 0)
     #expect(result.stdout.contains("Installed OpenCode enforcement"))
-    #expect(result.stderr.contains("degrade to review"))
-    #expect(result.stderr.contains("unattended-iteration"))
-    #expect(!result.stderr.contains("network-egress —"))
+    #expect(result.stderr.contains("forbids autonomous-loop, but no OpenCode tool maps to it"))
+    #expect(!result.stderr.contains("forbids network-access"))
   }
 
   @Test
@@ -1829,7 +1895,7 @@ struct CLIEnforceTests {
     #expect(result.status == 0)
     #expect(result.stdout.contains("removed the PersonaKit hook from"))
     #expect(result.stdout.contains("removed manifest"))
-    #expect(result.stdout.contains("Restart Claude Code"))
+    #expect(result.stdout.contains(EnforceInstallCommand.claudeCodeReloadNote))
     #expect(snapshot(projectDir) == before)
   }
 

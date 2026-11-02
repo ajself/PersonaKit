@@ -12,6 +12,15 @@ import { readRegularFileSync } from './regularFile.ts'
 const MANIFEST_DIR = path.join('.opencode', 'personakit')
 const MANIFEST_SUFFIX = '.checks.json'
 const PREFIX = 'Blocked by PersonaKit contract:'
+/** What every contract deny ends with (`noWorkaroundInstruction` in the CLI), so the agent stops here too. */
+const NO_WORKAROUND = 'Do not retry it through another tool or a workaround; stop and tell the user what you need.'
+
+/** A deny that is not the contract's: what failed, the fix the user would make, and the instruction to stop. */
+const failClosed = (problem: string, fix: string): string => `${PREFIX} ${problem}. To fix it, the user can ${fix}. ${NO_WORKAROUND}`
+
+/** The fix when `hook-check` runs but cannot answer the plugin: a binary from another release, or a broken one. */
+const CHECKER_FIX =
+  'check that personakit (the personakitPath option) runs and matches the plugin version, then restart OpenCode'
 
 export type ManifestFind = { kind: 'none' } | { kind: 'one'; path: string; projectDir: string } | { kind: 'many'; paths: string[] }
 
@@ -107,7 +116,10 @@ export function readManifestSnapshot(
 
 /** The deny reason for more than one manifest, naming each one. */
 export const manyReason = (paths: readonly string[]): string =>
-  `${PREFIX} more than one enforcement manifest in .opencode/personakit/: ${paths.map(printable).join(', ')}`
+  failClosed(
+    `more than one enforcement manifest in .opencode/personakit/: ${paths.map(printable).join(', ')}`,
+    'remove the extras (`personakit enforce uninstall --host opencode --project-dir <dir>` clears one folder), then restart OpenCode',
+  )
 
 const PATCH_HEADERS = ['*** Add File:', '*** Update File:', '*** Delete File:', '*** Move to:']
 
@@ -214,13 +226,13 @@ export async function check(
     result = await run(argv, { stdin: JSON.stringify(body) })
   } catch (error) {
     const detail = firstLine(error instanceof Error ? error.message : String(error))
-    return { deny: `${PREFIX} could not run personakit hook-check (${detail})` }
+    return { deny: failClosed(`could not run personakit hook-check (${detail})`, CHECKER_FIX) }
   }
-  if (result.exitCode !== 0) return { deny: `${PREFIX} could not run personakit hook-check (exit ${result.exitCode})` }
-  if (result.isStdoutTruncated) return { deny: `${PREFIX} personakit hook-check gave an unreadable answer` }
+  if (result.exitCode !== 0) return { deny: failClosed(`could not run personakit hook-check (exit ${result.exitCode})`, CHECKER_FIX) }
+  const unreadable = failClosed('personakit hook-check gave an unreadable answer', CHECKER_FIX)
+  if (result.isStdoutTruncated) return { deny: unreadable }
   if (result.stdout.trim() === '') return { allow: true }
-  const reason = denyReason(result.stdout)
-  return { deny: reason ?? `${PREFIX} personakit hook-check gave an unreadable answer` }
+  return { deny: denyReason(result.stdout) ?? unreadable }
 }
 
 /** One `tool.execute.before` call, decided. */
@@ -239,7 +251,9 @@ export async function enforceCall(
   if (state.kind === 'blockAll') return { deny: state.reason }
   // The server list decides routing (an MCP tool can shadow a read-only built-in), so it is read first, every call.
   const servers = await liveServers(ctx.configServers(), ctx.status)
-  if (servers === undefined) return { deny: `${PREFIX} could not list MCP servers, so no tool call can be checked` }
+  if (servers === undefined) {
+    return { deny: failClosed('could not list MCP servers, so no tool call can be checked', 'restart OpenCode') }
+  }
   if (!routes(call.tool, servers)) return { allow: true }
   if (state.kind === 'blockRouted') return { deny: state.reason }
   return check(ctx.run, state.binary, state.manifest, payload(call.tool, call.args, servers, ctx.directory, ctx.worktree))
@@ -277,8 +291,14 @@ export function resolveExecutable(
 
 /** The reason every routed call gets when the `personakitPath` option does not name a runnable executable. */
 export const unresolvedReason = (name: string): string =>
-  `${PREFIX} could not run personakit: ${printable(name)} is not an executable file or on PATH; restart OpenCode after fixing it`
+  failClosed(
+    `could not run personakit: ${printable(name)} is not an executable file or on PATH`,
+    'set the personakitPath option to the absolute path of the personakit binary, or to a name on the PATH OpenCode sees, then restart OpenCode',
+  )
 
 /** The reason every routed call gets when the manifest could not be read or hashed at startup. */
 export const unreadableReason = (where: string): string =>
-  `${PREFIX} could not read the enforcement manifest at ${printable(where)} when OpenCode started; restart OpenCode`
+  failClosed(
+    `could not read the enforcement manifest at ${printable(where)} when OpenCode started`,
+    'run `personakit enforce install --host opencode --session <id>` again, then restart OpenCode',
+  )

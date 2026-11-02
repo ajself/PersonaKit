@@ -31,11 +31,13 @@ host tools:
 | `network-access` | WebFetch, WebSearch | webfetch, websearch |
 
 `read-only-inspection` and `autonomous-loop` have no tool a hook can deny;
-`enforce install` notes that they degrade to review, naming their action classes
-(`inspection`, `unattended-iteration`). When the contract forbids
-none of the three capabilities above, install writes nothing and says so. The
-command and review checks that `personakit checks` lists, and that the export
-shows under Boundaries, are not run by any hook.
+`enforce install` notes that enforcement cannot block them and that the agent
+must still follow them. When the contract forbids none of the three capabilities
+above, install writes nothing and says so. If an earlier install's hook or
+manifest is still in place, it stays in force, and install says to run
+`enforce uninstall` to remove it. The command and review checks that
+`personakit checks` lists, and that the export shows under Boundaries, are not
+run by any hook.
 
 ### Shell Tools Are Judged By Name Only
 
@@ -89,7 +91,9 @@ A contract deny starts with `Blocked by PersonaKit contract:` and tells the
 agent not to work around it but to stop and tell you what it needs. A checker
 that cannot run, a manifest it cannot read, or a tool call it cannot parse also
 denies the call; those reasons start with `Blocked by PersonaKit contract:`,
-`PersonaKit enforcement could not`, or `PersonaKit could not`.
+`PersonaKit enforcement could not`, or `PersonaKit could not`. They name the fix,
+such as installing again or restarting the host, and end with the same
+instruction to stop and tell you.
 
 On Claude Code the hook names the `personakit` binary by the absolute path found
 at install time (pass `--executable` to choose another). If that binary moves or
@@ -122,8 +126,9 @@ personakit enforce install --session <id>
 
 This writes `.claude/personakit/<id>.checks.json` and merges a `PreToolUse`
 hook into `.claude/settings.json`. Other settings and hooks are kept; a previous
-PersonaKit hook is replaced, so one contract is in force per project. Restart
-Claude Code, since it reads hooks at startup.
+PersonaKit hook is replaced, so one contract is in force per project. Claude
+Code watches its settings, so running sessions pick up the hook within a few
+seconds; restart Claude Code if they do not.
 
 ### OpenCode
 
@@ -181,8 +186,9 @@ For OpenCode, add `--host opencode`. Both accept `--project-dir <path>`.
   folder left empty. It never touches OpenCode config, and the plugin stays
   installed; with no manifest it enforces nothing.
 
-Restart the host afterward. Until then, a session that started with enforcement
-keeps checking calls against a manifest that is gone, so it blocks them.
+Claude Code drops the hook within a few seconds; restart it if calls are still
+blocked. Restart OpenCode afterward: until then, the plugin keeps checking calls
+against a manifest that is gone, so it blocks them.
 Uninstall refuses where install does: a symbolic link on the path, a
 `*.checks.json` entry that is not a regular file, or settings that are not a
 JSON object. With nothing installed it says so and changes nothing.

@@ -101,10 +101,9 @@ struct EnforceUninstallCommand: ParsableCommand {
     for name in removed {
       print(TerminalText.sanitized("  removed manifest \(manifestDirectory.appendingPathComponent(name).path)"))
     }
-    print(
-      "Restart Claude Code: a session that started with the hook may keep running it, and it now blocks "
-        + "every tool call."
-    )
+    if removal != .nothingToRemove {
+      print(EnforceInstallCommand.claudeCodeReloadNote)
+    }
   }
 
   private func uninstallOpenCode(projectRoot: URL) throws {
