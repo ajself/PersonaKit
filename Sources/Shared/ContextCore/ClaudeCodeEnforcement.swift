@@ -671,15 +671,10 @@ public enum ClaudeCodeHookCheckEvaluator {
     detail: String,
     manifest: ChecksManifest
   ) -> ClaudeCodeHookCheckDecision {
-    let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
-      .sorted()
-      .filter { manifest.hookCheck(denying: $0) != nil }
-
-    guard !forbidden.isEmpty else {
+    guard let actions = forbiddenUnclassifiedActionsInWords(manifest: manifest) else {
       return ClaudeCodeHookCheckDecision(permission: .allow, reason: nil)
     }
 
-    let actions = listInWords(forbidden.map { $0.replacingOccurrences(of: "-", with: " ") })
     var reason =
       "PersonaKit contract needs approval: PersonaKit cannot classify tool "
       + "'\(OpenCodeEnforcement.strippingControlCharacters(toolName))'\(detail), and this session "
@@ -693,6 +688,16 @@ public enum ClaudeCodeHookCheckEvaluator {
     }
 
     return ClaudeCodeHookCheckDecision(permission: .ask, reason: reason)
+  }
+
+  /// The action classes a tool PersonaKit cannot classify could perform that the contract forbids, in words
+  /// ("command execution and file mutation"), or nil when it forbids none of them.
+  static func forbiddenUnclassifiedActionsInWords(manifest: ChecksManifest) -> String? {
+    let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
+      .sorted()
+      .filter { manifest.hookCheck(denying: $0) != nil }
+    guard !forbidden.isEmpty else { return nil }
+    return listInWords(forbidden.map { $0.replacingOccurrences(of: "-", with: " ") })
   }
 
   /// Joins items as prose: "a", "a and b", "a, b, and c".

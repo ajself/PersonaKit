@@ -452,16 +452,13 @@ public enum OpenCodeHookCheckEvaluator {
     serverName: String,
     manifest: ChecksManifest
   ) -> ClaudeCodeHookCheckDecision {
-    let forbidden = ClaudeCodeEnforcement.unclassifiedToolActionClasses
-      .sorted()
-      .compactMap { manifest.hookCheck(denying: $0) }
+    guard let actions = ClaudeCodeHookCheckEvaluator.forbiddenUnclassifiedActionsInWords(manifest: manifest) else {
+      return allow
+    }
 
-    guard !forbidden.isEmpty else { return allow }
-
-    let capabilities = forbidden.map(\.id).joined(separator: ", ")
     var reason =
       "Blocked by PersonaKit contract: tool '\(OpenCodeEnforcement.strippingControlCharacters(call.tool))' is a "
-      + "tool PersonaKit cannot classify, and this session forbids \(capabilities). Denying by fail-closed "
+      + "tool PersonaKit cannot classify, and this session forbids \(actions). Denying by fail-closed "
       + "policy."
 
     let colliding = OpenCodeEnforcement.collidingServers(

@@ -111,6 +111,21 @@ struct OpenCodeEnforcementTests {
     }
   }
 
+  @Test(arguments: [
+    (["network-access"], "network egress"),
+    (["edit-files", "network-access"], "file mutation and network egress"),
+    (["edit-files", "run-commands", "network-access"], "command execution, file mutation, and network egress"),
+  ])
+  func unclassifiedToolDenialNamesForbiddenActionsInWords(forbiddenCapabilities: [String], actions: String) {
+    let decision = evaluate(call("repo_clone"), forbiddenCapabilities: forbiddenCapabilities)
+    #expect(
+      decision.reason
+        == "Blocked by PersonaKit contract: tool 'repo_clone' is a tool PersonaKit cannot classify, and this "
+        + "session forbids \(actions). Denying by fail-closed policy. "
+        + ClaudeCodeHookCheckEvaluator.noWorkaroundInstruction
+    )
+  }
+
   @Test
   func policyDenialsTellTheAgentToStopRatherThanWorkAround() {
     let instruction = "Do not retry it through another tool or a workaround; stop and tell the user what you need."
