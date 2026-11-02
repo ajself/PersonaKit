@@ -36,7 +36,7 @@ test('prefillNeverSubmits', async () => {
     recorded.push(input.text ?? '')
     return { data: true, error: undefined }
   })
-  const text = 'Ground this session in the PersonaKit contract for session `solo-dev`.'
+  const text = 'Ground this session in the contract for PersonaKit session `solo-dev`.'
   expect(await prefill(api, text)).toBe(true)
   expect(recorded).toEqual([text])
 })

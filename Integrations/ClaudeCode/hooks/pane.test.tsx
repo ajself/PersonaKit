@@ -311,7 +311,7 @@ each('a subagent resolution shows under subagent contracts', async ($, w, surfac
 each('with no contract the pane gives the /pk use hint and no Re-ground', async ($, _w, surface) => {
   const ui = await mount($, surface)
   expect(await text(ui, /^No contract/)).toBe('No contract in force')
-  expect(await text(ui, /\/pk use/)).toBe('Run /pk use <session> to ground this session.')
+  expect(await text(ui, /\/pk use/)).toBe('Run /pk use with a PersonaKit session id to ground this session.')
   expect(await chipColors(ui)).toEqual([['● Advisory', 'inactive'], ['✓ No drift', 'success']])
   // Only the Contract | Library switch: nothing to Re-ground.
   expect((await ui.findAll({ type: 'Button' })).map((b) => b.key)).toEqual(['switch-contract', 'switch-library'])
@@ -326,7 +326,9 @@ each('/pk opens the pane, never focused', async ($, w) => {
 })
 
 each('/pk use s fills the prompt', async ($, w) => {
-  await pk($, 'use s')
+  const ran = await pk($, 'use s')
+  // This session is the host's; `s` is PersonaKit's.
+  expect(ran.text).toBe('Pre-filled a prompt to ground this session in PersonaKit session `s`; review it and send.')
   expect(w.fills).toEqual([{ text: usePrompt({ sessionId: 's' }), mode: 'replace' }])
 
   w.draft = 'draft'

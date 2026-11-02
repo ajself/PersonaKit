@@ -4,7 +4,8 @@ import { usePrompt } from './lib/prompts'
 
 test('a session prompt names it and asks to resolve, export, and adopt it', async () => {
   const text = usePrompt({ sessionId: 's' })
-  expect(text).toContain('`s`')
+  expect(text).toContain('Ground this session in the contract for PersonaKit session `s`.')
+  expect(text).toContain('each with PersonaKit session `s`')
   expect(text).toContain('personakit_resolve_contract tool and then its personakit_export tool')
   expect(text).toContain('MCP')
   expect(text).toContain('`personakit contract --session=s` and then `personakit export --session=s`')
@@ -22,6 +23,7 @@ test('the CLI fallback names the configured personakitPath, quoted when it needs
 test('persona and directive ids produce --persona and --directive', async () => {
   const text = usePrompt({ personaId: 'p', directiveId: 'd' })
   expect(text).toContain('`personakit contract --persona=p --directive=d` and then `personakit export --persona=p --directive=d`')
+  expect(text).toContain('Ground this session in the PersonaKit contract for personaId `p` and directiveId `d`.')
   expect(text).toContain('personaId `p`')
   expect(text).toContain('directiveId `d`')
   expect(text).not.toContain('--session')

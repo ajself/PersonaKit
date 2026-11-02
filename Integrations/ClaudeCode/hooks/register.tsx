@@ -269,7 +269,7 @@ export const register: Register = (on, options) => {
     if (name === undefined || rest.length > 0) return { text: USE }
     if (!canUse({ sessionId: name })) return { text: `Unsupported id: ${ID_RULE}. No prompt was pre-filled.` }
     const filled = await fillGrounding($, { sessionId: name }, binary)
-    return { text: filled ? `Pre-filled a prompt to ground this session in \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
+    return { text: filled ? `Pre-filled a prompt to ground this session in PersonaKit session \`${name}\`; review it and send.` : 'The prompt box took no text; the prompt is in a toast to copy.' }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

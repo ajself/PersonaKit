@@ -106,7 +106,7 @@ export function contractView(el: El, state: SessionState, pane: PaneState, actio
         <Text size="caption" dimColor>{`Resolved turn ${main.turn} · ${ago(state.turn - main.turn)} · ${source(main)}`}</Text>
       ) : (
         <Text size="caption" dimColor>
-          {'Run /pk use <session> to ground this session.'}
+          {'Run /pk use with a PersonaKit session id to ground this session.'}
         </Text>
       )}
       <Box key="chips" flexDirection="row" flexWrap="wrap" columnGap={2} marginTop={1}>

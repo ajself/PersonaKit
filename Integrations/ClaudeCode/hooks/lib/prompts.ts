@@ -12,13 +12,15 @@ const sh = (word: string) => (/^[A-Za-z0-9._\/:@+-]+$/.test(word) ? word : `'${w
 export function usePrompt(ids: ContractIds, binary = 'personakit'): string {
   const { sessionId, personaId, directiveId } = ids
   const what = sessionId !== undefined
-    ? `session \`${sessionId}\``
+    ? `PersonaKit session \`${sessionId}\``
     : [personaId && `personaId \`${personaId}\``, directiveId && `directiveId \`${directiveId}\``].filter(Boolean).join(' and ')
+  // `what` already says PersonaKit for a session; this session is always the host's.
+  const contract = sessionId !== undefined ? 'the contract' : 'the PersonaKit contract'
   const flags = sessionId !== undefined
     ? `--session=${sh(sessionId)}`
     : [personaId && `--persona=${sh(personaId)}`, directiveId && `--directive=${sh(directiveId)}`].filter(Boolean).join(' ')
   return (
-    `Ground this session in the PersonaKit contract for ${what}. ` +
+    `Ground this session in ${contract} for ${what}. ` +
     `Resolve and then export it through PersonaKit: if the PersonaKit MCP server is connected, call its personakit_resolve_contract tool and then its personakit_export tool, each with ${what}; ` +
     `otherwise run \`${sh(binary)} contract ${flags}\` and then \`${sh(binary)} export ${flags}\`. ` +
     `Then adopt the exported contract as your operating contract for this session: its persona, its directive's steps and stop points, and its boundaries.`
