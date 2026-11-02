@@ -40,9 +40,8 @@ public struct ValidationError: Error, Equatable, Sendable {
   public let expectedPath: String?
   public let message: String
   /// `true` when this error is an unresolved reference to a shared entity or file
-  /// (e.g. a missing persona/kit/skill/reference id) that a not-yet-connected scope
-  /// — such as the global library — could still satisfy. Used by Studio to fold these
-  /// into a "connect the global library" prompt instead of reporting hard errors.
+  /// (e.g. a missing persona/kit/skill/reference id) that a scope not loaded in this
+  /// run — such as the global library — could still satisfy.
   /// `false` for structural problems (schema, decode, id mismatch, unsafe paths,
   /// intra-entity conflicts) that no additional scope can fix.
   public let referencesUnresolvedID: Bool

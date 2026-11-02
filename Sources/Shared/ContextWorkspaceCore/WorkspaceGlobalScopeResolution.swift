@@ -5,8 +5,8 @@ import Foundation
 ///
 /// Preserves the historical resolution — an explicit URL wins (standardized once),
 /// otherwise fall back to the dependency default — while deferring evaluation to call
-/// time so a late-bound provider (see Studio's grant flow) reads the *current* granted
-/// scope rather than a value frozen at `init`.
+/// time so a late-bound provider reads the *current* global scope rather than a value
+/// frozen at `init`.
 func makeGlobalScopeProvider(
   explicit: URL?,
   default defaultProvider: @escaping @Sendable () -> URL?

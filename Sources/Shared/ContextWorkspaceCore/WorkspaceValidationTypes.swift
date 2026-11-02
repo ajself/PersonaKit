@@ -23,10 +23,8 @@ public struct WorkspaceValidationIssue: Equatable, Sendable {
   public let message: String
   public let severity: WorkspaceValidationSeverity
   /// `true` when this issue is an unresolved reference to a shared entity or file that a
-  /// not-yet-connected scope (the global library) could still satisfy. Studio folds these
-  /// into a single "connect the global library" prompt while the global scope is absent,
-  /// and shows them as real errors once it is connected. `false` for structural problems
-  /// (schema, decode, id mismatch, unsafe paths) that no extra scope can fix.
+  /// scope not loaded in this run (the global library) could still satisfy. `false` for
+  /// structural problems (schema, decode, id mismatch, unsafe paths) that no extra scope can fix.
   public let referencesUnresolvedID: Bool
 
   public init(
