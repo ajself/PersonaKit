@@ -92,15 +92,18 @@ struct StudioValidationReportState: Equatable, Sendable {
     "\(checkedItemCount) checked"
   }
 
-  var showsCompletedStats: Bool {
+  /// Summary badges for a finished validation; affected entities appear once there are
+  /// issues. Empty until validation completes.
+  var completedStatTexts: [String] {
     switch status {
-    case .clean,
-      .issues:
-      return true
+    case .clean:
+      return [checkedItemsText, issueCountText, affectedFilesText]
+    case .issues:
+      return [checkedItemsText, issueCountText, affectedEntitiesText, affectedFilesText]
     case .validating,
       .failed,
       .notRun:
-      return false
+      return []
     }
   }
 

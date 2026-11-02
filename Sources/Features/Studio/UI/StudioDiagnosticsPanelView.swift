@@ -60,8 +60,6 @@ struct StudioDiagnosticsPanelView: View {
             selectedIssueFilterID: $selectedIssueFilterID
           )
 
-          StudioValidationIssueStatsView(report: report)
-
           if issues.isEmpty {
             ContentUnavailableView.search
               .frame(maxWidth: .infinity, minHeight: 180)
@@ -222,22 +220,6 @@ private struct StudioValidationIssueFilterBarView: View {
       }
     }
     .accessibilityLabel("Validation issue filters")
-  }
-}
-
-private struct StudioValidationIssueStatsView: View {
-  let report: StudioValidationReportState
-
-  var body: some View {
-    HStack(spacing: 8) {
-      statBadge(report.issueCountText)
-      statBadge(report.affectedEntitiesText)
-      statBadge(report.affectedFilesText)
-    }
-  }
-
-  private func statBadge(_ title: String) -> some View {
-    StudioBadge(title: title, tone: .warning, size: .regular)
   }
 }
 

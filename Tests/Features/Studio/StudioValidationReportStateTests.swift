@@ -20,7 +20,7 @@ struct StudioValidationReportStateTests {
     #expect(report.statusHeadline == "No validation issues reported")
     #expect(report.coverageLine == "Checked 1 session and 5 library/context items")
     #expect(report.checkedItemsText == "6 checked")
-    #expect(report.showsCompletedStats)
+    #expect(report.completedStatTexts == ["6 checked", "0 issues", "0 affected files"])
     #expect(report.issueCountText == "0 issues")
     #expect(report.affectedFilesText == "0 affected files")
     #expect(
@@ -50,6 +50,9 @@ struct StudioValidationReportStateTests {
     #expect(report.issueCountText == "2 issues")
     #expect(report.affectedEntitiesText == "1 affected entity")
     #expect(report.affectedFilesText == "1 affected file")
+    #expect(
+      report.completedStatTexts == ["7 checked", "2 issues", "1 affected entity", "1 affected file"]
+    )
     #expect(report.areaRows.first { $0.title == "Sessions" }?.statusText == "2 issues")
     #expect(report.issueFilterOptions.map(\.title) == ["All", "Sessions"])
   }
@@ -64,7 +67,7 @@ struct StudioValidationReportStateTests {
 
     #expect(notValidatedReport.statusHeadline == "Not validated")
     #expect(notValidatedReport.coverageLine == nil)
-    #expect(!notValidatedReport.showsCompletedStats)
+    #expect(notValidatedReport.completedStatTexts.isEmpty)
 
     let validatingReport = StudioValidationReportState(
       snapshot: snapshot(),
@@ -77,7 +80,7 @@ struct StudioValidationReportStateTests {
 
     #expect(validatingReport.statusHeadline == "Validating workspace")
     #expect(validatingReport.coverageLine == "Checking workspace contents...")
-    #expect(!validatingReport.showsCompletedStats)
+    #expect(validatingReport.completedStatTexts.isEmpty)
 
     let failedReport = StudioValidationReportState(
       snapshot: snapshot(),
@@ -87,7 +90,7 @@ struct StudioValidationReportStateTests {
 
     #expect(failedReport.statusHeadline == "Validation failed")
     #expect(failedReport.coverageLine == nil)
-    #expect(!failedReport.showsCompletedStats)
+    #expect(failedReport.completedStatTexts.isEmpty)
   }
 
   @Test

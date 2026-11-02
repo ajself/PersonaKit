@@ -19,11 +19,11 @@ struct StudioDiagnosticsHeaderView: View {
           .foregroundStyle(.secondary)
       }
 
-      if report.showsCompletedStats {
+      if !report.completedStatTexts.isEmpty {
         HStack(spacing: 8) {
-          statBadge(report.checkedItemsText)
-          statBadge(report.issueCountText)
-          statBadge(report.affectedFilesText)
+          ForEach(report.completedStatTexts, id: \.self) { title in
+            statBadge(title)
+          }
         }
       }
     }
