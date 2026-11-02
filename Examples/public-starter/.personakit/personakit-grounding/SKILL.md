@@ -33,7 +33,7 @@ Treat these as PersonaKit-session intent:
    - Call `personakit_recommend_session` when no session id is supplied.
    - Call `personakit_resolve_contract` for the selected session.
    - Call `personakit_trace_session` when provenance, source files, or dependency reasons matter.
-   - Call `personakit_export` only when a human-readable grounding payload is needed.
+   - Call `personakit_export` only when human-readable handoff context is needed.
 3. If MCP tools are unavailable, use the installed `personakit` executable for CLI fallback:
    - `personakit guidance`
    - `personakit list sessions`
