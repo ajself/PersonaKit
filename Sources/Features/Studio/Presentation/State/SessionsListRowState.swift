@@ -7,8 +7,8 @@ enum SessionsListRowState {
     for session: WorkspaceSessionListItem,
     in snapshot: WorkspaceSnapshot
   ) -> String {
-    let personaName = displayName(for: session.personaId, in: snapshot.personas)
-    let directiveName = displayName(for: session.directiveId, in: snapshot.directives)
+    let personaName = StudioReferenceTitle.displayName(for: session.personaId, in: snapshot.personas)
+    let directiveName = StudioReferenceTitle.displayName(for: session.directiveId, in: snapshot.directives)
 
     return "\(personaName) · \(directiveName)"
   }
@@ -40,12 +40,5 @@ enum SessionsListRowState {
     in snapshot: WorkspaceSnapshot
   ) -> [WorkspaceSessionListItem] {
     sessions.filter { matches($0, searchText: searchText, in: snapshot) }
-  }
-
-  private static func displayName(
-    for id: String,
-    in items: [WorkspaceListItem]
-  ) -> String {
-    items.first { $0.id == id }?.displayName ?? id
   }
 }

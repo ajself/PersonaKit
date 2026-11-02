@@ -8,6 +8,7 @@ struct SessionEditorFormSectionsView: View {
   let personaOptions: SessionEditorReferenceOptions
   let directiveOptions: SessionEditorReferenceOptions
   let kitIDs: [String]
+  let kitTitlesByID: [String: String]
   let bindingForKitOverride: (String) -> Binding<Bool>
 
   var body: some View {
@@ -27,7 +28,7 @@ struct SessionEditorFormSectionsView: View {
         } else {
           ForEach(kitIDs, id: \.self) { kitID in
             Toggle(isOn: bindingForKitOverride(kitID)) {
-              Text(kitID)
+              Text(kitTitlesByID[kitID] ?? kitID)
             }
           }
         }
@@ -43,7 +44,7 @@ struct SessionEditorFormSectionsView: View {
   ) -> some View {
     Picker(title, selection: selection) {
       ForEach(options.loadedIDs, id: \.self) { item in
-        Text(item)
+        Text(options.title(for: item))
           .tag(item)
       }
 

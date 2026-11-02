@@ -34,14 +34,14 @@ struct StudioLibraryPreviewView: View {
           .fontWeight(.semibold)
           .foregroundStyle(.secondary)
 
-        Text(state.id)
+        Text(state.displayName)
           .font(.title3)
           .fontWeight(.semibold)
           .lineLimit(2)
           .textSelection(.enabled)
 
         if state.displayName != state.id {
-          Text(state.displayName)
+          Text(state.id)
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .textSelection(.enabled)
@@ -122,13 +122,15 @@ struct StudioLibraryPreviewView: View {
       } label: {
         Label {
           VStack(alignment: .leading, spacing: 1) {
-            Text(node.id)
+            Text(node.displayName)
               .lineLimit(1)
               .truncationMode(.middle)
 
-            Text(kindTitle)
+            Text(StudioLibraryUsageState.rowSubtitle(for: node, kindTitle: kindTitle))
               .font(.caption)
               .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .truncationMode(.middle)
           }
         } icon: {
           Image(systemName: target.sidebarItem.systemImage)
@@ -138,8 +140,8 @@ struct StudioLibraryPreviewView: View {
         .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
-      .accessibilityLabel("Open \(kindTitle) \(node.id)")
-      .help("Open \(kindTitle) \(node.id)")
+      .accessibilityLabel(StudioLibraryUsageState.rowAccessibilityLabel(for: node, kindTitle: kindTitle))
+      .help("Open \(kindTitle) \(node.displayName)")
     }
   }
 

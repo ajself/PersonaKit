@@ -75,6 +75,7 @@ struct SessionsPanelView: View {
       ) {
         SessionsInspectorView(
           selectedSession: selectedSession,
+          snapshot: workspaceStore.snapshot,
           workspaceURL: workspaceStore.workspaceURL,
           mapStatusText: inspectorMapStatusText
         )
@@ -131,9 +132,9 @@ struct SessionsPanelView: View {
       SessionEditorView(
         title: presentation.title,
         initialDraft: presentation.draft,
-        personaIDs: workspaceStore.snapshot.personas.map(\.id).sorted(),
-        directiveIDs: workspaceStore.snapshot.directives.map(\.id).sorted(),
-        kitIDs: workspaceStore.snapshot.kits.map(\.id).sorted(),
+        personas: workspaceStore.snapshot.personas,
+        directives: workspaceStore.snapshot.directives,
+        kits: workspaceStore.snapshot.kits,
         draftSessionMap: workspaceStore.draftSessionMap,
         draftSessionMapErrorMessage: workspaceStore.draftSessionMapErrorMessage,
         isLoadingDraftSessionMap: workspaceStore.isLoadingDraftSessionMap,
@@ -743,6 +744,7 @@ struct SessionsPanelView: View {
 
 private struct SessionsInspectorView: View {
   let selectedSession: WorkspaceSessionListItem?
+  let snapshot: WorkspaceSnapshot
   let workspaceURL: URL?
   let mapStatusText: String
 
@@ -773,8 +775,14 @@ private struct SessionsInspectorView: View {
 
       StudioInspectorSection("Identity") {
         StudioMetadataRow(label: "Session", value: selectedSession.id)
-        StudioMetadataRow(label: "Persona", value: selectedSession.personaId)
-        StudioMetadataRow(label: "Directive", value: selectedSession.directiveId)
+        StudioMetadataRow(
+          label: "Persona",
+          value: StudioReferenceTitle.nameFirst(id: selectedSession.personaId, in: snapshot.personas)
+        )
+        StudioMetadataRow(
+          label: "Directive",
+          value: StudioReferenceTitle.nameFirst(id: selectedSession.directiveId, in: snapshot.directives)
+        )
       }
 
       StudioInspectorSection("Source") {

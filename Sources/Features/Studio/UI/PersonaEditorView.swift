@@ -605,6 +605,29 @@ struct PersonaEditorView: View {
     )
   }
 
+  /// Name first, with the id beneath it when the name differs, like the library list rows.
+  private func referenceRowLabel(
+    id: String,
+    knownItem: WorkspaceListItem?
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 1) {
+      if let knownItem, knownItem.displayName != id {
+        Text(knownItem.displayName)
+          .foregroundStyle(.tint)
+          .underline()
+
+        Text(id)
+          .font(.caption.monospaced())
+          .foregroundStyle(.secondary)
+      } else {
+        Text(id)
+          .font(.body.monospaced())
+          .foregroundStyle(.tint)
+          .underline()
+      }
+    }
+  }
+
   private func referencePreviewPopover(
     knownItem: WorkspaceListItem?,
     referenceID: String,
@@ -614,16 +637,16 @@ struct PersonaEditorView: View {
       Text("\(referenceType.title) Preview")
         .font(.headline)
 
+      if let knownItem, knownItem.displayName != referenceID {
+        Text(knownItem.displayName)
+          .font(.callout)
+      }
+
       Text(referenceID)
-        .font(.callout.monospaced())
+        .font(.footnote.monospaced())
+        .foregroundStyle(.secondary)
 
       if let knownItem {
-        if knownItem.displayName != referenceID {
-          Text(knownItem.displayName)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-
         Text("Source: \(knownItem.sourceScope.displayName)")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -723,10 +746,7 @@ struct PersonaEditorView: View {
                 referenceID: knownID
               )
             } label: {
-              Text(knownID)
-                .font(.body.monospaced())
-                .foregroundStyle(.tint)
-                .underline()
+              referenceRowLabel(id: knownID, knownItem: knownItemsByID[knownID])
             }
             .buttonStyle(.plain)
             .popover(

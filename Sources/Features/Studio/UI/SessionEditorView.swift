@@ -8,6 +8,7 @@ struct SessionEditorView: View {
   let personaOptions: SessionEditorReferenceOptions
   let directiveOptions: SessionEditorReferenceOptions
   let kitIDs: [String]
+  let kitTitlesByID: [String: String]
   let draftSessionMap: WorkspaceSessionMap?
   let draftSessionMapErrorMessage: String?
   let isLoadingDraftSessionMap: Bool
@@ -28,9 +29,9 @@ struct SessionEditorView: View {
   init(
     title: String,
     initialDraft: WorkspaceSessionDraft,
-    personaIDs: [String],
-    directiveIDs: [String],
-    kitIDs: [String],
+    personas: [WorkspaceListItem],
+    directives: [WorkspaceListItem],
+    kits: [WorkspaceListItem],
     draftSessionMap: WorkspaceSessionMap?,
     draftSessionMapErrorMessage: String?,
     isLoadingDraftSessionMap: Bool,
@@ -40,7 +41,10 @@ struct SessionEditorView: View {
     onRefreshMap: @escaping (WorkspaceSessionDraft) -> Void
   ) {
     self.title = title
-    self.kitIDs = kitIDs
+
+    let kitOptions = SessionEditorReferenceOptions(requestedID: "", loadedItems: kits)
+    self.kitIDs = kitOptions.loadedIDs
+    self.kitTitlesByID = kitOptions.titlesByID
     self.draftSessionMap = draftSessionMap
     self.draftSessionMapErrorMessage = draftSessionMapErrorMessage
     self.isLoadingDraftSessionMap = isLoadingDraftSessionMap
@@ -51,11 +55,11 @@ struct SessionEditorView: View {
 
     let personaOptions = SessionEditorReferenceOptions(
       requestedID: initialDraft.personaId,
-      loadedIDs: personaIDs
+      loadedItems: personas
     )
     let directiveOptions = SessionEditorReferenceOptions(
       requestedID: initialDraft.directiveId,
-      loadedIDs: directiveIDs
+      loadedItems: directives
     )
     self.personaOptions = personaOptions
     self.directiveOptions = directiveOptions
@@ -79,6 +83,7 @@ struct SessionEditorView: View {
         personaOptions: personaOptions,
         directiveOptions: directiveOptions,
         kitIDs: kitIDs,
+        kitTitlesByID: kitTitlesByID,
         bindingForKitOverride: { kitID in
           bindingForKitOverride(kitID)
         }

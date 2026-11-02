@@ -44,6 +44,24 @@ enum StudioLibraryUsageState {
     }
   }
 
+  /// A "Used by" row's second line: the kind, then the id when the row's title is a distinct name.
+  static func rowSubtitle(
+    for node: WorkspaceSessionMapNode,
+    kindTitle: String
+  ) -> String {
+    node.displayName == node.id ? kindTitle : "\(kindTitle) · \(node.id)"
+  }
+
+  /// A "Used by" row's VoiceOver label, adding the id when it differs so same-named items sound distinct.
+  static func rowAccessibilityLabel(
+    for node: WorkspaceSessionMapNode,
+    kindTitle: String
+  ) -> String {
+    let name = node.displayName == node.id ? node.id : "\(node.displayName), \(node.id)"
+
+    return "Open \(kindTitle) \(name)"
+  }
+
   private static func kindRank(_ kind: WorkspaceSessionMapNodeKind) -> Int {
     switch kind {
     case .session:

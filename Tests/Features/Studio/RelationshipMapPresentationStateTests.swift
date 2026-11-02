@@ -59,6 +59,14 @@ struct StudioRelationshipMapPresentationStateTests {
   }
 
   @Test
+  func onlyTheMissingBadgeIsAWarning() {
+    #expect(RelationshipMapPresentationState.badgeIsWarning("missing"))
+    #expect(!RelationshipMapPresentationState.badgeIsWarning("default"))
+    #expect(!RelationshipMapPresentationState.badgeIsWarning("override"))
+    #expect(!RelationshipMapPresentationState.badgeIsWarning("required"))
+  }
+
+  @Test
   func nodeKindTitlesAreSingularAndLaneTitlesMatchTheSidebar() {
     let kinds: [WorkspaceSessionMapNodeKind] = [.session, .persona, .directive, .kit, .skill]
 

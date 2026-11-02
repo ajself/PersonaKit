@@ -220,7 +220,10 @@ struct SessionDependencyMapView: View {
     if !badges.isEmpty {
       HStack(spacing: 6) {
         ForEach(badges, id: \.self) { badge in
-          StudioBadge(title: badge, tone: .warning)
+          StudioBadge(
+            title: badge,
+            tone: RelationshipMapPresentationState.badgeIsWarning(badge) ? .warning : .neutral
+          )
         }
       }
     }

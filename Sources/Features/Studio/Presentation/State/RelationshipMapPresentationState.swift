@@ -15,10 +15,18 @@ enum RelationshipMapPresentationState {
     return laneOrder.filter { populatedKinds.contains($0) }
   }
 
+  static let missingBadge = "missing"
+
   /// Badges on a node card. A node whose entity isn't in the workspace leads with "missing",
   /// so the state reads in text and not only through the card's red tint.
   static func nodeBadges(_ node: WorkspaceSessionMapNode) -> [String] {
-    (node.isMissing ? ["missing"] : []) + node.badges.sorted()
+    (node.isMissing ? [missingBadge] : []) + node.badges.sorted()
+  }
+
+  /// Only "missing" is a problem; "default", "override", and "required" describe how a node
+  /// is linked and stay neutral.
+  static func badgeIsWarning(_ badge: String) -> Bool {
+    badge == missingBadge
   }
 
   static func nodeAccessibilityLabel(
