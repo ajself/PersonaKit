@@ -151,6 +151,10 @@ public final class WorkspaceStore {
     sessionFeatureModel.previewActionMessage
   }
 
+  var sessionPreviewActionIsError: Bool {
+    sessionFeatureModel.previewActionIsError
+  }
+
   var sessionEditorPresentation: SessionEditorPresentation? {
     sessionEditorFeatureModel.editorPresentation
   }

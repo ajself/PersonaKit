@@ -43,9 +43,9 @@ extension WorkspaceSessionFeatureModel {
   func copyPreviewReportingResult() {
     do {
       try copyPreviewToPasteboard()
-      previewActionMessage = "Copied handoff context to clipboard."
+      setPreviewActionMessage("Copied handoff context to clipboard.", isError: false)
     } catch {
-      previewActionMessage = error.localizedDescription
+      setPreviewActionMessage(error.localizedDescription, isError: true)
     }
   }
 
@@ -60,13 +60,17 @@ extension WorkspaceSessionFeatureModel {
           return
         }
 
-        previewActionMessage = didExport ? "Exported handoff context." : nil
+        if didExport {
+          setPreviewActionMessage("Exported handoff context.", isError: false)
+        } else {
+          clearPreviewActionMessage()
+        }
       } catch {
         guard !Task.isCancelled else {
           return
         }
 
-        previewActionMessage = error.localizedDescription
+        setPreviewActionMessage(error.localizedDescription, isError: true)
       }
 
       previewExportTask = nil
@@ -75,5 +79,11 @@ extension WorkspaceSessionFeatureModel {
 
   func clearPreviewActionMessage() {
     previewActionMessage = nil
+    previewActionIsError = false
+  }
+
+  private func setPreviewActionMessage(_ message: String, isError: Bool) {
+    previewActionMessage = message
+    previewActionIsError = isError
   }
 }

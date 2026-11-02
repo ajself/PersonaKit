@@ -19,6 +19,7 @@ final class WorkspaceSessionFeatureModel {
   var state = WorkspaceSessionPreviewState()
   // Result of the last Copy or Export action, shown under the preview header.
   var previewActionMessage: String?
+  var previewActionIsError = false
   var mapState = WorkspaceSessionMapState()
   var draftMapState = WorkspaceSessionMapState()
   @ObservationIgnored var activeWorkspaceURL: URL?

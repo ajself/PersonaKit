@@ -319,7 +319,7 @@ struct SessionsPanelView: View {
       {
         Text(sessionPreviewActionMessage)
           .font(.footnote)
-          .foregroundStyle(.secondary)
+          .foregroundStyle(workspaceStore.sessionPreviewActionIsError ? .red : .secondary)
       }
     }
     .padding(12)

@@ -975,6 +975,7 @@ struct WorkspaceStoreSessionActionsTests {
     store.copySessionPreviewReportingResult()
 
     #expect(store.sessionPreviewActionMessage == "Copied handoff context to clipboard.")
+    #expect(!store.sessionPreviewActionIsError)
   }
 
   @Test
@@ -990,6 +991,12 @@ struct WorkspaceStoreSessionActionsTests {
     store.copySessionPreviewReportingResult()
 
     #expect(store.sessionPreviewActionMessage == "Failed to copy handoff context to the clipboard.")
+    #expect(store.sessionPreviewActionIsError)
+
+    store.sessionSelectionDidChange()
+
+    #expect(store.sessionPreviewActionMessage == nil)
+    #expect(!store.sessionPreviewActionIsError)
   }
 
   @Test
@@ -1021,6 +1028,32 @@ struct WorkspaceStoreSessionActionsTests {
   }
 
   @Test
+  func exportSessionPreviewReportsAWriteFailureAsAnError() async {
+    let store = WorkspaceStore(
+      sessionPreviewManager: WorkspaceStoreStubSessionPreviewManager(
+        loadPreviewHandler: { _, _ in
+          "unused"
+        },
+        exportPreviewHandler: { _, _ in
+          throw WorkspaceSnapshotBuildError(message: "Disk full.")
+        }
+      ),
+      previewExportDestinationPicker: WorkspaceStoreStubPreviewExportDestinationPicker(
+        destinationURL: URL(fileURLWithPath: "/Exports/preview.md")
+      )
+    )
+
+    store.sessionPreview = "preview-to-export"
+    store.exportSessionPreviewReportingResult()
+
+    await waitFor {
+      store.sessionFeatureModel.previewExportTask == nil
+    }
+    #expect(store.sessionPreviewActionMessage?.contains("Disk full.") == true)
+    #expect(store.sessionPreviewActionIsError)
+  }
+
+  @Test
   func exportSessionPreviewReportsNothingWhenDestinationPickerCancels() async {
     let store = WorkspaceStore(
       sessionPreviewManager: WorkspaceStoreStubSessionPreviewManager(
@@ -1043,6 +1076,7 @@ struct WorkspaceStoreSessionActionsTests {
       store.sessionFeatureModel.previewExportTask == nil
     }
     #expect(store.sessionPreviewActionMessage == nil)
+    #expect(!store.sessionPreviewActionIsError)
   }
 }
 
