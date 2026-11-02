@@ -136,6 +136,9 @@ to replace an existing starter root:
 personakit init /tmp/personakit-demo/.personakit --force
 ```
 
+Upgrading a root written for PersonaKit 1.x? [Docs/migration-v1-to-v2.md](./Docs/migration-v1-to-v2.md) walks an AI
+coding agent through rewriting its packs for PersonaKit 2 and verifying the result.
+
 ## Core Model
 
 ```text

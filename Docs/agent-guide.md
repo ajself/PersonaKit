@@ -219,4 +219,5 @@ editor, owns the byte layout.
 - [Repository Overview](../README.md)
 - [PersonaKit MCP Guide](./mcp.md)
 - [PersonaKit Enforcement](./enforcement.md)
+- [Migrating Packs From PersonaKit 1 To PersonaKit 2](./migration-v1-to-v2.md)
 - [AGENTS.md](../AGENTS.md), policy for agents working *in* this repository
