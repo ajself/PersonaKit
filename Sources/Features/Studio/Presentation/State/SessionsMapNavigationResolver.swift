@@ -2,23 +2,12 @@ import ContextWorkspaceCore
 
 /// Shared map-node navigation resolver used by Studio session map surfaces.
 enum SessionsMapNavigationResolver {
-  static func navigationTarget(
-    for node: WorkspaceSessionMapNode,
-    selectedSessionID: String?
-  ) -> StudioNavigationTarget? {
+  static func navigationTarget(for node: WorkspaceSessionMapNode) -> StudioNavigationTarget {
     switch node.kind {
     case .session:
-      let sessionID = node.id == "active-session" ? selectedSessionID : node.id
-
-      guard let sessionID,
-        sessionID != "active-session"
-      else {
-        return nil
-      }
-
       return StudioNavigationTarget(
         sidebarItem: .sessions,
-        selectedSessionID: sessionID,
+        selectedSessionID: node.id,
         searchText: ""
       )
 

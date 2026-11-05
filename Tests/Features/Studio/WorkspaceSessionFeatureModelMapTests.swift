@@ -30,7 +30,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           Self.makeMap(personaID: "unused")
         },
         sessionPreviewManager: StubSessionPreviewManager(
@@ -84,7 +84,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           Self.makeMap(personaID: "unused")
         },
         sessionPreviewManager: StubSessionPreviewManager(
@@ -156,7 +156,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           Self.makeMap(personaID: "unused")
         },
         sessionPreviewManager: StubSessionPreviewManager(
@@ -229,7 +229,8 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: ["kit-a"]
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, personaId, directiveId, kitOverrides in
+        sessionMapBuilder: StubSessionMapBuilder { _, sessionId, personaId, directiveId, kitOverrides in
+          #expect(sessionId == "session-a")
           #expect(personaId == "persona-a")
           #expect(directiveId == "directive-a")
           #expect(kitOverrides == ["kit-a"])
@@ -275,7 +276,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: ["kit-a"]
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           let buildNumber = mapBuildGate.markStarted()
 
           return Self.makeMap(personaID: "persona-\(buildNumber)")
@@ -328,7 +329,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: ["kit-a"]
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           let buildNumber = mapBuildGate.markStarted()
 
           if buildNumber == 2 {
@@ -408,7 +409,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, personaId, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, personaId, _, _ in
           if personaId == "persona-slow" {
             _ = slowMapGate.markStarted()
             slowMapGate.waitUntilReleased()
@@ -477,7 +478,8 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, personaId, _, kitOverrides in
+        sessionMapBuilder: StubSessionMapBuilder { _, sessionId, personaId, _, kitOverrides in
+          #expect(sessionId == "draft")
           var map = Self.makeMap(personaID: personaId)
 
           if let personaNode = map.nodes.first(where: { $0.key == "persona:\(personaId)" }) {
@@ -553,7 +555,7 @@ struct WorkspaceSessionFeatureModelMapTests {
             kitOverrides: []
           )
         },
-        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _ in
+        sessionMapBuilder: StubSessionMapBuilder { _, _, _, _, _ in
           throw WorkspaceSnapshotBuildError(message: "Map load failed.")
         }
       ),
@@ -733,16 +735,18 @@ private struct StubSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
 }
 
 private struct StubSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
-  let buildHandler: @Sendable (URL, String, String, [String]) throws -> WorkspaceSessionMap
+  let buildHandler: @Sendable (URL, String, String, String, [String]) throws -> WorkspaceSessionMap
 
   func build(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
   ) throws -> WorkspaceSessionMap {
     try buildHandler(
       workspaceURL,
+      sessionId,
       personaId,
       directiveId,
       kitOverrides

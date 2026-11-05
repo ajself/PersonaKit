@@ -4,7 +4,6 @@ import SwiftUI
 
 /// Session map detail content with layered dependency visualization.
 struct SessionsMapTabView: View {
-  let selectedSession: WorkspaceSessionListItem
   let sessionMap: WorkspaceSessionMap?
   let sessionMapErrorMessage: String?
   let isLoadingSessionMap: Bool
@@ -96,8 +95,6 @@ struct SessionsMapTabView: View {
     for skill in snapshot.skills {
       scopes["skill:\(skill.id)"] = skill.sourceScope
     }
-
-    scopes["session:active-session"] = selectedSession.sourceScope
 
     return scopes
   }

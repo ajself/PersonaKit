@@ -150,12 +150,14 @@ package actor WorkspaceOperationRunner {
 
   package func loadSessionMap(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
   ) throws -> WorkspaceSessionMap {
     try sessionMapBuilder.build(
       workspaceURL: workspaceURL,
+      sessionId: sessionId,
       personaId: personaId,
       directiveId: directiveId,
       kitOverrides: kitOverrides

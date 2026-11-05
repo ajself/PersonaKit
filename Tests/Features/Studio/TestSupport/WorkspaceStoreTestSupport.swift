@@ -190,6 +190,7 @@ struct WorkspaceStoreStubSessionMapBuilder: WorkspaceSessionMapBuilding, Sendabl
 
   func build(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]

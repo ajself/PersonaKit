@@ -5,58 +5,11 @@ import Testing
 
 struct SessionsMapNavigationResolverTests {
   @Test
-  func sessionNodeReturnsNilWhenSelectedSessionIDIsMissing() {
+  func concreteSessionNodeNavigatesToItsOwnSessionID() {
     let target = SessionsMapNavigationResolver.navigationTarget(
       for: makeNode(
-        id: "active-session",
+        id: "session-a",
         kind: .session
-      ),
-      selectedSessionID: nil
-    )
-
-    #expect(target == nil)
-  }
-
-  @Test
-  func sessionNodeReturnsNilForSyntheticSelectedSessionID() {
-    let target = SessionsMapNavigationResolver.navigationTarget(
-      for: makeNode(
-        id: "active-session",
-        kind: .session
-      ),
-      selectedSessionID: "active-session"
-    )
-
-    #expect(target == nil)
-  }
-
-  @Test
-  func sessionNodeNavigatesToRealSelectedSessionID() throws {
-    let target = try #require(
-      SessionsMapNavigationResolver.navigationTarget(
-        for: makeNode(
-          id: "active-session",
-          kind: .session
-        ),
-        selectedSessionID: "session-a"
-      )
-    )
-
-    #expect(target.sidebarItem == .sessions)
-    #expect(target.selectedLibraryItemID == nil)
-    #expect(target.selectedSessionID == "session-a")
-    #expect(target.searchText == "")
-  }
-
-  @Test
-  func concreteSessionNodeNavigatesToItsOwnSessionID() throws {
-    let target = try #require(
-      SessionsMapNavigationResolver.navigationTarget(
-        for: makeNode(
-          id: "session-a",
-          kind: .session
-        ),
-        selectedSessionID: nil
       )
     )
 
@@ -66,14 +19,11 @@ struct SessionsMapNavigationResolverTests {
   }
 
   @Test
-  func skillNodeNavigatesToSkillsLibrary() throws {
-    let target = try #require(
-      SessionsMapNavigationResolver.navigationTarget(
-        for: makeNode(
-          id: "swift-style-guide-reference",
-          kind: .skill
-        ),
-        selectedSessionID: "session-a"
+  func skillNodeNavigatesToSkillsLibrary() {
+    let target = SessionsMapNavigationResolver.navigationTarget(
+      for: makeNode(
+        id: "swift-style-guide-reference",
+        kind: .skill
       )
     )
 

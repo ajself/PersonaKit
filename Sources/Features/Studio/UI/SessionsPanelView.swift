@@ -283,7 +283,6 @@ struct SessionsPanelView: View {
 
     case .map:
       SessionsMapTabView(
-        selectedSession: selectedSession,
         sessionMap: workspaceStore.sessionMap,
         sessionMapErrorMessage: workspaceStore.sessionMapErrorMessage,
         isLoadingSessionMap: workspaceStore.isLoadingSessionMap,

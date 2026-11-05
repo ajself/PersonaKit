@@ -50,6 +50,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
 
   public func build(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]
@@ -95,6 +96,7 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
     }
 
     let graph = buildGraph(
+      sessionId: sessionId,
       definition: definition,
       registry: registry
     )
@@ -123,18 +125,21 @@ public struct WorkspaceSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable 
   }
 
   private func buildGraph(
+    sessionId: String,
     definition: SessionDefinition,
     registry: Registry
   ) -> WorkspaceSessionMapGraph {
     var nodeStateByKey: [String: WorkspaceSessionMapMutableNode] = [:]
     var edgeKeys: Set<WorkspaceSessionMapEdgeKey> = []
 
-    let sessionNodeKey = workspaceSessionMapNodeKey(kind: .session, id: "active-session")
+    // An unsaved session has no id yet; the placeholder can't collide with a real session id.
+    let sessionNodeID = sessionId.isEmpty ? "New Session" : sessionId
+    let sessionNodeKey = workspaceSessionMapNodeKey(kind: .session, id: sessionNodeID)
     upsertWorkspaceSessionMapNode(
       in: &nodeStateByKey,
       kind: .session,
-      id: "active-session",
-      displayName: "Active Session",
+      id: sessionNodeID,
+      displayName: sessionNodeID,
       isMissing: false
     )
 

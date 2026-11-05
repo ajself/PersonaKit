@@ -79,6 +79,7 @@ extension WorkspaceSessionFeatureModel {
       do {
         let map = try await operationRunner.loadSessionMap(
           workspaceURL: requestedWorkspaceURL,
+          sessionId: draft.id,
           personaId: draft.personaId,
           directiveId: draft.directiveId,
           kitOverrides: draft.kitOverrides
@@ -218,6 +219,7 @@ extension WorkspaceSessionFeatureModel {
       return .loaded(
         try await operationRunner.loadSessionMap(
           workspaceURL: workspaceURL,
+          sessionId: session.id,
           personaId: draft.personaId,
           directiveId: draft.directiveId,
           kitOverrides: draft.kitOverrides
@@ -233,6 +235,6 @@ extension WorkspaceSessionFeatureModel {
   private func makeDraftMapRequestKey(_ draft: WorkspaceSessionDraft) -> String {
     let sortedKitOverrides = draft.kitOverrides.sorted()
 
-    return "draft:\(draft.personaId)::\(draft.directiveId)::\(sortedKitOverrides.joined(separator: ","))"
+    return "draft:\(draft.id)::\(draft.personaId)::\(draft.directiveId)::\(sortedKitOverrides.joined(separator: ","))"
   }
 }

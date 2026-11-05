@@ -15,18 +15,41 @@ struct WorkspaceSessionMapBuilderTests {
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
     let first = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []
     )
     let second = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []
     )
 
     #expect(first == second)
+  }
+
+  @Test
+  func unsavedDraftWithoutIDGetsPlaceholderSessionNode() throws {
+    let workspaceURL = try makeTempDirectory().appendingPathComponent("Workspace")
+    let projectScopeURL = workspaceURL.appendingPathComponent(".personakit")
+
+    try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+    try copyFixtureKit(to: projectScopeURL)
+
+    let map = try WorkspaceSessionMapBuilder(globalScopeURL: nil).build(
+      workspaceURL: workspaceURL,
+      sessionId: "",
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: []
+    )
+
+    let sessionNode = try #require(map.nodes.first(where: { $0.kind == .session }))
+    #expect(sessionNode.key == "session:New Session")
+    #expect(sessionNode.displayName == "New Session")
   }
 
   @Test
@@ -40,6 +63,7 @@ struct WorkspaceSessionMapBuilderTests {
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
     let map = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []
@@ -48,7 +72,10 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(map.isFullyResolved)
     #expect(map.resolutionErrors.isEmpty)
 
-    #expect(map.nodes.contains(where: { $0.key == "session:active-session" }))
+    let sessionNode = try #require(map.nodes.first(where: { $0.kind == .session }))
+    #expect(sessionNode.key == "session:session-a")
+    #expect(sessionNode.id == "session-a")
+    #expect(sessionNode.displayName == "session-a")
     #expect(map.nodes.contains(where: { $0.key == "persona:senior-swiftui-engineer" }))
     #expect(map.nodes.contains(where: { $0.key == "directive:apply-style" }))
     #expect(map.nodes.contains(where: { $0.key == "kit:swift-style" }))
@@ -122,6 +149,7 @@ struct WorkspaceSessionMapBuilderTests {
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
     let map = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []
@@ -145,6 +173,7 @@ struct WorkspaceSessionMapBuilderTests {
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: nil)
     let map = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: [
@@ -161,7 +190,7 @@ struct WorkspaceSessionMapBuilderTests {
     #expect(repoConstraintsNode.badges.contains("override"))
 
     let overrideEdges = map.edges.filter { edge in
-      edge.fromKey == "session:active-session"
+      edge.fromKey == "session:session-a"
         && edge.toKey == "kit:repo-constraints"
         && edge.reason == "session.kitOverrides"
     }
@@ -194,6 +223,7 @@ struct WorkspaceSessionMapBuilderTests {
     let builder = WorkspaceSessionMapBuilder(globalScopeURL: globalScopeURL)
     let map = try builder.build(
       workspaceURL: workspaceURL,
+      sessionId: "session-a",
       personaId: "senior-swiftui-engineer",
       directiveId: "apply-style",
       kitOverrides: []

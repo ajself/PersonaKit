@@ -5,7 +5,7 @@ import Testing
 
 struct StudioRootNavigationStateTests {
   @Test
-  func mapNodeOpenSelectsLibraryItemAndClearsDestinationSearchOnly() throws {
+  func mapNodeOpenSelectsLibraryItemAndClearsDestinationSearchOnly() {
     let node = WorkspaceSessionMapNode(
       key: "persona:persona-a",
       id: "persona-a",
@@ -14,12 +14,7 @@ struct StudioRootNavigationStateTests {
       isMissing: false,
       badges: []
     )
-    let target = try #require(
-      SessionsMapNavigationResolver.navigationTarget(
-        for: node,
-        selectedSessionID: "session-a"
-      )
-    )
+    let target = SessionsMapNavigationResolver.navigationTarget(for: node)
 
     var state = StudioRootNavigationState(
       selection: .sessions,
@@ -41,21 +36,16 @@ struct StudioRootNavigationStateTests {
   }
 
   @Test
-  func sessionMapNodeOpenSelectsSessionAndClearsDestinationSearchOnly() throws {
+  func sessionMapNodeOpenSelectsSessionAndClearsDestinationSearchOnly() {
     let node = WorkspaceSessionMapNode(
-      key: "session:active-session",
-      id: "active-session",
-      displayName: "Active Session",
+      key: "session:session-a",
+      id: "session-a",
+      displayName: "session-a",
       kind: .session,
       isMissing: false,
       badges: []
     )
-    let target = try #require(
-      SessionsMapNavigationResolver.navigationTarget(
-        for: node,
-        selectedSessionID: "session-a"
-      )
-    )
+    let target = SessionsMapNavigationResolver.navigationTarget(for: node)
 
     var state = StudioRootNavigationState(
       selection: .personas,

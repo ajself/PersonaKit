@@ -92,6 +92,7 @@ public struct WorkspaceSessionMap: Equatable, Sendable {
 public protocol WorkspaceSessionMapBuilding: Sendable {
   func build(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]

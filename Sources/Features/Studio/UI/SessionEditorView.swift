@@ -16,6 +16,8 @@ struct SessionEditorView: View {
   let onCancel: () -> Void
   let onSave: @Sendable (WorkspaceSessionDraft) async -> String?
   let onRefreshMap: (WorkspaceSessionDraft) -> Void
+  /// The map labels the session by its saved id, so typing a new id doesn't rebuild it.
+  private let savedSessionID: String
 
   @State private var id: String
   @State private var personaID: String
@@ -52,6 +54,7 @@ struct SessionEditorView: View {
     self.onCancel = onCancel
     self.onSave = onSave
     self.onRefreshMap = onRefreshMap
+    self.savedSessionID = initialDraft.id
 
     let personaOptions = SessionEditorReferenceOptions(
       requestedID: initialDraft.personaId,
@@ -232,7 +235,8 @@ struct SessionEditorView: View {
 
   private func scheduleMapRefresh() {
     mapRefreshTask?.cancel()
-    let draft = currentDraft()
+    var draft = currentDraft()
+    draft.id = savedSessionID
 
     mapRefreshTask = Task {
       try? await Task.sleep(for: .milliseconds(200))

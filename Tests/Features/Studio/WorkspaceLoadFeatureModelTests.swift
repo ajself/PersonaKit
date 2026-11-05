@@ -373,6 +373,7 @@ private struct NoOpSessionPreviewManager: WorkspaceSessionPreviewManaging, Senda
 private struct NoOpSessionMapBuilder: WorkspaceSessionMapBuilding, Sendable {
   func build(
     workspaceURL: URL,
+    sessionId: String,
     personaId: String,
     directiveId: String,
     kitOverrides: [String]

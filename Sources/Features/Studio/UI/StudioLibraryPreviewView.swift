@@ -111,38 +111,34 @@ struct StudioLibraryPreviewView: View {
 
   @ViewBuilder
   private func usedByRow(_ node: WorkspaceSessionMapNode) -> some View {
-    if let target = SessionsMapNavigationResolver.navigationTarget(
-      for: node,
-      selectedSessionID: nil
-    ) {
-      let kindTitle = target.sidebarItem.singularTitle
+    let target = SessionsMapNavigationResolver.navigationTarget(for: node)
+    let kindTitle = target.sidebarItem.singularTitle
 
-      Button {
-        onNavigate(target)
-      } label: {
-        Label {
-          VStack(alignment: .leading, spacing: 1) {
-            Text(node.displayName)
-              .lineLimit(1)
-              .truncationMode(.middle)
+    Button {
+      onNavigate(target)
+    } label: {
+      Label {
+        VStack(alignment: .leading, spacing: 1) {
+          Text(node.displayName)
+            .lineLimit(1)
+            .truncationMode(.middle)
 
-            Text(StudioLibraryUsageState.rowSubtitle(for: node, kindTitle: kindTitle))
-              .font(.caption)
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .truncationMode(.middle)
-          }
-        } icon: {
-          Image(systemName: target.sidebarItem.systemImage)
+          Text(StudioLibraryUsageState.rowSubtitle(for: node, kindTitle: kindTitle))
+            .font(.caption)
             .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
+      } icon: {
+        Image(systemName: target.sidebarItem.systemImage)
+          .foregroundStyle(.secondary)
       }
-      .buttonStyle(.plain)
-      .accessibilityLabel(StudioLibraryUsageState.rowAccessibilityLabel(for: node, kindTitle: kindTitle))
-      .help("Open \(kindTitle) \(node.displayName)")
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .contentShape(Rectangle())
     }
+    .buttonStyle(.plain)
+    .accessibilityLabel(StudioLibraryUsageState.rowAccessibilityLabel(for: node, kindTitle: kindTitle))
+    .help("Open \(kindTitle) \(node.displayName)")
   }
 
   // The graph reloads after every successful workspace reload, so saving a fix clears this.
