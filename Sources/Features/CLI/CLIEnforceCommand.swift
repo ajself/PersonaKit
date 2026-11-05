@@ -432,7 +432,8 @@ struct EnforceCommand: ParsableCommand {
 ///
 /// For Claude Code, writes a frozen manifest and merges a `PreToolUse` hook into `.claude/settings.json`.
 /// For OpenCode, writes only the frozen manifest: the `opencode-personakit` server plugin is the hook,
-/// and PersonaKit never edits OpenCode config.
+/// and PersonaKit never edits OpenCode config. On both hosts, other `*.checks.json` files in the manifest folder
+/// are removed so the project keeps one manifest.
 /// PersonaKit never writes host config on its own; this runs only when invoked, prints
 /// exactly what it changes, and supports `--dry-run` to review before energizing.
 struct EnforceInstallCommand: ParsableCommand {
@@ -588,6 +589,8 @@ struct EnforceInstallCommand: ParsableCommand {
       action: "install"
     )
 
+    let manifestDirectory = frozenManifestURL.deletingLastPathComponent()
+    let otherManifests = try Self.otherManifestEntryNames(in: manifestDirectory, keeping: frozenManifestURL)
     let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
     let existingSettings = try Self.existingSettings(at: settingsURL, action: "install")
@@ -604,14 +607,23 @@ struct EnforceInstallCommand: ParsableCommand {
       print(TerminalText.escapingJSON(frozenManifestJSON))
       print("# Merged settings → \(settingsURL.path)")
       print(TerminalText.escapingJSON(mergedSettingsJSON))
+      for name in otherManifests {
+        print(TerminalText.sanitized("# Would remove → \(manifestDirectory.appendingPathComponent(name).path)"))
+      }
     } else {
       let writer = AtomicFileWriter()
       try writer.write(contents: frozenManifestJSON + "\n", to: frozenManifestURL)
       try writer.write(contents: mergedSettingsJSON + "\n", to: settingsURL)
+      // Only after settings.json names the new manifest, so the file never names a removed one. A running
+      // Claude Code still runs the old hook until it reloads, and that hook blocks every call meanwhile.
+      let removed = try Self.removeOtherManifests(otherManifests, in: manifestDirectory, keeping: frozenManifestURL)
 
       print("Installed Claude Code enforcement for session \(sessionId).")
       if replacedExisting {
         print("  (replaced a prior PersonaKit enforcement entry — one active contract per project)")
+      }
+      for name in removed {
+        print(TerminalText.sanitized("  (removed prior manifest \(name))"))
       }
       print("  matcher: \(matcher)")
       print("  frozen manifest: \(frozenManifestURL.path)")
@@ -690,16 +702,7 @@ struct EnforceInstallCommand: ParsableCommand {
     try Self.refuseSymbolicLinks([manifestDirectory.deletingLastPathComponent(), manifestDirectory], action: "install")
 
     let frozenManifestURL = manifestDirectory.appendingPathComponent("\(sessionId).checks.json")
-    let entries = try Self.regularManifestEntryNames(in: manifestDirectory, action: "install")
-
-    // An entry that is the same directory entry as the new manifest (a case variant on a case-insensitive
-    // volume) is decided by identity, not by comparing names: the volume knows what folds together.
-    let existingNewIdentity = Self.fileIdentity(frozenManifestURL.path)
-    let otherManifests = entries.filter { name in
-      name != frozenManifestURL.lastPathComponent
-        && (existingNewIdentity == nil
-          || Self.fileIdentity(manifestDirectory.appendingPathComponent(name).path) != existingNewIdentity)
-    }
+    let otherManifests = try Self.otherManifestEntryNames(in: manifestDirectory, keeping: frozenManifestURL)
     let frozenManifestJSON = try Self.frozenManifestJSON(manifest)
 
     if dryRun {
@@ -731,6 +734,21 @@ struct EnforceInstallCommand: ParsableCommand {
           + "enforced yet. Run `make opencode-install` from a PersonaKit checkout of tag v\(PersonaKitVersion.current); "
           + "`personakit` itself never edits OpenCode config.\n"
       )
+    }
+  }
+
+  /// The `*.checks.json` entries in `directory` other than `manifestURL`, the ones install removes. Fails when any
+  /// entry is not a regular file.
+  private static func otherManifestEntryNames(in directory: URL, keeping manifestURL: URL) throws -> [String] {
+    let entries = try regularManifestEntryNames(in: directory, action: "install")
+
+    // An entry that is the same directory entry as the new manifest (a case variant on a case-insensitive
+    // volume) is decided by identity, not by comparing names: the volume knows what folds together.
+    let existingNewIdentity = fileIdentity(manifestURL.path)
+    return entries.filter { name in
+      name != manifestURL.lastPathComponent
+        && (existingNewIdentity == nil
+          || fileIdentity(directory.appendingPathComponent(name).path) != existingNewIdentity)
     }
   }
 

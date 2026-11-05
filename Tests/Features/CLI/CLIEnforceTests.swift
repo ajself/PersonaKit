@@ -1098,6 +1098,128 @@ struct CLIEnforceTests {
   }
 
   @Test
+  func claudeInstallReplacesOtherManifests() throws {
+    let projectDir = try freshProjectDir("pk-claude-replace")
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+    try Data("notes".utf8).write(to: directory.appendingPathComponent("notes.txt"))
+
+    let result = runInstall(extra: [], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("(removed prior manifest old.checks.json)"))
+    #expect(tree(directory) == ["notes.txt", "\(Self.openCodeSessionId).checks.json"])
+    let settings = try String(contentsOf: projectDir.appendingPathComponent(".claude/settings.json"), encoding: .utf8)
+    #expect(settings.contains("\(Self.openCodeSessionId).checks.json"))
+    #expect(!settings.contains("old.checks.json"))
+  }
+
+  @Test
+  func claudeInstallOfAnotherSessionReplacesThePriorHookAndManifest() throws {
+    let projectDir = try freshProjectDir("pk-claude-switch")
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+    // Recast that install as one for another session: its manifest and the hook that names it.
+    let current = "\(Self.openCodeSessionId).checks.json"
+    try FileManager.default.moveItem(
+      at: directory.appendingPathComponent(current),
+      to: directory.appendingPathComponent("other-session.checks.json")
+    )
+    let priorSettings = try String(contentsOf: settingsURL, encoding: .utf8)
+      .replacingOccurrences(of: current, with: "other-session.checks.json")
+    try Data(priorSettings.utf8).write(to: settingsURL)
+
+    let result = runInstall(extra: [], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("(replaced a prior PersonaKit enforcement entry"))
+    #expect(result.stdout.contains("(removed prior manifest other-session.checks.json)"))
+    #expect(tree(directory) == [current])
+    let settings = try String(contentsOf: settingsURL, encoding: .utf8)
+    #expect(settings.contains(current))
+    #expect(!settings.contains("other-session"))
+  }
+
+  @Test
+  func claudeInstallDryRunListsManifestsItWouldRemove() throws {
+    let projectDir = try freshProjectDir("pk-claude-dry-remove")
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+
+    let result = runInstall(extra: [], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(result.stdout.contains("# Would remove → \(directory.path)/old.checks.json"))
+    #expect(tree(projectDir) == [".claude", ".claude/personakit", ".claude/personakit/old.checks.json"])
+  }
+
+  @Test
+  func claudeInstallDryRunListsNothingToRemoveWhenOnlyItsOwnManifestExists() throws {
+    let projectDir = try freshProjectDir("pk-claude-dry-same")
+    #expect(runInstall(extra: [], projectDir: projectDir, dryRun: false).status == 0)
+
+    let result = runInstall(extra: [], projectDir: projectDir)
+
+    #expect(result.status == 0)
+    #expect(!result.stdout.contains("Would remove"))
+  }
+
+  @Test
+  func claudeInstallKeepsExactlyTheNewManifestWhenAnOldNameDiffersOnlyByCase() throws {
+    let projectDir = try freshProjectDir("pk-claude-case")
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let variant = Self.openCodeSessionId.uppercased() + ".checks.json"
+    try Data("{}".utf8).write(to: directory.appendingPathComponent(variant))
+
+    let dry = runInstall(extra: [], projectDir: projectDir)
+    #expect(dry.status == 0)
+    #expect(!dry.stdout.contains("Would remove"))
+
+    let result = runInstall(extra: [], projectDir: projectDir, dryRun: false)
+
+    #expect(result.status == 0)
+    #expect(tree(directory) == ["\(Self.openCodeSessionId).checks.json"])
+    let text = try String(
+      contentsOf: directory.appendingPathComponent("\(Self.openCodeSessionId).checks.json"),
+      encoding: .utf8
+    )
+    #expect(text.contains("\"sessionId\""))
+  }
+
+  @Test
+  func claudeInstallRefusesNonRegularManifestEntries() throws {
+    let projectDir = try freshProjectDir("pk-claude-nonregular")
+    let directory = projectDir.appendingPathComponent(".claude/personakit")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let target = projectDir.appendingPathComponent("target.txt")
+    try Data("t".utf8).write(to: target)
+    try FileManager.default.createSymbolicLink(
+      at: directory.appendingPathComponent("link.checks.json"),
+      withDestinationURL: target
+    )
+    try FileManager.default.createDirectory(
+      at: directory.appendingPathComponent("dir.checks.json"),
+      withIntermediateDirectories: true
+    )
+    try Data("{}".utf8).write(to: directory.appendingPathComponent("old.checks.json"))
+    let before = tree(projectDir)
+
+    for dryRun in [false, true] {
+      let result = runInstall(extra: [], projectDir: projectDir, dryRun: dryRun)
+
+      #expect(result.status != 0)
+      #expect((result.stderr + result.stdout).contains("link.checks.json"))
+      #expect((result.stderr + result.stdout).contains("dir.checks.json"))
+      #expect(!(result.stderr + result.stdout).contains("old.checks.json"))
+    }
+    #expect(tree(projectDir) == before)
+  }
+
+  @Test
   func claudeInstallRefusesSettingsItCannotRead() throws {
     let projectDir = try freshProjectDir("pk-claude-unreadable")
     let settingsURL = projectDir.appendingPathComponent(".claude/settings.json")
@@ -1599,6 +1721,10 @@ struct CLIEnforceTests {
         #"{"hooks":{"PreToolUse":[{"matcher":".*","hooks":[{"type":"command","#
         + #""command":"personakit hook-check --manifest /p/.claude/personakit/old.checks.json"}]}]}}"#
       try Data(settings.utf8).write(to: claudeDir.appendingPathComponent("settings.json"))
+      // With nothing to install, the earlier manifest stays alongside the hook that names it.
+      let manifestDirectory = claudeDir.appendingPathComponent("personakit")
+      try FileManager.default.createDirectory(at: manifestDirectory, withIntermediateDirectories: true)
+      try Data("{}".utf8).write(to: manifestDirectory.appendingPathComponent("old.checks.json"))
     }
     let before = snapshot(projectDir)
 

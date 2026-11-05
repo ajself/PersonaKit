@@ -113,8 +113,8 @@ every call.
 ## Install
 
 Enforcement covers one session per project. Run install from the project folder,
-or pass `--project-dir <path>`. Add `--dry-run` to print what would be written
-without writing it.
+or pass `--project-dir <path>`. Add `--dry-run` to print what would be written,
+and which earlier manifests would be removed, without changing anything.
 
 ### Claude Code
 
@@ -126,9 +126,12 @@ personakit enforce install --session <id>
 
 This writes `.claude/personakit/<id>.checks.json` and merges a `PreToolUse`
 hook into `.claude/settings.json`. Other settings and hooks are kept; a previous
-PersonaKit hook is replaced, so one contract is in force per project. Claude
+PersonaKit hook is replaced and any other manifest in `.claude/personakit/` is
+removed, so one contract is in force per project. Claude
 Code watches its settings, so running sessions pick up the hook within a few
-seconds; restart Claude Code if they do not.
+seconds; restart Claude Code if they do not. When install replaces another
+session's manifest, a running session blocks every tool call until it picks up
+the new hook.
 
 ### OpenCode
 
@@ -164,8 +167,7 @@ Install refuses, before writing anything, when `.claude`, `.claude/personakit`,
 `.claude/settings.json`, `.opencode`, or `.opencode/personakit` is a symbolic
 link, so the hook and manifest stay inside the project. It also refuses when
 `.claude/settings.json` cannot be read or is not a JSON object, and when the
-OpenCode manifest folder holds a `*.checks.json` entry that is not a regular
-file.
+manifest folder holds a `*.checks.json` entry that is not a regular file.
 
 ## Remove
 
