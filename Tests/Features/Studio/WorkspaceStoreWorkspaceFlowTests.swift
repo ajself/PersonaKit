@@ -73,7 +73,7 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
-  func validateWorkspaceAppendsSessionDiagnosticsIssues() async throws {
+  func validateWorkspaceShowsCoreIssuesWithoutStudioAdditions() async throws {
     let workspaceURL = try makeTempDirectory()
     let sessionFileURL = workspaceURL.appendingPathComponent(".personakit/Sessions/session-a.session.json")
 
@@ -150,17 +150,11 @@ struct WorkspaceStoreWorkspaceFlowTests {
     store.loadWorkspace()
 
     await waitFor {
-      store.validation.issues.count == 2
+      store.validation.summary == "core-summary"
     }
 
-    #expect(store.validation.summary == "core-summary")
-    #expect(store.validation.issues[0].entityType == .persona)
-    let hasSessionKitIssue = store.validation.issues.contains(where: { issue in
-      issue.entityType == .session
-        && issue.entityId == "session-a"
-        && issue.field == "kitOverrides"
-    })
-    #expect(hasSessionKitIssue)
+    // The session's missing kit is the core validator's to report; Studio adds nothing.
+    #expect(store.validation.issues == coreValidation.issues)
   }
 
   @Test

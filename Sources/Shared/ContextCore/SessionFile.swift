@@ -53,7 +53,7 @@ public enum SessionFileError: LocalizedError {
 
 /// Loads session files from project/global scope roots.
 public struct SessionFileLoader {
-  static func expectedPath(for sessionId: String) -> String {
+  package static func expectedPath(for sessionId: String) -> String {
     PersonaKitPathSafety.expectedPath(
       baseRelativePath: "Sessions",
       segment: sessionId,

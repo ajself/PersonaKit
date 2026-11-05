@@ -74,11 +74,40 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       entityType: map(error.entityType),
       entityId: error.entityId,
       field: error.field,
-      filePath: resolveFilePath(error.expectedPath, scopes: scopes),
-      message: error.message,
+      filePath: resolveFilePath(expectedPath(for: error), scopes: scopes),
+      message: message(for: error),
       severity: .error,
       referencesUnresolvedID: error.referencesUnresolvedID
     )
+  }
+
+  /// Names the missing id in the row, the way the CLI's `missingId=` suffix does. Core messages
+  /// that already name it quote it, or it is the row's own entity id (session file errors).
+  private func message(for error: ValidationError) -> String {
+    guard let missingId = error.missingId,
+      !missingId.isEmpty,
+      missingId != error.entityId,
+      !error.message.contains("\"\(missingId)\"")
+    else {
+      return error.message
+    }
+
+    let base = error.message.hasSuffix(".") ? String(error.message.dropLast()) : error.message
+    return "\(base): \(missingId)"
+  }
+
+  /// Session reference errors carry no path, but they always belong to the session's own file,
+  /// so Studio can still reveal it.
+  private func expectedPath(for error: ValidationError) -> String? {
+    if let expectedPath = error.expectedPath {
+      return expectedPath
+    }
+
+    guard error.entityType == .session, let sessionId = error.entityId else {
+      return nil
+    }
+
+    return SessionFileLoader.expectedPath(for: sessionId)
   }
 
   private func map(_ entityType: ValidationEntityType) -> WorkspaceValidationEntityType {

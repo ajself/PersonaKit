@@ -38,22 +38,6 @@ package actor WorkspaceOperationRunner {
     try workspaceValidator.validate(workspaceURL: workspaceURL)
   }
 
-  package func validate(
-    workspaceURL: URL,
-    snapshot: WorkspaceSnapshot
-  ) throws -> WorkspaceValidationSnapshot {
-    let coreValidation = try workspaceValidator.validate(workspaceURL: workspaceURL)
-    let sessionIssues = WorkspaceSessionDiagnostics.validateSessions(
-      workspaceURL: workspaceURL,
-      snapshot: snapshot
-    )
-
-    return WorkspaceValidationSnapshot(
-      summary: coreValidation.summary,
-      issues: coreValidation.issues + sessionIssues
-    )
-  }
-
   package func loadSessionDraft(fileURL: URL) throws -> WorkspaceSessionDraft {
     try sessionManager.loadDraft(fileURL: fileURL)
   }

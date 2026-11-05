@@ -54,7 +54,6 @@ final class WorkspaceValidationFeatureModel {
   /// until the new ones arrive, so background revalidation after a file change doesn't flash.
   func runValidation(
     workspaceURL: URL,
-    snapshotAtValidationStart: WorkspaceSnapshot,
     showsProgress: Bool = true
   ) {
     cancelValidationTask()
@@ -72,12 +71,9 @@ final class WorkspaceValidationFeatureModel {
       state.setErrorMessage(nil)
     }
 
-    validationTask = Task { [requestedWorkspaceURL, snapshotAtValidationStart] in
+    validationTask = Task { [requestedWorkspaceURL] in
       do {
-        let validation = try await operationRunner.validate(
-          workspaceURL: requestedWorkspaceURL,
-          snapshot: snapshotAtValidationStart
-        )
+        let validation = try await operationRunner.validate(workspaceURL: requestedWorkspaceURL)
 
         guard !Task.isCancelled,
           activeWorkspaceURL == requestedWorkspaceURL

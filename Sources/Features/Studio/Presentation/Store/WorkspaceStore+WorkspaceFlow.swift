@@ -198,7 +198,6 @@ extension WorkspaceStore {
         self.libraryFeatureModel.refreshUsageGraph(workspaceURL: workspaceURL)
         self.validationFeatureModel.runValidation(
           workspaceURL: workspaceURL,
-          snapshotAtValidationStart: snapshot,
           showsProgress: changedFileURLs == nil
         )
         self.watchLoadedWorkspace()
@@ -252,7 +251,6 @@ extension WorkspaceStore {
   private func keepLastSnapshotAfterFailedExternalReload(workspaceURL: URL) {
     validationFeatureModel.runValidation(
       workspaceURL: workspaceURL,
-      snapshotAtValidationStart: snapshot,
       showsProgress: false
     )
   }
@@ -265,10 +263,7 @@ extension WorkspaceStore {
       return
     }
 
-    validationFeatureModel.runValidation(
-      workspaceURL: workspaceURL,
-      snapshotAtValidationStart: snapshot
-    )
+    validationFeatureModel.runValidation(workspaceURL: workspaceURL)
   }
 
   /// Reveals a file in Finder.

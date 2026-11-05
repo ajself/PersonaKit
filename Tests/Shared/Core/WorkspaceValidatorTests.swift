@@ -86,6 +86,7 @@ struct WorkspaceValidatorTests {
     #expect(snapshot.issues[0].severity == WorkspaceValidationSeverity.error)
     #expect(snapshot.issues[1].entityType == WorkspaceValidationEntityType.kit)
     #expect(snapshot.issues[1].filePath == globalKitURL.path())
+    #expect(snapshot.issues[1].message == "Missing skill id: swift-style-guide")
     #expect(snapshot.issues[2].entityType == WorkspaceValidationEntityType.skill)
     #expect(snapshot.issues[2].filePath == ambiguousPath)
   }
@@ -137,6 +138,129 @@ struct WorkspaceValidatorTests {
     )
     #expect(byField["defaultKitIds"] == true)
     #expect(byField["schema"] == false)
+  }
+
+  @Test
+  func validateNamesMissingIDOnlyWhenMessageOmitsIt() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let projectPacksURL = PersonaKitDirectory.packsURL(
+      root: workspaceURL.appendingPathComponent(".personakit")
+    )
+
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { url in
+        url.standardizedFileURL == projectPacksURL.standardizedFileURL
+      },
+      fileExists: { _ in false },
+      defaultGlobalScopeURL: { nil },
+      validateScopes: { _ in
+        ValidationResult(
+          counts: .zero,
+          errors: [
+            ValidationError(
+              entityType: .session,
+              entityId: "s",
+              field: "personaId",
+              missingId: "missing-persona",
+              expectedPath: nil,
+              message: "Missing persona id.",
+              referencesUnresolvedID: true
+            ),
+            ValidationError(
+              entityType: .persona,
+              entityId: "p",
+              field: "defaultKitIds",
+              missingId: "missing-kit",
+              expectedPath: nil,
+              message: "Missing kit id \"missing-kit\".",
+              referencesUnresolvedID: true
+            ),
+            ValidationError(
+              entityType: .session,
+              entityId: "s",
+              field: "personaId",
+              missingId: "persona",
+              expectedPath: nil,
+              message: "Missing persona id.",
+              referencesUnresolvedID: true
+            ),
+            ValidationError(
+              entityType: .session,
+              entityId: "x",
+              field: "sessionFile",
+              missingId: "x",
+              expectedPath: "Sessions/x.session.json",
+              message: "Session file not found for x. Expected Sessions/x.session.json."
+            ),
+          ]
+        )
+      }
+    )
+
+    let validator = WorkspaceValidator(globalScopeURL: nil, dependencies: dependencies)
+    let messages = try validator.validate(workspaceURL: workspaceURL).issues.map(\.message)
+
+    #expect(
+      messages.sorted() == [
+        "Missing kit id \"missing-kit\".",
+        "Missing persona id: missing-persona",
+        "Missing persona id: persona",
+        "Session file not found for x. Expected Sessions/x.session.json.",
+      ]
+    )
+  }
+
+  @Test
+  func validateGivesSessionReferenceIssuesTheSessionFile() throws {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let globalScopeURL = URL(fileURLWithPath: "/Global/.personakit")
+    let projectPacksURL = PersonaKitDirectory.packsURL(
+      root: workspaceURL.appendingPathComponent(".personakit")
+    )
+    let globalSessionURL = globalScopeURL.appendingPathComponent("Sessions/global-only.session.json")
+
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { url in
+        url.standardizedFileURL == projectPacksURL.standardizedFileURL
+      },
+      fileExists: { url in
+        url.standardizedFileURL == globalSessionURL.standardizedFileURL
+      },
+      defaultGlobalScopeURL: { globalScopeURL },
+      validateScopes: { _ in
+        ValidationResult(
+          counts: .zero,
+          errors: [
+            ValidationError(
+              entityType: .session,
+              entityId: "global-only",
+              field: "personaId",
+              missingId: "missing-persona",
+              expectedPath: nil,
+              message: "Missing persona id.",
+              referencesUnresolvedID: true
+            ),
+            ValidationError(
+              entityType: .session,
+              entityId: nil,
+              field: "sessionFile",
+              missingId: nil,
+              expectedPath: nil,
+              message: "Session discovery failed."
+            ),
+          ]
+        )
+      }
+    )
+
+    let validator = WorkspaceValidator(globalScopeURL: globalScopeURL, dependencies: dependencies)
+    let issues = try validator.validate(workspaceURL: workspaceURL).issues
+
+    let filePathByEntityID = Dictionary(
+      uniqueKeysWithValues: issues.map { ($0.entityId ?? "none", $0.filePath) }
+    )
+    #expect(filePathByEntityID["global-only"] == globalSessionURL.path())
+    #expect(filePathByEntityID["none"] == .some(nil))
   }
 
   @Test
