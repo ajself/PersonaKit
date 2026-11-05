@@ -52,6 +52,8 @@ public final class WorkspaceStore {
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
   var isAgentSetupPresented = false
+  /// A destination the window should show next; the root view applies it and clears it.
+  var pendingNavigationTarget: StudioNavigationTarget?
   var validation: WorkspaceValidationSnapshot {
     get {
       validationFeatureModel.validation

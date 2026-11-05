@@ -266,6 +266,20 @@ extension WorkspaceStore {
     validationFeatureModel.runValidation(workspaceURL: workspaceURL)
   }
 
+  /// Validates and shows Validation Results, so a menu-driven run always has a visible result.
+  func validateWorkspaceAndShowResults() {
+    guard workspaceURL != nil else {
+      return
+    }
+
+    validateWorkspace()
+    pendingNavigationTarget = StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")
+  }
+
+  func clearPendingNavigationTarget() {
+    pendingNavigationTarget = nil
+  }
+
   /// Reveals a file in Finder.
   func revealInFinder(fileURL: URL) {
     systemFeatureModel.revealInFinder(fileURL: fileURL)

@@ -89,6 +89,15 @@ public struct StudioRootView: View {
         recordCurrentWorkspaceIfLoaded()
       }
     }
+    // `initial` lets a reopened window apply a request made while no window was open.
+    .onChange(of: workspaceStore.pendingNavigationTarget, initial: true) { _, target in
+      guard let target else {
+        return
+      }
+
+      applyNavigationTarget(target)
+      workspaceStore.clearPendingNavigationTarget()
+    }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       // A global item keeps its identity across workspaces, so a carried-over selection would
       // never re-select the detail the store just cleared.

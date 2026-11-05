@@ -17,7 +17,7 @@ public struct StudioAppCommands: Commands {
       .keyboardShortcut("o", modifiers: [.command])
 
       Button("Validate Workspace") {
-        workspaceStore.validateWorkspace()
+        workspaceStore.validateWorkspaceAndShowResults()
       }
       .disabled(workspaceStore.workspaceURL == nil)
     }

@@ -31,6 +31,51 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
+  func validateWorkspaceAndShowResultsRunsValidationAndRequestsValidationResults() async {
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        makeValidation(entityID: "persona-a")
+      }
+    )
+
+    store.workspaceURL = URL(fileURLWithPath: "/Workspace")
+    store.validateWorkspaceAndShowResults()
+
+    #expect(
+      store.pendingNavigationTarget
+        == StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")
+    )
+
+    await waitFor {
+      store.validation.issues.first?.entityId == "persona-a"
+    }
+
+    store.clearPendingNavigationTarget()
+
+    #expect(store.pendingNavigationTarget == nil)
+  }
+
+  @Test
+  func validateWorkspaceAndShowResultsDoesNothingWithoutWorkspace() {
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        Issue.record("Validation must not run without a workspace.")
+        return .empty
+      }
+    )
+
+    store.validateWorkspaceAndShowResults()
+
+    #expect(store.pendingNavigationTarget == nil)
+  }
+
+  @Test
   func validateWorkspaceIgnoresStaleResultAfterWorkspaceIsCleared() async {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let validationGate = BlockingCallGate()
