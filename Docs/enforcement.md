@@ -163,7 +163,11 @@ warns when the machine-wide OpenCode config does not list the plugin. The
 
 ### Install Refusals
 
-Install refuses, before writing anything, when `.claude`, `.claude/personakit`,
+Install validates the session it enforces, the same way export does, and refuses
+on any error in that session, its persona, directive, kits, or their skills.
+Problems elsewhere in the library print as `warning:` lines and do not stop it.
+
+Install also refuses, before writing anything, when `.claude`, `.claude/personakit`,
 `.claude/settings.json`, `.opencode`, or `.opencode/personakit` is a symbolic
 link, so the hook and manifest stay inside the project. It also refuses when
 `.claude/settings.json` cannot be read or is not a JSON object, and when the

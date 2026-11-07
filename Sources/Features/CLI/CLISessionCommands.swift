@@ -124,19 +124,18 @@ struct ExportCommand: ParsableCommand {
         from: session,
         scopes: scopes
       )
+      let export = try SessionExporter.exportWithValidation(
+        scopes: scopes,
+        personaId: sessionInput.personaId,
+        directiveId: sessionInput.directiveId,
+        kitOverrides: sessionInput.kitOverrides,
+        sessionId: sessionInput.sessionId,
+        targetPaths: referenceTriggers.targetPaths,
+        skillTags: referenceTriggers.skillTags
+      )
       // Sanitized once for every destination, so a person reading this export sees what an agent reading it
       // sees.
-      let output = try TerminalText.sanitized(
-        SessionExporter.export(
-          scopes: scopes,
-          personaId: sessionInput.personaId,
-          directiveId: sessionInput.directiveId,
-          kitOverrides: sessionInput.kitOverrides,
-          sessionId: sessionInput.sessionId,
-          targetPaths: referenceTriggers.targetPaths,
-          skillTags: referenceTriggers.skillTags
-        )
-      )
+      let output = TerminalText.sanitized(export.markdown)
       if let outputPath {
         let outputURL = RootPathResolver().resolve(path: outputPath)
         try AtomicFileWriter().write(contents: output, to: outputURL)
@@ -155,14 +154,14 @@ struct ExportCommand: ParsableCommand {
         var stderrStream = StandardError()
         stderrStream.write(Self.statsSummary(for: output) + "\n")
       }
+
+      // After the export lands, and on stderr only: integrations parse stdout as the export.
+      CLIHelpers.writeValidationWarnings(export.validation)
     } catch let error as ExportError {
       var stderrStream = StandardError()
       switch error {
       case .validationFailed(let result):
-        stderrStream.write(result.summary + "\n")
-        for validationError in result.errors {
-          stderrStream.write(validationError.lineDescription() + "\n")
-        }
+        CLIHelpers.writeValidationReport(result)
       case .resolutionFailed(let resolutionError):
         for resolutionError in resolutionError.errors {
           stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
@@ -216,34 +215,32 @@ struct ResolveGroundingSkillsCommand: ParsableCommand {
         from: session,
         scopes: scopes
       )
-      let result = try WorkflowGroundingSkillResolver.resolve(
+      let lookup = try WorkflowGroundingSkillResolver.resolveWithValidation(
         scopes: scopes,
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
+        sessionId: sessionInput.sessionId,
         input: SkillTriggerSelectionInput(
           targetPaths: referenceTriggers.targetPaths,
           skillTags: referenceTriggers.skillTags
         )
       )
-
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-      let data = try encoder.encode(result)
+      let data = try encoder.encode(lookup.result)
 
       guard let output = String(data: data, encoding: .utf8) else {
         throw CLIError.failure("Failed to encode grounding skill resolution output.")
       }
 
       print(TerminalText.escapingJSON(output))
+      CLIHelpers.writeValidationWarnings(lookup.validation)
     } catch let error as GroundingSkillLookupError {
       var stderrStream = StandardError()
       switch error {
       case .validationFailed(let result):
-        stderrStream.write(result.summary + "\n")
-        for validationError in result.errors {
-          stderrStream.write(validationError.lineDescription() + "\n")
-        }
+        CLIHelpers.writeValidationReport(result)
       case .resolutionFailed(let resolutionError):
         for resolutionError in resolutionError.errors {
           stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")

@@ -518,9 +518,26 @@ struct EnforceInstallCommand: ParsableCommand {
 
     let scopes = try CLIHelpers.resolveScopes(options: scope)
     let manifest: ChecksManifest
+    let validation: ValidationResult
 
     do {
       let sessionFile = try SessionFileLoader.load(scopes: scopes, sessionId: sessionId)
+      // Enforce only a session that validates; errors elsewhere in the library are warnings.
+      validation = try Validator.validate(
+        scopes: scopes,
+        session: ValidationSessionScope(
+          sessionId: sessionFile.id,
+          personaId: sessionFile.personaId,
+          directiveId: sessionFile.directiveId,
+          kitOverrides: sessionFile.kitOverrides ?? []
+        )
+      )
+
+      guard validation.errors.isEmpty else {
+        CLIHelpers.writeValidationReport(validation)
+        throw ExitCode.failure
+      }
+
       let result = try SessionContractResolver.resolve(scopes: scopes, session: sessionFile)
       manifest = ChecksManifestDeriver.derive(from: result).withMCPServerName(mcpServer)
     } catch let error as ResolverResolutionError {
@@ -537,6 +554,12 @@ struct EnforceInstallCommand: ParsableCommand {
       throw ExitCode.failure
     }
 
+    try install(manifest: manifest, sessionId: sessionId)
+    // Only once install has succeeded, so a later refusal is not preceded by a passing summary.
+    CLIHelpers.writeValidationWarnings(validation)
+  }
+
+  private func install(manifest: ChecksManifest, sessionId: String) throws {
     let projectRoot = RootPathResolver().resolve(path: projectDir)
 
     if host == .opencode {

@@ -163,9 +163,7 @@ enum MCPInternalSupport {
   static func formatExportError(_ error: ExportError) -> String {
     switch error {
     case .validationFailed(let result):
-      var lines: [String] = [result.summary]
-      lines.append(contentsOf: result.errors.map { $0.lineDescription() })
-      return TerminalText.sanitized(lines.joined(separator: "\n"))
+      return TerminalText.sanitized(result.reportLines.joined(separator: "\n"))
     case .resolutionFailed(let resolutionError):
       return formatResolutionErrors(resolutionError.errors)
     case .readFailed(let message):

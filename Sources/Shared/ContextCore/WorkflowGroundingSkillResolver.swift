@@ -21,6 +21,19 @@ public struct GroundingSkillLookupResult: Codable, Equatable, Sendable {
   }
 }
 
+/// A grounding-skill lookup and the scoped validation it passed. Kept apart from the lookup result, whose JSON
+/// is the command output.
+public struct GroundingSkillLookup: Equatable, Sendable {
+  public let result: GroundingSkillLookupResult
+  /// Library errors outside the session, as warnings.
+  public let validation: ValidationResult
+
+  public init(result: GroundingSkillLookupResult, validation: ValidationResult) {
+    self.result = result
+    self.validation = validation
+  }
+}
+
 /// Evaluates declared workflow grounding skills from explicit, caller-supplied trigger inputs.
 public enum WorkflowGroundingSkillResolver {
   public static func resolve(
@@ -28,10 +41,43 @@ public enum WorkflowGroundingSkillResolver {
     personaId: String,
     directiveId: String,
     kitOverrides: [String],
+    sessionId: String? = nil,
     input: SkillTriggerSelectionInput,
     fileManager: FileManager = .default
   ) throws -> GroundingSkillLookupResult {
-    let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
+    try resolveWithValidation(
+      scopes: scopes,
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: kitOverrides,
+      sessionId: sessionId,
+      input: input,
+      fileManager: fileManager
+    )
+    .result
+  }
+
+  /// Resolves grounding skills after a validation scoped to this session: errors elsewhere in the library come
+  /// back as warnings instead of blocking.
+  public static func resolveWithValidation(
+    scopes: ScopeSet,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String],
+    sessionId: String? = nil,
+    input: SkillTriggerSelectionInput,
+    fileManager: FileManager = .default
+  ) throws -> GroundingSkillLookup {
+    let validation = try Validator.validate(
+      scopes: scopes,
+      session: ValidationSessionScope(
+        sessionId: sessionId,
+        personaId: personaId,
+        directiveId: directiveId,
+        kitOverrides: kitOverrides
+      ),
+      fileManager: fileManager
+    )
 
     if !validation.errors.isEmpty {
       throw GroundingSkillLookupError.validationFailed(validation)
@@ -56,12 +102,14 @@ public enum WorkflowGroundingSkillResolver {
       throw GroundingSkillLookupError.resolutionFailed(error)
     }
 
-    return try resolve(
+    let result = try resolve(
       session: session,
       scopes: scopes,
       input: input,
       fileManager: fileManager
     )
+
+    return GroundingSkillLookup(result: result, validation: validation)
   }
 
   public static func resolve(

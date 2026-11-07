@@ -108,7 +108,10 @@ is read-only by design.
    `personakit export --session <id>` (add `--copy` or `--output <path>`). Add
    `--stats` to print a size summary (lines / bytes / sections) to stderr when you
    need to budget the handoff context; it leaves the exported Markdown on stdout
-   untouched.
+   untouched. Export checks only what the session uses: its persona, directive,
+   kits, and their skills. A problem elsewhere in the library prints to stderr as
+   a `warning:` line and does not stop the export; `personakit validate` still
+   checks everything.
 5. Inspect provenance if a constraint surprises you:
    `personakit graph --session <id>`.
 

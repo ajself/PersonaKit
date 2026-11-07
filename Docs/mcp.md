@@ -58,6 +58,8 @@ The key tools are:
 - `personakit_resolve_grounding_skills`: select triggered grounding skills for explicit paths or tags.
 - `personakit_export`: assemble the Markdown handoff context.
 
+Export and grounding-skill lookup check only what the requested session uses. A problem elsewhere in the library does not block them and is left out of their results, so the export stays plain Markdown; when the session itself fails validation, the error lists those problems as `warning:` lines after the session's own errors. `personakit_validate` checks the whole library.
+
 ## Client Setup Notes
 
 Client configuration formats differ, so treat these as starting points and

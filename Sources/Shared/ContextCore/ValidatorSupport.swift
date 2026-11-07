@@ -50,7 +50,7 @@ enum ValidatorSupport {
 
     return ValidationError(
       entityType: map(schemaPath: error.relativePath),
-      entityId: nil,
+      entityId: error.entityId,
       field: "schema",
       missingId: nil,
       expectedPath: error.relativePath,

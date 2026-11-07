@@ -49,6 +49,7 @@ extension MCPToolService {
         personaId: sessionInput.personaId,
         directiveId: sessionInput.directiveId,
         kitOverrides: sessionInput.kitOverrides,
+        sessionId: sessionInput.sessionId,
         input: SkillTriggerSelectionInput(
           targetPaths: input.targetPaths,
           skillTags: input.skillTags
@@ -58,8 +59,7 @@ extension MCPToolService {
     } catch let error as GroundingSkillLookupError {
       switch error {
       case .validationFailed(let result):
-        let lines = [result.summary] + result.errors.map { $0.lineDescription() }
-        throw MCPError.invalidParams(lines.joined(separator: "\n"))
+        throw MCPError.invalidParams(TerminalText.sanitized(result.reportLines.joined(separator: "\n")))
       case .resolutionFailed(let resolutionError):
         throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(resolutionError.errors))
       case .groundingSkillResolutionFailed(let resolutionError):

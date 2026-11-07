@@ -295,4 +295,21 @@ enum CLIHelpers {
     parts.append(error.message)
     return "Error: " + parts.joined(separator: " ")
   }
+
+  /// Writes a failed handoff validation to stderr: summary, errors, then warnings.
+  static func writeValidationReport(_ result: ValidationResult) {
+    var stderrStream = StandardError()
+    for line in result.reportLines {
+      stderrStream.write(TerminalText.sanitized(line) + "\n")
+    }
+  }
+
+  /// Writes the summary and warnings of a passed handoff validation to stderr; writes nothing when there are none.
+  static func writeValidationWarnings(_ result: ValidationResult) {
+    guard !result.warningLines.isEmpty else {
+      return
+    }
+
+    writeValidationReport(result)
+  }
 }

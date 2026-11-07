@@ -124,17 +124,37 @@ public struct ValidationResult: Equatable, Sendable {
   /// status; they exist so an empty scope cannot masquerade as a clean validation.
   public let warnings: [String]
 
+  /// Errors in library entities a scoped validation did not need, reported as warnings. Always empty for a
+  /// library-wide validation; they never block and never count toward `errors`.
+  public let outOfScopeErrors: [ValidationError]
+
   /// Human-readable summary string used in user-facing output.
   public var summary: String {
     return
-      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) warnings=\(warnings.count) errors=\(errors.count)"
+      "Validation summary: personas=\(counts.personas) kits=\(counts.kits) directives=\(counts.directives) skills=\(counts.skills) warnings=\(warnings.count + outOfScopeErrors.count) errors=\(errors.count)"
+  }
+
+  /// Every warning as one line each: advisories first, then out-of-scope errors in sorted order.
+  public var warningLines: [String] {
+    warnings + outOfScopeErrors.map { $0.lineDescription() }
+  }
+
+  /// What a handoff reports on stderr: the summary, each error, then each warning as `warning: <line>`.
+  public var reportLines: [String] {
+    [summary] + errors.map { $0.lineDescription() } + warningLines.map { "warning: " + $0 }
   }
 
   /// Creates a validation result and sorts errors for stable output.
-  public init(counts: ValidationCounts, errors: [ValidationError], warnings: [String] = []) {
+  public init(
+    counts: ValidationCounts,
+    errors: [ValidationError],
+    warnings: [String] = [],
+    outOfScopeErrors: [ValidationError] = []
+  ) {
     self.counts = counts
     self.errors = ValidationResult.sort(errors: errors)
     self.warnings = warnings
+    self.outOfScopeErrors = ValidationResult.sort(errors: outOfScopeErrors)
   }
 
   private static func sort(errors: [ValidationError]) -> [ValidationError] {

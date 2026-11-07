@@ -6,6 +6,8 @@ struct SchemaValidationError: Error, Equatable {
   let schemaName: String
   let message: String
   let instanceLocation: String?
+  /// The file's top-level `id`, when it has one, so a scoped validation can tell whose problem this is.
+  var entityId: String? = nil
 
   /// Returns validation errors in deterministic order for stable output.
   static func sort(errors: [SchemaValidationError]) -> [SchemaValidationError] {
@@ -193,7 +195,15 @@ struct SchemaValidator {
           schemaName: mapping.schemaName,
           errors: &fileErrors
         )
-        errors.append(contentsOf: fileErrors)
+
+        let entityId = (json as? [String: Any])?["id"] as? String
+        errors.append(
+          contentsOf: fileErrors.map { fileError in
+            var fileError = fileError
+            fileError.entityId = entityId
+            return fileError
+          }
+        )
       }
     }
 

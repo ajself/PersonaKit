@@ -29,6 +29,33 @@ struct WorkspaceSessionPreviewBuilderTests {
   }
 
   @Test
+  func buildSucceedsWhenOnlyAnotherSessionIsBroken() throws {
+    let projectScopeURL = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: projectScopeURL)
+    try writeSessionFile(
+      SessionFile(
+        id: "broken-extra",
+        personaId: "missing-persona",
+        directiveId: "apply-style",
+        kitOverrides: []
+      ),
+      root: projectScopeURL
+    )
+
+    let preview = try WorkspaceSessionPreviewBuilder().build(
+      projectScopeURL: projectScopeURL,
+      globalScopeURL: nil,
+      sessionId: "senior-swiftui-engineer_apply-style",
+      personaId: "senior-swiftui-engineer",
+      directiveId: "apply-style",
+      kitOverrides: []
+    )
+
+    #expect(preview.contains("Id: apply-style"))
+    #expect(!preview.contains("broken-extra"))
+  }
+
+  @Test
   func buildMapsResolutionFailuresToWorkspaceBuildError() throws {
     let projectScopeURL = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: projectScopeURL)

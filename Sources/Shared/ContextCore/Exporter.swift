@@ -12,6 +12,18 @@ public enum ExportError: Error {
   case readFailed(String)
 }
 
+/// A session's handoff Markdown and the scoped validation it passed.
+public struct SessionExport: Equatable, Sendable {
+  public let markdown: String
+  /// Library errors outside the exported session, as warnings. Never part of ``markdown``.
+  public let validation: ValidationResult
+
+  public init(markdown: String, validation: ValidationResult) {
+    self.markdown = markdown
+    self.validation = validation
+  }
+}
+
 /// Renders deterministic Markdown output for a Persona + Directive session.
 public struct SessionExporter {
   /// Exports a session by treating `root` as the only active PersonaKit scope.
@@ -66,7 +78,43 @@ public struct SessionExporter {
     skillTags: [String] = [],
     fileManager: FileManager = .default
   ) throws -> String {
-    let validation = try Validator.validate(scopes: scopes, fileManager: fileManager)
+    try exportWithValidation(
+      scopes: scopes,
+      personaId: personaId,
+      directiveId: directiveId,
+      kitOverrides: kitOverrides,
+      sessionId: sessionId,
+      targetPaths: targetPaths,
+      skillTags: skillTags,
+      fileManager: fileManager
+    )
+    .markdown
+  }
+
+  /// Exports a session and returns the scoped validation it passed, so a caller can report library errors
+  /// outside this session as warnings. Validation blocks only on errors in what the session reaches.
+  ///
+  /// - Throws: ``ExportError`` when validation, resolution, or file reads fail.
+  public static func exportWithValidation(
+    scopes: ScopeSet,
+    personaId: String,
+    directiveId: String,
+    kitOverrides: [String],
+    sessionId: String? = nil,
+    targetPaths: [String] = [],
+    skillTags: [String] = [],
+    fileManager: FileManager = .default
+  ) throws -> SessionExport {
+    let validation = try Validator.validate(
+      scopes: scopes,
+      session: ValidationSessionScope(
+        sessionId: sessionId,
+        personaId: personaId,
+        directiveId: directiveId,
+        kitOverrides: kitOverrides
+      ),
+      fileManager: fileManager
+    )
 
     if !validation.errors.isEmpty {
       throw ExportError.validationFailed(validation)
@@ -111,7 +159,7 @@ public struct SessionExporter {
       throw ExportError.readFailed(error.message)
     }
 
-    return renderSession(
+    let markdown = renderSession(
       persona: session.persona,
       directive: session.directive,
       kits: session.kits.sorted { $0.id < $1.id },
@@ -121,6 +169,8 @@ public struct SessionExporter {
       skillAuthorization: session.skillAuthorization,
       sessionId: sessionId
     )
+
+    return SessionExport(markdown: markdown, validation: validation)
   }
 
   /// Renders resolved session components into the canonical Markdown export format.

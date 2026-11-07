@@ -65,6 +65,63 @@ public struct Validator {
     return ValidationResult(counts: counts, errors: errors, warnings: warnings)
   }
 
+  /// Validates the library for one session's handoff: errors in what the session reaches block, errors elsewhere
+  /// come back as ``ValidationResult/outOfScopeErrors``. A library that fails to load, and any error tied to no
+  /// entity, still blocks.
+  ///
+  /// - Parameters:
+  ///   - scopes: Scope set used for loading, schema checks, and path resolution.
+  ///   - session: The session the handoff is built for.
+  ///   - fileManager: File system interface used for reads.
+  /// - Returns: Deterministic validation result.
+  public static func validate(
+    scopes: ScopeSet,
+    session: ValidationSessionScope,
+    fileManager: FileManager = .default
+  ) throws -> ValidationResult {
+    let bootstrap = try ValidatorBootstrap.prepare(
+      scopes: scopes,
+      fileManager: fileManager
+    )
+
+    guard let registry = bootstrap.registry else {
+      return ValidationResult(counts: .zero, errors: bootstrap.errors)
+    }
+
+    let counts = ValidationCounts(
+      personas: registry.personasById.count,
+      kits: registry.kitsById.count,
+      directives: registry.directivesById.count,
+      skills: registry.skillsById.count
+    )
+    let reach = ValidationSessionReach(scope: session, registry: registry)
+    var errors = bootstrap.errors
+
+    // Schema errors in the session's own entities would cascade into its reference checks; errors elsewhere
+    // must not hide the session's own problems.
+    if !errors.contains(where: reach.contains) {
+      errors.append(
+        contentsOf: try ValidatorReferenceChecker.validate(
+          registry: registry,
+          scopes: scopes,
+          fileManager: fileManager
+        )
+      )
+    }
+
+    let warnings =
+      errors.isEmpty
+      ? emptyRootWarnings(scopes: scopes, counts: counts, fileManager: fileManager)
+      : []
+
+    return ValidationResult(
+      counts: counts,
+      errors: errors.filter(reach.contains),
+      warnings: warnings,
+      outOfScopeErrors: errors.filter { !reach.contains($0) }
+    )
+  }
+
   /// Warns when a resolved scope root exists on disk but contributed no entities.
   ///
   /// A root that resolves yet loads nothing otherwise reports `errors=0`, which reads

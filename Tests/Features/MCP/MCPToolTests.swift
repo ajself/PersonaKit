@@ -196,6 +196,64 @@ struct MCPToolTests {
   }
 
   @Test
+  func toolCallExportOfAHealthySessionReturnsOnlyTheMarkdown() throws {
+    let root = try makeFixtureRootWithBrokenExtraSession()
+    let service = MCPToolService(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil))
+
+    let result = try service.callTool(
+      name: "personakit_export",
+      arguments: [
+        "sessionId": "senior-swiftui-engineer_apply-style"
+      ]
+    )
+
+    let expected = try String(
+      contentsOf: fixturesRootURL()
+        .appendingPathComponent("expected/export_senior-swiftui-engineer_apply-style.md"),
+      encoding: .utf8
+    )
+    #expect(result.content.count == 1)
+    #expect(normalizedTrailingNewline(try #require(firstText(result))) == normalizedTrailingNewline(expected))
+  }
+
+  @Test
+  func toolCallExportFailureListsTheSessionsErrorsThenWarnings() throws {
+    let root = try makeFixtureRootWithBrokenExtraSession()
+    try FileManager.default.removeItem(at: root.appendingPathComponent("Packs/skills/tools-and-constraints.md"))
+    let service = MCPToolService(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil))
+
+    do {
+      _ = try service.callTool(
+        name: "personakit_export",
+        arguments: [
+          "sessionId": "senior-swiftui-engineer_apply-style"
+        ]
+      )
+      Issue.record("Export must fail on an error in its own session.")
+    } catch {
+      let lines = errorMessage(error).split(separator: "\n").map(String.init)
+      #expect(lines.first?.hasSuffix(" warnings=1 errors=1") == true)
+      #expect(lines.dropFirst().first?.hasPrefix("skill tools-and-constraints body: ") == true)
+      #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
+    }
+  }
+
+  private func makeFixtureRootWithBrokenExtraSession() throws -> URL {
+    let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
+    try copyFixtureKit(to: root)
+    try writeSessionFile(
+      SessionFile(
+        id: "broken-extra",
+        personaId: "missing-persona",
+        directiveId: "apply-style",
+        kitOverrides: []
+      ),
+      root: root
+    )
+    return root
+  }
+
+  @Test
   func toolCallGraphMatchesFixture() throws {
     let scopes = ScopeSet(projectScopeURL: fixtureKitRootURL(), globalScopeURL: nil)
     let service = MCPToolService(scopes: scopes)
