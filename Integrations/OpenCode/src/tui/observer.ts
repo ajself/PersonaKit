@@ -2,7 +2,13 @@ import type { Part, ToolPart } from '@opencode-ai/sdk/v2'
 import type { Call, Enforcement, SessionState } from '../../../ClaudeCode/types'
 import type { Host } from '../../../ClaudeCode/hooks/lib/host.ts'
 import { observe } from '../../../ClaudeCode/hooks/lib/observe.ts'
-import { applyCall, initial, trustedServers } from '../../../ClaudeCode/hooks/lib/session.ts'
+import {
+  applyCall,
+  initial,
+  onlyFailedResolutions,
+  resolveFailedMessage,
+  trustedServers,
+} from '../../../ClaudeCode/hooks/lib/session.ts'
 
 /**
  * A finished tool part as the shared core's call, or undefined while it is pending or running. The tool id is kept
@@ -32,9 +38,13 @@ export function toCall(part: ToolPart, parentSessionID: string): Call | undefine
   return call
 }
 
+/** A main-session call that tried to resolve a contract and failed, with the toast the Claude Code mod shows for it. */
+export type FailedResolution = { callID: string; endedAt: number; message: string }
+
 /**
  * The session state rebuilt from its messages, oldest first: each user message starts a turn, and each finished tool
  * part on the others is observed and applied in order. Pure apart from `read`; the same messages give the same state.
+ * Each failed main resolution goes to `onFailedResolution`, in order, on every rebuild.
  */
 export async function rebuildFrom(
   messages: readonly { role: string; id: string }[],
@@ -44,6 +54,7 @@ export async function rebuildFrom(
   enforcement: Enforcement,
   sessionID: string,
   read: (path: string) => Promise<string | undefined>,
+  onFailedResolution: (failure: FailedResolution) => void = () => {},
 ): Promise<SessionState> {
   const trusted = trustedServers(configured, enforcement)
   let state: SessionState = { ...initial, enforcement }
@@ -56,7 +67,16 @@ export async function rebuildFrom(
       if (part.type !== 'tool') continue
       const call = toCall(part, sessionID)
       if (call === undefined) continue
-      state = applyCall(state, call, await observe(call, trusted, read, host), trusted, host)
+      const observations = await observe(call, trusted, read, host)
+      state = applyCall(state, call, observations, trusted, host)
+      const { state: finished } = part
+      if (
+        call.agentId === undefined &&
+        onlyFailedResolutions(observations) &&
+        (finished.status === 'completed' || finished.status === 'error')
+      ) {
+        onFailedResolution({ callID: part.callID, endedAt: finished.time.end, message: resolveFailedMessage(state) })
+      }
     }
   }
   return state

@@ -72,6 +72,10 @@ Subagents count as part of the session that started them.
 OpenCode continues on its own after it compacts a conversation, so when the session you are viewing compacts, a toast
 asks whether to re-ground and points to `/pk`. Nothing is injected into the conversation; re-grounding is your call.
 
+When the agent's attempt to resolve a contract fails in the session you are viewing, a toast says so once and names the
+contract that stays in force: `PersonaKit resolve failed; <id> stays in force`. Failures already in a session's history
+when you open it are not shown.
+
 ## The Library
 
 `/pk` opens a PersonaKit view in place of the session, with Contract and Library tabs. The Contract tab is the mod's

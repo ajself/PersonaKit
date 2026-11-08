@@ -8,7 +8,7 @@ import { observe } from './lib/observe'
 import { usePrompt } from './lib/prompts'
 import { loadLibrary, loadPreview, mcpServerName, personakitBinary, previewKey } from './lib/runner'
 import type { RunnerDollar } from './lib/runner'
-import { applyCall, initial, isEmpty, rejudge, trustedServers } from './lib/session'
+import { applyCall, initial, isEmpty, onlyFailedResolutions, rejudge, resolveFailedMessage, trustedServers } from './lib/session'
 import { statusText } from './lib/status'
 import { paneTree } from './pane'
 import type { PaneActions } from './pane'
@@ -245,10 +245,7 @@ export const register: Register = (on, options) => {
       const os = await observe(call, trusted, (path) => readText($, path))
       const s = await update($, session, (cur) => applyCall(cur, call, os, trusted))
       await paint($)
-      if (agentId === undefined && os.length > 0 && os.every((o) => o.kind === 'failed')) {
-        const kept = s.main ? `; ${s.main.ids.sessionId ?? s.main.ids.personaId ?? 'the current contract'} stays in force` : ''
-        $.ui.toast(`PersonaKit resolve failed${kept}`)
-      }
+      if (agentId === undefined && onlyFailedResolutions(os)) $.ui.toast(resolveFailedMessage(s))
     })
     return ran
   })

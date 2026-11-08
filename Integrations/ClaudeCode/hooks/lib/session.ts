@@ -10,6 +10,16 @@ export function isEmpty(s: SessionState): boolean {
   return s.main === undefined && Object.keys(s.subagents).length === 0 && s.drift.length === 0 && s.compactions === 0
 }
 
+/** The toast for a main resolution that failed, naming the contract that stays in force, if any. */
+export function resolveFailedMessage(s: SessionState): string {
+  const kept = s.main ? `; ${s.main.ids.sessionId ?? s.main.ids.personaId ?? 'the current contract'} stays in force` : ''
+  return `PersonaKit resolve failed${kept}`
+}
+
+/** Whether a call's observations are all failed resolutions: it tried to resolve a contract and none came back. */
+export const onlyFailedResolutions = (observations: readonly Observation[]) =>
+  observations.length > 0 && observations.every((o) => o.kind === 'failed')
+
 /** Drift from main's latest grounding on, or all of it with nothing grounded: what every drift count shows. */
 export const driftSinceGrounding = (s: SessionState) => s.drift.slice(s.main?.driftMark ?? 0)
 

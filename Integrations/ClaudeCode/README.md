@@ -53,6 +53,9 @@ tool calls it checks; without one, Drift check lists what the handoff context fo
 agent does it anyway. Each drift log entry reads `blocked` when the hook denied the call, `not blocked` when a
 forbidden call ran with no hook to stop it, or `re-ground blocked`.
 
+When the agent's attempt to resolve a contract fails, a toast says so and names the contract that stays in force:
+`PersonaKit resolve failed; <id> stays in force`.
+
 ## The Library
 
 The Library is the other half of the `/pk` pane: your personas, sessions, and components, read from the same

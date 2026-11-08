@@ -233,6 +233,90 @@ test('compactionToastsOnViewedSession', async () => {
   expect(sidebar.captureCharFrame()).not.toContain('2 · re-ground?')
 })
 
+/** A main-session `personakit contract` call that failed, finished at `end` (ms since the epoch). */
+const failedResolve = (id: string, messageID: string, end: number) => ({
+  id,
+  sessionID: MAIN,
+  messageID,
+  type: 'tool',
+  callID: `call_${id}`,
+  tool: 'bash',
+  state: {
+    status: 'error',
+    input: { command: 'personakit contract --session=missing' },
+    error: 'error: session missing not found',
+    time: { start: end - 1, end },
+  },
+})
+
+/** Adds an assistant message holding `parts` to the main session and reports it, as OpenCode does. */
+const addAssistant = (fake: ReturnType<typeof fakeApi>, transcript: ReturnType<typeof resolved>, id: string, parts: unknown[]) => {
+  transcript.messages[MAIN]!.push({ id, role: 'assistant', sessionID: MAIN, time: { created: Date.now() } })
+  ;(transcript.parts as Record<string, unknown[]>)[id] = parts
+  fake.emit('message.updated', { sessionID: MAIN, info: { id, role: 'assistant', sessionID: MAIN } })
+}
+
+test('aFailedResolutionToastsOncePerFailure', async () => {
+  const transcript = resolved()
+  const fake = await start(fakeApi(transcript))
+  const chip = await render(fake, 'session_prompt_right')
+  await chip.waitForFrame((f) => f.includes(SESSION))
+
+  addAssistant(fake, transcript, 'a2', [failedResolve('f1', 'a2', Date.now())])
+  await until(() => fake.record.toasts.length === 1, 'the failure toast')
+  expect(fake.record.toasts[0]).toEqual({
+    variant: 'warning',
+    title: 'PersonaKit',
+    message: `PersonaKit resolve failed; ${SESSION} stays in force`,
+  })
+
+  // Later rebuilds replay the same failure without showing it again; a new failure shows once.
+  fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a2', role: 'assistant', sessionID: MAIN } })
+  addAssistant(fake, transcript, 'a3', [failedResolve('f2', 'a3', Date.now())])
+  await until(() => fake.record.toasts.length === 2, 'the second failure toast')
+  fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a3', role: 'assistant', sessionID: MAIN } })
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  expect(fake.record.toasts.length).toBe(2)
+})
+
+test('aFailedResolutionAlreadyInTheHistoryIsNotToasted', async () => {
+  const transcript = resolved()
+  transcript.messages[MAIN]!.push({ id: 'a2', role: 'assistant', sessionID: MAIN, time: { created: 3 } })
+  ;(transcript.parts as Record<string, unknown[]>).a2 = [failedResolve('f1', 'a2', 3)]
+  const fake = await start(fakeApi(transcript))
+  const chip = await render(fake, 'session_prompt_right')
+  await chip.waitForFrame((f) => f.includes(SESSION))
+  fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a2', role: 'assistant', sessionID: MAIN } })
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  expect(fake.record.toasts).toEqual([])
+})
+
+test('aFailureFromBeforeTheSessionWasOpenedIsNotToasted', async () => {
+  const transcript = resolved()
+  const fake = await start(fakeApi(transcript))
+  // The resolve fails after the plugin started, in a session this TUI is not tracking yet, as from another client.
+  await new Promise((resolve) => setTimeout(resolve, 5))
+  transcript.messages[MAIN]!.push({ id: 'a2', role: 'assistant', sessionID: MAIN, time: { created: Date.now() } })
+  ;(transcript.parts as Record<string, unknown[]>).a2 = [failedResolve('f1', 'a2', Date.now())]
+  await new Promise((resolve) => setTimeout(resolve, 5))
+  const chip = await render(fake, 'session_prompt_right')
+  await chip.waitForFrame((f) => f.includes(SESSION))
+  fake.emit('message.updated', { sessionID: MAIN, info: { id: 'a2', role: 'assistant', sessionID: MAIN } })
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  expect(fake.record.toasts).toEqual([])
+})
+
+test('aSuccessfulResolutionDoesNotToast', async () => {
+  const transcript = resolved()
+  const fake = await start(fakeApi(transcript))
+  const chip = await render(fake, 'session_prompt_right')
+  await chip.waitForFrame((f) => f.includes(SESSION))
+  const live = tool('p2', 'a2', `personakit contract --session=${SESSION}`, CONTRACT_JSON)
+  addAssistant(fake, transcript, 'a2', [{ ...live, state: { ...live.state, time: { start: Date.now(), end: Date.now() } } }])
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  expect(fake.record.toasts).toEqual([])
+})
+
 test('aFailedRebuildAndAFailedHandlerAreLoggedAtDebug', async () => {
   const transcript = resolved()
   const fake = fakeApi(transcript)

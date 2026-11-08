@@ -11,6 +11,7 @@ import { initial } from '../../ClaudeCode/hooks/lib/session.ts'
 import { readManifestSnapshot } from './enforce.ts'
 import { openCodeEnforcement, pluginListed } from './tui/enforcement.ts'
 import { rebuildFrom } from './tui/observer.ts'
+import type { FailedResolution } from './tui/observer.ts'
 import { readRegularFileText } from './regularFile.ts'
 import { logFailure } from './tui/log.ts'
 import { prefill } from './tui/prefill.ts'
@@ -104,6 +105,8 @@ type Tracked = {
   dirty: boolean
   running: Promise<void> | undefined
   dispose: () => void
+  /** When this plugin started tracking the session: failures that finished earlier were never live here. */
+  trackedAt: number
 }
 
 /**
@@ -144,6 +147,9 @@ const tui = async (
   const [manifestChanged, setManifestChanged] = createSignal(false)
 
   const tracked = new Map<string, Tracked>()
+  // A failed resolution is toasted once, by its session and call id, and only when it finished after the session was
+  // first tracked: a rebuild replays the whole history, and failures already in it then were never live here.
+  const toastedFailures = new Set<string>()
 
   const viewed = (): string | undefined => {
     const current = api.route.current
@@ -171,9 +177,13 @@ const tui = async (
     return keyed.map((entry) => entry.message)
   }
 
-  const rebuildOne = async (sessionID: string, entry: Tracked): Promise<SessionState> => {
+  const rebuildOne = async (
+    sessionID: string,
+    entry: Tracked,
+  ): Promise<{ state: SessionState; failures: FailedResolution[] }> => {
     const now = readManifest(directory, worktree).signature
     setManifestChanged(now !== snapshotFor(directory, worktree).signature || (isUnconfirmed && now !== 'none'))
+    const failures: FailedResolution[] = []
     const state = await rebuildFrom(
       messagesOf(sessionID, entry.children),
       (messageID) => api.state.part(messageID),
@@ -182,6 +192,7 @@ const tui = async (
       enforcementNow(),
       sessionID,
       readRegularFileText,
+      (failure) => failures.push(failure),
     )
     // Each compaction is a user message with a compaction part, so the history alone counts them (a restart keeps
     // them, and an automatic compaction's extra "continue" message is not one). A main resolution at a later user turn
@@ -190,7 +201,18 @@ const tui = async (
     const compactions = users.filter(
       (m, i) => api.state.part(m.id).some((p) => p.type === 'compaction') && (state.main === undefined || i + 1 > state.main.turn),
     ).length
-    return { ...state, compactions }
+    return { state: { ...state, compactions }, failures }
+  }
+
+  /** Toasts each failed resolution in the viewed session that is new since the session was first tracked, once. */
+  const announceFailures = (sessionID: string, entry: Tracked, failures: readonly FailedResolution[]) => {
+    for (const failure of failures) {
+      const key = `${sessionID}/${failure.callID}`
+      if (toastedFailures.has(key)) continue
+      toastedFailures.add(key)
+      if (failure.endedAt < entry.trackedAt || sessionID !== viewed()) continue
+      api.ui.toast({ variant: 'warning', title: 'PersonaKit', message: sanitizeLine(failure.message) })
+    }
   }
 
   /** Rebuilds `sessionID` once whatever is in flight settles; requests made meanwhile fold into one more run. */
@@ -205,7 +227,10 @@ const tui = async (
         await new Promise((resolve) => setTimeout(resolve, 0))
         try {
           const next = await rebuildOne(sessionID, entry)
-          if (!disposed) entry.setState(next)
+          if (!disposed) {
+            entry.setState(next.state)
+            announceFailures(sessionID, entry, next.failures)
+          }
         } catch (error) {
           // Observe-only: a failed rebuild leaves the last state in place.
           logFailure(api, error, 'rebuild failed')
@@ -221,7 +246,15 @@ const tui = async (
     const existing = tracked.get(sessionID)
     if (existing) return existing
     const [state, setState] = createSignal<SessionState>({ ...initial, enforcement: enforcementNow() })
-    const entry: Tracked = { state, setState, children: new Set(), dirty: false, running: undefined, dispose: () => {} }
+    const entry: Tracked = {
+      state,
+      setState,
+      children: new Set(),
+      dirty: false,
+      running: undefined,
+      dispose: () => {},
+      trackedAt: Date.now(),
+    }
     tracked.set(sessionID, entry)
     // OpenCode loads a session's history into its store without an event; a change in its length asks for a rebuild.
     entry.dispose = createRoot((dispose) => {

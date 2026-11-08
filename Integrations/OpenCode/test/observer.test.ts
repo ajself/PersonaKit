@@ -272,3 +272,37 @@ test('aCollidingServerWithdrawsTrustInThePersonaKitKey', async () => {
   expect((await run(['personakit', 'personakit_personakit'])).main).toBeUndefined()
   expect((await run(['personakit', 'cupertino'])).main?.ids.sessionId).toBe('solo-dev')
 })
+
+test('rebuildReportsEachFailedMainResolutionWithTheContractStillInForce', async () => {
+  const failed: ToolPart['state'] = {
+    status: 'error',
+    input: { command: 'personakit contract --session missing' },
+    error: 'error: session missing not found',
+    time: { start: 5, end: 6 },
+  }
+  const failures: { callID: string; endedAt: number; message: string }[] = []
+  await rebuildFrom(
+    [
+      { role: 'user', id: 'u1' },
+      { role: 'assistant', id: 'a1' },
+    ],
+    () => [
+      part(failed, { id: 'p0', callID: 'call_0' }),
+      part(contractCall, { id: 'p1', callID: 'call_1' }),
+      part(completed({ command: 'ls' }, 'out'), { id: 'p2', callID: 'call_2' }),
+      part(failed, { id: 'p3', callID: 'call_3' }),
+      // A subagent's failure is its own, as in the Claude Code mod.
+      part(failed, { id: 'p4', callID: 'call_4', sessionID: 'ses_child' }),
+    ],
+    openCodeHost(['personakit']),
+    'personakit',
+    advisory,
+    MAIN,
+    none,
+    (failure) => failures.push(failure),
+  )
+  expect(failures).toEqual([
+    { callID: 'call_0', endedAt: 6, message: 'PersonaKit resolve failed' },
+    { callID: 'call_3', endedAt: 6, message: 'PersonaKit resolve failed; solo-dev stays in force' },
+  ])
+})
