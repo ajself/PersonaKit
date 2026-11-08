@@ -67,13 +67,13 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
     case .validationFailed(let validationResult):
       let details = validationResult.errors.prefix(3).map { $0.lineDescription() }.joined(separator: " ")
       return "Session preview validation failed. \(details)"
-    case .resolutionFailed(let resolutionError):
+    case .resolutionFailed(let resolutionError, _):
       let details = resolutionError.errors.prefix(3).map { resolutionError in
         "\(resolutionError.sourceType.rawValue) \(resolutionError.sourceId) \(resolutionError.field) \(resolutionError.message) missingId=\(resolutionError.missingId)"
       }
       .joined(separator: " ")
       return "Session preview resolution failed. \(details)"
-    case .readFailed(let message):
+    case .readFailed(let message, _):
       return "Session preview read failed: \(message)"
     }
   }

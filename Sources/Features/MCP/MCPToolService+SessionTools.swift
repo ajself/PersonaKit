@@ -60,10 +60,16 @@ extension MCPToolService {
       switch error {
       case .validationFailed(let result):
         throw MCPError.invalidParams(TerminalText.sanitized(result.reportLines.joined(separator: "\n")))
-      case .resolutionFailed(let resolutionError):
-        throw MCPError.invalidParams(MCPInternalSupport.formatResolutionErrors(resolutionError.errors))
-      case .groundingSkillResolutionFailed(let resolutionError):
-        throw MCPError.invalidParams("Error: \(resolutionError.message)")
+      case .resolutionFailed(let resolutionError, let validation):
+        throw MCPError.invalidParams(
+          MCPInternalSupport.formatResolutionErrors(resolutionError.errors, warningsFrom: validation)
+        )
+      case .groundingSkillResolutionFailed(let resolutionError, let validation):
+        throw MCPError.invalidParams(
+          TerminalText.sanitized(
+            (["Error: \(resolutionError.message)"] + validation.labeledWarningLines).joined(separator: "\n")
+          )
+        )
       }
     }
   }

@@ -139,9 +139,14 @@ public struct ValidationResult: Equatable, Sendable {
     warnings + outOfScopeErrors.map { $0.lineDescription() }
   }
 
+  /// Every warning as `warning: <line>`, the form a handoff reports it in.
+  public var labeledWarningLines: [String] {
+    warningLines.map { "warning: " + $0 }
+  }
+
   /// What a handoff reports on stderr: the summary, each error, then each warning as `warning: <line>`.
   public var reportLines: [String] {
-    [summary] + errors.map { $0.lineDescription() } + warningLines.map { "warning: " + $0 }
+    [summary] + errors.map { $0.lineDescription() } + labeledWarningLines
   }
 
   /// Creates a validation result and sorts errors for stable output.

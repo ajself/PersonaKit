@@ -238,6 +238,53 @@ struct MCPToolTests {
     }
   }
 
+  @Test(arguments: ["personakit_export", "personakit_resolve_grounding_skills"])
+  func toolCallResolutionFailureListsTheErrorThenWarnings(tool: String) throws {
+    let root = try makeFixtureRootWithBrokenExtraSession()
+    let service = MCPToolService(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil))
+
+    do {
+      _ = try service.callTool(
+        name: tool,
+        arguments: [
+          "personaId": "senior-swiftui-engineer",
+          "directiveId": "apply-style",
+          "kits": "no-such-kit",
+        ]
+      )
+      Issue.record("A missing kit override must fail resolution.")
+    } catch {
+      let lines = errorMessage(error).split(separator: "\n").map(String.init)
+      #expect(lines.count == 2)
+      #expect(lines.first?.contains("missingId=no-such-kit") == true)
+      #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
+    }
+  }
+
+  @Test(arguments: ["personakit_export", "personakit_resolve_grounding_skills"])
+  func toolCallGroundingSkillReadFailureListsTheErrorThenWarnings(tool: String) throws {
+    let root = try makeFixtureRootWithBrokenExtraSession()
+    try Data([0xFF, 0xFE]).write(to: root.appendingPathComponent("Packs/skills/swiftui-style-guide-reference.md"))
+    let service = MCPToolService(scopes: ScopeSet(projectScopeURL: root, globalScopeURL: nil))
+
+    do {
+      _ = try service.callTool(
+        name: tool,
+        arguments: [
+          "sessionId": "senior-swiftui-engineer_apply-style",
+          "targetPaths": ["Sources/FooView.swift"],
+          "skillTags": ["swiftui"],
+        ]
+      )
+      Issue.record("An unreadable grounding-skill body must fail the call.")
+    } catch {
+      let lines = errorMessage(error).split(separator: "\n").map(String.init)
+      #expect(lines.count == 2)
+      #expect(lines.first?.contains("swiftui-style-guide-reference") == true)
+      #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
+    }
+  }
+
   private func makeFixtureRootWithBrokenExtraSession() throws -> URL {
     let root = try makeTempDirectory().appendingPathComponent("PersonaKit")
     try copyFixtureKit(to: root)

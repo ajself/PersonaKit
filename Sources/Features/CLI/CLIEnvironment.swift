@@ -304,6 +304,14 @@ enum CLIHelpers {
     }
   }
 
+  /// Writes each warning of a handoff validation to stderr as `warning: <line>`, without the summary.
+  static func writeWarningLines(_ result: ValidationResult) {
+    var stderrStream = StandardError()
+    for line in result.labeledWarningLines {
+      stderrStream.write(TerminalText.sanitized(line) + "\n")
+    }
+  }
+
   /// Writes the summary and warnings of a passed handoff validation to stderr; writes nothing when there are none.
   static func writeValidationWarnings(_ result: ValidationResult) {
     guard !result.warningLines.isEmpty else {

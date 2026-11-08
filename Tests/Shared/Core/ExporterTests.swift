@@ -180,7 +180,7 @@ struct ExporterTests {
               && validationError.expectedPath == "Packs/skills/swiftui-style-guide-reference.md"
           }
         )
-      case .readFailed(let message):
+      case .readFailed(let message, _):
         #expect(message.contains("Packs/skills/swiftui-style-guide-reference.md"))
       default:
         #expect(Bool(false))

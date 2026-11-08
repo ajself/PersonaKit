@@ -3,8 +3,10 @@ import Foundation
 /// Errors produced while evaluating triggered grounding skills for a resolved session.
 public enum GroundingSkillLookupError: Error {
   case validationFailed(ValidationResult)
-  case resolutionFailed(ResolverResolutionError)
-  case groundingSkillResolutionFailed(GroundingSkillResolutionError)
+  /// `validation` is the scoped validation that passed, so a caller can still report warnings.
+  case resolutionFailed(ResolverResolutionError, validation: ValidationResult)
+  /// `validation` is the scoped validation that passed, so a caller can still report warnings.
+  case groundingSkillResolutionFailed(GroundingSkillResolutionError, validation: ValidationResult)
 }
 
 /// Deterministic result for a grounding-skill lookup against a resolved workflow session.
@@ -99,24 +101,26 @@ public enum WorkflowGroundingSkillResolver {
         fileManager: fileManager
       )
     } catch let error as ResolverResolutionError {
-      throw GroundingSkillLookupError.resolutionFailed(error)
+      throw GroundingSkillLookupError.resolutionFailed(error, validation: validation)
     }
 
     let result = try resolve(
       session: session,
       scopes: scopes,
       input: input,
+      validation: validation,
       fileManager: fileManager
     )
 
     return GroundingSkillLookup(result: result, validation: validation)
   }
 
-  public static func resolve(
+  private static func resolve(
     session: ResolvedSession,
     scopes: ScopeSet,
     input: SkillTriggerSelectionInput,
-    fileManager: FileManager = .default
+    validation: ValidationResult,
+    fileManager: FileManager
   ) throws -> GroundingSkillLookupResult {
     let matchedGroundingSkills = GroundingSkillSupport.resolveMatches(
       availableGroundingSkills: session.availableGroundingSkills,
@@ -131,7 +135,7 @@ public enum WorkflowGroundingSkillResolver {
           fileManager: fileManager
         )
       } catch let error as GroundingSkillResolutionError {
-        throw GroundingSkillLookupError.groundingSkillResolutionFailed(error)
+        throw GroundingSkillLookupError.groundingSkillResolutionFailed(error, validation: validation)
       }
     }
 

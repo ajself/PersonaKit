@@ -164,15 +164,20 @@ enum MCPInternalSupport {
     switch error {
     case .validationFailed(let result):
       return TerminalText.sanitized(result.reportLines.joined(separator: "\n"))
-    case .resolutionFailed(let resolutionError):
-      return formatResolutionErrors(resolutionError.errors)
-    case .readFailed(let message):
-      return TerminalText.sanitized("Error: \(message)")
+    case .resolutionFailed(let resolutionError, let validation):
+      return formatResolutionErrors(resolutionError.errors, warningsFrom: validation)
+    case .readFailed(let message, let validation):
+      return TerminalText.sanitized((["Error: \(message)"] + validation.labeledWarningLines).joined(separator: "\n"))
     }
   }
 
   static func formatResolutionErrors(_ errors: [ResolverError]) -> String {
     return errors.map { formatResolutionError($0) }.joined(separator: "\n")
+  }
+
+  /// Resolution errors, then the scoped validation's warnings as `warning:` lines.
+  static func formatResolutionErrors(_ errors: [ResolverError], warningsFrom validation: ValidationResult) -> String {
+    TerminalText.sanitized(([formatResolutionErrors(errors)] + validation.labeledWarningLines).joined(separator: "\n"))
   }
 
   static func formatResolutionError(_ error: ResolverError) -> String {

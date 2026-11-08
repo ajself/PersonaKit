@@ -54,6 +54,42 @@ struct CLIScopedValidationTests {
     #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
   }
 
+  @Test(arguments: ["export", "resolve-grounding-skills"])
+  func aResolutionFailureStillListsWarnings(command: String) throws {
+    let root = try makeRootWithBrokenExtraSession()
+
+    let run = runCLI([
+      command, "--root", root.path, "--no-global",
+      "--persona", "senior-swiftui-engineer", "--directive", "apply-style", "--kits", "no-such-kit",
+    ])
+
+    #expect(run.status == 1)
+    #expect(run.stdout.isEmpty)
+    let lines = run.stderr.split(separator: "\n").map(String.init)
+    #expect(lines.count == 2)
+    #expect(lines.first?.contains("missingId=no-such-kit") == true)
+    #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
+  }
+
+  @Test(arguments: ["export", "resolve-grounding-skills"])
+  func aGroundingSkillReadFailureStillListsWarnings(command: String) throws {
+    let root = try makeRootWithBrokenExtraSession()
+    try Data([0xFF, 0xFE]).write(to: root.appendingPathComponent("Packs/skills/swiftui-style-guide-reference.md"))
+
+    let run = runCLI([
+      command, "--root", root.path, "--no-global", "--session", Self.sessionId,
+      "--target-path", "Sources/FooView.swift", "--skill-tag", "swiftui",
+    ])
+
+    #expect(run.status == 1)
+    #expect(run.stdout.isEmpty)
+    let lines = run.stderr.split(separator: "\n").map(String.init)
+    #expect(lines.count == 2)
+    #expect(lines.first?.hasPrefix("Error: ") == true)
+    #expect(lines.first?.contains("swiftui-style-guide-reference") == true)
+    #expect(lines.last?.hasPrefix("warning: session broken-extra ") == true)
+  }
+
   @Test
   func resolveGroundingSkillsSucceedsAndWarnsOnStderr() throws {
     let root = try makeRootWithBrokenExtraSession()

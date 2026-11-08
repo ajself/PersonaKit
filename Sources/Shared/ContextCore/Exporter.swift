@@ -5,11 +5,13 @@ public enum ExportError: Error {
   /// Validation failed for one or more entities in the requested scopes.
   case validationFailed(ValidationResult)
 
-  /// Session resolution failed after loading validated entities.
-  case resolutionFailed(ResolverResolutionError)
+  /// Session resolution failed after loading validated entities. `validation` is the scoped validation that
+  /// passed, so a caller can still report library errors outside the session as warnings.
+  case resolutionFailed(ResolverResolutionError, validation: ValidationResult)
 
-  /// A referenced grounding-skill body file could not be read or decoded.
-  case readFailed(String)
+  /// A referenced grounding-skill body file could not be read or decoded. `validation` is the scoped validation
+  /// that passed, so a caller can still report warnings.
+  case readFailed(String, validation: ValidationResult)
 }
 
 /// A session's handoff Markdown and the scoped validation it passed.
@@ -136,7 +138,7 @@ public struct SessionExporter {
         fileManager: fileManager
       )
     } catch let error as ResolverResolutionError {
-      throw ExportError.resolutionFailed(error)
+      throw ExportError.resolutionFailed(error, validation: validation)
     }
 
     let triggerInput = SkillTriggerSelectionInput(
@@ -156,7 +158,7 @@ public struct SessionExporter {
         fileManager: fileManager
       )
     } catch let error as GroundingSkillResolutionError {
-      throw ExportError.readFailed(error.message)
+      throw ExportError.readFailed(error.message, validation: validation)
     }
 
     let markdown = renderSession(

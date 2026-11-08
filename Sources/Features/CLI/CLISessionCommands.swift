@@ -162,12 +162,14 @@ struct ExportCommand: ParsableCommand {
       switch error {
       case .validationFailed(let result):
         CLIHelpers.writeValidationReport(result)
-      case .resolutionFailed(let resolutionError):
+      case .resolutionFailed(let resolutionError, let validation):
         for resolutionError in resolutionError.errors {
-          stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+          stderrStream.write(TerminalText.sanitized(CLIHelpers.formatResolutionError(resolutionError)) + "\n")
         }
-      case .readFailed(let message):
-        stderrStream.write("Error: \(message)\n")
+        CLIHelpers.writeWarningLines(validation)
+      case .readFailed(let message, let validation):
+        stderrStream.write(TerminalText.sanitized("Error: \(message)") + "\n")
+        CLIHelpers.writeWarningLines(validation)
       }
       throw ExitCode.failure
     }
@@ -241,12 +243,14 @@ struct ResolveGroundingSkillsCommand: ParsableCommand {
       switch error {
       case .validationFailed(let result):
         CLIHelpers.writeValidationReport(result)
-      case .resolutionFailed(let resolutionError):
+      case .resolutionFailed(let resolutionError, let validation):
         for resolutionError in resolutionError.errors {
-          stderrStream.write(CLIHelpers.formatResolutionError(resolutionError) + "\n")
+          stderrStream.write(TerminalText.sanitized(CLIHelpers.formatResolutionError(resolutionError)) + "\n")
         }
-      case .groundingSkillResolutionFailed(let resolutionError):
-        stderrStream.write("Error: \(resolutionError.message)\n")
+        CLIHelpers.writeWarningLines(validation)
+      case .groundingSkillResolutionFailed(let resolutionError, let validation):
+        stderrStream.write(TerminalText.sanitized("Error: \(resolutionError.message)") + "\n")
+        CLIHelpers.writeWarningLines(validation)
       }
       throw ExitCode.failure
     } catch let error as RegistryLoadError {
