@@ -27,6 +27,22 @@ struct StudioLibraryPreviewStateTests {
   }
 
   @Test
+  func previewShowsARelativePathWithSpacesUnencoded() {
+    let state = StudioLibraryPreviewState(
+      selection: .personas,
+      item: WorkspaceListItem(
+        id: "solo-developer",
+        displayName: "Solo Developer",
+        fileURL: URL(fileURLWithPath: "/My Workspace/.personakit/Packs/personas/solo developer.persona.json"),
+        sourceScope: .project
+      ),
+      workspaceURL: URL(fileURLWithPath: "/My Workspace/")
+    )
+
+    #expect(state.relativePath == ".personakit/Packs/personas/solo developer.persona.json")
+  }
+
+  @Test
   func previewIncludesWorkstreamRoutingMetadataWhenPresent() {
     let state = StudioLibraryPreviewState(
       selection: .directives,

@@ -158,6 +158,77 @@ struct WorkspaceSystemFeatureModelTests {
 
     #expect(revealer.revealedURLs == [fileURL.standardizedFileURL])
   }
+
+  @Test
+  func revealValidationIssueInFinderMatchesAFileNameWithASpace() {
+    let revealer = SpyFileRevealer()
+    let workspaceURL = URL(fileURLWithPath: "/My Workspace")
+    let fileURL = URL(
+      fileURLWithPath: "/My Workspace/.personakit/Packs/personas/persona a.persona.json"
+    )
+    let snapshot = WorkspaceSnapshot(
+      sessions: [],
+      personas: [
+        WorkspaceListItem(
+          id: "persona-a",
+          displayName: "Persona A",
+          fileURL: fileURL,
+          sourceScope: .project
+        )
+      ],
+      directives: [],
+      kits: [],
+      skills: []
+    )
+    let model = WorkspaceSystemFeatureModel(
+      workspacePicker: StubWorkspacePicker(selectedURL: workspaceURL),
+      workspaceInitializer: WorkspaceInitializer(
+        dependencies: WorkspaceInitializerDependencies(
+          createDirectory: { _ in }
+        )
+      ),
+      fileRevealer: revealer
+    )
+
+    model.revealValidationIssueInFinder(
+      filePath: "Packs/personas/persona a.persona.json",
+      workspaceURL: workspaceURL,
+      snapshot: snapshot
+    )
+
+    #expect(revealer.revealedURLs == [fileURL.standardizedFileURL])
+  }
+
+  @Test
+  func revealValidationIssueInFinderFindsAFileOnDiskUnderAPathWithASpace() throws {
+    let workspaceURL = FileManager.default.temporaryDirectory
+      .appendingPathComponent("PersonaKit Reveal \(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: workspaceURL) }
+    let fileURL = workspaceURL.appendingPathComponent(".personakit/Packs/personas/persona a.persona.json")
+    try FileManager.default.createDirectory(
+      at: fileURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try Data("{}".utf8).write(to: fileURL)
+    let revealer = SpyFileRevealer()
+    let model = WorkspaceSystemFeatureModel(
+      workspacePicker: StubWorkspacePicker(selectedURL: workspaceURL),
+      workspaceInitializer: WorkspaceInitializer(
+        dependencies: WorkspaceInitializerDependencies(
+          createDirectory: { _ in }
+        )
+      ),
+      fileRevealer: revealer
+    )
+
+    model.revealValidationIssueInFinder(
+      filePath: "Packs/personas/persona a.persona.json",
+      workspaceURL: workspaceURL,
+      snapshot: .empty
+    )
+
+    #expect(revealer.revealedURLs == [fileURL.standardizedFileURL])
+  }
 }
 
 private final class WorkspaceInitializationState {

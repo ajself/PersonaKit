@@ -804,11 +804,11 @@ private struct SessionsInspectorView: View {
     for selectedSession: WorkspaceSessionListItem
   ) -> String {
     guard let workspaceURL else {
-      return selectedSession.fileURL.path()
+      return selectedSession.fileURL.path(percentEncoded: false)
     }
 
-    let workspacePath = workspaceURL.standardizedFileURL.path()
-    let filePath = selectedSession.fileURL.standardizedFileURL.path()
+    let workspacePath = workspaceURL.standardizedFileURL.path(percentEncoded: false)
+    let filePath = selectedSession.fileURL.standardizedFileURL.path(percentEncoded: false)
     let prefix = workspacePath.hasSuffix("/") ? workspacePath : "\(workspacePath)/"
 
     guard filePath.hasPrefix(prefix) else {

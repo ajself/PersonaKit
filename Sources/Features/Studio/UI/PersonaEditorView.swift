@@ -653,7 +653,7 @@ struct PersonaEditorView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
 
-        Text(knownItem.fileURL.path())
+        Text(knownItem.fileURL.path(percentEncoded: false))
           .font(.caption.monospaced())
           .foregroundStyle(.secondary)
           .lineLimit(3)

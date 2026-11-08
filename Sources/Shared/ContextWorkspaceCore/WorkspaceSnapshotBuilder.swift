@@ -232,7 +232,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
         .sorted { $0.lastPathComponent < $1.lastPathComponent }
     } catch {
       throw WorkspaceSnapshotBuildError(
-        message: "Failed to read directory \(directoryURL.path()): \(error.localizedDescription)"
+        message: "Failed to read directory \(directoryURL.path(percentEncoded: false)): \(error.localizedDescription)"
       )
     }
   }
@@ -242,7 +242,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       return try dependencies.readData(fileURL)
     } catch {
       throw WorkspaceSnapshotBuildError(
-        message: "Failed to read file \(fileURL.path()): \(error.localizedDescription)"
+        message: "Failed to read file \(fileURL.path(percentEncoded: false)): \(error.localizedDescription)"
       )
     }
   }
@@ -257,7 +257,7 @@ public struct WorkspaceSnapshotBuilder: WorkspaceSnapshotBuilding, Sendable {
       return try decoder.decode(type, from: data)
     } catch {
       throw WorkspaceSnapshotBuildError(
-        message: "Failed to decode \(fileURL.path()): \(error.localizedDescription)"
+        message: "Failed to decode \(fileURL.path(percentEncoded: false)): \(error.localizedDescription)"
       )
     }
   }

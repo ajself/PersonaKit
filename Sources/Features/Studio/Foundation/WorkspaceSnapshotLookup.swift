@@ -56,8 +56,8 @@ package enum WorkspaceSnapshotLookup {
     }
 
     let matchingSnapshotFileURLs = snapshotFileURLs(snapshot: snapshot).filter { fileURL in
-      fileURL.path().hasSuffix("/\(normalizedPath)")
-        || fileURL.path() == normalizedPath
+      fileURL.path(percentEncoded: false).hasSuffix("/\(normalizedPath)")
+        || fileURL.path(percentEncoded: false) == normalizedPath
     }
 
     if matchingSnapshotFileURLs.count == 1 {
@@ -84,7 +84,7 @@ package enum WorkspaceSnapshotLookup {
     .map(\.standardizedFileURL)
 
     if let existingCandidate = candidates.first(where: { candidate in
-      FileManager.default.fileExists(atPath: candidate.path())
+      FileManager.default.fileExists(atPath: candidate.path(percentEncoded: false))
     }) {
       return existingCandidate
     }

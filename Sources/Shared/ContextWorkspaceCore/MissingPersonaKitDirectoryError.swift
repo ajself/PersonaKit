@@ -9,6 +9,6 @@ public struct MissingPersonaKitDirectoryError: LocalizedError, Sendable {
   }
 
   public var errorDescription: String? {
-    "Missing PersonaKit directory at \(projectScopeURL.path())."
+    "Missing PersonaKit directory at \(projectScopeURL.path(percentEncoded: false))."
   }
 }

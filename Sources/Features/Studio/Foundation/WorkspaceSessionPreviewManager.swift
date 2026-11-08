@@ -71,9 +71,7 @@ public struct WorkspaceSessionPreviewManager: WorkspaceSessionPreviewManaging, S
         fileExists: dependencies.fileExists
       )
     } catch let error as MissingPersonaKitDirectoryError {
-      throw WorkspaceSnapshotBuildError(
-        message: "Missing PersonaKit directory at \(error.projectScopeURL.path())."
-      )
+      throw WorkspaceSnapshotBuildError(message: error.localizedDescription)
     }
   }
 }

@@ -6,6 +6,19 @@ import Testing
 
 struct StudioWorkspaceSummaryStateTests {
   @Test
+  func summaryShowsAWorkspacePathWithASpaceUnencoded() {
+    let state = StudioWorkspaceSummaryState(
+      workspaceURL: URL(fileURLWithPath: "/Users/aj/My Workspace"),
+      snapshot: .empty,
+      validation: WorkspaceValidationSnapshot(summary: "", issues: []),
+      validationErrorMessage: nil
+    )
+
+    #expect(state.workspacePath == "/Users/aj/My Workspace")
+    #expect(state.workspaceDisplayName == "My Workspace")
+  }
+
+  @Test
   func summaryReportsValidationIssuesAndDeterministicCounts() {
     let state = StudioWorkspaceSummaryState(
       workspaceURL: URL(fileURLWithPath: "/Workspace"),

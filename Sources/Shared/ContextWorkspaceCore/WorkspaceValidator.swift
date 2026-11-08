@@ -145,7 +145,7 @@ public struct WorkspaceValidator: WorkspaceValidating, Sendable {
       let candidate = root.appendingPathComponent(expectedPath)
 
       if dependencies.fileExists(candidate) {
-        matches.append(candidate.path())
+        matches.append(candidate.path(percentEncoded: false))
       }
     }
 

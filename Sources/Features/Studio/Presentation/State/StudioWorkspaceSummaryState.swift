@@ -64,7 +64,7 @@ struct StudioWorkspaceSummaryState: Equatable, Sendable {
     validation: WorkspaceValidationSnapshot,
     validationErrorMessage: String?
   ) {
-    workspacePath = workspaceURL.standardizedFileURL.path()
+    workspacePath = workspaceURL.standardizedFileURL.path(percentEncoded: false)
     validationStatus = StudioWorkspaceValidationStatus.status(
       validation: validation,
       validationErrorMessage: validationErrorMessage

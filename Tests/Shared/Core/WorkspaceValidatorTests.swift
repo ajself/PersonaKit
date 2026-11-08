@@ -92,6 +92,46 @@ struct WorkspaceValidatorTests {
   }
 
   @Test
+  func validateResolvesAFilePathWithASpaceUnencoded() throws {
+    let projectScopeURL = URL(fileURLWithPath: "/My Workspace/.personakit")
+    let personaPath = "Packs/personas/persona-a.persona.json"
+    let personaURL = projectScopeURL.appendingPathComponent(personaPath)
+    let projectPacksURL = PersonaKitDirectory.packsURL(root: projectScopeURL)
+    let dependencies = WorkspaceValidatorDependencies(
+      directoryExists: { url in
+        url.standardizedFileURL == projectPacksURL.standardizedFileURL
+      },
+      fileExists: { url in
+        url.standardizedFileURL == personaURL.standardizedFileURL
+      },
+      defaultGlobalScopeURL: { nil },
+      validateScopes: { _ in
+        ValidationResult(
+          counts: ValidationCounts(personas: 1, kits: 0, directives: 0, skills: 0),
+          errors: [
+            ValidationError(
+              entityType: .persona,
+              entityId: "persona-a",
+              field: "schema",
+              missingId: nil,
+              expectedPath: personaPath,
+              message: "Missing required property \"id\""
+            )
+          ]
+        )
+      }
+    )
+
+    let snapshot = try WorkspaceValidator(globalScopeURL: nil, dependencies: dependencies)
+      .validate(workspaceURL: URL(fileURLWithPath: "/My Workspace"))
+
+    #expect(
+      snapshot.issues.map(\.filePath)
+        == ["/My Workspace/.personakit/Packs/personas/persona-a.persona.json"]
+    )
+  }
+
+  @Test
   func validatePropagatesUnresolvedReferenceDiscriminator() throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let projectPacksURL = PersonaKitDirectory.packsURL(

@@ -177,6 +177,45 @@ struct WorkspaceSnapshotBuilderTests {
   }
 
   @Test
+  func missingDirectoryErrorShowsAPathWithASpaceUnencoded() {
+    let error = MissingPersonaKitDirectoryError(
+      projectScopeURL: URL(fileURLWithPath: "/My Workspace/.personakit")
+    )
+
+    #expect(error.errorDescription == "Missing PersonaKit directory at /My Workspace/.personakit.")
+  }
+
+  @Test
+  func decodeFailureShowsAPathWithASpaceUnencoded() throws {
+    let projectScopeURL = URL(fileURLWithPath: "/My Workspace/.personakit")
+    let sessionsURL = PersonaKitDirectory.sessionsURL(root: projectScopeURL)
+    let sessionURL = sessionsURL.appendingPathComponent("bad one.session.json")
+    let dependencies = try makeDependencies(
+      directories: [
+        PersonaKitDirectory.packsURL(root: projectScopeURL),
+        sessionsURL,
+      ],
+      directoryContents: [sessionsURL: [sessionURL]],
+      fileData: [sessionURL: Data("not json".utf8)]
+    )
+    let builder = WorkspaceSnapshotBuilder(
+      globalScopeURL: nil,
+      dependencies: dependencies
+    )
+
+    do {
+      _ = try builder.build(workspaceURL: URL(fileURLWithPath: "/My Workspace"))
+      #expect(Bool(false))
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(
+        error.message.hasPrefix(
+          "Failed to decode /My Workspace/.personakit/Sessions/bad one.session.json: "
+        )
+      )
+    }
+  }
+
+  @Test
   func snapshotFailsWhenProjectPacksPathIsFile() throws {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let packsURL = workspaceURL.appendingPathComponent(".personakit/Packs")

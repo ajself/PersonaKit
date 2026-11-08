@@ -124,14 +124,14 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
     fileURL: URL,
     workspaceURL: URL?
   ) -> String {
-    let filePath = fileURL.standardizedFileURL.path()
+    let filePath = fileURL.standardizedFileURL.path(percentEncoded: false)
 
     guard let workspaceURL else {
       return filePath
     }
 
     let workspacePath = normalizedDirectoryPath(
-      workspaceURL.standardizedFileURL.path()
+      workspaceURL.standardizedFileURL.path(percentEncoded: false)
     )
     let projectScopePath: String
 
@@ -143,7 +143,7 @@ struct StudioLibraryPreviewState: Equatable, Sendable {
         .appendingPathComponent(".personakit")
         .standardizedFileURL
 
-      projectScopePath = normalizedDirectoryPath(scopedURL.path())
+      projectScopePath = normalizedDirectoryPath(scopedURL.path(percentEncoded: false))
     }
 
     if filePath == workspacePath {

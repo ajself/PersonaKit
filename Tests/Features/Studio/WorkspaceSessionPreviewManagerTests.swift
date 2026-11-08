@@ -71,12 +71,12 @@ struct WorkspaceSessionPreviewManagerTests {
 
   @Test
   func loadPreviewFailsWhenProjectPersonaKitDirectoryMissing() throws {
-    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let workspaceURL = URL(fileURLWithPath: "/My Workspace")
     let session = WorkspaceSessionListItem(
       id: "session-a",
       personaId: "unused",
       directiveId: "unused",
-      fileURL: URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json"),
+      fileURL: URL(fileURLWithPath: "/My Workspace/.personakit/Sessions/session-a.session.json"),
       sourceScope: .project
     )
 
@@ -113,7 +113,7 @@ struct WorkspaceSessionPreviewManagerTests {
       )
       #expect(Bool(false))
     } catch let error as WorkspaceSnapshotBuildError {
-      #expect(error.message.contains("Missing PersonaKit directory"))
+      #expect(error.message == "Missing PersonaKit directory at /My Workspace/.personakit.")
     }
   }
 
