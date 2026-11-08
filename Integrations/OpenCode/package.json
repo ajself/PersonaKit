@@ -1,6 +1,6 @@
 {
   "name": "opencode-personakit",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "PersonaKit for OpenCode: shows the contract in force and enforces it with hook-check.",
   "type": "module",
   "oc-plugin": [
