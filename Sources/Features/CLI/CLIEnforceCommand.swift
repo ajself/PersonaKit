@@ -406,6 +406,16 @@ struct HookCheckCommand: ParsableCommand {
       mcpServer: payload.toolInput?.server,
       permissionMode: payload.permissionMode
     )
+    // Read only for a subagent call, so every other call skips the folder walk.
+    let shadowedSubagentTypes =
+      ClaudeCodeEnforcement.subagentTools.contains(toolName)
+      ? ClaudeCodeEnforcement.shadowedSubagentTypes(
+        in: ClaudeCodeEnforcement.agentDefinitionDirectories(
+          manifestPath: manifestURL.path,
+          cwd: payload.cwd,
+          configDirectory: configDirectory
+        )
+      ) : []
     return ClaudeCodeHookCheckEvaluator.evaluate(
       call,
       manifest: manifest,
@@ -414,7 +424,8 @@ struct HookCheckCommand: ParsableCommand {
         configDirectory: configDirectory,
         executablePath: executablePath
       ),
-      homeDirectory: home
+      homeDirectory: home,
+      shadowedSubagentTypes: shadowedSubagentTypes
     )
   }
 }

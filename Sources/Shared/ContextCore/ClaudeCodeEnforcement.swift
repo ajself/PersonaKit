@@ -65,12 +65,190 @@ public enum ClaudeCodeEnforcement {
   /// Tools that start a subagent. With `isolation` set, the subagent runs in a new git worktree (a branch
   /// and a directory written outside the file tools) or a remote environment the local hook never sees.
   /// A custom agent type can carry its own `isolation`, so only built-in types count as read-only.
-  static let subagentTools: Set<String> = ["Agent", "Task"]
+  public static let subagentTools: Set<String> = ["Agent", "Task"]
 
   /// Claude Code's built-in agent types, which run locally with no `isolation` of their own.
   static let localSubagentTypes: Set<String> = [
     "Explore", "Plan", "claude-code-guide", "fork", "general-purpose", "statusline-setup",
   ]
+
+  /// The type Claude Code starts when a subagent call names none.
+  static let defaultSubagentType = "general-purpose"
+
+  /// Claude Code's managed-settings folder, whose `.claude/agents` it loads for every session.
+  static let managedAgentDirectory = "/Library/Application Support/ClaudeCode/.claude/agents"
+
+  /// The `agents` folders on disk whose definitions Claude Code can load for a session: `.claude/agents` in the
+  /// project that owns the manifest, in the working directory and every folder above it, and in a linked
+  /// worktree's main checkout and the folders above it; the user's in `configDirectory`; and the managed one.
+  /// Sorted, without duplicates. Definitions passed with `--agents` or the SDK, and folders added with
+  /// `--add-dir`, never reach the hook.
+  public static func agentDefinitionDirectories(
+    manifestPath: String,
+    cwd: String?,
+    configDirectory: String?,
+    fileManager: FileManager = .default
+  ) -> [String] {
+    let manifestDirectory = (manifestPath as NSString).deletingLastPathComponent
+    let projectDirectory = ((manifestDirectory as NSString).deletingLastPathComponent as NSString)
+      .deletingLastPathComponent
+    var roots = [projectDirectory]
+    if let cwd, cwd.hasPrefix("/") {
+      roots.append(cwd)
+    }
+    roots += roots.compactMap { mainCheckout(containing: $0, fileManager: fileManager) }
+
+    var directories = Set(
+      roots.flatMap(selfAndAncestors).map { ($0 as NSString).appendingPathComponent(".claude/agents") }
+    )
+    if let configDirectory, !configDirectory.isEmpty {
+      directories.insert(configDirectory + "/agents")
+    }
+    directories.insert(managedAgentDirectory)
+    return directories.sorted()
+  }
+
+  /// The built-in agent types that a definition under `directories` replaces. A definition counts when its file
+  /// name, or any word in its leading `---` frontmatter, is a built-in type's name, ignoring case and compatibility
+  /// forms such as full-width letters. That is wider than the `name` Claude Code reads, so YAML quoting, comments,
+  /// and folded values cannot hide one; a definition that only mentions a built-in is asked about too. A backslash
+  /// in the frontmatter, which a YAML escape could use to spell any name, or a file too large to read whole,
+  /// counts as naming every built-in. Subfolders are searched, through symlinks.
+  public static func shadowedSubagentTypes(
+    in directories: [String],
+    fileManager: FileManager = .default
+  ) -> Set<String> {
+    let builtIns = Dictionary(uniqueKeysWithValues: localSubagentTypes.map { (folded($0), $0) })
+    var shadowed: Set<String> = []
+    for directory in directories {
+      for path in markdownFiles(under: directory, fileManager: fileManager) {
+        let stem = ((path as NSString).lastPathComponent as NSString).deletingPathExtension
+        var words = [stem]
+        switch definitionText(at: path, fileManager: fileManager) {
+        case .unreadable:
+          break
+        case .tooLarge:
+          return localSubagentTypes
+        case .text(let text):
+          let frontmatter = frontmatterLines(text)
+          if frontmatter.contains(where: { $0.contains("\\") }) {
+            return localSubagentTypes
+          }
+          words += frontmatter.flatMap(words(in:))
+        }
+        for word in words {
+          if let builtIn = builtIns[folded(word)] {
+            shadowed.insert(builtIn)
+          }
+        }
+      }
+    }
+    return shadowed
+  }
+
+  /// The most of a definition the checker reads. A frontmatter is a few lines; a longer file counts as naming
+  /// every built-in, since its name could sit past any shorter limit.
+  static let maximumDefinitionBytes = 256 * 1024
+
+  enum DefinitionText: Equatable {
+    case text(String)
+    case tooLarge
+    case unreadable
+  }
+
+  /// A definition's text, decoded leniently as Claude Code reads it so a stray invalid byte cannot hide the
+  /// frontmatter. Only a regular file is read, so a FIFO or a device cannot stall the hook.
+  static func definitionText(at path: String, fileManager: FileManager) -> DefinitionText {
+    let resolved = (path as NSString).resolvingSymlinksInPath
+    guard let attributes = try? fileManager.attributesOfItem(atPath: resolved),
+      attributes[.type] as? FileAttributeType == .typeRegular,
+      let handle = FileHandle(forReadingAtPath: resolved)
+    else { return .unreadable }
+    defer { try? handle.close() }
+    guard let data = try? handle.read(upToCount: maximumDefinitionBytes + 1) else { return .unreadable }
+    guard data.count <= maximumDefinitionBytes else { return .tooLarge }
+    return .text(String(decoding: data, as: UTF8.self))
+  }
+
+  /// The lines of a Markdown file's leading `---` frontmatter, trimmed; none when it has no frontmatter.
+  static func frontmatterLines(_ text: String) -> [String] {
+    let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+      .map { $0.trimmingCharacters(in: .whitespaces.union(CharacterSet(charactersIn: "\u{FEFF}"))) }
+    guard lines.first == "---" else { return [] }
+    return Array(lines.dropFirst().prefix { $0 != "---" })
+  }
+
+  /// The words of `line`, split on anything but letters, digits, `-`, and `_`.
+  static func words(in line: String) -> [String] {
+    line.split { !($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") }.map(String.init)
+  }
+
+  /// `word` compared as Claude Code's YAML and a reader would see it: compatibility forms folded, case ignored.
+  static func folded(_ word: String) -> String {
+    word.precomposedStringWithCompatibilityMapping.lowercased()
+  }
+
+  /// Every `.md` file under `directory`, following symlinked folders and visiting each real folder once.
+  static func markdownFiles(under directory: String, fileManager: FileManager) -> [String] {
+    var files: [String] = []
+    var visited: Set<String> = []
+    func walk(_ folder: String, depth: Int) {
+      guard depth < 16, visited.insert((folder as NSString).resolvingSymlinksInPath).inserted,
+        let entries = try? fileManager.contentsOfDirectory(atPath: folder)
+      else { return }
+      for entry in entries.sorted() {
+        let path = (folder as NSString).appendingPathComponent(entry)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: path, isDirectory: &isDirectory) else { continue }
+        if isDirectory.boolValue {
+          walk(path, depth: depth + 1)
+        } else if entry.lowercased().hasSuffix(".md") {
+          files.append(path)
+        }
+      }
+    }
+    walk(directory, depth: 0)
+    return files
+  }
+
+  /// `path` and each folder above it, up to `/`.
+  static func selfAndAncestors(_ path: String) -> [String] {
+    var result: [String] = []
+    var current = (path as NSString).standardizingPath
+    while true {
+      result.append(current)
+      let parent = (current as NSString).deletingLastPathComponent
+      guard parent != current, !parent.isEmpty else { return result }
+      current = parent
+    }
+  }
+
+  /// The main checkout of the linked git worktree that contains `path`, or `nil` when `path` is not in one: the
+  /// nearest `.git` above it is a file pointing at `<main>/.git/worktrees/<name>`.
+  static func mainCheckout(containing path: String, fileManager: FileManager) -> String? {
+    for folder in selfAndAncestors(path) {
+      let gitPath = (folder as NSString).appendingPathComponent(".git")
+      var isDirectory: ObjCBool = false
+      guard fileManager.fileExists(atPath: gitPath, isDirectory: &isDirectory) else { continue }
+      guard !isDirectory.boolValue, let data = fileManager.contents(atPath: gitPath) else { return nil }
+      let pointer = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+      guard pointer.hasPrefix("gitdir:") else { return nil }
+      let rawGitDirectory = pointer.dropFirst("gitdir:".count).trimmingCharacters(in: .whitespaces)
+      let gitDirectory =
+        rawGitDirectory.hasPrefix("/")
+        ? rawGitDirectory : (folder as NSString).appendingPathComponent(rawGitDirectory)
+      guard
+        let commonData = fileManager.contents(atPath: (gitDirectory as NSString).appendingPathComponent("commondir"))
+      else { return nil }
+      let rawCommon = String(decoding: commonData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+      let common =
+        ((rawCommon.hasPrefix("/") ? rawCommon : (gitDirectory as NSString).appendingPathComponent(rawCommon))
+        as NSString).standardizingPath
+      guard (common as NSString).lastPathComponent == ".git" else { return nil }
+      return (common as NSString).deletingLastPathComponent
+    }
+    return nil
+  }
 
   /// Built-ins that list or read MCP resources. Allowed only against PersonaKit's own trusted server,
   /// so an agent can re-ground; any other server's resources are asked about.
@@ -553,13 +731,15 @@ public enum ClaudeCodeHookCheckEvaluator {
     _ call: ClaudeCodeToolCall,
     manifest: ChecksManifest,
     protectedPaths: [String],
-    homeDirectory: String?
+    homeDirectory: String?,
+    shadowedSubagentTypes: Set<String> = []
   ) -> ClaudeCodeHookCheckDecision {
     let decision = evaluateContract(
       call,
       manifest: manifest,
       protectedPaths: protectedPaths,
-      homeDirectory: homeDirectory
+      homeDirectory: homeDirectory,
+      shadowedSubagentTypes: shadowedSubagentTypes
     )
     guard decision.permission == .ask, call.permissionMode == ClaudeCodeEnforcement.bypassPermissionMode else {
       return decision
@@ -576,7 +756,8 @@ public enum ClaudeCodeHookCheckEvaluator {
     _ call: ClaudeCodeToolCall,
     manifest: ChecksManifest,
     protectedPaths: [String],
-    homeDirectory: String?
+    homeDirectory: String?,
+    shadowedSubagentTypes: Set<String>
   ) -> ClaudeCodeHookCheckDecision {
     if ClaudeCodeEnforcement.subagentTools.contains(call.toolName) {
       if let isolation = call.isolation, !isolation.isEmpty {
@@ -592,6 +773,14 @@ public enum ClaudeCodeHookCheckEvaluator {
         return evaluateUnclassifiedTool(
           toolName: call.toolName,
           detail: " with agent type '\(shown)'",
+          manifest: manifest
+        )
+      }
+      let type = call.subagentType.flatMap { $0.isEmpty ? nil : $0 } ?? ClaudeCodeEnforcement.defaultSubagentType
+      if shadowedSubagentTypes.contains(type) {
+        return evaluateUnclassifiedTool(
+          toolName: call.toolName,
+          detail: " with agent type '\(type)', which a custom agent definition may replace",
           manifest: manifest
         )
       }

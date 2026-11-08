@@ -246,6 +246,59 @@ struct CLIEnforceTests {
   }
 
   @Test
+  func claudeHostAsksAboutABuiltInTypeThatAProjectOrUserAgentReplaces() throws {
+    let project = try freshProjectDir("pk-claude-agents")
+    let home = try freshProjectDir("pk-claude-agents-home")
+    defer {
+      try? FileManager.default.removeItem(at: project)
+      try? FileManager.default.removeItem(at: home)
+    }
+    let manifestDirectory = project.appendingPathComponent(".claude/personakit")
+    try FileManager.default.createDirectory(at: manifestDirectory, withIntermediateDirectories: true)
+    let manifest = manifestDirectory.appendingPathComponent("s.checks.json")
+    try FileManager.default.copyItem(at: try writeReadOnlyManifest(), to: manifest)
+
+    func decide(_ input: [String: Any]) throws -> ClaudeCodeHookCheckDecision {
+      let payload = try claudePayload(tool: "Agent", input: input, cwd: project.path)
+      return decideClaude(manifest: manifest, readStdin: { payload }, environment: ["HOME": home.path])
+    }
+
+    #expect(try decide(["prompt": "x", "subagent_type": "Explore"]).permission == .allow)
+
+    let agents = project.appendingPathComponent(".claude/agents")
+    try FileManager.default.createDirectory(at: agents, withIntermediateDirectories: true)
+    try "---\nname: Explore\nisolation: worktree\n---\n".write(
+      to: agents.appendingPathComponent("scout.md"),
+      atomically: true,
+      encoding: .utf8
+    )
+    #expect(try decide(["prompt": "x", "subagent_type": "Explore"]).permission == .ask)
+    #expect(try decide(["prompt": "x", "subagent_type": "Plan"]).permission == .allow)
+
+    // A session started in a subfolder still loads the project's agents, as Claude Code walks up to them.
+    let subfolder = project.appendingPathComponent("pkg")
+    try FileManager.default.createDirectory(at: subfolder, withIntermediateDirectories: true)
+    let nestedPayload = try claudePayload(
+      tool: "Agent",
+      input: ["prompt": "x", "subagent_type": "Explore"],
+      cwd: subfolder.path
+    )
+    #expect(
+      decideClaude(manifest: manifest, readStdin: { nestedPayload }, environment: ["HOME": home.path]).permission
+        == .ask
+    )
+
+    let userAgents = home.appendingPathComponent(".claude/agents")
+    try FileManager.default.createDirectory(at: userAgents, withIntermediateDirectories: true)
+    try "---\nname: general-purpose\n---\n".write(
+      to: userAgents.appendingPathComponent("gp.md"),
+      atomically: true,
+      encoding: .utf8
+    )
+    #expect(try decide(["prompt": "x"]).permission == .ask)
+  }
+
+  @Test
   func claudeHostProtectsEnforcementFilesWhenEditsAreAllowed() throws {
     let manifest = try writeNetworkOnlyManifest()
     let directory = manifest.deletingLastPathComponent().path

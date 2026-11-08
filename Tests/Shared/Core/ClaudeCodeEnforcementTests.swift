@@ -544,6 +544,168 @@ struct ClaudeCodeEnforcementTests {
   }
 
   @Test(arguments: ["Agent", "Task"])
+  func evaluatorAsksAboutBuiltInTypesThatAnAgentDefinitionReplaces(toolName: String) {
+    func evaluate(_ type: String?, shadowed: Set<String>, mode: String? = nil) -> ClaudeCodeHookCheckDecision {
+      ClaudeCodeHookCheckEvaluator.evaluate(
+        ClaudeCodeToolCall(toolName: toolName, paths: [], cwd: "/proj", subagentType: type, permissionMode: mode),
+        manifest: manifest(forbiddenCapabilities: ["edit-files", "run-commands"]),
+        protectedPaths: ["/proj/.claude/personakit/"],
+        homeDirectory: "/home/u",
+        shadowedSubagentTypes: shadowed
+      )
+    }
+
+    // A project agent named like a built-in replaces it and can set its own isolation, which the call never shows.
+    let replaced = evaluate("Explore", shadowed: ["Explore"])
+    #expect(replaced.permission == .ask)
+    #expect(replaced.reason?.contains("agent type 'Explore', which a custom agent definition may replace") == true)
+    #expect(evaluate("Explore", shadowed: ["Explore"], mode: "bypassPermissions").permission == .deny)
+    // A call that names no type starts the default one.
+    #expect(evaluate(nil, shadowed: ["general-purpose"]).permission == .ask)
+    #expect(evaluate("", shadowed: ["general-purpose"]).permission == .ask)
+    // Other built-ins are left alone.
+    #expect(evaluate("Explore", shadowed: ["Plan"]).permission == .allow)
+    #expect(evaluate(nil, shadowed: ["Explore"]).permission == .allow)
+  }
+
+  @Test
+  func shadowedSubagentTypesReadEveryWordOfTheFrontmatterAndTheFileName() throws {
+    let root = try temporaryFolder("pk-agents")
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    let files: [String: String] = [
+      // YAML forms a line-by-line `name:` reader would miss.
+      "a.md": "---\nname: Explore # scout\n---\n",
+      "b.md": "---\r\ndescription: x\r\n\"name\" : >-\r\n  Plan\r\n---\r\n",
+      "c.md": "\u{FEFF}---\nname: 'claude-code-guide'\n---\n",
+      // Full-width letters fold to the built-in's name.
+      "e.md": "---\nname: \u{FF33}tatusline-setup\n---\n",
+      // A frontmatter that never closes is read to the end.
+      "f.md": "---\ndescription: unclosed\nname: general-purpose\n",
+      // By file name alone.
+      "nested/FORK.MD": "no frontmatter\n",
+      // Words after the frontmatter, and in files that are not Markdown, do not count.
+      "d.md": "---\nname: reviewer\n---\nLike general-purpose, but slower.\n",
+      "statusline-setup.txt": "---\nname: statusline-setup\n---\n",
+    ]
+    for (relativePath, text) in files {
+      let path = (root as NSString).appendingPathComponent(relativePath)
+      try FileManager.default.createDirectory(
+        atPath: (path as NSString).deletingLastPathComponent,
+        withIntermediateDirectories: true
+      )
+      try text.write(toFile: path, atomically: true, encoding: .utf8)
+    }
+
+    #expect(
+      ClaudeCodeEnforcement.shadowedSubagentTypes(in: [root, root + "/missing"])
+        == ["Explore", "Plan", "claude-code-guide", "fork", "general-purpose", "statusline-setup"]
+    )
+  }
+
+  @Test
+  func shadowedSubagentTypesTreatAnEscapeOrAnOversizedFileAsNamingEveryBuiltIn() throws {
+    let root = try temporaryFolder("pk-agents-escapes")
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    let plain = root + "/plain"
+    try FileManager.default.createDirectory(atPath: plain, withIntermediateDirectories: true)
+    try "---\nname: reviewer\n---\nA body with a \\ backslash.\n".write(
+      toFile: plain + "/reviewer.md",
+      atomically: true,
+      encoding: .utf8
+    )
+    #expect(ClaudeCodeEnforcement.shadowedSubagentTypes(in: [plain]).isEmpty)
+
+    // YAML decodes `"\x45xplore"` to `Explore`, which no word in the file spells.
+    let escaped = root + "/escaped"
+    try FileManager.default.createDirectory(atPath: escaped, withIntermediateDirectories: true)
+    try "---\nname: \"\\x45xplore\"\nisolation: worktree\n---\n".write(
+      toFile: escaped + "/scout.md",
+      atomically: true,
+      encoding: .utf8
+    )
+    #expect(ClaudeCodeEnforcement.shadowedSubagentTypes(in: [escaped]) == ClaudeCodeEnforcement.localSubagentTypes)
+
+    let large = root + "/large"
+    try FileManager.default.createDirectory(atPath: large, withIntermediateDirectories: true)
+    let padding = String(repeating: "x", count: ClaudeCodeEnforcement.maximumDefinitionBytes)
+    try "---\ndescription: \(padding)\nname: reviewer\n---\n".write(
+      toFile: large + "/big.md",
+      atomically: true,
+      encoding: .utf8
+    )
+    #expect(ClaudeCodeEnforcement.shadowedSubagentTypes(in: [large]) == ClaudeCodeEnforcement.localSubagentTypes)
+  }
+
+  @Test
+  func shadowedSubagentTypesReadSymlinkedFilesAndSkipFIFOs() throws {
+    let root = try temporaryFolder("pk-agents-special")
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    let agents = root + "/agents"
+    try FileManager.default.createDirectory(atPath: agents, withIntermediateDirectories: true)
+    try "---\nname: Plan\n---\n".write(toFile: root + "/target.txt", atomically: true, encoding: .utf8)
+    try FileManager.default.createSymbolicLink(atPath: agents + "/linked.md", withDestinationPath: root + "/target.txt")
+    // Reading a FIFO would block until a writer came; it is skipped, and only its name counts.
+    #expect(mkfifo(agents + "/pipe.md", 0o600) == 0)
+
+    #expect(ClaudeCodeEnforcement.shadowedSubagentTypes(in: [agents]) == ["Plan"])
+  }
+
+  @Test
+  func shadowedSubagentTypesFollowSymlinkedFoldersAndReadInvalidUTF8() throws {
+    let root = try temporaryFolder("pk-agents-links")
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    let agents = root + "/agents"
+    let shared = root + "/team-agents"
+    try FileManager.default.createDirectory(atPath: agents, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(atPath: shared, withIntermediateDirectories: true)
+    try "---\nname: Explore\n---\n".write(toFile: shared + "/scout.md", atomically: true, encoding: .utf8)
+    try FileManager.default.createSymbolicLink(atPath: agents + "/shared", withDestinationPath: shared)
+    // A loop back to the top is walked once.
+    try FileManager.default.createSymbolicLink(atPath: shared + "/loop", withDestinationPath: agents)
+    var bytes = Data("---\ndescription: \u{1}".utf8)
+    bytes.append(0xFF)
+    bytes.append(contentsOf: Data("\nname: Plan\n---\n".utf8))
+    try bytes.write(to: URL(fileURLWithPath: agents + "/planner.md"))
+
+    #expect(ClaudeCodeEnforcement.shadowedSubagentTypes(in: [agents]) == ["Explore", "Plan"])
+  }
+
+  @Test
+  func agentDefinitionDirectoriesCoverAncestorsTheMainCheckoutTheUserAndManagedFolders() throws {
+    let root = try temporaryFolder("pk-agent-dirs")
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    // A linked worktree at <root>/wt whose main checkout is <root>/main.
+    let main = root + "/main"
+    let worktree = root + "/wt"
+    try FileManager.default.createDirectory(atPath: main + "/.git/worktrees/wt", withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(atPath: worktree + "/pkg", withIntermediateDirectories: true)
+    try "gitdir: \(main)/.git/worktrees/wt\n".write(toFile: worktree + "/.git", atomically: true, encoding: .utf8)
+    try "../..\n".write(toFile: main + "/.git/worktrees/wt/commondir", atomically: true, encoding: .utf8)
+
+    let directories = ClaudeCodeEnforcement.agentDefinitionDirectories(
+      manifestPath: worktree + "/.claude/personakit/s.checks.json",
+      cwd: worktree + "/pkg",
+      configDirectory: "/home/u/.claude"
+    )
+
+    for expected in [
+      worktree + "/pkg/.claude/agents", worktree + "/.claude/agents", root + "/.claude/agents", "/.claude/agents",
+      main + "/.claude/agents", "/home/u/.claude/agents", ClaudeCodeEnforcement.managedAgentDirectory,
+    ] {
+      #expect(directories.contains(expected), "\(expected)")
+    }
+    #expect(directories == directories.sorted())
+    #expect(ClaudeCodeEnforcement.mainCheckout(containing: main, fileManager: .default) == nil)
+  }
+
+  private func temporaryFolder(_ prefix: String) throws -> String {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(prefix)-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    // Resolved, so `/var` and `/private/var` do not differ between what is written and what is read.
+    return url.resolvingSymlinksInPath().path
+  }
+
+  @Test(arguments: ["Agent", "Task"])
   func evaluatorAsksAboutSubagentsThatAreNotBuiltInLocalTypes(toolName: String) {
     for type in ClaudeCodeEnforcement.localSubagentTypes.sorted() {
       #expect(

@@ -64,6 +64,17 @@ answers:
   refuse. Where no one can answer, as in `claude -p`, Claude Code refuses the
   call, and under `bypassPermissions` the checker denies it.
 
+An agent definition can reuse a built-in type's name, replace it, and set its
+own `isolation`. So a built-in type is asked about too when a definition on
+disk names it: in `.claude/agents/` in the project, the working directory or any
+folder above it, or a worktree's main checkout; in your Claude Code config
+folder; or in the managed settings folder. The checker matches the file name
+and every word of the definition's frontmatter, so a definition that only
+mentions a built-in also counts. A frontmatter with a backslash, which a YAML
+escape could use to spell any name, counts as naming every built-in. The
+checker cannot see definitions passed with `--agents` or the Agent SDK, or
+folders added with `--add-dir`.
+
 On **OpenCode** every tool except the read-only built-ins (glob, grep, invalid,
 lsp, plan_exit, question, read, skill, task, todowrite) goes to the checker. MCP
 tools, other plugins' tools, and custom tools cannot be classified, so they are
