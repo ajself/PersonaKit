@@ -51,8 +51,9 @@ public final class WorkspaceStore {
   @ObservationIgnored var inFlightReloadTrigger: WorkspaceReloadTrigger?
   var loadErrorMessage: String?
   var canInitializeWorkspaceStructure = false
-  var isAgentSetupPresented = false
-  /// A destination the window should show next; the root view applies it and clears it.
+  /// A Set Up Agents request made while no window was focused; the first window to claim it shows the sheet.
+  var pendingAgentSetupRequest = false
+  /// A destination requested while no window was focused; the first window to claim it applies it.
   var pendingNavigationTarget: StudioNavigationTarget?
   var validation: WorkspaceValidationSnapshot {
     get {

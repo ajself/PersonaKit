@@ -10,6 +10,7 @@ public struct StudioRootView: View {
   @State private var selectedSessionID: String?
   @State private var searchTextBySidebarItem: [SidebarItem: String] = [:]
   @State private var sidebarVisibility = NavigationSplitViewVisibility.all
+  @State private var isAgentSetupPresented = false
   @SceneStorage("studio.inspector.isPresented")
   private var isInspectorPresented = false
   @SceneStorage(StudioInspectorMode.storageKey)
@@ -89,29 +90,35 @@ public struct StudioRootView: View {
         recordCurrentWorkspaceIfLoaded()
       }
     }
-    // `initial` lets a reopened window apply a request made while no window was open.
-    .onChange(of: workspaceStore.pendingNavigationTarget, initial: true) { _, target in
-      guard let target else {
-        return
+    // Menu commands reach the focused window through these. A request made while no window was focused waits
+    // in the store; `initial` lets a reopened window claim it, and claiming keeps a second window from also
+    // acting on it.
+    .focusedSceneValue(
+      \.studioWindowActions,
+      StudioWindowActions(
+        navigate: { applyNavigationTarget($0) },
+        presentAgentSetup: { isAgentSetupPresented = true }
+      )
+    )
+    .onChange(of: workspaceStore.pendingNavigationTarget, initial: true) {
+      if let target = workspaceStore.claimPendingNavigationTarget() {
+        applyNavigationTarget(target)
       }
-
-      applyNavigationTarget(target)
-      workspaceStore.clearPendingNavigationTarget()
+    }
+    .onChange(of: workspaceStore.pendingAgentSetupRequest, initial: true) {
+      if workspaceStore.claimAgentSetupRequest() {
+        isAgentSetupPresented = true
+      }
     }
     .onChange(of: workspaceStore.workspaceURL) { _, _ in
       // A global item keeps its identity across workspaces, so a carried-over selection would
       // never re-select the detail the store just cleared.
       selectedLibraryItemID = nil
     }
-    .sheet(
-      isPresented: Binding(
-        get: { workspaceStore.isAgentSetupPresented },
-        set: { workspaceStore.isAgentSetupPresented = $0 }
-      )
-    ) {
+    .sheet(isPresented: $isAgentSetupPresented) {
       StudioAgentSetupSheetView(
         onDone: {
-          workspaceStore.isAgentSetupPresented = false
+          isAgentSetupPresented = false
         }
       )
     }

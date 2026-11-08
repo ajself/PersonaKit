@@ -113,8 +113,25 @@ extension WorkspaceStore {
     recentWorkspacesFeatureModel.stopAccess()
   }
 
-  func presentAgentSetup() {
-    isAgentSetupPresented = true
+  /// Shows Set Up Agents in `window`, the focused one. With no window focused, the next window to claim the
+  /// request shows it.
+  func presentAgentSetup(in window: StudioWindowActions?) {
+    guard let window else {
+      pendingAgentSetupRequest = true
+      return
+    }
+
+    window.presentAgentSetup()
+  }
+
+  /// Takes a pending Set Up Agents request, so only the first window to ask shows the sheet.
+  func claimAgentSetupRequest() -> Bool {
+    guard pendingAgentSetupRequest else {
+      return false
+    }
+
+    pendingAgentSetupRequest = false
+    return true
   }
 
   /// Creates a minimal PersonaKit folder structure at the selected workspace and reloads state.
@@ -284,18 +301,32 @@ extension WorkspaceStore {
     validationFeatureModel.runValidation(workspaceURL: workspaceURL)
   }
 
-  /// Validates and shows Validation Results, so a menu-driven run always has a visible result.
-  func validateWorkspaceAndShowResults() {
+  /// Validates and shows Validation Results in `window`, the focused one, so a menu-driven run always has a
+  /// visible result. With no window focused, the next window to claim the request shows it.
+  func validateWorkspaceAndShowResults(in window: StudioWindowActions?) {
     guard workspaceURL != nil else {
       return
     }
 
     validateWorkspace()
-    pendingNavigationTarget = StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")
+    let target = StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")
+
+    guard let window else {
+      pendingNavigationTarget = target
+      return
+    }
+
+    window.navigate(target)
   }
 
-  func clearPendingNavigationTarget() {
+  /// Takes the pending destination, so only the first window to ask applies it.
+  func claimPendingNavigationTarget() -> StudioNavigationTarget? {
+    guard let target = pendingNavigationTarget else {
+      return nil
+    }
+
     pendingNavigationTarget = nil
+    return target
   }
 
   /// Reveals a file in Finder.

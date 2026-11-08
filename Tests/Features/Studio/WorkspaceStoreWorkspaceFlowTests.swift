@@ -31,7 +31,30 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
-  func validateWorkspaceAndShowResultsRunsValidationAndRequestsValidationResults() async {
+  func validateWorkspaceAndShowResultsNavigatesOnlyTheFocusedWindow() async {
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        makeValidation(entityID: "persona-a")
+      }
+    )
+    let window = WindowActionsRecorder()
+
+    store.workspaceURL = URL(fileURLWithPath: "/Workspace")
+    store.validateWorkspaceAndShowResults(in: window.actions)
+
+    #expect(window.targets == [StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")])
+    #expect(store.pendingNavigationTarget == nil)
+
+    await waitFor {
+      store.validation.issues.first?.entityId == "persona-a"
+    }
+  }
+
+  @Test
+  func validateWorkspaceAndShowResultsWithNoFocusedWindowLeavesOneClaimableRequest() {
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
         WorkspaceSnapshot.empty
@@ -42,20 +65,13 @@ struct WorkspaceStoreWorkspaceFlowTests {
     )
 
     store.workspaceURL = URL(fileURLWithPath: "/Workspace")
-    store.validateWorkspaceAndShowResults()
+    store.validateWorkspaceAndShowResults(in: nil)
 
     #expect(
-      store.pendingNavigationTarget
+      store.claimPendingNavigationTarget()
         == StudioNavigationTarget(sidebarItem: .validationResults, searchText: "")
     )
-
-    await waitFor {
-      store.validation.issues.first?.entityId == "persona-a"
-    }
-
-    store.clearPendingNavigationTarget()
-
-    #expect(store.pendingNavigationTarget == nil)
+    #expect(store.claimPendingNavigationTarget() == nil)
   }
 
   @Test
@@ -69,9 +85,12 @@ struct WorkspaceStoreWorkspaceFlowTests {
         return .empty
       }
     )
+    let window = WindowActionsRecorder()
 
-    store.validateWorkspaceAndShowResults()
+    store.validateWorkspaceAndShowResults(in: window.actions)
+    store.validateWorkspaceAndShowResults(in: nil)
 
+    #expect(window.targets.isEmpty)
     #expect(store.pendingNavigationTarget == nil)
   }
 
@@ -312,22 +331,48 @@ struct WorkspaceStoreWorkspaceFlowTests {
   }
 
   @Test
-  func presentAgentSetupShowsTheSheet() {
+  func presentAgentSetupShowsTheSheetOnlyInTheFocusedWindow() {
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeProvider: { nil }),
+      workspaceValidator: WorkspaceValidator(globalScopeProvider: { nil })
+    )
+    let window = WindowActionsRecorder()
+
+    store.presentAgentSetup(in: window.actions)
+
+    #expect(window.agentSetupPresentations == 1)
+    #expect(!store.claimAgentSetupRequest())
+  }
+
+  @Test
+  func presentAgentSetupWithNoFocusedWindowLeavesOneClaimableRequest() {
     let store = WorkspaceStore(
       snapshotBuilder: WorkspaceSnapshotBuilder(globalScopeProvider: { nil }),
       workspaceValidator: WorkspaceValidator(globalScopeProvider: { nil })
     )
 
-    #expect(!store.isAgentSetupPresented)
+    store.presentAgentSetup(in: nil)
 
-    store.presentAgentSetup()
-
-    #expect(store.isAgentSetupPresented)
+    #expect(store.claimAgentSetupRequest())
+    #expect(!store.claimAgentSetupRequest())
   }
 
   private func yieldTasks(_ iterations: Int = 50) async {
     for _ in 0..<iterations {
       await Task.yield()
     }
+  }
+}
+
+@MainActor
+private final class WindowActionsRecorder {
+  private(set) var targets: [StudioNavigationTarget] = []
+  private(set) var agentSetupPresentations = 0
+
+  var actions: StudioWindowActions {
+    StudioWindowActions(
+      navigate: { [weak self] in self?.targets.append($0) },
+      presentAgentSetup: { [weak self] in self?.agentSetupPresentations += 1 }
+    )
   }
 }

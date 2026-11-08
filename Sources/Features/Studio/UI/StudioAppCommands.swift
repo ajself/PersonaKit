@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct StudioAppCommands: Commands {
   let workspaceStore: WorkspaceStore
+  @FocusedValue(\.studioWindowActions) private var focusedWindow
 
   public init(workspaceStore: WorkspaceStore) {
     self.workspaceStore = workspaceStore
@@ -17,14 +18,14 @@ public struct StudioAppCommands: Commands {
       .keyboardShortcut("o", modifiers: [.command])
 
       Button("Validate Workspace") {
-        workspaceStore.validateWorkspaceAndShowResults()
+        workspaceStore.validateWorkspaceAndShowResults(in: focusedWindow)
       }
       .disabled(workspaceStore.workspaceURL == nil)
     }
 
     CommandGroup(after: .appInfo) {
       Button("Set Up Agents…") {
-        workspaceStore.presentAgentSetup()
+        workspaceStore.presentAgentSetup(in: focusedWindow)
       }
     }
   }
