@@ -282,7 +282,12 @@ version-check:
 	echo "version-check: OK ($(RELEASE_VERSION))"
 
 cli-install: version-check cli-build
-	@bin_dir="$$($(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --show-bin-path)"; \
+	@set -e; \
+	bin_dir="$$($(SWIFT_BUILD) -c $(SWIFT_CONFIGURATION) --show-bin-path)"; \
+	if [ ! -d "$$bin_dir/$(CLI_SUPPORT_BUNDLE_NAME)" ]; then \
+		echo "error: resource bundle $(CLI_SUPPORT_BUNDLE_NAME) not found in $$bin_dir; the CLI crashes without it."; \
+		exit 1; \
+	fi; \
 	install -d "$(INSTALL_BIN_DIR)"; \
 	install -m 755 "$$bin_dir/$(CLI_PRODUCT_NAME)" "$(INSTALL_BIN_DIR)/$(CLI_PRODUCT_NAME)"; \
 	for bundle in "$$bin_dir"/*.bundle; do \
@@ -606,11 +611,11 @@ studio-pkg-app:
 		exit 1; \
 	fi; \
 	ditto --norsrc --noqtn "$$cli" "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)/$(CLI_PRODUCT_NAME)"; \
-	if [ -d "$$bundle" ]; then \
-		ditto --norsrc --noqtn "$$bundle" "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)/$(CLI_SUPPORT_BUNDLE_NAME)"; \
-	else \
-		echo "warning: resource bundle $(CLI_SUPPORT_BUNDLE_NAME) not found at $$bundle; skipping"; \
-	fi
+	if [ ! -d "$$bundle" ]; then \
+		echo "error: resource bundle $(CLI_SUPPORT_BUNDLE_NAME) not found at $$bundle; the CLI crashes without it."; \
+		exit 1; \
+	fi; \
+	ditto --norsrc --noqtn "$$bundle" "$(PKG_STAGE_ROOT)$(CLI_INSTALL_LOCATION)/$(CLI_SUPPORT_BUNDLE_NAME)"
 	@xattr -cr "$(PKG_STAGE_ROOT)"
 	@find "$(PKG_STAGE_ROOT)" -name '._*' -delete
 	@pkgbuild --analyze --root "$(PKG_STAGE_ROOT)" "$(PKG_COMPONENT_PLIST)"
