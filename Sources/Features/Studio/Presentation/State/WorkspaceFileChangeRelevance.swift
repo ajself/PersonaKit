@@ -56,13 +56,25 @@ enum WorkspaceFileChangeRelevance {
     return filePath == changedPath || filePath.hasPrefix(changedPath + "/")
   }
 
+  /// Resolves symlinks through the deepest part of the path that still exists. Foundation resolves only an
+  /// existing path, so a deleted file seen through a symlinked workspace would otherwise never match the real
+  /// directory FSEvents reports.
   private static func canonicalPath(_ url: URL) -> String {
-    let path = url.resolvingSymlinksInPath().standardizedFileURL.path
+    var existingURL = url.standardizedFileURL
+    var missingComponents: [String] = []
 
-    guard path.count > 1, path.hasSuffix("/") else {
-      return path
+    while existingURL.pathComponents.count > 1,
+      !FileManager.default.fileExists(atPath: existingURL.path)
+    {
+      missingComponents.insert(existingURL.lastPathComponent, at: 0)
+      existingURL.deleteLastPathComponent()
     }
 
-    return String(path.dropLast())
+    var resolvedURL = existingURL.resolvingSymlinksInPath()
+    for component in missingComponents {
+      resolvedURL.appendPathComponent(component)
+    }
+
+    return resolvedURL.standardizedFileURL.path
   }
 }

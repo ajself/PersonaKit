@@ -86,4 +86,34 @@ struct WorkspaceFileChangeRelevanceTests {
       )
     )
   }
+
+  @Test
+  func affectsFileMatchesADeletedFileThroughASymlinkedWorkspace() throws {
+    let rootURL = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let realPersonasURL = rootURL.appendingPathComponent("real/Packs/personas", isDirectory: true)
+    let linkURL = rootURL.appendingPathComponent("link", isDirectory: true)
+    try FileManager.default.createDirectory(at: realPersonasURL, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: rootURL) }
+    try FileManager.default.createSymbolicLink(
+      at: linkURL,
+      withDestinationURL: rootURL.appendingPathComponent("real", isDirectory: true)
+    )
+
+    // The file is already gone, and FSEvents reports only its real parent directory.
+    let deletedFileURL = linkURL.appendingPathComponent("Packs/personas/solo.persona.json")
+
+    #expect(WorkspaceFileChangeRelevance.affectsFile(deletedFileURL, changedFileURLs: [realPersonasURL]))
+    // FSEvents reports the temporary directory under /private.
+    if realPersonasURL.path.hasPrefix("/var/") {
+      let privateURL = URL(fileURLWithPath: "/private" + realPersonasURL.path, isDirectory: true)
+      #expect(WorkspaceFileChangeRelevance.affectsFile(deletedFileURL, changedFileURLs: [privateURL]))
+    }
+    #expect(
+      !WorkspaceFileChangeRelevance.affectsFile(
+        deletedFileURL,
+        changedFileURLs: [rootURL.appendingPathComponent("real/Packs/kits", isDirectory: true)]
+      )
+    )
+  }
 }
