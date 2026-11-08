@@ -232,7 +232,7 @@ struct StudioRecentWorkspacesStateTests {
 
   @Test
   @MainActor
-  func workspaceOpenCoordinatorSkipsRecentChangesWhenPickerReturnsSameWorkspace() {
+  func workspaceOpenCoordinatorReplacesAnUnusableBookmarkWhenPickerReturnsTheOpenWorkspace() {
     let workspaceURL = URL(fileURLWithPath: "/Workspace")
     let recentAccess = StudioRecentWorkspaceAccessRecorder()
     let storage = StudioRecentWorkspacesStorageRecorder()
@@ -252,10 +252,48 @@ struct StudioRecentWorkspacesStateTests {
       recentWorkspaceAccess: recentAccess,
       bookmarkDataProvider: { _ in Data([4, 5, 6]) }
     )
+    // A saved entry whose bookmark no longer opens the folder, so its load failed with this URL already set.
+    store.recordRecentWorkspace(workspaceURL: workspaceURL, bookmarkData: Data([1, 2, 3]))
     store.workspaceURL = workspaceURL
 
     StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: store)
 
+    #expect(recentAccess.stopCount == 1)
+    #expect(store.recentWorkspaces.map(\.path) == ["/Workspace"])
+    #expect(store.recentWorkspaces.first?.bookmarkData == Data([4, 5, 6]))
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storage.storageValue).first?.bookmarkData
+        == Data([4, 5, 6])
+    )
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorChangesNothingWhenPickerIsCancelled() {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let recentAccess = StudioRecentWorkspaceAccessRecorder()
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspacePicker: WorkspaceStoreStubWorkspacePicker(
+        selectedURL: nil
+      )
+    )
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: recentAccess,
+      bookmarkDataProvider: { _ in Data([4, 5, 6]) }
+    )
+    store.workspaceURL = workspaceURL
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: store)
+
+    #expect(store.workspaceURL == workspaceURL)
     #expect(recentAccess.stopCount == 0)
     #expect(store.recentWorkspaces.isEmpty)
     #expect(StudioRecentWorkspacesState.workspaces(from: storage.storageValue).isEmpty)
@@ -315,31 +353,168 @@ struct StudioRecentWorkspacesStateTests {
       resolvedURL: resolvedURL,
       shouldStartAccess: true
     )
-    let access = StudioRecentWorkspaceAccess(securityScopeClient: securityScopeClient)
+    let bookmarkClient = StudioRecentWorkspaceBookmarkRecorder(bookmarkData: Data([9]))
+    let access = StudioRecentWorkspaceAccess(
+      securityScopeClient: securityScopeClient,
+      bookmarkClient: bookmarkClient
+    )
 
-    let url = access.url(
-      for: StudioRecentWorkspace(
+    let accessed = access.access(
+      StudioRecentWorkspace(
         path: "/FallbackWorkspace",
         bookmarkData: bookmarkData
       )
     )
     access.stop()
 
-    #expect(url == resolvedURL.standardizedFileURL)
+    #expect(accessed.url == URL(fileURLWithPath: "/ResolvedWorkspace", isDirectory: true))
+    #expect(accessed.bookmarkData == bookmarkData)
+    #expect(bookmarkClient.requestedURLs.isEmpty)
     #expect(securityScopeClient.resolvedBookmarkData == [bookmarkData])
     #expect(securityScopeClient.startedURLs == [resolvedURL.standardizedFileURL])
     #expect(securityScopeClient.stoppedURLs == [resolvedURL.standardizedFileURL])
   }
+
+  @Test
+  @MainActor
+  func recentWorkspaceAccessReturnsTheEntryUnchangedWhenItsBookmarkIsMissingOrUnresolvable() {
+    let securityScopeClient = StudioRecentWorkspaceSecurityScopeRecorder(
+      resolvedURL: nil,
+      shouldStartAccess: true
+    )
+    let bookmarkClient = StudioRecentWorkspaceBookmarkRecorder(bookmarkData: Data([4, 5, 6]))
+    let access = StudioRecentWorkspaceAccess(
+      securityScopeClient: securityScopeClient,
+      bookmarkClient: bookmarkClient
+    )
+    let withoutBookmark = StudioRecentWorkspace(path: "/Plain")
+    let unresolvable = StudioRecentWorkspace(path: "/Broken", bookmarkData: Data([1, 2, 3]))
+
+    #expect(access.access(withoutBookmark) == withoutBookmark)
+    #expect(access.access(unresolvable) == unresolvable)
+    #expect(securityScopeClient.resolvedBookmarkData == [Data([1, 2, 3])])
+    #expect(securityScopeClient.startedURLs.isEmpty)
+    #expect(bookmarkClient.requestedURLs.isEmpty)
+  }
+
+  @Test
+  @MainActor
+  func recentWorkspaceAccessReplacesAStaleBookmarkWhileAccessIsHeld() {
+    let securityScopeClient = StudioRecentWorkspaceSecurityScopeRecorder(
+      resolvedURL: URL(fileURLWithPath: "/Moved Workspace"),
+      isStale: true,
+      shouldStartAccess: true
+    )
+    let bookmarkClient = StudioRecentWorkspaceBookmarkRecorder(bookmarkData: Data([4, 5, 6]))
+    let access = StudioRecentWorkspaceAccess(
+      securityScopeClient: securityScopeClient,
+      bookmarkClient: bookmarkClient
+    )
+
+    let accessed = access.access(
+      StudioRecentWorkspace(path: "/Workspace", bookmarkData: Data([1, 2, 3]))
+    )
+
+    #expect(accessed.path == "/Moved Workspace")
+    #expect(accessed.bookmarkData == Data([4, 5, 6]))
+    #expect(bookmarkClient.requestedURLs == [URL(fileURLWithPath: "/Moved Workspace").standardizedFileURL])
+    #expect(securityScopeClient.stoppedURLs.isEmpty)
+  }
+
+  @Test
+  @MainActor
+  func recentWorkspaceAccessKeepsAStaleBookmarkWhenANewOneCannotBeMade() {
+    let securityScopeClient = StudioRecentWorkspaceSecurityScopeRecorder(
+      resolvedURL: URL(fileURLWithPath: "/Workspace"),
+      isStale: true,
+      shouldStartAccess: true
+    )
+    let access = StudioRecentWorkspaceAccess(
+      securityScopeClient: securityScopeClient,
+      bookmarkClient: StudioRecentWorkspaceBookmarkRecorder(bookmarkData: nil)
+    )
+
+    let accessed = access.access(
+      StudioRecentWorkspace(path: "/Workspace", bookmarkData: Data([1, 2, 3]))
+    )
+
+    #expect(accessed.bookmarkData == Data([1, 2, 3]))
+  }
+
+  @Test
+  @MainActor
+  func recentWorkspaceAccessMakesNoBookmarkWhenAccessIsRefused() {
+    let securityScopeClient = StudioRecentWorkspaceSecurityScopeRecorder(
+      resolvedURL: URL(fileURLWithPath: "/Workspace"),
+      isStale: true,
+      shouldStartAccess: false
+    )
+    let bookmarkClient = StudioRecentWorkspaceBookmarkRecorder(bookmarkData: Data([4, 5, 6]))
+    let access = StudioRecentWorkspaceAccess(
+      securityScopeClient: securityScopeClient,
+      bookmarkClient: bookmarkClient
+    )
+
+    let accessed = access.access(
+      StudioRecentWorkspace(path: "/Workspace", bookmarkData: Data([1, 2, 3]))
+    )
+    access.stop()
+
+    #expect(accessed.bookmarkData == Data([1, 2, 3]))
+    #expect(bookmarkClient.requestedURLs.isEmpty)
+    #expect(securityScopeClient.stoppedURLs.isEmpty)
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorRecordsTheBookmarkTheRecentAccessReturns() async {
+    let recentAccess = StudioRecentWorkspaceAccessRecorder(refreshedBookmarkData: Data([4, 5, 6]))
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      }
+    )
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: recentAccess
+    )
+
+    StudioWorkspaceOpenCoordinator.openRecentWorkspace(
+      StudioRecentWorkspace(path: "/RecentWorkspace", bookmarkData: Data([1, 2, 3])),
+      workspaceStore: store
+    )
+
+    await waitFor {
+      store.workspaceURL != nil
+    }
+
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storage.storageValue).first?.bookmarkData
+        == Data([4, 5, 6])
+    )
+  }
 }
 
 private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAccessing {
+  private let refreshedBookmarkData: Data?
   private(set) var stopCount = 0
   private(set) var requestedWorkspaces: [StudioRecentWorkspace] = []
 
-  func url(for workspace: StudioRecentWorkspace) -> URL {
+  init(refreshedBookmarkData: Data? = nil) {
+    self.refreshedBookmarkData = refreshedBookmarkData
+  }
+
+  func access(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace {
     requestedWorkspaces.append(workspace)
 
-    return workspace.url
+    return StudioRecentWorkspace(
+      path: workspace.path,
+      bookmarkData: refreshedBookmarkData ?? workspace.bookmarkData
+    )
   }
 
   func stop() {
@@ -373,6 +548,7 @@ private final class StudioRecentWorkspaceSecurityScopeRecorder:
   StudioRecentWorkspaceSecurityScopeResolving
 {
   private let resolvedURL: URL?
+  private let isStale: Bool
   private let shouldStartAccess: Bool
   private(set) var resolvedBookmarkData: [Data] = []
   private(set) var startedURLs: [URL] = []
@@ -380,15 +556,17 @@ private final class StudioRecentWorkspaceSecurityScopeRecorder:
 
   init(
     resolvedURL: URL?,
+    isStale: Bool = false,
     shouldStartAccess: Bool
   ) {
     self.resolvedURL = resolvedURL?.standardizedFileURL
+    self.isStale = isStale
     self.shouldStartAccess = shouldStartAccess
   }
 
-  func resolveURL(from bookmarkData: Data) -> URL? {
+  func resolveURL(from bookmarkData: Data) -> (url: URL, isStale: Bool)? {
     resolvedBookmarkData.append(bookmarkData)
-    return resolvedURL
+    return resolvedURL.map { ($0, isStale) }
   }
 
   func startAccessing(_ url: URL) -> Bool {

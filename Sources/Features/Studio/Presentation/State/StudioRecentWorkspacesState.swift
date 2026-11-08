@@ -7,7 +7,7 @@ protocol StudioRecentWorkspaceBookmarking {
 }
 
 protocol StudioRecentWorkspaceSecurityScopeResolving {
-  func resolveURL(from bookmarkData: Data) -> URL?
+  func resolveURL(from bookmarkData: Data) -> (url: URL, isStale: Bool)?
   func startAccessing(_ url: URL) -> Bool
   func stopAccessing(_ url: URL)
 }
@@ -23,16 +23,21 @@ struct StudioRecentWorkspaceBookmarkClient: StudioRecentWorkspaceBookmarking {
 }
 
 struct StudioRecentWorkspaceSecurityScopeClient: StudioRecentWorkspaceSecurityScopeResolving {
-  func resolveURL(from bookmarkData: Data) -> URL? {
+  func resolveURL(from bookmarkData: Data) -> (url: URL, isStale: Bool)? {
     var isStale = false
 
-    return try? URL(
-      resolvingBookmarkData: bookmarkData,
-      options: [.withSecurityScope],
-      relativeTo: nil,
-      bookmarkDataIsStale: &isStale
-    )
-    .standardizedFileURL
+    guard
+      let url = try? URL(
+        resolvingBookmarkData: bookmarkData,
+        options: [.withSecurityScope],
+        relativeTo: nil,
+        bookmarkDataIsStale: &isStale
+      )
+    else {
+      return nil
+    }
+
+    return (url.standardizedFileURL, isStale)
   }
 
   func startAccessing(_ url: URL) -> Bool {
@@ -223,39 +228,49 @@ enum StudioRecentWorkspacesState {
 
 @MainActor
 protocol StudioRecentWorkspaceAccessing: AnyObject {
-  func url(for workspace: StudioRecentWorkspace) -> URL
+  /// Starts access to a recent workspace's folder and returns the entry to record: its resolved path, and a fresh
+  /// bookmark when the saved one is stale.
+  func access(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace
   func stop()
 }
 
 final class StudioRecentWorkspaceAccess: StudioRecentWorkspaceAccessing {
   private let securityScopeClient: any StudioRecentWorkspaceSecurityScopeResolving
+  private let bookmarkClient: any StudioRecentWorkspaceBookmarking
   private var accessedURL: URL?
 
   init(
     securityScopeClient: any StudioRecentWorkspaceSecurityScopeResolving =
-      StudioRecentWorkspaceSecurityScopeClient()
+      StudioRecentWorkspaceSecurityScopeClient(),
+    bookmarkClient: any StudioRecentWorkspaceBookmarking = StudioRecentWorkspaceBookmarkClient()
   ) {
     self.securityScopeClient = securityScopeClient
+    self.bookmarkClient = bookmarkClient
   }
 
-  func url(for workspace: StudioRecentWorkspace) -> URL {
+  func access(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace {
     stop()
 
-    guard let bookmarkData = workspace.bookmarkData else {
-      return workspace.url
-    }
-
     guard
-      let url = securityScopeClient.resolveURL(from: bookmarkData)
+      let bookmarkData = workspace.bookmarkData,
+      let resolved = securityScopeClient.resolveURL(from: bookmarkData)
     else {
-      return workspace.url
+      return workspace
     }
 
-    if securityScopeClient.startAccessing(url) {
-      accessedURL = url
+    guard securityScopeClient.startAccessing(resolved.url) else {
+      return StudioRecentWorkspace(path: resolved.url.path(percentEncoded: false), bookmarkData: bookmarkData)
     }
 
-    return url
+    accessedURL = resolved.url
+
+    // A stale bookmark still opens the folder for now, so replace it while access is held, before it stops working.
+    let currentBookmarkData =
+      resolved.isStale
+      ? bookmarkClient.bookmarkData(for: resolved.url) ?? bookmarkData
+      : bookmarkData
+
+    return StudioRecentWorkspace(path: resolved.url.path(percentEncoded: false), bookmarkData: currentBookmarkData)
   }
 
   func stop() {
@@ -331,8 +346,8 @@ final class StudioRecentWorkspacesFeatureModel {
     )
   }
 
-  func url(for workspace: StudioRecentWorkspace) -> URL {
-    recentWorkspaceAccess.url(for: workspace)
+  func access(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace {
+    recentWorkspaceAccess.access(workspace)
   }
 
   func stopAccess() {

@@ -46,12 +46,19 @@ extension WorkspaceStore {
 
   /// Presents the folder picker and loads the selected workspace snapshot.
   public func openWorkspacePicker() {
+    pickAndLoadWorkspace()
+  }
+
+  /// Returns whether the user picked a folder (false on cancel).
+  @discardableResult
+  func pickAndLoadWorkspace() -> Bool {
     guard let selectedURL = systemFeatureModel.pickWorkspaceURL() else {
-      return
+      return false
     }
 
     workspaceURL = selectedURL
     loadWorkspace()
+    return true
   }
 
   func openWorkspacePickerAndRecordRecent() {
@@ -87,8 +94,8 @@ extension WorkspaceStore {
     )
   }
 
-  func url(forRecentWorkspace workspace: StudioRecentWorkspace) -> URL {
-    recentWorkspacesFeatureModel.url(for: workspace)
+  func accessRecentWorkspace(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace {
+    recentWorkspacesFeatureModel.access(workspace)
   }
 
   func stopRecentWorkspaceAccess() {

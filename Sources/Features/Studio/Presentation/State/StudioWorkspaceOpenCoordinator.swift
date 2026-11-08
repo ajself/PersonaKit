@@ -5,14 +5,11 @@ enum StudioWorkspaceOpenCoordinator {
   static func openWorkspaceFromPicker(
     workspaceStore: WorkspaceStore
   ) {
-    let previousWorkspaceURL = workspaceStore.workspaceURL?.standardizedFileURL
-
-    workspaceStore.openWorkspacePicker()
-
-    guard workspaceStore.workspaceURL?.standardizedFileURL != previousWorkspaceURL else {
+    guard workspaceStore.pickAndLoadWorkspace() else {
       return
     }
 
+    // Record a re-pick of the open folder too: its new bookmark replaces a saved one that no longer opens it.
     workspaceStore.stopRecentWorkspaceAccess()
     workspaceStore.recordCurrentWorkspaceIfLoaded()
   }
@@ -21,13 +18,13 @@ enum StudioWorkspaceOpenCoordinator {
     _ workspace: StudioRecentWorkspace,
     workspaceStore: WorkspaceStore
   ) {
-    let workspaceURL = workspaceStore.url(forRecentWorkspace: workspace)
+    let accessedWorkspace = workspaceStore.accessRecentWorkspace(workspace)
 
-    workspaceStore.workspaceURL = workspaceURL
+    workspaceStore.workspaceURL = accessedWorkspace.url
     workspaceStore.loadWorkspace()
     workspaceStore.recordRecentWorkspace(
-      workspaceURL: workspaceURL,
-      bookmarkData: workspace.bookmarkData
+      workspaceURL: accessedWorkspace.url,
+      bookmarkData: accessedWorkspace.bookmarkData
     )
   }
 
