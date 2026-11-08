@@ -149,14 +149,17 @@ public struct StudioRootView: View {
             Label("Workspace Load Failed", systemImage: "exclamationmark.triangle")
           },
           description: {
-            Text("\(loadErrorMessage) Choose another folder to inspect a different PersonaKit root.")
+            Text(
+              "\(loadErrorMessage) If Studio lost access to this folder, choose it again. Otherwise, choose a "
+                + "different PersonaKit folder."
+            )
           },
           actions: {
-            Button("Choose Another Folder") {
+            Button("Choose Folder…") {
               openWorkspaceFromPicker()
             }
-            .accessibilityLabel("Choose Another Folder")
-            .help("Choose Another Folder")
+            .accessibilityLabel("Choose Folder…")
+            .help("Choose Folder…")
           }
         )
       }
