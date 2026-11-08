@@ -11,7 +11,7 @@ enum StudioWorkspaceOpenCoordinator {
 
     // Record a re-pick of the open folder too: its new bookmark replaces a saved one that no longer opens it.
     workspaceStore.stopRecentWorkspaceAccess()
-    workspaceStore.recordCurrentWorkspaceIfLoaded()
+    workspaceStore.recordPickedWorkspaceIfLoaded()
   }
 
   static func openRecentWorkspace(
@@ -22,15 +22,11 @@ enum StudioWorkspaceOpenCoordinator {
 
     workspaceStore.workspaceURL = accessedWorkspace.url
     workspaceStore.loadWorkspace()
+    // A bookmark that now resolves to a moved folder records the new path, so the old entry goes.
     workspaceStore.recordRecentWorkspace(
       workspaceURL: accessedWorkspace.url,
-      bookmarkData: accessedWorkspace.bookmarkData
+      bookmarkData: accessedWorkspace.bookmarkData,
+      replacing: accessedWorkspace.path == workspace.path ? nil : workspace
     )
-  }
-
-  static func recordCurrentWorkspaceIfLoaded(
-    workspaceStore: WorkspaceStore
-  ) {
-    workspaceStore.recordCurrentWorkspaceIfLoaded()
   }
 }

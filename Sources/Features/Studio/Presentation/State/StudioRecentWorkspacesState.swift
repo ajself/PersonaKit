@@ -107,17 +107,29 @@ enum StudioRecentWorkspacesState {
       .map(\.workspace)
   }
 
+  /// The list with `workspaceURL` first. A folder already in the list keeps its saved bookmark when this one has
+  /// none, unless `discardingSavedBookmark`: a folder the user just picked records exactly the access that pick gave.
+  /// `replacedWorkspace`, when given, is removed, as when its bookmark now resolves to a folder that moved.
   static func storageValue(
     adding workspaceURL: URL,
     bookmarkData: Data? = nil,
+    discardingSavedBookmark: Bool = false,
+    replacing replacedWorkspace: StudioRecentWorkspace? = nil,
     to storageValue: String
   ) -> String {
-    let existingWorkspaces = workspaces(from: storageValue).map(StoredWorkspace.init(workspace:))
     let newWorkspace = StoredWorkspace(
       path: normalizedDirectoryPath(workspaceURL.standardizedFileURL.path(percentEncoded: false)),
       bookmarkData: bookmarkData?.base64EncodedString(),
       pathIsDecoded: true
     )
+    let droppedPaths = Set(
+      [discardingSavedBookmark ? newWorkspace.path : nil, replacedWorkspace.map(standardizedPath(of:))].compactMap {
+        $0
+      }
+    )
+    let existingWorkspaces = workspaces(from: storageValue)
+      .filter { !droppedPaths.contains(standardizedPath(of: $0)) }
+      .map(StoredWorkspace.init(workspace:))
     let workspaces = uniqueStandardizedWorkspaces([newWorkspace] + existingWorkspaces)
       .prefix(maximumCount)
 
@@ -128,16 +140,20 @@ enum StudioRecentWorkspacesState {
     removing workspace: StudioRecentWorkspace,
     from storageValue: String
   ) -> String {
-    let removedPath = normalizedDirectoryPath(
-      URL(fileURLWithPath: workspace.path, isDirectory: true)
-        .standardizedFileURL
-        .path(percentEncoded: false)
-    )
+    let removedPath = standardizedPath(of: workspace)
     let workspaces = workspaces(from: storageValue)
       .map(StoredWorkspace.init(workspace:))
       .filter { $0.path != removedPath }
 
     return encodedStorageValue(workspaces)
+  }
+
+  private static func standardizedPath(of workspace: StudioRecentWorkspace) -> String {
+    normalizedDirectoryPath(
+      URL(fileURLWithPath: workspace.path, isDirectory: true)
+        .standardizedFileURL
+        .path(percentEncoded: false)
+    )
   }
 
   static func securityScopedBookmarkData(for workspaceURL: URL) -> Data? {
@@ -314,12 +330,28 @@ final class StudioRecentWorkspacesFeatureModel {
   @discardableResult
   func recordWorkspace(
     at workspaceURL: URL,
-    bookmarkData: Data? = nil
+    bookmarkData: Data? = nil,
+    replacing replacedWorkspace: StudioRecentWorkspace? = nil
   ) -> Bool {
     updateStorageValue(
       StudioRecentWorkspacesState.storageValue(
         adding: workspaceURL,
         bookmarkData: bookmarkData,
+        replacing: replacedWorkspace,
+        to: storageValue
+      )
+    )
+  }
+
+  /// Records a folder the user just picked with the bookmark made for it now, replacing any saved one: a re-pick
+  /// that cannot make a bookmark leaves none rather than one that opens the folder some other way.
+  @discardableResult
+  func recordPickedWorkspace(at workspaceURL: URL) -> Bool {
+    updateStorageValue(
+      StudioRecentWorkspacesState.storageValue(
+        adding: workspaceURL,
+        bookmarkData: bookmarkDataProvider(workspaceURL),
+        discardingSavedBookmark: true,
         to: storageValue
       )
     )

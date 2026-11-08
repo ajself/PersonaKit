@@ -114,6 +114,48 @@ struct StudioRecentWorkspacesStateTests {
   }
 
   @Test
+  func aPickedWorkspaceWithoutABookmarkDropsTheSavedOne() {
+    let storageValue = StudioRecentWorkspacesState.storageValue(
+      adding: URL(fileURLWithPath: "/Workspace/A/"),
+      discardingSavedBookmark: true,
+      to: StudioRecentWorkspacesState.storageValue(
+        adding: URL(fileURLWithPath: "/Workspace/A"),
+        bookmarkData: Data([1, 2, 3]),
+        to: "[]"
+      )
+    )
+
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storageValue)
+        == [StudioRecentWorkspace(path: "/Workspace/A", bookmarkData: nil)]
+    )
+  }
+
+  @Test
+  func addingAWorkspaceReplacingAnotherRemovesTheOtherEntry() {
+    let moved = StudioRecentWorkspace(path: "/Old/Place", bookmarkData: Data([1, 2, 3]))
+    let start = StudioRecentWorkspacesState.storageValue(
+      adding: URL(fileURLWithPath: "/Workspace/B"),
+      to: StudioRecentWorkspacesState.storageValue(
+        adding: moved.url,
+        bookmarkData: moved.bookmarkData,
+        to: "[]"
+      )
+    )
+
+    let storageValue = StudioRecentWorkspacesState.storageValue(
+      adding: URL(fileURLWithPath: "/New/Place"),
+      bookmarkData: Data([1, 2, 3]),
+      replacing: moved,
+      to: start
+    )
+
+    #expect(
+      StudioRecentWorkspacesState.workspaces(from: storageValue).map(\.path) == ["/New/Place", "/Workspace/B"]
+    )
+  }
+
+  @Test
   func oldPathOnlyStorageStillDecodes() {
     let storageValue = #"["/Workspace/A","/Workspace/B"]"#
 
@@ -313,6 +355,60 @@ struct StudioRecentWorkspacesStateTests {
       StudioRecentWorkspacesState.workspaces(from: storage.storageValue).first?.bookmarkData
         == Data([4, 5, 6])
     )
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorDropsTheSavedBookmarkWhenARePickCannotMakeOne() {
+    let workspaceURL = URL(fileURLWithPath: "/Workspace")
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      workspacePicker: WorkspaceStoreStubWorkspacePicker(
+        selectedURL: workspaceURL
+      )
+    )
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: StudioRecentWorkspaceAccessRecorder(),
+      bookmarkDataProvider: { _ in nil }
+    )
+    // The saved bookmark could resolve somewhere else; the folder the user just picked is the one to keep.
+    store.recordRecentWorkspace(workspaceURL: workspaceURL, bookmarkData: Data([1, 2, 3]))
+
+    StudioWorkspaceOpenCoordinator.openWorkspaceFromPicker(workspaceStore: store)
+
+    #expect(store.recentWorkspaces == [StudioRecentWorkspace(path: "/Workspace", bookmarkData: nil)])
+  }
+
+  @Test
+  @MainActor
+  func workspaceOpenCoordinatorReplacesAnEntryWhoseBookmarkFoundTheFolderMoved() {
+    let recentAccess = StudioRecentWorkspaceAccessRecorder(resolvedPath: "/Moved/Workspace")
+    let storage = StudioRecentWorkspacesStorageRecorder()
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        WorkspaceSnapshot.empty
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      }
+    )
+    store.configureRecentWorkspaces(
+      storage: storage,
+      recentWorkspaceAccess: recentAccess
+    )
+    let saved = StudioRecentWorkspace(path: "/Workspace", bookmarkData: Data([1, 2, 3]))
+    store.recordRecentWorkspace(workspaceURL: saved.url, bookmarkData: saved.bookmarkData)
+
+    StudioWorkspaceOpenCoordinator.openRecentWorkspace(saved, workspaceStore: store)
+
+    #expect(store.recentWorkspaces == [StudioRecentWorkspace(path: "/Moved/Workspace", bookmarkData: Data([1, 2, 3]))])
   }
 
   @Test
@@ -549,18 +645,20 @@ struct StudioRecentWorkspacesStateTests {
 
 private final class StudioRecentWorkspaceAccessRecorder: StudioRecentWorkspaceAccessing {
   private let refreshedBookmarkData: Data?
+  private let resolvedPath: String?
   private(set) var stopCount = 0
   private(set) var requestedWorkspaces: [StudioRecentWorkspace] = []
 
-  init(refreshedBookmarkData: Data? = nil) {
+  init(refreshedBookmarkData: Data? = nil, resolvedPath: String? = nil) {
     self.refreshedBookmarkData = refreshedBookmarkData
+    self.resolvedPath = resolvedPath
   }
 
   func access(_ workspace: StudioRecentWorkspace) -> StudioRecentWorkspace {
     requestedWorkspaces.append(workspace)
 
     return StudioRecentWorkspace(
-      path: workspace.path,
+      path: resolvedPath ?? workspace.path,
       bookmarkData: refreshedBookmarkData ?? workspace.bookmarkData
     )
   }

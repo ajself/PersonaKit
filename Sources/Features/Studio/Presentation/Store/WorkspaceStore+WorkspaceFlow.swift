@@ -79,12 +79,23 @@ extension WorkspaceStore {
   @discardableResult
   func recordRecentWorkspace(
     workspaceURL: URL,
-    bookmarkData: Data? = nil
+    bookmarkData: Data? = nil,
+    replacing replacedWorkspace: StudioRecentWorkspace? = nil
   ) -> Bool {
     recentWorkspacesFeatureModel.recordWorkspace(
       at: workspaceURL,
-      bookmarkData: bookmarkData
+      bookmarkData: bookmarkData,
+      replacing: replacedWorkspace
     )
+  }
+
+  @discardableResult
+  func recordPickedWorkspaceIfLoaded() -> Bool {
+    guard let workspaceURL else {
+      return false
+    }
+
+    return recentWorkspacesFeatureModel.recordPickedWorkspace(at: workspaceURL)
   }
 
   @discardableResult
