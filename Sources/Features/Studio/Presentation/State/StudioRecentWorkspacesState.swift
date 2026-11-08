@@ -114,8 +114,9 @@ enum StudioRecentWorkspacesState {
   ) -> String {
     let existingWorkspaces = workspaces(from: storageValue).map(StoredWorkspace.init(workspace:))
     let newWorkspace = StoredWorkspace(
-      path: normalizedDirectoryPath(workspaceURL.standardizedFileURL.path()),
-      bookmarkData: bookmarkData?.base64EncodedString()
+      path: normalizedDirectoryPath(workspaceURL.standardizedFileURL.path(percentEncoded: false)),
+      bookmarkData: bookmarkData?.base64EncodedString(),
+      pathIsDecoded: true
     )
     let workspaces = uniqueStandardizedWorkspaces([newWorkspace] + existingWorkspaces)
       .prefix(maximumCount)
@@ -130,7 +131,7 @@ enum StudioRecentWorkspacesState {
     let removedPath = normalizedDirectoryPath(
       URL(fileURLWithPath: workspace.path, isDirectory: true)
         .standardizedFileURL
-        .path()
+        .path(percentEncoded: false)
     )
     let workspaces = workspaces(from: storageValue)
       .map(StoredWorkspace.init(workspace:))
@@ -163,7 +164,7 @@ enum StudioRecentWorkspacesState {
     }
 
     return paths.map {
-      StoredWorkspace(path: $0, bookmarkData: nil)
+      StoredWorkspace(path: $0, bookmarkData: nil, pathIsDecoded: nil)
     }
   }
 
@@ -172,9 +173,9 @@ enum StudioRecentWorkspacesState {
 
     for workspace in workspaces {
       let standardizedPath = normalizedDirectoryPath(
-        URL(fileURLWithPath: workspace.path, isDirectory: true)
+        URL(fileURLWithPath: workspace.decodedPath, isDirectory: true)
           .standardizedFileURL
-          .path()
+          .path(percentEncoded: false)
       )
 
       guard !standardizedPath.isEmpty else {
@@ -187,7 +188,8 @@ enum StudioRecentWorkspacesState {
         {
           result[existingIndex] = StoredWorkspace(
             path: standardizedPath,
-            bookmarkData: bookmarkData
+            bookmarkData: bookmarkData,
+            pathIsDecoded: true
           )
         }
 
@@ -197,7 +199,8 @@ enum StudioRecentWorkspacesState {
       result.append(
         StoredWorkspace(
           path: standardizedPath,
-          bookmarkData: workspace.bookmarkData
+          bookmarkData: workspace.bookmarkData,
+          pathIsDecoded: true
         )
       )
     }
@@ -368,23 +371,42 @@ final class StudioRecentWorkspacesFeatureModel {
 private struct StoredWorkspace: Codable, Equatable {
   let path: String
   let bookmarkData: String?
+  /// Entries saved before 2.2.0 have no marker, and their paths gained a layer of percent-encoding each time the list
+  /// was rewritten. The marker keeps a folder whose real name contains `%20` from being decoded.
+  let pathIsDecoded: Bool?
 
   init(
     path: String,
-    bookmarkData: String?
+    bookmarkData: String?,
+    pathIsDecoded: Bool?
   ) {
     self.path = path
     self.bookmarkData = bookmarkData
+    self.pathIsDecoded = pathIsDecoded
   }
 
   init(workspace: StudioRecentWorkspace) {
     self.path = workspace.path
     self.bookmarkData = workspace.bookmarkData?.base64EncodedString()
+    self.pathIsDecoded = true
+  }
+
+  var decodedPath: String {
+    guard pathIsDecoded != true else {
+      return path
+    }
+
+    var decoded = path
+    while let next = decoded.removingPercentEncoding, next != decoded {
+      decoded = next
+    }
+
+    return decoded
   }
 
   var workspace: StudioRecentWorkspace {
     StudioRecentWorkspace(
-      path: path,
+      path: decodedPath,
       bookmarkData: bookmarkData.flatMap { Data(base64Encoded: $0) }
     )
   }

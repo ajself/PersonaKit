@@ -33,6 +33,54 @@ struct StudioRecentWorkspacesStateTests {
   }
 
   @Test
+  func aWorkspaceWhosePathHasASpaceRoundTripsUnencoded() {
+    let workspaceURL = URL(fileURLWithPath: "/Users/me/My Projects", isDirectory: true)
+    var storageValue = StudioRecentWorkspacesState.storageValue(adding: workspaceURL, to: "[]")
+    let workspace = StudioRecentWorkspacesState.workspaces(from: storageValue)[0]
+
+    #expect(workspace.path == "/Users/me/My Projects")
+    #expect(workspace.displayName == "My Projects")
+    #expect(workspace.url == workspaceURL)
+
+    storageValue = StudioRecentWorkspacesState.storageValue(removing: workspace, from: storageValue)
+
+    #expect(StudioRecentWorkspacesState.workspaces(from: storageValue).isEmpty)
+  }
+
+  @Test
+  func entriesSavedBy210AreDecodedAndMergeWithTheirFolder() {
+    // What 2.1.0 wrote: each rewrite of the list added a layer of encoding, and re-adding a folder didn't merge, so
+    // one folder can appear at several depths.
+    let saved = #"""
+      [{"path":"/Users/me/My%25252520Projects"},{"path":"/Users/me/My%2520Projects","bookmarkData":"AQID"}]
+      """#
+
+    #expect(StudioRecentWorkspacesState.workspaces(from: saved).map(\.path) == ["/Users/me/My Projects"])
+
+    let storageValue = StudioRecentWorkspacesState.storageValue(
+      adding: URL(fileURLWithPath: "/Users/me/My Projects", isDirectory: true),
+      to: saved
+    )
+    let workspaces = StudioRecentWorkspacesState.workspaces(from: storageValue)
+
+    #expect(workspaces.map(\.path) == ["/Users/me/My Projects"])
+    #expect(workspaces.first?.bookmarkData == Data([1, 2, 3]))
+  }
+
+  @Test
+  func aFolderNamedWithAPercentSequenceIsNotDecoded() {
+    let workspaceURL = URL(fileURLWithPath: "/Users/me/a%20b", isDirectory: true)
+    let storageValue = StudioRecentWorkspacesState.storageValue(adding: workspaceURL, to: "[]")
+
+    #expect(StudioRecentWorkspacesState.workspaces(from: storageValue).map(\.path) == ["/Users/me/a%20b"])
+    #expect(
+      StudioRecentWorkspacesState.workspaces(
+        from: StudioRecentWorkspacesState.storageValue(adding: workspaceURL, to: storageValue)
+      ).map(\.path) == ["/Users/me/a%20b"]
+    )
+  }
+
+  @Test
   func addingWorkspaceStoresBookmarkData() {
     let bookmarkData = Data([1, 2, 3])
     let storageValue = StudioRecentWorkspacesState.storageValue(
