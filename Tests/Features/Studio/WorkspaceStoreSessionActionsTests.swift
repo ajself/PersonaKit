@@ -901,6 +901,120 @@ struct WorkspaceStoreSessionActionsTests {
     #expect(!store.isLoadingSessionMap)
   }
 
+  @Test(arguments: [true, false])
+  func reloadRebuildsTheSessionMapOnlyWhileAMapIsOnScreen(mapIsOnScreen: Bool) async {
+    let sessionFileURL = URL(fileURLWithPath: "/Workspace/.personakit/Sessions/session-a.session.json")
+    let validationCount = Mutex(0)
+    let mapBuildCount = Mutex(0)
+    let snapshot = WorkspaceSnapshot(
+      sessions: [
+        WorkspaceSessionListItem(
+          id: "session-a",
+          personaId: "unused",
+          directiveId: "unused",
+          fileURL: sessionFileURL,
+          sourceScope: .project
+        )
+      ],
+      personas: [],
+      directives: [],
+      kits: [],
+      skills: []
+    )
+    let store = WorkspaceStore(
+      snapshotBuilder: WorkspaceStoreStubSnapshotBuilder { _ in
+        snapshot
+      },
+      workspaceValidator: WorkspaceStoreStubWorkspaceValidator { _ in
+        validationCount.withLock { $0 += 1 }
+        return WorkspaceValidationSnapshot(summary: "ok", issues: [])
+      },
+      sessionManager: WorkspaceStoreStubSessionManager(
+        loadDraftHandler: { _ in
+          WorkspaceSessionDraft(id: "session-a", personaId: "persona-a", directiveId: "directive-a", kitOverrides: [])
+        },
+        saveSessionHandler: { _, _, _, _, _, _ in
+          "session-a"
+        },
+        deleteSessionHandler: { _, _ in }
+      ),
+      sessionMapBuilder: WorkspaceStoreStubSessionMapBuilder(
+        buildHandler: { _, _, _, _ in
+          let count = mapBuildCount.withLock { count in
+            count += 1
+            return count
+          }
+          return WorkspaceSessionMap(
+            nodes: [
+              WorkspaceSessionMapNode(
+                key: "persona:persona-\(count)",
+                id: "persona-\(count)",
+                displayName: "Persona",
+                kind: .persona,
+                isMissing: false,
+                badges: []
+              )
+            ],
+            edges: [],
+            resolutionErrors: [],
+            isFullyResolved: true
+          )
+        }
+      )
+    )
+
+    store.workspaceURL = URL(fileURLWithPath: "/Workspace")
+    store.loadWorkspace()
+    await waitFor {
+      store.snapshot.sessions.first?.id == "session-a"
+    }
+
+    let firstWindowMap = UUID()
+    let secondWindowMap = UUID()
+    store.sessionMapDidAppear(id: firstWindowMap)
+    store.sessionMapDidAppear(id: firstWindowMap)
+    store.sessionMapDidAppear(id: secondWindowMap)
+    store.refreshSessionMap(for: store.snapshot.sessions.first)
+    await waitFor {
+      store.sessionMap != nil
+    }
+
+    // One window leaves Sessions; a repeated appear in the other must not count twice.
+    store.sessionMapDidDisappear(id: secondWindowMap)
+    if !mapIsOnScreen {
+      store.sessionMapDidDisappear(id: firstWindowMap)
+    }
+
+    // Validation starts after the map revalidation, so a second validation means the reload
+    // has already decided whether to rebuild the map.
+    store.reloadWorkspaceAfterExternalChange(changedFileURLs: [sessionFileURL])
+    await waitFor {
+      validationCount.withLock { $0 } == 2
+    }
+    if mapIsOnScreen {
+      await waitFor {
+        mapBuildCount.withLock { $0 } == 2
+      }
+    }
+    await yieldTasks()
+
+    #expect(mapBuildCount.withLock { $0 } == (mapIsOnScreen ? 2 : 1))
+    #expect((store.sessionMap != nil) == mapIsOnScreen)
+
+    guard !mapIsOnScreen else {
+      return
+    }
+
+    // Coming back to Sessions loads a fresh map.
+    store.sessionMapDidAppear(id: firstWindowMap)
+    store.refreshSessionMap(for: store.snapshot.sessions.first)
+    await waitFor {
+      store.sessionMap != nil
+    }
+
+    #expect(mapBuildCount.withLock { $0 } == 2)
+  }
+
   private func yieldTasks(_ iterations: Int = 50) async {
     for _ in 0..<iterations {
       await Task.yield()

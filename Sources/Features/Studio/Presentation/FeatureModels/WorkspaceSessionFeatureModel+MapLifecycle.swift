@@ -115,14 +115,28 @@ extension WorkspaceSessionFeatureModel {
     }
   }
 
+  func mapDidAppear(id: UUID) {
+    visibleMapIDs.insert(id)
+  }
+
+  func mapDidDisappear(id: UUID) {
+    visibleMapIDs.remove(id)
+  }
+
   /// Brings the session map up to date after a workspace reload, mirroring
   /// ``revalidatePreviewAfterReload(snapshot:workspaceURL:changedFileURLs:)``: the current map
-  /// stays on screen and is replaced only when the rebuilt one differs.
+  /// stays on screen and is replaced only when the rebuilt one differs. With no map on screen it
+  /// drops the map instead, so the next map view loads a fresh one.
   func revalidateMapAfterReload(
     snapshot: WorkspaceSnapshot,
     workspaceURL: URL?,
     changedFileURLs: Set<URL>?
   ) {
+    guard !visibleMapIDs.isEmpty else {
+      clearMap()
+      return
+    }
+
     guard let requestKey = mapState.requestKey,
       requestKey.hasPrefix("session:"),
       let session = snapshot.sessions.first(where: {

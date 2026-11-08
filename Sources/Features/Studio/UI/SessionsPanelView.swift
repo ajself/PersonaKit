@@ -16,6 +16,8 @@ struct SessionsPanelView: View {
   let onNavigateHelpLink: (StudioHelpLink) -> Void
 
   @State private var detailMode = SessionsDetailMode.preview
+  /// Identifies this panel's map view to the shared store, which tracks the maps on screen across windows.
+  @State private var mapViewID = UUID()
   @SceneStorage("studio.sessions.detailMode")
   private var persistedDetailModeRawValue = SessionsDetailMode.preview.rawValue
 
@@ -296,6 +298,12 @@ struct SessionsPanelView: View {
           )
         }
       )
+      .onAppear {
+        workspaceStore.sessionMapDidAppear(id: mapViewID)
+      }
+      .onDisappear {
+        workspaceStore.sessionMapDidDisappear(id: mapViewID)
+      }
     }
   }
 

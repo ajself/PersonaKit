@@ -15,6 +15,9 @@ final class WorkspaceSessionFeatureModel {
   @ObservationIgnored var previewTask: Task<Void, Never>?
   @ObservationIgnored var previewExportTask: Task<Void, Never>?
   @ObservationIgnored var mapTask: Task<Void, Never>?
+  /// Session map views on screen across every window, by view id. A reload rebuilds the map only while one is
+  /// showing; an id makes a repeated appear or disappear harmless.
+  @ObservationIgnored var visibleMapIDs: Set<UUID> = []
   @ObservationIgnored var draftMapTask: Task<Void, Never>?
   var state = WorkspaceSessionPreviewState()
   // Result of the last Copy or Export action, shown under the preview header.

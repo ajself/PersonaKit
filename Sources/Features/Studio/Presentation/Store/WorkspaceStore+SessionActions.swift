@@ -56,6 +56,16 @@ extension WorkspaceStore {
     sessionFeatureModel.clearMap()
   }
 
+  /// Records a session map view coming on screen, so reloads keep its map current.
+  func sessionMapDidAppear(id: UUID) {
+    sessionFeatureModel.mapDidAppear(id: id)
+  }
+
+  /// Records a session map view leaving the screen; with none left, reloads stop rebuilding the map.
+  func sessionMapDidDisappear(id: UUID) {
+    sessionFeatureModel.mapDidDisappear(id: id)
+  }
+
   /// Loads a dependency map for an in-flight session draft.
   func refreshDraftSessionMap(
     for draft: WorkspaceSessionDraft
