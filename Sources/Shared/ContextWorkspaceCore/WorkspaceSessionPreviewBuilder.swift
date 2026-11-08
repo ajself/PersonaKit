@@ -26,7 +26,7 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
   ///   - personaId: Session persona id.
   ///   - directiveId: Session directive id.
   ///   - kitOverrides: Session kit override ids.
-  /// - Returns: Deterministic markdown preview text.
+  /// - Returns: Deterministic markdown preview text, stripped of hidden characters as the CLI and MCP exports are.
   /// - Throws: ``WorkspaceSnapshotBuildError`` with user-facing preview failure details.
   public func build(
     projectScopeURL: URL,
@@ -42,13 +42,15 @@ public struct WorkspaceSessionPreviewBuilder: WorkspaceSessionPreviewBuilding, S
     )
 
     do {
-      return try SessionExporter.export(
+      let export = try SessionExporter.export(
         scopes: scopes,
         personaId: personaId,
         directiveId: directiveId,
         kitOverrides: kitOverrides,
         sessionId: sessionId
       )
+      // Studio copies and exports this text, so a person sees what an agent reading the handoff sees.
+      return TerminalText.sanitized(export)
     } catch let error as ExportError {
       throw WorkspaceSnapshotBuildError(
         message: Self.previewMessage(for: error)

@@ -5,7 +5,7 @@ import Foundation
 ///
 /// A repo's entity text could otherwise retitle or clear the terminal, write the clipboard, or hide or
 /// reorder text so a person reviewing output does not see what an agent reads. The CLI applies it to its
-/// output, and MCP to the export and graph it hands an agent.
+/// output, MCP to the export and graph it hands an agent, and Studio to the handoff preview it copies and exports.
 public enum TerminalText {
   /// Removes C0 controls other than tab and newline, DEL, C1 controls, line and paragraph separators,
   /// bidirectional marks, overrides and isolates, invisible formatting and filler characters, Unicode tag
