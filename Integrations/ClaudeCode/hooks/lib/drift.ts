@@ -1,10 +1,10 @@
 import type { Call, DriftEvent, Enforcement } from '../../types'
-import { CLAUDE_HOST } from './host'
+import { CLAUDE_HOST, PERSONAKIT_MCP_TOOL_NAMES } from './host'
 import type { Host } from './host'
 import { isPersonaKitCall } from './observe'
 
-/** Classes an unclassifiable MCP tool could plausibly perform (mirrors `unclassifiedToolActionClasses`). */
-const MCP_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']
+/** Classes a tool PersonaKit cannot classify could plausibly perform (mirrors `unclassifiedToolActionClasses`). */
+const UNCLASSIFIED_RELEVANT = ['file-mutation', 'command-execution', 'network-egress']
 
 // The last marks an operator prompt that was refused, as in a headless run where no one can answer it.
 const DENY_MARKERS = [
@@ -13,6 +13,36 @@ const DENY_MARKERS = [
   'PersonaKit could not check this tool call',
   'PersonaKit contract needs approval:',
 ]
+
+/** An input field as the checker reads it: absent or null is none, and a value that is not a string is unknown. */
+function presentString(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined
+  return typeof value === 'string' ? value : '(not a string)'
+}
+
+/**
+ * Whether the checker would let an unclassified call through, as it judges one: a read-only built-in (a subagent only
+ * of a built-in local type with no `isolation`), a resource read from a trusted server, or PersonaKit's own MCP tool
+ * from one. A built-in type that an agent definition on disk replaces is not seen here: that takes a folder read.
+ */
+function checkerAllows(call: Call, trustedServers: string[], host: Host): boolean {
+  const { tool, input } = call
+  if (host.isMCPTool(tool)) {
+    return trustedServers.some(
+      (server) =>
+        host.trustsMCPKey(tool, server) && PERSONAKIT_MCP_TOOL_NAMES.some((name) => tool === host.mcpToolName(server, name)),
+    )
+  }
+  if (host.subagentTools.includes(tool)) {
+    const isolation = presentString(input.isolation)
+    const type = presentString(input.subagent_type)
+    if (isolation !== undefined && isolation !== '') return false
+    if (type !== undefined && type !== '' && !host.localSubagentTypes.includes(type)) return false
+  }
+  if (host.readOnlyTools.includes(tool)) return true
+  const server = input.server
+  return host.mcpResourceTools.includes(tool) && typeof server === 'string' && trustedServers.includes(server)
+}
 
 /** Whether the installed hook's matcher routes the tool. Entries are regex alternatives anchored to the whole name. */
 function routed(tool: string, matcherTools: string[]): boolean {
@@ -59,6 +89,9 @@ export function classifyDrift(
 
   if (personaKit || call.result.isError === true) return undefined
   if (actionClass !== undefined) return deniedActionClasses.includes(actionClass) ? event('advisory') : undefined
-  if (host.isMCPTool(tool) && MCP_RELEVANT.some((c) => deniedActionClasses.includes(c))) return event('advisory', false)
+  // An unclassified call the checker would not let through could do anything the contract forbids.
+  if (!checkerAllows(call, trustedServers, host) && UNCLASSIFIED_RELEVANT.some((c) => deniedActionClasses.includes(c))) {
+    return event('advisory', false)
+  }
   return undefined
 }

@@ -86,6 +86,60 @@ test('advisory drift for unclassified MCP tools', () => {
   expect(classify({ tool: 'mcp__github__create_issue', result: ok() }, ['something-else'], advisory)).toBeUndefined()
 })
 
+test('advisory drift for built-ins the checker cannot classify', () => {
+  expect(classify({ tool: 'CronCreate', result: ok() }, ['command-execution'], advisory)).toEqual({
+    tool: 'CronCreate', kind: 'advisory', turn: 4,
+  })
+  expect(classify({ tool: 'CronCreate', result: ok() }, ['something-else'], advisory)).toBeUndefined()
+  // The checker allows read-only built-ins, and resource reads from a trusted PersonaKit server.
+  expect(classify({ tool: 'Read', result: ok() }, ['command-execution'], advisory)).toBeUndefined()
+  expect(classify({ tool: 'Agent', result: ok() }, ['command-execution'], advisory)).toBeUndefined()
+  const resource = (server: unknown) => ({ tool: 'ReadMcpResourceTool', input: { server, uri: 'x' }, result: ok() })
+  expect(classify(resource('personakit'), ['network-egress'], advisory)).toBeUndefined()
+  expect(classify(resource('github'), ['network-egress'], advisory)).toEqual({ tool: 'ReadMcpResourceTool', kind: 'advisory', turn: 4 })
+  expect(classify(resource(['personakit']), ['network-egress'], advisory)?.kind).toBe('advisory')
+})
+
+test('advisory drift for subagents the checker asks about', () => {
+  const agent = (input: Record<string, unknown>) => ({ tool: 'Agent', input: { prompt: 'x', ...input }, result: ok() })
+  const denied = ['command-execution']
+  for (const input of [{}, { subagent_type: 'Explore' }, { subagent_type: '' }, { isolation: '' }, { isolation: null }]) {
+    expect(classify(agent(input), denied, advisory)).toBeUndefined()
+  }
+  for (const input of [
+    { isolation: 'worktree' },
+    { isolation: true },
+    { subagent_type: 'superpowers:code-reviewer' },
+    { subagent_type: 'explore' },
+    { subagent_type: ['Explore'] },
+    { subagent_type: 'Explore', isolation: 'remote' },
+  ]) {
+    expect(classify(agent(input), denied, advisory)).toEqual({ tool: 'Agent', kind: 'advisory', turn: 4 })
+  }
+  expect(classify({ ...agent({ isolation: 'worktree' }), tool: 'Task' }, denied, advisory)?.kind).toBe('advisory')
+  expect(classify(agent({ isolation: 'worktree' }), ['something-else'], advisory)).toBeUndefined()
+})
+
+test("PersonaKit's own MCP tools from a trusted server are never drift", () => {
+  for (const name of ['personakit_validate', 'personakit_best_guidance', 'personakit_graph']) {
+    expect(classify({ tool: `mcp__personakit__${name}`, result: ok() }, ['network-egress'], advisory)).toBeUndefined()
+    expect(classify({ tool: `mcp__other__${name}`, result: ok() }, ['network-egress'], advisory)?.kind).toBe('advisory')
+  }
+  const host = openCodeHost(['personakit'])
+  const call = { input: {}, tool: 'personakit_personakit_validate', result: ok() }
+  expect(classifyDrift(call, ['network-egress'], advisory, trusted, 4, host)).toBeUndefined()
+})
+
+test('OpenCode: advisory drift for tools outside its read-only built-ins', () => {
+  const host = openCodeHost([])
+  const call = (tool: string) => ({ input: {}, tool, result: ok() })
+  expect(classifyDrift(call('some_plugin_tool'), ['file-mutation'], advisory, trusted, 4, host)).toEqual({
+    tool: 'some_plugin_tool', kind: 'advisory', turn: 4,
+  })
+  expect(classifyDrift(call('read'), ['file-mutation'], advisory, trusted, 4, host)).toBeUndefined()
+  expect(classifyDrift(call('task'), ['file-mutation'], advisory, trusted, 4, host)).toBeUndefined()
+})
+
 test('PersonaKit calls are never drift', () => {
   const tool = 'mcp__personakit__personakit_export'
   expect(classify({ tool, result: ok() }, ['file-mutation'], advisory)).toBeUndefined()
@@ -120,8 +174,10 @@ test('OpenCode: a configured server prefix makes a tool MCP even when a built-in
 
 test('tool names that are Object.prototype members are not classified', () => {
   for (const tool of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
-    expect(classify({ tool, result: ok() }, ['file-mutation', 'command-execution', 'network-egress'], advisory)).toBeUndefined()
-    expect(classifyDrift({ input: {}, tool, result: ok() }, ['command-execution'], advisory, trusted, 4, openCodeHost([]))).toBeUndefined()
+    // Unclassified, so drift with no inherited "class", as the checker would ask about it.
+    expect(classify({ tool, result: ok() }, ['file-mutation', 'command-execution', 'network-egress'], advisory)).toEqual({ tool, kind: 'advisory', turn: 4 })
+    expect(classifyDrift({ input: {}, tool, result: ok() }, ['command-execution'], advisory, trusted, 4, openCodeHost([]))).toEqual({ tool, kind: 'advisory', turn: 4 })
+    expect(classify({ tool, result: ok() }, ['something-else'], advisory)).toBeUndefined()
     // A denied one carries no inherited "class".
     expect(classify({ tool, result: err(DENY) }, [], enforced([tool]))).toEqual({ tool, kind: 'blocked', turn: 4 })
   }

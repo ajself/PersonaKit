@@ -1,7 +1,27 @@
 import { expect, test } from 'claude-code/testing'
 
-import { CONTRACT_JSON, OPENCODE_READ_ONLY_TOOLS_JSON, OPENCODE_TOOL_ACTION_CLASSES_JSON } from './fixtures/golden'
-import { CLAUDE_HOST, OPENCODE_READ_ONLY_TOOLS, OPENCODE_TOOL_ACTION_CLASSES, openCodeHost, sanitizeMCPName } from './lib/host'
+import {
+  CLAUDE_LOCAL_SUBAGENT_TYPES_JSON,
+  CLAUDE_MCP_RESOURCE_TOOLS_JSON,
+  CLAUDE_READ_ONLY_TOOLS_JSON,
+  CLAUDE_SUBAGENT_TOOLS_JSON,
+  CONTRACT_JSON,
+  OPENCODE_READ_ONLY_TOOLS_JSON,
+  OPENCODE_TOOL_ACTION_CLASSES_JSON,
+  PERSONAKIT_MCP_TOOL_NAMES_JSON,
+} from './fixtures/golden'
+import {
+  CLAUDE_HOST,
+  CLAUDE_LOCAL_SUBAGENT_TYPES,
+  CLAUDE_MCP_RESOURCE_TOOLS,
+  CLAUDE_READ_ONLY_TOOLS,
+  CLAUDE_SUBAGENT_TOOLS,
+  OPENCODE_READ_ONLY_TOOLS,
+  OPENCODE_TOOL_ACTION_CLASSES,
+  PERSONAKIT_MCP_TOOL_NAMES,
+  openCodeHost,
+  sanitizeMCPName,
+} from './lib/host'
 import { observe } from './lib/observe'
 
 const none = async () => undefined
@@ -21,6 +41,14 @@ test('sanitizeMCPNameReplacesEachUTF16Unit', () => {
 test('openCodeListsMatchSwift', () => {
   expect(OPENCODE_TOOL_ACTION_CLASSES).toEqual(JSON.parse(OPENCODE_TOOL_ACTION_CLASSES_JSON))
   expect([...OPENCODE_READ_ONLY_TOOLS]).toEqual(JSON.parse(OPENCODE_READ_ONLY_TOOLS_JSON))
+})
+
+test('claudeListsMatchSwift', () => {
+  expect([...CLAUDE_READ_ONLY_TOOLS]).toEqual(JSON.parse(CLAUDE_READ_ONLY_TOOLS_JSON))
+  expect([...CLAUDE_MCP_RESOURCE_TOOLS]).toEqual(JSON.parse(CLAUDE_MCP_RESOURCE_TOOLS_JSON))
+  expect([...CLAUDE_SUBAGENT_TOOLS]).toEqual(JSON.parse(CLAUDE_SUBAGENT_TOOLS_JSON))
+  expect([...CLAUDE_LOCAL_SUBAGENT_TYPES]).toEqual(JSON.parse(CLAUDE_LOCAL_SUBAGENT_TYPES_JSON))
+  expect([...PERSONAKIT_MCP_TOOL_NAMES]).toEqual(JSON.parse(PERSONAKIT_MCP_TOOL_NAMES_JSON))
 })
 
 test('isMCPToolIsAConfiguredServerPrefix', () => {

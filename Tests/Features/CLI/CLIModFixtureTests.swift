@@ -113,6 +113,26 @@ struct CLIModFixtureTests {
     try sortedJSON(flattened(OpenCodeEnforcement.toolActionClasses))
   }
 
+  private func claudeReadOnlyToolsJSON() throws -> String {
+    try sortedJSON(ClaudeCodeEnforcement.readOnlyTools.sorted())
+  }
+
+  private func claudeMCPResourceToolsJSON() throws -> String {
+    try sortedJSON(ClaudeCodeEnforcement.mcpResourceTools.sorted())
+  }
+
+  private func claudeSubagentToolsJSON() throws -> String {
+    try sortedJSON(ClaudeCodeEnforcement.subagentTools.sorted())
+  }
+
+  private func claudeLocalSubagentTypesJSON() throws -> String {
+    try sortedJSON(ClaudeCodeEnforcement.localSubagentTypes.sorted())
+  }
+
+  private func personaKitMCPToolNamesJSON() throws -> String {
+    try sortedJSON(ClaudeCodeEnforcement.personaKitMCPToolNames.sorted())
+  }
+
   private func openCodeReadOnlyToolsJSON() throws -> String {
     try sortedJSON(OpenCodeEnforcement.readOnlyTools.sorted())
   }
@@ -134,6 +154,11 @@ struct CLIModFixtureTests {
       "export const LIST_MERGED_JSON = \(try literal(merged))",
       "export const EXPORT_MD = \(try literal(export))",
       "export const TOOL_ACTION_CLASSES_JSON = \(try literal(try toolActionClassesJSON()))",
+      "export const CLAUDE_READ_ONLY_TOOLS_JSON = \(try literal(try claudeReadOnlyToolsJSON()))",
+      "export const CLAUDE_MCP_RESOURCE_TOOLS_JSON = \(try literal(try claudeMCPResourceToolsJSON()))",
+      "export const CLAUDE_SUBAGENT_TOOLS_JSON = \(try literal(try claudeSubagentToolsJSON()))",
+      "export const CLAUDE_LOCAL_SUBAGENT_TYPES_JSON = \(try literal(try claudeLocalSubagentTypesJSON()))",
+      "export const PERSONAKIT_MCP_TOOL_NAMES_JSON = \(try literal(try personaKitMCPToolNamesJSON()))",
       "export const OPENCODE_TOOL_ACTION_CLASSES_JSON = \(try literal(try openCodeToolActionClassesJSON()))",
       "export const OPENCODE_READ_ONLY_TOOLS_JSON = \(try literal(try openCodeReadOnlyToolsJSON()))",
     ].joined(separator: "\n") + "\n"
