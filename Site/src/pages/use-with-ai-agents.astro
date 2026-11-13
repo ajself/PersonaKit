@@ -14,6 +14,12 @@ const enforceCommand = "personakit enforce install --session <id>";
 
 const enforcementGuideHref = "https://github.com/ajself/PersonaKit/blob/main/Docs/enforcement.md";
 
+const modInstallCommand = "/plugin install personakit --marketplace ajself/PersonaKit";
+
+const claudeCodeModHref = "https://github.com/ajself/PersonaKit/blob/main/Integrations/ClaudeCode/README.md";
+
+const openCodePluginHref = "https://github.com/ajself/PersonaKit/blob/main/Integrations/OpenCode/README.md";
+
 const groundingSkillHref = sitePath("tutorials/personakit-grounding/index.html");
 
 const breadcrumbSnippet = `## PersonaKit
@@ -82,6 +88,17 @@ role, rules, allowed capabilities, forbidden actions, and stop points.`;
   </Callout>
 
   <p><a class="button-link" href={enforcementGuideHref}>Read the enforcement guide</a></p>
+
+  <h2 id="watch">5. See The Contract In Force (Optional)</h2>
+  <p>Claude Code and OpenCode each get an optional PersonaKit add-on that keeps the contract visible while the agent works: a mod for Claude Code and a plugin for OpenCode. Each one shows the contract the agent last resolved in the status line (a status chip in OpenCode), with its session, persona, directive, and whether it is enforced or advisory. When the agent uses a tool the contract forbids, the status line flags it as drift, and it suggests grounding again after the conversation is compacted.</p>
+
+  <p><code>/pk</code> opens the full contract and your PersonaKit library. Pick a session there and the add-on pre-fills a request asking the agent to resolve, export, and adopt that session's contract; you review the request and send it. To fill the panel it runs only read-only <code>personakit</code> commands. It never submits a prompt or writes a file.</p>
+
+  <Code code={modInstallCommand} lang="text" theme="github-dark" />
+
+  <p>Run that at a Claude Code prompt to install the mod. For OpenCode, <code>make opencode-install</code> from step 4 installs the plugin, which also carries the enforcement hook. Both read what the agent resolves through the MCP server or the CLI, so register the server from step 1 first.</p>
+
+  <p><a class="button-link" href={claudeCodeModHref}>Read about the Claude Code mod</a> <a class="button-link" href={openCodePluginHref}>Read about the OpenCode plugin</a></p>
 
   <h2 id="what-happens">What The Agent Does Once Connected</h2>
   <p>With the server connected and the contract resolved, the agent follows a small, inspectable loop:</p>
