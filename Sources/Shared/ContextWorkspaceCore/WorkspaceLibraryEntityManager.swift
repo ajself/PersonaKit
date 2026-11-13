@@ -171,12 +171,52 @@ public struct WorkspaceLibraryEntityManager: WorkspaceLibraryEntityManaging, Sen
     }
 
     let rawJSON = try loadRawJSON(fileURL: item.fileURL)
+    if entityType == .skill {
+      // Validate before the body lands, so JSON that won't save never leaves a stray body that blocks the next copy.
+      try validateRawJSON(rawJSON, entityType: .skill, expectedID: WorkspaceEntityIDPolicy.normalized(item.id))
+      try copySkillBodyToProject(workspaceURL: workspaceURL, item: item)
+    }
     try saveRawJSON(
       workspaceURL: workspaceURL,
       itemID: item.id,
       rawJSON: rawJSON,
       entityType: entityType
     )
+  }
+
+  /// Copies a global skill's `<id>.md` body beside the project copy of its JSON. Runs after the JSON validates and
+  /// before it is written, so a failed body copy never leaves a project skill without its body. A skill with no global
+  /// body copies as JSON only.
+  private func copySkillBodyToProject(workspaceURL: URL, item: WorkspaceListItem) throws {
+    let bodyFileName = "\(WorkspaceEntityIDPolicy.normalized(item.id)).md"
+    let sourceURL = item.fileURL.deletingLastPathComponent().appendingPathComponent(bodyFileName)
+    guard dependencies.fileExists(sourceURL) else {
+      return
+    }
+
+    let destinationURL = try destinationFileURL(
+      workspaceURL: workspaceURL,
+      itemID: item.id,
+      entityType: .skill
+    )
+    .deletingLastPathComponent()
+    .appendingPathComponent(bodyFileName)
+    guard !dependencies.fileExists(destinationURL) else {
+      throw WorkspaceSnapshotBuildError(
+        message:
+          "The project already has a skill body at \(destinationURL.path(percentEncoded: false)). Move or delete it, then copy again."
+      )
+    }
+
+    do {
+      let body = try dependencies.readData(sourceURL)
+      try dependencies.createDirectory(destinationURL.deletingLastPathComponent())
+      try dependencies.writeData(body, destinationURL)
+    } catch {
+      throw WorkspaceSnapshotBuildError(
+        message: "Failed to copy the skill body: \(error.localizedDescription)"
+      )
+    }
   }
 
   private func extractID(from jsonData: Data) throws -> String {
@@ -238,7 +278,7 @@ public struct WorkspaceLibraryEntityManagerDependencies: Sendable {
           && isDirectory.boolValue
       },
       fileExists: { url in
-        FileManager.default.fileExists(atPath: url.path())
+        FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
       },
       createDirectory: { url in
         try FileManager.default.createDirectory(

@@ -208,6 +208,59 @@ struct WorkspaceLibraryEntityManagerTests {
   }
 
   @Test
+  func copyGlobalSkillToProjectCopiesItsBody() throws {
+    let fixture = try SkillCopyFixture(globalBody: "# Style\n\nUse tabs.\n")
+
+    try fixture.copy()
+
+    #expect(FileManager.default.fileExists(atPath: fixture.projectJSONURL.path(percentEncoded: false)))
+    #expect(try String(contentsOf: fixture.projectBodyURL, encoding: .utf8) == "# Style\n\nUse tabs.\n")
+  }
+
+  @Test
+  func copyGlobalSkillWithoutBodyCopiesOnlyItsJSON() throws {
+    let fixture = try SkillCopyFixture(globalBody: nil)
+
+    try fixture.copy()
+
+    #expect(FileManager.default.fileExists(atPath: fixture.projectJSONURL.path(percentEncoded: false)))
+    #expect(!FileManager.default.fileExists(atPath: fixture.projectBodyURL.path(percentEncoded: false)))
+  }
+
+  @Test
+  func copyGlobalSkillRefusesToReplaceAnExistingProjectBody() throws {
+    let fixture = try SkillCopyFixture(globalBody: "global body\n")
+    try FileManager.default.createDirectory(
+      at: fixture.projectBodyURL.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try Data("project body\n".utf8).write(to: fixture.projectBodyURL)
+
+    do {
+      try fixture.copy()
+      Issue.record("Expected the copy to refuse.")
+    } catch let error as WorkspaceSnapshotBuildError {
+      #expect(error.message.contains(fixture.projectBodyURL.path(percentEncoded: false)))
+    }
+
+    #expect(try String(contentsOf: fixture.projectBodyURL, encoding: .utf8) == "project body\n")
+    #expect(!FileManager.default.fileExists(atPath: fixture.projectJSONURL.path(percentEncoded: false)))
+  }
+
+  @Test
+  func copyGlobalSkillWithInvalidJSONLeavesNoBodyBehind() throws {
+    struct SchemaFailure: Error {}
+    let fixture = try SkillCopyFixture(globalBody: "global body\n")
+
+    #expect(throws: (any Error).self) {
+      try fixture.copy(validateHandler: { _, _ in throw SchemaFailure() })
+    }
+
+    #expect(!FileManager.default.fileExists(atPath: fixture.projectBodyURL.path(percentEncoded: false)))
+    #expect(!FileManager.default.fileExists(atPath: fixture.projectJSONURL.path(percentEncoded: false)))
+  }
+
+  @Test
   func saveRawJSONWritesToProjectScopeSkillPath() throws {
     let manager = WorkspaceLibraryEntityManager(
       schemaValidator: StubEntitySchemaValidator(validateHandler: { _, _ in }),
@@ -248,5 +301,52 @@ private struct StubEntitySchemaValidator: WorkspaceEntityJSONSchemaValidating, S
     entityType: WorkspaceLibraryEntityType
   ) throws {
     try validateHandler(jsonData, entityType)
+  }
+}
+
+/// A global skill and an empty project, both under folders with spaces, as the live file system sees them.
+private struct SkillCopyFixture {
+  let workspaceURL: URL
+  let globalJSONURL: URL
+  let projectJSONURL: URL
+  let projectBodyURL: URL
+
+  init(globalBody: String?) throws {
+    workspaceURL = try makeTempDirectory().appendingPathComponent("my workspace")
+    try FileManager.default.createDirectory(
+      at: workspaceURL.appendingPathComponent(".personakit/Packs"),
+      withIntermediateDirectories: true
+    )
+
+    let globalSkillsURL = try makeTempDirectory().appendingPathComponent("global library/Packs/skills")
+    try FileManager.default.createDirectory(at: globalSkillsURL, withIntermediateDirectories: true)
+    globalJSONURL = globalSkillsURL.appendingPathComponent("style-guide.skill.json")
+    try Data(#"{ "id": "style-guide" }"#.utf8).write(to: globalJSONURL)
+    if let globalBody {
+      try Data(globalBody.utf8).write(to: globalSkillsURL.appendingPathComponent("style-guide.md"))
+    }
+
+    let projectSkillsURL = workspaceURL.appendingPathComponent(".personakit/Packs/skills")
+    projectJSONURL = projectSkillsURL.appendingPathComponent("style-guide.skill.json")
+    projectBodyURL = projectSkillsURL.appendingPathComponent("style-guide.md")
+  }
+
+  func copy(
+    validateHandler: @escaping @Sendable (Data, WorkspaceLibraryEntityType) throws -> Void = { _, _ in }
+  ) throws {
+    let manager = WorkspaceLibraryEntityManager(
+      schemaValidator: StubEntitySchemaValidator(validateHandler: validateHandler),
+      dependencies: .live()
+    )
+    try manager.copyGlobalItemToProject(
+      workspaceURL: workspaceURL,
+      item: WorkspaceListItem(
+        id: "style-guide",
+        displayName: "Style Guide",
+        fileURL: globalJSONURL,
+        sourceScope: .global
+      ),
+      entityType: .skill
+    )
   }
 }
