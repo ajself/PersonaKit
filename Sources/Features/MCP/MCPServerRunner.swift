@@ -20,11 +20,12 @@ public struct MCPServerRunner: MCPServerRunning {
 
   public init() {}
 
-  /// Starts the async MCP server loop and blocks the process main thread.
+  /// Serves MCP over stdio and exits the process once stdin closes. The main thread only parks in `dispatchMain()`.
   public func run(version: String, scopes: ScopeSet) throws {
     Task {
       do {
-        try await runServer(version: version, scopes: scopes)
+        try await Self.serve(version: version, scopes: scopes, transport: StdioTransport())
+        exit(0)
       } catch {
         var stderrStream = MCPStandardError()
         stderrStream.write("Error: MCP server failed to start: \(error.localizedDescription)\n")
@@ -34,7 +35,8 @@ public struct MCPServerRunner: MCPServerRunning {
     dispatchMain()
   }
 
-  private func runServer(version: String, scopes: ScopeSet) async throws {
+  /// Serves MCP over `transport` and returns once the client closes it.
+  static func serve(version: String, scopes: ScopeSet, transport: any Transport) async throws {
     guard !scopes.isEmpty else {
       throw MCPServerRunnerError.missingScopes
     }
@@ -96,10 +98,9 @@ public struct MCPServerRunner: MCPServerRunning {
       )
     }
 
-    let transport = StdioTransport()
     try await server.start(transport: transport)
-    let sleepNanoseconds = UInt64(60 * 60 * 24 * 365 * 100) * 1_000_000_000
-    try await Task.sleep(nanoseconds: sleepNanoseconds)
+    await server.waitUntilCompleted()
+    await server.stop()
   }
 }
 
